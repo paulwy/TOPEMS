@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPEMS 全项目审计报告 · 2026-09-30 实测</title>
+<style>
+  :root{
+    --bg:#f4f3ef; --paper:#ffffff; --ink:#20242b; --muted:#68707c; --line:#e3e1da;
+    --red:#c62828; --red-bg:#fdecea; --orange:#e06410; --orange-bg:#fff3e8;
+    --amber:#b8860b; --amber-bg:#fff8e1; --blue:#455a64; --blue-bg:#eceff1;
+    --green:#2e7d32; --green-bg:#e8f3e9; --gray:#9aa0a8; --gray-bg:#efefec;
+    --navy:#1f2430;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",system-ui,sans-serif;
+    font-size:15px;line-height:1.75;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px 80px;}
+  /* ===== 封面 ===== */
+  .cover{background:var(--navy);color:#fff;border-radius:0 0 14px 14px;padding:56px 48px 44px;margin:0 -28px 36px;}
+  .cover .tag{display:inline-block;font-size:12px;letter-spacing:3px;color:#9fb3c8;border:1px solid #4a5568;
+    padding:4px 12px;border-radius:99px;margin-bottom:22px;}
+  .cover h1{margin:0 0 10px;font-size:34px;line-height:1.3;font-weight:800;letter-spacing:1px;}
+  .cover .sub{color:#c4ccd6;font-size:15px;margin:0 0 26px;}
+  .verdict{border-left:4px solid #e57373;background:rgba(255,255,255,.07);padding:16px 20px;border-radius:0 8px 8px 0;
+    font-size:17px;line-height:1.7;}
+  .verdict b{color:#ffb4ab;}
+  .meta{display:flex;flex-wrap:wrap;gap:10px 32px;margin-top:24px;color:#9fb3c8;font-size:13px;}
+  .meta span b{color:#e6eaf0;font-weight:600;}
+  /* ===== 通用 ===== */
+  h2{font-size:22px;margin:48px 0 6px;padding-top:10px;border-top:2px solid var(--ink);padding-top:18px;}
+  h2 .no{color:var(--red);margin-right:10px;font-weight:800;}
+  h3{font-size:16px;margin:26px 0 8px;}
+  .lead{color:var(--muted);margin:0 0 18px;font-size:14px;}
+  .card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:20px 22px;}
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:22px 0 6px;}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .kpi .num{font-size:30px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums;}
+  .kpi .lab{font-size:13px;color:var(--muted);margin-top:4px;}
+  .kpi.bad .num{color:var(--red);} .kpi.warn .num{color:var(--orange);}
+  .kpi.ok .num{color:var(--green);} .kpi.mid .num{color:var(--ink);}
+  /* 可视化区 */
+  .viz-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:18px;margin-top:18px;}
+  .viz-card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px 20px;}
+  .viz-card h4{margin:0 0 4px;font-size:15px;}
+  .viz-card .note{font-size:12px;color:var(--muted);margin:0 0 8px;}
+  /* 条形图 */
+  .bar-row{display:grid;grid-template-columns:52px 1fr 44px;align-items:center;gap:10px;margin:9px 0;}
+  .bar-row .bl{font-weight:700;font-size:13px;text-align:center;border-radius:4px;color:#fff;padding:2px 0;}
+  .bar-track{background:#eee; height:20px;border-radius:4px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:4px;}
+  .bar-row .bv{font-variant-numeric:tabular-nums;font-weight:700;font-size:14px;}
+  /* 矩阵表 */
+  table{border-collapse:collapse;width:100%;background:var(--paper);font-size:13px;}
+  .matrix th,.matrix td{border:1px solid var(--line);padding:5px 8px;text-align:center;}
+  .matrix th{background:#f0efea;font-weight:700;font-size:12.5px;}
+  .matrix td.svc{text-align:left;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;}
+  .c-red{background:var(--red-bg);color:var(--red);font-weight:700;}
+  .c-green{background:var(--green-bg);color:var(--green);font-weight:700;}
+  .c-gray{background:var(--gray-bg);color:var(--gray);}
+  .c-amber{background:var(--amber-bg);color:var(--amber);font-weight:700;}
+  /* 问题清单 */
+  .issue{border:1px solid var(--line);border-left-width:5px;border-radius:8px;background:var(--paper);
+    padding:14px 18px;margin:12px 0;}
+  .issue.p0{border-left-color:var(--red);} .issue.p1{border-left-color:var(--orange);}
+  .issue.p2{border-left-color:var(--amber);} .issue.p3{border-left-color:var(--blue);}
+  .issue .ih{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;}
+  .issue .iid{font-weight:800;font-size:13px;}
+  .issue.p0 .iid{color:var(--red);} .issue.p1 .iid{color:var(--orange);}
+  .issue.p2 .iid{color:var(--amber);} .issue.p3 .iid{color:var(--blue);}
+  .issue .it{font-weight:700;font-size:15px;}
+  .issue dl{margin:8px 0 0;display:grid;grid-template-columns:64px 1fr;gap:4px 12px;font-size:13.5px;}
+  .issue dt{color:var(--muted);} .issue dd{margin:0;}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;
+    background:#f0efea;padding:1px 5px;border-radius:4px;}
+  /* 对照表 */
+  .cmp th,.cmp td{border:1px solid var(--line);padding:8px 10px;text-align:left;font-size:13.5px;vertical-align:top;}
+  .cmp th{background:#f0efea;}
+  .cmp table-layout:fixed;
+  /* 维度节 */
+  .dim{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:12px 0;}
+  .dim .dh{display:flex;justify-content:space-between;align-items:baseline;gap:12px;}
+  .dim .dh b{font-size:16px;}
+  .score-pill{font-weight:800;font-size:14px;padding:2px 12px;border-radius:99px;color:#fff;white-space:nowrap;}
+  ul.tight{margin:6px 0;padding-left:20px;} ul.tight li{margin:3px 0;font-size:13.5px;}
+  .good{background:var(--green-bg);border:1px solid #bfe0c2;border-radius:10px;padding:16px 20px;}
+  .foot{margin-top:60px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px;}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+  @media (max-width:860px){.viz-grid{grid-template-columns:1fr;}.kpis{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ================= 封面 ================= -->
+  <div class="cover">
+    <span class="tag">只读实测审计 · AUDIT REPORT</span>
+    <h1>TOPEMS 全项目审计报告</h1>
+    <p class="sub">Rust workspace（42 crate）+ pnpm workspace · HEAD <code style="background:rgba(255,255,255,.15);color:#fff;">07a076544</code> = origin/main · 2026-09-30 实测</p>
+    <div class="verdict">
+      <b>一句话总评：</b>工程治理骨架（统一认证、离线 sqlx 缓存、门禁清单、CI 阈值）设计到位且多数真实落地，但当前
+      <b>主干处于 Rust 编译红色状态且已推上远端</b>（35 个编译错误、clippy/fmt/test 全失败），
+      同时存在 <b>live SMTP 口令泄露进 git 历史</b> 与 <b>TODO.md「全绿」自述与 HEAD 实测全面矛盾</b> 三个 P0——
+      构建可信度与质量声称失真为当前最紧迫风险。
+    </div>
+    <div class="meta">
+      <span>审计时间：<b>2026-09-30 17:02–17:14 CST</b></span>
+      <span>工具链：<b>cargo/rustc 1.95.0 · node v22.23.2 · pnpm 9.15.9</b></span>
+      <span>约束：<b>全程只读，未改任何源码/配置</b></span>
+    </div>
+  </div>
+
+  <!-- ================= 执行摘要 ================= -->
+  <h2><span class="no">01</span>执行摘要与核心数字</h2>
+  <p class="lead">以下数字全部来自当日四份实测 findings（构建测试 / 架构代码 / 安全 / Git 文档部署），可逐条追溯到日志与命令退出码。</p>
+  <div class="kpis">
+    <div class="kpi bad"><div class="num">35</div><div class="lab">Rust 编译错误（wms 11 + mes 24），workspace check 退出 101</div></div>
+    <div class="kpi bad"><div class="num">P0 × 3</div><div class="lab">构建全红已推远端 · SMTP 口令入史 · 质量声称失真</div></div>
+    <div class="kpi warn"><div class="num">11 / 2·75</div><div class="lab">cargo 漏洞 11 个；pnpm critical 2 / high 75 / moderate 55 / low 12</div></div>
+    <div class="kpi mid"><div class="num">3713</div><div class="lab">提交总数（2026-05-20 → 09-30，约 4.4 个月）</div></div>
+    <div class="kpi bad"><div class="num">0</div><div class="lab">mes 测试实际运行数（自述 458/458 全过，实测编译不过、0 执行）</div></div>
+    <div class="kpi ok"><div class="num">29/29</div><div class="lab">服务统一认证中间件接入覆盖（依赖+挂载均无遗漏）</div></div>
+  </div>
+
+  <!-- ================= 总览可视化 ================= -->
+  <h2><span class="no">02</span>总览可视化</h2>
+  <p class="lead">下图为审计师评分（0–100，依据当日实测证据给出，非自动化度量）；问题分级与服务矩阵均来自 findings 实测清单。</p>
+  <div class="viz-grid">
+    <div class="viz-card">
+      <h4>2.1 九维健康度雷达（审计师评分）</h4>
+      <p class="note">外圈=100；越靠中心越弱。综合均分 ≈ 44/100。</p>
+      <svg viewBox="-50 -8 445 350" width="100%" style="max-width:430px;display:block;margin:0 auto;">
+        <g stroke="#d8d5cc" fill="none">
+          <circle cx="170" cy="175" r="31.25"/><circle cx="170" cy="175" r="62.5"/>
+          <circle cx="170" cy="175" r="93.75"/><circle cx="170" cy="175" r="125"/>
+        </g>
+        <g stroke="#e2dfd6" stroke-width="1">
+          <line x1="170" y1="175" x2="170" y2="50"/><line x1="170" y1="175" x2="250" y2="79"/>
+          <line x1="170" y1="175" x2="293" y2="153"/><line x1="170" y1="175" x2="278" y2="238"/>
+          <line x1="170" y1="175" x2="213" y2="293"/><line x1="170" y1="175" x2="127" y2="293"/>
+          <line x1="170" y1="175" x2="62" y2="238"/><line x1="170" y1="175" x2="47" y2="153"/>
+          <line x1="170" y1="175" x2="90" y2="79"/>
+        </g>
+        <polygon points="170,156 186,156 244,162 219,203 194,240 153,222 100,216 102,163 138,137"
+          fill="rgba(198,40,40,.18)" stroke="#c62828" stroke-width="2"/>
+        <g fill="#c62828">
+          <circle cx="170" cy="156" r="3"/><circle cx="186" cy="156" r="3"/><circle cx="244" cy="162" r="3"/>
+          <circle cx="219" cy="203" r="3"/><circle cx="194" cy="240" r="3"/><circle cx="153" cy="222" r="3"/>
+          <circle cx="100" cy="216" r="3"/><circle cx="102" cy="163" r="3"/><circle cx="138" cy="137" r="3"/>
+        </g>
+        <g font-size="11.5" fill="#444" font-weight="600">
+          <text x="170" y="38" text-anchor="middle">构建健康 15</text>
+          <text x="262" y="72" text-anchor="start">测试状态 20</text>
+          <text x="306" y="156" text-anchor="start">架构一致性 60</text>
+          <text x="292" y="248" text-anchor="start">代码质量 45</text>
+          <text x="213" y="312" text-anchor="middle">安全性 55</text>
+          <text x="127" y="312" text-anchor="middle">文档一致性 40</text>
+          <text x="58" y="248" text-anchor="end">Git卫生 65</text>
+          <text x="36" y="156" text-anchor="end">部署就绪 55</text>
+          <text x="78" y="72" text-anchor="end">技术债真实性 40</text>
+        </g>
+      </svg>
+    </div>
+    <div class="viz-card">
+      <h4>2.2 问题分级统计（P0–P3，共 23 项）</h4>
+      <p class="note">依据本报告第 04 节整合骨架计数；每级均附证据位置。</p>
+      <div class="bar-row"><span class="bl" style="background:var(--red);">P0</span>
+        <div class="bar-track"><div class="bar-fill" style="width:37.5%;background:var(--red);"></div></div><span class="bv">3</span></div>
+      <div class="bar-row"><span class="bl" style="background:var(--orange);">P1</span>
+        <div class="bar-track"><div class="bar-fill" style="width:62.5%;background:var(--orange);"></div></div><span class="bv">5</span></div>
+      <div class="bar-row"><span class="bl" style="background:var(--amber);">P2</span>
+        <div class="bar-track"><div class="bar-fill" style="width:100%;background:var(--amber);"></div></div><span class="bv">8</span></div>
+      <div class="bar-row"><span class="bl" style="background:var(--blue);">P3</span>
+        <div class="bar-track"><div class="bar-fill" style="width:87.5%;background:var(--blue);"></div></div><span class="bv">7</span></div>
+      <div class="legend" style="margin-top:14px;">
+        <span><i style="background:var(--red);"></i>P0 立即处置</span>
+        <span><i style="background:var(--orange);"></i>P1 本迭代修复</span>
+        <span><i style="background:var(--amber);"></i>P2 排期修复</span>
+        <span><i style="background:var(--blue);"></i>P3 跟踪提示</span>
+      </div>
+      <h4 style="margin-top:20px;">2.3 规模快照</h4>
+      <ul class="tight">
+        <li>后端 Rust 源文件 <b>1867</b> 个；Cargo workspace <b>42</b> crate（12 lib + 29 svc + 1 tools）</li>
+        <li>前端 <code>apps/web</code> <b>2863</b> 个 ts/tsx；pnpm typecheck / build 均退出 0</li>
+        <li>unwrap 8201 + expect 2561 = <b>10762</b> 处（Cargo.toml 显式 unwrap_used=allow）</li>
+        <li>动态 SQL <code>sqlx::query(</code> 3398 vs 编译期 <code>query!</code> 3377，约各半</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 服务状态矩阵 -->
+  <div class="viz-card" style="margin-top:18px;">
+    <h4>2.4 服务状态矩阵（28 业务 svc + 1 单体入口 = 29 行）</h4>
+    <p class="note">编译状态：workspace check 在 wms 即中止（未编到其余服务），故其余服务标「未覆盖」；统一认证 29/29 全覆盖；路径列严格按 README <code>/api/core/{svc}/v1</code> 字面核对 = 0/28；systemd 列依据 deploy/ 25 个 .service 与 7 个无单元清单。</p>
+    <table class="matrix">
+      <colgroup><col style="width:22%"><col style="width:19%"><col style="width:19%"><col style="width:22%"><col style="width:18%"></colgroup>
+      <tr><th>服务（svc/）</th><th>编译状态（实测）</th><th>统一认证接入</th><th>符合 README 路径规范</th><th>有 systemd 单元</th></tr>
+      <tr><td class="svc">wms</td><td class="c-red">红 · 11 错误</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/wms）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">mes</td><td class="c-red">红 · 24 错误</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/mes）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">unified-core</td><td class="c-gray">未覆盖（中止于 wms）</td><td class="c-green">已接入</td><td class="c-amber">设计分组 Group1</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">monitor</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/monitor）</td><td class="c-red">无</td></tr>
+      <tr><td class="svc">plugin-registry</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（裸 /api）</td><td class="c-red">无</td></tr>
+      <tr><td class="svc">search</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/search）</td><td class="c-red">无</td></tr>
+      <tr><td class="svc">communication</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/communication）</td><td class="c-red">无</td></tr>
+      <tr><td class="svc">integration</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/integration）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">portal</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/portal）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">mobile</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/mobile）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">ticket</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/ticket）</td><td class="c-red">无</td></tr>
+      <tr><td class="svc">hrm</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/hrm）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">erp</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/erp）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">scm</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/scm）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">srm</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/srm）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">pm</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/pm）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">pdm</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/pdm）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">finance</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/finance）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">crm</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/crm）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">tms</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/tms）</td><td class="c-red">无</td></tr>
+      <tr><td class="svc">qms</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/qms）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">ehs</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/ehs）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">lims</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/lims）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">gis</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/gis）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">rd</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/rd）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">master-data</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/master-data）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">analytics</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/bi，目录名≠前缀）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">ai</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-red">不符合（/api/ai）</td><td class="c-green">有</td></tr>
+      <tr><td class="svc">server（BFF 单体入口）</td><td class="c-gray">未覆盖</td><td class="c-green">已接入</td><td class="c-amber">—（嵌入聚合）</td><td class="c-red">无</td></tr>
+    </table>
+    <div class="legend">
+      <span><i style="background:var(--red-bg);border:1px solid var(--red);"></i>红 = 实测失败/缺失</span>
+      <span><i style="background:var(--green-bg);border:1px solid var(--green);"></i>绿 = 实测通过/已覆盖</span>
+      <span><i style="background:var(--amber-bg);border:1px solid var(--amber);"></i>琥珀 = 设计如此/特例</span>
+      <span><i style="background:var(--gray-bg);border:1px solid var(--gray);"></i>灰 = 本次未实测</span>
+    </div>
+  </div>
+
+  <!-- ================= 关键矛盾专项 ================= -->
+  <h2><span class="no">03</span>关键矛盾专项：TODO.md 自述（09:02） vs HEAD 实测（17:00）</h2>
+  <p class="lead">本章为全报告信息密度最高的一节：工程内 TODO.md 写于当日 09:02，其「全绿」叙述与 17:00 对同一 HEAD（07a076544）的实测结果逐条对照——<b>六项核心自述全部不成立</b>。</p>
+  <div class="card" style="overflow-x:auto;">
+  <table class="cmp">
+    <colgroup><col style="width:34%"><col style="width:14%"><col style="width:52%"></colgroup>
+    <tr><th>TODO.md 自述（09:02）</th><th>判定</th><th>实测证据（退出码 / 日志）</th></tr>
+    <tr><td>「MES 模块编译错误清零：<code>cargo check --workspace</code> 0 错误」</td><td class="c-red">不成立</td>
+      <td><code>SQLX_OFFLINE=true cargo check --workspace</code> 退出 <b>101</b>，在 wms 即中止（11 错误），根本未编到 mes。日志 <code>logs/check_workspace.log</code>。</td></tr>
+    <tr><td>「<code>-p topems-mes --all-targets</code> 0 错误」</td><td class="c-red">不成立</td>
+      <td>退出 <b>101</b>，mes <b>24 个错误</b> + 18 警告；E0433 <code>rust_decimal</code> 仍在 <code>production_order.rs:811:35</code>。日志 <code>logs/check_mes_alltargets.log</code>。</td></tr>
+    <tr><td>「<code>cargo test -p topems-mes --lib</code> 458/458 全过（0 failed）」</td><td class="c-red">不成立</td>
+      <td>绕过 sccache 重跑退出 <b>101</b>：mes lib test 编译不过，<b>0 个测试执行</b>，全程无任何 <code>test result:</code> 行。日志 <code>logs/test_mes_nosccache.log</code>。</td></tr>
+    <tr><td>「pre-push 五门禁全绿（check/clippy/fmt/test/shellcheck，511s）」</td><td class="c-red">不成立</td>
+      <td>check/clippy/test 均 101、fmt 退出 1（49 文件不符）；shellcheck 本机未安装无法复核。9 条门禁实测 7 红 2 绿（typecheck/build）。</td></tr>
+    <tr><td>「全仓 <code>cargo fmt</code> 统一」</td><td class="c-red">不成立</td>
+      <td><code>cargo fmt --check --all</code> 退出 <b>1</b>，<b>49 个文件</b>存在格式 diff（unified-core 418 hunks、mes 5 文件）。清单 <code>logs/fmt_dirty_files.txt</code>。</td></tr>
+    <tr><td>「workspace lib 测试 13239 全绿」</td><td class="c-gray">无法验证</td>
+      <td>workspace 连 <code>cargo check</code> 都过不了，测试编译无从谈起；本次未运行全量 workspace test。</td></tr>
+    <tr><td>前端「bundle 全绿 / typecheck」</td><td class="c-amber">部分成立</td>
+      <td><code>pnpm typecheck</code> 退出 0、<code>pnpm build</code> 退出 0；<code>pnpm lint</code> 因环境 OOM 退出 134，未得出结论。</td></tr>
+  </table>
+  </div>
+  <h3>成因解释（为什么自述与实测会漂移）</h3>
+  <ul class="tight">
+    <li><b>12:48 之后的新提交引入了错误。</b>errors.txt（12:47）记录 mes 24 错误；12:48 提交「fix: 修复 production_order.rs 中的 quantity 类型错误」只改了表达式形状，<b>没有把 <code>rust_decimal</code> 从 dev-dependencies 移到 dependencies</b>，E0433 原样残留到 HEAD。其后 12:59–16:33 又推入 16+ 条 <code>feat: 新增X模块真实数据库查询API</code>，其中 wms 的 batch/discrepancy/inventory_alert 新增了 11 个同类 <code>Option&lt;String&gt;</code> 类型错配。</li>
+    <li><b>errors.txt 准确反映现状、且只覆盖了一半。</b>它是一次 <code>cargo check -p topems-mes</code> 的输出，从未检查 wms；真实错误面 = wms 11 + mes 24 = <b>35</b>。errors.txt 本身是<b>未跟踪文件</b>留在工作区——开发者明知主干红仍继续推 feature。</li>
+    <li><b>门禁未实际拦截。</b>TODO.md 声称 pre-push 五门禁全绿，但 origin/main HEAD 处于 Rust 编译红——推送绕过了本地门禁（机制详见第 08 节专项）。</li>
+  </ul>
+
+  <!-- ================= P0-P3 清单 ================= -->
+  <h2><span class="no">04</span>P0–P3 问题分级清单（含证据位置）</h2>
+  <p class="lead">每项给出编号 / 标题 / 证据位置 / 影响 / 修复建议；细节均可回溯到四份 findings 原文。</p>
+
+  <div class="issue p0"><div class="ih"><span class="iid">P0-1</span><span class="it">构建全红且已推送远端：workspace 编译/格式/lint/test 全面失败</span></div>
+    <dl><dt>证据</dt><dd><code>findings_build_test.md</code> 门禁总表 #1–#5；<code>logs/check_workspace.log</code>（退出 101）、<code>check_mes_alltargets.log</code>（退出 101）、<code>test_mes_nosccache.log</code>（退出 101，0 测试）、<code>fmt.log</code>（退出 1）、<code>clippy.log</code>（退出 101）。错误清单：wms 11（batch.rs:451-452 / discrepancy.rs:683-684 / inventory_alert.rs 7 处 E0308/E0599）+ mes 24（E0433 rust_decimal @ production_order.rs:811:35；E0599×12、E0308×11，分布 team.rs 8 / work_report.rs 5 / patrol.rs 5 / standard.rs 4 等）。</dd>
+    <dt>影响</dt><dd>主干不可编译，任何基于该 HEAD 的 CI / 部署 / 他人拉取即失败；类型安全与发布基线同时失效。</dd>
+    <dt>建议</dt><dd>先把 <code>rust_decimal</code> 从 dev-dependencies 移入 dependencies；修完 wms 11 + mes 24 后重跑 <code>cargo check --workspace --all-targets</code> 至 0 错误；补跑 fmt 统一 49 文件；在门禁恢复前禁止直接推 main。</dd></dl></div>
+
+  <div class="issue p0"><div class="ih"><span class="iid">P0-2</span><span class="it">live SMTP 口令已泄露进 git 历史并推上远端</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §3.3：提交 <code>8eedba1eb</code>（.env.mail）中 <code>SMTP_PASSWORD=</code> 行与当前磁盘 <code>.env</code> 该行 <b>MD5 完全一致（98fb78…）</b>；该提交是 HEAD 祖先，main / release/v5.14.0 / 全部 feature 分支 + origin/* 均可达，文件虽在 HEAD 删除但 git 对象永久残留。其余 live 密钥（DATABASE_URL / JWT_SECRET / JWT_REFRESH_SECRET / ENCRYPTION_KEY / REDIS_URL）经全 67524 个 blob 指纹比对均未逐字入史。</dd>
+    <dt>影响</dt><dd>线上正在使用的邮件账号口令视为已公开，可被任何可拉取仓库者读取滥用。</dd>
+    <dt>建议</dt><dd>立即轮换 SMTP 口令及对应邮箱账号；评估 <code>git filter-repo</code>/BFG 重写历史并强推；确认远端仓库不可被未授权者拉取；历史中 dev/test/docker 弱默认值一并排查。</dd></dl></div>
+
+  <div class="issue p0"><div class="ih"><span class="iid">P0-3</span><span class="it">质量声称失真：TODO.md「全绿」与 HEAD 实测全面矛盾</span></div>
+    <dl><dt>证据</dt><dd><code>findings_build_test.md</code> §3 逐条判定表（见本报告第 03 节对照）：六项核心自述（MES 清零 / all-targets 0 错误 / 458 测试全过 / 五门禁全绿 / fmt 统一 / workspace 13239 全绿）在当前 HEAD 均不成立或不可验证。</dd>
+    <dt>影响</dt><dd>审计与验收基线不可信：任何以 TODO.md 为依据的上线判断都可能建立在错误前提上。</dd>
+    <dt>建议</dt><dd>以实测日志为准重写 TODO.md 状态段；将「门禁结果」改为由 CI 产物自动生成而非人工填写；修复 P0-1 后再由真实跑绿的门禁输出刷新自述。</dd></dl></div>
+
+  <div class="issue p1"><div class="ih"><span class="iid">P1-1</span><span class="it">依赖漏洞：cargo 11 个 + pnpm critical 2 / high 75</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §4.1–4.2。cargo（advisory 库缓存于 2026-09-25，GitHub 不可达未刷新）：rustls 0.23.43 / 0.20.9、h2 0.4.15、ring 0.16.20、rsa 0.9.10（无补丁）、rkyv 0.7.46、idna 0.4.0、protobuf、lopdf、remove_dir_all、crossbeam-epoch；另 6 unmaintained / 3 unsound / 2 yanked。pnpm：critical 2（tar ≤7.5.18、vitest &lt;3.2.6）、high 75、moderate 55、low 12。</dd>
+    <dt>影响</dt><dd>TLS/HTTP/序列化链路存在已知 CVE；多数 pnpm 高危在 dev/build 链不进生产，但 tar/undici/ip/postcss 需排查运行时引入。</dd>
+    <dt>建议</dt><dd>升级 rustls/h2/ring/idna；rsa 无补丁需隔离评估；CI 恢复后联网刷新 advisory 库重跑 cargo audit；deny.toml 的 bans.deny 显式拉黑已知问题 crate。</dd></dl></div>
+
+  <div class="issue p1"><div class="ih"><span class="iid">P1-2</span><span class="it">弱默认密钥回退：JWT/数据库口令存在可预测缺省值</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §4.2/§9：docker-compose 与 DatabaseConfig 中 <code>${JWT_SECRET:-topems…}</code> 形式弱回退；<code>lib/shared-core/src/config/enhanced.rs:41</code> 缺省回退 <code>postgres://topems:topems_secret@localhost:5432/topems</code>；<code>.env.production</code> 的 JWT_SECRET 前缀 <code>tope…</code> 似由项目名派生、可预测。</dd>
+    <dt>影响</dt><dd>若运维漏配 env，服务可能以弱/可预测密钥起服务（虽 AuthState 缺省会 panic 作 fail-closed，但 docker-compose 路径给出了具体弱值）。</dd>
+    <dt>建议</dt><dd>生产配置去除所有 <code>:-topems…</code> 回退，缺失即失败；<code>.env.production</code> 中 JWT_SECRET 换随机 ≥64 位；文档明确禁止示例值当真值部署。</dd></dl></div>
+
+  <div class="issue p1"><div class="ih"><span class="iid">P1-3</span><span class="it">鉴权旁路面：WebSocket / internal 段 / dev 超级用户旁路</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §5 + <code>findings_architecture_code.md</code> §3.3：<code>auth.rs:608-610/664-674</code> 所有 <code>/ws/*</code> 带 Upgrade 头即免 JWT；<code>is_public_path</code> 放行整段 <code>/api/internal/*</code>（注释自述仅靠网关隔离）；<code>auth.rs:687-712</code> 在 DEVELOPMENT_MODE=true 且非 prod 时签发 <code>is_superuser:true</code> Claims。</dd>
+    <dt>影响</dt><dd>WS 端点若握手/消息层未自鉴权即未授权可达；internal 编排接口依赖网关不暴露；dev 旁路一旦误带入 prod profile 即超级后门。</dd>
+    <dt>建议</dt><dd>网关层对 WS 统一鉴权或逐端点核对自鉴权；internal 段加网络 ACL + 服务间 token；prod profile 下强制忽略 DEVELOPMENT_MODE 并加启动断言。</dd></dl></div>
+
+  <div class="issue p1"><div class="ih"><span class="iid">P1-4</span><span class="it">文档-代码脱节：README 路径规范已废弃但未更新，版本三方不一致</span></div>
+    <dl><dt>证据</dt><dd><code>findings_architecture_code.md</code> §2 + <code>findings_git_docs_deploy.md</code> §1.3/§4：README:82 仍写「统一 <code>/api/core/{svc}/v1</code>」，而 <code>api_version.rs:89/234</code> 已将其标记 deprecated、现行事实标准为 <code>/api/{svc}/</code>，严格符合 README 的服务 = <b>0/28</b>；前端仍有 <b>371 处</b> <code>/api/core</code>，靠 legacy 重写层粘合。版本：README badge v5.15.0 / 最新 tag v5.14.0 / CHANGELOG 停在 1.0.0 无 5.x 节。</dd>
+    <dt>影响</dt><dd>新接入方按 README 对接即走错路径；版本号三处打架，发布状态不可判。</dd>
+    <dt>建议</dt><dd>README 改写为现行 <code>/api/{svc}/</code> 规范并说明 Group1/Group2 分组；排期前端从 <code>/api/core</code> 迁移或固化兼容层契约；补齐 CHANGELOG 5.x 节并对齐 tag。</dd></dl></div>
+
+  <div class="issue p1"><div class="ih"><span class="iid">P1-5</span><span class="it">代码质量债：巨量 unwrap、动态 SQL 约半、错误处理不统一、补丁残留入库</span></div>
+    <dl><dt>证据</dt><dd><code>findings_architecture_code.md</code> §4–§5：unwrap 8201 + expect 2561 = <b>10762</b> 处且根 Cargo.toml:272 显式 <code>unwrap_used=allow</code>；<code>query!</code> 3377 vs <code>sqlx::query(</code> 动态拼串 3398；anyhow 仅 113 / thiserror 234，大量手写 match+硬编码中文错误串；<b>7 个 *.rs.rej</b> 补丁失败残留入库（mes 的 team/process_flow/quality_traceability 等）；最大文件 portal/graphql_schema.rs <b>6516 行</b>，finance 按版本号堆文件（settlement_v55/tax_v56/decision_v60…）。</dd>
+    <dt>影响</dt><dd>运行时 panic 面大；动态 SQL 无法编译期校验列名/类型——正是反复「fix 类型错误」的根源；模块边界与重构被版本号文件掩盖。</dd>
+    <dt>建议</dt><dd>新代码禁用 unwrap（提级 deny）；高风险 crate 逐步从动态 SQL 迁回 <code>query!</code>；删除 7 个 .rej；对 finance/portal 巨型文件做拆分重构（而非继续加 v6x 文件）。</dd></dl></div>
+
+  <div class="issue p2"><div class="ih"><span class="iid">P2-1</span><span class="it">敏感信息门禁只认带引号值、不拦 .env* 文件名（本次漏网根因）</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §8：<code>scripts/ci/check-sensitive-info.sh:13-19</code> 模式要求值带引号（<code>secret="…"</code>），真实 .env 为无引号 <code>KEY=value</code> 不匹配；不按文件名拦截 .env*；脚本:68 明示可用 <code>--no-verify</code> 跳过。</dd>
+    <dt>建议</dt><dd>增加无引号 env 赋值模式并排除占位符；按文件名拦截非 example 的 .env*；CI 侧加 gitleaks/detect-secrets 兜底。</dd></dl></div>
+
+  <div class="issue p2"><div class="ih"><span class="iid">P2-2</span><span class="it">/metrics 公开暴露面</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §9：<code>shared-bootstrap:1308-1313</code> 把 /metrics、/api/metrics 挂在公开健康路由组、无 JWT。</dd>
+    <dt>建议</dt><dd>网络层限制 Prometheus 指标端口不对公网暴露。</dd></dl></div>
+
+  <div class="issue p2"><div class="ih"><span class="iid">P2-3</span><span class="it">709KB 分享包 zip 误入库</span></div>
+    <dl><dt>证据</dt><dd><code>findings_git_docs_deploy.md</code> §1.4：<code>.trae-html-share-packages/…/topems-creativity-proposal.html.zip</code>（709KB）未被 .gitignore 覆盖；同节另列 docs/archive 下 6 个历史 *.log。</dd>
+    <dt>建议</dt><dd>.gitignore 增加 <code>.trae-html-share-packages/</code>；评估从历史中移除该 zip。</dd></dl></div>
+
+  <div class="issue p2"><div class="ih"><span class="iid">P2-4</span><span class="it">7 个 svc 无 systemd 单元（含 BFF server）</span></div>
+    <dl><dt>证据</dt><dd><code>findings_git_docs_deploy.md</code> §5.1：deploy/ 共 25 个 .service（22 topems-* + grafana + prometheus + target）；无独立单元：<b>communication、monitor、plugin-registry、search、server(BFF)、ticket、tms</b>。</dd>
+    <dt>建议</dt><dd>补齐或在文档中明确其由 unified-core / 单体进程托管；BFF server 的进程守护方案需单独确认。</dd></dl></div>
+
+  <div class="issue p2"><div class="ih"><span class="iid">P2-5</span><span class="it">systemd 二进制命名三套风格并存，install.sh 口径漂移</span></div>
+    <dl><dt>证据</dt><dd><code>findings_git_docs_deploy.md</code> §5.1：ExecStart 抽样见 <code>ai-service</code> / <code>topems-analytics</code> / <code>ehs-service</code> 三种风格；install.sh 用 <code>"bi"</code> 命名而后端目录与单元为 <code>analytics</code>。</dd>
+    <dt>建议</dt><dd>统一二进制命名规范并让 install.sh 的 cp 逻辑与单元文件一一对应。</dd></dl></div>
+
+  <div class="issue p2"><div class="ih"><span class="iid">P2-6</span><span class="it">rollback 无 dry-run</span></div>
+    <dl><dt>证据</dt><dd><code>findings_git_docs_deploy.md</code> §3/§5.2：install.sh:49、update.sh:50 均支持 --dry-run；<code>rollback.sh</code> dry-run grep 零命中、需 root，TODO 自述「待生产实跑验证」属实。</dd>
+    <dt>建议</dt><dd>为 rollback 补 dry-run 路径，与 install/update 对齐。</dd></dl></div>
+
+  <div class="issue p2"><div class="ih"><span class="iid">P2-7</span><span class="it">超大文件与版本号堆文件反模式</span></div>
+    <dl><dt>证据</dt><dd><code>findings_architecture_code.md</code> §4.4：portal/graphql_schema.rs 6516 行、finance/mod.rs 5916 行等 Top20；finance 出现 settlement_v55 / tax_v56 / decision_v60 / reports_v57 按版本号堆文件；前端同样有 v53/v55/v56 命名。</dd>
+    <dt>建议</dt><dd>设立单文件行数上限门禁，超限时拆分而非新建版本号文件。</dd></dl></div>
+
+  <div class="issue p2"><div class="ih"><span class="iid">P2-8</span><span class="it">shared_event 挂起 35 分钟疑点未做长跑验证</span></div>
+    <dl><dt>证据</dt><dd><code>findings_git_docs_deploy.md</code> §3 #4：TODO 自述测试二进制偶发挂起 35+ 分钟；静态检查均有界超时（recv_timeout 60s / deadline 30s 等），未发现无界裸 recv，复现需长跑。</dd>
+    <dt>建议</dt><dd>安排一次长跑 CI job 复现并定位 etcd/zookeeper/redis 时序敏感点。</dd></dl></div>
+
+  <div class="issue p3"><div class="ih"><span class="iid">P3-1</span><span class="it">历史 dev/test/docker 弱默认凭据</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §3.2：.env.development/.env.test/.env.docker 硬编码 dev-jwt/test-jwt/POSTGRES_PASSWORD=topems… 本地弱值，已入史。</dd>
+    <dt>建议</dt><dd>确认这些弱值未在任何非本地环境生效；文档标注仅本地用途。</dd></dl></div>
+
+  <div class="issue p3"><div class="ih"><span class="iid">P3-2</span><span class="it">JWT_REFRESH_SECRET 与 REFRESH_SECRET 同值</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §2：当前 .env 中两键同前缀同长度，疑为同值重复定义，双密钥隔离失效。</dd>
+    <dt>建议</dt><dd>两密钥分离为不同随机值。</dd></dl></div>
+
+  <div class="issue p3"><div class="ih"><span class="iid">P3-3</span><span class="it">插件 install/uninstall 路径公开待复核</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §5：<code>/api/core/plugins/*/install|uninstall|enable|disable</code> 列为公开，routes 目录未直接定位到对应 handler。</dd>
+    <dt>建议</dt><dd>确认挂载点；若可达则加二级令牌/管理员鉴权。</dd></dl></div>
+
+  <div class="issue p3"><div class="ih"><span class="iid">P3-4</span><span class="it">deny.toml bans.deny 为空</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §4.3：advisories/licenses/sources 策略到位，但 bans.deny=[]。</dd>
+    <dt>建议</dt><dd>把已知问题 crate 显式拉黑。</dd></dl></div>
+
+  <div class="issue p3"><div class="ih"><span class="iid">P3-5</span><span class="it">容器 0.0.0.0 监听 / 开发态明文 http</span></div>
+    <dl><dt>证据</dt><dd><code>findings_security.md</code> §9：服务统一 bind 0.0.0.0（容器内正常）；.env 全 http://；.env.production.example 已规划 HTTPS/HSTS。</dd>
+    <dt>建议</dt><dd>由反代/容器层终止 TLS，prod 强制 https。</dd></dl></div>
+
+  <div class="issue p3"><div class="ih"><span class="iid">P3-6</span><span class="it">pnpm lint 环境 OOM，无法得出通过/失败结论</span></div>
+    <dl><dt>证据</dt><dd><code>findings_build_test.md</code> 门禁 #6：默认堆与 --max-old-space-size=8192 均 OOM 退出 134（SIGABRT），崩溃前无任何 lint 结果产出。</dd>
+    <dt>建议</dt><dd>在 CI 标准内存规格下跑 eslint，补上前端 lint 基线。</dd></dl></div>
+
+  <div class="issue p3"><div class="ih"><span class="iid">P3-7</span><span class="it">docs/archive 历史日志归档入库</span></div>
+    <dl><dt>证据</dt><dd><code>findings_git_docs_deploy.md</code> §1.4：6 个 *.log 因先于 *.log 忽略规则入库，均在 docs/archive/roadmap-history/，非运行时日志。</dd>
+    <dt>建议</dt><dd>历史包袱，可不处理；新建日志禁止再入仓。</dd></dl></div>
+
+  <!-- ================= 九维详细章节 ================= -->
+  <h2><span class="no">05</span>分维度详评（9 节）</h2>
+
+  <div class="dim"><div class="dh"><b>5.1 构建健康</b><span class="score-pill" style="background:var(--red);">15 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b><code>cargo check --workspace</code> 退出 101（12s）；wms 11 错误即中止；<code>cargo fmt --check --all</code> 退出 1，49 文件不符；<code>cargo clippy --workspace --all-targets</code> 退出 101。</li>
+      <li><b>主要问题：</b>P0-1（rust_decimal 误挂 dev-dependencies 等 35 错误）；P1-5（格式 49 文件未统一）。</li>
+    </ul></div>
+
+  <div class="dim"><div class="dh"><b>5.2 测试状态</b><span class="score-pill" style="background:var(--red);">20 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b><code>cargo test -p topems-mes --lib</code>（绕过 sccache）退出 101，24 编译错误，<b>0 个测试执行</b>，无 test result 行；workspace 13239 测试因 check 不过而不可达。</li>
+      <li><b>主要问题：</b>P0-1、P0-3（「458/458 全过」自述不成立）；P2-8（shared_event 长跑挂起疑点未验证）。</li>
+    </ul></div>
+
+  <div class="dim"><div class="dh"><b>5.3 架构一致性</b><span class="score-pill" style="background:var(--amber);">60 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b>42 crate（12 lib + 29 svc + 1 tools）；27 个 Group2 服务内部一致地统一为 <code>/api/{svc}/</code>；模块化单体（svc/server 进程内嵌 28 服务）；<code>shared-mcp</code>/<code>shared-dsh</code> 漏配 workspace.dependencies 键。</li>
+      <li><b>主要问题：</b>P1-4（README 路径规范脱节）；analytics 目录名≠前缀 /api/bi；plugin-registry 独立部署裸 /api 与单体 /api/plugins 不一致；Integration handler 错位写入 unified-core。</li>
+    </ul></div>
+
+  <div class="dim"><div class="dh"><b>5.4 代码质量</b><span class="score-pill" style="background:var(--orange);">45 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b>1867 个 .rs；unwrap 8201 / expect 2561 / panic 225 / unsafe 仅 10；query! 3377 vs 动态 query 3398；7 个 .rej 入库；最大文件 6516 行。</li>
+      <li><b>主要问题：</b>P1-5；P2-7（版本号堆文件）。</li>
+    </ul></div>
+
+  <div class="dim"><div class="dh"><b>5.5 安全性</b><span class="score-pill" style="background:var(--amber);">55 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b>bcrypt cost 12、JWT 固定算法拒绝 alg=none、fail-closed 缺省 panic、SQL 全参数化、CORS 白名单无通配；但存在 P0 级历史口令泄露与多处旁路。</li>
+      <li><b>主要问题：</b>P0-2（SMTP 入史）；P1-1（依赖漏洞）；P1-2（弱默认回退）；P1-3（WS/internal/dev 旁路）；P2-1（密钥扫描缺口）；P2-2（metrics 公开）。</li>
+    </ul></div>
+
+  <div class="dim"><div class="dh"><b>5.6 文档一致性</b><span class="score-pill" style="background:var(--orange);">40 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b>README「28 独立服务」vs 实际 29 目录且运行时为模块化单体；目录树残留已并入的 billing/feedback；版本三方不一致（README 5.15.0 / tag v5.14.0 / CHANGELOG 停 1.0.0）；严格路径规范符合 0/28。</li>
+      <li><b>主要问题：</b>P1-4。</li>
+    </ul></div>
+
+  <div class="dim"><div class="dh"><b>5.7 Git 卫生</b><span class="score-pill" style="background:var(--amber);">65 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b>3713 提交 / 4.4 个月；conventional 消息 98%（fix 70 / feat 18 / docs 8 / chore 2）；最近 50 条 = 14 条「新增API」生成 : 36 条类型修复（生成:修复 ≈ 1:2.6）；.sqlx 309 条缓存设计精巧地有意入库；191 个 tag。</li>
+      <li><b>主要问题：</b>P2-3（709KB zip 误入库）；分支/版本体系脱节；AI 批量生成-回炉循环（P0-1 的成因链）。</li>
+    </ul></div>
+
+  <div class="dim"><div class="dh"><b>5.8 部署就绪</b><span class="score-pill" style="background:var(--amber);">55 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b>deploy/ 25 个 systemd 单元、9 个 docker 文件、35 个 k8s manifest；install/update 支持 --dry-run；config/services.yaml 为单一真相源；.sqlx 离线缓存与 Gate S 配套。</li>
+      <li><b>主要问题：</b>P2-4（7 svc 无单元）；P2-5（命名三套）；P2-6（rollback 无 dry-run）。注：本机为 macOS，部署验证仅到 dry-run 层。</li>
+    </ul></div>
+
+  <div class="dim"><div class="dh"><b>5.9 技术债真实性</b><span class="score-pill" style="background:var(--orange);">40 / 100</span></div>
+    <ul class="tight">
+      <li><b>实测证据：</b>TODO.md 8 条静态核验中 5 条完全属实（.sqlx 309 一致 / 迁移防陈旧逻辑 / BI test-sql 确为桩 / bundle 阈值一致 / install dry-run）、3 条部分属实（精确 DB 数字、长跑 flaky、shellcheck 0 告警基线本机无法复测）；但当日新增的构建类「全绿」自述全面失真。</li>
+      <li><b>主要问题：</b>P0-3（质量声称失真）；P3-6（lint 基线无法判定）。</li>
+    </ul></div>
+
+  <!-- ================= 良好实践 ================= -->
+  <h2><span class="no">06</span>良好实践与优势（平衡视角）</h2>
+  <div class="good">
+    <ul class="tight">
+      <li><b>统一认证真正落地：</b>29/29 服务依赖并挂载 <code>auth_middleware</code>，源码内 <code>enable_auth</code> 显式关闭命中 = 0。</li>
+      <li><b>密码与令牌实现规范：</b>bcrypt cost 12；JWT 按密钥形态选 HS256/RS256、固定算法、拒绝 alg=none；生产缺省即 panic（fail-closed）。</li>
+      <li><b>注入面收敛：</b>SQL 值全部 $N 参数化，表名/排序列为内部硬编码枚举；CORS 显式白名单、无 <code>*</code>。</li>
+      <li><b>前端是当前唯一干净一侧：</b>pnpm typecheck / build 均退出 0（最大 chunk exceljs-vendor 923kb / gzip 263kb）。</li>
+      <li><b>门禁设计较完备：</b>pre-commit Gate S（真离线编译校验 sqlx 缓存，而非文件数启发式）、shellcheck、perm-matrix、axum-layer、bundle 阈值（30M/500K/2500K/1500K）均在 lefthook.yml 与 CI 中落实；ci.yml clippy 比本地更严（-D warnings）。</li>
+      <li><b>TODO.md 静态可验条目多数属实：</b>.sqlx 309 条磁盘与 git 完全一致；BI test-sql 确为纯桩；bundle 阈值与 ci.yml:1634 逐字一致。</li>
+      <li><b>提交消息规范：</b>最近 100 条 conventional 前缀占比 98%。</li>
+      <li><b>当前磁盘 .env 本身安全：</b>.env / .env.production / .env.mail 均被 gitignore 忽略、未跟踪；npmrc 无 token。</li>
+    </ul>
+  </div>
+
+  <!-- ================= 门禁失效机制专项 ================= -->
+  <h2><span class="no">07</span>门禁失效机制专项（实测确认）</h2>
+  <div class="card">
+    <p style="margin-top:0;"><b>生效链路实测：</b><code>core.hooksPath</code> 为空（未设置）；git 实际调用的是 <code>.git/hooks/pre-commit</code> / <code>.git/hooks/pre-push</code>——二者内容为 lefthook 安装的垫片，经 <code>node_modules/.pnpm/lefthook-darwin-arm64@2.1.10</code> 执行 <code>call_lefthook run</code>。<b>lefthook 是唯一生效的钩子体系。</b></p>
+    <ul class="tight">
+      <li>垫片内含 <code>LEFTHOOK=0</code> 显式旁路开关；脚本本身也提示可用 <code>--no-verify</code> 跳过。</li>
+      <li>本机未安装 shellcheck，<code>check-shellcheck.sh</code> 遇缺失即 exit 1——按设计本应拦在合法 pre-push 之前。</li>
+      <li>但 HEAD 处于编译红色（workspace check/clippy/test 全 101、fmt 1）仍被推上 origin/main，含 16+ 条 feature 提交。</li>
+    </ul>
+    <p style="margin-bottom:0;"><b>结论：推送绕过了本地门禁</b>（<code>--no-verify</code> / <code>LEFTHOOK=0</code> / 他机推送三者之一），门禁链未实际拦截本次红推；<code>.githooks/</code>（需 core.hooksPath 指向才生效的在线 cargo check）与 <code>.pre-commit-config.yaml</code>（自述备选需手动 install）、<code>.husky/</code>（空壳）均为<b>孤儿配置</b>，且存在 hooksPath 漂移切换到需连库旧链路的风险。</p>
+  </div>
+
+  <!-- ================= 附录 ================= -->
+  <h2><span class="no">08</span>证据附录</h2>
+  <h3>8.1 审计方法说明</h3>
+  <ul class="tight">
+    <li><b>实测 vs 自述：</b>所有结论以当日命令实测（退出码 + 输出）为准；TODO.md / README 自述仅作对照，不作证据。全程只读：未修改任何源码/配置，未运行 cargo fix，未安装任何工具，未执行 git push/fix。</li>
+    <li><b>离线口径：</b>cargo 命令均以 <code>SQLX_OFFLINE=true DATABASE_URL=</code> 运行，与项目 Makefile <code>check-offline</code> 一致；3a 的 sccache 崩溃为环境问题，已绕过后复测。</li>
+    <li><b>未完成项：</b>cargo advisory 库因 GitHub 不可达使用 2026-09-25 本地缓存（5 天内）；shellcheck 未安装，0 告警基线无法复测；pnpm lint OOM 无结论；shared_event 挂起未长跑。</li>
+  </ul>
+  <h3>8.2 Findings 与日志清单（绝对路径）</h3>
+  <div class="card" style="font-size:13px;line-height:1.9;">
+    <b>findings（数字唯一来源）：</b><br>
+    <code>…/agents/o_000cF8sOhcj/audit/findings_build_test.md</code><br>
+    <code>…/agents/o_000cF8sOhcj/audit/findings_architecture_code.md</code><br>
+    <code>…/agents/o_000cF8sOhcj/audit/findings_security.md</code><br>
+    <code>…/agents/o_000cF8sOhcj/audit/findings_git_docs_deploy.md</code><br>
+    <b>logs/ 退出码汇总：</b>
+    <table class="matrix" style="margin-top:8px;">
+      <tr><th>日志</th><th>命令</th><th>退出码</th><th>结果</th></tr>
+      <tr><td class="svc">check_workspace.log</td><td class="svc">cargo check --workspace</td><td class="c-red">101</td><td class="c-red">wms 11 错误中止</td></tr>
+      <tr><td class="svc">check_mes_alltargets.log</td><td class="svc">cargo check -p topems-mes --all-targets</td><td class="c-red">101</td><td class="c-red">mes 24 错误</td></tr>
+      <tr><td class="svc">test_mes.log</td><td class="svc">cargo test -p topems-mes --lib（sccache）</td><td class="c-red">101</td><td class="c-red">sccache ring 失败</td></tr>
+      <tr><td class="svc">test_mes_nosccache.log</td><td class="svc">同上绕过 sccache</td><td class="c-red">101</td><td class="c-red">0 测试执行</td></tr>
+      <tr><td class="svc">fmt.log / fmt_dirty_files.txt</td><td class="svc">cargo fmt --check --all</td><td class="c-red">1</td><td class="c-red">49 文件不符</td></tr>
+      <tr><td class="svc">clippy.log</td><td class="svc">cargo clippy --workspace --all-targets</td><td class="c-red">101</td><td class="c-red">wms+mes 失败</td></tr>
+      <tr><td class="svc">pnpm_lint.log</td><td class="svc">pnpm lint</td><td class="c-amber">134</td><td class="c-amber">环境 OOM，无结论</td></tr>
+      <tr><td class="svc">pnpm_typecheck.log</td><td class="svc">pnpm typecheck</td><td class="c-green">0</td><td class="c-green">通过</td></tr>
+      <tr><td class="svc">pnpm_build.log</td><td class="svc">pnpm build</td><td class="c-green">0</td><td class="c-green">通过</td></tr>
+    </table>
+  </div>
+
+  <div class="foot">
+    TOPEMS 全项目审计报告 · 生成于 2026-09-30 · 单文件自包含 HTML（内联 CSS/SVG，无外部依赖）· 所有敏感值保持脱敏（仅报告键名/长度/MD5 指纹）· 审计对象 HEAD 07a076544 = origin/main
+  </div>
+</div>
+</body>
+</html>

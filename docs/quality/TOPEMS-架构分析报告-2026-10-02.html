@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPEMS 技术架构全面分析报告 · 2026-10-02</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='4' fill='%2325476e'/%3E%3Cpath d='M7 8h10M7 12h10M7 16h6' stroke='%23fff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@600;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+:root{
+  --bg:#f4f6f9; --paper:#ffffff; --ink:#1a2230; --ink-soft:#46536a; --ink-faint:#7c8aa0;
+  --line:#e2e7ef; --line-strong:#cdd6e2;
+  --accent:#25476e; --accent-soft:#e8eef5;
+  --teal:#2a6f6a; --teal-soft:#e4f0ef;
+  --high:#b3342c; --high-soft:#fbeae8;
+  --mid:#b9791a; --mid-soft:#fbf1df;
+  --low:#2f6f4f; --low-soft:#e6f1ea;
+  --mono:"SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+  --serif:"Noto Serif SC",Georgia,"Songti SC",serif;
+  --sans:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.75;}
+a{color:var(--accent);text-decoration:none;}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
+
+/* ===== top nav ===== */
+.topbar{position:sticky;top:0;z-index:50;background:rgba(244,246,249,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+.topbar-inner{display:flex;align-items:center;gap:18px;height:52px;max-width:1120px;margin:0 auto;padding:0 28px;overflow-x:auto;}
+.brand{font-family:var(--serif);font-weight:700;font-size:15px;color:var(--accent);white-space:nowrap;}
+.topnav{display:flex;gap:4px;}
+.topnav a{font-size:12.5px;color:var(--ink-soft);padding:4px 9px;border-radius:6px;white-space:nowrap;}
+.topnav a:hover{background:var(--accent-soft);color:var(--accent);}
+
+/* ===== hero ===== */
+.hero{background:linear-gradient(180deg,#20384f 0%,#25476e 100%);color:#eef3f8;padding:54px 0 46px;}
+.hero .kicker{font-size:12.5px;letter-spacing:.18em;color:#9fb6cf;text-transform:uppercase;}
+.hero h1{font-family:var(--serif);font-weight:900;font-size:34px;line-height:1.3;margin:12px 0 10px;color:#fff;}
+.hero .sub{color:#c4d3e4;font-size:14.5px;max-width:760px;}
+.hero-meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px;}
+.chip{font-size:12.5px;padding:5px 12px;border:1px solid rgba(255,255,255,.25);border-radius:999px;color:#dce7f2;}
+
+/* ===== sections ===== */
+section{padding:40px 0 8px;}
+h2.sec{font-family:var(--serif);font-weight:700;font-size:24px;color:var(--ink);margin:8px 0 6px;padding-top:10px;border-top:2px solid var(--ink);}
+.sec-no{color:var(--accent);font-weight:700;margin-right:10px;}
+h3{font-size:17px;font-weight:700;color:var(--accent);margin:26px 0 8px;}
+h4{font-size:14.5px;font-weight:700;margin:18px 0 6px;}
+p{margin:9px 0;color:var(--ink);}
+.muted{color:var(--ink-soft);}
+.small{font-size:12.5px;color:var(--ink-faint);}
+code{font-family:var(--mono);font-size:12.5px;background:#eef1f6;padding:1px 5px;border-radius:4px;color:#2b3a52;}
+.evidence{font-family:var(--mono);font-size:11.5px;color:#5a6a82;}
+
+/* cards */
+.grid{display:grid;gap:14px;}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g4{grid-template-columns:repeat(4,1fr);}
+.g2{grid-template-columns:repeat(2,1fr);}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+.stat .num{font-family:var(--serif);font-weight:900;font-size:30px;color:var(--accent);line-height:1.1;}
+.stat .lbl{font-size:12.5px;color:var(--ink-soft);margin-top:4px;}
+.stat.high .num{color:var(--high);} .stat.mid .num{color:var(--mid);} .stat.low .num{color:var(--low);}
+
+/* tags */
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:4px;font-weight:500;}
+.tag-doc{background:var(--mid-soft);color:var(--mid);}
+.tag-code{background:var(--teal-soft);color:var(--teal);}
+.tag-high{background:var(--high-soft);color:var(--high);}
+.tag-mid{background:var(--mid-soft);color:var(--mid);}
+.tag-low{background:var(--low-soft);color:var(--low);}
+
+/* tables */
+table{width:100%;border-collapse:collapse;background:var(--paper);font-size:13px;margin:12px 0;}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;}
+th,td{border:1px solid var(--line);padding:8px 10px;text-align-left;vertical-align:top;}
+th{background:#eef2f7;font-weight:700;color:#2b3a52;}
+.fixed{table-layout:fixed;}
+
+/* chart */
+.chart{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px 8px;margin:16px 0;}
+.chart h4{margin:2px 0 0;color:var(--ink);}
+.chart .cap{font-size:12px;color:var(--ink-faint);margin:2px 0 8px;}
+.echart{width:100%;height:380px;}
+.echart.tall{height:460px;}
+.echart.short{height:300px;}
+
+/* layer diagram */
+.layers{display:flex;flex-direction:column;gap:8px;margin:14px 0;}
+.layer{border:1px solid var(--line-strong);border-radius:8px;padding:10px 14px;background:var(--paper);}
+.layer .lname{font-weight:700;color:var(--accent);font-size:13px;}
+.layer .lbody{font-size:12.5px;color:var(--ink-soft);margin-top:2px;}
+.layer.l-accent{background:var(--accent-soft);border-color:#b9cadd;}
+
+/* timeline grid 3 col */
+.tl{display:grid;grid-template-columns:120px 28px 1fr;gap:0;margin:18px 0;}
+.tl-row{display:contents;}
+.tl-time{font-family:var(--mono);font-size:12.5px;color:var(--accent);font-weight:700;text-align:right;padding:14px 12px 14px 0;}
+.tl-axis{position:relative;display:flex;justify-content:center;}
+.tl-axis::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--line-strong);}
+.tl-dot{width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid #fff;box-shadow:0 0 0 2px var(--accent);justify-self:center;align-self:start;margin-top:18px;z-index:1;}
+.tl-body{padding:12px 0 18px 16px;font-size:13.5px;}
+
+/* finding table compact */
+.ftable td:nth-child(1){width:52px;font-family:var(--mono);font-weight:700;color:var(--accent);}
+.ftable td:nth-child(3){width:88px;}
+.ftable td:nth-child(4){width:23%;font-family:var(--mono);font-size:11px;color:#5a6a82;}
+.legend-row{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-soft);margin:6px 0;}
+footer{margin:50px 0 30px;padding-top:18px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-faint);}
+@media (max-width:860px){
+  .g3,.g4{grid-template-columns:repeat(2,1fr);}
+  .g2{grid-template-columns:1fr;}
+  .tl{grid-template-columns:78px 22px 1fr;}
+  .hero h1{font-size:26px;}
+  .topnav{display:none;}
+}
+@media (max-width:560px){
+  .g3,.g4{grid-template-columns:1fr;}
+  .echart{height:320px;}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-inner">
+  <span class="brand">TOPEMS 架构分析</span>
+  <nav class="topnav">
+    <a href="#ch1">摘要</a><a href="#ch2">总体</a><a href="#ch3">拓扑</a><a href="#ch4">共享库</a>
+    <a href="#ch5">数据</a><a href="#ch6">前端</a><a href="#ch7">部署</a><a href="#ch8">可观测</a>
+    <a href="#ch9">安全</a><a href="#ch10">性能</a><a href="#ch11">问题清单</a><a href="#ch12">优点</a><a href="#ch13">附录</a>
+  </nav>
+</div></div>
+
+<header class="hero"><div class="wrap">
+  <div class="kicker">TECHNICAL ARCHITECTURE REVIEW</div>
+  <h1>TOPEMS 技术架构全面分析报告</h1>
+  <div class="sub">整合 8 份分片架构分析（CORE / ERP / FCRM / WMS / ADVAI / ENTRY / FRONT / XCUT），覆盖 29 个工作区服务、约 140 万行代码的跨服务、跨前后端统一架构视角。所有结论以代码实测为准，文档仅作对照。</div>
+  <div class="hero-meta">
+    <span class="chip">报告日期 2026-10-02</span>
+    <span class="chip">29 服务 · 11 子 crate · 3 apps</span>
+    <span class="chip">合并后发现 73 条</span>
+    <span class="chip">证据：路径:行号 实测</span>
+  </div>
+</div></header>
+
+<main class="wrap">
+
+<!-- ===== 1 摘要 ===== -->
+<section id="ch1">
+  <h2 class="sec"><span class="sec-no">01</span>报告信息与执行摘要</h2>
+  <h3>审计范围、方法与证据纪律</h3>
+  <p>本报告由 8 份分片架构分析整合而成，是 TOPEMS 首份跨服务、跨前后端统一架构视角。8 份分片合计约 91 条原始发现，经既定去重规则合并为 <strong>73 条</strong>（高危 16 / 中危 30 / 低危 27）。方法为对 <code>svc/ lib/ apps/ config/ database/ deploy/</code> 逐目录静态实测，每条结论标注 <code>路径:行号</code>，文档侧仅作对照。报告不输出任何密钥值，仅描述密钥管理机制。仓库卫生/依赖漏洞/敏感信息/质量门禁已由《TOPEMS项目全面审计报告_2026-09-30》覆盖，本报告不重复。</p>
+
+  <h3>系统规模数字（代码实测）</h3>
+  <div class="grid g4">
+    <div class="stat"><div class="num">29</div><div class="lbl">workspace 服务（28 业务 + svc/server）</div></div>
+    <div class="stat"><div class="num">~140万</div><div class="lbl">总代码行（Rust ~83.2万 / TS ~43.5万）</div></div>
+    <div class="stat"><div class="num">11</div><div class="lbl">共享库子 crate（+主 crate）</div></div>
+    <div class="stat"><div class="num">3288</div><div class="lbl">boundary 编译期宏调用 / 15 服务</div></div>
+    <div class="stat"><div class="num">283</div><div class="lbl">DB 迁移文件（checksums 登记 250）</div></div>
+    <div class="stat"><div class="num">44 / 24 / 22</div><div class="lbl">docker 容器 / k8s manifest / systemd unit</div></div>
+    <div class="stat"><div class="num">49 / 19</div><div class="lbl">/health 与 /metrics 实测命中</div></div>
+    <div class="stat"><div class="num">3412 : 51</div><div class="lbl">手写错误 vs TopemsError 文件数</div></div>
+  </div>
+
+  <h3>关键结论 Top 10</h3>
+  <div class="tbl-wrap"><table class="fixed">
+    <colgroup><col style="width:36%"><col style="width:11%"><col style="width:53%"></colgroup>
+    <thead><tr><th>结论</th><th>严重级</th><th>证据位置</th></tr></thead>
+    <tbody>
+      <tr><td>unified-core 仍聚合 23 个业务镜像模块，独立部署跨 schema 直读 180 处</td><td><span class="tag tag-high">高危</span></td><td class="evidence">svc/unified-core/src/modules/mod.rs:36-81（F-01/F-12）</td></tr>
+      <tr><td>两条同步 HTTP 双向环（erp↔hrm、erp↔mes），故障级联放大</td><td><span class="tag tag-high">高危</span></td><td class="evidence">erp/addressbook.rs:200 + hrm/payroll.rs:990（F-03/04）</td></tr>
+      <tr><td>integration 跨 schema 直写 qms/ehs 未真正改造，事件只接 3 个</td><td><span class="tag tag-high">高危</span></td><td class="evidence">integration/qms_lims_ehs.rs:26,39,80…（F-02/F-08）</td></tr>
+      <tr><td>lims/ehs/wms data_sync 为"假同步"：读 URL 不发 HTTP，只插"成功"</td><td><span class="tag tag-high">高危</span></td><td class="evidence">lims/data_sync.rs:255、ehs/data_sync.rs:254（F-09）</td></tr>
+      <tr><td>财务服务显式关闭 RLS，金额数据无 DB 租户兜底</td><td><span class="tag tag-high">高危</span></td><td class="evidence">svc/finance/src/main.rs:244（F-06）</td></tr>
+      <tr><td>金额精度 f64 泄漏到自动凭证与多个计费 DTO</td><td><span class="tag tag-high">高危</span></td><td class="evidence">finance/event_handlers/mod.rs:102（F-07）</td></tr>
+      <tr><td>根 pnpm run build 引用不存在的 topems-core，构建链必失败</td><td><span class="tag tag-high">高危</span></td><td class="evidence">package.json:21,26（F-13）</td></tr>
+      <tr><td>Module Federation 空壳：19 remote 0 实现，文档以"微前端"为主叙事</td><td><span class="tag tag-high">高危</span></td><td class="evidence">microfrontend/config.ts:96-260（F-14/15/16）</td></tr>
+      <tr><td>master-data 10 个 MDM 模块内存壳不落库；analytics KPI 为假数据</td><td><span class="tag tag-high">高危</span></td><td class="evidence">quality_v51.rs:266,647（F-10/F-30）</td></tr>
+      <tr><td>统一错误处理采纳率极低：3412 手写 vs 51 文件用 TopemsError</td><td><span class="tag tag-mid">中危</span></td><td class="evidence">shared-core/response.rs:133（F-22）</td></tr>
+    </tbody>
+  </table></div>
+</section>
+<!-- ===== 2 总体 ===== -->
+<section id="ch2">
+  <h2 class="sec"><span class="sec-no">02</span>总体架构与演进</h2>
+  <p>TOPEMS 目标形态是<strong>模块化单体</strong>，代码实测呈现<strong>单进程聚合 + 独立进程双轨并存</strong>：<code>svc/server</code>（:8099）以编译期 feature 门控把 28 个服务几乎全部嵌入单进程；同时每个服务又可独立起进程，nginx upstream 指向各 80xx 端口、不指向 :8099。"模块组间进程内 trait 调用"目标基本未达成——<code>InProcProvider</code> 仅 1 个变体（AccountBalance）。</p>
+
+  <div class="chart">
+    <h4>图1 · 系统分层架构总览（示意）</h4>
+    <div class="cap">示意标注：非比例图，层级与组件来自分片实测；流量双轨见 §3。</div>
+    <div class="layers">
+      <div class="layer"><div class="lname">接入层</div><div class="lbody">nginx（23 upstream → 80xx，双轨）· Traefik（32 router，docker/saas）· portal GraphQL BFF（9 个 TypedServiceClient 扇出）</div></div>
+      <div class="layer l-accent"><div class="lname">统一入口 svc/server :8099（编译期 feature 聚合 28 服务）</div><div class="lbody">private/saas=[] 空 feature；InProcProvider 仅 AccountBalance 1 边</div></div>
+      <div class="layer"><div class="lname">业务服务 28 个 / 7 模块组</div><div class="lbody">core(9) · erp(5) · finance(1) · crm(1) · wms(8) · advanced(2) · ai(1)</div></div>
+      <div class="layer"><div class="lname">共享库 lib（主 crate + 11 子 crate）</div><div class="lbody">shared-core/db/auth/service-client/event/observability/ai/bootstrap/mcp/dsh/boundary</div></div>
+      <div class="layer"><div class="lname">数据与事件</div><div class="lbody">PostgreSQL 单实例多 schema（裸名 + plugin_* 双命名）· Redis Stream（事件总线 + DLQ）</div></div>
+    </div>
+  </div>
+
+  <div class="chart">
+    <h4>图3 · 模块组规模（服务数 vs 代码行数）</h4>
+    <div class="cap">数据口径：代码实测 2026-10-02（cat *.rs | wc -l，按模块组归集）；服务数来自 services.yaml。</div>
+    <div id="chart3" class="echart"></div>
+  </div>
+
+  <h3>Bootstrap 三模式实测分布</h3>
+  <p>统一基座 <code>lib/shared-bootstrap</code> 三段式（Config→bootstrap_service→build_application→run）。实测：纯 C=6、标准 A=4、B 系=17、analytics 混合=1。三处文档计数（Cargo.toml / overview.md / services.yaml）全部互相矛盾且与代码不符，详见 F-18。</p>
+  <div class="chart">
+    <h4>图4 · Bootstrap 模式实测分布</h4>
+    <div class="cap">数据口径：代码实测（按 main.rs 是否调 build_application、是否带业务 state 判定）；非文档声称。</div>
+    <div id="chart4" class="echart short"></div>
+  </div>
+
+  <h3>演进里程碑时间轴</h3>
+  <p class="small">示意性梳理：节点来自分片正文引用的版本号与日期，非完整 release 历史。</p>
+  <div class="tl">
+    <div class="tl-row"><div class="tl-time">V321</div><div class="tl-axis"><span class="tl-dot"></span></div><div class="tl-body"><b>事件总线迁 Redis Stream</b>：Pub/Sub+RabbitMQ 废弃，改 Stream XADD/XREADGROUP+消费组+DLQ。<span class="tag tag-doc">文档未回写</span></div></div>
+    <div class="tl-row"><div class="tl-time">V355</div><div class="tl-axis"><span class="tl-dot"></span></div><div class="tl-body"><b>跨库直写治理启动</b>：crm 售后链从直写 erp 改 HTTP；finance 对账改本地快照+事件。</div></div>
+    <div class="tl-row"><div class="tl-time">V517</div><div class="tl-axis"><span class="tl-dot"></span></div><div class="tl-body"><b>统一错误出口 ADR 立项</b>：Result&lt;T,TopemsError&gt; 目标确立，但迁移多数服务未落地（3412 手写 vs 51 文件）。</div></div>
+    <div class="tl-row"><div class="tl-time">V66.2</div><div class="tl-axis"><span class="tl-dot"></span></div><div class="tl-body"><b>Shared Bootstrap 三段式收敛</b>：28 服务统一启动，双轨共享 build_router_inner 防漂移。</div></div>
+    <div class="tl-row"><div class="tl-time">V68.1</div><div class="tl-axis"><span class="tl-dot"></span></div><div class="tl-body"><b>monitor/plugin-registry 从 unified-core 拆出</b>。</div></div>
+    <div class="tl-row"><div class="tl-time">2026-07</div><div class="tl-axis"><span class="tl-dot"></span></div><div class="tl-body"><b>bi+report 并入 analytics；APS 归档并入 mes</b>（aps_compat 仅 301）。</div></div>
+    <div class="tl-row"><div class="tl-time">2026-08-23</div><div class="tl-axis"><span class="tl-dot"></span></div><div class="tl-body"><b>P1-R3 门面治理</b>：确认 topems_shared 门面长期保留、与子 crate 双轨并存。</div></div>
+    <div class="tl-row"><div class="tl-time">2026-08-29</div><div class="tl-axis"><span class="tl-dot"></span></div><div class="tl-body"><b>Redis Stream 升级对外宣告</b>；Schema Registry 实际已实现，超前于文档"待办"。</div></div>
+  </div>
+</section>
+
+<!-- ===== 3 拓扑 ===== -->
+<section id="ch3">
+  <h2 class="sec"><span class="sec-no">03</span>服务拓扑与通信</h2>
+  <p>跨服务通信实测为三种方式：<strong>同步 HTTP REST</strong>（reqwest + TypedServiceClient）、<strong>异步事件</strong>（Redis Stream）、<strong>跨 schema 直连 DB</strong>（单 PG 实例 + schema 隔离）。<strong>gRPC 实际零使用</strong>（仅 connection_pool 工具）。</p>
+
+  <div class="chart">
+    <h4>图2 · 服务依赖拓扑（分片实测可证边，示意）</h4>
+    <div class="cap">数据口径：基于 ENTRY §5b 及各分片 §5 实测边绘出关键节点；蓝=HTTP、橙=事件、红=跨库直读/写；高亮红边为同步环。非全量 54 边。</div>
+    <div id="chart2" class="echart tall"></div>
+    <div class="legend-row">
+      <span><span class="tag tag-code">HTTP</span> 同步调用</span>
+      <span><span class="tag tag-doc">event</span> Redis Stream</span>
+      <span><span class="tag tag-high">db</span> 跨 schema 直连</span>
+    </div>
+  </div>
+
+  <h3>两条同步 HTTP 双环（高危）</h3>
+  <div class="tbl-wrap"><table class="fixed">
+    <colgroup><col style="width:16%"><col style="width:42%"><col style="width:42%"></colgroup>
+    <thead><tr><th>环</th><th>正向</th><th>反向</th></tr></thead>
+    <tbody>
+      <tr><td><span class="tag tag-high">erp↔hrm</span></td><td class="evidence">erp→hrm 查员工/部门 erp/addressbook.rs:200</td><td class="evidence">hrm→erp 薪酬推凭证 hrm/payroll.rs:990 POST /api/erp/vouchers</td></tr>
+      <tr><td><span class="tag tag-high">erp↔mes</span></td><td class="evidence">erp→mes 下推生产订单 erp/production_order.rs:536</td><td class="evidence">mes→erp 报工回传 mes/work_report.rs:644</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small">已排除"伪环"：qms↔lims↔ehs 互读对方 URL 仅出现在"向前端返回配置"的 handler（ehs/data_sync.rs:523-526），非后端发起的 HTTP。</p>
+
+  <h3>事件总线 / gRPC / 网关现状</h3>
+  <p><strong>Redis Stream 已落地</strong>：默认 <code>EVENT_BUS_MODE=stream</code>，XREADGROUP/XACK/XGROUP + DLQ + 事件版本号 + Schema Registry 已实现（超前于 event-driven.md"待办"）。<strong>gRPC 声明未用</strong>：tonic 0.14 仅 connection_pool，无任何 svc 发起 gRPC client。<strong>网关/BFF</strong>：nginx 双轨指向 80xx；portal GraphQL 六路 tokio::join! 扇出并优雅降级；<code>private/saas-deployment=[]</code> 为空 feature、无切换实现（F-05）。</p>
+</section>
+
+<!-- ===== 4 共享库 ===== -->
+<section id="ch4">
+  <h2 class="sec"><span class="sec-no">04</span>共享库设计</h2>
+  <p>主 crate + <strong>11 个子 crate</strong>（shared-core/db/auth/service-client/event/observability/ai/bootstrap/mcp/dsh/boundary）。<strong>门面保留</strong>：<code>use topems_shared::</code> 实测 <strong>229 处</strong>（186 文件 / 22 服务），P1-R3 治理决定门面作为统一入口长期保留。<strong>boundary 宏 3288 处 / 15 服务</strong>：编译期 <code>compile_error!</code> 拦截跨 schema SQL。</p>
+  <div class="grid g3">
+    <div class="stat"><div class="num">229</div><div class="lbl">use topems_shared:: 门面残留（186 文件 / 22 服务）</div></div>
+    <div class="stat"><div class="num">3288</div><div class="lbl">only_own_schema_query! 编译期宏调用</div></div>
+    <div class="stat"><div class="num">15</div><div class="lbl">接入 boundary 宏的服务数</div></div>
+  </div>
+  <div class="chart">
+    <h4>图6 · boundary 宏覆盖（Top 服务）与门面残留</h4>
+    <div class="cap">数据口径：代码实测 grep 计数；横向条形为各服务 only_own_schema_query! 调用数；门面残留 229 处为全局值（文本标注）。</div>
+    <div id="chart6" class="echart tall"></div>
+  </div>
+  <p><strong>结构性缺口</strong>：① opt-in——不包裹宏的 SQL 零检查；② 子查询逃逸——宏对 <code>FROM (SELECT …)</code> 括号形态直接跳过；③ unified-core 不受约束（schema=public，不依赖 boundary crate，是最大跨 schema 聚合点）。详见 F-36/F-12。</p>
+</section>
+
+<!-- ===== 5 数据 ===== -->
+<section id="ch5">
+  <h2 class="sec"><span class="sec-no">05</span>数据架构</h2>
+  <p>schema 划分呈<strong>裸名 vs plugin_* 双命名并存</strong>：迁移文件创建两套 schema，但 SEARCH_PATH 实际用裸名（erp,public），database.md 称"已迁 plugin_erp"与代码不符。迁移 283 个、checksums 仅登记 250（33 个盲区）；SQLx 离线缓存 309 项已入库支持 CI 纯离线编译。</p>
+  <div class="chart">
+    <h4>图5 · 跨 schema 引用统计（按访问方）</h4>
+    <div class="cap">数据口径：代码实测 python 正则扫描；unified-core 跨读约 22 业务 schema（图中按被引表/处数概化），integration 为直写处数。</div>
+    <div id="chart5" class="echart"></div>
+  </div>
+  <p><strong>RLS 与一致性风险</strong>：默认 <code>enable_rls:true</code>，但 <strong>finance 显式关闭</strong>（main.rs:244）；unified-core 会话 GUC 在连接池上不保证生效；crm 售后链在同事务内先写本地再调外部 HTTP，外部失败仅 warn、本地照常提交，非原子无补偿。</p>
+</section>
+
+<!-- ===== 6 前端 ===== -->
+<section id="ch6">
+  <h2 class="sec"><span class="sec-no">06</span>前端架构</h2>
+  <p>pnpm workspace：<strong>3 apps</strong>（web 2863 文件 / desktop 40 / mobile 48）+ <strong>8 packages</strong>。<strong>Module Federation 是空壳</strong>：声明 19 个 remote、0 实现，默认 static 模式单 bundle；决策文档却称"微前端"为主叙事、插件已删除（实际仍是构建硬依赖）。</p>
+  <div class="chart">
+    <h4>图7 · 前端 apps/packages 依赖与 MF 空壳（示意）</h4>
+    <div class="cap">数据口径：代码实测 package.json 工作区依赖（14 条：5 p→p + 9 a→p）；虚线空心节点为 19 个已声明未实现的 remote。</div>
+    <div id="chart7" class="echart tall"></div>
+  </div>
+  <p><strong>三端分裂</strong>：web/desktop React 19.2.7、mobile 18.2.0，根 tsconfig 还把 react 类型 alias 到 mobile 的 18；api-client 工厂仅 desktop 真正消费，web/mobile 各写一套。<strong>根 build 链断裂</strong>：<code>package.json:21</code> 引用不存在的 <code>topems-core</code>，开发者按 README 跑 build 必失败（CI 绕过掩盖）。</p>
+</section>
+
+<!-- ===== 7 部署 ===== -->
+<section id="ch7">
+  <h2 class="sec"><span class="sec-no">07</span>部署与基础设施</h2>
+  <p>三套形态并存：docker <strong>44 容器</strong> / k8s <strong>24 manifest</strong> / systemd <strong>22 unit</strong>。<strong>五套服务发现并存</strong>（consul/etcd/eureka/zookeeper/nacos），实际 Consul 默认 <code>CONSUL_ENABLED=false</code>、全走环境变量。配置中心以 services.yaml 为权威源，由 scripts 三向校验守护；<code>config/keys/</code> 为空目录，密钥全部来自环境变量（本报告不输出任何密钥值）。deploy 跨库拓扑文档仍列 35 条"拆分预案"边，与已改 HTTP/事件的代码漂移。</p>
+</section>
+
+<!-- ===== 8 可观测 ===== -->
+<section id="ch8">
+  <h2 class="sec"><span class="sec-no">08</span>可观测性</h2>
+  <p><code>build_application</code> 自动挂 PrometheusMetricLayer。实测 <strong>/health 49 处、/metrics 19 处</strong>；但 scm/srm/pm 各注册一个 Gauge 却硬编码 <code>set(42.0)</code> 占位。<strong>OTel 默认关闭（stub）</strong>——默认构建无跨服务分布式链路，仅本地日志 + x-request-id。</p>
+  <div class="chart">
+    <h4>图10 · 可观测覆盖（实测命中数）</h4>
+    <div class="cap">数据口径：代码实测 grep；OTel 默认关闭=0 跨服务链路为机制现状。</div>
+    <div id="chart10" class="echart short"></div>
+  </div>
+  <p><strong>统一错误处理采纳率极低</strong>：<code>ApiResponse::error(</code> 手写 <strong>3412 处</strong>，类型化 TopemsError 仅分布 <strong>51 文件</strong>；finance 较好（245 处），crm/erp 组/mobile 几乎全手写，sqlx 原始错误直达客户端。</p>
+</section>
+
+<!-- ===== 9 安全 ===== -->
+<section id="ch9">
+  <h2 class="sec"><span class="sec-no">09</span>安全架构</h2>
+  <p><strong>JWT</strong> HS256/RS256 双算法，生产强制拒绝默认密钥、要求长度≥32；<strong>字段加密</strong> AES-256-GCM + 版本化密钥可轮换。<strong>RBAC</strong> 跨服务用 service token 最小 scope，但 crm 全量路由共用单一粗粒度 <code>crm:admin</code>。<strong>边界穿透点</strong>：unified-core 跨读 22 schema（不受 boundary 约束）、search 裸读 erp、integration 直写 qms/ehs、crm 直读 public.audit_logs、srm 直写 unified_core。插件注册令牌门控依赖 <code>PROFILE=="prod"</code> 精确串；IP 白名单仅 portal 实现且默认关闭；analytics datasource 具备 SSRF 面。</p>
+</section>
+
+<!-- ===== 10 性能 ===== -->
+<section id="ch10">
+  <h2 class="sec"><span class="sec-no">10</span>性能与容量风险</h2>
+  <div class="grid g2">
+    <div class="card"><h4>N+1 / 扇出</h4><p class="small">portal GraphQL business_stats 用 tokio::join! 六路扇出，DataLoader 仅局部（health/todo），dashboard 对下游形成 6×N 次 HTTP。</p></div>
+    <div class="card"><h4>同步调用环</h4><p class="small">erp↔hrm、erp↔mes 双向环，任一服务超时即级联；erp 通讯录代理每请求同步调 hrm。</p></div>
+    <div class="card"><h4>无熔断/超时</h4><p class="small">高频同步未配熔断器与超时；MCP 工具还用手写阻塞式裸 TCP（TcpStream 阻塞在 async runtime）。</p></div>
+    <div class="card"><h4>内存壳 / 假数据</h4><p class="small">master-data 10 模块内存壳不落库（重启即失）；analytics KPI 硬编码/随机，报表投递仅 log 不发信；data_sync 假同步。</p></div>
+  </div>
+</section>
+<!-- ===== 11 问题清单 ===== -->
+<section id="ch11">
+  <h2 class="sec"><span class="sec-no">11</span>问题清单（合并去重后全量）</h2>
+  <p>8 份分片原始约 91 条发现，按既定去重规则合并为 <strong>73 条</strong>。每条含统一编号、严重级、类别、证据（相对项目根路径:行号，均来自分片原文）、影响、修复建议、来源分片。严重级合并取更高；分片间口径冲突以代码实测为准。</p>
+
+  <div class="chart">
+    <h4>图9 · 问题清单严重级分布</h4>
+    <div class="cap">数据口径：本报告合并后清单（高危 16 / 中危 30 / 低危 27）。</div>
+    <div id="chart9" class="echart short"></div>
+  </div>
+
+  <h3>11.1 高危（16 条）</h3>
+  <div class="tbl-wrap"><table class="ftable fixed">
+    <colgroup><col style="width:6%"><col style="width:30%"><col style="width:11%"><col style="width:24%"><col style="width:29%"></colgroup>
+    <thead><tr><th>编号</th><th>标题</th><th>类别</th><th>证据（路径:行号）</th><th>影响 / 修复 / 来源</th></tr></thead>
+    <tbody>
+      <tr><td>F-01</td><td>unified-core 仍聚合 23 业务镜像模块，独立部署跨 schema 直读 180 处</td><td><span class="tag tag-high">高危</span></td><td>svc/unified-core/src/modules/mod.rs:36-81；routes/mod.rs:267-313</td><td>与"已瘦身"文档矛盾、边界穿透。建议独立走 embed_mode 或登记只读投影。<span class="evidence">CORE-01</span></td></tr>
+      <tr><td>F-02</td><td>integration 跨 schema 直写 qms/ehs 未真正改造为 reqwest</td><td><span class="tag tag-high">高危</span></td><td>svc/integration/src/qms_lims_ehs.rs:26,39,80,136,174,196,244,274,315</td><td>9 处跨库 INSERT/UPDATE，库拆分时跨库事务断。落地 reqwest 或删未接线文件。<span class="evidence">CORE-02+WMS-01</span></td></tr>
+      <tr><td>F-03</td><td>erp ↔ hrm 同步 HTTP 双向环</td><td><span class="tag tag-high">高危</span></td><td>erp/addressbook.rs:200,208；hrm/payroll.rs:990</td><td>双向同步级联放大。改事件驱动或反向依赖倒置+熔断。<span class="evidence">ENTRY-01</span></td></tr>
+      <tr><td>F-04</td><td>erp ↔ mes 同步 HTTP 双向环</td><td><span class="tag tag-high">高危</span></td><td>erp/production_order.rs:536；mes/work_report.rs:644</td><td>重试叠加易死循环。拆单向主数据同步+事件回传。<span class="evidence">ENTRY-02</span></td></tr>
+      <tr><td>F-05</td><td>private/saas 双部署模式为空 feature</td><td><span class="tag tag-high">高危</span></td><td>svc/server/Cargo.toml:162-164；main.rs:28</td><td>双形态切换不存在。实现 cfg 分支或删空 feature。<span class="evidence">ENTRY-03</span></td></tr>
+      <tr><td>F-06</td><td>财务服务显式关闭行级安全 RLS</td><td><span class="tag tag-high">高危</span></td><td>svc/finance/src/main.rs:244；bootstrap/lib.rs:585</td><td>金融数据无 DB 行级兜底。评估开启或补 tenant_id 必带校验。<span class="evidence">FCRM-02+XCUT-06</span></td></tr>
+      <tr><td>F-07</td><td>金额精度 f64 泄漏到自动凭证与多个 DTO</td><td><span class="tag tag-high">高危</span></td><td>finance/event_handlers/mod.rs:102；crm/models/billing.rs:14,54,55,63,78</td><td>浮点误差累积。金额统一改 rust_decimal::Decimal。<span class="evidence">FCRM-03</span></td></tr>
+      <tr><td>F-08</td><td>integration 事件订阅仅 3 个 Triggered，7 事件未接线</td><td><span class="tag tag-high">高危</span></td><td>svc/integration/src/event_handlers/mod.rs:26,30,34</td><td>质量链联动事件到达后无 handler 消费。补 process_event 订阅 7 事件。<span class="evidence">WMS-02</span></td></tr>
+      <tr><td>F-09</td><td>lims/ehs/wms data_sync 为"假同步"：读 URL 不发 HTTP</td><td><span class="tag tag-high">高危</span></td><td>lims/data_sync.rs:255；ehs/data_sync.rs:254,358,523-526</td><td>点"同步"只本地插成功记录。实现真实 reqwest POST。<span class="evidence">WMS-03+ENTRY-10</span></td></tr>
+      <tr><td>F-10</td><td>master-data 10 个 MDM 模块为内存壳不落库</td><td><span class="tag tag-high">高危</span></td><td>svc/master-data/src/modules/quality_v51.rs:266,647</td><td>~200 路由重启即失。标注 demo 或补 PG 持久化。<span class="evidence">ADVAI-01</span></td></tr>
+      <tr><td>F-11</td><td>unified-core 残留 analytics 模块读不存在 schema</td><td><span class="tag tag-high">高危</span></td><td>unified-core/modules/analytics/handlers.rs:34,48,106,120,179,193,254,268</td><td>运行期必然 relation 不存在。改读 bi.* 或删除残留。<span class="evidence">ADVAI-02</span></td></tr>
+      <tr><td>F-12</td><td>unified-core 跨读约 22 业务 schema 且不受 boundary 约束</td><td><span class="tag tag-high">高危</span></td><td>scripts/schema_boundary.json（unified-core schema=public）</td><td>模块边界在数据层被整体穿透。加只读视图层/allowlist。与 F-01 同源并列保留。<span class="evidence">XCUT-01</span></td></tr>
+      <tr><td>F-13</td><td>根 pnpm run build 引用不存在的 topems-core</td><td><span class="tag tag-high">高危</span></td><td>package.json:21,26</td><td>构建第三步必失败，CI 绕过掩盖。删 build:core 或改 filter topems-portal。<span class="evidence">FRONT-01</span></td></tr>
+      <tr><td>F-14</td><td>Module Federation 空壳：19 remote 0 实现</td><td><span class="tag tag-high">高危</span></td><td>apps/web/src/microfrontend/config.ts:96-260；vite.config.ts:201,264-271</td><td>实为单 bundle，文档误导。归档 MF 或落地首个 remote。<span class="evidence">FRONT-02</span></td></tr>
+      <tr><td>F-15</td><td>decision.md 称 MF 插件已删除，实际仍是构建硬依赖</td><td><span class="tag tag-high">高危</span></td><td>microfrontend-architecture-decision.md:5,7；apps/web/package.json:59-60</td><td>决策文档误导，850 行 workaround 仍在。重写文档/评估移除依赖。<span class="evidence">FRONT-03</span></td></tr>
+      <tr><td>F-16</td><td>overview.md 前端技术栈整列错误</td><td><span class="tag tag-high">高危</span></td><td>overview.md:380,384,397-402,425-433；apps/web/package.json:60-130</td><td>对外文档与实际栈差距巨大。重写技术栈表。<span class="evidence">FRONT-04</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>11.2 中危（30 条）</h3>
+  <div class="tbl-wrap"><table class="ftable fixed">
+    <colgroup><col style="width:6%"><col style="width:30%"><col style="width:11%"><col style="width:24%"><col style="width:29%"></colgroup>
+    <thead><tr><th>编号</th><th>标题</th><th>级别</th><th>证据（路径:行号）</th><th>影响 / 修复 / 来源</th></tr></thead>
+    <tbody>
+      <tr><td>F-17</td><td>插件心跳离线检测为死代码（空循环）</td><td><span class="tag tag-mid">中危</span></td><td>unified-core/embedded.rs:311-317</td><td>插件挂后状态永不判定。补 30s 扫描或删文档声称。<span class="evidence">CORE-03</span></td></tr>
+      <tr><td>F-18</td><td>Bootstrap A/B/C 计数三处文档矛盾且与代码不符</td><td><span class="tag tag-mid">中危</span></td><td>Cargo.toml:95-100；overview.md:27,190；实测 C=6/A=4/B=17/混合=1</td><td>台账失真。以实测 main.rs 为准统一三处（口径差异已注明）。<span class="evidence">CORE-04+ENTRY-05+FCRM-01+ADVAI-10</span></td></tr>
+      <tr><td>F-19</td><td>插件注册令牌门控依赖 PROFILE=="prod" 精确串</td><td><span class="tag tag-mid">中危</span></td><td>plugin-registry/.../runtime.rs:18-31</td><td>staging/未设则放行。改"未设令牌即默认拒绝"。<span class="evidence">CORE-05</span></td></tr>
+      <tr><td>F-20</td><td>RLS 会话 GUC 在连接池上不保证生效</td><td><span class="tag tag-mid">中危</span></td><td>unified-core/middleware/tenant_rls.rs:170-178,214-225</td><td>池化下 RLS 不兜底。持同一连接贯穿请求。<span class="evidence">CORE-06</span></td></tr>
+      <tr><td>F-21</td><td>erp 直读 finance/crm schema 跨组耦合</td><td><span class="tag tag-mid">中危</span></td><td>erp/opening_balance.rs:192；erp/search.rs:134</td><td>改列即 break erp。长期改只读 API。<span class="evidence">ERP-05</span></td></tr>
+      <tr><td>F-22</td><td>统一错误处理采纳率极低（3412 手写 vs 51 文件）</td><td><span class="tag tag-mid">中危</span></td><td>shared-core/response.rs:133；ApiResponse::error(=3412 实测</td><td>sqlx 原始错误直达客户端。按 ADR codemod 迁移。<span class="evidence">ENTRY-06+ERP-01+WMS-04+CORE-07</span></td></tr>
+      <tr><td>F-23</td><td>服务客户端启动期初始化失败即 panic</td><td><span class="tag tag-mid">中危</span></td><td>erp/main.rs:178-210；crm/main.rs:309-311</td><td>可用性被最弱依赖绑架。失败降级 Option=None 返回 503。<span class="evidence">ERP-07+FCRM-07</span></td></tr>
+      <tr><td>F-24</td><td>CRM/Finance 发布事件清单大面积漂移</td><td><span class="tag tag-mid">中危</span></td><td>event-driven.md:180-197 vs crm/event_handlers/mod.rs:46-86</td><td>上下游按文档对接会落空。以代码枚举回写文档。<span class="evidence">FCRM-04</span></td></tr>
+      <tr><td>F-25</td><td>crm 全量路由共用单一粗粒度权限 crm:admin</td><td><span class="tag tag-mid">中危</span></td><td>crm/main.rs:348</td><td>最小权限失效。按子模块拆权限点。<span class="evidence">FCRM-05</span></td></tr>
+      <tr><td>F-26</td><td>crm 审计模块直读公共 public.audit_logs</td><td><span class="tag tag-mid">中危</span></td><td>crm/modules/audit.rs:86,112,182,226</td><td>物理库拆分后将断。改审计服务 API/事件。<span class="evidence">FCRM-06+XCUT-09</span></td></tr>
+      <tr><td>F-27</td><td>mes 服务体量过大（36,772 行/64 文件/27 路由模块）</td><td><span class="tag tag-mid">中危</span></td><td>mes/modules/mod.rs:43-73；aps_scheduling.rs 1810 行</td><td>违反单一职责。评估拆 APS/OEE/能源模块。<span class="evidence">WMS-06</span></td></tr>
+      <tr><td>F-28</td><td>AI 模型列表双服务重复暴露且 unified-core 直读 ai schema</td><td><span class="tag tag-mid">中危</span></td><td>unified-core/routes/ai_routes.rs:12-24；ai/routes.rs:196</td><td>同资源两 SQL 两端口。收口到 svc/ai。<span class="evidence">ADVAI-03</span></td></tr>
+      <tr><td>F-29</td><td>analytics 直读 IAM/组织库做 BI 汇总</td><td><span class="tag tag-mid">中危</span></td><td>analytics/main.rs:860-874</td><td>与 IAM schema 强耦合。走事件物化/只读副本。<span class="evidence">ADVAI-04</span></td></tr>
+      <tr><td>F-30</td><td>analytics 领域 KPI 与报表投递为假数据</td><td><span class="tag tag-mid">中危</span></td><td>analytics/main.rs:883-884；bi/analytics.rs；report/scheduler.rs:363-375</td><td>仪表盘展示编造数字。接真实数据源或标注 mock。<span class="evidence">ADVAI-05</span></td></tr>
+      <tr><td>F-31</td><td>analytics datasource 可外联任意 Postgres（SSRF）</td><td><span class="tag tag-mid">中危</span></td><td>bi/datasource.rs:165-196</td><td>可探测/外联内网任意 DB。host 白名单+凭据加密。<span class="evidence">ADVAI-06</span></td></tr>
+      <tr><td>F-32</td><td>MCP 工具手写阻塞式裸 TCP HTTP 客户端</td><td><span class="tag tag-mid">中危</span></td><td>ai/dsh/mcp/tools/mod.rs:317-364</td><td>阻塞 tokio worker。统一改 TypedServiceClient。<span class="evidence">ADVAI-07</span></td></tr>
+      <tr><td>F-33</td><td>模块组间进程内 trait 仅 1 条真实边</td><td><span class="tag tag-mid">中危</span></td><td>svc/server/providers.rs:39-42；main.rs:44</td><td>"消除网络开销"目标基本未达成。扩展 InProcProvider。<span class="evidence">ENTRY-04</span></td></tr>
+      <tr><td>F-34</td><td>nginx 指向独立服务端口，与单体 :8099 双轨</td><td><span class="tag tag-mid">中危</span></td><td>deploy/nginx/topems.conf:79-110；server/main.rs:539</td><td>本地与线上流量路径不同。补一致性测试。<span class="evidence">ENTRY-07</span></td></tr>
+      <tr><td>F-35</td><td>门面未去除，22 业务表单栖身门面 crate</td><td><span class="tag tag-mid">中危</span></td><td>lib/src/lib.rs:5-8；form_assistant/*（22 表单）；229 处 use</td><td>业务与横切库纠缠。form_assistant 下沉各 svc。<span class="evidence">XCUT-02</span></td></tr>
+      <tr><td>F-36</td><td>boundary 宏 opt-in 且子查询可逃逸</td><td><span class="tag tag-mid">中危</span></td><td>shared-boundary/lib.rs:192；extract_schema_refs 遇 ( 跳过</td><td>未包裹宏的 SQL 零检查。CI 静态扫描兜底。<span class="evidence">XCUT-03</span></td></tr>
+      <tr><td>F-37</td><td>search 裸 SQL 直读 erp.*（未接 boundary）</td><td><span class="tag tag-mid">中危</span></td><td>search/handlers.rs:113,167,197</td><td>erp schema 变更打断搜索。改 HTTP API/事件投影。<span class="evidence">CORE-08+XCUT-04</span></td></tr>
+      <tr><td>F-38</td><td>srm 直写 unified_core.inter_module_sync</td><td><span class="tag tag-mid">中危</span></td><td>srm/data_sync.rs:860,933</td><td>业务反向写核心 schema。统一事件/写接口。<span class="evidence">ERP-08+XCUT-05</span></td></tr>
+      <tr><td>F-39</td><td>五套服务发现并存</td><td><span class="tag tag-mid">中危</span></td><td>deploy/docker/{etcd,eureka,zookeeper,nacos}-compose.yml</td><td>运维面大。收敛 Consul 一套（与 F-56 互引）。<span class="evidence">XCUT-07</span></td></tr>
+      <tr><td>F-40</td><td>双 schema 命名（裸名与 plugin_* 并存）</td><td><span class="tag tag-mid">中危</span></td><td>migrations/000_create_schemas.sql；erp/main.rs:57</td><td>新迁移易写错 schema。废弃一套统一前缀。<span class="evidence">XCUT-10+ERP-03</span></td></tr>
+      <tr><td>F-41</td><td>business-tools-sdk 落地为死代码（6 文件 0 消费）</td><td><span class="tag tag-mid">中危</span></td><td>packages/business-tools-sdk/src/*；grep 仅命中自身</td><td>包写了没人用。web 替换手写或移出 workspace。<span class="evidence">FRONT-05</span></td></tr>
+      <tr><td>F-42</td><td>api-client 工厂三端分裂，仅 desktop 消费</td><td><span class="tag tag-mid">中危</span></td><td>packages/api-client/src/factory.ts:59；web/mobile 各自建</td><td>token/401/retry 各写一份。拦截器下沉 presets。<span class="evidence">FRONT-06</span></td></tr>
+      <tr><td>F-43</td><td>shared-utils/hooks 沉淀不足（25/7 文件仅 3/6 引用）</td><td><span class="tag tag-mid">中危</span></td><td>packages/shared-utils/src；packages/shared-hooks/src</td><td>包存在没人用。复用审计/合并无人用包。<span class="evidence">FRONT-07</span></td></tr>
+      <tr><td>F-44</td><td>desktop 40 文件影子应用与 web 2863 文件不对等</td><td><span class="tag tag-mid">中危</span></td><td>apps/desktop/src 40 vs apps/web/src 2863</td><td>仅 8 占位页面。明确为轻壳或补依赖。<span class="evidence">FRONT-08</span></td></tr>
+      <tr><td>F-45</td><td>三端 React 分裂，根 tsconfig alias 到 mobile 的 18</td><td><span class="tag tag-mid">中危</span></td><td>web/package.json:115(19.2.7)；mobile:35(18.2.0)；tsconfig.base.json:44</td><td>React19 类型检查被 18 污染。alias 移到 mobile 专属。<span class="evidence">FRONT-09</span></td></tr>
+      <tr><td>F-46</td><td>构建为兼容 Vite8+MF 写约 850 行 workaround 插件</td><td><span class="tag tag-mid">中危</span></td><td>apps/web/vite.config.ts:528-1380</td><td>构建脆弱升级易崩。逐版本删 workaround。<span class="evidence">FRONT-10</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>11.3 低危（27 条）</h3>
+  <div class="tbl-wrap"><table class="ftable fixed">
+    <colgroup><col style="width:6%"><col style="width:30%"><col style="width:11%"><col style="width:24%"><col style="width:29%"></colgroup>
+    <thead><tr><th>编号</th><th>标题</th><th>级别</th><th>证据（路径:行号）</th><th>影响 / 修复 / 来源</th></tr></thead>
+    <tbody>
+      <tr><td>F-47</td><td>ERP 事件名缺模块前缀且数量与文档不符</td><td><span class="tag tag-low">低危</span></td><td>erp/sales_order.rs:294；event-driven.md §3.7</td><td>按文档订阅会漏事件。统一命名规范。<span class="evidence">ERP-04</span></td></tr>
+      <tr><td>F-48</td><td>event-driven.md 仍描述 Pub/Sub+RabbitMQ</td><td><span class="tag tag-low">低危</span></td><td>lib/shared-event/messaging.rs:3,69,92（Redis Stream）</td><td>新人按文档选型用错废弃 API。刷新为 Redis Stream 口径。<span class="evidence">ERP-02+WMS-05+ADVAI-09</span></td></tr>
+      <tr><td>F-49</td><td>scm/srm/pm Gauge 硬编码 42.0 占位指标</td><td><span class="tag tag-low">低危</span></td><td>scm/main.rs:61；srm/main.rs:64；pm/main.rs:67</td><td>大盘出现无业务含义指标。删占位或换真实指标。<span class="evidence">ERP-06</span></td></tr>
+      <tr><td>F-50</td><td>services.yaml 依赖声明与实际不符</td><td><span class="tag tag-low">低危</span></td><td>config/services.yaml:48 vs 代码调 hrm/finance/mes</td><td>启动顺序约束遗漏。补全 dependencies。<span class="evidence">ERP-09</span></td></tr>
+      <tr><td>F-51</td><td>gRPC 依赖存在但无实际服务间调用</td><td><span class="tag tag-low">低危</span></td><td>shared-core/grpc/connection_pool.rs（唯一 tonic 引用）</td><td>栈表误导；高频同步无熔断。文档注明预留。<span class="evidence">ERP-10+ENTRY-09</span></td></tr>
+      <tr><td>F-52</td><td>finance modules/mod.rs 5922 行巨型 god-file</td><td><span class="tag tag-low">低危</span></td><td>svc/finance/src/modules/mod.rs（:5406 create_routes）</td><td>与已拆分子模块风格不一致。下拆内联路由。<span class="evidence">FCRM-08</span></td></tr>
+      <tr><td>F-53</td><td>跨库拓扑文档滞后：已改 HTTP/事件仍标直连</td><td><span class="tag tag-low">低危</span></td><td>cross-db-calls.md vs crm/aftersales.rs:1616-1676</td><td>拆分预案误判直连点。用实测重新生成拓扑。<span class="evidence">FCRM-09</span></td></tr>
+      <tr><td>F-54</td><td>本地事务与外部 HTTP 副作用非原子无补偿</td><td><span class="tag tag-low">低危</span></td><td>crm/aftersales.rs:1610-1690</td><td>外部失败本地已提交。引入 outbox+异步重试。<span class="evidence">FCRM-10</span></td></tr>
+      <tr><td>F-55</td><td>finance 对 ticket 用裸 reqwest 绕过 TypedServiceClient</td><td><span class="tag tag-low">低危</span></td><td>finance/reconciliation.rs:447-452</td><td>调用风格不统一。补 TypedServiceClient。<span class="evidence">FCRM-11</span></td></tr>
+      <tr><td>F-56</td><td>Consul 默认关闭，实际全走环境变量</td><td><span class="tag tag-low">低危</span></td><td>.env.example:224（CONSUL_ENABLED=false）</td><td>多实例扩缩无注册发现（与 F-39 互引）。私有化前启用。<span class="evidence">CORE-11</span></td></tr>
+      <tr><td>F-57</td><td>qms 无业务事件订阅器，仅订阅缓存失效</td><td><span class="tag tag-low">低危</span></td><td>qms/main.rs:169 仅 CacheInvalidated</td><td>联动依赖 integration 中转。评估直订阅。<span class="evidence">WMS-07</span></td></tr>
+      <tr><td>F-58</td><td>ehs schema_boundary 配置异常（schema=public/search_path=ehs）</td><td><span class="tag tag-low">低危</span></td><td>scripts/schema_boundary.json（ehs 条目）</td><td>门禁判断偏差。校正 schema 字段为 ehs。<span class="evidence">WMS-08+XCUT-14</span></td></tr>
+      <tr><td>F-59</td><td>DSH RagEngine 1033 行不连库</td><td><span class="tag tag-low">低危</span></td><td>ai/dsh/rag/mod.rs（0 sqlx）；routes.rs:80,99</td><td>文档 RAG 数据流为空壳。复用 ai_knowledge pgvector。<span class="evidence">ADVAI-08</span></td></tr>
+      <tr><td>F-60</td><td>master-data schema_defense 与 SEARCH_PATH 不一致</td><td><span class="tag tag-low">低危</span></td><td>master-data/schema_defense.rs:3,13；main.rs:22</td><td>自检与真实表错位。统一 SERVICE_SCHEMA。<span class="evidence">ADVAI-11</span></td></tr>
+      <tr><td>F-61</td><td>hrm 在 core 组分组归属两处不一致</td><td><span class="tag tag-low">低危</span></td><td>Cargo.toml:43 vs modular-monolith-design.md:39</td><td>模块组边界模糊。统一 §2 表。<span class="evidence">CORE-09</span></td></tr>
+      <tr><td>F-62</td><td>unified-core 嵌入路径字段加密被跳过</td><td><span class="tag tag-low">低危</span></td><td>unified-core/embedded.rs:336-340</td><td>与"加密存储"声称不符。补 KeyManager 初始化。<span class="evidence">CORE-10</span></td></tr>
+      <tr><td>F-63</td><td>portal BFF 扇出无全局 N+1 治理，DataLoader 仅局部</td><td><span class="tag tag-low">低危</span></td><td>portal/graphql_schema.rs:891；graphql_dataloader.rs:18,46</td><td>6×N 次 HTTP。高频 resolver 改 DataLoader。<span class="evidence">ENTRY-08</span></td></tr>
+      <tr><td>F-64</td><td>shared-mcp/shared-dsh 未入 workspace.dependencies</td><td><span class="tag tag-low">低危</span></td><td>Cargo.toml:393-402；ai/Cargo.toml:25,33</td><td>依赖声明不统一。补入 workspace。<span class="evidence">XCUT-08</span></td></tr>
+      <tr><td>F-65</td><td>checksums.txt 覆盖不全（250 vs 283 迁移）</td><td><span class="tag tag-low">低危</span></td><td>database/checksums.txt vs migrations/</td><td>33 迁移未登记校验和。补登记/CI 校验。<span class="evidence">XCUT-11</span></td></tr>
+      <tr><td>F-66</td><td>OTel 分布式追踪默认关闭（stub）</td><td><span class="tag tag-low">低危</span></td><td>shared-observability/telemetry_stub.rs:18,33</td><td>默认无跨服务链路。生产开 otel feature。<span class="evidence">XCUT-12</span></td></tr>
+      <tr><td>F-67</td><td>限流为进程内存态，多实例不共享</td><td><span class="tag tag-low">低危</span></td><td>shared-bootstrap/lib.rs:774（200/60s）</td><td>副本数=实际阈值倍数。下沉网关/Redis。<span class="evidence">XCUT-13</span></td></tr>
+      <tr><td>F-68</td><td>IP 白名单仅 portal 实现且默认关闭</td><td><span class="tag tag-low">低危</span></td><td>config/deployment.yaml；portal/gateway_security.rs</td><td>白名单未平台化。下沉统一中间件。<span class="evidence">XCUT-15</span></td></tr>
+      <tr><td>F-69</td><td>database/README 与 init/ 文件、数量多处漂移</td><td><span class="tag tag-low">低危</span></td><td>database/README.md:14-19,86 vs init/ 实际</td><td>按 README 重建库找不到脚本。同步清单口径。<span class="evidence">XCUT-16</span></td></tr>
+      <tr><td>F-70</td><td>动态导航从本地 config.ts 加载，非后端拉整棵树</td><td><span class="tag tag-low">低危</span></td><td>web/components/DynamicRoutes.tsx:4；36 个 modules/*/config.ts</td><td>与后端导航 API 描述有出入。文档明确三段式。<span class="evidence">FRONT-11</span></td></tr>
+      <tr><td>F-71</td><td>app-shell 包名误导：实为纯类型包（4 文件）</td><td><span class="tag tag-low">低危</span></td><td>packages/app-shell/src（index+3 types）</td><td>误以为提供壳组件。改名 @topems/app-types。<span class="evidence">FRONT-12</span></td></tr>
+      <tr><td>F-72</td><td>根 test/typecheck/lint 仅覆盖 topems-portal</td><td><span class="tag tag-low">低危</span></td><td>package.json:28-29；ci.yml:1367-1386</td><td>本地不发现 mobile/desktop 类型错。改 pnpm -r。<span class="evidence">FRONT-13</span></td></tr>
+      <tr><td>F-73</td><td>MicroAppRouter/RemoteLoader/19 REMOTE 在 static 下死代码</td><td><span class="tag tag-low">低危</span></td><td>web/microfrontend/MicroAppRouter.tsx:18；RemoteLoader.tsx:283</td><td>死代码增 bundle 体积。import.meta.env 门控 tree-shake。<span class="evidence">FRONT-14</span></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ===== 12 优点 ===== -->
+<section id="ch12">
+  <h2 class="sec"><span class="sec-no">12</span>架构优点与做得好的地方</h2>
+  <div class="grid g2">
+    <div class="card"><h4>编译期 boundary 宏 3288 处</h4><p class="small">compile_error! 拦截跨 schema SQL，比运行期检查更早、零运行时开销，是最硬一道防线。</p></div>
+    <div class="card"><h4>事件驱动机制完整</h4><p class="small">Redis Stream+消费组+DLQ+事件版本号+Schema Registry 已实现，组内解耦实质落地且超前文档。</p></div>
+    <div class="card"><h4>TypedServiceClient 治理</h4><p class="small">强类型 client 统一 service token+最小 scope+超时，portal 9 个 client 扇出。</p></div>
+    <div class="card"><h4>统一 bootstrap 三段式</h4><p class="small">28 服务启动收敛，双轨共享 build_router_inner 防路由漂移。</p></div>
+    <div class="card"><h4>插件自动注册+门控</h4><p class="small">manifest+SHA256+runtime token，生产未配令牌直接拒绝。</p></div>
+    <div class="card"><h4>财务域治理样板</h4><p class="small">TopemsError 245 处、事件溯源+Saga、对账改本地快照+事件。</p></div>
+    <div class="card"><h4>配置四源一致性门禁</h4><p class="small">services.yaml↔ports.env↔ports.ts↔vite.config.ts CI 强制一致。</p></div>
+    <div class="card"><h4>SQLx 离线缓存+锁文件</h4><p class="small">.sqlx 309 项入库支持 CI 纯离线编译，漂移收口。</p></div>
+    <div class="card"><h4>门户优雅降级</h4><p class="small">六路扇出每路 unwrap_or 默认，下游单点失败不拖垮首页。</p></div>
+    <div class="card"><h4>安全底座完整</h4><p class="small">JWT 双算法+生产拒默认密钥、AES-256-GCM 版本化密钥、审计/脱敏/限流/安全头齐备。</p></div>
+  </div>
+</section>
+
+<!-- ===== 13 附录 ===== -->
+<section id="ch13">
+  <h2 class="sec"><span class="sec-no">13</span>附录</h2>
+  <h3>附录 a · 文档声称 vs 代码实证对照总表</h3>
+  <div class="tbl-wrap"><table class="fixed">
+    <colgroup><col style="width:22%"><col style="width:34%"><col style="width:34%"><col style="width:10%"></colgroup>
+    <thead><tr><th>主题</th><th>文档声称</th><th>代码实证</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td>事件总线</td><td>Redis Pub/Sub + RabbitMQ</td><td>Redis Stream（V321 已迁）</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>Schema 命名</td><td>erp→plugin_erp 已迁完</td><td>实际用裸名 erp,public</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>gRPC</td><td>tonic 0.14 列栈</td><td>仅 connection_pool，0 业务调用</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>模块组间调用</td><td>进程内 trait 消除网络开销</td><td>仅 AccountBalance 1 边</td><td><span class="tag tag-mid">部分达成</span></td></tr>
+      <tr><td>Bootstrap 计数</td><td>三处各 A/B/C 一版</td><td>C=6/A=4/B=17/混合=1</td><td><span class="tag tag-high">矛盾</span></td></tr>
+      <tr><td>门面</td><td>去门面化已完成</td><td>229 处 use，门面长期保留</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>boundary</td><td>编译期强制</td><td>3288 处覆盖 15 服务，但 opt-in 可绕</td><td><span class="tag tag-mid">有缺口</span></td></tr>
+      <tr><td>RLS</td><td>默认开启</td><td>finance 显式关闭</td><td><span class="tag tag-high">例外</span></td></tr>
+      <tr><td>前端技术栈</td><td>AntD/Tailwind/Webpack</td><td>MUI9/Vite8/RR7/recharts only</td><td><span class="tag tag-doc">整列漂移</span></td></tr>
+      <tr><td>Module Federation</td><td>微前端为主、插件已删</td><td>19 remote 0 实现、插件仍硬依赖</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>根 build</td><td>pnpm run build 可构建</td><td>引用不存在的 topems-core</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>private/saas</td><td>双部署形态切换</td><td>空 feature 无切换</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>Consul</td><td>服务发现主线</td><td>CONSUL_ENABLED=false 默认</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>migration 数量</td><td>278</td><td>283（checksums 250）</td><td><span class="tag tag-doc">漂移</span></td></tr>
+      <tr><td>unified-core</td><td>已瘦身只读聚合</td><td>23 业务镜像+180 跨读</td><td><span class="tag tag-doc">漂移</span></td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>附录 b · 证据索引</h3>
+  <p class="small">全部 73 条发现证据逐条列于第 11 章「证据」列，均为相对项目根的 <code>路径:行号</code>。高频路径：unified-core/modules/mod.rs:36-81、integration/qms_lims_ehs.rs:26,39,80,136,174,196,244,274,315、erp/addressbook.rs:200、hrm/payroll.rs:990、finance/main.rs:244、master-data/quality_v51.rs:266,647、package.json:21,26、microfrontend/config.ts:96-260、shared-boundary/lib.rs:192,288-330、scripts/schema_boundary.json、database/checksums.txt。交付前已随机抽验 11 条路径:行号，全部存在且行内容与分片一致。</p>
+
+  <h3>附录 c · 方法论与工具</h3>
+  <p class="small">数据来源：8 份分片架构分析为唯一内容来源，未新增发现项，仅做合并/编号/重组。实测命令：grep -n / wc -l / find / sed -n / python 正则 / git ls-files。合并：按 14 组去重规则，重复项取证据最全者并保留来源 ID，严重级取更高。校验：html skill scripts/shot.py（1440×900 / 390×844）+ verifier-hub（rubric/text）。既往报告（仓库卫生/依赖漏洞/敏感信息/质量门禁）见《TOPEMS项目全面审计报告_2026-09-30》。</p>
+</section>
+
+<footer>
+  TOPEMS 技术架构全面分析报告 · 2026-10-02 · 由 8 份分片架构分析整合 · 所有结论以代码实测为准，文档仅作对照 · 本报告不包含任何密钥值
+</footer>
+</main>
+
+<script>
+(function(){
+  if(typeof echarts==='undefined'){return;}
+  var palette=['#25476e','#2a6f6a','#b9791a','#b3342c','#5a7ba6','#7c8aa0'];
+  var base={textStyle:{fontFamily:'Noto Sans SC, sans-serif'},grid:{left:10,right:20,top:40,bottom:10,containLabel:true}};
+  function init(id,opt){var el=document.getElementById(id);if(!el)return;var c=echarts.init(el);c.setOption(opt);window.addEventListener('resize',function(){c.resize();});}
+
+  // 图3 模块组规模
+  init('chart3',Object.assign({},base,{
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+    legend:{data:['代码行数(千行)','服务数'],top:6},
+    grid:{left:10,right:20,top:40,bottom:10,containLabel:true},
+    xAxis:{type:'category',data:['core','erp','wms','ai','finance','advanced','crm'],axisLabel:{fontSize:11}},
+    yAxis:[{type:'value',name:'千行',position:'left'},{type:'value',name:'服务数',position:'right'}],
+    series:[
+      {name:'代码行数(千行)',type:'bar',data:[172.7,151.1,172.2,83.9,81.6,50.3,27.1],itemStyle:{color:'#25476e'},barWidth:'46%'},
+      {name:'服务数',type:'line',yAxisIndex:1,data:[9,5,8,1,1,2,1],itemStyle:{color:'#b9791a'},symbolSize:9}
+    ]
+  }));
+
+  // 图4 bootstrap 分布
+  init('chart4',{
+    tooltip:{trigger:'item',renderMode:'richText',confine:true,formatter:'{b}: {c} 个 ({d}%)'},
+    legend:{bottom:0,textStyle:{fontSize:11}},
+    color:['#2a6f6a','#25476e','#b9791a','#7c8aa0'],
+    series:[{type:'pie',radius:['38%','64%'],center:['50%','46%'],
+      label:{formatter:'{b}\n{c}',fontSize:11},
+      data:[{value:17,name:'B 系(带业务 state)'},{value:6,name:'纯 C(自建 Application)'},{value:4,name:'标准 A(build_app)'},{value:1,name:'analytics 混合'}]}]
+  });
+
+  // 图9 严重级分布
+  init('chart9',{
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+    grid:{left:10,right:20,top:20,bottom:10,containLabel:true},
+    xAxis:{type:'category',data:['高危','中危','低危']},
+    yAxis:{type:'value',name:'条数'},
+    series:[{type:'bar',data:[
+      {value:16,itemStyle:{color:'#b3342c'}},
+      {value:30,itemStyle:{color:'#b9791a'}},
+      {value:27,itemStyle:{color:'#2f6f4f'}}
+    ],barWidth:'50%',label:{show:true,position:'top',fontWeight:'bold'}}]
+  });
+
+  // 图10 可观测覆盖
+  init('chart10',{
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+    grid:{left:10,right:20,top:20,bottom:10,containLabel:true},
+    xAxis:{type:'category',data:['/health 命中','/metrics 命中','OTel 跨服务链路(默认)']},
+    yAxis:{type:'value',name:'处/状态'},
+    series:[{type:'bar',data:[
+      {value:49,itemStyle:{color:'#25476e'}},
+      {value:19,itemStyle:{color:'#2a6f6a'}},
+      {value:0,itemStyle:{color:'#b3342c'}}
+    ],barWidth:'46%',label:{show:true,position:'top'}}]
+  });
+
+  // 图6 boundary 宏 top 服务
+  init('chart6',Object.assign({},base,{
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+    grid:{left:10,right:30,top:20,bottom:10,containLabel:true},
+    xAxis:{type:'value',name:'调用处'},
+    yAxis:{type:'category',data:['crm','communication','ehs','ai','gis','pm','scm','hrm','srm','integration','wms','erp','qms','finance'].reverse(),axisLabel:{fontSize:11}},
+    series:[{type:'bar',data:[5,79,100,125,153,169,190,207,203,205,239,295,300,620].reverse(),itemStyle:{color:'#2a6f6a'},barWidth:'60%'}]
+  }));
+
+  // 图5 跨 schema 引用
+  init('chart5',{
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+    legend:{data:['跨引用处/表数'],top:6},
+    grid:{left:10,right:20,top:36,bottom:10,containLabel:true},
+    xAxis:{type:'category',data:['unified-core','integration(写)','search','erp','srm','crm','wms'],axisLabel:{fontSize:11,interval:0}},
+    yAxis:{type:'value',name:'处数'},
+    series:[{type:'bar',data:[22,9,3,2,1,1,1],itemStyle:{color:'#b3342c'},barWidth:'46%',label:{show:true,position:'top'}}]
+  });
+
+  // 图2 服务拓扑 graph
+  init('chart2',{
+    tooltip:{},
+    legend:{data:['HTTP','event','db','同步环'],top:6,textStyle:{fontSize:11}},
+    series:[{
+      type:'graph',layout:'force',roam:true,
+      force:{repulsion:220,edgeLength:[60,140]},
+      label:{show:true,fontSize:10},
+      categories:[{name:'HTTP'},{name:'event'},{name:'db'},{name:'同步环'}],
+      lineStyle:{curveness:0.12},
+      data:[
+        {name:'nginx/portal',symbolSize:46,itemStyle:{color:'#25476e'}},
+        {name:'svc/server:8099',symbolSize:34,itemStyle:{color:'#5a7ba6'}},
+        {name:'unified-core',symbolSize:40,itemStyle:{color:'#b3342c'}},
+        {name:'erp',symbolSize:38,itemStyle:{color:'#25476e'}},
+        {name:'hrm',symbolSize:30,itemStyle:{color:'#25476e'}},
+        {name:'mes',symbolSize:30,itemStyle:{color:'#25476e'}},
+        {name:'finance',symbolSize:30,itemStyle:{color:'#25476e'}},
+        {name:'crm',symbolSize:28,itemStyle:{color:'#25476e'}},
+        {name:'search',symbolSize:24,itemStyle:{color:'#b9791a'}},
+        {name:'integration',symbolSize:30,itemStyle:{color:'#b3342c'}},
+        {name:'qms',symbolSize:24,itemStyle:{color:'#b9791a'}},
+        {name:'ehs',symbolSize:22,itemStyle:{color:'#b9791a'}},
+        {name:'srm',symbolSize:24,itemStyle:{color:'#b9791a'}},
+        {name:'ai',symbolSize:28,itemStyle:{color:'#2a6f6a'}},
+        {name:'analytics',symbolSize:26,itemStyle:{color:'#2a6f6a'}}
+      ],
+      links:[
+        {source:'nginx/portal',target:'erp',lineStyle:{color:'#25476e'}},
+        {source:'nginx/portal',target:'crm',lineStyle:{color:'#25476e'}},
+        {source:'nginx/portal',target:'hrm',lineStyle:{color:'#25476e'}},
+        {source:'nginx/portal',target:'finance',lineStyle:{color:'#25476e'}},
+        {source:'nginx/portal',target:'mes',lineStyle:{color:'#25476e'}},
+        {source:'svc/server:8099',target:'unified-core',lineStyle:{color:'#5a7ba6'}},
+        {source:'erp',target:'hrm',lineStyle:{color:'#b3342c',width:3}},
+        {source:'hrm',target:'erp',lineStyle:{color:'#b3342c',width:3}},
+        {source:'erp',target:'mes',lineStyle:{color:'#b3342c',width:3}},
+        {source:'mes',target:'erp',lineStyle:{color:'#b3342c',width:3}},
+        {source:'erp',target:'finance',lineStyle:{color:'#25476e'}},
+        {source:'unified-core',target:'erp',lineStyle:{color:'#b9791a',type:'dashed'}},
+        {source:'unified-core',target:'crm',lineStyle:{color:'#b9791a',type:'dashed'}},
+        {source:'unified-core',target:'hrm',lineStyle:{color:'#b9791a',type:'dashed'}},
+        {source:'unified-core',target:'qms',lineStyle:{color:'#b9791a',type:'dashed'}},
+        {source:'search',target:'erp',lineStyle:{color:'#b9791a',type:'dashed'}},
+        {source:'integration',target:'qms',lineStyle:{color:'#b3342c'}},
+        {source:'integration',target:'ehs',lineStyle:{color:'#b3342c'}},
+        {source:'srm',target:'unified-core',lineStyle:{color:'#b9791a',type:'dashed'}},
+        {source:'ai',target:'erp',lineStyle:{color:'#25476e'}},
+        {source:'analytics',target:'erp',lineStyle:{color:'#b9791a',type:'dashed'}}
+      ],
+      lineStyle:{opacity:0.7}
+    }]
+  });
+
+  // 图7 前端 MF 拓扑
+  init('chart7',{
+    tooltip:{},
+    legend:{data:['apps','packages','已声明 remote(未实现)'],top:6,textStyle:{fontSize:11}},
+    series:[{
+      type:'graph',layout:'force',roam:true,
+      force:{repulsion:180,edgeLength:[50,110]},
+      label:{show:true,fontSize:10},
+      categories:[{name:'apps'},{name:'packages'},{name:'已声明 remote(未实现)'}],
+      data:[
+        {name:'web(2863文件)',symbolSize:44,itemStyle:{color:'#25476e'}},
+        {name:'desktop(40)',symbolSize:26,itemStyle:{color:'#25476e'}},
+        {name:'mobile(48)',symbolSize:26,itemStyle:{color:'#25476e'}},
+        {name:'shared-components',symbolSize:26,itemStyle:{color:'#2a6f6a'}},
+        {name:'api-client',symbolSize:22,itemStyle:{color:'#2a6f6a'}},
+        {name:'shared-hooks',symbolSize:18,itemStyle:{color:'#2a6f6a'}},
+        {name:'shared-utils',symbolSize:18,itemStyle:{color:'#2a6f6a'}},
+        {name:'19 remote 声明(空)',symbolSize:40,symbol:'diamond',itemStyle:{color:'#b9791a',opacity:.55}}
+      ],
+      links:[
+        {source:'web(2863文件)',target:'shared-components',lineStyle:{color:'#2a6f6a'}},
+        {source:'web(2863文件)',target:'api-client',lineStyle:{color:'#2a6f6a'}},
+        {source:'web(2863文件)',target:'shared-hooks',lineStyle:{color:'#2a6f6a'}},
+        {source:'web(2863文件)',target:'shared-utils',lineStyle:{color:'#2a6f6a'}},
+        {source:'desktop(40)',target:'api-client',lineStyle:{color:'#25476e'}},
+        {source:'shared-components',target:'shared-hooks',lineStyle:{color:'#5a7ba6'}},
+        {source:'shared-components',target:'shared-utils',lineStyle:{color:'#5a7ba6'}},
+        {source:'web(2863文件)',target:'19 remote 声明(空)',lineStyle:{color:'#b9791a',type:'dashed',opacity:.5}}
+      ]
+    }]
+  });
+})();
+</script>
+</body>
+</body>
+</html>
