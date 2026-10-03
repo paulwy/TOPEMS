@@ -615,3 +615,12 @@
   - 步骤 B 对照表（初测→复测，6/6 全 PASS）：① 工资→凭证 ✅→✅（PR-202610-R2B001 debit=credit=20000.0000 平衡、重放 99999 不覆盖）② 订单→工单 ❌→✅（source_order_id 精确匹配 status=pending、重放 HIJACK 不覆盖——R-1 生效）③ 报工→进度 ✅→✅（0→50.00/in_progress、重放 999 不覆盖、幂等账本 3→4）④ 质量链 ❌→✅（样品 registered+任务 pending 双落库、重放单行——R-2 路由+步骤 A 共同生效）⑤ 插件注册+心跳 ⚠️→✅（register success、list 含 r2b-test-plugin、last_heartbeat 11:53→11:54——R-4 生效）⑥ 审计 ⚠️→✅（crm/wms 200、wms 返回本服务测试行——R-5 生效）；测试数据全清理、真实自注册插件 4 个保留
   - 新观察（非回归）：wms audit-logs 读路径严格（entity_type 非空/ip_address 按 text 解码，手插 NULL/inet 行 500、真实写路径行合规）——留加固 ticket
   - 剩余缺口：5433 DOWN（0006 未重放）、DLQ 待核（排期 3）、nginx 未单独验证、20260924110000 checksum 漂移仍阻塞 sqlx migrate run（沿用手工账本）
+
+- [x] **排期 3：R-6 DLQ 兜底核查 + 联动批（5433 重放 + sqlx repair）**——✅ 2026-10-03 完成，commit `c0840553d`（R-6 修复 2 文件 +143/−10）+ `f7a17f2a`（迁移源文件恢复）：
+  - **R-6 根因定案（双缺陷叠加）**：①`subscribe_handler()` 把 handler Err 只打日志不上传（subscriber.rs），`start_listening()` 再包成 `Ok(())` → Stream 层永远 all_succeeded → 立即 XACK → settle_failed 从不调用；②主循环只 XREADGROUP `>` 读新消息，失败滞留 PEL 的消息从不 XCLAIM/XAUTOCLAIM → retry_count 永远 1 → 到不了 max_retries=3 → DLQ 永不触发（R2 观察"XPENDING=0+DLQ 空"的完整因果）
+  - **修复**：subscriber.rs 新增 result_handlers 直传 Result；stream_subscriber.rs 主循环加 XAUTOCLAIM 回收（min-idle 5s、redis 0.24 Value 手动解析）
+  - **三态实测**：修复前注入→XPENDING=0/DLQ 空；修复后 T+0s 注入→T+3s retry=1（不 ACK）→T+8s/13s XAUTOCLAIM 重投 retry=2/3→T+18s 超阈值入 DLQ+ACK（XPENDING=0、DLQ len=1，last_error="max retries exceeded"）；日志完整流转
+  - **联动批 1**：5433 仍完全不可达（docker 容器 topems-postgres 未启动）→ 输出恢复后重放脚本（sqlx migrate run --ignore-missing + psql 兜底 + 核对 SQL）；**发现 r4(0004)/r8(0005) 无盘上源文件**
+  - **联动批 2**：sqlx-cli 0.9.0 **无 repair 子命令**（仅 override skip）→ 按预案定向手工 UPDATE 账本 checksum：20260924110000 `778725e4`→`9d11faed`（=磁盘值，SQLX 存储=文件字节 SHA-384 已验证等价）；dry-run 不再 checksum abort、migrate info 全 installed
+  - **编排发现与处置（迁移源文件丢失恢复）**：核实发现 R-4 的 0004 仅存于孤儿提交 b19a89bc7（被并行线 rebase 丢弃）、R-8 的 0005 提交 2bacc35ef 被 reset 拆散——均从孤儿提交对象检出恢复文件并提交（`f7a17f2a`）；0004 补记账本（SHA-384 对齐）→ **终态：磁盘 291 文件=mes 账本 291、checksum 不一致=0、账本独有=0、磁盘独有=0（完全收敛）**；0005 恢复文件 SHA-384 与账本逐字节吻合（确为当初记账字节）
+  - 残留：5433 仍 DOWN（r4/r8 源文件已恢复，恢复后可完整重放）；`.subscribe()` 自吞错服务（mes/erp/crm 等）需 per-service 迁移到 subscribe_handler 才享受 DLQ；MDM 事件超限 ACK 放弃不入 DLQ（已知增强项）；search_path 陷阱（migrate 命令需显式 mes 首位）
