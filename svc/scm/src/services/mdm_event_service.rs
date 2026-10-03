@@ -114,9 +114,10 @@ mod tests {
         // and swallow errors, so this should not panic even without brokers.
         let svc = MdmEventService::new();
         let supplier_id = Uuid::new_v4();
-        // Use a short timeout to avoid hanging the test if Redis/RabbitMQ are unreachable.
+        // 短超时避免无 broker 时挂死。Windows TCP connect 对未监听端口约 2s 才拒绝
+        // （Linux 立即拒绝），Redis+RabbitMQ 串行可能 >6s，故给 30s 上限。
         let result = tokio::time::timeout(
-            std::time::Duration::from_millis(500),
+            std::time::Duration::from_secs(30),
             svc.publish_supplier_event(
                 supplier_id,
                 "SUP-001",

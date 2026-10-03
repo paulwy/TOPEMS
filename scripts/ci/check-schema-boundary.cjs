@@ -171,7 +171,8 @@ function main() {
           }
         }
         if (schemas.size) {
-          const rel = file.replace(REPO_ROOT + path.sep, '');
+          // Windows 下 path.sep 为 '\\'，必须归一化为 '/' 才能命中 allowlist 键（与 sqlx-prepare.sh 同思路）
+          const rel = file.replace(REPO_ROOT + path.sep, '').replace(/\\/g, '/');
           const entry = { svc, file: rel, line: text.slice(0, call.start).split('\n').length, schemas: [...schemas].join(', ') };
           if (ALLOWLIST.has(rel)) allowlisted.push(entry);
           else violations.push(entry);

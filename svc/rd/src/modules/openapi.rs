@@ -184,7 +184,8 @@ mod tests {
     fn extract_openapi_spec() {
         let spec = ApiDoc::openapi();
         let json = serde_json::to_string_pretty(&spec).expect("Failed to serialize OpenAPI spec");
-        std::fs::write("/tmp/topems-rd-openapi.json", json).expect("Failed to write spec");
-        tracing::info!("OpenAPI spec written to /tmp/topems-rd-openapi.json");
+        let out_path = std::env::temp_dir().join("topems-rd-openapi.json");
+        std::fs::write(&out_path, json).expect("Failed to write spec");
+        tracing::info!("OpenAPI spec written to {:?}", out_path);
     }
 }
