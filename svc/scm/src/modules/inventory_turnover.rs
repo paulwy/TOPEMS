@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::get,
     Json, Router,
 };
@@ -211,6 +211,7 @@ mod tests {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/inventory-turnover", get(calculate_turnover))
+        .route("/inventory-turnover/{id}", get(get_turnover_detail))
         .route("/inventory-turnover/days", get(turnover_days))
         .route("/inventory-turnover/abc-analysis", get(abc_analysis))
         .route("/inventory-turnover/trend", get(turnover_trend))
@@ -790,6 +791,127 @@ pub async fn turnover_trend(
         Err(e) => {
             tracing::error!("查询库存周转率趋势失败: {}", e);
             Json(api_error(500, "查询库存周转率趋势失败"))
+        }
+    }
+}
+
+/// 单物料库存周转统计（契约 inventoryTurnover.ts: GET /inventory-turnover/{id}）
+/// id 语义：material_code（物料编码）
+pub async fn get_turnover_detail(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(material_code): Path<String>,
+    Query(params): Query<TurnoverQueryParams>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+
+    let start_date = params.start_date.unwrap_or_else(|| {
+        let now = chrono::Utc::now();
+        let start = now - chrono::Duration::days(90);
+        start.format("%Y-%m-%d").to_string()
+    });
+    let end_date = params
+        .end_date
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
+
+    let result = sqlx::query(
+        only_own_schema_query!("scm", r#"
+        WITH current_inventory AS (
+            SELECT 
+                i.item_code as material_code,
+                i.item_name as material_name,
+                i.specification,
+                i.unit,
+                i.category,
+                COALESCE(i.quantity, 0) as ending_inventory,
+                COALESCE(i.total_value, 0) as ending_value
+            FROM scm.wms_inventory_snapshots i
+            WHERE i.item_code = $3
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4)
+        ),
+        movement_summary AS (
+            SELECT 
+                item_code as material_code,
+                SUM(CASE WHEN movement_type = 'inbound' THEN quantity ELSE 0 END) as total_inbound_qty,
+                SUM(CASE WHEN movement_type = 'outbound' THEN quantity ELSE 0 END) as total_outbound_qty,
+                SUM(CASE WHEN movement_type = 'outbound' THEN total_value ELSE 0 END) as total_outbound_value
+            FROM scm.wms_inventory_movement_snapshots
+            WHERE movement_date >= $1::timestamptz
+              AND movement_date < ($2::timestamptz + INTERVAL '1 day')
+              AND item_code = $3
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+            GROUP BY item_code
+        )
+        SELECT 
+            ci.material_code,
+            ci.material_name,
+            ci.specification,
+            ci.unit,
+            ci.category,
+            COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory)::float8 as beginning_inventory,
+            ci.ending_inventory,
+            (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2::float8 as average_inventory,
+            COALESCE(ms.total_outbound_value, 0)::float8 as cost_of_goods_sold,
+            CASE 
+                WHEN (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2 > 0
+                THEN COALESCE(ms.total_outbound_value, 0) / ((COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2)
+                ELSE 0
+            END::float8 as turnover_rate,
+            CASE 
+                WHEN 
+                    (COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2 > 0
+                    AND COALESCE(ms.total_outbound_value, 0) > 0
+                THEN ((COALESCE(ci.ending_inventory - COALESCE(ms.total_inbound_qty, 0) + COALESCE(ms.total_outbound_qty, 0), ci.ending_inventory) + ci.ending_inventory) / 2) * 90 / COALESCE(ms.total_outbound_value, 1)
+                ELSE 999
+            END::float8 as turnover_days,
+            ci.ending_value::float8 as inventory_value
+        FROM current_inventory ci
+        LEFT JOIN movement_summary ms ON ci.material_code = ms.material_code
+        LIMIT 1
+        "#),
+    )
+    .bind(&start_date)
+    .bind(&end_date)
+    .bind(&material_code)
+    .bind(tenant_bind)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            let stat = serde_json::json!({
+                "id": material_code,
+                "product_code": row.try_get::<String, _>("material_code").unwrap_or_default(),
+                "product_name": row.try_get::<String, _>("material_name").unwrap_or_default(),
+                "specification": row.try_get::<Option<String>, _>("specification").ok().flatten(),
+                "unit": row.try_get::<Option<String>, _>("unit").ok().flatten(),
+                "category": row.try_get::<Option<String>, _>("category").ok().flatten(),
+                "period": format!("{}~{}", start_date, end_date),
+                "turnover_rate": row.try_get::<f64, _>("turnover_rate").unwrap_or(0.0),
+                "turnover_days": row.try_get::<f64, _>("turnover_days").unwrap_or(0.0),
+                "beginning_inventory": row.try_get::<f64, _>("beginning_inventory").unwrap_or(0.0),
+                "ending_inventory": row.try_get::<f64, _>("ending_inventory").unwrap_or(0.0),
+                "average_inventory": row.try_get::<f64, _>("average_inventory").unwrap_or(0.0),
+                "cost_of_goods_sold": row.try_get::<f64, _>("cost_of_goods_sold").unwrap_or(0.0),
+                "sales_quantity": row.try_get::<f64, _>("cost_of_goods_sold").unwrap_or(0.0),
+                "inventory_value": row.try_get::<f64, _>("inventory_value").unwrap_or(0.0),
+                "calculated_at": chrono::Utc::now().to_rfc3339(),
+            });
+            Json(ApiResponse::success(stat, "获取单物料周转统计成功"))
+        }
+        Ok(None) => Json(api_error(404, "未找到该物料的库存周转数据")),
+        Err(e) => {
+            tracing::error!("获取单物料周转统计失败: {}", e);
+            Json(api_error(500, "获取单物料周转统计失败"))
         }
     }
 }

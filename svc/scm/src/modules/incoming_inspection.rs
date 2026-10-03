@@ -182,9 +182,16 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/incoming-inspections/{id}/pass", post(inspection_pass))
         .route("/incoming-inspections/{id}/fail", post(inspection_fail))
+        .route("/incoming-inspections/{id}/reject", post(inspection_fail))
         .route(
             "/incoming-inspections/{id}/records",
             get(list_inspection_records).post(create_inspection_record),
+        )
+        .route(
+            "/inspection-records/{id}",
+            get(get_inspection_record)
+                .put(update_inspection_record)
+                .delete(delete_inspection_record),
         )
 }
 
@@ -1455,6 +1462,190 @@ pub async fn create_inspection_record(
         Err(e) => {
             tracing::error!("创建检验记录明细失败: {}", e);
             Json(api_error(500, "创建检验记录明细失败"))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateInspectionRecordRequest {
+    pub item_code: Option<String>,
+    pub item_name: Option<String>,
+    pub specification: Option<String>,
+    pub unit: Option<String>,
+    pub batch_no: Option<String>,
+    pub quantity: Option<f64>,
+    pub samplesize: Option<f64>,
+    pub inspectionitems: Option<String>,
+    pub inspection_method: Option<String>,
+    pub inspection_standard: Option<String>,
+    pub result: Option<String>,
+    pub defect_details: Option<String>,
+}
+
+/// 单条检验记录明细查询（契约 inspectionRecord.ts: GET /inspection-records/{id}）
+pub async fn get_inspection_record(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        SELECT id, inspection_id, item_code, item_name, specification, unit,
+               batch_no, quantity, samplesize, inspectionitems, inspection_method,
+               inspection_standard, result, defect_details, created_at, updated_at
+        FROM scm.inspection_records
+        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        "#
+    ))
+    .bind(id)
+    .bind(tenant_bind)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(row)) => Json(ApiResponse::success(
+            inspection_record_row_to_json(&row),
+            "获取检验记录明细成功",
+        )),
+        Ok(None) => Json(api_error(404, "检验记录明细不存在")),
+        Err(e) => {
+            tracing::error!("获取检验记录明细失败: {}", e);
+            Json(api_error(500, "获取检验记录明细失败"))
+        }
+    }
+}
+
+/// 检验记录明细更新（契约 inspectionRecord.ts: PUT /inspection-records/{id}）
+pub async fn update_inspection_record(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<UpdateInspectionRecordRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        UPDATE scm.inspection_records SET
+            item_code = COALESCE($2, item_code),
+            item_name = COALESCE($3, item_name),
+            specification = $4,
+            unit = $5,
+            batch_no = $6,
+            quantity = COALESCE($7, quantity),
+            samplesize = COALESCE($8, samplesize),
+            inspectionitems = $9,
+            inspection_method = $10,
+            inspection_standard = $11,
+            result = COALESCE($12, result),
+            defect_details = $13,
+            updated_at = NOW()
+        WHERE id = $1 AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $14)
+        RETURNING id, inspection_id, item_code, item_name, specification, unit,
+                  batch_no, quantity, samplesize, inspectionitems, inspection_method,
+                  inspection_standard, result, defect_details, created_at, updated_at
+        "#
+    ))
+    .bind(id)
+    .bind(&req.item_code)
+    .bind(&req.item_name)
+    .bind(&req.specification)
+    .bind(&req.unit)
+    .bind(&req.batch_no)
+    .bind(req.quantity)
+    .bind(req.samplesize)
+    .bind(&req.inspectionitems)
+    .bind(&req.inspection_method)
+    .bind(&req.inspection_standard)
+    .bind(&req.result)
+    .bind(&req.defect_details)
+    .bind(tenant_bind)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    match result {
+        Ok(Some(row)) => {
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
+            Json(ApiResponse::success(
+                inspection_record_row_to_json(&row),
+                "更新检验记录明细成功",
+            ))
+        }
+        Ok(None) => Json(api_error(404, "检验记录明细不存在")),
+        Err(e) => {
+            tracing::error!("更新检验记录明细失败: {}", e);
+            Json(api_error(500, "更新检验记录明细失败"))
+        }
+    }
+}
+
+/// 检验记录明细删除（契约 inspectionRecord.ts: DELETE /inspection-records/{id}）
+pub async fn delete_inspection_record(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        DELETE FROM scm.inspection_records
+        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        "#
+    ))
+    .bind(id)
+    .bind(tenant_bind)
+    .execute(&mut **txn)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({"id": id}),
+                "删除检验记录明细成功",
+            ))
+        }
+        Ok(_) => Json(api_error(404, "检验记录明细不存在")),
+        Err(e) => {
+            tracing::error!("删除检验记录明细失败: {}", e);
+            Json(api_error(500, "删除检验记录明细失败"))
         }
     }
 }

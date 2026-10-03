@@ -339,20 +339,17 @@ pub struct ComparisonItemRecord {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/inquiries", get(list_inquiries).post(create_inquiry))
-        .route(
-            "/api/inquiries/{id}",
-            get(get_inquiry).delete(delete_inquiry),
-        )
-        .route("/api/inquiries/{id}/publish", post(publish_inquiry))
+        .route("/inquiries/{id}", get(get_inquiry).delete(delete_inquiry))
+        .route("/inquiries/{id}/publish", post(publish_inquiry))
         .route("/quotes", get(list_quotes).post(create_quote))
-        .route("/api/quotes/{id}", get(get_quote).put(update_quote))
-        .route("/api/quotes/{id}/submit", post(submit_quote))
+        .route("/quotes/{id}", get(get_quote).put(update_quote))
+        .route("/quotes/{id}/submit", post(submit_quote))
         .route(
             "/comparisons",
             get(list_comparisons).post(create_comparison),
         )
-        .route("/api/comparisons/{id}", get(get_comparison))
-        .route("/api/comparisons/{id}/approve", post(approve_comparison))
+        .route("/comparisons/{id}", get(get_comparison))
+        .route("/comparisons/{id}/approve", post(approve_comparison))
 }
 
 #[utoipa::path(
@@ -522,7 +519,7 @@ pub async fn create_inquiry(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["scm:inquiry:read"])),
-    path = "/api/inquiries/{id}",
+    path = "/inquiries/{id}",
     params(
 ("id" = String, Path, description = "id")
     ),
@@ -647,7 +644,7 @@ pub async fn delete_inquiry(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["scm:inquiry:write"])),
-    path = "/api/inquiries/{id}/publish",
+    path = "/inquiries/{id}/publish",
     params(
 ("id" = String, Path, description = "id")
     ),
@@ -857,7 +854,7 @@ pub async fn create_quote(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["scm:quote:read"])),
-    path = "/api/quotes/{id}",
+    path = "/quotes/{id}",
     params(
 ("id" = String, Path, description = "id")
     ),
@@ -987,7 +984,7 @@ pub async fn update_quote(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["scm:quote:write"])),
-    path = "/api/quotes/{id}/submit",
+    path = "/quotes/{id}/submit",
     params(
 ("id" = String, Path, description = "id")
     ),
@@ -1235,7 +1232,7 @@ pub async fn create_comparison(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["scm:comparison:read"])),
-    path = "/api/comparisons/{id}",
+    path = "/comparisons/{id}",
     params(
 ("id" = String, Path, description = "id")
     ),
@@ -1318,7 +1315,7 @@ pub async fn get_comparison(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["scm:comparison:write"])),
-    path = "/api/comparisons/{id}/approve",
+    path = "/comparisons/{id}/approve",
     params(
 ("id" = String, Path, description = "id")
     ),

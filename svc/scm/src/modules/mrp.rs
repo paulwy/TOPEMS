@@ -1,7 +1,7 @@
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
-    routing::get,
+    routing::{get, post},
     Json, Router,
 };
 use chrono::{Duration, NaiveDate, Utc};
@@ -147,6 +147,7 @@ pub fn create_routes() -> Router<ApiState> {
             "/mrp/suggestions/{id}",
             get(get_suggestion).post(confirm_suggestion),
         )
+        .route("/mrp/suggestions/{id}/confirm", post(confirm_suggestion))
         .route("/mrp/material-summary", get(material_requirement_summary))
         .route("/mrp-suggestions", get(list_suggestions))
         .route("/mrp-suggestions/{id}", get(get_suggestion))

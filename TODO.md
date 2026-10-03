@@ -502,3 +502,19 @@
   读+写 10 条路由全 401（挂载）；表建在 flow schema；psql DML 全链路（insert/update/count）通过
 - 遗留：form-definitions 未见独立前端契约（definition.ts 走 /workflows 已满足）；
   notification 类规则增强待流程设计器落地
+
+## 2026-10-03 供应链模块（scm+srm）API 缺口补实现（commit 待推）
+
+- 背景：延续"挂载更多业务模块 API"，本轮收敛 /api/scm（18 契约）+ /api/srm（4 契约）
+- 方法：前端契约 179 条 URL+method 全量 probe（串行+单次重试）→ 12 条真 404，其余全 401
+- 修复：
+  1. price_comparison.rs 去写死 /api/ 前缀 12 处（route+utoipa）→ 双重前缀 bug（/api/scm/api/... 可达、
+     /api/scm/... 404），前端 comparisons/quotes 真实路径恢复可达
+  2. purchase_order.rs +confirm/cancel/close（transition_order 公共状态机 + PurchaseOrderApprove 权限）
+  3. incoming_inspection.rs +reject 别名（→ fail handler）+ inspection-records/{id} get/update/delete
+  4. inventory_turnover.rs +get_turnover_detail（按 material_code 单物料周转统计）
+  5. mrp.rs +/mrp/suggestions/{id}/confirm 别名路由
+- 经验：srm 全绿无需改；scm 内嵌 /api/ 前缀是隐藏双重前缀形态（区别于 settlementCenter 的"前端写死"）；
+  axum handler 参数 `Json(req)` 模式解构后 req 是裸类型，调用处需重新 Json(req)
+- 验证：check/clippy 0 错一次通过；重启 health 200 modules=31；12 条原 404 全转 401；
+  回归 6 条无退化；179 条全量 probe 仅剩 4 条提取噪音（非真实路径）

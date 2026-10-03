@@ -28,6 +28,9 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/purchase-orders/{id}/approve", post(approve_order))
         .route("/purchase-orders/{id}/reject", post(reject_order))
+        .route("/purchase-orders/{id}/confirm", post(confirm_order))
+        .route("/purchase-orders/{id}/cancel", post(cancel_order))
+        .route("/purchase-orders/{id}/close", post(close_order))
 }
 
 #[utoipa::path(
@@ -773,6 +776,231 @@ pub async fn reject_order(
     .await;
 
     response
+}
+
+/// 采购订单状态流转通用逻辑（confirm/cancel/close 共用）
+async fn transition_order(
+    state: State<ApiState>,
+    claims: Extension<Claims>,
+    id: Uuid,
+    headers: HeaderMap,
+    txn_arc: std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    req: Json<ApprovalRequest>,
+    allowed_states: &[&str],
+    target_status: &'static str,
+    success_msg: &'static str,
+    audit_action: &'static str,
+) -> Json<ApiResponse<PurchaseOrder>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderApprove).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+
+    let existing = sqlx::query_as::<_, PurchaseOrder>(
+        only_own_schema_query!("scm", "SELECT id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at FROM scm.purchase_orders WHERE deleted_at IS NULL AND id = $1"),
+    )
+    .bind(id)
+    .bind(tenant_bind)
+    .fetch_optional(&mut **txn)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(o)) => o,
+        Ok(None) => return Json(api_error(404, "采购订单不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询采购订单失败: {}", e))),
+    };
+
+    if !allowed_states.contains(&existing.status.as_str()) {
+        return Json(api_error(
+            400,
+            &format!("采购订单当前状态为{}，无法{}", existing.status, success_msg),
+        ));
+    }
+
+    let operator_name = req.approver_name.clone().or(Some(claims.username.clone()));
+    let reason = req.remarks.clone().unwrap_or_default();
+    let new_remarks = match existing.remarks.clone() {
+        Some(old) => Some(format!(
+            "{} | {} ({}): {}",
+            old,
+            success_msg,
+            operator_name.clone().unwrap_or_default(),
+            reason
+        )),
+        None => Some(format!(
+            "{} ({}): {}",
+            success_msg,
+            operator_name.unwrap_or_default(),
+            reason
+        )),
+    };
+
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, PurchaseOrder>(
+        only_own_schema_query!("scm", r#"
+        UPDATE scm.purchase_orders SET
+            status = $2, remarks = $3, updated_at = $4
+        WHERE id = $1 AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
+        RETURNING id, po_no AS order_number, supplier_id, order_date, expected_date AS delivery_date, total_amount, status, remarks, created_at, updated_at
+        "#),
+    )
+    .bind(id)
+    .bind(target_status)
+    .bind(&new_remarks)
+    .bind(now)
+    .bind(tenant_bind)
+    .fetch_one(&mut **txn)
+    .await;
+
+    let (response, status_str, error_msg) = match &result {
+        Ok(order) => (
+            Json(ApiResponse::success(
+                order.clone(),
+                &format!("采购订单已{}", success_msg),
+            )),
+            "success",
+            None,
+        ),
+        Err(e) => {
+            tracing::error!("{}采购订单失败: {}", success_msg, e);
+            (
+                Json(api_error(500, &format!("{}采购订单失败", success_msg))),
+                "error",
+                Some(e.to_string()),
+            )
+        }
+    };
+
+    let request_data = serde_json::to_value(&*req).ok();
+    let response_data = if let Ok(order) = &result {
+        serde_json::to_value(order).ok()
+    } else {
+        None
+    };
+
+    log_audit_event(
+        &state.db,
+        audit_action.to_string(),
+        "purchase_order".to_string(),
+        Some(id),
+        None,
+        None,
+        None,
+        request_data,
+        response_data,
+        status_str.to_string(),
+        error_msg,
+        &headers,
+    )
+    .await;
+
+    response
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:approve"])),
+    path = "/scm/purchase-orders/{id}/confirm",
+    responses(
+        (status = 200, description = "confirm_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
+pub async fn confirm_order(
+    state: State<ApiState>,
+    claims: Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    txn_arc: Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<PurchaseOrder>> {
+    transition_order(
+        state,
+        claims,
+        id,
+        headers,
+        txn_arc.0,
+        Json(req),
+        &["pending", "approved"],
+        "confirmed",
+        "确认",
+        "confirm",
+    )
+    .await
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:approve"])),
+    path = "/scm/purchase-orders/{id}/cancel",
+    responses(
+        (status = 200, description = "cancel_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
+pub async fn cancel_order(
+    state: State<ApiState>,
+    claims: Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    txn_arc: Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<PurchaseOrder>> {
+    transition_order(
+        state,
+        claims,
+        id,
+        headers,
+        txn_arc.0,
+        Json(req),
+        &["pending", "approved"],
+        "cancelled",
+        "取消",
+        "cancel",
+    )
+    .await
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["scm:approve"])),
+    path = "/scm/purchase-orders/{id}/close",
+    responses(
+        (status = 200, description = "close_order OK")
+    ),
+    tag = "SCM/purchase-order"
+)]
+pub async fn close_order(
+    state: State<ApiState>,
+    claims: Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    txn_arc: Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<ApprovalRequest>,
+) -> Json<ApiResponse<PurchaseOrder>> {
+    transition_order(
+        state,
+        claims,
+        id,
+        headers,
+        txn_arc.0,
+        Json(req),
+        &["confirmed", "approved"],
+        "closed",
+        "关闭",
+        "close",
+    )
+    .await
 }
 
 #[cfg(test)]
