@@ -3654,7 +3654,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
 
   ws check                检查 WebSocket 连接状态
 
-  deploy                  一键部署
+  deploy                  生产部署（systemd 范式，需 .env.production；docker 部署见 deploy/docker/topems-docker.sh）
   update-password         重置管理员密码（reset-password 的别名）
   reset-password [用户] [密码]  重置用户密码（默认 admin/admin123；update-password 为别名）
 
@@ -3944,8 +3944,10 @@ case "${1:-help}" in
         esac
         ;;
     deploy)
-        info "调用部署脚本..."
-        "$SCRIPT_DIR/deploy/deploy.sh" deploy
+        info "调用生产部署脚本（systemd 范式）..."
+        # 2026-10-03: 部署范式已收敛为 A（systemd + /opt/topems），弃用 deploy.sh（docker run 离线范式 C）。
+        # production-deploy.sh 默认读取 .env.production；本地 docker 部署请改用 scripts/deploy/docker/topems-docker.sh。
+        "$SCRIPT_DIR/deploy/production-deploy.sh"
         ;;
     update-password|reset-password)
         info "调用密码重置脚本..."
