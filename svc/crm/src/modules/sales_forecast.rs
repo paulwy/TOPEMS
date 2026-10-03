@@ -5,6 +5,8 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use sqlx::Row;
 use uuid::Uuid;
@@ -333,7 +335,8 @@ pub async fn generate_forecast(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let predicted_amount = (rand::random::<f64>() * 1_000_000.0) + 500_000.0;
+    // B3: 预测金额 Decimal（NUMERIC(15,2) 列），整数元演示种子，避免 f64 噪声
+    let predicted_amount = Decimal::from(i64::from(rand::random::<u32>() % 1_000_000) + 500_000);
     let confidence_level = 0.7 + (rand::random::<f64>() * 0.25);
     let trend = match rand::random::<i32>() % 3 {
         0 => "up",
@@ -432,11 +435,14 @@ async fn update_sales_forecast(
 
     let request_data = serde_json::to_value(&req).ok();
 
+    // B3: 金额从 JSON（数字或字符串）解析为 Decimal，对齐 U6 billing 请求侧契约
     let predicted_amount = req
         .get("predicted_amount")
-        .and_then(|v| v.as_f64())
+        .and_then(|v| serde_json::from_value::<Decimal>(v.clone()).ok())
         .unwrap_or(existing.predicted_amount);
-    let actual_amount = req.get("actual_amount").and_then(|v| v.as_f64());
+    let actual_amount = req
+        .get("actual_amount")
+        .and_then(|v| serde_json::from_value::<Decimal>(v.clone()).ok());
     let accuracy = req.get("accuracy").and_then(|v| v.as_f64());
     let trend = req
         .get("trend")
@@ -681,40 +687,49 @@ pub async fn get_sales_trend(
 
     match result {
         Ok(rows) => {
-            let trend_data: Vec<serde_json::Value> = rows
+            // B3: 金额列读为 Decimal；accuracy 为比率保留 f64。先落成结构化行，再派生 JSON 与环比。
+            let rows: Vec<(String, Decimal, Option<Decimal>, Option<f64>, String)> = rows
                 .into_iter()
                 .map(|r| {
+                    (
+                        r.get::<String, _>("period"),
+                        r.get::<Decimal, _>("predicted_amount"),
+                        r.get::<Option<Decimal>, _>("actual_amount"),
+                        r.get::<Option<f64>, _>("accuracy"),
+                        r.get::<String, _>("trend"),
+                    )
+                })
+                .collect();
+
+            let trend_data: Vec<serde_json::Value> = rows
+                .iter()
+                .map(|(period, predicted, actual, accuracy, trend)| {
                     serde_json::json!({
-                        "period": r.get::<String, _>("period"),
-                        "predicted_amount": r.get::<f64, _>("predicted_amount"),
-                        "actual_amount": r.get::<Option<f64>, _>("actual_amount"),
-                        "accuracy": r.get::<Option<f64>, _>("accuracy"),
-                        "trend": r.get::<String, _>("trend"),
+                        "period": period,
+                        "predicted_amount": predicted,
+                        "actual_amount": actual,
+                        "accuracy": accuracy,
+                        "trend": trend,
                     })
                 })
                 .collect();
 
             let mut comparison_data = Vec::new();
-            for i in 1..trend_data.len() {
-                let prev = &trend_data[i - 1];
-                let curr = &trend_data[i];
-                let prev_predicted = prev
-                    .get("predicted_amount")
-                    .and_then(|v| v.as_f64())
-                    .unwrap_or(0.0);
-                let curr_predicted = curr
-                    .get("predicted_amount")
-                    .and_then(|v| v.as_f64())
-                    .unwrap_or(0.0);
-                let change_rate = if prev_predicted != 0.0 {
-                    ((curr_predicted - prev_predicted) / prev_predicted * 100.0).round() / 100.0
+            for i in 1..rows.len() {
+                let (_, prev_p, _, _, _) = &rows[i - 1];
+                let (period, curr_p, _, _, _) = &rows[i];
+                // change_rate 为环比百分比（比率），沿用 f64 语义；absolute_change 为金额差值，Decimal 精确
+                let prev_f = prev_p.to_f64().unwrap_or(0.0);
+                let curr_f = curr_p.to_f64().unwrap_or(0.0);
+                let change_rate = if prev_f != 0.0 {
+                    ((curr_f - prev_f) / prev_f * 100.0).round() / 100.0
                 } else {
                     0.0
                 };
                 comparison_data.push(serde_json::json!({
-                    "period": curr.get("period"),
+                    "period": period,
                     "change_rate": change_rate,
-                    "absolute_change": curr_predicted - prev_predicted,
+                    "absolute_change": curr_p - prev_p,
                 }));
             }
 
@@ -801,49 +816,58 @@ pub async fn compare_sales_forecasts(
 
     match result {
         Ok(rows) => {
-            let forecasts: Vec<serde_json::Value> = rows
+            // B3: 金额列读 Decimal；accuracy/confidence_level 为比率保留 f64
+            let rows: Vec<(String, Decimal, Option<Decimal>, Option<f64>, f64, String)> = rows
                 .into_iter()
                 .map(|r| {
+                    (
+                        r.get::<String, _>("period"),
+                        r.get::<Decimal, _>("predicted_amount"),
+                        r.get::<Option<Decimal>, _>("actual_amount"),
+                        r.get::<Option<f64>, _>("accuracy"),
+                        r.get::<f64, _>("confidence_level"),
+                        r.get::<String, _>("trend"),
+                    )
+                })
+                .collect();
+
+            let forecasts: Vec<serde_json::Value> = rows
+                .iter()
+                .map(|(period, predicted, actual, accuracy, confidence, trend)| {
                     serde_json::json!({
-                        "period": r.get::<String, _>("period"),
-                        "predicted_amount": r.get::<f64, _>("predicted_amount"),
-                        "actual_amount": r.get::<Option<f64>, _>("actual_amount"),
-                        "accuracy": r.get::<Option<f64>, _>("accuracy"),
-                        "confidence_level": r.get::<f64, _>("confidence_level"),
-                        "trend": r.get::<String, _>("trend"),
+                        "period": period,
+                        "predicted_amount": predicted,
+                        "actual_amount": actual,
+                        "accuracy": accuracy,
+                        "confidence_level": confidence,
+                        "trend": trend,
                     })
                 })
                 .collect();
 
-            let base_period = forecasts.first();
-            let (base_predicted, base_actual) = if let Some(base) = base_period {
-                (
-                    base.get("predicted_amount")
-                        .and_then(|v| v.as_f64())
-                        .unwrap_or(0.0),
-                    base.get("actual_amount")
-                        .and_then(|v| v.as_f64())
-                        .unwrap_or(0.0),
-                )
-            } else {
-                (0.0, 0.0)
-            };
+            let base_period = forecasts.first().cloned();
+            let base_pred: Decimal = rows.first().map(|(_, p, _, _, _, _)| *p).unwrap_or(Decimal::ZERO);
+            let base_actual_dec: Decimal = rows
+                .first()
+                .and_then(|(_, _, a, _, _, _)| *a)
+                .unwrap_or(Decimal::ZERO);
+            let base_predicted: f64 = base_pred.to_f64().unwrap_or(0.0);
+            let base_actual: f64 = base_actual_dec.to_f64().unwrap_or(0.0);
+            let base_accuracy: f64 = rows.first().and_then(|(_, _, _, a, _, _)| *a).unwrap_or(0.0);
 
-            let comparisons: Vec<serde_json::Value> = forecasts
+            let comparisons: Vec<serde_json::Value> = rows
                 .iter()
                 .skip(1)
-                .map(|f| {
-                    let predicted = f.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                    let actual = f.get("actual_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                    let acc1 = f.get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                    let acc2 = base_period.and_then(|b| b.get("accuracy").and_then(|v| v.as_f64())).unwrap_or(0.0);
-                    let accuracy_gap = acc1 - acc2;
+                .map(|(period, predicted, actual, acc, _, _)| {
+                    let predicted_f = predicted.to_f64().unwrap_or(0.0);
+                    let actual_f = actual.unwrap_or(Decimal::ZERO).to_f64().unwrap_or(0.0);
+                    let accuracy_gap = acc.unwrap_or(0.0) - base_accuracy;
                     serde_json::json!({
-                        "period": f.get("period"),
-                        "predicted_vs_base": predicted - base_predicted,
-                        "predicted_rate": if base_predicted != 0.0 { (predicted / base_predicted * 100.0).round() / 100.0 } else { 0.0 },
-                        "actual_vs_base": actual - base_actual,
-                        "actual_rate": if base_actual != 0.0 { (actual / base_actual * 100.0).round() / 100.0 } else { 0.0 },
+                        "period": period,
+                        "predicted_vs_base": predicted - base_pred,
+                        "predicted_rate": if base_predicted != 0.0 { (predicted_f / base_predicted * 100.0).round() / 100.0 } else { 0.0 },
+                        "actual_vs_base": actual.unwrap_or(Decimal::ZERO) - base_actual_dec,
+                        "actual_rate": if base_actual != 0.0 { (actual_f / base_actual * 100.0).round() / 100.0 } else { 0.0 },
                         "accuracy_gap": accuracy_gap,
                     })
                 })
@@ -935,74 +959,66 @@ pub async fn get_accuracy_report(
 
     match result {
         Ok(rows) => {
-            let records: Vec<serde_json::Value> = rows
+            // B3: 金额列读 Decimal（查询已过滤 actual_amount IS NOT NULL）；accuracy/confidence 为比率保留 f64。
+            let rows: Vec<(String, Decimal, Decimal, f64, f64, String)> = rows
                 .into_iter()
                 .map(|r| {
-                    let predicted = r.get::<f64, _>("predicted_amount");
-                    let actual = r.get::<f64, _>("actual_amount");
+                    (
+                        r.get::<String, _>("period"),
+                        r.get::<Decimal, _>("predicted_amount"),
+                        r.get::<Decimal, _>("actual_amount"),
+                        r.get::<f64, _>("accuracy"),
+                        r.get::<f64, _>("confidence_level"),
+                        r.get::<String, _>("trend"),
+                    )
+                })
+                .collect();
+
+            let total_records = rows.len();
+
+            // deviation 为金额差值（Decimal 精确）；deviation_rate 为偏差百分比（比率，f64）。
+            let records: Vec<serde_json::Value> = rows
+                .iter()
+                .map(|(period, predicted, actual, accuracy, confidence, trend)| {
                     let deviation = (predicted - actual).abs();
-                    let deviation_rate = if actual != 0.0 {
-                        ((predicted - actual).abs() / actual * 100.0).round() / 100.0
+                    let predicted_f = predicted.to_f64().unwrap_or(0.0);
+                    let actual_f = actual.to_f64().unwrap_or(0.0);
+                    let deviation_rate = if actual_f != 0.0 {
+                        ((predicted_f - actual_f).abs() / actual_f * 100.0).round() / 100.0
                     } else {
                         0.0
                     };
                     serde_json::json!({
-                        "period": r.get::<String, _>("period"),
+                        "period": period,
                         "predicted_amount": predicted,
                         "actual_amount": actual,
-                        "accuracy": r.get::<f64, _>("accuracy"),
-                        "confidence_level": r.get::<f64, _>("confidence_level"),
-                        "trend": r.get::<String, _>("trend"),
+                        "accuracy": accuracy,
+                        "confidence_level": confidence,
+                        "trend": trend,
                         "deviation": deviation,
                         "deviation_rate": deviation_rate,
                     })
                 })
                 .collect();
 
-            let total_records = records.len();
-            let avg_accuracy: f64 = records
+            let avg_accuracy: f64 =
+                rows.iter().map(|(_, _, _, a, _, _)| *a).sum::<f64>() / total_records as f64;
+
+            let avg_deviation: f64 = rows
                 .iter()
-                .filter_map(|r| r.get("accuracy").and_then(|v| v.as_f64()))
+                .map(|(_, p, a, _, _, _)| (p - a).abs().to_f64().unwrap_or(0.0))
                 .sum::<f64>()
                 / total_records as f64;
 
-            let avg_deviation: f64 = records
-                .iter()
-                .filter_map(|r| r.get("deviation").and_then(|v| v.as_f64()))
-                .sum::<f64>()
-                / total_records as f64;
+            let max_accuracy = rows.iter().map(|(_, _, _, a, _, _)| *a).fold(0.0, f64::max);
 
-            let max_accuracy = records
-                .iter()
-                .filter_map(|r| r.get("accuracy").and_then(|v| v.as_f64()))
-                .fold(0.0, f64::max);
+            let min_accuracy = rows.iter().map(|(_, _, _, a, _, _)| *a).fold(1.0, f64::min);
 
-            let min_accuracy = records
-                .iter()
-                .filter_map(|r| r.get("accuracy").and_then(|v| v.as_f64()))
-                .fold(1.0, f64::min);
+            let high_confidence_count = rows.iter().filter(|(_, _, _, _, c, _)| *c >= 0.8).count();
 
-            let high_confidence_count = records
-                .iter()
-                .filter(|r| {
-                    r.get("confidence_level")
-                        .and_then(|v| v.as_f64())
-                        .unwrap_or(0.0)
-                        >= 0.8
-                })
-                .count();
-
-            let trend_analysis = if records.len() >= 3 {
-                let recent: Vec<&serde_json::Value> = records.iter().rev().take(3).rev().collect();
-                let accuracy_trend = recent
-                    .windows(2)
-                    .map(|w| {
-                        let acc1 = w[0].get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                        let acc2 = w[1].get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                        acc2 - acc1
-                    })
-                    .sum::<f64>()
-                    / 2.0;
+            let trend_analysis = if rows.len() >= 3 {
+                let recent: Vec<f64> = rows.iter().rev().take(3).map(|(_, _, _, a, _, _)| *a).collect();
+                let accuracy_trend = recent.windows(2).map(|w| w[1] - w[0]).sum::<f64>() / 2.0;
 
                 if accuracy_trend > 0.01 {
                     "improving".to_string()

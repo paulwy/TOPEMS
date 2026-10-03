@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -9,8 +10,10 @@ pub struct SalesForecast {
     pub tenant_id: Uuid,
     pub period_type: String,
     pub period: String,
-    pub predicted_amount: f64,
-    pub actual_amount: Option<f64>,
+    // B3: 预测/实际金额 f64 -> Decimal（DB 列 NUMERIC(15,2)），对齐 U6 billing 口径
+    pub predicted_amount: Decimal,
+    pub actual_amount: Option<Decimal>,
+    // 比率（准确率/置信度，NUMERIC(6,3)）保留 f64，非币种金额
     pub accuracy: Option<f64>,
     pub trend: String,
     pub confidence_level: f64,
@@ -28,8 +31,8 @@ pub struct CreateSalesForecastRequest {
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct UpdateSalesForecastRequest {
-    pub predicted_amount: Option<f64>,
-    pub actual_amount: Option<f64>,
+    pub predicted_amount: Option<Decimal>,
+    pub actual_amount: Option<Decimal>,
     pub accuracy: Option<f64>,
     pub trend: Option<String>,
     pub confidence_level: Option<f64>,
@@ -77,8 +80,8 @@ mod tests {
             tenant_id: uid(),
             period_type: "monthly".into(),
             period: "2024-01".into(),
-            predicted_amount: 100000.0,
-            actual_amount: Some(98500.0),
+            predicted_amount: Decimal::new(10000000, 2),
+            actual_amount: Some(Decimal::new(9850000, 2)),
             accuracy: Some(0.985),
             trend: "stable".into(),
             confidence_level: 0.85,
@@ -97,7 +100,7 @@ mod tests {
             tenant_id: uid(),
             period_type: "quarterly".into(),
             period: "2024-Q1".into(),
-            predicted_amount: 500000.0,
+            predicted_amount: Decimal::new(50000000, 2),
             actual_amount: None,
             accuracy: None,
             trend: "up".into(),
@@ -122,8 +125,8 @@ mod tests {
     #[test]
     fn update_sales_forecast_request_roundtrip_full() {
         let r = UpdateSalesForecastRequest {
-            predicted_amount: Some(120000.0),
-            actual_amount: Some(115000.0),
+            predicted_amount: Some(Decimal::new(12000000, 2)),
+            actual_amount: Some(Decimal::new(11500000, 2)),
             accuracy: Some(0.958),
             trend: Some("up".into()),
             confidence_level: Some(0.9),
@@ -178,5 +181,31 @@ mod tests {
         assert_eq!(q.page_size, Some(30));
         assert_eq!(q.period_type.as_deref(), Some("monthly"));
         assert_eq!(q.status.as_deref(), Some("draft"));
+    }
+
+    /// B3 精度断言：预测/实际金额 Decimal 运算无 f64 累积误差。
+    #[test]
+    fn sales_forecast_amount_precision_exact() {
+        let predicted = Decimal::new(10000, 2); // 100.00
+        let actual = Decimal::new(9999, 2); // 99.99
+        let deviation = (predicted - actual).abs();
+        assert_eq!(deviation, Decimal::new(1, 2)); // 0.01 精确
+    }
+
+    /// B3 API 契约：响应侧金额序列化为 JSON 字符串（对齐 U6 billing 既有 Decimal 惯例），
+    /// 请求侧仍兼容 JSON 数字与字符串。
+    #[test]
+    fn sales_forecast_amount_serde_contract() {
+        let v = serde_json::to_value(Decimal::new(10000000, 2)).expect("serialize");
+        assert_eq!(v, serde_json::json!("100000.00"));
+        let from_num: Decimal = serde_json::from_str("100000.00").expect("from number");
+        let from_str: Decimal = serde_json::from_str("\"100000.00\"").expect("from string");
+        assert_eq!(from_num, Decimal::new(10000000, 2));
+        assert_eq!(from_str, Decimal::new(10000000, 2));
+        let req: UpdateSalesForecastRequest =
+            serde_json::from_str(r#"{"predicted_amount":12345.67,"actual_amount":12000}"#)
+                .expect("deserialize numeric amounts");
+        assert_eq!(req.predicted_amount, Some(Decimal::new(1234567, 2)));
+        assert_eq!(req.actual_amount, Some(Decimal::new(1200000, 2)));
     }
 }

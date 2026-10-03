@@ -63,6 +63,18 @@ pub struct MdmDeadLetter {
     pub last_attempt_at: DateTime<Utc>,
 }
 
+/// A4: MDM 死信列表（分页响应）
+///
+/// 与标准事件 `DeadLetterList` 同构，但条目为 `MdmDeadLetter`（独立 keyspace）。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MdmDeadLetterList {
+    pub items: Vec<MdmDeadLetter>,
+    pub total: usize,
+    pub page: usize,
+    pub page_size: usize,
+    pub total_pages: usize,
+}
+
 #[derive(Clone)]
 pub struct DeadLetterQueue {
     redis_client: Client,
@@ -151,6 +163,165 @@ impl DeadLetterQueue {
             event.domain, event.master_data_id, error
         );
         Ok(())
+    }
+
+    // ================================================================
+    // A4: MDM 死信管理 API（list / replay）
+    // ================================================================
+
+    /// A4: 列出 MDM 死信（分页）
+    ///
+    /// - `prefix` 为 `Some` 时仅扫描该域（如 `"mat"`），对应 key `topems:mdm_dlq:mat`；
+    ///   为 `None` 时扫描全部 `topems:mdm_dlq:*`。
+    /// - 条目按 `created_at` 降序（最新在前）分页；`page_size` 不能为 0。
+    #[allow(clippy::indexing_slicing)]
+    pub async fn list_mdm_dead_letters(
+        &self,
+        prefix: Option<&str>,
+        page: usize,
+        page_size: usize,
+    ) -> EventResult<MdmDeadLetterList> {
+        if page_size == 0 {
+            return Err(EventError::ConfigError("page_size 不能为 0".to_string()));
+        }
+
+        let mut con = self.redis_client.get_multiplexed_async_connection().await?;
+        let keys = self.list_mdm_dlq_keys(prefix).await?;
+
+        let mut all_items: Vec<MdmDeadLetter> = Vec::new();
+        for key in &keys {
+            let count: i64 = redis::cmd("LLEN").arg(key).query_async(&mut con).await?;
+            if count == 0 {
+                continue;
+            }
+            let raw: Vec<String> = redis::cmd("LRANGE")
+                .arg(key)
+                .arg(0i64)
+                .arg(count - 1)
+                .query_async(&mut con)
+                .await?;
+            for s in raw {
+                if let Ok(dl) = serde_json::from_str::<MdmDeadLetter>(&s) {
+                    all_items.push(dl);
+                }
+            }
+        }
+        all_items.sort_by_key(|a| std::cmp::Reverse(a.created_at));
+
+        let total = all_items.len();
+        let total_pages = if total == 0 {
+            0
+        } else {
+            total.div_ceil(page_size)
+        };
+        let start = page.saturating_mul(page_size);
+        let end = (start + page_size).min(total);
+        let items = if start >= total {
+            Vec::new()
+        } else {
+            all_items[start..end].to_vec()
+        };
+
+        Ok(MdmDeadLetterList {
+            items,
+            total,
+            page,
+            page_size,
+            total_pages,
+        })
+    }
+
+    /// A4: 重投单条 MDM 死信
+    ///
+    /// 找到 `event_id` 对应条目后，将其原始 `MasterDataEvent` 重新 XADD 回原 MDM Stream
+    /// （`topems:stream:master_data:{prefix}`），走标准消费链路（消费者组重新投递、
+    /// handler 幂等 UPSERT）。**保留事件原 event_id**（嵌在 payload JSON 内）以复用既有
+    /// 幂等语义；XADD `*` 生成新 message_id，重试计数从 0 重新累积。
+    /// 重投成功后从 DLQ 列表移除该条目。
+    pub async fn replay_mdm_dead_letter(&self, event_id: Uuid) -> EventResult<()> {
+        let target = self.find_mdm_dlq_entry(event_id).await?;
+        let Some((key, json, dead_letter)) = target else {
+            warn!(%event_id, "未找到 MDM 死信，无法重投");
+            return Err(EventError::ConfigError(format!(
+                "未找到 MDM 事件 {} 的死信记录",
+                event_id
+            )));
+        };
+
+        // 重投回原 Stream：复用 MasterDataEvent::publish 的 XADD 字段格式
+        // （event_id/payload/timestamp/source），保证与首次发布同构、可被消费者组解析。
+        dead_letter.event.publish().await.map_err(|e| {
+            EventError::PublishError(format!("MDM 死信重投回 Stream 失败: {}", e))
+        })?;
+
+        // 重投成功后从 DLQ 列表移除（按原始 JSON 精确匹配，仅删 1 条）
+        let mut con = self.redis_client.get_multiplexed_async_connection().await?;
+        let removed: i64 = redis::cmd("LREM")
+            .arg(&key)
+            .arg(1i64)
+            .arg(&json)
+            .query_async(&mut con)
+            .await?;
+        if removed > 0 {
+            info!(
+                %event_id,
+                domain = ?dead_letter.event.domain,
+                "MDM 死信重投成功并已从队列移除"
+            );
+        } else {
+            warn!(%event_id, "MDM 死信已重投，但队列项移除未命中（可能已被并发处理）");
+        }
+        Ok(())
+    }
+
+    /// A4: 列出 MDM DLQ 键，可选按域 prefix 过滤
+    async fn list_mdm_dlq_keys(&self, prefix: Option<&str>) -> EventResult<Vec<String>> {
+        let mut con = self.redis_client.get_multiplexed_async_connection().await?;
+        let keys = match prefix {
+            Some(p) => vec![format!("{}:{}", MDM_DLQ_KEY_PREFIX, p)],
+            None => {
+                let pattern = format!("{}:*", MDM_DLQ_KEY_PREFIX);
+                redis::cmd("KEYS").arg(&pattern).query_async(&mut con).await?
+            }
+        };
+        Ok(keys)
+    }
+
+    /// A4: 在所有 MDM DLQ 列表中按 event_id 查找条目
+    ///
+    /// 返回 (key, 原始 JSON 字符串, 解析后的 MdmDeadLetter)
+    async fn find_mdm_dlq_entry(
+        &self,
+        event_id: Uuid,
+    ) -> EventResult<Option<(String, String, MdmDeadLetter)>> {
+        let keys = self.list_mdm_dlq_keys(None).await?;
+        let mut con = self.redis_client.get_multiplexed_async_connection().await?;
+        for key in keys {
+            let count: i64 = redis::cmd("LLEN").arg(&key).query_async(&mut con).await?;
+            if count == 0 {
+                continue;
+            }
+            let batch = 200i64;
+            let mut idx: i64 = 0;
+            while idx < count {
+                let end = (idx + batch - 1).min(count - 1);
+                let raw: Vec<String> = redis::cmd("LRANGE")
+                    .arg(&key)
+                    .arg(idx)
+                    .arg(end)
+                    .query_async(&mut con)
+                    .await?;
+                for s in raw {
+                    if let Ok(dl) = serde_json::from_str::<MdmDeadLetter>(&s) {
+                        if dl.event.event_id == event_id {
+                            return Ok(Some((key.clone(), s, dl)));
+                        }
+                    }
+                }
+                idx = end + 1;
+            }
+        }
+        Ok(None)
     }
 
     pub async fn pop(&self, event_type: &str) -> EventResult<Option<DeadLetter>> {
@@ -909,5 +1080,87 @@ mod tests {
         let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
         let result = queue.get_stats().await;
         assert!(result.is_err(), "Redis 不可达时 get_stats 应返回 Err");
+    }
+
+    // ---- A4: MDM DLQ list/replay 单测 ----
+
+    fn make_mdm_event() -> MasterDataEvent {
+        use super::super::master_data::{MasterDataAction, MasterDataDomain};
+        MasterDataEvent::new(
+            Uuid::new_v4(),
+            MasterDataDomain::Material,
+            MasterDataAction::Created,
+            "mat-test-0001".to_string(),
+            "MAT0001".to_string(),
+            "erp",
+            serde_json::json!({"name": "test material"}),
+        )
+    }
+
+    fn make_mdm_dead_letter() -> MdmDeadLetter {
+        MdmDeadLetter {
+            event: make_mdm_event(),
+            retry_count: 3,
+            last_error: "max retries exceeded".to_string(),
+            created_at: Utc::now(),
+            last_attempt_at: Utc::now(),
+        }
+    }
+
+    #[test]
+    fn test_mdm_dead_letter_serde_roundtrip() {
+        let dl = make_mdm_dead_letter();
+        let event_id = dl.event.event_id;
+        let json = serde_json::to_string(&dl).expect("serialize");
+        let back: MdmDeadLetter = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.retry_count, 3);
+        assert_eq!(back.last_error, "max retries exceeded");
+        assert_eq!(back.event.event_id, event_id);
+        assert_eq!(back.event.master_data_id, "mat-test-0001");
+        assert_eq!(back.event.domain.prefix(), "mat");
+    }
+
+    #[test]
+    fn test_mdm_dead_letter_list_serde_roundtrip() {
+        let list = MdmDeadLetterList {
+            items: vec![make_mdm_dead_letter()],
+            total: 1,
+            page: 0,
+            page_size: 10,
+            total_pages: 1,
+        };
+        let json = serde_json::to_string(&list).expect("serialize");
+        let back: MdmDeadLetterList = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.total, 1);
+        assert_eq!(back.page_size, 10);
+        assert_eq!(back.items.len(), 1);
+        assert_eq!(back.items[0].event.domain.prefix(), "mat");
+    }
+
+    #[test]
+    fn test_mdm_list_page_size_zero_returns_config_error() {
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let rt = tokio::runtime::Runtime::new().expect("runtime");
+        let result = rt.block_on(queue.list_mdm_dead_letters(None, 0, 0));
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            EventError::ConfigError(msg) => assert!(msg.contains("page_size")),
+            other => panic!("Expected ConfigError, got {other:?}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_mdm_replay_returns_err_when_redis_unavailable() {
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let event_id = Uuid::new_v4();
+        let result = queue.replay_mdm_dead_letter(event_id).await;
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 replay 应返回 Err（连接失败而非假成功）"
+        );
     }
 }

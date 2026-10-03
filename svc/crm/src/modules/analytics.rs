@@ -82,7 +82,8 @@ pub async fn dashboard_overview(
 #[derive(Debug, Serialize)]
 pub struct CrmDashboardStats {
     pub total_opportunities: i64,
-    pub won_amount: f64,
+    // B3: 赢单金额（SUM(crm.opportunities.value)）f64 -> Decimal；转化率/平均周期为比率/天数保留 f64
+    pub won_amount: rust_decimal::Decimal,
     pub conversion_rate: f64,
     pub average_cycle: f64,
     pub opportunity_stages: Vec<NameValue>,
@@ -117,12 +118,12 @@ pub async fn dashboard_aggregate(State(state): State<ApiState>) -> impl IntoResp
             .await
             .unwrap_or(0);
 
-    let won_amount: f64 = sqlx::query_scalar(
+    let won_amount: rust_decimal::Decimal = sqlx::query_scalar(
         "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL AND value IS NOT NULL",
     )
     .fetch_one(db)
     .await
-    .unwrap_or(0.0);
+    .unwrap_or(rust_decimal::Decimal::ZERO);
 
     let won_count: i64 = sqlx::query_scalar(
         "SELECT COUNT(*) FROM crm.opportunities WHERE stage = 'closed_won' AND deleted_at IS NULL",

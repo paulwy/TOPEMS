@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -67,14 +68,16 @@ pub struct CustomerWithDetails {
 pub struct FunnelStage {
     pub stage: String,
     pub count: i64,
-    pub total_value: Option<f64>,
+    // B3: 漏斗阶段商机金额（SUM(crm.opportunities.value)）f64 -> Decimal，对齐 U6 口径
+    pub total_value: Option<Decimal>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SalesForecast {
     pub months: i32,
-    pub total_forecast: f64,
-    pub last_month_actual: f64,
+    // B3: 预测/实际金额 f64 -> Decimal
+    pub total_forecast: Decimal,
+    pub last_month_actual: Decimal,
     pub monthly_forecast: Vec<serde_json::Value>,
 }
 
@@ -152,7 +155,7 @@ mod tests {
     }
     #[test] fn rt_funnel_stage() {
         roundtrip(&FunnelStage {
-            stage: "Proposal".into(), count: 20, total_value: Some(500_000.0),
+            stage: "Proposal".into(), count: 20, total_value: Some(Decimal::new(50000000, 2)),
         });
     }
     #[test] fn rt_funnel_stage_no_value() {
@@ -160,11 +163,20 @@ mod tests {
     }
     #[test] fn rt_sales_forecast() {
         roundtrip(&SalesForecast {
-            months: 12, total_forecast: 12_000_000.0, last_month_actual: 900_000.0,
+            months: 12,
+            total_forecast: Decimal::new(1200000000, 2),
+            last_month_actual: Decimal::new(90000000, 2),
             monthly_forecast: vec![
-                serde_json::json!({"month": "2025-01", "amount": 1_000_000}),
-                serde_json::json!({"month": "2025-02", "amount": 1_100_000}),
+                serde_json::json!({"month": "2025-01", "amount": "1000000.00"}),
+                serde_json::json!({"month": "2025-02", "amount": "1100000.00"}),
             ],
         });
+    }
+
+    /// B3 看板金额精度断言：Decimal 求和无 f64 误差。
+    #[test] fn dashboard_amount_precision_exact() {
+        let parts = [Decimal::new(10000, 2), Decimal::new(20000, 2), Decimal::new(50, 2)];
+        let sum: Decimal = parts.iter().copied().sum();
+        assert_eq!(sum, Decimal::new(30050, 2));
     }
 }

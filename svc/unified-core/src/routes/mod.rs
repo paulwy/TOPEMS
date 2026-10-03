@@ -20,6 +20,8 @@ mod migration;
 // mod monitor;
 // V68.1 A2.2: routes/plugin.rs 适配层依赖 modules::plugin（已拆到 svc/plugin-registry 8096），这里不再载入
 // mod plugin;
+// A4: MDM 主数据死信队列管理 API（list/replay）
+mod mdm_dlq;
 mod system;
 // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
 mod sse;
@@ -175,6 +177,8 @@ pub fn create_routes(
         // V68.1 A2.1: monitor 已拆到 svc/monitor（端口 8095）；后续通过服务发现/代理转发 /api/monitor/* → 8095
         // .merge(monitor::monitor_routes(state))
         .merge(system::system_routes(state))
+        // A4: MDM 主数据死信队列管理 API（list=system:read / replay=system:write）
+        .merge(mdm_dlq::mdm_dlq_routes(state))
         .merge(doc::doc_routes(state))
         // V66.1：Automation 编排虚拟服务（planned 阶段，501 Not Implemented）
         .merge(automation::automation_routes(state))

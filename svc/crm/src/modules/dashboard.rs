@@ -4,6 +4,7 @@ use axum::{
     Json, Router,
 };
 use chrono::{Datelike, TimeZone, Utc};
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -302,14 +303,14 @@ async fn get_sales_funnel(
         .await
         .unwrap_or(0);
 
-        let total_value: Option<f64> = sqlx::query_scalar(
+        let total_value: Option<Decimal> = sqlx::query_scalar(
             "SELECT COALESCE(SUM(value), 0) FROM crm.opportunities WHERE stage = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND value IS NOT NULL"
         )
         .bind(stage)
         .bind(tenant_opt)
         .fetch_optional(&mut **txn)
         .await
-        .unwrap_or(Some(0.0));
+        .unwrap_or(Some(Decimal::ZERO));
 
         funnel_stages.push(FunnelStage {
             stage: stage.to_string(),
@@ -362,10 +363,10 @@ async fn get_sales_forecast(
         };
         let month_end = month_start + chrono::Duration::days(31);
 
-        let weighted_value: Option<f64> = sqlx::query_scalar(
+        let weighted_value: Option<Decimal> = sqlx::query_scalar(
             r#"
-            SELECT COALESCE(SUM(value * probability / 100), 0) 
-            FROM crm.opportunities 
+            SELECT COALESCE(SUM(value * probability / 100), 0)
+            FROM crm.opportunities
             WHERE ($3::uuid IS NULL OR tenant_id = $3) AND close_date >= $1 AND close_date < $2 AND stage NOT IN ('closed_won', 'closed_lost')
             "#,
         )
@@ -374,12 +375,12 @@ async fn get_sales_forecast(
         .bind(tenant_opt)
         .fetch_optional(&mut **txn)
         .await
-        .unwrap_or(Some(0.0));
+        .unwrap_or(Some(Decimal::ZERO));
 
-        forecast_data.push((month_start, weighted_value.unwrap_or(0.0)));
+        forecast_data.push((month_start, weighted_value.unwrap_or(Decimal::ZERO)));
     }
 
-    let total_forecast: f64 = forecast_data.iter().map(|(_, v)| v).sum();
+    let total_forecast: Decimal = forecast_data.iter().map(|(_, v)| v).sum();
 
     let last_month = Utc::now() - chrono::Duration::days(30);
     let last_month_start = if let Some(day1) = last_month.date_naive().with_day(1) {
@@ -393,10 +394,10 @@ async fn get_sales_forecast(
     };
     let last_month_end = last_month_start + chrono::Duration::days(31);
 
-    let last_month_actual: Option<f64> = sqlx::query_scalar(
+    let last_month_actual: Option<Decimal> = sqlx::query_scalar(
         r#"
-        SELECT COALESCE(SUM(value), 0) 
-        FROM crm.opportunities 
+        SELECT COALESCE(SUM(value), 0)
+        FROM crm.opportunities
         WHERE ($3::uuid IS NULL OR tenant_id = $3) AND close_date >= $1 AND close_date < $2 AND stage = 'closed_won'
         "#,
     )
@@ -405,12 +406,12 @@ async fn get_sales_forecast(
     .bind(tenant_opt)
     .fetch_optional(&mut **txn)
     .await
-    .unwrap_or(Some(0.0));
+    .unwrap_or(Some(Decimal::ZERO));
 
     let forecast = SalesForecast {
         months: months as i32,
         total_forecast,
-        last_month_actual: last_month_actual.unwrap_or(0.0),
+        last_month_actual: last_month_actual.unwrap_or(Decimal::ZERO),
         monthly_forecast: forecast_data
             .into_iter()
             .map(|(date, value)| {
