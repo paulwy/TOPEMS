@@ -2,12 +2,14 @@
 
 pub mod approval;
 pub mod category;
+pub mod delegate;
 pub mod history;
 pub mod instance;
 pub mod models;
 pub mod monitor;
 pub mod openapi;
 pub mod record;
+pub mod rule;
 pub mod setting;
 pub mod statistics;
 pub mod task;
@@ -155,6 +157,49 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_flow_delegates (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            delegator_id UUID NOT NULL,
+            attorney_id UUID NOT NULL,
+            workflow_id UUID,
+            scope VARCHAR(16) DEFAULT 'all',
+            start_date DATE,
+            end_date DATE,
+            reason TEXT,
+            status VARCHAR(16) DEFAULT 'active',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_flow_rules (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(128) NOT NULL,
+            workflow_id UUID,
+            node_id VARCHAR(64),
+            rule_type VARCHAR(32) DEFAULT 'condition',
+            condition JSONB NOT NULL DEFAULT '{}'::jsonb,
+            action JSONB NOT NULL DEFAULT '{}'::jsonb,
+            priority INTEGER DEFAULT 0,
+            status VARCHAR(16) DEFAULT 'active',
+            description TEXT,
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+            deleted_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_workflows_status ON core_workflows(status)")
         .execute(pool)
         .await?;
@@ -180,6 +225,21 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
     sqlx::query(
         "CREATE INDEX IF NOT EXISTS idx_core_flow_categories_parent ON core_flow_categories(parent_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_flow_delegates_delegator ON core_flow_delegates(delegator_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_flow_delegates_attorney ON core_flow_delegates(attorney_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_flow_rules_workflow ON core_flow_rules(workflow_id)",
     )
     .execute(pool)
     .await?;

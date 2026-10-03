@@ -243,6 +243,44 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             "/variables/global/{workflow_id}",
             get(modules::flow::variable::get_global_variables),
         )
+        // ===== Flow delegate（审批委托，契约 workflow/delegate.ts）=====
+        .route("/delegates", get(modules::flow::delegate::list_delegates))
+        .route(
+            "/delegates/my",
+            get(modules::flow::delegate::get_my_delegates),
+        )
+        .route(
+            "/delegates/my/attorneys",
+            get(modules::flow::delegate::get_my_attorneys),
+        )
+        .route(
+            "/delegates/active",
+            get(modules::flow::delegate::get_active_delegate),
+        )
+        .route(
+            "/delegates/check/{workflowId}",
+            get(modules::flow::delegate::check_delegation),
+        )
+        .route(
+            "/delegates/{id}",
+            get(modules::flow::delegate::get_delegate),
+        )
+        .route(
+            "/delegates/{id}/workflows",
+            get(modules::flow::delegate::get_delegate_workflows),
+        )
+        // ===== Flow rule（条件规则，契约 workflow/rule.ts）=====
+        .route("/rules", get(modules::flow::rule::list_rules))
+        .route(
+            "/rules/workflow/{workflowId}",
+            get(modules::flow::rule::get_rules_by_workflow),
+        )
+        .route(
+            "/rules/node/{workflowId}/{nodeId}",
+            get(modules::flow::rule::get_rules_by_node),
+        )
+        .route("/rules/type", get(modules::flow::rule::get_rules_by_type))
+        .route("/rules/{id}", get(modules::flow::rule::get_rule))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("workflow:read"),
@@ -280,6 +318,39 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route(
             "/variables/global/{workflow_id}/{key}",
             post(modules::flow::variable::set_global_variable),
+        )
+        // ===== Flow delegate 写操作 =====
+        .route("/delegates", post(modules::flow::delegate::create_delegate))
+        .route(
+            "/delegates/{id}/activate",
+            post(modules::flow::delegate::activate_delegate),
+        )
+        .route(
+            "/delegates/{id}/deactivate",
+            post(modules::flow::delegate::deactivate_delegate),
+        )
+        .route(
+            "/delegates/{id}",
+            put(modules::flow::delegate::update_delegate)
+                .delete(modules::flow::delegate::delete_delegate),
+        )
+        // ===== Flow rule 写操作 =====
+        .route("/rules", post(modules::flow::rule::create_rule))
+        .route(
+            "/rules/batch-update",
+            post(modules::flow::rule::batch_update_rules),
+        )
+        .route(
+            "/rules/{id}/activate",
+            post(modules::flow::rule::activate_rule),
+        )
+        .route(
+            "/rules/{id}/deactivate",
+            post(modules::flow::rule::deactivate_rule),
+        )
+        .route(
+            "/rules/{id}",
+            put(modules::flow::rule::update_rule).delete(modules::flow::rule::delete_rule),
         )
         .route("/tasks/{id}/claim", post(modules::flow::task::claim_task))
         .route(

@@ -486,3 +486,19 @@
   category 全链路 + variable upsert 冲突更新 + 历史快照全通过；表建在 flow schema
   （server SEARCH_PATH=flow 优先，与旧表 public 并存可解析）；MES 看板回归 401
 - 遗留：delegates/form-definitions/rules/notification 增强待前端流程设计器落地后补
+
+## 2026-10-03 workflow 增强第二批：delegate + rule 模块（P2，commit 待推）
+
+- 背景：workflow 增强契约（categories/delegates/form-definitions/rules/variables）补齐中，
+  本轮补 delegate（审批委托）+ rule（条件规则）；definition.ts 经核实走 /workflows 已实现路由无需补
+- 新增 svc/unified-core/src/modules/flow/delegate.rs：core_flow_delegates 表 + 11 handler
+  （list/get/create/update/delete/activate/deactivate/my/attorneys/active/workflows/check，
+  Claims.sub 取当前用户；有效期 start_date/end_date 过滤；workflow_id 空=全部流程）
+- 新增 svc/unified-core/src/modules/flow/rule.rs：core_flow_rules 表 + 10 handler
+  （list/get/create/update/delete + workflow/node/type 三查询 + activate/deactivate + batch-update）
+- 经验：list 过滤统一用固定参数（$n::uuid IS NULL OR col=$n）模式，避免动态 SQL + Box<dyn Encode>
+  编译复杂性（上轮 category/variable 已定型）；batch 反序列化需 DTO derive Deserialize
+- 验证：cargo check/clippy 0 错一次通过；重启 health 200 modules=31；delegates/rules
+  读+写 10 条路由全 401（挂载）；表建在 flow schema；psql DML 全链路（insert/update/count）通过
+- 遗留：form-definitions 未见独立前端契约（definition.ts 走 /workflows 已满足）；
+  notification 类规则增强待流程设计器落地
