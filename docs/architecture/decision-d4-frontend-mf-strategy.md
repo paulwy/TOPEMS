@@ -134,3 +134,25 @@
 | 16.48MB/5MB 预算口径无实证导致验收争议 | 验收统一以 `ci.yml:1639` 实测参数（total ≤ 30M 等）为准（§2.4 已注明无出处数值不采用） |
 
 **回退路径**：T1.1 单行 revert 即可恢复 build:core；D4-1 归档移动不删除（git 历史 + 原路径可恢复）；D4-2/3 依赖与配置改动单 commit 可 revert；全程无数据迁移。
+
+---
+
+## 8. 实施状态（2026-10-03）
+
+> 本节为 R3「文档与实现对齐闭环」追加，记录 D4 去 MF 化落地的最终 commit 与 R1 实测；不改动上文决策内容。
+
+- **方案要点**：选项 B——移除 remote 声明、回归模块化单体 SPA，归档 MF 死代码（RemoteLoader/MicroAppRouter/registry），移除 `@module-federation/vite` workaround 插件，保留原生 dynamic import 扩展点。
+- **实施 commit**：
+  - `f994a5075` T1：移除失效 `topems-core` 构建链 + 归档 MF 运行时空壳（build:core 移除、@module-federation 归零）；
+  - `2a71563ef` T2：系统性文档漂移修订（overview 前端技术栈表、microfrontend-architecture-decision.md 重写）。
+- **验证结果（R1 前端基线 `f7c3d687d`）**：
+  - `@module-federation` grep = 0 + 依赖树空（runtime/vite 均无节点）；
+  - `build:host`（tsc && vite build）exit 0，141s，6411 modules；
+  - `typecheck`（tsc --noEmit）exit 0，96s；
+  - vitest：6528 passed / 3 failed（既有基线 = GisMapTemplate × react-leaflet mock 缺 `useMapEvents`，与 MF 移除无关）；
+  - bundle 门禁：TOTAL 16.43MB / 预算 30M，全 chunk 预算内。
+- **偏差/残留**：
+  - F-15（decision.md 称 @module-federation/vite 已删而实为硬依赖）随依赖移除 + T2 重写 decision.md 消除；
+  - F-46（850 行 workaround 插件）/ F-73（MicroAppRouter/RemoteLoader 死代码）随 MF 空壳归档消除；
+  - `build:shared-types` DTS 步既有 TS2688（dompurify 类型）环境问题复现，与 MF 无关（web 走源码 alias 不受影响）；
+  - mobile/desktop 三端需原生工具链，R1 范围不跑，留待补测。

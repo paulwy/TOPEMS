@@ -139,3 +139,19 @@
 | Consul"预留"被误认为已启用 | `.env.example` 注释 + 文档明确默认关状态 |
 
 **回退路径**：U9.1/U9.2 均为删除（git 历史可恢复）；U9.5 校验脚本可独立停用；全程无数据迁移、无运行时行为变化（移除对象本就未接线/默认关）。
+
+---
+
+## 8. 实施状态（2026-10-03）
+
+> 本节为 R3「文档与实现对齐闭环」追加，记录 D5 服务发现收敛落地的最终 commit 与验证；不改动上文决策内容。
+
+- **方案要点**：选项 B——静态配置为主（`config/services.yaml` 唯一权威源 + nginx + env `SERVICE_URL`），移除 zookeeper/eureka/nacos 未接线残留；consul（预留扩展点，默认关）+ etcd（ai/portal opt-in 配置管理）保留登记。
+- **实施 commit**（阶段 2 U9，两批）：
+  - `f7f7dcf26` 依赖移除 + 代码删除：`lib/shared-event` zookeeper 依赖与 `zookeeper/mod.rs`+tests、unified-core 三个 discovery 实现 + eureka/nacos_watch 测试 + mod 声明，Cargo.lock 条目归零；
+  - `104da3c39` deploy 拓扑清理：zookeeper/eureka/nacos-compose.yml + `eureka-mock/` 删除、deploy README 收敛、`.env.example` CONSUL 预留标注、code-wiki B2 + overview 服务发现章节对齐最终形态。
+- **验证结果**：cargo check --workspace 0 错误、clippy/test 编译绿、双门禁 exit 0、deploy grep 残留 = 0；**M7 zookeeper future-incompat 警告消除**（依赖移出构建图，R1 后端基线确认）；`deploy/docker/` 现仅余 consul（预留）+ etcd（opt-in）两套。
+- **偏差/残留**：
+  - **U9.5 一致性校验脚本（services.yaml ↔ ports.env ↔ nginx）未做**——D5 独立可停用项，可后续单独立项；
+  - Consul「预留扩展点」与「etcd opt-in」已在 `.env.example`/overview/code-wiki 明确标注，避免误认为已启用；
+  - F-56（Consul 默认关走 env）经 D5 决策接受为默认形态并文档化，闭环。

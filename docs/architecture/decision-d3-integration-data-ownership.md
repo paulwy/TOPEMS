@@ -132,3 +132,24 @@
 | 事件接线后直写残留（部分 handle 漏改） | 验收项 1/2 双重门禁（grep 零直写 + 接线清单核对） |
 
 **回退路径**：U3.3 按 handle 分批接线（每批可独立 revert）；U3.1 表归属收敛可先建新表复制数据再切（保留原表至验证）；U3.5 假同步移除前 git 保留（恢复 = revert 单文件）；全程无破坏性数据操作。
+
+---
+
+## 8. 实施状态（2026-10-03）
+
+> 本节为 R3「文档与实现对齐闭环」追加，记录 D3 直写改造、假同步处置与 qa_lab 归属仲裁的最终落地状态；不改动上文决策内容。
+
+- **方案要点**：9 处直写 → qms/ehs/lims HTTP 编排 + 7 业务事件接线（选项 A）；假同步入口下线（选项 B 为主）；撤销 integration 对 qms/ehs 的 allow。
+- **实施 commit**（阶段 2 U3 + U3b）：
+  - `9b1f7c7d1` U3：9 处跨 schema 直写改 HTTP 编排 + 7 业务事件接线；
+  - `292298e75` U3：qms/ehs/lims internal 集成端点挂路由 + qa_lab_tasks 显式 public；
+  - `3bec2a840` U3：lims/ehs data_sync 假同步入口下线（`data_sync.rs:217-218,240` 注释声明不再写脏 completed 记录）；
+  - `61fbf68ac` U3 收尾：撤销 integration 白名单（直写=0 后）；
+  - U3b 步骤1 `4e2886840`：lims 18 处无前缀引用显式化 `public.qa_lab_*`；
+  - U3b 步骤2 `9b2c3a7aa`：DROP `qms.qa_lab_*`/`lims.qa_lab_*` 骨架表 + 从 `schema_defense.rs` 移除条目。
+- **验证结果**：integration 对 qms/ehs schema 直写 = 0（`grep` 仅余 `qms_lims_ehs.rs:4` 历史说明注释）；integration 白名单撤销后双门禁 exit 0。
+- **关键偏差（qa_lab_* 归属）**：上文 §2.3/U3.1 原建议收敛到 **lims**（逻辑业务维护方）。**实测终态为 public 唯一事实标准**——09-21 cleanup 迁移已补建 public 14 列标准表、lims 全部读写 public、qms 零引用；用户拍板选 **方案 B**（迁移收敛），经 U3b 步骤1/2 落地：qms/lims 空骨架表已 DROP，lims `models/mod.rs` 等 18 处无前缀引用显式切到 public。即 D3 建议的「lims 归属」被后续迁移链事实推翻，以 public 为准。
+- **偏差/残留（R2）**：
+  - **链④ 质量链编排 FAIL**：integration 按 D3 契约调裸路径 `/api/internal/*`，但 lims/ehs/qms 把 internal 路由嵌在 service api_prefix（`/api/lims` 等）下，实测拼接路径 `/api/lims/api/internal/lims/samples/integration` 才 200——**路径契约回归**，需统一 D3 契约与各服务挂载方式。
+  - 落库再被 `ck_qa_lab_samples_status_standard` 窄约束拦（status='registered'）——系统性 `ck_*_status_standard` 漂移，见总览残留待办。
+  - 历史脏 sync_records 未清洗（需另出迁移）；HTTP 编排链路 e2e 待 R4 环境（nginx/portal 在线）复测。

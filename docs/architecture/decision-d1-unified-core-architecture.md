@@ -140,3 +140,22 @@
 | 文档回写滞后造成新一轮漂移 | U1.5 与代码删除同批提交，验收项 3/5 强制关联 |
 
 **回退路径**：停挂阶段 = 单文件 git revert；删除阶段 = 从 git 历史恢复模块代码（无数据迁移，投影只读）；已撤销的 boundary allow 可按原值恢复。
+
+---
+
+## 8. 实施状态（2026-10-03）
+
+> 本节为 R3「文档与实现对齐闭环」追加，记录 D1 方案落地的最终 commit、验证结果与偏差；不改动上文决策内容。
+
+- **方案要点**：推荐 C（灰度下架）→ 终态 A（瘦身）。停挂 24 条业务投影路由 → 删除 23 个业务镜像模块与 180 处跨 schema 直读 → 撤销 unified-core 对 21 个业务 schema 的 boundary allow。
+- **实施 commit**（阶段 2 U1）：
+  - `89351e062` U1-b1 停挂业务投影路由（独立模式移除 24 条业务 merge + `/ws/mes/dashboard`）；
+  - `dea650b55` U1-b2 删除 23 业务镜像模块与 180 处跨读 + 解引用 svc/server mes 借用；
+  - `4a41df997` U1-b2 补全 24 个业务投影 routes 文件删除；
+  - `2ace368f3` U1-b3 撤销 unified-core 21 业务 schema 跨读白名单。
+- **验证结果**：独立模式业务路由 = 0；`svc/unified-core/src/modules/` 现仅余平台域模块（audit/automation/communication/doc/file/flow/iam/master/menu/settings/subscription/system_audit/tenant 等），无 erp/hrm/wms/crm/qms 业务镜像；PY 门禁 exit 0（unified-core 119 引用全 public/自有）、NODE 门禁 PASS；`cargo check --workspace` 0 错误（R1 基线 `f7c3d687d`/`470a37392`）。
+- **联动**：U5 RLS（`1404532a8`）在 unified-core 数据面收敛平台域后启动 finance RLS 与 tenant_rls 修复。
+- **偏差/残留**：
+  - :8099 直跑时 mes 看板 REST 端点 404（生产 nginx 转独立服务无影响，已登记）；
+  - F-11（unified-core analytics 死模块）/ F-28（unified-core 直读 ai schema）随 23 业务镜像模块一并删除，确认消除；
+  - search→erp 跨读（F-37）不在 D1 范围，仍保留于临时白名单，见总览残留待办。

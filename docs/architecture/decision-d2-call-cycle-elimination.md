@@ -167,3 +167,24 @@
 | 过渡期裸 reqwest 无超时放大故障 | U2.4 补 30s 总超时（防御补丁，随 U2.1-U2.3 完成可移除） |
 
 **回退路径**：事件化按方向独立提交——任一方向可单独 revert 回 HTTP 调用（spawn 代码保留在 git 历史）；环 3 本地化可在迁移前双写（本地表 + portal 同步），验证后切流量，回退仅需切回代理；全程无数据迁移风险（事件化不搬表，环 3 偏好表迁移量小且可反向）。
+
+---
+
+## 8. 实施状态（2026-10-03）
+
+> 本节为 R3「文档与实现对齐闭环」追加，记录 D2 三环消除落地的最终 commit、R2 实测结果与偏差；不改动上文决策内容。
+
+- **方案要点**：逐环定策——环1 erp↔hrm = C（hrm→erp 凭证改 `HrmPayrollPosted` 事件，erp→hrm 通讯录只读 HTTP 保留）；环2 erp↔mes = A（双向事件化）；环3 portal↔unified-core = C（偏好本地化 `core.user_preferences`，portal 只读代理）。
+- **实施 commit**（阶段 2 U2，四提交）：
+  - `a1c4e8a01` 地基：新增 4 类事件类型 + `event-driven.md §3.11` 登记；
+  - `173622037` 环1：hrm 工资凭证改发 `HrmPayrollPosted`，erp 幂等守卫；
+  - `18077bf45` 环2：`ErpProductionOrderDispatched`→mes 建单、`MesWorkReportSubmitted`→erp 更新进度；
+  - `269d37d44` 环3：偏好本地化 core.user_preferences，portal 只读代理。
+- **验证结果**：
+  - 代码侧：4 类事件在 `lib/shared-event/src/event/event_types.rs:191-203` 落地（含 Payload 结构与 roundtrip 测试）；环边 HTTP 残留 = 0（`hrm/payroll.rs:959`、`erp/production_order.rs:515`、`mes/work_report.rs:612` 现仅注释）；shared-event 360 passed + 3 ignored（R1）；门禁 PASS。
+  - R2 真 PG 实测（`38232be15`）：链① 工资→凭证 **PASS**（事件到达 + NUMERIC 借贷平衡 10000.0000 + 同 run_id 幂等跳过）；链③ 报工→进度 **PASS**（进度 0→50.00 + 幂等账本恒 1 行）。
+- **偏差/残留**：
+  - **链② 订单→工单 FAIL（R2 回归 bug）**：`svc/mes/src/event_handlers.rs:62,112` 把 `erp_order_id` 以 text 绑定 uuid 列，`ErpProductionOrderDispatched` 全失败——R2 在真 PG 上首次暴露（TODO 原注「DB 级幂等仅代码论证」）。建议 bind 改 `Uuid`。登记入总览残留待办。
+  - `IamUserPreferencesUpdated` 仅定义未实发（AppState 无 event_publisher），环3 订阅接线待补。
+  - **DLQ 兜底 R2 未触发**：两起真实 handler Err（链②/链④）均被 ACK，`topems:dlq:*` 为空——D2 DLQ 设计 vs 实测行为不一致，待编排核查。
+  - erp→hrm 通讯录只读 HTTP 边按决策 C 保留（单向、非环）；运行时拓扑矩阵 CSV 仍列旧双向环边，待 R4 在线 `--collect` 重生成。
