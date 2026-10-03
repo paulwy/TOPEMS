@@ -56,10 +56,12 @@ async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Re
     );
 
     // 幂等去重：同一 erp_order_id 已建单则直接收敛返回
-    let existing: Option<String> = sqlx::query_scalar(
+    // source_order_id 列为 uuid（见 bootstrap/mod.rs 与 model），须直接绑定 Uuid，
+    // 不能 .to_string() 转 text——否则触发 `operator does not exist: uuid = text`（R-1）。
+    let existing: Option<Uuid> = sqlx::query_scalar(
         "SELECT source_order_id FROM production_orders WHERE source_order_id = $1 LIMIT 1",
     )
-    .bind(payload.erp_order_id.to_string())
+    .bind(payload.erp_order_id)
     .fetch_optional(db)
     .await
     .map_err(|e| format!("幂等查询 source_order_id 失败: {}", e))?;
@@ -109,7 +111,7 @@ async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Re
     .bind(payload.product_name.unwrap_or_default())
     .bind(payload.product_code.unwrap_or_default())
     .bind(quantity_i32)
-    .bind(payload.erp_order_id.to_string())
+    .bind(payload.erp_order_id)
     .bind(&payload.order_no)
     .bind(planned_start.date_naive())
     .bind(planned_end.date_naive())
