@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use num_traits::cast::ToPrimitive;
+use rust_decimal::prelude::FromPrimitive;
 use serde::Deserialize;
 use sqlx::Row;
 use std::sync::Arc;
@@ -96,7 +97,10 @@ fn publish_inventory_updated(
         changed_at,
         available_quantity,
         min_quantity,
-        total_value,
+        // U6-2：库存总值 f64 -> Decimal
+        total_value: total_value.map(|v| {
+            rust_decimal::Decimal::from_f64(v).unwrap_or(rust_decimal::Decimal::ZERO)
+        }),
     };
 
     tokio::spawn(async move {

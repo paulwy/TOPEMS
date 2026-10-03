@@ -297,7 +297,7 @@ impl CrmEventHandlers {
         // 数据源：OpportunityWon 事件（crm 商机赢单发布），幂等按 invoice_no=OPP-{opportunity_id}
         let invoice_no = format!("OPP-{}", payload.opportunity_id);
         let due_date = now + chrono::Duration::days(30);
-        let billing_amount = payload.amount.unwrap_or(0.0);
+        let billing_amount = payload.amount.unwrap_or(rust_decimal::Decimal::ZERO);
 
         let existing_bill: Option<(uuid::Uuid,)> =
             sqlx::query_as("SELECT id FROM crm.billing_records WHERE invoice_no = $1")
@@ -377,7 +377,7 @@ impl CrmEventHandlers {
             event.trace_id
         );
 
-        if payload.amount <= 0.0 {
+        if payload.amount <= rust_decimal::Decimal::ZERO {
             return Ok(());
         }
 
@@ -765,7 +765,7 @@ impl CrmEventHandlers {
             .unwrap_or_else(|| "confirmed".to_string());
         let order_amount = payload
             .payable_amount
-            .unwrap_or_else(|| payload.total_amount.unwrap_or(0.0));
+            .unwrap_or_else(|| payload.total_amount.unwrap_or(rust_decimal::Decimal::ZERO));
         let customer_id = payload.customer_id;
 
         let result = sqlx::query(

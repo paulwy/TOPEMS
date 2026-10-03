@@ -4,6 +4,8 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
+use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::Decimal;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
@@ -264,8 +266,8 @@ pub async fn create_purchase_order(
             order_no: purchase_order.order_no.clone(),
             supplier_id: Some(purchase_order.supplier_id),
             supplier_name: Some(purchase_order.supplier_name.clone()),
-            total_amount: Some(purchase_order.total_amount),
-            payable_amount: Some(purchase_order.payable_amount),
+            total_amount: Some(Decimal::from_f64(purchase_order.total_amount).unwrap_or(Decimal::ZERO)),
+            payable_amount: Some(Decimal::from_f64(purchase_order.payable_amount).unwrap_or(Decimal::ZERO)),
             created_by: Some(claims.sub.clone()),
             tenant_id,
         };
@@ -474,8 +476,8 @@ pub async fn approve_purchase_order(
                     order_no: order.order_no.clone(),
                     supplier_id: Some(order.supplier_id),
                     supplier_name: Some(order.supplier_name.clone()),
-                    total_amount: Some(order.total_amount),
-                    payable_amount: Some(order.payable_amount),
+                    total_amount: Some(Decimal::from_f64(order.total_amount).unwrap_or(Decimal::ZERO)),
+                    payable_amount: Some(Decimal::from_f64(order.payable_amount).unwrap_or(Decimal::ZERO)),
                     approved_by: Some(claims.sub.clone()),
                     approved_at: Some(Utc::now()),
                     tenant_id,

@@ -1116,9 +1116,9 @@ impl ErpEventHandlers {
         let now = chrono::Utc::now();
         let settled_at = payload.settled_at.unwrap_or(now);
         let period = settled_at.format("%Y-%m").to_string();
-        let settled_amount = payload.settled_amount.unwrap_or(0.0);
+        let settled_amount = payload.settled_amount.unwrap_or(rust_decimal::Decimal::ZERO);
 
-        if settled_amount <= 0.0 {
+        if settled_amount <= rust_decimal::Decimal::ZERO {
             tracing::info!(
                 "[erp] 项目结算金额为 0，跳过凭证生成 - project_id={}",
                 payload.project_id
@@ -1163,7 +1163,7 @@ impl ErpEventHandlers {
 
         let voucher_id = uuid::Uuid::new_v4();
         let summary = format!("项目{}结算", payload.project_name);
-        let cost_amount = settled_amount * 0.7;
+        let cost_amount = settled_amount * rust_decimal::Decimal::new(7, 1);
 
         let voucher_result = sqlx::query(
             r#"INSERT INTO erp.financial_vouchers
@@ -1308,7 +1308,7 @@ impl ErpEventHandlers {
         .bind(payload.customer_id)
         .bind(&payload.customer_name)
         .bind(now)
-        .bind(payload.amount.unwrap_or(0.0))
+        .bind(payload.amount.unwrap_or(rust_decimal::Decimal::ZERO))
         .bind(format!("from_crm_opportunity:{}", payload.opportunity_id))
         .bind(now)
         .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
@@ -1420,9 +1420,9 @@ impl ErpEventHandlers {
         } else {
             now.format("%Y-%m").to_string()
         };
-        let refund_amount: f64 = payload.refund_amount;
+        let refund_amount = payload.refund_amount;
 
-        if refund_amount <= 0.0 {
+        if refund_amount <= rust_decimal::Decimal::ZERO {
             tracing::info!(
                 "[erp] 退款金额为 0，跳过凭证生成 - return_no={}",
                 payload.return_no
@@ -1542,7 +1542,7 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
-        if payload.amount <= 0.0 {
+        if payload.amount <= rust_decimal::Decimal::ZERO {
             tracing::info!(
                 "[erp] 收款金额为 0，跳过应收账款核销 - payment_no={}",
                 payload.payment_no
@@ -1659,7 +1659,7 @@ impl ErpEventHandlers {
             event.trace_id
         );
 
-        if payload.amount <= 0.0 {
+        if payload.amount <= rust_decimal::Decimal::ZERO {
             tracing::info!(
                 "[erp] 付款金额为 0，跳过应付账款核销 - payment_no={}",
                 payload.payment_no

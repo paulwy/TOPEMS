@@ -214,7 +214,7 @@ impl SrmEventHandlers {
                      updated_at = EXCLUDED.updated_at",
             )
             .bind(supplier_id)
-            .bind(payload.total_amount.unwrap_or(0.0))
+            .bind(payload.total_amount.unwrap_or(rust_decimal::Decimal::ZERO))
             .bind(Utc::now().date_naive())
             .bind(Utc::now())
             .execute(&self.db)

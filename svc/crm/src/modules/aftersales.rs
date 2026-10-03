@@ -1254,7 +1254,8 @@ pub async fn complete_return(
                 let return_no = return_record.return_no.clone();
                 let customer_id = return_record.customer_id;
                 let order_id = return_record.order_id;
-                let refund_amount = return_record.refund_amount.to_f64().unwrap_or(0.0);
+                // U6-2：refund_amount 已是 Decimal，直接透传
+                let refund_amount = return_record.refund_amount;
                 let return_type = return_record.return_type.clone();
                 let status = return_record.status.clone();
                 let completed_by = operator_id;
@@ -2525,7 +2526,8 @@ pub async fn confirm_return(
                     let return_no = return_record.return_no.clone();
                     let customer_id = return_record.customer_id;
                     let order_id = return_record.order_id;
-                    let refund_amount = return_record.refund_amount.to_f64().unwrap_or(0.0);
+                    // U6-2：refund_amount 已是 Decimal，直接透传
+                let refund_amount = return_record.refund_amount;
                     let return_type = return_record.return_type.clone();
                     let status = return_record.status.clone();
                     let completed_by = operator_id;

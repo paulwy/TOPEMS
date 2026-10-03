@@ -9,6 +9,7 @@
 //! - ERP 订阅 ReconciliationCreated/Approved/Updated 事件
 //! - PM 订阅 SettlementCreated/Approved 事件
 
+use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -251,9 +252,9 @@ pub async fn manual_reconcile(
             id: recon_id,
             tenant_id,
             status: "matched".to_string(),
-            total_debit: stats.2,
-            total_credit: stats.3,
-            difference: Some(difference),
+            total_debit: stats.2.map(|v| Decimal::from_f64(v).unwrap_or(Decimal::ZERO)),
+            total_credit: stats.3.map(|v| Decimal::from_f64(v).unwrap_or(Decimal::ZERO)),
+            difference: Some(Decimal::from_f64(difference).unwrap_or(Decimal::ZERO)),
             matched_count: stats.0,
             unmatched_count: stats.1,
             updated_at: now,

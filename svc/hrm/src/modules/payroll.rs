@@ -5,7 +5,11 @@ use axum::{
     Json, Router,
 };
 use bigdecimal::BigDecimal;
-use bigdecimal::ToPrimitive;
+
+/// U6-2：hrm 内部 BigDecimal -> 事件 rust_decimal::Decimal，字符串往返精确（不经过 f64，避免尾差）。
+fn bd_to_dec(bd: &BigDecimal) -> rust_decimal::Decimal {
+    std::str::FromStr::from_str(&bd.to_string()).unwrap_or(rust_decimal::Decimal::ZERO)
+}
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::postgres::PgPool;
@@ -966,8 +970,8 @@ pub async fn generate_payroll_voucher(
                 line_number: i32::try_from(e.line).unwrap_or(0),
                 subject_code: e.subject_code.to_string(),
                 subject_name: e.subject_name.to_string(),
-                debit_amount: e.debit.to_f64().unwrap_or(0.0),
-                credit_amount: e.credit.to_f64().unwrap_or(0.0),
+                debit_amount: bd_to_dec(&e.debit),
+                credit_amount: bd_to_dec(&e.credit),
             },
         )
         .collect();
@@ -982,11 +986,11 @@ pub async fn generate_payroll_voucher(
         maker_id: req.maker_id,
         maker_name: req.maker_name.clone().unwrap_or_else(|| "系统".to_string()),
         department_id: req.department_id.unwrap_or_else(Uuid::nil),
-        total_gross: total_gross.to_f64().unwrap_or(0.0),
-        total_tax: total_tax.to_f64().unwrap_or(0.0),
-        total_social_security: total_social_security.to_f64().unwrap_or(0.0),
-        total_housing_fund: total_housing_fund.to_f64().unwrap_or(0.0),
-        net_salary: net_salary.to_f64().unwrap_or(0.0),
+        total_gross: bd_to_dec(&total_gross),
+        total_tax: bd_to_dec(&total_tax),
+        total_social_security: bd_to_dec(&total_social_security),
+        total_housing_fund: bd_to_dec(&total_housing_fund),
+        net_salary: bd_to_dec(&net_salary),
         employee_count: payroll_run.employee_count,
         entries: event_entries,
         tenant_id: None,

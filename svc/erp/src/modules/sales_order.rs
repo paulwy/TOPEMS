@@ -285,8 +285,9 @@ pub async fn create_sales_order(
                     order_no: sales_order.order_no.clone(),
                     customer_id: Some(sales_order.customer_id),
                     customer_name: Some(sales_order.customer_name.clone()),
-                    total_amount: sales_order.total_amount.to_f64(),
-                    payable_amount: sales_order.payable_amount.to_f64(),
+                    total_amount: Some(sales_order.total_amount),
+                    payable_amount: Some(sales_order.payable_amount),
+
                     status: Some(sales_order.status.clone()),
                     created_by: Some(claims.sub.clone()),
                     tenant_id,
@@ -458,8 +459,9 @@ async fn update_sales_order_status(
                         order_no: sales_order.order_no.clone(),
                         customer_id: Some(sales_order.customer_id),
                         customer_name: Some(sales_order.customer_name.clone()),
-                        total_amount: sales_order.total_amount.to_f64(),
-                        payable_amount: sales_order.payable_amount.to_f64(),
+                        total_amount: Some(sales_order.total_amount),
+                        payable_amount: Some(sales_order.payable_amount),
+
                         approved_by: Some(claims.sub.clone()),
                         approved_at: Some(Utc::now()),
                         tenant_id,

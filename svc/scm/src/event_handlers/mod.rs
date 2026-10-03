@@ -837,7 +837,7 @@ impl ScmEventHandlers {
         } else {
             let available = payload.available_quantity.unwrap_or(payload.new_quantity);
             let min_qty = payload.min_quantity.unwrap_or(0.0);
-            let total_value = payload.total_value.unwrap_or(0.0);
+            let total_value = payload.total_value.unwrap_or(rust_decimal::Decimal::ZERO);
 
             sqlx::query(
                 r#"INSERT INTO scm.wms_inventory_snapshots
