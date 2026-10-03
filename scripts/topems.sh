@@ -2538,6 +2538,40 @@ db_reset() {
 # 一键运行：启动依赖 + 所有服务
 run_all() {
     _preflight_check "$@" || return 1
+
+    # D3: --auto-build 选项（先全量编译再启动；剥掉避免透传）
+    local do_auto_build=0
+    local -a run_opts=()
+    local opt
+    for opt in "$@"; do
+        if [ "$opt" = "--auto-build" ]; then
+            do_auto_build=1
+        else
+            run_opts+=("$opt")
+        fi
+    done
+    if [ $do_auto_build -eq 1 ]; then
+        info "========== --auto-build：先全量编译 =========="
+        build_all "${run_opts[@]}" || { error "build-all 失败，中止 run"; return 1; }
+    fi
+
+    # D3: 二进制产物缺失检测（未构建时启动会逐服务自动编译，较慢）
+    local missing_count=0
+    local missing_names=""
+    local svc exe
+    for svc in $(get_all_services); do
+        exe=$(get_executable_name "$svc")
+        if [ -n "$exe" ] && [ ! -f "$PROJECT_ROOT/target/release/$exe" ]; then
+            missing_count=$((missing_count + 1))
+            missing_names="$missing_names $svc"
+        fi
+    done
+    if [ "$missing_count" -gt 0 ]; then
+        warning "检测到 ${missing_count} 个服务二进制缺失（未构建），启动时将逐个自动编译（较慢）"
+        info "缺失:${missing_names}"
+        info "建议先执行: $0 build-all 或 $0 run --auto-build"
+    fi
+
     info "========== 一键运行 =========="
 
     # 1. 启动数据库
@@ -2545,8 +2579,8 @@ run_all() {
     redis_start || { error "Redis 启动失败，无法继续。请检查 Redis 配置。"; return 1; }
     sleep 2
 
-    # 2. 启动所有服务（透传 --only-core / --no-frontend / --skip= 等参数）
-    start_all_services "$@"
+    # 2. 启动所有服务（透传 --only-core / --no-frontend / --skip= 等参数，不含 --auto-build）
+    start_all_services "${run_opts[@]}"
 
     echo ""
     success "一键运行完成！"
@@ -2959,6 +2993,14 @@ clean_project() {
             warn "已取消系统缓存清理。"
             clean_system_cache=false
         fi
+    fi
+
+    # ── D1/D2: 运行态与构建活动感知（clean 前透明提示，避免误伤并行构建/运行中服务）──
+    if ps aux | grep -v grep | grep -q "$PROJECT_ROOT/target/release/"; then
+        warning "检测到运行中的服务进程（target/release/），clean 后重启将触发重新编译"
+    fi
+    if ps aux | grep -v grep | grep -qE "cargo (nextest )?(test|build|bench|run|check|clippy|fmt)|cargo-(llvm-cov|nextest|test|build|bench)|rustc"; then
+        warning "检测到活跃构建进程（cargo/rustc），本仓库相关的将在清理时被终止（并行构建请先停手）"
     fi
 
     echo ""
@@ -3645,6 +3687,7 @@ WebSocket:
   topems sqlx prepare --all   生成全量 SQLx 离线缓存
   topems test-all             运行所有测试
   topems run                  一键运行（数据库+所有服务）
+  topems run --auto-build    先全量编译再一键运行（避免未构建时逐服务慢编译）
   topems db status            查看数据库状态
   topems db backup            备份数据库
   topems db defense-check <svc>   单服务 Schema 防御自检（build+启动10s+grep自检日志）
