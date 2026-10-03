@@ -20,7 +20,7 @@
 - [`misc/TOPEMS_Architecture_Improvement_Plan.md`](misc/TOPEMS_Architecture_Improvement_Plan.md) v1.2
 - [`misc/TOPEMS_MCP_Architecture_Amendment_Plan.md`](misc/TOPEMS_MCP_Architecture_Amendment_Plan.md) v1.1
 
-**新的唯一架构路线图**：[`docs/architecture/TOPEMS_Architecture_Roadmap_v2.md`](../architecture/TOPEMS_Architecture_Roadmap_v2.md)
+**架构路线图（已归档至 misc）**：[`misc/TOPEMS_Architecture_Roadmap_v2.md`](misc/TOPEMS_Architecture_Roadmap_v2.md)
 
 新方案基于旧方案的完整评估，整合了边界治理、MCP 适配、AI 能力建设等内容，并诚实区分了"已验证完成"、"框架就绪"、"未启动"三类状态。所有架构决策请以新方案为准。
 
