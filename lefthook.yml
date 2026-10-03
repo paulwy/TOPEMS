@@ -277,7 +277,6 @@ pre-push:
         export SQLX_OFFLINE=true
         command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
         cargo clippy --workspace --all-targets -- -D clippy::correctness
-# 
     # [V294 NEW] cargo test workspace — Rust-only（从 pre-commit 移入，避免提交超时）
     # 只跑 --lib 单元测试，不跑集成测试（集成测试需要数据库）
     # V300: 离线模式（SQLX_OFFLINE=true）——同时验证 .sqlx 缓存完整性
