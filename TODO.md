@@ -640,3 +640,13 @@
   - **双库对照**：表数 5432=1256 vs 5433=704、RLS 469 vs 343——5432 长期累积漂移对象（服务内联 DDL、public.qa_lab_* 影子表），干净库反而更干净；核心验证（迁移链账本/checksum）完全收敛
   - **真实缺陷结论（不掩盖）**：迁移链在干净库从 0 重放需 3 处手工前置（U6 依赖 R-8 列、R3 依赖 status 列、R4 依赖 code 列）——因不得修改已应用迁移文件（防 checksum），无法用后续迁移修复"前面失败"；处置建议=新库建库按 Runbook 手工前置（已记录），或未来迁移链重构时统一处理；另建议 3 处补齐做成迁移内幂等守卫供空库一次性通过
   - 5433 实例**保留运行**（验证态完整，停止/启动命令已记录）；无仓库产物改动、无 commit；冒烟按约定跳过（不切服务连接串）
+
+- [x] **R-7b MDM 订阅 DLQ 变体**——✅ 2026-10-03 完成，commit `8763363d0`（5 files +301/−53，未 push）：
+  - 变体形态：facade 新增 `subscribe_master_data_handler`（+_employee/_organization 便捷变体）接受 `Result<(),String>` handler，stream 模式直传下层（下层本就接受 Result、零改动）；旧 `subscribe_master_data` 保留兼容 pdm/portal/scm
+  - MDM 语义定案=**适合重试+DLQ**：7 处 handler 全为幂等 UPSERT（ON CONFLICT DO UPDATE）重试安全；旧 graceful fallback 是"Err 包成 Ok→立即 ACK"的静默兜底（process_mdm_message 重试计数对 MDM 是死代码）；超限升级为**入独立 keyspace `topems:mdm_dlq:{prefix}` + ACK**（不复用类型化 DeadLetter 避免涟漪管理 API/363 基线）
+  - 库改动：subscriber.rs（mdm_result_handlers+3 公共方法+pubsub 降级分发）、dead_letter_queue.rs（MdmDeadLetter+push_mdm）、stream_subscriber.rs（process_mdm_message 超限先 push_mdm 再 ACK）；+1 builder 编译测试
+  - 接线 7 处：crm event_handlers/mod.rs 118/130/145（employee/organization/supplier）+ erp event_handlers/mod.rs 235/247/262/277（employee/organization/customer/material）；wrapper 改 match 传播 Err+保留 error! 日志；两处 upsert 写失败 warn+Ok 改 Err 传播（语义/幂等零改动）
+  - 抽验（erp mat 域）：注入 R7B- 事件→retry 1→2→3→`topems:mdm_dlq:mat` LLEN=1（last_error="max retries exceeded" 事件完整保留）→ACK XPENDING=0；测试数据清理
+  - 验证：shared-event **364 测试全绿**（363 基线+1）、`cargo check --workspace` 0 错、clippy 0 warning、双门禁 PASS；erp 已重启新二进制（PID 53964）
+  - **重要发现（另起排期）**：erp 运行时 search_path 下 `erp_master_data_refs` 关系**不存在**（现存 erp.erp_master_data_refs 仅归档列缺 master_data_id 等业务列）——erp MDM 本地 ref 同步**此前一直在静默失败**（旧二进制 warn 吞），本次后转为可见重试+MDM DLQ；**建表修复建议另起排期**（超出本任务范围未动 DDL）
+  - 残留：MDM DLQ 仅 push+独立 keyspace 未接 list/replay 管理 API（按本地 ref 自愈合设计取舍）；crm 服务本体本次未重启（erp 抽验覆盖接线链路）
