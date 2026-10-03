@@ -76,107 +76,159 @@ impl ErpEventHandlers {
         let h22 = self.clone();
 
         Ok(subscriber
-            .subscribe(vec![EventType::SalesOrderApproved], move |event| {
+            .subscribe_handler(vec![EventType::SalesOrderApproved], move |event| {
                 let h = h1.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_sales_order_approved(event).await {
-                        tracing::error!("[erp] handle_sales_order_approved 失败: {}", e);
+                    match h.handle_sales_order_approved(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_sales_order_approved 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::PurchaseOrderApproved], move |event| {
+            .subscribe_handler(vec![EventType::PurchaseOrderApproved], move |event| {
                 let h = h2.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_purchase_order_approved(event).await {
-                        tracing::error!("[erp] handle_purchase_order_approved 失败: {}", e);
+                    match h.handle_purchase_order_approved(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_purchase_order_approved 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::WorkOrderCompleted], move |event| {
+            .subscribe_handler(vec![EventType::WorkOrderCompleted], move |event| {
                 let h = h3.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_work_order_completed(event).await {
-                        tracing::error!("[erp] handle_work_order_completed 失败: {}", e);
+                    match h.handle_work_order_completed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_work_order_completed 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::StockInbound], move |event| {
+            .subscribe_handler(vec![EventType::StockInbound], move |event| {
                 let h = h4.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_stock_inbound(event).await {
-                        tracing::error!("[erp] handle_stock_inbound 失败: {}", e);
+                    match h.handle_stock_inbound(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_stock_inbound 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::StockOutbound], move |event| {
+            .subscribe_handler(vec![EventType::StockOutbound], move |event| {
                 let h = h5.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_stock_outbound(event).await {
-                        tracing::error!("[erp] handle_stock_outbound 失败: {}", e);
+                    match h.handle_stock_outbound(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_stock_outbound 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::EmployeeOnboarded], move |event| {
+            .subscribe_handler(vec![EventType::EmployeeOnboarded], move |event| {
                 let h = h6.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_employee_onboarded(event).await {
-                        tracing::error!("[erp] handle_employee_onboarded 失败: {}", e);
+                    match h.handle_employee_onboarded(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_employee_onboarded 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::PmProjectCompleted], move |event| {
+            .subscribe_handler(vec![EventType::PmProjectCompleted], move |event| {
                 let h = h7.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_pm_project_completed(event).await {
-                        tracing::error!("[erp] handle_pm_project_completed 失败: {}", e);
+                    match h.handle_pm_project_completed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_pm_project_completed 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::PmProjectSettled], move |event| {
+            .subscribe_handler(vec![EventType::PmProjectSettled], move |event| {
                 let h = h8.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_pm_project_settled(event).await {
-                        tracing::error!("[erp] handle_pm_project_settled 失败: {}", e);
+                    match h.handle_pm_project_settled(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_pm_project_settled 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::OpportunityWon], move |event| {
+            .subscribe_handler(vec![EventType::OpportunityWon], move |event| {
                 let h = h9.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_opportunity_won(event).await {
-                        tracing::error!("[erp] handle_opportunity_won 失败: {}", e);
+                    match h.handle_opportunity_won(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_opportunity_won 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::InventoryUpdated], move |event| {
+            .subscribe_handler(vec![EventType::InventoryUpdated], move |event| {
                 let h = h10.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_inventory_updated(event).await {
-                        tracing::error!("[erp] handle_inventory_updated 失败: {}", e);
+                    match h.handle_inventory_updated(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_inventory_updated 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::ReturnCompleted], move |event| {
+            .subscribe_handler(vec![EventType::ReturnCompleted], move |event| {
                 let h = h11.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_return_completed(event).await {
-                        tracing::error!("[erp] handle_return_completed 失败: {}", e);
+                    match h.handle_return_completed(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_return_completed 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::PaymentReceived], move |event| {
+            .subscribe_handler(vec![EventType::PaymentReceived], move |event| {
                 let h = h12.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_payment_received(event).await {
-                        tracing::error!("[erp] handle_payment_received 失败: {}", e);
+                    match h.handle_payment_received(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_payment_received 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::PaymentMade], move |event| {
+            .subscribe_handler(vec![EventType::PaymentMade], move |event| {
                 let h = h13.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_payment_made(event).await {
-                        tracing::error!("[erp] handle_payment_made 失败: {}", e);
+                    match h.handle_payment_made(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_payment_made 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
@@ -215,43 +267,63 @@ impl ErpEventHandlers {
                     }
                 })
             })
-            .subscribe(vec![EventType::ReconciliationCreated], move |event| {
+            .subscribe_handler(vec![EventType::ReconciliationCreated], move |event| {
                 let h = h18.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_reconciliation_created(event).await {
-                        tracing::error!("[erp] handle_reconciliation_created 失败: {}", e);
+                    match h.handle_reconciliation_created(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_reconciliation_created 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::ReconciliationApproved], move |event| {
+            .subscribe_handler(vec![EventType::ReconciliationApproved], move |event| {
                 let h = h19.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_reconciliation_approved(event).await {
-                        tracing::error!("[erp] handle_reconciliation_approved 失败: {}", e);
+                    match h.handle_reconciliation_approved(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_reconciliation_approved 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::ReconciliationUpdated], move |event| {
+            .subscribe_handler(vec![EventType::ReconciliationUpdated], move |event| {
                 let h = h20.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_reconciliation_updated(event).await {
-                        tracing::error!("[erp] handle_reconciliation_updated 失败: {}", e);
+                    match h.handle_reconciliation_updated(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_reconciliation_updated 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::HrmPayrollPosted], move |event| {
+            .subscribe_handler(vec![EventType::HrmPayrollPosted], move |event| {
                 let h = h21.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_hrm_payroll_posted(event).await {
-                        tracing::error!("[erp] handle_hrm_payroll_posted 失败: {}", e);
+                    match h.handle_hrm_payroll_posted(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_hrm_payroll_posted 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::MesWorkReportSubmitted], move |event| {
+            .subscribe_handler(vec![EventType::MesWorkReportSubmitted], move |event| {
                 let h = h22.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_mes_work_report_submitted(event).await {
-                        tracing::error!("[erp] handle_mes_work_report_submitted 失败: {}", e);
+                    match h.handle_mes_work_report_submitted(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[erp] handle_mes_work_report_submitted 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             }))
@@ -2148,6 +2220,8 @@ pub async fn start_event_subscribers(
 
     // 订阅缓存失效事件
     let cache_listener = cache_invalidation_listener;
+    // CacheInvalidated 为 best-effort 内存缓存淘汰（parse 失败即跳过、dispatch 无失败语义），
+    // 保持 .subscribe() 不入 DLQ——避免良性缓存失效失败制造死信噪音。
     let cache_subscriber = EventSubscriber::new("erp-cache-invalidation")
         .map_err(|e| e.to_string())?
         .subscribe(vec![EventType::CacheInvalidated], move |event| {
