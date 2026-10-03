@@ -11,6 +11,12 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 CLI_DIR="$PROJECT_ROOT/cli"
 
+# 防御：PROJECT_ROOT 必须解析为合法的仓库根（防 rm -rf 相对路径事故）
+if [ -z "$PROJECT_ROOT" ] || [ ! -f "$PROJECT_ROOT/Cargo.toml" ]; then
+    echo "FATAL: PROJECT_ROOT 解析异常（'${PROJECT_ROOT:-空}'，缺少 Cargo.toml）——拒绝执行" >&2
+    exit 1
+fi
+
 # 颜色定义
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -2622,6 +2628,17 @@ _kill_background_cargo() {
 
     [ -z "$cargo_pids" ] && return 0
 
+    # 2026-10-03：仅保留工作目录在本仓库的进程（防误杀其他项目/并行会话的编译）
+    local filtered_pids=""
+    local p2
+    for p2 in $cargo_pids; do
+        if lsof -a -p "$p2" -d cwd -Fn 2>/dev/null | grep -q "$PROJECT_ROOT"; then
+            filtered_pids="$filtered_pids $p2"
+        fi
+    done
+    cargo_pids="${filtered_pids# }"
+    [ -z "$cargo_pids" ] && return 0
+
     if $dry_run; then
         info "[DRY-RUN] 将终止后台 cargo 进程: $cargo_pids"
         return 1
@@ -2689,10 +2706,13 @@ _check_disk_space() {
     avail_kb=$(df -k "$PROJECT_ROOT" 2>/dev/null | awk 'NR==2 {print $4}')
     [ -z "$avail_kb" ] && return 0
     local avail_gb=$((avail_kb / 1024 / 1024))
-    if [ "$avail_gb" -lt 5 ]; then
+    # 阈值可配置：DISK_BLOCK_GB（阻断）/ DISK_WARN_GB（警告），默认 5 / 10
+    local block_gb="${DISK_BLOCK_GB:-5}"
+    local warn_gb="${DISK_WARN_GB:-10}"
+    if [ "$avail_gb" -lt "$block_gb" ]; then
         error "磁盘仅剩 ${avail_gb}GiB！即将满盘，请先执行: $0 clean"
         return 1
-    elif [ "$avail_gb" -lt 10 ]; then
+    elif [ "$avail_gb" -lt "$warn_gb" ]; then
         warn "磁盘仅剩 ${avail_gb}GiB，建议执行: $0 clean"
     fi
     return 0
@@ -2815,6 +2835,7 @@ clean_project() {
     local clean_debug=false
     local clean_debug_full=false
     local clean_sccache=false
+    local clean_analyze=false
     local dry_run=false
     local preflight=false
 
@@ -2824,6 +2845,7 @@ clean_project() {
             --debug)        clean_debug=true ;;
             --debug-full)   clean_debug_full=true ;;
             --sccache)      clean_sccache=true ;;
+            --analyze)      clean_analyze=true ;;
             --frontend)     clean_frontend=true ;;
             --cache)        clean_cache=true ;;
             --system-cache) clean_system_cache=true ;;
@@ -2840,6 +2862,44 @@ clean_project() {
                 ;;
         esac
     done
+
+    # ── --analyze：磁盘占用分析（只读，不删除任何文件）──────────
+    if [ "$clean_analyze" = true ]; then
+        echo ""
+        info "================================================"
+        info "  TOPEMS 磁盘占用分析（只读，不删除任何文件）"
+        info "================================================"
+        echo ""
+        local analyze_dirs=(
+            "$PROJECT_ROOT/target"
+            "$PROJECT_ROOT/target/debug/incremental"
+            "$PROJECT_ROOT/target/debug/deps"
+            "$PROJECT_ROOT/target/debug"
+            "$PROJECT_ROOT/target/release"
+            "$PROJECT_ROOT/apps/web/node_modules"
+            "$PROJECT_ROOT/apps/desktop/node_modules"
+            "$PROJECT_ROOT/apps/mobile/node_modules"
+            "$PROJECT_ROOT/apps/web/dist"
+            "$PROJECT_ROOT/logs"
+            "$PROJECT_ROOT/.sqlx"
+            "$HOME/.cargo/registry"
+            "$HOME/Library/Caches/Mozilla.sccache"
+            "$HOME/.ollama/models"
+        )
+        {
+            local d
+            for d in "${analyze_dirs[@]}"; do
+                if [ -e "$d" ]; then
+                    du -sh "$d" 2>/dev/null
+                fi
+            done
+        } | sort -rh | head -20
+        echo ""
+        info "磁盘当前可用: $(df -h "$PROJECT_ROOT" | awk 'NR==2 {print $4}')（$(df -h "$PROJECT_ROOT" | awk 'NR==2 {print $5}') 已用）"
+        echo ""
+        detail "清理建议: 日常 topems clean --debug（清增量，保留依赖）| 大扫除 topems clean（全量）"
+        return 0
+    fi
 
     # ── 轻量预检模式（主流程自动调用入口）─────────────────────────
     if $preflight; then
@@ -3527,7 +3587,10 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
                             --ollama       清理 Ollama 模型（保留项目使用的模型）
                             --logs         清理日志文件 (logs/*.log)
                             --all          全量清理（默认）
+                            --analyze      磁盘占用分析（只读排行，不删除任何文件）
                             --dry-run      预演模式，仅显示将删除的内容
+                          环境变量: DISK_BLOCK_GB（阻断阈值，默认5）/ DISK_WARN_GB（警告阈值，默认10）
+                          清理提醒: 磁盘守卫在可用空间 < 阈值时自动拦截/提示（topems clean 释放）
 
 开发环境:
   dev                     启动开发环境 (macOS)
