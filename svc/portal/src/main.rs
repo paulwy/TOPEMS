@@ -91,6 +91,8 @@ async fn main() -> anyhow::Result<()> {
     )
     .await?;
     let app = app.layer(prometheus_layer);
+    // portal 不走 build_application，手动补 /metrics 鉴权层（最外层）。
+    let app = app.layer(topems_shared_bootstrap::metrics_auth_layer());
 
     // portal 插件自注册（独立部署专属；server 嵌入时由 server 统一注册）
     let core_url = std::env::var("CORE_URL").ok();

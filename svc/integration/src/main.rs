@@ -97,7 +97,9 @@ async fn main() -> anyhow::Result<()> {
         .merge(business_router)
         .merge(metrics_router)
         .layer(axum::middleware::from_fn(request_context_middleware))
-        .layer(prometheus_layer);
+        .layer(prometheus_layer)
+        // integration 不走 build_application，手动补 /metrics 鉴权层（最外层）。
+        .layer(topems_shared_bootstrap::metrics_auth_layer());
 
     let app = Application {
         router: final_router,

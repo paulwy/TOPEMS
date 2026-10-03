@@ -61,101 +61,141 @@ scrape_configs:
     static_configs:
       - targets: ['host.docker.internal:8000']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-erp'
     static_configs:
       - targets: ['host.docker.internal:8010']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-hrm'
     static_configs:
       - targets: ['host.docker.internal:8020']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-pm'
     static_configs:
       - targets: ['host.docker.internal:8023']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-crm'
     static_configs:
       - targets: ['host.docker.internal:8029']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-mes'
     static_configs:
       - targets: ['host.docker.internal:8030']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-pdm'
     static_configs:
       - targets: ['host.docker.internal:8031']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-scm'
     static_configs:
       - targets: ['host.docker.internal:8040']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-wms'
     static_configs:
       - targets: ['host.docker.internal:8041']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-srm'
     static_configs:
       - targets: ['host.docker.internal:8042']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-qms'
     static_configs:
       - targets: ['host.docker.internal:8050']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-lims'
     static_configs:
       - targets: ['host.docker.internal:8051']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-ehs'
     static_configs:
       - targets: ['host.docker.internal:8052']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-rd'
     static_configs:
       - targets: ['host.docker.internal:8053']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-bi'
     static_configs:
       - targets: ['host.docker.internal:8060']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-portal'
     static_configs:
       - targets: ['host.docker.internal:8063']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-ai'
     static_configs:
       - targets: ['host.docker.internal:8013']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-mobile'
     static_configs:
       - targets: ['host.docker.internal:8070']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-gis'
     static_configs:
       - targets: ['host.docker.internal:8071']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'topems-integration'
     static_configs:
       - targets: ['host.docker.internal:8072']
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
 
   - job_name: 'postgres'
     static_configs:

@@ -58,7 +58,14 @@
 pub mod audit;
 
 use anyhow::Result;
-use axum::{extract::State, routing::get, Router};
+use axum::{
+    extract::{Request, State},
+    http::{header, Method, StatusCode},
+    middleware::Next,
+    response::IntoResponse,
+    routing::get,
+    Router,
+};
 use axum_prometheus::{metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayer};
 use prometheus::{Encoder as _, TextEncoder};
 use sqlx::postgres::PgPoolOptions;
@@ -757,6 +764,96 @@ where
 /// handle.render() 导出（缺口②修复——pair() 指标在独立 registry，gather() 不可见）。
 static GLOBAL_METRIC_HANDLE: std::sync::OnceLock<PrometheusHandle> = std::sync::OnceLock::new();
 
+/// 常量时间比较：等长后逐字节 XOR 累加，避免时序侧信道（禁止普通 == 字符串比较）。
+fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff: u8 = 0;
+    for (x, y) in a.iter().zip(b.iter()) {
+        diff |= x ^ y;
+    }
+    diff == 0
+}
+
+/// 仅用于「未配置 METRICS_AUTH_TOKEN」时记一次 WARN（不重复刷屏）。
+static METRICS_AUTH_WARNED: std::sync::Once = std::sync::Once::new();
+
+/// /metrics 鉴权中间件（无状态）：
+///
+/// - 仅拦截 `req.uri().path()` 以 `/metrics` 开头的请求，其余路径直通；
+/// - `OPTIONS` 预检直接放行（CORS）；
+/// - 读取环境变量 `METRICS_AUTH_TOKEN`：
+///   - 已设置且非空 → 要求请求头 `Authorization: Bearer <token>`，常量时间比较，匹配放行，
+///     否则返回 401 纯文本 `Unauthorized`；
+///   - 未设置/为空 → 放行，并用 [`std::sync::Once`] 记一次 WARN（提示生产必须配置）。
+pub async fn metrics_auth_middleware(req: Request, next: Next) -> impl IntoResponse {
+    // 注意：路径判断先于消费 body，本中间件不读取请求体。
+    if !req.uri().path().starts_with("/metrics") {
+        return next.run(req).await;
+    }
+    // CORS 预检放行
+    if req.method() == Method::OPTIONS {
+        return next.run(req).await;
+    }
+
+    match env::var("METRICS_AUTH_TOKEN") {
+        Ok(token) if !token.is_empty() => {
+            let presented = req
+                .headers()
+                .get(header::AUTHORIZATION)
+                .and_then(|v| v.to_str().ok())
+                .and_then(|v| v.strip_prefix("Bearer "));
+            let authorized = match presented {
+                Some(presented) => constant_time_eq(presented.as_bytes(), token.as_bytes()),
+                None => false,
+            };
+            if authorized {
+                next.run(req).await
+            } else {
+                (StatusCode::UNAUTHORIZED, "Unauthorized").into_response()
+            }
+        }
+        _ => {
+            METRICS_AUTH_WARNED.call_once(|| {
+                tracing::warn!(
+                    "未配置 METRICS_AUTH_TOKEN，/metrics 端点未鉴权，生产环境必须设置该环境变量"
+                );
+            });
+            next.run(req).await
+        }
+    }
+}
+
+/// 导出给「不走 build_application / build_application 返回后才 merge」的服务，
+/// 对其最终 router 手动 `.layer(metrics_auth_layer())`。
+///
+/// 用 Box<dyn Future> 包裹一层 fn pointer，使返回类型可命名（from_fn 返回的
+/// `FromFnLayer<F, (), T>` 中 F 为匿名 async fn 时无法在 pub fn 返回位置书写）。
+pub fn metrics_auth_layer() -> axum::middleware::FromFnLayer<
+    fn(
+        Request,
+        Next,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = axum::response::Response> + Send + 'static>,
+    >,
+    (),
+    (Request,),
+> {
+    async fn wrapped_async(req: Request, next: Next) -> axum::response::Response {
+        metrics_auth_middleware(req, next).await.into_response()
+    }
+    fn wrapped(
+        req: Request,
+        next: Next,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = axum::response::Response> + Send + 'static>,
+    > {
+        Box::pin(wrapped_async(req, next))
+    }
+    axum::middleware::from_fn(wrapped)
+}
+
 pub fn build_application(
     ctx: &ServiceContext,
     config: &ServiceConfig,
@@ -816,6 +913,11 @@ pub fn build_application(
     app = app.layer(axum::middleware::from_fn(telemetry_middleware));
 
     app = app.layer(prometheus_layer).layer(cors);
+
+    // /metrics 鉴权层放最外层（先于 prometheus/cors）：仅拦截 /metrics*，其余直通。
+    // 注意：axum Router::layer 只包裹「调用时已 merge 进路由」的路径；build_application
+    // 返回后才 merge 的 stateful_public 路由不会被此层覆盖，需各服务自行补层。
+    app = app.layer(axum::middleware::from_fn(metrics_auth_middleware));
 
     let port = resolve_port(config);
 

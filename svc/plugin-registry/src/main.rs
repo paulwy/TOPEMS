@@ -94,7 +94,9 @@ async fn main() -> anyhow::Result<()> {
             "/dev/runtime/{code}/register",
             post(modules::plugin::handlers::runtime::register_plugin),
         )
-        .with_state(app_state);
+        .with_state(app_state)
+        // stateful_public 在 build_application 返回后才 merge，需单独补 metrics 鉴权层。
+        .layer(topems_shared_bootstrap::metrics_auth_layer());
 
     app.router = app.router.merge(stateful_public);
 

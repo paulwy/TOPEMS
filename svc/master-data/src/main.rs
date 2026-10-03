@@ -92,7 +92,10 @@ async fn main() -> anyhow::Result<()> {
             "/metrics",
             get(move || async { prometheus_metrics_handler().await }),
         )
-        .with_state(app_state);
+        .with_state(app_state)
+        // stateful_public 在 build_application 返回后才 merge，不会被中央 metrics 层覆盖，
+        // 故在此单独补一层（中间件内部仅拦截 /metrics*，其余路径直通）。
+        .layer(topems_shared_bootstrap::metrics_auth_layer());
 
     app.router = app.router.merge(stateful_public);
 

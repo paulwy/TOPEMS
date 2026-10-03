@@ -133,7 +133,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/health", get(health_check))
         .route("/health/detailed", get(health_check_detailed))
         .route("/metrics/json", get(get_metrics))
-        .with_state(api_state.clone());
+        .with_state(api_state.clone())
+        // stateful_public 在 build_application 返回后才 merge（且 /metrics/json 以
+        // /metrics 开头），中央层覆盖不到，需单独补 metrics 鉴权层。
+        .layer(topems_shared_bootstrap::metrics_auth_layer());
 
     // ── 最终 Application 合并 ───────────────────────────────────────
     let final_app = Application {

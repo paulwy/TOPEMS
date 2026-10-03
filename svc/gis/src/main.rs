@@ -124,7 +124,9 @@ async fn main() -> Result<()> {
     .layer(axum::middleware::from_fn(request_context_middleware))
     .layer(axum::middleware::from_fn(telemetry_middleware))
     .layer(prometheus_layer)
-    .layer(cors);
+    .layer(cors)
+    // gis 不走 build_application，需手动补 /metrics 鉴权层（最外层）。
+    .layer(topems_shared_bootstrap::metrics_auth_layer());
 
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();

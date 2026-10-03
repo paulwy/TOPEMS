@@ -846,5 +846,8 @@ pub fn create_routes(
     // MCP 客户端（如 Cursor）通过这些端点进行 JSON-RPC 通信
     let app = app.merge(create_mcp_routes(mcp_server, mcp_jwt_secret));
 
+    // ai 自管全部中间件（不走 build_application），手动补 /metrics 鉴权层（最外层）。
+    let app = app.layer(topems_shared_bootstrap::metrics_auth_layer());
+
     app
 }

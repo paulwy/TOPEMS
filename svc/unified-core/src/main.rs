@@ -745,7 +745,9 @@ async fn main() -> anyhow::Result<()> {
     .with_telemetry()
     .layer(cors)
     .layer(prometheus_layer)
-    .with_state(state);
+    .with_state(state)
+    // unified-core 不走 build_application，手动补 /metrics 鉴权层（最外层）。
+    .layer(topems_shared_bootstrap::metrics_auth_layer());
 
     let app = Application {
         router: app,

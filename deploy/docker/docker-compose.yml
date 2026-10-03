@@ -12,6 +12,7 @@ x-common-env: &common-env
   IAM_SERVICE_URL: http://unified-core:8000
   JWT_SECRET: ${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
   JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+  METRICS_AUTH_TOKEN: ${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
 
 x-common-env-full: &common-env-full
   <<: *common-env
@@ -181,6 +182,7 @@ services:
       - CONSUL_ENABLED=true
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_change_me}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - PLUGIN_REGISTRATION_TOKEN=${PLUGIN_REGISTRATION_TOKEN:-}
       - PLUGIN_HEARTBEAT_TIMEOUT=${PLUGIN_HEARTBEAT_TIMEOUT:-90}
       - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
@@ -729,6 +731,7 @@ services:
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
@@ -781,6 +784,7 @@ services:
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_REGISTER_ADDRESS=topems-bi
       - CONSUL_HOST=http://consul:8500
@@ -827,6 +831,7 @@ services:
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
@@ -870,6 +875,7 @@ services:
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
@@ -926,6 +932,7 @@ services:
       - IAM_SERVICE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
@@ -972,6 +979,7 @@ services:
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
@@ -1015,6 +1023,7 @@ services:
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
@@ -1061,6 +1070,7 @@ services:
       - CORE_URL=http://unified-core:8000
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
@@ -1107,6 +1117,7 @@ services:
       - PLUGIN_REGISTRY_PORT=8096
       - JWT_SECRET=${JWT_SECRET:-topems_dev_secret_change_me_long_enough_32}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-topems_dev_refresh_secret_long_enough_32}
+      - METRICS_AUTH_TOKEN=${METRICS_AUTH_TOKEN:-topems_dev_metrics_token_change_me}
       - CONSUL_URL=http://consul:8500
       - CONSUL_HOST=http://consul:8500
       - CONSUL_ENABLED=true
@@ -1141,7 +1152,7 @@ services:
       - "80:80"      # HTTP 入口
       - "443:443"    # HTTPS 入口
       - "8080:8080"  # API 网关入口（对外 API，移动端/第三方/BI 直连）
-      - "8089:8089"  # Traefik Dashboard（内网，容器内监听 8089）
+      - "127.0.0.1:8089:8089"  # Traefik Dashboard（内网，容器内监听 8089）
     volumes:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic/dynamic.yml:ro
@@ -1208,7 +1219,7 @@ services:
     # 通过 docker 网络内部访问 nginx:80（由 Traefik 路由 / 到此服务）
     # 8081 端口用于直接调试访问（可选）
     ports:
-      - "8081:80"
+      - "127.0.0.1:8081:80"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ../apps/web/dist:/usr/share/nginx/html:ro
@@ -1285,7 +1296,7 @@ services:
       - "6831:6831/udp"
       - "6832:6832/udp"
       - "5778:5778"
-      - "16686:16686"
+      - "127.0.0.1:16686:16686"
       - "14268:14268"
       - "14250:14250"
       - "9411:9411"
@@ -1310,7 +1321,7 @@ services:
     image: prom/prometheus:v2
     container_name: topems-prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -1335,7 +1346,7 @@ services:
     image: grafana/grafana:11
     container_name: topems-grafana
     ports:
-      - "3001:3000"
+      - "127.0.0.1:3001:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -1361,7 +1372,7 @@ services:
     image: prom/alertmanager:v0.27
     container_name: topems-alertmanager
     ports:
-      - "9093:9093"
+      - "127.0.0.1:9093:9093"
     volumes:
       - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - ./alertmanager/templates:/etc/alertmanager/templates:ro
