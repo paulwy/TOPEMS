@@ -3535,10 +3535,10 @@ TOPEMS 服务管理工具
 
 用法: topems <命令> [选项]
 
-服务管理:
+服务管理（场景: 单服务生命周期——启动/停止/重启/日志/状态/单服务编译）:
   status [服务]           查看服务状态
   start <服务> [--force]  启动服务（自动注册到 unified-core；二进制缺失时自动编译）
-  stop <服务>             停止服务
+  stop <服务>             停止服务（不带服务名 = stop-all 停止全部）
   restart <服务> [--force]  重启服务（可选 --force 强制重启）
   mes-guard [选项]       运行 mes 编译守卫（遮蔽检查 + 在线编译断言 0 error）
                             --clean          清理 public 遮蔽对象（幂等）
@@ -3547,7 +3547,7 @@ TOPEMS 服务管理工具
                             --skip-compile   只做遮蔽检查（快排）
   check                   检查服务状态并自动重启异常服务
   logs <服务> [行数]      查看服务日志
-  build <服务> [--online|--offline|--dev|--skip-sqlx-check]  编译服务（默认离线优先 + 缓存新鲜度门禁）
+  build <服务> [--online|--offline|--dev|--skip-sqlx-check]  编译单个服务（场景: 改单个服务快速验证；默认离线优先 + 缓存新鲜度门禁）
   build-all [选项]        全量编译所有服务（后端+前端）
                             --prepare         先刷新 sqlx 缓存（需要 DATABASE_URL）
                             --only-core       只编核心服务（iam=unified-core）
@@ -3556,14 +3556,14 @@ TOPEMS 服务管理工具
                             --skip-sqlx-check 跳过 SQLx 离线缓存新鲜度门禁（build/start 默认先跑 --check）
                             --dev|--debug     编 debug 版（默认 release）
                             --skip=<svc>      跳过某个包，可重复
-                            --backend-only    只编后端，跳过前端
+                            --backend-only    只编后端，跳过前端（等价独立命令 build-backend）
                             --force           强制获取构建锁（避免并发冲突）
                             --skip-mem-check  跳过内存检查（CI / Docker 场景）
                             --serial          强制单线程串行构建，避免并行锁竞争
                             --cooldown=N      构建间冷却秒数（默认 2，serial 模式下生效）
                             --skip-lint      跳过前端 lint（若存在 build:nolint 则用，否则忽略）
                             --skip-preflight 跳过启动前预检（CI / 已清理过场景）
-  build-backend [选项]    编译所有后端服务（同 build-all 的后端子集）
+  build-backend [选项]    编译所有后端服务（等价 build-all --backend-only）
   build-frontend          编译前端 (tsc && vite build)
                             --dev        若存在 build:dev 脚本则用，否则回退默认 build
                             --skip-lint  若存在 build:nolint 脚本则用，否则忽略（默认 build 不跑 lint）
@@ -3578,19 +3578,19 @@ TOPEMS 服务管理工具
   stop-all                停止所有服务（含前端）
   restart-all [选项]      重启所有服务（透传 start-all 选项）
 
-一键运行:
+一键运行（场景: 完整环境一键——run 启动 DB+全部服务；run-stop 停止+可选停 DB）:
   run [选项]             一键启动数据库+所有服务（透传 start-all 选项）
                           --only-core       只启动核心服务
                           --no-frontend     不启动前端
                           --skip=<svc>      跳过某个服务
                           --skip-sqlx-check 跳过 SQLx 离线缓存新鲜度门禁
-  run-stop                一键停止所有服务+数据库
+  run-stop                一键停止所有服务+数据库（= stop-all + 询问确认是否停 DB/Redis）
 
-前端:
-  start web               启动前端服务
+前端（场景: 只启/停前端，不碰后端）:
+  start web               启动前端服务（仅前端）
   stop web                停止前端服务
 
-测试:
+测试（场景: 全量/后端/前端测试，参数与 pre-push 门禁一致）:
   test-all                运行所有测试（后端+前端）
   test-backend            运行后端测试（SQLX_OFFLINE=true 离线模式，与 pre-push/CI 一致）
   test-frontend [模式] [--no-typecheck]
@@ -3599,7 +3599,7 @@ TOPEMS 服务管理工具
                                   shard:1 .. shard:8  (component 分片，省内存)
                             --no-typecheck: 跳过类型检查（纯跑 vitest）
 
-SQLx 离线缓存 (V64+; V3xx 门禁):
+SQLx 离线缓存（场景: 迁移/改 SQL 后维护离线缓存; V64+; V3xx 门禁）:
   sqlx prepare [--pkg=X] [--all]  生成离线缓存
   sqlx prepare --check            校验离线缓存
   sqlx prepare --merge            合并分包缓存到根 .sqlx
@@ -3610,7 +3610,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
   scripts/dev/sqlx-prepare.sh --check；缓存缺失或与代码不一致即停止并给出修复指引。
   跳过: 命令加 --skip-sqlx-check，或设置环境变量 SQLX_CHECK_SKIP=1，或使用 --online。
 
-数据库:
+数据库（场景: PostgreSQL/Redis 生命周期 + 迁移/备份/恢复）:
   db start                启动 PostgreSQL
   db stop                 停止 PostgreSQL
   db status               查看数据库状态（PostgreSQL+Redis）
@@ -3621,7 +3621,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
   redis start             启动 Redis
   redis stop              停止 Redis
 
-清理:
+清理（场景: 磁盘治理——日常增量 clean_target.sh → 显式定向 clean → 危险 --system-cache）:
   clean [选项]            清理编译产物、缓存、日志
                             --rust         全量清理 Rust 编译产物 (target/ 含 release, .sqlx, 嵌套 target 残留) + 终止后台 cargo/rustc 进程
                             --debug        只清 Rust 增量缓存 + 嵌套 target 残留（保留 debug/release 产物，日常推荐，恢复最快）
@@ -3639,27 +3639,23 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
                           环境变量: DISK_BLOCK_GB（阻断阈值，默认5）/ DISK_WARN_GB（警告阈值，默认10）
                           清理提醒: 磁盘守卫在可用空间 < 阈值时自动拦截/提示（topems clean 释放）
 
-开发环境:
-  dev                     启动开发环境 (macOS)
+开发环境（场景: 环境自检/自举 + 最小开发环境）:
+  dev                     启动最小开发环境 (macOS)（DB+Redis+iam+前端热更新；完整环境用 run）
   install-deps            安装依赖
   doctor                  环境自检/自举（多机门禁一致性：装 lefthook、注册钩子、核对工具链）
   push [--skip-check]     推送入口：先自检门禁钩子再 git push（--skip-check 跳过自检）
 
-AI模型管理:
+扩展功能（场景: AI 模型 / WebSocket / 部署 / 密码管理）:
   ai start                启动 Ollama 服务
   ai stop                 停止 Ollama 服务
   ai status               查看 Ollama 状态
   ai pull <模型>          下载AI模型
 
-WebSocket:
   ws check                检查 WebSocket 连接状态
 
-部署:
   deploy                  一键部署
-  update-password         重置管理员密码
-
-用户管理:
-  reset-password [用户] [密码]  重置用户密码（默认 admin/admin123）
+  update-password         重置管理员密码（reset-password 的别名）
+  reset-password [用户] [密码]  重置用户密码（默认 admin/admin123；update-password 为别名）
 
 自动预检（主流程入口自动执行，磁盘 <5GiB 会阻断）:
   预检内容: 杀后台 cargo 进程 + 清 llvm-cov-target 残留 + 磁盘空间检查
@@ -3673,6 +3669,8 @@ WebSocket:
   BACKOFF_FACTOR          退避系数（默认: 2，指数退避）
   FORCE_ONLINE_BUILD      设为 1 时 build/build-all 默认在线编译
   SQLX_CHECK_SKIP         设为 1 时跳过 SQLx 离线缓存新鲜度门禁（等同 --skip-sqlx-check）
+  DISK_BLOCK_GB            清理阻断阈值 GiB（默认 5，可用空间低于时 clean 拒绝执行）
+  DISK_WARN_GB             清理警告阈值 GiB（默认 10，低于时 clean 提示）
 
 示例:
   topems status               查看所有服务状态
@@ -3689,6 +3687,12 @@ WebSocket:
   topems test-all             运行所有测试
   topems run                  一键运行（数据库+所有服务）
   topems run --auto-build    先全量编译再一键运行（避免未构建时逐服务慢编译）
+
+# 日常开发循环（磁盘紧张时）
+  ./scripts/clean_target.sh  增量清缓存（保留产物，秒级）
+  topems build-all           全量编译
+  topems run                 一键启动（DB+全部服务）
+  topems status              检查状态
   topems db status            查看数据库状态
   topems db backup            备份数据库
   topems db defense-check <svc>   单服务 Schema 防御自检（build+启动10s+grep自检日志）
