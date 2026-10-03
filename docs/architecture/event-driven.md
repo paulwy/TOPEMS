@@ -502,3 +502,26 @@ let event = bus.publish(PublishEventRequest {
 - 默认版本号为 1（`Event::new()`）
 - 支持自定义版本号（`Event::with_version()`）
 - 用于未来事件结构升级和平滑迁移
+
+
+### 9.2 事件契约变更登记：U6-2 金额字段 f64→Decimal（2026-10-04）
+
+**变更性质**：breaking（金额 payload 字段类型 `f64` → `rust_decimal::Decimal`，对齐 U6 `f331be2b6` 入站口径，消除浮点误差从事件链上游进入）。
+
+**版本策略（宽进窄出 + 一次性全链升级）**：事件名不变（ERP-04 待统一回修），不做 v1/v2 双版本并存：
+- **窄出（出站）**：rust_decimal serde 序列化金额为 JSON **字符串**（如 `"20000.0015"`），发布方一次性切换，不再产出数字形态 f64。
+- **宽进（入站）**：rust_decimal serde 对数字与字符串**均 lenient 反序列化**——升级窗口期内在途旧数字 JSON 事件（`{"total_amount":0.3}`）仍可正确反解，无需双写窗口、无需双版本消费组。
+- **迁移窗口**：本批一次性全链完成（shared-event payload + 全部发布方构造点 + 全部订阅方解析/SQL 绑定点同批落地），不存在中间运行态。
+
+**涉及事件（21 payload 结构体 / ~30 金额字段）**：
+- HrmPayrollPosted（total_gross/total_tax/total_social_security/total_housing_fund/net_salary）+ HrmPayrollVoucherEntry（debit_amount/credit_amount）
+- PmProjectSettled.settled_amount；ScmPurchasePlanCreated.total_amount；SrmBidSubmitted.amount
+- SalesOrderCreated/Approved（total_amount/payable_amount）；PaymentReceived.amount；PaymentMade.amount
+- PurchaseOrderCreated/Approved（total_amount/payable_amount）
+- InventoryUpdated.total_value；ShippingOrderRequested.total_amount；ReturnCompleted.refund_amount；OpportunityWon.amount
+- FinanceInvoiceCreated/PaymentMade/ReceiptReceived/BudgetCreated.amount
+- ReconciliationUpdated（total_debit/total_credit/difference）；SettlementCreated.amount
+
+**保留 f64（对齐 U6 口径）**：数量类（quantity/adjustment/delta/available/min/threshold/total_demand 等）、比率评分（qualification_rate/accuracy/score/confidence）、坐标（lat/lng）、dashboard 统计聚合。
+
+**固化测试**：lib/shared-event `payroll_payload_decimal_precision_and_wire_shape` 断言 0.1+0.2=0.3 精确（`Decimal::from_str_exact` 构造）、出站字符串形态、旧数字 JSON 在途兼容。既有 DLQ 订阅接线（subscribe_handler/subscribe_master_data_handler）与事件幂等键（event_id/idempotency_key）逻辑未动。
