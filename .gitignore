@@ -235,6 +235,8 @@ build/
 *.md.tmp
 *.txt.bak
 .traecache/
+# TRAE HTML 分享产物（zip 误入库已移除，2026-10-03）
+.trae-html-share-packages/
 .superpowers/
 *.code-workspace
 
