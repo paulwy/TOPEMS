@@ -43,51 +43,75 @@ impl CrmEventHandlers {
         let h9 = self.clone();
 
         Ok(subscriber
-            .subscribe(vec![EventType::AfterSalesTicketCreated], move |event| {
+            .subscribe_handler(vec![EventType::AfterSalesTicketCreated], move |event| {
                 let h = h1.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_aftersales_ticket_created(event).await {
-                        tracing::error!("[crm] handle_aftersales_ticket_created 失败: {}", e);
+                    match h.handle_aftersales_ticket_created(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[crm] handle_aftersales_ticket_created 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::OpportunityWon], move |event| {
+            .subscribe_handler(vec![EventType::OpportunityWon], move |event| {
                 let h = h2.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_opportunity_won(event).await {
-                        tracing::error!("[crm] handle_opportunity_won 失败: {}", e);
+                    match h.handle_opportunity_won(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[crm] handle_opportunity_won 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::CustomerCreated], move |event| {
+            .subscribe_handler(vec![EventType::CustomerCreated], move |event| {
                 let h = h3.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_customer_created(event).await {
-                        tracing::error!("[crm] handle_customer_created 失败: {}", e);
+                    match h.handle_customer_created(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[crm] handle_customer_created 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::ShippingOrderRequested], move |event| {
+            .subscribe_handler(vec![EventType::ShippingOrderRequested], move |event| {
                 let h = h7.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_shipping_order_requested(event).await {
-                        tracing::error!("[crm] handle_shipping_order_requested 失败: {}", e);
+                    match h.handle_shipping_order_requested(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[crm] handle_shipping_order_requested 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::PaymentReceived], move |event| {
+            .subscribe_handler(vec![EventType::PaymentReceived], move |event| {
                 let h = h8.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_payment_received(event).await {
-                        tracing::error!("[crm] handle_payment_received 失败: {}", e);
+                    match h.handle_payment_received(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[crm] handle_payment_received 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
-            .subscribe(vec![EventType::SalesOrderCreated], move |event| {
+            .subscribe_handler(vec![EventType::SalesOrderCreated], move |event| {
                 let h = h9.clone();
                 Box::pin(async move {
-                    if let Err(e) = h.handle_sales_order_created(event).await {
-                        tracing::error!("[crm] handle_sales_order_created 失败: {}", e);
+                    match h.handle_sales_order_created(event).await {
+                        Ok(()) => Ok(()),
+                        Err(e) => {
+                            tracing::error!("[crm] handle_sales_order_created 失败: {}", e);
+                            Err(e)
+                        }
                     }
                 })
             })
