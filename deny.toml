@@ -44,14 +44,13 @@ allow = [
 ]
 # 许可证置信度阈值（0-1），低于此值会 warn
 confidence-threshold = 0.8
-# 对无许可证文件的 crate 的处理方式
-unlicensed = "deny"
+# 无许可证 crate：cargo-deny 0.20+ 已移除 unlicensed 键（默认即 deny，行为不变）
 
 # ────────────────────────────────────────────────────────────────────────────
 # [bans] 禁用 crate + 重复版本检查
 # ────────────────────────────────────────────────────────────────────────────
 [bans]
-version = 2
+# cargo-deny 0.20+ 已移除本段 version 键（保留会导致配置反序列化失败，CI 用 unpinned 安装）
 # 重复版本：warn（允许但报告，后续可收紧为 deny）
 multiple-versions = "warn"
 # 通配符依赖（dep = "*"）：warn
@@ -69,7 +68,7 @@ skip = []
 # [sources] crate 来源限制
 # ────────────────────────────────────────────────────────────────────────────
 [sources]
-version = 2
+# cargo-deny 0.20+ 已移除本段 version 键
 # 未知 registry：deny（只允许 crates.io）
 unknown-registry = "deny"
 # 未知 git 来源：deny（防止直接引用 GitHub 仓库）
