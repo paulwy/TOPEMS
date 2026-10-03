@@ -3643,6 +3643,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
   dev                     启动最小开发环境 (macOS)（DB+Redis+iam+前端热更新；完整环境用 run）
   install-deps            安装依赖
   doctor                  环境自检/自举（多机门禁一致性：装 lefthook、注册钩子、核对工具链）
+  sync_base               新机器环境同步（独立脚本 bash scripts/sync_base.sh——doctor 后必跑，多机一致）
   push [--skip-check]     推送入口：先自检门禁钩子再 git push（--skip-check 跳过自检）
 
 扩展功能（场景: AI 模型 / WebSocket / 部署 / 密码管理）:
@@ -3706,7 +3707,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
   topems reset-password       重置 admin 密码为 admin123
   topems reset-password admin newpass123  重置 admin 密码为 newpass123
 
-完整功能请使用 Python CLI:
+完整功能请使用 Python CLI（场景: 批量运维——多服务/模块批量操作 + JSON 输出；日常单服务生命周期用上方 shell 命令）:
   cd cli && python3 -m topems_cli --help
 EOF
 }
