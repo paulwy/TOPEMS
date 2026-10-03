@@ -19,6 +19,11 @@ PATTERNS=(
   'AWS_SECRET_ACCESS_KEY\s*=\s*["'"'"'"][A-Za-z0-9/+=]{40,}["'"'"'"]'
   '-----BEGIN PRIVATE KEY-----'
   '-----BEGIN RSA PRIVATE KEY-----'
+  # Unquoted env-var style: KEY=value / export KEY=value / "KEY = value".
+  # KEY 含 PASSWORD|PASSWD|SECRET|TOKEN|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|REFRESH。
+  # 值：无引号、无空格、不含 ( ) ' " 空格 反引号，仅允许安全字符集，长度 >= 12。
+  # 锚定行首 '+'，避免误伤 const/let 等代码赋值（那些值含括号/引号会被字符集挡掉）。
+  '^\+[[:space:]]*(export[[:space:]]+)?[A-Za-z_][A-Za-z0-9_]*(PASSWORD|PASSWD|SECRET|TOKEN|API_?KEY|ACCESS_?KEY|PRIVATE_?KEY|REFRESH)[A-Za-z0-9_]*[[:space:]]*=[[:space:]]*[A-Za-z0-9+/_=.!@#$%^&*~?\-]{12,}$'
 )
 
 FOUND=""
@@ -26,9 +31,23 @@ FOUND=""
 for f in $STAGED; do
   [ -f "$f" ] || continue
 
-  # Skip lockfiles, database, and documentation
+  # Block non-template .env* files first (basename starts with .env), regardless of
+  # directory. .env / .env.local / .env.production / .env-* are blocked;
+  # .env.example / .env.*.template are exempt. config/ports.env etc. (not starting
+  # with .env) are unaffected.
   case "$f" in
-    pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*|docs/*|*.md) continue ;;
+    */.env|*/.env.*|*/.env-*|.env|.env.*|.env-*)
+      case "$f" in
+        *.example|*.template) ;;  # template files are exempt
+        *) FOUND="${FOUND}  - $f (sensitive .env* file should not be committed; non-template)\n" ;;
+      esac
+      continue
+      ;;
+  esac
+
+  # Skip lockfiles, database, documentation, and template/example files
+  case "$f" in
+    pnpm-lock.yaml|*-lock.yaml|database/postgres_data/*|docs/*|*.md|*.example|*.template) continue ;;
   esac
 
   # Check file extension for key/cert files
@@ -64,7 +83,7 @@ done
 
 if [ -n "$FOUND" ]; then
   echo "⚠️  Potential sensitive information detected:"
-  printf "$FOUND"
+  printf '%b' "$FOUND"
   echo "   If false positive, use --no-verify to skip."
   exit 1
 fi
