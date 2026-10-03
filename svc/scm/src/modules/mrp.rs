@@ -145,7 +145,9 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/mrp/suggestions", get(list_suggestions).post(compute_mrp))
         .route(
             "/mrp/suggestions/{id}",
-            get(get_suggestion).put(update_suggestion).delete(delete_suggestion),
+            get(get_suggestion)
+                .put(update_suggestion)
+                .delete(delete_suggestion),
         )
         .route("/mrp/suggestions/{id}/confirm", post(confirm_suggestion))
         .route("/mrp/material-summary", get(material_requirement_summary))

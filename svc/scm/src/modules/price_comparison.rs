@@ -348,7 +348,12 @@ pub fn create_routes() -> Router<ApiState> {
             "/comparisons",
             get(list_comparisons).post(create_comparison),
         )
-        .route("/comparisons/{id}", get(get_comparison).put(update_comparison).delete(delete_comparison))
+        .route(
+            "/comparisons/{id}",
+            get(get_comparison)
+                .put(update_comparison)
+                .delete(delete_comparison),
+        )
         .route("/comparisons/{id}/approve", post(approve_comparison))
 }
 
