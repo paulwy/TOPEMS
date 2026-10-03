@@ -1216,7 +1216,7 @@ impl ErpEventHandlers {
                 .await;
 
                 let profit_amount = settled_amount - cost_amount;
-                if profit_amount > 0.0 {
+                if profit_amount > rust_decimal::Decimal::ZERO {
                     let _ = sqlx::query(
                         r#"INSERT INTO erp.voucher_items
                            (id, voucher_id, line_number, subject_code, subject_name, summary, debit_amount, credit_amount, project_id, created_at, updated_at, tenant_id)

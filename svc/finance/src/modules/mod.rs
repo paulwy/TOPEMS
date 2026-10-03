@@ -33,7 +33,7 @@ use axum::{
     Extension, Router,
 };
 use chrono::{DateTime, Datelike, Utc};
-use rust_decimal::{prelude::ToPrimitive, Decimal};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use tokio;

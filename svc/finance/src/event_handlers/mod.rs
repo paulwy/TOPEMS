@@ -1,5 +1,4 @@
 use chrono::{Datelike, Utc};
-use rust_decimal::prelude::FromPrimitive;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use std::sync::Arc;
