@@ -751,7 +751,7 @@ build_all() {
     extra_opts="$filtered_opts"
     info "========== 全量编译开始 =========="
     info "参数: $( [ -z "$extra_opts" ] && echo "(无)" || echo "$extra_opts" )"
-    info "支持参数: --prepare --only-core --online --offline --dev/--debug --skip=<svc> --skip-lint --backend-only/--no-frontend"
+    info "支持参数: --prepare --only-core --online --offline --dev/--debug --skip=<svc> --skip-lint --skip-sqlx-check --serial --force --skip-mem-check --cooldown=<N> --backend-only/--no-frontend --skip-preflight"
 
     local backend_result=0
     local frontend_result=0
@@ -1523,6 +1523,7 @@ start_all_services() {
     # V3xx SQLx 缓存新鲜度门禁：缓存与当前代码匹配才启动（--skip-sqlx-check 可跳过）
     _check_sqlx_cache_freshness $extra_opts || return 1
     info "启动所有服务..."
+    info "支持参数: --only-core --no-frontend --no-register --skip=<svc> --skip-sqlx-check --skip-preflight"
     load_env
 
     local only_core=0
@@ -3517,6 +3518,8 @@ TOPEMS 服务管理工具
                             --skip-mem-check  跳过内存检查（CI / Docker 场景）
                             --serial          强制单线程串行构建，避免并行锁竞争
                             --cooldown=N      构建间冷却秒数（默认 2，serial 模式下生效）
+                            --skip-lint      跳过前端 lint（若存在 build:nolint 则用，否则忽略）
+                            --skip-preflight 跳过启动前预检（CI / 已清理过场景）
   build-backend [选项]    编译所有后端服务（同 build-all 的后端子集）
   build-frontend          编译前端 (tsc && vite build)
                             --dev        若存在 build:dev 脚本则用，否则回退默认 build
@@ -3528,6 +3531,7 @@ TOPEMS 服务管理工具
                             --no-register     不自动注册插件
                             --skip=<svc>      跳过某个服务
                             --skip-sqlx-check 跳过 SQLx 离线缓存新鲜度门禁
+                            --skip-preflight 跳过启动前预检（CI / 已清理过场景）
   stop-all                停止所有服务（含前端）
   restart-all [选项]      重启所有服务（透传 start-all 选项）
 
