@@ -362,12 +362,6 @@ describe('SCM incomingInspectionApi', () => {
     expect(mockApiClient.put).toHaveBeenCalledWith('/incoming-inspections/1', data);
   });
 
-  it('should call DELETE /incoming-inspections/:id for delete', async () => {
-    mockApiClient.delete.mockResolvedValue({ success: true, data: undefined });
-    await incomingInspectionApi.delete('1');
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/incoming-inspections/1');
-  });
-
   it('should call POST /incoming-inspections/:id/pass for pass', async () => {
     mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await incomingInspectionApi.pass('1', 'Passed');

@@ -145,7 +145,7 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/mrp/suggestions", get(list_suggestions).post(compute_mrp))
         .route(
             "/mrp/suggestions/{id}",
-            get(get_suggestion).post(confirm_suggestion),
+            get(get_suggestion).put(update_suggestion).delete(delete_suggestion),
         )
         .route("/mrp/suggestions/{id}/confirm", post(confirm_suggestion))
         .route("/mrp/material-summary", get(material_requirement_summary))
@@ -163,6 +163,17 @@ pub struct MrpComputeRequest {
     pub include_sales_orders: Option<bool>,
     pub include_forecast: Option<bool>,
     pub safety_stock_factor: Option<f64>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct UpdateMrpSuggestionRequest {
+    pub suggested_quantity: Option<f64>,
+    pub supplier_id: Option<Uuid>,
+    pub lead_time_days: Option<i32>,
+    pub suggested_order_date: Option<NaiveDate>,
+    pub suggested_delivery_date: Option<NaiveDate>,
+    pub status: Option<String>,
+    pub remarks: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -373,6 +384,114 @@ pub async fn get_suggestion(
             tracing::error!("获取MRP建议详情失败: {}", e);
             Json(api_error(500, "获取MRP建议详情失败"))
         }
+    }
+}
+
+pub async fn update_suggestion(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<UpdateMrpSuggestionRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+    let now = Utc::now();
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        UPDATE scm.mrp_suggestions
+        SET suggested_quantity = COALESCE($3, suggested_quantity),
+            supplier_id = COALESCE($4, supplier_id),
+            lead_time_days = COALESCE($5, lead_time_days),
+            suggested_order_date = COALESCE($6, suggested_order_date),
+            suggested_delivery_date = COALESCE($7, suggested_delivery_date),
+            status = COALESCE($8, status),
+            remarks = COALESCE($9, remarks),
+            updated_at = $10
+        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        "#
+    ))
+    .bind(id)
+    .bind(tenant_bind)
+    .bind(req.suggested_quantity)
+    .bind(req.supplier_id)
+    .bind(req.lead_time_days)
+    .bind(req.suggested_order_date)
+    .bind(req.suggested_delivery_date)
+    .bind(&req.status)
+    .bind(&req.remarks)
+    .bind(now)
+    .execute(&mut **txn)
+    .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "MRP 建议已更新",
+        )),
+        Ok(_) => Json(api_error(404, "MRP 建议不存在")),
+        Err(e) => Json(api_error(500, &format!("更新 MRP 建议失败: {}", e))),
+    }
+}
+
+pub async fn delete_suggestion(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PurchaseOrderWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        DELETE FROM scm.mrp_suggestions WHERE id = $1
+        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        "#
+    ))
+    .bind(id)
+    .bind(tenant_bind)
+    .execute(&mut **txn)
+    .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "MRP 建议已删除",
+        )),
+        Ok(_) => Json(api_error(404, "MRP 建议不存在")),
+        Err(e) => Json(api_error(500, &format!("删除 MRP 建议失败: {}", e))),
     }
 }
 

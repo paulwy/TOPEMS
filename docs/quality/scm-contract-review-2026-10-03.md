@@ -28,7 +28,17 @@
 | 3 | `/mrp/suggestions/{id}` | DELETE, GET, PUT | GET, POST | **前端 DELETE/PUT 无后端**（且后端 POST 前端未用） | `svc/scm/src/modules/mrp.rs:146-149` |
 
 **影响**：前端 API 层已导出 `deleteXxx/updateXxx` 函数，页面一旦触发即 404/405。
-**建议**：3 选 1 —— ① 后端补 DELETE/PUT handler（若业务确有删除/更新语义）；② 前端移除未实现的方法定义（若仅为占位）；③ 暂不处理需与产品确认删除语义。
+
+**处置（2026-10-03 已执行，方案①后端补 handler）**：
+
+| # | 处置 | 提交 |
+|---|---|---|
+| 1 | **补 `update_comparison` + `delete_comparison`**（部分更新 COALESCE 模式，删除先删 items 再删主表，权限 PriceComparisonWrite），路由 `.put().delete()` | 本波 |
+| 2 | **前端移除 `deleteInspection` 定义 + 测试块**（无任何页面引用——Dashboard 仅用 list/update；incoming-inspections 无 CrudPage 模板） | 本波 |
+| 3 | **补 `update_suggestion` + `delete_suggestion`**（部分更新 COALESCE 模式，权限 PurchaseOrderWrite，与现有 get_suggestion 的 PurchaseOrderRead 一致），路由 `.put().delete()` | 本波 |
+
+前端 comparisons/mrpPlan 的 `update/delete` **保留**（CrudPage 模板 + schema actions `['create','edit','detail','delete']` 真实渲染编辑/删除按钮，属运行时必需）。验证：`cargo check -p topems-scm` 0 error、`cargo test -p topems-scm` 通过、前端 typecheck 0 error、scm 测试 116 通过。
+
 
 ---
 

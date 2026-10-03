@@ -14,7 +14,7 @@ use super::ApiState;
 
 use crate::models::price_comparison::{
     CreatePriceComparisonRequest, CreatePurchaseInquiryRequest, CreateSupplierQuoteRequest,
-    PurchaseInquiry,
+    PurchaseInquiry, UpdatePriceComparisonRequest,
 };
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
@@ -348,7 +348,7 @@ pub fn create_routes() -> Router<ApiState> {
             "/comparisons",
             get(list_comparisons).post(create_comparison),
         )
-        .route("/comparisons/{id}", get(get_comparison))
+        .route("/comparisons/{id}", get(get_comparison).put(update_comparison).delete(delete_comparison))
         .route("/comparisons/{id}/approve", post(approve_comparison))
 }
 
@@ -1372,5 +1372,129 @@ pub async fn approve_comparison(
         )),
         Ok(_) => Json(api_error(404, "比价分析不存在")),
         Err(e) => Json(api_error(500, &format!("审批比价分析失败: {}", e))),
+    }
+}
+
+pub async fn update_comparison(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Json(req): Json<UpdatePriceComparisonRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+    let now = Utc::now();
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        UPDATE scm.price_comparisons
+        SET compared_at = COALESCE($3, compared_at),
+            recommended_supplier_id = COALESCE($4, recommended_supplier_id),
+            recommended_quote_id = COALESCE($5, recommended_quote_id),
+            quality_score = COALESCE($6, quality_score),
+            price_score = COALESCE($7, price_score),
+            delivery_score = COALESCE($8, delivery_score),
+            service_score = COALESCE($9, service_score),
+            remarks = COALESCE($10, remarks),
+            total_score = COALESCE($6, quality_score) * 0.3 + COALESCE($7, price_score) * 0.4
+                         + COALESCE($8, delivery_score) * 0.2 + COALESCE($9, service_score) * 0.1,
+            updated_at = $11
+        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        "#
+    ))
+    .bind(id)
+    .bind(tenant_bind)
+    .bind(req.compared_at)
+    .bind(req.recommended_supplier_id)
+    .bind(req.recommended_quote_id)
+    .bind(req.quality_score)
+    .bind(req.price_score)
+    .bind(req.delivery_score)
+    .bind(req.service_score)
+    .bind(&req.remarks)
+    .bind(now)
+    .execute(&mut **txn)
+    .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "比价分析已更新",
+        )),
+        Ok(_) => Json(api_error(404, "比价分析不存在")),
+        Err(e) => Json(api_error(500, &format!("更新比价分析失败: {}", e))),
+    }
+}
+
+pub async fn delete_comparison(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::PriceComparisonWrite).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+    let tenant_bind = tenant_bind_value(&claims);
+
+    let _ = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        DELETE FROM scm.price_comparison_items WHERE comparison_id = $1
+        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        "#
+    ))
+    .bind(id)
+    .bind(tenant_bind)
+    .execute(&mut **txn)
+    .await;
+
+    let result = sqlx::query(only_own_schema_query!(
+        "scm",
+        r#"
+        DELETE FROM scm.price_comparisons WHERE id = $1
+        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        "#
+    ))
+    .bind(id)
+    .bind(tenant_bind)
+    .execute(&mut **txn)
+    .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed: {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "比价分析已删除",
+        )),
+        Ok(_) => Json(api_error(404, "比价分析不存在")),
+        Err(e) => Json(api_error(500, &format!("删除比价分析失败: {}", e))),
     }
 }

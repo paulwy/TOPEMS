@@ -32,10 +32,6 @@ export const incomingInspectionApi = {
     return apiClient.scm.put(`/incoming-inspections/${id}`, data);
   },
 
-  delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.scm.delete(`/incoming-inspections/${id}`);
-  },
-
   pass: async (id: string, remarks?: string): Promise<ApiResponse<IncomingInspection>> => {
     return apiClient.scm.post(`/incoming-inspections/${id}/pass`, { remarks });
   },

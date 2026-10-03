@@ -104,6 +104,18 @@ pub struct CreatePriceComparisonRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UpdatePriceComparisonRequest {
+    pub compared_at: Option<DateTime<Utc>>,
+    pub recommended_supplier_id: Option<Uuid>,
+    pub recommended_quote_id: Option<Uuid>,
+    pub quality_score: Option<f64>,
+    pub price_score: Option<f64>,
+    pub delivery_score: Option<f64>,
+    pub service_score: Option<f64>,
+    pub remarks: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SupplierScoreItem {
     pub supplier_id: Uuid,
     pub quote_id: Uuid,
