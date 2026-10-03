@@ -44,6 +44,8 @@ scrape_configs:
           - topems-gis
           - topems-integration
     metrics_path: /metrics
+    authorization:
+      credentials: topems_dev_metrics_token_change_me
     relabel_configs:
       - source_labels: [__meta_consul_service_name]
         target_label: job
