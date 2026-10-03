@@ -271,8 +271,8 @@ npx lefthook run pre-commit --command <gate-name> --force
 | 属性 | 值 |
 |---|---|
 | **触发文件** | `^svc/.*\.rs$` |
-| **执行命令** | `python3 scripts/check_api_duplicates_ci.py --ci` |
-| **脚本** | [scripts/check_api_duplicates_ci.py](../../scripts/check_api_duplicates_ci.py) |
+| **执行命令** | `python3 scripts/tools/check_api_duplicates_ci.py --ci` |
+| **脚本** | [scripts/tools/check_api_duplicates_ci.py](../../scripts/tools/check_api_duplicates_ci.py) |
 | **tags** | `api rust` |
 | **迁移来源** | husky #4 |
 

@@ -1,7 +1,6 @@
 use axum::{
     extract::{Extension, State},
-    routing::get,
-    Json, Router,
+    Json,
 };
 use serde::{Deserialize, Serialize};
 
@@ -135,12 +134,6 @@ pub async fn plugin_health_check(
         Ok(_) => Json(ApiResponse::success((), "Healthy")),
         Err(e) => Json(ApiResponse::error(503, &format!("Database error: {}", e))),
     }
-}
-
-pub fn create_routes() -> Router<ApiState> {
-    Router::new()
-        .route("/plugins/info", get(get_plugin_info))
-        .route("/plugins/health", get(plugin_health_check))
 }
 
 /// 启动时自动注册到统一核心
@@ -278,10 +271,5 @@ mod tests {
         assert!(info.navigation_config.is_some());
         assert_eq!(info.category.as_deref(), Some("business"));
         roundtrip(&info);
-    }
-
-    #[test]
-    fn create_routes_smoke() {
-        let _router: Router<ApiState> = create_routes();
     }
 }

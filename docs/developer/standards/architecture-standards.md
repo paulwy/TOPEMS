@@ -463,10 +463,8 @@ Fixes #456
 
 | 工具 | 位置 | 用途 | 使用方式 |
 |------|------|------|----------|
-| API 路径扫描 | `scripts/scan_api_paths.py` | 扫描所有后端路由 | `python scripts/scan_api_paths.py` |
-| 前后端对应检查 | `scripts/check_api_correspondence.py` | 验证前后端 API 对应 | `python scripts/check_api_correspondence.py` |
-| API 路径 CI 检查 | `scripts/check_api_duplicates_ci.py` | CI 集成路径唯一性 | `python scripts/check_api_duplicates_ci.py --ci` |
-| 组件命名检查 | `scripts/check_component_naming.py` | 组件命名规范检查 | `python scripts/check_component_naming.py --ci` |
+| API 路径 CI 检查 | `scripts/tools/check_api_duplicates_ci.py` | CI 集成路径唯一性 | `python scripts/tools/check_api_duplicates_ci.py --ci` |
+| 组件命名检查 | `scripts/tools/check_component_naming.py` | 组件命名规范检查 | `python scripts/tools/check_component_naming.py --ci` |
 
 ---
 

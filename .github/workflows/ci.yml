@@ -1768,10 +1768,10 @@ jobs:
           python-version: '3.11'
 
       - name: Check API path uniqueness
-        run: python scripts/check_api_duplicates_ci.py --ci
+        run: python scripts/tools/check_api_duplicates_ci.py --ci
 
       - name: Check component naming conventions
-        run: python scripts/check_component_naming.py --ci
+        run: python scripts/tools/check_component_naming.py --ci
 
       - name: Check for console.log statements
         run: |

@@ -154,8 +154,8 @@ pre-commit:
       tags: security secrets
       run: bash scripts/ci/check-sensitive-info.sh
 
-    # [Gate P] API path duplicates check — migrated from husky #4
-    # NOTE: scripts/check_api_duplicates_ci.py is known to require a live DB.
+    # [Gate P] API path duplicates check — migrated from husky #4（脚本已迁移 scripts/tools/，由 CI job 执行）
+    # NOTE: scripts/tools/check_api_duplicates_ci.py 纯文件扫描（--ci 离线，无需 live DB）。
     # [Gate P] API Gate（check-api 三合一审计：audit+coverage+compare，dry-run 报告不阻断）
     api-gate:
       tags: api rust

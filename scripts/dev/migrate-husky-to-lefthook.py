@@ -113,8 +113,8 @@ GATE_P_API_DUPLICATES = """\
       tags: api rust
       files: ^svc/.*\\.rs$
       run: |
-        if [ -f "scripts/check_api_duplicates_ci.py" ]; then
-          python3 scripts/check_api_duplicates_ci.py --ci
+        if [ -f "scripts/tools/check_api_duplicates_ci.py" ]; then
+          python3 scripts/tools/check_api_duplicates_ci.py --ci
         fi
 """
 

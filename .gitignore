@@ -177,6 +177,9 @@ backup/
 # Keep roadmap archive tracked
 !docs/roadmap/archive/
 !docs/roadmap/archive/**
+# Keep quality archive tracked (docs/quality/archive 或 docs/archive 归档区显式入库)
+!docs/archive/
+!docs/archive/**
 
 # Storybook
 *storybook.log

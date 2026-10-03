@@ -202,8 +202,8 @@ pnpm --filter topems-portal test:coverage
 
 ### 代码质量
 ```bash
-python scripts/check_api_duplicates_ci.py --ci
-python scripts/check_component_naming.py --ci
+python scripts/tools/check_api_duplicates_ci.py --ci
+python scripts/tools/check_component_naming.py --ci
 bash scripts/check_allow_baseline.sh
 ```
 

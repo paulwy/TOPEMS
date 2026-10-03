@@ -183,7 +183,7 @@ def extract_script_key(cmd: str) -> str:
       "node scripts/ci/check-i18n.cjs --strict" → "check-i18n.cjs"
       "npx lint-staged"                          → "lint-staged"
       "cargo test --workspace"                   → "cargo test"
-      "python3 scripts/check_api_duplicates_ci.py --ci" → "check_api_duplicates_ci.py"
+      "python3 scripts/tools/check_api_duplicates_ci.py --ci" → "check_api_duplicates_ci.py"
     """
     # 提取脚本路径
     m = re.search(r"scripts/[^\s;&|]+\.(?:cjs|mjs|js|py|sh)", cmd)
