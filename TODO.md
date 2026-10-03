@@ -518,3 +518,15 @@
   axum handler 参数 `Json(req)` 模式解构后 req 是裸类型，调用处需重新 Json(req)
 - 验证：check/clippy 0 错一次通过；重启 health 200 modules=31；12 条原 404 全转 401；
   回归 6 条无退化；179 条全量 probe 仅剩 4 条提取噪音（非真实路径）
+
+## 2026-10-03 crm / mes / bi 三模块契约面全量核查（纯验证轮，0 条真实缺口）
+
+- 背景：延续"挂载更多业务模块 API"，按同一方法收敛 /api/crm、/api/mes、/api/bi 前端契约面
+- 方法：三模块前端契约全量提取（crm 98 / mes 167 / bi 101 条）→ 后端路由归一对比 → probe 实测
+  （GET/POST/PUT/DELETE，{P}→示例 UUID，串行+单次重试）
+- 结果：crm 97 条待测全 401；bi 101 条全 401；mes 136 条仅 1 条 404
+- 唯一 404 澄清为提取噪音：aps.ts /aps/schedule/bottleneck-analysis${query} 为 query 字符串拼接
+  （非路径参数），真实路径 /aps/schedule/bottleneck-analysis 后端已挂载 401
+- 结论：三模块前端契约面 100% 挂载，无 ticket/scm 式隐藏降级；本轮无代码改动
+- 经验：模块路由定义位置差异（analytics 在 routes.rs + modules/bi/*，非 modules/*.rs 平铺）
+  导致静态提取误报 0 条——后端提取必须按模块实际结构递归定位
