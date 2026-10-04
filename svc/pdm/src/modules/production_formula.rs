@@ -9,6 +9,7 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 // =============================================================================
 // Pure functions for production formula (配方平衡、收率、批次缩放)
@@ -104,7 +105,7 @@ pub fn group_by_kind(items: &[FormulaItem]) -> HashMap<&'static str, Vec<(String
 pub fn estimate_unit_cost(
     items: &[FormulaItem],
     unit_costs: &HashMap<String, f64>,
-) -> Result<(f64, Vec<String>), &'static str> {
+) -> Result<(f64, Vec<String>), TopemsError> {
     let mut input_cost = 0.0_f64;
     let mut missing = Vec::new();
     let mut total_output = 0.0_f64;
@@ -126,7 +127,7 @@ pub fn estimate_unit_cost(
         }
     }
     if total_output <= 0.0 {
-        return Err("无可产出主产（output=0）");
+        return Err(TopemsError::BusinessLogic("无可产出主产（output=0）".to_string()));
     }
     Ok((input_cost / total_output, missing))
 }

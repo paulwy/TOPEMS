@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -117,10 +118,10 @@ fn publish_inventory_updated(
 }
 
 /// V19.7: 从 Claims 中解析 tenant_id
-fn resolve_tenant_id(claims: &Claims) -> Result<Uuid, String> {
+fn resolve_tenant_id(claims: &Claims) -> Result<Uuid, TopemsError> {
     match &claims.tenant_id {
-        Some(id) => Uuid::parse_str(id).map_err(|e| format!("无效的租户ID: {}", e)),
-        None => Err("缺少租户ID".to_string()),
+        Some(id) => Uuid::parse_str(id).map_err(|e| TopemsError::BusinessLogic(format!("无效的租户ID: {}", e))),
+        None => Err(TopemsError::BusinessLogic("缺少租户ID".to_string())),
     }
 }
 

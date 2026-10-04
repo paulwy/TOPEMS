@@ -18,6 +18,7 @@
 //! 若调用方只提供 `social_average_wage`（社平工资），则 `base_min/base_max` 可通过
 //! `derive_base_range_from_social_average` 自动推导为 60% / 300%。
 
+use topems_shared_core::TopemsError;
 use bigdecimal::BigDecimal;
 use std::str::FromStr;
 
@@ -270,15 +271,15 @@ pub fn taxable_special_deductions_monthly(b: &SocialInsuranceBreakdown) -> BigDe
 ///   base_min > 0, base_max >= base_min
 ///   所有比例 ∈ [0, 1]
 ///   公积金个人+单位比例通常 ≤ 24%（非硬约束，但返回 warning flag）
-pub fn validate_social_insurance_config(cfg: &SocialInsuranceConfig) -> Result<(), String> {
+pub fn validate_social_insurance_config(cfg: &SocialInsuranceConfig) -> Result<(), TopemsError> {
     let zero = bd("0");
     let one = bd("1");
 
     if cfg.base_min <= zero || cfg.base_max < cfg.base_min {
-        return Err(format!(
+        return Err(TopemsError::BusinessLogic(format!(
             "基数范围不合法: min={} max={}",
             cfg.base_min, cfg.base_max
-        ));
+        )));
     }
 
     let pct = [
@@ -295,12 +296,12 @@ pub fn validate_social_insurance_config(cfg: &SocialInsuranceConfig) -> Result<(
     ];
     for (name, r) in pct {
         if r < &zero || r > &one {
-            return Err(format!("比例 {} 应在 [0,1]: {}", name, r));
+            return Err(TopemsError::BusinessLogic(format!("比例 {} 应在 [0,1]: {}", name, r)));
         }
     }
 
     if cfg.serious_illness_personal_fixed < zero || cfg.serious_illness_company_fixed < zero {
-        return Err("大病医疗固定额不可为负".into());
+        return Err(TopemsError::BusinessLogic("大病医疗固定额不可为负".to_string()));
     }
 
     Ok(())

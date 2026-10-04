@@ -2,6 +2,7 @@
 //! 提供库存周转率、订单履约率等聚合查询
 //! 路径前缀: /wms/analytics
 
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Extension, FromRef, Query, State},
     http::HeaderMap,
@@ -83,10 +84,10 @@ pub struct OrderFulfillmentSummary {
 
 // ===== 工具函数 =====
 
-fn resolve_tenant_id(claims: &Claims) -> Result<Uuid, String> {
+fn resolve_tenant_id(claims: &Claims) -> Result<Uuid, TopemsError> {
     match &claims.tenant_id {
-        Some(id) => Uuid::parse_str(id).map_err(|e| format!("无效的租户ID: {}", e)),
-        None => Err("缺少租户ID".to_string()),
+        Some(id) => Uuid::parse_str(id).map_err(|e| TopemsError::BusinessLogic(format!("无效的租户ID: {}", e))),
+        None => Err(TopemsError::BusinessLogic("缺少租户ID".to_string())),
     }
 }
 
@@ -142,7 +143,7 @@ async fn get_inventory_turnover(
     } else {
         Some(match resolve_tenant_id(&claims) {
             Ok(id) => id,
-            Err(e) => return Json(ApiResponse::error(401, &e)),
+            Err(e) => return Json(ApiResponse::error(401, &e.to_string())),
         })
     };
 
@@ -274,7 +275,7 @@ async fn get_order_fulfillment(
 ) -> Json<ApiResponse<OrderFulfillmentResponse>> {
     let tenant_id = match resolve_tenant_id(&claims) {
         Ok(id) => id,
-        Err(e) => return Json(ApiResponse::error(401, &e)),
+        Err(e) => return Json(ApiResponse::error(401, &e.to_string())),
     };
 
     let (start, end) = parse_date_range(&params);
