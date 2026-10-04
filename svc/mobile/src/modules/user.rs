@@ -346,6 +346,61 @@ fn base64_decode(s: &str) -> Result<Vec<u8>, ()> {
     Ok(out)
 }
 
+/// 修改密码（前端 POST /user/change-password → 转发 unified-core /api/core/iam/users/{id}/password）
+pub async fn change_password(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(topems_shared_core::response::error_value(401, "未授权")),
+            );
+        }
+    };
+
+    let core_url =
+        std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8099".to_string());
+    let url = format!("{}/api/core/iam/users/{}/password", core_url, user_id);
+
+    let auth_value = headers
+        .get(axum::http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or_default()
+        .to_string();
+
+    let client = reqwest::Client::new();
+    match client
+        .put(&url)
+        .header(reqwest::header::AUTHORIZATION, auth_value)
+        .json(&payload)
+        .send()
+        .await
+    {
+        Ok(resp) => {
+            let status = resp.status();
+            let body = resp.json::<serde_json::Value>().await.unwrap_or_default();
+            (
+                StatusCode::from_u16(status.as_u16()).unwrap_or(StatusCode::BAD_GATEWAY),
+                Json(body),
+            )
+        }
+        Err(e) => {
+            tracing::error!("转发修改密码失败: {}", e);
+            (
+                StatusCode::BAD_GATEWAY,
+                Json(topems_shared_core::response::error_value(
+                    502,
+                    "修改密码服务不可用",
+                )),
+            )
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -215,6 +215,65 @@ pub async fn list_attendance_records(
     }
 }
 
+/// 今日考勤（前端 GET /attendance/today → HRM 考勤记录按日期过滤）
+pub async fn get_today_attendance(
+    State(auth_state): State<AuthState>,
+    State(client): State<TypedServiceClient<HrmApi>>,
+    headers: HeaderMap,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let today = chrono::Utc::now().date_naive().to_string(); // YYYY-MM-DD
+    match client
+        .list_attendance_records(&user_id, None, 1, 100)
+        .await
+    {
+        Ok(data) => {
+            // HRM 返回可能是 { items: [...] } 或纯数组，兼容两种结构
+            let records = if let Some(items) = data.get("items").and_then(|v| v.as_array()) {
+                items.clone()
+            } else if let Some(arr) = data.as_array() {
+                arr.clone()
+            } else {
+                Vec::new()
+            };
+
+            let today_records: Vec<serde_json::Value> = records
+                .into_iter()
+                .filter(|r| {
+                    r.get("date")
+                        .and_then(|d| d.as_str())
+                        .map(|d| d.starts_with(&today))
+                        .unwrap_or(false)
+                })
+                .collect();
+
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success(
+                    serde_json::json!({ "items": today_records, "total": today_records.len() }),
+                    "获取今日考勤成功",
+                )),
+            )
+        }
+        Err(e) => {
+            tracing::error!("调用HRM服务获取今日考勤失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "获取今日考勤失败")),
+            )
+        }
+    }
+}
+
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["mobile:attendance:write"])),

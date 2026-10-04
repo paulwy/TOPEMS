@@ -93,7 +93,7 @@ use crate::modules::approval::{
 };
 use crate::modules::attendance::{
     apply_leave, check_in, check_out, get_attendance_overview, get_attendance_stats,
-    list_attendance_records, list_leave_applications,
+    get_today_attendance, list_attendance_records, list_leave_applications,
 };
 use crate::modules::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
@@ -159,7 +159,7 @@ use crate::modules::task::{
     get_overdue_tasks, get_pending_tasks, get_task, reopen_task, search_tasks, update_task,
     update_task_status,
 };
-use crate::modules::user::{get_profile, update_profile, upload_avatar};
+use crate::modules::user::{change_password, get_profile, update_profile, upload_avatar};
 use crate::modules::workbench::get_workbench_data;
 use axum::Router;
 
@@ -699,6 +699,16 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route(
             "/production/orders/{id}/complete",
             axum::routing::post(complete_production_order),
+        )
+        // attendance today（前端 /attendance/today → HRM 记录按日过滤）
+        .route(
+            "/attendance/today",
+            axum::routing::get(get_today_attendance),
+        )
+        // user change-password（前端 /user/change-password → unified-core）
+        .route(
+            "/user/change-password",
+            axum::routing::post(change_password),
         )
         // schedule（前端 /schedule/events → oa calendar events）
         .route(
