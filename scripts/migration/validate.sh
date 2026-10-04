@@ -104,7 +104,9 @@ check_single_responsibility() {
   local ddl_count schema_count line scopes raw
   ddl_count=$(grep -c -E '^[[:space:]]*(ALTER TABLE|CREATE TABLE|DROP TABLE|ALTER TABLE.*SET SCHEMA|COMMENT ON)' "$file" 2>/dev/null || true)
   # Distinct schemas touched by SET SCHEMA / schema-qualified table refs
-  scopes=$(grep -o -E 'SET SCHEMA [a-zA-Z_]+|(ALTER|CREATE|DROP) TABLE [a-zA-Z_]+\.' "$file" 2>/dev/null     | sed -E 's/SET SCHEMA //; s/(ALTER|CREATE|DROP) TABLE //; s/\.$//' | sort -u)
+  # （set -euo pipefail 下 grep 无匹配返回 1 会使整个命令替换失败 → 脚本崩溃；
+  #   加 `|| true` 使无 DDL 引用的迁移文件正常返回空 scopes，B4 根因修复）
+  scopes=$(grep -o -E 'SET SCHEMA [a-zA-Z_]+|(ALTER|CREATE|DROP) TABLE [a-zA-Z_]+\.' "$file" 2>/dev/null     | sed -E 's/SET SCHEMA //; s/(ALTER|CREATE|DROP) TABLE //; s/\.$//' | sort -u || true)
   schema_count=$(printf '%s\n' "$scopes" | grep -c -E '[a-zA-Z_]+' 2>/dev/null || true)
   if (( ddl_count > 40 )); then
     echo "HIGH"
@@ -302,7 +304,7 @@ for dir in "${MIGRATION_DIRS[@]}"; do
     res="$(check_single_responsibility "$file")"
     if [[ "$res" != "OK" ]]; then
       rel="$(rel_path "$file")"
-      SINGLE_RESPONSIBILITY_WARNINGS+=("$rel ($res: $(grep -c -E '^[[:space:]]*(ALTER TABLE|CREATE TABLE|DROP TABLE)' "$file") DDL)")
+      SINGLE_RESPONSIBILITY_WARNINGS+=("$rel ($res: $(grep -c -E '^[[:space:]]*(ALTER TABLE|CREATE TABLE|DROP TABLE)' "$file" 2>/dev/null || true) DDL)")
     fi
   done < <(find "$full_dir" -maxdepth 1 -type f \( -name '*.sql' \) ! -name '*.backup' ! -name '*.sql.backup' -print0 | sort -z)
 done
