@@ -8,6 +8,7 @@
 
 #![cfg(feature = "module-core")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 
@@ -19,7 +20,7 @@ pub struct UnifiedCoreRealModule {
 
 impl UnifiedCoreRealModule {
     /// 异步构建真实 Unified Core 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         std::env::set_var("SEARCH_PATH", "public");
 
         let config = topems_shared_bootstrap::ServiceConfig {

@@ -10,6 +10,7 @@
 
 #![cfg(feature = "module-mobile")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
@@ -24,7 +25,7 @@ pub struct MobileRealModule {
 
 impl MobileRealModule {
     /// 异步构建真实 Mobile 模块（复用 svc/mobile 的 AppState 与完整 protected 路由）
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         let config = ServiceConfig {
             name: "topems-mobile",
             port: 8095,

@@ -12,6 +12,7 @@
 
 #![cfg(feature = "module-crm")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -32,7 +33,7 @@ pub struct CrmRealModule {
 
 impl CrmRealModule {
     /// 异步构建真实 CRM 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // search_path 优先 crm schema
         std::env::set_var("SEARCH_PATH", "crm, public, shared");
 
@@ -88,7 +89,7 @@ impl CrmRealModule {
             .map(Arc::new);
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
             .and_then(|c| c.with_service_token(&jwt_secret, "crm-module", &["workflow:read"]))
-            .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
+            .map_err(|e| TopemsError::internal("工作流服务客户端初始化失败", e))?;
 
         // 5. 构建业务 ApiState（与独立部署 main.rs 一致）
         fn crm_l2_config(entity: &str) -> L2CacheConfig {

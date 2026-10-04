@@ -7,6 +7,7 @@
 
 #![cfg(feature = "module-search")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
@@ -22,7 +23,7 @@ pub struct SearchRealModule {
 
 impl SearchRealModule {
     /// 异步构建真实 Search 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         let config = ServiceConfig {
             name: "topems-search",
             port: 8092,

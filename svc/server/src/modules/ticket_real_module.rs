@@ -8,6 +8,7 @@
 
 #![cfg(feature = "module-ticket")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -29,7 +30,7 @@ pub struct TicketRealModule {
 
 impl TicketRealModule {
     /// 异步构建真实 Ticket 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // 与独立部署 main.rs 一致：search_path ticket, public（ticket 表在 ticket schema）
         std::env::set_var("SEARCH_PATH", "ticket, public");
 
@@ -60,10 +61,10 @@ impl TicketRealModule {
         let ddl_pool = ctx.migrate_pool.as_ref().unwrap_or(&ctx.db);
         handlers::init_ticket_tables(ddl_pool)
             .await
-            .map_err(|e| anyhow::anyhow!("初始化 ticket 表失败: {e}"))?;
+            .map_err(|e| TopemsError::internal("初始化 ticket 表失败", e))?;
         handlers::init_sla_tables(ddl_pool)
             .await
-            .map_err(|e| anyhow::anyhow!("初始化 SLA 表失败: {e}"))?;
+            .map_err(|e| TopemsError::internal("初始化 SLA 表失败", e))?;
 
         // 3. 业务路由（权限中间件 + tier 治理 + 开发验证模拟认证）
         let tier_gate_config = Arc::new(TierGateConfig::new("ticket", PlanTier::Free));

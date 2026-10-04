@@ -7,6 +7,7 @@
 
 #![cfg(feature = "module-tms")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -26,7 +27,7 @@ pub struct TmsRealModule {
 
 impl TmsRealModule {
     /// 异步构建真实 TMS 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // search_path 优先 tms schema
         std::env::set_var("SEARCH_PATH", "tms, public");
 

@@ -7,6 +7,7 @@
 
 #![cfg(feature = "module-srm")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -29,7 +30,7 @@ pub struct SrmRealModule {
 
 impl SrmRealModule {
     /// 异步构建真实 SRM 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         std::env::set_var("SEARCH_PATH", "srm, public, shared");
 
         let config = ServiceConfig {
@@ -73,7 +74,7 @@ impl SrmRealModule {
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
             .and_then(|c| c.with_service_token(&jwt_secret, "srm-module", &["workflow:read"]))
-            .map_err(|e| anyhow::anyhow!("SRM 工作流客户端初始化失败: {e}"))?;
+            .map_err(|e| TopemsError::internal("SRM 工作流客户端初始化失败", e))?;
 
         let db = ctx.db.clone();
         let ep = ctx.event_publisher.clone();

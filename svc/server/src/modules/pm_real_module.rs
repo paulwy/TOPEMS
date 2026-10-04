@@ -7,6 +7,7 @@
 
 #![cfg(feature = "module-pm")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -26,7 +27,7 @@ pub struct PmRealModule {
 
 impl PmRealModule {
     /// 异步构建真实 PM 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // search_path 优先 pm schema
         std::env::set_var("SEARCH_PATH", "pm, public, shared");
 
@@ -71,7 +72,7 @@ impl PmRealModule {
             Ok(c) => c,
             Err(e) => {
                 tracing::warn!("⚠️ 工作流服务客户端初始化失败，PM 模块本次不注册: {e}");
-                return Err(anyhow::anyhow!("workflow client init failed: {e}"));
+                return Err(TopemsError::internal("workflow client init failed", e));
             }
         };
 

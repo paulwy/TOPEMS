@@ -7,6 +7,7 @@
 
 #![cfg(feature = "module-communication")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::{delete, get, post, put};
 use axum::Router;
@@ -21,7 +22,7 @@ pub struct CommunicationRealModule {
 
 impl CommunicationRealModule {
     /// 异步构建真实 Communication 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         let config = ServiceConfig {
             name: "topems-communication",
             port: 8093,

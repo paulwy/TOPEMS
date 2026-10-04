@@ -7,6 +7,7 @@
 
 #![cfg(feature = "module-plugin-registry")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::time::Instant;
@@ -21,7 +22,7 @@ pub struct PluginRegistryRealModule {
 
 impl PluginRegistryRealModule {
     /// 异步构建真实 Plugin Registry 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         let config = ServiceConfig {
             name: "topems-plugin-registry",
             port: 8091,

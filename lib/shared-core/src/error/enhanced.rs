@@ -245,6 +245,14 @@ impl From<std::io::Error> for TopemsError {
     }
 }
 
+/// anyhow 聚合错误转换（B7 第三批前置：server 等业务层 anyhow 清退所需）。
+/// 统一收敛为 Internal：classify() 保证细节只进服务端日志，客户端收到通用「内部服务器错误」。
+impl From<anyhow::Error> for TopemsError {
+    fn from(error: anyhow::Error) -> Self {
+        TopemsError::Internal(error.to_string())
+    }
+}
+
 /// 错误上下文增强工具
 pub trait ErrorContext<T> {
     /// 添加上下文信息
@@ -1304,6 +1312,8 @@ mod tests {
             TopemsError::DatabaseTransaction(SECRET.to_string()),
             TopemsError::Internal(SECRET.to_string()),
             TopemsError::Unknown(SECRET.to_string()),
+            // B7：anyhow 聚合错误经 From 收敛为 Internal（细节同样不得回显）
+            TopemsError::from(anyhow::anyhow!(SECRET)),
             TopemsError::Database(SECRET.to_string()),
             TopemsError::CacheOperation(SECRET.to_string()),
             // 类型化载体变体（Display 中同样含 SECRET）

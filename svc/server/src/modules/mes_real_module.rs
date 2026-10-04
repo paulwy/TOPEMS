@@ -8,6 +8,7 @@
 
 #![cfg(feature = "module-mes")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -29,7 +30,7 @@ pub struct MesRealModule {
 
 impl MesRealModule {
     /// 异步构建真实 MES 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // search_path 优先 mes schema
         std::env::set_var("SEARCH_PATH", "mes, public");
 

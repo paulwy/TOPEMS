@@ -11,6 +11,7 @@
 
 #![cfg(feature = "module-finance")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use topems_finance::shared::AppState;
@@ -30,7 +31,7 @@ pub struct FinanceRealModule {
 impl FinanceRealModule {
     /// 异步构建真实财务模块：
     /// 初始化数据库 → 事件总线 → 服务客户端 → 业务路由
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // 与独立 finance 服务一致：search_path 优先 finance schema。
         // .env 默认 SEARCH_PATH=iam,shared,public 会解析到 iam schema 的旧表
         // （无 reco_type 列），导致 init_database 建索引失败。
@@ -60,14 +61,14 @@ impl FinanceRealModule {
         // 2. 初始化财务数据库（建表，幂等）
         if let Err(e) = topems_finance::services::init_database(&ctx.db).await {
             tracing::error!("Failed to init finance database: {}", e);
-            anyhow::bail!("finance 数据库初始化失败: {}", e);
+            return Err(TopemsError::internal("finance 数据库初始化失败", e));
         }
 
         // 3. 工作流服务客户端
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
             .and_then(|c| c.with_service_token(&jwt_secret, "finance-module", &["workflow:read"]))
-            .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
+            .map_err(|e| TopemsError::internal("工作流服务客户端初始化失败", e))?;
 
         // 4. 构建业务 AppState
         let state = AppState {

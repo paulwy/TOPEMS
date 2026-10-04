@@ -7,6 +7,7 @@
 
 #![cfg(feature = "module-rd")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -24,7 +25,7 @@ pub struct RdRealModule {
 
 impl RdRealModule {
     /// 异步构建真实 RD 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // rd 业务表位于 rs schema
         std::env::set_var("SEARCH_PATH", "rs, public");
 
@@ -56,7 +57,7 @@ impl RdRealModule {
         // 3. 构建业务 ApiState（与独立部署 main.rs 一致）
         let config_app = topems_shared_core::config::Config::load()
             .await
-            .map_err(|e| anyhow::anyhow!("RD 配置加载失败: {}", e))?;
+            .map_err(|e| TopemsError::internal("RD 配置加载失败", e))?;
         let api_state = ApiState {
             db: ctx.db.clone(),
             auth_state: ctx.auth_state.clone(),

@@ -11,6 +11,7 @@
 
 #![cfg(feature = "module-qms")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -33,7 +34,7 @@ pub struct QmsRealModule {
 
 impl QmsRealModule {
     /// 异步构建真实 QMS 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // search_path 优先 qms schema（.env 默认 iam,shared,public 会解析到错误 schema）
         std::env::set_var("SEARCH_PATH", "qms, public");
 
@@ -66,7 +67,7 @@ impl QmsRealModule {
         let jwt_secret = ctx.auth_state.jwt_secret.clone();
         let workflow_client = TypedServiceClient::<WorkflowApi>::from_env_default()
             .and_then(|c| c.with_service_token(&jwt_secret, "qms-module", &["workflow:read"]))
-            .map_err(|e| anyhow::anyhow!("工作流服务客户端初始化失败: {}", e))?;
+            .map_err(|e| TopemsError::internal("工作流服务客户端初始化失败", e))?;
 
         // 4. 构建业务 AppState
         let l2_config = L2CacheConfig {

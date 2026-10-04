@@ -7,6 +7,7 @@
 
 #![cfg(feature = "module-ai")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use axum_prometheus::PrometheusMetricLayer;
@@ -31,7 +32,7 @@ pub struct AiRealModule {
 
 impl AiRealModule {
     /// 异步构建真实 AI 模块（嵌入模式）
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         std::env::set_var("SEARCH_PATH", "ai, public");
 
         let config = ServiceConfig {
@@ -55,7 +56,7 @@ impl AiRealModule {
 
         // AI 专用 Database（提供 run_migrations 和服务内部状态）
         let database_url = std::env::var("DATABASE_URL")
-            .map_err(|_| anyhow::anyhow!("DATABASE_URL environment variable is required"))?;
+            .map_err(|_| TopemsError::EnvVarNotSet("DATABASE_URL".to_string()))?;
         let db = Database::new(&database_url).await?;
 
         // 迁移 / schema 防御 / ai_knowledge 初始化（失败仅告警不阻塞启动）

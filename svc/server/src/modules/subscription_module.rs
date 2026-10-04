@@ -11,6 +11,7 @@
 
 #![cfg(feature = "module-subscription")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::{
     extract::{Path, State},
@@ -219,7 +220,7 @@ pub struct SubscriptionModule {
 }
 
 impl SubscriptionModule {
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         std::env::set_var("SEARCH_PATH", "public");
 
         let config = ServiceConfig {

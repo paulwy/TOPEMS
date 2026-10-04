@@ -10,6 +10,7 @@
 
 #![cfg(feature = "module-erp")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -32,7 +33,7 @@ pub struct ErpRealModule {
 
 impl ErpRealModule {
     /// 异步构建真实 ERP 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // search_path 优先 erp schema（.env 默认 iam,shared,public 会解析到错误 schema）
         std::env::set_var("SEARCH_PATH", "erp, public");
 

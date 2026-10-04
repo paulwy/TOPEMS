@@ -8,6 +8,7 @@
 
 #![cfg(feature = "module-advanced")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -25,7 +26,7 @@ pub struct AnalyticsRealModule {
 
 impl AnalyticsRealModule {
     /// 异步构建真实 Analytics 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         // 与独立部署 main.rs 一致：search_path bi, public
         std::env::set_var("SEARCH_PATH", "bi, public");
 

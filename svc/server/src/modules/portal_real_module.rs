@@ -10,6 +10,7 @@
 
 #![cfg(feature = "module-portal")]
 
+use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -26,7 +27,7 @@ pub struct PortalRealModule {
 
 impl PortalRealModule {
     /// 异步构建真实 Portal 模块
-    pub async fn build() -> anyhow::Result<Self> {
+    pub async fn build() -> Result<Self> {
         std::env::set_var("SEARCH_PATH", "public, portal");
 
         let config = ServiceConfig {
