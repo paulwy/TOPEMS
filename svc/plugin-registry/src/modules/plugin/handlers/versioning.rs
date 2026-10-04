@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
@@ -14,16 +15,16 @@ use topems_shared_core::locale::Locale;
 
 /// Parse a semantic version string like "1.2.3" into (major, minor, patch).
 /// Pre-release suffixes (e.g. "-rc.1") are ignored. Returns Err on malformed input.
-pub fn parse_plugin_version(v: &str) -> Result<(u32, u32, u32), String> {
+pub fn parse_plugin_version(v: &str) -> Result<(u32, u32, u32), TopemsError> {
     // Strip pre-release / build metadata
     let base = v.split('-').next().unwrap_or(v);
     let base = base.split('+').next().unwrap_or(base);
     let parts: Vec<&str> = base.split('.').collect();
     if parts.len() < 3 {
-        return Err(format!(
+        return Err(TopemsError::BusinessLogic(format!(
             "invalid version '{}': expected at least 3 components (major.minor.patch)",
             v
-        ));
+        )));
     }
     let major = parts[0]
         .parse::<u32>()

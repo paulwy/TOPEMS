@@ -1,5 +1,6 @@
 //! 销售漏斗计算纯函数模块
 
+use topems_shared_core::TopemsError;
 use rust_decimal::Decimal;
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -57,12 +58,12 @@ pub fn calculate_conversion_chain(stage_counts: &[(&str, i64)]) -> Vec<StageConv
 }
 
 /// 校验概率合法性（0-100）
-pub fn validate_probability(probability: i32) -> Result<i32, String> {
+pub fn validate_probability(probability: i32) -> Result<i32, TopemsError> {
     if !(0..=100).contains(&probability) {
-        return Err(format!(
+        return Err(TopemsError::BusinessLogic(format!(
             "probability must be in [0, 100], got {}",
             probability
-        ));
+        )));
     }
     Ok(probability)
 }

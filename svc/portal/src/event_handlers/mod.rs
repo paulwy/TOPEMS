@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -6,7 +7,7 @@ use topems_shared_event::event::{
     EventSubscriber, EventType, PmProjectCreatedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct PortalEventHandlers {
@@ -32,15 +33,15 @@ impl PortalEventHandlers {
         Ok(subscriber
             .subscribe_handler(vec![EventType::EmployeeOnboarded], move |event| {
                 let h = h1.clone();
-                Box::pin(async move { h.handle_employee_onboarded(event).await })
+                Box::pin(async move { h.handle_employee_onboarded(event).await.map_err(|e| e.to_string()) })
             })
             .subscribe_handler(vec![EventType::PmProjectCreated], move |event| {
                 let h = h2.clone();
-                Box::pin(async move { h.handle_project_created(event).await })
+                Box::pin(async move { h.handle_project_created(event).await.map_err(|e| e.to_string()) })
             })
             .subscribe_handler(vec![EventType::AfterSalesTicketCreated], move |event| {
                 let h = h3.clone();
-                Box::pin(async move { h.handle_after_sales_ticket(event).await })
+                Box::pin(async move { h.handle_after_sales_ticket(event).await.map_err(|e| e.to_string()) })
             }))
     }
 
@@ -53,7 +54,7 @@ impl PortalEventHandlers {
         notification_type: &str,
         link_url: Option<&str>,
         target_user: Option<&str>,
-    ) -> Result<uuid::Uuid, String> {
+    ) -> Result<uuid::Uuid, TopemsError> {
         let now = Utc::now();
         let notif_id = uuid::Uuid::new_v4();
 
@@ -125,7 +126,7 @@ impl PortalEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[portal] 通知创建失败: {}", e);
-                Err(format!("通知创建失败: {}", e))
+                Err(TopemsError::BusinessLogic(format!("通知创建失败: {}", e)))
             }
         }
     }

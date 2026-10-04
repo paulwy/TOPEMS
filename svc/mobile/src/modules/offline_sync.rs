@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Json, Query, State},
     http::{HeaderMap, StatusCode},
@@ -224,10 +225,10 @@ pub async fn sync_data(
     )
 }
 
-async fn apply_operation(_pool: &PgPool, operation: &OfflineOperation) -> Result<(), String> {
+async fn apply_operation(_pool: &PgPool, operation: &OfflineOperation) -> Result<(), TopemsError> {
     match operation.operation_type.as_str() {
         "create" | "update" | "delete" => Ok(()),
-        _ => Err(format!("不支持的操作类型: {}", operation.operation_type)),
+        _ => Err(TopemsError::ValidationFailed(format!("不支持的操作类型: {}", operation.operation_type))),
     }
 }
 #[utoipa::path(
@@ -602,7 +603,7 @@ pub async fn retry_failed_sync(
                 retried_count += 1;
             }
             Err(e) => {
-                let _ = db_update_offline_operation_status(&pool, op.id, "failed", Some(&e)).await;
+                let _ = db_update_offline_operation_status(&pool, op.id, "failed", Some(&e.to_string())).await;
                 still_failed_count += 1;
             }
         }

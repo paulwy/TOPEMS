@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -29,7 +30,7 @@ pub fn explode_bom(
     edges: &[BomEdge],
     root: &str,
     root_qty: f64,
-) -> Result<HashMap<String, f64>, String> {
+) -> Result<HashMap<String, f64>, TopemsError> {
     if root_qty <= 0.0 {
         return Ok(HashMap::new());
     }
@@ -55,7 +56,7 @@ pub fn explode_bom(
                     // 叶子（没子件）累加；非叶子 DFS
                     let child_key = child.to_string();
                     if path.contains(&child_key) {
-                        return Err(format!("循环依赖检测：节点 {} 在路径中重复出现", child_key));
+                        return Err(TopemsError::BusinessLogic(format!("循环依赖检测：节点 {} 在路径中重复出现", child_key)));
                     }
                     // 累计用量
                     *result.entry(child_key.clone()).or_insert(0.0) += child_mult;
@@ -160,7 +161,7 @@ pub fn diff_bom_single_level(
 }
 
 /// BOM 层级深度（最大层数），根为 level 1，空子项 = 1
-pub fn bom_max_depth(edges: &[BomEdge], root: &str) -> Result<u32, String> {
+pub fn bom_max_depth(edges: &[BomEdge], root: &str) -> Result<u32, TopemsError> {
     let mut children: HashMap<&str, Vec<&str>> = HashMap::new();
     for (p, c, _) in edges {
         children.entry(p).or_default().push(c.as_str());
@@ -181,7 +182,7 @@ pub fn bom_max_depth(edges: &[BomEdge], root: &str) -> Result<u32, String> {
                 for child in list {
                     let child_key = child.to_string();
                     if path.contains(&child_key) {
-                        return Err(format!("循环依赖：{}", child_key));
+                        return Err(TopemsError::BusinessLogic(format!("循环依赖：{}", child_key)));
                     }
                     let mut np = path.clone();
                     np.insert(child_key);

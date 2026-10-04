@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -82,7 +83,7 @@ impl MobileEventHandlers {
         source_type: &str,
         source_id: uuid::Uuid,
         target_user: Option<&str>,
-    ) -> Result<Option<uuid::Uuid>, String> {
+    ) -> Result<Option<uuid::Uuid>, TopemsError> {
         let now = Utc::now();
         let notification_id = uuid::Uuid::new_v4();
 
@@ -124,7 +125,7 @@ impl MobileEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[mobile] 推送通知创建失败: {}", e);
-                Err(format!("推送通知创建失败: {}", e))
+                Err(TopemsError::BusinessLogic(format!("推送通知创建失败: {}", e)))
             }
         }
     }

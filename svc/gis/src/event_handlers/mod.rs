@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
@@ -52,7 +53,7 @@ impl GisEventHandlers {
         description: Option<&str>,
         level: Option<&str>,
         location: Option<&str>,
-    ) -> Result<uuid::Uuid, String> {
+    ) -> Result<uuid::Uuid, TopemsError> {
         let now = Utc::now();
         let marker_id = uuid::Uuid::new_v4();
 
@@ -91,7 +92,7 @@ impl GisEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[gis] 地图标注更新失败: {}", e);
-                Err(format!("地图标注更新失败: {}", e))
+                Err(TopemsError::BusinessLogic(format!("地图标注更新失败: {}", e)))
             }
         }
     }

@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -349,7 +350,7 @@ async fn get_entity_analyses(
     }
 }
 
-async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Result<String, String> {
+async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Result<String, TopemsError> {
     let url = ai_service_url.as_deref().unwrap_or(DEFAULT_AI_SERVICE_URL);
     let client = Client::new();
     let endpoint = format!("{}/api/core/rd/ai/chat", url);
@@ -399,7 +400,7 @@ async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Resul
                         error = %e,
                         "[AI Service] 解析 AI 响应失败"
                     );
-                    Err(format!("解析AI响应失败: {}", e))
+                    Err(TopemsError::BusinessLogic(format!("解析AI响应失败: {}", e)))
                 }
             }
         }
@@ -410,7 +411,7 @@ async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Resul
                 status = %resp.status(),
                 "[AI Service] AI 服务返回非成功状态，请检查 AI 服务端口与可用性"
             );
-            Err(format!("AI服务返回错误: {}", resp.status()))
+            Err(TopemsError::BusinessLogic(format!("AI服务返回错误: {}", resp.status())))
         }
         Err(e) => {
             error!(
@@ -419,7 +420,7 @@ async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Resul
                 error = %e,
                 "[AI Service] 调用 AI 服务失败，请检查端口配置与网络连通性"
             );
-            Err(format!("调用AI服务失败: {}", e))
+            Err(TopemsError::BusinessLogic(format!("调用AI服务失败: {}", e)))
         }
     }
 }

@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -9,7 +10,7 @@ use topems_shared_event::event::{
 };
 use uuid::Uuid;
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 #[allow(dead_code)]
@@ -40,27 +41,27 @@ impl PmEventHandlers {
                 vec![EventType::HrmEmployeeCreated, EventType::HrmEmployeeUpdated],
                 move |event| {
                     let h = h1.clone();
-                    Box::pin(async move { h.handle_employee_changed(event).await })
+                    Box::pin(async move { h.handle_employee_changed(event).await.map_err(|e| e.to_string()) })
                 },
             )
             .subscribe_handler(
                 vec![EventType::WorkflowApproved, EventType::WorkflowRejected],
                 move |event| {
                     let h = h2.clone();
-                    Box::pin(async move { h.handle_workflow_result(event).await })
+                    Box::pin(async move { h.handle_workflow_result(event).await.map_err(|e| e.to_string()) })
                 },
             )
             .subscribe_handler(vec![EventType::RdProjectCreated], move |event| {
                 let h = h3.clone();
-                Box::pin(async move { h.handle_rd_project_created(event).await })
+                Box::pin(async move { h.handle_rd_project_created(event).await.map_err(|e| e.to_string()) })
             })
             .subscribe_handler(vec![EventType::SettlementCreated], move |event| {
                 let h = h4.clone();
-                Box::pin(async move { h.handle_settlement_created(event).await })
+                Box::pin(async move { h.handle_settlement_created(event).await.map_err(|e| e.to_string()) })
             })
             .subscribe_handler(vec![EventType::SettlementApproved], move |event| {
                 let h = h5.clone();
-                Box::pin(async move { h.handle_settlement_approved(event).await })
+                Box::pin(async move { h.handle_settlement_approved(event).await.map_err(|e| e.to_string()) })
             }))
     }
 
@@ -223,7 +224,7 @@ impl PmEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[pm] 更新项目审批状态失败: {}", e);
-                return Err(format!("更新项目审批状态失败: {}", e));
+                return Err(TopemsError::BusinessLogic(format!("更新项目审批状态失败: {}", e)));
             }
         }
 
