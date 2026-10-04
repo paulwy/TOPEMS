@@ -3,22 +3,29 @@
  * P0-3 配置单一真相源统一校验（check-config-sources）
  * ====================================================
  * 权威源：config/services.yaml（服务清单 + 端口 + 虚拟服务 + 特殊端口）
- * 校验 5 个下游方向的一致性：
+ * 校验 6 个下游方向的一致性：
  *   A. config/services.yaml ↔ config/ports.env         （env_var=port 值级 + 多余条目）
  *   B. config/services.yaml ↔ Cargo.toml workspace     （svc/ 目录双向一致）
  *   C. config/services.yaml ↔ apps/web/src/config/ports.ts（BACKEND_PORTS 值级 + 死条目）
  *   D. config/services.yaml ↔ apps/web/vite.config.ts  （SERVICES 名/端口/virtual + 死条目）
  *   E. 端口冲突（同一端口被多个服务占用）
+ *   F. config/services.yaml ↔ apps/web/nginx.conf upstream（端口值级 + 死 upstream）[B12]
+ *   G. apps/web/nginx.conf map 引用自洽（路由表引用的 upstream 均已定义）[B12]
+ *   H. apps/web/nginx.conf map 前缀可解析到 services.yaml 服务（防拼写漂移）[B12]
  *
  * 纯 Node 零依赖（fs + 正则，缩进感知解析 YAML 子集），本机与 CI（ubuntu node 22）均可运行。
  *
- * 命名别名（ports.ts / vite.config.ts → services.yaml）：
+ * 命名别名（ports.ts / vite.config.ts / nginx.conf → services.yaml）：
  *   core      → unified-core（虚拟统一入口 8000，yaml 以 iam 名义出现）
  *   analytics → bi（service_dir: analytics）
  *   feedback  → ticket（已合并，兼容路由保留）
+ *   aps       → mes（V2026.08 已合并，nginx 兼容路由保留）
  *   web       → frontend（special_ports）
  *   gateway   → api_gateway（special_ports）
  *   postgres/redis/ollama → 同名 special_ports
+ *
+ * nginx upstream 名映射（B12）：去掉 `_service` 后缀、下划线→连字符（master_data→master-data、
+ * plugin_registry→plugin-registry、unified_core→unified-core→iam），其余名直接查 services.yaml。
  *
  * 用法:
  *   node scripts/ci/check-config-sources.cjs --check   # CI 门禁模式，不一致 exit 1
@@ -41,13 +48,17 @@ const PORTS_ENV = path.join(ROOT, 'config', 'ports.env');
 const CARGO_TOML = path.join(ROOT, 'Cargo.toml');
 const PORTS_TS = path.join(ROOT, 'apps/web/src/config/ports.ts');
 const VITE_CONFIG = path.join(ROOT, 'apps/web/vite.config.ts');
+const NGINX_CONF = path.join(ROOT, 'apps/web/nginx.conf');
 
 // 命名别名：下游名字 → services.yaml 名字（services.yaml 注释声明，非漂移）
 const ALIAS = {
   core: 'unified-core',   // 虚拟统一入口 8000
   'unified-core': 'iam',  // yaml 中 iam 以独立条目出现（service_dir: unified-core）
   analytics: 'bi',        // bi 服务目录名
+  report: 'bi',           // nginx map 兼容别名（/api/report/ → bi_service）
   feedback: 'ticket',     // 已合并至 ticket，兼容路由保留
+  aps: 'mes',             // V2026.08 已合并至 mes，nginx 兼容路由保留
+  plugin: 'plugin-registry', // nginx map 前缀（/api/plugin/ → plugin_registry_service）
   web: 'frontend',        // special_ports
   gateway: 'api_gateway', // special_ports
   postgres: 'postgres',
@@ -193,6 +204,46 @@ function parseViteServices(content) {
 }
 
 // ----------------------------------------------------------------------------
+// 6. 解析 apps/web/nginx.conf
+//    产出: { upstreams: {name -> port}, mapEntries: [{prefixes: [], upstream}] }
+// ----------------------------------------------------------------------------
+function parseNginx(content) {
+  const upstreams = {};
+  const re = /upstream\s+([A-Za-z0-9_]+)\s*\{\s*server\s+localhost:(\d+)/g;
+  let m;
+  while ((m = re.exec(content)) !== null) upstreams[m[1]] = parseInt(m[2], 10);
+
+  const mapEntries = [];
+  const mapBlock = content.match(/map\s+\$request_uri\s+\$api_upstream\s*\{([\s\S]*?)\n\s*\}/);
+  if (mapBlock) {
+    for (const line of mapBlock[1].split('\n')) {
+      const t = line.trim();
+      if (!t || t.startsWith('#')) continue;
+      // ~^/api/(core|doc|monitor)/          unified_core_service;
+      let mm = t.match(/~\^\/api\/\(([a-z|]+)\)\/\s+([A-Za-z0-9_]+);/);
+      if (mm) {
+        mapEntries.push({ prefixes: mm[1].split('|'), upstream: mm[2] });
+        continue;
+      }
+      // ~^/api/erp/                         erp_service;
+      mm = t.match(/~\^\/api\/([a-z][a-z0-9-]*)\/\s+([A-Za-z0-9_]+);/);
+      if (mm) mapEntries.push({ prefixes: [mm[1]], upstream: mm[2] });
+    }
+  }
+  return { upstreams, mapEntries };
+}
+
+// nginx upstream 名 → services.yaml 服务名（B12）
+// unified_core_service → unified-core → iam；master_data_service → master-data；其余去后缀转连字符
+function nginxUpstreamToYaml(upstreamName, servicesYaml) {
+  const base = upstreamName.replace(/_service$/, '');
+  const dashed = base.replace(/_/g, '-');
+  const r1 = resolveName(dashed, servicesYaml);
+  if (r1) return r1;
+  return resolveName(base, servicesYaml);
+}
+
+// ----------------------------------------------------------------------------
 // 工具：解析端口表达式为具体值
 // ----------------------------------------------------------------------------
 function resolvePortExpr(expr, portsTs, corePortDefault = 8000) {
@@ -230,6 +281,7 @@ function main() {
   const cargoDirs = parseCargoSvcDirs(fs.readFileSync(CARGO_TOML, 'utf-8'));
   const portsTs = parsePortsTs(fs.readFileSync(PORTS_TS, 'utf-8'));
   const viteServices = parseViteServices(fs.readFileSync(VITE_CONFIG, 'utf-8'));
+  const nginx = parseNginx(fs.readFileSync(NGINX_CONF, 'utf-8'));
 
   // ── A. services.yaml ↔ ports.env ────────────────────────────────────────
   for (const s of Object.values(servicesYaml)) {
@@ -319,6 +371,32 @@ function main() {
     }
   }
 
+  // ── F. services.yaml ↔ nginx.conf upstream（B12：nginx 端口须与权威源一致）──
+  for (const [upstreamName, port] of Object.entries(nginx.upstreams)) {
+    const yamlName = nginxUpstreamToYaml(upstreamName, servicesYaml);
+    if (!yamlName) {
+      problems.push(`F: nginx upstream ${upstreamName} 无对应 services.yaml 服务（应补条目或删 upstream）`);
+    } else if (port !== servicesYaml[yamlName].port) {
+      problems.push(`F: nginx upstream ${upstreamName}=${port} 与 services.yaml ${yamlName}=${servicesYaml[yamlName].port} 不一致`);
+    }
+  }
+
+  // ── G. nginx.conf map 引用自洽（B12：路由表引用的 upstream 均已定义）──
+  for (const entry of nginx.mapEntries) {
+    if (!(entry.upstream in nginx.upstreams)) {
+      problems.push(`G: nginx map 路由 ${entry.prefixes.join('|')} 引用未定义 upstream ${entry.upstream}（nginx 运行时将 502）`);
+    }
+  }
+
+  // ── H. nginx.conf map 前缀可解析（B12：路由前缀名须存在于 services.yaml 或别名）──
+  for (const entry of nginx.mapEntries) {
+    for (const p of entry.prefixes) {
+      if (!resolveName(p, servicesYaml)) {
+        problems.push(`H: nginx map 前缀 /api/${p}/ 无对应 services.yaml 服务（拼写漂移或需补别名）`);
+      }
+    }
+  }
+
   // ── 输出 ─────────────────────────────────────────────────────────────────
   const stats = {
     yaml: Object.keys(servicesYaml).length,
@@ -326,10 +404,11 @@ function main() {
     cargo: cargoDirs.size,
     ts: Object.keys(portsTs).length,
     vite: Object.keys(viteServices).length,
+    nginx: Object.keys(nginx.upstreams).length,
   };
   if (!QUIET) {
     console.log('🔍 配置单一真相源校验 (source: config/services.yaml)');
-    console.log(`   服务 ${stats.yaml} · ports.env ${stats.env} · Cargo svc ${stats.cargo} · ports.ts ${stats.ts} · vite SERVICES ${stats.vite}`);
+    console.log(`   服务 ${stats.yaml} · ports.env ${stats.env} · Cargo svc ${stats.cargo} · ports.ts ${stats.ts} · vite SERVICES ${stats.vite} · nginx upstream ${stats.nginx}`);
     console.log('');
   }
   if (problems.length === 0) {
@@ -339,7 +418,7 @@ function main() {
   if (!QUIET) console.log(`❌ ${problems.length} 处不一致：`);
   for (const p of problems) console.log(`  ${p}`);
   if (CHECK_ONLY) {
-    if (!QUIET) console.log('\n💡 以 config/services.yaml 为权威修正下游（ports.env / Cargo.toml / ports.ts / vite.config.ts）');
+    if (!QUIET) console.log('\n💡 以 config/services.yaml 为权威修正下游（ports.env / Cargo.toml / ports.ts / vite.config.ts / nginx.conf）');
     process.exit(1);
   }
   process.exit(0);

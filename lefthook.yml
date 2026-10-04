@@ -133,11 +133,11 @@ pre-commit:
           node scripts/ci/check-rls-permissions.cjs
         fi
 
-    # [Gate Q] 配置单一真相源一致性校验（P0-3：services.yaml 权威 ↔ ports.env/Cargo.toml/ports.ts/vite.config）
+    # [Gate Q] 配置单一真相源一致性校验（P0-3：services.yaml 权威 ↔ ports.env/Cargo.toml/ports.ts/vite.config/nginx.conf）
     ports-consistency:
       tags: config ports
       run: |
-        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^(config/ports.env|config/services.yaml|Cargo.toml|apps/web/src/config/ports.ts|apps/web/vite.config.ts|scripts/ci/check-config-sources.cjs)$" || true)
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^(config/ports.env|config/services.yaml|Cargo.toml|apps/web/src/config/ports.ts|apps/web/vite.config.ts|apps/web/nginx.conf|scripts/ci/check-config-sources.cjs)$" || true)
         [ -z "$STAGED" ] && exit 0
         if [ -f "scripts/ci/check-config-sources.cjs" ]; then
           node scripts/ci/check-config-sources.cjs --check
