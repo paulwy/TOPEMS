@@ -10,6 +10,7 @@
 //!
 //! 默认模式 = `warn`。
 
+use topems_shared_core::error::TopemsError;
 use sqlx::PgPool;
 use std::env;
 use tracing::{error, warn};
@@ -56,7 +57,7 @@ pub async fn validate_columns(
     pool: &PgPool,
     table_name: &str,
     columns: &[String],
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let mode = EnforceMode::from_env();
     if matches!(mode, EnforceMode::Off) {
         return Ok(());
@@ -81,7 +82,7 @@ pub async fn validate_columns(
             let msg = format!("BI dataset whitelist 查询失败 (table={table_name}): {e}");
             error!("{msg}");
             return if matches!(mode, EnforceMode::Strict) {
-                Err("数据元信息不可用，请稍后重试".to_string())
+                Err(TopemsError::BusinessLogic("数据元信息不可用，请稍后重试".to_string()))
             } else {
                 Ok(())
             };
@@ -93,9 +94,9 @@ pub async fn validate_columns(
         let msg = format!("BI 数据集白名单为空：table '{table_name}' 未注册任何允许查询的列");
         warn!("{msg}");
         return if matches!(mode, EnforceMode::Strict) {
-            Err(format!(
+            Err(TopemsError::BusinessLogic(format!(
                 "Table '{table_name}' is not in the BI dataset whitelist (no columns registered)"
-            ))
+            )))
         } else {
             Ok(())
         };
@@ -120,13 +121,13 @@ pub async fn validate_columns(
     warn!("{msg}");
 
     if matches!(mode, EnforceMode::Strict) {
-        Err(format!(
+        Err(TopemsError::BusinessLogic(format!(
             "Column{} '{}' {} not in the BI dataset whitelist for table '{}'",
             if missing.len() == 1 { "" } else { "s" },
             missing.join("', '"),
             if missing.len() == 1 { "is" } else { "are" },
             table_name
-        ))
+        )))
     } else {
         Ok(())
     }

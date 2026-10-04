@@ -8,7 +8,7 @@
 
 #![cfg(feature = "module-core")]
 
-use topems_shared_core::error::{Result, TopemsError};
+use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 

@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -9,34 +10,34 @@ use tracing::{info, warn};
 
 use crate::shared::AppState;
 
-fn validate_table_name(table_name: &str) -> Result<(), String> {
+fn validate_table_name(table_name: &str) -> Result<(), TopemsError> {
     if table_name.is_empty() {
-        return Err("Table name cannot be empty".to_string());
+        return Err(TopemsError::ValidationFailed("Table name cannot be empty".to_string()));
     }
     if table_name.len() > 63 {
-        return Err(format!(
+        return Err(TopemsError::ValidationFailed(format!(
             "Table name too long (max 63 chars, got {})",
             table_name.len()
-        ));
+        )));
     }
     if !table_name
         .chars()
         .next()
         .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
     {
-        return Err(format!(
+        return Err(TopemsError::ValidationFailed(format!(
             "Table name '{}' must start with a letter or underscore",
             table_name
-        ));
+        )));
     }
     if !table_name
         .chars()
         .all(|c| c.is_ascii_alphanumeric() || c == '_')
     {
-        return Err(format!(
+        return Err(TopemsError::ValidationFailed(format!(
             "Table name '{}' contains invalid characters (only letters, digits, underscores allowed)",
             table_name
-        ));
+        )));
     }
     Ok(())
 }

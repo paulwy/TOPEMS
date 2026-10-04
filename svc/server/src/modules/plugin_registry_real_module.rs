@@ -7,7 +7,7 @@
 
 #![cfg(feature = "module-plugin-registry")]
 
-use topems_shared_core::error::{Result, TopemsError};
+use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::time::Instant;

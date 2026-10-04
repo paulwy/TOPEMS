@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     http::{header, StatusCode},
@@ -19,13 +20,13 @@ use super::dataset_whitelist::validate_columns;
 const DEFAULT_BI_TABLE: &str = "analytics_data";
 
 /// 校验排序方向合法性（ASC/DESC）。
-fn validate_sort_order(order: &str) -> Result<String, String> {
+fn validate_sort_order(order: &str) -> Result<String, TopemsError> {
     match order.to_uppercase().as_str() {
         "ASC" | "DESC" => Ok(order.to_uppercase()),
-        _ => Err(format!(
+        _ => Err(TopemsError::ValidationFailed(format!(
             "Invalid sort order '{}': must be ASC or DESC",
             order
-        )),
+        ))),
     }
 }
 
@@ -526,7 +527,7 @@ pub async fn query_report_data(
                 if let Err(msg) =
                     validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await
                 {
-                    return Json(topems_shared_core::response::error_value(500, &msg));
+                    return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
                 }
             } else {
                 // sort_by 必须是已注册列或保留 id
@@ -542,7 +543,7 @@ pub async fn query_report_data(
                 if let Err(msg) =
                     validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await
                 {
-                    return Json(topems_shared_core::response::error_value(500, &msg));
+                    return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
                 }
             }
         }
@@ -571,7 +572,7 @@ pub async fn query_report_data(
     let sort_order = match validate_sort_order(&sort_order) {
         Ok(o) => o,
         Err(e) => {
-            return Json(topems_shared_core::response::error_value(500, &e));
+            return Json(topems_shared_core::response::error_value(500, &e.to_string()));
         }
     };
 

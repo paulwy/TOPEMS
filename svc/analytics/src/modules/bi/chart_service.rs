@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -89,42 +90,42 @@ pub struct ChartService {
 ///
 /// 严格白名单策略：仅允许 ASCII 字母 / 数字 / 下划线；首字符必须为字母或下划线。
 /// 额外阻止若干危险子串（即使字符集通过，也做二次拦截）。
-pub fn validate_identifier(name: &str) -> Result<String, String> {
+pub fn validate_identifier(name: &str) -> Result<String, TopemsError> {
     if name.is_empty() {
-        return Err("Identifier cannot be empty".to_string());
+        return Err(TopemsError::ValidationFailed("Identifier cannot be empty".to_string()));
     }
 
     // 长度上限：PostgreSQL 标识符不超过 63 字节（NAMEDATALEN-1）。
     // 超过时一律拒绝，防止异常膨胀或基于长度的边界攻击。
     if name.len() > 63 {
-        return Err(format!(
+        return Err(TopemsError::ValidationFailed(format!(
             "Invalid identifier '{}': exceeds max length of 63 bytes",
             name
-        ));
+        )));
     }
 
     // 字节层面禁止空字节与控制字符（ASCII 0-31、127 DEL）。
     // 这些字符在 SQL 中语义模糊，且常见于注入 / 截断型 payload。
     for (i, b) in name.bytes().enumerate() {
         if b == 0 {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "Invalid identifier '{}': contains NUL byte at position {}",
                 name, i
-            ));
+            )));
         }
         if b < 32 || b == 127 {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "Invalid identifier '{}': contains control char 0x{:02x} at position {}",
                 name, b, i
-            ));
+            )));
         }
         // 只允许 ASCII 字母 / 数字 / 下划线，拒绝所有多字节与高位字符。
         if !(b.is_ascii_alphanumeric() || b == b'_') {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "Invalid identifier '{}': only ASCII letters, digits, and '_' are allowed; \
                  got byte 0x{:02x} at position {}",
                 name, b, i
-            ));
+            )));
         }
     }
 
@@ -176,10 +177,10 @@ pub fn validate_identifier(name: &str) -> Result<String, String> {
     ];
     for fragment in FORBIDDEN {
         if lower.contains(fragment) {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "Invalid identifier '{}': contains forbidden substring '{}'",
                 name, fragment
-            ));
+            )));
         }
     }
 
@@ -187,23 +188,23 @@ pub fn validate_identifier(name: &str) -> Result<String, String> {
     let first = match chars.next() {
         Some(c) => c,
         None => {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "Invalid identifier '{}': identifier cannot be empty",
                 name
-            ))
+            )))
         }
     };
     if !(first.is_ascii_alphabetic() || first == '_') {
-        return Err(format!(
+        return Err(TopemsError::BusinessLogic(format!(
             "Invalid identifier '{}': must start with a letter or underscore",
             name
-        ));
+        )));
     }
     if !chars.all(|c| c.is_ascii_alphanumeric() || c == '_') {
-        return Err(format!(
+        return Err(TopemsError::BusinessLogic(format!(
             "Invalid identifier '{}': may only contain letters, digits, and underscores",
             name
-        ));
+        )));
     }
     Ok(name.to_string())
 }
