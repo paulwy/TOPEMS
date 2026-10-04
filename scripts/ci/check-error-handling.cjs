@@ -143,6 +143,14 @@ function isBusinessLayer(file) {
   return rel.length >= 3 && rel[1] === 'src' && BIZ_DIRS.has(rel[2]) && rel[rel.length - 1] !== 'main.rs';
 }
 
+// 接口/trait 绑定型 anyhow 显式豁免（B7 第三批登记，非漂移）：
+// analytics report scheduler 实现第三方 JobScheduler<'_> trait，关联类型绑定 anyhow::Error，
+// 签名由 trait 规定、无法改 TopemsError；内部错误已收敛为日志/事件路径，不构成 API 泄露。
+const ANYHOW_EXEMPT = new Set([
+  'svc/analytics/src/modules/report/schedule.rs',
+  'svc/analytics/src/modules/report/scheduler.rs',
+]);
+
 function scan() {
   const violations = [];
   const totals = { apiResponseError: 0, leakInternalError: 0, rawErrorToString: 0, anyhowInBusiness: 0 };
@@ -187,7 +195,7 @@ function scan() {
       }
     }
 
-    if (isBusinessLayer(file) && RULES['anyhow-in-business'].matchFile(content)) {
+    if (isBusinessLayer(file) && !ANYHOW_EXEMPT.has(relPath) && RULES['anyhow-in-business'].matchFile(content)) {
       const hits = (content.match(/\banyhow::/g) || []).length;
       totals.anyhowInBusiness += hits;
       violations.push({
