@@ -27,20 +27,24 @@ pub async fn init(pool: PgPool) {
     if POOL.set(pool.clone()).is_err() {
         return;
     }
-    let ddl = r#"
-        CREATE SCHEMA IF NOT EXISTS master_data;
-        CREATE TABLE IF NOT EXISTS master_data.mdm_collections (
+    // sqlx prepare 不支持一条语句多个命令，逐条执行（B10 修复 bootstrap 报错；
+    // 迁移链 20261003000010_u4_master_data_collections.sql 为权威 DDL，此处为兜底）。
+    for ddl in [
+        "CREATE SCHEMA IF NOT EXISTS master_data",
+        r#"CREATE TABLE IF NOT EXISTS master_data.mdm_collections (
             module      TEXT        NOT NULL,
             entity      TEXT        NOT NULL,
             data        JSONB       NOT NULL,
             updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
             PRIMARY KEY (module, entity)
-        );
-        CREATE INDEX IF NOT EXISTS mdm_collections_module_idx
-            ON master_data.mdm_collections (module);
-    "#;
-    if let Err(e) = sqlx::query(ddl).execute(&pool).await {
-        tracing::warn!("[master-data] persist 表 bootstrap 失败（将依赖迁移链）: {e}");
+        )"#,
+        "CREATE INDEX IF NOT EXISTS mdm_collections_module_idx
+            ON master_data.mdm_collections (module)",
+    ] {
+        if let Err(e) = sqlx::query(ddl).execute(&pool).await {
+            tracing::warn!("[master-data] persist 表 bootstrap 失败（将依赖迁移链）: {e}");
+            break;
+        }
     }
 }
 

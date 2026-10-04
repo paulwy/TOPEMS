@@ -2,6 +2,8 @@
 
 use crate::shared::AppState;
 use axum::{
+    http::Method,
+    middleware::Next,
     routing::{delete, get, post, put},
     Router,
 };
@@ -22,7 +24,61 @@ pub mod versioning_v54;
 // V68.1 A2.3: dict 模块从 unified-core 合并到主数据服务
 pub mod dict;
 
+/// B10：把 10 个 MDM 模块的内存集合快照全部回写库（幂等 upsert）。
+/// 与 main.rs 后台 3s flush 的调用面一致；各模块内部按 initialized 门控，
+/// 未 seed/load 前为 no-op，避免启动空集合覆盖库内既有快照。
+pub async fn flush_all() {
+    quality_v51::background_flush().await;
+    lineage_v52::background_flush().await;
+    knowledge_v53::background_flush().await;
+    versioning_v54::background_flush().await;
+    commercial_v55::background_flush().await;
+    disaster_v56::background_flush().await;
+    semantic_v57::background_flush().await;
+    governance_v58::background_flush().await;
+    ai_governance_v59::background_flush().await;
+    metadata_v60::background_flush().await;
+}
+
+/// B10 写后同步落库中间件：POST/PUT/PATCH/DELETE 请求处理完成后立即全量 flush。
+/// 消除 U4 遗留的 "≤3s 快照窗口 SIGKILL 丢最近写" —— 写请求返回前数据已落库，
+/// 后台 3s ticker 降级为周期兜底（幂等重写 + 未走 HTTP 的本地变更覆盖）。
+pub async fn flush_on_write(
+    req: axum::http::Request<axum::body::Body>,
+    next: Next,
+) -> axum::response::Response {
+    let method = req.method().clone();
+    let resp = next.run(req).await;
+    if is_write_method(&method) {
+        flush_all().await;
+    }
+    resp
+}
+
+/// 是否写方法（触发写后同步落库）。抽离为纯函数便于单测。
+fn is_write_method(m: &Method) -> bool {
+    matches!(*m, Method::POST | Method::PUT | Method::PATCH | Method::DELETE)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::Method;
+
+    #[test]
+    fn write_method_detection() {
+        for m in [Method::POST, Method::PUT, Method::PATCH, Method::DELETE] {
+            assert!(is_write_method(&m), "{m} 应为写方法");
+        }
+        for m in [Method::GET, Method::HEAD, Method::OPTIONS, Method::TRACE] {
+            assert!(!is_write_method(&m), "{m} 不应触发落库");
+        }
+    }
+}
+
 pub fn create_routes() -> Router<AppState> {
+    // 注意：Router::layer 只作用于调用时已注册的路由，必须放在所有 nest/route 之后
+    // （B10 曾先 layer 后 nest 导致中间件未生效）。
     Router::new()
         .nest(
             "/quality-v51",
@@ -566,4 +622,6 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/dict-items/{id}", delete(dict::delete_dict_item))
                 .route("/dict-items/batch", post(dict::batch_create_dict_items)),
         )
+        // B10：写请求后同步落库中间件（必须位于所有路由注册之后才生效）
+        .layer(axum::middleware::from_fn(flush_on_write))
 }
