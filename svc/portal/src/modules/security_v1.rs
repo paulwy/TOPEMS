@@ -16,6 +16,7 @@
 //!    - MaskingRule: 脱敏规则 (Full/Partial/Hash/Range/Null)
 //!    - MaskedField: 脱敏结果记录
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -559,12 +560,12 @@ impl SecurityGateway {
         filtered.into_iter().rev().take(limit).collect()
     }
 
-    pub async fn create_policy(policy: SecurityPolicy) -> Result<SecurityPolicy, String> {
+    pub async fn create_policy(policy: SecurityPolicy) -> Result<SecurityPolicy, TopemsError> {
         let store = get_security_store();
         let mut policies = store.policies.lock().await;
 
         if policies.iter().any(|p| p.name == policy.name) {
-            return Err(format!("策略名称 '{}' 已存在", policy.name));
+            return Err(TopemsError::BusinessLogic(format!("策略名称 '{}' 已存在", policy.name)));
         }
 
         policies.push(policy.clone());
@@ -776,12 +777,12 @@ impl ZeroTrustEngine {
         Ok(true)
     }
 
-    pub async fn create_identity_policy(policy: IdentityPolicy) -> Result<IdentityPolicy, String> {
+    pub async fn create_identity_policy(policy: IdentityPolicy) -> Result<IdentityPolicy, TopemsError> {
         let store = get_security_store();
         let mut policies = store.identity_policies.lock().await;
 
         if policies.iter().any(|p| p.name == policy.name) {
-            return Err(format!("策略名称 '{}' 已存在", policy.name));
+            return Err(TopemsError::BusinessLogic(format!("策略名称 '{}' 已存在", policy.name)));
         }
 
         policies.push(policy.clone());

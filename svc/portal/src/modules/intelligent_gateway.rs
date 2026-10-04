@@ -1217,17 +1217,17 @@ impl AutoSchemaStitcher {
         })
     }
 
-    async fn rollback_stitch(plan_id: &str) -> Result<StitchPlan, String> {
+    async fn rollback_stitch(plan_id: &str) -> Result<StitchPlan, TopemsError> {
         let store = get_intelligent_gw_store();
         let mut plans = store.stitch_plans.lock().await;
 
         let plan = plans
             .iter_mut()
             .find(|p| p.id == plan_id)
-            .ok_or_else(|| "未找到 Stitch 计划".to_string())?;
+            .ok_or_else(|| TopemsError::ResourceNotFound("未找到 Stitch 计划".to_string()))?;
 
         if plan.status != StitchStatus::Completed && plan.status != StitchStatus::Failed {
-            return Err(format!("当前状态 ({}) 不允许回滚", plan.status.as_str()));
+            return Err(TopemsError::BusinessLogic(format!("当前状态 ({}) 不允许回滚", plan.status.as_str())));
         }
 
         plan.status = StitchStatus::RolledBack;

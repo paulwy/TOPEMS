@@ -947,7 +947,7 @@ impl PerformanceTracer {
     pub async fn export_traces(
         format: &str,
         query_hash: Option<&str>,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let store = get_monitoring_store();
         let traces = store.traces.lock().await;
 
@@ -959,7 +959,7 @@ impl PerformanceTracer {
         match format {
             "json" => {
                 let json =
-                    serde_json::to_value(&filtered).map_err(|e| format!("序列化失败: {}", e))?;
+                    serde_json::to_value(&filtered).map_err(|e| TopemsError::BusinessLogic(format!("序列化失败: {}", e)))?;
                 Ok(json)
             }
             "summary" => {
@@ -977,7 +977,7 @@ impl PerformanceTracer {
                     "exported_at": chrono::Utc::now().to_rfc3339(),
                 }))
             }
-            _ => Err(format!("不支持的导出格式: {}", format)),
+            _ => Err(TopemsError::ValidationFailed(format!("不支持的导出格式: {}", format))),
         }
     }
 

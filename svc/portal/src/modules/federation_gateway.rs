@@ -630,17 +630,17 @@ impl TransactionCoordinator {
     async fn commit_transaction(
         transaction_id: &str,
         confirm_steps: Vec<ConfirmStepInput>,
-    ) -> Result<TransactionContext, String> {
+    ) -> Result<TransactionContext, TopemsError> {
         let store = get_federation_store();
         let mut transactions = store.transactions.lock().await;
 
         let tx = transactions
             .iter_mut()
             .find(|t| t.id == transaction_id)
-            .ok_or_else(|| "未找到事务".to_string())?;
+            .ok_or_else(|| TopemsError::ResourceNotFound("未找到事务".to_string()))?;
 
         if tx.state != TransactionState::Preparing {
-            return Err(format!("事务状态不允许提交: {:?}", tx.state));
+            return Err(TopemsError::BusinessLogic(format!("事务状态不允许提交: {:?}", tx.state)));
         }
 
         tx.state = TransactionState::Committing;
@@ -745,17 +745,17 @@ impl TransactionCoordinator {
         (items, total)
     }
 
-    async fn recover_transaction(transaction_id: &str) -> Result<TransactionContext, String> {
+    async fn recover_transaction(transaction_id: &str) -> Result<TransactionContext, TopemsError> {
         let store = get_federation_store();
         let mut transactions = store.transactions.lock().await;
 
         let tx = transactions
             .iter_mut()
             .find(|t| t.id == transaction_id)
-            .ok_or_else(|| "未找到事务".to_string())?;
+            .ok_or_else(|| TopemsError::ResourceNotFound("未找到事务".to_string()))?;
 
         if tx.state != TransactionState::Failed && tx.state != TransactionState::Compensating {
-            return Err(format!("事务状态不允许恢复: {:?}", tx.state));
+            return Err(TopemsError::BusinessLogic(format!("事务状态不允许恢复: {:?}", tx.state)));
         }
 
         tx.state = TransactionState::Recovering;

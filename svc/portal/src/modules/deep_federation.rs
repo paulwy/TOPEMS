@@ -715,13 +715,13 @@ impl ConsistencyManager {
     pub async fn resolve_conflict(
         entity_id: &str,
         strategy: String,
-    ) -> Result<VersionVector, String> {
+    ) -> Result<VersionVector, TopemsError> {
         let store = get_deep_federation_store();
         let mut vectors = store.version_vectors.lock().await;
 
         let vector = vectors
             .get_mut(entity_id)
-            .ok_or_else(|| format!("实体 '{}' 的版本向量不存在", entity_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("实体 '{}' 的版本向量不存在", entity_id)))?;
 
         match strategy.as_str() {
             "merge_by_max" => {
@@ -751,7 +751,7 @@ impl ConsistencyManager {
                 }
             }
             _ => {
-                return Err(format!("未知的解决策略: {}", strategy));
+                return Err(TopemsError::ValidationFailed(format!("未知的解决策略: {}", strategy)));
             }
         }
 
@@ -988,16 +988,16 @@ impl DistributedQueryEngine {
         })
     }
 
-    pub async fn cancel_query(query_id: &str) -> Result<DistributedQuery, String> {
+    pub async fn cancel_query(query_id: &str) -> Result<DistributedQuery, TopemsError> {
         let store = get_deep_federation_store();
         let mut queries = store.distributed_queries.lock().await;
 
         let query = queries
             .get_mut(query_id)
-            .ok_or_else(|| format!("分布式查询 '{}' 不存在", query_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("分布式查询 '{}' 不存在", query_id)))?;
 
         if query.status != QueryStatus::Running && query.status != QueryStatus::Pending {
-            return Err(format!("查询状态为 {}，无法取消", query.status.as_str()));
+            return Err(TopemsError::BusinessLogic(format!("查询状态为 {}，无法取消", query.status.as_str())));
         }
 
         query.status = QueryStatus::Cancelled;

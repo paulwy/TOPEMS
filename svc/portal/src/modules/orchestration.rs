@@ -529,16 +529,16 @@ impl GatewayOrchestrator {
         })
     }
 
-    pub async fn cancel_plan(plan_id: &str) -> Result<OrchestrationPlan, String> {
+    pub async fn cancel_plan(plan_id: &str) -> Result<OrchestrationPlan, TopemsError> {
         let store = get_orchestration_store();
         let mut plans = store.plans.lock().await;
 
         let p = plans
             .get_mut(plan_id)
-            .ok_or_else(|| format!("编排计划 '{}' 不存在", plan_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id)))?;
 
         if p.status != PlanStatus::Running && p.status != PlanStatus::Pending {
-            return Err(format!("计划状态为 {}，无法取消", p.status.as_str()));
+            return Err(TopemsError::BusinessLogic(format!("计划状态为 {}，无法取消", p.status.as_str())));
         }
 
         p.status = PlanStatus::Cancelled;
@@ -618,12 +618,12 @@ impl ServiceDiscoveryEngine {
         endpoint: String,
         capabilities: Vec<String>,
         metadata: Option<serde_json::Value>,
-    ) -> Result<ServiceDescriptor, String> {
+    ) -> Result<ServiceDescriptor, TopemsError> {
         let store = get_orchestration_store();
         let mut services = store.services.lock().await;
 
         if services.values().any(|s| s.name == name) {
-            return Err(format!("服务 '{}' 已注册", name));
+            return Err(TopemsError::BusinessLogic(format!("服务 '{}' 已注册", name)));
         }
 
         let descriptor = ServiceDescriptor {
@@ -641,7 +641,7 @@ impl ServiceDiscoveryEngine {
         Ok(descriptor)
     }
 
-    pub async fn deregister_service(id: &str) -> Result<bool, String> {
+    pub async fn deregister_service(id: &str) -> Result<bool, TopemsError> {
         let store = get_orchestration_store();
         let mut services = store.services.lock().await;
 
@@ -649,7 +649,7 @@ impl ServiceDiscoveryEngine {
         if removed {
             Ok(true)
         } else {
-            Err(format!("服务 '{}' 不存在", id))
+            Err(TopemsError::ResourceNotFound(format!("服务 '{}' 不存在", id)))
         }
     }
 

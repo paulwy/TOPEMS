@@ -15,6 +15,7 @@
 //!    - EdgeCacheLocation: CDN/EdgeNode/Regional/Global
 //!    - 缓存复制 + 同步状态 + 复制策略
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -354,16 +355,16 @@ impl PersistedQueryV2 {
         query_text: String,
         operation_name: Option<String>,
         created_by: Option<String>,
-    ) -> Result<PersistedEntryV2, String> {
+    ) -> Result<PersistedEntryV2, TopemsError> {
         let query_hash = Self::compute_sha256(&query_text);
         let store = get_persisted_query_store();
 
         let mut queries = store.persisted_queries.lock().await;
         if let Some(existing) = queries.get(&query_hash) {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "查询哈希已存在: {} (版本 {})",
                 query_hash, existing.version
-            ));
+            )));
         }
 
         let now = chrono::Utc::now().to_rfc3339();
@@ -404,16 +405,16 @@ impl PersistedQueryV2 {
         queries.get(query_hash).cloned()
     }
 
-    pub async fn execute_query(query_hash: &str) -> Result<PersistedEntryV2, String> {
+    pub async fn execute_query(query_hash: &str) -> Result<PersistedEntryV2, TopemsError> {
         let store = get_persisted_query_store();
         let mut queries = store.persisted_queries.lock().await;
 
         let entry = queries
             .get_mut(query_hash)
-            .ok_or_else(|| format!("查询哈希不存在: {}", query_hash))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("查询哈希不存在: {}", query_hash)))?;
 
         if entry.status != QueryStatus::Active {
-            return Err(format!("查询状态为 {}，不可执行", entry.status.as_str()));
+            return Err(TopemsError::BusinessLogic(format!("查询状态为 {}，不可执行", entry.status.as_str())));
         }
 
         entry.access_count += 1;

@@ -16,6 +16,7 @@
 //!    - AccessPolicy: 访问策略 (资源类型/模式/动作/效果/条件/优先级)
 //!    - AccessDecision: 访问决策 (Allow/Deny/Challenge)
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -779,12 +780,12 @@ impl GatewaySecurityV2 {
         Ok(true)
     }
 
-    pub async fn create_policy(policy: SecurityPolicyV2) -> Result<SecurityPolicyV2, String> {
+    pub async fn create_policy(policy: SecurityPolicyV2) -> Result<SecurityPolicyV2, TopemsError> {
         let store = get_gateway_security_store();
         let mut policies = store.policies.lock().await;
 
         if policies.iter().any(|p| p.name == policy.name) {
-            return Err(format!("策略名称 '{}' 已存在", policy.name));
+            return Err(TopemsError::BusinessLogic(format!("策略名称 '{}' 已存在", policy.name)));
         }
 
         policies.push(policy.clone());

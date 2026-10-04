@@ -16,6 +16,7 @@
 //!    - BackpressureConfig: 配置 (Drop/Backpressure/Sample/Batch)
 //!    - BackpressureState: 实时状态监控
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -1103,7 +1104,7 @@ impl BackpressureController {
         stats
     }
 
-    pub async fn reset_counter(stream_id: &str) -> Result<bool, String> {
+    pub async fn reset_counter(stream_id: &str) -> Result<bool, TopemsError> {
         let store = get_streaming_store();
         let mut counters = store.bp_counters.lock().await;
 
@@ -1122,7 +1123,7 @@ impl BackpressureController {
 
             Ok(true)
         } else {
-            Err(format!("背压计数器不存在: {}", stream_id))
+            Err(TopemsError::ResourceNotFound(format!("背压计数器不存在: {}", stream_id)))
         }
     }
 }

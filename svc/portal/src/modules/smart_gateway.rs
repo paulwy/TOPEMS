@@ -16,6 +16,7 @@
 //!    - DegradationPolicy: 触发阈值 + 回退策略
 //!    - AdaptiveDegradationController: 实时健康监控 + 自动降级调整
 
+use topems_shared_core::error::TopemsError;
 use axum::extract::{Json, Path, Query};
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -351,19 +352,19 @@ impl ProtocolRouterInner {
         self.handlers.insert(proto, handler);
     }
 
-    fn route_request(&self, protocol: SupportedProtocol, request: &str) -> Result<String, String> {
+    fn route_request(&self, protocol: SupportedProtocol, request: &str) -> Result<String, TopemsError> {
         let config = self
             .protocols
             .get(&protocol)
-            .ok_or_else(|| format!("Protocol {:?} not found", protocol))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("Protocol {:?} not found", protocol)))?;
         if !config.enabled {
-            return Err(format!("Protocol {:?} is disabled", protocol));
+            return Err(TopemsError::BusinessLogic(format!("Protocol {:?} is disabled", protocol)));
         }
         let handler = self
             .handlers
             .get(&protocol)
-            .ok_or_else(|| format!("No handler registered for protocol {:?}", protocol))?;
-        handler.handle(request)
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("No handler registered for protocol {:?}", protocol)))?;
+        handler.handle(request).map_err(TopemsError::BusinessLogic)
     }
 
     fn list_protocols(&self) -> Vec<ProtocolConfig> {
@@ -422,7 +423,7 @@ impl ProtocolRouter {
         &self,
         protocol: SupportedProtocol,
         request: &str,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         self.inner
             .lock()
             .unwrap_or_else(|e| e.into_inner())
@@ -938,7 +939,7 @@ pub fn register_protocol(config: ProtocolConfig) {
     protocol_router().register_protocol(config);
 }
 
-pub fn route_request(protocol: SupportedProtocol, request: &str) -> Result<String, String> {
+pub fn route_request(protocol: SupportedProtocol, request: &str) -> Result<String, TopemsError> {
     protocol_router().route_request(protocol, request)
 }
 

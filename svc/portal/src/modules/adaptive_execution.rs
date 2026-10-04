@@ -23,6 +23,7 @@
 //!    - 心跳与保活
 //!    - 实时过滤与转换
 
+use topems_shared_core::error::TopemsError;
 use axum::extract::{Json, Path, Query};
 use axum::http::StatusCode;
 use chrono::{DateTime, Utc};
@@ -840,9 +841,9 @@ impl StreamManagerInner {
         &mut self,
         stream_id: &str,
         subscriber_id: Option<String>,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         if !self.streams.contains_key(stream_id) {
-            return Err(format!("Stream '{}' not found", stream_id));
+            return Err(TopemsError::ResourceNotFound(format!("Stream '{}' not found", stream_id)));
         }
 
         let sub_id = subscriber_id.unwrap_or_else(generate_id);
@@ -866,12 +867,12 @@ impl StreamManagerInner {
         &mut self,
         stream_id: &str,
         subscriber_id: Option<String>,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, TopemsError> {
         if !self.streams.contains_key(stream_id) {
-            return Err(format!("Stream '{}' not found", stream_id));
+            return Err(TopemsError::ResourceNotFound(format!("Stream '{}' not found", stream_id)));
         }
 
-        let sub_id = subscriber_id.ok_or_else(|| "subscriber_id is required".to_string())?;
+        let sub_id = subscriber_id.ok_or_else(|| TopemsError::ResourceNotFound("subscriber_id is required".to_string()))?;
 
         let removed = if let Some(subs) = self.subscribers.get_mut(stream_id) {
             subs.unsubscribe(&sub_id)
@@ -980,7 +981,7 @@ impl StreamManager {
         &self,
         stream_id: &str,
         subscriber_id: Option<String>,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.subscribe(stream_id, subscriber_id)
     }
@@ -989,7 +990,7 @@ impl StreamManager {
         &self,
         stream_id: &str,
         subscriber_id: Option<String>,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, TopemsError> {
         let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         inner.unsubscribe(stream_id, subscriber_id)
     }
@@ -1110,11 +1111,11 @@ pub fn create_stream(name: String, topic: String, config: Option<StreamConfig>) 
     stream_manager().create_stream(name, topic, config)
 }
 
-pub fn subscribe_stream(stream_id: &str, subscriber_id: Option<String>) -> Result<String, String> {
+pub fn subscribe_stream(stream_id: &str, subscriber_id: Option<String>) -> Result<String, TopemsError> {
     stream_manager().subscribe(stream_id, subscriber_id)
 }
 
-pub fn unsubscribe_stream(stream_id: &str, subscriber_id: Option<String>) -> Result<bool, String> {
+pub fn unsubscribe_stream(stream_id: &str, subscriber_id: Option<String>) -> Result<bool, TopemsError> {
     stream_manager().unsubscribe(stream_id, subscriber_id)
 }
 
@@ -1151,7 +1152,7 @@ pub async fn execute_adaptive_query_handler(
         Ok(profile) => Ok(Json(ApiResult::ok(profile))),
         Err(e) => Err((
             StatusCode::INTERNAL_SERVER_ERROR,
-            Json(serde_json::json!({ "error": e })),
+            Json(serde_json::json!({ "error": e.to_string() })),
         )),
     }
 }
@@ -1349,7 +1350,7 @@ pub async fn subscribe_stream_handler(
         Ok(sub_id) => Ok(Json(ApiResult::ok(sub_id))),
         Err(e) => Err((
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": e })),
+            Json(serde_json::json!({ "error": e.to_string() })),
         )),
     }
 }
@@ -1362,7 +1363,7 @@ pub async fn unsubscribe_stream_handler(
         Ok(removed) => Ok(Json(ApiResult::ok(removed))),
         Err(e) => Err((
             StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": e })),
+            Json(serde_json::json!({ "error": e.to_string() })),
         )),
     }
 }

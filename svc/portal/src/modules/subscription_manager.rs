@@ -505,12 +505,12 @@ impl MessageQueueBridge {
         key: Option<String>,
         value: serde_json::Value,
         headers: Option<HashMap<String, String>>,
-    ) -> Result<QueueMessage, String> {
+    ) -> Result<QueueMessage, TopemsError> {
         let store = get_subscription_store();
 
         let configs = store.queue_configs.lock().await;
         if !configs.contains_key(queue_name) {
-            return Err(format!("队列 '{}' 不存在", queue_name));
+            return Err(TopemsError::ResourceNotFound(format!("队列 '{}' 不存在", queue_name)));
         }
         drop(configs);
 
@@ -548,14 +548,14 @@ impl MessageQueueBridge {
         Ok(messages)
     }
 
-    pub async fn create_queue(config: QueueConfig) -> Result<QueueConfig, String> {
+    pub async fn create_queue(config: QueueConfig) -> Result<QueueConfig, TopemsError> {
         let store = get_subscription_store();
         let mut queues = store.queues.lock().await;
         let mut configs = store.queue_configs.lock().await;
 
         let name = config.name.clone();
         if queues.contains_key(&name) {
-            return Err(format!("队列 '{}' 已存在", name));
+            return Err(TopemsError::BusinessLogic(format!("队列 '{}' 已存在", name)));
         }
 
         queues.insert(name.clone(), Vec::new());

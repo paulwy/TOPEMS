@@ -696,20 +696,20 @@ impl DeploymentManager {
         }
     }
 
-    pub async fn start_deployment(id: &str) -> Result<Deployment, String> {
+    pub async fn start_deployment(id: &str) -> Result<Deployment, TopemsError> {
         let store = get_deployment_store();
         let mut deployments = store.deployments.lock().await;
 
         let deployment = deployments
             .iter_mut()
             .find(|d| d.id == id)
-            .ok_or_else(|| format!("部署 '{}' 不存在", id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("部署 '{}' 不存在", id)))?;
 
         if deployment.status != DeploymentStatus::Pending {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "部署状态为 '{}'，无法启动",
                 deployment.status.as_str()
-            ));
+            )));
         }
 
         deployment.status = DeploymentStatus::Deploying;
@@ -733,22 +733,22 @@ impl DeploymentManager {
         Ok(deployment)
     }
 
-    pub async fn cancel_deployment(id: &str) -> Result<Deployment, String> {
+    pub async fn cancel_deployment(id: &str) -> Result<Deployment, TopemsError> {
         let store = get_deployment_store();
         let mut deployments = store.deployments.lock().await;
 
         let deployment = deployments
             .iter_mut()
             .find(|d| d.id == id)
-            .ok_or_else(|| format!("部署 '{}' 不存在", id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("部署 '{}' 不存在", id)))?;
 
         if deployment.status == DeploymentStatus::Completed
             || deployment.status == DeploymentStatus::Failed
         {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "部署状态为 '{}'，无法取消",
                 deployment.status.as_str()
-            ));
+            )));
         }
 
         deployment.status = DeploymentStatus::Failed;
@@ -1103,7 +1103,7 @@ impl ConfigurationManager {
         base_url: Option<String>,
         variables: Option<serde_json::Value>,
         is_protected: Option<bool>,
-    ) -> Result<ConfigEnvironment, String> {
+    ) -> Result<ConfigEnvironment, TopemsError> {
         let store = get_deployment_store();
 
         let env = ConfigEnvironment {
@@ -1117,7 +1117,7 @@ impl ConfigurationManager {
 
         let mut envs = store.config_environments.lock().await;
         if envs.iter().any(|e| e.name == name) {
-            return Err(format!("环境 '{}' 已存在", name));
+            return Err(TopemsError::BusinessLogic(format!("环境 '{}' 已存在", name)));
         }
         envs.push(env.clone());
 

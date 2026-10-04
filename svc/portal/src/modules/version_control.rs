@@ -423,16 +423,16 @@ impl APIVersionManager {
         version: String,
         changelog: Option<String>,
         breaking_changes: Vec<BreakingChange>,
-    ) -> Result<APIVersion, String> {
+    ) -> Result<APIVersion, TopemsError> {
         let store = get_version_control_store();
         let mut versions = store.api_versions.lock().await;
 
         if versions.contains_key(&version) {
-            return Err(format!("版本 '{}' 已存在", version));
+            return Err(TopemsError::BusinessLogic(format!("版本 '{}' 已存在", version)));
         }
 
         if !Self::is_valid_semver(&version) {
-            return Err(format!("无效的语义版本号: {}", version));
+            return Err(TopemsError::ValidationFailed(format!("无效的语义版本号: {}", version)));
         }
 
         let now = chrono::Utc::now().to_rfc3339();
@@ -668,19 +668,19 @@ impl CanaryManager {
         Ok(config.clone())
     }
 
-    pub async fn start_canary(id: &str) -> Result<CanaryConfig, String> {
+    pub async fn start_canary(id: &str) -> Result<CanaryConfig, TopemsError> {
         let store = get_version_control_store();
         let mut configs = store.canary_configs.lock().await;
 
         let config = configs
             .get_mut(id)
-            .ok_or_else(|| format!("灰度配置 '{}' 不存在", id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("灰度配置 '{}' 不存在", id)))?;
 
         if config.status != CanaryStatus::Draft && config.status != CanaryStatus::Paused {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "灰度配置状态为 {}，无法启动",
                 config.status.as_str()
-            ));
+            )));
         }
 
         config.status = CanaryStatus::Running;
@@ -919,12 +919,12 @@ impl CompatibilityChecker {
         name: String,
         min_level: CompatibilityLevel,
         require_migration: bool,
-    ) -> Result<CompatibilityPolicy, String> {
+    ) -> Result<CompatibilityPolicy, TopemsError> {
         let store = get_version_control_store();
         let mut policies = store.compatibility_policies.lock().await;
 
         if policies.iter().any(|p| p.name == name) {
-            return Err(format!("策略名称 '{}' 已存在", name));
+            return Err(TopemsError::BusinessLogic(format!("策略名称 '{}' 已存在", name)));
         }
 
         let policy = CompatibilityPolicy {
