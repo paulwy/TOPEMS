@@ -13,6 +13,7 @@ use crate::services::search::vector_search;
 use axum::Json;
 use reqwest::Client;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[utoipa::path(
     post,
@@ -749,7 +750,7 @@ async fn call_ai_api(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("无法连接到 AI 服务 ({}): {}", base_url, e);
-            return Err(format!("无法连接到 AI 服务: {}", e).into());
+            return Err(TopemsError::NetworkRequest(format!("无法连接到 AI 服务: {}", e)).into());
         }
     };
 
@@ -760,21 +761,21 @@ async fn call_ai_api(
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
         tracing::error!("AI API 请求失败: {} - {}", status, error_text);
-        return Err(format!("AI 服务错误: {} - {}", status, error_text).into());
+        return Err(TopemsError::ServiceUnavailable(format!("AI 服务错误: {} - {}", status, error_text)).into());
     }
 
     let openai_response: OpenAIResponse = match response.json().await {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("解析 AI 响应失败: {}", e);
-            return Err(format!("解析 AI 响应失败: {}", e).into());
+            return Err(TopemsError::BusinessLogic(format!("解析 AI 响应失败: {}", e)).into());
         }
     };
 
     if let Some(choice) = openai_response.choices.first() {
         Ok(choice.message.content.clone())
     } else {
-        Err("AI 未返回有效响应".into())
+        Err(TopemsError::BusinessLogic("AI 未返回有效响应".to_string()).into())
     }
 }
 
