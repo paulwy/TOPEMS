@@ -6,6 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
@@ -102,9 +103,9 @@ pub fn is_supported_barcode_format(format: &str) -> bool {
 }
 
 /// 解析条码字符串，返回包含原始值、格式、解码数据等信息的结构。
-pub fn parse_barcode(code: &str) -> Result<ParsedBarcode, String> {
+pub fn parse_barcode(code: &str) -> Result<ParsedBarcode, TopemsError> {
     if code.is_empty() {
-        return Err("条码不能为空".to_string());
+        return Err(TopemsError::ValidationFailed("条码不能为空".to_string()));
     }
     let format = detect_barcode_type(code);
     let decoded = decode_barcode(code, &format);

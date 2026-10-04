@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgRow, PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -103,41 +104,41 @@ impl ScanRecord {
 /// - expected_format = "phone" 要求以 tel: 开头
 /// - expected_format = "numeric" 要求全部为 ASCII 数字
 /// - expected_format = "text" 任意非空字符串
-pub fn validate_scan_result(code: &str, expected_format: &str) -> Result<(), String> {
+pub fn validate_scan_result(code: &str, expected_format: &str) -> Result<(), TopemsError> {
     if code.is_empty() {
-        return Err("扫描内容不能为空".to_string());
+        return Err(TopemsError::ValidationFailed("扫描内容不能为空".to_string()));
     }
     match expected_format {
         "url" => {
             if code.starts_with("http://") || code.starts_with("https://") {
                 Ok(())
             } else {
-                Err("URL 必须以 http:// 或 https:// 开头".to_string())
+                Err(TopemsError::ValidationFailed("URL 必须以 http:// 或 https:// 开头".to_string()))
             }
         }
         "email" => {
             if code.starts_with("mailto:") {
                 Ok(())
             } else {
-                Err("邮箱必须以 mailto: 开头".to_string())
+                Err(TopemsError::ValidationFailed("邮箱必须以 mailto: 开头".to_string()))
             }
         }
         "phone" => {
             if code.starts_with("tel:") {
                 Ok(())
             } else {
-                Err("电话必须以 tel: 开头".to_string())
+                Err(TopemsError::ValidationFailed("电话必须以 tel: 开头".to_string()))
             }
         }
         "numeric" => {
             if code.chars().all(|c| c.is_ascii_digit()) {
                 Ok(())
             } else {
-                Err("内容必须全部为数字".to_string())
+                Err(TopemsError::ValidationFailed("内容必须全部为数字".to_string()))
             }
         }
         "text" => Ok(()),
-        other => Err(format!("不支持的预期格式: {}", other)),
+        other => Err(TopemsError::ValidationFailed(format!("不支持的预期格式: {}", other))),
     }
 }
 

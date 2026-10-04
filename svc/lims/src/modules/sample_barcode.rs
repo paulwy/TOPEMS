@@ -1217,16 +1217,16 @@ pub fn classify_barcode(barcode: &str) -> &'static str {
 }
 
 /// 校验条码值是否可接受（非空 + 不超过 64 字符 + 无控制字符）
-pub fn validate_barcode(barcode: &str) -> Result<(), &'static str> {
+pub fn validate_barcode(barcode: &str) -> Result<(), TopemsError> {
     let b = barcode.trim();
     if b.is_empty() {
-        return Err("条码不能为空");
+        return Err(TopemsError::ValidationFailed("条码不能为空".to_string()));
     }
     if b.len() > 64 {
-        return Err("条码长度不能超过 64 字符");
+        return Err(TopemsError::ValidationFailed("条码长度不能超过 64 字符".to_string()));
     }
     if b.chars().any(|c| c.is_control()) {
-        return Err("条码包含非法控制字符");
+        return Err(TopemsError::ValidationFailed("条码包含非法控制字符".to_string()));
     }
     Ok(())
 }
@@ -1301,20 +1301,35 @@ mod tests {
 
     #[test]
     fn test_validate_empty_err() {
-        assert_eq!(validate_barcode(""), Err("条码不能为空"));
-        assert_eq!(validate_barcode("  "), Err("条码不能为空"));
+        assert!(matches!(
+            validate_barcode(""),
+            Err(TopemsError::ValidationFailed(m)) if m == "条码不能为空"
+        ));
+        assert!(matches!(
+            validate_barcode("  "),
+            Err(TopemsError::ValidationFailed(m)) if m == "条码不能为空"
+        ));
     }
 
     #[test]
     fn test_validate_too_long_err() {
         let s = "A".repeat(65);
-        assert_eq!(validate_barcode(&s), Err("条码长度不能超过 64 字符"));
+        assert!(matches!(
+            validate_barcode(&s),
+            Err(TopemsError::ValidationFailed(m)) if m == "条码长度不能超过 64 字符"
+        ));
     }
 
     #[test]
     fn test_validate_control_char_err() {
-        assert_eq!(validate_barcode("AB\u{0000}C"), Err("条码包含非法控制字符"));
-        assert_eq!(validate_barcode("BC\n123"), Err("条码包含非法控制字符"));
+        assert!(matches!(
+            validate_barcode("AB\u{0000}C"),
+            Err(TopemsError::ValidationFailed(m)) if m == "条码包含非法控制字符"
+        ));
+        assert!(matches!(
+            validate_barcode("BC\n123"),
+            Err(TopemsError::ValidationFailed(m)) if m == "条码包含非法控制字符"
+        ));
     }
 }
 
