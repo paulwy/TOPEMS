@@ -987,3 +987,31 @@
 | 自愈验证 | **5433 空库启动自愈验证（B+C 机制第一步）** | P1 | M | ✅ 已闭环（2026-10-07，commit `c09856938`）：对 5433 空库（301/301 重放）并行启动 monolith（SERVER_PORT=8098+DATABASE_URL→5433，不中断 5432）：启动自补列 **1289（2203→914，58%）**、二次启动增量递减（76 列/5 表）→ **多轮自愈有上限，不能一次性一步到位**；残余差异 **~916 列**（mobile 191/mes 164/portal 112/ticket 76/finance 63/integration 53/ehs 40/public 39…）+ 5432 独有表 ~304（多为演进库历史遗留，需分流）。**根因=迁移链与运行时内联 DDL 双事实源**（schema_defense/init_database 补列建表不在迁移链）；**机制避免**=B（CI 门禁：空库重放+启动自愈+差异扫描断言）+C（按域补链）。新增 `scripts/schema-drift-scan.sh`（scan/selfheal 双模式，shellcheck 0 告警，可挂 CI）。**遗留分流项**：916 列按 schema 分批评估"业务必需→补链 / 懒加载→运行时建 / 废弃→忽略"；5432 独有表 304 张分流"废弃表→归档清理 / 业务必需→补链" | 重建基线差异可量化、可复现；补链按域分批推进 |
 | ②-rehome | **重建基线对齐：R3 依赖表/列补进迁移链** | P2 | S | ✅ 已闭环（2026-10-07，commit `209b32792`）：5433 空库链 vs 5432 演进库结构差异根因=erp.financial_vouchers/crm.audit_logs 的 status 列与 erp.erp_production_orders 整表均为**服务运行时内联 DDL 自建（不在迁移链）**（business_base_tables 仅建 id 骨架、public 全列版被 0003 DROP、erp_production_orders 全链 0 CREATE）；新增迁移 `20261007000003`：补建 erp_production_orders（对齐 5432 21 列）+ 补 2 表 status 列（varchar NOT NULL DEFAULT）+ R3 同型宽约束 ×3（IF NOT EXISTS）；**5433 重放 301/301、5432 幂等 no-op、交集 301 checksum 不一致 0、三表列/约束与 5432 形态一致**。**全景遗留**：同表名列差异 2203 个（5432 有/5433 无，运行时内联 DDL 自建证据）——本次仅收敛 R3 依赖 3 表，其余列/表为"运行时自补 vs 迁移链补全"分流项（建议按服务启动自愈验证后决定） | 5433 重建后 R3 三表列+约束与 5432 一致 |
 | F-54 | **crm 售后事件发布原子性（Saga/补偿）** | P1 | M | 无 | 后端 | ✅ 已闭环（2026-10-07，commit `8e3a1c2b7`）：根因=complete/confirm 在事务 commit 前 tokio::spawn 发布 ReturnProcessed/ReturnCompleted（回滚即幽灵事件）；修复=publish 移至 commit 后 await + 失败登记 `crm.return_event_outbox` 补偿表（迁移 20261007000001）+ POST /returns/events/replay 重放端点；实测全链路 PASS（complete+confirm 事件均 commit 后发布、outbox 0、用后清理）| 售后结案链路失败可补偿（事件不丢不重） |
+
+---
+
+### 并行线补充记录（2026-10-04 批1剩余+批2 收口，本地原记录保留）
+
+## 2026-10-04 批1剩余+批2 收口（B3/B4/B5/B6/B8/B9 完成，本地提交未 push）
+
+> 依据「下一步工作规划」D 节执行形态：批 1（快赢收口）→ 批 2（残留偿还）。用户已拍板：批1剩余+批2 共 6 项，决策项（B1/B14/B15/A2/A5）暂跳过。
+> 说明：A3/A4/B2/B13 在本次会话前已由并行线完成并推 origin/main（TODO 表格未同步，此处补记）；B3 代码亦已在 HEAD（由并行线带入），本次验证确认。
+
+### ✅ 本次完成（commit 链 eca99460b + 后续 4 提交，均未 push）
+- **B3 crm 金额精度**（验证确认，无新改动）：sales_forecast/dashboard 金额已 f64→Decimal（HEAD 含 `sales_forecast_amount_precision_exact`/`dashboard_amount_precision_exact` 精度单测）；cargo test -p topems-crm --lib 504/504 绿（0 failed）
+- **B4 checksums.txt 恢复登记 + validate.sh 根因修复**：validate.sh `scopes=$(grep -o ... | sed ... | sort -u)` 在 set -euo pipefail 下 grep 无匹配即崩溃（09-21 后停更根因）→ 两处补 `|| true`；重跑后 checksums.txt 全量重生成 296 行（293 迁移全登记，含 B5），二次重跑 Checksum errors=0；首次 67 个 mismatch 为历史漂移一次性吸收
+- **B5 gis RLS 开启**：`svc/gis/src/main.rs` enable_rls:false→true（protected 路由挂 RLS 中间件）；新迁移 `20261004000001_b5_gis_rls_enable.sql`（幂等 ENABLE/FORCE + rls_tenant_isolation 策略，仅含 tenant_id 基表；geofences/track_positions 无 tenant_id 列自动跳过）；5432 应用两遍幂等无错；隔离实测（NOSUPERUSER topems_app）：无GUC=3 / 租户A=1 / nil UUID=3 / 无关租户=0 全过；cargo check -p topems-gis 绿
+- **B6 lib/shared-db rls.rs 池化 GUC 修复**：rls_middleware 改 acquire→set→run→reset 独占连接模式（对齐 tenant_rls CORE-06 修复，归还连接不残留租户状态）；apply_rls_middleware/set_tenant_context 标废弃注释（仓库无调用方）；cargo test -p topems-shared-db 152/152 绿、SQLX_OFFLINE cargo check --workspace 0 错误（1m15s）
+- **B8 前端 topems-core 清理**：根 package.json 删除 `dev:core`（pnpm --filter topems-core dev）；grep 代码/配置 topems-core=0（仅 docs/archive 历史文档残留，不参与构建）；build:shared-types CJS/ESM/DTS 全绿（既有 TS2688 不再出现）；pnpm typecheck 0 错误
+- **B9 GIS leaflet 测试修复**：DataInfraComponents.test.tsx react-leaflet mock 补 `useMapEvents: () => ({})`；全量 vitest 446 文件 6530 passed / 0 failed（R1 基线 3 失败清零）
+
+### 验证总览
+- 后端：cargo check --workspace 0 错误；shared-db 152、crm 504 测试绿
+- 前端：vitest 6530/0、typecheck 0、build:shared-types 全绿
+- 门禁：schema-boundary PY exit 0（全服务 PASS）+ NODE 29 服务/1420 文件 PASS；validate.sh 二次 0 错误
+- DB：B5 迁移 5432 幂等应用 + 隔离实测 4/4（未记 _sqlx_migrations 账本，沿用半手工惯例）
+
+### ⬜ 未完成（本批范围外）
+- **可执行未排期**：B7（L 级分批）、B10/B11/B12（P2）
+- **决策项跳过（用户拍板暂不处理）**：B1（search→erp 白名单撤销）、B14（守卫重构）、B15（埋点）、A2（5433 docker）、A5（erp RLS）
+- **环境阻塞**：A1（nginx 生产 conf 需 Linux/生产环境）；5433 仍 DOWN、nginx 未运行
