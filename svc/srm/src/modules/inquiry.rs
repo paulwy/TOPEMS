@@ -2,6 +2,7 @@
 //! 数据源：srm.inquiries（event_handlers 写入，收敛自 srm_inquiries）
 //! 走 RLS txn（tenant_middleware 注入）
 
+use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -56,7 +57,7 @@ pub struct AppState {
     pub db: PgPool,
 }
 
-pub async fn create_routes(db: PgPool) -> Result<Router, anyhow::Error> {
+pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()

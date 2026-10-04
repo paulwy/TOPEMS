@@ -1,4 +1,4 @@
-use anyhow::Result;
+use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Json, State},
     routing::post,
@@ -947,7 +947,7 @@ pub async fn record_sync_log(
     operation: &str,
     status: &str,
     error_message: Option<String>,
-) -> Result<(), sqlx::Error> {
+) -> std::result::Result<(), sqlx::Error> {
     sqlx::query(only_own_schema_query!(
         "srm",
         r#"

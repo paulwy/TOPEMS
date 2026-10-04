@@ -1,4 +1,4 @@
-use anyhow::Result;
+use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -270,7 +270,7 @@ pub async fn create_evaluation(
         ));
     }
 
-    let validate_score = |score: Option<f64>, name: &str| -> Result<(), String> {
+    let validate_score = |score: Option<f64>, name: &str| -> std::result::Result<(), String> {
         if let Some(s) = score {
             if !(0.0..=100.0).contains(&s) {
                 return Err(format!("{}评分必须在0-100之间", name));
@@ -557,7 +557,7 @@ pub async fn update_evaluation(
         existing.supplier_id
     };
 
-    let validate_score = |score: Option<f64>, name: &str| -> Result<(), String> {
+    let validate_score = |score: Option<f64>, name: &str| -> std::result::Result<(), String> {
         if let Some(s) = score {
             if !(0.0..=100.0).contains(&s) {
                 return Err(format!("{}评分必须在0-100之间", name));

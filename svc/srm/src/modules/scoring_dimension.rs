@@ -1,4 +1,4 @@
-use anyhow::Result;
+use topems_shared_core::error::{Result, TopemsError};
 use axum::{
     extract::{Extension, Path, State},
     http::HeaderMap,
@@ -565,24 +565,24 @@ pub fn normalize_dimension_score(raw: f64, floor: f64, ceil: f64) -> f64 {
     (clamped - floor) / (ceil - floor) * 100.0_f64
 }
 
-pub fn weighted_score(dims: &[(f64, f64)]) -> Result<f64, String> {
+pub fn weighted_score(dims: &[(f64, f64)]) -> Result<f64> {
     if dims.is_empty() {
-        return Err("维度列表不能为空".to_string());
+        return Err(TopemsError::ValidationFailed("维度列表不能为空".to_string()));
     }
 
     let mut total_weight = 0.0_f64;
     for (score, weight) in dims.iter() {
         if *score < 0.0_f64 {
-            return Err("存在负的维度分数".to_string());
+            return Err(TopemsError::ValidationFailed("存在负的维度分数".to_string()));
         }
         if *weight <= 0.0_f64 {
-            return Err("所有权重必须大于0".to_string());
+            return Err(TopemsError::ValidationFailed("所有权重必须大于0".to_string()));
         }
         total_weight += *weight;
     }
 
     if total_weight <= 0.0_f64 {
-        return Err("权重总和必须大于0".to_string());
+        return Err(TopemsError::ValidationFailed("权重总和必须大于0".to_string()));
     }
 
     let mut weighted_sum = 0.0_f64;
