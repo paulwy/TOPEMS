@@ -601,6 +601,49 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::post(mark_announcement_read),
         )
         .route("/oa/stats", axum::routing::get(get_oa_stats))
+        // ===== 页面级别名路由（前端 mobile api/*.ts 单数路径对齐，2026-10-05）=====
+        // approval（前端 /approval/tasks 单数 → approval.rs 复数实现）
+        .route("/approval/tasks", axum::routing::get(list_approval_tasks))
+        .route(
+            "/approval/tasks/pending",
+            axum::routing::get(get_pending_approval_tasks),
+        )
+        .route("/approval/history", axum::routing::get(get_approval_history))
+        .route("/approval/tasks/{id}", axum::routing::get(get_approval_task))
+        .route(
+            "/approval/tasks/{id}/approve",
+            axum::routing::post(approve_approval_task),
+        )
+        .route(
+            "/approval/tasks/{id}/reject",
+            axum::routing::post(reject_approval_task),
+        )
+        .route(
+            "/approval/tasks/{id}/delegate",
+            axum::routing::post(delegate_approval_task),
+        )
+        // task（前端 /task 单数 → task.rs 实现，原未挂载）
+        .route("/task", axum::routing::get(get_all_tasks))
+        .route("/task/{id}", axum::routing::get(get_task))
+        // device（前端 /device 单数 → device.rs）
+        .route("/device/register", axum::routing::post(register_device))
+        // schedule（前端 /schedule/events → oa calendar events）
+        .route("/schedule/events", axum::routing::get(list_calendar_events))
+        // dashboard announcements（前端 /dashboard/announcements → oa announcements）
+        .route("/dashboard/announcements", axum::routing::get(list_announcements))
+        .route(
+            "/dashboard/announcements/{id}/read",
+            axum::routing::post(mark_announcement_read),
+        )
+        // inventory（前端裸 /inventory → items）
+        .route("/inventory", axum::routing::get(list_inventory_items))
+        .route("/inventory/{id}", axum::routing::get(get_inventory_item))
+        // notifications（前端 /notifications → push notification）
+        .route("/notifications", axum::routing::get(get_notification_list))
+        .route(
+            "/notifications/{id}",
+            axum::routing::get(get_notification_by_id),
+        )
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
