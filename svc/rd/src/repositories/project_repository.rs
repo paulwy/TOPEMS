@@ -4,8 +4,8 @@ use sqlx::postgres::PgPool;
 use uuid::Uuid;
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};
-use anyhow::Result;
-use topems_shared_core::error::TopemsError;
+
+use topems_shared_core::error::{Result, TopemsError};
 
 #[allow(dead_code)]
 pub struct ProjectRepository {
@@ -190,7 +190,7 @@ impl ProjectRepository {
         .fetch_optional(&self.db)
         .await?;
 
-        project.ok_or_else(|| anyhow::anyhow!(TopemsError::NotFound("项目不存在".to_string())))
+        project.ok_or_else(|| TopemsError::NotFound("项目不存在".to_string()))
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<bool> {
