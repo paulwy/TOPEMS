@@ -774,3 +774,23 @@
   NaiveDateTime panic（ColumnDecode）→ 改 DateTime<Utc>（实测 200 返回数据）
 - **验证口径**：records/inspection/tasks 实测 200；check-in/out/applyLeave 无员工绑定（hrm.employees 空表）时
   返回明确 400"员工ID不能为空"（解析路径已通，非 500；有绑定员工时走与 today-status 同构的解析逻辑已证 200）
+
+## 方向③ 全局页面级精确扫描（2026-10-04）——26 模块契约×页面引用×实测
+
+- **方法**：方向②验证的"两步法"推广到全前端——api/index.ts 26 个 xxxApi 别名 + runtime.ts services baseURL 映射
+  → 递归扫描各模块目录全部 .ts 契约（apiClient.<client>.<verb>('path') + 回溯方法名）→ 页面精确引用
+  （排除 __tests__）→ 带 token 实测三表（URL = baseURL + path）
+- **结论**：页面在用 81 条；**GET 契约全部 200**（前几轮补挂覆盖完整）；非 200 46 条中 40 条为 POST 空 body
+  探测假象（422 参数校验），**真缺口 6 条**（405/500）：
+  - rd createBuild/createDeploy POST /builds、/deploys 500：**DB 根因**——rd.builds/deploys 表 status 默认
+    'pending' 与 check 约束（active/inactive/archived）冲突，INSERT 必违反 → ALTER TABLE SET DEFAULT 'active'
+    （topems_app owner 执行；需登记迁移）
+  - ehs createDrill POST /drills 405：后端仅 get(list_drill_plans) → 挂 post(create_drill_record)（同名
+    Request，演练记录创建语义）
+  - ehs createCheck POST /checks 405：后端无裸 /checks POST → 新 handler create_safety_check（直接映射
+    ehs.safety_checks 表，字段与前端 CreateSafetyCheckRequest 完全对齐）
+  - lims generateBarcode POST /barcodes/generate 405 → 别名路由 post(generate_barcode)；printBarcode POST
+    /barcodes/print 405 → 新 handler print_barcodes_batch（body barcode_ids 批量 UPDATE print_count）
+  - **顺带修复 lims 既有 bug**：SampleBarcode.id/tenant_id 类型 String vs 列 UUID（generate panic ColumnDecode）
+    → 改 Uuid；generate INSERT RETURNING 缺 tenant_id（ColumnNotFound panic）→ INSERT 补 gen_random_uuid()
+- **验证**：cargo build + run_monolith 重启后 6 条链路实测 200（print 空列表 400 校验、有 id 200 已验）

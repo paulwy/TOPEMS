@@ -12,6 +12,8 @@ use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/barcodes", get(list_barcodes).post(generate_barcode))
+        .route("/barcodes/generate", post(generate_barcode))
+        .route("/barcodes/print", post(print_barcodes_batch))
         .route(
             "/barcodes/{id}",
             get(get_barcode).put(update_barcode).delete(delete_barcode),
@@ -45,8 +47,8 @@ pub struct BarcodeQuery {
 
 #[derive(Debug, Serialize)]
 pub struct SampleBarcode {
-    pub id: String,
-    pub tenant_id: String,
+    pub id: Uuid,
+    pub tenant_id: Uuid,
     pub barcode: String,
     pub barcode_type: String,
     pub sample_id: Option<String>,
@@ -304,9 +306,9 @@ pub async fn generate_barcode(
 
         let row = sqlx::query(
             r#"
-            INSERT INTO qa_lims_sample_barcodes (barcode, barcode_type, sample_id, sample_no, status, generated_at)
-            VALUES ($1, $2, $3, $4, 'active', NOW())
-            RETURNING id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status,
+            INSERT INTO qa_lims_sample_barcodes (barcode, barcode_type, sample_id, sample_no, status, generated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, 'active', NOW(), gen_random_uuid())
+            RETURNING id, tenant_id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status,
                       generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT
             "#
         )
@@ -503,6 +505,51 @@ pub async fn print_barcode(
             Json(ApiResponse::error(500, "条码打印失败"))
         }
     }
+}
+
+/// POST /barcodes/print —— 前端 printBarcode 契约（批量：body { barcode_ids: string[] }）
+#[derive(Debug, Deserialize)]
+pub struct PrintBarcodesBatchRequest {
+    pub barcode_ids: Vec<String>,
+    pub printer: Option<String>,
+    pub copies: Option<i32>,
+    pub template: Option<String>,
+}
+
+pub async fn print_barcodes_batch(
+    State(state): State<crate::shared::AppState>,
+    Json(req): Json<PrintBarcodesBatchRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let copies = req.copies.unwrap_or(1).max(1);
+    if req.barcode_ids.is_empty() {
+        return Json(ApiResponse::error(400, "barcode_ids 不能为空"));
+    }
+    let mut printed: Vec<String> = Vec::new();
+    let mut failed: Vec<String> = Vec::new();
+    for id_str in &req.barcode_ids {
+        let id = match Uuid::parse_str(id_str) {
+            Ok(u) => u,
+            Err(_) => {
+                failed.push(id_str.clone());
+                continue;
+            }
+        };
+        let result = sqlx::query(
+            "UPDATE qa_lims_sample_barcodes SET print_count = print_count + $1, last_printed_at = NOW(), updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING barcode",
+        )
+        .bind(copies)
+        .bind(id)
+        .fetch_optional(&state.pool)
+        .await;
+        match result {
+            Ok(Some(r)) => printed.push(r.get::<String, _>("barcode")),
+            _ => failed.push(id_str.clone()),
+        }
+    }
+    Json(ApiResponse::success(
+        serde_json::json!({ "printed": printed, "failed": failed, "total": printed.len() }),
+        "条码批量打印完成",
+    ))
 }
 
 pub async fn delete_barcode(

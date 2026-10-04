@@ -7,6 +7,7 @@ use axum::{
     Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -32,7 +33,7 @@ pub fn create_routes() -> Router<AppState> {
             "/checks/records/{id}",
             get(get_record).put(update_record).delete(delete_record),
         )
-        .route("/checks", get(list_plans))
+        .route("/checks", get(list_plans).post(create_safety_check))
 }
 
 #[derive(Debug, Deserialize)]
@@ -575,6 +576,76 @@ pub async fn create_record(
         },
         "检查记录创建成功",
     ))
+}
+
+/// POST /checks —— 页面创建安全检查记录（前端 safetyCheck.ts createCheck 契约）
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CreateSafetyCheckRequest {
+    pub check_no: String,
+    pub check_type: String,
+    pub inspector: String,
+    pub check_date: Option<String>,
+    pub location: Option<String>,
+    pub result: String,
+    pub issues: Option<Vec<String>>,
+    pub attachments: Option<Vec<String>>,
+    pub status: String,
+}
+
+pub async fn create_safety_check(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Json(req): Json<CreateSafetyCheckRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+
+    let result = sqlx::query(
+        "INSERT INTO ehs.safety_checks \
+         (check_no, check_type, inspector, check_date, location, result, issues, attachments, status, tenant_id) \
+         VALUES ($1, $2, $3, $4::timestamptz, $5, $6, $7, $8, $9, $10) \
+         RETURNING id, check_no, check_type, inspector, check_date::TEXT, location, result, issues, attachments, status, created_at::TEXT, updated_at::TEXT",
+    )
+    .bind(&req.check_no)
+    .bind(&req.check_type)
+    .bind(&req.inspector)
+    .bind(&req.check_date)
+    .bind(&req.location)
+    .bind(&req.result)
+    .bind(serde_json::json!(req.issues.unwrap_or_default()))
+    .bind(serde_json::json!(req.attachments.unwrap_or_default()))
+    .bind(&req.status)
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) => Json(ApiResponse::success(
+            serde_json::json!({
+                "id": r.get::<uuid::Uuid, _>("id"),
+                "check_no": r.get::<String, _>("check_no"),
+                "check_type": r.get::<String, _>("check_type"),
+                "inspector": r.get::<String, _>("inspector"),
+                "check_date": r.get::<Option<String>, _>("check_date"),
+                "location": r.get::<Option<String>, _>("location"),
+                "result": r.get::<String, _>("result"),
+                "issues": r.get::<serde_json::Value, _>("issues"),
+                "attachments": r.get::<Option<serde_json::Value>, _>("attachments"),
+                "status": r.get::<String, _>("status"),
+                "created_at": r.get::<String, _>("created_at"),
+                "updated_at": r.get::<String, _>("updated_at"),
+            }),
+            "安全检查创建成功",
+        )),
+        Err(e) => {
+            tracing::error!("创建安全检查失败: {}", e);
+            Json(ApiResponse::<serde_json::Value>::error(500, "创建安全检查失败"))
+        }
+    }
 }
 
 #[utoipa::path(
