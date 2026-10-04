@@ -58,6 +58,21 @@ pub async fn get_inventory_item(
     }
 }
 
+/// 更新库存（前端 PUT /inventory/{id} → WmsApi.update_inventory）
+pub async fn update_inventory_item(
+    State(client): State<TypedServiceClient<WmsApi>>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match client.update_inventory(&id, &payload).await {
+        Ok(data) => Json(ApiResponse::success(data, "更新库存成功")),
+        Err(e) => {
+            tracing::error!("调用WMS服务更新库存失败: {}", e);
+            Json(ApiResponse::error(500, "更新库存失败"))
+        }
+    }
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["mobile:inventory:read"])),

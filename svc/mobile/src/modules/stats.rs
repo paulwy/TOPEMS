@@ -1,16 +1,23 @@
 use axum::{
-    extract::State,
+    extract::{Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
 };
-use serde::Serialize;
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use uuid::Uuid;
 
 use super::auth_utils::extract_user_id_from_token;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::response::ApiResponse;
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ActivityParams {
+    pub limit: Option<i64>,
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct DashboardStats {
@@ -320,6 +327,60 @@ pub async fn get_task_stats(
     (
         StatusCode::OK,
         Json(ApiResponse::success(stats, "获取任务统计数据成功")),
+    )
+}
+
+/// 最近动态（前端 GET /dashboard/activities?limit=N → 聚合最近任务记录）
+pub async fn get_recent_activities(
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+    Query(params): Query<ActivityParams>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let limit = params.limit.unwrap_or(10).clamp(1, 50);
+
+    let activities: Vec<serde_json::Value> = match sqlx::query(
+        only_own_schema_query!("mobile", "SELECT id, title, status, updated_at FROM mobile.mobile_tasks WHERE deleted_at IS NULL AND (assignee = $1 OR assignee IS NULL) ORDER BY updated_at DESC LIMIT $2"),
+    )
+    .bind(&user_id)
+    .bind(limit)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(rows) => rows
+            .iter()
+            .map(|r| {
+                serde_json::json!({
+                    "id": r.try_get::<Uuid, _>("id").ok(),
+                    "title": r.try_get::<String, _>("title").ok(),
+                    "status": r.try_get::<String, _>("status").ok(),
+                    "time": r.try_get::<Option<DateTime<Utc>>, _>("updated_at").ok(),
+                    "type": "task",
+                })
+            })
+            .collect(),
+        Err(e) => {
+            tracing::error!("查询最近动态失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "获取最近动态失败")),
+            );
+        }
+    };
+
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(activities, "获取最近动态成功")),
     )
 }
 

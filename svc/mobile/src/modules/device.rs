@@ -285,6 +285,49 @@ pub async fn update_push_token(
     }
 }
 
+/// 我的设备列表（前端 GET /device → mobile.devices）
+pub async fn list_my_devices(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id = $1 ORDER BY created_at DESC"))
+        .bind(user_id)
+        .fetch_all(&pool)
+        .await
+    {
+        Ok(rows) => rows
+            .iter()
+            .filter_map(|row| Device::from_row(row).ok())
+            .collect(),
+        Err(e) => {
+            tracing::error!("查询设备列表失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "查询设备列表失败")),
+            );
+        }
+    };
+
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(
+            serde_json::json!({ "items": devices, "total": devices.len() }),
+            "获取设备列表成功",
+        )),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

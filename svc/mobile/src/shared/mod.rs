@@ -90,10 +90,10 @@ use crate::modules::attendance::{
 use crate::modules::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
 };
-use crate::modules::device::{register_device, update_push_token};
+use crate::modules::device::{list_my_devices, register_device, update_push_token};
 use crate::modules::inventory::{
     create_stocktake_record, get_inventory_item, list_inbound_orders, list_inventory_items,
-    list_outbound_orders, list_stocktake_tasks,
+    list_outbound_orders, list_stocktake_tasks, update_inventory_item,
 };
 use crate::modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
 use crate::modules::missing_endpoints::{
@@ -142,7 +142,7 @@ use crate::modules::quality::{
 };
 use crate::modules::scan::{image_ocr, scan_qrcode};
 use crate::modules::shortcut::{create_shortcut, get_shortcuts};
-use crate::modules::stats::{get_dashboard_stats, get_patrol_stats, get_task_stats};
+use crate::modules::stats::{get_dashboard_stats, get_patrol_stats, get_recent_activities, get_task_stats};
 use crate::modules::task::{
     batch_update_status, complete_task, create_task, delete_task, get_all_tasks, get_my_tasks,
     get_overdue_tasks, get_pending_tasks, get_task, reopen_task, search_tasks, update_task,
@@ -646,6 +646,12 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         )
         // device（前端 /device 单数 → device.rs）
         .route("/device/register", axum::routing::post(register_device))
+        .route("/device", axum::routing::get(list_my_devices))
+        // dashboard 剩余（前端 /dashboard/activities → 最近动态聚合）
+        .route(
+            "/dashboard/activities",
+            axum::routing::get(get_recent_activities),
+        )
         // schedule（前端 /schedule/events → oa calendar events）
         .route(
             "/schedule/events",
@@ -663,7 +669,10 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         )
         // inventory（前端裸 /inventory → items）
         .route("/inventory", axum::routing::get(list_inventory_items))
-        .route("/inventory/{id}", axum::routing::get(get_inventory_item))
+        .route(
+            "/inventory/{id}",
+            axum::routing::get(get_inventory_item).put(update_inventory_item),
+        )
         // notifications（前端 /notifications 族 → notifications.rs 全量 handler）
         .route("/notifications", axum::routing::get(list_notifications))
         .route(
