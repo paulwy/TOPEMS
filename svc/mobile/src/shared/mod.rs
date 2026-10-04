@@ -103,8 +103,9 @@ use crate::modules::customer::{
 };
 use crate::modules::device::{list_my_devices, register_device, update_push_token};
 use crate::modules::inventory::{
-    create_stocktake_record, get_inventory_item, list_inbound_orders, list_inventory_items,
-    list_outbound_orders, list_stocktake_tasks, update_inventory_item,
+    create_stocktake_record, delete_inventory_item, get_inventory_item, list_inbound_orders,
+    list_inventory_items, list_low_stock_items, list_outbound_orders, list_stocktake_tasks,
+    scan_inventory, update_inventory_item,
 };
 use crate::modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
 use crate::modules::missing_endpoints::{
@@ -729,7 +730,17 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route("/inventory", axum::routing::get(list_inventory_items))
         .route(
             "/inventory/{id}",
-            axum::routing::get(get_inventory_item).put(update_inventory_item),
+            axum::routing::get(get_inventory_item)
+                .put(update_inventory_item)
+                .delete(delete_inventory_item),
+        )
+        .route(
+            "/inventory/low-stock",
+            axum::routing::get(list_low_stock_items),
+        )
+        .route(
+            "/inventory/scan",
+            axum::routing::get(scan_inventory),
         )
         // notifications（前端 /notifications 族 → notifications.rs 全量 handler）
         .route("/notifications", axum::routing::get(list_notifications))

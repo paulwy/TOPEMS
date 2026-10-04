@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::{extract::{Query, State}, Json};
 use serde::{Deserialize, Serialize};
 
 use topems_shared_core::response::ApiResponse;
@@ -8,6 +8,11 @@ use topems_shared_service_client::service_client::{api::wms_api::WmsApi, TypedSe
 pub struct CreateStocktakeRecordRequest {
     pub item_id: String,
     pub actual_quantity: i32,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ScanInventoryParams {
+    pub barcode: Option<String>,
 }
 
 #[utoipa::path(
@@ -69,6 +74,75 @@ pub async fn update_inventory_item(
         Err(e) => {
             tracing::error!("调用WMS服务更新库存失败: {}", e);
             Json(ApiResponse::error(500, "更新库存失败"))
+        }
+    }
+}
+
+/// 删除库存（前端 DELETE /inventory/{id} → WmsApi.delete_inventory）
+pub async fn delete_inventory_item(
+    State(client): State<TypedServiceClient<WmsApi>>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match client.delete_inventory(&id).await {
+        Ok(data) => Json(ApiResponse::success(data, "删除库存成功")),
+        Err(e) => {
+            tracing::error!("调用WMS服务删除库存失败: {}", e);
+            Json(ApiResponse::error(500, "删除库存失败"))
+        }
+    }
+}
+
+/// 低库存列表（前端 GET /inventory/low-stock → WMS /inventory/low-stock）
+pub async fn list_low_stock_items(
+    State(client): State<TypedServiceClient<WmsApi>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match client.list_low_stock_inventory().await {
+        Ok(data) => Json(ApiResponse::success(data, "获取低库存列表成功")),
+        Err(e) => {
+            tracing::error!("调用WMS服务获取低库存列表失败: {}", e);
+            Json(ApiResponse::error(500, "获取低库存列表失败"))
+        }
+    }
+}
+
+/// 扫码查库存（前端 GET /inventory/scan?barcode= → 列表内按条码/编码过滤）
+pub async fn scan_inventory(
+    State(client): State<TypedServiceClient<WmsApi>>,
+    Query(params): Query<ScanInventoryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let barcode = params.barcode.unwrap_or_default();
+    if barcode.is_empty() {
+        return Json(ApiResponse::error(400, "缺少条码参数"));
+    }
+
+    match client.list_inventory_items(1, 100).await {
+        Ok(data) => {
+            // WMS 返回可能是 { items: [...] } 或纯数组，兼容两种结构
+            let items = if let Some(arr) = data.get("items").and_then(|v| v.as_array()) {
+                arr.clone()
+            } else if let Some(arr) = data.as_array() {
+                arr.clone()
+            } else {
+                Vec::new()
+            };
+            let found = items.iter().find(|item| {
+                ["barcode", "code", "material_code", "sku"]
+                    .iter()
+                    .any(|k| {
+                        item.get(*k)
+                            .and_then(|v| v.as_str())
+                            .map(|v| v.eq_ignore_ascii_case(&barcode))
+                            .unwrap_or(false)
+                    })
+            });
+            match found {
+                Some(item) => Json(ApiResponse::success(item.clone(), "扫码查询成功")),
+                None => Json(ApiResponse::success(serde_json::Value::Null, "未找到对应库存")),
+            }
+        }
+        Err(e) => {
+            tracing::error!("调用WMS服务扫码查询失败: {}", e);
+            Json(ApiResponse::error(500, "扫码查询失败"))
         }
     }
 }
