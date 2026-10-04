@@ -132,6 +132,10 @@ use crate::modules::push_notification::{
     get_notification_stats, get_templates, register_device as register_push_device, send_broadcast,
     send_notification,
 };
+use crate::modules::notifications::{
+    delete_notification, delete_read_notifications, get_notification, get_unread_count,
+    list_notifications, mark_all_notifications_read, mark_notification_read,
+};
 use crate::modules::quality::{
     get_quality_task, list_defect_records, list_quality_tasks, report_defect,
     update_quality_task_status,
@@ -638,11 +642,27 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         // inventory（前端裸 /inventory → items）
         .route("/inventory", axum::routing::get(list_inventory_items))
         .route("/inventory/{id}", axum::routing::get(get_inventory_item))
-        // notifications（前端 /notifications → push notification）
-        .route("/notifications", axum::routing::get(get_notification_list))
+        // notifications（前端 /notifications 族 → notifications.rs 全量 handler）
+        .route("/notifications", axum::routing::get(list_notifications))
+        .route(
+            "/notifications/unread-count",
+            axum::routing::get(get_unread_count),
+        )
         .route(
             "/notifications/{id}",
-            axum::routing::get(get_notification_by_id),
+            axum::routing::get(get_notification).delete(delete_notification),
+        )
+        .route(
+            "/notifications/{id}/read",
+            axum::routing::put(mark_notification_read),
+        )
+        .route(
+            "/notifications/read-all",
+            axum::routing::put(mark_all_notifications_read),
+        )
+        .route(
+            "/notifications/read",
+            axum::routing::delete(delete_read_notifications),
         )
 }
 
