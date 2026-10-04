@@ -1092,3 +1092,32 @@
 ### 其他未完成（不变）
 - 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
 - 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）
+
+## 2026-10-05 方向③收尾 + B7 第 5 批（本地提交未 push）
+
+> 用户按建议推进：先快赢收口（方向③遗留 + U3b 闭环），再 B7 静态文案分批（mobile/lims）。
+
+### ✅ 方向③收尾（commit 4fbe20af0，2 迁移文件）
+- **rd status 默认值落迁移**：`20261005000001_rd_status_default_active.sql`（ALTER rd.builds/deploys
+  status SET DEFAULT 'active'，live 已生效、迁移固化；topems_app owner 双库应用幂等通过）
+- **U3b 骨架表依赖链闭环（真缺口修正）**：U3b（20261003000002）DROP lims.qa_lab_samples/tasks 被
+  lims 业务表 FK 依赖阻止（**声称"重放通过"实为未删净**）——新迁移 `20261005000002_lims_qa_lab_fk_repoint.sql`
+  先把 5 个 FK（records→tasks、sample_lifecycle/inspection_reports/rfid_tags/sample_barcodes→samples）
+  改指 public 事实标准表（与代码显式 public 引用一致）再 DROP 骨架；终态残留 0、幂等重放 0 错误；
+  lims 其余 11 个 qa_lab_* 业务表（reagents/instruments/records 等）为 lims 真实在用表保留
+- 5433 Homebrew 实例目录已被并行环境清理（U3b 重放历史已由排期项 1 全量完成），无恢复必要
+
+### ✅ B7 第 5 批：mobile/lims 静态 Err TopemsError 化（commit 975bd32e3，4 文件）
+- mobile：extract_user_id_from_token → `Result<String, TopemsError>`（AuthenticationFailed/InvalidToken）；
+  validate_scan_result 5 处 + parse_barcode 1 处 → ValidationFailed（含 format! 插值包 ValidationFailed）
+- lims：validate_barcode 3 处 → ValidationFailed；测试断言改 matches! 模式匹配（TopemsError 无
+  PartialEq——曾试 derive 被含 io/serde_json/sqlx/reqwest Error 的变体阻断，撤回改 matches!）
+- 调用方（barcode_scanner 4 处 match Err(_) 忽略内容）零影响
+- 验证：编译 0 错误、clippy 0 警告、单测 mobile 149 + lims 245 全绿
+- **mobile 静态 Err = 8→0、lims = 8→0**（本批清零两个小服务）
+
+### ⬜ B7 剩余（后续批次候选，静态 Err 计数）
+- ai 45 / crm 27 / portal 26 / integration 15 / mes 10 / finance 9 / scm 3 / erp 3 / analytics 3 /
+  wms 2 / master-data 2 / unified-core 1（+ 各服务 Result<_, String> 双参形态与
+  finance 386 处 to_string 试点待定策略）
+- 模式固化：ValidationFailed 语义映射 + matches! 断言模板可直接复制
