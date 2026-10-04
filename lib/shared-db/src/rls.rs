@@ -117,6 +117,9 @@ impl RlsMiddleware {
         Ok(())
     }
 
+    /// ⚠️ 已废弃（B6 同源修复后不再推荐）：在 `&PgPool` 上设置会话级 GUC 存在随机借连接 +
+    /// 归还残留污染问题（CORE-06 同类）。当前仓库无调用方；需要请求级租户上下文请使用
+    /// [`rls_middleware`]（独占连接 + 归还前 RESET）。
     pub async fn set_tenant_context(&self, tenant_id: Uuid) -> Result<(), sqlx::Error> {
         sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
             .bind(tenant_id.to_string())
@@ -200,6 +203,11 @@ impl IntoResponse for TenantContextRejection {
     }
 }
 
+/// 在请求进入前预设置租户 GUC 的辅助函数（历史遗留，当前仓库无调用方）。
+///
+/// ⚠️ 已废弃（B6 同源修复后不再推荐）：本函数直接在 `&PgPool` 上设置会话级 GUC——
+/// (a) 不保证业务查询借到同一连接；(b) 归还后 GUC 残留污染连接池；(c) 无对称 RESET 时机。
+/// 需要请求级租户上下文请使用 [`rls_middleware`]（独占连接 + 归还前 RESET）。
 pub async fn apply_rls_middleware<B>(
     req: Request<B>,
     pool: &PgPool,
@@ -239,16 +247,39 @@ pub async fn rls_middleware(
 
     if let Some(tenant_id_str) = tenant_id_str {
         if let Ok(tenant_id) = Uuid::parse_str(tenant_id_str) {
-            match sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
-                .bind(tenant_id.to_string())
-                .execute(&pool)
-                .await
-            {
-                Ok(_) => {
-                    debug!("Applied RLS context for tenant: {}", tenant_id);
+            // B6（CORE-06 同源修复，对齐 unified-core tenant_rls）：旧实现直接在 &PgPool 上
+            // set_config 会话级 GUC——(a) sqlx 随机借取一条池连接，业务 handler 后续查询可能
+            // 借到另一条连接，GUC 不生效；(b) 会话级 GUC 在该连接归还后残留，污染后续请求。
+            // 修复：acquire 独占本请求连接，在其上 set；请求结束后在【同一连接】显式 RESET
+            // 再归还连接池 → 归还连接不残留会话租户状态。
+            match pool.acquire().await {
+                Ok(mut conn) => {
+                    match sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+                        .bind(tenant_id.to_string())
+                        .execute(&mut *conn)
+                        .await
+                    {
+                        Ok(_) => {
+                            let resp = next.run(req).await;
+
+                            // 归还前显式清空：保证连接归还连接池时 app.tenant_id 干净，不残留上一位租户
+                            if let Err(e) =
+                                sqlx::query("RESET app.tenant_id").execute(&mut *conn).await
+                            {
+                                error!("Failed to reset RLS context on connection return: {}", e);
+                            }
+                            drop(conn); // 归还连接池（此时已清空会话租户状态）
+
+                            return resp;
+                        }
+                        Err(e) => {
+                            error!("Failed to set RLS context: {}", e);
+                            drop(conn);
+                        }
+                    }
                 }
                 Err(e) => {
-                    error!("Failed to set RLS context: {}", e);
+                    error!("Failed to acquire DB connection for RLS: {}", e);
                 }
             }
         }
