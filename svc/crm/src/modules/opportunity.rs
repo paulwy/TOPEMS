@@ -14,6 +14,7 @@ use crate::models::{CreateOpportunityRequest, Opportunity, UpdateOpportunityRequ
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -67,13 +68,13 @@ pub fn can_transition(
     from: OppStage,
     to: OppStage,
     is_owner_or_admin: bool,
-) -> Result<(), &'static str> {
+) -> Result<(), TopemsError> {
     use OppStage::*;
     if !is_owner_or_admin {
-        return Err("NOT_OWNER");
+        return Err(TopemsError::OperationNotAllowed("NOT_OWNER".to_string()));
     }
     if from.is_terminal() {
-        return Err("TERMINAL_CANNOT_TRANSITION");
+        return Err(TopemsError::BusinessLogic("TERMINAL_CANNOT_TRANSITION".to_string()));
     }
     let ok_advance = matches!(
         (from, to),
@@ -92,7 +93,7 @@ pub fn can_transition(
     if ok_advance || ok_rollback {
         Ok(())
     } else {
-        Err("INVALID_TRANSITION")
+        Err(TopemsError::ValidationFailed("INVALID_TRANSITION".to_string()))
     }
 }
 
@@ -1411,17 +1412,17 @@ pub async fn advance_opportunity(
 
     match can_transition(from_stage, to_stage, is_owner_or_admin) {
         Ok(_) => {}
-        Err("NOT_OWNER") => {
+        Err(TopemsError::OperationNotAllowed(_)) => {
             return Json(ApiResponse::from(TopemsError::ForbiddenStr(
                 "仅负责人或管理员可推进阶段".to_string(),
             )))
         }
-        Err("TERMINAL_CANNOT_TRANSITION") => {
+        Err(TopemsError::BusinessLogic(_)) => {
             return Json(ApiResponse::from(TopemsError::ValidationFailed(
                 "终态商机不可推进".to_string(),
             )))
         }
-        Err("INVALID_TRANSITION") => {
+        Err(TopemsError::ValidationFailed(_)) => {
             return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "无效推进: {} → {}",
                 from_stage.as_str(),
@@ -1609,17 +1610,17 @@ pub async fn rollback_opportunity(
 
     match can_transition(from_stage, to_stage, is_owner_or_admin) {
         Ok(_) => {}
-        Err("NOT_OWNER") => {
+        Err(TopemsError::OperationNotAllowed(_)) => {
             return Json(ApiResponse::from(TopemsError::ForbiddenStr(
                 "仅负责人或管理员可回退阶段".to_string(),
             )))
         }
-        Err("TERMINAL_CANNOT_TRANSITION") => {
+        Err(TopemsError::BusinessLogic(_)) => {
             return Json(ApiResponse::from(TopemsError::ValidationFailed(
                 "终态商机不可回退".to_string(),
             )))
         }
-        Err("INVALID_TRANSITION") => {
+        Err(TopemsError::ValidationFailed(_)) => {
             return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
                 "无效回退(仅相邻阶段允许): {} → {}",
                 from_stage.as_str(),
@@ -1892,49 +1893,52 @@ mod tests {
 
     #[test]
     fn can_transition_rejects_not_owner() {
-        assert_eq!(
+        assert!(matches!(
             can_transition(OppStage::Draft, OppStage::Lead, false),
-            Err("NOT_OWNER")
-        );
-        assert_eq!(
+            Err(TopemsError::OperationNotAllowed(_))
+        ));
+        assert!(matches!(
             can_transition(OppStage::Lead, OppStage::Qualified, false),
-            Err("NOT_OWNER")
-        );
+            Err(TopemsError::OperationNotAllowed(_))
+        ));
     }
 
     #[test]
     fn can_transition_rejects_from_terminal() {
         use OppStage::*;
-        assert_eq!(
+        assert!(matches!(
             can_transition(Won, Lead, true),
-            Err("TERMINAL_CANNOT_TRANSITION")
-        );
-        assert_eq!(
+            Err(TopemsError::BusinessLogic(_))
+        ));
+        assert!(matches!(
             can_transition(Lost, Won, true),
-            Err("TERMINAL_CANNOT_TRANSITION")
-        );
-        assert_eq!(
+            Err(TopemsError::BusinessLogic(_))
+        ));
+        assert!(matches!(
             can_transition(Closed, Proposal, true),
-            Err("TERMINAL_CANNOT_TRANSITION")
-        );
+            Err(TopemsError::BusinessLogic(_))
+        ));
     }
 
     #[test]
     fn can_transition_invalid_jumps() {
         use OppStage::*;
-        assert_eq!(
+        assert!(matches!(
             can_transition(Draft, Qualified, true),
-            Err("INVALID_TRANSITION")
-        );
-        assert_eq!(
+            Err(TopemsError::ValidationFailed(_))
+        ));
+        assert!(matches!(
             can_transition(Lead, Proposal, true),
-            Err("INVALID_TRANSITION")
-        );
-        assert_eq!(
+            Err(TopemsError::ValidationFailed(_))
+        ));
+        assert!(matches!(
             can_transition(Negotiation, Draft, true),
-            Err("INVALID_TRANSITION")
-        );
-        assert_eq!(can_transition(Draft, Won, true), Err("INVALID_TRANSITION"));
+            Err(TopemsError::ValidationFailed(_))
+        ));
+        assert!(matches!(
+            can_transition(Draft, Won, true),
+            Err(TopemsError::ValidationFailed(_))
+        ));
     }
 
     #[test]

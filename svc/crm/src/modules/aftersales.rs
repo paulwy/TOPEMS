@@ -18,6 +18,7 @@ use crate::models::{
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
@@ -83,10 +84,10 @@ pub enum ProcessType {
     Repair,
 }
 
-pub fn can_transition(from: ReturnStage, to: ReturnStage) -> Result<(), &'static str> {
+pub fn can_transition(from: ReturnStage, to: ReturnStage) -> Result<(), TopemsError> {
     use ReturnStage::*;
     if from.is_terminal() {
-        return Err("TERMINAL_CANNOT_TRANSITION");
+        return Err(TopemsError::BusinessLogic("TERMINAL_CANNOT_TRANSITION".to_string()));
     }
     let ok = matches!(
         (from, to),
@@ -104,7 +105,7 @@ pub fn can_transition(from: ReturnStage, to: ReturnStage) -> Result<(), &'static
     if ok {
         Ok(())
     } else {
-        Err("INVALID_TRANSITION")
+        Err(TopemsError::ValidationFailed("INVALID_TRANSITION".to_string()))
     }
 }
 
@@ -2890,36 +2891,39 @@ mod tests {
     #[test]
     fn can_transition_blocks_terminal_sources() {
         use ReturnStage::*;
-        assert_eq!(
+        assert!(matches!(
             can_transition(Done, Pending),
-            Err("TERMINAL_CANNOT_TRANSITION")
-        );
-        assert_eq!(
+            Err(TopemsError::BusinessLogic(_))
+        ));
+        assert!(matches!(
             can_transition(Rejected, Accepted),
-            Err("TERMINAL_CANNOT_TRANSITION")
-        );
-        assert_eq!(
+            Err(TopemsError::BusinessLogic(_))
+        ));
+        assert!(matches!(
             can_transition(Cancelled, Processing),
-            Err("TERMINAL_CANNOT_TRANSITION")
-        );
+            Err(TopemsError::BusinessLogic(_))
+        ));
     }
 
     #[test]
     fn can_transition_invalid_cross_stage() {
         use ReturnStage::*;
-        assert_eq!(
+        assert!(matches!(
             can_transition(Pending, Processing),
-            Err("INVALID_TRANSITION")
-        );
-        assert_eq!(can_transition(Accepted, Done), Err("INVALID_TRANSITION"));
-        assert_eq!(
+            Err(TopemsError::ValidationFailed(_))
+        ));
+        assert!(matches!(
+            can_transition(Accepted, Done),
+            Err(TopemsError::ValidationFailed(_))
+        ));
+        assert!(matches!(
             can_transition(Processing, Accepted),
-            Err("INVALID_TRANSITION")
-        );
-        assert_eq!(
+            Err(TopemsError::ValidationFailed(_))
+        ));
+        assert!(matches!(
             can_transition(Done, Cancelled),
-            Err("TERMINAL_CANNOT_TRANSITION")
-        );
+            Err(TopemsError::BusinessLogic(_))
+        ));
     }
 
     fn make_claims(sub: &str, tenant_id: Option<&str>) -> topems_shared::auth::Claims {

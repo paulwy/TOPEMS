@@ -1,4 +1,5 @@
 use crate::modules::opportunity::{can_transition, OppStage};
+use topems_shared_core::error::TopemsError;
 
 #[test]
 fn opp_fsm_6_stages_3_terminal_all_adjacency_pairs() {
@@ -21,10 +22,10 @@ fn opp_fsm_6_stages_3_terminal_all_adjacency_pairs() {
     assert!(can_transition(Lost, Negotiation, true).is_err());
     assert!(can_transition(Closed, Negotiation, true).is_err());
 
-    assert_eq!(
+    assert!(matches!(
         can_transition(Lead, Qualified, false).unwrap_err(),
-        "NOT_OWNER"
-    );
+        TopemsError::OperationNotAllowed(_)
+    ));
 }
 
 #[test]
@@ -62,16 +63,16 @@ fn opp_terminal_detection() {
 #[test]
 fn opp_fsm_invalid_transitions_detailed() {
     use OppStage::*;
-    assert_eq!(
+    assert!(matches!(
         can_transition(Won, Lead, true).unwrap_err(),
-        "TERMINAL_CANNOT_TRANSITION"
-    );
-    assert_eq!(
+        TopemsError::BusinessLogic(_)
+    ));
+    assert!(matches!(
         can_transition(Draft, Proposal, true).unwrap_err(),
-        "INVALID_TRANSITION"
-    );
-    assert_eq!(
+        TopemsError::ValidationFailed(_)
+    ));
+    assert!(matches!(
         can_transition(Proposal, Draft, true).unwrap_err(),
-        "INVALID_TRANSITION"
-    );
+        TopemsError::ValidationFailed(_)
+    ));
 }

@@ -1,4 +1,5 @@
 use crate::modules::aftersales::{can_transition, ProcessType, ReturnDecision, ReturnStage};
+use topems_shared_core::error::TopemsError;
 
 #[test]
 fn return_fsm_happy_path_refund_done() {
@@ -19,18 +20,9 @@ fn return_fsm_returned_branch_loops_back_to_processing() {
 #[test]
 fn return_fsm_three_terminal_protection() {
     use ReturnStage::*;
-    assert_eq!(
-        can_transition(Done, Processing).unwrap_err(),
-        "TERMINAL_CANNOT_TRANSITION"
-    );
-    assert_eq!(
-        can_transition(Rejected, Resolving).unwrap_err(),
-        "TERMINAL_CANNOT_TRANSITION"
-    );
-    assert_eq!(
-        can_transition(Cancelled, Accepted).unwrap_err(),
-        "TERMINAL_CANNOT_TRANSITION"
-    );
+    assert!(matches!(can_transition(Done, Processing).unwrap_err(), TopemsError::BusinessLogic(_)));
+    assert!(matches!(can_transition(Rejected, Resolving).unwrap_err(), TopemsError::BusinessLogic(_)));
+    assert!(matches!(can_transition(Cancelled, Accepted).unwrap_err(), TopemsError::BusinessLogic(_)));
 }
 
 #[test]
@@ -45,30 +37,12 @@ fn return_fsm_cancel_from_any_non_terminal() {
 #[test]
 fn return_fsm_invalid_cross_stage_rejected() {
     use ReturnStage::*;
-    assert_eq!(
-        can_transition(Pending, Processing).unwrap_err(),
-        "INVALID_TRANSITION"
-    );
-    assert_eq!(
-        can_transition(Pending, Resolving).unwrap_err(),
-        "INVALID_TRANSITION"
-    );
-    assert_eq!(
-        can_transition(Pending, Done).unwrap_err(),
-        "INVALID_TRANSITION"
-    );
-    assert_eq!(
-        can_transition(Accepted, Done).unwrap_err(),
-        "INVALID_TRANSITION"
-    );
-    assert_eq!(
-        can_transition(Processing, Done).unwrap_err(),
-        "INVALID_TRANSITION"
-    );
-    assert_eq!(
-        can_transition(Processing, Accepted).unwrap_err(),
-        "INVALID_TRANSITION"
-    );
+    assert!(matches!(can_transition(Pending, Processing).unwrap_err(), TopemsError::ValidationFailed(_)));
+    assert!(matches!(can_transition(Pending, Resolving).unwrap_err(), TopemsError::ValidationFailed(_)));
+    assert!(matches!(can_transition(Pending, Done).unwrap_err(), TopemsError::ValidationFailed(_)));
+    assert!(matches!(can_transition(Accepted, Done).unwrap_err(), TopemsError::ValidationFailed(_)));
+    assert!(matches!(can_transition(Processing, Done).unwrap_err(), TopemsError::ValidationFailed(_)));
+    assert!(matches!(can_transition(Processing, Accepted).unwrap_err(), TopemsError::ValidationFailed(_)));
 }
 
 #[test]
