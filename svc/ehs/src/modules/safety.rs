@@ -643,7 +643,10 @@ pub async fn create_safety_check(
         )),
         Err(e) => {
             tracing::error!("创建安全检查失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "创建安全检查失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "创建安全检查失败",
+            ))
         }
     }
 }
