@@ -81,7 +81,7 @@ pub async fn handle_create_voucher(
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "创建凭证成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -101,7 +101,7 @@ pub async fn handle_post_voucher(
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "过账成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -121,7 +121,7 @@ pub async fn handle_reverse_voucher(
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "冲销成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 #[utoipa::path(
@@ -158,7 +158,7 @@ pub async fn list_voucher_summary(
             let paginated = PaginatedResponse::new(items, total, page, page_size);
             Json(ApiResponse::success(paginated, "查询成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -168,7 +168,7 @@ pub async fn get_voucher_summary_by_id(
     let context = get_cqrs_context();
     match context.voucher_summary_view.get_by_id(&id).await {
         Ok(item) => Json(ApiResponse::success(item, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -188,7 +188,7 @@ pub async fn list_receivable_aging(
             let paginated = PaginatedResponse::new(items, total, page, page_size);
             Json(ApiResponse::success(paginated, "查询成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 #[utoipa::path(
@@ -217,7 +217,7 @@ pub async fn get_events(Path(aggregate_id): Path<String>) -> Json<ApiResponse<Ve
         .await
     {
         Ok(events) => Json(ApiResponse::success(events, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -225,7 +225,7 @@ pub async fn rebuild_views() -> Json<ApiResponse<()>> {
     let context = get_cqrs_context();
     match context.projector.rebuild_all().await {
         Ok(()) => Json(ApiResponse::success((), "重建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -283,7 +283,7 @@ pub async fn get_projection_progress(
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.get_progress().await {
             Ok(progress) => Json(ApiResponse::success(progress, "查询成功")),
-            Err(e) => Json(ApiResponse::error(500, &e)),
+            Err(e) => Json(ApiResponse::error(500, &e.to_string())),
         },
         None => Json(ApiResponse::error(500, "PgCqrsContext 未初始化")),
     }
@@ -313,7 +313,7 @@ pub async fn list_events_paginated(
                 };
                 Json(ApiResponse::success(response, "查询成功"))
             }
-            Err(e) => Json(ApiResponse::error(500, &e)),
+            Err(e) => Json(ApiResponse::error(500, &e.to_string())),
         },
         None => Json(ApiResponse::error(500, "PgCqrsContext 未初始化")),
     }
@@ -323,7 +323,7 @@ pub async fn replay_view(Path(view_name): Path<String>) -> Json<ApiResponse<()>>
     match get_pg_cqrs_context() {
         Some(ctx) => match ctx.async_projector.replay_view(&view_name).await {
             Ok(()) => Json(ApiResponse::success((), "重放成功")),
-            Err(e) => Json(ApiResponse::error(500, &e)),
+            Err(e) => Json(ApiResponse::error(500, &e.to_string())),
         },
         None => Json(ApiResponse::error(500, "PgCqrsContext 未初始化")),
     }

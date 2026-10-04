@@ -1,5 +1,6 @@
 //! Production Order handlers
 
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -166,7 +167,7 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
 
 // ==================== State Transition ====================
 
-pub fn validate_state_transition(current_status: &str, target_status: &str) -> Result<(), String> {
+pub fn validate_state_transition(current_status: &str, target_status: &str) -> Result<(), TopemsError> {
     let valid_transitions = [
         ("pending", "released"),
         ("pending", "cancelled"),
@@ -189,10 +190,10 @@ pub fn validate_state_transition(current_status: &str, target_status: &str) -> R
         }
     }
 
-    Err(format!(
+    Err(TopemsError::BusinessLogic(format!(
         "Invalid state transition: {} -> {}",
         current_status, target_status
-    ))
+    )))
 }
 
 // ==================== Production Order Handlers ====================

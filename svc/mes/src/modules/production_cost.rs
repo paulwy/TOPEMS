@@ -243,7 +243,7 @@ fn naive_to_utc(dt: Option<DateTime<Utc>>) -> DateTime<Utc> {
 async fn calculate_work_order_cost_detail_db(
     pool: &sqlx::PgPool,
     work_order_id: Uuid,
-) -> Result<(WorkOrderCostResult, Vec<CostBreakdownItem>), String> {
+) -> Result<(WorkOrderCostResult, Vec<CostBreakdownItem>), TopemsError> {
     let work_order = sqlx::query(
         r#"
         SELECT wo.id, wo.work_order_no, wo.order_no, wo.product_code, wo.product_name,
@@ -261,7 +261,7 @@ async fn calculate_work_order_cost_detail_db(
     let work_order = match work_order {
         Some(r) => r,
         None => {
-            return Err("工单不存在".to_string());
+            return Err(TopemsError::ResourceNotFound("工单不存在".to_string()));
         }
     };
 

@@ -4,6 +4,7 @@
 //! CSV and JSON formats. Supports filtering and streaming export for
 //! large datasets.
 
+use topems_shared_core::error::TopemsError;
 use axum::extract::{Query, State};
 use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -25,16 +26,16 @@ pub enum ExportFormat {
 }
 
 impl std::str::FromStr for ExportFormat {
-    type Err = String;
+    type Err = TopemsError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "csv" => Ok(Self::Csv),
             "json" => Ok(Self::Json),
-            _ => Err(format!(
+            _ => Err(TopemsError::BusinessLogic(format!(
                 "Unknown export format: {}. Use 'csv' or 'json'.",
                 s
-            )),
+            ))),
         }
     }
 }
@@ -191,11 +192,11 @@ pub async fn export_audit_logs(
     Query(query): Query<ExportQuery>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
     // Parse export format
-    let format: ExportFormat = query.format.parse().map_err(|e| {
+    let format: ExportFormat = query.format.parse().map_err(|e: TopemsError| {
         (
             StatusCode::BAD_REQUEST,
             Json(serde_json::json!({
-                "error": e,
+                "error": e.to_string(),
             })),
         )
     })?;

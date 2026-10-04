@@ -8,6 +8,7 @@
 //!
 //! 设计风格：ApiResponse + LazyLock 内存存储
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -658,7 +659,7 @@ impl KnowledgeGraphEngine {
         label: String,
         node_type: KGNodeType,
         properties: serde_json::Value,
-    ) -> Result<KGNode, String> {
+    ) -> Result<KGNode, TopemsError> {
         let store = get_knowledge_v53_store();
         let mut nodes = store.kg_nodes.lock().await;
         let mut graphs = store.kg_graphs.lock().await;
@@ -693,14 +694,14 @@ impl KnowledgeGraphEngine {
         relation_type: KGRelationType,
         weight: Option<f64>,
         confidence: Option<f64>,
-    ) -> Result<KGEdge, String> {
+    ) -> Result<KGEdge, TopemsError> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         if !nodes.iter().any(|n| n.id == source_id) {
-            return Err(format!("源节点不存在: {}", source_id));
+            return Err(TopemsError::ResourceNotFound(format!("源节点不存在: {}", source_id)));
         }
         if !nodes.iter().any(|n| n.id == target_id) {
-            return Err(format!("目标节点不存在: {}", target_id));
+            return Err(TopemsError::ResourceNotFound(format!("目标节点不存在: {}", target_id)));
         }
         drop(nodes);
 
@@ -731,7 +732,7 @@ impl KnowledgeGraphEngine {
         Ok(edge)
     }
 
-    async fn get_subgraph(node_id: &str, depth: Option<i32>) -> Result<KnowledgeGraph, String> {
+    async fn get_subgraph(node_id: &str, depth: Option<i32>) -> Result<KnowledgeGraph, TopemsError> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         let edges = store.kg_edges.lock().await;
@@ -780,16 +781,16 @@ impl KnowledgeGraphEngine {
         })
     }
 
-    async fn find_path(start_id: &str, end_id: &str) -> Result<Vec<KGEdge>, String> {
+    async fn find_path(start_id: &str, end_id: &str) -> Result<Vec<KGEdge>, TopemsError> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         let edges = store.kg_edges.lock().await;
 
         if !nodes.iter().any(|n| n.id == start_id) {
-            return Err(format!("起始节点不存在: {}", start_id));
+            return Err(TopemsError::ResourceNotFound(format!("起始节点不存在: {}", start_id)));
         }
         if !nodes.iter().any(|n| n.id == end_id) {
-            return Err(format!("目标节点不存在: {}", end_id));
+            return Err(TopemsError::ResourceNotFound(format!("目标节点不存在: {}", end_id)));
         }
         drop(nodes);
 
@@ -817,11 +818,11 @@ impl KnowledgeGraphEngine {
             }
         }
 
-        Err(format!("未找到从 {} 到 {} 的路径", start_id, end_id))
+        Err(TopemsError::BusinessLogic(format!("未找到从 {} 到 {} 的路径", start_id, end_id)))
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    async fn get_similar(node_id: &str, limit: Option<i32>) -> Result<Vec<KGNode>, String> {
+    async fn get_similar(node_id: &str, limit: Option<i32>) -> Result<Vec<KGNode>, TopemsError> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         let target = nodes
@@ -861,7 +862,7 @@ impl KnowledgeGraphEngine {
         Ok(result)
     }
 
-    async fn export_graph(format: &str) -> Result<String, String> {
+    async fn export_graph(format: &str) -> Result<String, TopemsError> {
         let store = get_knowledge_v53_store();
         let graphs = store.kg_graphs.lock().await;
         let graph = graphs.first().cloned().ok_or("没有可用的知识图谱")?;
@@ -886,8 +887,8 @@ impl KnowledgeGraphEngine {
                 dot.push_str("}\n");
                 Ok(dot)
             }
-            "json" => serde_json::to_string_pretty(&graph).map_err(|e| e.to_string()),
-            _ => Err(format!("不支持的导出格式: {}", format)),
+            "json" => serde_json::to_string_pretty(&graph).map_err(|e| TopemsError::BusinessLogic(e.to_string())),
+            _ => Err(TopemsError::ValidationFailed(format!("不支持的导出格式: {}", format))),
         }
     }
 }
@@ -906,7 +907,7 @@ impl RecommendationEngine {
         user_id: &str,
         target_id: Option<String>,
         limit: Option<i32>,
-    ) -> Result<Vec<Recommendation>, String> {
+    ) -> Result<Vec<Recommendation>, TopemsError> {
         let store = get_knowledge_v53_store();
         let interactions = store.interactions.lock().await;
         let assets = store.assets.lock().await;
@@ -1034,7 +1035,7 @@ impl RecommendationEngine {
     async fn get_similar_items(
         item_id: &str,
         limit: Option<i32>,
-    ) -> Result<Vec<DataAsset>, String> {
+    ) -> Result<Vec<DataAsset>, TopemsError> {
         let store = get_knowledge_v53_store();
         let assets = store.assets.lock().await;
         let target = assets
@@ -1156,7 +1157,7 @@ impl AssetCatalogManager {
         owner: String,
         domain: String,
         tags: Vec<String>,
-    ) -> Result<DataAsset, String> {
+    ) -> Result<DataAsset, TopemsError> {
         let store = get_knowledge_v53_store();
         let mut assets = store.assets.lock().await;
         let mut search_index = store.search_index.lock().await;
@@ -1256,14 +1257,14 @@ impl AssetCatalogManager {
         (items, total)
     }
 
-    async fn get_asset(id: &str) -> Result<DataAsset, String> {
+    async fn get_asset(id: &str) -> Result<DataAsset, TopemsError> {
         let store = get_knowledge_v53_store();
         let assets = store.assets.lock().await;
         assets
             .iter()
             .find(|a| a.id == id)
             .cloned()
-            .ok_or_else(|| format!("未找到资产: {}", id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("未找到资产: {}", id)))
     }
 
     async fn update_asset(
@@ -1273,7 +1274,7 @@ impl AssetCatalogManager {
         tags: Option<Vec<String>>,
         quality_score: Option<f64>,
         access_level: Option<String>,
-    ) -> Result<DataAsset, String> {
+    ) -> Result<DataAsset, TopemsError> {
         let store = get_knowledge_v53_store();
         let mut assets = store.assets.lock().await;
         let mut search_index = store.search_index.lock().await;
@@ -1495,7 +1496,7 @@ pub async fn add_kg_node(
 
     match KnowledgeGraphEngine::add_node(req.label, node_type, props).await {
         Ok(node) => Json(ApiResponse::success(node, "知识图谱节点已添加")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1526,7 +1527,7 @@ pub async fn add_kg_edge(
     .await
     {
         Ok(edge) => Json(ApiResponse::success(edge, "知识图谱边已添加")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 #[utoipa::path(
@@ -1549,7 +1550,7 @@ pub async fn get_subgraph(
 
     match KnowledgeGraphEngine::get_subgraph(&node_id, params.depth).await {
         Ok(graph) => Json(ApiResponse::success(graph, "子图谱")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1571,7 +1572,7 @@ pub async fn find_path(
 
     match KnowledgeGraphEngine::find_path(&params.start_id, &params.end_id).await {
         Ok(path) => Json(ApiResponse::success(path, "路径查找成功")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1597,7 +1598,7 @@ pub async fn get_similar(
 
     match KnowledgeGraphEngine::get_similar(&node_id, params.limit).await {
         Ok(nodes) => Json(ApiResponse::success(nodes, "相似节点")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1633,7 +1634,7 @@ pub async fn export_kg(
                 "知识图谱导出成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1662,7 +1663,7 @@ pub async fn get_recommendations(
     match RecommendationEngine::get_recommendations(&user_id, params.target_id, params.limit).await
     {
         Ok(recs) => Json(ApiResponse::success(recs, "推荐结果")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1711,7 +1712,7 @@ pub async fn get_similar_items(
 
     match RecommendationEngine::get_similar_items(&item_id, params.limit).await {
         Ok(items) => Json(ApiResponse::success(items, "相似资产")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1767,7 +1768,7 @@ pub async fn register_asset(
     .await
     {
         Ok(asset) => Json(ApiResponse::success(asset, "数据资产已注册")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1839,7 +1840,7 @@ pub async fn get_asset(
 
     match AssetCatalogManager::get_asset(&id).await {
         Ok(asset) => Json(ApiResponse::success(asset, "资产详情")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1874,7 +1875,7 @@ pub async fn update_asset(
     .await
     {
         Ok(asset) => Json(ApiResponse::success(asset, "资产已更新")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 

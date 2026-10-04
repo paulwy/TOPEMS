@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 pub fn calculate_oee(
     planned_time: f64,
     run_time: f64,
@@ -83,30 +84,30 @@ pub fn validate_oee_inputs(
     ideal_cycle_time: f64,
     actual_output: f64,
     good_output: f64,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     if planned_time < 0.0 {
-        return Err("Planned production time cannot be negative".to_string());
+        return Err(TopemsError::BusinessLogic("Planned production time cannot be negative".to_string()));
     }
     if run_time < 0.0 {
-        return Err("Run time cannot be negative".to_string());
+        return Err(TopemsError::BusinessLogic("Run time cannot be negative".to_string()));
     }
     if downtime < 0.0 {
-        return Err("Downtime cannot be negative".to_string());
+        return Err(TopemsError::BusinessLogic("Downtime cannot be negative".to_string()));
     }
     if ideal_cycle_time < 0.0 {
-        return Err("Ideal cycle time cannot be negative".to_string());
+        return Err(TopemsError::BusinessLogic("Ideal cycle time cannot be negative".to_string()));
     }
     if actual_output < 0.0 {
-        return Err("Actual output cannot be negative".to_string());
+        return Err(TopemsError::BusinessLogic("Actual output cannot be negative".to_string()));
     }
     if good_output < 0.0 {
-        return Err("Good output cannot be negative".to_string());
+        return Err(TopemsError::BusinessLogic("Good output cannot be negative".to_string()));
     }
     if good_output > actual_output {
-        return Err("Good output cannot exceed actual output".to_string());
+        return Err(TopemsError::BusinessLogic("Good output cannot exceed actual output".to_string()));
     }
     if run_time > planned_time + downtime {
-        return Err("Run time cannot exceed planned time plus downtime".to_string());
+        return Err(TopemsError::BusinessLogic("Run time cannot exceed planned time plus downtime".to_string()));
     }
 
     Ok(())

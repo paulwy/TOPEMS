@@ -5,6 +5,7 @@
 //! allowing seamless switching between storage backends without changing
 //! application code.
 
+use topems_shared_core::error::TopemsError;
 use std::sync::Arc;
 
 use serde::{Deserialize, Serialize};
@@ -37,13 +38,13 @@ impl std::fmt::Display for PermissionStoreType {
 }
 
 impl std::str::FromStr for PermissionStoreType {
-    type Err = String;
+    type Err = TopemsError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "memory" => Ok(Self::Memory),
             "database" | "db" | "postgres" | "postgresql" => Ok(Self::Database),
-            _ => Err(format!("Unknown permission store type: {}", s)),
+            _ => Err(TopemsError::BusinessLogic(format!("Unknown permission store type: {}", s))),
         }
     }
 }

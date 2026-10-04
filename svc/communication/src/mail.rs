@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use axum::Extension;
 use axum::{
     extract::{Path, State},
@@ -1175,7 +1176,7 @@ pub async fn send_with_template(
     }
 }
 
-pub async fn send_notification_email(to: &str, subject: &str, body: &str) -> Result<(), String> {
+pub async fn send_notification_email(to: &str, subject: &str, body: &str) -> Result<(), TopemsError> {
     tracing::info!("Sending notification email to: {}", to);
 
     send_email_with_lettre("system@topems.io", to, subject, body, None, None, None)
@@ -1305,7 +1306,7 @@ fn send_email_with_lettre(
     html_body: Option<&str>,
     cc: Option<&Vec<String>>,
     bcc: Option<&Vec<String>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
     let smtp_port = std::env::var("SMTP_PORT")
         .unwrap_or_else(|_| "587".to_string())
@@ -1364,16 +1365,16 @@ fn send_email_with_lettre(
                     ));
                 } else {
                     tracing::error!("Failed to send email after {} attempts: {}", max_retries, e);
-                    return Err(format!(
+                    return Err(TopemsError::BusinessLogic(format!(
                         "Failed to send email after {} attempts: {}",
                         max_retries, e
-                    ));
+                    )));
                 }
             }
         }
     }
 
-    Err("Max retries exceeded".to_string())
+    Err(TopemsError::BusinessLogic("Max retries exceeded".to_string()))
 }
 
 pub fn send_email_async(

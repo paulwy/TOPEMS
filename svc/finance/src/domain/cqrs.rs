@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use uuid::Uuid;
@@ -34,7 +35,7 @@ impl<T: EventStore + Send + Sync + 'static> CommandHandler<T> {
         &self,
         cmd: CreateVoucherCommand,
         metadata: Option<EventMetadata>,
-    ) -> Result<CommandResult, String> {
+    ) -> Result<CommandResult, TopemsError> {
         let voucher_id = cmd
             .voucher_id
             .clone()
@@ -67,10 +68,10 @@ impl<T: EventStore + Send + Sync + 'static> CommandHandler<T> {
         voucher_id: &str,
         cmd: PostVoucherCommand,
         metadata: Option<EventMetadata>,
-    ) -> Result<CommandResult, String> {
+    ) -> Result<CommandResult, TopemsError> {
         let current_version = self.event_store.get_aggregate_version(voucher_id).await?;
         if current_version == 0 {
-            return Err(format!("Voucher {} not found", voucher_id));
+            return Err(TopemsError::ResourceNotFound(format!("Voucher {} not found", voucher_id)));
         }
 
         let voucher_no = cmd.voucher_no.clone().unwrap_or_default();
@@ -106,10 +107,10 @@ impl<T: EventStore + Send + Sync + 'static> CommandHandler<T> {
         voucher_id: &str,
         cmd: ReverseVoucherCommand,
         metadata: Option<EventMetadata>,
-    ) -> Result<CommandResult, String> {
+    ) -> Result<CommandResult, TopemsError> {
         let current_version = self.event_store.get_aggregate_version(voucher_id).await?;
         if current_version == 0 {
-            return Err(format!("Voucher {} not found", voucher_id));
+            return Err(TopemsError::ResourceNotFound(format!("Voucher {} not found", voucher_id)));
         }
 
         let voucher_no = cmd.voucher_no.clone().unwrap_or_default();

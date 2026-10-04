@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -708,7 +709,7 @@ pub async fn unified_search_pois(
     Json(ApiResponse::success(result, "POI 搜索完成"))
 }
 
-async fn sync_geofence_to_gis_internal(geofence: &ImGeofence) -> Result<Option<Uuid>, String> {
+async fn sync_geofence_to_gis_internal(geofence: &ImGeofence) -> Result<Option<Uuid>, TopemsError> {
     let gis_service_url =
         std::env::var("GIS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8071".to_string());
 
@@ -744,10 +745,10 @@ async fn sync_geofence_to_gis_internal(geofence: &ImGeofence) -> Result<Option<U
                     .and_then(|s| Uuid::parse_str(s).ok());
                 Ok(gis_id)
             } else {
-                Err(format!("GIS 服务返回错误状态: {}", resp.status()))
+                Err(TopemsError::BusinessLogic(format!("GIS 服务返回错误状态: {}", resp.status())))
             }
         }
-        Err(e) => Err(format!("请求 GIS 服务失败: {}", e)),
+        Err(e) => Err(TopemsError::BusinessLogic(format!("请求 GIS 服务失败: {}", e))),
     }
 }
 

@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 pub fn calculate_overall_score(
     quality_score: Option<f64>,
     delivery_score: Option<f64>,
@@ -49,7 +50,7 @@ pub fn validate_scores(
     delivery_score: Option<f64>,
     service_score: Option<f64>,
     price_score: Option<f64>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let scores = [quality_score, delivery_score, service_score, price_score];
 
     for (idx, score) in scores.iter().enumerate() {
@@ -61,13 +62,13 @@ pub fn validate_scores(
                     "service_score",
                     "price_score",
                 ];
-                return Err(format!("{} must be between 0 and 100", field_names[idx]));
+                return Err(TopemsError::BusinessLogic(format!("{} must be between 0 and 100", field_names[idx])));
             }
         }
     }
 
     if scores.iter().all(|s| s.is_none()) {
-        return Err("At least one score must be provided".to_string());
+        return Err(TopemsError::BusinessLogic("At least one score must be provided".to_string()));
     }
 
     Ok(())

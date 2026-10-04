@@ -4,6 +4,7 @@
 //! configurations. Supports JSON format for backup, migration, and
 //! bulk configuration.
 
+use topems_shared_core::error::TopemsError;
 use axum::extract::{Query, State};
 use axum::http::{header, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -28,16 +29,16 @@ pub enum ExportFormat {
 }
 
 impl std::str::FromStr for ExportFormat {
-    type Err = String;
+    type Err = TopemsError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "json" => Ok(Self::Json),
             "csv" => Ok(Self::Csv),
-            _ => Err(format!(
+            _ => Err(TopemsError::BusinessLogic(format!(
                 "Unknown export format: {}. Use 'json' or 'csv'.",
                 s
-            )),
+            ))),
         }
     }
 }
@@ -278,11 +279,11 @@ pub async fn export_permissions(
     Query(query): Query<ExportQuery>,
 ) -> Result<Response, (StatusCode, Json<ErrorResponse>)> {
     // Parse export format
-    let format: ExportFormat = query.format.parse().map_err(|e| {
+    let format: ExportFormat = query.format.parse().map_err(|e: TopemsError| {
         (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse {
-                error: e,
+                error: e.to_string(),
                 code: Some("INVALID_FORMAT".to_string()),
             }),
         )

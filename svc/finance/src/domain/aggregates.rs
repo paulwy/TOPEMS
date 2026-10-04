@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 
 use super::entities::*;
@@ -23,22 +24,22 @@ pub struct VoucherAggregate {
 
 impl VoucherAggregate {
     // 聚合根行为方法
-    pub fn post(&mut self) -> Result<(), String> {
+    pub fn post(&mut self) -> Result<(), TopemsError> {
         if self.status != VoucherStatus::Approved {
-            return Err("Only approved vouchers can be posted".to_string());
+            return Err(TopemsError::BusinessLogic("Only approved vouchers can be posted".to_string()));
         }
         // 借贷平衡校验
         if (self.total_debit - self.total_credit).abs() > 0.01 {
-            return Err("Debit and credit must be balanced".to_string());
+            return Err(TopemsError::BusinessLogic("Debit and credit must be balanced".to_string()));
         }
         self.status = VoucherStatus::Posted;
         self.posted_at = Some(chrono::Utc::now());
         Ok(())
     }
 
-    pub fn reverse(&mut self) -> Result<(), String> {
+    pub fn reverse(&mut self) -> Result<(), TopemsError> {
         if self.status != VoucherStatus::Posted {
-            return Err("Only posted vouchers can be reversed".to_string());
+            return Err(TopemsError::BusinessLogic("Only posted vouchers can be reversed".to_string()));
         }
         self.status = VoucherStatus::Reversed;
         Ok(())
@@ -69,9 +70,9 @@ pub struct ReceivableAggregate {
 }
 
 impl ReceivableAggregate {
-    pub fn settle(&mut self, collection: CollectionRecord) -> Result<(), String> {
+    pub fn settle(&mut self, collection: CollectionRecord) -> Result<(), TopemsError> {
         if collection.customer_id != self.receivable.customer_id {
-            return Err("Customer mismatch".to_string());
+            return Err(TopemsError::BusinessLogic("Customer mismatch".to_string()));
         }
         self.receivable.settled_amount += collection.amount;
         self.receivable.status = if self.receivable.settled_amount >= self.receivable.amount {
@@ -97,9 +98,9 @@ pub struct PayableAggregate {
 }
 
 impl PayableAggregate {
-    pub fn settle(&mut self, payment: PaymentRecord) -> Result<(), String> {
+    pub fn settle(&mut self, payment: PaymentRecord) -> Result<(), TopemsError> {
         if payment.supplier_id != self.payable.supplier_id {
-            return Err("Supplier mismatch".to_string());
+            return Err(TopemsError::BusinessLogic("Supplier mismatch".to_string()));
         }
         self.payable.settled_amount += payment.amount;
         self.payable.status = if self.payable.settled_amount >= self.payable.amount {

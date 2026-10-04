@@ -3,6 +3,7 @@
 #[allow(unused_imports)]
 pub use topems_shared_bootstrap::audit::{AuditEventParams, AuditLog, ListAuditLogsQuery};
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -301,11 +302,11 @@ pub fn is_feedback_sla_breached(created_at: i64, sla_hours: i64, now: i64) -> bo
 }
 
 /// 校验反馈评分（1-5 星）
-pub fn validate_rating(rating: i32) -> Result<(), String> {
+pub fn validate_rating(rating: i32) -> Result<(), TopemsError> {
     if (1..=5).contains(&rating) {
         Ok(())
     } else {
-        Err(format!("rating must be between 1 and 5, got {}", rating))
+        Err(TopemsError::BusinessLogic(format!("rating must be between 1 and 5, got {}", rating)))
     }
 }
 
@@ -421,7 +422,7 @@ impl std::fmt::Display for TicketStatus {
 }
 
 impl std::str::FromStr for TicketStatus {
-    type Err = String;
+    type Err = TopemsError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "open" => Ok(TicketStatus::Open),
@@ -430,7 +431,7 @@ impl std::str::FromStr for TicketStatus {
             "resolved" => Ok(TicketStatus::Resolved),
             "closed" => Ok(TicketStatus::Closed),
             "cancelled" => Ok(TicketStatus::Cancelled),
-            other => Err(format!("Invalid ticket status: {}", other)),
+            other => Err(TopemsError::ValidationFailed(format!("Invalid ticket status: {}", other))),
         }
     }
 }
@@ -462,14 +463,14 @@ impl std::fmt::Display for TicketSeverity {
 }
 
 impl std::str::FromStr for TicketSeverity {
-    type Err = String;
+    type Err = TopemsError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "low" => Ok(TicketSeverity::Low),
             "medium" => Ok(TicketSeverity::Medium),
             "high" => Ok(TicketSeverity::High),
             "critical" => Ok(TicketSeverity::Critical),
-            other => Err(format!("Invalid ticket severity: {}", other)),
+            other => Err(TopemsError::ValidationFailed(format!("Invalid ticket severity: {}", other))),
         }
     }
 }
@@ -507,7 +508,7 @@ impl std::fmt::Display for TicketType {
 }
 
 impl std::str::FromStr for TicketType {
-    type Err = String;
+    type Err = TopemsError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "reconciliation_diff" => Ok(TicketType::ReconciliationDiff),

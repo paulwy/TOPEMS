@@ -406,7 +406,7 @@ async fn run_aps_scheduling(
     pool: &sqlx::PgPool,
     request: &ApsScheduleRequest,
     simulate_only: bool,
-) -> Result<ApsScheduleResult, String> {
+) -> Result<ApsScheduleResult, TopemsError> {
     let schedule_start = request.schedule_start.unwrap_or_else(Utc::now);
     let strategy = request.strategy.clone().unwrap_or_default();
     let _weights = request.optimization_weights.clone().unwrap_or_default();
@@ -432,7 +432,7 @@ async fn run_aps_scheduling(
     // 2. 获取可用工位
     let stations = fetch_available_work_stations(pool).await?;
     if stations.is_empty() {
-        return Err("没有可用的工位".to_string());
+        return Err(TopemsError::BusinessLogic("没有可用的工位".to_string()));
     }
 
     // 3. 获取设备信息
@@ -686,7 +686,7 @@ fn calculate_feasibility_score(
 async fn fetch_pending_orders(
     pool: &sqlx::PgPool,
     order_ids: Option<&Vec<Uuid>>,
-) -> Result<Vec<WorkOrderInfo>, String> {
+) -> Result<Vec<WorkOrderInfo>, TopemsError> {
     let query = if let Some(ids) = order_ids {
         if ids.is_empty() {
             return Ok(vec![]);
@@ -764,7 +764,7 @@ async fn fetch_pending_orders(
 
 async fn fetch_available_work_stations(
     pool: &sqlx::PgPool,
-) -> Result<Vec<WorkStationInfo>, String> {
+) -> Result<Vec<WorkStationInfo>, TopemsError> {
     let rows = sqlx::query(
         r#"
         SELECT id, name, capacity, status, equipment_id, process_id
@@ -798,7 +798,7 @@ async fn fetch_available_work_stations(
         .collect())
 }
 
-async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, EquipmentInfo>, String> {
+async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, EquipmentInfo>, TopemsError> {
     let rows = sqlx::query(
         r#"
         SELECT id, name, status, next_maintenance_date
@@ -837,7 +837,7 @@ async fn check_material_availability(
     pool: &sqlx::PgPool,
     order_id: Uuid,
     _order_quantity: f64,
-) -> Result<bool, String> {
+) -> Result<bool, TopemsError> {
     // 获取订单关联的 BOM（简化逻辑：通过产品编码匹配）
     // 实际场景需要更复杂的物料需求计算
     let product = sqlx::query(r#"SELECT product_code FROM mes.production_orders WHERE id = $1"#)
@@ -855,7 +855,7 @@ async fn check_material_availability(
     Ok(true)
 }
 
-async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Result<(), String> {
+async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Result<(), TopemsError> {
     let now = Utc::now();
 
     let result = sqlx::query(
@@ -900,7 +900,7 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
 
     match result {
         Ok(_) => Ok(()),
-        Err(e) => Err(format!("保存排程结果失败: {}", e)),
+        Err(e) => Err(TopemsError::BusinessLogic(format!("保存排程结果失败: {}", e))),
     }
 }
 

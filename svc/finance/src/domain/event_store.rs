@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -55,21 +56,21 @@ pub trait EventStore: Send + Sync {
         events: &[FinanceDomainEvent],
         expected_version: u64,
         metadata: Option<EventMetadata>,
-    ) -> Result<Vec<EventRecord>, String>;
+    ) -> Result<Vec<EventRecord>, TopemsError>;
 
     async fn read_events(
         &self,
         aggregate_id: &str,
         from_version: u64,
         to_version: Option<u64>,
-    ) -> Result<Vec<EventRecord>, String>;
+    ) -> Result<Vec<EventRecord>, TopemsError>;
 
-    async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), String>;
+    async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), TopemsError>;
     async fn get_latest_snapshot(
         &self,
         aggregate_id: &str,
-    ) -> Result<Option<SnapshotRecord>, String>;
-    async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, String>;
+    ) -> Result<Option<SnapshotRecord>, TopemsError>;
+    async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, TopemsError>;
 }
 
 pub struct InMemoryEventStore {
@@ -117,7 +118,7 @@ impl EventStore for InMemoryEventStore {
         events: &[FinanceDomainEvent],
         expected_version: u64,
         metadata: Option<EventMetadata>,
-    ) -> Result<Vec<EventRecord>, String> {
+    ) -> Result<Vec<EventRecord>, TopemsError> {
         let mut all_events = self.events.lock().map_err(|e| e.to_string())?;
 
         let current_version = all_events
@@ -128,10 +129,10 @@ impl EventStore for InMemoryEventStore {
             .unwrap_or(0);
 
         if current_version != expected_version {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "Optimistic concurrency error: expected version {}, current version {}",
                 expected_version, current_version
-            ));
+            )));
         }
 
         let metadata = metadata.unwrap_or_default();
@@ -162,7 +163,7 @@ impl EventStore for InMemoryEventStore {
         aggregate_id: &str,
         from_version: u64,
         to_version: Option<u64>,
-    ) -> Result<Vec<EventRecord>, String> {
+    ) -> Result<Vec<EventRecord>, TopemsError> {
         let all_events = self.events.lock().map_err(|e| e.to_string())?;
 
         let mut events: Vec<EventRecord> = all_events
@@ -179,7 +180,7 @@ impl EventStore for InMemoryEventStore {
         Ok(events)
     }
 
-    async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), String> {
+    async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), TopemsError> {
         let mut snapshots = self.snapshots.lock().map_err(|e| e.to_string())?;
 
         snapshots.retain(|s| s.aggregate_id != snapshot.aggregate_id);
@@ -190,7 +191,7 @@ impl EventStore for InMemoryEventStore {
     async fn get_latest_snapshot(
         &self,
         aggregate_id: &str,
-    ) -> Result<Option<SnapshotRecord>, String> {
+    ) -> Result<Option<SnapshotRecord>, TopemsError> {
         let snapshots = self.snapshots.lock().map_err(|e| e.to_string())?;
 
         Ok(snapshots
@@ -200,7 +201,7 @@ impl EventStore for InMemoryEventStore {
             .cloned())
     }
 
-    async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, String> {
+    async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, TopemsError> {
         let all_events = self.events.lock().map_err(|e| e.to_string())?;
 
         Ok(all_events

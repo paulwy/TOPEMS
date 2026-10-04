@@ -8,6 +8,7 @@
 //!
 //! 设计风格：ApiResponse + LazyLock 内存存储
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
@@ -569,7 +570,7 @@ impl LineageTracker {
         to_entity_id: String,
         edge_type: EdgeType,
         transformation_description: Option<String>,
-    ) -> Result<(LineageNode, LineageNode, LineageEdge), String> {
+    ) -> Result<(LineageNode, LineageNode, LineageEdge), TopemsError> {
         let store = get_lineage_v52_store();
         let mut nodes = store.lineage_nodes.lock().await;
         let mut edges = store.lineage_edges.lock().await;
@@ -708,7 +709,7 @@ impl LineageTracker {
         result
     }
 
-    async fn export_graph(format: &str) -> Result<String, String> {
+    async fn export_graph(format: &str) -> Result<String, TopemsError> {
         let store = get_lineage_v52_store();
         let graphs = store.lineage_graphs.lock().await;
         let graph = graphs.first().cloned().ok_or("没有可用的血缘图谱")?;
@@ -737,12 +738,12 @@ impl LineageTracker {
                 dot.push_str("}\n");
                 Ok(dot)
             }
-            "json" => serde_json::to_string_pretty(&graph).map_err(|e| e.to_string()),
-            _ => Err(format!("不支持的导出格式: {}", format)),
+            "json" => serde_json::to_string_pretty(&graph).map_err(|e| TopemsError::BusinessLogic(e.to_string())),
+            _ => Err(TopemsError::ValidationFailed(format!("不支持的导出格式: {}", format))),
         }
     }
 
-    async fn delete_node(node_id: &str) -> Result<(), String> {
+    async fn delete_node(node_id: &str) -> Result<(), TopemsError> {
         let store = get_lineage_v52_store();
         let mut nodes = store.lineage_nodes.lock().await;
         let mut edges = store.lineage_edges.lock().await;
@@ -751,7 +752,7 @@ impl LineageTracker {
         let len_before = nodes.len();
         nodes.retain(|n| n.id != node_id);
         if nodes.len() == len_before {
-            return Err("未找到血缘节点".to_string());
+            return Err(TopemsError::BusinessLogic("未找到血缘节点".to_string()));
         }
 
         edges.retain(|e| e.from_node_id != node_id && e.to_node_id != node_id);
@@ -782,7 +783,7 @@ impl ImpactAnalyzer {
         clippy::cast_possible_truncation,
         clippy::cast_possible_wrap
     )]
-    async fn analyze(req: &ImpactAnalysisRequest) -> Result<ImpactAnalysisResult, String> {
+    async fn analyze(req: &ImpactAnalysisRequest) -> Result<ImpactAnalysisResult, TopemsError> {
         let store = get_lineage_v52_store();
         let nodes = store.lineage_nodes.lock().await;
         let edges = store.lineage_edges.lock().await;
@@ -888,21 +889,21 @@ impl ImpactAnalyzer {
         Ok(result)
     }
 
-    async fn get_report(id: &str) -> Result<ImpactAnalysisResult, String> {
+    async fn get_report(id: &str) -> Result<ImpactAnalysisResult, TopemsError> {
         let store = get_lineage_v52_store();
         let analyses = store.impact_analyses.lock().await;
         analyses
             .iter()
             .find(|r| r.id == id)
             .cloned()
-            .ok_or_else(|| "未找到影响分析报告".to_string())
+            .ok_or_else(|| TopemsError::ResourceNotFound("未找到影响分析报告".to_string()))
     }
 
     async fn simulate(
         entity_type: String,
         entity_id: String,
         change_type: ChangeType,
-    ) -> Result<ImpactSimulation, String> {
+    ) -> Result<ImpactSimulation, TopemsError> {
         let store = get_lineage_v52_store();
         let nodes = store.lineage_nodes.lock().await;
         let edges = store.lineage_edges.lock().await;
@@ -975,7 +976,7 @@ impl ImpactAnalyzer {
     async fn get_affected_scope(
         entity_type: String,
         entity_id: String,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let store = get_lineage_v52_store();
         let nodes = store.lineage_nodes.lock().await;
         let edges = store.lineage_edges.lock().await;
@@ -1037,7 +1038,7 @@ impl ChangePropagator {
         change_type: ChangeType,
         old_value: Option<serde_json::Value>,
         new_value: Option<serde_json::Value>,
-    ) -> Result<(ChangeEvent, Vec<PropagationLog>), String> {
+    ) -> Result<(ChangeEvent, Vec<PropagationLog>), TopemsError> {
         let store = get_lineage_v52_store();
 
         let now = chrono::Utc::now().to_rfc3339();
@@ -1140,7 +1141,7 @@ impl ChangePropagator {
             .collect()
     }
 
-    async fn rollback(propagation_id: &str) -> Result<PropagationLog, String> {
+    async fn rollback(propagation_id: &str) -> Result<PropagationLog, TopemsError> {
         let store = get_lineage_v52_store();
         let mut logs = store.propagation_logs.lock().await;
 
@@ -1150,7 +1151,7 @@ impl ChangePropagator {
             .ok_or_else(|| "未找到传播记录".to_string())?;
 
         if log.status == "rolled_back" {
-            return Err("该记录已回滚".to_string());
+            return Err(TopemsError::BusinessLogic("该记录已回滚".to_string()));
         }
 
         log.status = "rolled_back".to_string();
@@ -1287,7 +1288,7 @@ pub async fn register_lineage(
             }),
             "血缘关系已注册",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 #[utoipa::path(
@@ -1403,7 +1404,7 @@ pub async fn export_lineage(
                 "血缘图谱导出成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1425,7 +1426,7 @@ pub async fn delete_lineage(
 
     match LineageTracker::delete_node(&req.node_id).await {
         Ok(()) => Json(ApiResponse::success_no_data("血缘节点已删除")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1457,7 +1458,7 @@ pub async fn analyze_impact(
 
     match ImpactAnalyzer::analyze(&analysis_req).await {
         Ok(result) => Json(ApiResponse::success(result, "影响分析完成")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1482,7 +1483,7 @@ pub async fn get_impact_report(
 
     match ImpactAnalyzer::get_report(&id).await {
         Ok(report) => Json(ApiResponse::success(report, "影响分析报告")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1505,7 +1506,7 @@ pub async fn simulate_change(
     let change_type = change_type_from_str(&req.change_type);
     match ImpactAnalyzer::simulate(req.entity_type, req.entity_id, change_type).await {
         Ok(simulation) => Json(ApiResponse::success(simulation, "变更模拟完成")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1527,7 +1528,7 @@ pub async fn get_affected_scope(
 
     match ImpactAnalyzer::get_affected_scope(params.entity_type, params.entity_id).await {
         Ok(scope) => Json(ApiResponse::success(scope, "受影响范围")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1567,7 +1568,7 @@ pub async fn propagate_change(
             }),
             "变更传播完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1681,7 +1682,7 @@ pub async fn rollback_propagation(
 
     match ChangePropagator::rollback(&req.propagation_id).await {
         Ok(log) => Json(ApiResponse::success(log, "传播已回滚")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -2097,7 +2098,7 @@ mod tests {
             new_value: Some(serde_json::json!({"k": "v"})),
             triggered_at: "2024-01-01T00:00:00Z".to_string(),
         };
-        let json = serde_json::to_string(&e).unwrap();
+        let json = serde_json::to_string(&e.to_string()).unwrap();
         let back: ChangeEvent = serde_json::from_str(&json).unwrap();
         assert_eq!(back.id, "ce-1");
         assert!(back.new_value.is_some());

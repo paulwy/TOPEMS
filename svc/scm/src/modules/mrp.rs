@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -52,12 +53,12 @@ pub fn calculate_eoq(
     annual_demand: f64,
     ordering_cost: f64,
     holding_cost_per_unit: f64,
-) -> Result<f64, String> {
+) -> Result<f64, TopemsError> {
     if annual_demand < 0.0 {
-        return Err("annual_demand must be non-negative".to_string());
+        return Err(TopemsError::BusinessLogic("annual_demand must be non-negative".to_string()));
     }
     if holding_cost_per_unit <= 0.0 {
-        return Err("holding_cost_per_unit must be > 0".to_string());
+        return Err(TopemsError::BusinessLogic("holding_cost_per_unit must be > 0".to_string()));
     }
     if annual_demand == 0.0 {
         return Ok(0.0);

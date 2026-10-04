@@ -2,6 +2,7 @@
 // =============================================================================
 // 事件处理器 trait + 副作用模型 + 路由器 + 4 个具体处理器实现
 
+use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 
 use super::event_publisher::event_type_name;
@@ -16,7 +17,7 @@ pub trait DomainEventHandler: Send + Sync {
         &self,
         event: &FinanceDomainEvent,
         aggregate_id: &str,
-    ) -> Result<HandlerResult, String>;
+    ) -> Result<HandlerResult, TopemsError>;
 }
 
 /// 处理器执行结果
@@ -124,7 +125,7 @@ impl EventRouter {
                         handler_name: handler.handler_name().to_string(),
                         success: false,
                         side_effects: Vec::new(),
-                        error: Some(e),
+                        error: Some(e.to_string()),
                     });
                 }
             }
@@ -197,14 +198,14 @@ impl DomainEventHandler for VoucherPostedHandler {
         &self,
         event: &FinanceDomainEvent,
         aggregate_id: &str,
-    ) -> Result<HandlerResult, String> {
+    ) -> Result<HandlerResult, TopemsError> {
         let (voucher_id, voucher_no, posted_by) = match event {
             FinanceDomainEvent::VoucherPosted(e) => (
                 e.voucher_id.clone(),
                 e.voucher_no.clone(),
                 e.posted_by.clone(),
             ),
-            _ => return Err("VoucherPostedHandler received non-VoucherPosted event".to_string()),
+            _ => return Err(TopemsError::BusinessLogic("VoucherPostedHandler received non-VoucherPosted event".to_string())),
         };
 
         let mut result = HandlerResult::success();
@@ -260,7 +261,7 @@ impl DomainEventHandler for VoucherReversedHandler {
         &self,
         event: &FinanceDomainEvent,
         aggregate_id: &str,
-    ) -> Result<HandlerResult, String> {
+    ) -> Result<HandlerResult, TopemsError> {
         let (voucher_id, voucher_no, reversed_by, reason) = match event {
             FinanceDomainEvent::VoucherReversed(e) => (
                 e.voucher_id.clone(),
@@ -269,7 +270,7 @@ impl DomainEventHandler for VoucherReversedHandler {
                 e.reason.clone(),
             ),
             _ => {
-                return Err("VoucherReversedHandler received non-VoucherReversed event".to_string())
+                return Err(TopemsError::BusinessLogic("VoucherReversedHandler received non-VoucherReversed event".to_string()))
             }
         };
 
@@ -326,7 +327,7 @@ impl DomainEventHandler for ReceivableSettledHandler {
         &self,
         event: &FinanceDomainEvent,
         aggregate_id: &str,
-    ) -> Result<HandlerResult, String> {
+    ) -> Result<HandlerResult, TopemsError> {
         let (receivable_id, settled_amount, remaining_amount) = match event {
             FinanceDomainEvent::ReceivableSettled(e) => (
                 e.receivable_id.clone(),
@@ -335,7 +336,7 @@ impl DomainEventHandler for ReceivableSettledHandler {
             ),
             _ => {
                 return Err(
-                    "ReceivableSettledHandler received non-ReceivableSettled event".to_string(),
+                    TopemsError::BusinessLogic("ReceivableSettledHandler received non-ReceivableSettled event".to_string()),
                 )
             }
         };
@@ -396,12 +397,12 @@ impl DomainEventHandler for PayableSettledHandler {
         &self,
         event: &FinanceDomainEvent,
         aggregate_id: &str,
-    ) -> Result<HandlerResult, String> {
+    ) -> Result<HandlerResult, TopemsError> {
         let (payable_id, settled_amount, remaining_amount) = match event {
             FinanceDomainEvent::PayableSettled(e) => {
                 (e.payable_id.clone(), e.settled_amount, e.remaining_amount)
             }
-            _ => return Err("PayableSettledHandler received non-PayableSettled event".to_string()),
+            _ => return Err(TopemsError::BusinessLogic("PayableSettledHandler received non-PayableSettled event".to_string())),
         };
 
         let mut result = HandlerResult::success();

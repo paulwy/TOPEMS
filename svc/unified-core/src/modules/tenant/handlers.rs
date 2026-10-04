@@ -1,5 +1,6 @@
 //! Tenant API handlers
 
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
@@ -244,7 +245,7 @@ async fn seed_tenant_defaults(
     admin_password: &str,
     default_department_name: &str,
     default_department_description: Option<&str>,
-) -> Result<Uuid, String> {
+) -> Result<Uuid, TopemsError> {
     // 1. Hash the admin password with bcrypt (same cost as IAM create_user).
     let password_hash = bcrypt::hash(admin_password, bcrypt::DEFAULT_COST)
         .map_err(|e| format!("Failed to hash admin password: {}", e))?;
@@ -258,7 +259,7 @@ async fn seed_tenant_defaults(
             .await
             .map_err(|e| format!("Failed to check existing admin user: {}", e))?;
     if dup > 0 {
-        return Err("Admin username or email already exists".to_string());
+        return Err(TopemsError::BusinessLogic("Admin username or email already exists".to_string()));
     }
 
     // 3. Create the admin user tied to the new tenant.
@@ -480,7 +481,7 @@ pub async fn onboard_tenant(
         Err(e) => {
             let _ = tx.rollback().await;
             tracing::error!("Failed to seed tenant defaults: {}", e);
-            return Json(CoreResponse::error(&e));
+            return Json(CoreResponse::error(&e.to_string()));
         }
     };
 
@@ -490,7 +491,7 @@ pub async fn onboard_tenant(
     if let Err(e) = activate_basic_modules(&mut tx, tenant.id).await {
         let _ = tx.rollback().await;
         tracing::error!("Failed to activate basic modules: {}", e);
-        return Json(CoreResponse::error(&e));
+        return Json(CoreResponse::error(&e.to_string()));
     }
 
     if let Err(e) = tx.commit().await {

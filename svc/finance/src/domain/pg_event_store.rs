@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use sqlx::{PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
@@ -32,7 +33,7 @@ impl PgEventStore {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    fn row_to_event_record(row: &sqlx::postgres::PgRow) -> Result<EventRecord, String> {
+    fn row_to_event_record(row: &sqlx::postgres::PgRow) -> Result<EventRecord, TopemsError> {
         let id: Uuid = row.try_get("id").map_err(|e| e.to_string())?;
         let aggregate_id: String = row.try_get("aggregate_id").map_err(|e| e.to_string())?;
         let aggregate_type: String = row.try_get("aggregate_type").map_err(|e| e.to_string())?;
@@ -65,7 +66,7 @@ impl PgEventStore {
         &self,
         last_event_id: Option<&str>,
         batch_size: u32,
-    ) -> Result<Vec<EventRecord>, String> {
+    ) -> Result<Vec<EventRecord>, TopemsError> {
         let batch_i64 = batch_size as i64;
 
         let rows = if let Some(last_id) = last_event_id {
@@ -94,7 +95,7 @@ impl PgEventStore {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    pub async fn get_event_count(&self) -> Result<u64, String> {
+    pub async fn get_event_count(&self) -> Result<u64, TopemsError> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "SELECT COUNT(*) as count FROM cqrs_events"
@@ -112,7 +113,7 @@ impl PgEventStore {
         aggregate_type: &str,
         page: u32,
         page_size: u32,
-    ) -> Result<(Vec<EventRecord>, u64), String> {
+    ) -> Result<(Vec<EventRecord>, u64), TopemsError> {
         let offset = ((page - 1) * page_size) as i64;
         let limit = page_size as i64;
 
@@ -144,7 +145,7 @@ impl PgEventStore {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    pub async fn get_snapshot_count(&self) -> Result<u64, String> {
+    pub async fn get_snapshot_count(&self) -> Result<u64, TopemsError> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "SELECT COUNT(*) as count FROM cqrs_snapshots"
@@ -171,7 +172,7 @@ impl EventStore for PgEventStore {
         events: &[FinanceDomainEvent],
         expected_version: u64,
         metadata: Option<EventMetadata>,
-    ) -> Result<Vec<EventRecord>, String> {
+    ) -> Result<Vec<EventRecord>, TopemsError> {
         let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
 
         let current_version_row = sqlx::query(only_own_schema_query!(
@@ -188,10 +189,10 @@ impl EventStore for PgEventStore {
         let current_version_u64 = current_version as u64;
 
         if current_version_u64 != expected_version {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "Optimistic concurrency error: expected version {}, current version {}",
                 expected_version, current_version_u64
-            ));
+            )));
         }
 
         let metadata = metadata.unwrap_or_default();
@@ -234,7 +235,7 @@ impl EventStore for PgEventStore {
         aggregate_id: &str,
         from_version: u64,
         to_version: Option<u64>,
-    ) -> Result<Vec<EventRecord>, String> {
+    ) -> Result<Vec<EventRecord>, TopemsError> {
         let rows = if let Some(to_ver) = to_version {
             sqlx::query(
                 only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_id = $1 AND version >= $2 AND version <= $3 ORDER BY version ASC"),
@@ -264,7 +265,7 @@ impl EventStore for PgEventStore {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), String> {
+    async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), TopemsError> {
         let state_json = serde_json::to_value(&snapshot.state).map_err(|e| e.to_string())?;
 
         sqlx::query(only_own_schema_query!(
@@ -292,7 +293,7 @@ impl EventStore for PgEventStore {
     async fn get_latest_snapshot(
         &self,
         aggregate_id: &str,
-    ) -> Result<Option<SnapshotRecord>, String> {
+    ) -> Result<Option<SnapshotRecord>, TopemsError> {
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, snapshot_data, version, created_at FROM cqrs_snapshots WHERE aggregate_id = $1"))
             .bind(aggregate_id)
             .fetch_optional(&self.pool)
@@ -323,7 +324,7 @@ impl EventStore for PgEventStore {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, String> {
+    async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, TopemsError> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "SELECT COALESCE(MAX(version), 0) as version FROM cqrs_events WHERE aggregate_id = $1"

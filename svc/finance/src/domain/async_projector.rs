@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use sqlx::{PgPool, Row};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -68,7 +69,7 @@ impl AsyncProjector {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    async fn get_last_progress(&self, view_name: &str) -> Result<ProjectionProgress, String> {
+    async fn get_last_progress(&self, view_name: &str) -> Result<ProjectionProgress, TopemsError> {
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT view_name, last_event_id, last_event_time, processed_count, error_count, last_error, updated_at FROM cqrs_projection_progress WHERE view_name = $1"))
             .bind(view_name)
             .fetch_optional(&self.pool)
@@ -129,7 +130,7 @@ impl AsyncProjector {
         last_event_time: Option<chrono::DateTime<chrono::Utc>>,
         processed_increment: u64,
         error: Option<&str>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let last_event_uuid = match last_event_id {
             Some(id) => Some(Uuid::parse_str(id).map_err(|e| e.to_string())?),
             None => None,
@@ -174,7 +175,7 @@ impl AsyncProjector {
         &self,
         last_event_id: Option<&str>,
         batch_size: u32,
-    ) -> Result<Vec<EventRecord>, String> {
+    ) -> Result<Vec<EventRecord>, TopemsError> {
         use super::pg_event_store::PgEventStore;
 
         let store = PgEventStore::new(self.pool.clone());
@@ -185,7 +186,7 @@ impl AsyncProjector {
         &self,
         view: &dyn MaterializedView,
         events: &[EventRecord],
-    ) -> Result<u64, String> {
+    ) -> Result<u64, TopemsError> {
         let mut processed = 0u64;
 
         for event_record in events {
@@ -199,13 +200,13 @@ impl AsyncProjector {
                     Err(e) => {
                         retries += 1;
                         if retries >= self.config.max_retries {
-                            return Err(format!(
+                            return Err(TopemsError::BusinessLogic(format!(
                                 "Failed to process event {} for view '{}' after {} retries: {}",
                                 event_record.id,
                                 view.view_name(),
                                 self.config.max_retries,
                                 e
-                            ));
+                            )));
                         }
                         time::sleep(Duration::from_millis(self.config.retry_delay_ms)).await;
                     }
@@ -216,7 +217,7 @@ impl AsyncProjector {
         Ok(processed)
     }
 
-    pub async fn run_once(&self) -> Result<u64, String> {
+    pub async fn run_once(&self) -> Result<u64, TopemsError> {
         let mut total_processed = 0u64;
 
         for view in &self.views {
@@ -244,7 +245,7 @@ impl AsyncProjector {
                     let last_event = events.last();
                     let last_id = last_event.map(|e| e.id.as_str());
                     let last_time = last_event.map(|e| e.occurred_at);
-                    self.update_progress(&view_name, last_id, last_time, 0, Some(&e))
+                    self.update_progress(&view_name, last_id, last_time, 0, Some(&e.to_string()))
                         .await?;
                     tracing::error!("Projection error for view '{}': {}", view_name, e);
                 }
@@ -283,7 +284,7 @@ impl AsyncProjector {
         });
     }
 
-    pub async fn get_progress(&self) -> Result<Vec<ProjectionProgress>, String> {
+    pub async fn get_progress(&self) -> Result<Vec<ProjectionProgress>, TopemsError> {
         let mut results = Vec::new();
 
         for view in &self.views {
@@ -299,7 +300,7 @@ impl AsyncProjector {
         Ok(results)
     }
 
-    pub async fn replay_view(&self, view_name: &str) -> Result<(), String> {
+    pub async fn replay_view(&self, view_name: &str) -> Result<(), TopemsError> {
         let view = self
             .views
             .iter()

@@ -4,6 +4,7 @@
 //! delete, activate, deactivate, and role change operations with before/after
 //! snapshots, actor information, and timestamps.
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -50,7 +51,7 @@ impl std::fmt::Display for AuditAction {
 }
 
 impl std::str::FromStr for AuditAction {
-    type Err = String;
+    type Err = TopemsError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
@@ -61,7 +62,7 @@ impl std::str::FromStr for AuditAction {
             "deactivate" => Ok(Self::Deactivate),
             "role_change" | "rolechange" => Ok(Self::RoleChange),
             "check" => Ok(Self::Check),
-            _ => Err(format!("Unknown audit action: {}", s)),
+            _ => Err(TopemsError::BusinessLogic(format!("Unknown audit action: {}", s))),
         }
     }
 }
