@@ -1041,3 +1041,32 @@
 - **可执行未排期**：B7（L 级分批）
 - **决策项跳过（用户拍板暂不处理）**：B1（search→erp 白名单撤销）、B14（守卫重构）、B15（埋点）、A2（5433 docker）、A5（erp RLS）
 - **环境阻塞**：A1（nginx 生产 conf 需 Linux/生产环境）；5433 仍 DOWN、nginx 未运行；SIGKILL 完整 e2e 需独占实例环境（并行线 11824 周期覆盖共享表）
+
+## 2026-10-05 B7 分批推进（第 1-2 批：svc/srm + svc/rd 完成，本地提交未 push）
+
+> 用户「继续」后开启 B7（U7 残留：静态 error() TopemsError 化 / ADR 阶段二）。B7 为 L 级（1313 处静态文案 + anyhow 清退），按「每服务分批」推进；本批完成 srm/rd 两个小服务的 anyhow 清退 + 静态 Err TopemsError 化，形成可复制模板。提交 d2bfb24ce / 1f203fe39，均未 push。
+
+### ✅ 第 1 批：svc/srm（d2bfb24ce，15 文件）
+- 14 个 modules 文件 `use anyhow::Result;` → `use topems_shared_core::error::Result;`（Result 别名同位置替换，函数签名不变）
+- inquiry.rs `create_routes -> Result<Router, anyhow::Error>` 完全限定移除
+- scoring_dimension.rs `weighted_score -> Result<f64, String>` → `Result<f64>`，4 处静态 `Err("...")` → `TopemsError::ValidationFailed(...)`
+- 保留（ADR 合规）：main.rs anyhow（进程边界）；supplier_evaluation 闭包与 data_sync 的 `std::result::Result<_, String|sqlx::Error>`（内部校验/sqlx 专用，4xx 静态文案按设计走 ApiResponse::error）
+- 验证：topems-srm 编译 0 错误；单测 559/559 绿；srm 业务层 anyhow=0
+
+### ✅ 第 2 批：svc/rd（1f203fe39，2 文件）
+- project_repository.rs / project_service.rs `use anyhow::Result` → `topems_shared_core::error::{Result, TopemsError}`
+- `anyhow::anyhow!(TopemsError::NotFound(...))` 去 anyhow 包装直接返回 TopemsError
+- 验证：topems-rd 编译 0 错误；单测 155/155 绿；rd 业务层 anyhow=0
+
+### 门禁变化（scripts/ci/check-error-handling.cjs）
+- 业务层 anyhow：70 → **52**（-18；srm -15 + rd -3）
+- 泄露面 413 不变（本批为 anyhow/静态文案，非泄露形态）
+- 注意：`Result<` 别名的坑——`topems_shared_core::error::Result` 是单参类型别名，`Result<_, String>`/`Result<_, sqlx::Error>` 等双参形态须用 `std::result::Result<_, _>` 完全限定
+
+### ⬜ B7 剩余（后续批次候选，按业务层 anyhow 计数）
+- svc/server（41）/ lib/shared-ai（24）/ svc/integration（22）/ svc/analytics（13）/ lib/shared-bootstrap（10）/ svc/ai（9）/ lib/shared-core（9）/ svc/unified-core / ticket / erp（各 4）等
+- 注意 analytics 的 JobScheduler trait（`type Err = anyhow::Error`）等约束型 anyhow 需单独策略
+
+### 其他未完成（不变）
+- 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
+- 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）
