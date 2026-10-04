@@ -16,6 +16,7 @@
 //!    - Anomaly: 异常事件 (Spike/Drop/Drift/Cycle/Burst)
 //!    - DetectionModel: 检测模型 (EWMA/Z-Score/Seasonal)
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -1182,14 +1183,14 @@ impl AnomalyDetector {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    pub async fn train_model(model_id: &str) -> Result<DetectionModel, String> {
+    pub async fn train_model(model_id: &str) -> Result<DetectionModel, TopemsError> {
         let store = get_monitoring_store();
         let mut models = store.detection_models.lock().await;
 
         let model = models
             .iter_mut()
             .find(|m| m.id == model_id)
-            .ok_or_else(|| format!("检测模型 '{}' 不存在", model_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("检测模型 '{}' 不存在", model_id)))?;
 
         let metrics = store.metrics.lock().await;
         let relevant_metrics: Vec<f64> = metrics
@@ -1199,7 +1200,7 @@ impl AnomalyDetector {
             .collect();
 
         if relevant_metrics.len() < 5 {
-            return Err("数据点不足，至少需要 5 个数据点".to_string());
+            return Err(TopemsError::ValidationFailed("数据点不足，至少需要 5 个数据点".to_string()));
         }
 
         let mean = relevant_metrics.iter().sum::<f64>() / relevant_metrics.len() as f64;
@@ -1509,7 +1510,7 @@ pub async fn end_trace_handler(
 ) -> Json<ApiResponse<Trace>> {
     match PerformanceTracer::end_trace(&req.trace_id).await {
         Ok(trace) => Json(ApiResponse::success(trace, "追踪已结束")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1544,7 +1545,7 @@ pub async fn add_resolver_timing_handler(
     .await
     {
         Ok(timing) => Json(ApiResponse::success(timing, "Resolver 计时已添加")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1641,7 +1642,7 @@ pub async fn export_traces_handler(
     let format = req.format.unwrap_or_else(|| "json".to_string());
     match PerformanceTracer::export_traces(&format, req.query_hash.as_deref()).await {
         Ok(data) => Json(ApiResponse::success(data, "追踪数据导出成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1776,7 +1777,7 @@ pub async fn update_model_handler(
 
     match AnomalyDetector::update_model(&id, updates).await {
         Ok(model) => Json(ApiResponse::success(model, "检测模型更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1834,7 +1835,7 @@ pub async fn train_model_handler(
 ) -> Json<ApiResponse<DetectionModel>> {
     match AnomalyDetector::train_model(&id).await {
         Ok(model) => Json(ApiResponse::success(model, "模型训练完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 

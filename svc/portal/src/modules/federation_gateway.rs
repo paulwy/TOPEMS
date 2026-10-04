@@ -15,6 +15,7 @@
 //!    - 超时与重试管理
 //!    - 事务日志与恢复
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, Json};
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
@@ -459,13 +460,13 @@ impl FederationGatewayV5 {
         subgraphs.clone()
     }
 
-    async fn remove_subgraph(id: &str) -> Result<(), String> {
+    async fn remove_subgraph(id: &str) -> Result<(), TopemsError> {
         let store = get_federation_store();
         let mut subgraphs = store.subgraphs.lock().await;
         let len_before = subgraphs.len();
         subgraphs.retain(|s| s.id != id);
         if subgraphs.len() == len_before {
-            return Err("未找到子图".to_string());
+            return Err(TopemsError::ResourceNotFound("未找到子图".to_string()));
         }
         Ok(())
     }
@@ -662,17 +663,17 @@ impl TransactionCoordinator {
         Ok(tx.clone())
     }
 
-    async fn compensate_transaction(transaction_id: &str) -> Result<TransactionContext, String> {
+    async fn compensate_transaction(transaction_id: &str) -> Result<TransactionContext, TopemsError> {
         let store = get_federation_store();
         let mut transactions = store.transactions.lock().await;
 
         let tx = transactions
             .iter_mut()
             .find(|t| t.id == transaction_id)
-            .ok_or_else(|| "未找到事务".to_string())?;
+            .ok_or_else(|| TopemsError::ResourceNotFound("未找到事务".to_string()))?;
 
         if tx.state == TransactionState::Completed {
-            return Err("事务已完成，无法补偿".to_string());
+            return Err(TopemsError::BusinessLogic("事务已完成，无法补偿".to_string()));
         }
 
         tx.state = TransactionState::Compensating;
@@ -834,7 +835,7 @@ pub async fn register_subgraph_handler(
     .await
     {
         Ok(config) => Json(ApiResponse::success(config, "子图注册成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -872,7 +873,7 @@ pub async fn remove_subgraph_handler(Path(id): Path<String>) -> Json<ApiResponse
 
     match FederationGatewayV5::remove_subgraph(&id).await {
         Ok(()) => Json(ApiResponse::success_no_data("子图已删除")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -893,7 +894,7 @@ pub async fn execute_federated_query_handler(
 
     match FederationGatewayV5::execute_federated_query(req.query, req.variables).await {
         Ok(result) => Json(ApiResponse::success(result, "联邦查询执行成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -952,7 +953,7 @@ pub async fn start_transaction_handler(
         .await
     {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务已启动")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -977,7 +978,7 @@ pub async fn commit_transaction_handler(
 
     match TransactionCoordinator::commit_transaction(&id, req.confirm_steps).await {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务提交成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1001,7 +1002,7 @@ pub async fn compensate_transaction_handler(
 
     match TransactionCoordinator::compensate_transaction(&id).await {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务补偿已执行")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1058,7 +1059,7 @@ pub async fn get_transaction_handler(
 
     match TransactionCoordinator::get_transaction_status(&id).await {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务详情")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1082,7 +1083,7 @@ pub async fn recover_transaction_handler(
 
     match TransactionCoordinator::recover_transaction(&id).await {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务恢复完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 

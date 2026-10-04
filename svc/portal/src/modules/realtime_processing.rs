@@ -16,6 +16,7 @@
 //!    - AggregationConfig: 聚合配置 (Count/Sum/Avg/Min/Max/HLL)
 //!    - TumblingWindow/HoppingWindow/SessionWindow 窗口计算
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -809,19 +810,19 @@ impl RealtimeAggregator {
     }
 
     #[allow(clippy::indexing_slicing)]
-    pub async fn start_aggregation(config_id: &str) -> Result<bool, String> {
+    pub async fn start_aggregation(config_id: &str) -> Result<bool, TopemsError> {
         let store = get_realtime_store();
 
         {
             let configs = store.aggregation_configs.lock().await;
             configs
                 .get(config_id)
-                .ok_or_else(|| format!("聚合配置不存在: {}", config_id))?;
+                .ok_or_else(|| TopemsError::ResourceNotFound(format!("聚合配置不存在: {}", config_id)))?;
         }
 
         let mut running = store.running_aggregations.lock().await;
         if running.contains_key(config_id) && running[config_id] {
-            return Err("聚合已在运行中".to_string());
+            return Err(TopemsError::BusinessLogic("聚合已在运行中".to_string()));
         }
         running.insert(config_id.to_string(), true);
 
@@ -846,12 +847,12 @@ impl RealtimeAggregator {
     }
 
     #[allow(clippy::indexing_slicing)]
-    pub async fn stop_aggregation(config_id: &str) -> Result<bool, String> {
+    pub async fn stop_aggregation(config_id: &str) -> Result<bool, TopemsError> {
         let store = get_realtime_store();
 
         let mut running = store.running_aggregations.lock().await;
         if !running.contains_key(config_id) || !running[config_id] {
-            return Err("聚合未在运行".to_string());
+            return Err(TopemsError::BusinessLogic("聚合未在运行".to_string()));
         }
         running.insert(config_id.to_string(), false);
 
@@ -1133,7 +1134,7 @@ pub async fn create_subscription_handler(
         .await
     {
         Ok(record) => Json(ApiResponse::success(record, "订阅创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1203,7 +1204,7 @@ pub async fn pause_subscription_handler(
 ) -> Json<ApiResponse<SubscriptionRecord>> {
     match PersistentSubscription::pause_subscription(&id).await {
         Ok(record) => Json(ApiResponse::success(record, "订阅已暂停")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1226,7 +1227,7 @@ pub async fn resume_subscription_handler(
 ) -> Json<ApiResponse<SubscriptionRecord>> {
     match PersistentSubscription::resume_subscription(&id).await {
         Ok(record) => Json(ApiResponse::success(record, "订阅已恢复")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1250,7 +1251,7 @@ pub async fn cancel_subscription_handler(
     match PersistentSubscription::cancel_subscription(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "订阅已取消")),
         Ok(false) => Json(ApiResponse::error(404, "订阅不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1308,7 +1309,7 @@ pub async fn request_replay_handler(
     .await
     {
         Ok(request) => Json(ApiResponse::success(request, "重放请求已创建")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1331,7 +1332,7 @@ pub async fn execute_replay_handler(
 ) -> Json<ApiResponse<ReplayResult>> {
     match MessageReplayEngine::execute_replay(&id).await {
         Ok(result) => Json(ApiResponse::success(result, "重放执行完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1377,7 +1378,7 @@ pub async fn cancel_replay_handler(
 ) -> Json<ApiResponse<ReplayResult>> {
     match MessageReplayEngine::cancel_replay(&id).await {
         Ok(result) => Json(ApiResponse::success(result, "重放已取消")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1463,7 +1464,7 @@ pub async fn create_aggregation_handler(
     .await
     {
         Ok(config) => Json(ApiResponse::success(config, "聚合配置创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1487,7 +1488,7 @@ pub async fn start_aggregation_handler(
     match RealtimeAggregator::start_aggregation(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "聚合已启动")),
         Ok(false) => Json(ApiResponse::error(500, "聚合启动失败")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1511,7 +1512,7 @@ pub async fn stop_aggregation_handler(
     match RealtimeAggregator::stop_aggregation(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "聚合已停止")),
         Ok(false) => Json(ApiResponse::error(500, "聚合停止失败")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1536,7 +1537,7 @@ pub async fn get_aggregation_result_handler(
         Some(result) => Json(ApiResponse::success(result, "聚合结果")),
         None => match RealtimeAggregator::compute_window(&id).await {
             Ok(result) => Json(ApiResponse::success(result, "聚合结果（首次计算）")),
-            Err(e) => Json(ApiResponse::error(404, &e)),
+            Err(e) => Json(ApiResponse::error(404, &e.to_string())),
         },
     }
 }

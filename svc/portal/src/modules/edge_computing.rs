@@ -1001,7 +1001,7 @@ pub async fn render_at_edge_handler(
 
     match EdgeRenderer::render_at_edge(render_req).await {
         Ok(result) => Json(ApiResponse::success(result, "边缘渲染完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1030,7 +1030,7 @@ pub async fn invalidate_cache_handler(
 
     match EdgeRenderer::invalidate_edge_cache(location, req.cache_key).await {
         Ok(count) => Json(ApiResponse::success(count, "缓存已失效")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1084,7 +1084,7 @@ pub async fn deploy_function_handler(
 
     match EdgeRenderer::deploy_edge_function(function).await {
         Ok(f) => Json(ApiResponse::success(f, "边缘函数部署成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1110,7 +1110,7 @@ pub async fn accelerate_request_handler(
         .await
     {
         Ok(resp) => Json(ApiResponse::success(resp, "加速请求完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1135,7 +1135,7 @@ pub async fn get_optimal_location_handler(
 
     match GlobalAccelerator::get_optimal_location(params.config_name.as_deref(), client_loc).await {
         Ok(loc) => Json(ApiResponse::success(loc, "最优节点位置")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1174,7 +1174,7 @@ pub async fn sync_config_handler(
 
     match GlobalAccelerator::sync_config(config).await {
         Ok(cfg) => Json(ApiResponse::success(cfg, "配置同步成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1213,7 +1213,7 @@ pub async fn optimize_response_handler(
 ) -> Json<ApiResponse<OptimizedResponse>> {
     match LatencyOptimizer::optimize_response(req.data, req.budget_name.as_deref()).await {
         Ok(resp) => Json(ApiResponse::success(resp, "响应优化完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1252,7 +1252,7 @@ pub async fn precompute_handler(
     let ttl = req.ttl_seconds.unwrap_or(300);
     match LatencyOptimizer::precompute_response(req.template_id, req.data, ttl).await {
         Ok(resp) => Json(ApiResponse::success(resp, "预计算完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1272,7 +1272,7 @@ pub async fn coalesce_requests_handler(
 ) -> Json<ApiResponse<CoalescedRequest>> {
     match LatencyOptimizer::coalesce_requests(req.request_ids, &req.query).await {
         Ok(resp) => Json(ApiResponse::success(resp, "请求合并完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 

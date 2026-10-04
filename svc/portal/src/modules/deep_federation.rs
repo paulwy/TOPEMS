@@ -17,6 +17,7 @@
 //!    - FederatedIdentity: 联邦身份 (JWT/OAuth2/SAML/APIKey)
 //!    - AuthPolicy: 认证策略
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -889,16 +890,16 @@ impl DistributedQueryEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-    pub async fn execute_distributed_query(query_id: &str) -> Result<DistributedQuery, String> {
+    pub async fn execute_distributed_query(query_id: &str) -> Result<DistributedQuery, TopemsError> {
         let store = get_deep_federation_store();
         let mut queries = store.distributed_queries.lock().await;
 
         let query = queries
             .get_mut(query_id)
-            .ok_or_else(|| format!("分布式查询 '{}' 不存在", query_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("分布式查询 '{}' 不存在", query_id)))?;
 
         if query.status == QueryStatus::Running {
-            return Err("查询已在执行中".to_string());
+            return Err(TopemsError::BusinessLogic("查询已在执行中".to_string()));
         }
 
         query.status = QueryStatus::Running;
@@ -1046,7 +1047,7 @@ impl DistributedQueryEngine {
 
     pub async fn validate_query_plan(
         query_plan: serde_json::Value,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let sub_queries = query_plan
             .get("sub_queries")
             .and_then(|v| v.as_array())
@@ -1054,7 +1055,7 @@ impl DistributedQueryEngine {
             .unwrap_or(0);
 
         if sub_queries == 0 {
-            return Err("查询计划必须包含至少一个子查询".to_string());
+            return Err(TopemsError::ValidationFailed("查询计划必须包含至少一个子查询".to_string()));
         }
 
         let services = query_plan
@@ -1138,9 +1139,9 @@ impl FederatedAuthService {
         }))
     }
 
-    pub async fn verify_token_chain(tokens: Vec<String>) -> Result<TokenChain, String> {
+    pub async fn verify_token_chain(tokens: Vec<String>) -> Result<TokenChain, TopemsError> {
         if tokens.is_empty() {
-            return Err("令牌链不能为空".to_string());
+            return Err(TopemsError::ValidationFailed("令牌链不能为空".to_string()));
         }
 
         let verified = !tokens.is_empty();
@@ -1351,7 +1352,7 @@ pub async fn check_consistency_handler(
 
     match ConsistencyManager::check_consistency(req.entity_ids, model).await {
         Ok(check) => Json(ApiResponse::success(check, "一致性检查完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1395,7 +1396,7 @@ pub async fn set_consistency_model_handler(
             serde_json::json!({ "model": m.as_str() }),
             "一致性模型已更新",
         )),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1415,7 +1416,7 @@ pub async fn detect_conflicts_handler(
 ) -> Json<ApiResponse<Vec<ConflictInfo>>> {
     match ConsistencyManager::detect_conflicts(req.entity_ids).await {
         Ok(conflicts) => Json(ApiResponse::success(conflicts, "冲突检测完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1440,7 +1441,7 @@ pub async fn resolve_conflict_handler(
     let strategy = req.strategy.unwrap_or_else(|| "merge_by_max".to_string());
     match ConsistencyManager::resolve_conflict(&id, strategy).await {
         Ok(vector) => Json(ApiResponse::success(vector, "冲突已解决")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1463,7 +1464,7 @@ pub async fn get_version_vector_handler(
 ) -> Json<ApiResponse<VersionVector>> {
     match ConsistencyManager::get_version_vector(&id).await {
         Ok(vector) => Json(ApiResponse::success(vector, "版本向量")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1515,7 +1516,7 @@ pub async fn create_distributed_query_handler(
     .await
     {
         Ok(query) => Json(ApiResponse::success(query, "分布式查询创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1538,7 +1539,7 @@ pub async fn execute_distributed_query_handler(
 ) -> Json<ApiResponse<DistributedQuery>> {
     match DistributedQueryEngine::execute_distributed_query(&id).await {
         Ok(query) => Json(ApiResponse::success(query, "分布式查询执行完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1561,7 +1562,7 @@ pub async fn get_query_status_handler(
 ) -> Json<ApiResponse<QueryStatusInfo>> {
     match DistributedQueryEngine::get_query_status(&id).await {
         Ok(info) => Json(ApiResponse::success(info, "查询状态")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1584,7 +1585,7 @@ pub async fn cancel_query_handler(
 ) -> Json<ApiResponse<DistributedQuery>> {
     match DistributedQueryEngine::cancel_query(&id).await {
         Ok(query) => Json(ApiResponse::success(query, "查询已取消")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1622,7 +1623,7 @@ pub async fn validate_query_plan_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     match DistributedQueryEngine::validate_query_plan(req.query_plan).await {
         Ok(result) => Json(ApiResponse::success(result, "查询计划验证完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1645,7 +1646,7 @@ pub async fn authenticate_federated_handler(
     let provider = AuthProvider::from_str(&req.provider);
     match FederatedAuthService::authenticate_federated(provider, req.token).await {
         Ok(identity) => Json(ApiResponse::success(identity, "联邦认证成功")),
-        Err(e) => Json(ApiResponse::error(401, &e)),
+        Err(e) => Json(ApiResponse::error(401, &e.to_string())),
     }
 }
 
@@ -1669,7 +1670,7 @@ pub async fn propagate_identity_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     match FederatedAuthService::propagate_identity(&id, req.target_services).await {
         Ok(result) => Json(ApiResponse::success(result, "身份传播完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1689,7 +1690,7 @@ pub async fn verify_token_chain_handler(
 ) -> Json<ApiResponse<TokenChain>> {
     match FederatedAuthService::verify_token_chain(req.tokens).await {
         Ok(chain) => Json(ApiResponse::success(chain, "令牌链验证完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1712,7 +1713,7 @@ pub async fn get_identity_handler(
 ) -> Json<ApiResponse<FederatedIdentity>> {
     match FederatedAuthService::get_identity(&id).await {
         Ok(identity) => Json(ApiResponse::success(identity, "身份详情")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1740,7 +1741,7 @@ pub async fn create_auth_policy_handler(
     .await
     {
         Ok(policy) => Json(ApiResponse::success(policy, "认证策略创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1772,7 +1773,7 @@ pub async fn update_auth_policy_handler(
     .await
     {
         Ok(policy) => Json(ApiResponse::success(policy, "认证策略已更新")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1796,7 +1797,7 @@ pub async fn get_auth_status_handler(
         .unwrap_or_else(|| "identity-001".to_string());
     match FederatedAuthService::get_auth_status(&identity_id).await {
         Ok(status) => Json(ApiResponse::success(status, "认证状态")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 

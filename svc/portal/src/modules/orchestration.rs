@@ -16,6 +16,7 @@
 //!    - RouteRule: 路由规则 (pattern/target/condition/priority/weight)
 //!    - RoutingDecision: 路由决策 (matched_rule/target/confidence/latency)
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -388,7 +389,7 @@ impl GatewayOrchestrator {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-    pub async fn execute_plan(plan_id: &str) -> Result<OrchestrationPlan, String> {
+    pub async fn execute_plan(plan_id: &str) -> Result<OrchestrationPlan, TopemsError> {
         let store = get_orchestration_store();
 
         let plan = {
@@ -396,17 +397,17 @@ impl GatewayOrchestrator {
             plans
                 .get(plan_id)
                 .cloned()
-                .ok_or_else(|| format!("编排计划 '{}' 不存在", plan_id))?
+                .ok_or_else(|| TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id)))?
         };
 
         if plan.status == PlanStatus::Running {
-            return Err("计划已在执行中".to_string());
+            return Err(TopemsError::BusinessLogic("计划已在执行中".to_string()));
         }
 
         let mut plans = store.plans.lock().await;
         let p = plans
             .get_mut(plan_id)
-            .ok_or_else(|| format!("编排计划 '{}' 不存在", plan_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id)))?;
 
         p.status = PlanStatus::Running;
         p.updated_at = chrono::Utc::now().to_rfc3339();
@@ -570,16 +571,16 @@ impl GatewayOrchestrator {
         filtered.into_iter().rev().take(limit).collect()
     }
 
-    pub async fn optimize_plan(plan_id: &str) -> Result<OrchestrationPlan, String> {
+    pub async fn optimize_plan(plan_id: &str) -> Result<OrchestrationPlan, TopemsError> {
         let store = get_orchestration_store();
         let mut plans = store.plans.lock().await;
 
         let p = plans
             .get_mut(plan_id)
-            .ok_or_else(|| format!("编排计划 '{}' 不存在", plan_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id)))?;
 
         if p.status != PlanStatus::Pending {
-            return Err("只能优化待执行的计划".to_string());
+            return Err(TopemsError::BusinessLogic("只能优化待执行的计划".to_string()));
         }
 
         p.execution_steps.sort_by(|a, b| {
@@ -1053,7 +1054,7 @@ pub async fn create_plan_handler(
     match GatewayOrchestrator::create_plan(req.query_id, req.execution_steps, req.timeout_ms).await
     {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1076,7 +1077,7 @@ pub async fn execute_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::execute_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划执行完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1099,7 +1100,7 @@ pub async fn get_plan_status_handler(
 ) -> Json<ApiResponse<PlanStatusInfo>> {
     match GatewayOrchestrator::get_plan_status(&id).await {
         Ok(info) => Json(ApiResponse::success(info, "计划状态")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1122,7 +1123,7 @@ pub async fn cancel_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::cancel_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划已取消")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1151,7 +1152,7 @@ pub async fn optimize_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::optimize_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划已优化")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1181,7 +1182,7 @@ pub async fn register_service_handler(
     .await
     {
         Ok(descriptor) => Json(ApiResponse::success(descriptor, "服务注册成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1205,7 +1206,7 @@ pub async fn deregister_service_handler(
     match ServiceDiscoveryEngine::deregister_service(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "服务注销成功")),
         Ok(false) => Json(ApiResponse::error(404, "服务不存在")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1291,7 +1292,7 @@ pub async fn check_health_handler(
 ) -> Json<ApiResponse<ServiceHeartbeat>> {
     match ServiceDiscoveryEngine::check_health(&id).await {
         Ok(heartbeat) => Json(ApiResponse::success(heartbeat, "健康检查完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1357,7 +1358,7 @@ pub async fn add_rule_handler(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "路由规则创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1395,7 +1396,7 @@ pub async fn update_rule_handler(
 
     match DynamicRouter::update_rule(&id, updated).await {
         Ok(rule) => Json(ApiResponse::success(rule, "路由规则更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1419,7 +1420,7 @@ pub async fn remove_rule_handler(
     match DynamicRouter::remove_rule(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "路由规则删除成功")),
         Ok(false) => Json(ApiResponse::error(404, "路由规则不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 

@@ -1099,7 +1099,7 @@ pub async fn validate_query_handler(
                 ))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1154,7 +1154,7 @@ pub async fn create_policy_handler(
 
     match SecurityGateway::create_policy(policy).await {
         Ok(p) => Json(ApiResponse::success(p, "安全策略创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1215,7 +1215,7 @@ pub async fn update_policy_handler(
 
     match SecurityGateway::update_policy(&id, updates).await {
         Ok(p) => Json(ApiResponse::success(p, "安全策略更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1239,7 +1239,7 @@ pub async fn evaluate_trust_handler(
 
     match ZeroTrustEngine::evaluate_trust(&req.identity, context).await {
         Ok(decision) => Json(ApiResponse::success(decision, "信任评估完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1262,7 +1262,7 @@ pub async fn get_trust_score_handler(
 ) -> Json<ApiResponse<f64>> {
     match ZeroTrustEngine::get_trust_score(&identity).await {
         Ok(score) => Json(ApiResponse::success(score, "信任分数")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1293,7 +1293,7 @@ pub async fn create_identity_policy_handler(
 
     match ZeroTrustEngine::create_identity_policy(policy).await {
         Ok(p) => Json(ApiResponse::success(p, "身份策略创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1357,7 +1357,7 @@ pub async fn mask_response_handler(
 
     match DataMasker::mask_response(req.data, roles).await {
         Ok(masked) => Json(ApiResponse::success(masked, "数据脱敏完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1391,7 +1391,7 @@ pub async fn add_masking_rule_handler(
 
     match DataMasker::add_masking_rule(rule).await {
         Ok(r) => Json(ApiResponse::success(r, "脱敏规则创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1432,7 +1432,7 @@ pub async fn remove_masking_rule_handler(
     match DataMasker::remove_masking_rule(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "脱敏规则删除成功")),
         Ok(false) => Json(ApiResponse::error(404, "脱敏规则不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1452,7 +1452,7 @@ pub async fn preview_masking_handler(
 ) -> Json<ApiResponse<serde_json::Value>> {
     match DataMasker::preview_masking(req.data, req.rule_ids).await {
         Ok(preview) => Json(ApiResponse::success(preview, "脱敏预览")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 

@@ -16,6 +16,7 @@
 //!    - CompatibilityReport: 兼容性报告、破坏性变更列表、废弃字段
 //!    - BreakingChange: 破坏性变更详情（字段移除/类型变更/枚举变更等）
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -500,16 +501,16 @@ impl APIVersionManager {
         Ok(updated)
     }
 
-    pub async fn sunset_version(version: &str) -> Result<APIVersion, String> {
+    pub async fn sunset_version(version: &str) -> Result<APIVersion, TopemsError> {
         let store = get_version_control_store();
         let mut versions = store.api_versions.lock().await;
 
         let v = versions
             .get_mut(version)
-            .ok_or_else(|| format!("版本 '{}' 不存在", version))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("版本 '{}' 不存在", version)))?;
 
         if v.status != APIVersionStatus::Deprecated {
-            return Err("只能废弃已标记为 Deprecated 的版本".to_string());
+            return Err(TopemsError::BusinessLogic("只能废弃已标记为 Deprecated 的版本".to_string()));
         }
 
         v.status = APIVersionStatus::Sunset;
@@ -624,9 +625,9 @@ impl CanaryManager {
         conditions: CanaryCondition,
         start_time: Option<String>,
         end_time: Option<String>,
-    ) -> Result<CanaryConfig, String> {
+    ) -> Result<CanaryConfig, TopemsError> {
         if percentage > 100 {
-            return Err("百分比不能超过 100".to_string());
+            return Err(TopemsError::ValidationFailed("百分比不能超过 100".to_string()));
         }
 
         let store = get_version_control_store();
@@ -646,16 +647,16 @@ impl CanaryManager {
         Ok(config)
     }
 
-    pub async fn update_canary(id: &str, updates: CanaryConfig) -> Result<CanaryConfig, String> {
+    pub async fn update_canary(id: &str, updates: CanaryConfig) -> Result<CanaryConfig, TopemsError> {
         let store = get_version_control_store();
         let mut configs = store.canary_configs.lock().await;
 
         let config = configs
             .get_mut(id)
-            .ok_or_else(|| format!("灰度配置 '{}' 不存在", id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("灰度配置 '{}' 不存在", id)))?;
 
         if config.status == CanaryStatus::Running {
-            return Err("运行中的灰度配置不可更新".to_string());
+            return Err(TopemsError::BusinessLogic("运行中的灰度配置不可更新".to_string()));
         }
 
         config.version = updates.version;
@@ -690,16 +691,16 @@ impl CanaryManager {
         Ok(config.clone())
     }
 
-    pub async fn stop_canary(id: &str) -> Result<CanaryConfig, String> {
+    pub async fn stop_canary(id: &str) -> Result<CanaryConfig, TopemsError> {
         let store = get_version_control_store();
         let mut configs = store.canary_configs.lock().await;
 
         let config = configs
             .get_mut(id)
-            .ok_or_else(|| format!("灰度配置 '{}' 不存在", id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("灰度配置 '{}' 不存在", id)))?;
 
         if config.status != CanaryStatus::Running {
-            return Err("灰度配置未在运行".to_string());
+            return Err(TopemsError::BusinessLogic("灰度配置未在运行".to_string()));
         }
 
         config.status = CanaryStatus::Paused;
@@ -742,17 +743,17 @@ impl CanaryManager {
         list
     }
 
-    pub async fn promote_canary(id: &str) -> Result<CanaryConfig, String> {
+    pub async fn promote_canary(id: &str) -> Result<CanaryConfig, TopemsError> {
         let store = get_version_control_store();
         let config = {
             let mut configs = store.canary_configs.lock().await;
 
             let config = configs
                 .get_mut(id)
-                .ok_or_else(|| format!("灰度配置 '{}' 不存在", id))?;
+                .ok_or_else(|| TopemsError::ResourceNotFound(format!("灰度配置 '{}' 不存在", id)))?;
 
             if config.status != CanaryStatus::Running && config.status != CanaryStatus::Paused {
-                return Err("只能推广运行中或已暂停的灰度配置".to_string());
+                return Err(TopemsError::BusinessLogic("只能推广运行中或已暂停的灰度配置".to_string()));
             }
 
             config.status = CanaryStatus::Completed;
@@ -1114,7 +1115,7 @@ pub async fn register_version_handler(
     let breaking = req.breaking_changes.unwrap_or_default();
     match APIVersionManager::register_version(req.version, req.changelog, breaking).await {
         Ok(v) => Json(ApiResponse::success(v, "版本注册成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1180,7 +1181,7 @@ pub async fn update_version_handler(
 ) -> Json<ApiResponse<APIVersion>> {
     match APIVersionManager::update_version(&version, req.changelog, req.breaking_changes).await {
         Ok(v) => Json(ApiResponse::success(v, "版本更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1190,7 +1191,7 @@ pub async fn deprecate_version_handler(
 ) -> Json<ApiResponse<APIVersion>> {
     match APIVersionManager::deprecate_version(&version).await {
         Ok(v) => Json(ApiResponse::success(v, "版本已废弃")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1213,7 +1214,7 @@ pub async fn sunset_version_handler(
 ) -> Json<ApiResponse<APIVersion>> {
     match APIVersionManager::sunset_version(&version).await {
         Ok(v) => Json(ApiResponse::success(v, "版本已 Sunset")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1235,7 +1236,7 @@ pub async fn check_compatibility_handler(
         .await
     {
         Ok(m) => Json(ApiResponse::success(m, "兼容性检查完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1266,7 +1267,7 @@ pub async fn create_canary_handler(
     .await
     {
         Ok(c) => Json(ApiResponse::success(c, "灰度配置创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1305,7 +1306,7 @@ pub async fn update_canary_handler(
 
     match CanaryManager::update_canary(&id, updated).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度配置更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1328,7 +1329,7 @@ pub async fn start_canary_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     match CanaryManager::start_canary(&id).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度已启动")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1351,7 +1352,7 @@ pub async fn stop_canary_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     match CanaryManager::stop_canary(&id).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度已停止")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1424,7 +1425,7 @@ pub async fn promote_canary_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     match CanaryManager::promote_canary(&id).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度已推广")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1447,7 +1448,7 @@ pub async fn rollback_canary_handler(
 ) -> Json<ApiResponse<CanaryConfig>> {
     match CanaryManager::rollback_canary(&id).await {
         Ok(c) => Json(ApiResponse::success(c, "灰度已回滚")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1469,7 +1470,7 @@ pub async fn check_compatibility_report_handler(
 ) -> Json<ApiResponse<CompatibilityReport>> {
     match CompatibilityChecker::check_compatibility(&req.from_version, &req.to_version).await {
         Ok(r) => Json(ApiResponse::success(r, "兼容性检查完成")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1489,7 +1490,7 @@ pub async fn get_compatibility_report_handler(
 ) -> Json<ApiResponse<CompatibilityReport>> {
     match CompatibilityChecker::generate_report(&params.from_version, &params.to_version).await {
         Ok(r) => Json(ApiResponse::success(r, "兼容性报告")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1509,7 +1510,7 @@ pub async fn get_migration_path_handler(
 ) -> Json<ApiResponse<Vec<String>>> {
     match CompatibilityChecker::get_migration_path(&params.from_version, &params.to_version).await {
         Ok(path) => Json(ApiResponse::success(path, "迁移路径")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1541,7 +1542,7 @@ pub async fn create_compatibility_policy_handler(
     .await
     {
         Ok(p) => Json(ApiResponse::success(p, "兼容性策略创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1566,7 +1567,7 @@ pub async fn get_compatibility_status_handler(
     .await
     {
         Ok(s) => Json(ApiResponse::success(s, "兼容性状态")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 

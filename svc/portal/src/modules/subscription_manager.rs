@@ -16,6 +16,7 @@
 //!    - 客户端感知推送 (慢速客户端自动批量)
 //!    - 背压处理 (Backpressure handling)
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -706,9 +707,9 @@ impl PushOptimizer {
         stats.clone()
     }
 
-    pub async fn set_batch_window(window_ms: u64) -> Result<PushStats, String> {
+    pub async fn set_batch_window(window_ms: u64) -> Result<PushStats, TopemsError> {
         if window_ms == 0 || window_ms > 5000 {
-            return Err("批量窗口必须在 1-5000ms 之间".to_string());
+            return Err(TopemsError::ValidationFailed("批量窗口必须在 1-5000ms 之间".to_string()));
         }
         let store = get_subscription_store();
         let mut window = store.batch_window.lock().await;
@@ -821,7 +822,7 @@ pub async fn subscribe_handler(
 
     match SubscriptionGateway::subscribe(req.client_id, channels).await {
         Ok(subscriber) => Json(ApiResponse::success(subscriber, "订阅成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -845,7 +846,7 @@ pub async fn unsubscribe_handler(
     match SubscriptionGateway::unsubscribe(&subscriber_id).await {
         Ok(true) => Json(ApiResponse::success(true, "取消订阅成功")),
         Ok(false) => Json(ApiResponse::error(404, "订阅者不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -904,7 +905,7 @@ pub async fn publish_handler(
 
     match SubscriptionGateway::publish(channel, req.payload).await {
         Ok(msg) => Json(ApiResponse::success(msg, "消息发布成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -934,7 +935,7 @@ pub async fn publish_to_queue_handler(
     .await
     {
         Ok(msg) => Json(ApiResponse::success(msg, "消息已发布到队列")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -985,7 +986,7 @@ pub async fn create_queue_handler(
 
     match MessageQueueBridge::create_queue(config).await {
         Ok(cfg) => Json(ApiResponse::success(cfg, "队列创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1005,7 +1006,7 @@ pub async fn purge_queue_handler(
 ) -> Json<ApiResponse<u64>> {
     match MessageQueueBridge::purge_queue(&req.queue_name).await {
         Ok(count) => Json(ApiResponse::success(count, "队列已清空")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1061,7 +1062,7 @@ pub async fn set_batch_window_handler(
 ) -> Json<ApiResponse<PushStats>> {
     match PushOptimizer::set_batch_window(req.batch_window_ms).await {
         Ok(stats) => Json(ApiResponse::success(stats, "批量窗口已更新")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 

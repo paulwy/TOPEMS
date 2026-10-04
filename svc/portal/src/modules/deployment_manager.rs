@@ -18,6 +18,7 @@
 //!    - RollbackPolicy: 回滚策略 (触发条件/步骤/最大回滚次数)
 //!    - RollbackAction: 回滚动作 (RevertConfig/RestartService/ScaleDown)
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -803,7 +804,7 @@ impl DeploymentManager {
     pub async fn promote_canary(
         id: &str,
         percentage: Option<f64>,
-    ) -> Result<DeploymentRollout, String> {
+    ) -> Result<DeploymentRollout, TopemsError> {
         let store = get_deployment_store();
 
         let deployment = {
@@ -812,11 +813,11 @@ impl DeploymentManager {
                 .iter()
                 .find(|d| d.id == id)
                 .cloned()
-                .ok_or_else(|| format!("部署 '{}' 不存在", id))?
+                .ok_or_else(|| TopemsError::ResourceNotFound(format!("部署 '{}' 不存在", id)))?
         };
 
         if deployment.strategy != DeploymentStrategy::Canary {
-            return Err("此部署不是灰度发布策略".to_string());
+            return Err(TopemsError::BusinessLogic("此部署不是灰度发布策略".to_string()));
         }
 
         let mut rollouts = store.deployment_rollouts.lock().await;
@@ -975,7 +976,7 @@ impl ConfigurationManager {
         }
     }
 
-    pub async fn activate_config(id: &str) -> Result<GatewayConfig, String> {
+    pub async fn activate_config(id: &str) -> Result<GatewayConfig, TopemsError> {
         let store = get_deployment_store();
 
         let current = {
@@ -984,7 +985,7 @@ impl ConfigurationManager {
                 .iter()
                 .find(|c| c.id == id)
                 .cloned()
-                .ok_or_else(|| format!("配置 '{}' 不存在", id))?
+                .ok_or_else(|| TopemsError::ResourceNotFound(format!("配置 '{}' 不存在", id)))?
         };
 
         let mut configs = store.gateway_configs.lock().await;
@@ -999,7 +1000,7 @@ impl ConfigurationManager {
             c.updated_at = chrono::Utc::now().to_rfc3339();
             Ok(c.clone())
         } else {
-            Err("激活失败".to_string())
+            Err(TopemsError::BusinessLogic("激活失败".to_string()))
         }
     }
 
@@ -1039,7 +1040,7 @@ impl ConfigurationManager {
     pub async fn rollback_config(
         config_id: &str,
         diff_id: Option<&str>,
-    ) -> Result<GatewayConfig, String> {
+    ) -> Result<GatewayConfig, TopemsError> {
         let store = get_deployment_store();
 
         let target_config = {
@@ -1048,7 +1049,7 @@ impl ConfigurationManager {
                 .iter()
                 .find(|c| c.id == config_id)
                 .cloned()
-                .ok_or_else(|| format!("配置 '{}' 不存在", config_id))?
+                .ok_or_else(|| TopemsError::ResourceNotFound(format!("配置 '{}' 不存在", config_id)))?
         };
 
         let diff = if let Some(_did) = diff_id {
@@ -1065,7 +1066,7 @@ impl ConfigurationManager {
 
         let old_settings = match diff {
             Some(d) => d.old_config,
-            None => return Err("没有可回滚的配置历史".to_string()),
+            None => return Err(TopemsError::ResourceNotFound("没有可回滚的配置历史".to_string())),
         };
 
         let mut configs = store.gateway_configs.lock().await;
@@ -1092,7 +1093,7 @@ impl ConfigurationManager {
                 .cloned()
                 .unwrap_or(target_config))
         } else {
-            Err("配置不存在".to_string())
+            Err(TopemsError::ResourceNotFound("配置不存在".to_string()))
         }
     }
 
@@ -1170,7 +1171,7 @@ impl RollbackManager {
         policy_id: &str,
         action_type: RollbackActionType,
         reason: Option<String>,
-    ) -> Result<RollbackAction, String> {
+    ) -> Result<RollbackAction, TopemsError> {
         let store = get_deployment_store();
 
         let policy = {
@@ -1179,11 +1180,11 @@ impl RollbackManager {
                 .iter()
                 .find(|p| p.id == policy_id)
                 .cloned()
-                .ok_or_else(|| format!("回滚策略 '{}' 不存在", policy_id))?
+                .ok_or_else(|| TopemsError::ResourceNotFound(format!("回滚策略 '{}' 不存在", policy_id)))?
         };
 
         if !policy.enabled {
-            return Err("回滚策略已禁用".to_string());
+            return Err(TopemsError::BusinessLogic("回滚策略已禁用".to_string()));
         }
 
         {
@@ -1191,7 +1192,7 @@ impl RollbackManager {
             let counter = counters.get(policy_id).cloned().unwrap_or((0, None, 0));
 
             if counter.0 >= policy.max_rollbacks {
-                return Err(format!("已达到最大回滚次数 ({})", policy.max_rollbacks));
+                return Err(TopemsError::BusinessLogic(format!("已达到最大回滚次数 ({})", policy.max_rollbacks)));
             }
         }
 
@@ -1471,7 +1472,7 @@ pub async fn create_deployment_handler(
 
     match DeploymentManager::create_deployment(req.version, environment, strategy).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1494,7 +1495,7 @@ pub async fn get_deployment_handler(
 ) -> Json<ApiResponse<Deployment>> {
     match DeploymentManager::get_deployment(&id).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署详情")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1544,7 +1545,7 @@ pub async fn start_deployment_handler(
 ) -> Json<ApiResponse<Deployment>> {
     match DeploymentManager::start_deployment(&id).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署已启动")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1567,7 +1568,7 @@ pub async fn cancel_deployment_handler(
 ) -> Json<ApiResponse<Deployment>> {
     match DeploymentManager::cancel_deployment(&id).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署已取消")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1590,7 +1591,7 @@ pub async fn get_deployment_status_handler(
 ) -> Json<ApiResponse<DeploymentStatusInfo>> {
     match DeploymentManager::get_deployment_status(&id).await {
         Ok(info) => Json(ApiResponse::success(info, "部署状态")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1601,7 +1602,7 @@ pub async fn promote_canary_handler(
 ) -> Json<ApiResponse<DeploymentRollout>> {
     match DeploymentManager::promote_canary(&id, req.percentage).await {
         Ok(rollout) => Json(ApiResponse::success(rollout, "灰度推广成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1624,7 +1625,7 @@ pub async fn rollback_deployment_handler(
 ) -> Json<ApiResponse<Deployment>> {
     match DeploymentManager::rollback_deployment(&id).await {
         Ok(deployment) => Json(ApiResponse::success(deployment, "部署已回滚")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1676,7 +1677,7 @@ pub async fn create_config_handler(
 
     match ConfigurationManager::create_config(req.name, req.version, environment, settings).await {
         Ok(config) => Json(ApiResponse::success(config, "配置创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1699,7 +1700,7 @@ pub async fn get_config_handler(
 ) -> Json<ApiResponse<GatewayConfig>> {
     match ConfigurationManager::get_config(&id).await {
         Ok(config) => Json(ApiResponse::success(config, "配置详情")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1746,7 +1747,7 @@ pub async fn update_config_handler(
 ) -> Json<ApiResponse<GatewayConfig>> {
     match ConfigurationManager::update_config(&id, req.settings, req.name).await {
         Ok(config) => Json(ApiResponse::success(config, "配置更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1769,7 +1770,7 @@ pub async fn activate_config_handler(
 ) -> Json<ApiResponse<GatewayConfig>> {
     match ConfigurationManager::activate_config(&id).await {
         Ok(config) => Json(ApiResponse::success(config, "配置已激活")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1841,7 +1842,7 @@ pub async fn rollback_config_handler(
 ) -> Json<ApiResponse<GatewayConfig>> {
     match ConfigurationManager::rollback_config(&id, req.diff_id.as_deref()).await {
         Ok(config) => Json(ApiResponse::success(config, "配置已回滚")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1869,7 +1870,7 @@ pub async fn create_environment_handler(
     .await
     {
         Ok(env) => Json(ApiResponse::success(env, "环境创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -1905,7 +1906,7 @@ pub async fn create_rollback_policy_handler(
     .await
     {
         Ok(policy) => Json(ApiResponse::success(policy, "回滚策略创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1960,7 +1961,7 @@ pub async fn execute_rollback_handler(
 
     match RollbackManager::execute_rollback(&policy_id, action_type, req.reason).await {
         Ok(action) => Json(ApiResponse::success(action, "回滚执行成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -2002,7 +2003,7 @@ pub async fn test_rollback_handler(
 ) -> Json<ApiResponse<RollbackAction>> {
     match RollbackManager::test_rollback(&id).await {
         Ok(action) => Json(ApiResponse::success(action, "回滚测试成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -2028,7 +2029,7 @@ pub async fn configure_auto_rollback_handler(
 
     match RollbackManager::configure_auto_rollback(&id, enabled, req.condition).await {
         Ok(policy) => Json(ApiResponse::success(policy, "自动回滚配置成功")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 
@@ -2051,7 +2052,7 @@ pub async fn disable_rollback_handler(
 ) -> Json<ApiResponse<RollbackPolicy>> {
     match RollbackManager::disable_rollback(&id).await {
         Ok(policy) => Json(ApiResponse::success(policy, "回滚策略已禁用")),
-        Err(e) => Json(ApiResponse::error(400, &e)),
+        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
     }
 }
 

@@ -19,6 +19,7 @@
 //!    - HealingAction: 自愈动作 (重启/扩容/移除/重定向)
 //!    - RecoveryPlan: 恢复计划
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -1017,7 +1018,7 @@ impl AutoCacheManager {
         key: String,
         value: Option<serde_json::Value>,
         ttl_ms: Option<u64>,
-    ) -> Result<CacheEntry, String> {
+    ) -> Result<CacheEntry, TopemsError> {
         let store = get_auto_cache_store();
         let mut entries = store.entries.lock().await;
 
@@ -1046,7 +1047,7 @@ impl AutoCacheManager {
             None => {
                 let mut misses = store.total_misses.lock().await;
                 *misses += 1;
-                Err("缓存未命中且未提供新值".to_string())
+                Err(TopemsError::BusinessLogic("缓存未命中且未提供新值".to_string()))
             }
         }
     }
@@ -1750,7 +1751,7 @@ pub async fn invalidate_cache_handler(
     .await
     {
         Ok(removed) => Json(ApiResponse::success(removed, "缓存失效完成")),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -1895,7 +1896,7 @@ pub async fn run_health_check_handler(
     let check_id = req.query_hash.unwrap_or_default();
     match SelfHealingEngine::run_health_check(&check_id).await {
         Ok(check) => Json(ApiResponse::success(check, "健康检查执行完成")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
@@ -1990,7 +1991,7 @@ pub async fn get_recovery_status_handler(
 ) -> Json<ApiResponse<RecoveryPlan>> {
     match SelfHealingEngine::get_recovery_status(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "恢复计划状态")),
-        Err(e) => Json(ApiResponse::error(404, &e)),
+        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
     }
 }
 
