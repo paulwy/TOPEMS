@@ -11,6 +11,7 @@
 //!
 //! 算法：Shunting-yard 风格的栈式求值
 
+use topems_shared_core::error::TopemsError;
 /// 运算符优先级（数值越大优先级越高）
 ///
 /// 提取自 `services/agent.rs:431-438`
@@ -60,7 +61,7 @@ pub fn apply_operator(numbers: &mut Vec<f64>, op: char) {
 /// ```ignore
 /// assert_eq!(calculate("1 + 2 * 3"), Ok("7".to_string()));
 /// ```
-pub fn calculate(expression: &str) -> Result<String, String> {
+pub fn calculate(expression: &str) -> Result<String, TopemsError> {
     let expression = expression.replace(' ', "");
     let chars: Vec<char> = expression.chars().collect();
 
@@ -117,11 +118,11 @@ pub fn calculate(expression: &str) -> Result<String, String> {
                 apply_operator(&mut numbers, op);
             }
             if !matched {
-                return Err("括号不匹配".to_string());
+                return Err(TopemsError::BusinessLogic("括号不匹配".to_string()));
             }
             expect_number = false;
         } else {
-            return Err(format!("无效字符: {}", c));
+                return Err(TopemsError::ValidationFailed(format!("无效字符: {}", c)));
         }
     }
 
@@ -131,7 +132,7 @@ pub fn calculate(expression: &str) -> Result<String, String> {
 
     while let Some(op) = operators.pop() {
         if op == '(' {
-            return Err("括号不匹配".to_string());
+                return Err(TopemsError::BusinessLogic("括号不匹配".to_string()));
         }
         apply_operator(&mut numbers, op);
     }
@@ -145,7 +146,7 @@ pub fn calculate(expression: &str) -> Result<String, String> {
             Ok(format!("{}", v))
         }
     } else {
-        Err("表达式错误".to_string())
+        Err(TopemsError::BusinessLogic("表达式错误".to_string()))
     }
 }
 

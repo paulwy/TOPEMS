@@ -2,6 +2,7 @@
 //!
 //! 提供业务 Copilot 的通用框架、上下文管理、意图识别、工具调用等能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -704,9 +705,9 @@ impl CopilotSessionManager {
     pub async fn process_request(
         &self,
         request: CopilotRequest,
-    ) -> Result<CopilotResponse, String> {
+    ) -> Result<CopilotResponse, TopemsError> {
         if !self.config.enabled {
-            return Err("Copilot 未启用".to_string());
+            return Err(TopemsError::BusinessLogic("Copilot 未启用".to_string()));
         }
 
         let start_time = std::time::Instant::now();

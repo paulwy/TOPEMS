@@ -233,7 +233,7 @@ pub async fn upload(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<UploadDocumentResponse>::error(500, &e))
+            Json(ApiResponse::<UploadDocumentResponse>::error(500, &e.to_string()))
         }
     }
 }
@@ -281,7 +281,7 @@ pub async fn process(
             404,
             "文档不存在",
         )),
-        Err(e) => Json(ApiResponse::<ProcessDocumentResponse>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<ProcessDocumentResponse>::error(500, &e.to_string())),
     }
 }
 
@@ -299,7 +299,7 @@ pub async fn get(
             "文档不存在",
         )),
         Err(e) => Json(ApiResponse::<crate::services::vector::Document>::error(
-            500, &e,
+            500, &e.to_string(),
         )),
     }
 }
@@ -357,7 +357,7 @@ pub async fn delete(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<String>::error(500, &e))
+            Json(ApiResponse::<String>::error(500, &e.to_string()))
         }
     }
 }
@@ -370,7 +370,7 @@ pub async fn list(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state.document_service.list_documents(tenant_id).await {
         Ok(docs) => Json(ApiResponse::success(docs, "Success")),
-        Err(e) => Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e.to_string())),
     }
 }
 
@@ -576,7 +576,7 @@ pub async fn extract(
             404,
             "文档不存在",
         )),
-        Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::error(500, &e.to_string())),
     }
 }
 
@@ -613,7 +613,7 @@ pub async fn vectorize_from_file(
         )),
         Err(e) => {
             tracing::error!("从 File 服务向量化失败: {}", e);
-            Json(ApiResponse::<VectorizeFromFileResponse>::error(500, &e))
+            Json(ApiResponse::<VectorizeFromFileResponse>::error(500, &e.to_string()))
         }
     }
 }
@@ -638,7 +638,7 @@ pub async fn summarize(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<SummarizeDocumentResponse>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<SummarizeDocumentResponse>::error(500, &e.to_string())),
     }
 }
 
@@ -675,7 +675,7 @@ pub async fn extract_key_points(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<ExtractKeyPointsResponse>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<ExtractKeyPointsResponse>::error(500, &e.to_string())),
     }
 }
 
@@ -721,6 +721,6 @@ pub async fn document_qa(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<DocumentQAAnswerResponse>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<DocumentQAAnswerResponse>::error(500, &e.to_string())),
     }
 }

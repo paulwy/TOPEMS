@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use crate::services::pdf::PdfParser;
 use crate::services::vector::{
     CreateDocumentRequest, SaveChunkRequest, SearchResult, VectorService,
@@ -93,7 +94,7 @@ impl DocumentService {
         file_size: u64,
         mime_type: Option<String>,
         tenant_id: Uuid,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         let mime = mime_type.as_deref().unwrap_or("application/octet-stream");
 
         // 创建文档记录
@@ -142,7 +143,7 @@ impl DocumentService {
             vs.update_document_status(doc_id, "empty", Some("文档内容为空"), tenant_id)
                 .await
                 .ok();
-            return Err("文档内容为空".to_string());
+            return Err(TopemsError::BusinessLogic("文档内容为空".to_string()));
         }
 
         tracing::info!("📄 文档 '{}' 分割为 {} 个块", filename, chunks.len());
@@ -372,7 +373,7 @@ impl DocumentService {
         &self,
         file_id: Uuid,
         tenant_id: Uuid,
-    ) -> Result<VectorizeResult, String> {
+    ) -> Result<VectorizeResult, TopemsError> {
         let file_client = self
             .file_client
             .as_ref()
@@ -403,7 +404,7 @@ impl DocumentService {
         let chunks = self.split_into_chunks(&text, CHUNK_SIZE, CHUNK_OVERLAP);
 
         if chunks.is_empty() {
-            return Err("文档内容为空".to_string());
+            return Err(TopemsError::BusinessLogic("文档内容为空".to_string()));
         }
 
         tracing::info!(
@@ -944,7 +945,7 @@ impl DocumentService {
         document_id: Uuid,
         max_length: Option<i32>,
         tenant_id: Uuid,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
         let chunks = self
@@ -956,7 +957,7 @@ impl DocumentService {
             .map_err(|e| format!("获取文档分块失败: {}", e))?;
 
         if chunks.is_empty() {
-            return Err("文档内容为空".to_string());
+            return Err(TopemsError::BusinessLogic("文档内容为空".to_string()));
         }
 
         let content = chunks
@@ -980,7 +981,7 @@ impl DocumentService {
         document_id: Uuid,
         max_points: Option<i32>,
         tenant_id: Uuid,
-    ) -> Result<Vec<String>, String> {
+    ) -> Result<Vec<String>, TopemsError> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
         let chunks = self
@@ -992,7 +993,7 @@ impl DocumentService {
             .map_err(|e| format!("获取文档分块失败: {}", e))?;
 
         if chunks.is_empty() {
-            return Err("文档内容为空".to_string());
+            return Err(TopemsError::BusinessLogic("文档内容为空".to_string()));
         }
 
         let content = chunks
@@ -1035,7 +1036,7 @@ impl DocumentService {
         &self,
         config: &DocumentQAConfig,
         prompt: &str,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         let api_url = format!("{}/chat/completions", config.base_url);
 
         #[derive(Serialize)]
@@ -1093,7 +1094,7 @@ impl DocumentService {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(format!("AI API 错误: {} - {}", status, error_text));
+            return Err(TopemsError::BusinessLogic(format!("AI API 错误: {} - {}", status, error_text)));
         }
 
         let openai_response: OpenAIResponse = response
@@ -1104,7 +1105,7 @@ impl DocumentService {
         if let Some(choice) = openai_response.choices.first() {
             Ok(choice.message.content.clone())
         } else {
-            Err("AI 未返回有效响应".to_string())
+            Err(TopemsError::BusinessLogic("AI 未返回有效响应".to_string()))
         }
     }
 

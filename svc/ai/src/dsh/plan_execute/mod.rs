@@ -2,6 +2,7 @@
 //!
 //! 提供任务规划、计划执行与监控、计划动态调整、计划执行报告等能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 
@@ -451,9 +452,9 @@ impl PlanExecuteOrchestrator {
         goal: &str,
         subtasks: Vec<Subtask>,
         dependencies: HashMap<String, Vec<String>>,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("Plan-Execute 编排器未启用".to_string());
+            return Err(TopemsError::BusinessLogic("Plan-Execute 编排器未启用".to_string()));
         }
 
         let plan_id = format!("plan_{}", uuid::Uuid::new_v4());
@@ -521,14 +522,14 @@ impl PlanExecuteOrchestrator {
     }
 
     /// 开始执行计划
-    pub fn start_execution(&self, plan_id: &str) -> Result<(), String> {
+    pub fn start_execution(&self, plan_id: &str) -> Result<(), TopemsError> {
         let mut plans = self.plans.lock();
         let plan = plans
             .get_mut(plan_id)
             .ok_or_else(|| format!("计划 {} 不存在", plan_id))?;
 
         if plan.status != PlanStatus::Created && plan.status != PlanStatus::Pending {
-            return Err(format!("计划状态为 {}，无法开始执行", plan.status.as_str()));
+            return Err(TopemsError::BusinessLogic(format!("计划状态为 {}，无法开始执行", plan.status.as_str())));
         }
 
         plan.status = PlanStatus::Executing;
@@ -572,7 +573,7 @@ impl PlanExecuteOrchestrator {
     }
 
     /// 开始执行子任务
-    pub fn start_subtask(&self, plan_id: &str, subtask_id: &str) -> Result<(), String> {
+    pub fn start_subtask(&self, plan_id: &str, subtask_id: &str) -> Result<(), TopemsError> {
         let mut plans = self.plans.lock();
         let plan = plans
             .get_mut(plan_id)
@@ -585,10 +586,10 @@ impl PlanExecuteOrchestrator {
             .ok_or_else(|| format!("子任务 {} 不存在", subtask_id))?;
 
         if subtask.status != SubtaskStatus::Ready && subtask.status != SubtaskStatus::WaitingRetry {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "子任务状态为 {}，无法开始执行",
                 subtask.status.as_str()
-            ));
+            )));
         }
 
         subtask.status = SubtaskStatus::Running;
@@ -605,7 +606,7 @@ impl PlanExecuteOrchestrator {
         plan_id: &str,
         subtask_id: &str,
         output: Option<serde_json::Value>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let mut plans = self.plans.lock();
         let plan = plans
             .get_mut(plan_id)
@@ -618,10 +619,10 @@ impl PlanExecuteOrchestrator {
             .ok_or_else(|| format!("子任务 {} 不存在", subtask_id))?;
 
         if subtask.status != SubtaskStatus::Running {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "子任务状态为 {}，无法完成",
                 subtask.status.as_str()
-            ));
+            )));
         }
 
         subtask.status = SubtaskStatus::Completed;
@@ -684,7 +685,7 @@ impl PlanExecuteOrchestrator {
         plan_id: &str,
         subtask_id: &str,
         error_message: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let mut plans = self.plans.lock();
         let plan = plans
             .get_mut(plan_id)
@@ -697,10 +698,10 @@ impl PlanExecuteOrchestrator {
             .ok_or_else(|| format!("子任务 {} 不存在", subtask_id))?;
 
         if subtask.status != SubtaskStatus::Running {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "子任务状态为 {}，无法标记失败",
                 subtask.status.as_str()
-            ));
+            )));
         }
 
         subtask.retry_count += 1;
@@ -809,14 +810,14 @@ impl PlanExecuteOrchestrator {
     }
 
     /// 取消计划
-    pub fn cancel_plan(&self, plan_id: &str) -> Result<(), String> {
+    pub fn cancel_plan(&self, plan_id: &str) -> Result<(), TopemsError> {
         let mut plans = self.plans.lock();
         let plan = plans
             .get_mut(plan_id)
             .ok_or_else(|| format!("计划 {} 不存在", plan_id))?;
 
         if plan.status == PlanStatus::Completed || plan.status == PlanStatus::Cancelled {
-            return Err(format!("计划状态为 {}，无法取消", plan.status.as_str()));
+            return Err(TopemsError::BusinessLogic(format!("计划状态为 {}，无法取消", plan.status.as_str())));
         }
 
         plan.status = PlanStatus::Cancelled;

@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -57,7 +58,7 @@ impl AiEventHandlers {
         source_type: &str,
         source_id: uuid::Uuid,
         features_json: Option<&str>,
-    ) -> Result<uuid::Uuid, String> {
+    ) -> Result<uuid::Uuid, TopemsError> {
         let now = Utc::now();
         let sample_id = uuid::Uuid::new_v4();
 
@@ -99,7 +100,7 @@ impl AiEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[ai] 训练样本入库失败: {}", e);
-                Err(format!("训练样本入库失败: {}", e))
+                Err(TopemsError::BusinessLogic(format!("训练样本入库失败: {}", e)))
             }
         }
     }

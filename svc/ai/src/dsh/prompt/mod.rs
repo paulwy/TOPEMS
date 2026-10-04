@@ -2,6 +2,7 @@
 //!
 //! 提供 Prompt 模板管理、版本控制、变量注入和 A/B 测试能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -203,9 +204,9 @@ impl PromptEngine {
     }
 
     /// 注册模板
-    pub fn register_template(&self, template: PromptTemplate) -> Result<String, String> {
+    pub fn register_template(&self, template: PromptTemplate) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("Prompt 引擎未启用".to_string());
+            return Err(TopemsError::BusinessLogic("Prompt 引擎未启用".to_string()));
         }
 
         let template_id = template.id.clone();
@@ -327,10 +328,10 @@ impl PromptEngine {
     }
 
     /// 删除模板
-    pub fn delete_template(&self, template_id: &str) -> Result<(), String> {
+    pub fn delete_template(&self, template_id: &str) -> Result<(), TopemsError> {
         let mut templates = self.templates.lock();
         if templates.remove(template_id).is_none() {
-            return Err(format!("模板 {} 不存在", template_id));
+            return Err(TopemsError::ResourceNotFound(format!("模板 {} 不存在", template_id)));
         }
         drop(templates);
 
@@ -437,9 +438,9 @@ impl PromptEngine {
     }
 
     /// 创建 A/B 测试
-    pub fn create_ab_test(&self, config: AbTestConfig) -> Result<String, String> {
+    pub fn create_ab_test(&self, config: AbTestConfig) -> Result<String, TopemsError> {
         if !self.config.enable_ab_testing {
-            return Err("A/B 测试未启用".to_string());
+            return Err(TopemsError::BusinessLogic("A/B 测试未启用".to_string()));
         }
 
         let test_id = config.test_id.clone();
@@ -472,7 +473,7 @@ impl PromptEngine {
         &self,
         test_id: &str,
         variables: &HashMap<String, String>,
-    ) -> Result<(RenderResult, String), String> {
+    ) -> Result<(RenderResult, String), TopemsError> {
         let ab_tests = self.ab_tests.lock();
         let config = ab_tests
             .get(test_id)
@@ -481,7 +482,7 @@ impl PromptEngine {
         drop(ab_tests);
 
         if !config.enabled {
-            return Err("A/B 测试未启用".to_string());
+            return Err(TopemsError::BusinessLogic("A/B 测试未启用".to_string()));
         }
 
         // 随机选择分组

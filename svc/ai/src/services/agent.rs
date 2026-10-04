@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use utoipa::ToSchema;
@@ -366,13 +367,13 @@ impl AgentService {
             Err(e) => ToolResult {
                 tool: AgentTool::Calculator,
                 success: false,
-                result: e,
+                result: e.to_string(),
                 error: Some("计算失败".to_string()),
             },
         }
     }
 
-    fn calculate(&self, expression: &str) -> Result<String, String> {
+    fn calculate(&self, expression: &str) -> Result<String, TopemsError> {
         let expression = expression.replace(" ", "");
         let chars: Vec<char> = expression.chars().collect();
 
@@ -427,7 +428,7 @@ impl AgentService {
         if numbers.len() == 1 {
             Ok(numbers.first().map_or(String::new(), |n| n.to_string()))
         } else {
-            Err("表达式错误".to_string())
+            Err(TopemsError::BusinessLogic("表达式错误".to_string()))
         }
     }
 
@@ -1046,7 +1047,7 @@ impl WorkflowOrchestrator {
                         break;
                     }
                     Err(e) => {
-                        step_error = Some(e.clone());
+                        step_error = Some(e.to_string());
                         if retry < step.retry_count {
                             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
                         }
@@ -1126,12 +1127,12 @@ impl WorkflowOrchestrator {
         &self,
         step: &WorkflowStep,
         context: &HashMap<String, serde_json::Value>,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         // Dify executor: delegate to DifyService.chat() (blocking mode)
         if step.executor.as_deref() == Some("dify") {
             if let Some(ref dify) = self.dify_service {
                 if !dify.is_configured() {
-                    return Err("Dify未配置：缺少DIFY_API_KEY或DIFY_BASE_URL".to_string());
+                    return Err(TopemsError::ValidationFailed("Dify未配置：缺少DIFY_API_KEY或DIFY_BASE_URL".to_string()));
                 }
                 let query = context
                     .get("query")
@@ -1150,7 +1151,7 @@ impl WorkflowOrchestrator {
                     .map_err(|e| format!("Difystepfailed:{}", e))?;
                 return Ok(resp.answer);
             } else {
-                return Err("Difystep配置但DifyService不可用".to_string());
+                return Err(TopemsError::BusinessLogic("Difystep配置但DifyService不可用".to_string()));
             }
         }
 
@@ -1167,7 +1168,7 @@ impl WorkflowOrchestrator {
             if result.success {
                 Ok(result.result)
             } else {
-                Err(result.error.unwrap_or_else(|| "Unknown error".to_string()))
+                Err(TopemsError::BusinessLogic(result.error.unwrap_or_else(|| "Unknown error".to_string())))
             }
         } else {
             // Direct QA without tool
@@ -1175,6 +1176,7 @@ impl WorkflowOrchestrator {
                 .qa_service
                 .ask(&prompt, None, 5, Uuid::nil(), None)
                 .await
+                .map_err(|e| TopemsError::BusinessLogic(e.to_string()))
                 .map(|r| r.0)
         }
     }

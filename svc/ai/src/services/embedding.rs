@@ -2,6 +2,7 @@
 // 使用静态内存存储（VECTORS / CHUNKS / DOCUMENTS）的旧版向量化流水线
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use crate::models::{
     Document, DocumentChunk, EmbeddingRequest, EmbeddingResponse, VectorEmbedding, CHUNKS, CLIENT,
     CONFIG, DOCUMENTS, VECTORS,

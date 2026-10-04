@@ -2,6 +2,7 @@
 //!
 //! 提供业务事件订阅、事件规则引擎、AI 自动响应、事件处理历史记录等能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -438,9 +439,9 @@ impl EventTriggerEngine {
     }
 
     /// 注册触发器规则
-    pub fn register_rule(&self, rule: TriggerRule) -> Result<String, String> {
+    pub fn register_rule(&self, rule: TriggerRule) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("事件触发器未启用".to_string());
+            return Err(TopemsError::BusinessLogic("事件触发器未启用".to_string()));
         }
 
         let rule_id = rule.rule_id.clone();
@@ -520,9 +521,9 @@ impl EventTriggerEngine {
     }
 
     /// 发布事件
-    pub fn publish_event(&self, event: BusinessEvent) -> Result<String, String> {
+    pub fn publish_event(&self, event: BusinessEvent) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("事件触发器未启用".to_string());
+            return Err(TopemsError::BusinessLogic("事件触发器未启用".to_string()));
         }
 
         let event_id = event.event_id.clone();

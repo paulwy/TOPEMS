@@ -2,6 +2,7 @@
 //!
 //! 提供工具 Schema 自动生成、工具分组与标签管理、工具版本化、Schema 兼容性校验等能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -439,9 +440,9 @@ impl ToolSchemaAdapter {
     }
 
     /// 注册工具
-    pub fn register_tool(&self, tool: ToolDefinition) -> Result<String, String> {
+    pub fn register_tool(&self, tool: ToolDefinition) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("Tool Schema 适配器未启用".to_string());
+            return Err(TopemsError::BusinessLogic("Tool Schema 适配器未启用".to_string()));
         }
 
         let tool_name = tool.name.clone();
@@ -457,10 +458,10 @@ impl ToolSchemaAdapter {
                     .check_schema_compatibility(&existing_tool.input_schema, &tool.input_schema);
 
                 if !compatibility.compatible && !self.config.allow_breaking_changes {
-                    return Err(format!(
+                    return Err(TopemsError::BusinessLogic(format!(
                         "工具 {} 的 Schema 存在破坏性变更，不允许注册",
                         tool_name
-                    ));
+                    )));
                 }
             }
 
@@ -565,7 +566,7 @@ impl ToolSchemaAdapter {
     }
 
     /// 删除工具
-    pub fn delete_tool(&self, tool_name: &str) -> Result<(), String> {
+    pub fn delete_tool(&self, tool_name: &str) -> Result<(), TopemsError> {
         let tool = {
             let mut tools = self.tools.lock();
             tools.remove(tool_name)
@@ -585,7 +586,7 @@ impl ToolSchemaAdapter {
             info!(tool_name = %tool_name, "Tool deleted");
             Ok(())
         } else {
-            Err(format!("工具 {} 不存在", tool_name))
+            Err(TopemsError::ResourceNotFound(format!("工具 {} 不存在", tool_name)))
         }
     }
 

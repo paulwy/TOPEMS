@@ -253,6 +253,30 @@ impl From<anyhow::Error> for TopemsError {
     }
 }
 
+/// String 桥接转换（B7 ai 批过渡：String 返回的调用方 `?` 传播 TopemsError 时使用）。
+/// 过渡后由函数签名收敛逐步替换；语义映射为 BusinessLogic。
+impl From<TopemsError> for String {
+    fn from(error: TopemsError) -> Self {
+        error.to_string()
+    }
+}
+
+/// String → TopemsError 桥接（B7 ai 批过渡：TopemsError 函数内 String `?` 传播）。
+/// 过渡后由逐处语义包装替换；语义映射为 BusinessLogic。
+impl From<String> for TopemsError {
+    fn from(message: String) -> Self {
+        TopemsError::BusinessLogic(message)
+    }
+}
+
+/// &str → TopemsError 桥接（B7 ai 批过渡：ok_or("...")? / map_err(|_| "...")? 传播）。
+/// 过渡后由逐处语义包装替换；语义映射为 BusinessLogic。
+impl From<&str> for TopemsError {
+    fn from(message: &str) -> Self {
+        TopemsError::BusinessLogic(message.to_string())
+    }
+}
+
 /// 错误上下文增强工具
 pub trait ErrorContext<T> {
     /// 添加上下文信息

@@ -48,6 +48,27 @@ pub enum ServiceClientError {
     OperationFailed(String),
 }
 
+/// String → ServiceClientError 桥接（B7 ai 批过渡：ServiceClientError 函数内 String `?` 传播）。
+impl From<String> for ServiceClientError {
+    fn from(message: String) -> Self {
+        ServiceClientError::OperationFailed(message)
+    }
+}
+
+/// &str → ServiceClientError 桥接（B7 ai 批过渡：ok_or("...")? / map_err(|_| "...")? 传播）。
+impl From<&str> for ServiceClientError {
+    fn from(message: &str) -> Self {
+        ServiceClientError::OperationFailed(message.to_string())
+    }
+}
+
+/// TopemsError → ServiceClientError 桥接（B7 ai 批过渡：ServiceClientError 函数调用 TopemsError 链）。
+impl From<topems_shared_core::error::TopemsError> for ServiceClientError {
+    fn from(error: topems_shared_core::error::TopemsError) -> Self {
+        ServiceClientError::OperationFailed(error.to_string())
+    }
+}
+
 // ===== Service Configuration =====
 
 /// Configuration for a single service.

@@ -2,6 +2,7 @@
 //!
 //! 提供 ERP/Finance/CRM/WMS 等业务系统的数据接入、事件触发和 Copilot 集成框架。
 
+use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -227,7 +228,7 @@ impl BusinessIntegrationManager {
     pub async fn register_config(&self, config: BusinessSystemConfig) -> Result<(), String> {
         let mut configs = self.configs.write().await;
         if configs.contains_key(&config.system_id) {
-            return Err(format!("系统 '{}' 已注册", config.system_id));
+            return Err(TopemsError::BusinessLogic(format!("系统 '{}' 已注册", config.system_id)));
         }
         configs.insert(config.system_id.clone(), config);
         Ok(())
@@ -236,7 +237,7 @@ impl BusinessIntegrationManager {
     pub async fn update_config(&self, config: BusinessSystemConfig) -> Result<(), String> {
         let mut configs = self.configs.write().await;
         if !configs.contains_key(&config.system_id) {
-            return Err(format!("系统 '{}' 未注册", config.system_id));
+            return Err(TopemsError::BusinessLogic(format!("系统 '{}' 未注册", config.system_id)));
         }
         configs.insert(config.system_id.clone(), config);
         Ok(())
@@ -245,7 +246,7 @@ impl BusinessIntegrationManager {
     pub async fn remove_config(&self, system_id: &str) -> Result<(), String> {
         let mut configs = self.configs.write().await;
         if !configs.contains_key(system_id) {
-            return Err(format!("系统 '{}' 未注册", system_id));
+            return Err(TopemsError::BusinessLogic(format!("系统 '{}' 未注册", system_id)));
         }
         configs.remove(system_id);
         Ok(())

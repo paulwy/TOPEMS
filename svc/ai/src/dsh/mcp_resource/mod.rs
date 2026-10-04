@@ -2,6 +2,7 @@
 //!
 //! 提供 MCP 资源注册、资源订阅与推送、资源层级管理、资源权限控制等能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 
@@ -295,9 +296,9 @@ impl ResourceManager {
     }
 
     /// 注册资源
-    pub fn register(&self, resource: McpResource) -> Result<String, String> {
+    pub fn register(&self, resource: McpResource) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("资源管理器未启用".to_string());
+            return Err(TopemsError::BusinessLogic("资源管理器未启用".to_string()));
         }
 
         let uri = resource.uri.clone();
@@ -306,10 +307,10 @@ impl ResourceManager {
         // 检查资源数限制
         let resources = self.resources.lock();
         if resources.len() >= self.config.max_resources {
-            return Err("资源数已达上限".to_string());
+            return Err(TopemsError::BusinessLogic("资源数已达上限".to_string()));
         }
         if resources.contains_key(&uri) {
-            return Err(format!("资源 URI {} 已存在", uri));
+            return Err(TopemsError::BusinessLogic(format!("资源 URI {} 已存在", uri)));
         }
         drop(resources);
 
@@ -534,14 +535,14 @@ impl ResourceManager {
         resource_uri: &str,
         subscriber_id: &str,
         subscriber_type: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let resources = self.resources.lock();
         let resource = resources
             .get(resource_uri)
             .ok_or_else(|| format!("资源 {} 不存在", resource_uri))?;
 
         if !resource.subscribable {
-            return Err(format!("资源 {} 不支持订阅", resource_uri));
+            return Err(TopemsError::BusinessLogic(format!("资源 {} 不支持订阅", resource_uri)));
         }
         drop(resources);
 
@@ -555,12 +556,12 @@ impl ResourceManager {
             .iter()
             .any(|s| s.subscriber_id == subscriber_id)
         {
-            return Err(format!("订阅者 {} 已订阅该资源", subscriber_id));
+            return Err(TopemsError::BusinessLogic(format!("订阅者 {} 已订阅该资源", subscriber_id)));
         }
 
         // 检查订阅者数限制
         if subscriber_list.len() >= self.config.max_subscribers_per_resource {
-            return Err("该资源订阅者数已达上限".to_string());
+            return Err(TopemsError::BusinessLogic("该资源订阅者数已达上限".to_string()));
         }
 
         subscriber_list.push(ResourceSubscriber {
@@ -584,16 +585,16 @@ impl ResourceManager {
     }
 
     /// 取消订阅
-    pub fn unsubscribe(&self, resource_uri: &str, subscriber_id: &str) -> Result<(), String> {
+    pub fn unsubscribe(&self, resource_uri: &str, subscriber_id: &str) -> Result<(), TopemsError> {
         let mut subscribers = self.subscribers.lock();
         if let Some(subscriber_list) = subscribers.get_mut(resource_uri) {
             let before = subscriber_list.len();
             subscriber_list.retain(|s| s.subscriber_id != subscriber_id);
             if subscriber_list.len() == before {
-                return Err(format!("订阅者 {} 未订阅该资源", subscriber_id));
+                return Err(TopemsError::BusinessLogic(format!("订阅者 {} 未订阅该资源", subscriber_id)));
             }
         } else {
-            return Err(format!("资源 {} 没有订阅者", resource_uri));
+            return Err(TopemsError::BusinessLogic(format!("资源 {} 没有订阅者", resource_uri)));
         }
         drop(subscribers);
 

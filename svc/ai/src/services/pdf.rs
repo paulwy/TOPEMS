@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 /// PDF 文本提取服务
 /// 使用 lopdf 和 pdf-extract 库
 
@@ -13,12 +14,12 @@ impl PdfParser {
     }
 
     /// 从 PDF 文件提取文本
-    pub async fn extract_text(&self, file_path: &str) -> Result<String, String> {
+    pub async fn extract_text(&self, file_path: &str) -> Result<String, TopemsError> {
         let file_path_owned = file_path.to_string();
 
         // 检查文件是否存在
         if !std::path::Path::new(&file_path_owned).exists() {
-            return Err(format!("文件不存在: {}", file_path));
+            return Err(TopemsError::ResourceNotFound(format!("文件不存在: {}", file_path)));
         }
 
         // 在阻塞线程中执行 PDF 解析
@@ -30,7 +31,7 @@ impl PdfParser {
     }
 
     /// 同步提取文本（必须在 blocking 线程中调用）
-    pub fn extract_text_sync(file_path: &str) -> Result<String, String> {
+    pub fn extract_text_sync(file_path: &str) -> Result<String, TopemsError> {
         // 使用 pdf-extract 提取文本
         match pdf_extract::extract_text(file_path) {
             Ok(text) => {
@@ -50,7 +51,7 @@ impl PdfParser {
     }
 
     /// 使用 lopdf 提取文本（备用方法）
-    fn extract_with_lopdf(file_path: &str) -> Result<String, String> {
+    fn extract_with_lopdf(file_path: &str) -> Result<String, TopemsError> {
         let doc = lopdf::Document::load(file_path).map_err(|e| format!("加载 PDF 失败: {}", e))?;
 
         let mut full_text = String::new();
@@ -69,7 +70,7 @@ impl PdfParser {
 
         let cleaned = Self::clean_text(&full_text);
         if cleaned.is_empty() {
-            Err("无法从 PDF 提取文本内容".to_string())
+            Err(TopemsError::BusinessLogic("无法从 PDF 提取文本内容".to_string()))
         } else {
             Ok(cleaned)
         }

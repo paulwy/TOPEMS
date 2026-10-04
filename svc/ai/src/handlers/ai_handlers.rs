@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use crate::models::{
     AIGenerateRequest, AIGenerateResponse, AITemplate, AiSearchDocument, AiSearchRequest,
     AiSearchResponse, AnomalyPoint, AnomalyPredictRequest, AnomalyPredictResponse, ChatRequest,

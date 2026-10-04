@@ -117,7 +117,7 @@ pub async fn sentiment(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e))
+            Json(ApiResponse::<SentimentAnalysisResponse>::error(500, &e.to_string()))
         }
     }
 }
@@ -170,7 +170,7 @@ pub async fn classify(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<ClassifyTextResponse>::error(500, &e))
+            Json(ApiResponse::<ClassifyTextResponse>::error(500, &e.to_string()))
         }
     }
 }
@@ -188,7 +188,7 @@ pub async fn extract_entities(
         .await
     {
         Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<ExtractEntitiesResponse>::error(500, &e.to_string())),
     }
 }
 
@@ -215,7 +215,7 @@ pub async fn extract_keywords(
         .await
     {
         Ok(response) => Json(ApiResponse::success(response, "Success")),
-        Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<ExtractKeywordsResponse>::error(500, &e.to_string())),
     }
 }
 
@@ -244,6 +244,6 @@ pub async fn history(
                 "Success",
             ))
         }
-        Err(e) => Json(ApiResponse::<AnalysisHistoryResponse>::error(500, &e)),
+        Err(e) => Json(ApiResponse::<AnalysisHistoryResponse>::error(500, &e.to_string())),
     }
 }

@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use crate::modules::models::{
     AnalysisResult, CategoryScore, ClassifyTextResponse, Entity, ExtractEntitiesResponse,
     ExtractKeywordsResponse, Keyword, SentimentAnalysisResponse,
@@ -302,7 +303,7 @@ impl AnalysisService {
     }
 
     /// 调用 AI API
-    async fn call_ai_api(&self, prompt: &str) -> Result<String, String> {
+    async fn call_ai_api(&self, prompt: &str) -> Result<String, TopemsError> {
         let api_url = format!("{}/chat/completions", self.config.base_url);
 
         #[derive(Serialize)]
@@ -360,7 +361,7 @@ impl AnalysisService {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(format!("AI API 错误: {} - {}", status, error_text));
+            return Err(TopemsError::BusinessLogic(format!("AI API 错误: {} - {}", status, error_text)));
         }
 
         let openai_response: OpenAIResponse = response
@@ -371,7 +372,7 @@ impl AnalysisService {
         if let Some(choice) = openai_response.choices.first() {
             Ok(choice.message.content.clone())
         } else {
-            Err("AI 未返回有效响应".to_string())
+            Err(TopemsError::BusinessLogic("AI 未返回有效响应".to_string()))
         }
     }
 

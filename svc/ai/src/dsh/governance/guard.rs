@@ -6,6 +6,7 @@
 //! - 输出内容安全检查
 //! - 调用速率限制
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashSet;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -277,7 +278,7 @@ impl AiSecurityGuard {
 
     #[allow(clippy::as_conversions)]
     /// 检查速率限制
-    async fn check_rate_limit(&self, user_id: &str) -> Result<(), String> {
+    async fn check_rate_limit(&self, user_id: &str) -> Result<(), TopemsError> {
         let now = Instant::now();
         let one_minute = Duration::from_secs(60);
 
@@ -295,10 +296,10 @@ impl AiSecurityGuard {
 
         // 检查是否超过速率限制
         if entry.timestamps.len() >= self.rate_limit_per_minute as usize {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "Rate limit exceeded: {} requests per minute",
                 self.rate_limit_per_minute
-            ));
+            )));
         }
 
         // 记录当前请求时间戳

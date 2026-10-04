@@ -8,6 +8,7 @@
 //! - 协作模式（Peer-to-Peer）
 //! - Agent 角色和能力定义
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
@@ -412,7 +413,7 @@ impl AgentRuntime {
         message_type: MessageType,
         content: serde_json::Value,
         task_id: Option<String>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let senders = self.message_senders.lock();
         if let Some(sender) = senders.get(receiver_id) {
             let message = AgentMessage {
@@ -429,7 +430,7 @@ impl AgentRuntime {
                 .map_err(|e| format!("Failed to send message: {}", e))?;
             Ok(())
         } else {
-            Err(format!("Receiver agent {} not found", receiver_id))
+            Err(TopemsError::ResourceNotFound(format!("Receiver agent {} not found", receiver_id)))
         }
     }
 
@@ -534,7 +535,7 @@ impl MultiAgentCoordinator {
     }
 
     /// 分配任务给最合适的 Agent
-    pub fn assign_task(&self, task_id: &str) -> Result<String, String> {
+    pub fn assign_task(&self, task_id: &str) -> Result<String, TopemsError> {
         let agents = self.agents.lock();
 
         // 找到可以接受任务的 Agent
@@ -570,7 +571,7 @@ impl MultiAgentCoordinator {
             info!(task_id = %task_id, agent_id = %agent_id, "Task assigned to agent");
             Ok(agent_id)
         } else {
-            Err("No available agent to assign task".to_string())
+            Err(TopemsError::ResourceNotFound("No available agent to assign task".to_string()))
         }
     }
 
@@ -613,7 +614,7 @@ impl MultiAgentCoordinator {
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 执行任务（分配 + 执行）
-    pub async fn execute_task(&self, task_id: &str) -> Result<serde_json::Value, String> {
+    pub async fn execute_task(&self, task_id: &str) -> Result<serde_json::Value, TopemsError> {
         // 分配任务
         let agent_id = self.assign_task(task_id)?;
 
@@ -625,7 +626,7 @@ impl MultiAgentCoordinator {
 
         let agent = match agent {
             Some(a) => a,
-            None => return Err("Agent not found after assignment".to_string()),
+            None => return Err(TopemsError::ResourceNotFound("Agent not found after assignment".to_string()),)
         };
 
         // 获取任务
@@ -636,7 +637,7 @@ impl MultiAgentCoordinator {
 
         let task = match task {
             Some(t) => t,
-            None => return Err("Task not found".to_string()),
+            None => return Err(TopemsError::ResourceNotFound("Task not found".to_string()),)
         };
 
         // 更新任务状态为运行中
@@ -687,7 +688,7 @@ impl MultiAgentCoordinator {
             "Task execution completed"
         );
 
-        result
+        result.map_err(TopemsError::BusinessLogic)
     }
 
     /// 分解任务为子任务
@@ -722,7 +723,7 @@ impl MultiAgentCoordinator {
     }
 
     /// 汇总子任务结果
-    pub fn aggregate_results(&self, parent_task_id: &str) -> Result<serde_json::Value, String> {
+    pub fn aggregate_results(&self, parent_task_id: &str) -> Result<serde_json::Value, TopemsError> {
         let tasks = self.tasks.lock();
 
         let parent = tasks
@@ -749,7 +750,7 @@ impl MultiAgentCoordinator {
         }
 
         if !all_completed {
-            return Err("Not all subtasks completed".to_string());
+            return Err(TopemsError::ValidationFailed("Not all subtasks completed".to_string()));
         }
 
         Ok(serde_json::json!({
@@ -822,7 +823,7 @@ impl MultiAgentCoordinator {
     }
 
     /// 取消任务
-    pub fn cancel_task(&self, task_id: &str) -> Result<(), String> {
+    pub fn cancel_task(&self, task_id: &str) -> Result<(), TopemsError> {
         let mut tasks = self.tasks.lock();
         if let Some(task) = tasks.get_mut(task_id) {
             if matches!(task.status, TaskStatus::Pending | TaskStatus::Assigned) {
@@ -830,10 +831,10 @@ impl MultiAgentCoordinator {
                 info!(task_id = %task_id, "Task cancelled");
                 Ok(())
             } else {
-                Err("Task cannot be cancelled in current state".to_string())
+                Err(TopemsError::BusinessLogic("Task cannot be cancelled in current state".to_string()))
             }
         } else {
-            Err("Task not found".to_string())
+            Err(TopemsError::ResourceNotFound("Task not found".to_string()))
         }
     }
 

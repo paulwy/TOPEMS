@@ -2,6 +2,7 @@
 //!
 //! 提供 stdio 传输、SSE 传输、HTTP 传输、传输层自动协商与降级等能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::Instant;
@@ -399,9 +400,9 @@ impl TransportManager {
     }
 
     /// 创建传输会话
-    pub fn create_session(&self, config: TransportConfig) -> Result<String, String> {
+    pub fn create_session(&self, config: TransportConfig) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("传输管理器未启用".to_string());
+            return Err(TopemsError::BusinessLogic("传输管理器未启用".to_string()));
         }
 
         let transport_type = config.transport_type;
@@ -427,14 +428,14 @@ impl TransportManager {
     }
 
     /// 连接传输会话
-    pub fn connect(&self, session_id: &str) -> Result<(), String> {
+    pub fn connect(&self, session_id: &str) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         let session = sessions
             .get_mut(session_id)
             .ok_or_else(|| format!("传输会话 {} 不存在", session_id))?;
 
         if session.status == TransportStatus::Connected {
-            return Err("传输会话已连接".to_string());
+            return Err(TopemsError::BusinessLogic("传输会话已连接".to_string()));
         }
 
         session.status = TransportStatus::Connecting;
@@ -476,17 +477,17 @@ impl TransportManager {
 
     #[allow(clippy::as_conversions)]
     /// 发送消息
-    pub fn send_message(&self, session_id: &str, message: TransportMessage) -> Result<(), String> {
+    pub fn send_message(&self, session_id: &str, message: TransportMessage) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         let session = sessions
             .get_mut(session_id)
             .ok_or_else(|| format!("传输会话 {} 不存在", session_id))?;
 
         if session.status != TransportStatus::Connected {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "传输会话状态为 {}，无法发送消息",
                 session.status.as_str()
-            ));
+            )));
         }
 
         // 检查消息大小
@@ -494,10 +495,10 @@ impl TransportManager {
             .map(|s| s.len())
             .unwrap_or(0);
         if message_size > session.config.max_message_size {
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "消息大小 {} 超过限制 {}",
                 message_size, session.config.max_message_size
-            ));
+            )));
         }
 
         // 添加到发送队列（实际实现中会通过真实传输发送）
@@ -586,13 +587,13 @@ impl TransportManager {
     }
 
     /// 删除会话
-    pub fn delete_session(&self, session_id: &str) -> Result<(), String> {
+    pub fn delete_session(&self, session_id: &str) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         if sessions.remove(session_id).is_some() {
             info!(session_id = %session_id, "Transport session deleted");
             Ok(())
         } else {
-            Err(format!("传输会话 {} 不存在", session_id))
+            Err(TopemsError::ResourceNotFound(format!("传输会话 {} 不存在", session_id)))
         }
     }
 
@@ -655,9 +656,9 @@ impl TransportManager {
     }
 
     /// 自动降级
-    pub fn auto_downgrade(&self, session_id: &str) -> Result<TransportType, String> {
+    pub fn auto_downgrade(&self, session_id: &str) -> Result<TransportType, TopemsError> {
         if !self.config.enable_auto_downgrade {
-            return Err("自动降级未启用".to_string());
+            return Err(TopemsError::BusinessLogic("自动降级未启用".to_string()));
         }
 
         let sessions = self.sessions.lock();
@@ -679,10 +680,10 @@ impl TransportManager {
                 );
                 Ok(downgrade_type)
             } else {
-                Err("已是最低优先级传输类型，无法继续降级".to_string())
+                Err(TopemsError::BusinessLogic("已是最低优先级传输类型，无法继续降级".to_string()))
             }
         } else {
-            Err("当前传输类型不在优先列表中".to_string())
+            Err(TopemsError::BusinessLogic("当前传输类型不在优先列表中".to_string()))
         }
     }
 

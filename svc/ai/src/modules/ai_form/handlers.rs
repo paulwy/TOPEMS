@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::extract::{Path, State};
 use axum::Json;
 use topems_shared_core::TopemsError;
@@ -36,7 +37,7 @@ fn default_assistant() -> AiFormAssistantClient {
 pub fn parse_action(
     action: &str,
     current_data: &serde_json::Value,
-) -> Result<FormAssistantAction, &'static str> {
+) -> Result<FormAssistantAction, TopemsError> {
     match action {
         "suggest" => Ok(FormAssistantAction::SuggestFields),
         "enhance" => {
@@ -54,7 +55,7 @@ pub fn parse_action(
                 .unwrap_or("");
             Ok(FormAssistantAction::TranslateTerm(term.to_string()))
         }
-        _ => Err("无效的 action 参数"),
+        _ => Err(TopemsError::ValidationFailed("无效的 action 参数".to_string()))
     }
 }
 

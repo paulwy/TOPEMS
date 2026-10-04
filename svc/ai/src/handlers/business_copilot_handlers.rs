@@ -244,7 +244,7 @@ pub async fn send_message(
                 StatusCode::NOT_FOUND,
                 Json(ApiError {
                     error: "session_not_found".to_string(),
-                    message: e,
+                    message: e.to_string(),
                 }),
             )
                 .into_response();
@@ -269,7 +269,7 @@ pub async fn send_message(
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError {
                 error: "processing_failed".to_string(),
-                message: e,
+                message: e.to_string(),
             }),
         )
             .into_response(),

@@ -2,6 +2,7 @@
 //!
 //! 提供工作流定义、节点执行、状态机驱动、版本管理、模板库等能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
@@ -545,9 +546,9 @@ impl WorkflowEngine {
     }
 
     /// 注册工作流
-    pub fn register_workflow(&self, definition: WorkflowDefinition) -> Result<String, String> {
+    pub fn register_workflow(&self, definition: WorkflowDefinition) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("工作流引擎未启用".to_string());
+            return Err(TopemsError::BusinessLogic("工作流引擎未启用".to_string()));
         }
 
         let workflow_id = definition.id.clone();
@@ -579,15 +580,15 @@ impl WorkflowEngine {
     }
 
     /// 验证工作流定义
-    fn validate_workflow(&self, definition: &WorkflowDefinition) -> Result<(), String> {
+    fn validate_workflow(&self, definition: &WorkflowDefinition) -> Result<(), TopemsError> {
         if definition.id.is_empty() {
-            return Err("工作流 ID 不能为空".to_string());
+            return Err(TopemsError::ValidationFailed("工作流 ID 不能为空".to_string()));
         }
         if definition.name.is_empty() {
-            return Err("工作流名称不能为空".to_string());
+            return Err(TopemsError::ValidationFailed("工作流名称不能为空".to_string()));
         }
         if definition.nodes.is_empty() {
-            return Err("工作流至少需要一个节点".to_string());
+            return Err(TopemsError::ValidationFailed("工作流至少需要一个节点".to_string()));
         }
 
         // 检查起始节点是否存在
@@ -596,14 +597,14 @@ impl WorkflowEngine {
             .iter()
             .any(|n| n.node_type == NodeType::Start);
         if !has_start {
-            return Err("工作流必须包含一个起始节点".to_string());
+            return Err(TopemsError::ValidationFailed("工作流必须包含一个起始节点".to_string()));
         }
 
         // 检查节点 ID 唯一性
         let mut node_ids = std::collections::HashSet::new();
         for node in &definition.nodes {
             if !node_ids.insert(node.id.clone()) {
-                return Err(format!("节点 ID 重复: {}", node.id));
+                return Err(TopemsError::BusinessLogic(format!("节点 ID 重复: {}", node.id)));
             }
         }
 
@@ -657,9 +658,9 @@ impl WorkflowEngine {
         workflow_id: &str,
         input_params: HashMap<String, serde_json::Value>,
         triggered_by: &str,
-    ) -> Result<WorkflowExecution, String> {
+    ) -> Result<WorkflowExecution, TopemsError> {
         if !self.config.enabled {
-            return Err("工作流引擎未启用".to_string());
+            return Err(TopemsError::BusinessLogic("工作流引擎未启用".to_string()));
         }
 
         let workflow = self
@@ -667,7 +668,7 @@ impl WorkflowEngine {
             .ok_or_else(|| format!("工作流 {} 不存在", workflow_id))?;
 
         if !workflow.enabled {
-            return Err(format!("工作流 {} 未启用", workflow_id));
+            return Err(TopemsError::BusinessLogic(format!("工作流 {} 未启用", workflow_id)));
         }
 
         let execution_id = format!("exec_{}", uuid::Uuid::new_v4());
@@ -954,7 +955,7 @@ impl WorkflowEngine {
     }
 
     /// 取消执行
-    pub fn cancel_execution(&self, execution_id: &str) -> Result<(), String> {
+    pub fn cancel_execution(&self, execution_id: &str) -> Result<(), TopemsError> {
         let mut executions = self.executions.lock();
         let execution = executions
             .get_mut(execution_id)
@@ -968,11 +969,11 @@ impl WorkflowEngine {
             info!(execution_id = %execution_id, "Workflow execution cancelled");
             Ok(())
         } else {
-            Err(format!(
+            Err(TopemsError::BusinessLogic(format!(
                 "执行实例 {} 状态为 {}，无法取消",
                 execution_id,
                 execution.status.as_str()
-            ))
+            )))
         }
     }
 
@@ -1003,7 +1004,7 @@ impl WorkflowEngine {
         template_id: &str,
         new_workflow_id: &str,
         new_name: &str,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         let mut templates = self.templates.lock();
         let template = templates
             .get_mut(template_id)

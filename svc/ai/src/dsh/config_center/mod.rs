@@ -2,6 +2,7 @@
 //!
 //! 提供统一配置管理、动态配置更新、配置版本控制、配置验证、配置回滚等能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 
@@ -497,16 +498,16 @@ impl ConfigCenter {
     }
 
     /// 注册配置项
-    pub fn register(&self, item: ConfigItem) -> Result<String, String> {
+    pub fn register(&self, item: ConfigItem) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err("配置管理中心未启用".to_string());
+            return Err(TopemsError::BusinessLogic("配置管理中心未启用".to_string()));
         }
 
         // 验证配置
         if self.config.enable_validation {
             let validation = self.validate_config_item(&item);
             if !validation.valid {
-                return Err(format!("配置验证失败: {:?}", validation.errors));
+                return Err(TopemsError::BusinessLogic(format!("配置验证失败: {:?}", validation.errors)));
             }
         }
 
@@ -588,9 +589,9 @@ impl ConfigCenter {
         value: serde_json::Value,
         modified_by: &str,
         change_note: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         if !self.config.enabled {
-            return Err("配置管理中心未启用".to_string());
+            return Err(TopemsError::BusinessLogic("配置管理中心未启用".to_string()));
         }
 
         let mut items = self.items.lock();
@@ -600,7 +601,7 @@ impl ConfigCenter {
 
         // 检查是否可动态更新
         if !item.is_dynamic && self.config.enable_dynamic_config {
-            return Err(format!("配置项 {} 不支持动态更新", key));
+            return Err(TopemsError::BusinessLogic(format!("配置项 {} 不支持动态更新", key)));
         }
 
         let old_value = item.value.clone();
@@ -609,7 +610,7 @@ impl ConfigCenter {
         if self.config.enable_validation {
             let validation = self.validate_value(key, &value, item);
             if !validation.valid {
-                return Err(format!("配置值验证失败: {:?}", validation.errors));
+                return Err(TopemsError::BusinessLogic(format!("配置值验证失败: {:?}", validation.errors)));
             }
         }
 
