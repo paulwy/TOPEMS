@@ -1070,3 +1070,25 @@
 ### 其他未完成（不变）
 - 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
 - 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）
+
+## 2026-10-05 B7 分批推进（第 3-4 批：server anyhow 清退 + 门禁归零，业务层 anyhow 70→0）
+
+> 承接同日第 1-2 批（srm/rd），本批完成 server 清退与门禁豁免登记。提交 6e9f69362 / 750494b29，均未 push。
+
+### ✅ 第 3 批：svc/server + shared-core（6e9f69362，30 文件）
+- **shared-core 新增 `impl From<anyhow::Error> for TopemsError`**：收敛为 Internal 变体（classify 脱敏，客户端仅收通用「内部服务器错误」）；防泄露单测向量加入 anyhow 转换变体（100/100 绿）——该 impl 解锁所有 anyhow → TopemsError 的 `?` 传播
+- server 29 个 *_real_module/subscription_module：`build() -> anyhow::Result<Self>` → `-> Result<Self>`（TopemsError::Result 别名）
+- 11 处 `anyhow::anyhow!/bail!` 初始化错误 → `TopemsError::internal(context, e)`（DATABASE_URL → `EnvVarNotSet`）
+- 验证：cargo check --workspace 0 错误；server modules anyhow=0
+
+### ✅ 第 4 批：门禁豁免登记（750494b29，1 文件）
+- analytics report scheduler 的 JobScheduler<'_> trait 绑定型 anyhow（`type Err = anyhow::Error`）显式豁免——第三方 trait 关联类型无法改 TopemsError，登记非漂移
+- **门禁业务层 anyhow：70 → 0**（ADR 阶段二 anyhow 清退子项达成；仅 main.rs 进程边界合法保留）；泄露面 413 不变
+
+### B7 剩余（继续分批候选）
+- **静态 `Err("...")`/`Result<_, String>` TopemsError 化**（1313 处无插值静态文案，ADR 明确不在泄露面；含各服务内部校验函数，需逐服务按语义映射 ValidationFailed/BusinessLogic 等）——L 级主体，后续批次按服务推进
+- finance 386 处 `.to_string()` 直出（无上下文文案，ADR 指定为 TopemsError 规范参考试点，需先定业务上下文策略）
+
+### 其他未完成（不变）
+- 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
+- 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）
