@@ -1121,3 +1121,12 @@
   wms 2 / master-data 2 / unified-core 1（+ 各服务 Result<_, String> 双参形态与
   finance 386 处 to_string 试点待定策略）
 - 模式固化：ValidationFailed 语义映射 + matches! 断言模板可直接复制
+
+### ✅ B7 第 6 批：crm 静态状态码 Err TopemsError 化（commit 101d1b05a，4 文件）
+- opportunity/aftersales can_transition → `Result<(), TopemsError>`：NOT_OWNER→OperationNotAllowed、
+  TERMINAL_CANNOT_TRANSITION→BusinessLogic、INVALID_TRANSITION→ValidationFailed
+- 消费点：2 处 match（推进/回退 403/400）+ 2 处兜底 api_error 改 `&e.to_string()`；
+  aftersales 4 处 `if let Err(e)`（e 进 format!，TopemsError Display 语义更友好）
+- 测试：opportunity_fsm_test 4 处 + return_fsm_test 9 处 assert_eq unwrap_err → matches!
+- 验证：编译 0 错误、clippy 0 警告、单测 504/504 全绿
+- **crm 静态 Err = 27→0**；累计清零：mobile 8 + lims 3 + crm 27 = 38
