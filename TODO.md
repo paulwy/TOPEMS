@@ -1015,3 +1015,29 @@
 - **可执行未排期**：B7（L 级分批）、B10/B11/B12（P2）
 - **决策项跳过（用户拍板暂不处理）**：B1（search→erp 白名单撤销）、B14（守卫重构）、B15（埋点）、A2（5433 docker）、A5（erp RLS）
 - **环境阻塞**：A1（nginx 生产 conf 需 Linux/生产环境）；5433 仍 DOWN、nginx 未运行
+
+## 2026-10-04 第二轮收口（B10/B11/B12 完成，本地提交未 push）
+
+> 用户「继续推进」后开启第二轮：B10（P2 数据丢失修复）+ B11/B12（P2 迁出/校验脚本），三项全部完成并本地提交（55342082c → 210b971e6，均未 push；远端同步由并行协作线负责）。
+
+### ✅ 本次完成
+- **B10 master-data 快照窗口数据丢失修复**：根因 = U4 的 10 个 MDM 模块写 handler 只改内存 store，靠 main.rs 3s tokio ticker 兜底 flush，SIGKILL 丢 ≤3s 最近写。
+  - `svc/master-data/src/modules/mod.rs` 新增 flush_on_write 中间件（POST/PUT/PATCH/DELETE 响应后立即 flush_all()）+ is_write_method 纯函数 + 单测；**layer 置于 create_routes() 末尾**（axum Router::layer 只作用于调用时已注册路由——曾先 layer 后 nest 导致中间件不生效，e2e 证伪后修正）
+  - `svc/master-data/src/modules/persist.rs` init() 拆逐条 DDL（SQLx prepared statement 不支持多命令，bootstrap 曾一直失败）
+  - 验证：master-data 单测 451/451 绿；e2e 另起实例（8097/8098）POST 后**立即查库** immediate_persisted=true（两轮独立验证：probe4 / e2e-final-probe2）
+  - 说明：SIGKILL 完整 e2e（kill→重启→load-on-boot 恢复）受并行线旧实例（/Users/air/topems release，8090/11824，3s ticker 周期覆盖共享表）约束无法独占验证；"写后立即持久化"机制已被 immediate 实测证明，重启恢复为 U4 load-on-boot 既有能力
+- **B11 form_assistant 迁出独立位置**：`lib/src/form_assistant/`（23 文件）git mv → `svc/ai/src/form_assistant/`；`lib/src/lib.rs` 移除 `pub mod form_assistant`（门面引用=0）；svc/ai lib.rs/main.rs 声明模块（bin crate 独立 root，需双侧声明），ai_form 引用 `topems_shared::form_assistant` → `crate::form_assistant`
+  - 验证：topems-ai 编译 0 错误；ai 单测 1190/1190 绿；全仓 grep 无残留 topems_shared::form_assistant
+- **B12 services.yaml↔nginx.conf 一致性校验脚本**：`scripts/ci/check-config-sources.cjs` 新增 F/G/H 三节——F: nginx upstream 端口/名称↔services.yaml（值级+死 upstream）；G: map 路由表引用 upstream 自洽（防运行时 502）；H: map 路由前缀可解析到 services.yaml 服务（防拼写漂移）；补别名 report→bi / plugin→plugin-registry / aps→mes
+  - lefthook `ports-consistency` 钩子 STAGED 清单加入 apps/web/nginx.conf
+  - 验证：`--check` 全绿（38 服务/27 upstream）；负向篡改 erp 端口 8010→8015 被 F 拦截（`erp_service=8015 与 services.yaml erp=8010 不一致`）后还原
+
+### 验证总览（第二轮）
+- cargo check --workspace 0 错误（36.8s）；master-data 451、ai 1190、shared 单测绿
+- e2e：POST 后立即查库 immediate_persisted=true（B10 核心主张实测）
+- B12 脚本：正向全绿 + 负向拦截验证
+
+### ⬜ 未完成（本轮范围外）
+- **可执行未排期**：B7（L 级分批）
+- **决策项跳过（用户拍板暂不处理）**：B1（search→erp 白名单撤销）、B14（守卫重构）、B15（埋点）、A2（5433 docker）、A5（erp RLS）
+- **环境阻塞**：A1（nginx 生产 conf 需 Linux/生产环境）；5433 仍 DOWN、nginx 未运行；SIGKILL 完整 e2e 需独占实例环境（并行线 11824 周期覆盖共享表）
