@@ -144,7 +144,9 @@ use crate::modules::scan::{image_ocr, scan_qrcode};
 use crate::modules::shortcut::{create_shortcut, get_shortcuts};
 use crate::modules::stats::{get_dashboard_stats, get_patrol_stats, get_task_stats};
 use crate::modules::task::{
-    create_task, delete_task, get_all_tasks, get_task, update_task, update_task_status,
+    batch_update_status, complete_task, create_task, delete_task, get_all_tasks, get_my_tasks,
+    get_overdue_tasks, get_pending_tasks, get_task, reopen_task, search_tasks, update_task,
+    update_task_status,
 };
 use crate::modules::user::{get_profile, update_profile, upload_avatar};
 use crate::modules::workbench::get_workbench_data;
@@ -629,10 +631,30 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         // task（前端 /task 单数 → task.rs 实现，原未挂载）
         .route("/task", axum::routing::get(get_all_tasks))
         .route("/task/{id}", axum::routing::get(get_task))
+        .route("/task/my", axum::routing::get(get_my_tasks))
+        .route("/task/pending", axum::routing::get(get_pending_tasks))
+        .route("/task/overdue", axum::routing::get(get_overdue_tasks))
+        .route(
+            "/task/{id}/complete",
+            axum::routing::post(complete_task),
+        )
+        .route("/task/{id}/reopen", axum::routing::post(reopen_task))
+        .route("/task/search", axum::routing::get(search_tasks))
+        .route(
+            "/task/batch/status",
+            axum::routing::post(batch_update_status),
+        )
         // device（前端 /device 单数 → device.rs）
         .route("/device/register", axum::routing::post(register_device))
         // schedule（前端 /schedule/events → oa calendar events）
-        .route("/schedule/events", axum::routing::get(list_calendar_events))
+        .route(
+            "/schedule/events",
+            axum::routing::get(list_calendar_events).post(create_calendar_event),
+        )
+        .route(
+            "/schedule/events/{id}",
+            axum::routing::put(update_calendar_event).delete(delete_calendar_event),
+        )
         // dashboard announcements（前端 /dashboard/announcements → oa announcements）
         .route("/dashboard/announcements", axum::routing::get(list_announcements))
         .route(

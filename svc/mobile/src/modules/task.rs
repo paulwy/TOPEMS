@@ -3,7 +3,7 @@
 #![allow(clippy::needless_borrows_for_generic_args)]
 
 use axum::{
-    extract::{Json, Path, State},
+    extract::{Json, Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -63,6 +63,17 @@ pub struct UpdateTaskRequest {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct UpdateStatusRequest {
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct SearchTasksParams {
+    pub keyword: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct BatchStatusRequest {
+    pub ids: Vec<Uuid>,
     pub status: String,
 }
 
@@ -469,6 +480,323 @@ pub async fn delete_task(
             )
         }
     }
+}
+
+// ===== 页面级缺口补充 handler（前端 task.ts 单数路径对齐，2026-10-05）=====
+
+/// 我的任务（仅本人 assignee，较 get_all_tasks 更严格）
+pub async fn get_my_tasks(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+        only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
+         FROM mobile.mobile_tasks 
+         WHERE deleted_at IS NULL AND assignee = $1 
+         ORDER BY due_date NULLS LAST, created_at DESC"),
+    )
+    .bind(&user_id)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("查询我的任务失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "查询失败")),
+            );
+        }
+    };
+
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(
+            serde_json::json!({ "items": tasks, "total": tasks.len() }),
+            "获取我的任务成功",
+        )),
+    )
+}
+
+/// 待办任务（status = pending）
+pub async fn get_pending_tasks(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+        only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
+         FROM mobile.mobile_tasks 
+         WHERE deleted_at IS NULL AND status = 'pending' AND (assignee = $1 OR assignee IS NULL) 
+         ORDER BY due_date NULLS LAST, created_at DESC"),
+    )
+    .bind(&user_id)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("查询待办任务失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "查询失败")),
+            );
+        }
+    };
+
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(
+            serde_json::json!({ "items": tasks, "total": tasks.len() }),
+            "获取待办任务成功",
+        )),
+    )
+}
+
+/// 逾期任务（due_date 已过且未完成）
+pub async fn get_overdue_tasks(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+        only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
+         FROM mobile.mobile_tasks 
+         WHERE deleted_at IS NULL AND due_date < NOW() AND status != 'completed' AND (assignee = $1 OR assignee IS NULL) 
+         ORDER BY due_date NULLS LAST, created_at DESC"),
+    )
+    .bind(&user_id)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("查询逾期任务失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "查询失败")),
+            );
+        }
+    };
+
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(
+            serde_json::json!({ "items": tasks, "total": tasks.len() }),
+            "获取逾期任务成功",
+        )),
+    )
+}
+
+/// 完成任务（前端 /task/{id}/complete 无 body）
+pub async fn complete_task(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let result = sqlx::query(
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = 'completed', completed_at = NOW(), updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
+    )
+    .bind(id)
+    .bind(&user_id)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            axum::Json(ApiResponse::success((), "任务已完成")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            axum::Json(ApiResponse::error(404, "任务不存在或无权操作")),
+        ),
+        Err(e) => {
+            tracing::error!("完成任务失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "操作失败")),
+            )
+        }
+    }
+}
+
+/// 重新打开任务
+pub async fn reopen_task(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let result = sqlx::query(
+        only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = 'pending', completed_at = NULL, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
+    )
+    .bind(id)
+    .bind(&user_id)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            axum::Json(ApiResponse::success((), "任务已重新打开")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            axum::Json(ApiResponse::error(404, "任务不存在或无权操作")),
+        ),
+        Err(e) => {
+            tracing::error!("重新打开任务失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "操作失败")),
+            )
+        }
+    }
+}
+
+/// 搜索任务（标题模糊匹配）
+pub async fn search_tasks(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Query(params): Query<SearchTasksParams>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let keyword = params.keyword.unwrap_or_default();
+    let tasks: Vec<MobileTask> = match sqlx::query_as::<_, MobileTask>(
+        only_own_schema_query!("mobile", "SELECT id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at 
+         FROM mobile.mobile_tasks 
+         WHERE deleted_at IS NULL AND title ILIKE '%' || $2 || '%' AND (assignee = $1 OR assignee IS NULL) 
+         ORDER BY created_at DESC"),
+    )
+    .bind(&user_id)
+    .bind(&keyword)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            tracing::error!("搜索任务失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(ApiResponse::error(500, "搜索失败")),
+            );
+        }
+    };
+
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(
+            serde_json::json!({ "items": tasks, "total": tasks.len() }),
+            "搜索任务成功",
+        )),
+    )
+}
+
+/// 批量更新状态（前端 /task/batch/status）
+pub async fn batch_update_status(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Json(payload): Json<BatchStatusRequest>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                axum::Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let mut success = 0;
+    let mut failed = 0;
+    for id in payload.ids {
+        let result = sqlx::query(
+            only_own_schema_query!("mobile", "UPDATE mobile.mobile_tasks SET status = $3, updated_at = NOW() WHERE id = $1 AND (assignee = $2 OR assignee IS NULL) AND deleted_at IS NULL"),
+        )
+        .bind(id)
+        .bind(&user_id)
+        .bind(&payload.status)
+        .execute(&pool)
+        .await;
+
+        match result {
+            Ok(r) if r.rows_affected() > 0 => success += 1,
+            _ => failed += 1,
+        }
+    }
+
+    (
+        StatusCode::OK,
+        axum::Json(ApiResponse::success(
+            serde_json::json!({ "success": success, "failed": failed }),
+            "批量更新状态完成",
+        )),
+    )
 }
 
 #[cfg(test)]
