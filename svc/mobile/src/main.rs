@@ -72,6 +72,10 @@ async fn main() -> Result<()> {
     {
         tracing::warn!("离线记录表初始化警告: {}", e);
     }
+    if let Err(e) = modules::document::init_database(ctx.migrate_pool.as_ref().unwrap_or(&ctx.db)).await
+    {
+        tracing::warn!("文档表初始化警告: {}", e);
+    }
 
     if let Err(e) =
         event_handlers::start_event_subscribers(ctx.db.clone(), ctx.event_publisher.clone()).await

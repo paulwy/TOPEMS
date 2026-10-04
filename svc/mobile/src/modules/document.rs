@@ -1,0 +1,350 @@
+//! 文档模块（前端 mobile/document.ts 契约对齐，2026-10-05）
+//! 无外部文档服务，落地 mobile 本地表（mobile.documents）
+
+use axum::{
+    extract::{Json, Path, Query, State},
+    http::{HeaderMap, StatusCode},
+    response::IntoResponse,
+};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
+use topems_shared_boundary::only_own_schema_query;
+use uuid::Uuid;
+
+use super::auth_utils::extract_user_id_from_token;
+use topems_shared_auth::auth::AuthState;
+use topems_shared_core::response::ApiResponse;
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct MobileDocument {
+    pub id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub category: String,
+    pub file_name: String,
+    pub file_size: i64,
+    pub file_type: String,
+    pub url: String,
+    pub status: String,
+    pub author_id: Uuid,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+/// 初始化 documents 表（main.rs 启动时调用）
+pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(only_own_schema_query!(
+        "mobile",
+        r#"
+        CREATE TABLE IF NOT EXISTS mobile.documents (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            title TEXT NOT NULL,
+            description TEXT,
+            category VARCHAR(64) NOT NULL DEFAULT 'general',
+            file_name VARCHAR(255) NOT NULL DEFAULT '',
+            file_size BIGINT NOT NULL DEFAULT 0,
+            file_type VARCHAR(64) NOT NULL DEFAULT '',
+            url TEXT NOT NULL DEFAULT '',
+            status VARCHAR(32) NOT NULL DEFAULT 'draft',
+            author_id UUID,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            deleted_at TIMESTAMPTZ
+        )
+        "#
+    ))
+    .execute(pool)
+    .await?;
+    sqlx::query(only_own_schema_query!(
+        "mobile",
+        "CREATE INDEX IF NOT EXISTS idx_mobile_documents_category ON mobile.documents(category)"
+    ))
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct DocumentListParams {
+    pub page: Option<i64>,
+    #[serde(rename = "pageSize")]
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub category: Option<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateDocumentRequest {
+    pub title: String,
+    pub description: Option<String>,
+    pub category: Option<String>,
+    pub file_name: Option<String>,
+    pub file_size: Option<i64>,
+    pub file_type: Option<String>,
+    pub url: Option<String>,
+    pub status: Option<String>,
+}
+
+/// 文档列表（前端 GET /documents）
+pub async fn list_documents(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Query(params): Query<DocumentListParams>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+    let search = params.search.unwrap_or_default();
+    let category = params.category.unwrap_or_default();
+
+    let documents: Vec<MobileDocument> = match sqlx::query_as::<_, MobileDocument>(
+        only_own_schema_query!(
+            "mobile",
+            "SELECT id, title, description, category, file_name, file_size, file_type, url, status, author_id, created_at, updated_at
+             FROM mobile.documents
+             WHERE deleted_at IS NULL AND (author_id = $1 OR author_id IS NULL)
+               AND ($2::text = '' OR title ILIKE '%' || $2 || '%')
+               AND ($3::text = '' OR category = $3)
+             ORDER BY created_at DESC
+             LIMIT $4 OFFSET $5"
+        ),
+    )
+    .bind(&user_id)
+    .bind(&search)
+    .bind(&category)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(d) => d,
+        Err(e) => {
+            tracing::error!("查询文档列表失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "查询文档列表失败")),
+            );
+        }
+    };
+
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(
+            serde_json::json!({ "items": documents, "total": documents.len() }),
+            "获取文档列表成功",
+        )),
+    )
+}
+
+/// 文档详情（前端 GET /documents/{id}）
+pub async fn get_document(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let document = sqlx::query_as::<_, MobileDocument>(
+        only_own_schema_query!(
+            "mobile",
+            "SELECT id, title, description, category, file_name, file_size, file_type, url, status, author_id, created_at, updated_at
+             FROM mobile.documents WHERE id = $1 AND deleted_at IS NULL"
+        ),
+    )
+    .bind(id)
+    .fetch_optional(&pool)
+    .await;
+
+    match document {
+        Ok(Some(d)) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(d, "获取文档详情成功")),
+        ),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "文档不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("查询文档详情失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "查询文档详情失败")),
+            )
+        }
+    }
+}
+
+/// 新建文档（前端 POST /documents）
+pub async fn create_document(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Json(req): Json<CreateDocumentRequest>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let id = Uuid::new_v4();
+    let result = sqlx::query(
+        only_own_schema_query!(
+            "mobile",
+            "INSERT INTO mobile.documents (id, title, description, category, file_name, file_size, file_type, url, status, author_id)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+        ),
+    )
+    .bind(id)
+    .bind(&req.title)
+    .bind(&req.description)
+    .bind(req.category.as_deref().unwrap_or("general"))
+    .bind(req.file_name.as_deref().unwrap_or(""))
+    .bind(req.file_size.unwrap_or(0))
+    .bind(req.file_type.as_deref().unwrap_or(""))
+    .bind(req.url.as_deref().unwrap_or(""))
+    .bind(req.status.as_deref().unwrap_or("draft"))
+    .bind(&user_id)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(_) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(serde_json::json!({ "id": id }), "创建文档成功")),
+        ),
+        Err(e) => {
+            tracing::error!("创建文档失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "创建文档失败")),
+            )
+        }
+    }
+}
+
+/// 更新文档（前端 PUT /documents/{id}）
+pub async fn update_document(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let title = req.get("title").and_then(|v| v.as_str());
+    let category = req.get("category").and_then(|v| v.as_str());
+    let status = req.get("status").and_then(|v| v.as_str());
+
+    let result = sqlx::query(
+        only_own_schema_query!(
+            "mobile",
+            "UPDATE mobile.documents SET title = COALESCE($2, title), category = COALESCE($3, category), status = COALESCE($4, status), updated_at = NOW()
+             WHERE id = $1 AND deleted_at IS NULL"
+        ),
+    )
+    .bind(id)
+    .bind(title)
+    .bind(category)
+    .bind(status)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "更新文档成功")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "文档不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("更新文档失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "更新文档失败")),
+            )
+        }
+    }
+}
+
+/// 删除文档（前端 DELETE /documents/{id}）
+pub async fn delete_document(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let result = sqlx::query(
+        only_own_schema_query!(
+            "mobile",
+            "UPDATE mobile.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+        ),
+    )
+    .bind(id)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "删除文档成功")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "文档不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("删除文档失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "删除文档失败")),
+            )
+        }
+    }
+}

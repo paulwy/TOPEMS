@@ -4,6 +4,7 @@ pub mod auth_utils;
 pub mod barcode_scanner;
 pub mod customer;
 pub mod device;
+pub mod document;
 pub mod inventory;
 pub mod media;
 pub mod missing_endpoints;

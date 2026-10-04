@@ -102,6 +102,9 @@ use crate::modules::customer::{
     create_customer, delete_customer, get_customer, list_customers, update_customer,
 };
 use crate::modules::device::{list_my_devices, register_device, update_push_token};
+use crate::modules::document::{
+    create_document, delete_document, get_document, list_documents, update_document,
+};
 use crate::modules::inventory::{
     create_stocktake_record, delete_inventory_item, get_inventory_item, list_inbound_orders,
     list_inventory_items, list_low_stock_items, list_outbound_orders, list_stocktake_tasks,
@@ -710,6 +713,17 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route(
             "/user/change-password",
             axum::routing::post(change_password),
+        )
+        // documents（前端 /documents → mobile 本地表 CRUD）
+        .route(
+            "/documents",
+            axum::routing::get(list_documents).post(create_document),
+        )
+        .route(
+            "/documents/{id}",
+            axum::routing::get(get_document)
+                .put(update_document)
+                .delete(delete_document),
         )
         // schedule（前端 /schedule/events → oa calendar events）
         .route(
