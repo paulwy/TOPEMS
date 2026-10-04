@@ -3,6 +3,7 @@
 //! Implements bidirectional data synchronization between HRM employee records
 //! and Finance payroll processing, including salary, social insurance, and housing fund.
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
@@ -433,7 +434,7 @@ pub async fn sync_employee(
     hrm_url: &str,
     finance_url: &str,
     req: &SyncEmployeeRequest,
-) -> Result<HrmFinanceSync, String> {
+) -> Result<HrmFinanceSync, TopemsError> {
     info!(
         "同步员工数据 - ID: {}, 来源: {}",
         req.employee_id, req.source_system
@@ -451,7 +452,7 @@ pub async fn sync_employee(
             let data = fetch_finance_employee(pool, finance_url, employee_id).await?;
             (data, DIRECTION_FINANCE_TO_HRM)
         }
-        _ => return Err(format!("未知的来源系统: {}", req.source_system)),
+        _ => return Err(TopemsError::ValidationFailed(format!("未知的来源系统: {}", req.source_system)),)
     };
 
     match direction {
@@ -545,7 +546,7 @@ pub async fn sync_employee(
             info!("员工数据从Finance同步到HRM成功 - 同步ID: {}", updated.id);
             Ok(updated)
         }
-        _ => Err("未知的同步方向".to_string()),
+        _ => Err(TopemsError::ValidationFailed("未知的同步方向".to_string())),
     }
 }
 
@@ -1016,7 +1017,7 @@ pub async fn retry_failed_sync(
     hrm_url: &str,
     finance_url: &str,
     sync_id: Uuid,
-) -> Result<HrmFinanceSync, String> {
+) -> Result<HrmFinanceSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
     let sync = get_hrm_finance_sync(pool, sync_id)
@@ -1025,7 +1026,7 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err("已达到最大重试次数".to_string());
+        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
     }
 
     let retry_config = RetryConfig {
@@ -1058,7 +1059,7 @@ pub async fn retry_failed_sync(
                 &sync_type,
                 &payload,
             )
-            .await
+            .await.map_err(|e| e.to_string())
         })
         .await;
 
@@ -1079,7 +1080,7 @@ pub async fn retry_failed_sync(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
             );
-            Err(error)
+            Err(TopemsError::BusinessLogic(error))
         }
     }
 }
@@ -1091,7 +1092,7 @@ async fn execute_sync_by_type(
     finance_url: &str,
     sync_type: &str,
     payload: &serde_json::Value,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     match sync_type {
         SYNC_TYPE_PAYROLL => {
             let payroll_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("");
@@ -1147,7 +1148,7 @@ async fn execute_sync_by_type(
             sync_housing_fund(pool, tenant_id, hrm_url, finance_url, &req).await?;
             Ok(())
         }
-        _ => Err(format!("不支持的同步类型: {}", sync_type)),
+        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
     }
 }
 

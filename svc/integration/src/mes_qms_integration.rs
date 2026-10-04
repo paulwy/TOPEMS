@@ -3,6 +3,7 @@
 //! Implements bidirectional data synchronization between MES production records
 //! and QMS quality inspection tasks.
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
@@ -1112,7 +1113,7 @@ pub async fn retry_failed_sync(
     mes_url: &str,
     qms_url: &str,
     sync_id: Uuid,
-) -> Result<MesQmsSync, String> {
+) -> Result<MesQmsSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
     let sync = get_mes_qms_sync(pool, sync_id)
@@ -1121,7 +1122,7 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err("已达到最大重试次数".to_string());
+        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
     }
 
     let retry_config = RetryConfig {
@@ -1146,7 +1147,7 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, mes_url, qms_url, &sync_type, &payload).await
+            execute_sync_by_type(pool, sync.tenant_id, mes_url, qms_url, &sync_type, &payload).await.map_err(|e| e.to_string())
         })
         .await;
 
@@ -1167,7 +1168,7 @@ pub async fn retry_failed_sync(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
             );
-            Err(error)
+            Err(TopemsError::BusinessLogic(error))
         }
     }
 }
@@ -1179,7 +1180,7 @@ async fn execute_sync_by_type(
     qms_url: &str,
     sync_type: &str,
     payload: &serde_json::Value,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     match sync_type {
         SYNC_TYPE_PRODUCTION_INSPECTION => {
             let record_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("");
@@ -1201,7 +1202,7 @@ async fn execute_sync_by_type(
             sync_quality_result_to_mes(pool, tenant_id, mes_url, qms_url, &req).await?;
             Ok(())
         }
-        _ => Err(format!("不支持的同步类型: {}", sync_type)),
+        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
     }
 }
 

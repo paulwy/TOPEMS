@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
@@ -80,7 +81,7 @@ impl IntegrationEventHandlers {
         details: Option<&str>,
         source_type: &str,
         source_id: uuid::Uuid,
-    ) -> Result<uuid::Uuid, String> {
+    ) -> Result<uuid::Uuid, TopemsError> {
         let now = Utc::now();
         let log_id = uuid::Uuid::new_v4();
 
@@ -124,7 +125,7 @@ impl IntegrationEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[integration] 同步日志记录失败: {}", e);
-                Err(format!("同步日志记录失败: {}", e))
+                Err(TopemsError::BusinessLogic(format!("同步日志记录失败: {}", e)))
             }
         }
     }

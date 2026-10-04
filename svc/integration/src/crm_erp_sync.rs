@@ -3,6 +3,7 @@
 //! Implements bidirectional data synchronization between CRM customer records
 //! and ERP customer master data, including contacts and opportunity-to-order conversion.
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
@@ -376,7 +377,7 @@ pub async fn sync_customer(
     crm_url: &str,
     erp_url: &str,
     req: &SyncCustomerRequest,
-) -> Result<CrmErpSync, String> {
+) -> Result<CrmErpSync, TopemsError> {
     info!(
         "同步客户数据 - ID: {}, 来源: {}",
         req.customer_id, req.source_system
@@ -394,7 +395,7 @@ pub async fn sync_customer(
             let data = fetch_erp_customer(pool, erp_url, customer_id).await?;
             (data, DIRECTION_ERP_TO_CRM)
         }
-        _ => return Err(format!("未知的来源系统: {}", req.source_system)),
+        _ => return Err(TopemsError::ValidationFailed(format!("未知的来源系统: {}", req.source_system)),)
     };
 
     match direction {
@@ -499,7 +500,7 @@ pub async fn sync_customer(
             );
             Ok(updated)
         }
-        _ => Err("未知的同步方向".to_string()),
+        _ => Err(TopemsError::ValidationFailed("未知的同步方向".to_string())),
     }
 }
 
@@ -509,7 +510,7 @@ pub async fn sync_contact(
     crm_url: &str,
     erp_url: &str,
     req: &SyncContactRequest,
-) -> Result<CrmErpSync, String> {
+) -> Result<CrmErpSync, TopemsError> {
     info!(
         "同步联系人数据 - ID: {}, 来源: {}",
         req.contact_id, req.source_system
@@ -527,7 +528,7 @@ pub async fn sync_contact(
             let data = fetch_erp_contact(pool, erp_url, contact_id).await?;
             (data, DIRECTION_ERP_TO_CRM)
         }
-        _ => return Err(format!("未知的来源系统: {}", req.source_system)),
+        _ => return Err(TopemsError::ValidationFailed(format!("未知的来源系统: {}", req.source_system)),)
     };
 
     match direction {
@@ -613,7 +614,7 @@ pub async fn sync_contact(
             info!("联系人数据从ERP同步到CRM成功 - 同步ID: {}", updated.id);
             Ok(updated)
         }
-        _ => Err("未知的同步方向".to_string()),
+        _ => Err(TopemsError::ValidationFailed("未知的同步方向".to_string())),
     }
 }
 
@@ -993,7 +994,7 @@ pub async fn retry_failed_sync(
     crm_url: &str,
     erp_url: &str,
     sync_id: Uuid,
-) -> Result<CrmErpSync, String> {
+) -> Result<CrmErpSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
     let sync = get_crm_erp_sync(pool, sync_id)
@@ -1002,7 +1003,7 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err("已达到最大重试次数".to_string());
+        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
     }
 
     let retry_config = RetryConfig {
@@ -1027,7 +1028,7 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, crm_url, erp_url, &sync_type, &payload).await
+            execute_sync_by_type(pool, sync.tenant_id, crm_url, erp_url, &sync_type, &payload).await.map_err(|e| e.to_string())
         })
         .await;
 
@@ -1048,7 +1049,7 @@ pub async fn retry_failed_sync(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
             );
-            Err(error)
+            Err(TopemsError::BusinessLogic(error))
         }
     }
 }
@@ -1060,7 +1061,7 @@ async fn execute_sync_by_type(
     erp_url: &str,
     sync_type: &str,
     payload: &serde_json::Value,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     match sync_type {
         SYNC_TYPE_CUSTOMER => {
             let customer_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("");
@@ -1090,7 +1091,7 @@ async fn execute_sync_by_type(
             convert_opportunity_to_order(pool, tenant_id, crm_url, erp_url, &req).await?;
             Ok(())
         }
-        _ => Err(format!("不支持的同步类型: {}", sync_type)),
+        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
     }
 }
 

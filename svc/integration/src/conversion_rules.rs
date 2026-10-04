@@ -2,6 +2,7 @@
 //!
 //! 实现模块间的数据自动流转规则
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -602,16 +603,16 @@ impl<'r> sqlx::FromRow<'r, sqlx::postgres::PgRow> for ConversionRule {
 pub fn execute_conversion(
     rule: &ConversionRule,
     source: &serde_json::Value,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     if !rule.is_enabled {
-        return Err(format!("转换规则 '{}' 未启用", rule.code));
+        return Err(TopemsError::BusinessLogic(format!("转换规则 '{}' 未启用", rule.code)));
     }
 
     // 解析字段映射
     let field_mappings: Vec<FieldMapping> =
         match serde_json::from_value(rule.field_mappings.clone()) {
             Ok(mappings) => mappings,
-            Err(e) => return Err(format!("解析字段映射失败: {}", e)),
+            Err(e) => return Err(TopemsError::BusinessLogic(format!("解析字段映射失败: {}", e)),)
         };
 
     if field_mappings.is_empty() {
@@ -843,7 +844,7 @@ fn compare_values(a: &serde_json::Value, b: &serde_json::Value) -> Option<std::c
 fn evaluate_simple_transform(
     transform: &str,
     value: &serde_json::Value,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     match transform {
         "toUpperCase" => {
             let s = value.as_str().unwrap_or("");
@@ -893,7 +894,7 @@ fn evaluate_simple_transform(
             let s = value.as_str().unwrap_or("");
             Ok(serde_json::Value::String(format!("{}{}", s, suffix)))
         }
-        _ => Err(format!("不支持的转换表达式: {}", transform)),
+        _ => Err(TopemsError::ValidationFailed(format!("不支持的转换表达式: {}", transform)),)
     }
 }
 

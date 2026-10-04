@@ -551,7 +551,7 @@ async fn call_erp_api(
     method: &str,
     path: &str,
     body: Option<&serde_json::Value>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
         .build()
@@ -589,11 +589,11 @@ async fn call_erp_api(
     let status = resp.status();
 
     if !status.is_success() {
-        return Err(format!(
+        return Err(TopemsError::BusinessLogic(format!(
             "ERP API returned status {}: {}",
             status.as_u16(),
             resp.text().await.unwrap_or_default()
-        ));
+        )));
     }
 
     let data: serde_json::Value = resp
@@ -833,7 +833,7 @@ pub async fn sync_entity(
                         Ok((total, inserted, skipped))
                     }
                     Err(e) => {
-                        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e))
+                        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e.to_string()))
                             .await;
                         Err(e)
                     }
@@ -868,7 +868,7 @@ pub async fn sync_entity(
                         Ok((created, created, 0))
                     }
                     Err(e) => {
-                        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e))
+                        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e.to_string()))
                             .await;
                         Err(e)
                     }
@@ -877,7 +877,7 @@ pub async fn sync_entity(
             _ => {
                 let msg = format!("不支持的同步方向: {}", direction);
                 update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&msg)).await;
-                Err(msg)
+                Err(TopemsError::ValidationFailed(msg))
             }
         };
 

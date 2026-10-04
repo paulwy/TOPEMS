@@ -2,6 +2,7 @@
 //!
 //! 实现事件订阅/发布机制，用于触发数据转换
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -280,14 +281,14 @@ impl EventHandlerRegistry {
     }
 
     /// 触发事件处理
-    pub async fn handle(&self, event_type: &str, event: IntegrationEvent) -> Result<(), String> {
+    pub async fn handle(&self, event_type: &str, event: IntegrationEvent) -> Result<(), TopemsError> {
         if let Some(handler) = self.get(event_type).await {
-            handler(event).await
+            handler(event).await.map_err(|e| TopemsError::BusinessLogic(e))
         } else {
-            Err(format!(
+            Err(TopemsError::BusinessLogic(format!(
                 "No handler registered for event type: {}",
                 event_type
-            ))
+            )))
         }
     }
 }

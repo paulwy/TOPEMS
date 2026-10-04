@@ -3,6 +3,7 @@
 //! Implements data synchronization between CRM opportunities and SCM purchase orders,
 //! including opportunity-to-purchase conversion and supplier information sync.
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
@@ -440,7 +441,7 @@ pub async fn sync_supplier(
     crm_url: &str,
     scm_url: &str,
     req: &SyncSupplierRequest,
-) -> Result<CrmScmSync, String> {
+) -> Result<CrmScmSync, TopemsError> {
     info!(
         "同步供应商数据 - ID: {}, 来源: {}",
         req.supplier_id, req.source_system
@@ -458,7 +459,7 @@ pub async fn sync_supplier(
             let data = fetch_scm_supplier(pool, scm_url, supplier_id).await?;
             (data, DIRECTION_SCM_TO_CRM)
         }
-        _ => return Err(format!("未知的来源系统: {}", req.source_system)),
+        _ => return Err(TopemsError::ValidationFailed(format!("未知的来源系统: {}", req.source_system)),)
     };
 
     match direction {
@@ -560,7 +561,7 @@ pub async fn sync_supplier(
             info!("供应商数据从SCM同步到CRM成功 - 同步ID: {}", updated.id);
             Ok(updated)
         }
-        _ => Err("未知的同步方向".to_string()),
+        _ => Err(TopemsError::ValidationFailed("未知的同步方向".to_string())),
     }
 }
 
@@ -570,7 +571,7 @@ pub async fn sync_product(
     crm_url: &str,
     scm_url: &str,
     req: &SyncProductRequest,
-) -> Result<CrmScmSync, String> {
+) -> Result<CrmScmSync, TopemsError> {
     info!(
         "同步产品数据 - ID: {}, 来源: {}",
         req.product_id, req.source_system
@@ -588,7 +589,7 @@ pub async fn sync_product(
             let data = fetch_scm_product(pool, scm_url, product_id).await?;
             (data, DIRECTION_SCM_TO_CRM)
         }
-        _ => return Err(format!("未知的来源系统: {}", req.source_system)),
+        _ => return Err(TopemsError::ValidationFailed(format!("未知的来源系统: {}", req.source_system)),)
     };
 
     match direction {
@@ -690,7 +691,7 @@ pub async fn sync_product(
             info!("产品数据从SCM同步到CRM成功 - 同步ID: {}", updated.id);
             Ok(updated)
         }
-        _ => Err("未知的同步方向".to_string()),
+        _ => Err(TopemsError::ValidationFailed("未知的同步方向".to_string())),
     }
 }
 
@@ -976,7 +977,7 @@ pub async fn retry_failed_sync(
     crm_url: &str,
     scm_url: &str,
     sync_id: Uuid,
-) -> Result<CrmScmSync, String> {
+) -> Result<CrmScmSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
     let sync = get_crm_scm_sync(pool, sync_id)
@@ -985,7 +986,7 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err("已达到最大重试次数".to_string());
+        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
     }
 
     let retry_config = RetryConfig {
@@ -1010,7 +1011,7 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, crm_url, scm_url, &sync_type, &payload).await
+            execute_sync_by_type(pool, sync.tenant_id, crm_url, scm_url, &sync_type, &payload).await.map_err(|e| e.to_string())
         })
         .await;
 
@@ -1031,7 +1032,7 @@ pub async fn retry_failed_sync(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
             );
-            Err(error)
+            Err(TopemsError::BusinessLogic(error))
         }
     }
 }
@@ -1043,7 +1044,7 @@ async fn execute_sync_by_type(
     scm_url: &str,
     sync_type: &str,
     payload: &serde_json::Value,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     match sync_type {
         SYNC_TYPE_OPPORTUNITY_TO_PURCHASE => {
             let opportunity_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("");
@@ -1072,7 +1073,7 @@ async fn execute_sync_by_type(
             sync_product(pool, tenant_id, crm_url, scm_url, &req).await?;
             Ok(())
         }
-        _ => Err(format!("不支持的同步类型: {}", sync_type)),
+        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
     }
 }
 

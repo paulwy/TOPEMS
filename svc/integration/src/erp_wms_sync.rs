@@ -3,6 +3,7 @@
 //! Implements bidirectional data synchronization between ERP inventory records
 //! and WMS warehouse management system, including stock movements and inventory adjustments.
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
@@ -519,7 +520,7 @@ pub async fn sync_inventory_adjustment(
     erp_url: &str,
     wms_url: &str,
     req: &SyncInventoryAdjustmentRequest,
-) -> Result<ErpWmsSync, String> {
+) -> Result<ErpWmsSync, TopemsError> {
     info!(
         "同步库存调整 - 调整ID: {}, 类型: {}",
         req.adjustment_id, req.adjustment_type
@@ -531,7 +532,7 @@ pub async fn sync_inventory_adjustment(
     let adjustment_data = match req.adjustment_type.as_str() {
         "erp" => fetch_erp_inventory_adjustment(pool, erp_url, adjustment_id).await?,
         "wms" => fetch_wms_inventory_adjustment(pool, wms_url, adjustment_id).await?,
-        _ => return Err(format!("未知的调整类型: {}", req.adjustment_type)),
+        _ => return Err(TopemsError::ValidationFailed(format!("未知的调整类型: {}", req.adjustment_type)),)
     };
 
     let direction = if req.adjustment_type == "erp" {
@@ -549,7 +550,7 @@ pub async fn sync_inventory_adjustment(
             let erp_id = apply_erp_inventory_adjustment(erp_url, &adjustment_data).await?;
             (erp_id, "erp")
         }
-        _ => return Err("未知的同步方向".to_string()),
+        _ => return Err(TopemsError::ValidationFailed("未知的同步方向".to_string())),
     };
 
     let product_code = adjustment_data
@@ -886,7 +887,7 @@ pub async fn retry_failed_sync(
     erp_url: &str,
     wms_url: &str,
     sync_id: Uuid,
-) -> Result<ErpWmsSync, String> {
+) -> Result<ErpWmsSync, TopemsError> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
     let sync = get_erp_wms_sync(pool, sync_id)
@@ -895,7 +896,7 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err("已达到最大重试次数".to_string());
+        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
     }
 
     let retry_config = RetryConfig {
@@ -920,7 +921,7 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, erp_url, wms_url, &sync_type, &payload).await
+            execute_sync_by_type(pool, sync.tenant_id, erp_url, wms_url, &sync_type, &payload).await.map_err(|e| e.to_string())
         })
         .await;
 
@@ -941,7 +942,7 @@ pub async fn retry_failed_sync(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
             );
-            Err(error)
+            Err(TopemsError::BusinessLogic(error))
         }
     }
 }
@@ -953,7 +954,7 @@ async fn execute_sync_by_type(
     wms_url: &str,
     sync_type: &str,
     payload: &serde_json::Value,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     match sync_type {
         SYNC_TYPE_ORDER => {
             let order_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("");
@@ -993,7 +994,7 @@ async fn execute_sync_by_type(
             sync_inventory_adjustment(pool, tenant_id, erp_url, wms_url, &req).await?;
             Ok(())
         }
-        _ => Err(format!("不支持的同步类型: {}", sync_type)),
+        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
     }
 }
 
