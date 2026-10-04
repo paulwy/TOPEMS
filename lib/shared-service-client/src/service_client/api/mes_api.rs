@@ -103,6 +103,24 @@ impl TypedServiceClient<MesApi> {
         self.get(&self.build_path(&path)).await
     }
 
+    /// 开始生产订单（PUT /api/mes/orders/{id}/start）
+    pub async fn start_production_order(
+        &self,
+        id: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/orders/{}/start", id);
+        self.put(&self.build_path(&path), &serde_json::json!({})).await
+    }
+
+    /// 完成生产订单（PUT /api/mes/orders/{id}/complete）
+    pub async fn complete_production_order(
+        &self,
+        id: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/orders/{}/complete", id);
+        self.put(&self.build_path(&path), &serde_json::json!({})).await
+    }
+
     /// ERP 下达生产工单（POST /api/mes/orders/from-erp）
     /// payload: { "erp_order": ErpSalesOrderInfo, "planned_start_date": ..., "notes": ... }
     pub async fn create_from_erp(

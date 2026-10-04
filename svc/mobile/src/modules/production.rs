@@ -67,6 +67,34 @@ pub async fn get_production_order(
     }
 }
 
+/// 开始生产订单（前端 POST /production/orders/{id}/start → MES PUT /orders/{id}/start）
+pub async fn start_production_order(
+    State(client): State<TypedServiceClient<MesApi>>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match client.start_production_order(&id).await {
+        Ok(data) => Json(ApiResponse::success(data, "开始生产订单成功")),
+        Err(e) => {
+            tracing::error!("调用MES服务开始生产订单失败: {}", e);
+            Json(ApiResponse::error(500, "开始生产订单失败"))
+        }
+    }
+}
+
+/// 完成生产订单（前端 POST /production/orders/{id}/complete → MES PUT /orders/{id}/complete）
+pub async fn complete_production_order(
+    State(client): State<TypedServiceClient<MesApi>>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match client.complete_production_order(&id).await {
+        Ok(data) => Json(ApiResponse::success(data, "完成生产订单成功")),
+        Err(e) => {
+            tracing::error!("调用MES服务完成生产订单失败: {}", e);
+            Json(ApiResponse::error(500, "完成生产订单失败"))
+        }
+    }
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["mobile:production:read"])),

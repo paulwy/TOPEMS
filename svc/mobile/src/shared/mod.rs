@@ -135,8 +135,8 @@ use crate::modules::photo_upload::{
     upload_photo,
 };
 use crate::modules::production::{
-    get_production_order, list_equipment, list_production_orders, list_work_reports,
-    submit_work_report,
+    complete_production_order, get_production_order, list_equipment, list_production_orders,
+    list_work_reports, start_production_order, submit_work_report,
 };
 use crate::modules::push_notification::{
     create_template, get_devices, get_notification_by_id, get_notification_list,
@@ -690,6 +690,15 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::get(get_customer)
                 .put(update_customer)
                 .delete(delete_customer),
+        )
+        // production 操作（前端 /production/orders/{id}/start|complete → MES）
+        .route(
+            "/production/orders/{id}/start",
+            axum::routing::post(start_production_order),
+        )
+        .route(
+            "/production/orders/{id}/complete",
+            axum::routing::post(complete_production_order),
         )
         // schedule（前端 /schedule/events → oa calendar events）
         .route(

@@ -42,7 +42,7 @@ impl MobileRealModule {
         let ctx = bootstrap_service(&config).await?;
         let _conn = ctx.db.acquire().await?;
 
-        // 1. 6 个服务客户端统一初始化（与独立部署一致的 service token）
+        // 1. 7 个服务客户端统一初始化（与独立部署一致的 service token）
         let (
             wms_client,
             hrm_client,
@@ -50,6 +50,7 @@ impl MobileRealModule {
             notification_client,
             mes_api_client,
             qms_api_client,
+            crm_client,
         ) = topems_mobile::shared::build_service_clients(&ctx.auth_state.jwt_secret).await;
 
         // 2. 构造 mobile AppState（复用 svc/mobile 类型）
@@ -63,6 +64,7 @@ impl MobileRealModule {
             notification_client,
             mes_api_client,
             qms_api_client,
+            crm_client,
         };
 
         // 3. 完整 protected 业务路由（approvals/oa/media/scan/patrol/offline 等 99 条）
