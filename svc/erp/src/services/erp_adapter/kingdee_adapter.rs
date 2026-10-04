@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 
 use reqwest::blocking::Client;
@@ -33,7 +34,7 @@ impl KingdeeApiClient {
         }
     }
 
-    pub fn authenticate(&mut self) -> Result<String, String> {
+    pub fn authenticate(&mut self) -> Result<String, TopemsError> {
         let auth_url = format!("{}/api/oauth2/token", self.config.api_endpoint);
 
         let params = [
@@ -64,12 +65,12 @@ impl KingdeeApiClient {
                 tracing::info!("金蝶认证成功");
                 return Ok(access_token.to_string());
             }
-            Err("解析token失败".to_string())
+            Err(TopemsError::BusinessLogic("解析token失败".to_string()))
         } else {
             let status = response.status();
             let error_text = response.text().unwrap_or_default();
             tracing::error!("金蝶认证失败: {} - {}", status, error_text);
-            Err(format!("认证失败: {} - {}", status, error_text))
+            Err(TopemsError::BusinessLogic(format!("认证失败: {} - {}", status, error_text)))
         }
     }
 

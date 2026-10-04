@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 
 use reqwest::blocking::Client;
@@ -31,7 +32,7 @@ impl YonyouApiClient {
         }
     }
 
-    pub fn login(&mut self) -> Result<String, String> {
+    pub fn login(&mut self) -> Result<String, TopemsError> {
         let login_url = format!("{}/uap/api/login", self.config.api_endpoint);
 
         let login_data = serde_json::json!({
@@ -44,7 +45,7 @@ impl YonyouApiClient {
 
         let response = match self.http_client.post(&login_url).json(&login_data).send() {
             Ok(resp) => resp,
-            Err(e) => return Err(e.to_string()),
+            Err(e) => return Err(TopemsError::BusinessLogic(e.to_string())),
         };
 
         if response.status().is_success() {
@@ -56,13 +57,13 @@ impl YonyouApiClient {
                         tracing::info!("用友登录成功");
                         return Ok(session_id.to_string());
                     }
-                    Err("解析session失败".to_string())
+                    Err(TopemsError::BusinessLogic("解析session失败".to_string()))
                 }
-                Err(e) => Err(e.to_string()),
+                Err(e) => Err(TopemsError::BusinessLogic(e.to_string())),
             }
         } else {
             let status = response.status();
-            Err(format!("登录失败: {}", status))
+            Err(TopemsError::BusinessLogic(format!("登录失败: {}", status)))
         }
     }
 

@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::http::HeaderMap;
 use serde::Deserialize;
 use serde_json::json;
@@ -42,7 +43,7 @@ pub async fn call_finance_core_approval(
     username: &str,
     rejection_reason: Option<&str>,
     comment: Option<&str>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let action_tag = match action {
         "submit" => "approval_submit",
         "approve" => "approval_approve",
@@ -96,7 +97,7 @@ pub async fn call_finance_core_approval(
             {"reason": rejection_reason, "comment": comment}
         ]),
         "cancel" => serde_json::json!([doc_type, doc_id.to_string()]),
-        _ => return Err(format!("Unknown action: {}", action)),
+        _ => return Err(TopemsError::BusinessLogic(format!("Unknown action: {}", action)),)
     };
 
     let result = match action {
@@ -104,12 +105,12 @@ pub async fn call_finance_core_approval(
         "approve" => finance_client.approve_approval(&body).await,
         "reject" => finance_client.reject_approval(&body).await,
         "cancel" => finance_client.cancel_approval(&body).await,
-        _ => return Err(format!("Unknown action: {}", action)),
+        _ => return Err(TopemsError::BusinessLogic(format!("Unknown action: {}", action)),)
     };
 
     match result {
         Ok(_) => Ok(()),
-        Err(e) => Err(format!("Finance Core returned error: {}", e)),
+        Err(e) => Err(TopemsError::BusinessLogic(format!("Finance Core returned error: {}", e)),)
     }
 }
 

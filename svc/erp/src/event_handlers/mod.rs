@@ -17,6 +17,7 @@
 //! - `PaymentReceived` → 自动核销应收账款（V20.1 新增）
 //! - `PaymentMade` → 自动核销应付账款（V20.1 新增）
 
+use topems_shared_core::error::TopemsError;
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use topems_shared_core::cache::{
@@ -33,7 +34,7 @@ use topems_shared_event::event::{
     StockInboundPayload, StockOutboundPayload, WorkOrderCompletedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 /// ERP 事件处理器集合，承载必要的依赖
 #[derive(Clone)]
@@ -83,7 +84,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_sales_order_approved 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -95,7 +96,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_purchase_order_approved 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -107,7 +108,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_work_order_completed 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -119,7 +120,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_stock_inbound 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -131,7 +132,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_stock_outbound 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -143,7 +144,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_employee_onboarded 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -155,7 +156,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_pm_project_completed 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -167,7 +168,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_pm_project_settled 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -179,7 +180,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_opportunity_won 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -191,7 +192,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_inventory_updated 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -203,7 +204,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_return_completed 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -215,7 +216,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_payment_received 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -227,7 +228,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_payment_made 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -242,7 +243,7 @@ impl ErpEventHandlers {
                                 "[erp] handle_master_data_employee_changed 失败: {}",
                                 e
                             );
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -257,7 +258,7 @@ impl ErpEventHandlers {
                                 "[erp] handle_master_data_organization_changed 失败: {}",
                                 e
                             );
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -272,7 +273,7 @@ impl ErpEventHandlers {
                                 "[erp] handle_master_data_customer_changed 失败: {}",
                                 e
                             );
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -287,7 +288,7 @@ impl ErpEventHandlers {
                                 "[erp] handle_master_data_material_changed 失败: {}",
                                 e
                             );
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -299,7 +300,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_reconciliation_created 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -311,7 +312,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_reconciliation_approved 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -323,7 +324,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_reconciliation_updated 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -335,7 +336,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_hrm_payroll_posted 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -347,7 +348,7 @@ impl ErpEventHandlers {
                         Ok(()) => Ok(()),
                         Err(e) => {
                             tracing::error!("[erp] handle_mes_work_report_submitted 失败: {}", e);
-                            Err(e)
+                            Err(e.to_string())
                         }
                     }
                 })
@@ -1327,7 +1328,7 @@ impl ErpEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[erp] CRM商机赢单自动创建销售订单失败: {}", e);
-                return Err(format!("创建销售订单失败: {}", e));
+                return Err(TopemsError::BusinessLogic(format!("创建销售订单失败: {}", e)));
             }
         }
 
@@ -1918,10 +1919,10 @@ impl ErpEventHandlers {
                 );
             }
             Err(e) => {
-                return Err(format!(
+                return Err(TopemsError::BusinessLogic(format!(
                     "[erp-mdm] 本地 ref 同步失败 - master_data_id={}, domain={}, local_entity_type={}: {}",
                     event.master_data_id, domain_str, local_entity_type, e
-                ));
+                )));
             }
         }
 
@@ -2190,10 +2191,10 @@ impl ErpEventHandlers {
                 "[erp] MesWorkReportSubmitted 无匹配 erp 订单 - work_report_id={}, mes_order_id={:?}（进 DLQ 待人工对账）",
                 payload.work_report_id, payload.mes_order_id
             );
-            return Err(format!(
+            return Err(TopemsError::BusinessLogic(format!(
                 "未找到对应 erp 生产订单（mes_order_id={:?}）",
                 payload.mes_order_id
-            ));
+            )));
         };
 
         let now = chrono::Utc::now();

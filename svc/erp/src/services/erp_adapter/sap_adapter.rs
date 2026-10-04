@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 
 use reqwest::blocking::Client;
@@ -29,7 +30,7 @@ impl SapApiClient {
         }
     }
 
-    pub fn authenticate(&self) -> Result<String, String> {
+    pub fn authenticate(&self) -> Result<String, TopemsError> {
         let auth_url = format!("{}/sap/bc/rest/oes/oauth2/token", self.config.api_endpoint);
 
         let params = [
@@ -42,7 +43,7 @@ impl SapApiClient {
 
         let response = match self.http_client.post(&auth_url).form(&params).send() {
             Ok(resp) => resp,
-            Err(e) => return Err(e.to_string()),
+            Err(e) => return Err(TopemsError::BusinessLogic(e.to_string())),
         };
 
         if response.status().is_success() {
@@ -54,13 +55,13 @@ impl SapApiClient {
                         tracing::info!("SAP认证成功");
                         return Ok(access_token.to_string());
                     }
-                    Err("解析token失败".to_string())
+                    Err(TopemsError::BusinessLogic("解析token失败".to_string()))
                 }
-                Err(e) => Err(e.to_string()),
+                Err(e) => Err(TopemsError::BusinessLogic(e.to_string())),
             }
         } else {
             let status = response.status();
-            Err(format!("SAP认证失败: {}", status))
+            Err(TopemsError::BusinessLogic(format!("SAP认证失败: {}", status)))
         }
     }
 

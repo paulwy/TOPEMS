@@ -8,6 +8,7 @@
 //! - Part 2: 影响分析（变更影响范围评估、风险等级、工作量估算、报告生成）
 //! - Part 3: 数据血缘图谱（图谱构建、过滤、统计、导出、关键路径、循环依赖检测）
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -1038,7 +1039,7 @@ async fn get_lineage_graph_stats() -> LineageGraphStats {
     }
 }
 
-async fn export_graph(format: &str) -> Result<String, String> {
+async fn export_graph(format: &str) -> Result<String, TopemsError> {
     let graph = build_lineage_graph().await;
 
     match format {
@@ -1081,7 +1082,7 @@ async fn export_graph(format: &str) -> Result<String, String> {
             xml.push_str("</graphml>\n");
             Ok(xml)
         }
-        _ => Err(format!("不支持的导出格式: {}", format)),
+        _ => Err(TopemsError::ValidationFailed(format!("不支持的导出格式: {}", format)),)
     }
 }
 

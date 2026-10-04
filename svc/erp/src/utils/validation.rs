@@ -1,6 +1,7 @@
 // 重新导出共享库的验证模块
 
 // 自定义验证函数（保留原有实现以确保 API 兼容）
+use topems_shared_core::error::TopemsError;
 use lazy_static::lazy_static;
 use regex::Regex;
 
@@ -44,9 +45,9 @@ pub fn validate_asset_number(number: &str) -> bool {
     ASSET_NUMBER_REGEX.is_match(number)
 }
 
-pub fn validate_required_field(field: &str, value: &str) -> Result<(), String> {
+pub fn validate_required_field(field: &str, value: &str) -> Result<(), TopemsError> {
     if value.trim().is_empty() {
-        Err(format!("{}不能为空", field))
+        Err(TopemsError::ValidationFailed(format!("{}不能为空", field)))
     } else {
         Ok(())
     }
@@ -58,12 +59,12 @@ pub fn validate_string_length(
     value: &str,
     min: usize,
     max: usize,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let len = value.chars().count();
     if len < min {
-        Err(format!("{}长度不能少于{}个字符", field, min))
+        Err(TopemsError::ValidationFailed(format!("{}长度不能少于{}个字符", field, min)))
     } else if len > max {
-        Err(format!("{}长度不能超过{}个字符", field, max))
+        Err(TopemsError::ValidationFailed(format!("{}长度不能超过{}个字符", field, max)))
     } else {
         Ok(())
     }

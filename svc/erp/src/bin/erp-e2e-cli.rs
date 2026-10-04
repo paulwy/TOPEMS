@@ -12,12 +12,13 @@
 //! Exit code: 全部通过=0；任一失败=1；参数错误=2。
 
 #![allow(clippy::as_conversions)]
+use topems_shared_core::error::TopemsError;
 use topems_erp::modules::procurement_e2e::{
     sample_happy_cny, sample_multi_currency_usd_cny, validate_procurement_chain,
     validate_procurement_chain_with_rates, ErpE2eError,
 };
 
-fn scenario_happy() -> Result<(), String> {
+fn scenario_happy() -> Result<(), TopemsError> {
     let req = sample_happy_cny();
     let r = validate_procurement_chain(&req.po, &req.grn, &req.invoice, &req.payment)
         .map_err(|e| format!("unexpected err: {e}"))?;
@@ -25,7 +26,7 @@ fn scenario_happy() -> Result<(), String> {
     let d: f64 = r.journal_entries.iter().map(|l| l.debit).sum();
     let c: f64 = r.journal_entries.iter().map(|l| l.credit).sum();
     if (d - c).abs() > 0.02 {
-        return Err(format!("entries not balanced: debit={d} credit={c}"));
+        return Err(TopemsError::BusinessLogic(format!("entries not balanced: debit={d} credit={c}")));
     }
     println!(
         "  ok  totals: PO={} GRN={} INV={} PAY={}",
@@ -41,7 +42,7 @@ fn scenario_happy() -> Result<(), String> {
     Ok(())
 }
 
-fn scenario_excess_grn() -> Result<(), String> {
+fn scenario_excess_grn() -> Result<(), TopemsError> {
     let mut req = sample_happy_cny();
     if let Some(line) = req.grn.lines.first_mut() {
         line.quantity = 15.0;
@@ -64,11 +65,11 @@ fn scenario_excess_grn() -> Result<(), String> {
             );
             Ok(())
         }
-        other => Err(format!("wrong error variant: {other:?}")),
+        other => Err(TopemsError::BusinessLogic(format!("wrong error variant: {other:?}")),)
     }
 }
 
-fn scenario_mismatch_inv() -> Result<(), String> {
+fn scenario_mismatch_inv() -> Result<(), TopemsError> {
     let mut req = sample_happy_cny();
     if let Some(line) = req.invoice.lines.first_mut() {
         line.unit_price = 150.0;
@@ -90,11 +91,11 @@ fn scenario_mismatch_inv() -> Result<(), String> {
             );
             Ok(())
         }
-        other => Err(format!("wrong error variant: {other:?}")),
+        other => Err(TopemsError::BusinessLogic(format!("wrong error variant: {other:?}")),)
     }
 }
 
-fn scenario_period_close() -> Result<(), String> {
+fn scenario_period_close() -> Result<(), TopemsError> {
     let mut req = sample_happy_cny();
     req.grn.period_status = "Closed".into();
     let err = validate_procurement_chain(&req.po, &req.grn, &req.invoice, &req.payment)
@@ -106,12 +107,12 @@ fn scenario_period_close() -> Result<(), String> {
             println!("  ok  error code: PERIOD_CLOSED document={document}");
             Ok(())
         }
-        other => Err(format!("wrong error variant: {other:?}")),
+        other => Err(TopemsError::BusinessLogic(format!("wrong error variant: {other:?}")),)
     }
 }
 
 #[allow(clippy::as_conversions)]
-fn scenario_multi_currency() -> Result<(), String> {
+fn scenario_multi_currency() -> Result<(), TopemsError> {
     let req = sample_multi_currency_usd_cny();
     let r = validate_procurement_chain_with_rates(
         &req.po,
@@ -124,15 +125,15 @@ fn scenario_multi_currency() -> Result<(), String> {
     // 总额: 1130 USD × 7.18 = 8113.4 CNY（付款）
     let expected_payment_cny = 1130.0 * 7.18;
     if (r.total_payment - expected_payment_cny).abs() > 0.02 {
-        return Err(format!(
+        return Err(TopemsError::BusinessLogic(format!(
             "expected total_payment={expected_payment_cny} got {}",
             r.total_payment
-        ));
+        )));
     }
     let d: f64 = r.journal_entries.iter().map(|l| l.debit).sum();
     let c: f64 = r.journal_entries.iter().map(|l| l.credit).sum();
     if (d - c).abs() > 0.02 {
-        return Err(format!("entries not balanced: debit={d} credit={c}"));
+        return Err(TopemsError::BusinessLogic(format!("entries not balanced: debit={d} credit={c}")));
     }
     println!(
         "  ok  USD→CNY totals: PO={:.2} PAY={:.2}",
@@ -147,7 +148,7 @@ fn scenario_multi_currency() -> Result<(), String> {
     Ok(())
 }
 
-const ALL: &[(&str, fn() -> Result<(), String>)] = &[
+const ALL: &[(&str, fn() -> Result<(), TopemsError>)] = &[
     ("happy", scenario_happy as _),
     ("excess_grn", scenario_excess_grn as _),
     ("mismatch_inv", scenario_mismatch_inv as _),
@@ -190,7 +191,7 @@ fn main() {
             }
             Err(msg) => {
                 println!("❌ FAIL\n   {msg}");
-                fail.push((name.to_string(), msg));
+                fail.push((name.to_string(), msg.to_string()));
             }
         }
     }
