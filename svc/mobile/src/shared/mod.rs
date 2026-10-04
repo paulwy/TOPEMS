@@ -15,8 +15,9 @@ use std::sync::Arc;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::{
-    api::hrm_api::HrmApi, api::mes_api::MesApi, api::notification_api::NotificationApi,
-    api::qms_api::QmsApi, api::wms_api::WmsApi, TypedServiceClient, WorkflowApi,
+    api::crm_api::CrmApi, api::hrm_api::HrmApi, api::mes_api::MesApi,
+    api::notification_api::NotificationApi, api::qms_api::QmsApi, api::wms_api::WmsApi,
+    TypedServiceClient, WorkflowApi,
 };
 
 #[derive(Clone)]
@@ -30,6 +31,7 @@ pub struct AppState {
     pub notification_client: TypedServiceClient<NotificationApi>,
     pub mes_api_client: TypedServiceClient<MesApi>,
     pub qms_api_client: TypedServiceClient<QmsApi>,
+    pub crm_client: TypedServiceClient<CrmApi>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -79,6 +81,12 @@ impl FromRef<AppState> for TypedServiceClient<NotificationApi> {
         state.notification_client.clone()
     }
 }
+
+impl FromRef<AppState> for TypedServiceClient<CrmApi> {
+    fn from_ref(state: &AppState) -> Self {
+        state.crm_client.clone()
+    }
+}
 use crate::modules::approval::{
     approve_approval_task, delegate_approval_task, get_approval_history, get_approval_task,
     get_pending_approval_tasks, list_approval_tasks, reject_approval_task,
@@ -89,6 +97,9 @@ use crate::modules::attendance::{
 };
 use crate::modules::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
+};
+use crate::modules::customer::{
+    create_customer, delete_customer, get_customer, list_customers, update_customer,
 };
 use crate::modules::device::{list_my_devices, register_device, update_push_token};
 use crate::modules::inventory::{
@@ -164,6 +175,7 @@ pub async fn build_service_clients(
     TypedServiceClient<NotificationApi>,
     TypedServiceClient<MesApi>,
     TypedServiceClient<QmsApi>,
+    TypedServiceClient<CrmApi>,
 ) {
     let wms_client = match TypedServiceClient::<WmsApi>::from_env_default()
         .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["wms:admin"]))
@@ -277,6 +289,24 @@ pub async fn build_service_clients(
         }
     };
 
+    let crm_client = match TypedServiceClient::<CrmApi>::from_env_default()
+        .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["crm:admin"]))
+    {
+        Ok(client) => {
+            tracing::info!("✅ CRM服务客户端初始化成功（service token）");
+            client
+        }
+        Err(e) => {
+            tracing::warn!(
+                "⚠️ CRM服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
+                e
+            );
+            TypedServiceClient::new(CrmApi, "http://localhost:8029")
+                .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["crm:admin"]))
+                .expect("hardcoded fallback URL is valid")
+        }
+    };
+
     (
         wms_client,
         hrm_client,
@@ -284,6 +314,7 @@ pub async fn build_service_clients(
         notification_client,
         mes_api_client,
         qms_api_client,
+        crm_client,
     )
 }
 
@@ -651,6 +682,14 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route(
             "/dashboard/activities",
             axum::routing::get(get_recent_activities),
+        )
+        // customer（前端 /customer → CRM 服务完整 CRUD）
+        .route("/customer", axum::routing::get(list_customers).post(create_customer))
+        .route(
+            "/customer/{id}",
+            axum::routing::get(get_customer)
+                .put(update_customer)
+                .delete(delete_customer),
         )
         // schedule（前端 /schedule/events → oa calendar events）
         .route(

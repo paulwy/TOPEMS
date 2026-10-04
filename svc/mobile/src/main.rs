@@ -88,6 +88,7 @@ async fn main() -> Result<()> {
         notification_client,
         mes_api_client,
         qms_api_client,
+        crm_client,
     ) = crate::shared::build_service_clients(&jwt_secret).await;
     let app_state = AppState {
         auth_state: ctx.auth_state.clone(),
@@ -99,6 +100,7 @@ async fn main() -> Result<()> {
         notification_client,
         mes_api_client,
         qms_api_client,
+        crm_client,
     };
 
     // Public routes (no auth)
