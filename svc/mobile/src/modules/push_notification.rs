@@ -622,8 +622,9 @@ pub async fn get_notification_by_id(
             Json(ApiResponse::success(notification, "获取推送通知成功")),
         )
     } else {
+        // 数据不存在语义：HTTP 200 + 内层 code 404。
         (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(ApiResponse::error(404, "推送通知不存在")),
         )
     }

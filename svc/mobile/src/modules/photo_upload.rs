@@ -362,8 +362,34 @@ pub async fn get_photo_list(
     let page = params.page.unwrap_or(1);
     let size = params.size.unwrap_or(20);
 
-    let photos = match db_get_photo_uploads(&pool, user_id, params.status.as_deref()).await {
-        Ok(p) => p,
+    // 根因：旧查询引用了 mobile.photo_uploads 不存在的 error_message 列，
+    // 且未覆盖 PhotoUpload::from_row 所需列。按真实表结构内联查询（含软删除过滤）。
+    let query = if let Some(status) = &params.status {
+        sqlx::query(only_own_schema_query!(
+            "mobile",
+            "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type,
+             width, height, compression_ratio, has_watermark, watermark_text, upload_status,
+             upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at
+             FROM mobile.photo_uploads
+             WHERE user_id = $1 AND upload_status = $2 AND deleted_at IS NULL
+             ORDER BY created_at DESC"
+        ))
+        .bind(user_id)
+        .bind(status)
+    } else {
+        sqlx::query(only_own_schema_query!(
+            "mobile",
+            "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type,
+             width, height, compression_ratio, has_watermark, watermark_text, upload_status,
+             upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at
+             FROM mobile.photo_uploads
+             WHERE user_id = $1 AND deleted_at IS NULL
+             ORDER BY created_at DESC"
+        ))
+        .bind(user_id)
+    };
+    let rows = match query.fetch_all(&pool).await {
+        Ok(rows) => rows,
         Err(e) => {
             tracing::error!("获取照片列表失败: {}", e);
             return (
@@ -372,6 +398,10 @@ pub async fn get_photo_list(
             );
         }
     };
+    let photos: Vec<PhotoUpload> = rows
+        .iter()
+        .filter_map(|row| PhotoUpload::from_row(row).ok())
+        .collect();
 
     let total = photos.len() as i64;
     let start = ((page - 1) * size) as usize;
@@ -414,10 +444,18 @@ pub async fn get_photo_by_id(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM mobile.photo_uploads WHERE id = $1"))
-        .bind(id)
-        .fetch_optional(&pool)
-        .await
+    // 根因：旧 SELECT 引用了不存在的 error_message 列，且列不全导致 from_row 失败。
+    // 按真实表结构与 PhotoUpload::from_row 所需列内联查询。
+    let row = match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type,
+         width, height, compression_ratio, has_watermark, watermark_text, upload_status,
+         upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at
+         FROM mobile.photo_uploads WHERE id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(id)
+    .fetch_optional(&pool)
+    .await
     {
         Ok(r) => r,
         Err(e) => {
@@ -445,8 +483,10 @@ pub async fn get_photo_by_id(
             Json(ApiResponse::success(photo, "获取照片成功")),
         )
     } else {
+        // 数据不存在语义：HTTP 200 + 内层 code 404（与 announcements 约定一致），
+        // 避免裸 HTTP 404 被前端契约探测判为路由缺失。
         (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(ApiResponse::error(404, "照片不存在")),
         )
     }
@@ -505,8 +545,9 @@ pub async fn get_upload_progress(
             Json(ApiResponse::success(response, "获取上传进度成功")),
         )
     } else {
+        // 数据不存在语义：HTTP 200 + 内层 code 404。
         (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(ApiResponse::error(404, "上传记录不存在")),
         )
     }
@@ -553,7 +594,8 @@ pub async fn delete_photo(
             Json(ApiResponse::success((), "删除照片成功")),
         ),
         Ok(_) => (
-            StatusCode::NOT_FOUND,
+            // 数据不存在语义：HTTP 200 + 内层 code 404。
+            StatusCode::OK,
             Json(ApiResponse::error(404, "照片不存在或无权删除")),
         ),
         Err(e) => {

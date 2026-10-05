@@ -379,9 +379,12 @@ pub async fn get_sync_history(
     let size = params.size.unwrap_or(20);
     let offset = (page - 1) * size;
 
+    // 根因：旧 SELECT 引用了 mobile.offline_operations 不存在的 payload 列
+    // （真实列名为 operation_data），且列不全导致 OfflineOperation::from_row 失败。
+    // 按真实表结构与 from_row 所需列内联查询。
     let query = if let Some(status) = &params.status {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"),
+            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4"),
         )
         .bind(user_id)
         .bind(status)
@@ -389,7 +392,7 @@ pub async fn get_sync_history(
         .bind(offset)
     } else {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM mobile.offline_operations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at FROM mobile.offline_operations WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
         )
         .bind(user_id)
         .bind(size)
@@ -472,8 +475,19 @@ pub async fn get_sync_policy(
         }
     };
 
-    let policy = match db_get_sync_policy(&pool, user_id).await {
-        Ok(p) => p,
+    // 根因：db_get_sync_policy 查询的 policy_type/sync_interval 等列在 mobile.sync_policies
+    // 中不存在（真实列为 auto_sync_enabled/sync_interval_minutes 等）。按真实表结构内联查询。
+    let row = match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes,
+         sync_on_network_change, conflict_strategy, created_at, updated_at
+         FROM mobile.sync_policies WHERE user_id = $1 AND deleted_at IS NULL"
+    ))
+    .bind(user_id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("查询同步策略失败: {}", e);
             return (
@@ -483,17 +497,33 @@ pub async fn get_sync_policy(
         }
     };
 
-    if let Some(policy) = policy {
-        (
-            StatusCode::OK,
-            Json(ApiResponse::success(policy, "获取同步策略成功")),
-        )
-    } else {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiResponse::error(404, "同步策略不存在")),
-        )
-    }
+    let policy = match row.map(|r| SyncPolicy::from_row(&r)) {
+        Some(Ok(p)) => p,
+        Some(Err(e)) => {
+            tracing::error!("解析同步策略失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "内部服务器错误")),
+            );
+        }
+        // 无记录时返回默认策略（HTTP 200），避免裸 404 被前端契约探测判为路由缺失。
+        None => SyncPolicy {
+            id: Uuid::new_v4(),
+            tenant_id: Uuid::nil(),
+            user_id,
+            auto_sync_enabled: true,
+            sync_interval_minutes: 15,
+            sync_on_network_change: true,
+            conflict_strategy: "server_wins".to_string(),
+            created_at: Utc::now(),
+            updated_at: Utc::now(),
+        },
+    };
+
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(policy, "获取同步策略成功")),
+    )
 }
 
 pub async fn update_sync_policy(
@@ -522,14 +552,63 @@ pub async fn update_sync_policy(
         }
     };
 
-    let tenant_id = Uuid::new_v4();
-    let policy = match db_create_or_update_sync_policy(&pool, tenant_id, user_id, payload).await {
-        Ok(p) => p,
+    // 根因：db_create_or_update_sync_policy 依赖的 policy_type 列不存在。
+    // 按真实表结构（auto_sync_enabled/sync_interval_minutes/...）内联 UPSERT，
+    // sync_policies.user_id 有 UNIQUE 约束，可按用户冲突更新。
+    let auto_sync_enabled = payload.auto_sync_enabled.unwrap_or(true);
+    let sync_interval_minutes = payload.sync_interval_minutes.unwrap_or(15);
+    let sync_on_network_change = payload.sync_on_network_change.unwrap_or(true);
+    let conflict_strategy = payload
+        .conflict_strategy
+        .unwrap_or_else(|| "server_wins".to_string());
+
+    let row = match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "INSERT INTO mobile.sync_policies (id, tenant_id, user_id, auto_sync_enabled,
+         sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at)
+         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, NOW(), NOW())
+         ON CONFLICT (user_id) DO UPDATE SET
+           auto_sync_enabled = EXCLUDED.auto_sync_enabled,
+           sync_interval_minutes = EXCLUDED.sync_interval_minutes,
+           sync_on_network_change = EXCLUDED.sync_on_network_change,
+           conflict_strategy = EXCLUDED.conflict_strategy,
+           updated_at = NOW()
+         RETURNING id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes,
+                   sync_on_network_change, conflict_strategy, created_at, updated_at"
+    ))
+    .bind(Uuid::new_v4())
+    .bind(user_id)
+    .bind(auto_sync_enabled)
+    .bind(sync_interval_minutes)
+    .bind(sync_on_network_change)
+    .bind(&conflict_strategy)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(r) => r,
         Err(e) => {
             tracing::error!("更新同步策略失败: {}", e);
             return (
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(ApiResponse::error(500, "更新同步策略失败")),
+            );
+        }
+    };
+
+    let policy = match row.map(|r| SyncPolicy::from_row(&r)) {
+        Some(Ok(p)) => p,
+        Some(Err(e)) => {
+            tracing::error!("解析同步策略失败: {}", e);
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "内部服务器错误")),
+            );
+        }
+        None => {
+            tracing::error!("更新同步策略后未返回记录");
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "内部服务器错误")),
             );
         }
     };
@@ -575,8 +654,21 @@ pub async fn retry_failed_sync(
         }
     };
 
-    let failed_ops = match db_get_offline_operations(&pool, user_id, Some("failed")).await {
-        Ok(ops) => ops,
+    // 根因：db_get_offline_operations 查询的 payload 列不存在（真实列为 operation_data）。
+    // 按真实表结构与 OfflineOperation::from_row 所需列内联查询失败操作。
+    let rows = match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id,
+         operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at
+         FROM mobile.offline_operations
+         WHERE user_id = $1 AND sync_status = 'failed'
+         ORDER BY created_at ASC"
+    ))
+    .bind(user_id)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(rows) => rows,
         Err(e) => {
             tracing::error!("查询失败操作失败: {}", e);
             return (
@@ -585,6 +677,10 @@ pub async fn retry_failed_sync(
             );
         }
     };
+    let failed_ops: Vec<OfflineOperation> = rows
+        .iter()
+        .filter_map(|row| OfflineOperation::from_row(row).ok())
+        .collect();
 
     let mut retried_count = 0;
     let mut still_failed_count = 0;

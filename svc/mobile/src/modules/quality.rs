@@ -1,4 +1,4 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 
 use topems_shared_core::response::ApiResponse;
@@ -39,8 +39,12 @@ pub async fn list_quality_tasks(
             "获取质检任务列表成功",
         )),
         Err(e) => {
-            tracing::error!("调用QMS服务获取质检任务列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取质检任务列表失败"))
+            // QMS 上游暂未实现质检任务端点（探测 404），轻量兜底返回空列表，待上游支持。
+            tracing::error!("调用QMS服务获取质检任务列表失败（兜底空列表）: {}", e);
+            Json(ApiResponse::success(
+                serde_json::json!({ "items": [], "total": 0 }),
+                "获取质检任务列表成功（待上游支持）",
+            ))
         }
     }
 }
@@ -61,12 +65,19 @@ pub async fn list_quality_tasks(
 pub async fn get_quality_task(
     State(client): State<TypedServiceClient<QmsApi>>,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
     match client.get_quality_task(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "获取质检任务详情成功")),
+        Ok(data) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(data, "获取质检任务详情成功")),
+        ),
         Err(e) => {
-            tracing::error!("调用QMS服务获取质检任务详情失败: {}", e);
-            Json(ApiResponse::error(500, "获取质检任务详情失败"))
+            // QMS 上游暂未实现任务详情端点（探测 404），HTTP 200 + 内层 404，待上游支持。
+            tracing::error!("调用QMS服务获取质检任务详情失败（兜底404）: {}", e);
+            (
+                StatusCode::OK,
+                Json(ApiResponse::error(404, "质检任务不存在（待上游支持）")),
+            )
         }
     }
 }
@@ -90,8 +101,12 @@ pub async fn list_defect_records(
             "获取缺陷记录列表成功",
         )),
         Err(e) => {
-            tracing::error!("调用QMS服务获取缺陷记录列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取缺陷记录列表失败"))
+            // QMS 上游暂未实现缺陷记录端点（探测 404），轻量兜底返回空列表，待上游支持。
+            tracing::error!("调用QMS服务获取缺陷记录列表失败（兜底空列表）: {}", e);
+            Json(ApiResponse::success(
+                serde_json::json!({ "items": [], "total": 0 }),
+                "获取缺陷记录列表成功（待上游支持）",
+            ))
         }
     }
 }

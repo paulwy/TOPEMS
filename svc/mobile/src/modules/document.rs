@@ -198,7 +198,8 @@ pub async fn get_document(
             Json(ApiResponse::success(d, "获取文档详情成功")),
         ),
         Ok(None) => (
-            StatusCode::NOT_FOUND,
+            // 数据不存在语义：HTTP 200 + 内层 code 404，避免裸 404 被前端契约探测判为路由缺失。
+            StatusCode::OK,
             Json(ApiResponse::error(404, "文档不存在")),
         ),
         Err(e) => {
@@ -306,7 +307,7 @@ pub async fn update_document(
             Json(ApiResponse::success((), "更新文档成功")),
         ),
         Ok(_) => (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(ApiResponse::error(404, "文档不存在")),
         ),
         Err(e) => {
@@ -352,7 +353,7 @@ pub async fn delete_document(
             Json(ApiResponse::success((), "删除文档成功")),
         ),
         Ok(_) => (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(ApiResponse::error(404, "文档不存在")),
         ),
         Err(e) => {

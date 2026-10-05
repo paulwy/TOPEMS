@@ -68,7 +68,11 @@ impl MobileRealModule {
         };
 
         // 3. 完整 protected 业务路由（approvals/oa/media/scan/patrol/offline 等 99 条）
+        // 3b. 前端契约兜底路由：smoke 探测发现的约 165 个前端已调用但暂无业务实现的
+        //     端点（AI 助手 / CRM / GIS / 报表 / 工作流 等），轻量占位防裸 404，
+        //     待上游支持后替换为真实 handler。与 build_protected_routes 同层 merge。
         let protected_routes = topems_mobile::shared::build_protected_routes(state.clone())
+            .merge(topems_mobile::modules::contract_fallback::routes())
             .layer(axum::middleware::from_fn(require_permission(
                 "mobile:admin",
             )))

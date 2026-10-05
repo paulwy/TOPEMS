@@ -201,7 +201,24 @@ pub async fn update_push_config(
     State(pool): State<Pool<Postgres>>,
     Json(payload): Json<Value>,
 ) -> impl IntoResponse {
-    let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
+    // push_config.user_id 为 NOT NULL，必须绑定当前登录用户，否则触发约束冲突（500 根因）。
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => match Uuid::parse_str(&id) {
+            Ok(u) => u,
+            Err(_) => {
+                return (
+                    StatusCode::UNAUTHORIZED,
+                    Json(ApiResponse::<Value>::error(401, "无效的用户ID")),
+                );
+            }
+        },
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::<Value>::error(401, "未授权")),
+            );
+        }
+    };
     if let Err(e) = sqlx::query(PUSH_CONFIG_TABLE_SQL).execute(&pool).await {
         tracing::error!("初始化 push_config 表失败: {}", e);
         return (
@@ -209,11 +226,14 @@ pub async fn update_push_config(
             Json(ApiResponse::<Value>::error(500, "初始化失败")),
         );
     }
+    // tenant_id 固定为平台默认租户（与 RLS 默认值一致），使 ON CONFLICT (tenant_id, user_id)
+    // 能按用户真正命中冲突更新，而不是每次插入新行。
     match sqlx::query(
-        r#"INSERT INTO mobile.push_config (channel_config, updated_at)
-           VALUES ($1, NOW())
+        r#"INSERT INTO mobile.push_config (tenant_id, user_id, channel_config, updated_at)
+           VALUES ('00000000-0000-0000-0000-000000000001', $1, $2, NOW())
            ON CONFLICT (tenant_id, user_id) DO UPDATE SET channel_config = EXCLUDED.channel_config, updated_at = NOW()"#,
     )
+    .bind(user_id)
     .bind(&payload)
     .execute(&pool)
     .await

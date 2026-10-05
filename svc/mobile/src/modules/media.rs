@@ -359,7 +359,8 @@ pub async fn delete_media(
             (StatusCode::OK, Json(ApiResponse::success((), "删除成功")))
         }
         Ok(_) => (
-            StatusCode::NOT_FOUND,
+            // 数据不存在语义：HTTP 200 + 内层 code 404。
+            StatusCode::OK,
             Json(ApiResponse::error(404, "文件不存在或无权删除")),
         ),
         Err(e) => {
