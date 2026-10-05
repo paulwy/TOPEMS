@@ -1112,7 +1112,7 @@ pub async fn get_alert_rule(
     }
 
     let result =
-        sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, warehouse_id, item_id, item_code, alert_type, threshold_min, threshold_max, unit, is_active, created_at, updated_at FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1"))
+        sqlx::query(only_own_schema_query!("wms", "SELECT id, tenant_id, warehouse_id, rule_name, alert_type, material_code, threshold_value, severity, enabled, remarks, created_at, updated_at FROM wms.inventory_alert_rules WHERE deleted_at IS NULL AND id = $1"))
             .bind(id)
             .fetch_optional(&mut **txn)
             .await;

@@ -1028,6 +1028,11 @@ pub async fn confirm_outbound_order(
             "success",
             None,
         ),
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "出库订单不存在或当前状态不允许确认")),
+            "not_found",
+            None,
+        ),
         Err(e) => {
             tracing::error!("确认出库订单失败: {}", e);
             (
@@ -1113,6 +1118,11 @@ pub async fn pick_outbound_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "开始拣货")),
             "success",
+            None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "出库订单不存在或当前状态不允许拣货")),
+            "not_found",
             None,
         ),
         Err(e) => {
@@ -1202,6 +1212,11 @@ pub async fn pack_outbound_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "开始打包")),
             "success",
+            None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "出库订单不存在或当前状态不允许打包")),
+            "not_found",
             None,
         ),
         Err(e) => {
@@ -1550,6 +1565,11 @@ pub async fn complete_outbound_order(
         Ok(order) => (
             Json(ApiResponse::success(order.clone(), "出库订单完成")),
             "success",
+            None,
+        ),
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "出库订单不存在或当前状态不允许完成")),
+            "not_found",
             None,
         ),
         Err(e) => {

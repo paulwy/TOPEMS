@@ -128,7 +128,7 @@ pub async fn create_order(
         INSERT INTO wms.replenishment_orders (
             id, order_number, warehouse_id, warehouse_name, status,
             total_quantity, total_amount, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7, $8)
+        ) VALUES ($1, $2, $3::uuid, $4, 'active', $5, $6, $7, $8)
         RETURNING id, order_number, warehouse_id, warehouse_name, status,
                   total_quantity, total_amount, created_at, updated_at
         "#,
@@ -201,7 +201,7 @@ pub async fn create_order(
                     "order_number": order_number,
                     "warehouse_id": req.get("warehouse_id").and_then(|v| v.as_str()),
                     "warehouse_name": req.get("warehouse_name").and_then(|v| v.as_str()),
-                    "status": "pending",
+                    "status": "active",
                     "created_at": now.to_string(),
                     "updated_at": now.to_string(),
                 }),
@@ -311,7 +311,7 @@ pub async fn update_order(
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
-            warehouse_id = COALESCE($2, warehouse_id),
+            warehouse_id = COALESCE($2::uuid, warehouse_id),
             warehouse_name = COALESCE($3, warehouse_name),
             status = COALESCE($4, status),
             updated_at = $5

@@ -140,6 +140,7 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
+        .route("/dashboard", get(get_wms_dashboard))
         .route("/inventory", get(list_inventory).post(create_inventory))
         .route("/inventory/low-stock", get(list_low_stock_inventory))
         .route(
@@ -156,6 +157,121 @@ where
                 .put(update_inventory)
                 .delete(delete_inventory),
         )
+}
+
+/// WMS 总览看板（GET /api/wms/dashboard）。
+///
+/// 前端 wms/dashboard.ts 真实消费。采用防御式逐指标查询：任一子查询失败
+/// 均降级为 0 / 空数组，避免因单表漂移导致整个看板 500。
+pub async fn get_wms_dashboard(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    match check_permission(&state.db, &claims, &ModulePermission::WarehouseRead).await {
+        Ok(_) => {}
+        Err(e) => return e,
+    }
+
+    let scalar_i64 = |row: &sqlx::postgres::PgRow, col: &str| -> i64 {
+        row.try_get::<i64, _>(col).unwrap_or(0)
+    };
+
+    let total_inventory: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "wms",
+        "SELECT COUNT(*) FROM wms.inventory WHERE deleted_at IS NULL"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
+
+    let pending_inbound: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "wms",
+        "SELECT COUNT(*) FROM wms.inbound_orders WHERE deleted_at IS NULL AND status IN ('created','received')"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
+
+    let pending_outbound: i64 = sqlx::query_scalar(only_own_schema_query!(
+        "wms",
+        "SELECT COUNT(*) FROM wms.outbound_orders WHERE deleted_at IS NULL AND status IN ('created','confirmed','picking','packing','shipping')"
+    ))
+    .fetch_one(&mut **txn)
+    .await
+    .unwrap_or(0);
+
+    // 库位利用率：取仓库存量利用率均值（无数据则 0）
+    let utilization_row = sqlx::query(only_own_schema_query!(
+        "wms",
+        "SELECT AVG(utilization_rate) AS avg_util FROM wms.warehouses WHERE deleted_at IS NULL"
+    ))
+    .fetch_one(&mut **txn)
+    .await;
+    let location_utilization: f64 = utilization_row
+        .as_ref()
+        .ok()
+        .and_then(|r| r.try_get::<f64, _>("avg_util").ok())
+        .unwrap_or(0.0);
+
+    // 出入库趋势（近 7 日）—— 防御式：失败返回空数组
+    let inbound_trend: Vec<serde_json::Value> = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT to_char(created_at, 'MM-DD') AS day, COUNT(*) AS cnt
+        FROM wms.inbound_orders
+        WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY 1 ORDER BY 1
+        "#
+    ))
+    .fetch_all(&mut **txn)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|r| {
+        serde_json::json!({
+            "name": r.try_get::<String, _>("day").unwrap_or_default(),
+            "value": scalar_i64(&r, "cnt"),
+        })
+    })
+    .collect();
+
+    let outbound_trend: Vec<serde_json::Value> = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"
+        SELECT to_char(created_at, 'MM-DD') AS day, COUNT(*) AS cnt
+        FROM wms.outbound_orders
+        WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY 1 ORDER BY 1
+        "#
+    ))
+    .fetch_all(&mut **txn)
+    .await
+    .unwrap_or_default()
+    .into_iter()
+    .map(|r| {
+        serde_json::json!({
+            "name": r.try_get::<String, _>("day").unwrap_or_default(),
+            "value": scalar_i64(&r, "cnt"),
+        })
+    })
+    .collect();
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "total_inventory": total_inventory,
+            "pending_inbound": pending_inbound,
+            "pending_outbound": pending_outbound,
+            "location_utilization": location_utilization,
+            "inbound_trend": inbound_trend,
+            "outbound_trend": outbound_trend,
+        }),
+        "获取WMS看板成功",
+    ))
 }
 
 #[utoipa::path(

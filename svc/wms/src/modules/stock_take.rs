@@ -691,6 +691,12 @@ pub async fn start_stock_take(
                 Some(stock_take_json),
             )
         }
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "盘点单不存在")),
+            "not_found",
+            None,
+            None,
+        ),
         Err(e) => {
             tracing::error!("获取盘点失败: {}", e);
             (
@@ -1467,6 +1473,12 @@ pub async fn complete_stock_take(
                 Some(stock_take_json),
             )
         }
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "盘点单不存在")),
+            "not_found",
+            None,
+            None,
+        ),
         Err(e) => {
             tracing::error!("获取盘点失败: {}", e);
             (

@@ -309,12 +309,12 @@ pub async fn compute_replenishment(
             AND (r.warehouse_id = i.warehouse_id OR r.warehouse_id IS NULL)
             AND r.enabled = true
         LEFT JOIN (
-            SELECT material_code, warehouse_id,
+            SELECT material_code, from_warehouse_id AS warehouse_id,
                    SUM(quantity) / $3 as avg_daily
             FROM wms.inventory_movements
             WHERE movement_type = 'outbound'
               AND created_at >= CURRENT_DATE - ($3 || ' days')::INTERVAL
-            GROUP BY material_code, warehouse_id
+            GROUP BY material_code, from_warehouse_id
         ) consumption ON i.material_code = consumption.material_code AND i.warehouse_id = consumption.warehouse_id
         WHERE i.deleted_at IS NULL
           AND ($4::uuid IS NULL OR i.warehouse_id = $4

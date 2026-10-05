@@ -410,7 +410,7 @@ pub async fn update_transfer(
             from_location_id = COALESCE($3, from_location_id),
             to_warehouse_id = COALESCE($4, to_warehouse_id),
             to_location_id = COALESCE($5, to_location_id),
-            planned_date = COALESCE($6, planned_date),
+            planned_date = COALESCE($6::date, planned_date),
             transporter = COALESCE($7, transporter),
             tracking_number = COALESCE($8, tracking_number),
             priority = COALESCE($9, priority),
@@ -809,7 +809,7 @@ pub async fn complete_transfer(
         r#"
         UPDATE wms.transfer_orders SET
             status = 'completed',
-            actual_date = TO_CHAR(NOW(), 'YYYY-MM-DD'),
+            actual_date = CURRENT_DATE,
             updated_at = $1
         WHERE id = $2 AND status = 'received'
         RETURNING *

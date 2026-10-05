@@ -1145,6 +1145,11 @@ pub async fn confirm_inbound_order(
                 None,
             )
         }
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "入库订单不存在或当前状态不允许确认")),
+            "not_found",
+            None,
+        ),
         Err(e) => {
             tracing::error!("确认入库订单失败: {}", e);
             (
@@ -1537,6 +1542,11 @@ pub async fn complete_inbound_order(
                 None,
             )
         }
+        Err(sqlx::Error::RowNotFound) => (
+            Json(api_error(404, "入库订单不存在或当前状态不允许完成")),
+            "not_found",
+            None,
+        ),
         Err(e) => {
             tracing::error!("完成入库订单失败: {}", e);
             (

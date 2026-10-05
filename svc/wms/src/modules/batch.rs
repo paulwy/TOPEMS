@@ -65,7 +65,7 @@ pub async fn list_batches(
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR batch_no ILIKE $3)
-          AND ($4::uuid IS NULL OR supplier_id = $4::uuid)
+          AND ($4::uuid IS NULL OR supplier_id = $4::text)
           AND ($5::text IS NULL OR quality_status = $5)
           AND ($6::text IS NULL OR status = $6)
         ORDER BY created_at DESC
@@ -92,7 +92,7 @@ pub async fn list_batches(
                 WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1::uuid)
                   AND ($2::text IS NULL OR sku ILIKE $2)
                   AND ($3::text IS NULL OR batch_no ILIKE $3)
-                  AND ($4::uuid IS NULL OR supplier_id = $4::uuid)
+                  AND ($4::uuid IS NULL OR supplier_id = $4::text)
                   AND ($5::text IS NULL OR quality_status = $5)
                   AND ($6::text IS NULL OR status = $6)
                 "#
@@ -311,13 +311,13 @@ pub async fn update_batch(
             unit = COALESCE($5, unit),
             quantity = COALESCE($6, quantity),
             warehouse_id = COALESCE($7, warehouse_id),
-            location_id = COALESCE($8, location_id),
-            supplier_id = COALESCE($9, supplier_id),
-            production_date = COALESCE($10, production_date),
-            expiry_date = COALESCE($11, expiry_date),
+            location_id = COALESCE($8::text, location_id),
+            supplier_id = COALESCE($9::text, supplier_id),
+            production_date = COALESCE($10::date, production_date),
+            expiry_date = COALESCE($11::date, expiry_date),
             quality_status = COALESCE($12, quality_status),
             status = COALESCE($13, status),
-            manufacture_date = COALESCE($14, manufacture_date),
+            manufacture_date = COALESCE($14::date, manufacture_date),
             shelf_life_days = COALESCE($15, shelf_life_days),
             unit_price = COALESCE($16, unit_price),
             remark = COALESCE($17, remark),
