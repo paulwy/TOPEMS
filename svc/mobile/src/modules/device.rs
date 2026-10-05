@@ -153,7 +153,7 @@ pub async fn register_device(
 
     let existing_device = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT id FROM mobile.devices WHERE user_id = $1 AND device_id = $2"
+        "SELECT id FROM mobile.devices WHERE user_id::text = $1 AND device_id = $2"
     ))
     .bind(user_id)
     .bind(&payload.device_id)
@@ -301,7 +301,7 @@ pub async fn list_my_devices(
         }
     };
 
-    let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id = $1 ORDER BY created_at DESC"))
+    let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id::text = $1 ORDER BY created_at DESC"))
         .bind(user_id)
         .fetch_all(&pool)
         .await
@@ -622,7 +622,7 @@ pub async fn get_device_stats(
 
     let total = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id = $1"
+        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1"
     ))
     .bind(&user_id)
     .fetch_one(&pool)
@@ -632,7 +632,7 @@ pub async fn get_device_stats(
 
     let active = sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id = $1 AND is_active = true"
+        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND is_active = true"
     ))
     .bind(&user_id)
     .fetch_one(&pool)
