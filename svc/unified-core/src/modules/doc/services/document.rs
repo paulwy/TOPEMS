@@ -136,5 +136,23 @@ pub async fn init_database(pool: &PgPool) -> Result<()> {
     .execute(pool)
     .await?;
 
+    // 文档版本表（list_document_versions / get_document_version / restore_document_version 使用）
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_doc_document_versions (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            document_id UUID NOT NULL REFERENCES core_doc_documents(id) ON DELETE CASCADE,
+            version INTEGER NOT NULL,
+            content TEXT NOT NULL DEFAULT '',
+            summary VARCHAR(500),
+            created_by VARCHAR(100) NOT NULL DEFAULT '',
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            UNIQUE(document_id, version)
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }
