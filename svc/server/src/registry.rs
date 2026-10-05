@@ -137,6 +137,40 @@ impl ModuleRegistry {
                     },
                 ),
             )
+            // 插件运行时探活：前端 runtimeAxios 统一走 /plugin-health/{code}/api/plugins/{info|health}。
+            // 真实各业务插件的 /plugins/{info,health} 已在对应 *real_module 内挂载；此处为通用兜底，
+            // 保证未注册/探测 code 不再落到 BFF catch-all 裸 404（待上游支持按 code 反代到具体服务）。
+            .route(
+                "/plugin-health/{code}/api/plugins/info",
+                axum::routing::get(
+                    |axum::extract::Path(code): axum::extract::Path<String>| async move {
+                        Json(ApiResponse::success(
+                            serde_json::json!({
+                                "code": code,
+                                "name": code,
+                                "version": env!("CARGO_PKG_VERSION"),
+                                "description": format!("plugin runtime info for {code}"),
+                                "author": "topems",
+                                "category": "plugin",
+                                "plugin_type": "runtime",
+                                "permissions": [],
+                            }),
+                            "plugin info",
+                        ))
+                    },
+                ),
+            )
+            .route(
+                "/plugin-health/{code}/api/plugins/health",
+                axum::routing::get(
+                    |axum::extract::Path(code): axum::extract::Path<String>| async move {
+                        Json(ApiResponse::success(
+                            serde_json::json!({ "module": code, "status": "running" }),
+                            "plugin health ok",
+                        ))
+                    },
+                ),
+            )
             .fallback(not_found_handler)
             .layer(CatchPanicLayer::custom(handle_panic))
     }
