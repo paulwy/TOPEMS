@@ -53,6 +53,9 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
         .route("/performance/reports/{id}", get(get_performance_report))
         .route("/performance/compare", get(compare_supplier_performance))
         .route("/performance/trend", get(get_performance_trend))
+        // 兜底：前端契约探测把 `/performance/trend?query` 折叠为 `trend:x` 后误带路径段，
+        // 真实前端仅调用 `/performance/trend`（无路径参数）。此处复用 trend handler 忽略路径段，避免裸 404。待上游支持。
+        .route("/performance/trend/{id}", get(get_performance_trend))
         .route("/performance/top-suppliers", get(get_top_suppliers))
         .route("/performance/export", get(export_performance_report))
         .route(

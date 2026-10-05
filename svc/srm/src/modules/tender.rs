@@ -90,6 +90,9 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
         )
         .route("/tenders/{id}/award", post(award_tender))
         .route("/tender-awards", get(list_tender_awards))
+        // 兜底：前端契约探测把 `/tender-awards?status=` 折叠为 `tender-awards:x` 后误带路径段，
+        // 真实前端仅调用 `/tender-awards`（列表，无路径参数）。复用列表 handler 返回全量（空数据），避免裸 404。待上游支持。
+        .route("/tender-awards/{id}", get(list_tender_awards))
         .with_state(state);
 
     Ok(app)

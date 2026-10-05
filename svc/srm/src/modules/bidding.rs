@@ -322,11 +322,11 @@ pub async fn update_bidding(
     .bind(req.items)
     .bind(req.remarks)
     .bind(now)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => {
+        Ok(Some(bidding)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
@@ -335,6 +335,7 @@ pub async fn update_bidding(
             }
             Json(ApiResponse::success(bidding, "招标更新成功"))
         }
+        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在")),
         Err(e) => {
             tracing::error!("更新招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "更新招标失败"))
@@ -406,11 +407,11 @@ pub async fn publish_bidding(
     .bind(id)
     .bind(now)
     .bind(now)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => {
+        Ok(Some(bidding)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
@@ -419,6 +420,7 @@ pub async fn publish_bidding(
             }
             Json(ApiResponse::success(bidding, "招标发布成功"))
         }
+        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在或当前状态不允许发布")),
         Err(e) => {
             tracing::error!("发布招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "发布招标失败"))
@@ -462,11 +464,11 @@ pub async fn open_bidding(
     .bind(id)
     .bind(now)
     .bind(now)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => {
+        Ok(Some(bidding)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
@@ -475,6 +477,7 @@ pub async fn open_bidding(
             }
             Json(ApiResponse::success(bidding, "开标成功"))
         }
+        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在或当前状态不允许开标")),
         Err(e) => {
             tracing::error!("开标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "开标失败"))
@@ -517,11 +520,11 @@ pub async fn evaluate_bidding(
     )
     .bind(id)
     .bind(now)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(bidding) => {
+        Ok(Some(bidding)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
@@ -530,6 +533,7 @@ pub async fn evaluate_bidding(
             }
             Json(ApiResponse::success(bidding, "评标完成"))
         }
+        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在或当前状态不允许评标")),
         Err(e) => {
             tracing::error!("评标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "评标失败"))
