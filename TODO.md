@@ -450,6 +450,7 @@
     3. **验证**：双库（5432/5433）重放；grep `qms.qa_lab`/`lims.qa_lab` 非注释引用=0（含 `.sqlx/` 离线缓存）；lims 启动后 public 读写正常、无 lims/qms schema 重建；boundary 双门禁 exit 0
   - 时机：步骤 1（代码对齐）可先开工；步骤 2 迁移在阶段 3 R2 全链路回归通过后再应用
   - ✅ **步骤 2 已执行**（2026-10-03，commit `9b2c3a7aa`，2 文件 +28/−40）：新迁移时间戳实际为 **0002**（`20261003000002_u3b_qa_lab_skeleton_cleanup.sql`——0001 已被 U5 占用，条目原文的 0001 已修正）+ `svc/lims/src/models/schema_defense.rs` TABLE_DEFS 移除 qa_lab_samples/qa_lab_tasks（−40）；5432 重放 4×DROP IF EXISTS 幂等通过（重放 NOTICE 无错）、应用后仅剩 public 事实标准表；lims 重编启动验证：增量迁移 31 表=33−2、lims/qms 骨架表未重建、health 200；grep qms.qa_lab/lims.qa_lab 非注释=0（含 .sqlx/）；双门禁 exit 0；**5433 缺口未重放**；迁移账本沿用 R2 半手工 psql 方式未走 sqlx 记账（后续建议正式补记账）
+  - ✅ **5433 收尾完成**（2026-10-06）：pg_tables 确认 5433 上 lims/qms qa_lab 骨架表已不存在（lims 仅余 9 个真实业务表 + public.qa_lab_samples 事实表在）；_sqlx_migrations 账本 20261003000002 已登记（success=t，checksum=b711…5e8e；INSERT 0 0 确认账本原有条目存在）——U3b 全部闭环
 
 ### 阶段 3 收敛与回归
 
