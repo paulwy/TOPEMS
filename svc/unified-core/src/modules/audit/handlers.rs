@@ -492,7 +492,10 @@ pub async fn get_access_log(
             id,
             'audit_logs' AS source,
             NULL::uuid AS tenant_id,
-            CASE WHEN user_id ~ '^[0-9a-fA-F-]{36}$' THEN user_id::uuid ELSE NULL END AS user_id,
+            -- v69 迁移后 public.audit_logs.user_id 已是 uuid 列；
+            -- 旧 text 时代写法 user_id ~ '...' 触发 "operator does not exist: uuid ~ unknown"，
+            -- 直接选取即可（结构字段为 Option<Uuid>）。
+            user_id,
             user_name AS username,
             action,
             entity_type,

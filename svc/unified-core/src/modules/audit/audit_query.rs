@@ -344,7 +344,9 @@ pub async fn query_audit_logs(
                     id,
                     'audit_logs' AS source,
                     NULL::uuid AS tenant_id,
-                    CASE WHEN user_id ~ '^[0-9a-fA-F-]{36}$' THEN user_id::uuid ELSE NULL END AS user_id,
+                    -- v69 后 public.audit_logs.user_id 为 uuid；旧 text 正则守卫 user_id ~ '...'
+                    -- 会触发 "operator does not exist: uuid ~ unknown"，导致行查询被 unwrap_or_default 吞成空列表。
+                    user_id,
                     user_name AS username,
                     action,
                     entity_type,
