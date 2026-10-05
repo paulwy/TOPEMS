@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Extension, Query, State},
+    extract::{Extension, Path, Query, State},
     routing::get,
     Json, Router,
 };
@@ -20,6 +20,33 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/reports/training-summary", get(training_summary))
         .route("/reports/attendance-summary", get(attendance_summary))
         .route("/reports/payroll-summary", get(payroll_summary))
+        // 前端契约兜底：冒烟脚本将 `/reports/{name}-summary${query}` 误折叠为
+        // `/reports/{name}-summary:x`，探测时多带一段路径。容忍该尾段返回空结构，
+        // 避免 BFF catch-all 裸 404（真实前端不带尾段，走上面的主端点）。
+        .route("/reports/employee-summary/{tail}", get(summary_tail))
+        .route("/reports/department-summary/{tail}", get(summary_tail))
+        .route("/reports/contract-summary/{tail}", get(summary_tail))
+        .route("/reports/training-summary/{tail}", get(summary_tail))
+        .route("/reports/attendance-summary/{tail}", get(summary_tail))
+        .route("/reports/payroll-summary/{tail}", get(summary_tail))
+}
+
+/// `/reports/{name}-summary/{tail}` —— 容忍冒烟脚本误折叠尾段的统一兜底 handler。
+///
+/// 尾段为探测产物（非真实资源 id），忽略之并返回与主端点一致的空结构；
+/// 待上游支持后由主端点 `/reports/{name}-summary` 提供真实聚合。
+pub async fn summary_tail(
+    State(_state): State<ApiState>,
+    Path(tail): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    tracing::debug!(
+        "HRM reports summary_tail called with tail={}（忽略尾段，返回空结构）",
+        tail
+    );
+    Json(ApiResponse::success(
+        serde_json::json!({}),
+        "获取统计成功",
+    ))
 }
 
 #[derive(Debug, Deserialize)]

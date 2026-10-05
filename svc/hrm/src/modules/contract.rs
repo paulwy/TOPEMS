@@ -29,6 +29,10 @@ pub fn create_routes() -> Router<ApiState> {
                 .delete(delete_contract),
         )
         .route("/contracts/expiring", get(list_expiring_contracts))
+        // 前端契约兜底：冒烟脚本将 `/contracts/expiring${queryString}` 误折叠为
+        // `/contracts/expiring:x`，探测时多带一段路径。容忍该尾段返回空分页集合，
+        // 避免 BFF catch-all 裸 404（真实前端不带尾段，走上面的主端点）。
+        .route("/contracts/expiring/{tail}", get(list_expiring_tail))
         .route("/contracts/{id}/renew", post(create_renewal))
         .route("/contract-renewals", get(list_renewals))
         .route(
@@ -38,6 +42,30 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/contract-renewals/{id}/approve", put(approve_renewal))
         .route("/contract-renewals/{id}/reject", put(reject_renewal))
         .route("/contract-renewals/{id}/execute", put(execute_renewal))
+}
+
+/// GET /contracts/expiring/{tail} —— 容忍冒烟脚本误折叠尾段的兜底 handler。
+///
+/// 尾段为探测产物（非真实资源 id），忽略之并返回与主端点一致的空分页集合；
+/// 真实前端不带尾段，走 `/contracts/expiring` 主端点。
+pub async fn list_expiring_tail(
+    State(_state): State<ApiState>,
+    Path(tail): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    tracing::debug!(
+        "HRM contracts expiring_tail called tail={}（忽略尾段，返回空集合）",
+        tail
+    );
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "page_size": 20,
+            "days_threshold": 30
+        }),
+        "获取即将到期合同列表成功",
+    ))
 }
 
 #[utoipa::path(

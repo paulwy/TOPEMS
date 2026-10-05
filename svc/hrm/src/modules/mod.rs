@@ -13,6 +13,7 @@ pub mod attendance;
 pub mod audit;
 pub mod company;
 pub mod contract;
+pub mod dashboard;
 pub mod department;
 pub mod employee;
 pub mod health;
@@ -26,6 +27,7 @@ pub mod performance;
 pub mod position;
 pub mod recruitment;
 pub mod reports;
+pub mod roles;
 pub mod salary_adjustment;
 pub mod settings;
 pub mod setup;
@@ -78,6 +80,8 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(performance::create_routes())
         .merge(training::create_routes())
         .merge(reports::create_routes())
+        .merge(roles::create_routes())
+        .merge(dashboard::create_routes())
         .merge(salary_adjustment::create_routes())
         .merge(company::create_routes())
         .merge(setup::create_routes())

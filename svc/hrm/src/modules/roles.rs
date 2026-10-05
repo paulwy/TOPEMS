@@ -1,0 +1,84 @@
+//! HRM 角色（Role）前端契约兜底模块
+//!
+//! 前端 `roleApi = createCrudApi<Role>('/roles')` 合成了 5 个标准 CRUD 端点，
+//! 但 HRM 侧暂无独立的角色资源表（权限/角色统一由 IAM 承载）。本模块按
+//! "死代码端点轻量兜底" 策略补挂路由，避免 BFF catch-all 裸 404：
+//!   - 列表类：返回空分页集合；
+//!   - 详情类：HTTP 200 + 内层 code=404（数据不存在的正常业务语义）；
+//!   - 写操作（创建/更新/删除）：不落地，返回成功回执并标注"待上游支持"。
+//!
+//! 注释中标注 TODO 的端点待上游（角色资源落地后）替换为真实实现。
+
+use axum::{
+    extract::{Path, State},
+    routing::get,
+    Json, Router,
+};
+use uuid::Uuid;
+
+use super::ApiState;
+use topems_shared_core::response::{api_error, ApiResponse};
+
+pub fn create_routes() -> Router<ApiState> {
+    Router::new()
+        .route("/roles", get(list_roles).post(create_role))
+        .route(
+            "/roles/{id}",
+            get(get_role).put(update_role).delete(delete_role),
+        )
+}
+
+/// GET /roles — 角色列表（集合类空列表兜底，待上游支持）
+pub async fn list_roles(State(_state): State<ApiState>) -> Json<ApiResponse<serde_json::Value>> {
+    // 待上游支持：角色资源落地后改为真实分页查询
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "items": [],
+            "total": 0,
+            "page": 1,
+            "page_size": 20
+        }),
+        "查询成功",
+    ))
+}
+
+/// GET /roles/{id} — 角色详情（详情类：HTTP 200 + 内层 404）
+pub async fn get_role(
+    State(_state): State<ApiState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    // 待上游支持：角色资源落地后改为按 id 查询
+    Json(api_error(404, &format!("角色不存在: {id}")))
+}
+
+/// POST /roles — 创建角色（轻量兜底，不落地，待上游支持）
+pub async fn create_role(
+    State(_state): State<ApiState>,
+    Json(_body): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    // 待上游支持：角色资源落地后改为真实创建
+    Json(ApiResponse::success_no_data("角色创建已记录（待上游支持）"))
+}
+
+/// PUT /roles/{id} — 更新角色（轻量兜底，不落地，待上游支持）
+pub async fn update_role(
+    State(_state): State<ApiState>,
+    Path(id): Path<Uuid>,
+    Json(_body): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    // 待上游支持：角色资源落地后改为真实更新
+    Json(ApiResponse::success_no_data(&format!(
+        "角色更新已记录（待上游支持）: {id}"
+    )))
+}
+
+/// DELETE /roles/{id} — 删除角色（轻量兜底，不落地，待上游支持）
+pub async fn delete_role(
+    State(_state): State<ApiState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    // 待上游支持：角色资源落地后改为真实删除
+    Json(ApiResponse::success_no_data(&format!(
+        "角色删除已记录（待上游支持）: {id}"
+    )))
+}
