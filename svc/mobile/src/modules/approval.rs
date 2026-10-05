@@ -384,10 +384,10 @@ pub async fn delegate_approval_task(
     }
 
     match client
-        .delegate_task(id, attorney_id, reason.as_deref())
+        .delegate_task_response(id, attorney_id, reason.as_deref())
         .await
     {
-        Ok(true) => {
+        Ok(resp) if resp.code == 200 => {
             let task = client.get_task(id).await.ok();
             let data = task
                 .as_ref()
@@ -398,9 +398,20 @@ pub async fn delegate_approval_task(
                 Json(ApiResponse::success(data, "审批委派成功")),
             )
         }
-        Ok(false) => internal_error("审批委派操作未成功"),
+        Ok(resp) if resp.code == 404 => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "审批任务不存在")),
+        ),
+        Ok(_) => internal_error("审批委派操作未成功"),
         Err(e) => {
             tracing::error!("调用Workflow服务审批委派失败: {}", e);
+            let msg = e.to_string();
+            if msg.contains("404") {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error(404, "审批任务不存在")),
+                );
+            }
             internal_error("审批委派失败")
         }
     }

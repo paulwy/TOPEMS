@@ -181,6 +181,21 @@ impl TypedServiceClient<WorkflowApi> {
             .await
     }
 
+    /// 委派任务（返回完整 ApiResponse，可区分业务 code，如 404 任务不存在）
+    pub async fn delegate_task_response(
+        &self,
+        id: Uuid,
+        attorney_id: Uuid,
+        reason: Option<&str>,
+    ) -> ServiceClientResult<ApiResponse<serde_json::Value>> {
+        let body = serde_json::json!({
+            "attorney_id": attorney_id,
+            "reason": reason,
+        });
+        let path = format!("/tasks/{}/delegate", id);
+        self.post(&self.build_path(&path), &body).await
+    }
+
     /// 委派任务
     pub async fn delegate_task(
         &self,

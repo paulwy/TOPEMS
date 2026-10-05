@@ -13,6 +13,7 @@ import hmac
 import json
 import os
 import re
+import subprocess
 import sys
 import time
 import urllib.error
@@ -36,6 +37,38 @@ def load_jwt_secret() -> str:
             if line.startswith("JWT_SECRET="):
                 return line.split("=", 1)[1].strip().strip('"').strip("'")
     raise SystemExit("缺少 JWT_SECRET：请设置环境变量或提供项目 .env")
+
+
+def load_database_url() -> str:
+    """DATABASE_URL 优先取环境变量，其次读项目 .env。"""
+    if os.environ.get("DATABASE_URL"):
+        return os.environ["DATABASE_URL"]
+    env_path = os.path.join(BASE, ".env")
+    if os.path.exists(env_path):
+        for line in open(env_path, encoding="utf-8"):
+            line = line.strip()
+            if line.startswith("DATABASE_URL="):
+                return line.split("=", 1)[1].strip().strip('"').strip("'")
+    return ""
+
+
+def prepare_data() -> None:
+    """准备冒烟测试数据：确保 mobile.mobile_users 存在测试用户。
+    mobile.devices.user_id 外键指向 mobile.mobile_users，缺记录时
+    POST /device/register 会报外键约束错误（环境数据问题而非代码缺陷）。"""
+    db = load_database_url()
+    if not db:
+        print("[prepare] 跳过：缺少 DATABASE_URL")
+        return
+    try:
+        subprocess.run(
+            ["psql", db, "-c",
+             f"INSERT INTO mobile.mobile_users (id, username, password_hash) VALUES ('{TEST_UID}', 'test_admin', 'smoke-not-a-real-hash') ON CONFLICT (id) DO NOTHING"],
+            capture_output=True, timeout=15,
+            check=False,
+        )
+    except Exception as e:
+        print(f"[prepare] 准备测试数据失败（非阻塞）: {e}")
 
 # ${var} -> 测试值（可扩展）
 VAR_DEFAULTS = {
@@ -61,14 +94,26 @@ VAR_DEFAULTS = {
 POST_BODIES = {
     "/customer": {"name": "冒烟测试客户", "customer_type": "enterprise", "owner_id": "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21", "phone": "13800000000", "email": "smoke@test.local"},
     "/inventory": {"sku": "SMOKE-SKU-001", "name": "冒烟测试库存", "quantity": 10, "unit": "件"},
-    "/attendance/check-in": {"latitude": 38.04, "longitude": 114.51},
-    "/attendance/check-out": {"latitude": 38.04, "longitude": 114.51},
-    "/device/register": {"device_token": "smoke-device-token", "platform": "ios"},
+    "/attendance/check-in": {"lat": 38.04, "lng": 114.51},
+    "/attendance/check-out": {"lat": 38.04, "lng": 114.51},
+    "/device/register": {"device_id": "smoke-device-1", "device_name": "冒烟设备", "device_type": "android", "os_type": "android", "os_version": "14", "app_version": "1.0.0", "push_token": "smoke-device-token"},
     "/documents": {"title": "冒烟测试文档", "category": "general", "content": "smoke"},
-    "/approval/tasks/${id}/delegate": {"delegateeId": TEST_UUID},
+    "/approval/tasks/${id}/delegate": {"userId": TEST_UUID, "reason": "冒烟委派"},
+    "/production/orders": {"product_name": "冒烟订单", "product_code": "SMOKE-001", "quantity": 10},
     "/approval/tasks/${id}/approve": {"comment": "smoke"},
     "/approval/tasks/${id}/reject": {"comment": "smoke"},
     "/user/change-password": {"oldPassword": "Test@123", "newPassword": "Test@1234"},
+    "/push/devices/register": {"device_token": "smoke-push-token", "platform": "android", "device_model": "Pixel-7", "app_version": "1.0.0", "os_version": "14"},
+    "/push/notifications": {"title": "冒烟通知", "body": "smoke", "notification_type": "general", "target_type": "all", "target_ids": []},
+    "/push/notifications/broadcast": {"title": "冒烟广播", "body": "smoke", "notification_type": "general", "target_type": "all", "target_ids": []},
+    "/push/templates": {"name": f"冒烟模板-{int(time.time())}", "title_template": "通知", "body_template": "内容", "notification_type": "general"},
+    "/scan/barcode": {"barcode": "SMOKE-001"},
+    "/scan/qrcode": {"qr_data": "SMOKE-001"},
+}
+
+# GET 端点所需的 query 参数（模拟前端必带参数，避免业务 400 误报）
+QUERY_PARAMS = {
+    "/inventory/scan": {"barcode": "SMOKE-001"},
 }
 
 
@@ -125,6 +170,9 @@ def fill_vars(path_tmpl: str) -> str:
 
 def call(method: str, path: str, tmpl: str, token: str):
     url = MOBILE_URL + path
+    q = QUERY_PARAMS.get(tmpl)
+    if q:
+        url += "?" + "&".join(f"{k}={urllib.parse.quote(str(v))}" for k, v in q.items())
     body = None
     headers = {"Authorization": f"Bearer {token}"}
     data_bytes = None
@@ -145,6 +193,7 @@ def call(method: str, path: str, tmpl: str, token: str):
 
 
 def main():
+    prepare_data()
     eps = extract_endpoints()
     print(f"前端契约端点(去重后): {len(eps)}")
     token = issue_token()

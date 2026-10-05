@@ -39,6 +39,33 @@ impl TypedServiceClient<MesApi> {
         self.get(&self.build_path(&path)).await
     }
 
+    /// 创建生产订单（透传 Value，返回完整 ApiResponse 供上层区分业务码）
+    pub async fn create_production_order(
+        &self,
+        req: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.post(&self.build_path("/orders"), req).await
+    }
+
+    /// 更新生产订单
+    pub async fn update_production_order(
+        &self,
+        id: &str,
+        req: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/orders/{}", id);
+        self.put(&self.build_path(&path), req).await
+    }
+
+    /// 删除生产订单
+    pub async fn delete_production_order(
+        &self,
+        id: &str,
+    ) -> ServiceClientResult<serde_json::Value> {
+        let path = format!("/orders/{}", id);
+        self.delete(&self.build_path(&path)).await
+    }
+
     /// 列出工位
     pub async fn list_work_stations(
         &self,

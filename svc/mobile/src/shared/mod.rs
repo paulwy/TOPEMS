@@ -148,9 +148,10 @@ use crate::modules::photo_upload::{
     upload_photo,
 };
 use crate::modules::production::{
-    complete_production_order, get_production_order, get_today_production_orders,
-    get_workstation_orders, list_equipment, list_production_orders, list_work_reports,
-    start_production_order, submit_work_report,
+    complete_production_order, create_production_order, delete_production_order,
+    get_production_order, get_today_production_orders, get_workstation_orders, list_equipment,
+    list_production_orders, list_work_reports, start_production_order, submit_work_report,
+    update_production_order,
 };
 use crate::modules::push_notification::{
     create_template, get_devices, get_notification_by_id, get_notification_list,
@@ -612,11 +613,13 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         // Production Routes
         .route(
             "/production/orders",
-            axum::routing::get(list_production_orders),
+            axum::routing::get(list_production_orders).post(create_production_order),
         )
         .route(
             "/production/orders/{id}",
-            axum::routing::get(get_production_order),
+            axum::routing::get(get_production_order)
+                .put(update_production_order)
+                .delete(delete_production_order),
         )
         .route(
             "/production/work-reports",

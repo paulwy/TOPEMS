@@ -155,7 +155,7 @@ pub async fn register_device(
         "mobile",
         "SELECT id FROM mobile.devices WHERE user_id::text = $1 AND device_id = $2"
     ))
-    .bind(user_id)
+    .bind(user_id.to_string())
     .bind(&payload.device_id)
     .fetch_optional(&pool)
     .await
@@ -302,7 +302,7 @@ pub async fn list_my_devices(
     };
 
     let devices: Vec<Device> = match sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE user_id::text = $1 ORDER BY created_at DESC"))
-        .bind(user_id)
+        .bind(user_id.to_string())
         .fetch_all(&pool)
         .await
     {
@@ -624,7 +624,7 @@ pub async fn get_device_stats(
         "mobile",
         "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1"
     ))
-    .bind(&user_id)
+    .bind(user_id.to_string())
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
@@ -634,7 +634,7 @@ pub async fn get_device_stats(
         "mobile",
         "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id::text = $1 AND is_active = true"
     ))
-    .bind(&user_id)
+    .bind(user_id.to_string())
     .fetch_one(&pool)
     .await
     .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
