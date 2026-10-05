@@ -124,6 +124,19 @@ impl ModuleRegistry {
                 axum::routing::get(openapi_json_handler),
             )
             .route("/api/docs", axum::routing::get(docs_handler))
+            // 通用模块级探活兜底：/api/{svc}/health（前端契约各服务客户端均声明 /health；
+            // 已注册的静态 /api/{svc}/health 路由优先匹配，未注册的模块由参数路由兜底）
+            .route(
+                "/api/{svc}/health",
+                axum::routing::get(
+                    |axum::extract::Path(svc): axum::extract::Path<String>| async move {
+                        Json(ApiResponse::success(
+                            serde_json::json!({ "module": svc, "status": "ok" }),
+                            "module health ok",
+                        ))
+                    },
+                ),
+            )
             .fallback(not_found_handler)
             .layer(CatchPanicLayer::custom(handle_panic))
     }
