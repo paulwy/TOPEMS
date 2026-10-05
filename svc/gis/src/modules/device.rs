@@ -470,7 +470,7 @@ pub async fn get_device_track_statistics(
     Path(device_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let records = sqlx::query_as::<_, DeviceLocationRecord>(
-        "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at ASC",
+        "SELECT id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at ASC",
     )
     .bind(device_id)
     .fetch_all(&pool)
