@@ -862,3 +862,11 @@
 
 - 文件面互斥确认后即可并行派发：**B5**（svc/gis 新迁移 RLS+策略）、**B6**（lib/shared-db rls.rs 池化 GUC 同源）、**B8**（根 package.json dev:core DTS + build:shared-types）、**B9**（GIS leaflet mock 补 3 测试）、**A5**（erp_master_data_refs RLS policy 供 topems_app）——前三为代码批、A5 为 DB 侧新迁移（新时间戳前缀，当前 0008/0009 空闲）。
 - 批 3 决策先行项（B1 白名单撤销方案 / B14 守卫重构 / B15 埋点 / A2 docker / A5 受限用户口径）待用户/各 owner 拍板。
+
+### P4-3 实测抽查发现：master-data schema_registry tenant_id 列缺失 — 待办
+
+- **发现**：2026-10-05 端点实测抽查（服务端 3018 端点文档，admin JWT 认证）`GET /api/master-data/schema-registry/schemas` 返回 500：`Database error: error returned from database: column "tenant_id" does not exist`。
+- **定位**：master-data `schema_registry` 相关表查询含 tenant_id 列引用（RLS/多租户过滤），但对应 DB 迁移未加该列——U 系列 RLS/多租户改造的迁移缺口。
+- **影响**：master-data schema-registry 域端点（schemas 等）业务不可用（HTTP 层路由已挂载，200 + 业务 code:500）；dict-types 等另有查询 500（疑似同类或数据问题，未逐一归因）。
+- **建议修复**：新增 DB 迁移为 master-data schema_registry 表补 `tenant_id` 列（参照 A5/B5 RLS 迁移模式），随后重跑实测验证；修复优先级归入 U 系列 RLS 改造收尾项。
+- **对照已验证**：integration 新 9 端点、search、master-data dict 路由均真实挂载（此前 master-data 404 已修复）；crm/erp 抽查 200 正常。
