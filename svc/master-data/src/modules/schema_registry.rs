@@ -171,7 +171,7 @@ pub async fn create_schema(
 
     let schema = sqlx::query_as::<_, SchemaDefinition>(
         r#"
-        INSERT INTO schema_registry (name, title, description, schema_json, table_name, is_active, version)
+        INSERT INTO public.schema_registry (name, title, description, schema_json, table_name, is_active, version)
         VALUES ($1, $2, $3, $4, $5, true, 1)
         RETURNING *
         "#,
@@ -217,7 +217,7 @@ pub async fn get_schema(
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let schema =
-        sqlx::query_as::<_, SchemaDefinition>("id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM schema_registry WHERE id = $1")
+        sqlx::query_as::<_, SchemaDefinition>("id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1")
             .bind(id)
             .fetch_optional(&state.db)
             .await
@@ -264,7 +264,7 @@ pub async fn list_schemas(
 
     let schemas = sqlx::query_as::<_, SchemaDefinition>(
         r#"
-        SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM schema_registry
+        SELECT id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry
         WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR title ILIKE '%' || $1 || '%')
           AND ($2::bool IS NULL OR is_active = $2)
         ORDER BY created_at DESC
@@ -286,7 +286,7 @@ pub async fn list_schemas(
 
     let total: i64 = sqlx::query_scalar(
         r#"
-        SELECT COUNT(*) FROM schema_registry
+        SELECT COUNT(*) FROM public.schema_registry
         WHERE ($1::text IS NULL OR name ILIKE '%' || $1 || '%' OR title ILIKE '%' || $1 || '%')
           AND ($2::bool IS NULL OR is_active = $2)
         "#,
@@ -326,7 +326,7 @@ pub async fn update_schema(
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let schema = sqlx::query_as::<_, SchemaDefinition>(
         r#"
-        UPDATE schema_registry
+        UPDATE public.schema_registry
         SET title = COALESCE($2, title),
             description = COALESCE($3, description),
             schema_json = COALESCE($4, schema_json),
@@ -376,7 +376,7 @@ pub async fn delete_schema(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let result = sqlx::query("DELETE FROM schema_registry WHERE id = $1")
+    let result = sqlx::query("DELETE FROM public.schema_registry WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await
@@ -423,7 +423,7 @@ pub async fn create_data(
     // 使用 JSONB 存储动态数据
     sqlx::query(
         r#"
-        INSERT INTO dynamic_data (id, schema_id, data_json)
+        INSERT INTO public.dynamic_data (id, schema_id, data_json)
         VALUES ($1, $2, $3)
         "#,
     )
@@ -477,7 +477,7 @@ pub async fn list_data(
     let records: Vec<(Uuid, Uuid, Value, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
         r#"
         SELECT id, schema_id, data_json, created_at, updated_at
-        FROM dynamic_data
+        FROM public.dynamic_data
         WHERE schema_id = $1
           AND ($2::text IS NULL OR data_json::text ILIKE '%' || $2 || '%')
         ORDER BY created_at DESC
@@ -499,7 +499,7 @@ pub async fn list_data(
 
     let total: i64 = sqlx::query_scalar(
         r#"
-        SELECT COUNT(*) FROM dynamic_data
+        SELECT COUNT(*) FROM public.dynamic_data
         WHERE schema_id = $1
           AND ($2::text IS NULL OR data_json::text ILIKE '%' || $2 || '%')
         "#,
@@ -559,7 +559,7 @@ pub async fn get_data(
     let record: Option<(Uuid, Uuid, Value, DateTime<Utc>, DateTime<Utc>)> = sqlx::query_as(
         r#"
         SELECT id, schema_id, data_json, created_at, updated_at
-        FROM dynamic_data
+        FROM public.dynamic_data
         WHERE id = $1 AND schema_id = $2
         "#,
     )
@@ -612,7 +612,7 @@ pub async fn update_data(
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
     let result = sqlx::query(
         r#"
-        UPDATE dynamic_data
+        UPDATE public.dynamic_data
         SET data_json = $3, updated_at = NOW()
         WHERE id = $1 AND schema_id = $2
         "#,
@@ -662,7 +662,7 @@ pub async fn delete_data(
     State(state): State<AppState>,
     Path((id, record_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<Value>, (StatusCode, Json<Value>)> {
-    let result = sqlx::query("DELETE FROM dynamic_data WHERE id = $1 AND schema_id = $2")
+    let result = sqlx::query("DELETE FROM public.dynamic_data WHERE id = $1 AND schema_id = $2")
         .bind(record_id)
         .bind(id)
         .execute(&state.db)
@@ -694,7 +694,7 @@ async fn get_schema_def(
     pool: &PgPool,
     id: Uuid,
 ) -> Result<SchemaDefinition, (StatusCode, Json<Value>)> {
-    sqlx::query_as::<_, SchemaDefinition>("id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM schema_registry WHERE id = $1")
+    sqlx::query_as::<_, SchemaDefinition>("id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at FROM public.schema_registry WHERE id = $1")
         .bind(id)
         .fetch_optional(pool)
         .await
