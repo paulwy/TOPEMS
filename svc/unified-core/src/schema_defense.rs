@@ -120,6 +120,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("priority", "TEXT"),
             ("due_time", "TIMESTAMPTZ"),
             ("claimed_at", "TIMESTAMPTZ"),
+            ("updated_at", "TIMESTAMPTZ DEFAULT NOW()"),
         ],
     ),
     (

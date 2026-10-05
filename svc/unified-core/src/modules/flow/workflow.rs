@@ -890,7 +890,7 @@ pub async fn get_workflow_version(
     Extension(claims): Extension<Claims>,
     Path((workflow_id, version_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<WorkflowVersion>> {
-    let _tenant_opt: Option<Uuid> = if claims.is_superuser {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         claims
@@ -906,6 +906,7 @@ pub async fn get_workflow_version(
     )
     .bind(workflow_id)
     .bind(version_id)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

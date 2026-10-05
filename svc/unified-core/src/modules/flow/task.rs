@@ -100,7 +100,7 @@ pub async fn list_tasks(
 
     let items: Vec<WorkflowTask> = if !has_filters {
         match sqlx::query_as::<_, WorkflowTask>(
-            "SELECT id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at FROM core_workflow_tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id FROM flow.core_workflow_tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
