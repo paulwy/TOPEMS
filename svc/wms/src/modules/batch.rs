@@ -310,7 +310,7 @@ pub async fn update_batch(
             specification = COALESCE($4, specification),
             unit = COALESCE($5, unit),
             quantity = COALESCE($6, quantity),
-            warehouse_id = COALESCE($7, warehouse_id),
+            warehouse_id = COALESCE($7::uuid, warehouse_id),
             location_id = COALESCE($8::text, location_id),
             supplier_id = COALESCE($9::text, supplier_id),
             production_date = COALESCE($10::date, production_date),

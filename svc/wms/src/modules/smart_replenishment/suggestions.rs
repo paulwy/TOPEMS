@@ -289,7 +289,7 @@ pub async fn compute_replenishment(
             END as suggested_quantity,
             NULL::uuid as supplier_id,
             NULL::text as supplier_name,
-            'draft' as status,
+            'active' as status,
             CASE
                 WHEN i.available_quantity < COALESCE(r.safety_stock, i.min_quantity, 0) THEN 'urgent'
                 WHEN i.available_quantity < COALESCE(r.reorder_point, i.reorder_point, 0) THEN 'high'
