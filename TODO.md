@@ -83,8 +83,8 @@
   - ✅ 其余 flaky 观察项无需动作（详见上两条）
 
 ### ⚠️ 存在问题（诚实记录）
-- BI `/datasets/test-sql` 后端仍为桩实现（恒返回空 columns/data）——前端结果展示链路已通（显示"查询未返回数据"空态），真实 SQL 执行待后端落地
-- BI SQL 测试结果解析路径 `res?.data?.data` 基于 apiClient 已解包一层的假设，后端真实现后需实跑复核字段层级
+- ✅ **BI `/datasets/test-sql` 后端真实 SQL 执行已落地**（2026-10-06）：桩替换为 `execute_bi_sql`（只读事务 BEGIN READ ONLY + 子查询包装 `SELECT json_agg(to_json(t)) FROM (SELECT * FROM (<sql>) __src LIMIT 100) t` + 15s 超时 + 首关键字预检）；写语句/多语句在语法层与只读事务双层拒绝；实测 12 用例全过（多类型 SELECT/空结果/INSERT 拒绝/多语句拒绝/LIMIT 100 兜底/语法错误/空 SQL/括号 SELECT/WITH 只读/真实表 3 行 数字+bool+text）
+- ✅ **BI SQL 测试字段层级已实跑复核**：后端返回 `{success, data:{columns, data, valid, rows}, message}`，data 为对象数组（每行 {列名:值}）；前端 `res?.data?.data` 解包两层后 `setSqlTestResult` 直接消费，`row[col]` 渲染与后端对象数组契约一致（已核对 DatasetPage 渲染逻辑，无需前端改动）
 - push 阶段 SSH 截断反复出现（keepalive 参数缓解 + sccache 加速后推送窗口缩短，长连接空闲问题待完全根治）——本次 511s 长推送全程 keepalive 无截断，进一步缓解但非根除
 - 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）——已加 MIGRATE_ALLOW_STALE=1 防护 + 决策文档化
 - 远端半成品批次教训：残缺 .sqlx 缓存 + 无 CI 门禁会导致离线编译假通过——已通过 Gate S（pre-commit/pre-push/CI 三层）+ sqlx-prepare.sh --check 固化防线

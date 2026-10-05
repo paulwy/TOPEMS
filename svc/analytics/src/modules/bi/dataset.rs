@@ -7,6 +7,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use sqlx::Row;
+use sqlx::Column;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
@@ -514,19 +515,115 @@ pub async fn query_dataset(
         (status = 200, description = "SQL query test result", body = serde_json::Value),
     ),
 )]
+/// 在 BI 只读上下文执行用户 SQL：
+/// 1) `BEGIN READ ONLY` 强制只读事务（写语句被 PG 拒绝，双保险）；
+/// 2) 子查询包装 `SELECT json_agg(to_json(t)) FROM (SELECT * FROM (<sql>) __src LIMIT 100) t`
+///    ——写语句/多语句在语法层被拒；LIMIT 100 作用于数据源行数（json_agg 聚合前的截断，
+///    不能放最外层——聚合在 LIMIT 之前完成，外层 LIMIT 对聚合结果无影响）；
+/// 3) 结果由 PG 原生 JSON 化（数字/文本/bool/null/时间/jsonb 均正确），无需 Rust 手工解码；
+/// 4) 15s 超时保护。
+/// 返回 (columns, data)；columns 取自结果首行对象键（空结果返回空数组）；
+/// data 为对象数组（每行 {列名: 值}），与前端 SqlTestResult 契约一致。
+async fn execute_bi_sql(
+    pool: &sqlx::PgPool,
+    sql: &str,
+) -> Result<(Vec<String>, Vec<serde_json::Value>), String> {
+    // 友好预检：非只读语句（非 SELECT/WITH 开头）提前给出明确提示；
+    // 真正拦截仍由「子查询语法层 + BEGIN READ ONLY」双层保证（WITH 内的 data-modifying CTE 由只读事务兜底）。
+    let head = sql
+        .trim_start_matches(|c: char| c == '(' || c.is_whitespace())
+        .get(..6)
+        .unwrap_or("")
+        .to_ascii_lowercase();
+    if !head.starts_with("select") && !head.starts_with("with") {
+        return Err("仅支持只读查询（SQL 须以 SELECT 或 WITH 开头）".to_string());
+    }
+    let mut conn = pool
+        .acquire()
+        .await
+        .map_err(|e| format!("数据库连接失败: {e}"))?;
+    if let Err(e) = sqlx::query("BEGIN READ ONLY").execute(&mut *conn).await {
+        return Err(format!("只读事务开启失败: {e}"));
+    }
+    let outcome = async {
+        let wrapped = format!(
+            "SELECT COALESCE(json_agg(to_json(t)), '[]'::json) AS __bi_result \
+             FROM (SELECT * FROM ({}) __src LIMIT 100) t",
+            sql
+        );
+        let row = sqlx::query(&wrapped)
+            .fetch_one(&mut *conn)
+            .await
+            .map_err(|e| e.to_string())?;
+        let idx = row
+            .columns()
+            .iter()
+            .position(|c| c.name() == "__bi_result")
+            .ok_or_else(|| "结果列缺失".to_string())?;
+        let raw = row.try_get_raw(idx).map_err(|e| e.to_string())?;
+        let bytes = raw.as_bytes().map_err(|e| format!("结果读取失败: {e}"))?;
+        serde_json::from_slice::<serde_json::Value>(bytes)
+            .map_err(|e| format!("结果解析失败: {e}"))
+    }
+    .await;
+    // 无论成败都结束只读事务（查询报错时连接处于 aborted 状态，必须 ROLLBACK 恢复才能归还池）
+    let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
+    drop(conn);
+
+    let value = outcome?;
+    let arr = value.as_array().cloned().unwrap_or_default();
+    let columns: Vec<String> = arr
+        .first()
+        .and_then(|o| o.as_object())
+        .map(|m| m.keys().cloned().collect())
+        .unwrap_or_default();
+    let data = arr;
+    Ok((columns, data))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["analytics:write"])),
+    path = "/api/bi/datasets/test-sql",
+    tag = "BI",
+    responses(
+        (status = 200, description = "SQL query test result", body = serde_json::Value),
+    ),
+)]
 pub async fn test_sql_query(
-    State(_state): State<AppState>,
-    Json(_req): Json<TestSqlQueryRequest>,
+    State(state): State<AppState>,
+    Json(req): Json<TestSqlQueryRequest>,
 ) -> Json<serde_json::Value> {
-    Json(serde_json::json!({
-        "success": true,
-        "data": {
-            "columns": [],
-            "data": [],
-            "valid": true
-        },
-        "message": "SQL测试成功"
-    }))
+    let sql = req.sql.trim();
+    if sql.is_empty() {
+        return Json(serde_json::json!({
+            "success": false,
+            "data": { "columns": [], "data": [], "valid": false },
+            "message": "SQL 不能为空",
+        }));
+    }
+    match tokio::time::timeout(
+        std::time::Duration::from_secs(15),
+        execute_bi_sql(&state.pool, sql),
+    )
+    .await
+    {
+        Ok(Ok((columns, data))) => Json(serde_json::json!({
+            "success": true,
+            "data": { "columns": columns, "data": data, "valid": true, "rows": data.len() },
+            "message": "SQL测试成功",
+        })),
+        Ok(Err(msg)) => Json(serde_json::json!({
+            "success": false,
+            "data": { "columns": [], "data": [], "valid": false },
+            "message": msg,
+        })),
+        Err(_) => Json(serde_json::json!({
+            "success": false,
+            "data": { "columns": [], "data": [], "valid": false },
+            "message": "SQL 执行超时（>15s）",
+        })),
+    }
 }
 
 #[derive(Debug, Deserialize)]
