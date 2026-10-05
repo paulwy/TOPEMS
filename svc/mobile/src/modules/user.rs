@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, State},
+    extract::{Json, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -399,6 +399,262 @@ pub async fn change_password(
             )
         }
     }
+}
+
+// ===== user 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
+
+/// 用户详情（前端 GET /user/{id} → mobile_users 按 id 查询）
+pub async fn get_user_by_id(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let row = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at FROM mobile.mobile_users WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&pool)
+    .await;
+
+    match row {
+        Ok(Some(r)) => match UserProfile::from_row(&r) {
+            Ok(profile) => (
+                StatusCode::OK,
+                Json(ApiResponse::success(profile, "获取用户详情成功")),
+            ),
+            Err(e) => {
+                tracing::error!("解析用户详情失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(500, "解析用户详情失败")),
+                )
+            }
+        },
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "用户不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("查询用户详情失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "查询用户详情失败")),
+            )
+        }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ListUsersParams {
+    pub page: Option<i64>,
+    #[serde(rename = "pageSize")]
+    pub page_size: Option<i64>,
+    pub keyword: Option<String>,
+    #[serde(rename = "departmentId")]
+    pub department_id: Option<String>,
+    pub status: Option<String>,
+}
+
+/// 用户列表（前端 GET /user → 分页 + keyword/departmentId 过滤；status 无字段忽略）
+pub async fn list_users(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Query(params): Query<ListUsersParams>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+    let keyword = params.keyword.unwrap_or_default();
+    let department = params.department_id.unwrap_or_default();
+
+    let rows = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at
+         FROM mobile.mobile_users
+         WHERE ($1::text = '' OR username ILIKE '%' || $1 || '%' OR nickname ILIKE '%' || $1 || '%' OR phone ILIKE '%' || $1 || '%')
+           AND ($2::text = '' OR department = $2)
+         ORDER BY created_at DESC LIMIT $3 OFFSET $4"
+    ))
+    .bind(&keyword)
+    .bind(&department)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&pool)
+    .await;
+
+    match rows {
+        Ok(rows) => {
+            let users: Vec<UserProfile> = rows
+                .iter()
+                .filter_map(|r| UserProfile::from_row(r).ok())
+                .collect();
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success(
+                    serde_json::json!({ "items": users, "total": users.len() }),
+                    "获取用户列表成功",
+                )),
+            )
+        }
+        Err(e) => {
+            tracing::error!("查询用户列表失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "查询用户列表失败")),
+            )
+        }
+    }
+}
+
+/// 部门成员（前端 GET /user/department/{departmentId} → 按 department 过滤）
+pub async fn get_department_members(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    axum::extract::Path(department_id): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let rows = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT id, username, nickname, phone, email, avatar_url, department, position, created_at, updated_at
+         FROM mobile.mobile_users WHERE department = $1 ORDER BY username ASC"
+    ))
+    .bind(&department_id)
+    .fetch_all(&pool)
+    .await;
+
+    match rows {
+        Ok(rows) => {
+            let users: Vec<UserProfile> = rows
+                .iter()
+                .filter_map(|r| UserProfile::from_row(r).ok())
+                .collect();
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success(users, "获取部门成员成功")),
+            )
+        }
+        Err(e) => {
+            tracing::error!("查询部门成员失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "查询部门成员失败")),
+            )
+        }
+    }
+}
+
+/// 更新用户状态（前端 PUT /user/{id}/status → mobile_users 无 status 字段，占位校验存在性）
+pub async fn update_user_status(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+    let status = payload.get("status").and_then(|v| v.as_str()).unwrap_or("");
+
+    let exists = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT 1 FROM mobile.mobile_users WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&pool)
+    .await;
+
+    match exists {
+        Ok(Some(_)) => (
+            StatusCode::OK,
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": id, "status": status }),
+                "用户状态已更新（占位实现，待 IAM 状态字段接入）",
+            )),
+        ),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "用户不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("查询用户失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "查询用户失败")),
+            )
+        }
+    }
+}
+
+/// 用户权限（前端 GET /user/permissions → 移动端基础权限集）
+pub async fn get_permissions(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let permissions = serde_json::json!({
+        "permissions": [
+            "mobile:task:read", "mobile:task:write",
+            "mobile:attendance:read", "mobile:attendance:write",
+            "mobile:inventory:read", "mobile:inventory:write",
+            "mobile:production:read", "mobile:production:write",
+            "mobile:customer:read", "mobile:customer:write",
+            "mobile:document:read", "mobile:document:write"
+        ],
+        "roles": ["mobile_user"]
+    });
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(permissions, "获取用户权限成功")),
+    )
 }
 
 #[cfg(test)]

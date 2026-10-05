@@ -176,7 +176,10 @@ use crate::modules::task::{
     get_overdue_tasks, get_pending_tasks, get_task, reopen_task, search_tasks, update_task,
     update_task_status,
 };
-use crate::modules::user::{change_password, get_profile, update_profile, upload_avatar};
+use crate::modules::user::{
+    change_password, get_department_members, get_permissions, get_profile, get_user_by_id,
+    list_users, update_profile, update_user_status, upload_avatar,
+};
 use crate::modules::workbench::get_workbench_data;
 use axum::Router;
 
@@ -753,6 +756,15 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/user/change-password",
             axum::routing::post(change_password),
         )
+        // user 死代码兜底（前端 /user 列表、/{id}、department、status、permissions）
+        .route("/user", axum::routing::get(list_users))
+        .route("/user/{id}", axum::routing::get(get_user_by_id))
+        .route(
+            "/user/department/{departmentId}",
+            axum::routing::get(get_department_members),
+        )
+        .route("/user/{id}/status", axum::routing::put(update_user_status))
+        .route("/user/permissions", axum::routing::get(get_permissions))
         // documents（前端 /documents → mobile 本地表 CRUD）
         .route(
             "/documents",
