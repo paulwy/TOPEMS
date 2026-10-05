@@ -200,7 +200,7 @@ pub async fn get_dashboard(
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Dashboard not found",
         )),
     }
@@ -273,7 +273,7 @@ pub async fn update_dashboard(
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Dashboard not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -322,7 +322,7 @@ pub async fn delete_dashboard(
             "message": "Delete dashboard"
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Dashboard not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -528,7 +528,7 @@ now.naive_utc(),
             }
         }
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Dashboard not found",
         )),
     }

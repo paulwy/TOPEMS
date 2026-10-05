@@ -128,7 +128,7 @@ pub async fn get_subscription(
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Subscription not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -396,7 +396,7 @@ pub async fn toggle_subscription(
             }))
         }
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Subscription not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(

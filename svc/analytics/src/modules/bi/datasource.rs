@@ -478,7 +478,7 @@ pub async fn get_datasource(
                             )
                         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Datasource not found",
         )),
     }
@@ -579,7 +579,7 @@ pub async fn update_datasource(
                             )
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Datasource not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -625,7 +625,7 @@ pub async fn delete_datasource(
             "message": "Delete datasource"
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Datasource not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -683,7 +683,7 @@ pub async fn test_datasource(
 
     let Some(r) = row else {
         return Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Datasource not found",
         ));
     };
@@ -780,7 +780,7 @@ pub async fn refresh_datasource(
 
     let Some(r) = row else {
         return Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Datasource not found",
         ));
     };

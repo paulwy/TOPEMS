@@ -245,7 +245,7 @@ pub async fn get_drilldown_path(
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Drilldown path not found",
         )),
     }
@@ -306,7 +306,7 @@ now.naive_utc(),
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Drilldown path not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -347,7 +347,7 @@ pub async fn delete_drilldown_path(
             "message": "Delete drilldown path"
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Drilldown path not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -386,7 +386,7 @@ pub async fn drill_down(
         Ok(Some(row)) => row,
         Ok(None) => {
             return Json(topems_shared_core::response::error_value(
-                500,
+                404,
                 "Drilldown path not found",
             ));
         }
@@ -479,7 +479,7 @@ pub async fn roll_up(
         Ok(Some(row)) => row,
         Ok(None) => {
             return Json(topems_shared_core::response::error_value(
-                500,
+                404,
                 "Drilldown path not found",
             ));
         }

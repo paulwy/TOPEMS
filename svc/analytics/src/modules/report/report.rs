@@ -227,7 +227,7 @@ pub async fn create_report_from_template(
             }
         }
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Template not found or inactive",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -280,7 +280,7 @@ pub async fn get_report(
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Report not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -315,7 +315,7 @@ pub async fn update_report(
         UPDATE reports
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
-            status = COALESCE($3, status),
+            status = COALESCE($3::report_status, status),
             config = COALESCE($4, config),
             updated_at = $5
         WHERE id = $6
@@ -422,7 +422,7 @@ pub async fn export_report(
             }))
         }
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Report not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -501,7 +501,7 @@ pub async fn run_report(
     let result = sqlx::query(
         r#"
         UPDATE reports
-        SET status = 'running', last_run_at = $1
+        SET last_run_at = $1
         WHERE id = $2
         "#,
     )

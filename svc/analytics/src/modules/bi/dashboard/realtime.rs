@@ -45,7 +45,7 @@ pub async fn query_dashboard_realtime_data(
 
     if dashboard.is_none() {
         return Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Dashboard not found",
         ));
     }
@@ -215,7 +215,7 @@ pub async fn refresh_dashboard_data(
             }))
         }
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Dashboard not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -270,7 +270,7 @@ pub async fn set_auto_refresh(
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Dashboard not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(

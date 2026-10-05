@@ -119,7 +119,7 @@ pub async fn get_shared_dashboard(
             }
         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Share link not found or expired",
         )),
     }
@@ -213,7 +213,7 @@ pub async fn delete_share_link(
             "message": "Delete share link"
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Share link not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(

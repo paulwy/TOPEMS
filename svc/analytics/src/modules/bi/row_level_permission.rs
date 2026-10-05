@@ -346,7 +346,7 @@ pub async fn get_permission_rule(
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Permission rule not found",
         )),
     }
@@ -429,7 +429,7 @@ pub async fn update_permission_rule(
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Permission rule not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -478,7 +478,7 @@ pub async fn delete_permission_rule(
             "message": "Delete permission rule"
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Permission rule not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(

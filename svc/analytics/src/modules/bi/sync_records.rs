@@ -269,7 +269,7 @@ pub async fn get_sync_record(
             "data": SyncRecordResponse::from(r)
         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Sync record not found",
         )),
     }
@@ -313,7 +313,7 @@ pub async fn create_sync_record(
         };
     if ds_exists.is_none() {
         return Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Data source not found",
         ));
     }
@@ -403,7 +403,7 @@ pub async fn update_sync_record(
 
     match result {
         Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Sync record not found",
         )),
         Ok(_) => match get_sync_record(State(state), Path(id)).await {
@@ -440,7 +440,7 @@ pub async fn delete_sync_record(
 
     match result {
         Ok(r) if r.rows_affected() == 0 => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Sync record not found",
         )),
         Ok(_) => Json(serde_json::json!({
@@ -486,7 +486,7 @@ pub async fn retry_sync(
         Ok(Some(r)) => r,
         Ok(None) => {
             return Json(topems_shared_core::response::error_value(
-                500,
+                404,
                 "Sync record not found",
             ));
         }

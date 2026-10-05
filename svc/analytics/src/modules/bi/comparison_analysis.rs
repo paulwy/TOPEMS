@@ -287,7 +287,7 @@ pub async fn get_comparison(
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Comparison analysis not found",
         )),
     }
@@ -440,7 +440,7 @@ pub async fn update_comparison(
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Comparison analysis not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -492,7 +492,7 @@ pub async fn delete_comparison(
             "data": { "id": id }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Comparison analysis not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -554,7 +554,7 @@ pub async fn run_comparison(
         Some(r) => r,
         None => {
             return Json(topems_shared_core::response::error_value(
-                500,
+                404,
                 "Comparison analysis not found",
             ));
         }

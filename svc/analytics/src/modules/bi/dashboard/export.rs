@@ -73,7 +73,7 @@ pub async fn export_dashboard(
             }))
         }
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Dashboard not found",
         )),
     }

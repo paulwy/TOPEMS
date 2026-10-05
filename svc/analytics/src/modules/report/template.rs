@@ -289,7 +289,7 @@ pub async fn get_template(
             }))
         }
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Template not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(

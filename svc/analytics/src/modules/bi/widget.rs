@@ -379,7 +379,7 @@ pub async fn get_widget(
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Widget not found",
         )),
     }
@@ -465,7 +465,7 @@ now.naive_utc(),
                                     }))
         }
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Widget not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -516,7 +516,7 @@ pub async fn delete_widget(
             }))
         }
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Widget not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -644,7 +644,7 @@ pub async fn get_widget_data(
             }))
         }
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Widget not found",
         )),
     }
@@ -785,7 +785,7 @@ pub async fn get_widget_data_realtime(
             }
         }
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Widget not found",
         )),
     }

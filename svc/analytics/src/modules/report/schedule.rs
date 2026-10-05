@@ -286,7 +286,7 @@ pub async fn get_schedule(
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Schedule not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(

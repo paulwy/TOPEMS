@@ -188,6 +188,27 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // bi 基线 report_subscriptions 表曾以残表（仅 id+deleted_at）落地，
+    // CREATE TABLE IF NOT EXISTS 不会补列；按 reports 基线漂移同款模式幂等补齐。
+    sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS template_id UUID")
+        .execute(pool)
+        .await?;
+    sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS user_id VARCHAR(64)")
+        .execute(pool)
+        .await?;
+    sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS email TEXT")
+        .execute(pool)
+        .await?;
+    sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS frequency VARCHAR(32)")
+        .execute(pool)
+        .await?;
+    sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS enabled BOOLEAN DEFAULT TRUE")
+        .execute(pool)
+        .await?;
+    sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()")
+        .execute(pool)
+        .await?;
+
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS reports (

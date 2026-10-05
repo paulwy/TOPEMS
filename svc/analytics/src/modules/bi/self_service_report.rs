@@ -275,7 +275,7 @@ pub async fn get_report(
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Report not found",
         )),
     }
@@ -357,7 +357,7 @@ now.naive_utc(),
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Report not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -405,7 +405,7 @@ pub async fn delete_report(
             "message": "Delete report"
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Report not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -445,7 +445,7 @@ pub async fn query_report_data(
         Ok(Some(row)) => row,
         Ok(None) => {
             return Json(topems_shared_core::response::error_value(
-                500,
+                404,
                 "Report not found",
             ));
         }

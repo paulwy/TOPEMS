@@ -182,7 +182,7 @@ pub async fn get_dashboard_template(
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Template not found",
         )),
     }
@@ -255,7 +255,7 @@ now.naive_utc(),
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Template not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -302,7 +302,7 @@ pub async fn delete_dashboard_template(
             "message": "Delete dashboard template"
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Template not found",
         )),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -392,7 +392,7 @@ now.naive_utc(),
             }
         }
         None => Json(topems_shared_core::response::error_value(
-            500,
+            404,
             "Template not found or inactive",
         )),
     }
