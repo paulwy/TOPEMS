@@ -78,6 +78,7 @@ pub struct SyncResult {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route("/health", get(scm_health))
         .route(
             "/sync-records",
             get(list_sync_records).post(create_sync_record),
@@ -87,6 +88,21 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/sync-records/{id}/details", get(list_sync_details))
         .route("/sync/wms/{sync_type}", post(trigger_wms_sync))
         .route("/sync/srm/{sync_type}", post(trigger_srm_sync))
+}
+
+/// GET /health — 前端 scmApi.health() 探测服务存活。
+/// 轻量兜底：探一次 DB 连接，返回 ok 字符串。
+pub async fn scm_health(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
+    match sqlx::query("SELECT 1").execute(&state.db).await {
+        Ok(_) => Json(ApiResponse::success("ok".to_string(), "SCM 服务正常")),
+        Err(e) => {
+            tracing::error!("SCM health 检查失败: {}", e);
+            Json(ApiResponse::success(
+                "degraded".to_string(),
+                "SCM 服务异常",
+            ))
+        }
+    }
 }
 
 async fn current_tenant_id(claims: &Claims) -> Option<uuid::Uuid> {
