@@ -567,10 +567,14 @@ pub async fn get_formula_versions(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
+    // rs.formula_versions 实际不含 approval_status/approved_by/approved_at
+    // （列漂移），用 NULL 别名补齐 FormulaVersion 的 Option 字段。
     let result = sqlx::query_as::<_, FormulaVersion>(
         r#"
         SELECT id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
-               properties, changes, approval_status, approved_by, approved_at,
+               properties, changes,
+               NULL::text AS approval_status, NULL::text AS approved_by,
+               NULL::timestamptz AS approved_at,
                created_by, created_at, updated_at
         FROM rs.formula_versions
         WHERE formula_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
@@ -646,7 +650,9 @@ pub async fn create_formula_version(
             properties, changes, created_by, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         RETURNING id, tenant_id, formula_id, version, ingredients, process_steps, process_params,
-                  properties, changes, approval_status, approved_by, approved_at,
+                  properties, changes,
+                  NULL::text AS approval_status, NULL::text AS approved_by,
+                  NULL::timestamptz AS approved_at,
                   created_by, created_at, updated_at
         "#,
     )
@@ -762,6 +768,10 @@ pub async fn approve_formula(
                 }
             }
             Json(ApiResponse::success(formula, "配方审批成功"))
+        }
+        // RowNotFound：被审批配方不存在，转为业务内层 404（HTTP 仍为 200）
+        Err(sqlx::Error::RowNotFound) => {
+            Json(ApiResponse::error(404, "配方不存在"))
         }
         Err(e) => {
             tracing::error!("审批配方失败: {}", e);

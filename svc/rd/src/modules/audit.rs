@@ -68,26 +68,38 @@ async fn list_audit_logs(
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let result = sqlx::query_as::<_, AuditLog>(
-        r#"
-        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
-               user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+    // rs.audit_logs 实际列为：id, tenant_id, action, entity_type, entity_id,
+    // details(jsonb), user_id(uuid), ip_address, user_agent, created_at, success。
+    // 代码历史引用的 entity_ids / user_name / request_details / response_details /
+    // status / error_message 在该表不存在（列漂移），这里用别名补齐，保持
+    // shared-db::AuditLog FromRow 契约；user_id 由 uuid 显式转 text。
+    let select_cols = r#"
+        SELECT id, tenant_id, action, entity_type, entity_id,
+               NULL::jsonb AS entity_ids,
+               user_id::text AS user_id,
+               NULL::text AS user_name,
+               details AS request_details,
+               NULL::jsonb AS response_details,
+               'success'::text AS status,
+               NULL::text AS error_message,
+               ip_address, user_agent, created_at
         FROM rs.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
-          AND ($3::uuid IS NULL OR user_id = $3::uuid)
-          AND ($4::text IS NULL OR status = $4)
-          AND ($5::text IS NULL OR created_at >= $5::timestamptz)
-          AND ($6::text IS NULL OR created_at <= $6::timestamptz)
-        ORDER BY created_at DESC
-        LIMIT $7 OFFSET $8
-        "#,
+          AND ($3::uuid IS NULL OR user_id = $3)
+          AND ($4::text IS NULL OR created_at >= $4::timestamptz)
+          AND ($5::text IS NULL OR created_at <= $5::timestamptz)
+    "#;
+
+    let result = sqlx::query_as::<_, AuditLog>(
+        &format!(
+            "{} ORDER BY created_at DESC LIMIT $6 OFFSET $7",
+            select_cols
+        ),
     )
     .bind(&params.action)
     .bind(&params.entity_type)
     .bind(&params.user_id)
-    .bind(&params.status)
     .bind(params.start_date.clone())
     .bind(params.end_date.clone())
     .bind(page_size)
@@ -98,20 +110,17 @@ async fn list_audit_logs(
     match result {
         Ok(logs) => {
             let count_result = sqlx::query_scalar::<_, i64>(
-                r#"
-                SELECT COUNT(*) FROM rs.audit_logs
-                WHERE ($1::text IS NULL OR action = $1)
-                  AND ($2::text IS NULL OR entity_type = $2)
-                  AND ($3::uuid IS NULL OR user_id = $3::uuid)
-                  AND ($4::text IS NULL OR status = $4)
-                  AND ($5::text IS NULL OR created_at >= $5::timestamptz)
-                  AND ($6::text IS NULL OR created_at <= $6::timestamptz)
-                "#,
+                &format!(
+                    "SELECT COUNT(*) FROM rs.audit_logs WHERE ($1::text IS NULL OR action = $1) \
+                     AND ($2::text IS NULL OR entity_type = $2) \
+                     AND ($3::uuid IS NULL OR user_id = $3) \
+                     AND ($4::text IS NULL OR created_at >= $4::timestamptz) \
+                     AND ($5::text IS NULL OR created_at <= $5::timestamptz)"
+                ),
             )
             .bind(&params.action)
             .bind(&params.entity_type)
             .bind(&params.user_id)
-            .bind(&params.status)
             .bind(params.start_date)
             .bind(params.end_date)
             .fetch_one(&mut **txn)
@@ -162,9 +171,15 @@ async fn get_audit_log(
 
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
-               user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+        SELECT id, tenant_id, action, entity_type, entity_id,
+               NULL::jsonb AS entity_ids,
+               user_id::text AS user_id,
+               NULL::text AS user_name,
+               details AS request_details,
+               NULL::jsonb AS response_details,
+               'success'::text AS status,
+               NULL::text AS error_message,
+               ip_address, user_agent, created_at
         FROM rs.audit_logs WHERE id = $1
         "#,
     )
@@ -271,23 +286,27 @@ async fn export_audit_logs(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, AuditLog>(
         r#"
-        SELECT id, tenant_id, action, entity_type, entity_id, entity_ids,
-               user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+        SELECT id, tenant_id, action, entity_type, entity_id,
+               NULL::jsonb AS entity_ids,
+               user_id::text AS user_id,
+               NULL::text AS user_name,
+               details AS request_details,
+               NULL::jsonb AS response_details,
+               'success'::text AS status,
+               NULL::text AS error_message,
+               ip_address, user_agent, created_at
         FROM rs.audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
-          AND ($3::uuid IS NULL OR user_id = $3::uuid)
-          AND ($4::text IS NULL OR status = $4)
-          AND ($5::text IS NULL OR created_at >= $5::timestamptz)
-          AND ($6::text IS NULL OR created_at <= $6::timestamptz)
+          AND ($3::uuid IS NULL OR user_id = $3)
+          AND ($4::text IS NULL OR created_at >= $4::timestamptz)
+          AND ($5::text IS NULL OR created_at <= $5::timestamptz)
         ORDER BY created_at DESC
         "#,
     )
     .bind(&params.action)
     .bind(&params.entity_type)
     .bind(&params.user_id)
-    .bind(&params.status)
     .bind(params.start_date)
     .bind(params.end_date)
     .fetch_all(&mut **txn)

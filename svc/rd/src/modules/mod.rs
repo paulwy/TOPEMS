@@ -1,10 +1,11 @@
-use axum::{extract::FromRef, Router};
+use axum::{extract::FromRef, extract::State, routing::get, Json, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::AuthState;
 use topems_shared_core::config::Config;
 use topems_shared_core::health::SystemMetrics;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::EventPublisher;
 
 pub mod ai_integration;
@@ -68,4 +69,16 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(statistics::create_routes())
         .merge(settings::create_routes())
         .merge(change_management::create_routes())
+        // 前端 rd/index.ts health() 契约：GET /api/rd/health（业务路由内，复用鉴权）
+        .route("/health", get(rd_health))
+}
+
+/// RD 模块健康检查（业务面）：返回 ok + 数据库探活。
+async fn rd_health(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
+    let db_ok = sqlx::query("SELECT 1").fetch_one(&state.db).await.is_ok();
+    if db_ok {
+        Json(ApiResponse::success("ok".to_string(), "rd 服务健康"))
+    } else {
+        Json(ApiResponse::error(500, "rd 数据库探活失败"))
+    }
 }

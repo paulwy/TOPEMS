@@ -79,6 +79,10 @@ pub fn create_routes() -> Router<super::ApiState> {
         .route("/experiments/phase/lab", get(list_lab_experiments))
         .route("/experiments/phase/pilot", get(list_pilot_experiments))
         .route("/experiments/phase/scaleup", get(list_scaleup_experiments))
+        .route(
+            "/experiments/project/{project_id}",
+            get(list_experiments_by_project),
+        )
         .route("/experiments/{id}/advance-phase", post(advance_phase))
         .route("/batch-trace/{batch_number}", get(trace_batch))
 }
@@ -570,19 +574,19 @@ pub async fn get_experiment_records(
         r#"
         SELECT json_agg(
             json_build_object(
-                'id', id,
-                'experiment_id', experiment_id,
-                'record_type', record_type,
-                'content', content,
-                'attachments', attachments,
-                'recorded_by', recorded_by,
-                'recorded_at', recorded_at
+                'id', er.id,
+                'experiment_id', er.experiment_id,
+                'record_type', er.record_type,
+                'content', er.content,
+                'attachments', er.attachments,
+                'recorded_by', er.recorded_by,
+                'recorded_at', er.recorded_at
             )
         ) as records
         FROM rs.experiment_records er
         JOIN rs.experiments e ON er.experiment_id = e.id
         WHERE er.experiment_id = $1 AND ($2::uuid IS NULL OR e.tenant_id = $2)
-        ORDER BY recorded_at ASC
+        ORDER BY er.recorded_at ASC
         "#,
     )
     .bind(id)
@@ -601,6 +605,52 @@ pub async fn get_experiment_records(
         Err(e) => {
             tracing::error!("获取试验记录失败: {}", e);
             Json(ApiResponse::error(500, "获取试验记录失败"))
+        }
+    }
+}
+
+/// 真缺口补实现：按项目 ID 查询试验列表（前端 experiment.ts listExperimentsByProject）。
+/// 复用 rs.experiments 现有列，返回扁平数组，与 `ApiResponse<Experiment[]>` 契约一致。
+pub async fn list_experiments_by_project(
+    State(_state): State<super::ApiState>,
+    Path(project_id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+) -> Json<ApiResponse<Vec<Experiment>>> {
+    let mut guard = txn_arc.lock().await;
+    let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
+    let result = sqlx::query_as::<_, Experiment>(
+        r#"
+        SELECT id, tenant_id, name, code, project_id, formula_id, experiment_type, phase, status,
+               objective, method, results, conclusions, experimenter,
+               batch_number, scale, scale_unit, started_at, completed_at,
+               created_by, created_at, updated_at
+        FROM rs.experiments
+        WHERE deleted_at IS NULL AND project_id = $1
+          AND ($2::uuid IS NULL OR tenant_id = $2)
+        ORDER BY created_at DESC
+        "#,
+    )
+    .bind(project_id)
+    .bind(tenant_opt)
+    .fetch_all(&mut **txn)
+    .await;
+
+    match result {
+        Ok(experiments) => Json(ApiResponse::success(experiments, "按项目获取试验成功")),
+        Err(e) => {
+            tracing::error!("按项目获取试验失败: {}", e);
+            Json(ApiResponse::error(500, "按项目获取试验失败"))
         }
     }
 }
