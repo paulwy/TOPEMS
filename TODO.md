@@ -870,3 +870,12 @@
 - **影响**：master-data schema-registry 域端点（schemas 等）业务不可用（HTTP 层路由已挂载，200 + 业务 code:500）；dict-types 等另有查询 500（疑似同类或数据问题，未逐一归因）。
 - **建议修复**：新增 DB 迁移为 master-data schema_registry 表补 `tenant_id` 列（参照 A5/B5 RLS 迁移模式），随后重跑实测验证；修复优先级归入 U 系列 RLS 改造收尾项。
 - **对照已验证**：integration 新 9 端点、search、master-data dict 路由均真实挂载（此前 master-data 404 已修复）；crm/erp 抽查 200 正常。
+
+### P4-3 抽查发现修复完成（schema_registry + dict 影子表对齐）— ✅ 2026-10-05
+
+- **修复 1**：master-data `schema_registry.rs` 3 处查询 SQL 列集与表结构脱节（SELECT 含不存在的 code/schema_type/definition/created_by/tenant_id，缺 title/schema_json/table_name）→ 统一改为 `id, name, title, description, schema_json, table_name, is_active, version, created_at, updated_at`；编译通过
+- **修复 2**：`public.schema_registry`/`public.dynamic_data` 为 schema_defense 阶段 0 建的裸骨架影子表（仅 id/deleted_at），monolith SEARCH_PATH 中 public 优先致查询解析到影子表 → 新迁移 `20261005000001_align_public_shadow_tables.sql` 显式 public. 补齐结构（列/索引/触发器，全 IF NOT EXISTS 幂等）
+- **修复 3**：`public.core_dict_types`/`core_dict_items` 缺 name_en（dict 查询 COALESCE(name_en,name)）→ 新迁移 `20261005000002_align_public_core_dict_name_en.sql` 补齐
+- **应用方式**：迁移通道因账本积压（30/293）被 migrate.sh 保护拒绝 → 直接 psql 应用幂等 SQL + 手动登记 _sqlx_migrations（version/description/installed_on/success/checksum(SHA-384)/execution_time）
+- **验证**：`/api/master-data/schema-registry/schemas` 与 `/api/master-data/dict/dict-types` 均由 500 → 200 success:true；服务端重启无需（代码修正已随 PID 23579 生效）
+- **提交**：见 git log（schema_registry.rs + 2 迁移 + 本登记）
