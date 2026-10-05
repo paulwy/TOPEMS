@@ -17,6 +17,15 @@ fn tenant_id(_state: &AppState) -> String {
     "default".to_string()
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:erp_connections:read"])),
+    path = "/api/integration/erp/connections",
+    tag = "integration",
+    responses(
+        (status = 200, description = "List ERP connections"),
+    ),
+)]
 pub async fn list_connections(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -44,6 +53,15 @@ pub async fn list_connections(
     }
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:erp_connections:read"])),
+    path = "/api/integration/erp/connections/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "Get ERP connection by id"),
+    ),
+)]
 pub async fn get_connection(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -71,6 +89,15 @@ pub async fn get_connection(
     }
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["integration:erp_connections:write"])),
+    path = "/api/integration/erp/connections",
+    tag = "integration",
+    responses(
+        (status = 200, description = "Create ERP connection"),
+    ),
+)]
 pub async fn create_connection(
     State(state): State<AppState>,
     Json(req): Json<CreateErpConnectionRequest>,
@@ -109,6 +136,15 @@ pub async fn create_connection(
     }
 }
 
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["integration:erp_connections:write"])),
+    path = "/api/integration/erp/connections/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "Update ERP connection"),
+    ),
+)]
 pub async fn update_connection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -155,6 +191,15 @@ pub async fn update_connection(
     }
 }
 
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["integration:erp_connections:write"])),
+    path = "/api/integration/erp/connections/{id}",
+    tag = "integration",
+    responses(
+        (status = 200, description = "Delete ERP connection"),
+    ),
+)]
 pub async fn delete_connection(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -176,6 +221,15 @@ pub async fn delete_connection(
 }
 
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["integration:erp_connections:write"])),
+    path = "/api/integration/erp/connections/test",
+    tag = "integration",
+    responses(
+        (status = 200, description = "Test ERP connection"),
+    ),
+)]
 pub async fn test_connection(
     State(_state): State<AppState>,
     Json(req): Json<TestConnectionRequest>,

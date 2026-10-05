@@ -609,6 +609,15 @@ struct SyncStatsAggRow {
 
 /// GET /api/integration/sync-stats —— 集成同步整体统计（按 sync_type 聚合）
 #[allow(clippy::cast_precision_loss, clippy::as_conversions)]
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:sync:read"])),
+    path = "/api/integration/sync-stats",
+    tag = "integration",
+    responses(
+        (status = 200, description = "Get integration sync stats"),
+    ),
+)]
 pub async fn get_integration_sync_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<IntegrationSyncStatsResp>> {
@@ -711,6 +720,15 @@ struct SyncHistoryRow {
 }
 
 /// GET /api/integration/sync-stats/history —— 同步历史记录（分页）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:sync:read"])),
+    path = "/api/integration/sync-stats/history",
+    tag = "integration",
+    responses(
+        (status = 200, description = "Get sync history"),
+    ),
+)]
 pub async fn get_sync_history(
     State(state): State<AppState>,
     axum::extract::Query(q): axum::extract::Query<SyncHistoryQuery>,
@@ -791,6 +809,15 @@ pub struct IntegrationEndpointResp {
 }
 
 /// GET /api/integration/endpoints —— 集成端点清单（供 automation designer 选择）
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["integration:sync:read"])),
+    path = "/api/integration/endpoints",
+    tag = "integration",
+    responses(
+        (status = 200, description = "List integration endpoints"),
+    ),
+)]
 pub async fn list_endpoints(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<IntegrationEndpointResp>>> {

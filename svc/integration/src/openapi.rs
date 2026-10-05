@@ -77,6 +77,17 @@ use utoipa::OpenApi;
         crate::handlers::erp_mappings::create_mapping,
         crate::handlers::erp_mappings::update_mapping,
         crate::handlers::erp_mappings::delete_mapping,
+        // erp_connections
+        crate::handlers::erp_connections::list_connections,
+        crate::handlers::erp_connections::get_connection,
+        crate::handlers::erp_connections::create_connection,
+        crate::handlers::erp_connections::update_connection,
+        crate::handlers::erp_connections::delete_connection,
+        crate::handlers::erp_connections::test_connection,
+        // sync
+        crate::handlers::sync::get_integration_sync_stats,
+        crate::handlers::sync::get_sync_history,
+        crate::handlers::sync::list_endpoints,
 ),
     tags(
         (name = "Integration", description = "集成"),
