@@ -1,0 +1,97 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT id, name, description, comparison_type, dimension_a, dimension_b,\n               indicators, filters, status, last_run_at, created_by, created_at, updated_at\n        FROM analytics_comparison_analyses\n        WHERE ($1::TEXT IS NULL OR name ILIKE $1 OR description ILIKE $1)\n          AND ($2::TEXT IS NULL OR status = $2)\n        ORDER BY created_at DESC\n        LIMIT $3 OFFSET $4\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "description",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "comparison_type",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "dimension_a",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "dimension_b",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "indicators",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 7,
+        "name": "filters",
+        "type_info": "Jsonb"
+      },
+      {
+        "ordinal": 8,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 9,
+        "name": "last_run_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 10,
+        "name": "created_by",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 11,
+        "name": "created_at",
+        "type_info": "Timestamp"
+      },
+      {
+        "ordinal": 12,
+        "name": "updated_at",
+        "type_info": "Timestamp"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text",
+        "Text",
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "7943994b7070e78673debcf69dc25d5d08441c423ed8643588573912d02d4f5a"
+}

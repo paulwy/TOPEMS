@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT template_id, recipients\n        FROM report_schedules\n        WHERE id = $1\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "template_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "recipients",
+        "type_info": "Jsonb"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      true
+    ]
+  },
+  "hash": "fc295f4edfc8169e556450a0f89c779b89b41c446bb68c865e913a79cc5af241"
+}
