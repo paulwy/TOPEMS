@@ -95,9 +95,19 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             priority INTEGER DEFAULT 0,
             due_time TIMESTAMPTZ,
             claimed_at TIMESTAMPTZ,
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
             tenant_id UUID,
             deleted_at TIMESTAMP
         )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // 存量库幂等补列：CREATE TABLE IF NOT EXISTS 不会为已存在的表补列
+    sqlx::query(
+        r#"
+        ALTER TABLE core_workflow_tasks ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW()
         "#,
     )
     .execute(pool)
