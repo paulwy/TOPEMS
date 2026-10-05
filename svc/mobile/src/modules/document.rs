@@ -114,7 +114,7 @@ pub async fn list_documents(
             "mobile",
             "SELECT id, title, description, category, file_name, file_size, file_type, url, status, author_id, created_at, updated_at
              FROM mobile.documents
-             WHERE deleted_at IS NULL AND (author_id = $1 OR author_id IS NULL)
+             WHERE deleted_at IS NULL AND (author_id::text = $1 OR author_id IS NULL)
                AND ($2::text = '' OR title ILIKE '%' || $2 || '%')
                AND ($3::text = '' OR category = $3)
              ORDER BY created_at DESC
