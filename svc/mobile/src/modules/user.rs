@@ -363,7 +363,7 @@ pub async fn change_password(
     };
 
     let core_url =
-        std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8099".to_string());
+        std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
     let url = format!("{}/api/core/iam/users/{}/password", core_url, user_id);
 
     let auth_value = headers

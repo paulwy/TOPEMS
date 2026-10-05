@@ -119,6 +119,14 @@ impl TypedServiceClient<WmsApi> {
         self.post(&self.build_path(&path), data).await
     }
 
+    /// 创建库存明细项（POST /inventory，透传上游 CreateInventoryItemRequest）
+    pub async fn create_inventory(
+        &self,
+        data: &serde_json::Value,
+    ) -> ServiceClientResult<serde_json::Value> {
+        self.post(&self.build_path("/inventory"), data).await
+    }
+
     /// 按单据引用列出库存移动记录
     pub async fn list_inventory_movements_by_ref(
         &self,

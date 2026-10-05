@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 define_service_api!(
     NotificationApi,
     "topems-notification",
-    8000,
+    8084,
     Some("NOTIFICATION_SERVICE_URL"),
     "/api/communication/notification"
 );
@@ -72,7 +72,7 @@ impl TypedServiceClient<NotificationApi> {
     }
 
     /// 全部标记为已读
-    pub async fn mark_all_as_read(&self) -> ServiceClientResult<i32> {
+    pub async fn mark_all_as_read(&self) -> ServiceClientResult<serde_json::Value> {
         self.put(
             &self.build_path("/notifications/read-all"),
             &serde_json::Value::Null,

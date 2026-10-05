@@ -194,6 +194,13 @@ pub async fn get_approval_task(
         ),
         Err(e) => {
             tracing::error!("调用Workflow服务获取审批任务详情失败: {}", e);
+            let msg = e.to_string();
+            if msg.contains("404") || msg.contains("missing") {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error(404, "审批任务不存在")),
+                );
+            }
             internal_error("获取审批任务详情失败")
         }
     }
@@ -234,8 +241,8 @@ pub async fn approve_approval_task(
         client.set_auth_token(token);
     }
 
-    match client.approve_task(id, comment.as_deref()).await {
-        Ok(true) => {
+    match client.approve_task_response(id, comment.as_deref()).await {
+        Ok(resp) if resp.code == 200 => {
             let task = client.get_task(id).await.ok();
             let data = task
                 .as_ref()
@@ -246,9 +253,20 @@ pub async fn approve_approval_task(
                 Json(ApiResponse::success(data, "审批通过成功")),
             )
         }
-        Ok(false) => internal_error("审批通过操作未成功"),
+        Ok(resp) if resp.code == 404 => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "审批任务不存在")),
+        ),
+        Ok(_) => internal_error("审批通过操作未成功"),
         Err(e) => {
             tracing::error!("调用Workflow服务审批通过失败: {}", e);
+            let msg = e.to_string();
+            if msg.contains("404") {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error(404, "审批任务不存在")),
+                );
+            }
             internal_error("审批通过失败")
         }
     }
@@ -289,8 +307,8 @@ pub async fn reject_approval_task(
         client.set_auth_token(token);
     }
 
-    match client.reject_task(id, comment.as_deref()).await {
-        Ok(true) => {
+    match client.reject_task_response(id, comment.as_deref()).await {
+        Ok(resp) if resp.code == 200 => {
             let task = client.get_task(id).await.ok();
             let data = task
                 .as_ref()
@@ -301,9 +319,20 @@ pub async fn reject_approval_task(
                 Json(ApiResponse::success(data, "审批驳回成功")),
             )
         }
-        Ok(false) => internal_error("审批驳回操作未成功"),
+        Ok(resp) if resp.code == 404 => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "审批任务不存在")),
+        ),
+        Ok(_) => internal_error("审批驳回操作未成功"),
         Err(e) => {
             tracing::error!("调用Workflow服务审批驳回失败: {}", e);
+            let msg = e.to_string();
+            if msg.contains("404") {
+                return (
+                    StatusCode::NOT_FOUND,
+                    Json(ApiResponse::error(404, "审批任务不存在")),
+                );
+            }
             internal_error("审批驳回失败")
         }
     }

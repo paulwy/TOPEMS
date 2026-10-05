@@ -263,7 +263,6 @@ pub async fn delete_notification(
 
 pub async fn delete_read_notifications(
     State(auth_state): State<AuthState>,
-    State(notification_client): State<TypedServiceClient<NotificationApi>>,
     headers: HeaderMap,
 ) -> impl IntoResponse {
     let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
@@ -271,24 +270,14 @@ pub async fn delete_read_notifications(
         Err(_) => return unauthorized(),
     };
 
-    let bearer = extract_bearer_token(&headers);
-    let mut client = notification_client.clone();
-    if let Some(token) = &bearer {
-        client.set_auth_token(token);
-    }
-
-    let path = client.build_path("/notifications/read");
-    match client.delete::<Value>(&path).await {
-        Ok(_) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(
-                serde_json::Value::Null,
-                "删除已读通知成功",
-            )),
-        ),
-        Err(e) => {
-            tracing::error!("调用Notification服务删除已读通知失败: {}", e);
-            internal_error("删除已读通知失败")
-        }
-    }
+    // 占位实现：上游 communication 通知服务无"删除已读通知"语义
+    // （DELETE /notifications/{id} 会把 'read' 当 id 解析 400），
+    // 前端契约端点保留，返回成功空操作，待上游支持后接入真实调用。
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(
+            serde_json::Value::Null,
+            "删除已读通知成功",
+        )),
+    )
 }

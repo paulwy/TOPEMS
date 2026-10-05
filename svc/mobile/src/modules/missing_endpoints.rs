@@ -271,7 +271,7 @@ pub async fn update_push_template(
                is_active = COALESCE($5, is_active),
                updated_at = NOW()
            WHERE id = $1
-           RETURNING id, name, template_type, title_template, body_template, is_active, created_at"#,
+           RETURNING id, name, notification_type, title_template, body_template, is_active, created_at"#,
     )
     .bind(id)
     .bind(name)
@@ -285,7 +285,7 @@ pub async fn update_push_template(
             let v = json!({
                 "id": row.get::<Uuid, _>("id"),
                 "name": row.get::<String, _>("name"),
-                "templateType": row.get::<String, _>("template_type"),
+                "templateType": row.get::<String, _>("notification_type"),
                 "titleTemplate": row.get::<String, _>("title_template"),
                 "bodyTemplate": row.get::<String, _>("body_template"),
                 "isActive": row.get::<bool, _>("is_active"),

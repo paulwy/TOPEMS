@@ -112,9 +112,9 @@ use crate::modules::document::{
     update_document,
 };
 use crate::modules::inventory::{
-    create_stocktake_record, delete_inventory_item, get_inventory_item, list_inbound_orders,
-    list_inventory_items, list_low_stock_items, list_outbound_orders, list_stocktake_tasks,
-    scan_inventory, update_inventory_item,
+    create_inventory_item, create_stocktake_record, delete_inventory_item, get_inventory_item,
+    list_inbound_orders, list_inventory_items, list_low_stock_items, list_outbound_orders,
+    list_stocktake_tasks, scan_inventory, update_inventory_item,
 };
 use crate::modules::media::{delete_media, get_audio, get_photos, get_video, upload_media};
 use crate::modules::missing_endpoints::{
@@ -302,7 +302,7 @@ pub async fn build_service_clients(
                 "⚠️ Notification服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(NotificationApi, "http://localhost:8000")
+            TypedServiceClient::new(NotificationApi, "http://localhost:8084")
                 .and_then(|c| {
                     c.with_service_token(jwt_secret, "mobile-service", &["notification:read"])
                 })
@@ -826,7 +826,10 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::post(acknowledge_alert),
         )
         // inventory（前端裸 /inventory → items）
-        .route("/inventory", axum::routing::get(list_inventory_items))
+        .route(
+            "/inventory",
+            axum::routing::get(list_inventory_items).post(create_inventory_item),
+        )
         .route(
             "/inventory/{id}",
             axum::routing::get(get_inventory_item)

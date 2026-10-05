@@ -37,6 +37,30 @@ pub async fn list_inventory_items(
     }
 }
 
+/// 创建库存明细项（前端 POST /inventory，透传 WMS 上游）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["mobile:inventory:write"])),
+    path = "/inventory",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+        (status = 500, description = "Internal server error")
+    ),
+    tag = "inventory"
+)]
+pub async fn create_inventory_item(
+    State(client): State<TypedServiceClient<WmsApi>>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match client.create_inventory(&payload).await {
+        Ok(data) => Json(ApiResponse::success(data, "创建库存成功")),
+        Err(e) => {
+            tracing::error!("调用WMS服务创建库存失败: {}", e);
+            Json(ApiResponse::error(500, "创建库存失败"))
+        }
+    }
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["mobile:inventory:read"])),

@@ -233,7 +233,7 @@ pub async fn create_document(
         only_own_schema_query!(
             "mobile",
             "INSERT INTO mobile.documents (id, title, description, category, file_name, file_size, file_type, url, status, author_id)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CAST($10 AS uuid))"
         ),
     )
     .bind(id)

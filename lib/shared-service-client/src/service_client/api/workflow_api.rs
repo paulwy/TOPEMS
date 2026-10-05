@@ -8,7 +8,7 @@ use super::super::trait_api::TypedServiceClient;
 use crate::define_service_api;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::response::{ApiResponse, PaginatedResponse};
 use uuid::Uuid;
 
 define_service_api!(
@@ -144,12 +144,34 @@ impl TypedServiceClient<WorkflowApi> {
             .await
     }
 
+    /// 审批通过（返回完整 ApiResponse，可区分业务 code，如 404 任务不存在）
+    pub async fn approve_task_response(
+        &self,
+        id: Uuid,
+        comment: Option<&str>,
+    ) -> ServiceClientResult<ApiResponse<serde_json::Value>> {
+        let body = serde_json::json!({ "comment": comment });
+        let path = format!("/tasks/{}/approve", id);
+        self.post(&self.build_path(&path), &body).await
+    }
+
     /// 审批拒绝
     pub async fn reject_task(&self, id: Uuid, comment: Option<&str>) -> ServiceClientResult<bool> {
         let body = serde_json::json!({ "comment": comment });
         let path = format!("/tasks/{}/reject", id);
         self.post_and_check_success(&self.build_path(&path), &body)
             .await
+    }
+
+    /// 审批拒绝（返回完整 ApiResponse，可区分业务 code）
+    pub async fn reject_task_response(
+        &self,
+        id: Uuid,
+        comment: Option<&str>,
+    ) -> ServiceClientResult<ApiResponse<serde_json::Value>> {
+        let body = serde_json::json!({ "comment": comment });
+        let path = format!("/tasks/{}/reject", id);
+        self.post(&self.build_path(&path), &body).await
     }
 
     /// 签收任务
