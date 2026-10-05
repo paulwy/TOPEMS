@@ -369,10 +369,10 @@
   - 方案：修正 ehs 配置；把 9 处直写登记为已知 FAIL 基线（阶段 2 U3 治理后转绿）；boundary 门禁脚本纳入 pre-commit/pre-push 实跑
   - 验证：门禁脚本可运行且输出确定基线（FAIL 清单=9 处已知项）；ehs 配置修正后无新增误报
 
-- [ ] **T4 插件令牌门控修复**（P1，依赖：无）：
-  - 根因：`svc/unified-core/src/modules/plugin/handlers/runtime.rs:18-31` 令牌门控依赖 `PROFILE=="prod"` 精确串比较，非 prod 环境无令牌也能注册（报告 CORE-05）
-  - 方案：改布尔/枚举开关（如 PLUGIN_TOKEN_ENFORCE=true），prod 默认强制令牌
-  - 验证：非 prod 强制模式下无令牌注册返回 403（单测覆盖）；prod 行为不变
+- [x] **T4 插件令牌门控修复**（P1，依赖：无）——✅ 2026-10-06 commit（10 测试通过）：
+  - 根因：`svc/plugin-registry/src/modules/plugin/handlers/runtime.rs` 令牌门控依赖 `PROFILE=="prod"` 精确串比较（未设置/拼写差异即放行，报告 CORE-05；原登记路径 unified-core 已迁 plugin-registry）
+  - 方案：改布尔开关 `PLUGIN_TOKEN_ENFORCE=true|1|yes` 优先；未显式时按 PROFILE（prod/production）判定强制；强制且未配 PLUGIN_REGISTRATION_TOKEN → 拒绝（防绕过）
+  - 验证：10 单测覆盖（强制无令牌拒/令牌匹配放行/错误拒/dev/staging 默认放行/prod 默认强制/production 别名/显式覆盖 dev/显式 false 关闭 prod）；prod 行为不变
 
 ### 阶段 2 架构改造（依赖阶段 0 决策）
 

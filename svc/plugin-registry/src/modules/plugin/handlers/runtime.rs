@@ -9,38 +9,57 @@ use topems_shared_auth::Claims;
 use super::super::models::*;
 use crate::{AppState, CoreResponse};
 
-/// 验证插件注册令牌
-/// 如果未设置 PLUGIN_REGISTRATION_TOKEN 环境变量，则允许所有注册（开发模式）
-/// 如果已设置，则请求头 X-Plugin-Token 必须匹配
+/// 验证插件注册令牌（T4 门控修复，CORE-05）
+///
+/// 门控策略（优先级从高到低）：
+/// 1. `PLUGIN_TOKEN_ENFORCE=true|1|yes` 显式强制 → 任意环境均强制校验令牌
+/// 2. 未显式指定时按 `PROFILE` 判定：`prod` / `production` 强制
+/// 3. 其余（dev / staging / 未设置）默认放行（开发模式）
+///
+/// 强制模式下：
+/// - `PLUGIN_REGISTRATION_TOKEN` 未配置 → 拒绝（防无令牌绕过）
+/// - 已配置 → 请求头 `X-Plugin-Token` 必须精确匹配，否则拒绝
 fn verify_registration_token(headers: &HeaderMap) -> bool {
-    let expected_token = match std::env::var("PLUGIN_REGISTRATION_TOKEN") {
-        Ok(token) if !token.is_empty() => token,
-        _ => {
-            // 未配置注册令牌：生产环境拒绝，开发环境允许
+    let expected_token = std::env::var("PLUGIN_REGISTRATION_TOKEN")
+        .ok()
+        .filter(|t| !t.is_empty());
+
+    let enforce = std::env::var("PLUGIN_TOKEN_ENFORCE")
+        .ok()
+        .map(|v| matches!(v.as_str(), "true" | "1" | "yes"))
+        .unwrap_or_else(|| {
             let profile = std::env::var("PROFILE").unwrap_or_default();
-            if profile == "prod" || profile == "production" {
-                tracing::error!(
-                    "[Plugin] PLUGIN_REGISTRATION_TOKEN not set - plugin registration blocked in production"
-                );
-                return false;
-            }
+            matches!(profile.as_str(), "prod" | "production")
+        });
+
+    match (enforce, expected_token) {
+        // 非强制：开发模式放行
+        (false, _) => {
             tracing::warn!(
-                "[Plugin] PLUGIN_REGISTRATION_TOKEN not set - allowing all registrations in dev mode"
+                "[Plugin] PLUGIN_TOKEN_ENFORCE 未开启 - 插件注册放行（dev 模式）"
             );
-            return true;
+            true
         }
-    };
-
-    let provided_token = headers
-        .get("X-Plugin-Token")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-
-    if provided_token == expected_token {
-        true
-    } else {
-        tracing::warn!("[Plugin] Registration rejected: invalid or missing plugin token");
-        false
+        // 强制但未配置令牌：拒绝（防绕过，不再依赖 PROFILE 精确串）
+        (true, None) => {
+            tracing::error!(
+                "[Plugin] 强制模式但 PLUGIN_REGISTRATION_TOKEN 未配置 - 插件注册被拒绝"
+            );
+            false
+        }
+        // 强制且已配置令牌：校验请求头
+        (true, Some(token)) => {
+            let provided_token = headers
+                .get("X-Plugin-Token")
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+            if provided_token == token {
+                true
+            } else {
+                tracing::warn!("[Plugin] Registration rejected: invalid or missing plugin token");
+                false
+            }
+        }
     }
 }
 
@@ -472,4 +491,115 @@ pub async fn get_navigation_config(
         serde_json::json!({ "modules": modules }),
         "Navigation config retrieved",
     ))
+}
+
+#[cfg(test)]
+mod token_gate_tests {
+    use super::*;
+    use axum::http::HeaderMap;
+    use std::sync::Mutex;
+
+    /// env 全局可变，测试间串行化（避免 set_var 并发串扰）
+    static ENV_LOCK: Mutex<()> = Mutex::new(());
+
+    fn reset_env() {
+        for k in [
+            "PLUGIN_TOKEN_ENFORCE",
+            "PLUGIN_REGISTRATION_TOKEN",
+            "PROFILE",
+        ] {
+            std::env::remove_var(k);
+        }
+    }
+
+    fn headers_with_token(token: &str) -> HeaderMap {
+        let mut h = HeaderMap::new();
+        h.insert("X-Plugin-Token", token.parse().unwrap());
+        h
+    }
+
+    #[test]
+    fn enforce_true_without_token_denies() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PLUGIN_TOKEN_ENFORCE", "true");
+        assert!(!verify_registration_token(&HeaderMap::new()));
+    }
+
+    #[test]
+    fn enforce_true_with_matching_token_allows() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PLUGIN_TOKEN_ENFORCE", "true");
+        std::env::set_var("PLUGIN_REGISTRATION_TOKEN", "sec-123");
+        assert!(verify_registration_token(&headers_with_token("sec-123")));
+    }
+
+    #[test]
+    fn enforce_true_with_wrong_token_denies() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PLUGIN_TOKEN_ENFORCE", "true");
+        std::env::set_var("PLUGIN_REGISTRATION_TOKEN", "sec-123");
+        assert!(!verify_registration_token(&headers_with_token("wrong")));
+        assert!(!verify_registration_token(&HeaderMap::new()));
+    }
+
+    #[test]
+    fn dev_default_allows_without_any_env() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        assert!(verify_registration_token(&HeaderMap::new()));
+    }
+
+    #[test]
+    fn staging_not_enforced_by_default() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PROFILE", "staging");
+        assert!(verify_registration_token(&HeaderMap::new()));
+    }
+
+    #[test]
+    fn prod_default_enforces_without_token() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PROFILE", "prod");
+        assert!(!verify_registration_token(&HeaderMap::new()));
+    }
+
+    #[test]
+    fn prod_default_enforces_with_matching_token() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PROFILE", "prod");
+        std::env::set_var("PLUGIN_REGISTRATION_TOKEN", "p-token");
+        assert!(verify_registration_token(&headers_with_token("p-token")));
+    }
+
+    #[test]
+    fn production_alias_also_enforces() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PROFILE", "production");
+        assert!(!verify_registration_token(&HeaderMap::new()));
+    }
+
+    #[test]
+    fn explicit_enforce_overrides_dev_profile() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PROFILE", "staging");
+        std::env::set_var("PLUGIN_TOKEN_ENFORCE", "1");
+        assert!(!verify_registration_token(&HeaderMap::new()));
+    }
+
+    #[test]
+    fn enforce_false_disables_even_in_prod() {
+        let _g = ENV_LOCK.lock().unwrap();
+        reset_env();
+        std::env::set_var("PROFILE", "prod");
+        std::env::set_var("PLUGIN_TOKEN_ENFORCE", "false");
+        assert!(verify_registration_token(&HeaderMap::new()));
+    }
 }
