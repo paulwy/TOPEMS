@@ -806,7 +806,7 @@ async fn fetch_available_work_stations(
 async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, EquipmentInfo>, TopemsError> {
     let rows = sqlx::query(
         r#"
-        SELECT id, name, status, next_maintenance_date
+        SELECT id, equipment_name AS name, status, next_maintenance_date
         FROM mes.equipment
         "#,
     )
