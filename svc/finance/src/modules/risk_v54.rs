@@ -1319,16 +1319,6 @@ pub struct AlertQueryParams {
     pub entity: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v54/risk_alerts",
-    tag = "RiskV54",
-    operation_id = "get_risk_alerts_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_risk_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1361,16 +1351,6 @@ pub async fn get_risk_alerts_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v54/alert",
-    tag = "RiskV54",
-    operation_id = "acknowledge_alert_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1418,16 +1398,6 @@ async fn resolve_alert_handler(
 
 // --- Fraud ---
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v54/transaction",
-    tag = "RiskV54",
-    operation_id = "score_transaction_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn score_transaction_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1442,16 +1412,6 @@ pub async fn score_transaction_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v54/fraud_rules",
-    tag = "RiskV54",
-    operation_id = "get_fraud_rules_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_fraud_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1519,16 +1479,6 @@ pub async fn update_fraud_rule_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v54/fraud_score",
-    tag = "RiskV54",
-    operation_id = "get_fraud_score_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_fraud_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1545,16 +1495,6 @@ pub async fn get_fraud_score_handler(
 
 // --- Compliance ---
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v54/entity",
-    tag = "RiskV54",
-    operation_id = "review_entity_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn review_entity_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1618,16 +1558,6 @@ pub async fn get_review_results_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v54/compliance_status",
-    tag = "RiskV54",
-    operation_id = "get_compliance_status_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_compliance_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1648,16 +1578,6 @@ pub async fn get_compliance_status_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v54/workflow",
-    tag = "RiskV54",
-    operation_id = "create_workflow_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_workflow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1709,16 +1629,6 @@ pub struct ComplianceReportQueryParams {
     pub entity_id: Option<String>,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance-v54/compliance_report",
-    tag = "RiskV54",
-    operation_id = "generate_compliance_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn generate_compliance_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

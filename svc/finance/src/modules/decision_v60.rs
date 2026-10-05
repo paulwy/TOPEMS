@@ -1472,16 +1472,6 @@ async fn create_scenario_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/scenario",
-    tag = "DecisionV60",
-    operation_id = "evaluate_scenario_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn evaluate_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1523,16 +1513,6 @@ pub async fn get_decision_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/scenarios",
-    tag = "DecisionV60",
-    operation_id = "list_scenarios_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1583,16 +1563,6 @@ pub async fn get_alternatives_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/scenarios",
-    tag = "DecisionV60",
-    operation_id = "compare_scenarios_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn compare_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1606,16 +1576,6 @@ async fn compare_scenarios_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/decision_history",
-    tag = "DecisionV60",
-    operation_id = "get_decision_history_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_decision_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1632,16 +1592,6 @@ pub async fn get_decision_history_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/sensitivity_analysis",
-    tag = "DecisionV60",
-    operation_id = "sensitivity_analysis_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn sensitivity_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1686,16 +1636,6 @@ pub async fn create_alert_rule_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/alert_rules",
-    tag = "DecisionV60",
-    operation_id = "get_alert_rules_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_alert_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1712,16 +1652,6 @@ pub async fn get_alert_rules_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/alerts",
-    tag = "DecisionV60",
-    operation_id = "evaluate_alerts_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn evaluate_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1735,16 +1665,6 @@ pub async fn evaluate_alerts_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/active_alerts",
-    tag = "DecisionV60",
-    operation_id = "get_active_alerts_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_active_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1793,16 +1713,6 @@ async fn acknowledge_alert_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/alert",
-    tag = "DecisionV60",
-    operation_id = "resolve_alert_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1816,16 +1726,6 @@ pub async fn resolve_alert_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/alert_history",
-    tag = "DecisionV60",
-    operation_id = "get_alert_history_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_alert_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1842,16 +1742,6 @@ pub async fn get_alert_history_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/channel",
-    tag = "DecisionV60",
-    operation_id = "configure_channel_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn configure_channel_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1895,16 +1785,6 @@ pub async fn create_task_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/tasks",
-    tag = "DecisionV60",
-    operation_id = "get_tasks_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_tasks_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1935,16 +1815,6 @@ async fn schedule_task_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/task",
-    tag = "DecisionV60",
-    operation_id = "execute_task_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn execute_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1997,16 +1867,6 @@ pub struct ExecutionQueryParams {
     pub task_id: Option<Uuid>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/executions",
-    tag = "DecisionV60",
-    operation_id = "list_executions_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_executions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2024,16 +1884,6 @@ pub async fn list_executions_handler(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v60/task/{id}",
-    tag = "DecisionV60",
-    operation_id = "update_task_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn update_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2048,16 +1898,6 @@ pub async fn update_task_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/task",
-    tag = "DecisionV60",
-    operation_id = "pause_task_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn pause_task_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

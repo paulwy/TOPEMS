@@ -65,19 +65,6 @@ pub struct ToggleRuleRequest {
     pub isactive: bool,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/voucher-templates/{templateId}/copy",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID")),
-    request_body = CopyTemplateRequest,
-    responses(
-        (status = 200, description = "复制凭证模板成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "凭证模板不存在"),
-        (status = 500, description = "服务器内部错误"),
-    ),
-)]
 pub async fn copy_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -125,16 +112,6 @@ pub async fn copy_template(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/template",
-    tag = "VoucherTemplate",
-    operation_id = "toggle_template",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn toggle_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -244,16 +221,6 @@ pub async fn match_template(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/usage_stats",
-    tag = "VoucherTemplate",
-    operation_id = "get_usage_stats",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_usage_stats(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -284,17 +251,6 @@ pub async fn get_usage_stats(
     ))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/voucher-templates/{templateId}/export",
-    tag = "Voucher Template",
-    params(("templateId" = Uuid, Path, description = "模板ID"), ExportQueryParams),
-    responses(
-        (status = 200, description = "导出凭证模板成功"),
-        (status = 500, description = "服务器内部错误"),
-    ),
-)]
 pub async fn export_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -322,16 +278,6 @@ pub async fn export_template(
         .into_response()
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/template",
-    tag = "VoucherTemplate",
-    operation_id = "import_template",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn import_template(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -381,19 +327,6 @@ pub async fn import_template(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/voucher-generation-rules/{ruleId}/toggle",
-    tag = "Voucher Generation Rule",
-    params(("ruleId" = Uuid, Path, description = "生成规则ID")),
-    request_body = ToggleRuleRequest,
-    responses(
-        (status = 200, description = "启用/禁用生成规则成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "生成规则不存在"),
-        (status = 500, description = "服务器内部错误"),
-    ),
-)]
 pub async fn toggle_generate_rule(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -851,16 +784,6 @@ pub struct AutoGenerateRequest {
     pub rule_id: Option<Uuid>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/generate",
-    tag = "VoucherTemplate",
-    operation_id = "auto_generate",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn auto_generate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -927,17 +850,6 @@ pub async fn auto_generate(
     ))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/voucher/generate/regenerate/{originalVoucherId}",
-    tag = "Voucher Generation",
-    params(("originalVoucherId" = Uuid, Path, description = "原始凭证ID")),
-    responses(
-        (status = 200, description = "重新生成凭证成功", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
-    ),
-)]
 pub async fn regenerate(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

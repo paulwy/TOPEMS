@@ -1267,16 +1267,6 @@ pub async fn predict_cash_flow_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v53/predictions",
-    tag = "ForecastV53",
-    operation_id = "get_predictions_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_predictions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1302,16 +1292,6 @@ pub async fn get_predictions_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v53/model",
-    tag = "ForecastV53",
-    operation_id = "retrain_model_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn retrain_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1367,16 +1347,6 @@ pub async fn get_accuracy_handler(
 
 // --- Budget Handlers ---
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:budget:write"])),
-    path = "/finance-v53/budget",
-    tag = "ForecastV53",
-    operation_id = "analyze_budget_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn analyze_budget_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1391,16 +1361,6 @@ pub async fn analyze_budget_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v53/variance/{id}",
-    tag = "ForecastV53",
-    operation_id = "get_variance_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1453,16 +1413,6 @@ pub async fn get_variance_report_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v53/anomalies",
-    tag = "ForecastV53",
-    operation_id = "detect_anomalies_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1483,16 +1433,6 @@ pub async fn detect_anomalies_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v53/variance_trends",
-    tag = "ForecastV53",
-    operation_id = "get_variance_trends_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_variance_trends_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

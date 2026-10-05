@@ -939,23 +939,6 @@ impl InternalPricingManager {
 }
 
 // ==================== Handlers ====================
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/shared-services/centers/{period}",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("period" = String, Path, description = "期间"),
-    ),
-    tag = "Finance Shared Services",
-    operation_id = "get_service_centers_handler",
-)]
 
 async fn get_service_centers_handler(
     State(state): State<AppState>,
@@ -968,16 +951,6 @@ async fn get_service_centers_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/service_performance/{id}",
-    tag = "SharedServices",
-    operation_id = "get_service_performance_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn get_service_performance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -989,16 +962,6 @@ async fn get_service_performance_handler(
     Json(ApiResponse::success(performance, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/service_utilization/{id}",
-    tag = "SharedServices",
-    operation_id = "get_service_utilization_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn get_service_utilization_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1010,16 +973,6 @@ async fn get_service_utilization_handler(
     Json(ApiResponse::success(utilization, "查询成功"))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/calculate_cost_allocation",
-    tag = "SharedServices",
-    operation_id = "calculate_cost_allocation_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn calculate_cost_allocation_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1031,16 +984,6 @@ async fn calculate_cost_allocation_handler(
     Json(ApiResponse::success(result, "计算成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/cost_allocation",
-    tag = "SharedServices",
-    operation_id = "get_cost_allocation_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn get_cost_allocation_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1051,23 +994,6 @@ async fn get_cost_allocation_handler(
     let items = ServiceCostAllocator::get_allocations(&period);
     Json(ApiResponse::success(items, "查询成功"))
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/shared-services/cost-allocation/{period}/breakdown",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("period" = String, Path, description = "期间"),
-    ),
-    tag = "Finance Shared Services",
-    operation_id = "get_cost_allocation_breakdown_handler",
-)]
 
 async fn get_cost_allocation_breakdown_handler(
     State(state): State<AppState>,
@@ -1080,16 +1006,6 @@ async fn get_cost_allocation_breakdown_handler(
     Json(ApiResponse::success(breakdown, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/pricing_policies",
-    tag = "SharedServices",
-    operation_id = "get_pricing_policies_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn get_pricing_policies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1100,16 +1016,6 @@ async fn get_pricing_policies_handler(
     Json(ApiResponse::success(policies, "查询成功"))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/pricing_policy",
-    tag = "SharedServices",
-    operation_id = "create_pricing_policy_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn create_pricing_policy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1121,16 +1027,6 @@ async fn create_pricing_policy_handler(
     Json(ApiResponse::success(policy, "创建成功"))
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance/pricing_policy/{id}",
-    tag = "SharedServices",
-    operation_id = "update_pricing_policy_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn update_pricing_policy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1157,23 +1053,6 @@ async fn update_pricing_policy_handler(
     let policy = InternalPricingManager::update_policy(existing, req);
     Json(ApiResponse::success(policy, "更新成功"))
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/shared-services/internal-pricing/settlements/{period}",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("period" = String, Path, description = "期间"),
-    ),
-    tag = "Finance Shared Services",
-    operation_id = "get_internal_settlements_handler",
-)]
 
 async fn get_internal_settlements_handler(
     State(state): State<AppState>,
@@ -1186,16 +1065,6 @@ async fn get_internal_settlements_handler(
     Json(ApiResponse::success(settlements, "查询成功"))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/settlements",
-    tag = "SharedServices",
-    operation_id = "generate_settlements_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn generate_settlements_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

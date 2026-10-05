@@ -1329,16 +1329,6 @@ pub async fn create_template_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/templates",
-    tag = "ReportsV57",
-    operation_id = "get_templates_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_templates_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1357,16 +1347,6 @@ pub async fn get_templates_handler(
 
 // --- Report Generation ---
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance-v57/report",
-    tag = "ReportsV57",
-    operation_id = "generate_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn generate_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1482,16 +1462,6 @@ pub async fn delete_report_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance-v57/report",
-    tag = "ReportsV57",
-    operation_id = "schedule_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn schedule_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1512,16 +1482,6 @@ pub struct AnalysisHistoryQueryParams {
     pub dimension: Option<String>,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v57/analyze",
-    tag = "ReportsV57",
-    operation_id = "analyze_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn analyze_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1535,16 +1495,6 @@ pub async fn analyze_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/pivot",
-    tag = "ReportsV57",
-    operation_id = "pivot_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn pivot_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1579,16 +1529,6 @@ pub async fn drill_down_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/roll_up",
-    tag = "ReportsV57",
-    operation_id = "roll_up_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn roll_up_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1602,16 +1542,6 @@ pub async fn roll_up_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/slice",
-    tag = "ReportsV57",
-    operation_id = "slice_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn slice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1625,16 +1555,6 @@ pub async fn slice_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/dice",
-    tag = "ReportsV57",
-    operation_id = "dice_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn dice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1648,16 +1568,6 @@ pub async fn dice_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/analysis_history",
-    tag = "ReportsV57",
-    operation_id = "get_analysis_history_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_analysis_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1707,16 +1617,6 @@ pub async fn generate_forecast_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v57/anomalies",
-    tag = "ReportsV57",
-    operation_id = "detect_anomalies_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1757,16 +1657,6 @@ pub async fn get_insights_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v57/model",
-    tag = "ReportsV57",
-    operation_id = "train_model_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn train_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

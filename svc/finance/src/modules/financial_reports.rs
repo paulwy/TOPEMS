@@ -149,16 +149,6 @@ pub struct ItemVouchersQuery {
     pub page_size: Option<i64>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:voucher:read"])),
-    path = "/finance/report_item_vouchers",
-    tag = "FinancialReports",
-    operation_id = "get_report_item_vouchers",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_report_item_vouchers(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -329,16 +319,6 @@ pub struct TrendQuery {
     pub currency_code: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report_trend",
-    tag = "FinancialReports",
-    operation_id = "get_report_trend",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_report_trend(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -476,16 +456,6 @@ pub struct PeriodOverPeriodQuery {
     pub currency_code: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report_period_over_period/{id}",
-    tag = "FinancialReports",
-    operation_id = "get_report_period_over_period",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_report_period_over_period(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -608,16 +578,6 @@ pub struct ConsolidatedReportQuery {
     pub currency_code: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/consolidated_report/{id}",
-    tag = "FinancialReports",
-    operation_id = "get_consolidated_report",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_consolidated_report(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -793,16 +753,6 @@ pub async fn create_consolidation_entity(
     ))
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance/consolidation_entity/{id}",
-    tag = "FinancialReports",
-    operation_id = "update_consolidation_entity",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn update_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -826,16 +776,6 @@ pub async fn update_consolidation_entity(
     ))
 }
 
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["finance:delete"])),
-    path = "/finance/consolidation_entity/{id}",
-    tag = "FinancialReports",
-    operation_id = "delete_consolidation_entity",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn delete_consolidation_entity(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -913,16 +853,6 @@ pub async fn get_intercompany_elims(
     ))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/intercompany_elimination",
-    tag = "FinancialReports",
-    operation_id = "add_intercompany_elimination",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn add_intercompany_elimination(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -991,16 +921,6 @@ pub async fn export_consolidated_report(
 
 // ========== Phase 4: 批量导出 ==========
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/batch_export_reports",
-    tag = "FinancialReports",
-    operation_id = "batch_export_reports",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn batch_export_reports(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1213,16 +1133,6 @@ pub async fn create_report_subscription(
     ))
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report_subscription/{id}",
-    tag = "FinancialReports",
-    operation_id = "update_report_subscription",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn update_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1269,18 +1179,6 @@ pub async fn update_report_subscription(
     ))
 }
 
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/reports/subscriptions/{subscriptionId}",
-    tag = "Report",
-    params(("subscriptionId" = String, Path, description = "订阅ID")),
-    responses(
-        (status = 200, description = "删除报表订阅成功", body = ApiResponse<serde_json::Value>),
-        (status = 404, description = "报表订阅不存在"),
-        (status = 500, description = "服务器内部错误"),
-    ),
-)]
 pub async fn delete_report_subscription(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1295,16 +1193,6 @@ pub async fn delete_report_subscription(
     ))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report_now",
-    tag = "FinancialReports",
-    operation_id = "send_report_now",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn send_report_now(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1326,16 +1214,6 @@ pub struct SubscriptionHistoryQuery {
     pub page_size: Option<i64>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/subscription_history",
-    tag = "FinancialReports",
-    operation_id = "get_subscription_history",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_subscription_history(
     State(_state): State<AppState>,
@@ -1616,16 +1494,6 @@ fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
     data
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/balance_sheet/{id}",
-    tag = "FinancialReports",
-    operation_id = "get_balance_sheet",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 
 pub async fn get_balance_sheet(
     State(state): State<AppState>,
@@ -1712,16 +1580,6 @@ pub async fn get_balance_sheet_history(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/income_statement",
-    tag = "FinancialReports",
-    operation_id = "generate_income_statement",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn generate_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1752,16 +1610,6 @@ pub async fn generate_income_statement(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/income_statement/{id}",
-    tag = "FinancialReports",
-    operation_id = "get_income_statement",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_income_statement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1847,16 +1695,6 @@ pub async fn get_income_statement_history(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/cash_flow",
-    tag = "FinancialReports",
-    operation_id = "generate_cash_flow",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn generate_cash_flow(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1943,16 +1781,6 @@ pub async fn get_cash_flow(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/cash_flow_history",
-    tag = "FinancialReports",
-    operation_id = "get_cash_flow_history",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_cash_flow_history(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2033,16 +1861,6 @@ pub async fn submit_report_for_approval(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report",
-    tag = "FinancialReports",
-    operation_id = "approve_report",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn approve_report(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2070,16 +1888,6 @@ pub async fn approve_report(
     }
 }
 
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report/{id}",
-    tag = "FinancialReports",
-    operation_id = "reject_report",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn reject_report(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -2144,16 +1952,6 @@ pub async fn lock_report(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report",
-    tag = "FinancialReports",
-    operation_id = "unlock_report",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn unlock_report(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

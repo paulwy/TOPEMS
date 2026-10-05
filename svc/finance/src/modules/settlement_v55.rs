@@ -2023,16 +2023,6 @@ pub async fn reconcile_batch_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v55/single",
-    tag = "SettlementV55",
-    operation_id = "reconcile_single_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn reconcile_single_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2051,16 +2041,6 @@ pub async fn reconcile_single_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v55/recon_results",
-    tag = "SettlementV55",
-    operation_id = "get_recon_results_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_recon_results_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2078,16 +2058,6 @@ pub async fn get_recon_results_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v55/recon_rule",
-    tag = "SettlementV55",
-    operation_id = "create_recon_rule_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_recon_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2131,16 +2101,6 @@ pub async fn list_recon_rules_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v55/match",
-    tag = "SettlementV55",
-    operation_id = "approve_match_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn approve_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2154,16 +2114,6 @@ pub async fn approve_match_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v55/match",
-    tag = "SettlementV55",
-    operation_id = "dispute_match_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn dispute_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2189,16 +2139,6 @@ pub struct MatchInvoiceRequest {
     pub purchase_order_id: String,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v55/invoice",
-    tag = "SettlementV55",
-    operation_id = "recognize_invoice_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn recognize_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2285,16 +2225,6 @@ pub async fn list_invoices_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v55/invoice",
-    tag = "SettlementV55",
-    operation_id = "validate_invoice_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn validate_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2314,16 +2244,6 @@ pub async fn validate_invoice_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v55/invoice",
-    tag = "SettlementV55",
-    operation_id = "post_invoice_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn post_invoice_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2397,16 +2317,6 @@ impl SchedulePaymentRequest {
 }
 
 // gate: admin-only
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:payment:admin"])),
-    path = "/finance-v55/payment",
-    tag = "SettlementV55",
-    operation_id = "initiate_payment_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn initiate_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2435,16 +2345,6 @@ pub async fn initiate_payment_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:payment:read"])),
-    path = "/finance-v55/payment_status",
-    tag = "SettlementV55",
-    operation_id = "get_payment_status_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_payment_status_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2523,16 +2423,6 @@ pub async fn list_payments_handler(
 }
 
 // gate: admin-only
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:payment:admin"])),
-    path = "/finance-v55/payment",
-    tag = "SettlementV55",
-    operation_id = "schedule_payment_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn schedule_payment_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

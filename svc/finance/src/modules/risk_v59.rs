@@ -1423,16 +1423,6 @@ pub async fn analyze_transaction_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/fraud_decision/{id}",
-    tag = "RiskV59",
-    operation_id = "get_fraud_decision_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_fraud_decision_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1455,16 +1445,6 @@ pub struct SignalQueryParams {
     pub signal_type: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/signals",
-    tag = "RiskV59",
-    operation_id = "get_signals_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_signals_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1482,16 +1462,6 @@ pub async fn get_signals_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v59/device",
-    tag = "RiskV59",
-    operation_id = "create_device_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_device_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1547,16 +1517,6 @@ pub async fn get_device_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/blocked_devices",
-    tag = "RiskV59",
-    operation_id = "list_blocked_devices_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_blocked_devices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1573,16 +1533,6 @@ pub async fn list_blocked_devices_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v59/rule",
-    tag = "RiskV59",
-    operation_id = "add_rule_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn add_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1596,16 +1546,6 @@ pub async fn add_rule_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/rules",
-    tag = "RiskV59",
-    operation_id = "get_rules_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1652,16 +1592,6 @@ pub async fn calculate_score_handler(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v59/credit_profile/{id}",
-    tag = "RiskV59",
-    operation_id = "get_credit_profile_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_credit_profile_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1675,16 +1605,6 @@ pub async fn get_credit_profile_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/scoring_models",
-    tag = "RiskV59",
-    operation_id = "get_scoring_models_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_scoring_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1701,16 +1621,6 @@ pub async fn get_scoring_models_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v59/model",
-    tag = "RiskV59",
-    operation_id = "create_model_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_model_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1760,16 +1670,6 @@ pub struct FactorQueryParams {
     pub entity_id: Option<String>,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v59/score_factors",
-    tag = "RiskV59",
-    operation_id = "get_score_factors_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_score_factors_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1783,16 +1683,6 @@ pub async fn get_score_factors_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/model_comparison/{id}",
-    tag = "RiskV59",
-    operation_id = "get_model_comparison_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_model_comparison_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1810,16 +1700,6 @@ pub async fn get_model_comparison_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v59/bulk_score",
-    tag = "RiskV59",
-    operation_id = "bulk_score_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn bulk_score_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1863,16 +1743,6 @@ pub async fn create_scenario_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v59/stress_test",
-    tag = "RiskV59",
-    operation_id = "run_stress_test_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn run_stress_test_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1886,16 +1756,6 @@ pub async fn run_stress_test_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/test_result/{id}",
-    tag = "RiskV59",
-    operation_id = "get_test_result_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_test_result_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1913,16 +1773,6 @@ pub async fn get_test_result_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/scenarios",
-    tag = "RiskV59",
-    operation_id = "list_scenarios_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1972,16 +1822,6 @@ pub struct GetParamsQueryParams {
     pub scenario_id: Option<Uuid>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/scenario_parameters",
-    tag = "RiskV59",
-    operation_id = "get_scenario_parameters_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_scenario_parameters_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1999,16 +1839,6 @@ pub async fn get_scenario_parameters_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/test_summary",
-    tag = "RiskV59",
-    operation_id = "get_test_summary_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_test_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

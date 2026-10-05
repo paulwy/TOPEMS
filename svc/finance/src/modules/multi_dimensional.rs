@@ -985,16 +985,6 @@ pub async fn get_cost_center_report_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/cost_center_trend",
-    tag = "MultiDim",
-    operation_id = "get_cost_center_trend_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_cost_center_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1006,16 +996,6 @@ pub async fn get_cost_center_trend_handler(
     Json(ApiResponse::success(trend, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/cost_center_efficiency/{id}",
-    tag = "MultiDim",
-    operation_id = "get_cost_center_efficiency_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_cost_center_efficiency_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1027,16 +1007,6 @@ pub async fn get_cost_center_efficiency_handler(
     Json(ApiResponse::success(efficiency, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/profit_center_report/{id}",
-    tag = "MultiDim",
-    operation_id = "get_profit_center_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_profit_center_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1048,16 +1018,6 @@ pub async fn get_profit_center_report_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/profit_center_trend",
-    tag = "MultiDim",
-    operation_id = "get_profit_center_trend_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_profit_center_trend_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1099,16 +1059,6 @@ pub async fn get_profit_center_ranking_handler(
     Json(ApiResponse::success(ranking, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/project_account_report/{id}",
-    tag = "MultiDim",
-    operation_id = "get_project_account_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_project_account_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1120,16 +1070,6 @@ pub async fn get_project_account_report_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/project_progress",
-    tag = "MultiDim",
-    operation_id = "get_project_progress_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_project_progress_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1141,16 +1081,6 @@ pub async fn get_project_progress_handler(
     Json(ApiResponse::success(progress, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/project_profitability/{id}",
-    tag = "MultiDim",
-    operation_id = "get_project_profitability_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_project_profitability_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1162,16 +1092,6 @@ pub async fn get_project_profitability_handler(
     Json(ApiResponse::success(profitability, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/project_summary",
-    tag = "MultiDim",
-    operation_id = "get_project_summary_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_project_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

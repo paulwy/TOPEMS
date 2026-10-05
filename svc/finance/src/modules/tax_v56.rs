@@ -1571,16 +1571,6 @@ pub async fn generate_tax_form_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/tax_forms",
-    tag = "TaxV56",
-    operation_id = "get_tax_forms_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_tax_forms_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1598,16 +1588,6 @@ pub async fn get_tax_forms_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:payment:read"])),
-    path = "/finance-v56/tax_form_by_id/{id}",
-    tag = "TaxV56",
-    operation_id = "get_tax_form_by_id_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_tax_form_by_id_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1625,16 +1605,6 @@ pub async fn get_tax_form_by_id_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v56/tax_form",
-    tag = "TaxV56",
-    operation_id = "submit_tax_form_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn submit_tax_form_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1680,16 +1650,6 @@ pub async fn amend_tax_form_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/tax_summary",
-    tag = "TaxV56",
-    operation_id = "get_tax_summary_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_tax_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1707,16 +1667,6 @@ pub async fn get_tax_summary_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v56/tax_schedule",
-    tag = "TaxV56",
-    operation_id = "get_tax_schedule_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_tax_schedule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1737,16 +1687,6 @@ pub struct RateScheduleQueryParams {
     pub jurisdiction: Option<String>,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v56/calculate_tax",
-    tag = "TaxV56",
-    operation_id = "calculate_tax_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn calculate_tax_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1838,16 +1778,6 @@ pub async fn get_rate_schedule_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/lookup_rate",
-    tag = "TaxV56",
-    operation_id = "lookup_rate_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn lookup_rate_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1877,16 +1807,6 @@ pub async fn lookup_rate_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/tax_breakdown/{id}",
-    tag = "TaxV56",
-    operation_id = "get_tax_breakdown_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_tax_breakdown_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1958,16 +1878,6 @@ pub struct ComplianceQueryParams {
     pub entity: Option<String>,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v56/plan",
-    tag = "TaxV56",
-    operation_id = "create_plan_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_plan_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1981,16 +1891,6 @@ pub async fn create_plan_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v56/scenario",
-    tag = "TaxV56",
-    operation_id = "analyze_scenario_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn analyze_scenario_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2042,16 +1942,6 @@ pub async fn get_suggestions_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v56/scenarios",
-    tag = "TaxV56",
-    operation_id = "compare_scenarios_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn compare_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2065,16 +1955,6 @@ async fn compare_scenarios_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/plans",
-    tag = "TaxV56",
-    operation_id = "list_plans_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_plans_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2092,16 +1972,6 @@ pub async fn list_plans_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v56/plan",
-    tag = "TaxV56",
-    operation_id = "approve_plan_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn approve_plan_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

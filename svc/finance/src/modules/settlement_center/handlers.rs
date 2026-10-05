@@ -61,16 +61,6 @@ pub async fn list_reconciliations(
 }
 
 /// POST /api/core/settlement-center/reconciliations
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/reconciliation",
-    tag = "SettlementCenter",
-    operation_id = "create_reconciliation",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -107,16 +97,6 @@ pub async fn create_reconciliation(
 }
 
 /// GET /api/core/settlement-center/reconciliations/{id}
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/reconciliation/{id}",
-    tag = "SettlementCenter",
-    operation_id = "get_reconciliation",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_reconciliation(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -134,16 +114,6 @@ pub async fn get_reconciliation(
 }
 
 /// POST /api/core/settlement-center/reconciliations/{id}/reconcile
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/reconcile",
-    tag = "SettlementCenter",
-    operation_id = "reconcile",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn reconcile(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -200,16 +170,6 @@ pub async fn auto_reconcile(
 // ============================================================
 
 /// GET /api/core/settlement-center/settlements
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/settlements",
-    tag = "SettlementCenter",
-    operation_id = "list_settlements",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_settlements(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -226,16 +186,6 @@ pub async fn list_settlements(
 }
 
 /// POST /api/core/settlement-center/settlements
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/settlement",
-    tag = "SettlementCenter",
-    operation_id = "create_settlement",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -269,16 +219,6 @@ pub async fn create_settlement(
 }
 
 /// GET /api/core/settlement-center/settlements/{id}
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/settlement/{id}",
-    tag = "SettlementCenter",
-    operation_id = "get_settlement",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_settlement(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -368,16 +308,6 @@ pub async fn approve_settlement(
 // ============================================================
 
 /// POST /api/core/settlement-center/links
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/link",
-    tag = "SettlementCenter",
-    operation_id = "create_link",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -401,16 +331,6 @@ pub async fn create_link(
 }
 
 /// DELETE /api/core/settlement-center/links/{id}
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["finance:delete"])),
-    path = "/finance/link/{id}",
-    tag = "SettlementCenter",
-    operation_id = "delete_link",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn delete_link(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -428,16 +348,6 @@ pub async fn delete_link(
 }
 
 /// GET /api/core/settlement-center/links
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/links",
-    tag = "SettlementCenter",
-    operation_id = "list_links",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_links(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -483,16 +393,6 @@ pub async fn list_differences(
 }
 
 /// POST /api/core/settlement-center/differences
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/difference",
-    tag = "SettlementCenter",
-    operation_id = "create_difference",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -528,16 +428,6 @@ pub async fn create_difference(
 }
 
 /// POST /api/core/settlement-center/differences/{id}/approve
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/difference",
-    tag = "SettlementCenter",
-    operation_id = "approve_difference",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn approve_difference(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -592,16 +482,6 @@ pub async fn reject_difference(
 // ============================================================
 
 /// GET /api/core/settlement-center/dashboard
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/dashboard",
-    tag = "SettlementCenter",
-    operation_id = "get_dashboard",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_dashboard(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -617,16 +497,6 @@ pub async fn get_dashboard(
 }
 
 /// GET /api/core/settlement-center/statistics
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/statistics",
-    tag = "SettlementCenter",
-    operation_id = "get_statistics",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

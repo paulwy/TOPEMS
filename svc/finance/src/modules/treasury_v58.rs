@@ -1350,16 +1350,6 @@ pub async fn list_pools_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v58/allocate_funds",
-    tag = "TreasuryV58",
-    operation_id = "allocate_funds_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn allocate_funds_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1401,16 +1391,6 @@ pub async fn transfer_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/pool_balance/{id}",
-    tag = "TreasuryV58",
-    operation_id = "get_pool_balance_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_pool_balance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1428,16 +1408,6 @@ pub async fn get_pool_balance_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/pool_history",
-    tag = "TreasuryV58",
-    operation_id = "get_pool_history_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_pool_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1455,16 +1425,6 @@ pub async fn get_pool_history_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v58/consolidate_cash",
-    tag = "TreasuryV58",
-    operation_id = "consolidate_cash_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn consolidate_cash_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1508,16 +1468,6 @@ async fn create_scenario_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:forecast:write"])),
-    path = "/finance-v58/forecast",
-    tag = "TreasuryV58",
-    operation_id = "run_forecast_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn run_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1558,16 +1508,6 @@ pub async fn get_forecast_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/scenarios",
-    tag = "TreasuryV58",
-    operation_id = "list_scenarios_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn list_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1612,16 +1552,6 @@ async fn compare_scenarios_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:forecast:read"])),
-    path = "/finance-v58/forecast_summary",
-    tag = "TreasuryV58",
-    operation_id = "get_forecast_summary_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_forecast_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1638,16 +1568,6 @@ pub async fn get_forecast_summary_handler(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v58/assumptions/{id}",
-    tag = "TreasuryV58",
-    operation_id = "update_assumptions_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn update_assumptions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1664,16 +1584,6 @@ pub async fn update_assumptions_handler(
 
 // --- Liquidity Handlers ---
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/liquidity_snapshot/{id}",
-    tag = "TreasuryV58",
-    operation_id = "get_liquidity_snapshot_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_liquidity_snapshot_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1718,16 +1628,6 @@ pub async fn optimize_liquidity_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/recommendations",
-    tag = "TreasuryV58",
-    operation_id = "get_recommendations_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_recommendations_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1744,16 +1644,6 @@ pub async fn get_recommendations_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v58/action",
-    tag = "TreasuryV58",
-    operation_id = "execute_action_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn execute_action_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1767,16 +1657,6 @@ pub async fn execute_action_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/targets",
-    tag = "TreasuryV58",
-    operation_id = "get_targets_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_targets_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1824,16 +1704,6 @@ pub async fn set_target_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/optimization_history",
-    tag = "TreasuryV58",
-    operation_id = "get_optimization_history_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_optimization_history_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

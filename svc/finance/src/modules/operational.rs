@@ -91,16 +91,6 @@ pub async fn list_expenses(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/expense",
-    tag = "Operational",
-    operation_id = "create_expense",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_expense(
     State(state): State<AppState>,
@@ -211,16 +201,6 @@ pub async fn get_expense(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance/expense/{id}",
-    tag = "Operational",
-    operation_id = "update_expense",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_expense(
     State(state): State<AppState>,
@@ -406,16 +386,6 @@ pub async fn list_budgets(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/budget",
-    tag = "Operational",
-    operation_id = "create_budget",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_budget(
     State(state): State<AppState>,
@@ -530,16 +500,6 @@ pub async fn get_budget(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:budget:write"])),
-    path = "/finance/budget/{id}",
-    tag = "Operational",
-    operation_id = "update_budget",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn update_budget(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -720,16 +680,6 @@ pub async fn list_receivables(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/receivable",
-    tag = "Operational",
-    operation_id = "create_receivable",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_receivable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -842,16 +792,6 @@ pub async fn get_receivable(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance/receivable/{id}",
-    tag = "Operational",
-    operation_id = "update_receivable",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn update_receivable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1022,16 +962,6 @@ pub async fn list_payables(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/payable",
-    tag = "Operational",
-    operation_id = "create_payable",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn create_payable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,
@@ -1144,16 +1074,6 @@ pub async fn get_payable(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance/payable/{id}",
-    tag = "Operational",
-    operation_id = "update_payable",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn update_payable(
     State(state): State<AppState>,
     Extension(_claims): Extension<Claims>,

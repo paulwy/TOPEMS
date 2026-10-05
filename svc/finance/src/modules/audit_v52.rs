@@ -1699,16 +1699,6 @@ pub async fn create_audit_rule_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v52/audit_rules",
-    tag = "AuditV52",
-    operation_id = "list_audit_rules_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_audit_rules_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1727,16 +1717,6 @@ pub async fn list_audit_rules_handler(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v52/audit_rule/{id}",
-    tag = "AuditV52",
-    operation_id = "update_audit_rule_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn update_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1750,16 +1730,6 @@ pub async fn update_audit_rule_handler(
     }
 }
 
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["finance:delete"])),
-    path = "/finance-v52/audit_rule/{id}",
-    tag = "AuditV52",
-    operation_id = "delete_audit_rule_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn delete_audit_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1772,16 +1742,6 @@ pub async fn delete_audit_rule_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v52/audit_findings",
-    tag = "AuditV52",
-    operation_id = "get_audit_findings_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_audit_findings_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1848,16 +1808,6 @@ pub async fn resolve_finding_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v52/audit",
-    tag = "AuditV52",
-    operation_id = "run_audit_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn run_audit_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1870,16 +1820,6 @@ pub async fn run_audit_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v52/anomalies",
-    tag = "AuditV52",
-    operation_id = "detect_anomalies_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn detect_anomalies_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1892,16 +1832,6 @@ async fn detect_anomalies_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v52/anomaly_alerts",
-    tag = "AuditV52",
-    operation_id = "get_anomaly_alerts_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_anomaly_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1961,16 +1891,6 @@ pub async fn get_detection_summary_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v52/detection",
-    tag = "AuditV52",
-    operation_id = "configure_detection_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn configure_detection_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1998,16 +1918,6 @@ pub async fn configure_detection_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v52/alerts",
-    tag = "AuditV52",
-    operation_id = "get_alerts_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2064,16 +1974,6 @@ pub async fn create_alert_config_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v52/alert_configs",
-    tag = "AuditV52",
-    operation_id = "list_alert_configs_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_alert_configs_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2089,16 +1989,6 @@ pub async fn list_alert_configs_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v52/alert",
-    tag = "AuditV52",
-    operation_id = "acknowledge_alert_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

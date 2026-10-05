@@ -875,16 +875,6 @@ pub async fn get_enhanced_balance_sheet_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/enhanced_income_statement/{id}",
-    tag = "ReportCenter",
-    operation_id = "get_enhanced_income_statement_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_enhanced_income_statement_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -897,16 +887,6 @@ pub async fn get_enhanced_income_statement_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/enhanced_cash_flow/{id}",
-    tag = "ReportCenter",
-    operation_id = "get_enhanced_cash_flow_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_enhanced_cash_flow_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -918,16 +898,6 @@ pub async fn get_enhanced_cash_flow_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/financial_analysis",
-    tag = "ReportCenter",
-    operation_id = "get_financial_analysis_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_financial_analysis_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -973,16 +943,6 @@ pub async fn get_comparative_report_handler(
     Json(ApiResponse::success(report, "查询成功"))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report",
-    tag = "ReportCenter",
-    operation_id = "export_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn export_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

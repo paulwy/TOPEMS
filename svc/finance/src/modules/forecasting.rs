@@ -1019,16 +1019,6 @@ pub async fn get_cash_flow_forecast_handler(
     Json(ApiResponse::success(forecast, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:forecast:read"])),
-    path = "/finance/forecast_scenarios",
-    tag = "Forecasting",
-    operation_id = "get_forecast_scenarios_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_forecast_scenarios_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1040,16 +1030,6 @@ pub async fn get_forecast_scenarios_handler(
     Json(ApiResponse::success(scenarios, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:forecast:read"])),
-    path = "/finance/forecast_accuracy/{id}",
-    tag = "Forecasting",
-    operation_id = "get_forecast_accuracy_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_forecast_accuracy_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1060,16 +1040,6 @@ pub async fn get_forecast_accuracy_handler(
     Json(ApiResponse::success(accuracy, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:budget:read"])),
-    path = "/finance/budget_variance/{id}",
-    tag = "Forecasting",
-    operation_id = "get_budget_variance_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_budget_variance_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1109,16 +1079,6 @@ pub async fn get_variance_trend_handler(
     Json(ApiResponse::success(trend, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/significant_variances",
-    tag = "Forecasting",
-    operation_id = "get_significant_variances_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_significant_variances_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1129,16 +1089,6 @@ pub async fn get_significant_variances_handler(
     Json(ApiResponse::success(items, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/active_alerts",
-    tag = "Forecasting",
-    operation_id = "get_active_alerts_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn get_active_alerts_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1149,16 +1099,6 @@ async fn get_active_alerts_handler(
     Json(ApiResponse::success(alerts, "查询成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/alert_summary",
-    tag = "Forecasting",
-    operation_id = "get_alert_summary_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_alert_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1169,16 +1109,6 @@ pub async fn get_alert_summary_handler(
     Json(ApiResponse::success(summary, "查询成功"))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance/alert_rule",
-    tag = "Forecasting",
-    operation_id = "create_alert_rule_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn create_alert_rule_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1229,16 +1159,6 @@ pub async fn update_alert_rule_handler(
     Json(ApiResponse::success(rule, "更新成功"))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/alert",
-    tag = "Forecasting",
-    operation_id = "acknowledge_alert_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn acknowledge_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1250,16 +1170,6 @@ async fn acknowledge_alert_handler(
     Json(ApiResponse::success(alert, "告警已确认"))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/alert",
-    tag = "Forecasting",
-    operation_id = "resolve_alert_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn resolve_alert_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

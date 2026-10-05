@@ -98,16 +98,6 @@ pub async fn create_session_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/session/{id}",
-    tag = "Reconciliation",
-    operation_id = "get_session_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -122,16 +112,6 @@ pub async fn get_session_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/sessions",
-    tag = "Reconciliation",
-    operation_id = "list_sessions_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_sessions_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -193,16 +173,6 @@ pub async fn import_items_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/match",
-    tag = "Reconciliation",
-    operation_id = "auto_match_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn auto_match_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -217,16 +187,6 @@ pub async fn auto_match_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/session",
-    tag = "Reconciliation",
-    operation_id = "complete_session_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn complete_session_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -290,16 +250,6 @@ pub async fn get_items_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/summary",
-    tag = "Reconciliation",
-    operation_id = "get_summary_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_summary_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -361,16 +311,6 @@ pub struct AgingQueryParams {
     pub direction: String,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance/report/{id}",
-    tag = "Reconciliation",
-    operation_id = "get_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -506,16 +446,6 @@ pub async fn batch_update_diff_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/diff_statistics",
-    tag = "Reconciliation",
-    operation_id = "get_diff_statistics_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_diff_statistics_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -530,16 +460,6 @@ pub async fn get_diff_statistics_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/aging/{id}",
-    tag = "Reconciliation",
-    operation_id = "get_aging_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_aging_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

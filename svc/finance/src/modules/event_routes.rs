@@ -115,16 +115,6 @@ pub async fn list_published_events() -> Json<ApiResponse<Vec<PublishedEvent>>> {
     ))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/handlers",
-    tag = "EventRoutes",
-    operation_id = "list_handlers",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
     let pipeline = get_event_pipeline();
     let handlers = pipeline.get_router().list_handlers();
@@ -135,16 +125,6 @@ pub async fn list_handlers() -> Json<ApiResponse<HandlersResponse>> {
     ))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/event",
-    tag = "EventRoutes",
-    operation_id = "route_event",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn route_event(
     Json(req): Json<RouteEventRequest>,
 ) -> Json<ApiResponse<RouteEventResponse>> {
@@ -164,16 +144,6 @@ pub async fn route_event(
     ))
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/events",
-    tag = "EventRoutes",
-    operation_id = "process_events",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn process_events(
     Json(req): Json<ProcessEventsRequest>,
 ) -> Json<ApiResponse<PipelineResult>> {
@@ -182,16 +152,6 @@ pub async fn process_events(
     Json(ApiResponse::success(result, "处理完成"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/sagas",
-    tag = "EventRoutes",
-    operation_id = "list_sagas",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_sagas() -> Json<ApiResponse<SagasListResponse>> {
     let pipeline = get_event_pipeline();
     let items = pipeline.get_saga_coordinator().list_sagas(None).await;
@@ -227,16 +187,6 @@ pub async fn get_saga(Path(saga_id): Path<String>) -> Json<ApiResponse<SagaInsta
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/saga",
-    tag = "EventRoutes",
-    operation_id = "start_saga",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<StartSagaResponse>> {
     let pipeline = get_event_pipeline();
     match pipeline
@@ -262,16 +212,6 @@ pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<S
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance/saga",
-    tag = "EventRoutes",
-    operation_id = "compensate_saga",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn compensate_saga(
     Path(saga_id): Path<String>,
 ) -> Json<ApiResponse<CompensateSagaResponse>> {
@@ -289,16 +229,6 @@ pub async fn compensate_saga(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance/saga_stats",
-    tag = "EventRoutes",
-    operation_id = "saga_stats",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn saga_stats() -> Json<ApiResponse<SagaStats>> {
     let pipeline = get_event_pipeline();
     Json(ApiResponse::success(
