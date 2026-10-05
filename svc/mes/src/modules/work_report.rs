@@ -159,16 +159,6 @@ pub struct TodayOutputQuery {
     pub operator: Option<String>,
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["mes:production:read"])),
-    path = "/api/mes/work-reports/today/output",
-    tag = "WorkReport",
-    responses(
-        (status = 200, description = "今日产量", body = ApiResponse<serde_json::Value>),
-        (status = 500, description = "服务器内部错误"),
-    ),
-)]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn get_today_production_output(
     State(state): State<AppState>,

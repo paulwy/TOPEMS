@@ -909,3 +909,9 @@
 - **已完成**：finance 域清理 337 个孤立注解块 + openapi 聚合引用（openapi.rs 373 行 / main.rs 80 行），commit f1f7ce785（25 文件 -3893 行）。重跑生成器→删文档 152 假端点→重编译重启→全量探测 **2575 端点 0 假端点** ✓
 - **已完成**（本轮）：其余域 70 个有注解假端点清理（finance-v5x 系 47/ticket 12/mobile 6/master-data 1/ai 1/erp 1/plugin-registry 1/rd 1，20 文件 -999 行）+ 91 个纯文档幽灵删除（core 38/communication 18/integration 7/plugins 7 等，源码无注解）。8 crate 编译通过，重跑生成器 → 删文档 → 重启 → **2575 端点 0 假端点** ✓
 - **根因细分**：①孤立注解（handler 有注解无路由挂载）②死代码路由（模块 Router 定义但模块未挂载 → 404）③纯文档幽灵（从未有源码注解，历史残留，删文档即根治）
+## [2026-10-06] P4-4 openapi-gen 加固：base 幽灵修剪 + 相对路径假端点注解清理（✅ 2525 端点 0 假端点）
+
+- **生成器加固**（openapi_gen.rs）：base 旧 key 仅保留 ∈ 注解集 ∪ SERVER_OWNED 白名单（/api/openapi.json、/api/docs）→ 历史幽灵路径重跑不复发（根治"只增不删"）
+- **深层发现**：上轮 91 个"文档幽灵"实为**相对路径注解假端点**（path=/im/xxx 等，normalize 补前缀，反查曾漏判）——已按 normalize 感知定位清理：unified-core file 系 22、communication 18、integration 7、plugin-registry 6、settlement-center(finance) 6、ai-form(ai) 9、internal(lims/qms) 4、health/detailed 5 文件、gis/mes/pdm 零星 → 13+7 crate 编译通过
+- **最终**：文档 2525 端点（=注解集 ∪ SERVER_OWNED），探测 **0 假端点** ✓；提交待完成
+- **登记**：生成器修剪掉 42 个"无注解真路由"（ai 系 12 等——探测 200 但无注解来源，文档不再宣称）→ 待补注解（低优先，文档一致性已优先）

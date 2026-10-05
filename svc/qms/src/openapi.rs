@@ -27,31 +27,10 @@ use crate::models::quality_standard::{
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // =============================================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["qms:read"])),
-    path = "/",
-    tag = "qms",
-    responses((status = 200, description = "home OK")),
-)]
 fn _home() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["qms:read"])),
-    path = "/health",
-    tag = "qms",
-    responses((status = 200, description = "health OK")),
-)]
 fn _health() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["qms:read"])),
-    path = "/api/health/detailed",
-    tag = "qms",
-    responses((status = 200, description = "detailed_health OK")),
-)]
 fn _detailed_health() {}
 
 #[derive(OpenApi)]
@@ -223,8 +202,6 @@ fn _detailed_health() {}
         crate::modules::quality_cost::get_cost_trend,
         crate::modules::dashboard::get_today_quality_pass_rate,
         crate::modules::dashboard::get_dashboard_stats,
-        crate::modules::integration::create_integration_action,
-        crate::modules::integration::update_integration_inspection_result,
         crate::modules::apqp::list_apqp_projects,
         crate::modules::apqp::create_apqp_project,
         crate::modules::apqp::get_apqp_project,
@@ -258,9 +235,6 @@ fn _detailed_health() {}
         crate::modules::quality_issue::start_issue_approval,
         crate::modules::qms_plugin::get_plugin_info,
         crate::modules::qms_plugin::plugin_health_check,
-        _home,
-        _health,
-        _detailed_health,
 ),
     tags(
         (name = "quality_standard", description = "质量标准 API"),

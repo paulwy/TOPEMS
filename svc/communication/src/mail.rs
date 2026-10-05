@@ -830,19 +830,6 @@ pub async fn create_template(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["communication:mail:read"])),
-    path = "/mail/templates/{id}",
-    params(
-        ("id" = String, Path, description = "Template ID")
-    ),
-    responses(
-        (status = 200, description = "Get template", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "email"
-)]
 pub async fn get_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -926,19 +913,6 @@ pub async fn get_template(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["communication:mail:write"])),
-    path = "/mail/templates/{id}",
-    params(
-        ("id" = String, Path, description = "Template ID")
-    ),
-    responses(
-        (status = 200, description = "Update template", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "email"
-)]
 pub async fn update_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,
@@ -1093,19 +1067,6 @@ pub async fn delete_template(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["communication:mail:write"])),
-    path = "/mail/templates/{id}/send",
-    params(
-        ("id" = String, Path, description = "Template ID")
-    ),
-    responses(
-        (status = 200, description = "Send with template", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "email"
-)]
 pub async fn send_with_template(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

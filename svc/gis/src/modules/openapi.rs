@@ -262,7 +262,6 @@ pub struct OfflineDataDownload {
         crate::modules::business::get_business_location,
         crate::modules::business::update_business_location,
         crate::modules::business::delete_business_location,
-        crate::modules::business::list_business_locations_by_type,
         crate::modules::photo::list_location_photos,
         crate::modules::photo::create_location_photo,
         crate::modules::photo::get_location_photo,

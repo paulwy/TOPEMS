@@ -340,16 +340,6 @@ pub async fn delete_connection(
 
 // ===== connections/{id}/{entity}-mappings =====
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["integration:external_erp:read"])),
-    path = "/api/integration/",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ExternalErp"
-)]
 pub async fn list_entity_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -435,16 +425,6 @@ async fn create_entity_mapping(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["integration:external_erp:write"])),
-    path = "/api/integration/batch",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ExternalErp"
-)]
 pub async fn batch_entity_mappings(
     State(state): State<AppState>,
     Path((id, entity)): Path<(String, String)>,
@@ -517,19 +497,6 @@ pub async fn batch_entity_mappings(
 
 // ===== connections/{id}/preview/{entity} =====
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["integration:external_erp:read"])),
-    path = "/api/integration/{entity}",
-    params(
-        ("entity" = String, Path, description = "entity")
-    ),
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ExternalErp"
-)]
 pub async fn preview_entity(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -732,19 +699,6 @@ async fn write_to_staging(
 
 // ===== sync/{entity} =====
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["integration:external_erp:write"])),
-    path = "/api/integration/{entity}",
-    params(
-        ("entity" = String, Path, description = "entity")
-    ),
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ExternalErp"
-)]
 #[allow(
     clippy::as_conversions,
     clippy::cast_possible_truncation,
@@ -956,16 +910,6 @@ pub async fn sync_entity(
 
 // ===== sync-logs =====
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["integration:external_erp:read"])),
-    path = "/api/integration/sync-logs",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ExternalErp"
-)]
 pub async fn sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -993,16 +937,6 @@ pub async fn sync_logs(
 
 // ===== sync-statistics =====
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["integration:external_erp:read"])),
-    path = "/api/integration/sync-statistics",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ExternalErp"
-)]
 pub async fn sync_statistics(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1079,16 +1013,6 @@ pub async fn sync_statistics(
 
 // ===== export =====
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["integration:external_erp:read"])),
-    path = "/api/integration/export/mappings",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ExternalErp"
-)]
 pub async fn export_mappings(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1120,16 +1044,6 @@ pub async fn export_mappings(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["integration:external_erp:read"])),
-    path = "/api/integration/export/sync-logs",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "ExternalErp"
-)]
 pub async fn export_sync_logs(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

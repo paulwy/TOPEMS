@@ -293,19 +293,6 @@ pub async fn delete_business_location(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["gis:business:read"])),
-    path = "/business-locations/type/{business_type}",
-    params(
-("business_type" = String, Path, description = "business_type")
-    ),
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "business"
-)]
 pub async fn list_business_locations_by_type(
     State(pool): State<PgPool>,
     Extension(claims): Extension<Claims>,

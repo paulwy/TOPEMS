@@ -39,13 +39,6 @@ use crate::modules::work_report::{
 // （home 定义在 main.rs，lib 无法直接引用，仅用于生成 OpenAPI spec）
 // =============================================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["mes:read"])),
-    path = "/",
-    tag = "mes",
-    responses((status = 200, description = "home OK")),
-)]
 fn _home() {}
 
 #[derive(OpenApi)]
@@ -71,7 +64,6 @@ fn _home() {}
         crate::modules::work_report::delete_work_report,
         crate::modules::work_report::approve_work_report,
         crate::modules::work_report::reject_work_report,
-        crate::modules::work_report::get_today_production_output,
 
         // ── Production Order ────────────────────────────────────────
         crate::modules::production_order::list_production_orders,
@@ -197,7 +189,6 @@ fn _home() {}
         crate::modules::capacity::release_capacity,
         crate::modules::capacity::maintenance_capacity,
         crate::modules::capacity::submit_capacity,
-        crate::modules::work_report::get_today_production_output,
         crate::modules::work_report::list_work_reports,
         crate::modules::work_report::get_work_report,
         crate::modules::work_report::create_work_report,
@@ -285,7 +276,6 @@ fn _home() {}
         crate::modules::work_order::cancel_work_order,
         crate::modules::work_order::pause_work_order,
         crate::modules::work_order::resume_work_order,
-        crate::modules::settings::get_settings,
         crate::modules::anomaly_detection::list_anomaly_alerts,
         crate::modules::anomaly_detection::get_anomaly_summary,
         crate::modules::anomaly_detection::get_equipment_anomalies,
@@ -310,10 +300,8 @@ fn _home() {}
         crate::modules::work_report::approve_rework,
         crate::modules::work_report::reject_rework,
         crate::modules::work_report::start_rework_approval,
-        crate::modules::dashboard_ws::dashboard_websocket,
         crate::modules::mes_plugin::get_plugin_info,
         crate::modules::mes_plugin::plugin_health_check,
-        _home,
 ),
     components(
         schemas(

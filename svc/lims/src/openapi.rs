@@ -15,13 +15,6 @@ use crate::modules::{
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // =============================================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["lims:read"])),
-    path = "/",
-    tag = "lims",
-    responses((status = 200, description = "home OK")),
-)]
 fn _home() {}
 
 #[utoipa::path(
@@ -33,13 +26,6 @@ fn _home() {}
 )]
 fn _health() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["lims:read"])),
-    path = "/api/health/detailed",
-    tag = "lims",
-    responses((status = 200, description = "detailed_health OK")),
-)]
 fn _detailed_health() {}
 
 #[derive(OpenApi)]
@@ -91,7 +77,6 @@ fn _detailed_health() {}
         crate::modules::proficiency_testing::list_plan_corrective_actions,
         crate::modules::test_method::list_methods,
         crate::modules::test_method::get_method,
-        crate::modules::test_method::list_categories,
         crate::modules::test_method::update_category,
         crate::modules::test_method::list_validations,
         crate::modules::test_method::list_method_versions,
@@ -123,8 +108,6 @@ fn _detailed_health() {}
         crate::modules::sample::get_lifecycle_stage,
         crate::modules::sample::get_sample_traceability,
         crate::modules::dashboard::get_dashboard,
-        crate::modules::integration::create_integration_sample,
-        crate::modules::integration::create_integration_task,
         crate::modules::uncertainty::list_projects,
         crate::modules::uncertainty::get_project,
         crate::modules::uncertainty::list_sources,
@@ -140,9 +123,6 @@ fn _detailed_health() {}
         crate::modules::inspection_record::get_record,
             crate::modules::lims_plugin::get_plugin_info,
         crate::modules::lims_plugin::plugin_health_check,
-        _home,
-        _health,
-        _detailed_health,
 ),
     components(
         schemas(

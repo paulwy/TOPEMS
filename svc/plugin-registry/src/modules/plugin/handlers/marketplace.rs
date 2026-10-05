@@ -44,16 +44,6 @@ pub fn paginate(page: Option<u32>, page_size: Option<u32>) -> (u32, u32, u32) {
 }
 
 /// Get marketplace summary
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["plugin_registry:read"])),
-    path = "/marketplace/summary",
-    tag = "plugin",
-    responses(
-        (status = 200, description = "Marketplace summary", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    )
-)]
 pub async fn get_marketplace_summary(
     State(state): State<AppState>,
     headers: HeaderMap,
@@ -114,16 +104,6 @@ pub async fn get_marketplace_summary(
 }
 
 /// List plugin categories
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["plugin_registry:read"])),
-    path = "/marketplace/categories",
-    tag = "plugin",
-    responses(
-        (status = 200, description = "List of plugin categories", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    )
-)]
 pub async fn list_categories(
     State(state): State<AppState>,
 ) -> Json<CoreResponse<Vec<PluginCategory>>> {
@@ -140,24 +120,6 @@ pub async fn list_categories(
 }
 
 /// List plugins with filters
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
-    path = "/marketplace/plugins",
-    tag = "plugin",
-    params(
-        ("page" = Option<u32>, Query, description = "Page number"),
-        ("page_size" = Option<u32>, Query, description = "Items per page"),
-        ("category" = Option<String>, Query, description = "Filter by category"),
-        ("search" = Option<String>, Query, description = "Search query"),
-        ("is_free" = Option<bool>, Query, description = "Filter free plugins"),
-        ("sort_by" = Option<String>, Query, description = "Sort by: popular, rating, recent, name"),
-    ),
-    responses(
-        (status = 200, description = "List of plugins", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    )
-)]
 #[allow(
     clippy::as_conversions,
     clippy::cast_possible_truncation,
@@ -240,20 +202,6 @@ pub async fn list_plugins(
 }
 
 /// Get plugin by code
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["plugin-registry:plugin:read"])),
-    path = "/marketplace/plugins/{code}",
-    tag = "plugin",
-    params(
-        ("code" = String, Path, description = "Plugin code"),
-    ),
-    responses(
-        (status = 200, description = "Plugin detail", body = serde_json::Value),
-        (status = 404, description = "Plugin not found"),
-        (status = 500, description = "Internal server error")
-    )
-)]
 pub async fn get_plugin(
     State(state): State<AppState>,
     Path(code): Path<String>,

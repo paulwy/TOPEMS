@@ -5,13 +5,6 @@ use utoipa::OpenApi;
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // =============================================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["plugin-registry:read"])),
-    path = "/",
-    tag = "plugin-registry",
-    responses((status = 200, description = "home OK")),
-)]
 fn _home() {}
 
 #[utoipa::path(
@@ -28,12 +21,6 @@ fn _detailed_health() {}
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::modules::plugin::handlers::marketplace::get_marketplace_summary,
-        crate::modules::plugin::handlers::marketplace::list_categories,
-        crate::modules::plugin::handlers::marketplace::list_plugins,
-        crate::modules::plugin::handlers::marketplace::get_plugin,
-        crate::modules::plugin::handlers::tenant_plugins::list_tenant_plugins,
-        crate::modules::plugin::handlers::tenant_plugins::install_plugin,
         crate::modules::plugin::handlers::runtime::register_plugin,
         crate::modules::plugin::handlers::runtime::update_plugin_status,
         crate::modules::plugin::handlers::runtime::get_plugin_status,
@@ -52,10 +39,6 @@ fn _detailed_health() {}
         crate::modules::plugin::handlers::reviews_stats::get_plugin_statistics,
         crate::modules::plugin::handlers::reviews_stats::get_review_statistics,
         crate::modules::plugin::handlers::reviews_stats::get_download_history,
-        crate::modules::plugin::handlers::marketplace::get_marketplace_summary,
-        crate::modules::plugin::handlers::marketplace::list_categories,
-        crate::modules::plugin::handlers::marketplace::list_plugins,
-        crate::modules::plugin::handlers::marketplace::get_plugin,
         crate::modules::plugin::handlers::marketplace::get_plugin_reviews,
         crate::modules::plugin::handlers::marketplace::create_review,
         crate::modules::plugin::handlers::automated_upgrade::get_upgrade_schedule,
@@ -72,8 +55,6 @@ fn _detailed_health() {}
         crate::modules::plugin::handlers::simple_api::list_tenant_installed_plugins,
         crate::modules::plugin::handlers::simple_api::enable_plugin_simple,
         crate::modules::plugin::handlers::simple_api::disable_plugin_simple,
-        crate::modules::plugin::handlers::tenant_plugins::list_tenant_plugins,
-        crate::modules::plugin::handlers::tenant_plugins::install_plugin,
         crate::modules::plugin::handlers::tenant_plugins::uninstall_plugin,
         crate::modules::plugin::handlers::tenant_plugins::uninstall_my_plugin,
         crate::modules::plugin::handlers::tenant_plugins::activate_plugin,
@@ -89,8 +70,6 @@ fn _detailed_health() {}
             crate::modules::plugin::handlers::marketplace::get_plugin_versions,
         crate::modules::plugin::handlers::tenant_plugins::install_my_plugin,
         crate::modules::plugin::handlers::tenant_plugins::list_my_plugins,
-        _home,
-        _health,
 ),
     tags(
         (name = "plugin",      description = "插件注册/发布 API"),

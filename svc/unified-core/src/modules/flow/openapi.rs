@@ -125,8 +125,6 @@ use super::models::{
         // === Flow-Template ===
         super::template::list_templates,
         super::template::create_template,
-        super::template::get_template,
-        super::template::update_template,
         super::template::delete_template,
         super::template::copy_template,
         super::template::import_template,

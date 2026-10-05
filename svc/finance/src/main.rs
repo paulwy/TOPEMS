@@ -116,12 +116,6 @@ use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowA
         crate::modules::financial_reports::get_report_subscriptions,
         crate::modules::financial_reports::create_report_subscription,
         // ---- settlement_center ----
-        settlement_handlers::list_reconciliations,
-        settlement_handlers::auto_reconcile,
-        settlement_handlers::approve_reconciliation,
-        settlement_handlers::approve_settlement,
-        settlement_handlers::list_differences,
-        settlement_handlers::reject_difference,
     ),
     tags(
         (name = "Finance", description = "财务管理"),

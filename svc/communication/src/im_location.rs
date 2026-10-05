@@ -191,16 +191,6 @@ pub struct UnifiedPoiResult {
     pub providers_used: Vec<String>,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["communication:location:write"])),
-    path = "/locations/message",
-    responses(
-        (status = 200, description = "Send location message", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "location"
-)]
 pub async fn send_location_message(
     State(pool): State<PgPool>,
     Json(payload): Json<SendLocationRequest>,
@@ -308,16 +298,6 @@ async fn check_geofence_triggers(
         .collect()
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["communication:location:read"])),
-    path = "/locations/rooms/{chat_id}/messages",
-    responses(
-        (status = 200, description = "List location messages", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "location"
-)]
 pub async fn list_location_messages(
     State(pool): State<PgPool>,
     Path(chat_id): Path<Uuid>,
@@ -344,16 +324,6 @@ pub async fn list_location_messages(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["communication:location:write"])),
-    path = "/locations/geofences",
-    responses(
-        (status = 200, description = "Create geofence", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "location"
-)]
 pub async fn create_geofence(
     State(pool): State<PgPool>,
     Json(payload): Json<CreateImGeofenceRequest>,
@@ -443,16 +413,6 @@ pub async fn create_geofence(
     Json(ApiResponse::success(sync_result, "创建地理围栏成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["communication:location:read"])),
-    path = "/locations/geofences/{id}",
-    responses(
-        (status = 200, description = "Get geofence", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "location"
-)]
 pub async fn get_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -474,16 +434,6 @@ pub async fn get_geofence(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["communication:location:read"])),
-    path = "/locations/geofences",
-    responses(
-        (status = 200, description = "List geofences", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "location"
-)]
 pub async fn list_geofences(
     State(pool): State<PgPool>,
     Query(params): Query<GeofenceQuery>,
@@ -543,19 +493,6 @@ pub async fn list_geofences(
     }
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["communication:location:write"])),
-    path = "/locations/geofences/{id}",
-    params(
-        ("id" = Uuid, Path, description = "Geofence ID")
-    ),
-    responses(
-        (status = 200, description = "Update geofence", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "location"
-)]
 pub async fn update_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -649,19 +586,6 @@ pub async fn update_geofence(
     Json(ApiResponse::success(sync_result, "更新地理围栏成功"))
 }
 
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["communication:location:write"])),
-    path = "/locations/geofences/{id}",
-    params(
-        ("id" = Uuid, Path, description = "Geofence ID")
-    ),
-    responses(
-        (status = 200, description = "Delete geofence", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "location"
-)]
 pub async fn delete_geofence(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -688,16 +612,6 @@ pub async fn delete_geofence(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["communication:location:read"])),
-    path = "/pois/search",
-    responses(
-        (status = 200, description = "Unified search POIs", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "location"
-)]
 pub async fn unified_search_pois(
     State(_pool): State<PgPool>,
     Json(payload): Json<SearchPoiRequest>,

@@ -18,13 +18,6 @@ use utoipa::OpenApi;
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // =============================================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["pdm:read"])),
-    path = "/",
-    tag = "pdm",
-    responses((status = 200, description = "OK")),
-)]
 fn _home() {}
 
 #[utoipa::path(
@@ -36,13 +29,6 @@ fn _home() {}
 )]
 fn _health() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["pdm:read"])),
-    path = "/api/health/detailed",
-    tag = "pdm",
-    responses((status = 200, description = "OK")),
-)]
 fn _detailed_health() {}
 
 // =============================================================================
@@ -64,9 +50,6 @@ fn _detailed_health() {}
     ),
     paths(
         // === main.rs 中的 bin-only handler（占位函数） ===
-        _home,
-        _health,
-        _detailed_health,
         // === pdm_plugin（公共路由） ===
         pdm_plugin::get_plugin_info,
         pdm_plugin::plugin_health_check,
@@ -199,8 +182,6 @@ fn _detailed_health() {}
         workflow::get_workflow_instance,
         workflow::advance_workflow,
         // === settings ===
-        settings::get_settings,
-        settings::update_settings,
 
     ),
 )]

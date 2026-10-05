@@ -45,22 +45,8 @@ use crate::modules::versioning_v54::{
 //   生成 OpenAPI spec，运行期不会被调用）
 // =============================================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["master_data:read"])),
-    path = "/",
-    tag = "master-data",
-    responses((status = 200, description = "home OK")),
-)]
 fn _home() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["master_data:read"])),
-    path = "/health",
-    tag = "master-data",
-    responses((status = 200, description = "health OK")),
-)]
 fn _health() {}
 
 fn _detailed_health() {}
@@ -317,7 +303,6 @@ fn _detailed_health() {}
         crate::modules::knowledge_v53::search_assets,
         crate::modules::knowledge_v53::get_asset,
         crate::modules::knowledge_v53::update_asset,
-        crate::modules::knowledge_v53::list_categories,
         crate::modules::knowledge_v53::get_asset_stats,
         crate::modules::lineage_v52::register_lineage,
         crate::modules::lineage_v52::delete_lineage,
@@ -412,8 +397,6 @@ fn _detailed_health() {}
         crate::modules::quality_v51::update_quality_rule,
         crate::modules::master_plugin::get_plugin_info,
         crate::modules::master_plugin::plugin_health_check,
-        _home,
-        _health,
         crate::modules::metadata_v60::export_lineage,
         crate::modules::metadata_v60::get_downstream,
         crate::modules::metadata_v60::get_lineage_graph,

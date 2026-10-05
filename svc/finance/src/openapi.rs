@@ -180,12 +180,6 @@ use crate::modules::*;
         crate::modules::financial_reports::get_profit_analysis,
 
         // === settlement_center RC4b: 18 recovered (module visibility fixed) ===
-        crate::modules::settlement_center::handlers::list_reconciliations,
-        crate::modules::settlement_center::handlers::auto_reconcile,
-        crate::modules::settlement_center::handlers::approve_reconciliation,
-        crate::modules::settlement_center::handlers::approve_settlement,
-        crate::modules::settlement_center::handlers::list_differences,
-        crate::modules::settlement_center::handlers::reject_difference,
 
         // === audit_v52 RC4b: Query-handlers recovered after IntoParams ===
         crate::modules::audit_v52::resolve_finding_handler,

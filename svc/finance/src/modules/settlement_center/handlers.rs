@@ -35,15 +35,6 @@ fn current_user_id(claims: &Claims) -> Option<Uuid> {
 // 统一对账 API
 // ============================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/api/core/settlement-center/reconciliations",
-    tag = "Settlement-Center",
-    operation_id = "list_reconciliations",
-    params(ReconciliationListQuery),
-    responses((status = 200, description = "OK")),
-)]
 /// GET /api/core/settlement-center/reconciliations
 pub async fn list_reconciliations(
     State(state): State<AppState>,
@@ -138,14 +129,6 @@ pub async fn reconcile(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/api/core/settlement-center/auto-reconcile",
-    tag = "Settlement-Center",
-    operation_id = "auto_reconcile",
-    responses((status = 200, description = "OK")),
-)]
 /// POST /api/core/settlement-center/auto-reconcile
 pub async fn auto_reconcile(
     State(state): State<AppState>,
@@ -235,14 +218,6 @@ pub async fn get_settlement(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/api/core/settlement-center/reconciliations/{id}/approve",
-    tag = "Settlement-Center",
-    operation_id = "approve_reconciliation",
-    responses((status = 200, description = "OK")),
-)]
 /// POST /api/core/settlement-center/reconciliations/{id}/approve
 pub async fn approve_reconciliation(
     State(state): State<AppState>,
@@ -269,14 +244,6 @@ pub async fn approve_reconciliation(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/api/core/settlement-center/settlements/{id}/approve",
-    tag = "Settlement-Center",
-    operation_id = "approve_settlement",
-    responses((status = 200, description = "OK")),
-)]
 /// POST /api/core/settlement-center/settlements/{id}/approve
 pub async fn approve_settlement(
     State(state): State<AppState>,
@@ -367,15 +334,6 @@ pub async fn list_links(
 // 差异处理 API
 // ============================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/api/core/settlement-center/differences",
-    tag = "Settlement-Center",
-    operation_id = "list_differences",
-    params(DifferenceListQuery),
-    responses((status = 200, description = "OK")),
-)]
 /// GET /api/core/settlement-center/differences
 pub async fn list_differences(
     State(state): State<AppState>,
@@ -448,14 +406,6 @@ pub async fn approve_difference(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/api/core/settlement-center/differences/{id}/reject",
-    tag = "Settlement-Center",
-    operation_id = "reject_difference",
-    responses((status = 200, description = "OK")),
-)]
 /// POST /api/core/settlement-center/differences/{id}/reject
 pub async fn reject_difference(
     State(state): State<AppState>,

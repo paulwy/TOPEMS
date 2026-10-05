@@ -18,31 +18,10 @@ use utoipa::OpenApi;
 // 占位函数：为 main.rs 中的 bin-only handler 承载 utoipa::path 注解
 // =============================================================================
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ehs:read"])),
-    path = "/",
-    tag = "ehs",
-    responses((status = 200, description = "OK")),
-)]
 fn _home() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ehs:read"])),
-    path = "/health",
-    tag = "ehs",
-    responses((status = 200, description = "OK")),
-)]
 fn _health() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/health/detailed",
-    tag = "ehs",
-    responses((status = 200, description = "OK")),
-)]
 fn _detailed_health() {}
 
 // =============================================================================
@@ -64,9 +43,6 @@ fn _detailed_health() {}
     ),
     paths(
         // === main.rs 中的 bin-only handler（占位函数） ===
-        _home,
-        _health,
-        _detailed_health,
         // === ehs_plugin（公共路由） ===
         ehs_plugin::get_plugin_info,
         ehs_plugin::plugin_health_check,

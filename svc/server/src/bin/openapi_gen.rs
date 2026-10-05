@@ -90,6 +90,74 @@ fn merge_doc(
     );
 }
 
+// 各域 ApiDoc 聚合（按需追加后续域；domain 用于路径前缀规范化）。
+// 先收集注解全集（anno_paths/anno_components），用于：
+// 1) base 旧 key 修剪：仅保留 ∈ 注解集 或 SERVER_OWNED 白名单的路径，根治"只增不删"历史幽灵复发；
+// 2) 随后并入 merged_paths（base 优先 + 注解补 method/新路径）。
+fn collect_docs() -> Vec<(&'static str, Value)> {
+    vec![
+    ("pm", serde_json::to_value(topems_pm::modules::openapi::ApiDoc::openapi())
+            .expect("pm ApiDoc 序列化失败")),
+    ("lims", serde_json::to_value(topems_lims::openapi::LimsApiDoc::openapi())
+            .expect("lims ApiDoc 序列化失败")),
+    ("crm", serde_json::to_value(topems_crm::modules::openapi::CrmApiDoc::openapi())
+            .expect("crm ApiDoc 序列化失败")),
+    ("erp", serde_json::to_value(topems_erp::modules::openapi::ErpApiDoc::openapi())
+            .expect("erp ApiDoc 序列化失败")),
+    ("finance", serde_json::to_value(topems_finance::openapi::ApiDoc::openapi())
+            .expect("finance ApiDoc 序列化失败")),
+    ("qms", serde_json::to_value(topems_qms::openapi::QmsApiDoc::openapi())
+            .expect("qms ApiDoc 序列化失败")),
+    ("scm", serde_json::to_value(topems_scm::modules::openapi::ScmApiDoc::openapi())
+            .expect("scm ApiDoc 序列化失败")),
+    ("wms", serde_json::to_value(topems_wms::modules::openapi::WmsApiDoc::openapi())
+            .expect("wms ApiDoc 序列化失败")),
+    ("hrm", serde_json::to_value(topems_hrm::modules::openapi::ApiDoc::openapi())
+            .expect("hrm ApiDoc 序列化失败")),
+    ("mes", serde_json::to_value(topems_mes::modules::openapi::MesApiDoc::openapi())
+            .expect("mes ApiDoc 序列化失败")),
+    ("tms", serde_json::to_value(topems_tms::modules::openapi::TmsApiDoc::openapi())
+            .expect("tms ApiDoc 序列化失败")),
+    ("ticket", serde_json::to_value(topems_ticket::openapi::TicketApiDoc::openapi())
+            .expect("ticket ApiDoc 序列化失败")),
+    ("rd", serde_json::to_value(topems_rd::modules::openapi::ApiDoc::openapi())
+            .expect("rd ApiDoc 序列化失败")),
+    ("srm", serde_json::to_value(topems_srm::modules::openapi::SrmApiDoc::openapi())
+            .expect("srm ApiDoc 序列化失败")),
+    ("gis", serde_json::to_value(topems_gis::modules::openapi::GisApiDoc::openapi())
+            .expect("gis ApiDoc 序列化失败")),
+    ("portal", serde_json::to_value(topems_portal::openapi::ApiDoc::openapi())
+            .expect("portal ApiDoc 序列化失败")),
+    ("bi", serde_json::to_value(topems_analytics::openapi::ApiDoc::openapi())
+            .expect("analytics ApiDoc 序列化失败")),
+    ("ehs", serde_json::to_value(topems_ehs::modules::openapi::ApiDoc::openapi())
+            .expect("ehs ApiDoc 序列化失败")),
+    ("pdm", serde_json::to_value(topems_pdm::modules::openapi::ApiDoc::openapi())
+            .expect("pdm ApiDoc 序列化失败")),
+    ("monitor", serde_json::to_value(topems_monitor::openapi::MonitorApiDoc::openapi())
+            .expect("monitor ApiDoc 序列化失败")),
+    ("search", serde_json::to_value(topems_search::openapi::SearchApiDoc::openapi())
+            .expect("search ApiDoc 序列化失败")),
+    ("communication", serde_json::to_value(topems_communication::openapi::CommunicationApiDoc::openapi())
+            .expect("communication ApiDoc 序列化失败")),
+    ("integration", serde_json::to_value(topems_integration::openapi::ApiDoc::openapi())
+            .expect("integration ApiDoc 序列化失败")),
+    ("master-data", serde_json::to_value(topems_master_data::openapi::MasterDataApiDoc::openapi())
+            .expect("master-data ApiDoc 序列化失败")),
+    ("ai", serde_json::to_value(topems_ai::modules::openapi::ApiDoc::openapi())
+            .expect("ai ApiDoc 序列化失败")),
+    ("plugins", serde_json::to_value(topems_plugin_registry::openapi::PluginRegistryApiDoc::openapi())
+            .expect("plugin-registry ApiDoc 序列化失败")),
+    ("mobile", serde_json::to_value(topems_mobile::services::openapi::MobileApiDoc::openapi())
+            .expect("mobile ApiDoc 序列化失败")),
+    ("core", serde_json::to_value(topems_unified_core::ApiDoc::openapi())
+            .expect("unified-core ApiDoc 序列化失败")),
+    ]
+}
+
+// server 根层自有路由（无 crate 注解来源，但属真实端点，修剪时必须保留）
+const SERVER_OWNED: &[&str] = &["/api/openapi.json", "/api/docs"];
+
 fn main() {
     let base_path = "docs/api/openapi.json";
     let base: Value = serde_json::from_str(
@@ -97,14 +165,26 @@ fn main() {
     )
     .expect("base openapi.json 非法 JSON");
 
+    let docs = collect_docs();
+    // 1) 注解全集（normalize 后）
+    let mut anno_paths: Map<String, Value> = Map::new();
+    let mut anno_components: Map<String, Value> = Map::new();
+    for (domain, doc) in &docs {
+        merge_doc(&mut anno_paths, &mut anno_components, doc, domain);
+    }
+
     let mut merged = base;
-    // 重建 paths：仅保留既有 /api/ 前缀 key（手工精选 + 历史规范化），丢弃相对路径旧 key 防重复膨胀
+    // 2) 重建 paths：仅保留 ∈ 注解集 或 SERVER_OWNED 白名单的既有 /api/ 前缀 key
+    //    （历史幽灵路径不再随旧文档残留，重跑生成器不复发）
     let mut merged_paths: Map<String, Value> = merged
         .get("paths")
         .and_then(|v| v.as_object())
         .map(|m| {
             m.iter()
-                .filter(|(k, _)| k.starts_with("/api/"))
+                .filter(|(k, _)| {
+                    k.starts_with("/api/")
+                        && (anno_paths.contains_key(k.as_str()) || SERVER_OWNED.contains(&k.as_str()))
+                })
                 .map(|(k, v)| (k.clone(), v.clone()))
                 .collect()
         })
@@ -115,7 +195,7 @@ fn main() {
         .cloned()
         .unwrap_or_default();
 
-    // 各域 ApiDoc 聚合（按需追加后续域；domain 用于路径前缀规范化）
+    // 各域 ApiDoc 聚合（base 优先 + 注解补 method/新路径）
     merge_doc(
         &mut merged_paths,
         &mut merged_components,

@@ -543,18 +543,4 @@ pub async fn compat_post_api_bi_reports_center_export_reporttype() {}
 )]
 pub async fn compat_home_root() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["analytics:compat:read"])),
-    path = "/api/health/detailed",
-    tag = "Health",
-    operation_id = "compat_detailed_health",
-    responses(
-        (status = 200, description = "OK"),
-        (status = 400, description = "Bad Request"),
-        (status = 401, description = "Unauthorized"),
-        (status = 404, description = "Not Found"),
-        (status = 500, description = "Internal Server Error"),
-    ),
-)]
 pub async fn compat_api_health_detailed() {}
