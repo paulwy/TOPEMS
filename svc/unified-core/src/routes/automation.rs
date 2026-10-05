@@ -122,6 +122,10 @@ pub fn automation_routes(_state: &AppState) -> Router<AppState> {
             "/automation/runs/{id}/logs",
             get(crate::modules::automation::get_run_logs),
         )
+        .route(
+            "/automation/runs/{id}/logs/{log_id}",
+            get(crate::modules::automation::get_run_log_by_id),
+        )
         // Variables
         .route(
             "/automation/variables",

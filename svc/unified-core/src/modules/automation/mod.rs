@@ -792,6 +792,17 @@ pub async fn get_run_logs(
     }
 }
 
+/// 双段日志路径兼容：/automation/runs/{id}/logs/{log_id}。
+/// 运行日志为整段文本、当前无独立"日志条目"维度，log_id 暂忽略，复用 get_run_logs 按 run_id
+/// 返回（待上游支持按 log_id 取条目）。避免该路径落到 BFF catch-all 裸 404。
+pub async fn get_run_log_by_id(
+    State(state): State<AppState>,
+    Path((run_id, _log_id)): Path<(Uuid, Uuid)>,
+    Query(params): Query<RunLogQueryParams>,
+) -> Json<ApiResponse<Value>> {
+    get_run_logs(State(state), Path(run_id), Query(params)).await
+}
+
 pub async fn purge_runs(
     State(state): State<AppState>,
     Json(payload): Json<PurgeRequest>,
