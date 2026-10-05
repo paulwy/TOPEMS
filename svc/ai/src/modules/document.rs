@@ -675,7 +675,15 @@ pub async fn extract_key_points(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<ExtractKeyPointsResponse>::error(500, &e.to_string())),
+        Err(e) => {
+            // 文档不存在 / 无内容（RowNotFound 语义）→ 内层 404，而非 500（web 契约收口）
+            let msg = e.to_string();
+            if msg.contains("文档内容为空") || msg.contains("文档不存在") {
+                Json(ApiResponse::<ExtractKeyPointsResponse>::error(404, "文档不存在"))
+            } else {
+                Json(ApiResponse::<ExtractKeyPointsResponse>::error(500, &msg))
+            }
+        }
     }
 }
 
@@ -723,4 +731,103 @@ pub async fn document_qa(
         )),
         Err(e) => Json(ApiResponse::<DocumentQAAnswerResponse>::error(500, &e.to_string())),
     }
+}
+
+// ============ 前端契约收口（2026-10-06）：documents 轻量兜底端点 ============
+// 这些端点前端已约定（translate / ocr / classify / entities），但 crate 内尚无真实
+// LLM/OCR/分类上游实现。按契约策略：先校验文档存在性（不存在则内层 404），存在则
+// 返回空结果占位并标注“待上游支持”，禁止裸 404。
+
+/// 校验文档是否存在；不存在则提前返回内层 404 Json。
+macro_rules! doc_not_found_or_ok {
+    ($state:expr, $id:expr, $tenant:expr) => {
+        match $state.document_service.get_document($id, $tenant).await {
+            Ok(Some(_)) => {}
+            Ok(None) => {
+                return Json(ApiResponse::<serde_json::Value>::error(404, "文档不存在"));
+            }
+            Err(e) => {
+                return Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string()));
+            }
+        }
+    };
+}
+
+/// POST /api/documents/{id}/translate - 文档翻译（待上游支持）
+pub async fn translate(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    doc_not_found_or_ok!(state, id, tenant_id);
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "document_id": id,
+            "translated_content": "",
+            "target_language": req.get("target_language").and_then(|v| v.as_str()).unwrap_or(""),
+            "source_language": req.get("source_language").and_then(|v| v.as_str()).unwrap_or(""),
+            "_note": "待上游支持"
+        }),
+        "Success",
+    ))
+}
+
+/// POST /api/documents/{id}/ocr - 文档 OCR（待上游支持）
+pub async fn ocr(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    doc_not_found_or_ok!(state, id, tenant_id);
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "document_id": id,
+            "text": "",
+            "pages": 0,
+            "confidence": 0.0,
+            "_note": "待上游支持"
+        }),
+        "Success",
+    ))
+}
+
+/// POST /api/documents/{id}/classify - 文档分类（待上游支持）
+pub async fn classify(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    doc_not_found_or_ok!(state, id, tenant_id);
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "document_id": id,
+            "category": "uncategorized",
+            "confidence": 0.0,
+            "all_categories": [],
+            "_note": "待上游支持"
+        }),
+        "Success",
+    ))
+}
+
+/// POST /api/documents/{id}/entities - 文档实体抽取（待上游支持）
+pub async fn entities(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    doc_not_found_or_ok!(state, id, tenant_id);
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "document_id": id,
+            "entities": [],
+            "_note": "待上游支持"
+        }),
+        "Success",
+    ))
 }

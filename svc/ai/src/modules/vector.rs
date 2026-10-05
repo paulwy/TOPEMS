@@ -412,3 +412,63 @@ pub async fn clear_all(State(state): State<AppState>) -> Json<ApiResponse<String
         Err(e) => Json(ApiResponse::<String>::error(500, &e.to_string())),
     }
 }
+
+// ============ 前端契约收口（2026-10-06）：/vector/collections 轻量兜底 ============
+// 前端 vector.ts 约定了 /vector/collections 的增删查与 /vector/index/{doc} 重建索引；
+// crate 现有向量能力走 /vectors/* 且无独立 collection 表。这里按契约补轻量占位
+// （空集合列表 / 成功回执），待上游接入 collection 存储。
+
+/// GET /api/ai/vector/collections - 向量集合列表（待上游支持，返回空）
+pub async fn list_collections(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    Json(ApiResponse::success(Vec::new(), "向量集合列表（待上游支持）"))
+}
+
+/// POST /api/ai/vector/collections - 创建向量集合（待上游支持，回显 name）
+pub async fn create_collection(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let name = req.get("description").and_then(|v| v.as_str());
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "id": Uuid::new_v4().to_string(),
+            "name": req.get("name").and_then(|v| v.as_str()).unwrap_or_default(),
+            "description": name,
+            "_note": "待上游支持"
+        }),
+        "Success",
+    ))
+}
+
+/// DELETE /api/ai/vector/collections/{id} - 删除向量集合（待上游支持）
+pub async fn delete_collection(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<String>> {
+    Json(ApiResponse::success(
+        format!("集合 {id} 已删除（待上游支持）"),
+        "Success",
+    ))
+}
+
+/// POST /api/ai/vector/index/{document_id} - 重建文档索引（待上游支持）
+pub async fn index_document(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path(document_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "document_id": document_id.to_string(),
+            "chunks_indexed": 0,
+            "status": "pending",
+            "_note": "待上游支持"
+        }),
+        "Success",
+    ))
+}

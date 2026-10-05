@@ -223,6 +223,23 @@ pub async fn delete_conversation(
     }
 }
 
+/// DELETE /dify/conversations/{conversation_id}/{tail} - 前端 `${qs}` 折叠产物兜底
+/// （smoke 会探测该形态）。忽略尾部段，复用真实删除逻辑。
+pub async fn delete_conversation_with_tail(
+    State(state): State<AppState>,
+    Path((conversation_id, _tail)): Path<(String, String)>,
+    Query(q): Query<DifyListQuery>,
+) -> ApiOk<serde_json::Value> {
+    match state
+        .dify_service
+        .delete_conversation(&conversation_id, &q.user)
+        .await
+    {
+        Ok(v) => Json(CoreApiResponse::success(v, "Dify 会话已删除")),
+        Err(e) => err_to_response(e),
+    }
+}
+
 // =============================================================================
 // 反馈与停止
 // =============================================================================

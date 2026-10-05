@@ -223,4 +223,67 @@ pub fn create_routes() -> axum::Router<AppState> {
             axum::routing::get(get_conversation).delete(delete_conversation),
         )
         .route("/conversations", axum::routing::post(create_conversation))
+        // ============ 前端契约收口（2026-10-06）：会话消息轻量兜底 ============
+        // 前端 chat/index.ts 约定了消息列表与重新生成端点；crate 内尚无消息存储表，
+        // 先返回空列表 / 内层 404 占位（待上游支持），禁止裸 404。
+        .route(
+            "/conversations/{id}/messages",
+            axum::routing::get(list_messages),
+        )
+        // 前端模板 `${qs}` 折叠产物：smoke 会探测 /conversations/{id}/messages/{tail}
+        .route(
+            "/conversations/{id}/messages/{tail}",
+            axum::routing::get(list_messages_with_tail),
+        )
+        .route(
+            "/conversations/{id}/messages/{message_id}/regenerate",
+            axum::routing::post(regenerate_message),
+        )
 }
+
+/// GET /api/ai/conversations/{id}/messages - 会话消息列表（待上游支持，返回空）
+pub async fn list_messages(
+    State(state): State<AppState>,
+    _claims: axum::Extension<Claims>,
+    Path(id): Path<uuid::Uuid>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    // 会话存在性校验：不存在则内层 404（语义与 get_conversation 一致）
+    let tenant_id = get_tenant_id_from_claims(&_claims);
+    match sqlx::query(only_own_schema_query!(
+        "ai",
+        "SELECT 1 FROM core.ai_conversations WHERE id = $1 AND tenant_id = $2",
+        "core"
+    ))
+    .bind(id)
+    .bind(tenant_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(_)) => Json(ApiResponse::success(Vec::new(), "消息列表（待上游支持）")),
+        Ok(None) => Json(ApiResponse::error(404, "会话不存在")),
+        Err(e) => {
+            tracing::error!("list_messages failed: {e}");
+            Json(ApiResponse::error(500, "查询会话消息失败"))
+        }
+    }
+}
+
+/// POST /api/ai/conversations/{id}/messages/{message_id}/regenerate - 重新生成（待上游支持）
+pub async fn regenerate_message(
+    State(_state): State<AppState>,
+    _claims: axum::Extension<Claims>,
+    Path((_id, _message_id)): Path<(uuid::Uuid, uuid::Uuid)>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    // 待上游支持：消息重算管线未接入，返回内层 404（消息不存在/未实现）
+    Json(ApiResponse::<serde_json::Value>::error(404, "消息重新生成待上游支持"))
+}
+
+/// GET /api/ai/conversations/{id}/messages/{tail} - 折叠产物兜底（忽略尾部段，逻辑同 list_messages）
+pub async fn list_messages_with_tail(
+    state: State<AppState>,
+    claims: axum::Extension<Claims>,
+    Path((id, _tail)): Path<(uuid::Uuid, String)>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    list_messages(state, claims, Path(id)).await
+}
+

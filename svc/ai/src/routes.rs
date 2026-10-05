@@ -192,6 +192,11 @@ pub fn create_routes(
             "/dashboard/activity-trend",
             get(model_admin_handlers::get_activity_trend),
         )
+        // 前端 `${qs}` 折叠产物兜底：smoke 探测 /dashboard/activity-trend/{tail}
+        .route(
+            "/dashboard/activity-trend/{tail}",
+            get(model_admin_handlers::get_activity_trend),
+        )
         .route(
             "/dashboard/feature-usage",
             get(model_admin_handlers::get_feature_usage),
@@ -199,6 +204,11 @@ pub fn create_routes(
         // ========== 模型管理（known_gap A 补全，2026-09-09）==========
         .route("/models", get(model_admin_handlers::list_models))
         .route("/models/usage", get(model_admin_handlers::get_model_usage))
+        // 前端 `${qs}` 折叠产物兜底：smoke 探测 /models/usage/{tail}
+        .route(
+            "/models/usage/{tail}",
+            get(model_admin_handlers::get_model_usage),
+        )
         .route(
             "/models/{id}/config",
             get(model_admin_handlers::get_model_config)
@@ -268,6 +278,20 @@ pub fn create_routes(
             "/documents/{id}/key-points",
             post(crate::modules::document::extract_key_points),
         )
+        // 前端契约收口（2026-10-06）：documents 轻量兜底端点（待上游支持）
+        .route(
+            "/documents/{id}/translate",
+            post(crate::modules::document::translate),
+        )
+        .route("/documents/{id}/ocr", post(crate::modules::document::ocr))
+        .route(
+            "/documents/{id}/classify",
+            post(crate::modules::document::classify),
+        )
+        .route(
+            "/documents/{id}/entities",
+            post(crate::modules::document::entities),
+        )
         .route("/documents/qa", post(crate::modules::document::document_qa))
         // 代码助手 API - 使用 CodeAssistantApi 模块
         .route(
@@ -303,6 +327,19 @@ pub fn create_routes(
             post(crate::modules::vector::hybrid_search),
         )
         .route("/vectors/clear", post(crate::modules::vector::clear_all))
+        // 前端契约收口（2026-10-06）：/vector/collections 轻量兜底（待上游支持）
+        .route(
+            "/vector/collections",
+            get(crate::modules::vector::list_collections).post(crate::modules::vector::create_collection),
+        )
+        .route(
+            "/vector/collections/{id}",
+            delete(crate::modules::vector::delete_collection),
+        )
+        .route(
+            "/vector/index/{document_id}",
+            post(crate::modules::vector::index_document),
+        )
         // 问答 API - 使用 QaApi 模块
         .route("/qa/ask", post(crate::modules::qa::ask))
         .route(
@@ -647,6 +684,19 @@ pub fn create_routes(
             "/profile/update",
             post(crate::modules::recommendation::update_user_profile),
         )
+        // 前端契约收口（2026-10-06）：/recommendations 轻量兜底（待上游支持）
+        .route(
+            "/recommendations",
+            post(crate::modules::recommendation::recommendations),
+        )
+        .route(
+            "/recommendations/personalized",
+            get(crate::modules::recommendation::personalized),
+        )
+        .route(
+            "/recommendations/feedback",
+            post(crate::modules::recommendation::feedback),
+        )
         // Axum layer order: LAST added = OUTERMOST = runs FIRST on incoming request.
         // Therefore tenant_middleware (needs Claims) must be added FIRST (innermost),
         // auth_middleware (inserts Claims) must be added LAST (outermost).
@@ -722,15 +772,27 @@ pub fn create_routes(
         .route("/dify/chat/stream", post(dify_handlers::chat_stream))
         .route("/dify/info", get(dify_handlers::info))
         .route("/dify/parameters", get(dify_handlers::parameters))
+        // 前端 `${qs}` 折叠产物兜底：smoke 探测 /dify/parameters/{tail}
+        .route(
+            "/dify/parameters/{tail}",
+            get(dify_handlers::parameters),
+        )
         .route("/dify/meta", get(dify_handlers::meta))
         .route(
             "/dify/conversations",
             get(dify_handlers::list_conversations),
         )
         .route("/dify/messages", get(dify_handlers::list_messages))
+        // 前端 `${qs}` 折叠产物兜底：smoke 探测 /dify/messages/{tail}
+        .route("/dify/messages/{tail}", get(dify_handlers::list_messages))
         .route(
             "/dify/conversations/{conversation_id}",
             delete(dify_handlers::delete_conversation),
+        )
+        // 前端 `${qs}` 折叠产物兜底：smoke 探测 /dify/conversations/{id}/{tail}
+        .route(
+            "/dify/conversations/{conversation_id}/{tail}",
+            delete(dify_handlers::delete_conversation_with_tail),
         )
         .route(
             "/dify/messages/{message_id}/feedbacks",

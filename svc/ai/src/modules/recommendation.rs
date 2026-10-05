@@ -189,3 +189,43 @@ pub async fn recommend_knowledge(
         Err(e) => Json(ApiResponse::<RecommendationResponse>::error(500, &e.to_string())),
     }
 }
+
+// ============ 前端契约收口（2026-10-06）：/recommendations 轻量兜底 ============
+// 前端 recommendation.ts 约定了 /recommendations、/recommendations/personalized、
+// /recommendations/feedback 三个端点；crate 现有推荐服务走 /recommend/* 路径，
+// 与此契约路径不同。这里按契约补轻量占位（空推荐列表 / 成功回执），待上游接入。
+
+/// POST /api/ai/recommendations - 通用推荐（待上游支持，返回空列表）
+pub async fn recommendations(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<topems_shared_auth::auth::Claims>,
+    Json(_req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({ "recommendations": [], "_note": "待上游支持" }),
+        "Success",
+    ))
+}
+
+/// GET /api/ai/recommendations/personalized - 个性化推荐（待上游支持，返回空 items）
+pub async fn personalized(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<topems_shared_auth::auth::Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({ "items": [], "_note": "待上游支持" }),
+        "Success",
+    ))
+}
+
+/// POST /api/ai/recommendations/feedback - 推荐反馈回执（待上游支持）
+pub async fn feedback(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<topems_shared_auth::auth::Claims>,
+    Json(_req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({ "success": true, "_note": "待上游支持" }),
+        "Success",
+    ))
+}

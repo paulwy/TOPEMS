@@ -215,7 +215,8 @@ pub async fn get_feature_usage(
          UNION ALL
          SELECT 'analysis', '智能分析', COUNT(*) FROM ai.analysis_results WHERE (tenant_id IS NULL OR tenant_id = $1)
          UNION ALL
-         SELECT 'vectors', '向量检索', COUNT(*) FROM ai.vectors WHERE (tenant_id IS NULL OR tenant_id = $1)",
+         -- ai.vectors 表无 tenant_id 列（schema 漂移），向量统计不按租户过滤
+         SELECT 'vectors', '向量检索', COUNT(*) FROM ai.vectors WHERE deleted_at IS NULL",
     )
     // 4 个 UNION 分支共用同一个 $1 参数，Postgres 预备语句只需绑定一次
     .bind(tenant_id)
