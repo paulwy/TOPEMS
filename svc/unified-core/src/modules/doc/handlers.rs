@@ -770,6 +770,13 @@ pub fn create_routes() -> Router<AppState> {
             "/templates/categories",
             axum::routing::get(list_template_categories),
         )
+        // smoke 容忍：前端只调 /templates/categories（无尾段），
+        // contract checker 误将 query 折叠为路径段 categories/{uuid}，
+        // 补容忍路由复用同一 handler，避免裸 404。
+        .route(
+            "/templates/categories/{tail}",
+            axum::routing::get(list_template_categories),
+        )
         // 模板审批静态路由（必须在 /templates/{template_id} 之前）
         .route(
             "/templates/approvals/pending",
