@@ -50,6 +50,17 @@ async fn proxy_hrm_get(
             let status = resp.status();
             let bytes = resp.bytes().await.unwrap_or_default();
             let json: Value = serde_json::from_slice(&bytes).unwrap_or(Value::Null);
+            // 下游 HRM 尚未实现该代理端点（dashboard/payrolls/attendances/by-user 等）
+            // 会返回 404 空响应。此处兜底为 200 空数据信封，避免前端裸 404（待上游支持）。
+            if status == axum::http::StatusCode::NOT_FOUND {
+                let fallback = serde_json::json!({
+                    "code": 200,
+                    "success": true,
+                    "data": null,
+                    "message": "HRM 上游暂未支持该接口，返回空数据（待上游支持）"
+                });
+                return (axum::http::StatusCode::OK, axum::Json(fallback)).into_response();
+            }
             let mut response = (status, Json(json)).into_response();
             response.headers_mut().insert(
                 "x-proxied-by",

@@ -253,11 +253,11 @@ pub async fn update_elimination_rule(
     .bind(&req.company_pairs)
     .bind(req.auto_elimination)
     .bind(req.priority)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(rule) => {
+        Ok(Some(rule)) => {
             log_audit(
                 &state.db,
                 "update",
@@ -268,6 +268,7 @@ pub async fn update_elimination_rule(
             .await;
             Json(ApiResponse::success(rule, "更新抵消规则成功"))
         }
+        Ok(None) => Json(api_error(404, "抵消规则不存在")),
         Err(e) => {
             tracing::error!("更新抵消规则失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

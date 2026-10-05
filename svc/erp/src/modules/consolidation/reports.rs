@@ -586,11 +586,11 @@ pub async fn publish_report(
         "#,
     )
     .bind(report_id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(report) => {
+        Ok(Some(report)) => {
             log_audit(
                 &state.db,
                 "publish",
@@ -601,6 +601,7 @@ pub async fn publish_report(
             .await;
             Json(ApiResponse::success(report, "发布合并报表成功"))
         }
+        Ok(None) => Json(api_error(404, "合并报表不存在")),
         Err(e) => {
             tracing::error!("发布合并报表失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

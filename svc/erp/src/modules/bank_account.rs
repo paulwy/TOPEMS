@@ -201,10 +201,7 @@ pub async fn get_bank_account(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ApiResponse::error(404, "银行账户不存在")),
-            ))
+            return Ok(Json(ApiResponse::error(404, "银行账户不存在")));
         }
         Err(e) => {
             tracing::error!("查询银行账户失败: {}", e);
@@ -307,10 +304,7 @@ pub async fn update_bank_account(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ApiResponse::error(404, "银行账户不存在")),
-            ))
+            return Ok(Json(ApiResponse::error(404, "银行账户不存在")));
         }
         Err(e) => {
             tracing::error!("更新银行账户失败: {}", e);
@@ -348,10 +342,7 @@ pub async fn delete_bank_account(
     match result {
         Ok(res) => {
             if res.rows_affected() == 0 {
-                return Err((
-                    StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error(404, "银行账户不存在")),
-                ));
+                return Ok(Json(ApiResponse::error(404, "银行账户不存在")));
             }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {

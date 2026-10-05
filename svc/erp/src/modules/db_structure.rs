@@ -512,14 +512,23 @@ pub async fn execute_drop_column(
             None,
         ),
         Err(e) => {
-            tracing::error!("删除字段失败: {}", e);
+            let msg = e.to_string();
+            tracing::error!("删除字段失败: {}", msg);
+            // 表/字段不存在属于业务性 404（元数据建模端点的合法输入），不当作 500
+            let not_found = msg.contains("does not exist");
             (
-                Json(ApiResponse::from(TopemsError::internal(
-                    "删除字段失败: {}",
-                    e,
-                ))),
+                Json(if not_found {
+                    ApiResponse::from(TopemsError::ResourceNotFound(
+                        "表或字段不存在".to_string(),
+                    ))
+                } else {
+                    ApiResponse::from(TopemsError::internal(
+                        "删除字段失败: {}",
+                        e,
+                    ))
+                }),
                 "error".to_string(),
-                Some(e.to_string()),
+                Some(msg),
             )
         }
     };

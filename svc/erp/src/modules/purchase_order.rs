@@ -349,11 +349,12 @@ pub async fn update_purchase_order(
     .bind(req.remark)
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     let purchase_order = match result {
-        Ok(o) => o,
+        Ok(Some(o)) => o,
+        Ok(None) => return Json(api_error(404, "采购订单不存在")),
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
             return Json(ApiResponse::from(TopemsError::Internal(
@@ -470,11 +471,11 @@ pub async fn approve_purchase_order(
     )
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(order) => {
+        Ok(Some(order)) => {
             let tenant_id: Option<Uuid> = sqlx::query_scalar(
                 "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
             )
@@ -519,6 +520,7 @@ pub async fn approve_purchase_order(
             }
             Json(ApiResponse::success(order, "采购订单审批成功"))
         }
+        Ok(None) => Json(api_error(404, "采购订单不存在或状态不是待审批")),
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
@@ -566,11 +568,11 @@ pub async fn cancel_purchase_order(
     )
     .bind(Utc::now())
     .bind(id)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(r) => {
+        Ok(Some(r)) => {
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -581,6 +583,7 @@ pub async fn cancel_purchase_order(
             }
             Json(ApiResponse::success(r, "采购订单已取消"))
         }
+        Ok(None) => Json(api_error(404, "采购订单不存在或状态不可取消")),
         Err(e) => {
             tracing::error!("取消采购订单失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

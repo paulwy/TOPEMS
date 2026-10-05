@@ -206,10 +206,7 @@ pub async fn get_asset_category(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ApiResponse::error(404, "资产分类不存在")),
-            ))
+            return Ok(Json(ApiResponse::error(404, "资产分类不存在")));
         }
         Err(e) => {
             tracing::error!("查询资产分类失败: {}", e);
@@ -311,10 +308,7 @@ pub async fn update_asset_category(
     {
         Ok(Some(row)) => row,
         Ok(None) => {
-            return Err((
-                StatusCode::NOT_FOUND,
-                Json(ApiResponse::error(404, "资产分类不存在")),
-            ))
+            return Ok(Json(ApiResponse::error(404, "资产分类不存在")));
         }
         Err(e) => {
             tracing::error!("更新资产分类失败: {}", e);
@@ -352,10 +346,7 @@ pub async fn delete_asset_category(
     match result {
         Ok(res) => {
             if res.rows_affected() == 0 {
-                return Err((
-                    StatusCode::NOT_FOUND,
-                    Json(ApiResponse::error(404, "资产分类不存在")),
-                ));
+                return Ok(Json(ApiResponse::error(404, "资产分类不存在")));
             }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {

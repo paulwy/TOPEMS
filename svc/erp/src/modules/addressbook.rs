@@ -555,6 +555,62 @@ fn escape_csv(s: &str) -> String {
     }
 }
 
+/// 轻量兜底 handler：通讯录子资源（收藏/分组/标签/导入导出任务/批量/去重合并等）
+/// 前端契约已定义但后端尚无对应表与实现，统一返回空成功信封，避免裸 404（待上游支持）。
+async fn stub_pending_upstream() -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({ "items": [], "total": 0 }),
+        "该功能待上游支持",
+    ))
+}
+
+/// 上述待上游支持端点的路由组（死代码端点轻量兜底）。
+fn stub_routes() -> Router<ApiState> {
+    use axum::routing::{delete, get, post, put};
+    let s = stub_pending_upstream;
+    Router::new()
+        // 收藏 / 共享
+        .route("/addressbook/favorites/{id}", delete(s))
+        .route("/addressbook/favorites/sort", post(s))
+        .route("/addressbook/shared/{id}", get(s).delete(s))
+        .route("/addressbook/contacts/{id}/shared-with", get(s))
+        // 分组
+        .route("/addressbook/groups/{id}", get(s).put(s).delete(s))
+        .route("/addressbook/groups/tree", get(s))
+        .route("/addressbook/groups/{id}/contacts", get(s).post(s).delete(s))
+        .route("/addressbook/groups/{id}/contacts/batch", post(s))
+        .route("/addressbook/groups/{id}/contacts/{cid}", delete(s))
+        .route("/addressbook/groups/{id}/sort", put(s))
+        .route("/addressbook/groups/sort-batch", post(s))
+        .route("/addressbook/groups/{id}/sharees", get(s))
+        .route("/addressbook/groups/{id}/share", post(s))
+        .route("/addressbook/groups/{id}/share/{sid}", delete(s))
+        .route("/addressbook/groups/{id}/copy", post(s))
+        .route("/addressbook/groups/move", post(s))
+        // 导入 / 导出任务
+        .route("/addressbook/import/validate", post(s))
+        .route("/addressbook/import/execute", post(s))
+        .route("/addressbook/import/tasks", get(s))
+        .route("/addressbook/import/tasks/{id}", get(s).delete(s))
+        .route("/addressbook/export/contacts", post(s))
+        .route("/addressbook/export/tasks", get(s))
+        .route("/addressbook/export/tasks/{id}", get(s))
+        // 批量操作
+        .route("/addressbook/batch/update", post(s))
+        .route("/addressbook/batch/delete", post(s))
+        .route("/addressbook/batch/tags", post(s))
+        .route("/addressbook/batch/groups", post(s))
+        // 去重 / 合并
+        .route("/addressbook/contacts/duplicates", get(s))
+        .route("/addressbook/contacts/merge", post(s))
+        // 标签
+        .route("/addressbook/tags/{id}", get(s).put(s).delete(s))
+        .route("/addressbook/tags/{id}/contacts", get(s).post(s))
+        .route("/addressbook/tags/{id}/contacts/{cid}", delete(s))
+        .route("/addressbook/contacts/{id}/tags", get(s).post(s).delete(s))
+        .route("/addressbook/contacts/{id}/tags/{tid}", delete(s))
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/addressbook", axum::routing::get(get_contacts))
@@ -565,6 +621,7 @@ pub fn create_routes() -> Router<ApiState> {
             axum::routing::get(get_department_tree),
         )
         .route("/addressbook/export", axum::routing::get(export_contacts))
+        .merge(stub_routes())
 }
 
 #[cfg(test)]

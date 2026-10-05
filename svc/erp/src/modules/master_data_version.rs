@@ -239,7 +239,7 @@ pub async fn get_version(
         r#"SELECT id, master_data_id, version_number, domain, code, name, status,
                   snapshot, changed_by, created_at
            FROM erp_master_data_versions
-           WHERE master_data_id = $1 AND id = $2"#
+           WHERE master_data_id = $1 AND id = $2::uuid"#
     ))
     .bind(&master_data_id)
     .bind(&version_id)
@@ -310,7 +310,7 @@ pub async fn rollback_to_version(
         "erp",
         r#"SELECT version_number, domain, code, name, status, snapshot
            FROM erp_master_data_versions
-           WHERE master_data_id = $1 AND id = $2"#
+           WHERE master_data_id = $1 AND id = $2::uuid"#
     ))
     .bind(&master_data_id)
     .bind(&version_id)

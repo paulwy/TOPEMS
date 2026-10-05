@@ -154,11 +154,11 @@ pub async fn update_scope_company(
     .bind(req.consolidation_percentage)
     .bind(req.minority_interest)
     .bind(&req.expiry_date)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(company) => {
+        Ok(Some(company)) => {
             log_audit(
                 &state.db,
                 "update",
@@ -169,6 +169,7 @@ pub async fn update_scope_company(
             .await;
             Json(ApiResponse::success(company, "更新合并范围公司成功"))
         }
+        Ok(None) => Json(api_error(404, "合并范围公司不存在")),
         Err(e) => {
             tracing::error!("更新合并范围公司失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

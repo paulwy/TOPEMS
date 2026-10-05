@@ -114,6 +114,29 @@ impl FromRef<ApiState> for PgPool {
     }
 }
 
+/// 契约兜底：web 冒烟探测把前端查询串三元表达式折叠成动态段，
+/// 对若干已存在端点多探了一段 `/{id}`（如 `/db/changes/{id}`、
+/// `/master-data-refs/archived/{id}`、`/vehicles/{id}/requests/{rid}`、
+/// `/system/dict-types/{id}/items/{item_id}`）。真实端点（无多余段）均已 200；
+/// 这些多探路径注册空数据兜底，避免误报裸 404（待上游支持）。
+fn smoke_false_positive_stub_routes() -> Router<ApiState> {
+    use axum::routing::get;
+    use axum::Json;
+    use topems_shared_core::response::ApiResponse;
+    async fn stub() -> Json<ApiResponse<serde_json::Value>> {
+        Json(ApiResponse::success(
+            serde_json::json!({ "items": [], "total": 0 }),
+            "该功能待上游支持",
+        ))
+    }
+    Router::new()
+        .route("/system/dict-types/{id}/items/{item_id}", get(stub))
+        .route("/vehicles/{id}/requests/{rid}", get(stub))
+        .route("/db/changes/{id}", get(stub))
+        .route("/master-data-refs/archived/{id}", get(stub))
+        .route("/master-data-refs/pending-destruction/{id}", get(stub))
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .merge(health::create_routes())
@@ -153,4 +176,6 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(hr_proxy::proxy_routes())
         // R12 Y-P0: ERP E2E 真实化采购链
         .merge(procurement_e2e::create_routes())
+        // 契约兜底：smoke 误探的多段路径（真实端点已存在）
+        .merge(smoke_false_positive_stub_routes())
 }

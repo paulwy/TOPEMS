@@ -223,11 +223,11 @@ pub async fn update_scope(
     .bind(&req.description)
     .bind(&req.consolidation_method)
     .bind(&req.status)
-    .fetch_one(&mut **txn)
+    .fetch_optional(&mut **txn)
     .await;
 
     match result {
-        Ok(scope) => {
+        Ok(Some(scope)) => {
             log_audit(
                 &state.db,
                 "update",
@@ -238,6 +238,7 @@ pub async fn update_scope(
             .await;
             Json(ApiResponse::success(scope, "更新合并范围成功"))
         }
+        Ok(None) => Json(api_error(404, "合并范围不存在")),
         Err(e) => {
             tracing::error!("更新合并范围失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
