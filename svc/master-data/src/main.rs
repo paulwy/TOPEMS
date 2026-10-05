@@ -19,7 +19,7 @@ pub mod modules;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    std::env::set_var("SEARCH_PATH", "public");
+    std::env::set_var("SEARCH_PATH", "master_data, public, shared");
 
     let config = ServiceConfig {
         name: "topems-master-data",

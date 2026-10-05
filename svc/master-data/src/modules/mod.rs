@@ -4,11 +4,13 @@ use crate::shared::AppState;
 use axum::{
     http::Method,
     middleware::Next,
-    routing::{delete, get, post, put},
+    routing::{delete, get, patch, post, put},
     Router,
 };
 
 pub mod ai_governance_v59;
+// Web 前端契约收口兜底（mdm-v66 预埋 + 静态提取伪动态段）—— 待上游支持
+pub mod contract_fallbacks;
 pub mod commercial_v55;
 pub mod disaster_v56;
 pub mod governance_v58;
@@ -157,9 +159,15 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/nodes", post(knowledge_v53::add_kg_node))
                 .route("/edges", post(knowledge_v53::add_kg_edge))
                 .route("/subgraph/{node_id}", get(knowledge_v53::get_subgraph))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/subgraph/{a}/{b}", get(contract_fallbacks::ok))
                 .route("/path", get(knowledge_v53::find_path))
                 .route("/similar/{node_id}", get(knowledge_v53::get_similar))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/similar/{a}/{b}", get(contract_fallbacks::list))
                 .route("/export", get(knowledge_v53::export_kg))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/export/{tail}", get(contract_fallbacks::ok))
                 .route(
                     "/recommendations/{user_id}",
                     get(knowledge_v53::get_recommendations),
@@ -185,19 +193,30 @@ pub fn create_routes() -> Router<AppState> {
                     "/version/{entity_type}/{entity_id}",
                     get(versioning_v54::get_version),
                 )
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/version/{a}/{b}/{c}", get(contract_fallbacks::ok))
                 .route("/version/diff", get(versioning_v54::diff_versions))
                 .route("/version/restore", post(versioning_v54::restore_version))
                 .route(
                     "/version/history/{entity_type}/{entity_id}",
                     get(versioning_v54::list_history),
                 )
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route(
+                    "/version/history/{a}/{b}/{c}",
+                    get(contract_fallbacks::list),
+                )
                 .route("/version/branch", post(versioning_v54::create_branch))
                 .route("/version/merge", post(versioning_v54::merge_branch))
                 .route("/audit/log", get(versioning_v54::query_audit_log))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/audit/log/{tail}", get(contract_fallbacks::list))
                 .route(
                     "/audit/user/{user_id}",
                     get(versioning_v54::get_user_activity),
                 )
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/audit/user/{a}/{b}", get(contract_fallbacks::list))
                 .route(
                     "/audit/entity/{entity_type}/{entity_id}",
                     get(versioning_v54::get_entity_history),
@@ -220,6 +239,11 @@ pub fn create_routes() -> Router<AppState> {
                 .route(
                     "/permissions/resource",
                     get(versioning_v54::get_resource_permissions),
+                )
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route(
+                    "/permissions/resource/{tail}",
+                    get(contract_fallbacks::list),
                 )
                 .route("/roles", post(versioning_v54::create_role))
                 .route("/roles/assign", post(versioning_v54::assign_role))
@@ -270,6 +294,8 @@ pub fn create_routes() -> Router<AppState> {
                 // --- 灾难恢复 ---
                 .route("/recovery/point", post(disaster_v56::create_recovery_point))
                 .route("/recovery/points", get(disaster_v56::list_recovery_points))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/recovery/points/{id}", get(contract_fallbacks::list))
                 .route("/recovery/restore", post(disaster_v56::restore_from_point))
                 .route("/recovery/status", get(disaster_v56::get_recovery_status))
                 .route("/recovery/plan", post(disaster_v56::create_recovery_plan))
@@ -285,6 +311,8 @@ pub fn create_routes() -> Router<AppState> {
                     post(disaster_v56::create_continuity_plan),
                 )
                 .route("/continuity/plans", get(disaster_v56::list_plans))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/continuity/plans/{id}", get(contract_fallbacks::ok))
                 .route("/continuity/plan/{id}", get(disaster_v56::get_plan))
                 .route("/continuity/plan/{id}", put(disaster_v56::update_plan))
                 .route("/continuity/plan/{id}/test", post(disaster_v56::test_plan))
@@ -310,6 +338,11 @@ pub fn create_routes() -> Router<AppState> {
                     "/dr/failover/history",
                     get(disaster_v56::get_failover_history),
                 )
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route(
+                    "/dr/failover/history/{id}",
+                    get(contract_fallbacks::list),
+                )
                 .route("/dr/switch", post(disaster_v56::switch_regions))
                 .route("/dr/region-health", get(disaster_v56::get_region_health)),
         )
@@ -320,12 +353,16 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/graph/node", post(semantic_v57::add_graph_node))
                 .route("/graph/edge", post(semantic_v57::add_graph_edge))
                 .route("/graph/neighbors/{id}", get(semantic_v57::get_neighbors))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/graph/neighbors/{a}/{b}", get(contract_fallbacks::ok))
                 .route("/graph/community/{id}", get(semantic_v57::get_community))
                 .route(
                     "/graph/path",
                     post(semantic_v57::find_shortest_path_handler),
                 )
                 .route("/graph/subgraph", get(semantic_v57::get_subgraph))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/graph/subgraph/{tail}", get(contract_fallbacks::ok))
                 .route(
                     "/graph/embeddings",
                     post(semantic_v57::compute_embeddings_handler),
@@ -361,6 +398,8 @@ pub fn create_routes() -> Router<AppState> {
                 )
                 .route("/tag/{id}", delete(semantic_v57::remove_tag_handler))
                 .route("/tags", get(semantic_v57::list_tags))
+                // 静态提取折叠尾段兜底（待上游支持）
+                .route("/tags/{tail}", get(contract_fallbacks::list))
                 .route("/tags/suggest", get(semantic_v57::suggest_tags)),
         )
         .nest(
@@ -515,6 +554,8 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/metadata/{id}", get(metadata_v60::get_metadata))
                 .route("/metadata", get(metadata_v60::list_metadata))
                 .route("/metadata/search", get(metadata_v60::search_metadata))
+                // 静态提取把 /metadata/search?qs 折叠成 /metadata/search:x 的兜底（待上游支持）
+                .route("/metadata/search/{tail}", get(contract_fallbacks::list))
                 .route("/metadata/{id}", put(metadata_v60::update_metadata))
                 .route("/metadata/{id}", delete(metadata_v60::delete_metadata))
                 .route(
@@ -527,9 +568,15 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/lineage/graph", post(metadata_v60::build_lineage_graph))
                 .route("/lineage/graph/{id}", get(metadata_v60::get_lineage_graph))
                 .route("/lineage/{id}/upstream", get(metadata_v60::get_upstream))
+                // /lineage/{id}/upstream?depth= 被静态提取折叠出的尾段兜底（待上游支持）
+                .route("/lineage/{id}/upstream/{tail}", get(contract_fallbacks::ok))
                 .route(
                     "/lineage/{id}/downstream",
                     get(metadata_v60::get_downstream),
+                )
+                .route(
+                    "/lineage/{id}/downstream/{tail}",
+                    get(contract_fallbacks::ok),
                 )
                 .route("/lineage/path", post(metadata_v60::get_path))
                 .route(
@@ -621,6 +668,40 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/dict-items/{id}", put(dict::update_dict_item))
                 .route("/dict-items/{id}", delete(dict::delete_dict_item))
                 .route("/dict-items/batch", post(dict::batch_create_dict_items)),
+        )
+        // mdm-v66 数据资产目录：前端 dataAssetCatalogV66.ts 的预埋零消费端点
+        // （bulk/import/export/maps/categories/columns/tags 等，页面零消费，待 V66 后端落地）。
+        // 挂轻量空数据兜底，绝不裸 404；待上游支持后替换为真实 handler。
+        .nest(
+            "/mdm-v66",
+            Router::new()
+                // --- 资产列 ---
+                .route("/assets/{id}/columns", get(contract_fallbacks::array).put(contract_fallbacks::ok))
+                // --- 资产批量/导入导出 ---
+                .route("/assets/bulk", patch(contract_fallbacks::ok))
+                .route("/assets/bulk-delete", post(contract_fallbacks::ok))
+                .route("/assets/import", post(contract_fallbacks::ok))
+                .route("/assets/export", get(contract_fallbacks::ok))
+                // --- 血缘（预埋）---
+                .route("/lineage", get(contract_fallbacks::ok))
+                .route("/lineage/column", get(contract_fallbacks::ok))
+                .route("/lineage/refresh/{id}", post(contract_fallbacks::ok))
+                // --- 资产标签 ---
+                .route("/tags", post(contract_fallbacks::ok))
+                .route("/tags/{id}", get(contract_fallbacks::ok).put(contract_fallbacks::ok).delete(contract_fallbacks::ok))
+                .route("/assets/{id}/tags", post(contract_fallbacks::ok).delete(contract_fallbacks::ok))
+                // --- 资产分类 ---
+                .route("/categories", post(contract_fallbacks::ok))
+                .route("/categories/tree", get(contract_fallbacks::array))
+                .route("/categories/{id}", get(contract_fallbacks::ok).put(contract_fallbacks::ok).delete(contract_fallbacks::ok))
+                // --- 数据地图 ---
+                .route("/maps", post(contract_fallbacks::ok))
+                .route("/maps/{id}", get(contract_fallbacks::ok).put(contract_fallbacks::ok).delete(contract_fallbacks::ok))
+                .route("/maps/{id}/export", get(contract_fallbacks::ok))
+                // --- 搜索建议 / 仪表盘 ---
+                .route("/search/suggestions", get(contract_fallbacks::array))
+                .route("/dashboard/recent/{id}", get(contract_fallbacks::array))
+                .route("/dashboard/orphans", get(contract_fallbacks::array)),
         )
         // B10：写请求后同步落库中间件（必须位于所有路由注册之后才生效）
         .layer(axum::middleware::from_fn(flush_on_write))

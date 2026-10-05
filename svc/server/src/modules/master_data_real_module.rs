@@ -27,8 +27,10 @@ pub struct MasterDataRealModule {
 impl MasterDataRealModule {
     /// 异步构建真实 MasterData 模块
     pub async fn build() -> Result<Self> {
-        // 与独立部署 main.rs 一致：search_path public
-        std::env::set_var("SEARCH_PATH", "public");
+        // 自己 schema 优先（与全仓 pm/erp 等模式对齐：master_data, public, shared）。
+        // 字典/元数据等表已迁移至 master_data schema（i18n name_en 列亦在该 schema），
+        // 裸表名 SQL 据此解析到 master_data，避免命中 public 空壳旧表。
+        std::env::set_var("SEARCH_PATH", "master_data, public, shared");
 
         let config = ServiceConfig {
             name: "topems-master-data",
