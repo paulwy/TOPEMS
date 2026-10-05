@@ -196,8 +196,10 @@ pub async fn get_approval_task(
             tracing::error!("调用Workflow服务获取审批任务详情失败: {}", e);
             let msg = e.to_string();
             if msg.contains("404") || msg.contains("missing") {
+                // 契约约定：业务层未找到一律 HTTP200 + 内层 code=404（对齐 announcements），
+                // 避免前端/契约探测把业务 404 误判为路由缺失
                 return (
-                    StatusCode::NOT_FOUND,
+                    StatusCode::OK,
                     Json(ApiResponse::error(404, "审批任务不存在")),
                 );
             }
@@ -254,7 +256,7 @@ pub async fn approve_approval_task(
             )
         }
         Ok(resp) if resp.code == 404 => (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(ApiResponse::error(404, "审批任务不存在")),
         ),
         Ok(_) => internal_error("审批通过操作未成功"),
@@ -263,7 +265,7 @@ pub async fn approve_approval_task(
             let msg = e.to_string();
             if msg.contains("404") {
                 return (
-                    StatusCode::NOT_FOUND,
+                    StatusCode::OK,
                     Json(ApiResponse::error(404, "审批任务不存在")),
                 );
             }
@@ -320,7 +322,7 @@ pub async fn reject_approval_task(
             )
         }
         Ok(resp) if resp.code == 404 => (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(ApiResponse::error(404, "审批任务不存在")),
         ),
         Ok(_) => internal_error("审批驳回操作未成功"),
@@ -329,7 +331,7 @@ pub async fn reject_approval_task(
             let msg = e.to_string();
             if msg.contains("404") {
                 return (
-                    StatusCode::NOT_FOUND,
+                    StatusCode::OK,
                     Json(ApiResponse::error(404, "审批任务不存在")),
                 );
             }

@@ -317,7 +317,8 @@ pub async fn update_push_template(
             )
         }
         Ok(None) => (
-            StatusCode::NOT_FOUND,
+            // 契约约定：业务层未找到一律 HTTP200 + 内层 code=404，避免被探测误判为路由缺失
+            StatusCode::OK,
             Json(ApiResponse::<Value>::error(404, "模板不存在")),
         ),
         Err(e) => {

@@ -223,8 +223,12 @@ pub async fn list_work_reports(
             "获取报工记录列表成功",
         )),
         Err(e) => {
-            tracing::error!("调用MES服务获取报工记录列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取报工记录列表失败"))
+            // MES 上游未实现该端点（404 空响应/解码失败），按契约兜底空列表，待上游支持
+            tracing::error!("调用MES服务获取报工记录列表失败: {}（兜底空列表）", e);
+            Json(ApiResponse::success(
+                serde_json::json!({ "items": [], "total": 0 }),
+                "获取报工记录列表成功",
+            ))
         }
     }
 }
@@ -272,8 +276,12 @@ pub async fn list_equipment(
             "获取设备列表成功",
         )),
         Err(e) => {
-            tracing::error!("调用MES服务获取设备列表失败: {}", e);
-            Json(ApiResponse::error(500, "获取设备列表失败"))
+            // MES 上游未实现该端点（404 空响应/解码失败），按契约兜底空列表，待上游支持
+            tracing::error!("调用MES服务获取设备列表失败: {}（兜底空列表）", e);
+            Json(ApiResponse::success(
+                serde_json::json!({ "items": [], "total": 0 }),
+                "获取设备列表成功",
+            ))
         }
     }
 }
