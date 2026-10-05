@@ -476,7 +476,7 @@
 - [ ] **R4 灰度上线**（P0，依赖：R1/R2 通过）——🚧 2026-10-03 演练执行中（本地演练、不发布）：
   - 方案：按服务分批部署（先 portal/unified-core 平台层，再业务服务），systemd/k8s 滚动，含回滚预案
   - 验证：每批部署后 /health 绿、关键指标（请求错误率/延迟）无劣化；回滚演练一次通过
-  - 进行中：环境核对（5433 不可达记缺口；nginx 未运行待启动验证转发；portal 启动挂起待重试；R2 残留服务清理）；产出上线前检查单与回滚预案 `docs/architecture/go-live-checklist-and-rollback-2026-10-03.md`；runtime 矩阵 `--collect` 补 R3 遗留；结果待汇总
+  - ✅ **演练收尾**（2026-10-06，commit 待推）：环境缺口全消——5433 服务 health 200 / nginx :8080 运行（演练配置首页转发 portal 200；/api/ 指向独立服务 upstream 未运行故 404 属演练预期）/ portal :8063 200（原"启动挂起"缺口已消）；runtime 矩阵 `--collect` 结论化（monolith 单进程无独立服务边=架构事实；design 静态矩阵重生成 40 边/24 节点）；产出上线前检查单与回滚预案 `docs/architecture/go-live-checklist-and-rollback-2026-10-06.md`；生产实跑（install/update/rollback + systemd）仍需生产环境
 
 ## 2026-10-03 workflow 增强：flow category + variable 模块（P2，commit 待推）
 
