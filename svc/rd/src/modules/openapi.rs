@@ -120,7 +120,6 @@ fn _health_check_detailed() {}
             crate::modules::rs_plugin::get_plugin_info,
         crate::modules::rs_plugin::plugin_health_check,
         _health_check,
-        _health_check_detailed,
 ),
     components(
         schemas(

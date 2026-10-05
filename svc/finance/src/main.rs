@@ -106,7 +106,6 @@ use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowA
         crate::modules::voucher_template::preview_generation,
         crate::modules::voucher_template::generate_from_source,
         crate::modules::voucher_template::batch_generate,
-        list_payments_handler,
         export_payments_handler,
         list_payment_records_handler,
         crate::modules::operational::get_receivable,

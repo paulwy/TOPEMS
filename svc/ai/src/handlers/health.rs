@@ -42,15 +42,6 @@ pub async fn health() -> Json<ApiResponse<String>> {
     ))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ai:read"])),
-    path = "/health/detailed",
-    tag = "ai",
-    responses(
-        (status = 200, description = "OK"),
-    ),
-)]
 pub async fn health_check_detailed(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<ServiceHealth>> {

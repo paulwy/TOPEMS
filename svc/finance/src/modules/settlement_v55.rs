@@ -1970,21 +1970,6 @@ pub struct ReconResultQueryParams {
 pub struct ReconRuleQueryParams {
     pub enabled: Option<bool>,
 }
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v55/reconcile/batch",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Settlement V55",
-    operation_id = "reconcile_batch_handler",
-)]
 
 pub async fn reconcile_batch_handler(
     State(state): State<AppState>,
@@ -2070,20 +2055,6 @@ pub async fn create_recon_rule_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v55/reconcile/rules",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Settlement V55",
-    operation_id = "list_recon_rules_handler",
-)]
 
 pub async fn list_recon_rules_handler(
     State(state): State<AppState>,
@@ -2163,23 +2134,6 @@ pub async fn recognize_invoice_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:invoice:read"])),
-    path = "/finance-v55/invoice/{id}",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Settlement V55",
-    operation_id = "get_invoice_handler",
-)]
 
 pub async fn get_invoice_handler(
     State(state): State<AppState>,
@@ -2198,16 +2152,6 @@ pub async fn get_invoice_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:invoice:read"])),
-    path = "/finance-v55/invoices",
-    tag = "SettlementV55",
-    operation_id = "list_invoices_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_invoices_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2259,21 +2203,6 @@ pub async fn post_invoice_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v55/invoice/match",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Settlement V55",
-    operation_id = "match_invoice_handler",
-)]
 
 pub async fn match_invoice_handler(
     State(state): State<AppState>,
@@ -2361,24 +2290,6 @@ pub async fn get_payment_status_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:payment:admin"])),
-    path = "/finance-v55/payment/{id}/reverse",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Settlement V55",
-    operation_id = "reverse_payment_handler",
-)]
 
 pub async fn reverse_payment_handler(
     State(state): State<AppState>,
@@ -2395,16 +2306,6 @@ pub async fn reverse_payment_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:payment:read"])),
-    path = "/finance-v55/payments",
-    tag = "SettlementV55",
-    operation_id = "list_payments_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_payments_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -2464,20 +2365,6 @@ pub async fn schedule_payment_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v55/payment/methods",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Settlement V55",
-    operation_id = "get_supported_methods_handler",
-)]
 
 pub async fn get_supported_methods_handler(
     State(_state): State<AppState>,

@@ -23,13 +23,6 @@ fn _home() {}
 )]
 fn _health() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["plugin-registry:read"])),
-    path = "/health/detailed",
-    tag = "plugin-registry",
-    responses((status = 200, description = "detailed_health OK")),
-)]
 fn _detailed_health() {}
 
 #[derive(OpenApi)]
@@ -98,7 +91,6 @@ fn _detailed_health() {}
         crate::modules::plugin::handlers::tenant_plugins::list_my_plugins,
         _home,
         _health,
-        _detailed_health,
 ),
     tags(
         (name = "plugin",      description = "插件注册/发布 API"),

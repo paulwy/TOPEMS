@@ -123,17 +123,6 @@ pub fn sort_task_titles_by_priority_str(titles: &[(String, String)]) -> Vec<(Str
     entries
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["mobile:task:read"])),
-    path = "/mobile-tasks",
-    tag = "task",
-    responses(
-        (status = 200, description = "获取任务列表成功", body = serde_json::Value),
-        (status = 401, description = "未授权"),
-        (status = 500, description = "查询失败")
-    )
-)]
 pub async fn get_all_tasks(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -172,21 +161,6 @@ pub async fn get_all_tasks(
     )
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["mobile:task:read"])),
-    path = "/mobile-tasks/{id}",
-    tag = "task",
-    params(
-        ("id" = Uuid, Path, description = "任务ID")
-    ),
-    responses(
-        (status = 200, description = "获取任务成功", body = serde_json::Value),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "任务不存在"),
-        (status = 500, description = "查询失败")
-    )
-)]
 pub async fn get_task(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -229,18 +203,6 @@ pub async fn get_task(
     )
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["mobile:config:write"])),
-    path = "/mobile-tasks",
-    tag = "task",
-    request_body = CreateTaskRequest,
-    responses(
-        (status = 201, description = "创建任务成功", body = serde_json::Value),
-        (status = 401, description = "未授权"),
-        (status = 500, description = "创建失败")
-    )
-)]
 pub async fn create_task(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -308,22 +270,6 @@ pub async fn create_task(
     )
 }
 
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["mobile:task:read"])),
-    path = "/mobile-tasks/{id}",
-    tag = "task",
-    params(
-        ("id" = Uuid, Path, description = "任务ID")
-    ),
-    request_body = UpdateTaskRequest,
-    responses(
-        (status = 200, description = "更新成功", body = serde_json::Value),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "任务不存在或无权修改"),
-        (status = 500, description = "更新失败")
-    )
-)]
 pub async fn update_task(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -407,19 +353,6 @@ pub async fn update_task(
     )
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["mobile:task:write"])),
-    path = "/mobile-tasks/{id}/status",
-    params(
-("id" = String, Path, description = "id")
-    ),
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "task"
-)]
 pub async fn update_task_status(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,
@@ -495,21 +428,6 @@ pub async fn update_task_status(
     }
 }
 
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["mobile:task:read"])),
-    path = "/mobile-tasks/{id}",
-    tag = "task",
-    params(
-        ("id" = Uuid, Path, description = "任务ID")
-    ),
-    responses(
-        (status = 200, description = "删除成功", body = serde_json::Value),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "任务不存在或无权删除"),
-        (status = 500, description = "删除失败")
-    )
-)]
 pub async fn delete_task(
     headers: HeaderMap,
     State(auth_state): State<AuthState>,

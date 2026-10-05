@@ -13,17 +13,6 @@ use crate::models::{
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::handlers::create_ticket_handler,
-        crate::handlers::list_tickets_handler,
-        crate::handlers::get_ticket_handler,
-        crate::handlers::update_ticket_handler,
-        crate::handlers::delete_ticket_handler,
-        crate::handlers::get_stats_handler,
-        crate::handlers::get_ticket_sla_handler,
-        crate::handlers::get_sla_stats_handler,
-        crate::handlers::add_comment_handler,
-        crate::handlers::list_comments_handler,
-        crate::handlers::list_activities_handler,
         crate::handlers::create_sla_policy_handler,
         crate::handlers::list_sla_policies_handler,
         crate::handlers::get_sla_policy_handler,
@@ -34,7 +23,6 @@ use crate::models::{
         crate::handlers::get_automation_rule_handler,
         crate::handlers::update_automation_rule_handler,
         crate::handlers::delete_automation_rule_handler,
-        crate::handlers::trigger_sla_escalation_handler,
         crate::handlers::create_knowledge_article_handler,
         crate::handlers::list_knowledge_articles_handler,
         crate::handlers::get_knowledge_article_handler,

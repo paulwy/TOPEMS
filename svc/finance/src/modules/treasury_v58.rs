@@ -1268,21 +1268,6 @@ impl LiquidityOptimizer {
 // ==================== API Handlers ====================
 
 // --- Cash Pool Handlers ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v58/pool",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Treasury V58",
-    operation_id = "create_pool_handler",
-)]
 
 pub async fn create_pool_handler(
     State(state): State<AppState>,
@@ -1297,16 +1282,6 @@ pub async fn create_pool_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/pool/{id}",
-    tag = "TreasuryV58",
-    operation_id = "get_pool_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_pool_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1324,16 +1299,6 @@ pub async fn get_pool_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v58/pools",
-    tag = "TreasuryV58",
-    operation_id = "list_pools_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_pools_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1362,21 +1327,6 @@ pub async fn allocate_funds_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v58/pool/transfer",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Treasury V58",
-    operation_id = "transfer_handler",
-)]
 
 pub async fn transfer_handler(
     State(state): State<AppState>,
@@ -1439,21 +1389,6 @@ pub async fn consolidate_cash_handler(
 }
 
 // --- Forecasting Handlers ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v58/forecast/scenario",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Treasury V58",
-    operation_id = "create_scenario_handler",
-)]
 
 async fn create_scenario_handler(
     State(state): State<AppState>,
@@ -1481,16 +1416,6 @@ pub async fn run_forecast_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:forecast:read"])),
-    path = "/finance-v58/forecast/{id}",
-    tag = "TreasuryV58",
-    operation_id = "get_forecast_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1599,21 +1524,6 @@ pub async fn get_liquidity_snapshot_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v58/liquidity/optimize",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Treasury V58",
-    operation_id = "optimize_liquidity_handler",
-)]
 
 pub async fn optimize_liquidity_handler(
     State(state): State<AppState>,
@@ -1672,23 +1582,6 @@ pub async fn get_targets_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v58/liquidity/target/{id}",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Treasury V58",
-    operation_id = "set_target_handler",
-)]
 
 pub async fn set_target_handler(
     State(state): State<AppState>,

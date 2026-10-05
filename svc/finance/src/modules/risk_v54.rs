@@ -1281,20 +1281,6 @@ impl AutoComplianceReviewer {
 // ==================== API Handlers ====================
 
 // --- Risk Dashboard & Alerts ---
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v54/risk/dashboard",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Risk V54",
-    operation_id = "get_risk_dashboard_handler",
-)]
 
 pub async fn get_risk_dashboard_handler(
     State(state): State<AppState>,
@@ -1436,23 +1422,6 @@ pub struct UpdateFraudRuleRequest {
     pub threshold: Option<f64>,
     pub enabled: Option<bool>,
 }
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v54/fraud/rules/{id}",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Risk V54",
-    operation_id = "update_fraud_rule_handler",
-)]
 
 pub async fn update_fraud_rule_handler(
     State(state): State<AppState>,
@@ -1515,23 +1484,6 @@ pub struct ReviewResultQueryParams {
     pub entity_type: Option<String>,
     pub entity_id: Option<String>,
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v54/compliance/results",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("query" = ReviewResultQueryParams, Query, description = "查询参数"),
-    ),
-    tag = "Finance Risk V54",
-    operation_id = "get_review_results_handler",
-)]
 
 pub async fn get_review_results_handler(
     State(state): State<AppState>,
@@ -1591,23 +1543,6 @@ pub async fn create_workflow_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v54/compliance/workflow/{id}/advance",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Risk V54",
-    operation_id = "advance_workflow_handler",
-)]
 
 pub async fn advance_workflow_handler(
     State(state): State<AppState>,

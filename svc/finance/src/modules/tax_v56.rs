@@ -1542,21 +1542,6 @@ pub struct TaxFormsQueryParams {
 pub struct TaxSummaryQueryParams {
     pub year: Option<i32>,
 }
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v56/tax/generate",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Tax V56",
-    operation_id = "generate_tax_form_handler",
-)]
 
 pub async fn generate_tax_form_handler(
     State(state): State<AppState>,
@@ -1617,24 +1602,6 @@ pub async fn submit_tax_form_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v56/tax/forms/{id}/amend",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Tax V56",
-    operation_id = "amend_tax_form_handler",
-)]
 
 pub async fn amend_tax_form_handler(
     State(state): State<AppState>,
@@ -1736,23 +1703,6 @@ pub async fn calculate_tax_handler(
         _ => Json(ApiResponse::error(400, "不支持的税种类型")),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/tax/rates",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("query" = RateScheduleQueryParams, Query, description = "查询参数"),
-    ),
-    tag = "Finance Tax V56",
-    operation_id = "get_rate_schedule_handler",
-)]
 
 pub async fn get_rate_schedule_handler(
     State(state): State<AppState>,
@@ -1831,23 +1781,6 @@ pub async fn get_tax_breakdown_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/tax/validate",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("query" = ValidateRateParams, Query, description = "查询参数"),
-    ),
-    tag = "Finance Tax V56",
-    operation_id = "validate_rate_handler",
-)]
 
 pub async fn validate_rate_handler(
     State(state): State<AppState>,
@@ -1903,23 +1836,6 @@ pub async fn analyze_scenario_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/tax/suggestions",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("query" = SuggestionsQueryParams, Query, description = "查询参数"),
-    ),
-    tag = "Finance Tax V56",
-    operation_id = "get_suggestions_handler",
-)]
 
 pub async fn get_suggestions_handler(
     State(state): State<AppState>,
@@ -1984,23 +1900,6 @@ pub async fn approve_plan_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v56/tax/compliance",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("query" = ComplianceQueryParams, Query, description = "查询参数"),
-    ),
-    tag = "Finance Tax V56",
-    operation_id = "get_compliance_handler",
-)]
 
 pub async fn get_compliance_handler(
     State(state): State<AppState>,

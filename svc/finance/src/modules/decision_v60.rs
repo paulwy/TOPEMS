@@ -1443,21 +1443,6 @@ impl IntelligentScheduler {
 // ==================== API Handlers ====================
 
 // --- Decision Handlers ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v60/decision/scenario",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Decision V60",
-    operation_id = "create_scenario_handler",
-)]
 
 async fn create_scenario_handler(
     State(state): State<AppState>,
@@ -1486,16 +1471,6 @@ pub async fn evaluate_scenario_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/decision/{id}",
-    tag = "DecisionV60",
-    operation_id = "get_decision_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_decision_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1528,23 +1503,6 @@ async fn list_scenarios_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/decision/{id}/alternatives",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Decision V60",
-    operation_id = "get_alternatives_handler",
-)]
 
 pub async fn get_alternatives_handler(
     State(state): State<AppState>,
@@ -1756,21 +1714,6 @@ pub async fn configure_channel_handler(
 }
 
 // --- Scheduling Handlers ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v60/schedule/task",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Decision V60",
-    operation_id = "create_task_handler",
-)]
 
 pub async fn create_task_handler(
     State(state): State<AppState>,
@@ -1827,23 +1770,6 @@ pub async fn execute_task_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v60/schedule/execution/{id}",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Decision V60",
-    operation_id = "get_execution_handler",
-)]
 
 pub async fn get_execution_handler(
     State(state): State<AppState>,
@@ -1910,24 +1836,6 @@ pub async fn pause_task_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v60/schedule/{id}/resume",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Decision V60",
-    operation_id = "resume_task_handler",
-)]
 
 pub async fn resume_task_handler(
     State(state): State<AppState>,

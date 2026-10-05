@@ -89,7 +89,6 @@ use utoipa::OpenApi;
         crate::handlers::ai_handlers::knowledge_ask,
         crate::handlers::health::home,
         crate::handlers::health::health,
-        crate::handlers::health::health_check_detailed,
         crate::handlers::governance_dashboard_handlers::get_dashboard,
         crate::handlers::governance_dashboard_handlers::get_governance_score,
         crate::handlers::governance_dashboard_handlers::get_risk_assessment,

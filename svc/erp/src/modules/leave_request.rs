@@ -193,17 +193,6 @@ pub fn create_routes() -> Router<ApiState> {
 
 // ============ Handler ============
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["erp:hr:read"])),
-    path = "/erp/leave-request/list-leave-requests",
-    tag = "LeaveRequest",
-    operation_id = "list_leave_requests",
-    params(LeaveRequestQueryParams),
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_leave_requests(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

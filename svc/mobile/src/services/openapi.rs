@@ -55,11 +55,6 @@ fn _health_check() {}
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        crate::modules::task::get_all_tasks,
-        crate::modules::task::get_task,
-        crate::modules::task::create_task,
-        crate::modules::task::update_task,
-        crate::modules::task::delete_task,
         crate::modules::patrol::get_all_patrol_records,
         crate::modules::patrol::get_patrol_record,
         crate::modules::patrol::create_patrol_record,
@@ -98,12 +93,6 @@ fn _health_check() {}
         crate::modules::media::get_video,
         crate::modules::media::upload_media,
         crate::modules::media::delete_media,
-        crate::modules::task::get_all_tasks,
-        crate::modules::task::get_task,
-        crate::modules::task::create_task,
-        crate::modules::task::update_task,
-        crate::modules::task::update_task_status,
-        crate::modules::task::delete_task,
         crate::modules::user::get_profile,
         crate::modules::user::upload_avatar,
         crate::modules::production::list_production_orders,

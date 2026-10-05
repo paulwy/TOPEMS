@@ -63,13 +63,6 @@ fn _home() {}
 )]
 fn _health() {}
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["master_data:read"])),
-    path = "/health/detailed",
-    tag = "master-data",
-    responses((status = 200, description = "detailed_health OK")),
-)]
 fn _detailed_health() {}
 
 #[derive(OpenApi)]
@@ -421,7 +414,6 @@ fn _detailed_health() {}
         crate::modules::master_plugin::plugin_health_check,
         _home,
         _health,
-        _detailed_health,
         crate::modules::metadata_v60::export_lineage,
         crate::modules::metadata_v60::get_downstream,
         crate::modules::metadata_v60::get_lineage_graph,

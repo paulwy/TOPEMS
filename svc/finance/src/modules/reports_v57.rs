@@ -1308,14 +1308,6 @@ pub struct ReportListQueryParams {
     pub status: Option<String>,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v57/report/template",
-    tag = "Reports-V57",
-    operation_id = "create_template_handler",
-    responses((status = 200, description = "OK")),
-)]
 pub async fn create_template_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1360,16 +1352,6 @@ pub async fn generate_report_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance-v57/reports",
-    tag = "ReportsV57",
-    operation_id = "list_reports_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_reports_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1387,16 +1369,6 @@ pub async fn list_reports_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance-v57/report/{id}",
-    tag = "ReportsV57",
-    operation_id = "get_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 async fn get_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1414,14 +1386,6 @@ async fn get_report_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance-v57/report/{id}/download",
-    tag = "Reports-V57",
-    operation_id = "download_report_handler",
-    responses((status = 200, description = "OK")),
-)]
 pub async fn download_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1439,16 +1403,6 @@ pub async fn download_report_handler(
     }
 }
 
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["finance:report:read"])),
-    path = "/finance-v57/report/{id}",
-    tag = "ReportsV57",
-    operation_id = "delete_report_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn delete_report_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1508,14 +1462,6 @@ pub async fn pivot_handler(
     }
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v57/analysis/drill-down",
-    tag = "Reports-V57",
-    operation_id = "drill_down_handler",
-    responses((status = 200, description = "OK")),
-)]
 pub async fn drill_down_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1596,14 +1542,6 @@ pub struct TrendQueryParams {
     pub metric: Option<String>,
 }
 
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:forecast:write"])),
-    path = "/finance-v57/forecast",
-    tag = "Reports-V57",
-    operation_id = "generate_forecast_handler",
-    responses((status = 200, description = "OK")),
-)]
 pub async fn generate_forecast_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1630,16 +1568,6 @@ async fn detect_anomalies_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/insights",
-    tag = "ReportsV57",
-    operation_id = "get_insights_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn get_insights_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1670,16 +1598,6 @@ pub async fn train_model_handler(
     }
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/models",
-    tag = "ReportsV57",
-    operation_id = "list_models_handler",
-    responses(
-        (status = 200, description = "操作成功"),
-    ),
-)]
 pub async fn list_models_handler(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -1695,23 +1613,6 @@ pub async fn list_models_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v57/trend",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("query" = TrendQueryParams, Query, description = "查询参数"),
-    ),
-    tag = "Reports-V57",
-    operation_id = "get_trend_handler",
-)]
 
 pub async fn get_trend_handler(
     State(state): State<AppState>,

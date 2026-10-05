@@ -1394,21 +1394,6 @@ impl StressTestEngine {
 // ==================== API Handlers ====================
 
 // --- Anti-Fraud Handlers ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v59/fraud/analyze",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Risk V59",
-    operation_id = "analyze_transaction_handler",
-)]
 
 pub async fn analyze_transaction_handler(
     State(state): State<AppState>,
@@ -1474,23 +1459,6 @@ pub async fn create_device_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["finance:read"])),
-    path = "/finance-v59/fraud/device/{id}",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Risk V59",
-    operation_id = "get_device_handler",
-)]
 
 pub async fn get_device_handler(
     State(state): State<AppState>,
@@ -1563,21 +1531,6 @@ pub async fn get_rules_handler(
 }
 
 // --- Credit Scoring Handlers ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:write"])),
-    path = "/finance-v59/credit/score",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Risk V59",
-    operation_id = "calculate_score_handler",
-)]
 
 pub async fn calculate_score_handler(
     State(state): State<AppState>,
@@ -1633,23 +1586,6 @@ pub async fn create_model_handler(
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["finance:update"])),
-    path = "/finance-v59/credit/model/{id}",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    params(
-        ("id" = String, Path, description = "资源 ID"),
-    ),
-    tag = "Finance Risk V59",
-    operation_id = "update_model_handler",
-)]
 
 pub async fn update_model_handler(
     State(state): State<AppState>,
@@ -1714,21 +1650,6 @@ pub async fn bulk_score_handler(
 }
 
 // --- Stress Testing Handlers ---
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["finance:invoice:write"])),
-    path = "/finance-v59/stress/scenario",
-    responses(
-        (status = 200, description = "成功"),
-        (status = 201, description = "创建成功"),
-        (status = 400, description = "请求参数错误"),
-        (status = 401, description = "未授权"),
-        (status = 404, description = "资源不存在"),
-        (status = 500, description = "服务内部错误"),
-    ),
-    tag = "Finance Risk V59",
-    operation_id = "create_scenario_handler",
-)]
 
 pub async fn create_scenario_handler(
     State(state): State<AppState>,

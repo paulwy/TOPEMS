@@ -907,6 +907,5 @@
 
 - **根因**：handler 有 `#[utoipa::path]` 注解但函数/路由从未挂 `.route()`，openapi-gen 只增不删 → 假端点入文档且每次重跑复发。
 - **已完成**：finance 域清理 337 个孤立注解块 + openapi 聚合引用（openapi.rs 373 行 / main.rs 80 行），commit f1f7ce785（25 文件 -3893 行）。重跑生成器→删文档 152 假端点→重编译重启→全量探测 **2575 端点 0 假端点** ✓
-- **遗留**：其余域孤立注解仍在源码，生成器重跑会复发（已删文档暂保一致）。待按 finance 范式逐域清理：
-  - core 38 / communication 18 / finance-v5x 系 ~46 / plugins 8 / tickets 7 / integration 7 / internal 4 / mes 3 / master-data 3 / ai 3 / mobile-tasks 3 / qms 2 / rd 2 / ehs 2 / pdm 2 / lims 1 / health 1 / erp 1 / gis 1
-  - 范式：扫描孤立 path（不在全库 route）→ 块后 25 行解析 handler → 删注解块 → 删 openapi.rs/main.rs 聚合引用 → 编译 → 重跑生成器
+- **已完成**（本轮）：其余域 70 个有注解假端点清理（finance-v5x 系 47/ticket 12/mobile 6/master-data 1/ai 1/erp 1/plugin-registry 1/rd 1，20 文件 -999 行）+ 91 个纯文档幽灵删除（core 38/communication 18/integration 7/plugins 7 等，源码无注解）。8 crate 编译通过，重跑生成器 → 删文档 → 重启 → **2575 端点 0 假端点** ✓
+- **根因细分**：①孤立注解（handler 有注解无路由挂载）②死代码路由（模块 Router 定义但模块未挂载 → 404）③纯文档幽灵（从未有源码注解，历史残留，删文档即根治）

@@ -479,7 +479,6 @@ pub struct VehicleRequest {
         crate::modules::consolidation::company_relations::get_company_financial_data,
         crate::modules::consolidation::company_relations::get_company_tree,
         // Leave Request
-        crate::modules::leave_request::list_leave_requests,
         // Procurement E2E
         crate::modules::procurement_e2e::validate_chain_handler,
         crate::modules::procurement_e2e::validate_chain_multi_handler,
