@@ -1295,7 +1295,7 @@ pub async fn get_risk_dashboard_handler(
 
     match RealTimeRiskMonitor::get_dashboard(&pool, tenant_id).await {
         Ok(dashboard) => Json(ApiResponse::success(dashboard, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1320,20 +1320,20 @@ pub async fn get_risk_alerts_handler(
     if let Some(ref cat) = params.category {
         match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, cat.clone()).await {
             Ok(alerts) => return Json(ApiResponse::success(alerts, "查询成功")),
-            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => return Json(crate::shared::err_resp(e)),
         }
     }
 
     if let Some(ref ent) = params.entity {
         match RealTimeRiskMonitor::get_alerts_by_entity(&pool, tenant_id, ent.clone()).await {
             Ok(alerts) => return Json(ApiResponse::success(alerts, "查询成功")),
-            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => return Json(crate::shared::err_resp(e)),
         }
     }
 
     match RealTimeRiskMonitor::get_alerts_by_category(&pool, tenant_id, String::new()).await {
         Ok(alerts) => Json(ApiResponse::success(alerts, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1347,7 +1347,7 @@ async fn acknowledge_alert_handler(
 
     match RealTimeRiskMonitor::acknowledge_alert(&pool, tenant_id, alert_id).await {
         Ok(alert) => Json(ApiResponse::success(alert, "已确认")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -1378,7 +1378,7 @@ async fn resolve_alert_handler(
 
     match RealTimeRiskMonitor::resolve_alert(&pool, tenant_id, alert_id).await {
         Ok(alert) => Json(ApiResponse::success(alert, "已解决")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1394,7 +1394,7 @@ pub async fn score_transaction_handler(
 
     match AntiFraudEngine::score_transaction(&pool, tenant_id, req).await {
         Ok(score) => Json(ApiResponse::success(score, "评分完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1411,7 +1411,7 @@ pub async fn get_fraud_rules_handler(
 
     match AntiFraudEngine::get_fraud_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1444,7 +1444,7 @@ pub async fn update_fraud_rule_handler(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1458,7 +1458,7 @@ pub async fn get_fraud_score_handler(
 
     match AntiFraudEngine::get_score(&pool, tenant_id, transaction_id).await {
         Ok(score) => Json(ApiResponse::success(score, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1475,7 +1475,7 @@ pub async fn review_entity_handler(
 
     match AutoComplianceReviewer::review_entity(&pool, tenant_id, req, reviewer).await {
         Ok(results) => Json(ApiResponse::success(results, "审查完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1506,7 +1506,7 @@ pub async fn get_review_results_handler(
     .await
     {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1526,7 +1526,7 @@ pub async fn get_compliance_status_handler(
         .await
     {
         Ok(workflows) => Json(ApiResponse::success(workflows, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1540,7 +1540,7 @@ pub async fn create_workflow_handler(
 
     match AutoComplianceReviewer::create_review_workflow(&pool, tenant_id, req).await {
         Ok(workflow) => Json(ApiResponse::success(workflow, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1554,7 +1554,7 @@ pub async fn advance_workflow_handler(
 
     match AutoComplianceReviewer::advance_workflow(&pool, tenant_id, workflow_id).await {
         Ok(workflow) => Json(ApiResponse::success(workflow, "推进成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1581,7 +1581,7 @@ pub async fn generate_compliance_report_handler(
     .await
     {
         Ok(report) => Json(ApiResponse::success(report, "报告生成成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

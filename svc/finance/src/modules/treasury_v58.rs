@@ -1278,7 +1278,7 @@ pub async fn create_pool_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::create_pool(&pool, tenant_id, req).await {
         Ok(p) => Json(ApiResponse::success(p, "现金池创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1295,7 +1295,7 @@ pub async fn get_pool_handler(
     };
     match CashPoolManager::get_pool(&pool, tenant_id, id).await {
         Ok(p) => Json(ApiResponse::success(p, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1311,7 +1311,7 @@ pub async fn list_pools_handler(
     };
     match CashPoolManager::list_pools(&pool, tenant_id).await {
         Ok(pools) => Json(ApiResponse::success(pools, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1324,7 +1324,7 @@ pub async fn allocate_funds_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::allocate_funds(&pool, tenant_id, req).await {
         Ok(a) => Json(ApiResponse::success(a, "资金分配成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1337,7 +1337,7 @@ pub async fn transfer_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::transfer_between_pools(&pool, tenant_id, req).await {
         Ok(t) => Json(ApiResponse::success(t, "资金调拨成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1354,7 +1354,7 @@ pub async fn get_pool_balance_handler(
     };
     match CashPoolManager::get_pool_balance(&pool, tenant_id, id).await {
         Ok(b) => Json(ApiResponse::success(b, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1371,7 +1371,7 @@ pub async fn get_pool_history_handler(
     };
     match CashPoolManager::get_pool_history(&pool, tenant_id, id).await {
         Ok(h) => Json(ApiResponse::success(h, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1384,7 +1384,7 @@ pub async fn consolidate_cash_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CashPoolManager::consolidate_cash(&pool, tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "现金归集完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1399,7 +1399,7 @@ async fn create_scenario_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::create_scenario(&pool, tenant_id, req).await {
         Ok(s) => Json(ApiResponse::success(s, "场景创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1412,7 +1412,7 @@ pub async fn run_forecast_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::run_forecast(&pool, tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "预测运行完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1429,7 +1429,7 @@ pub async fn get_forecast_handler(
     };
     match CashFlowPredictor::get_forecast(&pool, tenant_id, id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1445,7 +1445,7 @@ async fn list_scenarios_handler(
     };
     match CashFlowPredictor::list_scenarios(&pool, tenant_id).await {
         Ok(s) => Json(ApiResponse::success(s, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -1473,7 +1473,7 @@ async fn compare_scenarios_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
         Ok(r) => Json(ApiResponse::success(r, "对比完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1489,7 +1489,7 @@ pub async fn get_forecast_summary_handler(
     };
     match CashFlowPredictor::get_forecast_summary(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1503,7 +1503,7 @@ pub async fn update_assumptions_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CashFlowPredictor::update_assumptions(&pool, tenant_id, id, req).await {
         Ok(s) => Json(ApiResponse::success(s, "假设更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1521,7 +1521,7 @@ pub async fn get_liquidity_snapshot_handler(
     };
     match LiquidityOptimizer::get_liquidity_snapshot(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1534,7 +1534,7 @@ pub async fn optimize_liquidity_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::optimize_liquidity(&pool, tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "优化完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1550,7 +1550,7 @@ pub async fn get_recommendations_handler(
     };
     match LiquidityOptimizer::get_recommendations(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1563,7 +1563,7 @@ pub async fn execute_action_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::execute_action(&pool, tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "操作执行成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1579,7 +1579,7 @@ pub async fn get_targets_handler(
     };
     match LiquidityOptimizer::get_targets(&pool, tenant_id).await {
         Ok(t) => Json(ApiResponse::success(t, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1593,7 +1593,7 @@ pub async fn set_target_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match LiquidityOptimizer::set_target(&pool, tenant_id, id, req).await {
         Ok(t) => Json(ApiResponse::success(t, "目标设置成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1609,7 +1609,7 @@ pub async fn get_optimization_history_handler(
     };
     match LiquidityOptimizer::get_optimization_history(&pool, tenant_id).await {
         Ok(r) => Json(ApiResponse::success(r, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

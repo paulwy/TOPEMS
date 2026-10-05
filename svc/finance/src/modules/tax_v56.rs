@@ -1552,7 +1552,7 @@ pub async fn generate_tax_form_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::generate_tax_form(&pool, tenant_id, req).await {
         Ok(form) => Json(ApiResponse::success(form, "税务表单生成成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1569,7 +1569,7 @@ pub async fn get_tax_forms_handler(
     };
     match AutoTaxFiler::get_forms(&pool, tenant_id, params.form_type, params.status).await {
         Ok(forms) => Json(ApiResponse::success(forms, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1586,7 +1586,7 @@ pub async fn get_tax_form_by_id_handler(
     };
     match AutoTaxFiler::get_form_by_id(&pool, tenant_id, id).await {
         Ok(form) => Json(ApiResponse::success(form, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1599,7 +1599,7 @@ pub async fn submit_tax_form_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::submit_form(&pool, tenant_id, id).await {
         Ok(form) => Json(ApiResponse::success(form, "提交成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1613,7 +1613,7 @@ pub async fn amend_tax_form_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::amend_form(&pool, tenant_id, id, req).await {
         Ok(form) => Json(ApiResponse::success(form, "修改成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1630,7 +1630,7 @@ pub async fn get_tax_summary_handler(
     };
     match AutoTaxFiler::get_tax_summary(&pool, tenant_id, params.year).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1642,7 +1642,7 @@ pub async fn get_tax_schedule_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoTaxFiler::get_filing_schedule(&pool, tenant_id).await {
         Ok(schedule) => Json(ApiResponse::success(schedule, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1668,7 +1668,7 @@ pub async fn calculate_tax_handler(
                 .await
             {
                 Ok(result) => Json(ApiResponse::success(result, "计算成功")),
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
         "cit" => {
@@ -1676,7 +1676,7 @@ pub async fn calculate_tax_handler(
                 .await
             {
                 Ok(result) => Json(ApiResponse::success(result, "计算成功")),
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
         "pit" => {
@@ -1684,7 +1684,7 @@ pub async fn calculate_tax_handler(
                 .await
             {
                 Ok(result) => Json(ApiResponse::success(result, "计算成功")),
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
         "withholding" => {
@@ -1697,7 +1697,7 @@ pub async fn calculate_tax_handler(
             .await
             {
                 Ok(result) => Json(ApiResponse::success(result, "计算成功")),
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
         _ => Json(ApiResponse::error(400, "不支持的税种类型")),
@@ -1724,7 +1724,7 @@ pub async fn get_rate_schedule_handler(
     .await
     {
         Ok(rates) => Json(ApiResponse::success(rates, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1753,7 +1753,7 @@ pub async fn lookup_rate_handler(
             serde_json::json!({ "rate": rate }),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1778,7 +1778,7 @@ pub async fn get_tax_breakdown_handler(
     .await
     {
         Ok(breakdown) => Json(ApiResponse::success(breakdown, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1790,7 +1790,7 @@ pub async fn validate_rate_handler(
     let pool = state.pool.clone();
     match TaxRateCalculator::validate_rate(&pool, params.rate, params.tax_type).await {
         Ok(result) => Json(ApiResponse::success(result, "验证完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1820,7 +1820,7 @@ pub async fn create_plan_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::create_plan(&pool, tenant_id, req).await {
         Ok(plan) => Json(ApiResponse::success(plan, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1833,7 +1833,7 @@ pub async fn analyze_scenario_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::analyze_scenario(&pool, tenant_id, req).await {
         Ok(analysis) => Json(ApiResponse::success(analysis, "分析完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1854,7 +1854,7 @@ pub async fn get_suggestions_handler(
     };
     match TaxPlanner::get_suggestions(&pool, tenant_id, plan_id).await {
         Ok(suggestions) => Json(ApiResponse::success(suggestions, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1867,7 +1867,7 @@ async fn compare_scenarios_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::compare_scenarios(&pool, tenant_id, req.scenarios).await {
         Ok(results) => Json(ApiResponse::success(results, "对比完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1884,7 +1884,7 @@ pub async fn list_plans_handler(
     };
     match TaxPlanner::list_plans(&pool, tenant_id, params.status).await {
         Ok(plans) => Json(ApiResponse::success(plans, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1897,7 +1897,7 @@ pub async fn approve_plan_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match TaxPlanner::approve_plan(&pool, tenant_id, id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "审批成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1914,7 +1914,7 @@ pub async fn get_compliance_handler(
     };
     match TaxPlanner::get_compliance_check(&pool, tenant_id, params.entity).await {
         Ok(result) => Json(ApiResponse::success(result, "合规检查完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

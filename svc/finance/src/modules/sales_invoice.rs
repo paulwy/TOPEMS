@@ -356,7 +356,7 @@ pub async fn list_sales_invoices(
                 red_flush_of: r.get("red_flush_of"),
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::<Paginated<SalesInvoiceOut>>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     Json(ApiResponse::success(
@@ -408,7 +408,7 @@ pub async fn get_sales_invoice(
     match fetch_invoice(&state.pool, tenant_id, id).await {
         Ok(Some(inv)) => Json(ApiResponse::success(inv, "Success")),
         Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::error(404, "发票不存在")),
-        Err(e) => Json(ApiResponse::<SalesInvoiceOut>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -454,7 +454,7 @@ pub async fn create_sales_invoice(
                 _ => Json(ApiResponse::<SalesInvoiceOut>::error(500, "创建后读取失败")),
             }
         }
-        Err(e) => Json(ApiResponse::<SalesInvoiceOut>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -499,7 +499,7 @@ pub async fn update_sales_invoice(
             409,
             "仅草稿可编辑或发票不存在",
         )),
-        Err(e) => Json(ApiResponse::<SalesInvoiceOut>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -523,7 +523,7 @@ pub async fn delete_sales_invoice(
             409,
             "仅草稿可删除或发票不存在",
         )),
-        Err(e) => Json(ApiResponse::<String>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -565,7 +565,7 @@ pub async fn issue_sales_invoice(
             }
         }
         Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::error(409, "仅草稿可开具")),
-        Err(e) => Json(ApiResponse::<SalesInvoiceOut>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -610,7 +610,7 @@ pub async fn cancel_sales_invoice(
             }
         }
         Ok(None) => Json(ApiResponse::<SalesInvoiceOut>::error(409, "该状态不可取消")),
-        Err(e) => Json(ApiResponse::<SalesInvoiceOut>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -660,7 +660,7 @@ pub async fn red_flush_sales_invoice(
     .execute(&state.pool)
     .await
     {
-        return Json(ApiResponse::<SalesInvoiceOut>::error(500, &e.to_string()));
+        return Json(crate::shared::err_resp(e));
     }
 
     // 生成负数发票（金额取负）
@@ -694,7 +694,7 @@ pub async fn red_flush_sales_invoice(
                 _ => Json(ApiResponse::<SalesInvoiceOut>::error(500, "红冲后读取失败")),
             }
         }
-        Err(e) => Json(ApiResponse::<SalesInvoiceOut>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -829,7 +829,7 @@ pub async fn list_collections(
                 confirmed_at: r.get("confirmed_at"),
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::<Paginated<CollectionOut>>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     Json(ApiResponse::success(
@@ -881,7 +881,7 @@ pub async fn get_collection(
     match fetch_collection(&state.pool, tenant_id, id).await {
         Ok(Some(c)) => Json(ApiResponse::success(c, "Success")),
         Ok(None) => Json(ApiResponse::<CollectionOut>::error(404, "回款记录不存在")),
-        Err(e) => Json(ApiResponse::<CollectionOut>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -923,7 +923,7 @@ pub async fn create_collection(
         "INSERT INTO finance.erp_collection_records
             (tenant_id, collection_no, customer_id, customer_name, invoice_no, collection_date,
              amount, payment_method, remark, status, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9, 'pending', NULL)
+         VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9, NULL, NULL)
          RETURNING id",
     )
     .bind(tenant_id)
@@ -945,7 +945,7 @@ pub async fn create_collection(
                 _ => Json(ApiResponse::<CollectionOut>::error(500, "创建后读取失败")),
             }
         }
-        Err(e) => Json(ApiResponse::<CollectionOut>::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -982,7 +982,7 @@ pub async fn confirm_collection(
     {
         Ok(Some(r)) => (r.get::<f64, _>("amount"), r.get::<Option<Uuid>, _>("invoice_id"), r.get::<String, _>("status")),
         Ok(None) => return Json(ApiResponse::<CollectionOut>::error(404, "回款记录不存在")),
-        Err(e) => return Json(ApiResponse::<CollectionOut>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
     let (amount, invoice_id, status) = rec;
     if status == "confirmed" {
@@ -991,7 +991,7 @@ pub async fn confirm_collection(
 
     let mut tx = match pool.begin().await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::<CollectionOut>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     if let Err(e) = sqlx::query(
@@ -1004,7 +1004,7 @@ pub async fn confirm_collection(
     .execute(&mut *tx)
     .await
     {
-        return Json(ApiResponse::<CollectionOut>::error(500, &e.to_string()));
+        return Json(crate::shared::err_resp(e));
     }
 
     if let Some(inv_id) = invoice_id {
@@ -1021,12 +1021,12 @@ pub async fn confirm_collection(
         .execute(&mut *tx)
         .await
         {
-            return Json(ApiResponse::<CollectionOut>::error(500, &e.to_string()));
+            return Json(crate::shared::err_resp(e));
         }
     }
 
     if let Err(e) = tx.commit().await {
-        return Json(ApiResponse::<CollectionOut>::error(500, &e.to_string()));
+        return Json(crate::shared::err_resp(e));
     }
 
     match fetch_collection(pool, Some(tenant_id), id).await {
@@ -1117,7 +1117,7 @@ pub async fn get_receivable_aging(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => return Json(ApiResponse::<Vec<AgingBucket>>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     use std::collections::HashMap;
@@ -1179,7 +1179,7 @@ pub async fn get_receivable_summary(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => return Json(ApiResponse::<ReceivableSummary>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     let mut total_receivable = 0.0;
@@ -1243,7 +1243,7 @@ pub async fn get_overdue_receivables(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => return Json(ApiResponse::<Vec<OverdueItem>>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     let mut items = Vec::new();
@@ -1316,7 +1316,7 @@ pub async fn export_sales_invoices(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::<String>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     let mut csv = String::from("发票号,客户,开票日期,总额,已收,状态\n");
@@ -1366,7 +1366,7 @@ pub async fn export_collections(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::<String>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     let mut csv = String::from("回款单号,客户,回款日期,金额,支付方式,状态\n");
@@ -1416,7 +1416,7 @@ pub async fn export_receivable_aging(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::<String>::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     let now = today();

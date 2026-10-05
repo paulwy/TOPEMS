@@ -282,10 +282,7 @@ pub async fn update_expense(
             row_to_expense_json(&row),
             "费用报销更新成功",
         )),
-        Err(e) => {
-            tracing::error!("更新费用报销失败: {}", e);
-            Json(ApiResponse::error(500, "费用报销更新失败"))
-        }
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -565,10 +562,7 @@ pub async fn update_budget(
             row_to_budget_json(&row),
             "预算更新成功",
         )),
-        Err(e) => {
-            tracing::error!("更新预算失败: {}", e);
-            Json(ApiResponse::error(500, "预算更新失败"))
-        }
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -848,10 +842,7 @@ pub async fn update_receivable(
             row_to_receivable_json(&row),
             "应收更新成功",
         )),
-        Err(e) => {
-            tracing::error!("更新应收失败: {}", e);
-            Json(ApiResponse::error(500, "应收更新失败"))
-        }
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1130,10 +1121,7 @@ pub async fn update_payable(
             row_to_payable_json(&row),
             "应付更新成功",
         )),
-        Err(e) => {
-            tracing::error!("更新应付失败: {}", e);
-            Json(ApiResponse::error(500, "应付更新失败"))
-        }
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

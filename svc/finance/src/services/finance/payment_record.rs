@@ -140,7 +140,7 @@ impl FinanceService {
 
         let row = sqlx::query(
             only_own_schema_query!("finance", "INSERT INTO erp_payment_records (tenant_id, payment_no, supplier_name, amount, status, created_by)
-             VALUES ($1, $2, $3, $4, 'pending', $5)
+             VALUES ($1, $2, $3, $4, NULL, $5)
              RETURNING id, payment_no, supplier_name, amount, status, created_at"),
         )
         .bind(tenant_id)

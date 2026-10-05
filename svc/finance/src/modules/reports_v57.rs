@@ -1317,7 +1317,7 @@ pub async fn create_template_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::create_template(&pool, tenant_id, req).await {
         Ok(template) => Json(ApiResponse::success(template, "模板创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1333,7 +1333,7 @@ pub async fn get_templates_handler(
     };
     match AutomatedReportEngine::get_templates(&pool, tenant_id).await {
         Ok(templates) => Json(ApiResponse::success(templates, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1348,7 +1348,7 @@ pub async fn generate_report_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::generate_report(&pool, tenant_id, req).await {
         Ok(report) => Json(ApiResponse::success(report, "报表生成成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1365,7 +1365,7 @@ pub async fn list_reports_handler(
     };
     match AutomatedReportEngine::list_reports(&pool, tenant_id, params.status).await {
         Ok(reports) => Json(ApiResponse::success(reports, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1382,7 +1382,7 @@ async fn get_report_handler(
     };
     match AutomatedReportEngine::get_report(&pool, tenant_id, id).await {
         Ok(report) => Json(ApiResponse::success(report, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1399,7 +1399,7 @@ pub async fn download_report_handler(
     };
     match AutomatedReportEngine::download_report(&pool, tenant_id, id).await {
         Ok(report) => Json(ApiResponse::success(report, "下载成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1412,7 +1412,7 @@ pub async fn delete_report_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::delete_report(&pool, tenant_id, id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1425,7 +1425,7 @@ pub async fn schedule_report_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutomatedReportEngine::schedule_report(&pool, tenant_id, req).await {
         Ok(template) => Json(ApiResponse::success(template, "调度设置成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1445,7 +1445,7 @@ pub async fn analyze_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::analyze(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "分析完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1458,7 +1458,7 @@ pub async fn pivot_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::pivot(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Pivot 完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1471,7 +1471,7 @@ pub async fn drill_down_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::drill_down(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Drill-down 完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1484,7 +1484,7 @@ pub async fn roll_up_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::roll_up(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Roll-up 完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1497,7 +1497,7 @@ pub async fn slice_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::slice(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Slice 完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1510,7 +1510,7 @@ pub async fn dice_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match MultiDimensionalAnalyzer::dice(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "Dice 完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1526,7 +1526,7 @@ pub async fn get_analysis_history_handler(
     };
     match MultiDimensionalAnalyzer::get_analysis_history(&pool, tenant_id).await {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1551,7 +1551,7 @@ pub async fn generate_forecast_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::generate_forecast(&pool, tenant_id, req).await {
         Ok(insight) => Json(ApiResponse::success(insight, "预测生成成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1564,7 +1564,7 @@ async fn detect_anomalies_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::detect_anomalies(&pool, tenant_id, req).await {
         Ok(insight) => Json(ApiResponse::success(insight, "异常检测完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1581,7 +1581,7 @@ pub async fn get_insights_handler(
     };
     match PredictiveInsightEngine::get_insights(&pool, tenant_id, params.insight_type).await {
         Ok(insights) => Json(ApiResponse::success(insights, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1594,7 +1594,7 @@ pub async fn train_model_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::train_model(&pool, tenant_id, req).await {
         Ok(model) => Json(ApiResponse::success(model, "模型训练成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1610,7 +1610,7 @@ pub async fn list_models_handler(
     };
     match PredictiveInsightEngine::list_models(&pool, tenant_id).await {
         Ok(models) => Json(ApiResponse::success(models, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1623,7 +1623,7 @@ pub async fn get_trend_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match PredictiveInsightEngine::get_trend_analysis(&pool, tenant_id, params.metric).await {
         Ok(insight) => Json(ApiResponse::success(insight, "趋势分析完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

@@ -375,7 +375,7 @@ impl FinanceService {
         template_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing = sqlx::query_as::<_, VoucherTemplate>(
-            only_own_schema_query!("finance", "id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, code, description, template_type, is_active, created_by, created_at, updated_at FROM finance_voucher_templates WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(template_id)

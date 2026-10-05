@@ -76,7 +76,7 @@ pub async fn copy_template(
     let created_by = claims.username.clone();
     let source = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
     let lines: Vec<crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest> =
         source
@@ -108,7 +108,7 @@ pub async fn copy_template(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "复制成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -144,10 +144,10 @@ pub async fn toggle_template(
                     }
                     Json(ApiResponse::success(val, "切换成功"))
                 }
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -182,7 +182,7 @@ pub async fn match_template(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
     match rule {
         Some(r) => {
@@ -262,7 +262,7 @@ pub async fn export_template(
     let template = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
         Err(e) => {
-            return Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string()))
+            return Json(crate::shared::err_resp::<serde_json::Value, _>(e))
                 .into_response()
         }
     };
@@ -323,7 +323,7 @@ pub async fn import_template(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "导入成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -368,10 +368,10 @@ pub async fn toggle_generate_rule(
                     }
                     Json(ApiResponse::success(val, "切换成功"))
                 }
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -558,7 +558,7 @@ pub async fn preview_generation(
         .await
     {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     let voucher_date = req.date.unwrap_or_else(|| chrono::Utc::now().date_naive());
@@ -648,7 +648,7 @@ pub async fn generate_from_source(
         .await
     {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     let voucher_type = match template.voucher_type.as_str() {
@@ -864,7 +864,7 @@ pub async fn regenerate(
     // 获取原始凭证
     let original = match service.get_voucher(tenant_id, original_voucher_id).await {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     // 创建冲销凭证（借贷互换）

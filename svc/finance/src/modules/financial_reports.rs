@@ -135,7 +135,7 @@ pub async fn get_report_item_details(
                 "查询成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -231,7 +231,7 @@ pub async fn get_report_item_vouchers(
                 "查询成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

@@ -1263,7 +1263,7 @@ pub async fn predict_cash_flow_handler(
 
     match CashFlowPredictor::predict(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "预测完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1288,7 +1288,7 @@ pub async fn get_predictions_handler(
     .await
     {
         Ok((items, _total)) => Json(ApiResponse::success(items, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1308,7 +1308,7 @@ pub async fn retrain_model_handler(
 
     match CashFlowPredictor::retrain_model(&pool, tenant_id, model).await {
         Ok(record) => Json(ApiResponse::success(record, "模型重训练完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -1341,7 +1341,7 @@ pub async fn get_accuracy_handler(
 
     match CashFlowPredictor::get_accuracy(&pool, model_type).await {
         Ok(accuracies) => Json(ApiResponse::success(accuracies, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1357,7 +1357,7 @@ pub async fn analyze_budget_handler(
 
     match BudgetAnalyzer::analyze(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "分析完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1378,7 +1378,7 @@ pub async fn get_variance_handler(
     .await
     {
         Ok(variances) => Json(ApiResponse::success(variances, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -1409,7 +1409,7 @@ pub async fn get_variance_report_handler(
 
     match BudgetAnalyzer::get_report(&pool, params.entity_id, params.period).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1429,7 +1429,7 @@ pub async fn detect_anomalies_handler(
 
     match BudgetAnalyzer::detect_anomalies(&pool, entity_id, period).await {
         Ok(anomalies) => Json(ApiResponse::success(anomalies, "异常检测完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1448,7 +1448,7 @@ pub async fn get_variance_trends_handler(
 
     match BudgetAnalyzer::get_trends(&pool, entity_id).await {
         Ok(trends) => Json(ApiResponse::success(trends, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

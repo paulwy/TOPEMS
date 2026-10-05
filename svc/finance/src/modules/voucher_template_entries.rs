@@ -70,7 +70,7 @@ pub async fn list_entries(
             .unwrap_or_default();
             Json(ApiResponse::success(lines, "查询成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -151,7 +151,7 @@ pub async fn create_entry(
     .await;
     match line {
         Ok(l) => Json(ApiResponse::success(l, "新增分录成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -181,7 +181,7 @@ pub async fn update_entry(
             .await
         {
             Ok(l) => l,
-            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => return Json(crate::shared::err_resp(e)),
         };
     let description = req.description.or(existing.description);
     let account_code = req.account_code.unwrap_or(existing.account_code);
@@ -205,7 +205,7 @@ pub async fn update_entry(
     .await;
     match line {
         Ok(l) => Json(ApiResponse::success(l, "更新分录成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -233,7 +233,7 @@ pub async fn delete_entry(
                 "删除分录成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -272,7 +272,7 @@ pub async fn reorder_entries(
         .execute(&state.pool)
         .await
         {
-            return Json(ApiResponse::error(500, &e.to_string()));
+            return Json(crate::shared::err_resp(e));
         }
     }
     let lines: Result<Vec<VoucherTemplateLine>, sqlx::Error> = sqlx::query_as(
@@ -292,7 +292,7 @@ pub async fn reorder_entries(
                 "重排成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

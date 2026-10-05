@@ -2004,7 +2004,7 @@ pub async fn reconcile_batch_handler(
     match AutoReconciler::reconcile_batch(&pool, tenant_id, req).await {
         Ok(results) => Json(ApiResponse::success(results, "批量对账完成")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2022,7 +2022,7 @@ pub async fn reconcile_single_handler(
     match AutoReconciler::reconcile_single(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "对账完成")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2039,7 +2039,7 @@ pub async fn get_recon_results_handler(
     };
     match AutoReconciler::get_results(&pool, tenant_id, params.status).await {
         Ok(results) => Json(ApiResponse::success(results, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2052,7 +2052,7 @@ pub async fn create_recon_rule_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::create_rule(&pool, tenant_id, req).await {
         Ok(rule) => Json(ApiResponse::success(rule, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2068,7 +2068,7 @@ pub async fn list_recon_rules_handler(
     };
     match AutoReconciler::list_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2081,7 +2081,7 @@ pub async fn approve_match_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::approve_match(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "审批通过")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2094,7 +2094,7 @@ pub async fn dispute_match_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::dispute_match(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "已标记争议")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2131,7 +2131,7 @@ pub async fn recognize_invoice_handler(
     }
     match InvoiceRecognizer::recognize_invoice(&pool, tenant_id, req).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "识别完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2148,7 +2148,7 @@ pub async fn get_invoice_handler(
     };
     match InvoiceRecognizer::get_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2165,7 +2165,7 @@ pub async fn list_invoices_handler(
     };
     match InvoiceRecognizer::list_invoices(&pool, tenant_id, params.status).await {
         Ok(invoices) => Json(ApiResponse::success(invoices, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2184,7 +2184,7 @@ pub async fn validate_invoice_handler(
             // 保守：无法从 Box<dyn Error> 直接下钻时，以 422 抛出完整消息（已包含 ValidationError Display）
             Json(ApiResponse::error(422, &msg.to_string()))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2200,7 +2200,7 @@ pub async fn post_invoice_handler(
     match InvoiceRecognizer::post_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "过账成功")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2216,7 +2216,7 @@ pub async fn match_invoice_handler(
         .await
     {
         Ok(invoice) => Json(ApiResponse::success(invoice, "匹配成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2270,7 +2270,7 @@ pub async fn initiate_payment_handler(
     match ElectronicPaymentProcessor::initiate_payment(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "支付发起成功")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2287,7 +2287,7 @@ pub async fn get_payment_status_handler(
     };
     match ElectronicPaymentProcessor::get_payment_status(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2302,7 +2302,7 @@ pub async fn reverse_payment_handler(
     match ElectronicPaymentProcessor::reverse_payment(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "冲正成功")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2319,7 +2319,7 @@ pub async fn list_payments_handler(
     };
     match ElectronicPaymentProcessor::list_payments(&pool, tenant_id, params.status).await {
         Ok(payments) => Json(ApiResponse::success(payments, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2362,7 +2362,7 @@ pub async fn schedule_payment_handler(
     {
         Ok(request) => Json(ApiResponse::success(request, "调度成功")),
         Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

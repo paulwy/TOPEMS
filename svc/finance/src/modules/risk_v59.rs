@@ -1404,7 +1404,7 @@ pub async fn analyze_transaction_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::analyze_transaction(&pool, tenant_id, req).await {
         Ok(decision) => Json(ApiResponse::success(decision, "分析完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1421,7 +1421,7 @@ pub async fn get_fraud_decision_handler(
     };
     match AntiFraudEngine::get_fraud_decision(&pool, tenant_id, id).await {
         Ok(decision) => Json(ApiResponse::success(decision, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1443,7 +1443,7 @@ pub async fn get_signals_handler(
     };
     match AntiFraudEngine::get_signals(&pool, tenant_id, params.signal_type).await {
         Ok(signals) => Json(ApiResponse::success(signals, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1456,7 +1456,7 @@ pub async fn create_device_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::update_device_profile(&pool, tenant_id, req).await {
         Ok(profile) => Json(ApiResponse::success(profile, "设备画像创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1481,7 +1481,7 @@ pub async fn get_device_handler(
 
     match result {
         Ok(profile) => Json(ApiResponse::success(profile, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1497,7 +1497,7 @@ pub async fn list_blocked_devices_handler(
     };
     match AntiFraudEngine::list_blocked_devices(&pool, tenant_id).await {
         Ok(devices) => Json(ApiResponse::success(devices, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1510,7 +1510,7 @@ pub async fn add_rule_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AntiFraudEngine::add_rule(&pool, tenant_id, req).await {
         Ok(rule) => Json(ApiResponse::success(rule, "规则添加成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1526,7 +1526,7 @@ pub async fn get_rules_handler(
     };
     match AntiFraudEngine::get_rules(&pool, tenant_id).await {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1541,7 +1541,7 @@ pub async fn calculate_score_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::calculate_score(&pool, tenant_id, req).await {
         Ok(profile) => Json(ApiResponse::success(profile, "评分完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1554,7 +1554,7 @@ pub async fn get_credit_profile_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::get_credit_profile(&pool, tenant_id, id).await {
         Ok(profile) => Json(ApiResponse::success(profile, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1570,7 +1570,7 @@ pub async fn get_scoring_models_handler(
     };
     match CreditScoringEngine::get_scoring_models(&pool, tenant_id).await {
         Ok(models) => Json(ApiResponse::success(models, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1583,7 +1583,7 @@ pub async fn create_model_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::create_model(&pool, tenant_id, req).await {
         Ok(model) => Json(ApiResponse::success(model, "模型创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1597,7 +1597,7 @@ pub async fn update_model_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::update_model(&pool, tenant_id, id, req).await {
         Ok(model) => Json(ApiResponse::success(model, "模型更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1615,7 +1615,7 @@ pub async fn get_score_factors_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::get_score_factors(&pool, tenant_id, params.entity_id).await {
         Ok(factors) => Json(ApiResponse::success(factors, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1632,7 +1632,7 @@ pub async fn get_model_comparison_handler(
     };
     match CreditScoringEngine::get_model_comparison(&pool, tenant_id, params.model_ids).await {
         Ok(result) => Json(ApiResponse::success(result, "对比完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1645,7 +1645,7 @@ pub async fn bulk_score_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match CreditScoringEngine::bulk_score(&pool, tenant_id, req).await {
         Ok(profiles) => Json(ApiResponse::success(profiles, "批量评分完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1660,7 +1660,7 @@ pub async fn create_scenario_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::create_scenario(&pool, tenant_id, req).await {
         Ok(scenario) => Json(ApiResponse::success(scenario, "场景创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1673,7 +1673,7 @@ pub async fn run_stress_test_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::run_stress_test(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "压力测试完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1690,7 +1690,7 @@ pub async fn get_test_result_handler(
     };
     match StressTestEngine::get_test_result(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1706,7 +1706,7 @@ pub async fn list_scenarios_handler(
     };
     match StressTestEngine::list_scenarios(&pool, tenant_id).await {
         Ok(scenarios) => Json(ApiResponse::success(scenarios, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -1734,7 +1734,7 @@ pub async fn compare_scenarios_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match StressTestEngine::compare_scenarios(&pool, tenant_id, req.scenario_ids).await {
         Ok(result) => Json(ApiResponse::success(result, "对比完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1756,7 +1756,7 @@ pub async fn get_scenario_parameters_handler(
     };
     match StressTestEngine::get_scenario_parameters(&pool, tenant_id, params.scenario_id).await {
         Ok(params) => Json(ApiResponse::success(params, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1772,7 +1772,7 @@ pub async fn get_test_summary_handler(
     };
     match StressTestEngine::get_test_summary(&pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

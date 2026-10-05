@@ -1695,7 +1695,7 @@ pub async fn create_audit_rule_handler(
     let created_by = claims.username.clone();
     match AutoAuditEngine::create_rule(&state.pool, tenant_id, req, &created_by).await {
         Ok(rule) => Json(ApiResponse::success(rule, "审计规则创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1713,7 +1713,7 @@ pub async fn list_audit_rules_handler(
         .await
     {
         Ok(rules) => Json(ApiResponse::success(rules, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1726,7 +1726,7 @@ pub async fn update_audit_rule_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::update_rule(&state.pool, id, tenant_id, req).await {
         Ok(rule) => Json(ApiResponse::success(rule, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1738,7 +1738,7 @@ pub async fn delete_audit_rule_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::delete_rule(&state.pool, id, tenant_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1774,7 +1774,7 @@ pub async fn get_audit_findings_handler(
             }),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1804,7 +1804,7 @@ pub async fn resolve_finding_handler(
     .await
     {
         Ok(finding) => Json(ApiResponse::success(finding, "问题已处理")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1816,7 +1816,7 @@ pub async fn run_audit_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoAuditEngine::run_audit(&state.pool, tenant_id, req.rule_ids).await {
         Ok(findings) => Json(ApiResponse::success(findings, "审计执行完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1828,7 +1828,7 @@ async fn detect_anomalies_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AnomalyDetector::detect(&state.pool, tenant_id, req).await {
         Ok(alerts) => Json(ApiResponse::success(alerts, "异常检测完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1864,7 +1864,7 @@ pub async fn get_anomaly_alerts_handler(
             }),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1887,7 +1887,7 @@ pub async fn get_detection_summary_handler(
     };
     match AnomalyDetector::get_summary(&state.pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1914,7 +1914,7 @@ pub async fn configure_detection_handler(
         .await
     {
         Ok(_) => Json(ApiResponse::success((), "配置更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1950,7 +1950,7 @@ pub async fn get_alerts_handler(
             }),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1970,7 +1970,7 @@ pub async fn create_alert_config_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertManager::create_config(&state.pool, tenant_id, req).await {
         Ok(config) => Json(ApiResponse::success(config, "预警配置创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1985,7 +1985,7 @@ pub async fn list_alert_configs_handler(
     };
     match AlertManager::list_configs(&state.pool, tenant_id).await {
         Ok(configs) => Json(ApiResponse::success(configs, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1998,7 +1998,7 @@ pub async fn acknowledge_alert_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AlertManager::acknowledge(&state.pool, id, tenant_id, &req.acknowledged_by).await {
         Ok(history) => Json(ApiResponse::success(history, "预警已确认")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

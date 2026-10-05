@@ -94,7 +94,7 @@ pub async fn create_session_handler(
 
     match service.create_session(tenant_id, req, &created_by).await {
         Ok(session) => Json(ApiResponse::success(session, "对账会话创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -108,7 +108,7 @@ pub async fn get_session_handler(
 
     match service.get_session(tenant_id, session_id).await {
         Ok(session) => Json(ApiResponse::success(session, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -135,7 +135,7 @@ pub async fn list_sessions_handler(
             },
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -169,7 +169,7 @@ pub async fn import_items_handler(
 
     match service.import_items(tenant_id, req).await {
         Ok(count) => Json(ApiResponse::success(count, "导入成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -183,7 +183,7 @@ pub async fn auto_match_handler(
 
     match service.auto_match(tenant_id, session_id).await {
         Ok(result) => Json(ApiResponse::success(result, "自动匹配完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -197,7 +197,7 @@ pub async fn complete_session_handler(
 
     match service.complete_session(tenant_id, session_id).await {
         Ok(session) => Json(ApiResponse::success(session, "对账会话已完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -246,7 +246,7 @@ pub async fn get_items_handler(
         .await
     {
         Ok(items) => Json(ApiResponse::success(items, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -260,7 +260,7 @@ pub async fn get_summary_handler(
 
     match service.get_summary(tenant_id, session_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -295,7 +295,7 @@ pub async fn update_diff_handler(
         .await
     {
         Ok(item) => Json(ApiResponse::success(item, "差异标记成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -327,7 +327,7 @@ pub async fn get_report_handler(
             }
             Json(ApiResponse::success(report, "对账报告生成成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -442,7 +442,7 @@ pub async fn batch_update_diff_handler(
 
     match service.batch_update_diff(tenant_id, req).await {
         Ok(resp) => Json(ApiResponse::success(resp, "批量差异处理完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -456,7 +456,7 @@ pub async fn get_diff_statistics_handler(
 
     match service.get_diff_statistics(tenant_id, session_id).await {
         Ok(stats) => Json(ApiResponse::success(stats, "差异统计查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -481,7 +481,7 @@ pub async fn get_aging_handler(
 
     match service.get_aging(tenant_id, as_of_date, &direction).await {
         Ok(report) => Json(ApiResponse::success(report, "账龄分析查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

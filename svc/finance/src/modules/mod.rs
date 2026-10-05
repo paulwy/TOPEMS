@@ -169,7 +169,7 @@ pub async fn create_account(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.create_account(tenant_id, req).await {
         Ok(account) => Json(ApiResponse::success(account, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -184,7 +184,7 @@ pub async fn get_account(
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_account(tenant_id, account_id, locale).await {
         Ok(account) => Json(ApiResponse::success(account, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -199,7 +199,7 @@ pub async fn get_account_by_code(
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_account_by_code(tenant_id, &code, locale).await {
         Ok(account) => Json(ApiResponse::success(account, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -232,7 +232,7 @@ pub async fn get_account_balances(
             };
             Json(ApiResponse::success(filtered, "查询成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -247,7 +247,7 @@ pub async fn list_accounts(
     let locale = Locale::from_headers(&headers).as_sql();
     match service.list_accounts(tenant_id, locale).await {
         Ok(accounts) => Json(ApiResponse::success(accounts, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -266,7 +266,7 @@ pub async fn create_voucher(
         .await
     {
         Ok(voucher) => Json(ApiResponse::success(voucher, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -279,7 +279,7 @@ pub async fn get_voucher(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => Json(ApiResponse::success(voucher, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -316,7 +316,7 @@ async fn list_vouchers(
         .await
     {
         Ok(vouchers) => Json(ApiResponse::success(vouchers, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -329,7 +329,7 @@ pub async fn submit_voucher(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.submit_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => Json(ApiResponse::success(voucher, "提交成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -346,7 +346,7 @@ pub async fn approve_voucher(
         .await
     {
         Ok(voucher) => Json(ApiResponse::success(voucher, "审批成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -363,7 +363,7 @@ pub async fn post_voucher(
         .await
     {
         Ok(voucher) => Json(ApiResponse::success(voucher, "过账成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -384,7 +384,7 @@ async fn update_voucher(
         .await
     {
         Ok(voucher) => Json(ApiResponse::success(voucher, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -398,7 +398,7 @@ pub async fn delete_voucher(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_voucher(tenant_id, voucher_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -412,7 +412,7 @@ pub async fn unpost_voucher(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.unpost_voucher(tenant_id, voucher_id).await {
         Ok(voucher) => Json(ApiResponse::success(voucher, "反过账成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -433,7 +433,7 @@ pub async fn get_ledger(
 
     match service.get_ledger(tenant_id, ledger_params).await {
         Ok(entries) => Json(ApiResponse::success(entries, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -459,7 +459,7 @@ pub async fn get_trial_balance(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_trial_balance(tenant_id, &period).await {
         Ok(balance) => Json(ApiResponse::success(balance, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -482,7 +482,7 @@ async fn get_balance_sheet(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_balance_sheet(tenant_id, &period).await {
         Ok(sheet) => Json(ApiResponse::success(sheet, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -505,7 +505,7 @@ async fn get_income_statement(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_income_statement(tenant_id, &period).await {
         Ok(statement) => Json(ApiResponse::success(statement, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -522,7 +522,7 @@ pub async fn close_period(
         .await
     {
         Ok(period) => Json(ApiResponse::success(period, "期间已关闭")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -554,7 +554,7 @@ pub async fn open_period(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.open_period(tenant_id, year, month).await {
         Ok(period) => Json(ApiResponse::success(period, "期间已打开")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -567,7 +567,7 @@ pub async fn create_aux_account(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.create_aux_account(tenant_id, req).await {
         Ok(account) => Json(ApiResponse::success(account, "辅助科目创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -593,7 +593,7 @@ async fn list_aux_accounts(
     let locale = Locale::from_headers(&headers).as_sql();
     match service.list_aux_accounts(tenant_id, aux_type, locale).await {
         Ok(accounts) => Json(ApiResponse::success(accounts, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -644,7 +644,7 @@ pub async fn get_aux_ledger(
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_aux_ledger(tenant_id, query, locale).await {
         Ok(entries) => Json(ApiResponse::success(entries, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -678,7 +678,7 @@ pub async fn get_aux_balance(
     let locale = Locale::from_headers(&headers).as_sql();
     match service.get_aux_balance(tenant_id, query, locale).await {
         Ok(balance) => Json(ApiResponse::success(balance, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -704,7 +704,7 @@ async fn get_cash_flow(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_cash_flow_statement(tenant_id, &period).await {
         Ok(statement) => Json(ApiResponse::success(statement, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -720,7 +720,7 @@ pub async fn batch_submit_vouchers(
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "批量提交完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -737,7 +737,7 @@ pub async fn batch_approve_vouchers(
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "批量审批完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -754,7 +754,7 @@ pub async fn batch_post_vouchers(
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "批量过账完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -778,7 +778,7 @@ pub async fn export_vouchers(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.export_vouchers(tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "导出成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -797,7 +797,7 @@ pub async fn year_end_close(
         .await
     {
         Ok(result) => Json(ApiResponse::success(result, "年末结转成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -855,7 +855,7 @@ pub async fn create_payment_handler(
             }
             Json(ApiResponse::success(payment, "创建成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -868,7 +868,7 @@ pub async fn get_payment_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payment(tenant_id, payment_id).await {
         Ok(payment) => Json(ApiResponse::success(payment, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -915,7 +915,7 @@ pub async fn list_payments_handler(
             },
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -936,7 +936,7 @@ pub async fn update_payment_handler(
         .await
     {
         Ok(payment) => Json(ApiResponse::success(payment, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -949,7 +949,7 @@ pub async fn delete_payment_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payment(tenant_id, payment_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -965,15 +965,15 @@ pub async fn submit_payment_handler(
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
         Ok(p) => p,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     match service.submit_voucher(tenant_id, payment.voucher_id).await {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {
             Ok(p) => Json(ApiResponse::success(p, "提交成功")),
-            Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => Json(crate::shared::err_resp(e)),
         },
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -988,7 +988,7 @@ pub async fn approve_payment_handler(
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
         Ok(p) => p,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     match service
@@ -997,9 +997,9 @@ pub async fn approve_payment_handler(
     {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {
             Ok(p) => Json(ApiResponse::success(p, "审批通过")),
-            Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => Json(crate::shared::err_resp(e)),
         },
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1014,7 +1014,7 @@ pub async fn reject_payment_handler(
 
     let payment = match service.get_payment(tenant_id, payment_id).await {
         Ok(p) => p,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
 
     match service
@@ -1023,9 +1023,9 @@ pub async fn reject_payment_handler(
     {
         Ok(_) => match service.get_payment(tenant_id, payment_id).await {
             Ok(p) => Json(ApiResponse::success(p, "已拒绝")),
-            Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => Json(crate::shared::err_resp(e)),
         },
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1045,7 +1045,7 @@ pub async fn execute_payment_handler(
         .await
     {
         Ok(p) => Json(ApiResponse::success(p, "执行成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1070,7 +1070,7 @@ pub async fn write_off_payment_item_handler(
         .await
     {
         Ok(p) => Json(ApiResponse::success(p, "核销成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1096,7 +1096,7 @@ pub async fn export_payments_handler(
 
     match service.export_payments(tenant_id, req).await {
         Ok(r) => Json(ApiResponse::success(r, "导出成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1114,7 +1114,7 @@ pub async fn list_approval_configs_handler(
 
     match service.list_approval_configs(tenant_id).await {
         Ok(configs) => Json(ApiResponse::success(configs, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1137,7 +1137,7 @@ pub async fn create_approval_config_handler(
         .await
     {
         Ok(config) => Json(ApiResponse::success(config, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1156,7 +1156,7 @@ pub async fn get_approval_config_handler(
 
     match service.get_approval_config(tenant_id, config_id).await {
         Ok(config) => Json(ApiResponse::success(config, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1180,7 +1180,7 @@ pub async fn update_approval_config_handler(
         .await
     {
         Ok(config) => Json(ApiResponse::success(config, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1199,7 +1199,7 @@ pub async fn delete_approval_config_handler(
 
     match service.delete_approval_config(tenant_id, config_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1481,7 +1481,7 @@ pub async fn list_voucher_templates_handler(
                 .collect();
             Json(ApiResponse::success(json_templates, "查询成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1497,7 +1497,7 @@ pub async fn get_voucher_template_handler(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1522,7 +1522,7 @@ pub async fn create_voucher_template_handler(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "创建成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1547,7 +1547,7 @@ async fn update_voucher_template_handler(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "更新成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1563,7 +1563,7 @@ pub async fn delete_voucher_template_handler(
         .await
     {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1579,7 +1579,7 @@ pub async fn set_default_template_handler(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "设置成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -1612,7 +1612,7 @@ pub async fn apply_template_handler(
         };
     match service.apply_template(tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "应用成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1635,7 +1635,7 @@ async fn copy_template_handler(
     let created_by = claims.username.clone();
     let source = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
     let lines: Vec<crate::services::finance::voucher_template::CreateVoucherTemplateLineRequest> =
         source
@@ -1667,7 +1667,7 @@ async fn copy_template_handler(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "复制成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1721,10 +1721,10 @@ pub async fn toggle_template_handler(
                     }
                     Json(ApiResponse::success(val, "切换成功"))
                 }
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1766,7 +1766,7 @@ pub async fn match_template_handler(
     .await
     {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => return Json(crate::shared::err_resp(e)),
     };
     match rule {
         Some(r) => {
@@ -1935,7 +1935,7 @@ async fn add_template_entry_handler(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
             "新增分录成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1977,7 +1977,7 @@ async fn update_template_entry_handler(
         .await
         {
             Ok(l) => l,
-            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => return Json(crate::shared::err_resp(e)),
         };
     let description = req.description.or(existing.description);
     let account_code = req.account_code.unwrap_or(existing.account_code);
@@ -2006,7 +2006,7 @@ async fn update_template_entry_handler(
             serde_json::to_value(l).unwrap_or(serde_json::json!({})),
             "更新分录成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2034,7 +2034,7 @@ async fn delete_template_entry_handler(
                 "删除分录成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2091,7 +2091,7 @@ pub async fn reorder_template_entries_handler(
         .execute(&state.pool)
         .await
         {
-            return Json(ApiResponse::error(500, &e.to_string()));
+            return Json(crate::shared::err_resp(e));
         }
     }
     let lines: Result<
@@ -2114,7 +2114,7 @@ pub async fn reorder_template_entries_handler(
                 "重排成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2149,7 +2149,7 @@ pub async fn export_template_handler(
     let template = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
         Err(e) => {
-            return Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string()))
+            return Json(crate::shared::err_resp::<serde_json::Value, _>(e))
                 .into_response()
         }
     };
@@ -2221,7 +2221,7 @@ pub async fn import_template_handler(
             serde_json::to_value(template).unwrap_or(serde_json::json!({})),
             "导入成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2262,7 +2262,7 @@ pub async fn list_generation_rules_handler(
                 .collect();
             Json(ApiResponse::success(json_rules, "查询成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2278,7 +2278,7 @@ pub async fn get_generation_rule_handler(
             serde_json::to_value(rule).unwrap_or(serde_json::json!({})),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2303,7 +2303,7 @@ pub async fn create_generation_rule_handler(
             serde_json::to_value(rule).unwrap_or(serde_json::json!({})),
             "创建成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2328,7 +2328,7 @@ pub async fn update_generation_rule_handler(
             serde_json::to_value(rule).unwrap_or(serde_json::json!({})),
             "更新成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2341,7 +2341,7 @@ pub async fn delete_generation_rule_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_generation_rule(tenant_id, rule_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2392,10 +2392,10 @@ pub async fn toggle_generation_rule_handler(
                     }
                     Json(ApiResponse::success(val, "切换成功"))
                 }
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -2431,7 +2431,7 @@ pub async fn test_rule_handler(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "测试完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2456,7 +2456,7 @@ pub async fn generate_vouchers_handler(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "生成成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2501,7 +2501,7 @@ pub async fn import_vouchers_handler(
             serde_json::to_value(result).unwrap_or(serde_json::json!({})),
             "导入成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2517,7 +2517,7 @@ pub async fn get_import_status_handler(
             serde_json::to_value(status).unwrap_or(serde_json::json!({})),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2542,7 +2542,7 @@ pub async fn list_import_records_handler(
                 .collect();
             Json(ApiResponse::success(json_records, "查询成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -2575,7 +2575,7 @@ pub async fn get_import_record_handler(
             serde_json::to_value(record).unwrap_or(serde_json::json!({})),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2588,7 +2588,7 @@ pub async fn rollback_import_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.rollback_import(tenant_id, import_id).await {
         Ok(_) => Json(ApiResponse::success((), "回滚成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2620,7 +2620,7 @@ pub async fn list_receivables_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2633,7 +2633,7 @@ async fn get_receivable_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_receivable(tenant_id, receivable_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2647,7 +2647,7 @@ async fn create_receivable_handler(
     let created_by = claims.username.clone();
     match service.create_receivable(tenant_id, req, &created_by).await {
         Ok(data) => Json(ApiResponse::success(data, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2664,7 +2664,7 @@ async fn update_receivable_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2677,7 +2677,7 @@ async fn delete_receivable_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_receivable(tenant_id, receivable_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -2703,7 +2703,7 @@ pub async fn get_receivable_aging_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_receivable_aging(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2725,7 +2725,7 @@ pub async fn batch_create_receivables_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "批量创建完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2757,7 +2757,7 @@ pub async fn list_payables_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2770,7 +2770,7 @@ async fn get_payable_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payable(tenant_id, payable_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2784,7 +2784,7 @@ async fn create_payable_handler(
     let created_by = claims.username.clone();
     match service.create_payable(tenant_id, req, &created_by).await {
         Ok(data) => Json(ApiResponse::success(data, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2798,7 +2798,7 @@ async fn update_payable_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.update_payable(tenant_id, payable_id, req).await {
         Ok(data) => Json(ApiResponse::success(data, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2811,7 +2811,7 @@ async fn delete_payable_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payable(tenant_id, payable_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -2837,7 +2837,7 @@ pub async fn get_payable_aging_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payable_aging(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2869,7 +2869,7 @@ pub async fn batch_create_payables_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "批量创建完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -2901,7 +2901,7 @@ pub async fn list_collections_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -2931,7 +2931,7 @@ pub async fn get_collection_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_collection(tenant_id, collection_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3004,7 +3004,7 @@ pub async fn create_collection_handler(
             }
             Json(ApiResponse::success(data, "创建成功"))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3021,7 +3021,7 @@ async fn update_collection_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3034,7 +3034,7 @@ async fn delete_collection_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_collection(tenant_id, collection_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -3080,7 +3080,7 @@ pub async fn write_off_collection_handler(
                 .await
             {
                 Ok(data) => Json(ApiResponse::success(data, "核销成功")),
-                Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+                Err(e) => Json(crate::shared::err_resp(e)),
             }
         }
         _ => Json(ApiResponse::error(400, "无效的ID格式")),
@@ -3101,7 +3101,7 @@ pub async fn batch_write_off_collections_handler(
         .unwrap_or_default();
     match service.batch_write_off(tenant_id, items).await {
         Ok(data) => Json(ApiResponse::success(data, "批量核销完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3148,7 +3148,7 @@ pub async fn list_payment_records_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3161,7 +3161,7 @@ pub async fn get_payment_record_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_payment_record(tenant_id, payment_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3179,7 +3179,7 @@ pub async fn create_payment_record_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3199,7 +3199,7 @@ pub async fn approve_payment_record_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "审批通过")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3219,7 +3219,7 @@ pub async fn reject_payment_record_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "已拒绝")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3237,7 +3237,7 @@ async fn update_payment_record_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3251,7 +3251,7 @@ async fn delete_payment_record_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.delete_payment_record(tenant_id, payment_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3273,7 +3273,7 @@ pub async fn write_off_payment_record_handler(
     ) {
         (Ok(pid), Ok(rid)) => match service.write_off_payment(tenant_id, pid, rid, amount).await {
             Ok(data) => Json(ApiResponse::success(data, "核销成功")),
-            Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+            Err(e) => Json(crate::shared::err_resp(e)),
         },
         _ => Json(ApiResponse::error(400, "无效的ID格式")),
     }
@@ -3308,7 +3308,7 @@ pub async fn batch_write_off_payments_handler(
         .unwrap_or_default();
     match service.batch_write_off_payments(tenant_id, items).await {
         Ok(data) => Json(ApiResponse::success(data, "批量核销完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3329,7 +3329,7 @@ pub async fn calculate_receivable_aging_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.calculate_receivable_aging(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "计算成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3341,7 +3341,7 @@ pub async fn calculate_payable_aging_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.calculate_payable_aging(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "计算成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3353,7 +3353,7 @@ pub async fn get_aging_summary_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -3387,7 +3387,7 @@ pub async fn get_aging_detail_handler(
         .await
     {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3402,7 +3402,7 @@ pub async fn get_aging_trend_handler(
     let months = params.months.unwrap_or(6);
     match service.get_aging_trend(tenant_id, &direction, months).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3487,7 +3487,7 @@ pub async fn get_voucher_entries(
                 "查询成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3498,7 +3498,7 @@ pub async fn get_voucher_items(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let rows = sqlx::query(
-        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, sort_order FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sort_order, created_at"),
+        only_own_schema_query!("finance", "SELECT id, voucher_id, account_code, account_name, description, debit, credit, created_at FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at"),
     )
     .bind(voucher_id)
     .bind(tenant_id)
@@ -3517,7 +3517,6 @@ pub async fn get_voucher_items(
                         "description": r.try_get::<String, _>("description").ok(),
                         "debit": r.try_get::<f64, _>("debit").ok(),
                         "credit": r.try_get::<f64, _>("credit").ok(),
-                        "sort_order": r.try_get::<i32, _>("sort_order").ok(),
                     })
                 })
                 .collect();
@@ -3526,7 +3525,7 @@ pub async fn get_voucher_items(
                 "查询成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3597,7 +3596,7 @@ pub async fn unapprove_voucher(
     Path(voucher_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'pending', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')"))
+    let res = sqlx::query(only_own_schema_query!("finance", "UPDATE finance.core_finance_vouchers SET status = 'submitted', updated_at = NOW() WHERE id = $1 AND tenant_id = $2 AND status IN ('approved', 'posted')"))
         .bind(voucher_id)
         .bind(tenant_id)
         .execute(&state.pool)
@@ -3608,12 +3607,12 @@ pub async fn unapprove_voucher(
                 Json(ApiResponse::error(404, "凭证不存在或状态不允许反审核"))
             } else {
                 Json(ApiResponse::success(
-                    serde_json::json!({"voucher_id": voucher_id, "status": "pending"}),
+                    serde_json::json!({"voucher_id": voucher_id, "status": "submitted"}),
                     "反审核成功",
                 ))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3625,7 +3624,7 @@ pub async fn reverse_voucher(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = get_tenant_id_from_claims(&claims);
     let reversal_id = Uuid::new_v4();
-    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (id, tenant_id, voucher_no, voucher_date, period, voucher_type, description, status, is_reversed, original_voucher_id, created_by, created_at, updated_at) SELECT $1, $2, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', true, $3, created_by, NOW(), NOW() FROM finance.core_finance_vouchers WHERE id = $3 AND tenant_id = $2"))
+    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_vouchers (id, tenant_id, voucher_no, voucher_date, period, voucher_type, description, status, created_by, created_at, updated_at) SELECT $1, $2, CONCAT('RV-', voucher_no), voucher_date, period, voucher_type, CONCAT('红冲: ', description), 'draft', created_by, NOW(), NOW() FROM finance.core_finance_vouchers WHERE id = $3 AND tenant_id = $2"))
         .bind(reversal_id)
         .bind(tenant_id)
         .bind(voucher_id)
@@ -3642,7 +3641,7 @@ pub async fn reverse_voucher(
                 ))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3695,7 +3694,7 @@ pub async fn generate_voucher_by_template(
                 "生成成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3816,19 +3815,33 @@ pub async fn open_period_v2(
     Extension(claims): Extension<Claims>,
     Json(req): Json<PeriodActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let period = req.period.unwrap_or_default();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_periods (tenant_id, period, status, created_at, updated_at) VALUES ($1, $2, 'open', NOW(), NOW()) ON CONFLICT (tenant_id, period) DO UPDATE SET status = 'open', updated_at = NOW()"))
+    // period 形如 "YYYY-MM"；表 core_finance_periods 以 (tenant_id, year, month) 为唯一键。
+    let period = req.period.unwrap_or_default();
+    let parts: Vec<&str> = period.split('-').collect();
+    let year: i32 = parts.first().and_then(|y| y.parse().ok()).unwrap_or(0);
+    let month: i32 = parts.get(1).and_then(|m| m.parse().ok()).unwrap_or(0);
+    if !(1..=12).contains(&month) || !(2000..=2100).contains(&year) {
+        return Json(ApiResponse::error(400, "period 格式应为 YYYY-MM"));
+    }
+    let period_name = format!("{:04}-{:02}", year, month);
+    let start_date = format!("{:04}-{:02}-01", year, month);
+    let end_date = format!("{:04}-{:02}-28", year, month);
+    let res = sqlx::query(only_own_schema_query!("finance", "INSERT INTO finance.core_finance_periods (tenant_id, year, month, period_name, status, start_date, end_date, created_at, updated_at) VALUES ($1, $2, $3, $4, 'open', $5::timestamp, $6::timestamp, NOW(), NOW()) ON CONFLICT (tenant_id, year, month) DO UPDATE SET status = 'open', updated_at = NOW()"))
         .bind(tenant_id)
-        .bind(&period)
+        .bind(year)
+        .bind(month)
+        .bind(&period_name)
+        .bind(&start_date)
+        .bind(&end_date)
         .execute(&state.pool)
         .await;
     match res {
         Ok(_) => Json(ApiResponse::success(
-            serde_json::json!({"period": period, "status": "open"}),
+            serde_json::json!({"period": period_name, "status": "open"}),
             "开启成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3855,7 +3868,7 @@ pub async fn close_period_v2(
                 ))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3910,7 +3923,7 @@ pub async fn get_ar_aging(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3934,7 +3947,7 @@ pub async fn get_ap_aging(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match service.get_aging_summary(tenant_id).await {
         Ok(data) => Json(ApiResponse::success(data, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -3978,7 +3991,7 @@ pub async fn get_account_tree(
                 "查询成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 

@@ -92,7 +92,9 @@ fn internal_error(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>
 }
 
 fn not_found(msg: &str) -> (StatusCode, Json<ApiResponse<serde_json::Value>>) {
-    (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, msg)))
+    // finance 统一信封契约：业务错误一律 HTTP 200，由 body.code 承载业务码。
+    // （此前返回真实 HTTP 404，被 BFF 契约冒烟误判为"路由缺失 route_missing"。）
+    (StatusCode::OK, Json(ApiResponse::error(404, msg)))
 }
 
 fn parse_date(s: &Option<String>) -> Option<NaiveDate> {

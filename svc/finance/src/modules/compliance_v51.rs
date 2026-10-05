@@ -1172,7 +1172,7 @@ pub async fn create_control_point_handler(
     let created_by = claims.username.clone();
     match ControlPoint::create(&state.pool, tenant_id, req, &created_by).await {
         Ok(cp) => Json(ApiResponse::success(cp, "控制点创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1196,7 +1196,7 @@ pub async fn list_control_points_handler(
     .await
     {
         Ok(cps) => Json(ApiResponse::success(cps, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1212,7 +1212,7 @@ pub async fn get_control_point_handler(
     };
     match ControlPoint::get(&state.pool, id, tenant_id).await {
         Ok(cp) => Json(ApiResponse::success(cp, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1225,7 +1225,7 @@ pub async fn update_control_point_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match ControlPoint::update(&state.pool, id, tenant_id, req).await {
         Ok(cp) => Json(ApiResponse::success(cp, "更新成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1237,7 +1237,7 @@ pub async fn delete_control_point_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match ControlPoint::delete(&state.pool, id, tenant_id).await {
         Ok(_) => Json(ApiResponse::success((), "删除成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1258,7 +1258,7 @@ pub async fn generate_control_matrix_handler(
     let created_by = claims.username.clone();
     match ControlMatrix::generate(&state.pool, tenant_id, req, &created_by).await {
         Ok(cm) => Json(ApiResponse::success(cm, "内控矩阵生成成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1274,7 +1274,7 @@ pub async fn get_control_matrix_handler(
     };
     match ControlMatrix::get(&state.pool, id, tenant_id).await {
         Ok(cm) => Json(ApiResponse::success(cm, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1290,7 +1290,7 @@ pub async fn list_control_matrices_handler(
     };
     match ControlMatrix::list(&state.pool, tenant_id, params.period).await {
         Ok(cms) => Json(ApiResponse::success(cms, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1303,7 +1303,7 @@ pub async fn assess_risk_handler(
     let assessed_by = claims.username.clone();
     match RiskAssessment::assess(&state.pool, tenant_id, req, &assessed_by).await {
         Ok(ra) => Json(ApiResponse::success(ra, "风险评估创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1319,7 +1319,7 @@ pub async fn get_risk_assessment_handler(
     };
     match RiskAssessment::get(&state.pool, id, tenant_id).await {
         Ok(ra) => Json(ApiResponse::success(ra, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -1359,7 +1359,7 @@ pub async fn list_risk_assessments_handler(
     .await
     {
         Ok(ras) => Json(ApiResponse::success(ras, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1374,7 +1374,7 @@ pub async fn get_risk_summary_handler(
     };
     match RiskAssessment::get_summary(&state.pool, tenant_id).await {
         Ok(summary) => Json(ApiResponse::success(summary, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1387,7 +1387,7 @@ async fn generate_compliance_report_handler(
     let created_by = claims.username.clone();
     match ComplianceReportV51::generate(&state.pool, tenant_id, req, &created_by).await {
         Ok((report, issues)) => Json(ApiResponse::success((report, issues), "合规报告生成成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1403,7 +1403,7 @@ pub async fn get_compliance_report_handler(
     };
     match ComplianceReportV51::get(&state.pool, id, tenant_id).await {
         Ok(report) => Json(ApiResponse::success(report, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 #[utoipa::path(
@@ -1436,7 +1436,7 @@ pub async fn list_compliance_reports_handler(
     };
     match ComplianceReportV51::list(&state.pool, tenant_id, params.report_type).await {
         Ok(reports) => Json(ApiResponse::success(reports, "查询成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
@@ -1448,7 +1448,7 @@ pub async fn export_compliance_report_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match ComplianceReportV51::export(&state.pool, id, tenant_id).await {
         Ok(exported) => Json(ApiResponse::success(exported, "导出成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
 
