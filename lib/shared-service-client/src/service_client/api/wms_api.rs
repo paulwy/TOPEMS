@@ -138,13 +138,13 @@ impl TypedServiceClient<WmsApi> {
         page: i32,
         page_size: i32,
     ) -> ServiceClientResult<serde_json::Value> {
-        let path = format!("/inventory/items?page={}&pagesize={}", page, page_size);
+        let path = format!("/inventory?page={}&pagesize={}", page, page_size);
         self.get(&self.build_path(&path)).await
     }
 
     /// 获取库存明细项
     pub async fn get_inventory_item(&self, id: &str) -> ServiceClientResult<serde_json::Value> {
-        let path = format!("/inventory/items/{}", id);
+        let path = format!("/inventory/{}", id);
         self.get(&self.build_path(&path)).await
     }
 
