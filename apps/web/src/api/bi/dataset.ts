@@ -41,7 +41,10 @@ export const datasetCrudApi: CrudOperations<Dataset> = {
   delete: deleteDataset,
 };
 
-export async function queryDataset(params: DatasetQueryParams): Promise<DatasetQueryResult> {
+/** axios 层已解包 HTTP body → 返回 {success, data:{columns,rows,total,execution_time}, message}，结果对象在 res.data */
+export async function queryDataset(
+  params: DatasetQueryParams
+): Promise<{ success: boolean; data?: DatasetQueryResult; message?: string }> {
   return await apiClient.bi.post('/datasets/query', params);
 }
 

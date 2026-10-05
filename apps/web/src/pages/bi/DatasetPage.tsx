@@ -24,6 +24,7 @@ import {
   InputLabel,
   Select,
   CircularProgress,
+  Modal,
 } from '@mui/material';
 import i18n from '@/i18n';
 import { PageContainer } from '@/components/common';
@@ -33,9 +34,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   datasetCrudApi,
   publishDataset,
+  queryDataset,
   refreshDataset,
   testSqlQuery,
   type Dataset,
+  type DatasetQueryResult,
   type DatasetField,
   type SqlTestResult,
 } from '@/api/bi';
@@ -52,6 +55,9 @@ const DatasetPage = () => {
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
   const [editorTab, setEditorTab] = useState(0);
   const [sqlTestResult, setSqlTestResult] = useState<SqlTestResult | null>(null);
+  const [queryResult, setQueryResult] = useState<DatasetQueryResult | null>(null);
+  const [queryLoading, setQueryLoading] = useState(false);
+  const [viewDataset, setViewDataset] = useState<Dataset | null>(null);
   const [formData, setFormData] = useState<Partial<Dataset>>({
     name: '',
     description: '',
@@ -203,6 +209,21 @@ const DatasetPage = () => {
       logger.error('SQL test failed:', e);
     }
   }, [formData.data_source_id, formData.sql_query, testSqlMutation]);
+  const handleView = useCallback(async (dataset: Dataset) => {
+    setViewDataset(dataset);
+    setQueryResult(null);
+    setQueryLoading(true);
+    try {
+      const res = await queryDataset({ dataset_id: dataset.id });
+      // axios 已解包 body → res={success,data,message}，结果对象在 res.data
+      setQueryResult((res?.data as DatasetQueryResult | undefined) ?? null);
+    } catch (e: unknown) {
+      logger.error('Dataset query failed:', e);
+      setQueryResult(null);
+    } finally {
+      setQueryLoading(false);
+    }
+  }, []);
   const getStatusChip = (status: string) => {
     const configs: Record<string, { color: 'success' | 'warning' | 'primary'; label: string }> = {
       published: { color: 'success', label: i18n.t('bi.dataset_page.text_dca0c1') },
@@ -386,6 +407,7 @@ const DatasetPage = () => {
                     <Tooltip title={i18n.t('bi.dataset_page.view')}>
                       <IconButton
                         size='small'
+                        onClick={() => handleView(dataset)}
                         aria-label={i18n.t('bi.dataset_page.view_1')}
                       >
                         <Eye size={16} />
@@ -742,6 +764,89 @@ const DatasetPage = () => {
       >
         {viewMode === 'list' ? renderListView() : renderEditorView()}
       </DashboardTemplate>
+      <Modal
+        open={viewDataset !== null}
+        onClose={() => setViewDataset(null)}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '70%',
+            maxWidth: 960,
+            maxHeight: '75vh',
+            bgcolor: 'background.paper',
+            boxShadow: 24,
+            p: 3,
+            borderRadius: 2,
+            overflow: 'auto',
+          }}
+        >
+          <Typography
+            variant='h6'
+            sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+          >
+            {viewDataset?.name}
+            <IconButton
+              size='small'
+              onClick={() => setViewDataset(null)}
+              aria-label='close'
+            >
+              <Typography variant='body2'>✕</Typography>
+            </IconButton>
+          </Typography>
+          {queryLoading ? (
+            <CircularProgress size={24} />
+          ) : queryResult ? (
+            <>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ mb: 1, display: 'block' }}
+              >
+                共 {queryResult.total} 行，执行 {queryResult.execution_time ?? '-'} ms
+              </Typography>
+              <TableContainer
+                component={Paper}
+                sx={{ maxHeight: 400 }}
+              >
+                <Table
+                  size='small'
+                  stickyHeader
+                >
+                  <TableHead>
+                    <TableRow>
+                      {queryResult.columns.map((col) => (
+                        <TableCell key={col}>{col}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {queryResult.rows.map((row, idx) => (
+                      <TableRow key={idx}>
+                        {queryResult.columns.map((col) => (
+                          <TableCell key={col}>
+                            {String((row as Record<string, unknown>)[col] ?? '')}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
+          ) : (
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              查询失败或无结果
+            </Typography>
+          )}
+        </Box>
+      </Modal>
     </PageContainer>
   );
 };
