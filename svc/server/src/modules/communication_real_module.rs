@@ -160,6 +160,7 @@ const IM_STUB_POST: &[&str] = &[
     "/contact-groups/{id}/{sub}/members",
     "/contacts/{id}",
     "/files/upload",
+    "/notifications",
 ];
 const IM_STUB_PUT: &[&str] = &[
     "/contact-groups/{id}/{sub}",
@@ -192,6 +193,11 @@ pub struct CommunicationRealModule {
 impl CommunicationRealModule {
     /// 异步构建真实 Communication 模块
     pub async fn build() -> Result<Self> {
+        // 自己 schema 优先（与全仓 master_data/pm 等模式对齐：communication, public）。
+        // 裸表名 SQL 据此解析到 communication schema（i18n name_en 列在该 schema），
+        // 避免命中 public 空壳旧表（缺 name_en 列 → channels/mail templates 查询 500）。
+        std::env::set_var("SEARCH_PATH", "communication, public");
+
         let config = ServiceConfig {
             name: "topems-communication",
             port: 8093,
