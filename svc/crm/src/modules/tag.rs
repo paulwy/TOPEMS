@@ -89,7 +89,7 @@ pub async fn list_tags(
 
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, tenant_id,
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000')::uuid AS tenant_id,
                CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                color, description, created_at, updated_at
         FROM crm.tags
@@ -290,7 +290,7 @@ pub async fn get_tag(
 
     let result = sqlx::query_as::<_, Tag>(
         r#"
-        SELECT id, tenant_id,
+        SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000')::uuid AS tenant_id,
                CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                color, description, created_at, updated_at
         FROM crm.tags WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)

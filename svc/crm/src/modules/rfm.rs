@@ -372,7 +372,7 @@ pub async fn analyze_rfm(
         SELECT
             c.id   AS customer_id,
             c.name AS customer_name,
-            COALESCE(($1::date - MAX(o.order_date))::int, 9999)::float8 AS recency_days,
+            COALESCE(($1::date - MAX(o.order_date)::date)::int, 9999)::float8 AS recency_days,
             COUNT(o.id)::float8 AS frequency,
             COALESCE(SUM(o.total_amount), 0)::float8 AS monetary
         FROM crm.customers c

@@ -330,6 +330,21 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
 
     // 阶段 1+2：调用 shared-db 抽象完成增量迁移 + 一致性自检
     run_schema_defense(pool, SERVICE_SCHEMA, TABLE_DEFS, SERVICE_TAG).await?;
+
+    // 阶段 3：业务约束对齐（幂等）。
+    // 历史库在 crm.returns.status 上挂了通用状态约束 ck_returns_status_standard，
+    // 仅允许 active/inactive/archived，与退换货 FSM（pending/accepted/approved/rejected/
+    // processing/completed/cancelled）冲突，导致 POST /returns 创建即 500。
+    // 这里 DROP 通用约束并按本服务 FSM 词表重建（表为空，ADD 不会命中历史脏数据）。
+    sqlx::query("ALTER TABLE crm.returns DROP CONSTRAINT IF EXISTS ck_returns_status_standard")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "ALTER TABLE crm.returns ADD CONSTRAINT ck_returns_status_standard CHECK (status IS NULL OR status = ANY (ARRAY['pending','accepted','approved','rejected','processing','completed','cancelled']))",
+    )
+    .execute(pool)
+    .await?;
+
     Ok(())
 }
 

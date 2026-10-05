@@ -96,7 +96,7 @@ pub async fn list_interactions(
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
-        SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
+        SELECT id, tenant_id, customer_id, contact_id, interaction_type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
         FROM crm.interactions
         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL
           AND ($2::text IS NULL OR subject ILIKE $2 OR content ILIKE $2)
@@ -195,7 +195,7 @@ pub async fn get_interaction(
 
     let result = sqlx::query_as::<_, Interaction>(
         r#"
-        SELECT id, tenant_id, customer_id, contact_id, type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
+        SELECT id, tenant_id, customer_id, contact_id, interaction_type as type_, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at, deleted_at
         FROM crm.interactions WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL
         "#,
     )
