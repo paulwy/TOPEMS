@@ -23,6 +23,10 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/hazards/{id}/assessments", post(assess_risk))
         .route(
+            "/hazards/{id}/assessments/{assessment_id}",
+            put(update_assessment),
+        )
+        .route(
             "/hazards/{id}/controls",
             get(list_control_measures).post(create_control_measure),
         )
@@ -749,6 +753,26 @@ pub async fn assess_risk(
         },
         "风险评估成功",
     ))
+}
+
+/// PUT /hazards/{id}/assessments/{assessment_id}
+/// 待上游支持：当前风险评估与风险记录内联（无独立 assessment 表），
+/// 该端点复用 assess_risk 的更新语义，assessment_id 仅用于路径对齐。
+pub async fn update_assessment(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    axum::extract::Path((id, _assessment_id)): axum::extract::Path<(String, String)>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<Risk>> {
+    assess_risk(
+        State(state),
+        Extension(claims),
+        headers,
+        axum::extract::Path(id),
+        Json(req),
+    )
+    .await
 }
 #[utoipa::path(
     delete,

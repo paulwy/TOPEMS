@@ -68,16 +68,40 @@ pub fn create_routes() -> Router<AppState> {
             get(list_hazard_factors).post(create_hazard_factor),
         )
         .route(
+            "/occupational-diseases/factors/{id}",
+            get(get_hazard_factor)
+                .put(update_hazard_factor)
+                .delete(delete_hazard_factor),
+        )
+        .route(
             "/occupational-diseases/detection-records",
             get(list_detection_records).post(create_detection_record),
+        )
+        .route(
+            "/occupational-diseases/detection-records/{id}",
+            get(get_detection_record)
+                .put(update_detection_record)
+                .delete(delete_detection_record),
         )
         .route(
             "/occupational-diseases/cases",
             get(list_disease_cases).post(create_disease_case),
         )
         .route(
+            "/occupational-diseases/cases/{id}",
+            get(get_disease_case)
+                .put(update_disease_case)
+                .delete(delete_disease_case),
+        )
+        .route(
             "/occupational-diseases/protection-measures",
             get(list_protection_measures).post(create_protection_measure),
+        )
+        .route(
+            "/occupational-diseases/protection-measures/{id}",
+            get(get_protection_measure)
+                .put(update_protection_measure)
+                .delete(delete_protection_measure),
         )
 }
 
@@ -1467,4 +1491,15 @@ pub async fn list_factor_types(
         serde_json::json!({ "code": "psychological", "name": "心理因素" }),
     ];
     Json(ApiResponse::success(types, "获取危害因素类型成功"))
+}
+
+// 待上游支持：职业病危害因素检测记录当前为只读桩，无按 ID 更新通道。
+pub async fn update_detection_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+    Json(_req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::error(404, "检测记录不存在"))
 }

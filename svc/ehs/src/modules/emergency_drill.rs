@@ -46,6 +46,12 @@ pub fn create_routes() -> Router<AppState> {
         .route("/drills/types", get(list_drill_types))
         .route("/drills/statistics", get(get_drill_statistics))
         .route("/drills", get(list_drill_plans).post(create_drill_record))
+        .route(
+            "/drills/{id}",
+            get(get_drill_record)
+                .put(update_drill_record)
+                .delete(delete_drill_record),
+        )
 }
 
 #[derive(Debug, Deserialize)]

@@ -73,8 +73,20 @@ pub fn create_routes() -> Router<AppState> {
             get(list_evaluations).post(create_evaluation),
         )
         .route(
+            "/environmental-compliance/assessments/{id}",
+            get(get_evaluation)
+                .put(update_evaluation)
+                .delete(delete_evaluation),
+        )
+        .route(
             "/environmental-compliance/events",
             get(list_incidents).post(create_incident),
+        )
+        .route(
+            "/environmental-compliance/events/{id}",
+            get(get_incident)
+                .put(update_incident)
+                .delete(delete_incident),
         )
 }
 

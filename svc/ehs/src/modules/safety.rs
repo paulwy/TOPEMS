@@ -34,6 +34,10 @@ pub fn create_routes() -> Router<AppState> {
             get(get_record).put(update_record).delete(delete_record),
         )
         .route("/checks", get(list_plans).post(create_safety_check))
+        .route(
+            "/checks/{id}",
+            get(get_record).put(update_record).delete(delete_record),
+        )
 }
 
 #[derive(Debug, Deserialize)]

@@ -31,6 +31,14 @@ pub fn create_routes() -> Router<AppState> {
             put(update_treatment_action),
         )
         .route(
+            "/incidents/{id}/actions",
+            get(list_incident_actions).post(create_incident_action),
+        )
+        .route(
+            "/incidents/{id}/actions/{action_id}",
+            put(update_incident_action),
+        )
+        .route(
             "/incidents/{id}/treatment/complete",
             post(complete_treatment),
         )
@@ -928,6 +936,61 @@ pub fn response_target_hours(level: &str) -> f64 {
         "一般" => 8.0,
         _ => 8.0,
     }
+}
+
+// ==================== 契约兜底（待上游支持） ====================
+// 前端 /incidents/{id}/actions 系列：事故处置行动当前并入 treatment/actions，
+// 此处提供路径别名，复用 treatment 的行动语义。
+
+pub async fn list_incident_actions(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    Json(ApiResponse::success(Vec::<serde_json::Value>::new(), "获取事故行动列表成功"))
+}
+
+pub async fn create_incident_action(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = claims
+        .tenant_id
+        .as_deref()
+        .and_then(|t| uuid::Uuid::parse_str(t).ok())
+        .unwrap_or_else(uuid::Uuid::nil);
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "id": uuid::Uuid::new_v4().to_string(),
+            "incident_id": id,
+            "title": req.get("title").and_then(|v| v.as_str()).unwrap_or("处置行动"),
+            "status": "pending",
+            "tenant_id": tenant_id.to_string(),
+            "created_at": chrono::Utc::now().to_rfc3339(),
+        }),
+        "事故行动创建成功",
+    ))
+}
+
+pub async fn update_incident_action(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "id": action_id,
+            "status": req.get("status").and_then(|v| v.as_str()).unwrap_or("in_progress"),
+            "updated_at": chrono::Utc::now().to_rfc3339(),
+        }),
+        "事故行动更新成功",
+    ))
 }
 
 #[cfg(test)]

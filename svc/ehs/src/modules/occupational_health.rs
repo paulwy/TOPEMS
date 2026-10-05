@@ -62,12 +62,30 @@ pub fn create_routes() -> Router<AppState> {
             get(list_exam_plans).post(create_exam_plan),
         )
         .route(
+            "/occupational-health/check-plans/{id}",
+            get(get_exam_plan)
+                .put(update_exam_plan)
+                .delete(delete_exam_plan),
+        )
+        .route(
             "/occupational-health/check-records",
             get(list_exam_records).post(create_exam_record),
         )
         .route(
+            "/occupational-health/check-records/{id}",
+            get(get_exam_record)
+                .put(update_exam_record)
+                .delete(delete_exam_record),
+        )
+        .route(
             "/occupational-health/records",
             get(list_exam_records).post(create_exam_record),
+        )
+        .route(
+            "/occupational-health/records/{id}",
+            get(get_exam_record)
+                .put(update_exam_record)
+                .delete(delete_exam_record),
         )
 }
 

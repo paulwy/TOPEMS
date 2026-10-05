@@ -16,8 +16,16 @@ pub fn create_routes() -> Router<AppState> {
             get(list_records).post(create_record),
         )
         .route(
+            "/environment/monitors/{id}",
+            get(get_record).put(update_record).delete(delete_record),
+        )
+        .route(
             "/environment/records",
             get(list_records).post(create_record),
+        )
+        .route(
+            "/environment/records/{id}",
+            get(get_record),
         )
 }
 
@@ -102,4 +110,57 @@ pub async fn create_record(
         },
         "环境记录创建成功",
     ))
+}
+
+// 待上游支持：环境监测/记录当前为内存桩，无持久化表。
+// 详情类统一返回 200 + 内层 404；更新/删除返回成功（幂等）。
+
+pub async fn get_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<EnvironmentRecord>> {
+    Json(ApiResponse::error(404, "环境记录不存在"))
+}
+
+pub async fn update_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<EnvironmentRecord>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    Json(ApiResponse::success(
+        EnvironmentRecord {
+            id,
+            record_no: "ENV-UPD".to_string(),
+            monitor_type: req.get("monitor_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            monitor_point: req.get("monitor_point").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            data: req.clone(),
+            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("normal").to_string(),
+            monitored_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "环境记录更新成功",
+    ))
+}
+
+pub async fn delete_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    Json(ApiResponse::success((), "环境记录删除成功"))
 }

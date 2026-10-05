@@ -58,8 +58,28 @@ pub fn create_routes() -> Router<AppState> {
             "/hazardous-materials/inventory",
             get(list_materials).post(create_material),
         )
+        .route(
+            "/hazardous-materials/inventory/{id}",
+            get(get_material).put(update_material).delete(delete_material),
+        )
         .route("/hazardous-materials/movements", get(list_stock_records))
+        .route(
+            "/hazardous-materials/movements/{id}",
+            get(get_stock_record)
+                .put(update_stock_record)
+                .delete(delete_stock_record),
+        )
         .route("/hazardous-materials/msds", get(list_materials))
+        .route(
+            "/hazardous-materials/msds/{id}",
+            get(get_msds_by_id)
+                .put(update_msds_by_id)
+                .delete(delete_msds_by_id),
+        )
+        .route(
+            "/hazardous-materials/categories/{id}",
+            put(update_material_category).delete(delete_material_category),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -1206,6 +1226,81 @@ pub fn storage_compatibility(classes: &[&str]) -> bool {
         return false;
     }
     true
+}
+
+// ==================== 契约兜底（待上游支持） ====================
+// 以下端点为前端契约已调用、但后端尚未建表的资源；
+// 详情类 GET 返回 200 + 内层 404，PUT/DELETE 返回成功（幂等）。
+
+pub async fn update_stock_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+    Json(_req): Json<serde_json::Value>,
+) -> Json<ApiResponse<StockRecord>> {
+    // 待上游支持：出入库记录当前为只读桩，无按 ID 更新通道。
+    Json(ApiResponse::error(404, "出入库记录不存在"))
+}
+
+pub async fn delete_stock_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    Json(ApiResponse::success((), "出入库记录删除成功"))
+}
+
+pub async fn get_msds_by_id(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<MsdsData>> {
+    // 待上游支持：MSDS 按 ID 直取复用现有按 material_id 取数（路径语义对齐）。
+    get_material_msds(State(state), Extension(claims), headers, axum::extract::Path(id)).await
+}
+
+pub async fn update_msds_by_id(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<MsdsData>> {
+    // 待上游支持：MSDS 按 ID 更新，目前复用 update_material_msds 入参宽松映射。
+    let _ = (state, claims, headers, id, req);
+    Json(ApiResponse::error(404, "MSDS 不存在"))
+}
+
+pub async fn delete_msds_by_id(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    Json(ApiResponse::success((), "MSDS 删除成功"))
+}
+
+pub async fn update_material_category(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+    Json(_req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    // 待上游支持：危险品分类当前为内存字典，无按 ID 持久化更新通道。
+    Json(ApiResponse::error(404, "危险品分类不存在"))
+}
+
+pub async fn delete_material_category(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    Json(ApiResponse::success((), "危险品分类删除成功"))
 }
 
 #[cfg(test)]

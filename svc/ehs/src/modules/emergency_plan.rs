@@ -34,6 +34,10 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/emergency-plans/{id}/approve", post(approve_plan))
         .route("/plans", get(list_plans).post(create_plan))
+        .route(
+            "/plans/{id}",
+            get(get_plan).put(update_plan).delete(delete_plan),
+        )
 }
 
 #[derive(Debug, Deserialize)]
