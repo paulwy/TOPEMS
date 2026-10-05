@@ -166,7 +166,11 @@ pub fn create_routes(
         // VXX: JWT 校验端点（API 网关 Traefik jwt-auth forwardAuth 目标，任意方法）
         .route("/iam/auth/verify", any(modules::iam::auth::verify_token))
         .nest("/flow", flow::flow_routes(state))
-        .merge(file::file_routes(state))
+        // V-file-contract：file 模块此前 .merge() 挂在 core 根（/api/core/upload、/api/core/files/*），
+        // 与前端契约（services.file=/api/core/file）及内部调用方（shared-ai/file_client、
+        // service_client/file_api、集成测试）约定的 /api/core/file/* 前缀错位，导致 50 个端点裸 404。
+        // 现统一 nest 到 /file 之下，与 utoipa path 注解（/api/core/file/*）对齐。
+        .nest("/file", file::file_routes(state))
         .merge(master::master_routes(state))
         .merge(feature_flag::feature_flag_routes(state))
         // V514-2: migration 路由此前定义未挂载（migration_routes 未进 merge 链），前端 /api/core/migration/migrations/* 404。
