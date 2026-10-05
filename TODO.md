@@ -886,3 +886,11 @@
 - **结论**：全部路由健康、业务 200（kg-v53/subgraph、mdm-v55/products、mdm-v56/recovery/points、mdm-v58/maturity/assessment、mdm-v59/governance/models、mdm-v57/graph/neighbors、mdm-v60/metadata、mdm-v54/version/diff 补 entity_type/entity_id/from_version/to_version 后 200）；**无新增影子表/缺列问题**（schema_registry/dict 两处已修）
 - **新发现（文档一致性问题，非运行故障）**：master-data 文档路径（openapi.json 语义名：semantic/governance/metadata/versioning/knowledge 等）与真实路由前缀（nest 编号：mdm-v57~v60/kg-v53 等）**不一致**——按文档路径调用 v53~v60 模块端点会 404。例：文档 /api/master-data/semantic-v57/* vs 实际 /api/master-data/mdm-v57/*
 - **建议**：后续在 openapi-gen 路径规范化映射或注解 path 中对齐前缀（改前先核 create_routes nest 名清单，勿动运行路由）
+
+### P4-3 master-data 文档-路由前缀对齐完成 — ✅ 2026-10-05
+
+- **根因**：master-data 各模块注解 path 用语义名首段（/version /metadata /governance 等），生成器补 /api/master-data/ 前缀 → 文档路径 = 语义名；真实路由 nest 前缀 = 编号（mdm-v54~v60/kg-v53 等）→ 按文档调用 404
+- **修复（10 文件 212 行，commit c028c7c20）**：注解 path 对齐真实路由——quality_v51 绝对路径 /api/master/ → /api/master-data/（补 -data）；10 模块相对路径首段插 nest 前缀（/version → /mdm-v54/version 等）
+- **文档清理（openapi.json）**：生成器合并后旧语义名路径残留（双轨 403 条）→ 删除 193 条非合法前缀路径，master-data 收敛 210 条（12 合法前缀 + 根路径）
+- **验证**：文档 3023 端点（服务端一致）；新编号前缀 12 抽样端点全 200；旧语义名 5 抽样端点全 404（文档-路由一致达成）
+- **说明**：total 3023（3216-193）；master-data 各前缀 quality-v51 17 / lineage-v52 14 / kg-v53 14 / mdm-v54~v60 153 / schema-registry 4 / dict 7
