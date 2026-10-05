@@ -544,7 +544,7 @@ pub async fn update_task(
         .and_then(|s| Uuid::parse_str(s).ok());
 
     let row = sqlx::query(&format!(
-        "UPDATE public.qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5, actual_start_date), actual_end_date = COALESCE($6, actual_end_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $7 RETURNING {}",
+        "UPDATE public.qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5::timestamp, actual_start_date), actual_end_date = COALESCE($6::timestamp, actual_end_date), updated_at = NOW() WHERE id = $1 AND tenant_id = $7 RETURNING {}",
         TASK_SELECT_COLS
     ))
     .bind(id)
