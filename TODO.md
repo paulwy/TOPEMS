@@ -879,3 +879,10 @@
 - **应用方式**：迁移通道因账本积压（30/293）被 migrate.sh 保护拒绝 → 直接 psql 应用幂等 SQL + 手动登记 _sqlx_migrations（version/description/installed_on/success/checksum(SHA-384)/execution_time）
 - **验证**：`/api/master-data/schema-registry/schemas` 与 `/api/master-data/dict/dict-types` 均由 500 → 200 success:true；服务端重启无需（代码修正已随 PID 23579 生效）
 - **提交**：见 git log（schema_registry.rs + 2 迁移 + 本登记）
+
+### P4-3 master-data 全域抽查结论（13 模块 205 端点）— ✅ 2026-10-05
+
+- **抽查方式**：按 create_routes 12 个 nest 前缀（/quality-v51 /lineage-v52 /kg-v53 /mdm-v54~v60 /schema-registry /dict）逐一 GET 探测
+- **结论**：全部路由健康、业务 200（kg-v53/subgraph、mdm-v55/products、mdm-v56/recovery/points、mdm-v58/maturity/assessment、mdm-v59/governance/models、mdm-v57/graph/neighbors、mdm-v60/metadata、mdm-v54/version/diff 补 entity_type/entity_id/from_version/to_version 后 200）；**无新增影子表/缺列问题**（schema_registry/dict 两处已修）
+- **新发现（文档一致性问题，非运行故障）**：master-data 文档路径（openapi.json 语义名：semantic/governance/metadata/versioning/knowledge 等）与真实路由前缀（nest 编号：mdm-v57~v60/kg-v53 等）**不一致**——按文档路径调用 v53~v60 模块端点会 404。例：文档 /api/master-data/semantic-v57/* vs 实际 /api/master-data/mdm-v57/*
+- **建议**：后续在 openapi-gen 路径规范化映射或注解 path 中对齐前缀（改前先核 create_routes nest 名清单，勿动运行路由）
