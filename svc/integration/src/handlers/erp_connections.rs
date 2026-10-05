@@ -38,8 +38,8 @@ pub async fn list_connections(
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -75,8 +75,8 @@ pub async fn get_connection(
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
     ))
     .bind(id)
     .bind(tid)
@@ -111,8 +111,8 @@ pub async fn create_connection(
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC'"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
     ))
     .bind(id)
     .bind(&tid)
@@ -167,8 +167,8 @@ pub async fn update_connection(
          updated_at = NOW() \
          WHERE id = $11 AND tenant_id = $12 \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC'"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
     ))
     .bind(req.name)
     .bind(req.api_url)

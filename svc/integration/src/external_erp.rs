@@ -56,8 +56,8 @@ pub async fn list_connections(
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -136,8 +136,8 @@ pub async fn create_connection(
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC'"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
     ))
     .bind(id)
     .bind(TENANT_ID)
@@ -231,8 +231,8 @@ async fn get_connection(
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
     ))
     .bind(uuid)
     .bind(tid)
@@ -288,8 +288,8 @@ pub async fn update_connection(
          updated_at = NOW() \
          WHERE id = $5 AND tenant_id = $6 \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC'"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
     ))
     .bind(name)
     .bind(api_url)
@@ -356,7 +356,7 @@ pub async fn list_entity_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_mappings \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_mappings \
          WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id = $3) ORDER BY created_at DESC"
     ))
     .bind(uuid)
@@ -407,7 +407,7 @@ async fn create_entity_mapping(
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NULL,NOW(),NOW()) \
          RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC'"
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
     ))
     .bind(mapping_id)
     .bind(TENANT_ID)
@@ -513,7 +513,7 @@ pub async fn preview_entity(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_mappings \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_mappings \
          WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id = $3) \
          ORDER BY created_at DESC LIMIT 20"
     ))
@@ -535,8 +535,8 @@ async fn get_connection_by_id(pool: &sqlx::PgPool, connection_id: Uuid) -> Optio
     sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_connections WHERE id = $1 AND tenant_id = $2"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_connections WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(connection_id)
     .bind(TENANT_ID)
@@ -924,7 +924,7 @@ pub async fn sync_logs(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
-         started_at AT TIME ZONE 'UTC', completed_at AT TIME ZONE 'UTC', created_at AT TIME ZONE 'UTC' \
+         started_at AT TIME ZONE 'UTC' AS started_at, completed_at AT TIME ZONE 'UTC' AS completed_at, created_at AT TIME ZONE 'UTC' AS created_at \
          FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"
     ))
     .bind(tid)
@@ -1027,7 +1027,7 @@ pub async fn export_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -1058,7 +1058,7 @@ pub async fn export_sync_logs(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
-         started_at AT TIME ZONE 'UTC', completed_at AT TIME ZONE 'UTC', created_at AT TIME ZONE 'UTC' \
+         started_at AT TIME ZONE 'UTC' AS started_at, completed_at AT TIME ZONE 'UTC' AS completed_at, created_at AT TIME ZONE 'UTC' AS created_at \
          FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
@@ -1359,7 +1359,7 @@ pub async fn get_sync_log(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
-         started_at AT TIME ZONE 'UTC', completed_at AT TIME ZONE 'UTC', created_at AT TIME ZONE 'UTC' \
+         started_at AT TIME ZONE 'UTC' AS started_at, completed_at AT TIME ZONE 'UTC' AS completed_at, created_at AT TIME ZONE 'UTC' AS created_at \
          FROM external_erp_sync_logs WHERE id = $1"
     ))
     .bind(uuid)
