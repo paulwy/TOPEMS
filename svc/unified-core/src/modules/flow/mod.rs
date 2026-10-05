@@ -26,6 +26,8 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         CREATE TABLE IF NOT EXISTS core_workflows (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(128) NOT NULL,
+            name_en VARCHAR(128),
+            code VARCHAR(128),
             description TEXT,
             definition JSONB NOT NULL,
             status VARCHAR(32) DEFAULT 'draft',

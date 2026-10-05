@@ -1,9 +1,36 @@
+use axum::extract::State;
 use axum::routing::{delete, get, post, put};
-use axum::Router;
+use axum::{Json, Router};
 
 use crate::middleware::permission::require_permission;
 use crate::modules;
 use crate::AppState;
+use topems_shared_core::response::{api_error, ApiResponse};
+
+// ===== 前端契约兜底（workflow 批次）=====
+// 这些端点前端已调用，但 unified-core 暂无对应 handler/表（真实能力归属后续上游）。
+// 按契约策略：集合类返回分页空壳、写操作返回成功回执、详情类返回内层 404，禁止裸 404。
+
+/// 集合/查询类兜底：分页空壳。待上游支持。
+async fn stub_list(_state: State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({"items": [], "total": 0, "page": 1, "page_size": 20}),
+        "待上游支持",
+    ))
+}
+
+/// 写操作（POST/PUT/DELETE）兜底：成功回执。待上游支持。
+async fn stub_action(_state: State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({"success": true}),
+        "待上游支持",
+    ))
+}
+
+/// 详情类兜底：HTTP200 + 内层 404。待上游支持。
+async fn stub_detail(_state: State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
+    Json(api_error(404, "数据不存在"))
+}
 
 pub fn flow_routes(state: &AppState) -> Router<AppState> {
     let read = Router::new()
@@ -281,6 +308,84 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         )
         .route("/rules/type", get(modules::flow::rule::get_rules_by_type))
         .route("/rules/{id}", get(modules::flow::rule::get_rule))
+        // ===== 前端契约 GET 兜底（workflow 批次，待上游支持）=====
+        // 定义/版本对比、导出
+        .route(
+            "/workflows/{id}/compare/{p0}/{p1}",
+            get(stub_list),
+        )
+        .route("/workflows/{id}/export", get(stub_list))
+        // 表单定义 + 表单实例（CRUD 查询侧）
+        .route("/form-definitions", get(stub_list))
+        .route("/form-definitions/{id}", get(stub_detail))
+        .route("/form-definitions/workflow/{id}", get(stub_list))
+        .route("/form-definitions/categories", get(stub_list))
+        .route("/form-definitions/{id}/versions", get(stub_list))
+        .route("/form-definitions/{id}/versions/{p0}", get(stub_detail))
+        .route("/form-definitions/{id}/export", get(stub_list))
+        .route("/form-instances", get(stub_list))
+        .route("/form-instances/{id}", get(stub_detail))
+        .route("/form-instances/workflow-instance/{id}", get(stub_list))
+        .route("/form-instances/form-definition/{id}", get(stub_list))
+        .route("/form-instances/{id}/data", get(stub_detail))
+        .route("/form-instances/{id}/history", get(stub_list))
+        .route("/form-instances/my", get(stub_list))
+        .route("/form-instances/my/drafts", get(stub_list))
+        .route("/form-instances/{id}/export", get(stub_list))
+        // 性能 / 健康
+        .route("/performance", get(stub_list))
+        .route("/health", get(stub_list))
+        // 实例详情扩展（变量/任务/历史/日志/流程图）
+        .route("/instances/{id}/variables", get(stub_list))
+        .route("/instances/{id}/tasks", get(stub_list))
+        .route("/instances/{id}/history", get(stub_list))
+        .route("/instances/{id}/logs", get(stub_list))
+        .route("/instances/{id}/diagram", get(stub_list))
+        // 监控实例详情 + 分析（复用真实 handler）
+        .route(
+            "/monitor/instances/{id}",
+            get(modules::flow::instance::get_instance),
+        )
+        .route("/monitor/instances/{id}/history", get(stub_list))
+        .route("/monitor/instances/{id}/tasks", get(stub_list))
+        .route("/monitor/instances/{id}/variables", get(stub_list))
+        .route("/monitor/instances/{id}/diagram", get(stub_list))
+        .route(
+            "/monitor/analysis/{p0}",
+            get(modules::flow::monitor::get_workflow_analysis),
+        )
+        .route(
+            "/monitor/analysis/{p0}/nodes",
+            get(modules::flow::monitor::get_node_statistics),
+        )
+        .route(
+            "/monitor/analysis/{p0}/bottlenecks",
+            get(modules::flow::monitor::get_bottleneck_analysis),
+        )
+        .route(
+            "/monitor/analysis/trend",
+            get(modules::flow::monitor::get_trend_data),
+        )
+        .route(
+            "/monitor/analysis/users",
+            get(modules::flow::monitor::get_user_stats),
+        )
+        .route(
+            "/monitor/analysis/departments",
+            get(modules::flow::monitor::get_department_stats),
+        )
+        .route("/monitor/logs/node/{p0}/{p1}", get(stub_list))
+        .route(
+            "/monitor/sla-compliance",
+            get(modules::flow::monitor::get_sla_compliance),
+        )
+        // 任务详情扩展（评论/附件/表单/变量/时间线/历史）
+        .route("/tasks/{id}/comments", get(stub_list))
+        .route("/tasks/{id}/attachments", get(stub_list))
+        .route("/tasks/{id}/form", get(stub_detail))
+        .route("/tasks/{id}/variables", get(stub_list))
+        .route("/tasks/{id}/timeline", get(stub_list))
+        .route("/tasks/{id}/history", get(stub_list))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("workflow:read"),
@@ -527,6 +632,60 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             "/monitor/instances/{id}/terminate",
             post(modules::flow::monitor::force_terminate),
         )
+        // ===== 前端契约写操作兜底（workflow 批次，待上游支持）=====
+        .route("/workflows/{id}/copy", post(stub_action))
+        // 表单定义 + 表单实例（写侧）
+        .route("/form-definitions", post(stub_action))
+        .route("/form-definitions/{id}", put(stub_action))
+        .route("/form-definitions/{id}", delete(stub_action))
+        .route("/form-definitions/{id}/activate", post(stub_action))
+        .route("/form-definitions/{id}/deactivate", post(stub_action))
+        .route("/form-definitions/{id}/publish", post(stub_action))
+        .route("/form-definitions/{id}/copy", post(stub_action))
+        .route("/form-definitions/{id}/validate", post(stub_action))
+        .route("/form-definitions/{id}/preview", post(stub_action))
+        .route(
+            "/form-definitions/{id}/versions/{p0}/rollback",
+            post(stub_action),
+        )
+        .route("/form-definitions/import", post(stub_action))
+        .route("/form-instances", post(stub_action))
+        .route("/form-instances/{id}", put(stub_action))
+        .route("/form-instances/{id}", delete(stub_action))
+        .route("/form-instances/{id}/submit", post(stub_action))
+        .route("/form-instances/{id}/draft", post(stub_action))
+        .route("/form-instances/{id}/data", put(stub_action))
+        // 性能重置
+        .route("/performance/reset", post(stub_action))
+        // 实例动作
+        .route("/instances/{id}/activate", post(stub_action))
+        .route("/instances/{id}/terminate", post(stub_action))
+        .route("/instances/{id}/variables", post(stub_action))
+        // 监控强制完成/终止（复用真实 handler）
+        .route(
+            "/monitor/instances/{id}/force-complete",
+            post(modules::flow::monitor::force_complete),
+        )
+        .route(
+            "/monitor/instances/{id}/force-terminate",
+            post(modules::flow::monitor::force_terminate),
+        )
+        // 规则测试
+        .route("/rules/{id}/test", post(stub_action))
+        // 任务动作扩展
+        .route("/tasks/{id}/transfer", post(stub_action))
+        .route("/tasks/{id}/reassign", post(stub_action))
+        .route("/tasks/{id}/add-sign", post(stub_action))
+        .route("/tasks/{id}/counter-sign", post(stub_action))
+        .route("/tasks/{id}/withdraw", post(stub_action))
+        .route("/tasks/{id}/return", post(stub_action))
+        .route("/tasks/{id}/jump", post(stub_action))
+        .route("/tasks/{id}/urge", post(stub_action))
+        .route("/tasks/{id}/comments", post(stub_action))
+        .route("/tasks/{id}/attachments", post(stub_action))
+        .route("/tasks/{id}/attachments/{p0}", delete(stub_action))
+        .route("/tasks/{id}/form", post(stub_action))
+        .route("/tasks/{id}/variables", post(stub_action))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("workflow:write"),

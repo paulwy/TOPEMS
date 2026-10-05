@@ -79,6 +79,8 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
         "core_workflows",
         &[
             ("name", "VARCHAR(128) NOT NULL"),
+            ("name_en", "VARCHAR(128)"),
+            ("code", "VARCHAR(128)"),
             ("description", "TEXT"),
             ("definition", "JSONB NOT NULL"),
             ("status", "VARCHAR(32) DEFAULT 'draft'"),

@@ -8,7 +8,8 @@ use uuid::Uuid;
 #[schema(as = Workflow)]
 pub struct Workflow {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    #[sqlx(default)]
+    pub tenant_id: Option<Uuid>,
     pub name: String,
     #[serde(default)]
     #[sqlx(default)]
@@ -47,7 +48,8 @@ pub struct UpdateWorkflowRequest {
 #[schema(as = WorkflowInstance)]
 pub struct WorkflowInstance {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    #[sqlx(default)]
+    pub tenant_id: Option<Uuid>,
     pub workflow_id: Uuid,
     pub title: String,
     pub initiator_id: Uuid,
@@ -73,7 +75,8 @@ pub struct CreateInstanceRequest {
 #[schema(as = WorkflowTask)]
 pub struct WorkflowTask {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    #[sqlx(default)]
+    pub tenant_id: Option<Uuid>,
     pub instance_id: Uuid,
     pub node_id: String,
     pub assignee_id: Uuid,
@@ -397,7 +400,7 @@ mod tests {
     fn test_workflow_construct_and_clone() {
         let wf = Workflow {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             name: "Leave Approval".to_string(),
             name_en: None,
             description: Some("Leave request workflow".to_string()),
@@ -420,7 +423,7 @@ mod tests {
     fn test_workflow_serde_roundtrip() {
         let wf = Workflow {
             id: Uuid::parse_str("a1a2a3a4-a1a2-a3a4-a1a2-a3a4a5a6a7a8").unwrap(),
-            tenant_id: Uuid::parse_str("b1b2b3b4-b1b2-b3b4-b1b2-b3b4b5b6b7b8").unwrap(),
+            tenant_id: Some(Uuid::parse_str("b1b2b3b4-b1b2-b3b4-b1b2-b3b4b5b6b7b8").unwrap()),
             name: "报销流程".to_string(),
             description: Some("财务报销审批流程".to_string()),
             name_en: None,
@@ -477,7 +480,7 @@ mod tests {
     fn test_workflow_instance_serde() {
         let inst = WorkflowInstance {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             workflow_id: Uuid::new_v4(),
             title: "2024年1月报销-张三".to_string(),
             initiator_id: Uuid::new_v4(),
@@ -516,7 +519,7 @@ mod tests {
     fn test_workflow_task_serde() {
         let task = WorkflowTask {
             id: Uuid::new_v4(),
-            tenant_id: Uuid::new_v4(),
+            tenant_id: Some(Uuid::new_v4()),
             instance_id: Uuid::new_v4(),
             node_id: "approve_1".to_string(),
             assignee_id: Uuid::new_v4(),
