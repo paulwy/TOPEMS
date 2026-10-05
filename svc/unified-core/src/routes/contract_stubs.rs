@@ -67,28 +67,28 @@ async fn stub_detail_404(
 pub fn contract_stub_routes() -> Router<AppState> {
     Router::new()
         .route("/copilot/sessions", post(stub_action))
-        .route("/copilot/sessions/{p0}", get(stub_list))
-        .route("/copilot/sessions/{p0}", delete(stub_action))
+        .route("/copilot/sessions/{id}", get(stub_list))
+        .route("/copilot/sessions/{id}", delete(stub_action))
         .route("/copilot/chat", post(stub_action))
         .route("/copilot/intent", post(stub_action))
         .route("/copilot/modules", get(stub_list))
-        .route("/copilot/modules/{p0}", get(stub_list))
-        .route("/copilot/modules/{p0}/faq", get(stub_list))
+        .route("/copilot/modules/{id}", get(stub_list))
+        .route("/copilot/modules/{id}/faq", get(stub_list))
         .route("/forms", get(stub_list))
-        .route("/forms/{p0}", get(stub_list))
-        .route("/forms/{p0}/validate", post(stub_action))
-        .route("/forms/{p0}/auto-fill", post(stub_action))
-        .route("/forms/{p0}/generate", post(stub_action))
-        .route("/forms/{p0}/submit", post(stub_action))
-        .route("/forms/{p0}/draft", post(stub_action))
+        .route("/forms/{id}", get(stub_list))
+        .route("/forms/{id}/validate", post(stub_action))
+        .route("/forms/{id}/auto-fill", post(stub_action))
+        .route("/forms/{id}/generate", post(stub_action))
+        .route("/forms/{id}/submit", post(stub_action))
+        .route("/forms/{id}/draft", post(stub_action))
         .route("/documents", get(stub_list))
         .route("/documents", post(stub_action))
-        .route("/documents/{p0}", get(stub_list))
-        .route("/documents/{p0}", delete(stub_action))
-        .route("/documents/{p0}/parse", post(stub_action))
-        .route("/documents/{p0}/summary", get(stub_list))
-        .route("/documents/{p0}/summary", post(stub_action))
-        .route("/documents/{p0}/search", get(stub_list))
+        .route("/documents/{id}", get(stub_list))
+        .route("/documents/{id}", delete(stub_action))
+        .route("/documents/{id}/parse", post(stub_action))
+        .route("/documents/{id}/summary", get(stub_list))
+        .route("/documents/{id}/summary", post(stub_action))
+        .route("/documents/{id}/search", get(stub_list))
         .route("/documents/generate", post(stub_action))
         .route("/governance/dashboard", get(stub_list))
         .route("/governance/score", get(stub_list))
@@ -104,123 +104,123 @@ pub fn contract_stub_routes() -> Router<AppState> {
         .route("/governance/refresh", post(stub_action))
         .route("/comments", get(stub_list))
         .route("/comments", post(stub_action))
-        .route("/comments/{p0}", put(stub_action))
-        .route("/comments/{p0}", delete(stub_action))
+        .route("/comments/{id}", put(stub_action))
+        .route("/comments/{id}", delete(stub_action))
         .route("/favorites", get(stub_list))
         .route("/favorites", post(stub_action))
-        .route("/favorites/{p0}", delete(stub_action))
+        .route("/favorites/{id}", delete(stub_action))
         .route("/favorites/check", get(stub_list))
         .route("/search", get(stub_list))
         .route("/search/suggestions", get(stub_list))
         .route("/search/recent", get(stub_list))
         .route("/search/recent", delete(stub_action))
-        .route("/dict/dict-types/{p0}/items", get(stub_list))
-        .route("/tenant/{p0}/analytics/overview", get(stub_list))
-        .route("/tenant/{p0}/analytics/usage", get(stub_list))
-        .route("/tenant/{p0}/analytics/activity", get(stub_list))
-        .route("/tenant/{p0}/analytics/api-usage", get(stub_list))
-        .route("/tenant/{p0}/analytics/top-endpoints", get(stub_list))
-        .route("/tenant/{p0}/analytics/user-stats", get(stub_list))
-        .route("/tenant/{p0}/analytics/real-time", get(stub_list))
-        .route("/tenant/{p0}/billing/subscription", get(stub_list))
-        .route("/tenant/{p0}/billing/invoices", get(stub_list))
-        .route("/tenant/{p0}/billing/invoices/{p1}", get(stub_list))
-        .route("/tenant/{p0}/billing/invoices/{p1}/pay", post(stub_action))
-        .route("/tenant/{p0}/billing/plan", post(stub_action))
+        .route("/dict/dict-types/{id}/items", get(stub_list))
+        .route("/tenant/{id}/analytics/overview", get(stub_list))
+        .route("/tenant/{id}/analytics/usage", get(stub_list))
+        .route("/tenant/{id}/analytics/activity", get(stub_list))
+        .route("/tenant/{id}/analytics/api-usage", get(stub_list))
+        .route("/tenant/{id}/analytics/top-endpoints", get(stub_list))
+        .route("/tenant/{id}/analytics/user-stats", get(stub_list))
+        .route("/tenant/{id}/analytics/real-time", get(stub_list))
+        .route("/tenant/{id}/billing/subscription", get(stub_list))
+        .route("/tenant/{id}/billing/invoices", get(stub_list))
+        .route("/tenant/{id}/billing/invoices/{sub}", get(stub_list))
+        .route("/tenant/{id}/billing/invoices/{sub}/pay", post(stub_action))
+        .route("/tenant/{id}/billing/plan", post(stub_action))
         .route(
-            "/tenant/{p0}/billing/subscription/cancel",
+            "/tenant/{id}/billing/subscription/cancel",
             post(stub_action),
         )
-        .route("/tenant/{p0}/billing/card", post(stub_action))
-        .route("/tenant/{p0}/billing/card", delete(stub_action))
-        .route("/tenant/{p0}/settings", get(stub_list))
-        .route("/tenant/{p0}/settings", put(stub_action))
-        .route("/tenant/{p0}/branding", get(stub_list))
-        .route("/tenant/{p0}/branding", put(stub_action))
-        .route("/tenant/{p0}/features", get(stub_list))
-        .route("/tenant/{p0}/features", put(stub_action))
-        .route("/tenant/{p0}/features/{p1}/enable", post(stub_action))
-        .route("/tenant/{p0}/features/{p1}/disable", post(stub_action))
-        .route("/tenant/{p0}/domains", get(stub_list))
-        .route("/tenant/{p0}/domains", post(stub_action))
-        .route("/tenant/{p0}/domains/{p1}", delete(stub_action))
-        .route("/tenant/{p0}/email-config", get(stub_list))
-        .route("/tenant/{p0}/email-config", put(stub_action))
-        .route("/tenant/{p0}/integrations", get(stub_list))
-        .route("/tenant/{p0}/integrations", post(stub_action))
-        .route("/tenant/{p0}/integrations/{p1}", put(stub_action))
-        .route("/tenant/{p0}/integrations/{p1}", delete(stub_action))
-        .route("/tenant/{p0}/webhooks", get(stub_list))
-        .route("/tenant/{p0}/webhooks", post(stub_action))
-        .route("/tenant/{p0}/webhooks/{p1}", put(stub_action))
-        .route("/tenant/{p0}/webhooks/{p1}", delete(stub_action))
-        .route("/tenant/{p0}/webhooks/{p1}/test", post(stub_action))
-        .route("/tenant/{p0}/security", get(stub_list))
-        .route("/tenant/{p0}/security", put(stub_action))
-        .route("/tenant/{p0}/security/password-policy", get(stub_list))
-        .route("/tenant/{p0}/security/password-policy", put(stub_action))
-        .route("/tenant/{p0}/security/enable-2fa", post(stub_action))
-        .route("/tenant/{p0}/security/disable-2fa", post(stub_action))
-        .route("/tenant/{p0}/security/api-keys", get(stub_list))
-        .route("/tenant/{p0}/security/generate-api-key", post(stub_action))
+        .route("/tenant/{id}/billing/card", post(stub_action))
+        .route("/tenant/{id}/billing/card", delete(stub_action))
+        .route("/tenant/{id}/settings", get(stub_list))
+        .route("/tenant/{id}/settings", put(stub_action))
+        .route("/tenant/{id}/branding", get(stub_list))
+        .route("/tenant/{id}/branding", put(stub_action))
+        .route("/tenant/{id}/features", get(stub_list))
+        .route("/tenant/{id}/features", put(stub_action))
+        .route("/tenant/{id}/features/{sub}/enable", post(stub_action))
+        .route("/tenant/{id}/features/{sub}/disable", post(stub_action))
+        .route("/tenant/{id}/domains", get(stub_list))
+        .route("/tenant/{id}/domains", post(stub_action))
+        .route("/tenant/{id}/domains/{sub}", delete(stub_action))
+        .route("/tenant/{id}/email-config", get(stub_list))
+        .route("/tenant/{id}/email-config", put(stub_action))
+        .route("/tenant/{id}/integrations", get(stub_list))
+        .route("/tenant/{id}/integrations", post(stub_action))
+        .route("/tenant/{id}/integrations/{sub}", put(stub_action))
+        .route("/tenant/{id}/integrations/{sub}", delete(stub_action))
+        .route("/tenant/{id}/webhooks", get(stub_list))
+        .route("/tenant/{id}/webhooks", post(stub_action))
+        .route("/tenant/{id}/webhooks/{sub}", put(stub_action))
+        .route("/tenant/{id}/webhooks/{sub}", delete(stub_action))
+        .route("/tenant/{id}/webhooks/{sub}/test", post(stub_action))
+        .route("/tenant/{id}/security", get(stub_list))
+        .route("/tenant/{id}/security", put(stub_action))
+        .route("/tenant/{id}/security/password-policy", get(stub_list))
+        .route("/tenant/{id}/security/password-policy", put(stub_action))
+        .route("/tenant/{id}/security/enable-2fa", post(stub_action))
+        .route("/tenant/{id}/security/disable-2fa", post(stub_action))
+        .route("/tenant/{id}/security/api-keys", get(stub_list))
+        .route("/tenant/{id}/security/generate-api-key", post(stub_action))
         .route(
-            "/tenant/{p0}/security/rotate-api-key/{p1}",
+            "/tenant/{id}/security/rotate-api-key/{sub}",
             post(stub_action),
         )
-        .route("/tenant/{p0}/security/api-keys/{p1}", delete(stub_action))
-        .route("/tenant/{p0}/security/audit-logs", get(stub_list))
-        .route("/tenant/{p0}/security/audit-logs/{p1}", get(stub_list))
-        .route("/tenant/{p0}/security/audit-logs/export", post(stub_action))
-        .route("/tenant/{p0}/security/sessions", get(stub_list))
+        .route("/tenant/{id}/security/api-keys/{sub}", delete(stub_action))
+        .route("/tenant/{id}/security/audit-logs", get(stub_list))
+        .route("/tenant/{id}/security/audit-logs/{sub}", get(stub_list))
+        .route("/tenant/{id}/security/audit-logs/export", post(stub_action))
+        .route("/tenant/{id}/security/sessions", get(stub_list))
         .route(
-            "/tenant/{p0}/security/sessions/{p1}/revoke",
+            "/tenant/{id}/security/sessions/{sub}/revoke",
             post(stub_action),
         )
         .route(
-            "/tenant/{p0}/security/sessions/revoke-all",
+            "/tenant/{id}/security/sessions/revoke-all",
             post(stub_action),
         )
-        .route("/tenant/{p0}/security/ip-whitelist", post(stub_action))
+        .route("/tenant/{id}/security/ip-whitelist", post(stub_action))
         .route(
-            "/tenant/{p0}/security/ip-whitelist/{p1}",
+            "/tenant/{id}/security/ip-whitelist/{sub}",
             delete(stub_action),
         )
-        .route("/system/api-keys/{p0}", get(stub_list))
-        .route("/system/api-keys/{p0}", put(stub_action))
-        .route("/wms/inbound-orders/{p0}/approval/start", post(stub_action))
+        .route("/system/api-keys/{id}", get(stub_list))
+        .route("/system/api-keys/{id}", put(stub_action))
+        .route("/wms/inbound-orders/{id}/approval/start", post(stub_action))
         .route(
-            "/wms/inbound-orders/{p0}/approval/approve",
+            "/wms/inbound-orders/{id}/approval/approve",
             post(stub_action),
         )
         .route(
-            "/wms/inbound-orders/{p0}/approval/reject",
+            "/wms/inbound-orders/{id}/approval/reject",
             post(stub_action),
         )
         .route(
-            "/wms/outbound-orders/{p0}/approval/start",
+            "/wms/outbound-orders/{id}/approval/start",
             post(stub_action),
         )
         .route(
-            "/wms/outbound-orders/{p0}/approval/approve",
+            "/wms/outbound-orders/{id}/approval/approve",
             post(stub_action),
         )
         .route(
-            "/wms/outbound-orders/{p0}/approval/reject",
+            "/wms/outbound-orders/{id}/approval/reject",
             post(stub_action),
         )
-        .route("/wms/stock-takes/{p0}/approval/start", post(stub_action))
-        .route("/wms/stock-takes/{p0}/approval/approve", post(stub_action))
-        .route("/wms/stock-takes/{p0}/approval/reject", post(stub_action))
+        .route("/wms/stock-takes/{id}/approval/start", post(stub_action))
+        .route("/wms/stock-takes/{id}/approval/approve", post(stub_action))
+        .route("/wms/stock-takes/{id}/approval/reject", post(stub_action))
         .route(
-            "/wms/transfer-orders/{p0}/approval/start",
-            post(stub_action),
-        )
-        .route(
-            "/wms/transfer-orders/{p0}/approval/approve",
+            "/wms/transfer-orders/{id}/approval/start",
             post(stub_action),
         )
         .route(
-            "/wms/transfer-orders/{p0}/approval/reject",
+            "/wms/transfer-orders/{id}/approval/approve",
+            post(stub_action),
+        )
+        .route(
+            "/wms/transfer-orders/{id}/approval/reject",
             post(stub_action),
         )
         // ===== Help 服务（FAQ + 指南）契约兜底 =====
@@ -230,10 +230,10 @@ pub fn contract_stub_routes() -> Router<AppState> {
         .route("/help/faqs", get(stub_list).post(stub_action))
         .route("/help/faqs/categories", get(stub_string_array))
         .route(
-            "/help/faqs/{p0}",
+            "/help/faqs/{id}",
             get(stub_detail_404).put(stub_action).delete(stub_action),
         )
         .route("/help/guides", get(stub_list).post(stub_action))
         .route("/help/guides/categories", get(stub_string_array))
-        .route("/help/guides/{p0}", get(stub_detail_404))
+        .route("/help/guides/{id}", get(stub_detail_404))
 }
