@@ -903,3 +903,10 @@
 - **修复**：从 openapi.json 删除 448 条 → 2575 端点；重编译 server + 重启；重探测 **0 假端点**（文档=路由一致）
 - **遗留发现（登记供 P3 挂载治理）**：finance 系 331 个端点路由未挂载到 monolith（文档曾宣称但真实 404）——疑似 finance 子模块（v51~v60）未接入单体路由；core 38 个类似。是否补挂载属 P3 微服务/路由治理范畴
 - **建议**：openapi-gen 后续增加假端点自动清理（或基于探测结果的白名单），避免重跑生成器后残留复发
+## [2026-10-06] 孤立注解根因根治（finance 完成，其余域待批量）
+
+- **根因**：handler 有 `#[utoipa::path]` 注解但函数/路由从未挂 `.route()`，openapi-gen 只增不删 → 假端点入文档且每次重跑复发。
+- **已完成**：finance 域清理 337 个孤立注解块 + openapi 聚合引用（openapi.rs 373 行 / main.rs 80 行），commit f1f7ce785（25 文件 -3893 行）。重跑生成器→删文档 152 假端点→重编译重启→全量探测 **2575 端点 0 假端点** ✓
+- **遗留**：其余域孤立注解仍在源码，生成器重跑会复发（已删文档暂保一致）。待按 finance 范式逐域清理：
+  - core 38 / communication 18 / finance-v5x 系 ~46 / plugins 8 / tickets 7 / integration 7 / internal 4 / mes 3 / master-data 3 / ai 3 / mobile-tasks 3 / qms 2 / rd 2 / ehs 2 / pdm 2 / lims 1 / health 1 / erp 1 / gis 1
+  - 范式：扫描孤立 path（不在全库 route）→ 块后 25 行解析 handler → 删注解块 → 删 openapi.rs/main.rs 聚合引用 → 编译 → 重跑生成器
