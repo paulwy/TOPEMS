@@ -45,10 +45,11 @@ impl SearchRealModule {
             Router::new().route("/api/search/health", get(handlers::health_handler));
 
         // 受保护路由（需要 State<PgPool>）
-        // 直接用全路径挂载而非 nest：前端 GET /api/search（无尾斜杠）命中 search_handler；
-        // axum nest("/api/search", route("/")) 仅匹配 /api/search/，裸路径会 404。
+        // 直接用全路径挂载而非 nest：同时挂 /api/search 与 /api/search/ 两种形态，
+        // 兼容前端无尾斜杠与带尾斜杠调用（axum 0.8 route 严格匹配，不自动重定向）。
         let protected_routes = Router::new()
             .route("/api/search", get(handlers::search_handler))
+            .route("/api/search/", get(handlers::search_handler))
             .route("/api/search/suggestions", get(handlers::suggestions_handler))
             .layer(axum::middleware::from_fn(require_permission(
                 "search:admin",
