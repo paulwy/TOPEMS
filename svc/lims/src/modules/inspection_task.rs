@@ -600,6 +600,8 @@ pub async fn update_task(
             }
             Json(ApiResponse::success(task, "检测任务更新成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update task: {}", e);
             Json(ApiResponse::error(500, "检测任务更新失败"))

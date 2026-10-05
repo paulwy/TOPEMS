@@ -637,6 +637,8 @@ pub async fn update_plan(
             },
             "能力验证计划更新成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update PT plan: {}", e);
             Json(ApiResponse::error(500, "能力验证计划更新失败"))
@@ -1375,11 +1377,11 @@ pub async fn update_corrective_action(
         SET root_cause = COALESCE($2, root_cause),
             corrective_measures = COALESCE($3, corrective_measures),
             responsible_person = COALESCE($4, responsible_person),
-            deadline = COALESCE($5, deadline),
+            deadline = COALESCE($5::timestamp, deadline),
             status = COALESCE($6, status),
             verification_result = COALESCE($7, verification_result),
             verified_by = COALESCE($8, verified_by),
-            verified_at = COALESCE($9, verified_at),
+            verified_at = COALESCE($9::timestamp, verified_at),
             updated_at = NOW()
         WHERE id = $1
         RETURNING id, plan_id, plan_no, evaluation_id, unsatisfactory_item,
@@ -1422,6 +1424,8 @@ pub async fn update_corrective_action(
             },
             "不满意结果整改记录更新成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update PT corrective action: {}", e);
             Json(ApiResponse::error(500, "不满意结果整改记录更新失败"))

@@ -478,7 +478,7 @@ pub async fn update_project(
         r#"
         UPDATE qa_lims_uncertainty_projects 
         SET project_name = COALESCE($2, project_name),
-            method_id = COALESCE($3, method_id),
+            method_id = COALESCE($3::uuid, method_id),
             method_name = COALESCE($4, method_name),
             test_item = COALESCE($5, test_item),
             measurand = COALESCE($6, measurand),
@@ -486,7 +486,7 @@ pub async fn update_project(
             unit = COALESCE($8, unit),
             status = COALESCE($9, status),
             evaluator = COALESCE($10, evaluator),
-            evaluation_date = COALESCE($11, evaluation_date),
+            evaluation_date = COALESCE($11::timestamp, evaluation_date),
             coverage_factor = COALESCE($12, coverage_factor),
             confidence_level = COALESCE($13, confidence_level),
             notes = COALESCE($14, notes),
@@ -541,6 +541,8 @@ pub async fn update_project(
             },
             "不确定度评定项目更新成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update uncertainty project: {}", e);
             Json(ApiResponse::error(500, "不确定度评定项目更新失败"))
@@ -767,6 +769,8 @@ pub async fn update_source(
             },
             "不确定度来源更新成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update uncertainty source: {}", e);
             Json(ApiResponse::error(500, "不确定度来源更新失败"))
@@ -1038,6 +1042,8 @@ pub async fn update_component(
             },
             "不确定度分量更新成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update uncertainty component: {}", e);
             Json(ApiResponse::error(500, "不确定度分量更新失败"))

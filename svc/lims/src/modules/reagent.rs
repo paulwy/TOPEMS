@@ -382,6 +382,8 @@ pub async fn update_reagent(
             },
             "试剂更新成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update reagent: {}", e);
             Json(ApiResponse::error(500, "试剂更新失败"))

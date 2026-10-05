@@ -426,7 +426,7 @@ pub async fn update_collection_task(
             status = COALESCE($3, status),
             cron_expression = COALESCE($4, cron_expression),
             interval_minutes = COALESCE($5, interval_minutes),
-            parse_rule_id = COALESCE($6, parse_rule_id),
+            parse_rule_id = COALESCE($6::uuid, parse_rule_id),
             updated_at = NOW()
         WHERE id = $1
         RETURNING id::TEXT, task_no, task_name, instrument_id::TEXT, protocol,

@@ -571,6 +571,8 @@ pub async fn update_method(
                 "检测方法更新成功",
             ))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update test method: {}", e);
             Json(ApiResponse::error(500, "检测方法更新失败"))
@@ -746,7 +748,7 @@ pub async fn update_category(
         r#"
         UPDATE qa_lims_method_categories
         SET category_name = COALESCE($2, category_name),
-            parent_id = COALESCE($3, parent_id),
+            parent_id = COALESCE($3::uuid, parent_id),
             sort_order = COALESCE($4, sort_order),
             description = COALESCE($5, description),
             status = COALESCE($6, status),
@@ -781,6 +783,8 @@ pub async fn update_category(
             },
             "方法分类更新成功",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+
         Err(e) => {
             tracing::error!("Failed to update method category: {}", e);
             Json(ApiResponse::error(500, "方法分类更新失败"))
