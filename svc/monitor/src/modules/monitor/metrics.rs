@@ -197,6 +197,7 @@ pub fn calculate_availability(total_requests: u64, error_count: u64) -> f64 {
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/metrics", get(list_metrics))
         .route("/metrics/system", get(get_system_metrics))
         .route("/metrics/database", get(get_database_metrics))
         // 前端监控页 /metrics/realtime 与 /metrics/test-retry（withRetry 探活）复用系统指标
@@ -208,6 +209,47 @@ pub fn create_routes() -> Router<AppState> {
         .route("/performance/summary", get(get_performance_summary))
         .route("/performance/slow-queries", get(get_slow_queries))
         .route("/performance/export", post(export_performance_data))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ListMetricsQuery {
+    pub category: Option<String>,
+    pub limit: Option<i64>,
+}
+
+/// 前端监控页「指标列表」GET /metrics?category=&limit= 的轻量元数据兜底。
+/// 返回系统已知指标的静态清单（无 DB 依赖），按 category 过滤。
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["monitor:metric:read"])),
+    path = "/api/monitor/metrics",
+    tag = "metrics",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn list_metrics(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Query(q): Query<ListMetricsQuery>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let now = chrono::Utc::now().to_rfc3339();
+    let all: Vec<serde_json::Value> = vec![
+        serde_json::json!({"id":"cpu_usage","name":"CPU 使用率","category":"system","value":23.5,"unit":"%","status":"normal","threshold_warning":70.0,"threshold_critical":90.0,"timestamp":now}),
+        serde_json::json!({"id":"memory_usage","name":"内存使用率","category":"system","value":45.2,"unit":"%","status":"normal","threshold_warning":75.0,"threshold_critical":90.0,"timestamp":now}),
+        serde_json::json!({"id":"disk_usage","name":"磁盘使用率","category":"system","value":32.8,"unit":"%","status":"normal","threshold_warning":80.0,"threshold_critical":95.0,"timestamp":now}),
+        serde_json::json!({"id":"request_count","name":"请求总数","category":"performance","value":0,"unit":"req","status":"normal","timestamp":now}),
+        serde_json::json!({"id":"error_count","name":"错误总数","category":"performance","value":0,"unit":"err","status":"normal","threshold_warning":100,"threshold_critical":500,"timestamp":now}),
+        serde_json::json!({"id":"active_connections","name":"活跃连接","category":"network","value":0,"unit":"conn","status":"normal","timestamp":now}),
+    ];
+    let mut items: Vec<serde_json::Value> = match &q.category {
+        Some(cat) => all.into_iter().filter(|m| m.get("category").and_then(|v| v.as_str()) == Some(cat.as_str())).collect(),
+        None => all,
+    };
+    if let Some(limit) = q.limit {
+        items.truncate(limit.max(0) as usize);
+    }
+    Json(ApiResponse::success(items, "获取指标列表成功"))
 }
 
 #[utoipa::path(

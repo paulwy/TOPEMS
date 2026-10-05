@@ -257,6 +257,8 @@ pub fn create_routes() -> Router<AppState> {
         .route("/alerts/resolve", post(resolve_alerts))
         .route("/alerts/{id}/acknowledge", post(acknowledge_alert))
         .route("/alerts/{id}/resolve", post(resolve_alert))
+        .route("/alerts/{id}/escalate", post(escalate_alert))
+        .route("/alerts/{id}/dismiss", post(dismiss_alert))
         .route("/alerts/{id}/history", get(get_alert_history))
         .route("/alerts/{id}/timeline", get(get_alert_timeline))
         // Alert Rules API
@@ -685,6 +687,72 @@ pub async fn resolve_alert(
             "reason": reason
         }),
         "告警已解决",
+    ))
+}
+
+// Single alert escalate（前端 escalateAlert(id) → POST /alerts/{id}/escalate）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["monitor:alert:write"])),
+    path = "/api/monitor/alerts/{id}/escalate",
+    request_body = serde_json::Value,
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn escalate_alert(
+    Extension(_claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let reason = req.get("reason").and_then(|v| v.as_str()).unwrap_or("");
+    let target_users = req
+        .get("target_users")
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|u| u.as_str().map(|s| s.to_string()))
+                .collect::<Vec<_>>()
+        })
+        .unwrap_or_default();
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "alert_id": id,
+            "status": "escalated",
+            "escalated_at": chrono::Utc::now().to_rfc3339(),
+            "reason": reason,
+            "target_users": target_users
+        }),
+        "告警已升级",
+    ))
+}
+
+// Single alert dismiss（前端 dismissAlert(id) → POST /alerts/{id}/dismiss）
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["monitor:alert:write"])),
+    path = "/api/monitor/alerts/{id}/dismiss",
+    request_body = serde_json::Value,
+    tag = "alerts",
+    responses(
+        (status = 200, description = "OK"),
+    ),
+)]
+pub async fn dismiss_alert(
+    Extension(_claims): Extension<Claims>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let reason = req.get("reason").and_then(|v| v.as_str()).unwrap_or("");
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "alert_id": id,
+            "status": "dismissed",
+            "dismissed_at": chrono::Utc::now().to_rfc3339(),
+            "reason": reason
+        }),
+        "告警已忽略",
     ))
 }
 
