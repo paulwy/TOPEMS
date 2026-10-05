@@ -107,7 +107,8 @@ const DatasetPage = () => {
         refetchType: 'active',
       });
       // 适配后端 /datasets/test-sql 返回结构 {columns, data, valid}
-      setSqlTestResult((res?.data?.data as SqlTestResult | undefined) ?? null);
+      // axios 层已解包 body → res={success,data,message}，结果对象在 res.data（res.data.data 是行数组）
+      setSqlTestResult((res?.data as SqlTestResult | undefined) ?? null);
     },
   });
   const displayDatasets = datasets;

@@ -84,7 +84,8 @@
 
 ### ⚠️ 存在问题（诚实记录）
 - ✅ **BI `/datasets/test-sql` 后端真实 SQL 执行已落地**（2026-10-06）：桩替换为 `execute_bi_sql`（只读事务 BEGIN READ ONLY + 子查询包装 `SELECT json_agg(to_json(t)) FROM (SELECT * FROM (<sql>) __src LIMIT 100) t` + 15s 超时 + 首关键字预检）；写语句/多语句在语法层与只读事务双层拒绝；实测 12 用例全过（多类型 SELECT/空结果/INSERT 拒绝/多语句拒绝/LIMIT 100 兜底/语法错误/空 SQL/括号 SELECT/WITH 只读/真实表 3 行 数字+bool+text）
-- ✅ **BI SQL 测试字段层级已实跑复核**：后端返回 `{success, data:{columns, data, valid, rows}, message}`，data 为对象数组（每行 {列名:值}）；前端 `res?.data?.data` 解包两层后 `setSqlTestResult` 直接消费，`row[col]` 渲染与后端对象数组契约一致（已核对 DatasetPage 渲染逻辑，无需前端改动）
+- ✅ **BI SQL 测试字段层级已实跑复核**：后端返回 `{success, data:{columns, data, valid, rows}, message}`，data 为对象数组（每行 {列名:值}）；**前端联调发现并修复两处契约问题**：① axios 层已解包 body（res={success,data,message}），结果对象在 `res.data`（非 res.data.data）——DatasetPage onSuccess 解包层级修正；② 前端数据源 Select 传硬编码字符串（ds-mysql-001）→ 后端 `TestSqlQueryRequest.data_source_id` 由 Uuid 放宽为 String 宽容解析（执行恒走本地主库 pool）。**浏览器端到端全链路验证通过**：列表渲染（ApiResponse 包装修复）→ 编辑器 → 数据源选择 → SQL 输入 → 运行查询 → 结果表格渲染 5 行真实数据
+- ✅ **BI `/datasets/query` query_dataset 后端真实执行已落地**（2026-10-06）：按 dataset_id 查 `bi.analytics_datasets.sql_query`（deleted_at IS NULL）→ 复用 execute_bi_sql → 返回 `{columns, rows, total, execution_time}`；limit clamp(1,500)/offset max(0)；实测 rows=5 exec_ms=2；联调修复：全部 analytics_datasets 引用加 `bi.` 前缀（monolith 连 5432 库，5433 无此表）、SELECT 列对齐 bi 版表结构（query_config/is_active → sql_query/fields/filters/config 等 21 列）、5432 CHECK 约束放宽含 draft、list_datasets 返回加 `ApiResponse` 包装对齐前端 CrudOperations 契约 `{success, code, message, data:{items,total}}`
 - push 阶段 SSH 截断反复出现（keepalive 参数缓解 + sccache 加速后推送窗口缩短，长连接空闲问题待完全根治）——本次 511s 长推送全程 keepalive 无截断，进一步缓解但非根除
 - 主库 25/283 半迁移为既成技术债（防护兜底误操作，"记录 vs 结构"长期不一致）——已加 MIGRATE_ALLOW_STALE=1 防护 + 决策文档化
 - 远端半成品批次教训：残缺 .sqlx 缓存 + 无 CI 门禁会导致离线编译假通过——已通过 Gate S（pre-commit/pre-push/CI 三层）+ sqlx-prepare.sh --check 固化防线

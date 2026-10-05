@@ -21,6 +21,7 @@
     "svc/ai/src/modules/ai_knowledge/service.rs": "ai_knowledge 模块未在 svc/ai/src/modules/mod.rs 挂载（死代码，26 处宏调用引用 core.* 白名单 plugin_ai——若激活将编译失败）；待决策：删除或挂载并修复白名单。【非临时，死代码待决策】",
     "svc/ai/src/modules/ai_knowledge/rag.rs": "同 service.rs：ai_knowledge 未挂载死代码。【非临时】",
     "svc/search/src/handlers.rs": "【临时·阶段2检索治理】search 聚合检索只读直读 erp.*（customers/sales_orders/purchase_orders）；待改走服务 API/事件后撤销本条并撤销 schema_boundary.json 中 search.allow=[erp]。",
-    "svc/master-data/src/modules/persist.rs": "master-data 自身 schema（master_data）的持久化集合表 mdm_collections（bootstrap CREATE SCHEMA/TABLE + INSERT/SELECT，own schema 显式前缀访问）；schema_boundary.json 已登记 services/master-data.schema=master_data，属存量模式。【非临时】"
+    "svc/master-data/src/modules/persist.rs": "master-data 自身 schema（master_data）的持久化集合表 mdm_collections（bootstrap CREATE SCHEMA/TABLE + INSERT/SELECT，own schema 显式前缀访问）；schema_boundary.json 已登记 services/master-data.schema=master_data，属存量模式。【非临时】",
+    "svc/analytics/src/modules/bi/dataset.rs": "analytics 服务 own schema=bi（schema_boundary.json 已配置 schema=bi, search_path=bi,public）；dataset.rs 显式 bi. 前缀对齐 DB 实际 schema（monolith 连 5432 库表在 bi schema），python 门禁已 PASS；待统一包裹 only_own_schema_query! 宏后撤销"
   }
 }

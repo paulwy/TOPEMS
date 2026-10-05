@@ -11,7 +11,7 @@ use sqlx::Column;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
-use topems_shared_core::response::ListResponse;
+use topems_shared_core::response::{ApiResponse, ListResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct ListDatasetQuery {
@@ -47,7 +47,11 @@ pub struct UpdateDatasetRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct DatasetQueryParams {
+    pub dataset_id: Option<Uuid>,
+    pub fields: Option<Vec<String>>,
     pub filters: Option<serde_json::Value>,
+    pub group_by: Option<Vec<String>>,
+    pub order_by: Option<serde_json::Value>,
     pub sort_by: Option<String>,
     pub sort_order: Option<String>,
     pub limit: Option<i64>,
@@ -56,7 +60,8 @@ pub struct DatasetQueryParams {
 
 #[derive(Debug, Deserialize)]
 pub struct TestSqlQueryRequest {
-    pub data_source_id: Uuid,
+    /// 数据源标识（前端 Select 传字符串如 ds-mysql-001；执行恒走本地主库 pool，故宽容解析）
+    pub data_source_id: String,
     pub sql: String,
 }
 
@@ -105,12 +110,12 @@ pub fn create_routes() -> Router<AppState> {
 pub async fn list_datasets(
     State(state): State<AppState>,
     Query(params): Query<ListDatasetQuery>,
-) -> Json<ListResponse<Dataset>> {
+) -> Json<ApiResponse<ListResponse<Dataset>>> {
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
     let offset = (page - 1) * page_size;
 
-    let query = "SELECT id, tenant_id, name, description, source_type, datasource_id, query_config, status, is_active, created_at, updated_at, deleted_at FROM analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
+    let query = "SELECT id, tenant_id, name, description, source_type, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at, deleted_at, source_id, created_by FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3) ORDER BY created_at DESC LIMIT $4 OFFSET $5";
     let result = sqlx::query_as::<_, Dataset>(query)
         .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
         .bind(params.status.as_deref())
@@ -123,7 +128,7 @@ pub async fn list_datasets(
     match result {
         Ok(datasets) => {
             let total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3)",
+                "SELECT COUNT(*) FROM bi.analytics_datasets WHERE deleted_at IS NULL AND ($1::text IS NULL OR name ILIKE $1) AND ($2::text IS NULL OR status = $2) AND ($3::uuid IS NULL OR datasource_id = $3)",
             )
             .bind(params.search.as_deref().map(|s| format!("%{}%", s)))
             .bind(params.status.as_deref())
@@ -132,13 +137,14 @@ pub async fn list_datasets(
             .await
             .unwrap_or(0);
 
-            Json(ListResponse::with_pagination(
-                datasets, total, page, page_size,
+            Json(ApiResponse::success(
+                ListResponse::with_pagination(datasets, total, page, page_size),
+                "查询成功",
             ))
         }
         Err(e) => {
             warn!("获取数据集列表失败: {}", e);
-            Json(ListResponse::new(vec![], 0))
+            Json(ApiResponse::error(500, "获取数据集列表失败"))
         }
     }
 }
@@ -160,7 +166,7 @@ pub async fn get_dataset(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let result = sqlx::query_as::<_, Dataset>(
-        "SELECT id, tenant_id, name, description, source_type, datasource_id, query_config, status, is_active, created_at, updated_at, deleted_at FROM analytics_datasets WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, name, description, source_type, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at, deleted_at, source_id, created_by FROM bi.analytics_datasets WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -206,7 +212,7 @@ pub async fn create_dataset(
     let now = Utc::now();
 
     let result = sqlx::query(
-        r#"INSERT INTO analytics_datasets (name, description, datasource_id, sql_query, fields, filters, config, status, is_public, owner_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id"#,
+        r#"INSERT INTO bi.analytics_datasets (name, description, datasource_id, sql_query, fields, filters, config, status, is_public, owner_id, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id"#,
     )
     .bind(req.name)
     .bind(req.description)
@@ -265,7 +271,7 @@ pub async fn update_dataset(
     Json(req): Json<UpdateDatasetRequest>,
 ) -> Json<serde_json::Value> {
     let result = sqlx::query(
-        r#"UPDATE analytics_datasets SET name = COALESCE($1, name), description = COALESCE($2, description), sql_query = COALESCE($3, sql_query), fields = COALESCE($4, fields), filters = COALESCE($5, filters), config = COALESCE($6, config), is_public = COALESCE($7, is_public), updated_at = $8 WHERE id = $9"#,
+        r#"UPDATE bi.analytics_datasets SET name = COALESCE($1, name), description = COALESCE($2, description), sql_query = COALESCE($3, sql_query), fields = COALESCE($4, fields), filters = COALESCE($5, filters), config = COALESCE($6, config), is_public = COALESCE($7, is_public), updated_at = $8 WHERE id = $9"#,
     )
     .bind(req.name)
     .bind(req.description)
@@ -317,7 +323,7 @@ pub async fn delete_dataset(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let result = sqlx::query("UPDATE analytics_datasets SET deleted_at = NOW() WHERE id = $1")
+    let result = sqlx::query("UPDATE bi.analytics_datasets SET deleted_at = NOW() WHERE id = $1")
         .bind(id)
         .execute(&state.pool)
         .await;
@@ -358,7 +364,7 @@ pub async fn publish_dataset(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let result = sqlx::query(
-        "UPDATE analytics_datasets SET status = 'published', published_at = $1, updated_at = $2 WHERE id = $3",
+        "UPDATE bi.analytics_datasets SET status = 'published', published_at = $1, updated_at = $2 WHERE id = $3",
     )
     .bind(Utc::now())
     .bind(Utc::now())
@@ -402,7 +408,7 @@ pub async fn refresh_dataset(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     let result = sqlx::query(
-        "UPDATE analytics_datasets SET last_refreshed_at = $1, updated_at = $2 WHERE id = $3",
+        "UPDATE bi.analytics_datasets SET last_refreshed_at = $1, updated_at = $2 WHERE id = $3",
     )
     .bind(Utc::now())
     .bind(Utc::now())
@@ -449,7 +455,7 @@ pub async fn get_dataset_preview(
     let _limit = params.limit.unwrap_or(10);
 
     let dataset = sqlx::query_as::<_, Dataset>(
-        "SELECT id, tenant_id, name, description, source_type, datasource_id, query_config, status, is_active, created_at, updated_at, deleted_at FROM analytics_datasets WHERE deleted_at IS NULL AND id = $1",
+        "SELECT id, tenant_id, name, description, source_type, datasource_id, sql_query, fields, filters, config, status, is_public, published_at, last_refreshed_at, owner_id, created_at, updated_at, deleted_at, source_id, created_by FROM bi.analytics_datasets WHERE deleted_at IS NULL AND id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -492,18 +498,77 @@ pub async fn get_dataset_preview(
     ),
 )]
 pub async fn query_dataset(
-    State(_state): State<AppState>,
-    Json(_params): Json<DatasetQueryParams>,
+    State(state): State<AppState>,
+    Json(params): Json<DatasetQueryParams>,
 ) -> Json<serde_json::Value> {
-    Json(serde_json::json!({
-        "success": true,
-        "data": {
-            "columns": [],
-            "data": [],
-            "total": 0
-        },
-        "message": "查询数据集成功"
-    }))
+    let dataset_id = match params.dataset_id {
+        Some(id) => id,
+        None => {
+            return Json(serde_json::json!({
+                "success": false,
+                "data": { "columns": [], "rows": [], "total": 0 },
+                "message": "dataset_id 必填",
+            }))
+        }
+    };
+    // 取已注册数据集的 sql_query（软删除过滤）
+    let sql_query: Option<String> = match sqlx::query_scalar(
+        "SELECT sql_query FROM bi.analytics_datasets WHERE id = $1 AND deleted_at IS NULL",
+    )
+    .bind(dataset_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            warn!("查询数据集 SQL 失败: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "data": { "columns": [], "rows": [], "total": 0 },
+                "message": "查询数据集配置失败",
+            }));
+        }
+    };
+    let sql = match sql_query {
+        Some(s) => s,
+        None => {
+            return Json(serde_json::json!({
+                "success": false,
+                "data": { "columns": [], "rows": [], "total": 0 },
+                "message": "数据集不存在或已删除",
+            }))
+        }
+    };
+    let limit = params.limit.unwrap_or(100).clamp(1, 500);
+    let offset = params.offset.unwrap_or(0).max(0);
+    let started = std::time::Instant::now();
+    match tokio::time::timeout(
+        std::time::Duration::from_secs(15),
+        execute_bi_sql(&state.pool, &sql, limit, offset),
+    )
+    .await
+    {
+        Ok(Ok((columns, rows))) => Json(serde_json::json!({
+            "success": true,
+            "data": {
+                "columns": columns,
+                "rows": rows,
+                "total": rows.len(),
+                "execution_time": started.elapsed().as_millis(),
+            },
+            "message": "查询数据集成功",
+        })),
+        Ok(Err(msg)) => Json(serde_json::json!({
+            "success": false,
+            "data": { "columns": [], "rows": [], "total": 0 },
+            "message": msg,
+        })),
+        Err(_) => Json(serde_json::json!({
+            "success": false,
+            "data": { "columns": [], "rows": [], "total": 0 },
+            "message": "SQL 执行超时（>15s）",
+        })),
+    }
 }
 
 #[utoipa::path(
@@ -527,6 +592,8 @@ pub async fn query_dataset(
 async fn execute_bi_sql(
     pool: &sqlx::PgPool,
     sql: &str,
+    limit: i64,
+    offset: i64,
 ) -> Result<(Vec<String>, Vec<serde_json::Value>), String> {
     // 友好预检：非只读语句（非 SELECT/WITH 开头）提前给出明确提示；
     // 真正拦截仍由「子查询语法层 + BEGIN READ ONLY」双层保证（WITH 内的 data-modifying CTE 由只读事务兜底）。
@@ -546,10 +613,11 @@ async fn execute_bi_sql(
         return Err(format!("只读事务开启失败: {e}"));
     }
     let outcome = async {
+        // limit/offset 为 i64 数字（调用方 clamp/校验），直接格式化拼接无注入风险
         let wrapped = format!(
             "SELECT COALESCE(json_agg(to_json(t)), '[]'::json) AS __bi_result \
-             FROM (SELECT * FROM ({}) __src LIMIT 100) t",
-            sql
+             FROM (SELECT * FROM ({}) __src LIMIT {} OFFSET {}) t",
+            sql, limit, offset
         );
         let row = sqlx::query(&wrapped)
             .fetch_one(&mut *conn)
@@ -604,7 +672,7 @@ pub async fn test_sql_query(
     }
     match tokio::time::timeout(
         std::time::Duration::from_secs(15),
-        execute_bi_sql(&state.pool, sql),
+        execute_bi_sql(&state.pool, sql, 100, 0),
     )
     .await
     {
