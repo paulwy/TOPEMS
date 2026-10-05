@@ -45,6 +45,11 @@ pub fn create_routes() -> Router<AppState> {
             "/aps/schedule/bottleneck-analysis",
             get(get_bottleneck_analysis),
         )
+        // 前端契约兜底：模板带可选路径段 — 待上游支持
+        .route(
+            "/aps/schedule/bottleneck-analysis/{_id}",
+            get(get_bottleneck_analysis),
+        )
         .route("/aps/orders/{id}/feasibility", get(check_order_feasibility))
 }
 
@@ -695,7 +700,7 @@ async fn fetch_pending_orders(
         format!(
             r#"
             SELECT id, order_number AS order_no, product_name, product_code, quantity,
-                   planned_start_date, planned_end_date, status, priority, product_id
+                   planned_start_date, planned_end_date, status, priority
             FROM mes.production_orders
             WHERE id IN ({}) AND status IN ('pending', 'released')
             ORDER BY priority DESC, planned_start_date ASC
@@ -705,7 +710,7 @@ async fn fetch_pending_orders(
     } else {
         r#"
         SELECT id, order_number AS order_no, product_name, product_code, quantity,
-               planned_start_date, planned_end_date, status, priority, product_id
+               planned_start_date, planned_end_date, status, priority
         FROM mes.production_orders
         WHERE status IN ('pending', 'released')
         ORDER BY priority DESC, planned_start_date ASC
@@ -755,7 +760,7 @@ async fn fetch_pending_orders(
                 .ok()
                 .flatten()
                 .unwrap_or_else(|| "pending".to_string()),
-            product_id: r.try_get::<Option<Uuid>, _>("product_id").ok().flatten(),
+            product_id: None, // production_orders 表无 product_id 列
         })
         .collect();
 

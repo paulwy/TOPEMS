@@ -449,7 +449,7 @@ pub async fn update_work_station(
     let result = sqlx::query(
         r#"
         UPDATE work_stations SET
-            name = COALESCE($2, name),
+            station_name = COALESCE($2, station_name),
             workshop_id = COALESCE($3, workshop_id),
             location = COALESCE($4, location),
             status = COALESCE($5, status),
@@ -460,7 +460,7 @@ pub async fn update_work_station(
             updated_at = $10
         WHERE id = $1
         RETURNING 
-            id, station_no, name, workshop_id, location,
+            id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
@@ -562,7 +562,7 @@ pub async fn activate_work_station(
             updated_at = $2
         WHERE id = $1
         RETURNING 
-            id, station_no, name, workshop_id, location,
+            id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,
@@ -620,7 +620,7 @@ pub async fn deactivate_work_station(
             updated_at = $2
         WHERE id = $1 AND status = 'active'
         RETURNING 
-            id, station_no, name, workshop_id, location,
+            id, station_no, station_name AS name, workshop_id, location,
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,

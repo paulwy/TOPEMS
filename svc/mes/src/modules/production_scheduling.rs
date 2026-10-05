@@ -38,6 +38,8 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route("/schedules/{id}/adjust", put(adjust_schedule))
         .route("/schedules/gantt", get(get_gantt_data))
+        // 前端契约兜底：模板带可选路径段 — 待上游支持
+        .route("/schedules/gantt/{_id}", get(get_gantt_data))
         .route("/schedules/{id}/submit", post(submit_schedule))
         .route("/schedules/{id}/release", post(release_schedule))
         .route("/schedules/{id}/hold", post(hold_schedule))

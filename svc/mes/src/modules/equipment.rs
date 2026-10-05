@@ -42,6 +42,9 @@ pub fn create_routes() -> Router<AppState> {
             get(list_maintenances).post(create_maintenance),
         )
         .route("/maintenances/{id}/status", put(update_maintenance_status))
+        // 前端契约兜底：模板带可选路径段 — 待上游支持
+        .route("/inspections/{_id}", get(list_inspections))
+        .route("/maintenances/{_id}", get(list_maintenances))
 }
 
 // ==================== Data Types ====================
@@ -460,7 +463,7 @@ pub async fn update_equipment(
     let result = sqlx::query(
         r#"
         UPDATE equipment SET
-            name = COALESCE($2, name),
+            equipment_name = COALESCE($2, equipment_name),
             model = COALESCE($3, model),
             manufacturer = COALESCE($4, manufacturer),
             status = COALESCE($5, status),

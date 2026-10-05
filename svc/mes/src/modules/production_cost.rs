@@ -425,6 +425,10 @@ pub async fn calculate_work_order_cost(
         Ok((result, _)) => Json(ApiResponse::success(result, "工单成本计算成功")),
         Err(err) => {
             tracing::error!("计算工单成本失败: {}", err);
+            // ResourceNotFound 应返回 HTTP200+内层404，而非包装为 500
+            if matches!(err, TopemsError::ResourceNotFound(_)) {
+                return Json(ApiResponse::error(404, "工单不存在"));
+            }
             Json(ApiResponse::from(TopemsError::internal(
                 "计算工单成本失败",
                 err,
@@ -461,6 +465,9 @@ pub async fn get_work_order_cost_detail(
         Ok((result, _)) => Json(ApiResponse::success(result, "获取工单成本详情成功")),
         Err(err) => {
             tracing::error!("获取工单成本详情失败: {}", err);
+            if matches!(err, TopemsError::ResourceNotFound(_)) {
+                return Json(ApiResponse::error(404, "工单不存在"));
+            }
             Json(ApiResponse::from(TopemsError::internal(
                 "获取工单成本详情失败",
                 err,

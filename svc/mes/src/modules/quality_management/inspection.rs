@@ -528,20 +528,7 @@ pub async fn update_inspection(
         qualified_quantity,
         unqualified_quantity,
         body.inspector,
-        body.inspection_time.as_ref().and_then(|s| {
-            NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-                .ok()
-                .or_else(|| {
-                    chrono::DateTime::parse_from_rfc3339(s)
-                        .ok()
-                        .map(|dt| dt.naive_utc())
-                })
-                .or_else(|| {
-                    s.parse::<chrono::NaiveDate>()
-                        .ok()
-                        .and_then(|d| d.and_hms_opt(0, 0, 0))
-                })
-        }),
+        body.inspection_time,
         body.status,
         body.result,
         body.memo,

@@ -33,6 +33,13 @@ pub fn create_routes() -> Router<AppState> {
         .route("/wips/transfer", post(transfer_wip))
         .route("/wips/{wip_id}/transfers", get(list_wip_transfers))
         .route("/wips/statistics", get(get_wip_statistics))
+        // 前端契约兜底：/wips/transfers/{id} 实际无此端点 — 待上游支持
+        .route("/wips/transfers/{_id}", get(stub_wip_transfer_detail))
+}
+
+/// 待上游支持：WIP 调拨单详情占位，返回空列表
+async fn stub_wip_transfer_detail() -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    Json(ApiResponse::success(vec![], "调拨记录查询待上游支持"))
 }
 
 // ==================== Data Types ====================

@@ -485,20 +485,6 @@ pub async fn update_material_requirement(
     let available_quantity = body
         .available_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let required_date = body.required_date.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .ok()
-            .or_else(|| {
-                DateTime::parse_from_rfc3339(s)
-                    .ok()
-                    .map(|dt| dt.naive_utc())
-            })
-            .or_else(|| {
-                s.parse::<chrono::NaiveDate>()
-                    .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0))
-            })
-    });
 
     let result = sqlx::query_unchecked!(
         r#"
@@ -517,7 +503,7 @@ pub async fn update_material_requirement(
         "#,
         required_quantity,
         available_quantity,
-        required_date,
+        body.required_date,
         body.priority,
         body.status,
         body.remark,

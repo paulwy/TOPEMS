@@ -921,8 +921,14 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let order_no: String = row.get("order_no");
             let product_name: String = row.get("product_name");
             let planned_end: Option<chrono::NaiveDate> = row.get("planned_end_date");
-            let quantity: f64 = row.get::<i32, _>("quantity") as f64;
-            let completed: f64 = row.get::<i32, _>("completed_quantity") as f64;
+            // quantity 可能是 integer 或 numeric，completed_quantity 是 numeric——统一容错解码
+            let quantity: f64 = row.try_get::<sqlx::types::BigDecimal, _>("quantity")
+                .map(|b| b.to_string().parse().unwrap_or(0.0))
+                .or_else(|_| row.try_get::<i32, _>("quantity").map(|v| v as f64))
+                .unwrap_or(0.0);
+            let completed: f64 = row.try_get::<sqlx::types::BigDecimal, _>("completed_quantity")
+                .map(|b| b.to_string().parse().unwrap_or(0.0))
+                .unwrap_or(0.0);
 
             let days_delay = if let Some(pe) = planned_end {
                 Utc::now().date_naive().signed_duration_since(pe).num_days()

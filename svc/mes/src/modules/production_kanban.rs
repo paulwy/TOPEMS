@@ -23,6 +23,11 @@ pub fn create_routes() -> Router<AppState> {
         .route("/kanban/workstation-status", get(get_workstation_status))
         .route("/kanban/quality-trend", get(get_quality_trend))
         .route("/kanban/equipment-status", get(get_equipment_status))
+        // 前端契约兜底：模板带可选路径段 — 待上游支持
+        .route("/kanban/order-progress/{_id}", get(get_order_progress))
+        .route("/kanban/quality-trend/{_id}", get(get_quality_trend))
+        .route("/kanban/dashboard/{_id}", get(get_dashboard))
+        .route("/kanban/equipment-status/{_id}", get(get_equipment_status))
 }
 
 // ==================== Response Types ====================
@@ -396,8 +401,8 @@ pub async fn get_dashboard(
         r#"
         SELECT
             e.id            AS equipment_id,
-            e.name          AS equipment_name,
-            e.equipment_no   AS equipment_code,
+            e.equipment_name AS equipment_name,
+            e.equipment_code AS equipment_code,
             e.status        AS status,
             latest_oee.oee  AS oee
         FROM mes.equipment e
@@ -408,7 +413,7 @@ pub async fn get_dashboard(
             ORDER BY record_date DESC
             LIMIT 1
         ) latest_oee ON true
-        ORDER BY e.name
+        ORDER BY e.equipment_name
         "#,
     )
     .fetch_all(&state.pool)
@@ -728,8 +733,8 @@ pub async fn get_equipment_status(
         r#"
         SELECT
             e.id            AS equipment_id,
-            e.name          AS equipment_name,
-            e.equipment_no   AS equipment_code,
+            e.equipment_name AS equipment_name,
+            e.equipment_code AS equipment_code,
             e.status        AS status,
             latest_oee.oee  AS oee
         FROM mes.equipment e
@@ -740,7 +745,7 @@ pub async fn get_equipment_status(
             ORDER BY record_date DESC
             LIMIT 1
         ) latest_oee ON true
-        ORDER BY e.name
+        ORDER BY e.equipment_name
         "#,
     )
     .fetch_all(&state.pool)

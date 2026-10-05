@@ -584,20 +584,6 @@ pub async fn update_standard(
         }
     };
 
-    let effective_date = body.effective_date.as_ref().and_then(|s| {
-        chrono::NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .ok()
-            .or_else(|| {
-                chrono::DateTime::parse_from_rfc3339(s)
-                    .ok()
-                    .map(|dt| dt.naive_utc())
-            })
-            .or_else(|| {
-                s.parse::<chrono::NaiveDate>()
-                    .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0))
-            })
-    });
     let standard_result = sqlx::query_unchecked!(
         r#"
         UPDATE quality_standards
@@ -608,7 +594,7 @@ pub async fn update_standard(
             product_name = COALESCE($4, product_name),
             inspection_type = COALESCE($5, inspection_type),
             status = COALESCE($6, status),
-            version = COALESCE($7, version),
+            version = COALESCE($7::int, version),
             effective_date = COALESCE($8, effective_date),
             description = COALESCE($9, description),
             updated_at = NOW()
@@ -626,7 +612,7 @@ pub async fn update_standard(
         body.inspection_type,
         body.status,
         body.version,
-        effective_date,
+        body.effective_date,
         body.description,
         uuid,
     )

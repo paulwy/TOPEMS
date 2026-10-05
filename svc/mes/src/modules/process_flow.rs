@@ -906,9 +906,7 @@ pub async fn update_flow_step(
         "#,
         body.sequence,
         work_station_uuid,
-        equipment_ids
-            .as_ref()
-            .map(|ids| serde_json::to_string(ids).unwrap_or_default()),
+        equipment_ids.as_deref(),
         standard_time,
         wait_time,
         transfer_time,

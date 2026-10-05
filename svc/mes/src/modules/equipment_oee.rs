@@ -35,6 +35,8 @@ pub fn create_routes() -> Router<AppState> {
             "/equipment-oee/{equipment_id}/efficiency",
             get(get_equipment_efficiency_analysis),
         )
+        // 前端契约兜底：模板带可选路径段 — 待上游支持
+        .route("/equipment-oee/statistics/{_id}", get(get_oee_statistics))
 }
 
 // ==================== Data Types ====================
