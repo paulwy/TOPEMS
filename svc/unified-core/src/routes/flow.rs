@@ -311,7 +311,7 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         // ===== 前端契约 GET 兜底（workflow 批次，待上游支持）=====
         // 定义/版本对比、导出
         .route(
-            "/workflows/{id}/compare/{p0}/{p1}",
+            "/workflows/{id}/compare/{sub}/{extra}",
             get(stub_list),
         )
         .route("/workflows/{id}/export", get(stub_list))
@@ -321,7 +321,7 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route("/form-definitions/workflow/{id}", get(stub_list))
         .route("/form-definitions/categories", get(stub_list))
         .route("/form-definitions/{id}/versions", get(stub_list))
-        .route("/form-definitions/{id}/versions/{p0}", get(stub_detail))
+        .route("/form-definitions/{id}/versions/{sub}", get(stub_detail))
         .route("/form-definitions/{id}/export", get(stub_list))
         .route("/form-instances", get(stub_list))
         .route("/form-instances/{id}", get(stub_detail))
@@ -351,15 +351,15 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route("/monitor/instances/{id}/variables", get(stub_list))
         .route("/monitor/instances/{id}/diagram", get(stub_list))
         .route(
-            "/monitor/analysis/{p0}",
+            "/monitor/analysis/{id}",
             get(modules::flow::monitor::get_workflow_analysis),
         )
         .route(
-            "/monitor/analysis/{p0}/nodes",
+            "/monitor/analysis/{id}/nodes",
             get(modules::flow::monitor::get_node_statistics),
         )
         .route(
-            "/monitor/analysis/{p0}/bottlenecks",
+            "/monitor/analysis/{id}/bottlenecks",
             get(modules::flow::monitor::get_bottleneck_analysis),
         )
         .route(
@@ -374,7 +374,7 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
             "/monitor/analysis/departments",
             get(modules::flow::monitor::get_department_stats),
         )
-        .route("/monitor/logs/node/{p0}/{p1}", get(stub_list))
+        .route("/monitor/logs/node/{id}/{sub}", get(stub_list))
         .route(
             "/monitor/sla-compliance",
             get(modules::flow::monitor::get_sla_compliance),
@@ -645,7 +645,7 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route("/form-definitions/{id}/validate", post(stub_action))
         .route("/form-definitions/{id}/preview", post(stub_action))
         .route(
-            "/form-definitions/{id}/versions/{p0}/rollback",
+            "/form-definitions/{id}/versions/{sub}/rollback",
             post(stub_action),
         )
         .route("/form-definitions/import", post(stub_action))
@@ -683,7 +683,7 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route("/tasks/{id}/urge", post(stub_action))
         .route("/tasks/{id}/comments", post(stub_action))
         .route("/tasks/{id}/attachments", post(stub_action))
-        .route("/tasks/{id}/attachments/{p0}", delete(stub_action))
+        .route("/tasks/{id}/attachments/{sub}", delete(stub_action))
         .route("/tasks/{id}/form", post(stub_action))
         .route("/tasks/{id}/variables", post(stub_action))
         .layer(axum::middleware::from_fn_with_state(
