@@ -95,6 +95,72 @@ pub async fn complete_production_order(
     }
 }
 
+// ===== 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
+
+/// 今日生产订单（前端 GET /production/orders/today → MES 列表按日期字段过滤）
+pub async fn get_today_production_orders(
+    State(client): State<TypedServiceClient<MesApi>>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let today = chrono::Utc::now().date_naive().to_string();
+    match client.list_production_orders(1, 100).await {
+        Ok(items) => {
+            let filtered: Vec<serde_json::Value> = items
+                .into_iter()
+                .filter(|item| {
+                    ["date", "created_at", "planned_start_date", "start_date"]
+                        .iter()
+                        .any(|k| {
+                            item.get(*k)
+                                .and_then(|v| v.as_str())
+                                .map(|v| v.starts_with(&today))
+                                .unwrap_or(false)
+                        })
+                })
+                .collect();
+            Json(ApiResponse::success(
+                serde_json::json!({ "items": filtered, "total": filtered.len() }),
+                "获取今日生产订单成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("调用MES服务获取今日生产订单失败: {}", e);
+            Json(ApiResponse::error(500, "获取今日生产订单失败"))
+        }
+    }
+}
+
+/// 工位订单（前端 GET /production/workstations/{wid}/orders → MES 列表按工位过滤）
+pub async fn get_workstation_orders(
+    State(client): State<TypedServiceClient<MesApi>>,
+    axum::extract::Path(workstation_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    match client.list_production_orders(1, 100).await {
+        Ok(items) => {
+            let filtered: Vec<serde_json::Value> = items
+                .into_iter()
+                .filter(|item| {
+                    ["workstation", "station_id", "workstation_id", "station"]
+                        .iter()
+                        .any(|k| {
+                            item.get(*k)
+                                .and_then(|v| v.as_str())
+                                .map(|v| v == workstation_id.as_str())
+                                .unwrap_or(false)
+                        })
+                })
+                .collect();
+            Json(ApiResponse::success(
+                serde_json::json!({ "items": filtered, "total": filtered.len() }),
+                "获取工位订单成功",
+            ))
+        }
+        Err(e) => {
+            tracing::error!("调用MES服务获取工位订单失败: {}", e);
+            Json(ApiResponse::error(500, "获取工位订单失败"))
+        }
+    }
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["mobile:production:read"])),

@@ -92,8 +92,10 @@ use crate::modules::approval::{
     get_pending_approval_tasks, list_approval_tasks, reject_approval_task,
 };
 use crate::modules::attendance::{
-    apply_leave, check_in, check_out, get_attendance_overview, get_attendance_stats,
+    apply_leave, check_in, check_out, create_attendance_record, delete_attendance_record,
+    get_attendance_overview, get_attendance_record_by_id, get_attendance_stats,
     get_today_attendance, list_attendance_records, list_leave_applications,
+    update_attendance_record,
 };
 use crate::modules::barcode_scanner::{
     delete_scan_record, get_scan_by_id, get_scan_history, get_supported_barcode_types, scan_barcode,
@@ -101,7 +103,10 @@ use crate::modules::barcode_scanner::{
 use crate::modules::customer::{
     create_customer, delete_customer, get_customer, list_customers, update_customer,
 };
-use crate::modules::device::{list_my_devices, register_device, update_push_token};
+use crate::modules::device::{
+    activate_device, disable_device, get_device_by_id, get_device_stats, list_my_devices,
+    register_device, test_push_device, unregister_device, update_device, update_push_token,
+};
 use crate::modules::document::{
     create_document, delete_document, get_document, list_documents, update_document,
 };
@@ -139,8 +144,9 @@ use crate::modules::photo_upload::{
     upload_photo,
 };
 use crate::modules::production::{
-    complete_production_order, get_production_order, list_equipment, list_production_orders,
-    list_work_reports, start_production_order, submit_work_report,
+    complete_production_order, get_production_order, get_today_production_orders,
+    get_workstation_orders, list_equipment, list_production_orders, list_work_reports,
+    start_production_order, submit_work_report,
 };
 use crate::modules::push_notification::{
     create_template, get_devices, get_notification_by_id, get_notification_list,
@@ -416,7 +422,13 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::post(update_task_status),
         )
         // Attendance Routes
-        .route("/attendance", axum::routing::get(get_attendance_overview))
+        .route("/attendance", axum::routing::get(get_attendance_overview).post(create_attendance_record))
+        .route(
+            "/attendance/{id}",
+            axum::routing::get(get_attendance_record_by_id)
+                .put(update_attendance_record)
+                .delete(delete_attendance_record),
+        )
         // 前端契约 /attendance/overview 别名（页面 MobileAttendancePage 使用）
         .route(
             "/attendance/overview",
@@ -682,6 +694,17 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         // device（前端 /device 单数 → device.rs）
         .route("/device/register", axum::routing::post(register_device))
         .route("/device", axum::routing::get(list_my_devices))
+        .route("/device/my", axum::routing::get(list_my_devices))
+        .route("/device/stats", axum::routing::get(get_device_stats))
+        .route(
+            "/device/{id}",
+            axum::routing::get(get_device_by_id)
+                .put(update_device)
+                .delete(unregister_device),
+        )
+        .route("/device/{id}/activate", axum::routing::post(activate_device))
+        .route("/device/{id}/disable", axum::routing::post(disable_device))
+        .route("/device/{id}/test-push", axum::routing::post(test_push_device))
         // dashboard 剩余（前端 /dashboard/activities → 最近动态聚合）
         .route(
             "/dashboard/activities",
@@ -703,6 +726,15 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route(
             "/production/orders/{id}/complete",
             axum::routing::post(complete_production_order),
+        )
+        // production 死代码兜底（前端 /production/orders/today、/production/workstations/{wid}/orders）
+        .route(
+            "/production/orders/today",
+            axum::routing::get(get_today_production_orders),
+        )
+        .route(
+            "/production/workstations/{workstationId}/orders",
+            axum::routing::get(get_workstation_orders),
         )
         // attendance today（前端 /attendance/today → HRM 记录按日过滤）
         .route(

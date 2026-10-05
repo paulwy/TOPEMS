@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, State},
+    extract::{Json, Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -324,6 +324,327 @@ pub async fn list_my_devices(
         Json(ApiResponse::success(
             serde_json::json!({ "items": devices, "total": devices.len() }),
             "获取设备列表成功",
+        )),
+    )
+}
+
+// ===== 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
+
+/// 设备详情（前端 GET /device/{id} → mobile.devices 按 id 查询）
+pub async fn get_device_by_id(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let device = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT id, user_id, device_id, device_name, device_type, os_type, os_version, app_version, push_token, is_active, last_login_at, created_at, updated_at FROM mobile.devices WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&pool)
+    .await;
+
+    match device {
+        Ok(Some(row)) => match Device::from_row(&row) {
+            Ok(d) => (
+                StatusCode::OK,
+                Json(ApiResponse::success(d, "获取设备详情成功")),
+            ),
+            Err(e) => {
+                tracing::error!("解析设备详情失败: {}", e);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(500, "解析设备详情失败")),
+                )
+            }
+        },
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "设备不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("查询设备详情失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "查询设备详情失败")),
+            )
+        }
+    }
+}
+
+/// 更新设备（前端 PUT /device/{id} → 更新 app_version/os_version/is_active 等）
+pub async fn update_device(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let app_version = payload.get("appVersion").and_then(|v| v.as_str());
+    let os_version = payload.get("osVersion").and_then(|v| v.as_str());
+    let is_active = payload.get("isActive").and_then(|v| v.as_bool());
+
+    let result = sqlx::query(
+        only_own_schema_query!(
+            "mobile",
+            "UPDATE mobile.devices SET app_version = COALESCE($2, app_version), os_version = COALESCE($3, os_version), is_active = COALESCE($4, is_active), updated_at = NOW() WHERE id = $1"
+        ),
+    )
+    .bind(id)
+    .bind(app_version)
+    .bind(os_version)
+    .bind(is_active)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "更新设备成功")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "设备不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("更新设备失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "更新设备失败")),
+            )
+        }
+    }
+}
+
+/// 注销设备（前端 DELETE /device/{id}）
+pub async fn unregister_device(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let result = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "DELETE FROM mobile.devices WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "设备已注销")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "设备不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("注销设备失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "注销设备失败")),
+            )
+        }
+    }
+}
+
+/// 激活设备（前端 POST /device/{id}/activate）
+pub async fn activate_device(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let result = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "UPDATE mobile.devices SET is_active = true, updated_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "设备已激活")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "设备不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("激活设备失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "激活设备失败")),
+            )
+        }
+    }
+}
+
+/// 停用设备（前端 POST /device/{id}/disable）
+pub async fn disable_device(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let result = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "UPDATE mobile.devices SET is_active = false, updated_at = NOW() WHERE id = $1"
+    ))
+    .bind(id)
+    .execute(&pool)
+    .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "设备已停用")),
+        ),
+        Ok(_) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "设备不存在")),
+        ),
+        Err(e) => {
+            tracing::error!("停用设备失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "停用设备失败")),
+            )
+        }
+    }
+}
+
+/// 推送测试（前端 POST /device/{id}/test-push → 占位兜底，真实推送需推送网关）
+pub async fn test_push_device(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    Json(_payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let _exists = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT 1 FROM mobile.devices WHERE id = $1"
+    ))
+    .bind(id)
+    .fetch_optional(&pool)
+    .await;
+
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(
+            serde_json::json!({ "success": true }),
+            "测试推送已发送（占位实现，待推送网关接入）",
+        )),
+    )
+}
+
+/// 设备统计（前端 GET /device/stats → mobile.devices 聚合）
+pub async fn get_device_stats(
+    headers: HeaderMap,
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let total = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id = $1"
+    ))
+    .bind(&user_id)
+    .fetch_one(&pool)
+    .await
+    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
+    .unwrap_or(0);
+
+    let active = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "SELECT COUNT(*)::bigint as count FROM mobile.devices WHERE user_id = $1 AND is_active = true"
+    ))
+    .bind(&user_id)
+    .fetch_one(&pool)
+    .await
+    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
+    .unwrap_or(0);
+
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(
+            serde_json::json!({ "total": total, "active": active, "inactive": total - active }),
+            "获取设备统计成功",
         )),
     )
 }

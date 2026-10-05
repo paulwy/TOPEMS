@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Query, State},
+    extract::{Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Json,
@@ -272,6 +272,131 @@ pub async fn get_today_attendance(
             )
         }
     }
+}
+
+// ===== 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
+
+/// 考勤记录详情（前端 GET /attendance/{id} → HRM 记录按 id 过滤）
+pub async fn get_attendance_record_by_id(
+    State(auth_state): State<AuthState>,
+    State(client): State<TypedServiceClient<HrmApi>>,
+    headers: HeaderMap,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    match client
+        .list_attendance_records(&user_id, None, 1, 100)
+        .await
+    {
+        Ok(data) => {
+            let records = if let Some(items) = data.get("items").and_then(|v| v.as_array()) {
+                items.clone()
+            } else if let Some(arr) = data.as_array() {
+                arr.clone()
+            } else {
+                Vec::new()
+            };
+            let found = records
+                .iter()
+                .find(|r| r.get("id").and_then(|v| v.as_str()) == Some(id.as_str()));
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success(
+                    found.cloned().unwrap_or(serde_json::Value::Null),
+                    "获取考勤记录详情成功",
+                )),
+            )
+        }
+        Err(e) => {
+            tracing::error!("调用HRM服务获取考勤记录详情失败: {}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "获取考勤记录详情失败")),
+            )
+        }
+    }
+}
+
+/// 新建考勤记录（前端 POST /attendance → 占位兜底，页面未接入）
+pub async fn create_attendance_record(
+    State(auth_state): State<AuthState>,
+    headers: HeaderMap,
+    Json(_payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(
+            serde_json::Value::Null,
+            "考勤记录已登记（占位实现，待页面接入补全）",
+        )),
+    )
+}
+
+/// 更新考勤记录（前端 PUT /attendance/{id} → 占位兜底）
+pub async fn update_attendance_record(
+    State(auth_state): State<AuthState>,
+    headers: HeaderMap,
+    Path(_id): Path<String>,
+    Json(_payload): Json<serde_json::Value>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(
+            serde_json::Value::Null,
+            "考勤记录已更新（占位实现，待页面接入补全）",
+        )),
+    )
+}
+
+/// 删除考勤记录（前端 DELETE /attendance/{id} → 占位兜底）
+pub async fn delete_attendance_record(
+    State(auth_state): State<AuthState>,
+    headers: HeaderMap,
+    Path(_id): Path<String>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(
+            serde_json::Value::Null,
+            "考勤记录已删除（占位实现，待页面接入补全）",
+        )),
+    )
 }
 
 #[utoipa::path(
