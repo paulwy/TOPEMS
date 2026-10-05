@@ -153,7 +153,7 @@ pub async fn update_scope_company(
     .bind(req.ownership_percentage)
     .bind(req.consolidation_percentage)
     .bind(req.minority_interest)
-    .bind(&req.expiry_date)
+    .bind(req.expiry_date.as_ref().and_then(|s| s.parse::<chrono::NaiveDate>().ok()))
     .fetch_optional(&mut **txn)
     .await;
 

@@ -368,6 +368,25 @@ pub async fn proxy_list_attendances(
     .await
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["erp:read"])),
+    path = "/erp/hr-proxy/proxy-get-attendance",
+    tag = "HrProxy",
+    operation_id = "proxy_get_attendance",
+    responses(
+        (status = 200, description = "操作成功"),
+    ),
+)]
+pub async fn proxy_get_attendance(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> impl IntoResponse {
+    let path = format!("/api/hrm/attendances/{}", id);
+    proxy_hrm_get(&state.hrm_client, &path, None, &claims).await
+}
+
 // ==================== 路由注册 ====================
 
 pub fn proxy_routes() -> axum::Router<ApiState> {
@@ -398,6 +417,7 @@ pub fn proxy_routes() -> axum::Router<ApiState> {
         .route("/hr/payrolls/{id}", get(proxy_get_payroll))
         // 考勤
         .route("/hr/attendances", get(proxy_list_attendances))
+        .route("/hr/attendances/{id}", get(proxy_get_attendance))
 }
 
 #[utoipa::path(
