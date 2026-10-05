@@ -866,20 +866,7 @@ pub async fn update_flow_step(
     let wait_time = body
         .wait_time
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
-    let transfer_time = body.transfer_time.as_ref().and_then(|s| {
-        NaiveDateTime::parse_from_str(s, "%Y-%m-%d %H:%M:%S")
-            .ok()
-            .or_else(|| {
-                DateTime::parse_from_rfc3339(s)
-                    .ok()
-                    .map(|dt| dt.naive_utc())
-            })
-            .or_else(|| {
-                s.parse::<chrono::NaiveDate>()
-                    .ok()
-                    .and_then(|d| d.and_hms_opt(0, 0, 0))
-            })
-    });
+    // transfer_time 列为 text，直接绑字符串
     let equipment_ids: Option<Vec<Uuid>> = body.equipment_ids.map(|ids| {
         ids.into_iter()
             .filter_map(|id| Uuid::parse_str(&id).ok())
@@ -909,7 +896,7 @@ pub async fn update_flow_step(
         equipment_ids.as_deref(),
         standard_time,
         wait_time,
-        transfer_time,
+        body.transfer_time,
         body.quality_check_required,
         body.description,
         step_uuid,

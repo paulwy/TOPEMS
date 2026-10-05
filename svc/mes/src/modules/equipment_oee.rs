@@ -37,6 +37,13 @@ pub fn create_routes() -> Router<AppState> {
         )
         // 前端契约兜底：模板带可选路径段 — 待上游支持
         .route("/equipment-oee/statistics/{_id}", get(get_oee_statistics))
+        // 前端模板 /equipment-oee/{id}/efficiency/{rid} 双段兜底
+        .route("/equipment-oee/{_id}/efficiency/{_rid}", get(stub_efficiency_detail))
+}
+
+/// 待上游支持：效率分析详情占位（复用 efficiency 列表逻辑）
+async fn stub_efficiency_detail() -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    Json(ApiResponse::success(vec![], "设备效率详情待上游支持"))
 }
 
 // ==================== Data Types ====================

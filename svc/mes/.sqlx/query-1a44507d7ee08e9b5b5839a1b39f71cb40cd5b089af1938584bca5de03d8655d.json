@@ -36,17 +36,17 @@
       {
         "ordinal": 6,
         "name": "standard_time",
-        "type_info": "Int4"
+        "type_info": "Float8"
       },
       {
         "ordinal": 7,
         "name": "wait_time",
-        "type_info": "Int4"
+        "type_info": "Float8"
       },
       {
         "ordinal": 8,
         "name": "transfer_time",
-        "type_info": "Int4"
+        "type_info": "Text"
       },
       {
         "ordinal": 9,

@@ -772,7 +772,7 @@ async fn fetch_available_work_stations(
 ) -> Result<Vec<WorkStationInfo>, TopemsError> {
     let rows = sqlx::query(
         r#"
-        SELECT id, name, capacity, status, equipment_id, process_id
+        SELECT id, station_name AS name, capacity, status, equipment_id, process_id
         FROM mes.work_stations
         WHERE status = 'active'
         ORDER BY capacity DESC
