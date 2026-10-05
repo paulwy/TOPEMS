@@ -41,12 +41,15 @@ impl SearchRealModule {
         let _conn = ctx.db.acquire().await?;
 
         // 公开路由（无状态）
-        let public_routes = Router::new().route("/health", get(handlers::health_handler));
+        let public_routes =
+            Router::new().route("/api/search/health", get(handlers::health_handler));
 
         // 受保护路由（需要 State<PgPool>）
+        // 直接用全路径挂载而非 nest：前端 GET /api/search（无尾斜杠）命中 search_handler；
+        // axum nest("/api/search", route("/")) 仅匹配 /api/search/，裸路径会 404。
         let protected_routes = Router::new()
-            .route("/", get(handlers::search_handler))
-            .route("/suggestions", get(handlers::suggestions_handler))
+            .route("/api/search", get(handlers::search_handler))
+            .route("/api/search/suggestions", get(handlers::suggestions_handler))
             .layer(axum::middleware::from_fn(require_permission(
                 "search:admin",
             )))
@@ -56,8 +59,8 @@ impl SearchRealModule {
                 topems_shared_auth::tenant_middleware(),
             ));
 
-        let routes = axum::Router::new()
-            .nest(config.api_prefix, public_routes.merge(protected_routes))
+        let routes = public_routes
+            .merge(protected_routes)
             .layer(axum::middleware::from_fn_with_state(
                 ctx.auth_state.clone(),
                 topems_shared_auth::auth::auth_middleware,
