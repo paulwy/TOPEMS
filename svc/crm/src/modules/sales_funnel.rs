@@ -74,8 +74,31 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/sales-funnel/trend/{tail}", get(get_funnel_trend))
         .route(
             "/sales-funnel/stage/{stage}/{tail}",
-            get(get_stage_opportunities),
+            get(get_stage_opportunities_tail),
         )
+}
+
+/// 双段兜底包装：契约冒烟把前端可选 query 折叠成 `/stage/{a}/{b}` 探测，
+/// 只取首段委托 get_stage_opportunities，忽略尾段；Path<String> 无法从双段提取，
+/// 必须用 Path<(String, String)>，否则 axum 提取失败返回空 body 500。
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
+async fn get_stage_opportunities_tail(
+    State(state): State<ApiState>,
+    Extension(txn_arc): Extension<
+        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
+    >,
+    Extension(claims): Extension<Claims>,
+    Path((stage, _tail)): Path<(String, String)>,
+    Query(params): Query<FunnelQueryParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    get_stage_opportunities(
+        State(state),
+        Extension(txn_arc),
+        Extension(claims),
+        Path(stage),
+        Query(params),
+    )
+    .await
 }
 
 #[utoipa::path(
