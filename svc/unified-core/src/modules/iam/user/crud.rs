@@ -457,8 +457,9 @@ pub async fn get_user(
         }
         None => {
             tracing::warn!("User not found: {}", id);
+            // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404（避免 BFF catch-all 误判路由缺失）
             (
-                StatusCode::NOT_FOUND,
+                StatusCode::OK,
                 Json(topems_shared_core::response::error_value(404, "用户不存在")),
             )
         }
@@ -514,8 +515,9 @@ pub async fn update_user(
     };
 
     if existing_user_count == 0 {
+        // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
         return (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
@@ -700,8 +702,9 @@ pub async fn delete_user(
     };
 
     if existing_user_count == 0 {
+        // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
         return (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }

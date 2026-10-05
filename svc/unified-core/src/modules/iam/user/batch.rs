@@ -58,8 +58,9 @@ pub async fn get_effective_permissions(
     {
         Ok(Some(v)) => v,
         Ok(None) => {
+            // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
             return (
-                StatusCode::NOT_FOUND,
+                StatusCode::OK,
                 Json(topems_shared_core::response::error_value(404, "用户不存在")),
             );
         }

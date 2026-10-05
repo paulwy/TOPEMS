@@ -2,7 +2,6 @@
 
 use crate::AppState;
 use axum::{extract::State, Json};
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -13,7 +12,8 @@ struct PermissionRow {
     description: Option<String>,
     resource: Option<String>,
     action: Option<String>,
-    created_at: Option<DateTime<Utc>>,
+    // DB 列为 TIMESTAMP（无时区），与 iam/mod.rs DDL 对齐；用 NaiveDateTime 避免 sqlx 解码 500。
+    created_at: Option<chrono::NaiveDateTime>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -85,6 +85,42 @@ pub async fn list_permissions(State(state): State<AppState>) -> Json<serde_json:
 /// 从权限 code 中提取 category（例如 "iam:users_read" -> "iam"）
 fn extract_category(code: &str) -> String {
     code.split(':').next().unwrap_or("other").to_string()
+}
+
+/// PUT /permissions/{id} — 权限定义为系统种子数据，前端契约兜底（待上游支持）
+pub async fn update_permission(
+    State(_state): State<AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("IAM permission update_permission stub called for id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "权限更新已记录（待上游支持）",
+        "data": null
+    }))
+}
+
+/// DELETE /permissions/{id} — 权限定义为系统种子数据，前端契约兜底（待上游支持）
+pub async fn delete_permission(
+    State(_state): State<AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("IAM permission delete_permission stub called for id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "权限删除已记录（待上游支持）",
+        "data": null
+    }))
+}
+
+/// GET /health — IAM 模块健康检查（前端契约 /api/core/iam/health）
+pub async fn health() -> Json<serde_json::Value> {
+    Json(serde_json::json!({
+        "success": true,
+        "message": "iam service healthy",
+        "data": { "status": "ok", "service": "iam" },
+        "code": 200
+    }))
 }
 
 #[cfg(test)]

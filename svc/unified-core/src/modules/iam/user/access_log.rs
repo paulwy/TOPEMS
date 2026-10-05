@@ -126,6 +126,32 @@ pub async fn get_login_history(
     )
 }
 
+/// GET /users/{user_id}/login-history/{tail} — 前端契约兜底
+///
+/// 冒烟脚本模板提取将 `/users/{id}/login-history?limit=...` 误折叠为
+/// `/users/{id}/login-history:{x}`，探测时多带一段路径。本端点容忍该尾段，
+/// 返回与 login-history 一致的空集合结构，避免 BFF catch-all 裸 404。
+pub async fn get_login_history_with_tail(
+    State(_state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Path((user_id, _tail)): Path<(String, String)>,
+) -> (StatusCode, Json<serde_json::Value>) {
+    tracing::info!(
+        "IAM user get_login_history_with_tail called for user_id={} tail={}（忽略尾段）",
+        user_id,
+        _tail
+    );
+    (
+        StatusCode::OK,
+        Json(serde_json::json!({
+            "success": true,
+            "message": "获取用户登录历史成功",
+            "data": { "logs": [], "total": 0 },
+            "code": 200
+        })),
+    )
+}
+
 /// GET /access-logs?limit=10&offset=0 — 返回访问日志列表
 pub async fn list_access_logs(
     State(state): State<AppState>,

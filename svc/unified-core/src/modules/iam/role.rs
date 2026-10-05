@@ -15,8 +15,9 @@ struct RoleRow {
     name: String,
     description: Option<String>,
     tenant_id: Option<uuid::Uuid>,
-    created_at: Option<chrono::DateTime<chrono::Utc>>,
-    updated_at: Option<chrono::DateTime<chrono::Utc>>,
+    // DB 列为 TIMESTAMP（无时区），与 iam/mod.rs DDL 对齐；用 NaiveDateTime 避免 sqlx 解码 500。
+    created_at: Option<chrono::NaiveDateTime>,
+    updated_at: Option<chrono::NaiveDateTime>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -539,4 +540,133 @@ pub async fn delete_role(
         "message": "删除角色成功",
         "data": null
     }))
+}
+
+/// GET /roles/{id}/permissions — 列出角色已授权的权限 code 列表
+pub async fn get_role_permissions(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    let role_uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(400, "无效的角色ID格式"));
+        }
+    };
+
+    // 集合类：角色不存在时返回空列表（HTTP 200），不裸 404
+    let permissions: Vec<String> = sqlx::query_scalar(
+        r#"
+        SELECT p.code FROM public.core_permissions p
+        INNER JOIN public.core_role_permissions rp ON p.id = rp.permission_id
+        WHERE rp.role_id = $1
+        ORDER BY p.code
+        "#,
+    )
+    .bind(role_uuid)
+    .fetch_all(&state.pool)
+    .await
+    .unwrap_or_default();
+
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取角色权限成功",
+        "data": permissions
+    }))
+}
+
+/// POST /roles/{id}/permissions — 为角色授权权限（body: {permission_id} 或 {permission_code}）
+pub async fn add_role_permission(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    let role_uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(400, "无效的角色ID格式"));
+        }
+    };
+
+    // 支持传 permission_id（UUID）或 permission_code（字符串）
+    let permission_id: Option<Uuid> = match payload.get("permission_id").and_then(|v| v.as_str()) {
+        Some(pid) => Uuid::parse_str(pid).ok(),
+        None => match payload.get("permission_code").and_then(|v| v.as_str()) {
+            Some(code) => {
+                sqlx::query_scalar::<_, Uuid>("SELECT id FROM public.core_permissions WHERE code = $1")
+                    .bind(code)
+                    .fetch_optional(&state.pool)
+                    .await
+                    .ok()
+                    .flatten()
+            }
+            None => None,
+        },
+    };
+
+    let permission_id = match permission_id {
+        Some(pid) => pid,
+        None => {
+            return Json(topems_shared_core::response::error_value(400, "无效的权限标识"));
+        }
+    };
+
+    let result = sqlx::query(
+        "INSERT INTO public.core_role_permissions (role_id, permission_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+    )
+    .bind(role_uuid)
+    .bind(permission_id)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "角色权限授权成功",
+            "data": null
+        })),
+        Err(e) => {
+            tracing::error!("角色权限授权失败: {}", e);
+            Json(topems_shared_core::response::error_value(500, &format!("角色权限授权失败: {}", e)))
+        }
+    }
+}
+
+/// DELETE /roles/{id}/permissions/{permission_id} — 移除角色的权限授权
+pub async fn remove_role_permission(
+    State(state): State<AppState>,
+    Path((id, permission_id)): Path<(String, String)>,
+) -> Json<serde_json::Value> {
+    let role_uuid = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(400, "无效的角色ID格式"));
+        }
+    };
+    let perm_uuid = match Uuid::parse_str(&permission_id) {
+        Ok(u) => u,
+        Err(_) => {
+            return Json(topems_shared_core::response::error_value(400, "无效的权限ID格式"));
+        }
+    };
+
+    let result = sqlx::query(
+        "DELETE FROM public.core_role_permissions WHERE role_id = $1 AND permission_id = $2",
+    )
+    .bind(role_uuid)
+    .bind(perm_uuid)
+    .execute(&state.pool)
+    .await;
+
+    match result {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "角色权限移除成功",
+            "data": null
+        })),
+        Err(e) => {
+            tracing::error!("角色权限移除失败: {}", e);
+            Json(topems_shared_core::response::error_value(500, &format!("角色权限移除失败: {}", e)))
+        }
+    }
 }

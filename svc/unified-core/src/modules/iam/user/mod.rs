@@ -30,5 +30,6 @@ pub use batch::{batch_delete_users, batch_update_users, get_effective_permission
 pub use validation::{check_email_availability, check_username_availability};
 
 pub use access_log::{
-    create_access_log, get_login_history, get_user_access_logs, list_access_logs,
+    create_access_log, get_login_history, get_login_history_with_tail, get_user_access_logs,
+    list_access_logs,
 };

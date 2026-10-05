@@ -86,8 +86,9 @@ pub async fn get_user_permissions(
         Some(u) => u,
         None => {
             tracing::warn!("User not found: {}", user_id);
+            // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
             return (
-                StatusCode::NOT_FOUND,
+                StatusCode::OK,
                 Json(topems_shared_core::response::error_value(404, "用户不存在")),
             );
         }
@@ -246,8 +247,9 @@ pub async fn get_user_roles(
     };
 
     if existing_user_count == 0 {
+        // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
         return (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
@@ -355,8 +357,9 @@ pub async fn assign_user_role(
     };
 
     if existing_user_count == 0 {
+        // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
         return (
-            StatusCode::NOT_FOUND,
+            StatusCode::OK,
             Json(topems_shared_core::response::error_value(404, "用户不存在")),
         );
     }
@@ -496,8 +499,9 @@ pub async fn remove_user_role(
         Ok(r) => {
             if r.rows_affected() == 0 {
                 tracing::warn!("User role not found: {}/{}", user_id, role_id);
+                // 前端契约：详情类资源不存在返回 HTTP 200 + 内层 code=404
                 return (
-                    StatusCode::NOT_FOUND,
+                    StatusCode::OK,
                     Json(topems_shared_core::response::error_value(
                         404,
                         "用户角色关联不存在",

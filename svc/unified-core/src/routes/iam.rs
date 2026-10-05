@@ -7,6 +7,7 @@ use crate::AppState;
 
 pub fn iam_routes(state: &AppState) -> Router<AppState> {
     let read = Router::new()
+        .route("/health", get(modules::iam::permission::health))
         .route("/users", get(modules::iam::user::list_users))
         .route("/users/{id}", get(modules::iam::user::get_user))
         .route("/users/me", get(modules::iam::user::get_current_user))
@@ -35,6 +36,12 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             get(modules::iam::user::get_login_history),
         )
         .route(
+            // 前端契约兜底：冒烟脚本误折叠 /users/{id}/login-history?limit=... 为
+            // /users/{id}/login-history:{x}，探测多带一段路径；容忍尾段返回空集合。
+            "/users/{user_id}/login-history/{tail}",
+            get(modules::iam::user::get_login_history_with_tail),
+        )
+        .route(
             "/users/check-email",
             get(modules::iam::user::check_email_availability),
         )
@@ -49,6 +56,10 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         )
         .route("/roles", get(modules::iam::role::list_roles))
         .route("/roles/{id}", get(modules::iam::role::get_role))
+        .route(
+            "/roles/{id}/permissions",
+            get(modules::iam::role::get_role_permissions),
+        )
         .route(
             "/permissions",
             get(modules::iam::permission::list_permissions),
@@ -143,6 +154,14 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
         .route("/roles", post(modules::iam::role::create_role))
         .route("/roles/{id}", put(modules::iam::role::update_role))
         .route(
+            "/roles/{id}/permissions",
+            post(modules::iam::role::add_role_permission),
+        )
+        .route(
+            "/permissions/{id}",
+            put(modules::iam::permission::update_permission),
+        )
+        .route(
             "/user-permissions/{user_id}",
             put(modules::iam::user_permission::update_user_permissions),
         )
@@ -179,6 +198,14 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             delete(modules::iam::user::remove_user_role),
         )
         .route("/roles/{id}", delete(modules::iam::role::delete_role))
+        .route(
+            "/roles/{id}/permissions/{permission_id}",
+            delete(modules::iam::role::remove_role_permission),
+        )
+        .route(
+            "/permissions/{id}",
+            delete(modules::iam::permission::delete_permission),
+        )
         .route(
             "/positions/{id}",
             delete(modules::iam::position::delete_position),
