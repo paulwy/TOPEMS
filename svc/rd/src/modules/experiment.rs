@@ -582,11 +582,11 @@ pub async fn get_experiment_records(
                 'recorded_by', er.recorded_by,
                 'recorded_at', er.recorded_at
             )
+            ORDER BY er.recorded_at ASC
         ) as records
         FROM rs.experiment_records er
         JOIN rs.experiments e ON er.experiment_id = e.id
         WHERE er.experiment_id = $1 AND ($2::uuid IS NULL OR e.tenant_id = $2)
-        ORDER BY er.recorded_at ASC
         "#,
     )
     .bind(id)
