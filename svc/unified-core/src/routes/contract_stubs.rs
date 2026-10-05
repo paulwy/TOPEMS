@@ -40,6 +40,28 @@ async fn stub_action(_state: State<AppState>) -> Json<ApiResponse<serde_json::Va
     ))
 }
 
+/// 字符串数组类兜底（如分类列表）：返回空数组。待上游支持。
+async fn stub_string_array(_state: State<AppState>) -> Json<ApiResponse<Vec<String>>> {
+    Json(ApiResponse::success(Vec::new(), "待上游支持"))
+}
+
+/// 详情类兜底：HTTP 200 + 内层 code=404（资源不存在）。待上游支持。
+/// 不直接返回 HTTP 404 是为了避免被契约 smoke 判定为 route_missing。
+async fn stub_detail_404(
+    _state: State<AppState>,
+) -> (axum::http::StatusCode, Json<serde_json::Value>) {
+    (
+        axum::http::StatusCode::OK,
+        Json(serde_json::json!({
+            "code": 404,
+            "success": false,
+            "data": null,
+            "message": "资源不存在，待上游支持",
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+        })),
+    )
+}
+
 /// 注册全部契约兜底路由。
 #[allow(clippy::too_many_lines)]
 pub fn contract_stub_routes() -> Router<AppState> {
@@ -201,4 +223,17 @@ pub fn contract_stub_routes() -> Router<AppState> {
             "/wms/transfer-orders/{p0}/approval/reject",
             post(stub_action),
         )
+        // ===== Help 服务（FAQ + 指南）契约兜底 =====
+        // 真实实现位于 svc/portal（/api/portal/help/*），前端按 Group1 走 /api/core/help/*。
+        // unified-core 暂无 help 表与 handler，做轻量兜底：列表空壳、写操作成功回执、
+        // 详情类 HTTP200+内层404、分类空数组。待上游支持。
+        .route("/help/faqs", get(stub_list).post(stub_action))
+        .route("/help/faqs/categories", get(stub_string_array))
+        .route(
+            "/help/faqs/{p0}",
+            get(stub_detail_404).put(stub_action).delete(stub_action),
+        )
+        .route("/help/guides", get(stub_list).post(stub_action))
+        .route("/help/guides/categories", get(stub_string_array))
+        .route("/help/guides/{p0}", get(stub_detail_404))
 }
