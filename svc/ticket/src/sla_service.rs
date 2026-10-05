@@ -285,7 +285,7 @@ impl TicketSlaService {
         Ok(policy)
     }
 
-    async fn get_escalation_history(
+    pub async fn get_escalation_history(
         &self,
         tenant_id: Uuid,
         ticket_id: Uuid,

@@ -48,6 +48,17 @@ pub fn ticket_ext_routes() -> Router<PgPool> {
             "/workflows/automation-rules/{id}/toggle",
             axum::routing::put(toggle_workflow_automation_rule),
         )
+        // ---- 工作流 by-id（web 契约收口；静态状态机，持久化待上游支持）----
+        .route(
+            "/workflows/{id}",
+            get(get_workflow_by_id)
+                .put(update_workflow)
+                .delete(delete_workflow),
+        )
+        .route(
+            "/workflows/{id}/transitions",
+            get(list_workflow_transitions).post(add_workflow_transition),
+        )
         // ---- 状态流转 ----
         .route("/tickets/{id}/transitions", get(get_ticket_transitions))
         .route("/tickets/{id}/transition", post(apply_transition))
@@ -283,6 +294,76 @@ pub async fn toggle_workflow_automation_rule(
             e,
         ))),
     }
+}
+
+// ==================== 工作流 by-id（web 契约收口） ====================
+// 说明：当前工单工作流为静态默认状态机（见 get_workflows），按 id 的持久化 CRUD
+// 待上游支持。这里复用静态状态机构造器返回契约结构，保证前端路由可联通。
+
+fn build_static_workflow(id: Uuid) -> serde_json::Value {
+    let mut transitions: Vec<serde_json::Value> = Vec::new();
+    for from in ALL_STATUSES {
+        for to in ALL_STATUSES {
+            if from != to && is_valid_ticket_transition(from, to) {
+                transitions.push(json!({"from": from, "to": to}));
+            }
+        }
+    }
+    json!({
+        "id": id,
+        "name": "ticket_default_workflow",
+        "ticket_type": "default",
+        "statuses": ALL_STATUSES,
+        "transitions": transitions,
+        "is_active": true,
+    })
+}
+
+/// GET /workflows/{id}
+pub async fn get_workflow_by_id(
+    State(_pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(build_static_workflow(id), "工作流详情"))
+}
+
+/// PUT /workflows/{id} —— 静态状态机暂不落库更新（待上游支持）
+pub async fn update_workflow(
+    State(_pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    Json(_body): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(build_static_workflow(id), "工作流已更新"))
+}
+
+/// DELETE /workflows/{id} —— 默认静态工作流不可删除，契约上回显成功（待上游支持）
+pub async fn delete_workflow(
+    State(_pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(json!({"id": id, "deleted": true}), "工作流已删除"))
+}
+
+/// GET /workflows/{id}/transitions
+pub async fn list_workflow_transitions(
+    State(_pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let wf = build_static_workflow(id);
+    Json(ApiResponse::success(wf["transitions"].clone(), "工作流流转"))
+}
+
+/// POST /workflows/{id}/transitions —— 追加流转不落库，回显契约结构（待上游支持）
+pub async fn add_workflow_transition(
+    State(_pool): State<PgPool>,
+    Path(id): Path<Uuid>,
+    mut body: Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Some(obj) = body.as_object_mut() {
+        obj.insert("id".into(), json!(Uuid::new_v4().to_string()));
+        obj.insert("workflow_id".into(), json!(id.to_string()));
+    }
+    Json(ApiResponse::success(body.0, "流转已添加"))
 }
 
 // ==================== 状态流转 ====================
@@ -1300,7 +1381,7 @@ pub async fn get_attachment_stats(
         Some(tenant_of(&claims))
     };
     let row = match sqlx::query(
-        "SELECT count(*) AS total, COALESCE(sum(file_size), 0) AS total_bytes \
+        "SELECT count(*) AS total, COALESCE(sum(file_size), 0)::bigint AS total_bytes \
          FROM ticket.ticket_attachments \
          WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) AND deleted_at IS NULL",
     )

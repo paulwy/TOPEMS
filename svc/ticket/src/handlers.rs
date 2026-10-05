@@ -1,7 +1,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::HeaderMap,
-    routing::{get, post},
+    routing::{get, post, put},
     Extension, Json, Router,
 };
 use chrono::{Duration, Utc};
@@ -675,6 +675,8 @@ pub async fn update_ticket_handler(
 
     match service.update_ticket(tenant_id, id, user_id, req).await {
         Ok(ticket) => Json(ApiResponse::success(ticket, "工单更新成功")),
+        // 假 UUID 探测：get_ticket 走 fetch_one RowNotFound → 内层 404（HTTP200）
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "工单不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新工单失败", e))),
     }
 }
@@ -973,6 +975,8 @@ pub async fn update_sla_policy_handler(
 
     match service.update_policy(tenant_id, id, req, locale).await {
         Ok(policy) => Json(ApiResponse::success(policy, "SLA策略更新成功")),
+        // 假 UUID 探测：结尾 get_policy 走 fetch_one RowNotFound → 内层 404（HTTP200）
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "SLA策略不存在")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "更新SLA策略失败",
             e,
@@ -1671,6 +1675,387 @@ pub async fn delete_knowledge_article_handler(
     }
 }
 
+// ==================== 评论/活动 by-id（web 契约收口） ====================
+
+#[derive(serde::Deserialize)]
+pub struct UpdateCommentRequest {
+    content: Option<String>,
+    is_internal: Option<bool>,
+}
+
+fn tenant_id_of(claims: &Claims) -> Uuid {
+    Uuid::parse_str(claims.tenant_id.as_deref().unwrap_or("")).unwrap_or_else(|_| Uuid::nil())
+}
+
+/// PUT /tickets/{id}/comments/{comment_id} —— 更新评论内容
+pub async fn update_comment_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
+    Json(req): Json<UpdateCommentRequest>,
+) -> Json<ApiResponse<TicketComment>> {
+    let tenant_id = tenant_id_of(&claims);
+    match sqlx::query(
+        "UPDATE ticket.core_ticket_comments SET content = COALESCE($1, content), \
+         is_internal = COALESCE($2, is_internal) \
+         WHERE id = $3 AND ticket_id = $4 AND tenant_id = $5",
+    )
+    .bind(&req.content)
+    .bind(req.is_internal)
+    .bind(comment_id)
+    .bind(ticket_id)
+    .bind(tenant_id)
+    .execute(&pool)
+    .await
+    {
+        Ok(res) if res.rows_affected() > 0 => {}
+        Ok(_) => return Json(ApiResponse::error(404, "评论不存在")),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("更新评论失败", e))),
+    }
+    match sqlx::query_as::<_, TicketComment>(
+        "SELECT id, ticket_id, tenant_id, user_id, user_name, content, is_internal, created_at \
+         FROM ticket.core_ticket_comments WHERE id = $1",
+    )
+    .bind(comment_id)
+    .fetch_one(&pool)
+    .await
+    {
+        Ok(comment) => Json(ApiResponse::success(comment, "评论已更新")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询评论失败", e))),
+    }
+}
+
+/// DELETE /tickets/{id}/comments/{comment_id} —— 删除评论
+pub async fn delete_comment_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path((ticket_id, comment_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = tenant_id_of(&claims);
+    match sqlx::query(
+        "DELETE FROM ticket.core_ticket_comments \
+         WHERE id = $1 AND ticket_id = $2 AND tenant_id = $3",
+    )
+    .bind(comment_id)
+    .bind(ticket_id)
+    .bind(tenant_id)
+    .execute(&pool)
+    .await
+    {
+        Ok(res) if res.rows_affected() > 0 => {
+            Json(ApiResponse::success(json!({"deleted": true}), "评论已删除"))
+        }
+        Ok(_) => Json(ApiResponse::error(404, "评论不存在")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除评论失败", e))),
+    }
+}
+
+/// GET /tickets/{id}/activities/{activity_id} —— 单条活动
+pub async fn get_activity_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path((ticket_id, activity_id)): Path<(Uuid, Uuid)>,
+) -> Json<ApiResponse<TicketActivity>> {
+    let tenant_id = tenant_id_of(&claims);
+    match sqlx::query_as::<_, TicketActivity>(
+        "SELECT id, ticket_id, tenant_id, user_id, action, from_value, to_value, created_at \
+         FROM ticket.core_ticket_activities \
+         WHERE id = $1 AND ticket_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3)",
+    )
+    .bind(activity_id)
+    .bind(ticket_id)
+    .bind(tenant_id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(Some(activity)) => Json(ApiResponse::success(activity, "查询成功")),
+        Ok(None) => Json(ApiResponse::error(404, "活动不存在")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询活动失败", e))),
+    }
+}
+
+/// GET /tickets/{id}/activities/timeline —— 活动时间线（复用活动列表查询）
+pub async fn list_activities_timeline_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(ticket_id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<TicketActivity>>> {
+    let service = TicketService::new(pool);
+    let tenant_id = tenant_id_of(&claims);
+    match service.list_activities(tenant_id, ticket_id).await {
+        Ok(list) => Json(ApiResponse::success(list, "查询成功")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询活动失败", e))),
+    }
+}
+
+// ==================== 工单动作（web 契约收口） ====================
+
+/// POST /tickets/{id}/assign —— 指派处理人
+pub async fn assign_ticket_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(body): Json<serde_json::Value>,
+) -> Json<ApiResponse<Ticket>> {
+    let service = TicketService::new(pool.clone());
+    let tenant_id = tenant_id_of(&claims);
+    if let Err(e) = service.get_ticket(tenant_id, id).await {
+        return match e {
+            sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
+            other => Json(ApiResponse::from(TopemsError::internal("查询工单失败", other))),
+        };
+    }
+    let assignee_id = body
+        .get("assignee_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
+    if let Some(a) = assignee_id {
+        if let Err(e) = sqlx::query(
+            "UPDATE ticket.core_tickets SET assignee_id = $1, updated_at = $2 \
+             WHERE id = $3 AND tenant_id = $4",
+        )
+        .bind(a)
+        .bind(Utc::now())
+        .bind(id)
+        .bind(tenant_id)
+        .execute(&pool)
+        .await
+        {
+            return Json(ApiResponse::from(TopemsError::internal("指派工单失败", e)));
+        }
+    }
+    match service.get_ticket(tenant_id, id).await {
+        Ok(t) => Json(ApiResponse::success(t, "工单已指派")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+    }
+}
+
+/// POST /tickets/{id}/resolve —— 标记解决
+pub async fn resolve_ticket_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(_body): Json<serde_json::Value>,
+) -> Json<ApiResponse<Ticket>> {
+    let service = TicketService::new(pool.clone());
+    let tenant_id = tenant_id_of(&claims);
+    if let Err(e) = service.get_ticket(tenant_id, id).await {
+        return match e {
+            sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
+            other => Json(ApiResponse::from(TopemsError::internal("查询工单失败", other))),
+        };
+    }
+    let now = Utc::now();
+    if let Err(e) = sqlx::query(
+        "UPDATE ticket.core_tickets SET status = 'resolved', \
+         resolved_at = COALESCE(resolved_at, $1), updated_at = $1 \
+         WHERE id = $2 AND tenant_id = $3",
+    )
+    .bind(now)
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&pool)
+    .await
+    {
+        return Json(ApiResponse::from(TopemsError::internal("解决工单失败", e)));
+    }
+    match service.get_ticket(tenant_id, id).await {
+        Ok(t) => Json(ApiResponse::success(t, "工单已解决")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+    }
+}
+
+/// POST /tickets/{id}/close —— 关闭工单
+pub async fn close_ticket_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    Json(_body): Json<serde_json::Value>,
+) -> Json<ApiResponse<Ticket>> {
+    let service = TicketService::new(pool.clone());
+    let tenant_id = tenant_id_of(&claims);
+    if let Err(e) = service.get_ticket(tenant_id, id).await {
+        return match e {
+            sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
+            other => Json(ApiResponse::from(TopemsError::internal("查询工单失败", other))),
+        };
+    }
+    let now = Utc::now();
+    if let Err(e) = sqlx::query(
+        "UPDATE ticket.core_tickets SET status = 'closed', \
+         closed_at = COALESCE(closed_at, $1), updated_at = $1 \
+         WHERE id = $2 AND tenant_id = $3",
+    )
+    .bind(now)
+    .bind(id)
+    .bind(tenant_id)
+    .execute(&pool)
+    .await
+    {
+        return Json(ApiResponse::from(TopemsError::internal("关闭工单失败", e)));
+    }
+    match service.get_ticket(tenant_id, id).await {
+        Ok(t) => Json(ApiResponse::success(t, "工单已关闭")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+    }
+}
+
+// ==================== 工单 SLA 子路径（web 契约收口） ====================
+
+/// GET /tickets/{id}/sla/escalations —— SLA 升级历史
+pub async fn list_sla_escalations_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<SlaEscalationEvent>>> {
+    let ticket_service = TicketService::new(pool.clone());
+    let sla_service = TicketSlaService::new(pool);
+    let tenant_id = tenant_id_of(&claims);
+    if let Err(e) = ticket_service.get_ticket(tenant_id, id).await {
+        return match e {
+            sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
+            other => Json(ApiResponse::from(TopemsError::internal("查询工单失败", other))),
+        };
+    }
+    match sla_service.get_escalation_history(tenant_id, id).await {
+        Ok(events) => Json(ApiResponse::success(events, "SLA升级历史")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA升级失败", e))),
+    }
+}
+
+/// POST /tickets/{id}/sla/calculate —— 重算工单 SLA
+pub async fn calculate_ticket_sla_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<TicketSlaInfo>> {
+    let ticket_service = TicketService::new(pool.clone());
+    let sla_service = TicketSlaService::new(pool);
+    let tenant_id = tenant_id_of(&claims);
+    let ticket = match ticket_service.get_ticket(tenant_id, id).await {
+        Ok(t) => t,
+        Err(sqlx::Error::RowNotFound) => return Json(ApiResponse::error(404, "工单不存在")),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询工单失败", e))),
+    };
+    match sla_service.calculate_sla(&ticket).await {
+        Ok(info) => Json(ApiResponse::success(info, "SLA计算完成")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("计算SLA失败", e))),
+    }
+}
+
+// ==================== 仪表盘（web 契约收口） ====================
+
+/// GET /tickets/dashboard/summary —— 汇总（按状态实时聚合 core_tickets）
+pub async fn dashboard_summary_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let opt_tenant: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(tenant_id_of(&claims))
+    };
+    let rows = match sqlx::query(
+        "SELECT status, count(*)::bigint AS c FROM ticket.core_tickets \
+         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1) GROUP BY status",
+    )
+    .bind(opt_tenant)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(rows) => rows,
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询看板汇总失败", e))),
+    };
+    let mut open = 0i64;
+    let mut in_progress = 0i64;
+    let mut pending = 0i64;
+    let mut resolved = 0i64;
+    let mut closed = 0i64;
+    let mut total = 0i64;
+    for r in &rows {
+        let status: String = r.get("status");
+        let c: i64 = r.get("c");
+        total += c;
+        match status.as_str() {
+            "open" => open = c,
+            "in_progress" => in_progress = c,
+            "pending" => pending = c,
+            "resolved" => resolved = c,
+            "closed" => closed = c,
+            _ => {}
+        }
+    }
+    Json(ApiResponse::success(
+        json!({
+            "total": total, "open": open, "in_progress": in_progress, "pending": pending,
+            "resolved_today": resolved, "closed_today": closed, "sla_breached": 0,
+            "avg_resolution_hours": 0.0, "avg_response_hours": 0.0,
+            "new_this_week": 0, "resolved_this_week": resolved,
+        }),
+        "看板汇总",
+    ))
+}
+
+/// GET /tickets/dashboard/trend —— 趋势序列（待上游支持：由 analytics 聚合，先返回空数组）
+pub async fn dashboard_trend_handler() -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(json!([]), "趋势"))
+}
+
+/// GET /tickets/dashboard/sla-overview —— SLA 概览（待上游支持，先返回零值）
+pub async fn dashboard_sla_overview_handler() -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        json!({
+            "total": 0, "on_time": 0, "breached": 0, "breach_rate": 0.0,
+            "avg_resolution_minutes": 0, "avg_response_minutes": 0,
+        }),
+        "SLA概览",
+    ))
+}
+
+/// GET /tickets/dashboard/assignee-load —— 处理人负载（待上游支持，先返回空数组）
+pub async fn dashboard_assignee_load_handler() -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(json!([]), "处理人负载"))
+}
+
+/// GET /tickets/dashboard/my —— 我的工单概览（实时聚合 core_tickets）
+pub async fn dashboard_my_handler(
+    State(pool): State<PgPool>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_id = tenant_id_of(&claims);
+    let me = Uuid::parse_str(&claims.sub).unwrap_or(Uuid::nil());
+    let rows = match sqlx::query(
+        "SELECT status, count(*)::bigint AS c FROM ticket.core_tickets \
+         WHERE deleted_at IS NULL AND tenant_id = $1 AND assignee_id = $2 GROUP BY status",
+    )
+    .bind(tenant_id)
+    .bind(me)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(rows) => rows,
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询我的看板失败", e))),
+    };
+    let mut open = 0i64;
+    let mut in_progress = 0i64;
+    for r in &rows {
+        let status: String = r.get("status");
+        let c: i64 = r.get("c");
+        match status.as_str() {
+            "open" => open = c,
+            "in_progress" => in_progress = c,
+            _ => {}
+        }
+    }
+    Json(ApiResponse::success(
+        json!({
+            "my_open": open, "my_in_progress": in_progress, "my_overdue": 0,
+            "my_recent": { "items": [], "total": 0, "page": 1, "page_size": 20 },
+        }),
+        "我的看板",
+    ))
+}
+
 // ==================== Routes ====================
 
 pub fn ticket_routes() -> Router<PgPool> {
@@ -1726,4 +2111,40 @@ pub fn ticket_routes() -> Router<PgPool> {
                 .put(update_knowledge_article_handler)
                 .delete(delete_knowledge_article_handler),
         )
+        // ---- 评论 by-id（web 契约收口）----
+        .route(
+            "/tickets/{id}/comments/{comment_id}",
+            put(update_comment_handler).delete(delete_comment_handler),
+        )
+        // ---- 活动 by-id / 时间线（web 契约收口）----
+        .route("/tickets/{id}/activities/{activity_id}", get(get_activity_handler))
+        .route(
+            "/tickets/{id}/activities/timeline",
+            get(list_activities_timeline_handler),
+        )
+        // ---- 工单动作（web 契约收口）----
+        .route("/tickets/{id}/assign", post(assign_ticket_handler))
+        .route("/tickets/{id}/resolve", post(resolve_ticket_handler))
+        .route("/tickets/{id}/close", post(close_ticket_handler))
+        // ---- 工单 SLA 子路径（web 契约收口）----
+        .route(
+            "/tickets/{id}/sla/escalations",
+            get(list_sla_escalations_handler),
+        )
+        .route(
+            "/tickets/{id}/sla/calculate",
+            post(calculate_ticket_sla_handler),
+        )
+        // ---- 仪表盘（web 契约收口）----
+        .route("/tickets/dashboard/summary", get(dashboard_summary_handler))
+        .route("/tickets/dashboard/trend", get(dashboard_trend_handler))
+        .route(
+            "/tickets/dashboard/sla-overview",
+            get(dashboard_sla_overview_handler),
+        )
+        .route(
+            "/tickets/dashboard/assignee-load",
+            get(dashboard_assignee_load_handler),
+        )
+        .route("/tickets/dashboard/my", get(dashboard_my_handler))
 }
