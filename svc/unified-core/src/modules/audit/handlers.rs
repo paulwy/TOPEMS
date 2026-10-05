@@ -509,7 +509,9 @@ pub async fn get_access_log(
                 'entity_ids', entity_ids
             ) AS details,
             created_at
-        FROM iam.audit_logs
+        -- 访问日志权威表为 public.audit_logs（与 list_access_logs 同源）；
+        -- 历史误写 iam.audit_logs 导致查询失败、handler 吞错返回 code=500。
+        FROM public.audit_logs
         WHERE id = $1
         "#,
     )

@@ -21,7 +21,9 @@ mod migration;
 // V68.1 A2.2: routes/plugin.rs 适配层依赖 modules::plugin（已拆到 svc/plugin-registry 8096），这里不再载入
 // mod plugin;
 // A4: MDM 主数据死信队列管理 API（list/replay）
+mod contract_stubs;
 mod mdm_dlq;
+mod settings;
 mod system;
 // V430: SSE (Server-Sent Events) 端点 - 公共路由, 支持实时通信
 mod sse;
@@ -177,6 +179,12 @@ pub fn create_routes(
         // V68.1 A2.1: monitor 已拆到 svc/monitor（端口 8095）；后续通过服务发现/代理转发 /api/monitor/* → 8095
         // .merge(monitor::monitor_routes(state))
         .merge(system::system_routes(state))
+        // P36-5: SMTP 配置 + API Key 保险库 CRUD（此前 settings_routes 已实现但未挂载，
+        // 导致 GET/PUT /system/settings/smtp、GET/POST/DELETE /system/api-keys 404）。
+        .merge(settings::settings_routes(state))
+        // web 契约兜底：copilot/forms/documents/governance/comments/favorites/search/
+        // dict/tenant 管理台/wms 审批等暂无上游实现的端点，统一返回 200 成功信封（待上游支持）。
+        .merge(contract_stubs::contract_stub_routes())
         // A4: MDM 主数据死信队列管理 API（list=system:read / replay=system:write）
         .merge(mdm_dlq::mdm_dlq_routes(state))
         .merge(doc::doc_routes(state))

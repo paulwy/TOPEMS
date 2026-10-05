@@ -151,6 +151,13 @@ pub fn system_routes(state: &AppState) -> Router<AppState> {
         .route("/system/v1/cache/stats", get(get_cache_stats))
         .route("/system/v1/log/config", get(get_log_config))
         .route("/system/v1/params", get(get_system_params))
+        // 前端契约面为 /system/*（无 /v1 中缀）：同一 handler 额外挂载无 v1 路径，
+        // 避免 /system/v1/* 与前端期望路径错位导致 404。
+        .route("/system/config", get(get_system_config))
+        .route("/system/cache/config", get(get_cache_config))
+        .route("/system/cache/stats", get(get_cache_stats))
+        .route("/system/log/config", get(get_log_config))
+        .route("/system/params", get(get_system_params))
         .route(
             "/system/audit-logs",
             get(crate::modules::system_audit::list_audit_logs),
@@ -178,6 +185,12 @@ pub fn system_routes(state: &AppState) -> Router<AppState> {
         .route("/system/v1/cache/clear", post(clear_cache))
         .route("/system/v1/log/config", put(update_log_config))
         .route("/system/v1/params", put(update_system_params))
+        // 无 v1 中缀的写路径（对齐前端契约面）。
+        .route("/system/config", put(update_system_config))
+        .route("/system/cache/config", put(update_cache_config))
+        .route("/system/cache/clear", post(clear_cache))
+        .route("/system/log/config", put(update_log_config))
+        .route("/system/params", put(update_system_params))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
             require_permission("system:write"),

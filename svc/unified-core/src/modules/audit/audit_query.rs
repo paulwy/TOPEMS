@@ -750,7 +750,9 @@ async fn fetch_export_rows(
                 WHERE ($1::timestamptz IS NULL OR changed_at >= $1)
                   AND ($2::timestamptz IS NULL OR changed_at <= $2)
                   AND ($3::text IS NULL OR action = $3)
-                  AND ($4::uuid IS NULL OR user_id = $4)
+                  -- user_id 列为 varchar：须按 text 比较，避免计划期报
+                  -- "operator does not exist: character varying = uuid"（历史 export 500 根因）。
+                  AND ($4::text IS NULL OR user_id = $4)
                 ORDER BY changed_at DESC
                 LIMIT $5
                 "#,
@@ -758,12 +760,7 @@ async fn fetch_export_rows(
             .bind(start_date)
             .bind(end_date)
             .bind(params.action.as_deref())
-            .bind(
-                params
-                    .user_id
-                    .as_deref()
-                    .and_then(|s| Uuid::parse_str(s).ok()),
-            )
+            .bind(params.user_id.as_deref())
             .bind(limit)
             .fetch_all(&state.pool)
             .await?

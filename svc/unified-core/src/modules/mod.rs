@@ -32,6 +32,8 @@ pub mod openapi;
 // pub mod plugin;
 pub mod subscription;
 pub mod system_audit;
+// P36-5: 外部集成设置（SMTP 配置 + API Key 保险库），此前模块存在但未声明/未挂载。
+pub mod settings;
 pub mod tenant;
 
 // U1-b2（D1 §5 选项C 灰度下架）：以下 23 个业务镜像模块已删除——

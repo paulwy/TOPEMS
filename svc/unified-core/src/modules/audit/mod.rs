@@ -148,18 +148,14 @@ pub fn create_routes(state: AppState) -> Router<AppState> {
             delete(login_log_handlers::delete_login_log),
         )
         // ===== 操作审计 =====
+        // 注意：本路由树已被 BFF nest 到 /api/core 之下（嵌入模式），路径不得再硬编码
+        // /api/core 前缀，否则实际挂载为 /api/core/api/core/audit/...（前端探测 404）。
+        .route("/audit/operations", get(handlers::list_operation_logs))
         .route(
-            "/api/core/audit/operations",
-            get(handlers::list_operation_logs),
-        )
-        .route(
-            "/api/core/audit/operations/stats",
+            "/audit/operations/stats",
             get(handlers::get_operation_log_stats),
         )
-        .route(
-            "/api/core/audit/operations/{id}",
-            get(handlers::get_operation_log),
-        )
+        .route("/audit/operations/{id}", get(handlers::get_operation_log))
         // ===== 统一 IAM 审计日志接口 (iam/v1/audit/*) =====
         .route("/iam/v1/audit/logs", get(audit_query::query_audit_logs))
         .route(
