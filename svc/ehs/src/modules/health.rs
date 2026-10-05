@@ -9,9 +9,11 @@ use uuid::Uuid;
 
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
+    // 注意：不注册 `/health` 集合路由。BFF 外层 registry 有通用探活 `/api/{svc}/health`，
+    // 嵌套注册同名静态路由会与该参数路由冲突，导致 ehs auth_middleware 被绕过、
+    // handler 取 Extension<Claims> 时 500。业务健康记录列表请走 `/health-records`。
     Router::new()
         .route("/health-records", get(list_records).post(create_record))
-        .route("/health", get(list_records).post(create_record))
         .route(
             "/health/{id}",
             get(get_record).put(update_record).delete(delete_record),
