@@ -108,7 +108,8 @@ use crate::modules::device::{
     register_device, test_push_device, unregister_device, update_device, update_push_token,
 };
 use crate::modules::document::{
-    create_document, delete_document, get_document, list_documents, update_document,
+    create_document, delete_document, get_document, get_document_categories, list_documents,
+    update_document,
 };
 use crate::modules::inventory::{
     create_stocktake_record, delete_inventory_item, get_inventory_item, list_inbound_orders,
@@ -770,6 +771,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/documents",
             axum::routing::get(list_documents).post(create_document),
         )
+        .route("/documents/categories", axum::routing::get(get_document_categories))
         .route(
             "/documents/{id}",
             axum::routing::get(get_document)

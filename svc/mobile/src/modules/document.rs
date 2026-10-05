@@ -148,6 +148,22 @@ pub async fn list_documents(
     )
 }
 
+/// 文档分类（前端 GET /documents/categories → 内置业务分类）
+pub async fn get_document_categories() -> impl IntoResponse {
+    let categories = serde_json::json!([
+        { "id": "general", "name": "通用文档" },
+        { "id": "contract", "name": "合同" },
+        { "id": "report", "name": "报告" },
+        { "id": "manual", "name": "操作手册" },
+        { "id": "training", "name": "培训资料" },
+        { "id": "quality", "name": "质量文件" }
+    ]);
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(categories, "获取文档分类成功")),
+    )
+}
+
 /// 文档详情（前端 GET /documents/{id}）
 pub async fn get_document(
     headers: HeaderMap,
