@@ -236,6 +236,26 @@ pre-commit:
           node scripts/ci/check-i18n.cjs --mode=hardcode --strict
         fi
 
+    # [Gate MCS] Mobile 契约全量实跑回归（方向1固化，117 端点）
+    # 触发：mobile 前端契约 / mobile BFF / shared-service-client 变更。
+    # mobile 服务(8070)在线才执行（离线秒级跳过并提示，避免破坏无服务开发流）；
+    # 有 FAIL 阻断提交，日志落 /tmp/mobile_smoke_precommit.log。
+    mobile-contract-smoke:
+      tags: mobile contract smoke
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/mobile/src/api/|svc/mobile/src/|lib/shared-service-client/src/)' || true)
+        [ -z "$STAGED" ] && exit 0
+        if ! lsof -iTCP:8070 -sTCP:LISTEN >/dev/null 2>&1; then
+          printf '\033[33m[Gate MCS] SKIP\033[0m mobile 服务(8070)未运行，契约回归可手动执行 python3 scripts/mobile_contract_smoke.py\n'
+          exit 0
+        fi
+        if python3 scripts/mobile_contract_smoke.py > /tmp/mobile_smoke_precommit.log 2>&1; then
+          printf '\033[32m[Gate MCS] PASS\033[0m 117 端点契约实跑回归全绿\n'
+        else
+          printf '\033[31m[Gate MCS] FAIL\033[0m 见 /tmp/mobile_smoke_precommit.log 末尾 FAIL 行；若为未重启到新二进制，请重启 mobile 后重提\n'
+          exit 1
+        fi
+
 pre-push:
   # V300: parallel:true → false。四个 cargo 命令共享 target/包缓存锁，并行会竞争
   # 导致随机失败（曾实测 cargo-test-workspace 并行失败、串行全绿）。
