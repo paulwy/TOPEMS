@@ -488,7 +488,7 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
 /// 获取所有转换规则
 pub async fn list_conversion_rules(pool: &PgPool) -> Result<Vec<ConversionRule>, sqlx::Error> {
     sqlx::query_as::<_, ConversionRule>(
-        only_own_schema_query!("integration", "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM integration.conversion_rules ORDER BY priority ASC, created_at DESC"),
+        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL ORDER BY priority ASC, created_at DESC"),
     )
     .fetch_all(pool)
     .await
@@ -501,7 +501,7 @@ pub async fn get_rule_executions(
     limit: i64,
 ) -> Result<Vec<ConversionExecution>, sqlx::Error> {
     sqlx::query_as::<_, ConversionExecution>(
-        only_own_schema_query!("integration", "SELECT id, rule_id, source_value, target_value, status, error_message, executed_at FROM integration.conversion_executions WHERE rule_id = $1 ORDER BY created_at DESC LIMIT $2"),
+        only_own_schema_query!("integration", "SELECT id, tenant_id, rule_id, rule_code, source_record_id, target_record_id, source_data, target_data, status, retry_count, error_message, started_at AT TIME ZONE 'UTC' AS started_at, completed_at AT TIME ZONE 'UTC' AS completed_at, created_at AT TIME ZONE 'UTC' AS created_at FROM integration.conversion_executions WHERE rule_id = $1 ORDER BY created_at DESC LIMIT $2"),
     )
     .bind(rule_id)
     .bind(limit)

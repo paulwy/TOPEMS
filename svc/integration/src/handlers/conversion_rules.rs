@@ -59,7 +59,7 @@ pub async fn get_conversion_rule_api(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ConversionRule>> {
     match sqlx::query_as::<_, ConversionRule>(
-        only_own_schema_query!("integration", "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -307,7 +307,7 @@ pub async fn execute_conversion_rule_api(
     Json(req): Json<ExecuteConversionRequest>,
 ) -> Json<ApiResponse<ExecuteConversionResponse>> {
     let rule = match sqlx::query_as::<_, ConversionRule>(
-        only_own_schema_query!("integration", "SELECT id, source_system, target_system, rule_type, source_field, target_field, transformation_type, transformation_config, priority, is_active, created_at, updated_at, deleted_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("integration", "SELECT id, tenant_id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM integration.conversion_rules WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .fetch_one(&state.pool)

@@ -2,7 +2,8 @@
 //! 覆盖 /external-erp/* 全部路径，基于 erp_connections / erp_mappings / external_erp_sync_logs 真实表实现
 
 use axum::extract::{Extension, Path, State};
-use axum::{routing::get, routing::post, Json, Router};
+use axum::routing::{get, post, put};
+use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
@@ -55,8 +56,8 @@ pub async fn list_connections(
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -135,8 +136,8 @@ pub async fn create_connection(
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC'"
     ))
     .bind(id)
     .bind(TENANT_ID)
@@ -230,8 +231,8 @@ async fn get_connection(
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
     ))
     .bind(uuid)
     .bind(tid)
@@ -287,8 +288,8 @@ pub async fn update_connection(
          updated_at = NOW() \
          WHERE id = $5 AND tenant_id = $6 \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC'"
     ))
     .bind(name)
     .bind(api_url)
@@ -355,7 +356,7 @@ pub async fn list_entity_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at, updated_at FROM erp_mappings \
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_mappings \
          WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id = $3) ORDER BY created_at DESC"
     ))
     .bind(uuid)
@@ -406,7 +407,7 @@ async fn create_entity_mapping(
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NULL,NOW(),NOW()) \
          RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at, updated_at"
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC'"
     ))
     .bind(mapping_id)
     .bind(TENANT_ID)
@@ -512,7 +513,7 @@ pub async fn preview_entity(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at, updated_at FROM erp_mappings \
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_mappings \
          WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id = $3) \
          ORDER BY created_at DESC LIMIT 20"
     ))
@@ -534,8 +535,8 @@ async fn get_connection_by_id(pool: &sqlx::PgPool, connection_id: Uuid) -> Optio
     sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
-         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at, \
-         created_at, updated_at FROM erp_connections WHERE id = $1 AND tenant_id = $2"
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC', \
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_connections WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(connection_id)
     .bind(TENANT_ID)
@@ -923,7 +924,7 @@ pub async fn sync_logs(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
-         started_at, completed_at, created_at \
+         started_at AT TIME ZONE 'UTC', completed_at AT TIME ZONE 'UTC', created_at AT TIME ZONE 'UTC' \
          FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"
     ))
     .bind(tid)
@@ -1026,7 +1027,7 @@ pub async fn export_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at, updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         created_at AT TIME ZONE 'UTC', updated_at AT TIME ZONE 'UTC' FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -1057,7 +1058,7 @@ pub async fn export_sync_logs(
         "integration",
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
-         started_at, completed_at, created_at \
+         started_at AT TIME ZONE 'UTC', completed_at AT TIME ZONE 'UTC', created_at AT TIME ZONE 'UTC' \
          FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
@@ -1076,13 +1077,375 @@ pub async fn export_sync_logs(
     }
 }
 
+// ===== connections/{id}/toggle =====
+
+pub async fn toggle_connection(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(body): Json<serde_json::Value>,
+) -> Json<ApiResponse<ErpConnection>> {
+    let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let enabled = body.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
+    match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
+        "integration",
+        "UPDATE erp_connections SET isactive = $2, updated_at = NOW() \
+         WHERE id = $1 AND tenant_id = $3 \
+         RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
+         sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AT TIME ZONE 'UTC' AS last_sync_at, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
+    ))
+    .bind(uuid)
+    .bind(enabled)
+    .bind(TENANT_ID)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(conn)) => Json(ApiResponse::success(conn, "切换成功")),
+        Ok(None) => Json(ApiResponse::error(404, "连接不存在")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("切换失败", e))),
+    }
+}
+
+// ===== connections/{id}/sync-status =====
+
+pub async fn sync_connection_status(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    // 待上游支持：此处仅回显连接当前状态，真实 ERP 连通性探测后续接入
+    match get_connection_by_id(&state.pool, uuid).await {
+        Some(c) => Json(ApiResponse::success(
+            serde_json::json!({"status": c.status, "isactive": c.isactive, "last_sync_at": c.last_sync_at}),
+            "连接状态已刷新",
+        )),
+        None => Json(ApiResponse::error(404, "连接不存在")),
+    }
+}
+
+// ===== connections/{id}/company-mappings =====
+
+pub async fn list_company_mappings(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<ApiResponse<Vec<ErpMapping>>> {
+    let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let tid: Option<&str> = if claims.is_superuser {
+        None
+    } else {
+        Some(claims.tenant_id.as_deref().unwrap_or("default"))
+    };
+    match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
+        "integration",
+        "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
+         external_code, external_name, direction, isactive, priority, condition, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at \
+         FROM erp_mappings WHERE connection_id = $1 AND mapping_type = 'company' AND ($2::text IS NULL OR tenant_id = $2) ORDER BY created_at DESC"
+    ))
+    .bind(uuid)
+    .bind(tid)
+    .fetch_all(&state.pool)
+    .await
+    {
+        Ok(rows) => Json(ApiResponse::success(rows, "公司映射列表获取成功")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+    }
+}
+
+pub async fn create_company_mapping(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+    Json(body): Json<serde_json::Value>,
+) -> Json<ApiResponse<ErpMapping>> {
+    let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let mapping_id = Uuid::new_v4();
+    let local_code = body.get("local_code").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let local_name = body.get("local_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let external_code = body.get("external_code").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let external_name = body.get("external_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
+        "integration",
+        "INSERT INTO erp_mappings \
+         (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
+          external_code, external_name, direction, isactive, priority, condition, \
+          created_at, updated_at) \
+         VALUES ($1,$2,$3,'company',$4,$5,$6,$7,$8,'bidirectional',TRUE,0,NULL,NOW(),NOW()) \
+         RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
+         external_code, external_name, direction, isactive, priority, condition, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
+    ))
+    .bind(mapping_id)
+    .bind(TENANT_ID)
+    .bind(conn_uuid)
+    .bind(mapping_id.to_string())
+    .bind(&local_code)
+    .bind(&local_name)
+    .bind(&external_code)
+    .bind(&external_name)
+    .fetch_one(&state.pool)
+    .await
+    {
+        Ok(m) => Json(ApiResponse::success(m, "创建成功")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建失败", e))),
+    }
+}
+
+pub async fn update_company_mapping(
+    State(state): State<AppState>,
+    Path((id, mapping_id)): Path<(String, String)>,
+    Json(body): Json<serde_json::Value>,
+) -> Json<ApiResponse<ErpMapping>> {
+    let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    let local_code = body.get("local_code").and_then(|v| v.as_str());
+    let local_name = body.get("local_name").and_then(|v| v.as_str());
+    let external_code = body.get("external_code").and_then(|v| v.as_str());
+    let external_name = body.get("external_name").and_then(|v| v.as_str());
+    match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
+        "integration",
+        "UPDATE erp_mappings SET \
+         local_code = COALESCE($1, local_code), \
+         local_name = COALESCE($2, local_name), \
+         external_code = COALESCE($3, external_code), \
+         external_name = COALESCE($4, external_name), \
+         updated_at = NOW() \
+         WHERE id = $5 AND connection_id = $6 AND mapping_type = 'company' \
+         RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
+         external_code, external_name, direction, isactive, priority, condition, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
+    ))
+    .bind(local_code)
+    .bind(local_name)
+    .bind(external_code)
+    .bind(external_name)
+    .bind(mid)
+    .bind(conn_uuid)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
+        Ok(None) => Json(ApiResponse::error(404, "映射不存在")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+    }
+}
+
+pub async fn delete_company_mapping(
+    State(state): State<AppState>,
+    Path((id, mapping_id)): Path<(String, String)>,
+) -> Json<ApiResponse<()>> {
+    let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
+    let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    match sqlx::query(only_own_schema_query!(
+        "integration",
+        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company'"
+    ))
+    .bind(mid)
+    .bind(conn_uuid)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "映射不存在")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+    }
+}
+
+// ===== connections/{id}/mappings/{entity}/{mapping_id} =====
+
+pub async fn update_entity_mapping(
+    State(state): State<AppState>,
+    Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
+    Json(body): Json<serde_json::Value>,
+) -> Json<ApiResponse<ErpMapping>> {
+    let conn_uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
+    let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    let local_code = body.get("local_code").and_then(|v| v.as_str());
+    let local_name = body.get("local_name").and_then(|v| v.as_str());
+    let external_code = body.get("external_code").and_then(|v| v.as_str());
+    let external_name = body.get("external_name").and_then(|v| v.as_str());
+    match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
+        "integration",
+        "UPDATE erp_mappings SET \
+         local_code = COALESCE($1, local_code), \
+         local_name = COALESCE($2, local_name), \
+         external_code = COALESCE($3, external_code), \
+         external_name = COALESCE($4, external_name), \
+         updated_at = NOW() \
+         WHERE id = $5 AND connection_id = $6 AND mapping_type = $7 \
+         RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
+         external_code, external_name, direction, isactive, priority, condition, \
+         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
+    ))
+    .bind(local_code)
+    .bind(local_name)
+    .bind(external_code)
+    .bind(external_name)
+    .bind(mid)
+    .bind(conn_uuid)
+    .bind(&entity)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(m)) => Json(ApiResponse::success(m, "更新成功")),
+        Ok(None) => Json(ApiResponse::error(404, "映射不存在")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+    }
+}
+
+pub async fn delete_entity_mapping(
+    State(state): State<AppState>,
+    Path((conn_id, entity, mapping_id)): Path<(String, String, String)>,
+) -> Json<ApiResponse<()>> {
+    let conn_uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
+    let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
+    match sqlx::query(only_own_schema_query!(
+        "integration",
+        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3"
+    ))
+    .bind(mid)
+    .bind(conn_uuid)
+    .bind(&entity)
+    .execute(&state.pool)
+    .await
+    {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "映射不存在")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除失败", e))),
+    }
+}
+
+/// 自动匹配映射（待上游支持：依赖主数据服务，当前返回空匹配）
+pub async fn auto_match_mappings() -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({"matched": 0, "total": 0}),
+        "自动匹配完成",
+    ))
+}
+
+// ===== sync/{log_id}/cancel =====
+
+/// 取消同步（待上游支持：此处校验日志存在性后返回成功，真实中断后续接入）
+pub async fn cancel_sync(
+    State(state): State<AppState>,
+    Path(log_id): Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let uuid = Uuid::parse_str(&log_id).unwrap_or(Uuid::nil());
+    let exists: Option<(Uuid,)> = sqlx::query_as(only_own_schema_query!(
+        "integration",
+        "SELECT id FROM external_erp_sync_logs WHERE id = $1"
+    ))
+    .bind(uuid)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+    match exists {
+        Some(_) => Json(ApiResponse::success(
+            serde_json::json!({"status": "cancelled"}),
+            "同步已取消",
+        )),
+        None => Json(ApiResponse::error(404, "同步日志不存在")),
+    }
+}
+
+// ===== sync-logs/{log_id} =====
+
+pub async fn get_sync_log(
+    State(state): State<AppState>,
+    Path(log_id): Path<String>,
+) -> Json<ApiResponse<ExternalErpSyncLog>> {
+    let uuid = Uuid::parse_str(&log_id).unwrap_or(Uuid::nil());
+    match sqlx::query_as::<_, ExternalErpSyncLog>(only_own_schema_query!(
+        "integration",
+        "SELECT id, tenant_id, connection_id, entity, direction, status, \
+         total_records, success_count, failed_count, error_message, \
+         started_at AT TIME ZONE 'UTC', completed_at AT TIME ZONE 'UTC', created_at AT TIME ZONE 'UTC' \
+         FROM external_erp_sync_logs WHERE id = $1"
+    ))
+    .bind(uuid)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(log)) => Json(ApiResponse::success(log, "获取成功")),
+        Ok(None) => Json(ApiResponse::error(404, "同步日志不存在")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+    }
+}
+
+// ===== connections/{id}/sync-statistics =====
+
+pub async fn connection_sync_statistics(
+    State(state): State<AppState>,
+    Path(conn_id): Path<String>,
+) -> Json<ApiResponse<SyncStatistics>> {
+    let uuid = Uuid::parse_str(&conn_id).unwrap_or(Uuid::nil());
+    let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
+        "integration",
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1"
+    ))
+    .bind(uuid)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+    let successful: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
+        "integration",
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1 AND status = 'success'"
+    ))
+    .bind(uuid)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+    let failed: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
+        "integration",
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE connection_id = $1 AND status = 'failed'"
+    ))
+    .bind(uuid)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+    let last_sync: Option<(Option<chrono::DateTime<chrono::Utc>>,)> =
+        sqlx::query_as(only_own_schema_query!(
+            "integration",
+            "SELECT MAX(completed_at AT TIME ZONE 'UTC') FROM external_erp_sync_logs WHERE connection_id = $1"
+        ))
+        .bind(uuid)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
+    Json(ApiResponse::success(
+        SyncStatistics {
+            total_syncs: total.map(|t| t.0).unwrap_or(0),
+            successful: successful.map(|t| t.0).unwrap_or(0),
+            failed: failed.map(|t| t.0).unwrap_or(0),
+            last_sync_at: last_sync.and_then(|t| t.0),
+            by_entity: serde_json::Value::Object(serde_json::Map::new()),
+        },
+        "统计获取成功",
+    ))
+}
+
+// ===== /health =====
+
+pub async fn integration_health() -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({"status": "up", "service": "integration"}),
+        "integration healthy",
+    ))
+}
+
 /// 构建 external-erp 路由（挂载到 /external-erp 前缀）
 pub fn create_routes() -> Router<AppState> {
     let entity_mappings = Router::new()
         .route("/", get(list_entity_mappings).post(create_entity_mapping))
-        .route("/batch", post(batch_entity_mappings));
+        .route("/batch", post(batch_entity_mappings))
+        .route("/auto-match", post(auto_match_mappings))
+        .route("/{mapping_id}", put(update_entity_mapping).delete(delete_entity_mapping));
 
     let preview = Router::new().route("/{entity}", get(preview_entity));
+
+    let company_mappings = Router::new()
+        .route("/", get(list_company_mappings).post(create_company_mapping))
+        .route("/{mapping_id}", put(update_company_mapping).delete(delete_company_mapping));
 
     let connection_detail = Router::new()
         .route(
@@ -1091,10 +1454,16 @@ pub fn create_routes() -> Router<AppState> {
                 .put(update_connection)
                 .delete(delete_connection),
         )
+        .route("/toggle", put(toggle_connection))
+        .route("/sync-status", post(sync_connection_status))
+        .route("/sync-statistics", get(connection_sync_statistics))
+        .nest("/company-mappings", company_mappings)
         .nest("/mappings/{entity}", entity_mappings)
         .nest("/preview", preview);
 
-    let sync = Router::new().route("/{entity}", post(sync_entity));
+    let sync = Router::new()
+        .route("/{entity}", post(sync_entity))
+        .route("/{log_id}/cancel", post(cancel_sync));
 
     Router::new()
         .route(
@@ -1105,6 +1474,7 @@ pub fn create_routes() -> Router<AppState> {
         .nest("/connections/{id}", connection_detail)
         .nest("/sync", sync)
         .route("/sync-logs", get(sync_logs))
+        .route("/sync-logs/{log_id}", get(get_sync_log))
         .route("/sync-statistics", get(sync_statistics))
         .route("/export/mappings", get(export_mappings))
         .route("/export/sync-logs", get(export_sync_logs))

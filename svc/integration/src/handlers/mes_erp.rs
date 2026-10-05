@@ -194,10 +194,11 @@ pub async fn sync_mes_erp(
     .bind("synced")
     .bind(Some(now))
     .bind(now)
-    .fetch_one(&state.pool)
+    .fetch_optional(&state.pool)
     .await
     {
-        Ok(s) => s,
+        Ok(Some(s)) => s,
+        Ok(None) => return Json(ApiResponse::error(404, "Sync not found")),
         Err(e) => {
             tracing::error!("Failed to update sync: {}", e);
             return Json(ApiResponse::from(TopemsError::internal(

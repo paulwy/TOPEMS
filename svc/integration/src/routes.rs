@@ -57,6 +57,7 @@ fn create_routes_inner(state: AppState, public_routes: Router<()>, with_openapi:
     });
 
     let protected_routes = Router::new()
+        .route("/health", get(external_erp::integration_health))
         .route("/stats", get(events::get_sync_stats))
         .route("/events", get(events::list_events))
         .route("/events", post(events::create_event))
