@@ -66,7 +66,7 @@ async fn list_resources(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        only_own_schema_query!("pm", "id, project_id, resource_type, resource_name, resource_service, quantity, cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -169,7 +169,7 @@ async fn get_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        only_own_schema_query!("pm", "id, project_id, resource_type, resource_name, resource_service, quantity, cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
+        only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)

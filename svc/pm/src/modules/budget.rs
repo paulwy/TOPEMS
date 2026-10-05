@@ -496,7 +496,7 @@ async fn get_budget_items(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<BudgetItem>>> {
     let items = sqlx::query_as::<_, BudgetItem>(
-        only_own_schema_query!("pm", "SELECT id, budget_id, item_code, item_name, category, subcategory, budget_amount, allocated_amount, spent_amount, remaining_amount, created_at FROM pm.budget_items WHERE budget_id = $1"),
+        only_own_schema_query!("pm", "SELECT id, budget_id, item_code, item_name, category, subcategory, budget_amount, allocated_amount, spent_amount, description, created_at, updated_at FROM pm.budget_items WHERE budget_id = $1"),
     )
     .bind(id)
     .fetch_all(&pool)

@@ -51,7 +51,7 @@ async fn get_project_notifications(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Notification>>> {
     let notifications = sqlx::query_as::<_, Notification>(
-        only_own_schema_query!("pm", "id, project_id, recipient AS user_id, notification_type, title, content AS message, status, priority, metadata, due_date, created_at, updated_at FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, recipient AS user_id, notification_type, title, content AS message, status, priority, metadata, due_date, sent_at AS delivered_at, NULL::timestamptz AS read_at, created_at, updated_at FROM pm.notifications WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)

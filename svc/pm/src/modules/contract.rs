@@ -660,7 +660,7 @@ async fn list_contract_milestones(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ContractMilestone>>> {
     let milestones = sqlx::query_as::<_, ContractMilestone>(
-        only_own_schema_query!("pm", "SELECT id, contract_id, project_milestone_id, name, description, target_date, payment_amount, payment_percentage, status, created_at FROM pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date"),
+        only_own_schema_query!("pm", "SELECT id, contract_id, project_milestone_id, name, description, target_date, payment_amount, payment_percent, status, actual_date, payment_status, created_at, updated_at FROM pm.contract_milestones WHERE contract_id = $1 ORDER BY target_date"),
     )
     .bind(id)
     .fetch_all(&pool)
@@ -963,7 +963,7 @@ async fn delete_payment_schedule(
 
 async fn list_templates(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<ContractTemplate>>> {
     let templates = sqlx::query_as::<_, ContractTemplate>(
-        only_own_schema_query!("pm", "id, name, contract_type, description, content, is_active, created_by, created_at, updated_at FROM pm.contract_templates WHERE is_active = true ORDER BY name"),
+        only_own_schema_query!("pm", "SELECT id, name, contract_type, description, content, is_active, created_by, created_at, updated_at FROM pm.contract_templates WHERE is_active = true ORDER BY name"),
     )
     .fetch_all(&pool)
     .await;
@@ -985,7 +985,7 @@ async fn get_template(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ContractTemplate>> {
     let template =
-        sqlx::query_as::<_, ContractTemplate>(only_own_schema_query!("pm", "id, name, contract_type, description, content, is_active, created_by, created_at, updated_at FROM pm.contract_templates WHERE id = $1"))
+        sqlx::query_as::<_, ContractTemplate>(only_own_schema_query!("pm", "SELECT id, name, contract_type, description, content, is_active, created_by, created_at, updated_at FROM pm.contract_templates WHERE id = $1"))
             .bind(id)
             .fetch_one(&pool)
             .await;

@@ -456,7 +456,7 @@ async fn get_project_records(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<AcceptanceRecord>>> {
     let records = sqlx::query_as::<_, AcceptanceRecord>(
-        only_own_schema_query!("pm", "id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_at, updated_at FROM pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at FROM pm.acceptance_records WHERE project_id = $1 ORDER BY acceptance_date DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -492,7 +492,7 @@ async fn get_record(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
     let record = sqlx::query_as::<_, AcceptanceRecord>(
-        only_own_schema_query!("pm", "id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_at, updated_at FROM pm.acceptance_records WHERE id = $1"),
+        only_own_schema_query!("pm", "SELECT id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at FROM pm.acceptance_records WHERE id = $1"),
     )
     .bind(id)
     .fetch_one(&pool)

@@ -62,7 +62,7 @@ async fn list_expenses(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectExpense>>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        only_own_schema_query!("pm", "id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 ORDER BY expense_date DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 ORDER BY expense_date DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -169,7 +169,7 @@ async fn get_expense(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectExpense>> {
     let result = sqlx::query_as::<_, ProjectExpense>(
-        only_own_schema_query!("pm", "id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2"),
+        only_own_schema_query!("pm", "SELECT id, project_id, phase_id, expense_type, description, amount, currency, expense_date, approved_date, budget_item_id, resource_id, expense_ref_id, status, approval_workflow_id, attachment_ids, created_by, approver, created_at, updated_at FROM pm.project_expenses WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)

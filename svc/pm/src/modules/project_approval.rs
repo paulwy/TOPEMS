@@ -71,7 +71,7 @@ async fn get_approval(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectApproval>> {
     let result = sqlx::query_as::<_, ProjectApproval>(
-        only_own_schema_query!("pm", "id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1"),
+        only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 ORDER BY created_at DESC LIMIT 1"),
     )
     .bind(project_id)
     .fetch_optional(&state.pool)
@@ -238,7 +238,7 @@ async fn handle_approval_action(
     }
 
     let result = sqlx::query_as::<_, ProjectApproval>(
-        only_own_schema_query!("pm", "id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1 FOR UPDATE")
+        only_own_schema_query!("pm", "SELECT id, project_id, status, current_step, total_steps, approvals, comments, created_by, created_at, updated_at FROM pm.project_approvals WHERE project_id = $1 AND status = 'pending' ORDER BY created_at DESC LIMIT 1 FOR UPDATE")
     )
     .bind(project_id)
     .fetch_optional(&state.pool)

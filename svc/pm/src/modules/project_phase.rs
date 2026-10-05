@@ -61,7 +61,7 @@ async fn list_phases(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectPhase>>> {
     let result = sqlx::query_as::<_, ProjectPhase>(
-        only_own_schema_query!("pm", "id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -173,7 +173,7 @@ async fn get_phase(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectPhase>> {
     let result = sqlx::query_as::<_, ProjectPhase>(
-        only_own_schema_query!("pm", "id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 AND id = $2"),
+        only_own_schema_query!("pm", "SELECT id, project_id, name, description, sequence_number, start_date, end_date, progress, status, predecessor_ids, created_at, updated_at FROM pm.project_phases WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)

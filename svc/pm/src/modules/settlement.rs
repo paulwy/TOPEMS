@@ -82,7 +82,7 @@ async fn get_project_settlements(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<Settlement>>> {
     let settlements = sqlx::query_as::<_, Settlement>(
-        only_own_schema_query!("pm", "id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE project_id = $1 ORDER BY settlement_date DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE project_id = $1 ORDER BY settlement_date DESC"),
     )
     .bind(project_id)
     .fetch_all(&state.pool)
@@ -118,7 +118,7 @@ async fn get_settlement(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Settlement>> {
     let settlement =
-        sqlx::query_as::<_, Settlement>(only_own_schema_query!("pm", "id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE id = $1"))
+        sqlx::query_as::<_, Settlement>(only_own_schema_query!("pm", "SELECT id, project_id, settlement_no, settlement_name, settlement_type, status, settlement_date, amount, currency, remarks, settlement_period_start, settlement_period_end, approved_at, created_by, created_at, updated_at FROM pm.settlements WHERE id = $1"))
             .bind(id)
             .fetch_one(&state.pool)
             .await;

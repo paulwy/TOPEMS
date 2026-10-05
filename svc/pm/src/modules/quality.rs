@@ -78,7 +78,7 @@ async fn get_project_quality_checks(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<QualityCheck>>> {
     let checks = sqlx::query_as::<_, QualityCheck>(
-        only_own_schema_query!("pm", "id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -114,7 +114,7 @@ async fn get_quality_check(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityCheck>> {
     let check =
-        sqlx::query_as::<_, QualityCheck>(only_own_schema_query!("pm", "id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE id = $1"))
+        sqlx::query_as::<_, QualityCheck>(only_own_schema_query!("pm", "SELECT id, project_id, check_name, check_type, phase_id, milestone_id, issues, acceptance_standard, result, status, check_date, checker, result_details, nonconformities, corrective_actions, follow_up_date, created_at, updated_at FROM pm.quality_checks WHERE id = $1"))
             .bind(id)
             .fetch_one(&pool)
             .await;

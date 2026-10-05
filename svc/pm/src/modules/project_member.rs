@@ -46,7 +46,7 @@ async fn list_members(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectMember>>> {
     let result = sqlx::query_as::<_, ProjectMember>(
-        only_own_schema_query!("pm", "id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 ORDER BY role ASC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 ORDER BY role ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -143,7 +143,7 @@ async fn get_member(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectMember>> {
     let result = sqlx::query_as::<_, ProjectMember>(
-        only_own_schema_query!("pm", "id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 AND id = $2"),
+        only_own_schema_query!("pm", "SELECT id, project_id, user_id, role, responsibilities, start_date, end_date, created_at, updated_at FROM pm.project_members WHERE project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)

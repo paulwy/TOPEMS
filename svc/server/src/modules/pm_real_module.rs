@@ -13,6 +13,7 @@ use axum::Router;
 use std::sync::Arc;
 use topems_pm::modules;
 use topems_shared_auth::middleware::require_permission;
+use topems_shared_auth::tenant_middleware;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_event::event::EventPublisher;
 use topems_shared_service_client::service_client::api::workflow_api::WorkflowApi;
@@ -76,9 +77,15 @@ impl PmRealModule {
             }
         };
 
-        // 4. 业务路由（pool 直传 + 权限中间件）
+        // 4. 业务路由（pool 直传 + 租户上下文中间件 + 权限中间件）
+        // tenant_middleware 从 Claims 派生 TenantContext（业务写 handler 直接
+        // Extension<TenantContext> 提取），并开启 RLS 事务；与 crm/mes 等真实模块一致。
         let protected_routes =
             modules::create_routes(ctx.db.clone(), ctx.event_publisher.clone(), workflow_client)
+                .layer(axum::middleware::from_fn_with_state(
+                    ctx.db.clone(),
+                    tenant_middleware(),
+                ))
                 .layer(axum::middleware::from_fn(require_permission("pm:admin")));
 
         // 5. 组装路由：api_prefix + 统一 JWT 认证（与独立部署一致）

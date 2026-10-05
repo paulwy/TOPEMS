@@ -60,7 +60,7 @@ async fn get_project_documents(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectDocument>>> {
     let documents = sqlx::query_as::<_, ProjectDocument>(
-        only_own_schema_query!("pm", "id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, uploaded_by, created_at, updated_at FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE project_id = $1 ORDER BY created_at DESC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -96,7 +96,7 @@ async fn get_document(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProjectDocument>> {
     let document =
-        sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, uploaded_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
+        sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
             .bind(id)
             .fetch_one(&pool)
             .await;
@@ -269,7 +269,7 @@ async fn create_document_version(
     Json(req): Json<CreateDocumentVersionRequest>,
 ) -> Json<ApiResponse<DocumentVersion>> {
     let doc_result =
-        sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, uploaded_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
+        sqlx::query_as::<_, ProjectDocument>(only_own_schema_query!("pm", "SELECT id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at FROM pm.project_documents WHERE id = $1"))
             .bind(id)
             .fetch_one(&pool)
             .await;
