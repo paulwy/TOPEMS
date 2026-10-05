@@ -1185,7 +1185,7 @@ pub struct SuggestTagsRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/graph/node",
+    path = "/mdm-v57/graph/node",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1219,7 +1219,7 @@ pub async fn add_graph_node(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/graph/edge",
+    path = "/mdm-v57/graph/edge",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1248,7 +1248,7 @@ pub async fn add_graph_edge(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:semantic:read"])),
-    path = "/graph/neighbors/{id}",
+    path = "/mdm-v57/graph/neighbors/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1271,7 +1271,7 @@ pub async fn get_neighbors(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:semantic:read"])),
-    path = "/graph/community/{id}",
+    path = "/mdm-v57/graph/community/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1300,7 +1300,7 @@ pub async fn get_community(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/graph/path",
+    path = "/mdm-v57/graph/path",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1337,7 +1337,7 @@ pub async fn find_shortest_path_handler(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/graph/subgraph",
+    path = "/mdm-v57/graph/subgraph",
     responses((status = 200, description = "get_subgraph OK")),
     tag = "semantic_v57"
 )]
@@ -1377,7 +1377,7 @@ pub async fn get_subgraph(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/graph/embeddings",
+    path = "/mdm-v57/graph/embeddings",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1405,7 +1405,7 @@ pub async fn compute_embeddings_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/graph/communities",
+    path = "/mdm-v57/graph/communities",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1427,7 +1427,7 @@ pub async fn detect_communities_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/search/index",
+    path = "/mdm-v57/search/index",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1453,7 +1453,7 @@ pub async fn index_entity(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/search/semantic",
+    path = "/mdm-v57/search/semantic",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1484,7 +1484,7 @@ pub async fn search_semantic_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/search/hybrid",
+    path = "/mdm-v57/search/hybrid",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1514,7 +1514,7 @@ pub async fn search_hybrid_handler(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/search/reindex",
+    path = "/mdm-v57/search/reindex",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1542,7 +1542,7 @@ pub async fn reindex_all(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:semantic:read"])),
-    path = "/search/stats",
+    path = "/mdm-v57/search/stats",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1561,7 +1561,7 @@ pub async fn get_search_stats(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/search/index/{id}",
+    path = "/mdm-v57/search/index/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1595,7 +1595,7 @@ pub async fn remove_from_index(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/tags",
+    path = "/mdm-v57/tags",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1625,7 +1625,7 @@ pub async fn create_tag(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/tag/apply",
+    path = "/mdm-v57/tag/apply",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1650,7 +1650,7 @@ pub async fn apply_tag(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/tag/auto",
+    path = "/mdm-v57/tag/auto",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1684,7 +1684,7 @@ pub async fn auto_tag(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:semantic:read"])),
-    path = "/tags/entity/{type}/{id}",
+    path = "/mdm-v57/tags/entity/{type}/{id}",
     params(
         ("type" = String, Path, description = "type"),
         ("id" = String, Path, description = "id")
@@ -1712,7 +1712,7 @@ pub async fn get_tags_for_entity(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:semantic:read"])),
-    path = "/entities/tag/{tag}",
+    path = "/mdm-v57/entities/tag/{tag}",
     params(
         ("tag" = String, Path, description = "tag")
     ),
@@ -1736,7 +1736,7 @@ pub async fn get_entities_by_tag(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/tag/{id}",
+    path = "/mdm-v57/tag/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1776,7 +1776,7 @@ pub async fn remove_tag_handler(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:semantic:read"])),
-    path = "/tags",
+    path = "/mdm-v57/tags",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1804,7 +1804,7 @@ pub async fn get_tag_stats(State(_state): State<AppState>) -> Json<ApiResponse<s
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:semantic:read"])),
-    path = "/tags/suggest",
+    path = "/mdm-v57/tags/suggest",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

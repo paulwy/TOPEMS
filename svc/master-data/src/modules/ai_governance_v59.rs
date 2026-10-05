@@ -970,7 +970,7 @@ pub struct UpdateRulesRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/governance/analyze",
+    path = "/mdm-v59/governance/analyze",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -992,7 +992,7 @@ pub async fn analyze(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/governance/suggestions",
+    path = "/mdm-v59/governance/suggestions",
     responses((status = 200, description = "get_suggestions OK")),
     tag = "ai_governance_v59"
 )]
@@ -1016,7 +1016,7 @@ pub async fn get_suggestions(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/governance/entity/{id}",
+    path = "/mdm-v59/governance/entity/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1039,7 +1039,7 @@ pub async fn get_entity_suggestions(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/governance/apply/{id}",
+    path = "/mdm-v59/governance/apply/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1065,7 +1065,7 @@ pub async fn apply_suggestion(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/governance/dismiss/{id}",
+    path = "/mdm-v59/governance/dismiss/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1091,7 +1091,7 @@ pub async fn dismiss_suggestion(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/governance/models",
+    path = "/mdm-v59/governance/models",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1108,7 +1108,7 @@ pub async fn get_models(State(_state): State<AppState>) -> Json<ApiResponse<Vec<
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/governance/train/{id}",
+    path = "/mdm-v59/governance/train/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1136,7 +1136,7 @@ pub async fn train_model(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/matching/rule",
+    path = "/mdm-v59/matching/rule",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1167,7 +1167,7 @@ pub async fn create_match_rule(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/matching/rules",
+    path = "/mdm-v59/matching/rules",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1184,7 +1184,7 @@ pub async fn get_match_rules(State(_state): State<AppState>) -> Json<ApiResponse
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/matching/entities",
+    path = "/mdm-v59/matching/entities",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1208,7 +1208,7 @@ pub async fn match_entities(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/matching/results",
+    path = "/mdm-v59/matching/results",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1227,7 +1227,7 @@ pub async fn get_match_results(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/matching/review/{id}",
+    path = "/mdm-v59/matching/review/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1259,7 +1259,7 @@ pub async fn review_match(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/matching/confirm/{id}",
+    path = "/mdm-v59/matching/confirm/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1285,7 +1285,7 @@ pub async fn confirm_match(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/matching/reject/{id}",
+    path = "/mdm-v59/matching/reject/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1311,7 +1311,7 @@ pub async fn reject_match(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/matching/stats",
+    path = "/mdm-v59/matching/stats",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1330,7 +1330,7 @@ pub async fn get_match_stats(State(_state): State<AppState>) -> Json<ApiResponse
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/classifier",
+    path = "/mdm-v59/classifier",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1360,7 +1360,7 @@ pub async fn create_classifier(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/classifiers",
+    path = "/mdm-v59/classifiers",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1379,7 +1379,7 @@ pub async fn get_classifiers(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/classify/{entity_type}/{id}",
+    path = "/mdm-v59/classify/{entity_type}/{id}",
     params(
         ("entity_type" = String, Path, description = "entity_type"),
         ("id" = String, Path, description = "id")
@@ -1403,7 +1403,7 @@ pub async fn classify_entity(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/classification/{entity_type}/{id}",
+    path = "/mdm-v59/classification/{entity_type}/{id}",
     params(
         ("entity_type" = String, Path, description = "entity_type"),
         ("id" = String, Path, description = "id")
@@ -1430,7 +1430,7 @@ pub async fn get_classification(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/classification/categories/{entity_type}",
+    path = "/mdm-v59/classification/categories/{entity_type}",
     params(
         ("entity_type" = String, Path, description = "entity_type")
     ),
@@ -1453,7 +1453,7 @@ pub async fn get_entity_categories(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/classification/review/{id}",
+    path = "/mdm-v59/classification/review/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1484,7 +1484,7 @@ pub async fn review_classification(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:ai_governance:read"])),
-    path = "/classification/stats",
+    path = "/mdm-v59/classification/stats",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1503,7 +1503,7 @@ pub async fn get_classification_stats(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:ai_governance:write"])),
-    path = "/classifier/rules/{id}",
+    path = "/mdm-v59/classifier/rules/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),

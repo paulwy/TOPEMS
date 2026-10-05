@@ -725,7 +725,7 @@ pub struct SwitchRegionsRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/recovery/point",
+    path = "/mdm-v56/recovery/point",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -772,7 +772,7 @@ pub async fn create_recovery_point(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/recovery/points",
+    path = "/mdm-v56/recovery/points",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -836,7 +836,7 @@ pub async fn list_recovery_points(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/recovery/restore",
+    path = "/mdm-v56/recovery/restore",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -874,7 +874,7 @@ pub async fn restore_from_point(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/recovery/status",
+    path = "/mdm-v56/recovery/status",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -935,7 +935,7 @@ pub async fn get_recovery_status(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/recovery/plan",
+    path = "/mdm-v56/recovery/plan",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1001,7 +1001,7 @@ pub async fn create_recovery_plan(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/recovery/plan/execute",
+    path = "/mdm-v56/recovery/plan/execute",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1051,7 +1051,7 @@ pub async fn execute_plan(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/recovery/plan/{id}/progress",
+    path = "/mdm-v56/recovery/plan/{id}/progress",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1108,7 +1108,7 @@ pub async fn get_plan_progress(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/recovery/test",
+    path = "/mdm-v56/recovery/test",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1165,7 +1165,7 @@ pub async fn test_recovery(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/continuity/plan",
+    path = "/mdm-v56/continuity/plan",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1223,7 +1223,7 @@ pub async fn create_continuity_plan(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/continuity/plans",
+    path = "/mdm-v56/continuity/plans",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1240,7 +1240,7 @@ pub async fn list_plans(State(_state): State<AppState>) -> Json<ApiResponse<Vec<
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/continuity/plan/{id}",
+    path = "/mdm-v56/continuity/plan/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1266,7 +1266,7 @@ pub async fn get_plan(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/continuity/plan/{id}",
+    path = "/mdm-v56/continuity/plan/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1317,7 +1317,7 @@ pub async fn update_plan(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/continuity/plan/{id}/test",
+    path = "/mdm-v56/continuity/plan/{id}/test",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1391,7 +1391,7 @@ pub async fn get_test_results(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/continuity/impact",
+    path = "/mdm-v56/continuity/impact",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1471,7 +1471,7 @@ pub async fn assess_impact(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/continuity/score",
+    path = "/mdm-v56/continuity/score",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1554,7 +1554,7 @@ pub async fn get_continuity_score(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/dr/replication",
+    path = "/mdm-v56/dr/replication",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1592,7 +1592,7 @@ pub async fn configure_replication(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/dr/replication/start",
+    path = "/mdm-v56/dr/replication/start",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1629,7 +1629,7 @@ pub async fn start_replication(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/dr/replication/stop",
+    path = "/mdm-v56/dr/replication/stop",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1664,7 +1664,7 @@ pub async fn stop_replication(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/dr/replication/status",
+    path = "/mdm-v56/dr/replication/status",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1710,7 +1710,7 @@ pub async fn get_replication_status(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/dr/failover",
+    path = "/mdm-v56/dr/failover",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1754,7 +1754,7 @@ pub async fn initiate_failover(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/dr/failover/{id}/complete",
+    path = "/mdm-v56/dr/failover/{id}/complete",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1812,7 +1812,7 @@ pub async fn complete_failover(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/dr/failover/history",
+    path = "/mdm-v56/dr/failover/history",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1831,7 +1831,7 @@ pub async fn get_failover_history(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:disaster:write"])),
-    path = "/dr/switch",
+    path = "/mdm-v56/dr/switch",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1886,7 +1886,7 @@ pub async fn switch_regions(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:disaster:read"])),
-    path = "/dr/region-health",
+    path = "/mdm-v56/dr/region-health",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

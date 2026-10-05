@@ -1232,7 +1232,7 @@ pub struct RollbackPropagationRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:lineage:write"])),
-    path = "/register",
+    path = "/lineage-v52/register",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1271,7 +1271,7 @@ pub async fn register_lineage(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/graph",
+    path = "/lineage-v52/graph",
     responses((status = 200, description = "get_lineage_graph OK")),
     tag = "lineage_v52"
 )]
@@ -1284,7 +1284,7 @@ pub async fn get_lineage_graph(State(_state): State<AppState>) -> Json<ApiRespon
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/upstream/{entity_type}/{id}",
+    path = "/lineage-v52/upstream/{entity_type}/{id}",
     params(
         ("entity_type" = String, Path, description = "entity_type"),
         ("id" = String, Path, description = "id"),
@@ -1319,7 +1319,7 @@ pub async fn get_upstream(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/downstream/{entity_type}/{id}",
+    path = "/lineage-v52/downstream/{entity_type}/{id}",
     params(
         ("entity_type" = String, Path, description = "entity_type"),
         ("id" = String, Path, description = "id"),
@@ -1354,7 +1354,7 @@ pub async fn get_downstream(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/export",
+    path = "/lineage-v52/export",
     responses((status = 200, description = "export_lineage OK")),
     tag = "lineage_v52"
 )]
@@ -1388,7 +1388,7 @@ pub async fn export_lineage(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:lineage:write"])),
-    path = "/delete",
+    path = "/lineage-v52/delete",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1412,7 +1412,7 @@ pub async fn delete_lineage(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:lineage:write"])),
-    path = "/impact/analyze",
+    path = "/lineage-v52/impact/analyze",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1442,7 +1442,7 @@ pub async fn analyze_impact(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:lineage:read"])),
-    path = "/impact/report/{id}",
+    path = "/lineage-v52/impact/report/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1467,7 +1467,7 @@ pub async fn get_impact_report(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:lineage:write"])),
-    path = "/impact/simulate",
+    path = "/lineage-v52/impact/simulate",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1490,7 +1490,7 @@ pub async fn simulate_change(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:lineage:read"])),
-    path = "/impact/scope",
+    path = "/lineage-v52/impact/scope",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1514,7 +1514,7 @@ pub async fn get_affected_scope(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:lineage:write"])),
-    path = "/propagate",
+    path = "/lineage-v52/propagate",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1552,7 +1552,7 @@ pub async fn propagate_change(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:lineage:read"])),
-    path = "/propagation/rules",
+    path = "/lineage-v52/propagation/rules",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1570,7 +1570,7 @@ pub async fn get_propagation_rules(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:lineage:write"])),
-    path = "/propagation/rules",
+    path = "/lineage-v52/propagation/rules",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1598,7 +1598,7 @@ pub async fn add_propagation_rule(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:lineage:read"])),
-    path = "/propagation/log",
+    path = "/lineage-v52/propagation/log",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1644,7 +1644,7 @@ pub async fn get_propagation_log(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:lineage:write"])),
-    path = "/propagation/rollback",
+    path = "/lineage-v52/propagation/rollback",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

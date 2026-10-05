@@ -1264,7 +1264,7 @@ pub struct BulkTransitionRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/metadata",
+    path = "/mdm-v60/metadata",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1300,7 +1300,7 @@ pub async fn create_metadata(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/metadata/{id}",
+    path = "/mdm-v60/metadata/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1326,7 +1326,7 @@ pub async fn get_metadata(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/metadata",
+    path = "/mdm-v60/metadata",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1349,7 +1349,7 @@ pub async fn list_metadata(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/metadata/search",
+    path = "/mdm-v60/metadata/search",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1370,7 +1370,7 @@ pub async fn search_metadata(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/metadata/{id}",
+    path = "/mdm-v60/metadata/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1408,7 +1408,7 @@ pub async fn update_metadata(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/metadata/{id}",
+    path = "/mdm-v60/metadata/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1434,7 +1434,7 @@ pub async fn delete_metadata(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/metadata/{id}/attribute",
+    path = "/mdm-v60/metadata/{id}/attribute",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1468,7 +1468,7 @@ pub async fn add_attribute(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/metadata/tag",
+    path = "/mdm-v60/metadata/tag",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1496,7 +1496,7 @@ pub async fn add_tag(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/metadata/stats",
+    path = "/mdm-v60/metadata/stats",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1517,7 +1517,7 @@ pub async fn get_metadata_stats(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/lineage/graph",
+    path = "/mdm-v60/lineage/graph",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1541,7 +1541,7 @@ pub async fn build_lineage_graph(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/lineage/graph/{id}",
+    path = "/mdm-v60/lineage/graph/{id}",
     params(
         ("id" = String, Path, description = "id"),
     ),
@@ -1564,7 +1564,7 @@ pub async fn get_lineage_graph(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/lineage/{id}/upstream",
+    path = "/mdm-v60/lineage/{id}/upstream",
     params(
         ("id" = String, Path, description = "id"),
     ),
@@ -1585,7 +1585,7 @@ pub async fn get_upstream(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/lineage/{id}/downstream",
+    path = "/mdm-v60/lineage/{id}/downstream",
     params(
         ("id" = String, Path, description = "id"),
     ),
@@ -1607,7 +1607,7 @@ pub async fn get_downstream(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/lineage/path",
+    path = "/mdm-v60/lineage/path",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1630,7 +1630,7 @@ pub async fn get_path(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/lineage/{id}/impact",
+    path = "/mdm-v60/lineage/{id}/impact",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1654,7 +1654,7 @@ pub async fn get_lineage_impact(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/lineage/dashboard",
+    path = "/mdm-v60/lineage/dashboard",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1672,7 +1672,7 @@ pub async fn get_lineage_dashboard(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/lineage/export",
+    path = "/mdm-v60/lineage/export",
     responses((status = 200, description = "export_lineage OK")),
     tag = "metadata_v60"
 )]
@@ -1694,7 +1694,7 @@ pub async fn export_lineage(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/lifecycle/{id}/stage",
+    path = "/mdm-v60/lifecycle/{id}/stage",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1723,7 +1723,7 @@ pub async fn get_current_stage(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/lifecycle/{id}/transition",
+    path = "/mdm-v60/lifecycle/{id}/transition",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1761,7 +1761,7 @@ pub async fn transition_stage(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/lifecycle/{id}/history",
+    path = "/mdm-v60/lifecycle/{id}/history",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1785,7 +1785,7 @@ pub async fn get_lifecycle_history(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/lifecycle/policy",
+    path = "/mdm-v60/lifecycle/policy",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1814,7 +1814,7 @@ pub async fn create_policy(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/lifecycle/policies",
+    path = "/mdm-v60/lifecycle/policies",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1835,7 +1835,7 @@ pub async fn get_policies(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/lifecycle/auto-transition",
+    path = "/mdm-v60/lifecycle/auto-transition",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1855,7 +1855,7 @@ pub async fn auto_transition(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
-    path = "/lifecycle/dashboard",
+    path = "/mdm-v60/lifecycle/dashboard",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1875,7 +1875,7 @@ pub async fn get_lifecycle_dashboard(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
-    path = "/lifecycle/bulk",
+    path = "/mdm-v60/lifecycle/bulk",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

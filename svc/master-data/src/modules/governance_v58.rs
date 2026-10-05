@@ -1328,7 +1328,7 @@ pub struct ExposeApiRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/maturity/assess",
+    path = "/mdm-v58/maturity/assess",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1359,7 +1359,7 @@ pub async fn assess_maturity(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/maturity/assessment",
+    path = "/mdm-v58/maturity/assessment",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1390,7 +1390,7 @@ pub async fn get_assessment(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/maturity/scores",
+    path = "/mdm-v58/maturity/scores",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1409,7 +1409,7 @@ pub async fn get_dimension_scores(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/maturity/improvement-plan",
+    path = "/mdm-v58/maturity/improvement-plan",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1442,7 +1442,7 @@ pub async fn create_improvement_plan(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/maturity/progress",
+    path = "/mdm-v58/maturity/progress",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1461,7 +1461,7 @@ pub async fn track_progress(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/maturity/history",
+    path = "/mdm-v58/maturity/history",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1484,7 +1484,7 @@ pub async fn get_maturity_history(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/maturity/benchmark",
+    path = "/mdm-v58/maturity/benchmark",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1505,7 +1505,7 @@ pub async fn get_benchmark(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/workflow",
+    path = "/mdm-v58/workflow",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1556,7 +1556,7 @@ pub async fn create_workflow(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/workflow/{id}/start",
+    path = "/mdm-v58/workflow/{id}/start",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1582,7 +1582,7 @@ pub async fn start_workflow(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/workflow/{id}/advance",
+    path = "/mdm-v58/workflow/{id}/advance",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1609,7 +1609,7 @@ pub async fn advance_step(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/workflow/{id}/status",
+    path = "/mdm-v58/workflow/{id}/status",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1635,7 +1635,7 @@ pub async fn get_workflow_status(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/workflows",
+    path = "/mdm-v58/workflows",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1658,7 +1658,7 @@ pub async fn list_workflows(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/workflow/templates",
+    path = "/mdm-v58/workflow/templates",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1677,7 +1677,7 @@ pub async fn get_workflow_templates(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/workflow/step/{id}/approve",
+    path = "/mdm-v58/workflow/step/{id}/approve",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1709,7 +1709,7 @@ pub async fn approve_step(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/workflow/step/{id}/reject",
+    path = "/mdm-v58/workflow/step/{id}/reject",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1753,7 +1753,7 @@ pub async fn get_workflow_history(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/data-product",
+    path = "/mdm-v58/data-product",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1783,7 +1783,7 @@ pub async fn create_data_product(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/data-product/{id}",
+    path = "/mdm-v58/data-product/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1809,7 +1809,7 @@ pub async fn get_data_product(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/data-products",
+    path = "/mdm-v58/data-products",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1832,7 +1832,7 @@ pub async fn list_data_products(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/data-product/{id}/contract",
+    path = "/mdm-v58/data-product/{id}/contract",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1879,7 +1879,7 @@ pub async fn update_contract(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/data-product/{id}/contract/status",
+    path = "/mdm-v58/data-product/{id}/contract/status",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1905,7 +1905,7 @@ pub async fn get_contract_status(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:governance:write"])),
-    path = "/data-product/{id}/expose",
+    path = "/mdm-v58/data-product/{id}/expose",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1935,7 +1935,7 @@ pub async fn expose_as_api(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/data-product/{id}/consumers",
+    path = "/mdm-v58/data-product/{id}/consumers",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1958,7 +1958,7 @@ pub async fn get_consumers(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:governance:read"])),
-    path = "/data-product/{id}/lineage",
+    path = "/mdm-v58/data-product/{id}/lineage",
     params(
         ("id" = String, Path, description = "id")
     ),

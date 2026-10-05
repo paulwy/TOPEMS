@@ -820,7 +820,7 @@ fn compute_diff(from: &serde_json::Value, to: &serde_json::Value) -> VersionDiff
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/version/snapshot",
+    path = "/mdm-v54/version/snapshot",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -874,7 +874,7 @@ pub async fn create_snapshot(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/version/{entity_type}/{entity_id}",
+    path = "/mdm-v54/version/{entity_type}/{entity_id}",
     params(
         ("entity_type" = String, Path, description = "entity_type"),
         ("entity_id" = String, Path, description = "entity_id")
@@ -914,7 +914,7 @@ pub async fn get_version(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/version/diff",
+    path = "/mdm-v54/version/diff",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -954,7 +954,7 @@ pub async fn diff_versions(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/version/restore",
+    path = "/mdm-v54/version/restore",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1023,7 +1023,7 @@ pub async fn restore_version(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/version/history/{entity_type}/{entity_id}",
+    path = "/mdm-v54/version/history/{entity_type}/{entity_id}",
     params(
         ("entity_type" = String, Path, description = "entity_type"),
         ("entity_id" = String, Path, description = "entity_id")
@@ -1082,7 +1082,7 @@ pub async fn list_history(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/version/branch",
+    path = "/mdm-v54/version/branch",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1123,7 +1123,7 @@ pub async fn create_branch(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/version/merge",
+    path = "/mdm-v54/version/merge",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1161,7 +1161,7 @@ pub async fn merge_branch(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/audit/log",
+    path = "/mdm-v54/audit/log",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1256,7 +1256,7 @@ pub async fn query_audit_log(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/audit/user/{user_id}",
+    path = "/mdm-v54/audit/user/{user_id}",
     params(
         ("user_id" = String, Path, description = "user_id")
     ),
@@ -1332,7 +1332,7 @@ pub async fn get_user_activity(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/audit/entity/{entity_type}/{entity_id}",
+    path = "/mdm-v54/audit/entity/{entity_type}/{entity_id}",
     params(
         ("entity_type" = String, Path, description = "entity_type"),
         ("entity_id" = String, Path, description = "entity_id")
@@ -1409,7 +1409,7 @@ pub async fn get_entity_history(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/audit/export",
+    path = "/mdm-v54/audit/export",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1468,7 +1468,7 @@ pub async fn export_audit_log(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/audit/compliance",
+    path = "/mdm-v54/audit/compliance",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1533,7 +1533,7 @@ pub async fn get_compliance_audit(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/permissions/grant",
+    path = "/mdm-v54/permissions/grant",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1565,7 +1565,7 @@ pub async fn grant_permission(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/permissions/{id}",
+    path = "/mdm-v54/permissions/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1595,7 +1595,7 @@ pub async fn revoke_permission(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/permissions/check",
+    path = "/mdm-v54/permissions/check",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1665,7 +1665,7 @@ pub async fn check_permission(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/permissions/user/{user_id}",
+    path = "/mdm-v54/permissions/user/{user_id}",
     params(
         ("user_id" = String, Path, description = "user_id")
     ),
@@ -1738,7 +1738,7 @@ pub async fn get_user_permissions(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
-    path = "/permissions/resource",
+    path = "/mdm-v54/permissions/resource",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1783,7 +1783,7 @@ pub async fn get_resource_permissions(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/roles",
+    path = "/mdm-v54/roles",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1815,7 +1815,7 @@ pub async fn create_role(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/roles/assign",
+    path = "/mdm-v54/roles/assign",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1846,7 +1846,7 @@ pub async fn assign_role(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["master_data:versioning:write"])),
-    path = "/roles/revoke",
+    path = "/mdm-v54/roles/revoke",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

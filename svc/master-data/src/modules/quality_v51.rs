@@ -763,7 +763,7 @@ fn compute_score(checks: &[QualityCheckV51]) -> f64 {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:write"])),
-    path = "/api/master/quality-v51/checks",
+    path = "/api/master-data/quality-v51/checks",
     tag = "quality_v51",
     request_body = RunQualityCheckRequest,
     responses(
@@ -833,7 +833,7 @@ pub async fn run_quality_check(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/api/master/quality-v51/checks",
+    path = "/api/master-data/quality-v51/checks",
     tag = "quality_v51",
     params(
         ("entity_type" = Option<String>, Query, description = "实体类型过滤"),
@@ -920,7 +920,7 @@ pub async fn list_quality_checks(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:quality:read"])),
-    path = "/checks/{entity_type}/{entity_id}",
+    path = "/quality-v51/checks/{entity_type}/{entity_id}",
     params(
         ("entity_type" = String, Path, description = "entity_type"),
         ("entity_id" = String, Path, description = "entity_id")
@@ -953,7 +953,7 @@ pub async fn get_quality_check_results(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master-data:quality:read"])),
-    path = "/api/master/quality-v51/rules",
+    path = "/api/master-data/quality-v51/rules",
     tag = "quality_v51",
     responses(
         (status = 200, description = "质量规则列表", body = ApiResponse<Vec<QualityRule>>),
@@ -971,7 +971,7 @@ pub async fn list_quality_rules(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master-data:quality:read"])),
-    path = "/api/master/quality-v51/rules",
+    path = "/api/master-data/quality-v51/rules",
     tag = "quality_v51",
     request_body = CreateQualityRuleRequest,
     responses(
@@ -1006,7 +1006,7 @@ pub async fn create_quality_rule(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/rules/{id}",
+    path = "/quality-v51/rules/{id}",
     params(
         ("id" = String, Path, description = "id"),
     ),
@@ -1029,7 +1029,7 @@ pub async fn get_quality_rule(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:write"])),
-    path = "/rules/{id}",
+    path = "/quality-v51/rules/{id}",
     params(
         ("id" = String, Path, description = "id"),
     ),
@@ -1072,7 +1072,7 @@ pub async fn update_quality_rule(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["master_data:quality:write"])),
-    path = "/rules/{id}",
+    path = "/quality-v51/rules/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1104,7 +1104,7 @@ pub async fn delete_quality_rule(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master-data:quality:read"])),
-    path = "/api/master/quality-v51/score",
+    path = "/api/master-data/quality-v51/score",
     tag = "quality_v51",
     responses(
         (status = 200, description = "质量评分", body = ApiResponse<QualityScore>),
@@ -1169,7 +1169,7 @@ pub async fn get_quality_score(State(_state): State<AppState>) -> Json<ApiRespon
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master-data:quality:read"])),
-    path = "/api/master/quality-v51/dashboard",
+    path = "/api/master-data/quality-v51/dashboard",
     tag = "quality_v51",
     responses(
         (status = 200, description = "质量仪表盘", body = ApiResponse<QualityDashboard>),
@@ -1232,7 +1232,7 @@ pub async fn get_quality_dashboard(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:write"])),
-    path = "/api/master/quality-v51/auto-fix/run",
+    path = "/api/master-data/quality-v51/auto-fix/run",
     tag = "quality_v51",
     request_body = AutoFixRequest,
     responses(
@@ -1272,7 +1272,7 @@ pub async fn apply_auto_fix(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/auto-fix/actions",
+    path = "/quality-v51/auto-fix/actions",
     responses((status = 200, description = "get_fix_actions OK")),
     tag = "quality_v51"
 )]
@@ -1346,7 +1346,7 @@ pub async fn get_fix_actions(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:quality:write"])),
-    path = "/auto-fix/actions/{id}/revert",
+    path = "/quality-v51/auto-fix/actions/{id}/revert",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1381,7 +1381,7 @@ pub async fn revert_fix_action(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:quality:read"])),
-    path = "/auto-fix/history",
+    path = "/quality-v51/auto-fix/history",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1417,7 +1417,7 @@ pub async fn get_fix_history(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:quality:write"])),
-    path = "/auto-fix/workflow",
+    path = "/quality-v51/auto-fix/workflow",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1482,7 +1482,7 @@ pub async fn run_fix_workflow(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:write"])),
-    path = "/api/master/quality-v51/ai/suggest",
+    path = "/api/master-data/quality-v51/ai/suggest",
     tag = "quality_v51",
     request_body = GenerateSuggestionsRequest,
     responses(
@@ -1529,7 +1529,7 @@ pub async fn generate_suggestions(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/ai/suggestions",
+    path = "/quality-v51/ai/suggestions",
     responses((status = 200, description = "get_suggestions OK")),
     tag = "quality_v51"
 )]
@@ -1613,7 +1613,7 @@ pub async fn get_suggestions(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:quality:write"])),
-    path = "/ai/suggestions/{id}/approve",
+    path = "/quality-v51/ai/suggestions/{id}/approve",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1646,7 +1646,7 @@ pub async fn approve_suggestion(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:quality:write"])),
-    path = "/ai/suggestions/{id}/reject",
+    path = "/quality-v51/ai/suggestions/{id}/reject",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1679,7 +1679,7 @@ pub async fn reject_suggestion(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:quality:read"])),
-    path = "/ai/insights",
+    path = "/quality-v51/ai/insights",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1698,7 +1698,7 @@ pub async fn get_governance_insights(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:quality:write"])),
-    path = "/ai/predict",
+    path = "/quality-v51/ai/predict",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

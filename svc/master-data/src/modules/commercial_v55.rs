@@ -691,7 +691,7 @@ pub struct SLAReportQuery {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/products",
+    path = "/mdm-v55/products",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -730,7 +730,7 @@ pub async fn create_api_product(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/products",
+    path = "/mdm-v55/products",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -750,7 +750,7 @@ pub async fn list_api_products(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/products/{id}",
+    path = "/mdm-v55/products/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -776,7 +776,7 @@ pub async fn get_api_product(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/subscribe",
+    path = "/mdm-v55/subscribe",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -825,7 +825,7 @@ pub async fn subscribe_tenant(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/subscriptions/{id}",
+    path = "/mdm-v55/subscriptions/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -851,7 +851,7 @@ pub async fn get_subscription(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/subscriptions",
+    path = "/mdm-v55/subscriptions",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -890,7 +890,7 @@ pub async fn list_subscriptions(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/subscriptions/{id}/cancel",
+    path = "/mdm-v55/subscriptions/{id}/cancel",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -920,7 +920,7 @@ pub async fn cancel_subscription(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/subscriptions/{id}/upgrade",
+    path = "/mdm-v55/subscriptions/{id}/upgrade",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -957,7 +957,7 @@ pub async fn upgrade_tier(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/usage/record",
+    path = "/mdm-v55/usage/record",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -990,7 +990,7 @@ pub async fn record_usage(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/usage/summary",
+    path = "/mdm-v55/usage/summary",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1056,7 +1056,7 @@ pub async fn get_usage_summary(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/bill/generate",
+    path = "/mdm-v55/bill/generate",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1155,7 +1155,7 @@ pub async fn generate_bill(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/billing",
+    path = "/mdm-v55/billing",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1214,7 +1214,7 @@ pub async fn get_billing_history(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/rate-cards",
+    path = "/mdm-v55/rate-cards",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1245,7 +1245,7 @@ pub async fn create_rate_card(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/rate-cards",
+    path = "/mdm-v55/rate-cards",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1262,7 +1262,7 @@ pub async fn get_rate_cards(State(_state): State<AppState>) -> Json<ApiResponse<
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/billing/{id}/mark-paid",
+    path = "/mdm-v55/billing/{id}/mark-paid",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1294,7 +1294,7 @@ pub async fn mark_bill_paid(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/sla/configure",
+    path = "/mdm-v55/sla/configure",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1331,7 +1331,7 @@ pub async fn configure_sla(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/sla/measure",
+    path = "/mdm-v55/sla/measure",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1381,7 +1381,7 @@ pub async fn measure_sla(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/sla/status",
+    path = "/mdm-v55/sla/status",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1449,7 +1449,7 @@ pub async fn get_sla_status(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/sla/history",
+    path = "/mdm-v55/sla/history",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1498,7 +1498,7 @@ pub async fn get_sla_history(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/sla/penalty",
+    path = "/mdm-v55/sla/penalty",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1549,7 +1549,7 @@ pub async fn calculate_penalty(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
-    path = "/sla/incident",
+    path = "/mdm-v55/sla/incident",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1605,7 +1605,7 @@ pub async fn create_incident(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/sla/incidents",
+    path = "/mdm-v55/sla/incidents",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1650,7 +1650,7 @@ pub async fn get_incidents(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
-    path = "/sla/report",
+    path = "/mdm-v55/sla/report",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")

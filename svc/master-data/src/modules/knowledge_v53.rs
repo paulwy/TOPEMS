@@ -1459,7 +1459,7 @@ pub struct UpdateAssetRequest {
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:knowledge:write"])),
-    path = "/nodes",
+    path = "/kg-v53/nodes",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1484,7 +1484,7 @@ pub async fn add_kg_node(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:knowledge:write"])),
-    path = "/edges",
+    path = "/kg-v53/edges",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1514,7 +1514,7 @@ pub async fn add_kg_edge(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:read"])),
-    path = "/subgraph/{node_id}",
+    path = "/kg-v53/subgraph/{node_id}",
     params(
         ("node_id" = String, Path, description = "node_id"),
     ),
@@ -1538,7 +1538,7 @@ pub async fn get_subgraph(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/path",
+    path = "/kg-v53/path",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1560,7 +1560,7 @@ pub async fn find_path(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/similar/{node_id}",
+    path = "/kg-v53/similar/{node_id}",
     params(
         ("node_id" = String, Path, description = "node_id")
     ),
@@ -1586,7 +1586,7 @@ pub async fn get_similar(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/export",
+    path = "/kg-v53/export",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1624,7 +1624,7 @@ pub async fn export_kg(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/recommendations/{user_id}",
+    path = "/kg-v53/recommendations/{user_id}",
     params(
         ("user_id" = String, Path, description = "user_id")
     ),
@@ -1651,7 +1651,7 @@ pub async fn get_recommendations(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:knowledge:write"])),
-    path = "/interactions",
+    path = "/kg-v53/interactions",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1674,7 +1674,7 @@ pub async fn record_interaction(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/similar-items/{item_id}",
+    path = "/kg-v53/similar-items/{item_id}",
     params(
         ("item_id" = String, Path, description = "item_id")
     ),
@@ -1700,7 +1700,7 @@ pub async fn get_similar_items(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/trending",
+    path = "/kg-v53/trending",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1722,7 +1722,7 @@ pub async fn get_trending_items(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:knowledge:write"])),
-    path = "/assets",
+    path = "/kg-v53/assets",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1756,7 +1756,7 @@ pub async fn register_asset(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/assets",
+    path = "/kg-v53/assets",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1803,7 +1803,7 @@ pub async fn search_assets(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/assets/{id}",
+    path = "/kg-v53/assets/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1828,7 +1828,7 @@ pub async fn get_asset(
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:knowledge:write"])),
-    path = "/assets/{id}",
+    path = "/kg-v53/assets/{id}",
     params(
         ("id" = String, Path, description = "id")
     ),
@@ -1863,7 +1863,7 @@ pub async fn update_asset(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/categories",
+    path = "/kg-v53/categories",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
@@ -1882,7 +1882,7 @@ pub async fn list_categories(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:knowledge:read"])),
-    path = "/assets/stats",
+    path = "/kg-v53/assets/stats",
     responses(
         (status = 200, description = "OK", body = serde_json::Value),
         (status = 500, description = "Internal server error")
