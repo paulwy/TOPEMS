@@ -302,6 +302,7 @@ pub async fn update_spc_chart(
 
     match chart {
         Ok(data) => Json(ApiResponse::success(data, "SPC控制图更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update SPC chart: {}", e);
             Json(ApiResponse::error(500, "SPC控制图更新失败"))
@@ -657,6 +658,89 @@ pub async fn calculate_control_limits(
     Json(ApiResponse::success(result, "控制限计算成功"))
 }
 
+/// GET /spc/charts/{id}/data-points —— 按控制图 chart 作用域查询数据点（前端契约形状 data_points）
+pub async fn get_spc_chart_data_points(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let _ = get_tenant_id(&claims, &headers);
+    let chart_id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+    };
+    let points = sqlx::query_as::<_, SpcDataPoint>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_id::TEXT, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at, created_at FROM qms.qa_spc_data_points WHERE chart_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY sample_no ASC"#))
+        .bind(chart_id)
+        .bind(tenant_opt)
+        .fetch_all(&state.pool)
+        .await;
+    match points {
+        Ok(data) => Json(ApiResponse::success(
+            serde_json::json!({ "data_points": data }),
+            "获取SPC数据点成功",
+        )),
+        Err(e) => {
+            tracing::error!("Failed to fetch chart data points: {}", e);
+            Json(ApiResponse::error(500, "获取SPC数据点失败"))
+        }
+    }
+}
+
+/// POST /spc/charts/{id}/calculate —— 返回指定控制图的当前控制限
+/// 注：基于图内历史数据点的完整重算待上游支持，这里先回读已存储的控制限（ucl/cl/lcl/cp/cpk）。
+pub async fn calculate_spc_chart_limits(
+    State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
+    headers: axum::http::HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    _body: Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let _ = get_tenant_id(&claims, &headers);
+    let chart_id = match Uuid::parse_str(&id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
+    };
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(chart_id).bind(tenant_opt).fetch_one(&state.pool).await;
+    match chart {
+        Ok(c) => {
+            let f = |v: Option<&bigdecimal::BigDecimal>| v.and_then(|x| x.to_f64()).unwrap_or(0.0);
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "ucl": f(c.ucl.as_ref()),
+                    "cl": f(c.cl.as_ref()),
+                    "lcl": f(c.lcl.as_ref()),
+                    "cp": f(c.cp.as_ref()),
+                    "cpk": f(c.cpk.as_ref()),
+                    "sample_count": c.sample_count,
+                }),
+                "控制限计算成功",
+            ))
+        }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to calculate chart limits: {}", e);
+            Json(ApiResponse::error(500, "控制限计算失败"))
+        }
+    }
+}
+
 pub fn create_routes() -> Router<crate::AppState> {
     Router::new()
         .route("/spc/charts", get(list_spc_charts))
@@ -664,6 +748,8 @@ pub fn create_routes() -> Router<crate::AppState> {
         .route("/spc/charts/{id}", get(get_spc_chart))
         .route("/spc/charts/{id}", put(update_spc_chart))
         .route("/spc/charts/{id}", delete(delete_spc_chart))
+        .route("/spc/charts/{id}/data-points", get(get_spc_chart_data_points))
+        .route("/spc/charts/{id}/calculate", post(calculate_spc_chart_limits))
         .route("/spc/data-points", get(get_spc_data_points))
         .route("/spc/data-points", post(add_spc_data_point))
         .route("/spc/calculate", post(calculate_control_limits))

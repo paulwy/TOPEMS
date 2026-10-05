@@ -313,6 +313,7 @@ pub async fn retry_sync(
             },
             "同步记录已重置为待处理",
         )),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to retry sync: {}", e);
             Json(ApiResponse::error(500, "同步重试失败"))

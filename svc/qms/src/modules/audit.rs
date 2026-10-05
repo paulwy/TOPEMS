@@ -183,6 +183,7 @@ pub async fn start_audit_plan(
 
     match plan {
         Ok(data) => Json(ApiResponse::success(data, "审核计划已启动")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to start audit plan: {}", e);
             Json(ApiResponse::error(500, "审核计划启动失败"))
@@ -221,6 +222,7 @@ pub async fn complete_audit_plan(
 
     match plan {
         Ok(data) => Json(ApiResponse::success(data, "审核计划已完成")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to complete audit plan: {}", e);
             Json(ApiResponse::error(500, "审核计划完成失败"))
@@ -358,6 +360,7 @@ pub async fn complete_audit_task(
 
     match task {
         Ok(data) => Json(ApiResponse::success(data, "审核任务已完成")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to complete audit task: {}", e);
             Json(ApiResponse::error(500, "审核任务完成失败"))
@@ -542,6 +545,7 @@ pub async fn verify_audit_finding(
 
     match finding {
         Ok(data) => Json(ApiResponse::success(data, "审核发现已验证")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to verify audit finding: {}", e);
             Json(ApiResponse::error(500, "审核发现验证失败"))

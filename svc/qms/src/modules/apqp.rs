@@ -279,6 +279,7 @@ pub async fn update_apqp_project(
 
     match project {
         Ok(data) => Json(ApiResponse::success(data, "APQP项目更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update APQP project: {}", e);
             Json(ApiResponse::error(500, "APQP项目更新失败"))
@@ -560,6 +561,7 @@ pub async fn update_apqp_phase(
 
     match phase {
         Ok(data) => Json(ApiResponse::success(data, "APQP阶段更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update APQP phase: {}", e);
             Json(ApiResponse::error(500, "APQP阶段更新失败"))
@@ -813,6 +815,7 @@ pub async fn update_apqp_task(
 
     match task {
         Ok(data) => Json(ApiResponse::success(data, "APQP任务更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update APQP task: {}", e);
             Json(ApiResponse::error(500, "APQP任务更新失败"))
@@ -1061,6 +1064,7 @@ pub async fn update_apqp_risk(
 
     match risk {
         Ok(data) => Json(ApiResponse::success(data, "APQP风险更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update APQP risk: {}", e);
             Json(ApiResponse::error(500, "APQP风险更新失败"))

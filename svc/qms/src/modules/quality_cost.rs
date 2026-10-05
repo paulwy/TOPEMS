@@ -260,6 +260,7 @@ pub async fn update_quality_cost(
 
     match cost {
         Ok(data) => Json(ApiResponse::success(data, "质量成本记录更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update quality cost: {}", e);
             Json(ApiResponse::error(500, "质量成本记录更新失败"))

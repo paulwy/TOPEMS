@@ -271,6 +271,7 @@ pub async fn update_eightd_report(
 
     match report {
         Ok(data) => Json(ApiResponse::success(data, "8D报告更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update 8D report: {}", e);
             Json(ApiResponse::error(500, "8D报告更新失败"))
@@ -402,6 +403,7 @@ pub async fn submit_d3_containment(
             .await;
             Json(ApiResponse::success(data, "D3临时遏制措施提交成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to submit D3 containment: {}", e);
             Json(ApiResponse::error(500, "D3临时遏制措施提交失败"))
@@ -446,6 +448,7 @@ pub async fn submit_d4_root_cause(
             .await;
             Json(ApiResponse::success(data, "D4根本原因分析提交成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to submit D4 root cause: {}", e);
             Json(ApiResponse::error(500, "D4根本原因分析提交失败"))
@@ -490,6 +493,7 @@ pub async fn submit_d5_permanent_action(
             .await;
             Json(ApiResponse::success(data, "D5永久纠正措施提交成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to submit D5 permanent action: {}", e);
             Json(ApiResponse::error(500, "D5永久纠正措施提交失败"))
@@ -534,6 +538,7 @@ pub async fn verify_d6_effectiveness(
             .await;
             Json(ApiResponse::success(data, "D6效果验证成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to verify D6 effectiveness: {}", e);
             Json(ApiResponse::error(500, "D6效果验证失败"))
@@ -578,6 +583,7 @@ pub async fn submit_d7_preventive(
             .await;
             Json(ApiResponse::success(data, "D7预防措施提交成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to submit D7 preventive: {}", e);
             Json(ApiResponse::error(500, "D7预防措施提交失败"))
@@ -622,6 +628,7 @@ pub async fn close_eightd_report(
             .await;
             Json(ApiResponse::success(data, "8D报告已关闭"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to close 8D report: {}", e);
             Json(ApiResponse::error(500, "8D报告关闭失败"))

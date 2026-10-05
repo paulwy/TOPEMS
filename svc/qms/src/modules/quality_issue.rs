@@ -310,6 +310,7 @@ pub async fn update_issue(
 
     match issue {
         Ok(data) => Json(ApiResponse::success(data, "质量问题更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update issue: {}", e);
             Json(ApiResponse::error(500, "质量问题更新失败"))

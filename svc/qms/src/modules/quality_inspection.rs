@@ -263,6 +263,7 @@ pub async fn update_inspection(
 
     match inspection {
         Ok(data) => Json(ApiResponse::success(data, "质量检查更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update inspection: {}", e);
             Json(ApiResponse::error(500, "质量检查更新失败"))

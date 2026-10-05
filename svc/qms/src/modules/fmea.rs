@@ -190,6 +190,7 @@ pub async fn update_fmea_analysis(
 
     match fmea {
         Ok(data) => Json(ApiResponse::success(data, "FMEA分析更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update FMEA analysis: {}", e);
             Json(ApiResponse::error(500, "FMEA分析更新失败"))
@@ -425,6 +426,7 @@ pub async fn update_fmea_item(
 
     match item {
         Ok(data) => Json(ApiResponse::success(data, "FMEA条目更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update FMEA item: {}", e);
             Json(ApiResponse::error(500, "FMEA条目更新失败"))

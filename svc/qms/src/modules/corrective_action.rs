@@ -303,6 +303,7 @@ pub async fn update_action(
 
     match action {
         Ok(data) => Json(ApiResponse::success(data, "整改措施更新成功")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update action: {}", e);
             Json(ApiResponse::error(500, "整改措施更新失败"))
@@ -341,6 +342,7 @@ pub async fn complete_action(
 
     match action {
         Ok(data) => Json(ApiResponse::success(data, "整改措施已完成")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to complete action: {}", e);
             Json(ApiResponse::error(500, "整改措施完成失败"))

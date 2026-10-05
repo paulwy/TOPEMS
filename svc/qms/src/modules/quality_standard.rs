@@ -349,6 +349,7 @@ pub async fn update_standard(
 
             Json(ApiResponse::success(data, "质量标准更新成功"))
         }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "记录不存在")),
         Err(e) => {
             tracing::error!("Failed to update standard: {}", e);
             Json(ApiResponse::error(500, "质量标准更新失败"))
