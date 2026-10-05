@@ -123,6 +123,18 @@ pub fn build_business_router(state: &AppState) -> Router<AppState> {
                 .delete(modules::business::delete_business_location),
         )
         .route(
+            "/business-locations/type/{business_type}",
+            axum::routing::get(modules::business::list_business_locations_by_type),
+        )
+        .route(
+            "/device-tracks/devices",
+            axum::routing::get(modules::device::list_devices_with_tracks),
+        )
+        .route(
+            "/device-tracks/{device_id}/statistics",
+            axum::routing::get(modules::device::get_device_track_statistics),
+        )
+        .route(
             "/location-photos",
             axum::routing::get(modules::photo::list_location_photos),
         )

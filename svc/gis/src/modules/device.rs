@@ -3,6 +3,7 @@
 
 use crate::models::{Device, DeviceLocationRecord};
 use crate::modules::websocket::{SharedWebSocketManager, WebSocketMessage};
+use crate::services::track_stats::{TrackPoint, TrackStatisticsCalculator};
 use crate::shared::permission::{check_permission, GisPermission};
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -10,7 +11,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -455,6 +456,112 @@ pub async fn get_device_history(
         }
         Err(e) => Json(ApiResponse::from(TopemsError::internal(
             "查询历史位置失败",
+            e,
+        ))),
+    }
+}
+
+/// GET /device-tracks/{device_id}/statistics
+/// 前端 trackApi.getTrackStatistics(deviceId) → 返回单设备轨迹统计汇总。
+/// 复用 services::track_stats::TrackStatisticsCalculator 计算距离/速度。
+pub async fn get_device_track_statistics(
+    State(pool): State<PgPool>,
+    Extension(_claims): Extension<Claims>,
+    Path(device_id): Path<Uuid>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let records = sqlx::query_as::<_, DeviceLocationRecord>(
+        "id, tenant_id, device_id, position, accuracy, speed, direction, altitude, battery_level, signal_strength, recorded_at, created_at FROM gis.device_location_records WHERE device_id = $1 ORDER BY recorded_at ASC",
+    )
+    .bind(device_id)
+    .fetch_all(&pool)
+    .await;
+
+    match records {
+        Ok(records) if records.is_empty() => Json(ApiResponse::success(
+            serde_json::json!({
+                "total_distance": 0.0,
+                "avg_speed": 0.0,
+                "max_speed": 0.0,
+                "track_points": 0,
+                "start_time": null,
+                "end_time": null,
+            }),
+            "暂无轨迹数据",
+        )),
+        Ok(records) => {
+            let points: Vec<TrackPoint> = records
+                .iter()
+                .map(|r| TrackPoint {
+                    position: r.position.clone(),
+                    altitude: r.altitude,
+                    speed: r.speed,
+                    heading: r.direction,
+                    accuracy: r.accuracy,
+                    battery_level: r.battery_level,
+                    timestamp: r.recorded_at,
+                })
+                .collect();
+            let stats = TrackStatisticsCalculator::calculate(&points);
+            let resp = match stats {
+                Some(s) => serde_json::json!({
+                    "total_distance": s.total_distance,
+                    "avg_speed": s.avg_speed,
+                    "max_speed": s.max_speed,
+                    "track_points": s.point_count,
+                    "start_time": s.start_time,
+                    "end_time": s.end_time,
+                }),
+                None => serde_json::json!({
+                    "total_distance": 0.0,
+                    "avg_speed": 0.0,
+                    "max_speed": 0.0,
+                    "track_points": 0,
+                    "start_time": null,
+                    "end_time": null,
+                }),
+            };
+            Json(ApiResponse::success(resp, "获取轨迹统计成功"))
+        }
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询轨迹统计失败", e))),
+    }
+}
+
+/// GET /device-tracks/devices
+/// 前端 trackApi.listDevicesWithTracks() → 返回最近有轨迹上报的设备列表（含最新位置）。
+pub async fn list_devices_with_tracks(
+    State(pool): State<PgPool>,
+    Extension(_claims): Extension<Claims>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    let rows = sqlx::query(
+        "SELECT DISTINCT ON (device_id) device_id, position, speed, recorded_at \
+         FROM gis.device_location_records \
+         ORDER BY device_id, recorded_at DESC",
+    )
+    .fetch_all(&pool)
+    .await;
+
+    match rows {
+        Ok(rows) => {
+            let items: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    let device_id: Uuid = r.get("device_id");
+                    let position: serde_json::Value = r.get("position");
+                    let speed: Option<f64> = r.get("speed");
+                    let recorded_at: DateTime<Utc> = r.get("recorded_at");
+                    serde_json::json!({
+                        "id": device_id,
+                        "device_id": device_id,
+                        "position": position,
+                        "speed": speed,
+                        "recorded_at": recorded_at,
+                    })
+                })
+                .collect();
+            Json(ApiResponse::success(items, "获取设备轨迹列表成功"))
+        }
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "查询设备轨迹列表失败",
             e,
         ))),
     }
