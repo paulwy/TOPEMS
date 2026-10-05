@@ -4,7 +4,7 @@
 
 use axum::extract::{Path, Query, State};
 use axum::Json;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Datelike, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
@@ -422,6 +422,246 @@ pub async fn list_calendar_events(
     {
         Ok(rows) => Json(ApiResponse::success(rows, "ok")),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+    }
+}
+
+// ===== schedule 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
+
+async fn fetch_events_in_range(
+    pool: &PgPool,
+    start: DateTime<Utc>,
+    end: DateTime<Utc>,
+) -> Result<Vec<OaCalendarEvent>, sqlx::Error> {
+    let tid = tenant_id();
+    sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
+        "mobile",
+        "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 AND start_time >= $2 AND start_time < $3 ORDER BY start_time ASC"
+    ))
+    .bind(&tid)
+    .bind(start)
+    .bind(end)
+    .fetch_all(pool)
+    .await
+}
+
+/// 事件详情（前端 GET /schedule/events/{id}）
+pub async fn get_schedule_event(
+    State(pool): State<PgPool>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+) -> Json<ApiResponse<Option<OaCalendarEvent>>> {
+    let tid = tenant_id();
+    match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
+        "mobile",
+        "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1 AND id = $2"
+    ))
+    .bind(&tid)
+    .bind(id)
+    .fetch_optional(&pool)
+    .await
+    {
+        Ok(row) => Json(ApiResponse::success(row, "ok")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+    }
+}
+
+/// 今日事件（前端 GET /schedule/events/today）
+pub async fn list_today_events(
+    State(pool): State<PgPool>,
+) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+    let now = chrono::Utc::now();
+    let start = DateTime::<Utc>::from_naive_utc_and_offset(
+        now.date_naive().and_hms_opt(0, 0, 0).unwrap(),
+        Utc,
+    );
+    let end = start + chrono::Duration::days(1);
+    match fetch_events_in_range(&pool, start, end).await {
+        Ok(rows) => Json(ApiResponse::success(rows, "ok")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+    }
+}
+
+/// 本周事件（前端 GET /schedule/events/week）
+pub async fn list_week_events(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+    let now = chrono::Utc::now();
+    let today = now.date_naive();
+    let weekday = today.weekday().num_days_from_monday();
+    let monday = today - chrono::Duration::days(weekday as i64);
+    let start = DateTime::<Utc>::from_naive_utc_and_offset(
+        monday.and_hms_opt(0, 0, 0).unwrap(),
+        Utc,
+    );
+    let end = start + chrono::Duration::days(7);
+    match fetch_events_in_range(&pool, start, end).await {
+        Ok(rows) => Json(ApiResponse::success(rows, "ok")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MonthEventParams {
+    pub year: Option<i32>,
+    pub month: Option<i32>,
+}
+
+/// 本月事件（前端 GET /schedule/events/month?year=&month=）
+pub async fn list_month_events(
+    State(pool): State<PgPool>,
+    Query(params): Query<MonthEventParams>,
+) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+    let now = chrono::Utc::now();
+    let year = params.year.unwrap_or(now.year());
+    let month = params.month.unwrap_or(now.month() as i32).clamp(1, 12);
+    let start = DateTime::<Utc>::from_naive_utc_and_offset(
+        chrono::NaiveDate::from_ymd_opt(year, month as u32, 1)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        Utc,
+    );
+    let end = if month == 12 {
+        DateTime::<Utc>::from_naive_utc_and_offset(
+            chrono::NaiveDate::from_ymd_opt(year + 1, 1, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            Utc,
+        )
+    } else {
+        DateTime::<Utc>::from_naive_utc_and_offset(
+            chrono::NaiveDate::from_ymd_opt(year, (month + 1) as u32, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            Utc,
+        )
+    };
+    match fetch_events_in_range(&pool, start, end).await {
+        Ok(rows) => Json(ApiResponse::success(rows, "ok")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct MyEventsParams {
+    pub page: Option<i64>,
+    #[serde(rename = "pageSize")]
+    pub page_size: Option<i64>,
+    pub start_date: Option<String>,
+    pub end_date: Option<String>,
+}
+
+/// 我的事件（前端 GET /schedule/events/my → 查表全量分页）
+pub async fn list_my_events(
+    State(pool): State<PgPool>,
+    Query(params): Query<MyEventsParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tid = tenant_id();
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).clamp(1, 100);
+    let offset = (page - 1) * page_size;
+    let start_filter = params.start_date.unwrap_or_default();
+    let end_filter = params.end_date.unwrap_or_default();
+
+    let events: Vec<OaCalendarEvent> = match sqlx::query_as::<_, OaCalendarEvent>(
+        only_own_schema_query!(
+            "mobile",
+            "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1
+             AND ($2::text = '' OR start_time::date >= $2::date)
+             AND ($3::text = '' OR start_time::date <= $3::date)
+             ORDER BY start_time DESC LIMIT $4 OFFSET $5"
+        ),
+    )
+    .bind(&tid)
+    .bind(&start_filter)
+    .bind(&end_filter)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&pool)
+    .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
+        }
+    };
+
+    Json(ApiResponse::success(
+        serde_json::json!({ "items": events, "total": events.len() }),
+        "ok",
+    ))
+}
+
+/// 我参与的事件（前端 GET /schedule/events/attending → 空列表占位，需 attendees 表）
+pub async fn list_attending_events() -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+    Json(ApiResponse::success(Vec::new(), "ok"))
+}
+
+/// 更新事件状态（前端 PUT /schedule/events/{id}/status → 占位兜底）
+pub async fn update_event_status(
+    State(pool): State<PgPool>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<ApiResponse<()>> {
+    let tid = tenant_id();
+    let status = payload
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("confirmed");
+    match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
+    ))
+    .bind(&tid)
+    .bind(id)
+    .execute(&pool)
+    .await
+    {
+        Ok(_) => Json(ApiResponse::success(
+            (),
+            &("事件状态已更新（占位：status=".to_owned() + status + "）"),
+        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+    }
+}
+
+/// 添加参与者（前端 POST /schedule/events/{id}/attendees → 占位兜底）
+pub async fn add_event_attendee(
+    State(pool): State<PgPool>,
+    axum::extract::Path(id): axum::extract::Path<Uuid>,
+    Json(_payload): Json<serde_json::Value>,
+) -> Json<ApiResponse<()>> {
+    let tid = tenant_id();
+    match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
+    ))
+    .bind(&tid)
+    .bind(id)
+    .execute(&pool)
+    .await
+    {
+        Ok(_) => Json(ApiResponse::success((), "参与者已添加（占位实现，待 attendees 表）")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
+    }
+}
+
+/// 移除参与者（前端 DELETE /schedule/events/{id}/attendees/{userId} → 占位兜底）
+pub async fn remove_event_attendee(
+    State(pool): State<PgPool>,
+    axum::extract::Path((id, _user_id)): axum::extract::Path<(Uuid, String)>,
+) -> Json<ApiResponse<()>> {
+    let tid = tenant_id();
+    match sqlx::query(only_own_schema_query!(
+        "mobile",
+        "UPDATE mobile.oa_calendar_events SET updated_at = NOW() WHERE tenant_id = $1 AND id = $2"
+    ))
+    .bind(&tid)
+    .bind(id)
+    .execute(&pool)
+    .await
+    {
+        Ok(_) => Json(ApiResponse::success((), "参与者已移除（占位实现，待 attendees 表）")),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
 

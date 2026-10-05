@@ -121,10 +121,13 @@ use crate::modules::missing_endpoints::{
     update_push_template,
 };
 use crate::modules::oa::{
-    complete_oa_task, create_calendar_event, create_meeting, create_oa_task, delete_calendar_event,
-    delete_meeting, delete_oa_task, get_announcement, get_meeting, get_oa_stats, get_oa_task,
-    join_meeting, leave_meeting, list_announcements, list_calendar_events, list_meetings,
-    list_oa_tasks, mark_announcement_read, update_calendar_event, update_meeting, update_oa_task,
+    add_event_attendee, complete_oa_task, create_calendar_event, create_meeting, create_oa_task,
+    delete_calendar_event, delete_meeting, delete_oa_task, get_announcement, get_meeting,
+    get_oa_stats, get_oa_task, get_schedule_event, join_meeting, leave_meeting,
+    list_announcements, list_attending_events, list_calendar_events, list_meetings,
+    list_month_events, list_my_events, list_oa_tasks, list_today_events, list_week_events,
+    mark_announcement_read, remove_event_attendee, update_calendar_event, update_event_status,
+    update_meeting, update_oa_task,
 };
 use crate::modules::offline::{get_offline_status, sync_offline_data};
 use crate::modules::offline_records::{
@@ -163,7 +166,11 @@ use crate::modules::quality::{
 };
 use crate::modules::scan::{image_ocr, scan_qrcode};
 use crate::modules::shortcut::{create_shortcut, get_shortcuts};
-use crate::modules::stats::{get_dashboard_stats, get_patrol_stats, get_recent_activities, get_task_stats};
+use crate::modules::stats::{
+    acknowledge_alert, get_dashboard_alerts, get_dashboard_charts, get_dashboard_kpis,
+    get_dashboard_stats, get_patrol_stats, get_quick_actions, get_recent_activities,
+    get_task_stats,
+};
 use crate::modules::task::{
     batch_update_status, complete_task, create_task, delete_task, get_all_tasks, get_my_tasks,
     get_overdue_tasks, get_pending_tasks, get_task, reopen_task, search_tasks, update_task,
@@ -764,13 +771,45 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         )
         .route(
             "/schedule/events/{id}",
-            axum::routing::put(update_calendar_event).delete(delete_calendar_event),
+            axum::routing::get(get_schedule_event)
+                .put(update_calendar_event)
+                .delete(delete_calendar_event),
+        )
+        // schedule 死代码兜底（前端 today/week/month/my/attending/status/attendees）
+        .route("/schedule/events/today", axum::routing::get(list_today_events))
+        .route("/schedule/events/week", axum::routing::get(list_week_events))
+        .route("/schedule/events/month", axum::routing::get(list_month_events))
+        .route("/schedule/events/my", axum::routing::get(list_my_events))
+        .route(
+            "/schedule/events/attending",
+            axum::routing::get(list_attending_events),
+        )
+        .route(
+            "/schedule/events/{id}/status",
+            axum::routing::put(update_event_status),
+        )
+        .route(
+            "/schedule/events/{id}/attendees",
+            axum::routing::post(add_event_attendee),
+        )
+        .route(
+            "/schedule/events/{id}/attendees/{userId}",
+            axum::routing::delete(remove_event_attendee),
         )
         // dashboard announcements（前端 /dashboard/announcements → oa announcements）
         .route("/dashboard/announcements", axum::routing::get(list_announcements))
         .route(
             "/dashboard/announcements/{id}/read",
             axum::routing::post(mark_announcement_read),
+        )
+        // dashboard 死代码兜底（前端 quick-actions/kpis/charts/alerts）
+        .route("/dashboard/quick-actions", axum::routing::get(get_quick_actions))
+        .route("/dashboard/kpis", axum::routing::get(get_dashboard_kpis))
+        .route("/dashboard/charts", axum::routing::get(get_dashboard_charts))
+        .route("/dashboard/alerts", axum::routing::get(get_dashboard_alerts))
+        .route(
+            "/dashboard/alerts/{id}/acknowledge",
+            axum::routing::post(acknowledge_alert),
         )
         // inventory（前端裸 /inventory → items）
         .route("/inventory", axum::routing::get(list_inventory_items))

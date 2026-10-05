@@ -384,6 +384,167 @@ pub async fn get_recent_activities(
     )
 }
 
+// ===== 死代码端点轻量兜底（2026-10-05，页面未调用，占位实现防 404）=====
+
+/// 快捷操作（前端 GET /dashboard/quick-actions → 内置业务快捷入口）
+pub async fn get_quick_actions() -> impl IntoResponse {
+    let actions = serde_json::json!([
+        { "id": "scan", "title": "扫码", "icon": "scan", "url": "/scan", "order": 1 },
+        { "id": "task", "title": "任务", "icon": "task", "url": "/tasks", "order": 2 },
+        { "id": "approval", "title": "审批", "icon": "approval", "url": "/approvals", "order": 3 },
+        { "id": "attendance", "title": "打卡", "icon": "attendance", "url": "/attendance", "order": 4 },
+        { "id": "inventory", "title": "库存", "icon": "inventory", "url": "/inventory", "order": 5 },
+        { "id": "production", "title": "生产", "icon": "production", "url": "/production", "order": 6 }
+    ]);
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(actions, "获取快捷操作成功")),
+    )
+}
+
+#[derive(Debug, Deserialize)]
+pub struct KpiParams {
+    pub period: Option<String>,
+}
+
+/// KPI 指标（前端 GET /dashboard/kpis?period= → 本地表聚合）
+pub async fn get_dashboard_kpis(
+    State(auth_state): State<AuthState>,
+    State(pool): State<PgPool>,
+    headers: HeaderMap,
+    Query(_params): Query<KpiParams>,
+) -> impl IntoResponse {
+    let user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+
+    let today_tasks = sqlx::query(
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.mobile_tasks WHERE assignee = $1 AND created_at >= CURRENT_DATE"),
+    )
+    .bind(&user_id)
+    .fetch_one(&pool)
+    .await
+    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
+    .unwrap_or(0);
+
+    let today_scans = sqlx::query(
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.scan_records WHERE operator = $1 AND scanned_at >= CURRENT_DATE"),
+    )
+    .bind(&user_id)
+    .fetch_one(&pool)
+    .await
+    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
+    .unwrap_or(0);
+
+    let today_patrols = sqlx::query(
+        only_own_schema_query!("mobile", "SELECT COUNT(*) as count FROM mobile.patrol_records WHERE checked_by = $1 AND created_at >= CURRENT_DATE"),
+    )
+    .bind(&user_id)
+    .fetch_one(&pool)
+    .await
+    .map(|r: sqlx::postgres::PgRow| r.get::<Option<i64>, _>("count").unwrap_or(0))
+    .unwrap_or(0);
+
+    let kpis = serde_json::json!({
+        "tasks": { "value": today_tasks, "previousValue": 0, "trend": "stable", "trendValue": 0, "label": "今日任务" },
+        "scans": { "value": today_scans, "previousValue": 0, "trend": "stable", "trendValue": 0, "label": "今日扫码" },
+        "patrols": { "value": today_patrols, "previousValue": 0, "trend": "stable", "trendValue": 0, "label": "今日巡检" }
+    });
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(kpis, "获取KPI成功")),
+    )
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ChartParams {
+    pub chart_type: Option<String>,
+    pub period: Option<String>,
+}
+
+/// 图表数据（前端 GET /dashboard/charts → 近 7 天任务趋势）
+pub async fn get_dashboard_charts(
+    State(pool): State<PgPool>,
+    Query(_params): Query<ChartParams>,
+) -> impl IntoResponse {
+    let rows = sqlx::query(
+        only_own_schema_query!(
+            "mobile",
+            "SELECT created_at::date as d, COUNT(*) as count FROM mobile.mobile_tasks WHERE created_at >= CURRENT_DATE - INTERVAL '6 days' GROUP BY d ORDER BY d"
+        ),
+    )
+    .fetch_all(&pool)
+    .await;
+
+    let mut daily: std::collections::HashMap<String, i64> = std::collections::HashMap::new();
+    if let Ok(rows) = rows {
+        for r in rows {
+            if let (Ok(d), Ok(c)) = (
+                r.try_get::<Option<chrono::NaiveDate>, _>("d"),
+                r.try_get::<Option<i64>, _>("count"),
+            ) {
+                if let (Some(d), Some(c)) = (d, c) {
+                    daily.insert(d.to_string(), c);
+                }
+            }
+        }
+    }
+
+    let mut labels = Vec::new();
+    let mut data = Vec::new();
+    let today = chrono::Utc::now().date_naive();
+    for i in (0..7).rev() {
+        let d = today - chrono::Duration::days(i);
+        let key = d.to_string();
+        labels.push(key.clone());
+        data.push(daily.get(&key).copied().unwrap_or(0));
+    }
+
+    let chart = serde_json::json!({
+        "labels": labels,
+        "datasets": [ { "label": "任务数", "data": data } ]
+    });
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(chart, "获取图表数据成功")),
+    )
+}
+
+/// 告警列表（前端 GET /dashboard/alerts → 空列表占位，告警需告警中心接入）
+pub async fn get_dashboard_alerts() -> impl IntoResponse {
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(serde_json::json!([]), "获取告警列表成功")),
+    )
+}
+
+/// 确认告警（前端 POST /dashboard/alerts/{id}/acknowledge → 占位兜底）
+pub async fn acknowledge_alert(
+    State(auth_state): State<AuthState>,
+    headers: HeaderMap,
+    axum::extract::Path(_id): axum::extract::Path<String>,
+) -> impl IntoResponse {
+    let _user_id = match extract_user_id_from_token(&headers, &auth_state.jwt_secret) {
+        Ok(id) => id,
+        Err(_) => {
+            return (
+                StatusCode::UNAUTHORIZED,
+                Json(ApiResponse::error(401, "未授权")),
+            );
+        }
+    };
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success((), "告警已确认（占位实现，待告警中心接入）")),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
