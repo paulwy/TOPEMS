@@ -262,7 +262,6 @@ pub async fn create_customer(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let result = sqlx::query_as::<_, Customer>(
 
@@ -286,7 +285,7 @@ pub async fn create_customer(
     .bind("none")
     .bind(now)
     .bind(now)
-    .bind(org_id)
+    .bind(tenant_opt)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)

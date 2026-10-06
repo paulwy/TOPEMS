@@ -203,7 +203,6 @@ pub async fn create_contact(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let result = sqlx::query_as::<_, Contact>(
 
@@ -225,7 +224,7 @@ pub async fn create_contact(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .bind(org_id)
+    .bind(tenant_opt)
     .fetch_one(&mut **txn)
     .await;
 

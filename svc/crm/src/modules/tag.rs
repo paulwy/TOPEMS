@@ -177,7 +177,6 @@ async fn create_tag(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let result = sqlx::query_as::<_, Tag>(
 
@@ -196,7 +195,7 @@ async fn create_tag(
     .bind(&req.description)
     .bind(now)
     .bind(now)
-    .bind(org_id)
+    .bind(tenant_opt)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)
@@ -627,8 +626,6 @@ async fn add_tag_to_customer(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
-
     let exists = sqlx::query_scalar::<_, bool>(
 
         "SELECT EXISTS(SELECT 1 FROM crm.customer_tags WHERE customer_id = $1 AND tag_id = $2 AND tenant_id = $3)",
@@ -652,7 +649,7 @@ async fn add_tag_to_customer(
     .bind(customer_id)
     .bind(tag_id)
     .bind(tenant_id)
-    .bind(org_id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 

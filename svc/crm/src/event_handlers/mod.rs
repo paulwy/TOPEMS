@@ -188,9 +188,8 @@ impl CrmEventHandlers {
             payload.created_by.as_deref().unwrap_or("system")
         );
 
-        let org_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001")
-            .unwrap_or(uuid::Uuid::nil());
-
+        // 多租户：org_id 与 tenant_id 均取事件携带的租户维度；无租户（系统事件）落 SQL NULL，
+        // 不再硬编码真实租户 ...0001（命中 crm.interactions 的 tenant_id IS NULL 分支）。
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
                (id, org_id, customer_id, interaction_type, subject, content, status, scheduled_at, created_at, updated_at, tenant_id)
@@ -198,13 +197,13 @@ impl CrmEventHandlers {
                ON CONFLICT DO NOTHING"#,
         )
         .bind(interaction_id)
-        .bind(org_id)
+        .bind(payload.tenant_id)
         .bind(payload.customer_id)
         .bind(&subject)
         .bind(&content)
         .bind(now)
         .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+        .bind(payload.tenant_id)
         .execute(&self.db)
         .await;
 
@@ -256,9 +255,8 @@ impl CrmEventHandlers {
         // 跟进日期：商机赢单后 7 天
         let follow_up_date = now + chrono::Duration::days(7);
 
-        let org_id = uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001")
-            .unwrap_or(uuid::Uuid::nil());
-
+        // 多租户：org_id 与 tenant_id 均取事件携带的租户维度；无租户（系统事件）落 SQL NULL，
+        // 不再硬编码真实租户 ...0001（命中 crm.interactions 的 tenant_id IS NULL 分支）。
         let result = sqlx::query(
             r#"INSERT INTO crm.interactions
                (id, org_id, customer_id, opportunity_id, interaction_type, subject, content, status, scheduled_at, follow_up_required, follow_up_date, created_at, updated_at, tenant_id)
@@ -266,7 +264,7 @@ impl CrmEventHandlers {
                ON CONFLICT DO NOTHING"#,
         )
         .bind(interaction_id)
-        .bind(org_id)
+        .bind(payload.tenant_id)
         .bind(payload.customer_id)
         .bind(payload.opportunity_id)
         .bind(&subject)
@@ -274,7 +272,7 @@ impl CrmEventHandlers {
         .bind(now)
         .bind(follow_up_date)
         .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+        .bind(payload.tenant_id)
         .execute(&self.db)
         .await;
 
@@ -643,7 +641,7 @@ impl CrmEventHandlers {
         .bind(payload.total_amount)
         .bind(now)
         .bind(now)
-        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
+        .bind(payload.tenant_id)
         .execute(&self.db)
         .await;
 

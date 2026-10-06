@@ -199,8 +199,6 @@ pub async fn get_billing_record(
     }
 }
 
-const ORG_ID_FALLBACK: &str = "00000000-0000-0000-0000-000000000001";
-
 async fn create_billing_record(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<

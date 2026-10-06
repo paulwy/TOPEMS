@@ -391,7 +391,6 @@ pub async fn create_opportunity(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    let org_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").expect("valid org uuid");
 
     let opp_no = if req.opp_no.is_empty() {
         format!("OPP-{}", now.timestamp())
@@ -428,7 +427,7 @@ pub async fn create_opportunity(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .bind(org_id)
+    .bind(tenant_opt)
     .bind(&req.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
     .fetch_one(&mut **txn)

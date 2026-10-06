@@ -218,8 +218,6 @@ pub async fn get_interaction(
     }
 }
 
-const ORG_ID_FALLBACK: &str = "00000000-0000-0000-0000-000000000001";
-
 async fn create_interaction(
     State(state): State<ApiState>,
     Extension(txn_arc): Extension<
@@ -246,7 +244,6 @@ async fn create_interaction(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    let org_id = Uuid::parse_str(ORG_ID_FALLBACK).expect("valid org uuid");
     let now = chrono::Utc::now();
     let type_ = if req.type_.trim().is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -265,7 +262,7 @@ async fn create_interaction(
         "#,
     )
     .bind(tenant_id)
-    .bind(org_id)
+    .bind(tenant_opt)
     .bind(req.customer_id)
     .bind(req.contact_id)
     .bind(&type_)
