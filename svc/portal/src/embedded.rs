@@ -341,7 +341,7 @@ pub async fn build_router(
                         return (
                             axum::http::StatusCode::FORBIDDEN,
                             axum::Json(serde_json::json!({
-                                "errors": [{ "message": msg }],
+                                "errors": [{ "message": msg.to_string() }],
                                 "data": null
                             })),
                         )
@@ -353,7 +353,7 @@ pub async fn build_router(
                         return (
                             axum::http::StatusCode::TOO_MANY_REQUESTS,
                             axum::Json(serde_json::json!({
-                                "errors": [{ "message": msg }],
+                                "errors": [{ "message": msg.to_string() }],
                                 "data": null
                             })),
                         )
@@ -417,7 +417,7 @@ pub async fn build_router(
                             return (
                                 axum::http::StatusCode::BAD_REQUEST,
                                 axum::Json(serde_json::json!({
-                                    "errors": [{ "message": msg }],
+                                    "errors": [{ "message": msg.to_string() }],
                                     "data": null
                                 })),
                             )
@@ -435,7 +435,7 @@ pub async fn build_router(
                             return (
                                 axum::http::StatusCode::BAD_REQUEST,
                                 axum::Json(serde_json::json!({
-                                    "errors": [{ "message": msg }],
+                                    "errors": [{ "message": msg.to_string() }],
                                     "data": null
                                 })),
                             )
@@ -493,7 +493,7 @@ pub async fn build_router(
                                 ),
                             ],
                             axum::Json(serde_json::json!({
-                                "errors": [{ "message": msg }],
+                                "errors": [{ "message": msg.to_string() }],
                                 "data": null
                             })),
                         )
@@ -511,7 +511,7 @@ pub async fn build_router(
                                 ),
                             ],
                             axum::Json(serde_json::json!({
-                                "errors": [{ "message": msg }],
+                                "errors": [{ "message": msg.to_string() }],
                                 "data": null
                             })),
                         )
@@ -635,7 +635,7 @@ pub async fn build_router(
                                     ),
                                 ],
                                 axum::Json(serde_json::json!({
-                                    "errors": [{ "message": msg }],
+                                    "errors": [{ "message": msg.to_string() }],
                                     "data": null
                                 })),
                             )
@@ -659,7 +659,7 @@ pub async fn build_router(
                                     ),
                                 ],
                                 axum::Json(serde_json::json!({
-                                    "errors": [{ "message": msg }],
+                                    "errors": [{ "message": msg.to_string() }],
                                     "data": null
                                 })),
                             )

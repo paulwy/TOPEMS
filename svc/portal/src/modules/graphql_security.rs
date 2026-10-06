@@ -4,6 +4,7 @@
 //! 包含：安全事件、查询深度/复杂度校验、速率限制、IP 黑名单、安全统计、
 //! 查询白名单自动化、安全审计报表、性能调优建议。
 
+use topems_shared_core::error::TopemsError;
 use async_graphql::SimpleObject;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -121,7 +122,7 @@ pub fn validate_query_depth(
     query: &str,
     ip: Option<&str>,
     query_hash: Option<&str>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let depth = estimate_query_depth(query);
     if depth > MAX_QUERY_DEPTH {
         let msg = format!("Query depth {} exceeds maximum {}", depth, MAX_QUERY_DEPTH);
@@ -131,7 +132,7 @@ pub fn validate_query_depth(
             query_hash.map(|s| s.to_string()),
             msg.clone(),
         );
-        Err(msg)
+        Err(msg.into())
     } else {
         Ok(())
     }
@@ -144,7 +145,7 @@ pub fn validate_query_complexity(
     query: &str,
     ip: Option<&str>,
     query_hash: Option<&str>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let complexity = estimate_query_complexity(query);
     if complexity > MAX_QUERY_COMPLEXITY {
         let msg = format!(
@@ -157,7 +158,7 @@ pub fn validate_query_complexity(
             query_hash.map(|s| s.to_string()),
             msg.clone(),
         );
-        Err(msg)
+        Err(msg.into())
     } else {
         Ok(())
     }
@@ -187,7 +188,7 @@ const RATE_LIMIT_WINDOW: std::time::Duration = std::time::Duration::from_secs(60
 /// V40.0: 检查速率限制
 ///
 /// 超过限制时返回错误并记录安全事件
-pub fn check_rate_limit(ip: &str) -> Result<(), String> {
+pub fn check_rate_limit(ip: &str) -> Result<(), TopemsError> {
     let mut limiter = rate_limiter().lock().unwrap_or_else(|e| e.into_inner());
     let entry = limiter.entry(ip.to_string()).or_insert(RateLimitEntry {
         count: 0,
@@ -210,7 +211,7 @@ pub fn check_rate_limit(ip: &str) -> Result<(), String> {
             None,
             msg.clone(),
         );
-        Err(msg)
+        Err(msg.into())
     } else {
         entry.count += 1;
         Ok(())
@@ -277,7 +278,7 @@ pub fn get_ip_blacklist_size() -> usize {
 }
 
 /// V40.0: 检查 IP 黑名单，若在黑名单中则记录安全事件并返回错误
-pub fn check_ip_blacklist(ip: &str) -> Result<(), String> {
+pub fn check_ip_blacklist(ip: &str) -> Result<(), TopemsError> {
     if is_ip_blacklisted(ip) {
         let msg = format!("IP {} is blacklisted", ip);
         record_security_event(
@@ -286,7 +287,7 @@ pub fn check_ip_blacklist(ip: &str) -> Result<(), String> {
             None,
             msg.clone(),
         );
-        Err(msg)
+        Err(msg.into())
     } else {
         Ok(())
     }

@@ -646,7 +646,7 @@ impl DeploymentManager {
         version: String,
         environment: Environment,
         strategy: DeploymentStrategy,
-    ) -> Result<Deployment, String> {
+    ) -> Result<Deployment, TopemsError> {
         let store = get_deployment_store();
 
         let deployment = Deployment::new(version, environment, strategy);
@@ -656,7 +656,7 @@ impl DeploymentManager {
         Ok(deployment)
     }
 
-    pub async fn get_deployment(id: &str) -> Result<Deployment, String> {
+    pub async fn get_deployment(id: &str) -> Result<Deployment, TopemsError> {
         let store = get_deployment_store();
         let deployments = store.deployments.lock().await;
 
@@ -664,7 +664,7 @@ impl DeploymentManager {
             .iter()
             .find(|d| d.id == id)
             .cloned()
-            .ok_or_else(|| format!("部署 '{}' 不存在", id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("部署 '{}' 不存在", id)))
     }
 
     #[allow(clippy::as_conversions)]
@@ -758,7 +758,7 @@ impl DeploymentManager {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-    pub async fn get_deployment_status(id: &str) -> Result<DeploymentStatusInfo, String> {
+    pub async fn get_deployment_status(id: &str) -> Result<DeploymentStatusInfo, TopemsError> {
         let store = get_deployment_store();
 
         let deployment = {
@@ -767,7 +767,7 @@ impl DeploymentManager {
                 .iter()
                 .find(|d| d.id == id)
                 .cloned()
-                .ok_or_else(|| format!("部署 '{}' 不存在", id))?
+                .ok_or_else(|| TopemsError::ResourceNotFound(format!("部署 '{}' 不存在", id)))?
         };
 
         let steps = store.deployment_steps.lock().await;
@@ -844,14 +844,14 @@ impl DeploymentManager {
         Ok(rollout.clone())
     }
 
-    pub async fn rollback_deployment(id: &str) -> Result<Deployment, String> {
+    pub async fn rollback_deployment(id: &str) -> Result<Deployment, TopemsError> {
         let store = get_deployment_store();
         let mut deployments = store.deployments.lock().await;
 
         let deployment = deployments
             .iter_mut()
             .find(|d| d.id == id)
-            .ok_or_else(|| format!("部署 '{}' 不存在", id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("部署 '{}' 不存在", id)))?;
 
         deployment.status = DeploymentStatus::RollingBack;
         deployment.completed_at = Some(chrono::Utc::now().to_rfc3339());
@@ -888,7 +888,7 @@ impl ConfigurationManager {
         version: String,
         environment: Environment,
         settings: serde_json::Value,
-    ) -> Result<GatewayConfig, String> {
+    ) -> Result<GatewayConfig, TopemsError> {
         let store = get_deployment_store();
         let config = GatewayConfig::new(name, version, environment, settings);
         let mut configs = store.gateway_configs.lock().await;
@@ -896,7 +896,7 @@ impl ConfigurationManager {
         Ok(config)
     }
 
-    pub async fn get_config(id: &str) -> Result<GatewayConfig, String> {
+    pub async fn get_config(id: &str) -> Result<GatewayConfig, TopemsError> {
         let store = get_deployment_store();
         let configs = store.gateway_configs.lock().await;
 
@@ -904,7 +904,7 @@ impl ConfigurationManager {
             .iter()
             .find(|c| c.id == id)
             .cloned()
-            .ok_or_else(|| format!("配置 '{}' 不存在", id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("配置 '{}' 不存在", id)))
     }
 
     pub async fn list_configs(
@@ -934,14 +934,14 @@ impl ConfigurationManager {
         id: &str,
         settings: Option<serde_json::Value>,
         name: Option<String>,
-    ) -> Result<GatewayConfig, String> {
+    ) -> Result<GatewayConfig, TopemsError> {
         let store = get_deployment_store();
         let mut configs = store.gateway_configs.lock().await;
 
         let config = configs
             .iter_mut()
             .find(|c| c.id == id)
-            .ok_or_else(|| format!("配置 '{}' 不存在", id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("配置 '{}' 不存在", id)))?;
 
         if let Some(s) = settings {
             let old_settings = config.settings.clone();
@@ -966,7 +966,7 @@ impl ConfigurationManager {
                 .iter()
                 .find(|c| c.id == id)
                 .cloned()
-                .ok_or_else(|| "配置更新后不存在".to_string())
+                .ok_or_else(|| TopemsError::ResourceNotFound("配置更新后不存在".to_string()))
         } else if let Some(n) = name {
             config.name = n;
             config.updated_at = chrono::Utc::now().to_rfc3339();
@@ -1136,7 +1136,7 @@ impl RollbackManager {
         condition: Option<serde_json::Value>,
         rollback_steps: Option<Vec<String>>,
         max_rollbacks: Option<u32>,
-    ) -> Result<RollbackPolicy, String> {
+    ) -> Result<RollbackPolicy, TopemsError> {
         let store = get_deployment_store();
 
         let mut policy = RollbackPolicy::new(name, trigger);
@@ -1242,7 +1242,7 @@ impl RollbackManager {
             .collect()
     }
 
-    pub async fn test_rollback(policy_id: &str) -> Result<RollbackAction, String> {
+    pub async fn test_rollback(policy_id: &str) -> Result<RollbackAction, TopemsError> {
         let store = get_deployment_store();
 
         let policy = {
@@ -1273,7 +1273,7 @@ impl RollbackManager {
         policy_id: &str,
         enabled: bool,
         condition: Option<serde_json::Value>,
-    ) -> Result<RollbackPolicy, String> {
+    ) -> Result<RollbackPolicy, TopemsError> {
         let store = get_deployment_store();
         let mut policies = store.rollback_policies.lock().await;
 
@@ -1290,7 +1290,7 @@ impl RollbackManager {
         Ok(policy.clone())
     }
 
-    pub async fn disable_rollback(policy_id: &str) -> Result<RollbackPolicy, String> {
+    pub async fn disable_rollback(policy_id: &str) -> Result<RollbackPolicy, TopemsError> {
         let store = get_deployment_store();
         let mut policies = store.rollback_policies.lock().await;
 

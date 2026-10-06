@@ -508,7 +508,7 @@ impl AdaptiveExecutor {
         &self,
         query: &str,
         strategy: Option<AdaptiveStrategy>,
-    ) -> Result<ExecutionProfile, String> {
+    ) -> Result<ExecutionProfile, TopemsError> {
         let mut inner = self.inner.lock().unwrap_or_else(|e| e.into_inner());
         if let Some(s) = strategy {
             inner.configure_strategy(s);
@@ -1069,7 +1069,7 @@ fn get_uptime() -> u64 {
 pub fn execute_adaptive_query(
     query: &str,
     strategy: Option<AdaptiveStrategy>,
-) -> Result<ExecutionProfile, String> {
+) -> Result<ExecutionProfile, TopemsError> {
     adaptive_executor().execute_query(query, strategy)
 }
 

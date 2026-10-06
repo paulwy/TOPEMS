@@ -462,7 +462,7 @@ impl PersistedQueryV2 {
         query_hash: &str,
         new_query_text: String,
         created_by: Option<String>,
-    ) -> Result<PersistedEntryV2, String> {
+    ) -> Result<PersistedEntryV2, TopemsError> {
         let store = get_persisted_query_store();
         let mut queries = store.persisted_queries.lock().await;
 
@@ -498,7 +498,7 @@ impl PersistedQueryV2 {
     pub async fn deprecate_query(
         query_hash: &str,
         status: QueryStatus,
-    ) -> Result<PersistedEntryV2, String> {
+    ) -> Result<PersistedEntryV2, TopemsError> {
         let store = get_persisted_query_store();
         let mut queries = store.persisted_queries.lock().await;
 
@@ -559,7 +559,7 @@ impl VersionedCache {
         value: serde_json::Value,
         tags: Option<Vec<String>>,
         ttl_seconds: Option<u64>,
-    ) -> Result<CacheEntryV2, String> {
+    ) -> Result<CacheEntryV2, TopemsError> {
         let store = get_persisted_query_store();
 
         let active_version = store.active_cache_version.lock().await;
@@ -600,7 +600,7 @@ impl VersionedCache {
     }
 
     #[allow(clippy::as_conversions)]
-    pub async fn invalidate_version(version_id: &str) -> Result<u64, String> {
+    pub async fn invalidate_version(version_id: &str) -> Result<u64, TopemsError> {
         let store = get_persisted_query_store();
 
         let mut entries = store.cache_entries.lock().await;
@@ -617,7 +617,7 @@ impl VersionedCache {
         Ok(removed)
     }
 
-    pub async fn create_version(description: Option<String>) -> Result<CacheVersion, String> {
+    pub async fn create_version(description: Option<String>) -> Result<CacheVersion, TopemsError> {
         let store = get_persisted_query_store();
 
         let mut versions = store.cache_versions.lock().await;
@@ -722,7 +722,7 @@ impl EdgePersistence {
         value: serde_json::Value,
         location: EdgeCacheLocation,
         ttl_ms: Option<u64>,
-    ) -> Result<EdgeEntry, String> {
+    ) -> Result<EdgeEntry, TopemsError> {
         let store = get_persisted_query_store();
 
         let ttl = match ttl_ms {
@@ -767,7 +767,7 @@ impl EdgePersistence {
     pub async fn sync_to_regions(
         key: &str,
         target_locations: Vec<EdgeCacheLocation>,
-    ) -> Result<u64, String> {
+    ) -> Result<u64, TopemsError> {
         let store = get_persisted_query_store();
         let entries = store.edge_entries.lock().await;
 
@@ -847,7 +847,7 @@ impl EdgePersistence {
     pub async fn invalidate_edge(
         key: Option<String>,
         location: Option<EdgeCacheLocation>,
-    ) -> Result<u64, String> {
+    ) -> Result<u64, TopemsError> {
         let store = get_persisted_query_store();
         let mut entries = store.edge_entries.lock().await;
         let before = entries.len();
@@ -901,7 +901,7 @@ impl EdgePersistence {
 
     pub async fn set_replication_policy(
         policy: EdgeReplicationPolicy,
-    ) -> Result<EdgeReplicationPolicy, String> {
+    ) -> Result<EdgeReplicationPolicy, TopemsError> {
         let store = get_persisted_query_store();
         let mut existing = store.replication_policy.lock().await;
         *existing = policy.clone();

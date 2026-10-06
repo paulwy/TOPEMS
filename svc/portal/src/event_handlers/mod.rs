@@ -295,7 +295,7 @@ impl PortalEventHandlers {
 pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = PortalEventHandlers::new(db, event_publisher);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 

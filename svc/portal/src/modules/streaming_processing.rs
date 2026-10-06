@@ -421,7 +421,7 @@ impl StreamManagerV2 {
         stream_type: StreamType,
         filter: Option<serde_json::Value>,
         batch_size: Option<u32>,
-    ) -> Result<Stream, String> {
+    ) -> Result<Stream, TopemsError> {
         let store = get_streaming_store();
 
         let stream = Stream {
@@ -439,13 +439,13 @@ impl StreamManagerV2 {
         Ok(stream)
     }
 
-    pub async fn get_stream(id: &str) -> Result<Stream, String> {
+    pub async fn get_stream(id: &str) -> Result<Stream, TopemsError> {
         let store = get_streaming_store();
         let streams = store.streams.lock().await;
         streams
             .get(id)
             .cloned()
-            .ok_or_else(|| format!("流不存在: {}", id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("流不存在: {}", id)))
     }
 
     pub async fn list_streams(
@@ -474,7 +474,7 @@ impl StreamManagerV2 {
         stream_id: &str,
         event_type: String,
         payload: serde_json::Value,
-    ) -> Result<StreamEvent, String> {
+    ) -> Result<StreamEvent, TopemsError> {
         let store = get_streaming_store();
 
         {
@@ -508,7 +508,7 @@ impl StreamManagerV2 {
         Ok(event)
     }
 
-    pub async fn subscribe_stream(stream_id: &str, subscriber_id: String) -> Result<bool, String> {
+    pub async fn subscribe_stream(stream_id: &str, subscriber_id: String) -> Result<bool, TopemsError> {
         let store = get_streaming_store();
 
         {
@@ -527,7 +527,7 @@ impl StreamManagerV2 {
         Ok(true)
     }
 
-    pub async fn unsubscribe_stream(stream_id: &str, subscriber_id: &str) -> Result<bool, String> {
+    pub async fn unsubscribe_stream(stream_id: &str, subscriber_id: &str) -> Result<bool, TopemsError> {
         let store = get_streaming_store();
         let mut subs = store.stream_subscribers.lock().await;
 
@@ -571,7 +571,7 @@ impl StreamManagerV2 {
         }
     }
 
-    pub async fn delete_stream(stream_id: &str) -> Result<bool, String> {
+    pub async fn delete_stream(stream_id: &str) -> Result<bool, TopemsError> {
         let store = get_streaming_store();
         let mut streams = store.streams.lock().await;
 
@@ -584,7 +584,7 @@ impl StreamManagerV2 {
     }
 
     #[allow(clippy::as_conversions)]
-    pub async fn get_stream_stats(stream_id: &str) -> Result<StreamStats, String> {
+    pub async fn get_stream_stats(stream_id: &str) -> Result<StreamStats, TopemsError> {
         let store = get_streaming_store();
 
         let events = store.stream_events.lock().await;
@@ -620,7 +620,7 @@ impl DeduplicationEngine {
         dedup_key: String,
         window_ms: Option<u64>,
         strategy: Option<DedupStrategy>,
-    ) -> Result<DedupRule, String> {
+    ) -> Result<DedupRule, TopemsError> {
         let store = get_streaming_store();
 
         let rule = DedupRule {
@@ -865,7 +865,7 @@ impl DeduplicationEngine {
             .collect()
     }
 
-    pub async fn enable_rule(rule_id: &str) -> Result<DedupRule, String> {
+    pub async fn enable_rule(rule_id: &str) -> Result<DedupRule, TopemsError> {
         let store = get_streaming_store();
         let mut rules = store.dedup_rules.lock().await;
 
@@ -877,7 +877,7 @@ impl DeduplicationEngine {
         Ok(rule.clone())
     }
 
-    pub async fn disable_rule(rule_id: &str) -> Result<DedupRule, String> {
+    pub async fn disable_rule(rule_id: &str) -> Result<DedupRule, TopemsError> {
         let store = get_streaming_store();
         let mut rules = store.dedup_rules.lock().await;
 
@@ -901,7 +901,7 @@ impl BackpressureController {
         high_watermark: Option<f64>,
         low_watermark: Option<f64>,
         overflow_strategy: Option<OverflowStrategy>,
-    ) -> Result<BackpressureConfig, String> {
+    ) -> Result<BackpressureConfig, TopemsError> {
         let store = get_streaming_store();
 
         let config = BackpressureConfig {
@@ -919,26 +919,26 @@ impl BackpressureController {
         Ok(config)
     }
 
-    pub async fn get_config(stream_id: &str) -> Result<BackpressureConfig, String> {
+    pub async fn get_config(stream_id: &str) -> Result<BackpressureConfig, TopemsError> {
         let store = get_streaming_store();
         let configs = store.bp_configs.lock().await;
         configs
             .get(stream_id)
             .cloned()
-            .ok_or_else(|| format!("背压配置不存在: {}", stream_id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("背压配置不存在: {}", stream_id)))
     }
 
-    pub async fn get_state(stream_id: &str) -> Result<BackpressureState, String> {
+    pub async fn get_state(stream_id: &str) -> Result<BackpressureState, TopemsError> {
         let store = get_streaming_store();
         let states = store.bp_states.lock().await;
         states
             .get(stream_id)
             .cloned()
-            .ok_or_else(|| format!("背压状态不存在: {}", stream_id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("背压状态不存在: {}", stream_id)))
     }
 
     #[allow(clippy::as_conversions)]
-    pub async fn apply_backpressure(stream_id: &str, event_id: String) -> Result<bool, String> {
+    pub async fn apply_backpressure(stream_id: &str, event_id: String) -> Result<bool, TopemsError> {
         let store = get_streaming_store();
 
         let config = {
@@ -1029,13 +1029,13 @@ impl BackpressureController {
         }
     }
 
-    pub async fn drain_queue(stream_id: &str) -> Result<u32, String> {
+    pub async fn drain_queue(stream_id: &str) -> Result<u32, TopemsError> {
         let store = get_streaming_store();
         let mut states = store.bp_states.lock().await;
 
         let state = states
             .get_mut(stream_id)
-            .ok_or_else(|| format!("背压状态不存在: {}", stream_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("背压状态不存在: {}", stream_id)))?;
 
         let drained = state.queue_depth;
         state.queue_depth = 0;

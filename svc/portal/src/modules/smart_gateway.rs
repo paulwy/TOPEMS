@@ -305,7 +305,7 @@ impl<T> ApiResult<T> {
 
 pub trait ProtocolHandler: Send + Sync {
     fn protocol(&self) -> SupportedProtocol;
-    fn handle(&self, request: &str) -> Result<String, String>;
+    fn handle(&self, request: &str) -> Result<String, TopemsError>;
 }
 
 // ==================== 多协议路由实现 ====================
@@ -364,7 +364,7 @@ impl ProtocolRouterInner {
             .handlers
             .get(&protocol)
             .ok_or_else(|| TopemsError::ResourceNotFound(format!("No handler registered for protocol {:?}", protocol)))?;
-        handler.handle(request).map_err(TopemsError::BusinessLogic)
+        handler.handle(request)
     }
 
     fn list_protocols(&self) -> Vec<ProtocolConfig> {

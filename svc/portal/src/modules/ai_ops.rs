@@ -1057,7 +1057,7 @@ impl AutoCacheManager {
         cache_key: String,
         reason: String,
         triggered_by: Option<String>,
-    ) -> Result<u64, String> {
+    ) -> Result<u64, TopemsError> {
         let store = get_auto_cache_store();
         let mut entries = store.entries.lock().await;
 
@@ -1225,7 +1225,7 @@ impl SelfHealingEngine {
             .collect()
     }
 
-    pub async fn run_health_check(check_id: &str) -> Result<HealthCheck, String> {
+    pub async fn run_health_check(check_id: &str) -> Result<HealthCheck, TopemsError> {
         let store = get_self_healing_store();
         let checks = store.health_checks.lock().await;
         let check = checks
@@ -1294,14 +1294,14 @@ impl SelfHealingEngine {
         plan
     }
 
-    pub async fn get_recovery_status(plan_id: &str) -> Result<RecoveryPlan, String> {
+    pub async fn get_recovery_status(plan_id: &str) -> Result<RecoveryPlan, TopemsError> {
         let store = get_self_healing_store();
         let plans = store.recovery_plans.lock().await;
         plans
             .iter()
             .find(|p| p.id == plan_id)
             .cloned()
-            .ok_or_else(|| format!("恢复计划 '{}' 不存在", plan_id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("恢复计划 '{}' 不存在", plan_id)))
     }
 
     #[allow(clippy::as_conversions)]

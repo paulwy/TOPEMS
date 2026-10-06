@@ -788,7 +788,7 @@ impl AIQueryRouter {
         service_id: &str,
         entity_types: Vec<String>,
         score: Option<f64>,
-    ) -> Result<ServiceAffinity, String> {
+    ) -> Result<ServiceAffinity, TopemsError> {
         let store = get_intelligent_gw_store();
         let mut affinities = store.affinities.lock().await;
 
@@ -814,20 +814,20 @@ impl AIQueryRouter {
         Ok(affinity)
     }
 
-    async fn get_service_score(service_id: &str) -> Result<ServiceAffinity, String> {
+    async fn get_service_score(service_id: &str) -> Result<ServiceAffinity, TopemsError> {
         let store = get_intelligent_gw_store();
         let affinities = store.affinities.lock().await;
         affinities
             .iter()
             .find(|a| a.service_id == service_id)
             .cloned()
-            .ok_or_else(|| format!("未找到服务亲和度: {}", service_id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("未找到服务亲和度: {}", service_id)))
     }
 
     async fn warm_up_routing(
         entity_types: Vec<String>,
         target_services: Vec<String>,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let store = get_intelligent_gw_store();
         let loads = store.service_loads.lock().await;
 
@@ -913,7 +913,7 @@ impl AutoSchemaStitcher {
     async fn generate_stitch_plan(
         subgraph_ids: Option<Vec<String>>,
         resolution_strategy: Option<String>,
-    ) -> Result<StitchPlan, String> {
+    ) -> Result<StitchPlan, TopemsError> {
         let store = get_intelligent_gw_store();
 
         let all_subgraphs = Self::discover_subgraphs(None).await?;
@@ -1110,7 +1110,7 @@ impl AutoSchemaStitcher {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn validate_stitch(plan_id: &str) -> Result<serde_json::Value, String> {
+    async fn validate_stitch(plan_id: &str) -> Result<serde_json::Value, TopemsError> {
         let store = get_intelligent_gw_store();
         let plans = store.stitch_plans.lock().await;
 
@@ -1171,7 +1171,7 @@ impl AutoSchemaStitcher {
         }))
     }
 
-    async fn get_stitch_status(plan_id: &str) -> Result<StitchStatusReport, String> {
+    async fn get_stitch_status(plan_id: &str) -> Result<StitchStatusReport, TopemsError> {
         let store = get_intelligent_gw_store();
         let plans = store.stitch_plans.lock().await;
 

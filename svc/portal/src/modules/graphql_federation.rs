@@ -949,7 +949,7 @@ async fn execute_step(
 /// V42.0: 查询执行器 — 按并行组执行，组内并行，组间顺序
 pub async fn execute_federation_plan(
     plan: &FederationQueryPlan,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     let mut results: HashMap<String, serde_json::Value> = HashMap::new();
 
     for group in &plan.parallel_groups {
@@ -2351,7 +2351,7 @@ pub struct FederationV3Executor;
 
 impl FederationV3Executor {
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-    pub async fn execute_plan_v3(plan: &FederationV3Plan) -> Result<serde_json::Value, String> {
+    pub async fn execute_plan_v3(plan: &FederationV3Plan) -> Result<serde_json::Value, TopemsError> {
         let mut results: HashMap<String, serde_json::Value> = HashMap::new();
         let mut step_traces: Vec<PlanStepTrace> = Vec::new();
         let mut services_used: HashSet<String> = HashSet::new();

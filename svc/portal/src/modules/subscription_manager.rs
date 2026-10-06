@@ -385,7 +385,7 @@ impl SubscriptionGateway {
     pub async fn subscribe(
         client_id: String,
         channels: Vec<SubscriptionChannel>,
-    ) -> Result<Subscriber, String> {
+    ) -> Result<Subscriber, TopemsError> {
         let store = get_subscription_store();
         let mut subscribers = store.subscribers.lock().await;
 
@@ -402,7 +402,7 @@ impl SubscriptionGateway {
         Ok(subscriber)
     }
 
-    pub async fn unsubscribe(subscriber_id: &str) -> Result<bool, String> {
+    pub async fn unsubscribe(subscriber_id: &str) -> Result<bool, TopemsError> {
         let store = get_subscription_store();
         let mut subscribers = store.subscribers.lock().await;
         let len_before = subscribers.len();
@@ -413,7 +413,7 @@ impl SubscriptionGateway {
     pub async fn publish(
         channel: SubscriptionChannel,
         payload: serde_json::Value,
-    ) -> Result<SubscriptionMessage, String> {
+    ) -> Result<SubscriptionMessage, TopemsError> {
         let store = get_subscription_store();
 
         let mut counters = store.channel_counters.lock().await;
@@ -447,7 +447,7 @@ impl SubscriptionGateway {
         for channel in channels {
             match Self::publish(channel, payload.clone()).await {
                 Ok(msg) => results.push(msg),
-                Err(e) => return Err(e),
+                Err(e) => return Err(e.into()),
             }
         }
         Ok(results)
@@ -601,7 +601,7 @@ impl MessageQueueBridge {
     }
 
     #[allow(clippy::as_conversions)]
-    pub async fn purge_queue(queue_name: &str) -> Result<u64, String> {
+    pub async fn purge_queue(queue_name: &str) -> Result<u64, TopemsError> {
         let store = get_subscription_store();
         let mut queues = store.queues.lock().await;
 
@@ -657,7 +657,7 @@ impl PushOptimizer {
         messages: Vec<SubscriptionMessage>,
         _priority: PushPriority,
         slow_client_ids: Option<Vec<String>>,
-    ) -> Result<PushBatch, String> {
+    ) -> Result<PushBatch, TopemsError> {
         let store = get_subscription_store();
 
         let mut sorted_messages = messages;

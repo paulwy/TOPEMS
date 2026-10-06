@@ -425,7 +425,7 @@ impl PersistentSubscription {
         subscriber_id: String,
         topic: String,
         filter: Option<serde_json::Value>,
-    ) -> Result<SubscriptionRecord, String> {
+    ) -> Result<SubscriptionRecord, TopemsError> {
         let store = get_realtime_store();
 
         let record = SubscriptionRecord {
@@ -470,7 +470,7 @@ impl PersistentSubscription {
             .collect()
     }
 
-    pub async fn pause_subscription(id: &str) -> Result<SubscriptionRecord, String> {
+    pub async fn pause_subscription(id: &str) -> Result<SubscriptionRecord, TopemsError> {
         let store = get_realtime_store();
         let mut records = store.subscription_records.lock().await;
 
@@ -484,7 +484,7 @@ impl PersistentSubscription {
         Ok(record.clone())
     }
 
-    pub async fn resume_subscription(id: &str) -> Result<SubscriptionRecord, String> {
+    pub async fn resume_subscription(id: &str) -> Result<SubscriptionRecord, TopemsError> {
         let store = get_realtime_store();
         let mut records = store.subscription_records.lock().await;
 
@@ -498,7 +498,7 @@ impl PersistentSubscription {
         Ok(record.clone())
     }
 
-    pub async fn cancel_subscription(id: &str) -> Result<bool, String> {
+    pub async fn cancel_subscription(id: &str) -> Result<bool, TopemsError> {
         let store = get_realtime_store();
         let mut records = store.subscription_records.lock().await;
 
@@ -541,7 +541,7 @@ impl PersistentSubscription {
         event_type: String,
         payload: serde_json::Value,
         expires_at: Option<String>,
-    ) -> Result<SubscriptionEvent, String> {
+    ) -> Result<SubscriptionEvent, TopemsError> {
         let store = get_realtime_store();
 
         let mut sequences = store.subscription_sequences.lock().await;
@@ -607,7 +607,7 @@ impl MessageReplayEngine {
         to_sequence: Option<u64>,
         batch_size: u32,
         replay_type: ReplayType,
-    ) -> Result<ReplayRequest, String> {
+    ) -> Result<ReplayRequest, TopemsError> {
         let store = get_realtime_store();
 
         let request = ReplayRequest {
@@ -626,7 +626,7 @@ impl MessageReplayEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-    pub async fn execute_replay(request_id: &str) -> Result<ReplayResult, String> {
+    pub async fn execute_replay(request_id: &str) -> Result<ReplayResult, TopemsError> {
         let store = get_realtime_store();
 
         let request = {
@@ -680,7 +680,7 @@ impl MessageReplayEngine {
         results.get(request_id).cloned()
     }
 
-    pub async fn cancel_replay(request_id: &str) -> Result<ReplayResult, String> {
+    pub async fn cancel_replay(request_id: &str) -> Result<ReplayResult, TopemsError> {
         let store = get_realtime_store();
 
         let mut results = store.replay_results.lock().await;
@@ -754,7 +754,7 @@ impl MessageReplayEngine {
         subscription_id: String,
         event_type: String,
         payload: serde_json::Value,
-    ) -> Result<SubscriptionEvent, String> {
+    ) -> Result<SubscriptionEvent, TopemsError> {
         PersistentSubscription::deliver_event(&subscription_id, event_type, payload, None).await
     }
 
@@ -790,7 +790,7 @@ impl RealtimeAggregator {
         group_by: Option<Vec<String>>,
         filter_expr: Option<String>,
         aggregator: Aggregator,
-    ) -> Result<AggregationConfig, String> {
+    ) -> Result<AggregationConfig, TopemsError> {
         let store = get_realtime_store();
 
         let config = AggregationConfig {
@@ -907,7 +907,7 @@ impl RealtimeAggregator {
     pub async fn subscribe_to_aggregation(
         config_id: &str,
         subscriber_id: String,
-    ) -> Result<SubscriptionRecord, String> {
+    ) -> Result<SubscriptionRecord, TopemsError> {
         let store = get_realtime_store();
 
         let configs = store.aggregation_configs.lock().await;
@@ -927,7 +927,7 @@ impl RealtimeAggregator {
         clippy::cast_precision_loss
     )]
     #[allow(clippy::indexing_slicing)]
-    pub async fn compute_window(config_id: &str) -> Result<AggregationResult, String> {
+    pub async fn compute_window(config_id: &str) -> Result<AggregationResult, TopemsError> {
         let store = get_realtime_store();
 
         let config = {

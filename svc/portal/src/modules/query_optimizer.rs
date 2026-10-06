@@ -16,6 +16,7 @@
 //!    - AccelerationStrategy: 加速策略 (并行/批量/早返回/懒加载/预取)
 //!    - AccelerationResult: 加速结果 + 提速倍数
 
+use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -394,7 +395,7 @@ fn get_query_optimizer_store() -> &'static QueryOptimizerStore {
 pub struct QueryCompiler;
 
 impl QueryCompiler {
-    pub async fn compile_query(original_query: String) -> Result<CompiledQuery, String> {
+    pub async fn compile_query(original_query: String) -> Result<CompiledQuery, TopemsError> {
         let store = get_query_optimizer_store();
 
         let query_hash = Self::compute_hash(&original_query);
@@ -472,7 +473,7 @@ impl QueryCompiler {
         list
     }
 
-    pub async fn enable_rule(rule_type: CompilationRuleType) -> Result<CompilationRule, String> {
+    pub async fn enable_rule(rule_type: CompilationRuleType) -> Result<CompilationRule, TopemsError> {
         let store = get_query_optimizer_store();
         let mut rules = store.compilation_rules.lock().await;
         let key = rule_type.as_str().to_string();
@@ -485,7 +486,7 @@ impl QueryCompiler {
         Ok(rule.clone())
     }
 
-    pub async fn disable_rule(rule_type: CompilationRuleType) -> Result<CompilationRule, String> {
+    pub async fn disable_rule(rule_type: CompilationRuleType) -> Result<CompilationRule, TopemsError> {
         let store = get_query_optimizer_store();
         let mut rules = store.compilation_rules.lock().await;
         let key = rule_type.as_str().to_string();
@@ -617,7 +618,7 @@ impl QueryPlanner {
     pub async fn create_plan(
         query_hash: String,
         field_paths: Vec<String>,
-    ) -> Result<ExecutionPlan, String> {
+    ) -> Result<ExecutionPlan, TopemsError> {
         let store = get_query_optimizer_store();
 
         let mut steps = Vec::new();
@@ -685,7 +686,7 @@ impl QueryPlanner {
     pub async fn compare_plans(
         plan_id_a: String,
         plan_id_b: String,
-    ) -> Result<PlanCompareResult, String> {
+    ) -> Result<PlanCompareResult, TopemsError> {
         let store = get_query_optimizer_store();
         let plans = store.execution_plans.lock().await;
 
@@ -723,7 +724,7 @@ impl QueryPlanner {
         })
     }
 
-    pub async fn get_plan_cost(plan_id: &str) -> Result<f64, String> {
+    pub async fn get_plan_cost(plan_id: &str) -> Result<f64, TopemsError> {
         let plan = Self::get_plan(plan_id)
             .await
             .ok_or_else(|| format!("计划不存在: {}", plan_id))?;
@@ -735,7 +736,7 @@ impl QueryPlanner {
         clippy::cast_possible_truncation,
         clippy::cast_precision_loss
     )]
-    pub async fn optimize_plan(plan_id: &str) -> Result<ExecutionPlan, String> {
+    pub async fn optimize_plan(plan_id: &str) -> Result<ExecutionPlan, TopemsError> {
         let store = get_query_optimizer_store();
         let mut plans = store.execution_plans.lock().await;
 
@@ -871,7 +872,7 @@ impl ExecutionAccelerator {
         original_time_ms: u64,
         field_count: u32,
         strategies: Option<Vec<AccelerationStrategy>>,
-    ) -> Result<AccelerationResult, String> {
+    ) -> Result<AccelerationResult, TopemsError> {
         let store = get_query_optimizer_store();
 
         let active_strategies = if let Some(strats) = strategies {
@@ -954,7 +955,7 @@ impl ExecutionAccelerator {
         strategy: AccelerationStrategy,
         enabled: bool,
         parameters: Option<serde_json::Value>,
-    ) -> Result<AccelerationConfig, String> {
+    ) -> Result<AccelerationConfig, TopemsError> {
         let store = get_query_optimizer_store();
         let mut configs = store.acceleration_configs.lock().await;
         let key = strategy.as_str().to_string();

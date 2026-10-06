@@ -439,7 +439,7 @@ impl EdgeRenderer {
         clippy::cast_possible_wrap,
         clippy::cast_precision_loss
     )]
-    pub async fn render_at_edge(req: RenderRequest) -> Result<RenderResult, String> {
+    pub async fn render_at_edge(req: RenderRequest) -> Result<RenderResult, TopemsError> {
         let store = get_edge_store();
 
         let location = req.preferred_location.clone().unwrap_or(EdgeLocation::APAC);
@@ -557,7 +557,7 @@ impl EdgeRenderer {
     pub async fn invalidate_edge_cache(
         location: Option<EdgeLocation>,
         cache_key: Option<String>,
-    ) -> Result<u64, String> {
+    ) -> Result<u64, TopemsError> {
         let store = get_edge_store();
         let mut cache = store.edge_cache.lock().await;
         let before = cache.len();
@@ -619,7 +619,7 @@ impl GlobalAccelerator {
         data: serde_json::Value,
         config_name: Option<&str>,
         client_location: Option<EdgeLocation>,
-    ) -> Result<AcceleratedResponse, String> {
+    ) -> Result<AcceleratedResponse, TopemsError> {
         let store = get_edge_store();
 
         let configs = store.accel_configs.lock().await;
@@ -663,7 +663,7 @@ impl GlobalAccelerator {
     pub async fn get_optimal_location(
         config_name: Option<&str>,
         client_location: Option<EdgeLocation>,
-    ) -> Result<EdgeLocation, String> {
+    ) -> Result<EdgeLocation, TopemsError> {
         let store = get_edge_store();
         let configs = store.accel_configs.lock().await;
         let config = configs
@@ -675,7 +675,7 @@ impl GlobalAccelerator {
         Ok(Self::select_location(&config, client_location).await)
     }
 
-    pub async fn sync_config(config: AccelConfig) -> Result<AccelConfig, String> {
+    pub async fn sync_config(config: AccelConfig) -> Result<AccelConfig, TopemsError> {
         let store = get_edge_store();
         let mut configs = store.accel_configs.lock().await;
         let name = config.name.clone();
@@ -771,7 +771,7 @@ impl LatencyOptimizer {
     pub async fn optimize_response(
         data: serde_json::Value,
         budget_name: Option<&str>,
-    ) -> Result<OptimizedResponse, String> {
+    ) -> Result<OptimizedResponse, TopemsError> {
         let store = get_edge_store();
 
         let budgets = store.latency_budgets.lock().await;
@@ -836,7 +836,7 @@ impl LatencyOptimizer {
         template_id: String,
         data: serde_json::Value,
         ttl_seconds: u64,
-    ) -> Result<PrecomputedResponse, String> {
+    ) -> Result<PrecomputedResponse, TopemsError> {
         let store = get_edge_store();
         let now = chrono::Utc::now();
         let expires_at = now + chrono::Duration::seconds(ttl_seconds as i64);
@@ -858,7 +858,7 @@ impl LatencyOptimizer {
     pub async fn coalesce_requests(
         request_ids: Vec<String>,
         query: &str,
-    ) -> Result<CoalescedRequest, String> {
+    ) -> Result<CoalescedRequest, TopemsError> {
         let store = get_edge_store();
         let query_hash = EdgeRenderer::compute_query_hash(query);
 

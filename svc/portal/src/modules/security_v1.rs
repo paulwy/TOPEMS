@@ -419,7 +419,7 @@ impl SecurityGateway {
         query: &str,
         client_ip: Option<&str>,
         policy_id: Option<&str>,
-    ) -> Result<ValidationResult, String> {
+    ) -> Result<ValidationResult, TopemsError> {
         let store = get_security_store();
 
         let policy = if let Some(pid) = policy_id {
@@ -497,7 +497,7 @@ impl SecurityGateway {
     pub async fn check_rate_limit(
         identifier: &str,
         policy_id: Option<&str>,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, TopemsError> {
         let store = get_security_store();
 
         let policy = if let Some(pid) = policy_id {
@@ -587,7 +587,7 @@ impl SecurityGateway {
     pub async fn update_policy(
         id: &str,
         updates: SecurityPolicy,
-    ) -> Result<SecurityPolicy, String> {
+    ) -> Result<SecurityPolicy, TopemsError> {
         let store = get_security_store();
         let mut policies = store.policies.lock().await;
 
@@ -638,7 +638,7 @@ impl ZeroTrustEngine {
     pub async fn evaluate_trust(
         identity: &str,
         context: IdentityContext,
-    ) -> Result<TrustDecision, String> {
+    ) -> Result<TrustDecision, TopemsError> {
         let store = get_security_store();
 
         let mut risk_score = 0.0f64;
@@ -746,7 +746,7 @@ impl ZeroTrustEngine {
         Ok(trust_decision)
     }
 
-    pub async fn get_trust_score(identity: &str) -> Result<f64, String> {
+    pub async fn get_trust_score(identity: &str) -> Result<f64, TopemsError> {
         let store = get_security_store();
         let decisions = store.trust_decisions.lock().await;
 
@@ -758,7 +758,7 @@ impl ZeroTrustEngine {
         }
     }
 
-    pub async fn verify_identity(identity: &str, context: IdentityContext) -> Result<bool, String> {
+    pub async fn verify_identity(identity: &str, context: IdentityContext) -> Result<bool, TopemsError> {
         let store = get_security_store();
 
         let policies = store.identity_policies.lock().await;
@@ -810,7 +810,7 @@ impl DataMasker {
     pub async fn mask_response(
         data: serde_json::Value,
         user_roles: Vec<String>,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let store = get_security_store();
 
         let applicable: Vec<MaskingRule> = {
@@ -851,7 +851,7 @@ impl DataMasker {
         Ok(result)
     }
 
-    pub async fn add_masking_rule(rule: MaskingRule) -> Result<MaskingRule, String> {
+    pub async fn add_masking_rule(rule: MaskingRule) -> Result<MaskingRule, TopemsError> {
         let store = get_security_store();
         let mut rules = store.masking_rules.lock().await;
         rules.push(rule.clone());
@@ -864,7 +864,7 @@ impl DataMasker {
         rules.clone()
     }
 
-    pub async fn remove_masking_rule(id: &str) -> Result<bool, String> {
+    pub async fn remove_masking_rule(id: &str) -> Result<bool, TopemsError> {
         let store = get_security_store();
         let mut rules = store.masking_rules.lock().await;
         let len_before = rules.len();
@@ -875,7 +875,7 @@ impl DataMasker {
     pub async fn preview_masking(
         data: serde_json::Value,
         rule_ids: Vec<String>,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let store = get_security_store();
 
         let selected: Vec<MaskingRule> = {

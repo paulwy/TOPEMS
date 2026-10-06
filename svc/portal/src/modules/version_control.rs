@@ -486,7 +486,7 @@ impl APIVersionManager {
         list
     }
 
-    pub async fn deprecate_version(version: &str) -> Result<APIVersion, String> {
+    pub async fn deprecate_version(version: &str) -> Result<APIVersion, TopemsError> {
         let store = get_version_control_store();
         let mut versions = store.api_versions.lock().await;
 
@@ -523,7 +523,7 @@ impl APIVersionManager {
     pub async fn check_compatibility(
         client_version: &str,
         server_version: &str,
-    ) -> Result<VersionMapping, String> {
+    ) -> Result<VersionMapping, TopemsError> {
         let store = get_version_control_store();
 
         let versions = store.api_versions.lock().await;
@@ -577,7 +577,7 @@ impl APIVersionManager {
         version: &str,
         changelog: Option<String>,
         breaking_changes: Option<Vec<BreakingChange>>,
-    ) -> Result<APIVersion, String> {
+    ) -> Result<APIVersion, TopemsError> {
         let store = get_version_control_store();
         let mut versions = store.api_versions.lock().await;
 
@@ -793,7 +793,7 @@ impl CanaryManager {
         Ok(config)
     }
 
-    pub async fn rollback_canary(id: &str) -> Result<CanaryConfig, String> {
+    pub async fn rollback_canary(id: &str) -> Result<CanaryConfig, TopemsError> {
         let store = get_version_control_store();
         let mut configs = store.canary_configs.lock().await;
 
@@ -807,7 +807,7 @@ impl CanaryManager {
         Ok(config.clone())
     }
 
-    pub async fn record_request(config_id: &str, is_canary: bool) -> Result<(), String> {
+    pub async fn record_request(config_id: &str, is_canary: bool) -> Result<(), TopemsError> {
         let store = get_version_control_store();
         let mut stats = store.canary_stats.lock().await;
 
@@ -837,7 +837,7 @@ impl CompatibilityChecker {
     pub async fn check_compatibility(
         from_version: &str,
         to_version: &str,
-    ) -> Result<CompatibilityReport, String> {
+    ) -> Result<CompatibilityReport, TopemsError> {
         let store = get_version_control_store();
 
         let versions = store.api_versions.lock().await;
@@ -885,7 +885,7 @@ impl CompatibilityChecker {
     pub async fn generate_report(
         from_version: &str,
         to_version: &str,
-    ) -> Result<CompatibilityReport, String> {
+    ) -> Result<CompatibilityReport, TopemsError> {
         Self::check_compatibility(from_version, to_version).await
     }
 
@@ -947,7 +947,7 @@ impl CompatibilityChecker {
     pub async fn validate_client_version(
         client_version: &str,
         server_version: &str,
-    ) -> Result<CompatibilityStatus, String> {
+    ) -> Result<CompatibilityStatus, TopemsError> {
         let store = get_version_control_store();
         let _policy = store.active_policy.lock().await;
 
@@ -971,7 +971,7 @@ impl CompatibilityChecker {
     pub async fn get_compatibility_status(
         client_version: &str,
         server_version: &str,
-    ) -> Result<CompatibilityStatus, String> {
+    ) -> Result<CompatibilityStatus, TopemsError> {
         Self::validate_client_version(client_version, server_version).await
     }
 

@@ -359,7 +359,7 @@ impl GatewayOrchestrator {
         query_id: String,
         execution_steps: Vec<ExecutionStep>,
         timeout_ms: Option<u64>,
-    ) -> Result<OrchestrationPlan, String> {
+    ) -> Result<OrchestrationPlan, TopemsError> {
         let store = get_orchestration_store();
 
         let _step_ids: Vec<String> = execution_steps.iter().map(|s| s.id.clone()).collect();
@@ -491,7 +491,7 @@ impl GatewayOrchestrator {
         clippy::cast_possible_truncation,
         clippy::cast_sign_loss
     )]
-    pub async fn get_plan_status(plan_id: &str) -> Result<PlanStatusInfo, String> {
+    pub async fn get_plan_status(plan_id: &str) -> Result<PlanStatusInfo, TopemsError> {
         let store = get_orchestration_store();
         let plans = store.plans.lock().await;
 
@@ -686,7 +686,7 @@ impl ServiceDiscoveryEngine {
             .collect()
     }
 
-    pub async fn check_health(id: &str) -> Result<ServiceHeartbeat, String> {
+    pub async fn check_health(id: &str) -> Result<ServiceHeartbeat, TopemsError> {
         let store = get_orchestration_store();
 
         let _service = {
@@ -760,7 +760,7 @@ impl ServiceDiscoveryEngine {
         }
     }
 
-    pub async fn watch_service(id: &str) -> Result<ServiceDescriptor, String> {
+    pub async fn watch_service(id: &str) -> Result<ServiceDescriptor, TopemsError> {
         let store = get_orchestration_store();
         let services = store.services.lock().await;
 
@@ -853,7 +853,7 @@ impl DynamicRouter {
         condition: Option<serde_json::Value>,
         priority: Option<i32>,
         weight: Option<u32>,
-    ) -> Result<RouteRule, String> {
+    ) -> Result<RouteRule, TopemsError> {
         let store = get_orchestration_store();
         let mut rules = store.route_rules.lock().await;
 
@@ -871,7 +871,7 @@ impl DynamicRouter {
         Ok(rule)
     }
 
-    pub async fn update_rule(id: &str, updates: RouteRule) -> Result<RouteRule, String> {
+    pub async fn update_rule(id: &str, updates: RouteRule) -> Result<RouteRule, TopemsError> {
         let store = get_orchestration_store();
         let mut rules = store.route_rules.lock().await;
 
@@ -890,7 +890,7 @@ impl DynamicRouter {
         Ok(rule.clone())
     }
 
-    pub async fn remove_rule(id: &str) -> Result<bool, String> {
+    pub async fn remove_rule(id: &str) -> Result<bool, TopemsError> {
         let store = get_orchestration_store();
         let mut rules = store.route_rules.lock().await;
 
@@ -957,7 +957,7 @@ impl DynamicRouter {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-    pub async fn reload_rules() -> Result<u32, String> {
+    pub async fn reload_rules() -> Result<u32, TopemsError> {
         let store = get_orchestration_store();
         let rules = store.route_rules.lock().await;
         Ok(rules.len() as u32)

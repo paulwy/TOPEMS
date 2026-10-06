@@ -769,7 +769,7 @@ impl PerformanceTracer {
         trace
     }
 
-    pub async fn end_trace(trace_id: &str) -> Result<Trace, String> {
+    pub async fn end_trace(trace_id: &str) -> Result<Trace, TopemsError> {
         let store = get_monitoring_store();
         let mut traces = store.traces.lock().await;
 
@@ -790,7 +790,7 @@ impl PerformanceTracer {
         duration_ms: u64,
         start_time: String,
         end_time: String,
-    ) -> Result<ResolverTiming, String> {
+    ) -> Result<ResolverTiming, TopemsError> {
         let store = get_monitoring_store();
         let mut traces = store.traces.lock().await;
 
@@ -1113,7 +1113,7 @@ impl AnomalyDetector {
         model
     }
 
-    pub async fn update_model(id: &str, updates: DetectionModel) -> Result<DetectionModel, String> {
+    pub async fn update_model(id: &str, updates: DetectionModel) -> Result<DetectionModel, TopemsError> {
         let store = get_monitoring_store();
         let mut models = store.detection_models.lock().await;
 

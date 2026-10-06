@@ -572,7 +572,7 @@ impl GatewaySecurityV2 {
     pub async fn validate_token(
         token: &str,
         policy_id: Option<&str>,
-    ) -> Result<TokenValidationResult, String> {
+    ) -> Result<TokenValidationResult, TopemsError> {
         let store = get_gateway_security_store();
 
         if token.is_empty() {
@@ -613,7 +613,7 @@ impl GatewaySecurityV2 {
     pub async fn check_authentication(
         token: &str,
         policy_id: Option<&str>,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, TopemsError> {
         let result = Self::validate_token(token, policy_id).await?;
         Ok(result.valid)
     }
@@ -739,7 +739,7 @@ impl GatewaySecurityV2 {
     pub async fn check_rate_limit(
         identifier: &str,
         policy_id: Option<&str>,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, TopemsError> {
         let store = get_gateway_security_store();
 
         let policy = if let Some(pid) = policy_id {
@@ -807,7 +807,7 @@ impl GatewaySecurityV2 {
     pub async fn update_policy(
         id: &str,
         updates: SecurityPolicyV2,
-    ) -> Result<SecurityPolicyV2, String> {
+    ) -> Result<SecurityPolicyV2, TopemsError> {
         let store = get_gateway_security_store();
         let mut policies = store.policies.lock().await;
 
@@ -857,7 +857,7 @@ impl GatewaySecurityV2 {
 pub struct AuditTrailV2;
 
 impl AuditTrailV2 {
-    pub async fn write_audit(entry: AuditEntryV2) -> Result<AuditEntryV2, String> {
+    pub async fn write_audit(entry: AuditEntryV2) -> Result<AuditEntryV2, TopemsError> {
         let store = get_gateway_security_store();
         let mut entries = store.audit_entries.lock().await;
         entries.push(entry.clone());
@@ -978,7 +978,7 @@ impl AuditTrailV2 {
         filter: AuditFilter,
         format: &str,
         created_by: Option<String>,
-    ) -> Result<AuditExport, String> {
+    ) -> Result<AuditExport, TopemsError> {
         let _entries = Self::query_audit(filter.clone()).await;
 
         let export = AuditExport {
@@ -1083,7 +1083,7 @@ impl AccessControlV2 {
         actor_id: &str,
         role: &str,
         permissions: Vec<String>,
-    ) -> Result<UserPermissions, String> {
+    ) -> Result<UserPermissions, TopemsError> {
         let store = get_gateway_security_store();
         let mut user_permissions = store.user_permissions.lock().await;
 
@@ -1113,7 +1113,7 @@ impl AccessControlV2 {
         actor_id: &str,
         role: Option<&str>,
         permissions: Option<Vec<String>>,
-    ) -> Result<UserPermissions, String> {
+    ) -> Result<UserPermissions, TopemsError> {
         let store = get_gateway_security_store();
         let mut user_permissions = store.user_permissions.lock().await;
 
@@ -1154,14 +1154,14 @@ impl AccessControlV2 {
         }
     }
 
-    pub async fn create_policy(policy: AccessPolicy) -> Result<AccessPolicy, String> {
+    pub async fn create_policy(policy: AccessPolicy) -> Result<AccessPolicy, TopemsError> {
         let store = get_gateway_security_store();
         let mut policies = store.access_policies.lock().await;
         policies.push(policy.clone());
         Ok(policy)
     }
 
-    pub async fn update_policy(id: &str, updates: AccessPolicy) -> Result<AccessPolicy, String> {
+    pub async fn update_policy(id: &str, updates: AccessPolicy) -> Result<AccessPolicy, TopemsError> {
         let store = get_gateway_security_store();
         let mut policies = store.access_policies.lock().await;
 
@@ -1180,7 +1180,7 @@ impl AccessControlV2 {
         Ok(policy.clone())
     }
 
-    pub async fn delete_policy(id: &str) -> Result<bool, String> {
+    pub async fn delete_policy(id: &str) -> Result<bool, TopemsError> {
         let store = get_gateway_security_store();
         let mut policies = store.access_policies.lock().await;
         let len_before = policies.len();

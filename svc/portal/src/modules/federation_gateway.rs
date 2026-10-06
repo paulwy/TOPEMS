@@ -428,7 +428,7 @@ impl FederationGatewayV5 {
         types: Vec<String>,
         entities: Vec<String>,
         version: Option<i32>,
-    ) -> Result<SubgraphConfig, String> {
+    ) -> Result<SubgraphConfig, TopemsError> {
         let store = get_federation_store();
         let mut subgraphs = store.subgraphs.lock().await;
 
@@ -475,7 +475,7 @@ impl FederationGatewayV5 {
     async fn execute_federated_query(
         query: String,
         variables: Option<serde_json::Value>,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let plan = Self::create_query_plan_internal(&query).await;
 
         let store = get_federation_store();
@@ -596,7 +596,7 @@ impl TransactionCoordinator {
         participants: Vec<String>,
         steps: Vec<CompensationStepInput>,
         timeout_ms: Option<i64>,
-    ) -> Result<TransactionContext, String> {
+    ) -> Result<TransactionContext, TopemsError> {
         let store = get_federation_store();
         let mut transactions = store.transactions.lock().await;
 
@@ -701,14 +701,14 @@ impl TransactionCoordinator {
         Ok(tx.clone())
     }
 
-    async fn get_transaction_status(transaction_id: &str) -> Result<TransactionContext, String> {
+    async fn get_transaction_status(transaction_id: &str) -> Result<TransactionContext, TopemsError> {
         let store = get_federation_store();
         let transactions = store.transactions.lock().await;
         transactions
             .iter()
             .find(|t| t.id == transaction_id)
             .cloned()
-            .ok_or_else(|| "未找到事务".to_string())
+            .ok_or_else(|| TopemsError::ResourceNotFound("未找到事务".to_string()))
     }
 
     #[allow(

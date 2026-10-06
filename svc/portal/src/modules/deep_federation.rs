@@ -511,7 +511,7 @@ impl ConsistencyManager {
     pub async fn check_consistency(
         entity_ids: Vec<String>,
         model: ConsistencyModel,
-    ) -> Result<ConsistencyCheck, String> {
+    ) -> Result<ConsistencyCheck, TopemsError> {
         let store = get_deep_federation_store();
 
         let vectors = store.version_vectors.lock().await;
@@ -650,7 +650,7 @@ impl ConsistencyManager {
 
     pub async fn set_consistency_model(
         model: ConsistencyModel,
-    ) -> Result<ConsistencyModel, String> {
+    ) -> Result<ConsistencyModel, TopemsError> {
         let store = get_deep_federation_store();
 
         let entity_ids: Vec<String> = store.version_vectors.lock().await.keys().cloned().collect();
@@ -759,19 +759,19 @@ impl ConsistencyManager {
         Ok(vector.clone())
     }
 
-    pub async fn get_version_vector(entity_id: &str) -> Result<VersionVector, String> {
+    pub async fn get_version_vector(entity_id: &str) -> Result<VersionVector, TopemsError> {
         let store = get_deep_federation_store();
         let vectors = store.version_vectors.lock().await;
         vectors
             .get(entity_id)
             .cloned()
-            .ok_or_else(|| format!("实体 '{}' 的版本向量不存在", entity_id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("实体 '{}' 的版本向量不存在", entity_id)))
     }
 
     pub async fn compare_vectors(
         entity_id_a: &str,
         entity_id_b: &str,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let store = get_deep_federation_store();
         let vectors = store.version_vectors.lock().await;
 
@@ -868,7 +868,7 @@ impl DistributedQueryEngine {
         routing_map: serde_json::Value,
         consistency_requirement: Option<ConsistencyModel>,
         timeout_ms: Option<u64>,
-    ) -> Result<DistributedQuery, String> {
+    ) -> Result<DistributedQuery, TopemsError> {
         let store = get_deep_federation_store();
 
         let query = DistributedQuery {
@@ -950,7 +950,7 @@ impl DistributedQueryEngine {
         clippy::cast_possible_truncation,
         clippy::cast_sign_loss
     )]
-    pub async fn get_query_status(query_id: &str) -> Result<QueryStatusInfo, String> {
+    pub async fn get_query_status(query_id: &str) -> Result<QueryStatusInfo, TopemsError> {
         let store = get_deep_federation_store();
         let queries = store.distributed_queries.lock().await;
 
@@ -1005,7 +1005,7 @@ impl DistributedQueryEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-    pub async fn merge_results(query_id: &str) -> Result<MergedResult, String> {
+    pub async fn merge_results(query_id: &str) -> Result<MergedResult, TopemsError> {
         let store = get_deep_federation_store();
         let queries = store.distributed_queries.lock().await;
 
@@ -1087,7 +1087,7 @@ impl FederatedAuthService {
     pub async fn authenticate_federated(
         provider: AuthProvider,
         token: String,
-    ) -> Result<FederatedIdentity, String> {
+    ) -> Result<FederatedIdentity, TopemsError> {
         let store = get_deep_federation_store();
 
         let identity = FederatedIdentity {
@@ -1111,13 +1111,13 @@ impl FederatedAuthService {
     pub async fn propagate_identity(
         identity_id: &str,
         target_services: Vec<String>,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let store = get_deep_federation_store();
         let identities = store.federated_identities.lock().await;
 
         let identity = identities
             .get(identity_id)
-            .ok_or_else(|| format!("身份 '{}' 不存在", identity_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("身份 '{}' 不存在", identity_id)))?;
 
         let propagation_results: Vec<serde_json::Value> = target_services
             .iter()
@@ -1162,13 +1162,13 @@ impl FederatedAuthService {
         })
     }
 
-    pub async fn get_identity(identity_id: &str) -> Result<FederatedIdentity, String> {
+    pub async fn get_identity(identity_id: &str) -> Result<FederatedIdentity, TopemsError> {
         let store = get_deep_federation_store();
         let identities = store.federated_identities.lock().await;
         identities
             .get(identity_id)
             .cloned()
-            .ok_or_else(|| format!("身份 '{}' 不存在", identity_id))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("身份 '{}' 不存在", identity_id)))
     }
 
     pub async fn create_auth_policy(
@@ -1177,7 +1177,7 @@ impl FederatedAuthService {
         token_issuer: String,
         audience: String,
         token_validity: Option<u64>,
-    ) -> Result<AuthPolicy, String> {
+    ) -> Result<AuthPolicy, TopemsError> {
         let store = get_deep_federation_store();
 
         let now = chrono::Utc::now().to_rfc3339();
@@ -1204,7 +1204,7 @@ impl FederatedAuthService {
         token_issuer: Option<String>,
         audience: Option<String>,
         token_validity: Option<u64>,
-    ) -> Result<AuthPolicy, String> {
+    ) -> Result<AuthPolicy, TopemsError> {
         let store = get_deep_federation_store();
         let mut policies = store.auth_policies.lock().await;
 
@@ -1229,13 +1229,13 @@ impl FederatedAuthService {
         Ok(policy.clone())
     }
 
-    pub async fn get_auth_status(identity_id: &str) -> Result<AuthStatusInfo, String> {
+    pub async fn get_auth_status(identity_id: &str) -> Result<AuthStatusInfo, TopemsError> {
         let store = get_deep_federation_store();
         let identities = store.federated_identities.lock().await;
 
         let identity = identities
             .get(identity_id)
-            .ok_or_else(|| format!("身份 '{}' 不存在", identity_id))?;
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("身份 '{}' 不存在", identity_id)))?;
 
         Ok(AuthStatusInfo {
             identity_id: identity.id.clone(),
