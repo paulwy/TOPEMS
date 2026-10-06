@@ -4,6 +4,7 @@
 //! management API endpoints. Extracts actor information from request headers
 //! and records audit log entries for create, update, and delete operations.
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -97,7 +98,7 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
         &self,
         permission: &TenantPermission,
         actor: &ActorInfo,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         self.logger
             .log_create(
                 permission,
@@ -106,7 +107,7 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
                 actor.user_agent.as_deref(),
             )
             .await
-            .map_err(|e| format!("Failed to record create audit log: {}", e))
+            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to record create audit log: {}", e)))
     }
 
     /// Record a permission update.
@@ -115,7 +116,7 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
         old_permission: &TenantPermission,
         new_permission: &TenantPermission,
         actor: &ActorInfo,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         self.logger
             .log_update(
                 old_permission,
@@ -125,7 +126,7 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
                 actor.user_agent.as_deref(),
             )
             .await
-            .map_err(|e| format!("Failed to record update audit log: {}", e))
+            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to record update audit log: {}", e)))
     }
 
     /// Record a permission deletion.
@@ -133,7 +134,7 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
         &self,
         permission: &TenantPermission,
         actor: &ActorInfo,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         self.logger
             .log_delete(
                 permission,
@@ -142,7 +143,7 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
                 actor.user_agent.as_deref(),
             )
             .await
-            .map_err(|e| format!("Failed to record delete audit log: {}", e))
+            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to record delete audit log: {}", e)))
     }
 
     /// Record a permission activation/deactivation.
@@ -151,7 +152,7 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
         permission: &TenantPermission,
         activated: bool,
         actor: &ActorInfo,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         self.logger
             .log_activation(
                 permission,
@@ -161,7 +162,7 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
                 actor.user_agent.as_deref(),
             )
             .await
-            .map_err(|e| format!("Failed to record activation audit log: {}", e))
+            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to record activation audit log: {}", e)))
     }
 
     /// Get the underlying audit logger.

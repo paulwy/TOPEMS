@@ -5,6 +5,7 @@
 //! 幂等键 = erp_order_id（映射到 mes.production_orders.source_order_id），重复投递只建单一次。
 //! 消费失败由 shared-event 订阅器统一进 DLQ（topems:dlq + retry_count）。
 
+use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -16,7 +17,7 @@ use topems_shared_event::event::{
 /// 启动 MES 业务事件订阅（在 main.rs 中与缓存失效订阅并行 spawn）。
 pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), String> {
     let subscriber = EventSubscriber::new("mes-business")
-        .map_err(|e| format!("创建 MES 业务事件订阅者失败: {}", e))?;
+        .map_err(|e| TopemsError::NetworkRequest(format!("创建 MES 业务事件订阅者失败: {}", e)))?;
 
     // R-7: 迁移到 subscribe_handler —— Err 直传 Stream 层走重试/DLQ（此前 .subscribe 吞错自吞）。
     // 保留 error! 日志后再返回 Err，可观测性不降。
@@ -51,7 +52,7 @@ pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), String> 
 async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Result<(), String> {
     let payload: ErpProductionOrderDispatchedPayload = event
         .parse_payload()
-        .map_err(|e| format!("解析 ErpProductionOrderDispatched payload 失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("解析 ErpProductionOrderDispatched payload 失败: {}", e)))?;
 
     tracing::info!(
         "[mes] ErpProductionOrderDispatched 处理 - erp_order_id={}, order_no={}, qty={:?}, trace_id={:?}",
@@ -70,7 +71,7 @@ async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Re
     .bind(payload.erp_order_id)
     .fetch_optional(db)
     .await
-    .map_err(|e| format!("幂等查询 source_order_id 失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("幂等查询 source_order_id 失败: {}", e)))?;
     if existing.is_some() {
         tracing::info!(
             "[mes] ErpProductionOrderDispatched 幂等跳过 - erp_order_id={} 已建单",
@@ -94,12 +95,12 @@ async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Re
     let mut tx = db
         .begin()
         .await
-        .map_err(|e| format!("开启事务失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
     sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
         .bind(Uuid::nil().to_string())
         .execute(&mut *tx)
         .await
-        .map_err(|e| format!("设置 nil 租户上下文失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("设置 nil 租户上下文失败: {}", e)))?;
 
     // f64→i32 无 TryFrom 实现；生产订单数量在 i32 合理范围，截断后转换（cast deny 受控点）
     #[allow(clippy::cast_possible_truncation, clippy::as_conversions)]
@@ -127,11 +128,11 @@ async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Re
     .bind(Uuid::nil())
     .execute(&mut *tx)
     .await
-    .map_err(|e| format!("插入 production_orders 失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("插入 production_orders 失败: {}", e)))?;
 
     tx.commit()
         .await
-        .map_err(|e| format!("提交事务失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
 
     tracing::info!(
         "[mes] ErpProductionOrderDispatched 完成 - 新建工单 {}, source_order_id={}",

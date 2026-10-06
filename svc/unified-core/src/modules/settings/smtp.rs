@@ -312,11 +312,11 @@ fn send_test_email(config: &SmtpConfig, to: &str, subject: &str, body: &str) -> 
         config
             .from_email
             .parse()
-            .map_err(|e| format!("无效的发件人邮箱: {}", e))?,
+            .map_err(|e| TopemsError::ValidationFailed(format!("无效的发件人邮箱: {}", e)))?,
     );
     let to_addr = Mailbox::new(
         Some(to.to_string()),
-        to.parse().map_err(|e| format!("无效的收件人邮箱: {}", e))?,
+        to.parse().map_err(|e| TopemsError::ValidationFailed(format!("无效的收件人邮箱: {}", e)))?,
     );
 
     let message = Message::builder()
@@ -324,11 +324,11 @@ fn send_test_email(config: &SmtpConfig, to: &str, subject: &str, body: &str) -> 
         .to(to_addr)
         .subject(subject)
         .body(body.to_string())
-        .map_err(|e| format!("构建邮件失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("构建邮件失败: {}", e)))?;
 
     let transport = build_transport(config)?;
     transport
         .send(&message)
-        .map_err(|e| format!("发送邮件失败: {}", e))?;
+        .map_err(|e| TopemsError::NetworkRequest(format!("发送邮件失败: {}", e)))?;
     Ok(())
 }

@@ -728,7 +728,7 @@ async fn fetch_pending_orders(
     let rows = query_builder
         .fetch_all(pool)
         .await
-        .map_err(|e| format!("获取待排程订单失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("获取待排程订单失败: {}", e)))?;
 
     let orders: Vec<WorkOrderInfo> = rows
         .into_iter()
@@ -780,7 +780,7 @@ async fn fetch_available_work_stations(
     )
     .fetch_all(pool)
     .await
-    .map_err(|e| format!("获取工位信息失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("获取工位信息失败: {}", e)))?;
 
     Ok(rows
         .into_iter()
@@ -812,7 +812,7 @@ async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, Equipm
     )
     .fetch_all(pool)
     .await
-    .map_err(|e| format!("获取设备信息失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("获取设备信息失败: {}", e)))?;
 
     let mut map = HashMap::new();
     for r in rows {
@@ -849,7 +849,7 @@ async fn check_material_availability(
         .bind(order_id)
         .fetch_optional(pool)
         .await
-        .map_err(|e| format!("查询产品信息失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询产品信息失败: {}", e)))?;
 
     if product.is_none() {
         return Ok(false);

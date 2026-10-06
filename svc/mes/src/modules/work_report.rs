@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post, put},
@@ -142,9 +143,9 @@ fn opt_datetime_to_string(dt: Option<DateTime<Utc>>) -> Option<String> {
     dt.map(|d| d.to_rfc3339())
 }
 
-fn parse_report_date(s: &str) -> Result<NaiveDate, String> {
+fn parse_report_date(s: &str) -> Result<NaiveDate, TopemsError> {
     s.parse::<chrono::NaiveDate>()
-        .map_err(|e| format!("无效的 report_date: {}", e))
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的 report_date: {}", e)))
 }
 
 fn generate_report_no() -> String {
@@ -520,7 +521,7 @@ pub async fn create_work_report(
     let report_date = match parse_report_date(&body.report_date) {
         Ok(d) => d,
         Err(e) => {
-            return Json(ApiResponse::error(400, &e));
+            return Json(ApiResponse::error(400, &e.to_string()));
         }
     };
 
@@ -740,7 +741,7 @@ pub async fn update_work_report(
     let report_date = match body.report_date.as_ref() {
         Some(s) => match parse_report_date(s) {
             Ok(d) => Some(d),
-            Err(e) => return Json(ApiResponse::error(400, &e)),
+            Err(e) => return Json(ApiResponse::error(400, &e.to_string())),
         },
         None => None,
     };

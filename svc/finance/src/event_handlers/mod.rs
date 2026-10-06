@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use chrono::{Datelike, Utc};
 use rust_decimal::Decimal;
 use sqlx::PgPool;
@@ -137,7 +138,7 @@ impl FinanceEventHandlers {
         .bind(tenant_id)
         .fetch_optional(&self.db)
         .await
-        .map_err(|e| format!("创建凭证失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证失败: {}", e)))?;
 
         if let Some(vid) = voucher_id {
             tracing::info!(
@@ -168,7 +169,7 @@ impl FinanceEventHandlers {
 
         let payload: SalesOrderCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析销售订单创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析销售订单创建事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[finance] 销售订单创建: {} ({})，客户: {:?}，金额: {:?}",
@@ -241,7 +242,7 @@ impl FinanceEventHandlers {
 
         let payload: SalesOrderApprovedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析销售订单审批事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析销售订单审批事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[finance] 销售订单审批通过: {} ({})，客户: {:?}，金额: {:?}",
@@ -314,7 +315,7 @@ impl FinanceEventHandlers {
 
         let payload: PurchaseOrderApprovedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析采购订单审批事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单审批事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[finance] 采购订单审批通过: {} ({})，供应商: {:?}，金额: {:?}",
@@ -387,7 +388,7 @@ impl FinanceEventHandlers {
 
         let payload: PaymentReceivedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析收款事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析收款事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[finance] 收款: {} ({})，金额: {}，方式: {:?}",
@@ -448,7 +449,7 @@ impl FinanceEventHandlers {
 
         let payload: PaymentMadePayload = event
             .parse_payload()
-            .map_err(|e| format!("解析付款事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析付款事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[finance] 付款: {} ({})，金额: {}，方式: {:?}",
@@ -553,7 +554,7 @@ impl FinanceEventHandlers {
 
         let payload: PurchaseOrderCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析采购订单创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e)))?;
 
         let payable_amount = payload.payable_amount.unwrap_or(Decimal::ZERO);
         if payable_amount > Decimal::ZERO {
@@ -616,7 +617,7 @@ impl FinanceEventHandlers {
     async fn handle_reconciliation_created(&self, event: Event) -> HandlerResult {
         let payload: ReconciliationCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析对账单创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析对账单创建事件 payload 失败: {}", e)))?;
         tracing::info!(
             "[finance] 收到 ReconciliationCreated 事件 - recon_id={}, recon_name={}",
             payload.id,
@@ -629,7 +630,7 @@ impl FinanceEventHandlers {
     async fn handle_reconciliation_updated(&self, event: Event) -> HandlerResult {
         let payload: ReconciliationUpdatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析对账单更新事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析对账单更新事件 payload 失败: {}", e)))?;
         tracing::info!(
             "[finance] 收到 ReconciliationUpdated 事件 - recon_id={}, status={}",
             payload.id,
@@ -642,7 +643,7 @@ impl FinanceEventHandlers {
     async fn handle_reconciliation_approved(&self, event: Event) -> HandlerResult {
         let payload: ReconciliationApprovedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析对账单审批事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析对账单审批事件 payload 失败: {}", e)))?;
         tracing::info!(
             "[finance] 收到 ReconciliationApproved 事件 - recon_id={}, approved_by={}",
             payload.id,
@@ -655,7 +656,7 @@ impl FinanceEventHandlers {
     async fn handle_settlement_created(&self, event: Event) -> HandlerResult {
         let payload: SettlementCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析结算单创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析结算单创建事件 payload 失败: {}", e)))?;
         tracing::info!(
             "[finance] 收到 SettlementCreated 事件 - settlement_id={}, settlement_no={}",
             payload.id,
@@ -668,7 +669,7 @@ impl FinanceEventHandlers {
     async fn handle_settlement_approved(&self, event: Event) -> HandlerResult {
         let payload: SettlementApprovedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析结算单审批事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析结算单审批事件 payload 失败: {}", e)))?;
         tracing::info!(
             "[finance] 收到 SettlementApproved 事件 - settlement_id={}, approved_by={}",
             payload.id,
@@ -681,7 +682,7 @@ impl FinanceEventHandlers {
     async fn handle_settlement_rejected(&self, event: Event) -> HandlerResult {
         let payload: SettlementRejectedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析结算单拒绝事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析结算单拒绝事件 payload 失败: {}", e)))?;
         tracing::info!(
             "[finance] 收到 SettlementRejected 事件 - settlement_id={}, rejected_by={}",
             payload.id,
@@ -732,7 +733,7 @@ impl FinanceEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("存储对账快照失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("存储对账快照失败: {}", e)))?;
         Ok(())
     }
 
@@ -762,7 +763,7 @@ impl FinanceEventHandlers {
         .bind(payload.id)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("更新对账快照失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新对账快照失败: {}", e)))?;
         Ok(())
     }
 
@@ -786,7 +787,7 @@ impl FinanceEventHandlers {
         .bind(payload.tenant_id)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("审批对账快照失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("审批对账快照失败: {}", e)))?;
         Ok(())
     }
 
@@ -825,7 +826,7 @@ impl FinanceEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("存储结算快照失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("存储结算快照失败: {}", e)))?;
         Ok(())
     }
 
@@ -849,7 +850,7 @@ impl FinanceEventHandlers {
         .bind(payload.tenant_id)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("审批结算快照失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("审批结算快照失败: {}", e)))?;
         Ok(())
     }
 
@@ -869,7 +870,7 @@ impl FinanceEventHandlers {
         .bind(payload.tenant_id)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("拒绝结算快照失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("拒绝结算快照失败: {}", e)))?;
         Ok(())
     }
 }

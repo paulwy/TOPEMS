@@ -256,7 +256,7 @@ async fn calculate_work_order_cost_detail_db(
     .bind(work_order_id)
     .fetch_optional(pool)
     .await
-    .map_err(|e| format!("查询工单失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("查询工单失败: {}", e)))?;
 
     let work_order = match work_order {
         Some(r) => r,
