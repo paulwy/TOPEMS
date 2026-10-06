@@ -1494,7 +1494,6 @@ fn enrich_balance_percentage(mut data: serde_json::Value) -> serde_json::Value {
     data
 }
 
-
 pub async fn get_balance_sheet(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

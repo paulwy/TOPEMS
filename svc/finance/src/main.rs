@@ -12,9 +12,7 @@ use axum::routing::get;
 use utoipa::OpenApi;
 
 use crate::models::*;
-use crate::modules::settlement_center::{
-    handlers as settlement_handlers, models as settlement_models,
-};
+use crate::modules::settlement_center::models as settlement_models;
 use crate::modules::*;
 use crate::shared::AppState;
 use topems_shared_bootstrap::{

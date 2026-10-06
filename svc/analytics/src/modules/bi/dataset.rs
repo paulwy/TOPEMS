@@ -6,8 +6,8 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
-use sqlx::Row;
 use sqlx::Column;
+use sqlx::Row;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
@@ -630,8 +630,7 @@ async fn execute_bi_sql(
             .ok_or_else(|| "结果列缺失".to_string())?;
         let raw = row.try_get_raw(idx).map_err(|e| e.to_string())?;
         let bytes = raw.as_bytes().map_err(|e| format!("结果读取失败: {e}"))?;
-        serde_json::from_slice::<serde_json::Value>(bytes)
-            .map_err(|e| format!("结果解析失败: {e}"))
+        serde_json::from_slice::<serde_json::Value>(bytes).map_err(|e| format!("结果解析失败: {e}"))
     }
     .await;
     // 无论成败都结束只读事务（查询报错时连接处于 aborted 状态，必须 ROLLBACK 恢复才能归还池）

@@ -35,9 +35,7 @@ fn verify_registration_token(headers: &HeaderMap) -> bool {
     match (enforce, expected_token) {
         // 非强制：开发模式放行
         (false, _) => {
-            tracing::warn!(
-                "[Plugin] PLUGIN_TOKEN_ENFORCE 未开启 - 插件注册放行（dev 模式）"
-            );
+            tracing::warn!("[Plugin] PLUGIN_TOKEN_ENFORCE 未开启 - 插件注册放行（dev 模式）");
             true
         }
         // 强制但未配置令牌：拒绝（防绕过，不再依赖 PROFILE 精确串）
