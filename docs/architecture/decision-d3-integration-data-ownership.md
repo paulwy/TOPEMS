@@ -8,9 +8,9 @@
 `svc/integration` 被设计为**跨域同步中枢**（integration-cross-domain-api.md 声称已完成"步骤 B：直写→reqwest、步骤 D：撤销 allow"），但实测存在两类问题：
 
 1. **9 处跨 schema 直写**：`svc/integration/src/qms_lims_ehs.rs` 内 7 个业务事件 handle 共 9 处 `INSERT/UPDATE qms.*`/`ehs.*` 直写（含 `only_own_schema_query!("integration", SQL, "qms")` 显式跨库宏），且**这 7 个 handle 均未在 `event_handlers/mod.rs` 接线**——直写代码从未实际运行（死代码），但一旦接线即绕过 qms/ehs 服务直接写他人 schema。
-2. **data_sync 假同步**：`svc/lims`、`svc/ehs`、`svc/wms` 的 data_sync 模块"读取对方服务 URL → 打日志 → **从不发起 HTTP** → 编造成功响应 → 本地插入 status=completed 的 sync_records 记录"，用户点"同步"得到虚假成功反馈，真实数据从未传输。
+2. **data_sync 假同步**：`svc/lims`、`svc/ehs` 的 data_sync 模块~~（2026-10-02 原文含 `svc/wms`——**2026-10-04 B13 订正：系误诊，wms 为真实事件驱动，见 §2.2/§8.1**）~~"读取对方服务 URL → 打日志 → **从不发起 HTTP** → 编造成功响应 → 本地插入 status=completed 的 sync_records 记录"，用户点"同步"得到虚假成功反馈，真实数据从未传输。
 
-**决策问题**：(a) integration 的 9 处直写归属如何处置——改走服务 API/事件、下沉共享库、还是维持白名单基线？(b) 假同步如何处置——真实现、移除、还是标记废弃？该决策决定 TODO.md 阶段 2 U3（integration/DB 归属改造）的拆解方式。
+**决策问题**：(a) integration 的 9 处直写归属如何处置——改走服务 API/事件、下沉共享库、还是维持白名单基线？(b) 假同步如何处置——真实现、移除、还是标记废弃？（**2026-10-04 B13 订正**：假同步主体为 lims/ehs；wms 经订正非假同步，不在处置范围）该决策决定 TODO.md 阶段 2 U3（integration/DB 归属改造）的拆解方式。
 
 ## 2. 现状盘点（2026-10-02 实测）
 
@@ -75,10 +75,10 @@
 - **选项 C 维持直写白名单基线**：把 9 处直写登记为已知 FAIL 基线（schema_boundary allow 保留），阶段 2 U3 后转绿——**仅作过渡**，不解决绕过校验、双表分叉、归属混乱，长期不可接受。
 - **推荐：选项 A**（详见 §5）。
 
-### 4.2 假同步处置（lims/ehs/wms data_sync）
+### 4.2 假同步处置（lims/ehs data_sync；wms 经 B13 订正非假同步）
 
 - **选项 A 真实现**：补真实 HTTP/事件发送（lims→qms 等）。适用条件：目标方有接收 API 或事件订阅器、同步链路有真实业务价值。当前 qms/ehs 侧无接收 API、消费方=0（§3），真实现的**前置成本高且收益未验证**——若产品确认"手动同步"是必需交互，走"发布业务事件到总线 + 目标方订阅"（复用 D2 机制），而非补 HTTP。
-- **选项 B 移除假同步代码**：删除 lims/ehs/wms data_sync 的"编造成功"路径（读 URL + 假响应 + completed 记录），同步按钮 UI 改为显式"同步通道未启用"提示或禁用。消费方=0 时最干净，清除脏 sync_records 数据源。
+- **选项 B 移除假同步代码**：删除 lims/ehs data_sync 的"编造成功"路径（读 URL + 假响应 + completed 记录），同步按钮 UI 改为（wms 经 B13 订正无此路径）显式"同步通道未启用"提示或禁用。消费方=0 时最干净，清除脏 sync_records 数据源。
 - **选项 C 标记废弃并文档化**：保留代码、标 `#[deprecated]` + 文档说明"未启用"，sync_records 记录标记为不可信。适合"有历史原因暂不可删"的中间态。
 - **推荐：选项 B 为主、C 作过渡**（详见 §5）。
 
@@ -112,7 +112,7 @@
 | U3.2 | **补接收 API**：qms 补 lab_samples/lab_tasks 接收 API（或确认归属方后由 lims 提供）；ehs 补 alerts 接收 API（或改为事件订阅 LimsReagentAlert） | qms/ehs 模块路由（参照 `svc/qms/src/modules/corrective_action.rs:394-401` 模式） |
 | U3.3 | **改造 7 个 handle 接线**：`qms_lims_ehs.rs` 的 7 个业务事件 handle 注册订阅，内部**删除 9 处直写**，改为调 §U3.2 的 API 或事件传递；失败进 DLQ | `svc/integration/src/qms_lims_ehs.rs:26,39,80,136,174,196,244,274,315`、`event_handlers/mod.rs` |
 | U3.4 | **撤销 allow**：`scripts/schema_boundary.json` 移除 integration 对 qms/ehs 的 allow 登记 | `scripts/schema_boundary.json`（integration allow=['qms','ehs'] 段） |
-| U3.5 | **假同步处置**：删除 lims/ehs/wms data_sync 的"编造成功"路径（读 URL + 假响应 + completed 记录）；同步按钮 UI 提示"通道未启用"或改事件发布；历史 sync_records 标记 `is_fake` 或清理 | `svc/lims/src/modules/data_sync.rs:255-268`、`svc/ehs/src/modules/data_sync.rs:254-265`、wms 同模块 |
+| U3.5 | **假同步处置**：删除 lims/ehs data_sync 的"编造成功"路径（读 URL + 假响应 + completed 记录）；同步按钮 UI 提示"通道未启用"或改事件发布；历史 sync_records 标记 `is_fake` 或清理 | `svc/lims/src/modules/data_sync.rs:255-268`、`svc/ehs/src/modules/data_sync.rs:254-265`（wms 经 B13 订正无此路径，不在处置范围） |
 | U3.6 | **文档回写**：integration-cross-domain-api.md 标注"步骤 B/D 已真正落地（2026-10）"；WMS/报告 F-09/F-10 条目标注已修复 | — |
 
 **验收标准（可测量）**：
@@ -121,7 +121,7 @@
 2. **7 个业务事件 handle 接线且走 API/事件**：`event_handlers/mod.rs` 含 7 个 `subscribe_handler` 注册；e2e 验证：LIMS 检验完成事件 → qms/lims API → 检验任务创建成功（非直写）。
 3. **schema_boundary 门禁转绿**：integration allow=['qms','ehs'] 移除后门禁零 FAIL。
 4. **qa_lab_* 归属单一**：迁移后同名表仅存于唯一 schema（grep 三处引用归零）；lims `inspection_task.rs:363` 引用修正。
-5. **假同步清除**：lims/ehs/wms data_sync 无"编造成功"路径（grep 假响应构造 = 0）；sync_records 无新增 completed 假记录；同步按钮 UI 行为明确（提示或事件化）。
+5. **假同步清除**：lims/ehs data_sync 无"编造成功"路径（wms 经 B13 订正无此路径）（grep 假响应构造 = 0）；sync_records 无新增 completed 假记录；同步按钮 UI 行为明确（提示或事件化）。
 6. **全量回归**：qms/ehs/lims 既有 API 与事件链路不受影响；`cargo check --workspace` 0 错误；integration 编排链路（integration→erp/mes 等既有 reqwest 边）不变。
 
 ## 7. 风险与回退
