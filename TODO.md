@@ -718,7 +718,7 @@
 | # | 项 | 优先级 | 工作量 | 依赖 | 依据 | 可测量验收 |
 |---|---|---|---|---|---|---|
 | ✅ B1 | **T3 临时白名单撤销（search→erp，F-37）** | P0 | M | ✅ 已实施（API 化，b23b79ab8）：search 3 处直读改走 erp HTTP API（erp_api.rs service token 鉴权 + list API）；已撤销 schema_boundary.json search.allow + allowlist 双条目 | T3 条目（撤销时机 U1/U3 已满足）；implementation-overview §7 | ✅ 双门禁零 FAIL（python/node）；端到端：keyword=B1TEST 命中客户/销售/采购 3 类，测试数据已清理 |
-| B2 | **U6 残留 a：事件 payload 金额 f64→Decimal（跨服务契约）** | P1 | M | shared-event 366 测试基线；先盘点各事件金额字段 | U6 条目（commit `f331be2b6` 仅 finance 4 文件+crm billing）；F-07 | 全仓事件 payload 金额字段 Decimal；grep f64 金额路径=0 |
+| ✅ B2 | **U6 残留 a：事件 payload 金额 f64→Decimal（跨服务契约）** | P1 | M | ✅ 已实施+推送（2026-10-04 批1，commit 链 3c5db4142/db1f9fcf5/6343f78ef/7e078845e + 登记 b46706184）；2026-10-06 收尾复核：事件 payload 金额字段全 Decimal（event_types.rs 抽查确认），残留 f64 均为模型/响应/dashboard 层（crm/qms/pm 模型 + ai dashboard 聚合，非事件契约） | U6 条目（commit `f331be2b6` 仅 finance 4 文件+crm billing）；F-07 | 全仓事件 payload 金额字段 Decimal（✅ 达成）；grep f64 金额路径=0（✅ 事件路径已清；模型层 f64 属后续模型治理，pm 发布点 from_f64 为源头精度项已登记） |
 | B3 | **U6 残留 b：crm sales_forecast/dashboard 金额 f64** | P1 | S | 无 | U6 条目（crm/models/billing.rs:14,54-78 已改，预测/看板未覆盖） | 两处改 Decimal + 精度单测绿 |
 | B4 | **U6 残留 c：checksums.txt 停更恢复** | P1 | S | 无 | U4 残留（09-21 后停登惯例）；F-65（250 vs 283 覆盖不全） | checksums.txt 恢复登记与 `.sqlx/` 一致，或显式废弃声明（二选一落盘） |
 | B5 | **U5 残留 a：gis 表 enable_rls:false** | P1 | M | 无 | U5 条目残留（同款模式登记）；F-06 族 | 新迁移开启 gis RLS + 策略 + 跨租户实测（同 finance 1106 模式） |
@@ -811,6 +811,7 @@
 - **链路① e2e**：XADD HrmPayrollPosted→erp 消费→凭证落库：`total_debit=total_credit=20000.0015`（NUMERIC 精确）、分录 0.3000/0.3000（0.1+0.2=0.3 零误差）、`balanced=t`、同 payroll_run_id 幂等重放不重复（1 凭证/2 分录）；测试数据已清理
 - **commit**：`3c5db4142`（shared-event 本体）/`db1f9fcf5`（下游 Decimal 适配 8 服务 17 文件）/`6343f78ef`（服务侧发布/订阅点全链对接）/`7e078845e`（event-driven.md §9.2 登记）
 - **残留**：crm aftersales.rs:1629 `refund_amount_f64` 为裸 JSON 构造（非类型化 payload，未走 shared-event 契约），不在契约范围
+- **2026-10-06 收尾复核**：事件 payload 金额字段全 Decimal（HrmPayrollPosted/PmProjectSettled/SalesOrderCreated 等抽查确认）；残留 f64 金额均为模型/响应/dashboard 层（pm budget/settlement、qms quality_cost、crm customer.overdue_amount、ai governance_dashboard——后者属 TODO 保留列表"dashboard 聚合"）；pm 发布点 `settlement.rs:189 Decimal::from_f64` 为模型层 f64 源头精度项（值在 f64 模型已产生，非 B2 事件契约可解，建议后续模型层 Decimal 治理单独立项）
 
 ### A3 wms 审计读路径 P2 加固 — ✅ 完成
 
