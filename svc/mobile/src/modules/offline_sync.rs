@@ -479,7 +479,7 @@ pub async fn get_sync_policy(
     // 中不存在（真实列为 auto_sync_enabled/sync_interval_minutes 等）。按真实表结构内联查询。
     let row = match sqlx::query(only_own_schema_query!(
         "mobile",
-        "SELECT id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes,
+        "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, auto_sync_enabled, sync_interval_minutes,
          sync_on_network_change, conflict_strategy, created_at, updated_at
          FROM mobile.sync_policies WHERE user_id = $1 AND deleted_at IS NULL"
     ))
@@ -591,7 +591,7 @@ pub async fn update_sync_policy(
            sync_on_network_change = EXCLUDED.sync_on_network_change,
            conflict_strategy = EXCLUDED.conflict_strategy,
            updated_at = NOW()
-         RETURNING id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes,
+         RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, auto_sync_enabled, sync_interval_minutes,
                    sync_on_network_change, conflict_strategy, created_at, updated_at"
     ))
     .bind(Uuid::new_v4())
