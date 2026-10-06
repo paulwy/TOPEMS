@@ -19,8 +19,8 @@ use sqlx::Row;
 use uuid::Uuid;
 
 use crate::AppState;
+use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{ api_success};
 use topems_shared_core::TopemsError;
 
 // ==================== 数据模型 ====================
@@ -662,7 +662,9 @@ pub async fn export_audit_logs(
         .map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiResponse::<()>::from(TopemsError::Internal("查询审计日志失败".to_string()))),
+                Json(ApiResponse::<()>::from(TopemsError::Internal(
+                    "查询审计日志失败".to_string(),
+                ))),
             )
                 .into_response()
         })?;
