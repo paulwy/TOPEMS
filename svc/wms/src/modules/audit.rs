@@ -298,7 +298,9 @@ mod tests {
         // 防止未来重构回归（NULL 行经 CHECK 三值逻辑可入库，String 非 Option 字段解码即 500）。
         let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/modules/audit.rs"));
         let src = src.split("#[cfg(test)]").next().unwrap_or(src); // 排除测试段自匹配
-        let count_et = src.matches("COALESCE(entity_type, '') AS entity_type").count();
+        let count_et = src
+            .matches("COALESCE(entity_type, '') AS entity_type")
+            .count();
         let count_st = src.matches("COALESCE(status, '') AS status").count();
         let count_ip = src.matches("ip_address::text, user_agent").count();
         assert_eq!(count_et, 2, "list+get 均应含 COALESCE(entity_type,'')");

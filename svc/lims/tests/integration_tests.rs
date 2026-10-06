@@ -74,10 +74,12 @@ mod tests {
                 .await;
         assert!(read.is_ok(), "仪器读取应该成功");
 
-        let calibrate = sqlx::query("UPDATE lims.instruments SET status = 'calibration', updated_at = NOW() WHERE id = $1 RETURNING status")
+        // 2026-10-06 修复：status 受 ck_instruments_status_standard CHECK 约束（active/inactive/archived/NULL），
+        // 原 'calibration' 值违反约束致 UPDATE 恒败（预存在问题，与 U12b 无关）
+        let calibrate = sqlx::query("UPDATE lims.instruments SET status = 'archived', updated_at = NOW() WHERE id = $1 RETURNING status")
             .bind(inst_id).fetch_one(&pool).await;
-        assert!(calibrate.is_ok(), "仪器校准状态更新应该成功");
-        assert_eq!(calibrate.unwrap().get::<String, _>("status"), "calibration");
+        assert!(calibrate.is_ok(), "仪器状态更新应该成功");
+        assert_eq!(calibrate.unwrap().get::<String, _>("status"), "archived");
 
         sqlx::query("DELETE FROM lims.instruments WHERE id = $1")
             .bind(inst_id)
