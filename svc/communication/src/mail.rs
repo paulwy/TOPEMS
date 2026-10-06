@@ -1190,15 +1190,15 @@ fn build_message(
     html_body: Option<&str>,
     cc: Option<&Vec<String>>,
     bcc: Option<&Vec<String>>,
-) -> Result<Message, String> {
+) -> Result<Message, TopemsError> {
     let from_addr = Mailbox::new(
         Some(from.to_string()),
         from.parse()
-            .map_err(|e| format!("Invalid from email: {}", e))?,
+            .map_err(|e| TopemsError::ValidationFailed(format!("Invalid from email: {}", e)))?,
     );
     let to_addr = Mailbox::new(
         Some(to.to_string()),
-        to.parse().map_err(|e| format!("Invalid to email: {}", e))?,
+        to.parse().map_err(|e| TopemsError::ValidationFailed(format!("Invalid to email: {}", e)))?,
     );
 
     let mut message_builder = Message::builder()
@@ -1212,7 +1212,7 @@ fn build_message(
                 Some(cc_email.to_string()),
                 cc_email
                     .parse()
-                    .map_err(|e| format!("Invalid CC email: {}", e))?,
+                    .map_err(|e| TopemsError::ValidationFailed(format!("Invalid CC email: {}", e)))?,
             );
             message_builder = message_builder.cc(cc_addr);
         }
@@ -1224,7 +1224,7 @@ fn build_message(
                 Some(bcc_email.to_string()),
                 bcc_email
                     .parse()
-                    .map_err(|e| format!("Invalid BCC email: {}", e))?,
+                    .map_err(|e| TopemsError::ValidationFailed(format!("Invalid BCC email: {}", e)))?,
             );
             message_builder = message_builder.bcc(bcc_addr);
         }
@@ -1233,11 +1233,11 @@ fn build_message(
     if let Some(html) = html_body {
         message_builder
             .body(format!("{}\n\n{}", body, html))
-            .map_err(|e| format!("Failed to build message: {}", e))
+            .map_err(|e| TopemsError::NetworkRequest(format!("Failed to build message: {}", e)))
     } else {
         message_builder
             .body(body.to_string())
-            .map_err(|e| format!("Failed to build message: {}", e))
+            .map_err(|e| TopemsError::NetworkRequest(format!("Failed to build message: {}", e)))
     }
 }
 
@@ -2117,14 +2117,14 @@ mod tests {
     fn test_build_message_invalid_from_returns_err() {
         let msg = build_message("not-an-email", "to@example.com", "S", "B", None, None, None);
         assert!(msg.is_err());
-        assert!(msg.unwrap_err().contains("Invalid from email"));
+        assert!(msg.unwrap_err().to_string().contains("Invalid from email"));
     }
 
     #[test]
     fn test_build_message_invalid_to_returns_err() {
         let msg = build_message("from@example.com", "bad-to", "S", "B", None, None, None);
         assert!(msg.is_err());
-        assert!(msg.unwrap_err().contains("Invalid to email"));
+        assert!(msg.unwrap_err().to_string().contains("Invalid to email"));
     }
 
     #[test]
@@ -2165,7 +2165,7 @@ mod tests {
         std::env::remove_var("SMTP_PASSWORD");
         let result = create_mailer();
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("SMTP_PASSWORD"));
+        assert!(result.unwrap_err().to_string().contains("SMTP_PASSWORD"));
     }
 
     #[test]

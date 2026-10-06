@@ -141,7 +141,7 @@ impl MobileEventHandlers {
             EventType::WorkflowApproved => {
                 let payload: WorkflowApprovedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析工作流审批事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析工作流审批事件 payload 失败: {}", e)))?;
 
                 let title = format!("审批通过 - {}", payload.workflow_name);
                 let content = format!(
@@ -165,7 +165,7 @@ impl MobileEventHandlers {
             EventType::WorkflowRejected => {
                 let payload: WorkflowRejectedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析工作流拒绝事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析工作流拒绝事件 payload 失败: {}", e)))?;
 
                 let title = format!("审批拒绝 - {}", payload.workflow_name);
                 let content = format!(
@@ -202,7 +202,7 @@ impl MobileEventHandlers {
 
         let payload: AfterSalesTicketCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析售后工单事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析售后工单事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[mobile] 售后工单创建: {} ({})，优先级: {:?}，客户: {:?}",
@@ -254,7 +254,7 @@ impl MobileEventHandlers {
 
         let payload: EhsHazardReportedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析隐患报告事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析隐患报告事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[mobile] 隐患报告: {} ({})，等级: {}，类别: {}",
@@ -305,7 +305,7 @@ impl MobileEventHandlers {
 
         let payload: EhsAccidentReportedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析 EHS 事故报告事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 EHS 事故报告事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[mobile] 事故报告: {} ({})，严重程度: {}",
@@ -354,7 +354,7 @@ impl MobileEventHandlers {
 
         let payload: QmsQualityIssueCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析 QMS 质量问题事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 QMS 质量问题事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[mobile] 质量问题: {} ({})，严重程度: {:?}",
@@ -401,7 +401,7 @@ impl MobileEventHandlers {
             EventType::RdProjectCreated => {
                 let payload: RdProjectCreatedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析 RD 项目创建事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析 RD 项目创建事件 payload 失败: {}", e)))?;
 
                 tracing::info!(
                     "[mobile] RD 项目创建: {} ({})",
@@ -430,7 +430,7 @@ impl MobileEventHandlers {
             EventType::PmProjectCreated => {
                 let payload: PmProjectCreatedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析 PM 项目创建事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析 PM 项目创建事件 payload 失败: {}", e)))?;
 
                 tracing::info!(
                     "[mobile] PM 项目创建: {} ({})",
@@ -468,7 +468,7 @@ impl MobileEventHandlers {
 
         let payload: SalesOrderCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析销售订单创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析销售订单创建事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[mobile] 销售订单创建: {} ({})，客户: {:?}",

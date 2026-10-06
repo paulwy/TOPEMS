@@ -79,7 +79,7 @@ impl PmEventHandlers {
             EventType::HrmEmployeeCreated => {
                 let payload: HrmEmployeeCreatedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析员工创建事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析员工创建事件 payload 失败: {}", e)))?;
                 employee_id = payload.employee_id;
                 employee_name = Some(payload.name);
                 tracing::debug!(
@@ -91,7 +91,7 @@ impl PmEventHandlers {
             EventType::HrmEmployeeUpdated => {
                 let payload: HrmEmployeeUpdatedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析员工更新事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析员工更新事件 payload 失败: {}", e)))?;
                 employee_id = payload.employee_id;
                 employee_name = None;
                 let _ = employee_name;
@@ -133,7 +133,7 @@ impl PmEventHandlers {
             EventType::WorkflowApproved => {
                 let payload: WorkflowApprovedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析审批通过事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析审批通过事件 payload 失败: {}", e)))?;
                 (
                     payload.business_id,
                     payload.business_type,
@@ -145,7 +145,7 @@ impl PmEventHandlers {
             EventType::WorkflowRejected => {
                 let payload: WorkflowRejectedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析审批拒绝事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析审批拒绝事件 payload 失败: {}", e)))?;
                 (
                     payload.business_id,
                     payload.business_type,
@@ -240,7 +240,7 @@ impl PmEventHandlers {
 
         let payload: RdProjectCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析 RD 项目创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 RD 项目创建事件 payload 失败: {}", e)))?;
 
         tracing::debug!(
             "[pm] RD 项目创建: {} ({})，负责人: {:?}",
@@ -296,7 +296,7 @@ impl PmEventHandlers {
 
     async fn handle_settlement_created(&self, event: Event) -> HandlerResult {
         let payload: SettlementCreatedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 SettlementCreated payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SettlementCreated payload 失败: {}", e)))?;
 
         tracing::info!(
             "[pm] SettlementCreated 处理 - id={}, settlement_no={}, trace_id={:?}",
@@ -330,14 +330,14 @@ impl PmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("写入 pm.settlements 失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 pm.settlements 失败: {}", e)))?;
 
         Ok(())
     }
 
     async fn handle_settlement_approved(&self, event: Event) -> HandlerResult {
         let payload: SettlementApprovedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 SettlementApproved payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SettlementApproved payload 失败: {}", e)))?;
 
         tracing::info!(
             "[pm] SettlementApproved 处理 - id={}, approved_by={}, trace_id={:?}",
@@ -356,7 +356,7 @@ impl PmEventHandlers {
         .bind(payload.id)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("更新 pm.settlements 失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新 pm.settlements 失败: {}", e)))?;
 
         Ok(())
     }

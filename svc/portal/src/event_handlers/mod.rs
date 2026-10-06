@@ -140,7 +140,7 @@ impl PortalEventHandlers {
 
         let payload: EmployeeOnboardedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析员工入职事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析员工入职事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[portal] 新员工入职: {} ({})，工号: {:?}，部门: {:?}",
@@ -175,7 +175,7 @@ impl PortalEventHandlers {
 
         let payload: PmProjectCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析项目创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析项目创建事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[portal] 新项目创建: {} ({})，负责人: {}",
@@ -245,7 +245,7 @@ impl PortalEventHandlers {
 
         let payload: AfterSalesTicketCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析售后工单事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析售后工单事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[portal] 售后工单创建: {} ({})，客户: {:?}，优先级: {:?}",

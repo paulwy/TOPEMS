@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use crate::models::{BusinessLocation, DeviceLocation, Pipeline, WarehouseLocation};
 use axum::{
     extract::{Extension, Json, State},
@@ -119,7 +120,7 @@ async fn insert_device_location(
     record: &DeviceLocationRecord,
 ) -> Result<(), String> {
     let position: serde_json::Value =
-        serde_json::from_str(&record.position).map_err(|e| format!("位置解析失败: {}", e))?;
+        serde_json::from_str(&record.position).map_err(|e| TopemsError::ValidationFailed(format!("位置解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
 
     sqlx::query(
@@ -137,7 +138,7 @@ async fn insert_device_location(
     .bind(sqlx::types::Uuid::nil())
     .execute(pool)
     .await
-    .map_err(|e| format!("插入失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
 
     Ok(())
 }
@@ -154,7 +155,7 @@ struct PipelineRecord {
 
 async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), String> {
     let path: serde_json::Value =
-        serde_json::from_str(&record.path).map_err(|e| format!("路径解析失败: {}", e))?;
+        serde_json::from_str(&record.path).map_err(|e| TopemsError::ValidationFailed(format!("路径解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
 
     sqlx::query(only_own_schema_query!(
@@ -173,7 +174,7 @@ async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), S
     .bind(sqlx::types::Uuid::nil())
     .execute(pool)
     .await
-    .map_err(|e| format!("插入失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
 
     Ok(())
 }
@@ -189,7 +190,7 @@ struct WarehouseRecord {
 
 async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> Result<(), String> {
     let position: serde_json::Value =
-        serde_json::from_str(&record.position).map_err(|e| format!("位置解析失败: {}", e))?;
+        serde_json::from_str(&record.position).map_err(|e| TopemsError::ValidationFailed(format!("位置解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
 
     sqlx::query(only_own_schema_query!(
@@ -207,7 +208,7 @@ async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> R
     .bind(sqlx::types::Uuid::nil())
     .execute(pool)
     .await
-    .map_err(|e| format!("插入失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("插入失败: {}", e)))?;
 
     Ok(())
 }

@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use super::events::FinanceDomainEvent;
 use super::materialized_view::MaterializedView;
@@ -40,7 +41,7 @@ impl EventProjector {
         for view in &self.views {
             view.rebuild()
                 .await
-                .map_err(|e| format!("Failed to rebuild view '{}': {}", view.view_name(), e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to rebuild view '{}': {}", view.view_name(), e)))?;
         }
         Ok(())
     }

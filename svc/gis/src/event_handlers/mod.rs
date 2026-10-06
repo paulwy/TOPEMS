@@ -106,7 +106,7 @@ impl GisEventHandlers {
 
         let payload: EhsHazardReportedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析隐患报告事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析隐患报告事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[gis] 隐患报告: {} ({})，类别: {}，等级: {}，位置: {:?}",
@@ -141,7 +141,7 @@ impl GisEventHandlers {
 
         let payload: ScmShipmentReceivedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析收货事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析收货事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[gis] 收货: {} ({})，供应商: {:?}，数量: {:?}",
@@ -184,7 +184,7 @@ impl GisEventHandlers {
             EventType::StockInbound => {
                 let payload: StockInboundPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析入库事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析入库事件 payload 失败: {}", e)))?;
 
                 tracing::info!(
                     "[gis] 库存入库: {} ({})，仓库: {:?}，物料: {:?}，数量: {}",
@@ -218,7 +218,7 @@ impl GisEventHandlers {
             EventType::StockOutbound => {
                 let payload: StockOutboundPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析出库事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析出库事件 payload 失败: {}", e)))?;
 
                 tracing::info!(
                     "[gis] 库存出库: {} ({})，仓库: {:?}，物料: {:?}，数量: {}",

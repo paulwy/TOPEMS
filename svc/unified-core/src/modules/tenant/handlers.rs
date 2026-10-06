@@ -403,7 +403,7 @@ async fn activate_basic_modules(
         .bind(module_name)
         .execute(&mut **tx)
         .await
-        .map_err(|e| format!("Failed to activate basic module {}: {}", module_code, e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to activate basic module {}: {}", module_code, e)))?;
     }
     Ok(())
 }

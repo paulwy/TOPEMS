@@ -6,6 +6,7 @@
 //! 当前使用内存实现（无需 DB），用于验证进程内调用机制；
 //! 真实接入时替换为 `svc/finance` 的 `plugin_finance.accounting_subjects` 查询。
 
+use topems_shared_core::error::TopemsError;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use crate::providers::AccountBalanceProvider;
 use axum::{Json, Router};
@@ -65,7 +66,7 @@ impl AccountBalanceProvider for FinanceModule {
     async fn get_account_balance(&self, account_code: &str) -> Result<f64, String> {
         self.balances
             .read()
-            .map_err(|e| format!("余额锁读取失败: {}", e))?
+            .map_err(|e| TopemsError::DatabaseQuery(format!("余额锁读取失败: {}", e)))?
             .get(account_code)
             .copied()
             .ok_or_else(|| format!("科目 {} 不存在", account_code))
@@ -75,7 +76,7 @@ impl AccountBalanceProvider for FinanceModule {
         let balances = self
             .balances
             .read()
-            .map_err(|e| format!("余额锁读取失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("余额锁读取失败: {}", e)))?;
         Ok(self
             .asset_codes
             .iter()

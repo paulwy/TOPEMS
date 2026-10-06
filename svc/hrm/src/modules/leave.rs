@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -100,7 +101,7 @@ async fn resolve_leave_employee_id(
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     user_id: Option<&str>,
     employee_id: Option<Uuid>,
-) -> Result<Option<Uuid>, String> {
+) -> Result<Option<Uuid>, TopemsError> {
     if let Some(uid) = user_id {
         sqlx::query_scalar::<_, Uuid>(
             "SELECT id FROM hrm.employees WHERE user_id = $1::uuid AND deleted_at IS NULL LIMIT 1",
@@ -108,7 +109,7 @@ async fn resolve_leave_employee_id(
         .bind(uid)
         .fetch_optional(&mut **txn)
         .await
-        .map_err(|e| format!("user_id 解析 employee_id 失败: {}", e))
+        .map_err(|e| TopemsError::ValidationFailed(format!("user_id 解析 employee_id 失败: {}", e)))
     } else {
         Ok(employee_id.filter(|e| !e.is_nil()))
     }

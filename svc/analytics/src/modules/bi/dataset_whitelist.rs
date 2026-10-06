@@ -176,7 +176,7 @@ pub async fn auto_register_from_information_schema(
         .bind(*table)
         .execute(pool)
         .await
-        .map_err(|e| format!("auto_register bi_datasets for '{table}' failed: {e}"))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("auto_register bi_datasets for '{table}' failed: {e}")))?;
         inserted += rows.rows_affected();
     }
 

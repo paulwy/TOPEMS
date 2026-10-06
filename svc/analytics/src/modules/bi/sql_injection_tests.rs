@@ -148,7 +148,7 @@ async fn l2_strict_mode_rejects_unregistered_column() {
     // a) bi_datasets 表未创建 → "数据元信息不可用，请稍后重试"
     // b) 表存在但 analytics_data 无注册列 → "Table 'analytics_data' is not in ..."
     // c) 表存在且注册了其他列但没注册 malicious_col → "Columns 'malicious_col' are not in the BI dataset whitelist"
-    assert!(!err.is_empty(), "错误文案应为非空");
+    assert!(!err.to_string().is_empty(), "错误文案应为非空");
 }
 
 /// 防御深度汇总 — 所有 SQL 注入 Payload（1~6）在 L1 层全部被 quote_identifier 拒绝的回归测试

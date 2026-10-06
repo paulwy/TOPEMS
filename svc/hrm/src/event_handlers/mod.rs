@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -96,7 +97,7 @@ impl HrmEventHandlers {
             EventType::PermissionChanged => {
                 let payload: PermissionChangedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析权限变更事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析权限变更事件 payload 失败: {}", e)))?;
 
                 tracing::info!(
                     "[hrm] 权限变更: user_id={}, 新增 {} 项, 移除 {} 项",
@@ -120,7 +121,7 @@ impl HrmEventHandlers {
             EventType::PositionCreated => {
                 let payload: PositionCreatedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析岗位创建事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析岗位创建事件 payload 失败: {}", e)))?;
 
                 tracing::info!(
                     "[hrm] 岗位创建: {} ({}, {})",
@@ -146,7 +147,7 @@ impl HrmEventHandlers {
             EventType::PositionUpdated => {
                 let payload: PositionUpdatedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析岗位更新事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析岗位更新事件 payload 失败: {}", e)))?;
 
                 tracing::info!(
                     "[hrm] 岗位更新: position_id={}, changes={}",
@@ -173,7 +174,7 @@ impl HrmEventHandlers {
             EventType::PositionDeleted => {
                 let payload: PositionDeletedPayload = event
                     .parse_payload()
-                    .map_err(|e| format!("解析岗位删除事件 payload 失败: {}", e))?;
+                    .map_err(|e| TopemsError::ValidationFailed(format!("解析岗位删除事件 payload 失败: {}", e)))?;
 
                 tracing::info!("[hrm] 岗位删除: position_id={}", payload.position_id);
 

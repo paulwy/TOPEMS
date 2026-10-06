@@ -21,7 +21,7 @@ use topems_erp::modules::procurement_e2e::{
 fn scenario_happy() -> Result<(), TopemsError> {
     let req = sample_happy_cny();
     let r = validate_procurement_chain(&req.po, &req.grn, &req.invoice, &req.payment)
-        .map_err(|e| format!("unexpected err: {e}"))?;
+        .map_err(|e| TopemsError::BusinessLogic(format!("unexpected err: {e}")))?;
     // 检查借贷平衡
     let d: f64 = r.journal_entries.iter().map(|l| l.debit).sum();
     let c: f64 = r.journal_entries.iter().map(|l| l.credit).sum();
@@ -121,7 +121,7 @@ fn scenario_multi_currency() -> Result<(), TopemsError> {
         &req.payment,
         &req.rates,
     )
-    .map_err(|e| format!("unexpected err: {e}"))?;
+    .map_err(|e| TopemsError::BusinessLogic(format!("unexpected err: {e}")))?;
     // 总额: 1130 USD × 7.18 = 8113.4 CNY（付款）
     let expected_payment_cny = 1130.0 * 7.18;
     if (r.total_payment - expected_payment_cny).abs() > 0.02 {

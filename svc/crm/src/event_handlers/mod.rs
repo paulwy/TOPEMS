@@ -7,6 +7,7 @@
 //! - `OpportunityWon` → 自动创建跟进任务记录
 //! - `CustomerCreated` → 触发欢迎邮件（记录日志，邮件发送由通知服务异步处理）
 
+use topems_shared_core::error::TopemsError;
 use sqlx::PgPool;
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
 use topems_shared_event::event::{
@@ -167,7 +168,7 @@ impl CrmEventHandlers {
     /// 使用 graceful fallback：若 DB 操作失败，记录警告并继续，不让事件处理失败。
     async fn handle_aftersales_ticket_created(&self, event: Event) -> HandlerResult {
         let payload: AfterSalesTicketCreatedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 AfterSalesTicketCreated payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 AfterSalesTicketCreated payload 失败: {}", e)))?;
 
         tracing::info!(
             "[crm] AfterSalesTicketCreated 处理 - ticket_no={}, title={}, customer_id={:?}, priority={:?}, trace_id={:?}",
@@ -231,7 +232,7 @@ impl CrmEventHandlers {
     /// 使用 graceful fallback：若 DB 操作失败，记录警告并继续。
     async fn handle_opportunity_won(&self, event: Event) -> HandlerResult {
         let payload: OpportunityWonPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 OpportunityWon payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 OpportunityWon payload 失败: {}", e)))?;
 
         tracing::info!(
             "[crm] OpportunityWon 处理 - opportunity_id={}, opportunity_name={}, customer_id={:?}, amount={:?}, trace_id={:?}",
@@ -302,7 +303,7 @@ impl CrmEventHandlers {
                 .bind(&invoice_no)
                 .fetch_optional(&self.db)
                 .await
-                .map_err(|e| format!("查询应收账单失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("查询应收账单失败: {}", e)))?;
 
         if existing_bill.is_none() {
             // 多租户：经 customers 反查 tenant_id（OpportunityWon payload 无租户维度）
@@ -365,7 +366,7 @@ impl CrmEventHandlers {
     /// 置 status='paid' + paid_at。
     async fn handle_payment_received(&self, event: Event) -> HandlerResult {
         let payload: PaymentReceivedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 PaymentReceived payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 PaymentReceived payload 失败: {}", e)))?;
 
         tracing::info!(
             "[crm] PaymentReceived 处理 - payment_no={}, customer_name={:?}, amount={}, trace_id={:?}",
@@ -458,7 +459,7 @@ impl CrmEventHandlers {
     /// 若客户记录在 DB 中不存在，记录警告并跳过（graceful fallback）。
     async fn handle_customer_created(&self, event: Event) -> HandlerResult {
         let payload: CustomerCreatedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 CustomerCreated payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 CustomerCreated payload 失败: {}", e)))?;
 
         tracing::info!(
             "[crm] CustomerCreated 处理 - customer_id={}, customer_name={}, email={:?}, source={:?}, trace_id={:?}",
@@ -475,7 +476,7 @@ impl CrmEventHandlers {
                 .bind(payload.customer_id)
                 .fetch_optional(&self.db)
                 .await
-                .map_err(|e| format!("查询客户记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("查询客户记录失败: {}", e)))?;
 
         if customer_exists.is_none() {
             tracing::warn!(
@@ -598,7 +599,7 @@ impl CrmEventHandlers {
     /// 采用事件驱动解耦，CRM 在本地创建销售订单。
     async fn handle_shipping_order_requested(&self, event: Event) -> HandlerResult {
         let payload: ShippingOrderRequestedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 ShippingOrderRequested payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 ShippingOrderRequested payload 失败: {}", e)))?;
 
         tracing::info!(
             "[crm] ShippingOrderRequested 处理 - outbound_order_id={}, shipping_id={}, shipping_order_number={}, customer_id={:?}, total_amount={}, trace_id={:?}",
@@ -617,7 +618,7 @@ impl CrmEventHandlers {
                 .bind(&payload.shipping_order_number)
                 .fetch_optional(&self.db)
                 .await
-                .map_err(|e| format!("查询销售订单是否存在失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售订单是否存在失败: {}", e)))?;
 
         if existing.is_some() {
             tracing::warn!(
@@ -720,7 +721,7 @@ impl CrmEventHandlers {
     /// status 透传 erp 侧真实状态（draft/confirmed/...），tenant_id 优先事件载荷、回退连接上下文。
     async fn handle_sales_order_created(&self, event: Event) -> HandlerResult {
         let payload: SalesOrderCreatedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 SalesOrderCreated payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SalesOrderCreated payload 失败: {}", e)))?;
 
         // 幂等：同租户同单号已同步则跳过
         let order_no = payload.order_no.clone();
@@ -732,7 +733,7 @@ impl CrmEventHandlers {
         .bind(payload_tenant)
         .fetch_optional(&self.db)
         .await
-        .map_err(|e| format!("查询客户订单失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询客户订单失败: {}", e)))?;
 
         if existing.is_some() {
             tracing::debug!("[crm] 客户订单已同步（跳过）- order_no={}", order_no);

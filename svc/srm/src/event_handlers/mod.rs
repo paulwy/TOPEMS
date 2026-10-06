@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -70,7 +71,7 @@ impl SrmEventHandlers {
 
         let payload: ScmPurchasePlanCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析采购计划创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购计划创建事件 payload 失败: {}", e)))?;
 
         tracing::debug!(
             "[srm] 采购计划创建: {} ({})，金额: {:?}，周期: {:?}",
@@ -123,7 +124,7 @@ impl SrmEventHandlers {
 
         let payload: ScmSupplierEvaluatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析供应商考评事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析供应商考评事件 payload 失败: {}", e)))?;
 
         tracing::debug!(
             "[srm] 供应商考评: {} ({})，得分: {:?}，等级: {:?}",
@@ -185,7 +186,7 @@ impl SrmEventHandlers {
 
         let payload: PurchaseOrderCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析采购订单创建事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e)))?;
 
         tracing::debug!(
             "[srm] 采购订单创建: {} ({})，供应商: {:?}，金额: {:?}",
@@ -243,7 +244,7 @@ impl SrmEventHandlers {
     async fn handle_supplier_data_sync(&self, event: Event) -> HandlerResult {
         let payload: SupplierDataSyncRequestedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析 SupplierDataSyncRequested payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SupplierDataSyncRequested payload 失败: {}", e)))?;
 
         tracing::info!(
             "[srm] 收到 SupplierDataSyncRequested 事件 - supplier_id={}, supplier_name={}, direction={}",
@@ -294,7 +295,7 @@ impl SrmEventHandlers {
             .bind(payload.tenant_id.unwrap_or_else(Uuid::nil))
             .execute(&self.db)
             .await
-            .map_err(|e| format!("更新 suppliers 失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新 suppliers 失败: {}", e)))?;
         } else {
             let supplier_no = format!(
                 "SUP-{}",
@@ -330,7 +331,7 @@ impl SrmEventHandlers {
             .bind(now)
             .execute(&self.db)
             .await
-            .map_err(|e| format!("创建 suppliers 失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("创建 suppliers 失败: {}", e)))?;
         }
 
         sqlx::query(
@@ -377,7 +378,7 @@ impl SrmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("写入 srm.scm_supplier_snapshots 失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 srm.scm_supplier_snapshots 失败: {}", e)))?;
 
         Ok(())
     }
