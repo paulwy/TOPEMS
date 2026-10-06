@@ -1,12 +1,12 @@
 {
-  "generatedAt": "2026-09-14",
-  "baselineRevision": "V517.3",
+  "generatedAt": "2026-10-07",
+  "baselineRevision": "V517.4",
   "note": "统一错误出口存量基线。数字只应下降；上升说明新增了违规，--changed-only 模式会在 CI 直接拦截。规则见 docs/architecture/unified-error-handling-decision.md",
   "rules": {
     "apiResponseErrorTotal": "全 svc 层手写 ApiResponse::error(...) 调用总数",
     "leakInternalError": "把原始错误 format! 进客户端响应的处数（信息泄露）",
     "rawErrorToString": "客户端响应里直接 <err>.to_string() 的处数（信息泄露，更直白）",
-    "anyhowInBusinessLayer": "svc/*/src/{modules,services,handlers,repositories} 下 anyhow:: 出现次数"
+    "anyhowInBusinessLayer": "业务层 anyhow:: 出现次数（V517.4 起含 svc src 根 + lib 共享库，bootstrap/embedded 进程边界豁免）"
   },
   "detectionGranularity": "statement（括号配平，覆盖跨行调用）",
   "baselineHistory": [
@@ -29,6 +29,11 @@
       "revision": "V517.3",
       "leakInternalError": 241,
       "note": "第二个服务迁移（svc/integration，65 处）完成。-65（60 机械 + 5 人工 400 类）。integration 已从泄露分布中清零"
+    },
+    {
+      "revision": "V517.4",
+      "anyhowInBusinessLayer": 57,
+      "note": "扫描范围扩展：业务层判定新增 svc/<svc>/src 根文件（integration 事件同步处理器等）与 lib 共享库（shared-ai/shared-core）；bootstrap.rs/embedded.rs 进程边界豁免。新口径存量 57 = src 根 21（integration）+ lib 36（shared-ai 24 + shared-core 12）；svc 业务层原有 anyhow 已随迁移清零（仅剩 analytics trait 绑定豁免项）"
     }
   ],
   "leakByService": {
@@ -55,6 +60,6 @@
   "apiResponseErrorTotal": 3407,
   "leakInternalError": 241,
   "rawErrorToString": 385,
-  "anyhowInBusinessLayer": 60,
+  "anyhowInBusinessLayer": 57,
   "leakSurfaceTotal": 626
 }

@@ -27,10 +27,11 @@ const { execSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 const SVC_DIR = path.join(ROOT, 'svc');
+const LIB_DIR = path.join(ROOT, 'lib');
 const BASELINE_FILE = path.join(__dirname, 'error-handling-baseline.json');
 
 const SKIP_DIRS = new Set(['target', 'node_modules', '.git', '_archive', '.sqlx', 'dist']);
-// 业务层：svc/<svc>/src/{modules,services,handlers,repositories}
+// 业务层：svc/<svc>/src/{modules,services,handlers,repositories} + svc/<svc>/src 根文件 + lib/<lib>/src（共享库）
 const BIZ_DIRS = new Set(['modules', 'services', 'handlers', 'repositories']);
 // 错误变量命名（用于"是否把错误对象暴露给客户端"的判断）
 const ERR_VAR = '(?:e|err|error|ex|io_err|sql_err|db_err|db_error|repo_err|err_msg|anyhow_err)';
@@ -81,8 +82,11 @@ const RULES = {
 // -----------------------------------------------------------------------------
 // 遍历
 // -----------------------------------------------------------------------------
-function* walkRustFiles(dir) {
-  const stack = [dir];
+/**
+ * 遍历一个或多个根目录下的 .rs 文件。
+ */
+function* walkRustFiles(...dirs) {
+  const stack = dirs.slice();
   while (stack.length) {
     const cur = stack.pop();
     let entries;
@@ -138,9 +142,33 @@ function extractArgs(content, openIdx) {
   return content.slice(openIdx + 1); // 未配平：保守取到文件尾
 }
 
+/**
+ * 业务层判定（anyhow 禁止区域，main.rs / bootstrap / embedded 进程边界除外）：
+ *  - svc/<svc>/src/{modules,services,handlers,repositories}/**  （历史口径）
+ *  - svc/<svc>/src/*.rs  （src 根文件：integration 事件同步处理器等，2026-10-07 补覆盖）
+ *  - lib/<lib>/src/**    （共享库：shared-ai/shared-core 等，2026-10-07 补覆盖）
+ * 测试目录（tests/）与示例（examples/）不判定为业务层，anyhow 允许。
+ * 进程边界入口（main.rs / bootstrap.rs / embedded.rs）anyhow 允许。
+ */
 function isBusinessLayer(file) {
-  const rel = path.relative(SVC_DIR, file).split(path.sep); // <svc>/src/<layer>/...
-  return rel.length >= 3 && rel[1] === 'src' && BIZ_DIRS.has(rel[2]) && rel[rel.length - 1] !== 'main.rs';
+  const rel = path.relative(ROOT, file).split(path.sep);
+  const fname = rel[rel.length - 1];
+  if (fname === 'main.rs' || fname === 'bootstrap.rs' || fname === 'embedded.rs') return false;
+  if (rel[0] === 'svc') {
+    const svcRel = rel.slice(1); // <svc>/src/<layer>/...
+    if (svcRel[1] === 'src') {
+      if (svcRel.length >= 3 && BIZ_DIRS.has(svcRel[2])) return true;
+      if (svcRel.length === 3) return true; // svc/<svc>/src/*.rs
+    }
+    return false;
+  }
+  if (rel[0] === 'lib') {
+    // lib/<lib>/src/** 或 lib/src/**（workspace 根 crate）
+    if (rel[1] && rel[2] === 'src') return true;
+    if (rel[1] === 'src' && rel.length === 3) return true;
+    return false;
+  }
+  return false;
 }
 
 // 接口/trait 绑定型 anyhow 显式豁免（B7 第三批登记，非漂移）：
@@ -150,6 +178,13 @@ const ANYHOW_EXEMPT = new Set([
   'svc/analytics/src/modules/report/schedule.rs',
   'svc/analytics/src/modules/report/scheduler.rs',
 ]);
+// 整目录豁免（2026-10-07）：bootstrap 进程边界——anyhow 仅允许 main.rs / bootstrap 边界。
+const ANYHOW_EXEMPT_DIRS = ['lib/shared-bootstrap'];
+
+function isAnyhowExempt(relPath) {
+  if (ANYHOW_EXEMPT.has(relPath)) return true;
+  return ANYHOW_EXEMPT_DIRS.some((d) => relPath === d || relPath.startsWith(d + '/'));
+}
 
 function scan() {
   const violations = [];
@@ -161,7 +196,7 @@ function scan() {
     byService[svc] = (byService[svc] || 0) + n;
   };
 
-  for (const file of walkRustFiles(SVC_DIR)) {
+  for (const file of walkRustFiles(SVC_DIR, LIB_DIR)) {
     let content;
     try {
       content = fs.readFileSync(file, 'utf8');
@@ -169,33 +204,37 @@ function scan() {
       continue;
     }
     const relPath = path.relative(ROOT, file);
+    const isSvc = relPath.startsWith('svc/');
 
-    totals.apiResponseError += (content.match(/ApiResponse::error\(/g) || []).length;
+    if (isSvc) totals.apiResponseError += (content.match(/ApiResponse::error\(/g) || []).length;
 
-    // 语句级检测：逐 `ApiResponse::error(` 提取完整参数后判定
-    CALL_RX.lastIndex = 0;
-    let m;
-    while ((m = CALL_RX.exec(content)) !== null) {
-      const openIdx = m.index + m[0].length - 1; // '(' 的索引
-      const args = extractArgs(content, openIdx);
-      for (const name of ['leak-internal-error', 'raw-error-to-string']) {
-        if (RULES[name].match(args)) {
-          const line = content.slice(0, m.index).split('\n').length;
-          violations.push({
-            rule: name,
-            file: relPath,
-            line,
-            text: args.replace(/\s+/g, ' ').trim().slice(0, 120),
-          });
-          if (name === 'leak-internal-error') totals.leakInternalError += 1;
-          else totals.rawErrorToString += 1;
-          bump(relPath);
-          break; // 一条调用只归属一个规则
+    // 语句级检测（仅 svc：ApiResponse 是客户端出口语义，lib 共享库不直接面向客户端）
+    if (isSvc) {
+      // 逐 `ApiResponse::error(` 提取完整参数后判定
+      CALL_RX.lastIndex = 0;
+      let m;
+      while ((m = CALL_RX.exec(content)) !== null) {
+        const openIdx = m.index + m[0].length - 1; // '(' 的索引
+        const args = extractArgs(content, openIdx);
+        for (const name of ['leak-internal-error', 'raw-error-to-string']) {
+          if (RULES[name].match(args)) {
+            const line = content.slice(0, m.index).split('\n').length;
+            violations.push({
+              rule: name,
+              file: relPath,
+              line,
+              text: args.replace(/\s+/g, ' ').trim().slice(0, 120),
+            });
+            if (name === 'leak-internal-error') totals.leakInternalError += 1;
+            else totals.rawErrorToString += 1;
+            bump(relPath);
+            break; // 一条调用只归属一个规则
+          }
         }
       }
     }
 
-    if (isBusinessLayer(file) && !ANYHOW_EXEMPT.has(relPath) && RULES['anyhow-in-business'].matchFile(content)) {
+    if (isBusinessLayer(file) && !isAnyhowExempt(relPath) && RULES['anyhow-in-business'].matchFile(content)) {
       const hits = (content.match(/\banyhow::/g) || []).length;
       totals.anyhowInBusiness += hits;
       violations.push({
