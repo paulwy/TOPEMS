@@ -34,7 +34,7 @@ async fn main() -> Result<()> {
         port_env_var: Some("GIS_PORT"),
         max_db_connections: 20,
         enable_events: false,
-        enable_rls: false,
+        enable_rls: true,
         enable_request_context: false,
         api_prefix: "/api/gis",
         legacy_prefixes: &["/api/v1/gis", "/api/core/gis/v1"],

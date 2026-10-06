@@ -254,7 +254,12 @@ pub async fn rls_middleware(
         }
     }
 
-    next.run(req).await
+    // 请求处理完成后清空会话级 GUC，防止池化连接被复用时的跨租户残留
+    // （session 级 set_config 在连接归还后仍保留；下一个请求复用该连接
+    //  若未显式设置租户，将读到上一个请求的 tenant_id —— B6 池化 GUC 同源跟进）
+    let resp = next.run(req).await;
+    let _ = sqlx::query("RESET app.tenant_id").execute(&pool).await;
+    resp
 }
 
 #[cfg(test)]
