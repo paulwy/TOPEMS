@@ -724,7 +724,7 @@
 |---|---|---|---|---|---|---|
 | ✅ B1 | **T3 临时白名单撤销（search→erp，F-37）** | P0 | M | ✅ 已实施（API 化，b23b79ab8）：search 3 处直读改走 erp HTTP API（erp_api.rs service token 鉴权 + list API）；已撤销 schema_boundary.json search.allow + allowlist 双条目 | T3 条目（撤销时机 U1/U3 已满足）；implementation-overview §7 | ✅ 双门禁零 FAIL（python/node）；端到端：keyword=B1TEST 命中客户/销售/采购 3 类，测试数据已清理 |
 | ✅ B2 | **U6 残留 a：事件 payload 金额 f64→Decimal（跨服务契约）** | P1 | M | ✅ 已实施+推送（2026-10-04 批1，commit 链 3c5db4142/db1f9fcf5/6343f78ef/7e078845e + 登记 b46706184）；2026-10-06 收尾复核：事件 payload 金额字段全 Decimal（event_types.rs 抽查确认），残留 f64 均为模型/响应/dashboard 层（crm/qms/pm 模型 + ai dashboard 聚合，非事件契约） | U6 条目（commit `f331be2b6` 仅 finance 4 文件+crm billing）；F-07 | 全仓事件 payload 金额字段 Decimal（✅ 达成）；grep f64 金额路径=0（✅ 事件路径已清；模型层 f64 属后续模型治理，pm 发布点 from_f64 为源头精度项已登记） |
-| B3 | **U6 残留 b：crm sales_forecast/dashboard 金额 f64** | P1 | S | 无 | U6 条目（crm/models/billing.rs:14,54-78 已改，预测/看板未覆盖） | 两处改 Decimal + 精度单测绿 |
+| ✅ B3 | **U6 残留 b：crm sales_forecast/dashboard 金额 f64** | P1 | S | 无 | U6 条目（crm/models/billing.rs:14,54-78 已改，预测/看板未覆盖） | ✅ 已实施：sales_forecast.rs 预测/实际金额 Decimal + dashboard.rs 漏斗商机金额/预测 Decimal + 精度单测（断言 Decimal 求和无 f64 误差）；crm lib 504 测试全绿 |
 | B4 | **U6 残留 c：checksums.txt 停更恢复** | P1 | S | 无 | U4 残留（09-21 后停登惯例）；F-65（250 vs 283 覆盖不全） | checksums.txt 恢复登记与 `.sqlx/` 一致，或显式废弃声明（二选一落盘） |
 | B5 | **U5 残留 a：gis 表 enable_rls:false** | P1 | M | 无 | U5 条目残留（同款模式登记）；F-06 族 | 新迁移开启 gis RLS + 策略 + 跨租户实测（同 finance 1106 模式） |
 | B6 | **U5 残留 b：lib/shared-db rls.rs 池化 GUC 同源跟进** | P1 | M | 无 | U5 条目（tenant_rls 已修 acquire→set→run→reset；rls.rs 同源模式未改） | 池化 GUC 连接级正确绑定/清空 + 多租户单测绿 |
