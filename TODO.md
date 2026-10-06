@@ -1131,6 +1131,18 @@
 - 验证：编译 0 错误、clippy 0 警告、单测 504/504 全绿
 - **crm 静态 Err = 27→0**；累计清零：mobile 8 + lims 3 + crm 27 = 38
 
+### ✅ B7 第 8 批：共享库静态 Err TopemsError 化（commit 65842422f，8 文件）
+- deployment.rs check_tenant_access → OperationNotAllowed（文案中文化「租户不匹配」）
+- approval.rs validate_start_approval/validate_approval_decision → ValidationFailed/BusinessLogic
+  （含同函数内 format! 错误一并迁移；业务状态冲突「已有/没有进行中的审批」→BusinessLogic）
+- data_governance.rs process_access/erasure_request → ValidationFailed/ResourceNotFound
+  （ok_or("Request not found")→ResourceNotFound「请求不存在」；right_type 校验→ValidationFailed）
+- shared-dsh resource/tool/prompt validate_uri/validate_name → ValidationFailed
+  （Cargo.toml 新增 topems-shared-core 依赖；register 消费点 map_err 适配 e.to_string()）
+- 验证：全仓静态 Err(" 业务残留 = **0**；cargo check 0 error 0 warning；单测 963 全绿
+  （shared-core 790 + shared-db 152 基线 + shared-dsh 21）；pre-commit 23 项全绿（提交时复验）
+- 保留不动：enhanced.rs/metrics.rs 6 处 `&str` 错误类型测试（非 String 迁移对象）
+
 ## 2026-10-06 契约面收口 + RLS 治理 + 门禁固化（全链路闭环）
 
 > 承接 10-05 mobile 契约面收口主线，扩展至 web(portal) 契约面、全库 RLS 治理、硬编码租户对齐、双门禁固化与全仓实例统一。全部本地提交未 push（除既有主线提交链）。
