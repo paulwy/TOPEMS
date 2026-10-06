@@ -10,11 +10,11 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
-use super::auth_utils::extract_user_id_from_token;
+use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 use crate::db::repository::*;
 use crate::models::{CreateOfflineOperation, OfflineOperation, SyncPolicy, UpdateSyncPolicy};
 use sqlx::Row;
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{verify_jwt_token, AuthState};
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -552,6 +552,17 @@ pub async fn update_sync_policy(
         }
     };
 
+    // 租户取自 token claims；冒烟为 nil 租户（superuser claims，middleware 将
+    // app.tenant_id 置零 uuid）。此前硬编码平台默认租户 '...0001'，在零 uuid 会话下
+    // 被幸存 RLS 策略 tenant_isolation_sync_policies 拒绝（"new row violates row-level
+    // security policy"）。按全仓 nil 上下文写路径惯例：claims 无 tenant 时绑 Uuid::nil()。
+    // 注意 ON CONFLICT (user_id) 仅更新业务列，不回写 tenant_id。
+    let tenant_id = extract_bearer_token(&headers)
+        .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
+        .and_then(|c| c.tenant_id)
+        .and_then(|t| Uuid::parse_str(&t).ok())
+        .unwrap_or(Uuid::nil());
+
     // 根因：db_create_or_update_sync_policy 依赖的 policy_type 列不存在。
     // 按真实表结构（auto_sync_enabled/sync_interval_minutes/...）内联 UPSERT，
     // sync_policies.user_id 有 UNIQUE 约束，可按用户冲突更新。
@@ -566,7 +577,7 @@ pub async fn update_sync_policy(
         "mobile",
         "INSERT INTO mobile.sync_policies (id, tenant_id, user_id, auto_sync_enabled,
          sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at)
-         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, NOW(), NOW())
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
          ON CONFLICT (user_id) DO UPDATE SET
            auto_sync_enabled = EXCLUDED.auto_sync_enabled,
            sync_interval_minutes = EXCLUDED.sync_interval_minutes,
@@ -577,6 +588,7 @@ pub async fn update_sync_policy(
                    sync_on_network_change, conflict_strategy, created_at, updated_at"
     ))
     .bind(Uuid::new_v4())
+    .bind(tenant_id)
     .bind(user_id)
     .bind(auto_sync_enabled)
     .bind(sync_interval_minutes)
