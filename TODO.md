@@ -1143,6 +1143,19 @@
   （shared-core 790 + shared-db 152 基线 + shared-dsh 21）；pre-commit 23 项全绿（提交时复验）
 - 保留不动：enhanced.rs/metrics.rs 6 处 `&str` 错误类型测试（非 String 迁移对象）
 
+### ✅ B7 第 9 批：共享库 Err(format!) TopemsError 化（commit 2ba067a82，6 文件）
+- rate_limit_enhanced validate_timestamp → ValidationFailed（无效时间戳/超容差，含 parse map_err 连锁）
+- permission validate_permission_code 4 处 → ValidationFailed（模块码/动作/数据范围/段数）
+- health check_http_health → ServiceUnavailable（「无法连接服务」）+ 消费点 e.to_string() + 测试断言适配
+- plugin generate/verify_plugin_install_token → ValidationFailed/AuthenticationFailed
+  （Invalid RSA key→ValidationFailed、JWT verify→AuthenticationFailed、scope→ValidationFailed，含 map_err format! 连锁）
+- service_config get_startup_order → ConfigValidation（循环依赖）+ 内部 visit 闭包签名同步
+- schema_registry check_type → ValidationFailed + add_error 消费点适配 e.to_string()
+- 验证：全仓 Err(format!) 业务残留 = **0**；cargo check 0 error 0 warning；
+  三库单测 1383 全绿（shared-auth 227 + shared-core 790 + shared-event 366）；pre-commit 23 项全绿
+- B7 累计：静态 Err 55 处 + Err(format!) 9 处（含连锁 map_err）= 清零；
+  剩余形态：map_err(format!) 417 处 + Result<_, String> 465 处（后续批次候选）
+
 ## 2026-10-06 契约面收口 + RLS 治理 + 门禁固化（全链路闭环）
 
 > 承接 10-05 mobile 契约面收口主线，扩展至 web(portal) 契约面、全库 RLS 治理、硬编码租户对齐、双门禁固化与全仓实例统一。全部本地提交未 push（除既有主线提交链）。
