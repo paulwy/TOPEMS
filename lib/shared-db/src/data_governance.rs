@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 // =============================================================================
@@ -839,14 +840,18 @@ impl DataSubjectRightsManager {
         request_id: Uuid,
         raw_data: serde_json::Value,
         entity_tags: &EntityDataTags,
-    ) -> Result<DataExportResult, String> {
+    ) -> Result<DataExportResult, TopemsError> {
         let mut requests = self.requests.write().await;
-        let request = requests.get_mut(&request_id).ok_or("Request not found")?;
+        let request = requests
+            .get_mut(&request_id)
+            .ok_or_else(|| TopemsError::ResourceNotFound("请求不存在".to_string()))?;
 
         if request.right_type != DataSubjectRight::RightToAccess
             && request.right_type != DataSubjectRight::RightToDataPortability
         {
-            return Err("Invalid right type for access processing".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "无效的访问处理权利类型".to_string(),
+            ));
         }
 
         request.status = DsrRequestStatus::Processing;
@@ -903,12 +908,16 @@ impl DataSubjectRightsManager {
         &self,
         request_id: Uuid,
         deletion_callback: impl FnOnce(&str) -> (usize, usize, Vec<String>),
-    ) -> Result<DataErasureResult, String> {
+    ) -> Result<DataErasureResult, TopemsError> {
         let mut requests = self.requests.write().await;
-        let request = requests.get_mut(&request_id).ok_or("Request not found")?;
+        let request = requests
+            .get_mut(&request_id)
+            .ok_or_else(|| TopemsError::ResourceNotFound("请求不存在".to_string()))?;
 
         if request.right_type != DataSubjectRight::RightToErasure {
-            return Err("Invalid right type for erasure processing".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "无效的删除处理权利类型".to_string(),
+            ));
         }
 
         let subject_id = request.subject.subject_id.clone();

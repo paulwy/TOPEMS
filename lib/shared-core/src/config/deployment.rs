@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 use std::env;
 use uuid::Uuid;
 
+use crate::error::TopemsError;
+
 /// 部署模式
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -141,13 +143,15 @@ impl DeploymentConfig {
         &self,
         user_tenant_id: Uuid,
         resource_tenant_id: Uuid,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         if !self.multi_tenant_enabled {
             return Ok(());
         }
 
         if user_tenant_id != resource_tenant_id {
-            return Err("Tenant mismatch".to_string());
+            return Err(TopemsError::OperationNotAllowed(
+                "租户不匹配".to_string(),
+            ));
         }
 
         Ok(())

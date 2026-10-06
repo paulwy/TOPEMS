@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::error::DshToolError;
+use topems_shared_core::error::TopemsError;
 
 /// Prompt 模板定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -209,20 +210,26 @@ impl PromptTemplate {
     }
 
     /// 验证模板名称
-    pub fn validate_name(&self) -> Result<(), String> {
+    pub fn validate_name(&self) -> Result<(), TopemsError> {
         if self.name.is_empty() {
-            return Err("模板名称不能为空".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "模板名称不能为空".to_string(),
+            ));
         }
         if !self
             .name
             .chars()
             .all(|c| c.is_ascii_lowercase() || c == '_' || c.is_ascii_digit())
         {
-            return Err("模板名称只能包含小写字母、数字和下划线".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "模板名称只能包含小写字母、数字和下划线".to_string(),
+            ));
         }
         let parts: Vec<&str> = self.name.split('_').collect();
         if parts.len() < 3 {
-            return Err("模板名称应包含至少 3 部分：{业务域}_{场景}_{用途}".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "模板名称应包含至少 3 部分：{业务域}_{场景}_{用途}".to_string(),
+            ));
         }
         Ok(())
     }
@@ -287,7 +294,7 @@ impl PromptRegistry {
     pub fn register(&mut self, template: PromptTemplate) -> Result<(), DshToolError> {
         template
             .validate_name()
-            .map_err(DshToolError::definition_error)?;
+            .map_err(|e| DshToolError::definition_error(e.to_string()))?;
         if self.templates.contains_key(&template.name) {
             return Err(DshToolError::definition_error(format!(
                 "模板 '{}' 已存在",

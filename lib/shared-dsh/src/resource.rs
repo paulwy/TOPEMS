@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::error::DshToolError;
+use topems_shared_core::error::TopemsError;
 
 /// Resource 定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -76,30 +77,42 @@ impl ResourceDefinition {
 
     /// 验证 URI 格式
     #[allow(clippy::indexing_slicing)]
-    pub fn validate_uri(&self) -> Result<(), String> {
+    pub fn validate_uri(&self) -> Result<(), TopemsError> {
         if self.uri.is_empty() {
-            return Err("资源 URI 不能为空".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "资源 URI 不能为空".to_string(),
+            ));
         }
         if !self.uri.contains("://") {
-            return Err("资源 URI 必须包含 '://' 分隔符".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "资源 URI 必须包含 '://' 分隔符".to_string(),
+            ));
         }
         let parts: Vec<&str> = self.uri.splitn(2, "://").collect();
         if parts.len() != 2 {
-            return Err("资源 URI 格式错误".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "资源 URI 格式错误".to_string(),
+            ));
         }
         let scheme = parts[0];
         let path = parts[1];
         if scheme.is_empty() {
-            return Err("资源 URI 的协议部分不能为空".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "资源 URI 的协议部分不能为空".to_string(),
+            ));
         }
         if path.is_empty() {
-            return Err("资源 URI 的路径部分不能为空".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "资源 URI 的路径部分不能为空".to_string(),
+            ));
         }
         if !scheme
             .chars()
             .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit())
         {
-            return Err("资源 URI 的协议部分只能包含小写字母和数字".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "资源 URI 的协议部分只能包含小写字母和数字".to_string(),
+            ));
         }
         Ok(())
     }
@@ -247,7 +260,7 @@ impl ResourceRegistry {
     pub fn register(&mut self, resource: ResourceDefinition) -> Result<(), DshToolError> {
         resource
             .validate_uri()
-            .map_err(DshToolError::definition_error)?;
+            .map_err(|e| DshToolError::definition_error(e.to_string()))?;
         if self.resources.contains_key(&resource.uri) {
             return Err(DshToolError::definition_error(format!(
                 "资源 '{}' 已存在",

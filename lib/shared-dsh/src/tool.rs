@@ -8,6 +8,7 @@ use std::pin::Pin;
 
 use crate::error::DshToolError;
 use crate::types::DshResponse;
+use topems_shared_core::error::TopemsError;
 
 /// Tool 定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -105,23 +106,31 @@ impl ToolDefinition {
     }
 
     /// 验证工具名称是否符合规范
-    pub fn validate_name(&self) -> Result<(), String> {
+    pub fn validate_name(&self) -> Result<(), TopemsError> {
         if self.name.is_empty() {
-            return Err("工具名称不能为空".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "工具名称不能为空".to_string(),
+            ));
         }
         if self.name.len() > 50 {
-            return Err("工具名称不能超过 50 个字符".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "工具名称不能超过 50 个字符".to_string(),
+            ));
         }
         if !self
             .name
             .chars()
             .all(|c| c.is_ascii_lowercase() || c == '_' || c.is_ascii_digit())
         {
-            return Err("工具名称只能包含小写字母、数字和下划线".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "工具名称只能包含小写字母、数字和下划线".to_string(),
+            ));
         }
         let parts: Vec<&str> = self.name.split('_').collect();
         if parts.len() < 3 {
-            return Err("工具名称应包含至少 3 部分：{业务域}_{操作}_{对象}".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "工具名称应包含至少 3 部分：{业务域}_{操作}_{对象}".to_string(),
+            ));
         }
         Ok(())
     }
@@ -292,7 +301,7 @@ impl ToolRegistry {
     pub fn register(&mut self, tool: Box<dyn Tool>) -> Result<(), DshToolError> {
         let def = tool.definition();
         def.validate_name()
-            .map_err(DshToolError::definition_error)?;
+            .map_err(|e| DshToolError::definition_error(e.to_string()))?;
         if self.tools.contains_key(&def.name) {
             return Err(DshToolError::definition_error(format!(
                 "工具 '{}' 已存在",

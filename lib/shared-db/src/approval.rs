@@ -11,6 +11,7 @@
 
 use serde_json::json;
 use sqlx::postgres::PgPool;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::fsm::{FsmDef, FsmError};
 use uuid::Uuid;
 
@@ -35,37 +36,45 @@ pub fn validate_start_approval(
     current_status: &str,
     target_status: &str,
     existing_approval_id: Option<Uuid>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     // 校验状态合法性
     if !fsm.is_valid_status(current_status) {
-        return Err(format!("无效的当前状态: {}", current_status));
+        return Err(TopemsError::ValidationFailed(format!(
+            "无效的当前状态: {}",
+            current_status
+        )));
     }
     if !fsm.is_valid_status(target_status) {
-        return Err(format!("无效的目标状态: {}", target_status));
+        return Err(TopemsError::ValidationFailed(format!(
+            "无效的目标状态: {}",
+            target_status
+        )));
     }
 
     // 校验迁移合法性
     if let Err(e) = fsm.can_transition(current_status, target_status) {
-        return Err(match e {
+        return Err(TopemsError::ValidationFailed(match e {
             FsmError::TerminalState(s) => format!("状态 {} 为终态，无法发起审批", s),
             FsmError::InvalidTransition { from, to } => {
                 format!("不允许的状态迁移: {} → {}", from, to)
             }
             FsmError::UnknownStatus(s) => format!("未知状态: {}", s),
-        });
+        }));
     }
 
     // 校验是否需要审批
     if !fsm.requires_approval(current_status, target_status) {
-        return Err(format!(
+        return Err(TopemsError::ValidationFailed(format!(
             "状态迁移 {} → {} 不需要审批",
             current_status, target_status
-        ));
+        )));
     }
 
     // 校验是否已有进行中的审批
     if existing_approval_id.is_some() {
-        return Err("当前已有进行中的审批，请先处理".to_string());
+        return Err(TopemsError::BusinessLogic(
+            "当前已有进行中的审批，请先处理".to_string(),
+        ));
     }
 
     Ok(())
@@ -82,33 +91,42 @@ pub fn validate_approval_decision(
     to_status: &str,
     stored_approval_id: Option<Uuid>,
     request_approval_id: Uuid,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     // 校验状态合法性
     if !fsm.is_valid_status(current_status) {
-        return Err(format!("无效的当前状态: {}", current_status));
+        return Err(TopemsError::ValidationFailed(format!(
+            "无效的当前状态: {}",
+            current_status
+        )));
     }
 
     // 当前状态必须等于 from 状态（审批通过前状态未变）
     if current_status != from_status {
-        return Err(format!(
+        return Err(TopemsError::ValidationFailed(format!(
             "当前状态 {} 不匹配审批前置状态 {}",
             current_status, from_status
-        ));
+        )));
     }
 
     // 校验迁移是否需要审批（防御性检查）
     if !fsm.requires_approval(from_status, to_status) {
-        return Err(format!(
+        return Err(TopemsError::ValidationFailed(format!(
             "状态迁移 {} → {} 不需要审批",
             from_status, to_status
-        ));
+        )));
     }
 
     // 校验 approval_id 匹配
     match stored_approval_id {
-        None => return Err("当前没有进行中的审批".to_string()),
+        None => {
+            return Err(TopemsError::BusinessLogic(
+                "当前没有进行中的审批".to_string(),
+            ))
+        }
         Some(stored_id) if stored_id != request_approval_id => {
-            return Err("审批ID不匹配".to_string());
+            return Err(TopemsError::ValidationFailed(
+                "审批ID不匹配".to_string(),
+            ));
         }
         _ => {}
     }
