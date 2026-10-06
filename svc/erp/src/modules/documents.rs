@@ -10,8 +10,8 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::{CreateDocumentRequest, Document, UpdateDocumentRequest};
 use crate::utils::validate_required_field;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct DocumentQueryParams {
@@ -102,7 +102,9 @@ pub async fn list_documents(
         }
         Err(e) => {
             tracing::error!("获取文档列表失败: {}", e);
-            Json(api_error(500, "查询文档失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询文档失败".to_string(),
+            )))
         }
     }
 }
@@ -130,7 +132,7 @@ pub async fn create_document(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("标题", &payload.title) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let doc_type = payload.doc_type.unwrap_or_else(|| "general".to_string());
@@ -154,7 +156,9 @@ pub async fn create_document(
         Ok(doc) => Json(ApiResponse::success(doc, "文档创建成功")),
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
-            Json(api_error(500, "创建文档失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建文档失败".to_string(),
+            )))
         }
     }
 }
@@ -187,10 +191,14 @@ pub async fn get_document(
         .await
     {
         Ok(Some(doc)) => Json(ApiResponse::success(doc, "文档获取成功")),
-        Ok(None) => Json(api_error(404, "文档不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "文档不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取文档失败: {}", e);
-            Json(api_error(500, "获取文档失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取文档失败".to_string(),
+            )))
         }
     }
 }
@@ -224,10 +232,16 @@ pub async fn update_document(
         .await
     {
         Ok(Some(d)) => d,
-        Ok(None) => return Json(api_error(404, "文档不存在")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "文档不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("查询文档失败: {}", e);
-            return Json(api_error(500, "更新文档失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "更新文档失败".to_string(),
+            )));
         }
     };
 
@@ -256,7 +270,9 @@ pub async fn update_document(
         Ok(doc) => Json(ApiResponse::success(doc, "文档更新成功")),
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
-            Json(api_error(500, "更新文档失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新文档失败".to_string(),
+            )))
         }
     }
 }
@@ -297,10 +313,14 @@ pub async fn delete_document(
             }
             Json(ApiResponse::success(id.to_string(), "文档删除成功"))
         }
-        Ok(_) => Json(api_error(404, "文档不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "文档不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
-            Json(api_error(500, "删除文档失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除文档失败".to_string(),
+            )))
         }
     }
 }

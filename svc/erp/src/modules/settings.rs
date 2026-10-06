@@ -14,7 +14,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
 use sqlx::PgPool;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -128,10 +129,14 @@ pub async fn get_setting(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(api_error(404, "设置项不存在"))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "设置项不存在".to_string(),
+                )))
             } else {
                 tracing::error!("查询设置项失败: {}", e);
-                Json(api_error(500, "查询设置项失败"))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询设置项失败".to_string(),
+                )))
             }
         }
     }
@@ -157,7 +162,9 @@ pub async fn create_setting(
         Ok(v) => Json(ApiResponse::success(v, "创建成功")),
         Err(e) => {
             tracing::error!("创建设置项失败: {}", e);
-            Json(api_error(500, "创建设置项失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建设置项失败".to_string(),
+            )))
         }
     }
 }
@@ -186,10 +193,14 @@ pub async fn update_setting(
         Ok(v) => Json(ApiResponse::success(v, "更新成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(api_error(404, "设置项不存在"))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "设置项不存在".to_string(),
+                )))
             } else {
                 tracing::error!("更新设置项失败: {}", e);
-                Json(api_error(500, "更新设置项失败"))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新设置项失败".to_string(),
+                )))
             }
         }
     }
@@ -208,10 +219,14 @@ pub async fn delete_setting(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("删除成功".to_string(), "删除成功"))
         }
-        Ok(_) => Json(api_error(404, "设置项不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "设置项不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除设置项失败: {}", e);
-            Json(api_error(500, "删除设置项失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除设置项失败".to_string(),
+            )))
         }
     }
 }
@@ -231,7 +246,11 @@ pub async fn batch_update_settings(
 ) -> Json<ApiResponse<Vec<SystemSetting>>> {
     let settings_map = match payload.settings.as_object() {
         Some(m) => m,
-        None => return Json(api_error(400, "settings 必须为对象")),
+        None => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "settings 必须为对象".to_string(),
+            )))
+        }
     };
 
     let mut updated = Vec::new();

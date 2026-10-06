@@ -13,8 +13,8 @@ use serde::Deserialize;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 #[derive(Debug, Deserialize)]
 pub struct AnnouncementQueryParams {
@@ -129,7 +129,9 @@ pub async fn list_announcements(
         }
         Err(e) => {
             tracing::error!("获取公告列表失败: {}", e);
-            Json(api_error(500, "获取公告列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取公告列表失败".to_string(),
+            )))
         }
     }
 }
@@ -158,10 +160,10 @@ pub async fn create_announcement(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("公告标题", &req.title) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
     if let Err(e) = validate_required_field("作者", &req.author) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -203,7 +205,9 @@ pub async fn create_announcement(
         Err(e) => {
             tracing::error!("创建公告失败: {}", e);
             (
-                Json(api_error(500, "公告创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "公告创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -215,7 +219,9 @@ pub async fn create_announcement(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "公告创建失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "公告创建失败".to_string(),
+                )));
             }
         }
     }
@@ -294,10 +300,14 @@ pub async fn get_announcement(
     .await;
     match result {
         Ok(Some(announcement)) => Json(ApiResponse::success(announcement, "获取公告成功")),
-        Ok(None) => Json(api_error(404, "公告不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "公告不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取公告失败: {}", e);
-            Json(api_error(500, "获取公告失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取公告失败".to_string(),
+            )))
         }
     }
 }
@@ -345,8 +355,17 @@ pub async fn update_announcement(
     .await;
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "公告不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询公告失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "公告不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询公告失败: {}",
+                e,
+            )))
+        }
     };
     let request_data = serde_json::to_value(&req).ok();
     let title = req.title.unwrap_or(existing.title);
@@ -392,7 +411,9 @@ pub async fn update_announcement(
         Err(e) => {
             tracing::error!("更新公告失败: {}", e);
             (
-                Json(api_error(500, "公告更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "公告更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -403,7 +424,9 @@ pub async fn update_announcement(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "公告更新失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "公告更新失败".to_string(),
+                )));
             }
         }
     }
@@ -488,14 +511,18 @@ pub async fn delete_announcement(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "公告不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "公告不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("公告不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除公告失败: {}", e);
             (
-                Json(api_error(500, "公告删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "公告删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -582,14 +609,18 @@ pub async fn publish_announcement(
             None,
         ),
         Ok(None) => (
-            Json(api_error(400, "公告不是草稿状态，无法发布")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "公告不是草稿状态，无法发布".to_string(),
+            ))),
             "error".to_string(),
             Some("公告不是草稿状态".to_string()),
         ),
         Err(e) => {
             tracing::error!("发布公告失败: {}", e);
             (
-                Json(api_error(500, "公告发布失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "公告发布失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -600,7 +631,9 @@ pub async fn publish_announcement(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "公告发布失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "公告发布失败".to_string(),
+                )));
             }
         }
     }
@@ -684,14 +717,18 @@ pub async fn unpublish_announcement(
             None,
         ),
         Ok(None) => (
-            Json(api_error(400, "公告不是已发布状态，无法取消发布")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "公告不是已发布状态，无法取消发布".to_string(),
+            ))),
             "error".to_string(),
             Some("公告不是已发布状态".to_string()),
         ),
         Err(e) => {
             tracing::error!("取消发布公告失败: {}", e);
             (
-                Json(api_error(500, "取消发布公告失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "取消发布公告失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -702,7 +739,9 @@ pub async fn unpublish_announcement(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "公告撤回失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "公告撤回失败".to_string(),
+                )));
             }
         }
     }

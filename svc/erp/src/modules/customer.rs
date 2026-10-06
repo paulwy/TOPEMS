@@ -16,8 +16,8 @@ use crate::modules::customer_calc::{
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct CustomerListParams {
@@ -167,7 +167,9 @@ pub async fn list_customers(
         Ok(c) => c,
         Err(e) => {
             tracing::error!("查询客户失败: {}", e);
-            return Json(api_error(500, "查询客户失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询客户失败".to_string(),
+            )));
         }
     };
 
@@ -183,7 +185,7 @@ pub async fn list_customers(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询客户总数失败: {}", e);
-            return Json(api_error(500, "查询客户总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询客户总数失败".to_string())));
         }
     };
 
@@ -234,10 +236,14 @@ pub async fn get_customer(
 
     match result {
         Ok(Some(customer)) => Json(ApiResponse::success(customer, "获取客户成功")),
-        Ok(None) => Json(api_error(404, "客户不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "客户不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询客户失败: {}", e);
-            Json(api_error(500, "查询客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询客户失败".to_string(),
+            )))
         }
     }
 }
@@ -295,10 +301,14 @@ pub async fn create_customer(
 
     match result {
         Ok(Some(customer)) => Json(ApiResponse::success(customer, "创建客户成功")),
-        Ok(None) => Json(api_error(500, "创建客户失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
+            "创建客户失败".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("创建客户失败: {}", e);
-            Json(api_error(500, "创建客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建客户失败".to_string(),
+            )))
         }
     }
 }
@@ -361,10 +371,14 @@ pub async fn update_customer(
 
     match result {
         Ok(Some(customer)) => Json(ApiResponse::success(customer, "更新客户成功")),
-        Ok(None) => Json(api_error(404, "客户不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "客户不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新客户失败: {}", e);
-            Json(api_error(500, "更新客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新客户失败".to_string(),
+            )))
         }
     }
 }
@@ -417,10 +431,14 @@ pub async fn delete_customer(
             }
             Json(ApiResponse::success("删除成功".to_string(), "删除客户成功"))
         }
-        Ok(_) => Json(api_error(404, "客户不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "客户不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除客户失败: {}", e);
-            Json(api_error(500, "删除客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除客户失败".to_string(),
+            )))
         }
     }
 }
@@ -557,7 +575,9 @@ pub async fn batch_list_customers(
         Ok(customers) => Json(ApiResponse::success(customers, "批量查询成功")),
         Err(e) => {
             tracing::error!("批量查询客户失败: {}", e);
-            Json(api_error(500, "批量查询客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量查询客户失败".to_string(),
+            )))
         }
     }
 }
@@ -609,7 +629,9 @@ pub async fn batch_create_customers(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(created, "批量创建成功"))
@@ -651,7 +673,9 @@ async fn batch_update_customers(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(updated, "批量更新成功"))
@@ -690,7 +714,9 @@ async fn batch_delete_customers(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(
@@ -700,7 +726,9 @@ async fn batch_delete_customers(
         }
         Err(e) => {
             tracing::error!("批量删除客户失败: {}", e);
-            Json(api_error(500, "批量删除客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量删除客户失败".to_string(),
+            )))
         }
     }
 }
@@ -747,10 +775,14 @@ pub async fn change_customer_status(
             }
             Json(ApiResponse::success(customer, "客户状态更新成功"))
         }
-        Ok(None) => Json(api_error(404, "客户不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "客户不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新客户状态失败: {}", e);
-            Json(api_error(500, "更新客户状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新客户状态失败".to_string(),
+            )))
         }
     }
 }
@@ -805,7 +837,9 @@ pub async fn batch_change_status(
         }
         Err(e) => {
             tracing::error!("批量更新客户状态失败: {}", e);
-            Json(api_error(500, "批量更新客户状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量更新客户状态失败".to_string(),
+            )))
         }
     }
 }
@@ -860,7 +894,9 @@ pub async fn batch_change_category(
         }
         Err(e) => {
             tracing::error!("批量更新客户分类失败: {}", e);
-            Json(api_error(500, "批量更新客户分类失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量更新客户分类失败".to_string(),
+            )))
         }
     }
 }

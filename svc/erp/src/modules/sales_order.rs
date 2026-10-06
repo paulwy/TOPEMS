@@ -13,8 +13,8 @@ use crate::models::material::{CreateSalesOrderRequest, SalesOrder, UpdateSalesOr
 use crate::modules::material_calc::{calculate_sales_order_amounts, default_sales_order_status};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_event::event::{SalesOrderApprovedPayload, SalesOrderCreatedPayload};
 
 pub fn create_routes() -> Router<ApiState> {
@@ -127,7 +127,9 @@ pub async fn list_sales_orders(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询销售订单失败: {}", e);
-            return Json(api_error(500, "查询销售订单失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询销售订单失败".to_string(),
+            )));
         }
     };
 
@@ -142,7 +144,7 @@ pub async fn list_sales_orders(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询销售订单总数失败: {}", e);
-            return Json(api_error(500, "查询销售订单总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询销售订单总数失败".to_string())));
         }
     };
 
@@ -191,10 +193,14 @@ pub async fn get_sales_order(
 
     match result {
         Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, "获取销售订单成功")),
-        Ok(None) => Json(api_error(404, "销售订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "销售订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询销售订单失败: {}", e);
-            Json(api_error(500, "查询销售订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询销售订单失败".to_string(),
+            )))
         }
     }
 }
@@ -304,10 +310,14 @@ pub async fn create_sales_order(
             }
             Json(ApiResponse::success(sales_order, "创建销售订单成功"))
         }
-        Ok(None) => Json(api_error(500, "创建销售订单失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
+            "创建销售订单失败".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("创建销售订单失败: {}", e);
-            Json(api_error(500, "创建销售订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建销售订单失败".to_string(),
+            )))
         }
     }
 }
@@ -361,10 +371,14 @@ pub async fn update_sales_order(
 
     match result {
         Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, "更新销售订单成功")),
-        Ok(None) => Json(api_error(404, "销售订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "销售订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新销售订单失败: {}", e);
-            Json(api_error(500, "更新销售订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新销售订单失败".to_string(),
+            )))
         }
     }
 }
@@ -412,10 +426,14 @@ pub async fn delete_sales_order(
             "删除成功".to_string(),
             "删除销售订单成功",
         )),
-        Ok(_) => Json(api_error(404, "销售订单不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "销售订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除销售订单失败: {}", e);
-            Json(api_error(500, "删除销售订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除销售订单失败".to_string(),
+            )))
         }
     }
 }
@@ -478,7 +496,9 @@ async fn update_sales_order_status(
             }
             Json(ApiResponse::success(sales_order, success_message))
         }
-        Ok(None) => Json(api_error(404, "销售订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "销售订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("{}: {}", error_message, e);
             Json(api_error(500, error_message))
@@ -729,7 +749,9 @@ async fn batch_create_sales_orders(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(created, "批量创建销售订单成功"))
@@ -768,7 +790,9 @@ async fn batch_update_sales_orders(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(updated, "批量更新销售订单成功"))
@@ -832,7 +856,9 @@ pub async fn batch_approve_sales_orders(
         }
         Err(e) => {
             tracing::error!("批量审批销售订单失败: {}", e);
-            Json(api_error(500, "批量审批销售订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量审批销售订单失败".to_string(),
+            )))
         }
     }
 }
@@ -871,7 +897,9 @@ pub async fn batch_ship_sales_orders(
         }
         Err(e) => {
             tracing::error!("批量发货销售订单失败: {}", e);
-            Json(api_error(500, "批量发货销售订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量发货销售订单失败".to_string(),
+            )))
         }
     }
 }
@@ -910,7 +938,9 @@ pub async fn batch_complete_sales_orders(
         }
         Err(e) => {
             tracing::error!("批量完成销售订单失败: {}", e);
-            Json(api_error(500, "批量完成销售订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量完成销售订单失败".to_string(),
+            )))
         }
     }
 }
@@ -949,7 +979,9 @@ pub async fn batch_cancel_sales_orders(
         }
         Err(e) => {
             tracing::error!("批量取消销售订单失败: {}", e);
-            Json(api_error(500, "批量取消销售订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量取消销售订单失败".to_string(),
+            )))
         }
     }
 }

@@ -12,8 +12,8 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::finance::AccountingSubject;
 use crate::modules::audit::{log_audit_event, AuditEventParams};
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OpeningBalance {
@@ -159,7 +159,9 @@ pub async fn list_opening_balances(
         }
         Err(e) => {
             tracing::error!("获取期初余额列表失败: {}", e);
-            Json(api_error(500, "获取期初余额列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取期初余额列表失败".to_string(),
+            )))
         }
     }
 }
@@ -228,7 +230,9 @@ pub async fn create_opening_balance(
         Err(e) => {
             tracing::error!("创建期初余额失败: {}", e);
             (
-                Json(api_error(500, "期初余额创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "期初余额创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -238,7 +242,9 @@ pub async fn create_opening_balance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -303,10 +309,14 @@ pub async fn get_opening_balance(
 
     match result {
         Ok(Some(balance)) => Json(ApiResponse::success(balance, "获取期初余额成功")),
-        Ok(None) => Json(api_error(404, "期初余额不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "期初余额不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取期初余额失败: {}", e);
-            Json(api_error(500, "获取期初余额失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取期初余额失败".to_string(),
+            )))
         }
     }
 }
@@ -342,8 +352,17 @@ pub async fn update_opening_balance(
 
     let existing = match existing {
         Ok(Some(b)) => b,
-        Ok(None) => return Json(api_error(404, "期初余额不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询期初余额失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "期初余额不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询期初余额失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -375,7 +394,9 @@ pub async fn update_opening_balance(
         Err(e) => {
             tracing::error!("更新期初余额失败: {}", e);
             (
-                Json(api_error(500, "期初余额更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "期初余额更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -385,7 +406,9 @@ pub async fn update_opening_balance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -453,14 +476,18 @@ pub async fn delete_opening_balance(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "期初余额不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "期初余额不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("期初余额不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除期初余额失败: {}", e);
             (
-                Json(api_error(500, "期初余额删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "期初余额删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -470,7 +497,9 @@ pub async fn delete_opening_balance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -606,7 +635,9 @@ pub async fn import_opening_balances(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(result, "期初余额批量导入完成"))
@@ -663,7 +694,9 @@ pub async fn carry_forward_opening_balance(
         Err(e) => {
             tracing::error!("结转期初余额失败: {}", e);
             (
-                Json(api_error(500, "期初余额结转失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "期初余额结转失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -673,7 +706,9 @@ pub async fn carry_forward_opening_balance(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }

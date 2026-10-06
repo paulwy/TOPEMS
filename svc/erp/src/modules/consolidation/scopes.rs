@@ -8,8 +8,8 @@ use uuid::Uuid;
 use crate::models::consolidation::*;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
@@ -80,7 +80,9 @@ pub async fn list_scopes(
         }
         Err(e) => {
             tracing::error!("获取合并范围列表失败: {}", e);
-            Json(api_error(500, "获取合并范围列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合并范围列表失败".to_string(),
+            )))
         }
     }
 }
@@ -113,10 +115,14 @@ pub async fn get_scope(
     .await
     {
         Ok(Some(scope)) => Json(ApiResponse::success(scope, "获取合并范围成功")),
-        Ok(None) => Json(api_error(404, "合并范围不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "合并范围不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取合并范围失败: {}", e);
-            Json(api_error(500, "获取合并范围失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合并范围失败".to_string(),
+            )))
         }
     }
 }
@@ -171,7 +177,9 @@ pub async fn create_scope(
         }
         Err(e) => {
             tracing::error!("创建合并范围失败: {}", e);
-            Json(api_error(500, "创建合并范围失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建合并范围失败".to_string(),
+            )))
         }
     }
 }
@@ -232,7 +240,9 @@ pub async fn update_scope(
         }
         Err(e) => {
             tracing::error!("更新合并范围失败: {}", e);
-            Json(api_error(500, "更新合并范围失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新合并范围失败".to_string(),
+            )))
         }
     }
 }
@@ -265,7 +275,9 @@ pub async fn delete_scope(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(api_error(404, "合并范围不存在"))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "合并范围不存在".to_string(),
+                )))
             } else {
                 log_audit(
                     &state.db,
@@ -286,7 +298,9 @@ pub async fn delete_scope(
         }
         Err(e) => {
             tracing::error!("删除合并范围失败: {}", e);
-            Json(api_error(500, "删除合并范围失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除合并范围失败".to_string(),
+            )))
         }
     }
 }

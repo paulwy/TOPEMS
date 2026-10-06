@@ -6,8 +6,7 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
@@ -49,7 +48,9 @@ pub async fn list_company_relations(
         Ok(relations) => Json(ApiResponse::success(relations, "获取公司关系列表成功")),
         Err(e) => {
             tracing::error!("获取公司关系列表失败: {}", e);
-            Json(api_error(500, "获取公司关系列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取公司关系列表失败".to_string(),
+            )))
         }
     }
 }
@@ -158,7 +159,9 @@ pub async fn create_company_relation(
         }
         Err(e) => {
             tracing::error!("创建公司关系失败: {}", e);
-            Json(api_error(500, "创建公司关系失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建公司关系失败".to_string(),
+            )))
         }
     }
 }
@@ -223,7 +226,9 @@ pub async fn update_company_relation(
         }
         Err(e) => {
             tracing::error!("更新公司关系失败: {}", e);
-            Json(api_error(500, "更新公司关系失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新公司关系失败".to_string(),
+            )))
         }
     }
 }
@@ -256,7 +261,9 @@ pub async fn delete_company_relation(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(api_error(404, "公司关系不存在"))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "公司关系不存在".to_string(),
+                )))
             } else {
                 log_audit(
                     &state.db,
@@ -277,7 +284,9 @@ pub async fn delete_company_relation(
         }
         Err(e) => {
             tracing::error!("删除公司关系失败: {}", e);
-            Json(api_error(500, "删除公司关系失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除公司关系失败".to_string(),
+            )))
         }
     }
 }

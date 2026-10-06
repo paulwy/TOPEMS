@@ -6,8 +6,8 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::common::{call_finance_core_approval, log_audit, ConsolidationListParams};
 use super::ApiState;
@@ -83,7 +83,9 @@ pub async fn list_reports(
         }
         Err(e) => {
             tracing::error!("获取合并报表列表失败: {}", e);
-            Json(api_error(500, "获取合并报表列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合并报表列表失败".to_string(),
+            )))
         }
     }
 }
@@ -121,10 +123,14 @@ pub async fn get_report(
     .await
     {
         Ok(Some(report)) => Json(ApiResponse::success(report, "获取合并报表成功")),
-        Ok(None) => Json(api_error(404, "合并报表不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "合并报表不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取合并报表失败: {}", e);
-            Json(api_error(500, "获取合并报表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合并报表失败".to_string(),
+            )))
         }
     }
 }
@@ -195,7 +201,9 @@ pub async fn generate_report(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("生成合并报表失败: {}", e);
-            return Json(api_error(500, "生成合并报表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "生成合并报表失败".to_string(),
+            )));
         }
     };
 
@@ -242,7 +250,9 @@ pub async fn generate_report(
         }
         Err(e) => {
             tracing::error!("更新合并报表失败: {}", e);
-            Json(api_error(500, "更新合并报表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新合并报表失败".to_string(),
+            )))
         }
     }
 }
@@ -277,7 +287,9 @@ pub async fn get_report_lines(
         Ok(lines) => Json(ApiResponse::success(lines, "获取合并报表行项目成功")),
         Err(e) => {
             tracing::error!("获取合并报表行项目失败: {}", e);
-            Json(api_error(500, "获取合并报表行项目失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合并报表行项目失败".to_string(),
+            )))
         }
     }
 }
@@ -317,10 +329,16 @@ pub async fn export_report(
     .await
     {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(api_error(404, "合并报表不存在")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "合并报表不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("导出合并报表失败: {}", e);
-            return Json(api_error(500, "导出合并报表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "导出合并报表失败".to_string(),
+            )));
         }
     };
 
@@ -334,7 +352,9 @@ pub async fn export_report(
         Ok(l) => l,
         Err(e) => {
             tracing::error!("导出合并报表行项目失败: {}", e);
-            return Json(api_error(500, "导出合并报表行项目失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "导出合并报表行项目失败".to_string(),
+            )));
         }
     };
 
@@ -385,8 +405,12 @@ pub async fn submit_report(
 
     let report = match report_result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(api_error(404, "合并报表不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "合并报表不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败: {}", e))),
     };
 
     if let Err(e) = call_finance_core_approval(
@@ -431,7 +455,9 @@ pub async fn submit_report(
         }
         Err(e) => {
             tracing::error!("提交审批失败: {}", e);
-            Json(api_error(500, "提交审批失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "提交审批失败".to_string(),
+            )))
         }
     }
 }
@@ -473,8 +499,12 @@ pub async fn approve_report(
 
     let report = match report_result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(api_error(404, "合并报表不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "合并报表不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询失败: {}", e))),
     };
 
     if let Err(e) = call_finance_core_approval(
@@ -519,7 +549,9 @@ pub async fn approve_report(
         }
         Err(e) => {
             tracing::error!("审批合并报表失败: {}", e);
-            Json(api_error(500, "审批合并报表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审批合并报表失败".to_string(),
+            )))
         }
     }
 }
@@ -571,7 +603,9 @@ pub async fn publish_report(
         }
         Err(e) => {
             tracing::error!("发布合并报表失败: {}", e);
-            Json(api_error(500, "发布合并报表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "发布合并报表失败".to_string(),
+            )))
         }
     }
 }
@@ -604,7 +638,9 @@ pub async fn delete_report(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(api_error(404, "合并报表不存在"))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "合并报表不存在".to_string(),
+                )))
             } else {
                 log_audit(
                     &state.db,
@@ -625,7 +661,9 @@ pub async fn delete_report(
         }
         Err(e) => {
             tracing::error!("删除合并报表失败: {}", e);
-            Json(api_error(500, "删除合并报表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除合并报表失败".to_string(),
+            )))
         }
     }
 }

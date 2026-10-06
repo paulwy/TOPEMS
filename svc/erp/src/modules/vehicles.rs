@@ -16,8 +16,8 @@ use crate::models::{
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct VehicleQueryParams {
@@ -121,7 +121,9 @@ pub async fn list_vehicles(
         }
         Err(e) => {
             tracing::error!("获取车辆列表失败: {}", e);
-            Json(api_error(500, "获取车辆列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取车辆列表失败".to_string(),
+            )))
         }
     }
 }
@@ -150,7 +152,7 @@ pub async fn create_vehicle(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("车牌号", &req.plate_number) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let id = Uuid::new_v4();
@@ -185,7 +187,9 @@ pub async fn create_vehicle(
         Err(e) => {
             tracing::error!("创建车辆失败: {}", e);
             (
-                Json(api_error(500, "车辆创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "车辆创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -195,7 +199,9 @@ pub async fn create_vehicle(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -264,10 +270,14 @@ pub async fn get_vehicle(
 
     match result {
         Ok(Some(vehicle)) => Json(ApiResponse::success(vehicle, "获取车辆成功")),
-        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "车辆不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取车辆失败: {}", e);
-            Json(api_error(500, "获取车辆失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取车辆失败".to_string(),
+            )))
         }
     }
 }
@@ -308,8 +318,17 @@ pub async fn update_vehicle(
 
     let existing = match existing {
         Ok(Some(v)) => v,
-        Ok(None) => return Json(api_error(404, "车辆不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询车辆失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "车辆不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询车辆失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -356,7 +375,9 @@ pub async fn update_vehicle(
         Err(e) => {
             tracing::error!("更新车辆失败: {}", e);
             (
-                Json(api_error(500, "车辆更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "车辆更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -366,7 +387,9 @@ pub async fn update_vehicle(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -438,14 +461,18 @@ pub async fn delete_vehicle(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "车辆不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "车辆不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("车辆不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除车辆失败: {}", e);
             (
-                Json(api_error(500, "车辆删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "车辆删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -455,7 +482,9 @@ pub async fn delete_vehicle(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -556,7 +585,9 @@ pub async fn list_vehicle_requests(
         }
         Err(e) => {
             tracing::error!("获取车辆申请列表失败: {}", e);
-            Json(api_error(500, "获取车辆申请列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取车辆申请列表失败".to_string(),
+            )))
         }
     }
 }
@@ -585,7 +616,7 @@ pub async fn create_vehicle_request(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("申请人", &req.requester) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let vehicle_result = sqlx::query_as::<_, Vehicle>(
@@ -597,8 +628,17 @@ pub async fn create_vehicle_request(
 
     let vehicle = match vehicle_result {
         Ok(Some(v)) => v,
-        Ok(None) => return Json(api_error(400, "车辆不可用或不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询车辆失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "车辆不可用或不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询车辆失败: {}",
+                e,
+            )))
+        }
     };
 
     let overlapping = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -617,7 +657,9 @@ pub async fn create_vehicle_request(
 
     if let Ok(count) = overlapping {
         if count > 0 {
-            return Json(api_error(400, "该时间段车辆已被申请"));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "该时间段车辆已被申请".to_string(),
+            )));
         }
     }
 
@@ -653,7 +695,9 @@ pub async fn create_vehicle_request(
         Err(e) => {
             tracing::error!("创建车辆申请失败: {}", e);
             (
-                Json(api_error(500, "车辆申请创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "车辆申请创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -663,7 +707,9 @@ pub async fn create_vehicle_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -732,10 +778,14 @@ pub async fn get_vehicle_request(
 
     match result {
         Ok(Some(request)) => Json(ApiResponse::success(request, "获取车辆申请成功")),
-        Ok(None) => Json(api_error(404, "车辆申请不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "车辆申请不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取车辆申请失败: {}", e);
-            Json(api_error(500, "获取车辆申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取车辆申请失败".to_string(),
+            )))
         }
     }
 }
@@ -776,8 +826,17 @@ pub async fn update_vehicle_request(
 
     let existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(api_error(404, "车辆申请不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询车辆申请失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "车辆申请不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询车辆申请失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -814,7 +873,9 @@ pub async fn update_vehicle_request(
         Err(e) => {
             tracing::error!("更新车辆申请失败: {}", e);
             (
-                Json(api_error(500, "车辆申请更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "车辆申请更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -824,7 +885,9 @@ pub async fn update_vehicle_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -896,14 +959,18 @@ pub async fn delete_vehicle_request(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "车辆申请不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "车辆申请不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("车辆申请不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除车辆申请失败: {}", e);
             (
-                Json(api_error(500, "车辆申请删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "车辆申请删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -913,7 +980,9 @@ pub async fn delete_vehicle_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -983,7 +1052,9 @@ pub async fn get_vehicle_requests(
         Ok(requests) => Json(ApiResponse::success(requests, "获取车辆申请列表成功")),
         Err(e) => {
             tracing::error!("获取车辆申请列表失败: {}", e);
-            Json(api_error(500, "获取车辆申请列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取车辆申请列表失败".to_string(),
+            )))
         }
     }
 }

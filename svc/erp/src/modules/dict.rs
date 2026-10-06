@@ -21,8 +21,8 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct BatchCreateDictItemRequest {
@@ -307,7 +307,9 @@ pub async fn list_dict_types(
         }
         Err(e) => {
             tracing::error!("获取字典类型列表失败: {}", e);
-            Json(api_error(500, "获取字典类型列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取字典类型列表失败".to_string(),
+            )))
         }
     }
 }
@@ -335,11 +337,11 @@ pub async fn create_dict_type(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("字典类型编码", &req.code) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     if let Err(e) = validate_required_field("字典类型名称", &req.name) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let id = Uuid::new_v4();
@@ -367,7 +369,9 @@ pub async fn create_dict_type(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             // 失效当前租户的字典类型缓存
@@ -405,7 +409,9 @@ pub async fn create_dict_type(
         Err(e) => {
             tracing::error!("创建字典类型失败: {}", e);
             (
-                Json(api_error(500, "字典类型创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "字典类型创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -473,10 +479,14 @@ pub async fn get_dict_type(
 
     match result {
         Ok(Some(dict_type)) => Json(ApiResponse::success(dict_type, "获取字典类型成功")),
-        Ok(None) => Json(api_error(404, "字典类型不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "字典类型不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取字典类型失败: {}", e);
-            Json(api_error(500, "获取字典类型失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取字典类型失败".to_string(),
+            )))
         }
     }
 }
@@ -513,8 +523,17 @@ pub async fn update_dict_type(
 
     let existing = match existing {
         Ok(Some(d)) => d,
-        Ok(None) => return Json(api_error(404, "字典类型不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询字典类型失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "字典类型不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询字典类型失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -548,7 +567,9 @@ pub async fn update_dict_type(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             // 失效当前租户的字典类型缓存
@@ -586,7 +607,9 @@ pub async fn update_dict_type(
         Err(e) => {
             tracing::error!("更新字典类型失败: {}", e);
             (
-                Json(api_error(500, "字典类型更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "字典类型更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -696,14 +719,18 @@ pub async fn delete_dict_type(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "字典类型不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "字典类型不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("字典类型不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除字典类型失败: {}", e);
             (
-                Json(api_error(500, "字典类型删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "字典类型删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -713,7 +740,9 @@ pub async fn delete_dict_type(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -815,7 +844,9 @@ pub async fn list_dict_items(
         }
         Err(e) => {
             tracing::error!("获取字典项列表失败: {}", e);
-            Json(api_error(500, "获取字典项列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取字典项列表失败".to_string(),
+            )))
         }
     }
 }
@@ -874,7 +905,9 @@ pub async fn create_dict_item(
         Err(e) => {
             tracing::error!("创建字典项失败: {}", e);
             (
-                Json(api_error(500, "字典项创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "字典项创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -884,7 +917,9 @@ pub async fn create_dict_item(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -949,10 +984,14 @@ pub async fn get_dict_item(
 
     match result {
         Ok(Some(item)) => Json(ApiResponse::success(item, "获取字典项成功")),
-        Ok(None) => Json(api_error(404, "字典项不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "字典项不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取字典项失败: {}", e);
-            Json(api_error(500, "获取字典项失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取字典项失败".to_string(),
+            )))
         }
     }
 }
@@ -988,8 +1027,17 @@ pub async fn update_dict_item(
 
     let existing = match existing {
         Ok(Some(d)) => d,
-        Ok(None) => return Json(api_error(404, "字典项不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询字典项失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "字典项不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询字典项失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -1032,7 +1080,9 @@ pub async fn update_dict_item(
         Err(e) => {
             tracing::error!("更新字典项失败: {}", e);
             (
-                Json(api_error(500, "字典项更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "字典项更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1042,7 +1092,9 @@ pub async fn update_dict_item(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -1110,14 +1162,18 @@ pub async fn delete_dict_item(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "字典项不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "字典项不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("字典项不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除字典项失败: {}", e);
             (
-                Json(api_error(500, "字典项删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "字典项删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1127,7 +1183,9 @@ pub async fn delete_dict_item(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -1211,7 +1269,10 @@ pub async fn batch_create_dict_items(
             Ok(item) => created_items.push(item),
             Err(e) => {
                 tracing::error!("批量创建字典项失败: {}", e);
-                return Json(api_error(500, &format!("批量创建字典项失败: {}", e)));
+                return Json(ApiResponse::from(TopemsError::internal(
+                    "批量创建字典项失败: {}",
+                    e,
+                )));
             }
         }
     }
@@ -1241,7 +1302,9 @@ pub async fn batch_create_dict_items(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(

@@ -17,8 +17,8 @@ use crate::models::{
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 // ============ 纯函数 ============
 
@@ -280,7 +280,9 @@ pub async fn list_leave_requests(
         }
         Err(e) => {
             tracing::error!("获取请假列表失败: {}", e);
-            Json(api_error(500, "获取请假列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取请假列表失败".to_string(),
+            )))
         }
     }
 }
@@ -310,13 +312,15 @@ pub async fn create_leave_request(
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("申请人姓名", &req.employee_name) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
     if let Err(e) = validate_required_field("请假原因", &req.reason) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
     if req.start_date > req.end_date {
-        return Json(api_error(400, "开始日期不能晚于结束日期"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "开始日期不能晚于结束日期".to_string(),
+        )));
     }
 
     // 计算请假天数
@@ -369,7 +373,9 @@ pub async fn create_leave_request(
         Err(e) => {
             tracing::error!("创建请假申请失败: {}", e);
             (
-                Json(api_error(500, "创建请假申请失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建请假申请失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -379,7 +385,9 @@ pub async fn create_leave_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -461,10 +469,14 @@ pub async fn get_leave_request(
 
     match result {
         Ok(Some(leave)) => Json(ApiResponse::success(leave, "获取请假申请成功")),
-        Ok(None) => Json(api_error(404, "请假申请不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "请假申请不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取请假申请失败: {}", e);
-            Json(api_error(500, "获取请假申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取请假申请失败".to_string(),
+            )))
         }
     }
 }
@@ -513,13 +525,24 @@ pub async fn update_leave_request(
 
     let existing = match existing {
         Ok(Some(l)) => l,
-        Ok(None) => return Json(api_error(404, "请假申请不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询请假申请失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "请假申请不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询请假申请失败: {}",
+                e,
+            )))
+        }
     };
 
     // 仅草稿状态可编辑
     if existing.status != "draft" {
-        return Json(api_error(400, "仅草稿状态的请假申请可编辑"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "仅草稿状态的请假申请可编辑".to_string(),
+        )));
     }
 
     let request_data = serde_json::to_value(&req).ok();
@@ -532,7 +555,9 @@ pub async fn update_leave_request(
     let reason = req.reason.unwrap_or(existing.reason);
 
     if start_date > end_date {
-        return Json(api_error(400, "开始日期不能晚于结束日期"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "开始日期不能晚于结束日期".to_string(),
+        )));
     }
 
     // 重新计算天数
@@ -573,7 +598,9 @@ pub async fn update_leave_request(
         Err(e) => {
             tracing::error!("更新请假申请失败: {}", e);
             (
-                Json(api_error(500, "请假申请更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "请假申请更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -583,7 +610,9 @@ pub async fn update_leave_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -657,14 +686,18 @@ pub async fn delete_leave_request(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "请假申请不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "请假申请不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("请假申请不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除请假申请失败: {}", e);
             (
-                Json(api_error(500, "请假申请删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "请假申请删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -674,7 +707,9 @@ pub async fn delete_leave_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -757,14 +792,18 @@ pub async fn submit_leave_request(
             None,
         ),
         Ok(None) => (
-            Json(api_error(400, "请假申请不是草稿状态，无法提交")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "请假申请不是草稿状态，无法提交".to_string(),
+            ))),
             "error".to_string(),
             Some("请假申请不是草稿状态".to_string()),
         ),
         Err(e) => {
             tracing::error!("提交请假申请失败: {}", e);
             (
-                Json(api_error(500, "提交请假申请失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "提交请假申请失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -774,7 +813,9 @@ pub async fn submit_leave_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -833,7 +874,7 @@ pub async fn approve_leave_request(
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let tenant = tenant_id_from_claims(&claims);
@@ -866,14 +907,18 @@ pub async fn approve_leave_request(
             None,
         ),
         Ok(None) => (
-            Json(api_error(400, "请假申请不是待审批状态，无法批准")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "请假申请不是待审批状态，无法批准".to_string(),
+            ))),
             "error".to_string(),
             Some("请假申请不是待审批状态".to_string()),
         ),
         Err(e) => {
             tracing::error!("批准请假申请失败: {}", e);
             (
-                Json(api_error(500, "批准请假申请失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "批准请假申请失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -883,7 +928,9 @@ pub async fn approve_leave_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -942,10 +989,10 @@ pub async fn reject_leave_request(
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
     if let Err(e) = validate_required_field("驳回原因", &req.rejected_reason) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let tenant = tenant_id_from_claims(&claims);
@@ -979,14 +1026,18 @@ pub async fn reject_leave_request(
             None,
         ),
         Ok(None) => (
-            Json(api_error(400, "请假申请不是待审批状态，无法驳回")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "请假申请不是待审批状态，无法驳回".to_string(),
+            ))),
             "error".to_string(),
             Some("请假申请不是待审批状态".to_string()),
         ),
         Err(e) => {
             tracing::error!("驳回请假申请失败: {}", e);
             (
-                Json(api_error(500, "驳回请假申请失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "驳回请假申请失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -996,7 +1047,9 @@ pub async fn reject_leave_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -1079,17 +1132,18 @@ pub async fn cancel_leave_request(
             None,
         ),
         Ok(None) => (
-            Json(api_error(
-                400,
-                "请假申请当前状态不可撤销（仅草稿或待审批可撤销）",
-            )),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "请假申请当前状态不可撤销（仅草稿或待审批可撤销）".to_string(),
+            ))),
             "error".to_string(),
             Some("请假申请状态不可撤销".to_string()),
         ),
         Err(e) => {
             tracing::error!("撤销请假申请失败: {}", e);
             (
-                Json(api_error(500, "撤销请假申请失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "撤销请假申请失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1099,7 +1153,9 @@ pub async fn cancel_leave_request(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }

@@ -14,8 +14,8 @@ use crate::modules::inventory_calc::{
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
+use topems_shared_core::response::{PaginatedResponse, PaginationParams};
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -94,7 +94,9 @@ pub async fn list_inventory(
         Ok(i) => i,
         Err(e) => {
             tracing::error!("查询库存失败: {}", e);
-            return Json(api_error(500, "查询库存失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询库存失败".to_string(),
+            )));
         }
     };
 
@@ -109,7 +111,7 @@ pub async fn list_inventory(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询库存总数失败: {}", e);
-            return Json(api_error(500, "查询库存总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询库存总数失败".to_string())));
         }
     };
 
@@ -158,10 +160,14 @@ pub async fn get_inventory(
 
     match result {
         Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "获取库存成功")),
-        Ok(None) => Json(api_error(404, "库存不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "库存不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询库存失败: {}", e);
-            Json(api_error(500, "查询库存失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询库存失败".to_string(),
+            )))
         }
     }
 }
@@ -230,10 +236,14 @@ pub async fn create_inventory(
 
     match result {
         Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "创建库存成功")),
-        Ok(None) => Json(api_error(500, "创建库存失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
+            "创建库存失败".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("创建库存失败: {}", e);
-            Json(api_error(500, "创建库存失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建库存失败".to_string(),
+            )))
         }
     }
 }
@@ -286,10 +296,14 @@ pub async fn update_inventory(
 
     match result {
         Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "更新库存成功")),
-        Ok(None) => Json(api_error(404, "库存不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "库存不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新库存失败: {}", e);
-            Json(api_error(500, "更新库存失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新库存失败".to_string(),
+            )))
         }
     }
 }
@@ -342,10 +356,14 @@ pub async fn delete_inventory(
             }
             Json(ApiResponse::success("删除成功".to_string(), "删除库存成功"))
         }
-        Ok(_) => Json(api_error(404, "库存不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "库存不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除库存失败: {}", e);
-            Json(api_error(500, "删除库存失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除库存失败".to_string(),
+            )))
         }
     }
 }
@@ -382,7 +400,7 @@ pub async fn get_low_stock(
         Ok(l) => l,
         Err(e) => {
             tracing::error!("查询低库存失败: {}", e);
-            return Json(api_error(500, "查询低库存失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询低库存失败".to_string())));
         }
     };
 

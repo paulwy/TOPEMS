@@ -20,8 +20,8 @@ use crate::models::material::{CreateSupplierRequest, Supplier, UpdateSupplierReq
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct SupplierListParams {
@@ -157,7 +157,9 @@ pub async fn list_suppliers(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询供应商失败: {}", e);
-            return Json(api_error(500, "查询供应商失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询供应商失败".to_string(),
+            )));
         }
     };
 
@@ -173,7 +175,7 @@ pub async fn list_suppliers(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询供应商总数失败: {}", e);
-            return Json(api_error(500, "查询供应商总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询供应商总数失败".to_string())));
         }
     };
 
@@ -224,10 +226,14 @@ pub async fn get_supplier(
 
     match result {
         Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "获取供应商成功")),
-        Ok(None) => Json(api_error(404, "供应商不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询供应商失败: {}", e);
-            Json(api_error(500, "查询供应商失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询供应商失败".to_string(),
+            )))
         }
     }
 }
@@ -284,10 +290,14 @@ pub async fn create_supplier(
 
     match result {
         Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "创建供应商成功")),
-        Ok(None) => Json(api_error(500, "创建供应商失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
+            "创建供应商失败".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("创建供应商失败: {}", e);
-            Json(api_error(500, "创建供应商失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建供应商失败".to_string(),
+            )))
         }
     }
 }
@@ -349,10 +359,14 @@ pub async fn update_supplier(
 
     match result {
         Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "更新供应商成功")),
-        Ok(None) => Json(api_error(404, "供应商不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新供应商失败: {}", e);
-            Json(api_error(500, "更新供应商失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新供应商失败".to_string(),
+            )))
         }
     }
 }
@@ -400,10 +414,14 @@ pub async fn delete_supplier(
             "删除成功".to_string(),
             "删除供应商成功",
         )),
-        Ok(_) => Json(api_error(404, "供应商不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除供应商失败: {}", e);
-            Json(api_error(500, "删除供应商失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除供应商失败".to_string(),
+            )))
         }
     }
 }

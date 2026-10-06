@@ -15,8 +15,7 @@ use crate::models::production_order::{
     UpdateProductionOrderRequest, UpdateProductionProgressRequest,
 };
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_event::event::{ErpProductionOrderDispatchedPayload, EventType};
 
 #[derive(Debug, Deserialize, utoipa::IntoParams)]
@@ -131,7 +130,9 @@ pub async fn list_production_orders(
         }
         Err(e) => {
             tracing::error!("获取生产订单列表失败: {}", e);
-            Json(api_error(500, "获取生产订单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取生产订单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -216,7 +217,9 @@ pub async fn create_production_order(
         }
         Err(e) => {
             tracing::error!("创建生产订单失败: {}", e);
-            Json(api_error(500, "创建生产订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建生产订单失败".to_string(),
+            )))
         }
     }
 }
@@ -263,10 +266,14 @@ pub async fn get_production_order(
 
     match result {
         Ok(Some(order)) => Json(ApiResponse::success(order, "获取生产订单成功")),
-        Ok(None) => Json(api_error(404, "生产订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "生产订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取生产订单失败: {}", e);
-            Json(api_error(500, "获取生产订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取生产订单失败".to_string(),
+            )))
         }
     }
 }
@@ -334,10 +341,14 @@ pub async fn update_production_order(
 
     match result {
         Ok(Some(order)) => Json(ApiResponse::success(order, "生产订单更新成功")),
-        Ok(None) => Json(api_error(404, "生产订单不存在或状态不允许修改")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "生产订单不存在或状态不允许修改".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新生产订单失败: {}", e);
-            Json(api_error(500, "更新生产订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新生产订单失败".to_string(),
+            )))
         }
     }
 }
@@ -387,12 +398,16 @@ pub async fn delete_production_order(
                 }
                 Json(ApiResponse::success("".to_string(), "生产订单删除成功"))
             } else {
-                Json(api_error(404, "生产订单不存在或状态不允许删除"))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "生产订单不存在或状态不允许删除".to_string(),
+                )))
             }
         }
         Err(e) => {
             tracing::error!("删除生产订单失败: {}", e);
-            Json(api_error(500, "删除生产订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除生产订单失败".to_string(),
+            )))
         }
     }
 }
@@ -450,10 +465,14 @@ pub async fn update_production_progress(
 
     match result {
         Ok(Some(order)) => Json(ApiResponse::success(order, "生产进度更新成功")),
-        Ok(None) => Json(api_error(404, "生产订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "生产订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新生产进度失败: {}", e);
-            Json(api_error(500, "更新生产进度失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新生产进度失败".to_string(),
+            )))
         }
     }
 }
@@ -560,10 +579,14 @@ pub async fn update_production_status(
             }
             Json(ApiResponse::success(order, "生产订单状态更新成功"))
         }
-        Ok(None) => Json(api_error(404, "生产订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "生产订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新生产订单状态失败: {}", e);
-            Json(api_error(500, "更新生产订单状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新生产订单状态失败".to_string(),
+            )))
         }
     }
 }
@@ -606,7 +629,9 @@ pub async fn receive_mes_progress(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("begin tx failed in receive_mes_progress: {}", e);
-            return Json(api_error(500, "更新生产进度失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "更新生产进度失败".to_string(),
+            )));
         }
     };
     if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
@@ -615,7 +640,9 @@ pub async fn receive_mes_progress(
         .await
     {
         tracing::error!("set nil RLS context failed in receive_mes_progress: {}", e);
-        return Json(api_error(500, "更新生产进度失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "更新生产进度失败".to_string(),
+        )));
     }
 
     let order_id = match req.erp_order_id {
@@ -631,11 +658,15 @@ pub async fn receive_mes_progress(
             match result {
                 Ok(Some(Some(id))) => id,
                 Ok(Some(None)) | Ok(None) => {
-                    return Json(api_error(404, "未找到对应的ERP生产订单"));
+                    return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                        "未找到对应的ERP生产订单".to_string(),
+                    )));
                 }
                 Err(e) => {
                     tracing::error!("查询ERP订单ID失败: {}", e);
-                    return Json(api_error(500, "查询ERP生产订单失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "查询ERP生产订单失败".to_string(),
+                    )));
                 }
             }
         }
@@ -674,7 +705,9 @@ pub async fn receive_mes_progress(
         Ok(Some(order)) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("commit tx failed in receive_mes_progress: {}", e);
-                return Json(api_error(500, "更新生产进度失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "更新生产进度失败".to_string(),
+                )));
             }
 
             tracing::debug!(
@@ -683,10 +716,14 @@ pub async fn receive_mes_progress(
             );
             Json(ApiResponse::success(order, "MES生产进度同步成功"))
         }
-        Ok(None) => Json(api_error(404, "生产订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "生产订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("同步MES生产进度失败: {}", e);
-            Json(api_error(500, "同步MES生产进度失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "同步MES生产进度失败".to_string(),
+            )))
         }
     }
 }

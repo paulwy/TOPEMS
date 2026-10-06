@@ -6,8 +6,7 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared_core::response::api_error;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::common::log_audit;
 use super::ApiState;
@@ -46,7 +45,9 @@ pub async fn list_scope_companies(
         Ok(companies) => Json(ApiResponse::success(companies, "获取合并范围公司列表成功")),
         Err(e) => {
             tracing::error!("获取合并范围公司列表失败: {}", e);
-            Json(api_error(500, "获取合并范围公司列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合并范围公司列表失败".to_string(),
+            )))
         }
     }
 }
@@ -106,7 +107,9 @@ pub async fn add_scope_company(
         }
         Err(e) => {
             tracing::error!("添加公司到合并范围失败: {}", e);
-            Json(api_error(500, "添加公司到合并范围失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "添加公司到合并范围失败".to_string(),
+            )))
         }
     }
 }
@@ -168,7 +171,9 @@ pub async fn update_scope_company(
         }
         Err(e) => {
             tracing::error!("更新合并范围公司失败: {}", e);
-            Json(api_error(500, "更新合并范围公司失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新合并范围公司失败".to_string(),
+            )))
         }
     }
 }
@@ -203,7 +208,9 @@ pub async fn remove_scope_company(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(api_error(404, "合并范围公司不存在"))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "合并范围公司不存在".to_string(),
+                )))
             } else {
                 log_audit(
                     &state.db,
@@ -224,7 +231,9 @@ pub async fn remove_scope_company(
         }
         Err(e) => {
             tracing::error!("从合并范围移除公司失败: {}", e);
-            Json(api_error(500, "从合并范围移除公司失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "从合并范围移除公司失败".to_string(),
+            )))
         }
     }
 }

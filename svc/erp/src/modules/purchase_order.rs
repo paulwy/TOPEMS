@@ -18,8 +18,8 @@ use crate::modules::material_calc::{
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
+use topems_shared_core::response::{PaginatedResponse, PaginationParams};
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_event::event::{PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload};
 
 pub fn create_routes() -> Router<ApiState> {
@@ -102,7 +102,9 @@ pub async fn list_purchase_orders(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
-            return Json(api_error(500, "查询采购订单失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询采购订单失败".to_string(),
+            )));
         }
     };
 
@@ -117,7 +119,7 @@ pub async fn list_purchase_orders(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询采购订单总数失败: {}", e);
-            return Json(api_error(500, "查询采购订单总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询采购订单总数失败".to_string())));
         }
     };
 
@@ -167,7 +169,7 @@ pub async fn get_purchase_order(
         Ok(o) => o,
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
-            return Json(api_error(404, "采购订单不存在"));
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string())));
         }
     };
 
@@ -250,7 +252,9 @@ pub async fn create_purchase_order(
         Ok(o) => o,
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
-            return Json(api_error(500, "创建采购订单失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "创建采购订单失败".to_string(),
+            )));
         }
     };
 
@@ -291,7 +295,9 @@ pub async fn create_purchase_order(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(purchase_order, "创建采购订单成功"))
@@ -350,14 +356,18 @@ pub async fn update_purchase_order(
         Ok(o) => o,
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
-            return Json(api_error(500, "更新采购订单失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "更新采购订单失败".to_string(),
+            )));
         }
     };
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(purchase_order, "更新采购订单成功"))
@@ -406,14 +416,18 @@ pub async fn delete_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success("".to_string(), "删除采购订单成功"))
         }
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
-            Json(api_error(500, "删除采购订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除采购订单失败".to_string(),
+            )))
         }
     }
 }
@@ -471,7 +485,9 @@ pub async fn approve_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             if let Some(ref publisher) = state.event_publisher {
@@ -505,7 +521,9 @@ pub async fn approve_purchase_order(
         }
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
-            Json(api_error(500, "审批采购订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审批采购订单失败".to_string(),
+            )))
         }
     }
 }
@@ -556,14 +574,18 @@ pub async fn cancel_purchase_order(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(r, "采购订单已取消"))
         }
         Err(e) => {
             tracing::error!("取消采购订单失败: {}", e);
-            Json(api_error(500, "取消采购订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "取消采购订单失败".to_string(),
+            )))
         }
     }
 }

@@ -6,8 +6,8 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
@@ -73,7 +73,9 @@ pub async fn list_internal_transactions(
         }
         Err(e) => {
             tracing::error!("获取内部交易列表失败: {}", e);
-            Json(api_error(500, "获取内部交易列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取内部交易列表失败".to_string(),
+            )))
         }
     }
 }
@@ -106,10 +108,14 @@ pub async fn get_internal_transaction(
     .await
     {
         Ok(Some(transaction)) => Json(ApiResponse::success(transaction, "获取内部交易详情成功")),
-        Ok(None) => Json(api_error(404, "内部交易不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "内部交易不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取内部交易详情失败: {}", e);
-            Json(api_error(500, "获取内部交易详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取内部交易详情失败".to_string(),
+            )))
         }
     }
 }

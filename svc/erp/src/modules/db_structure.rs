@@ -14,8 +14,8 @@ fn escape_sql_identifier(identifier: &str) -> String {
 }
 use crate::models::{ColumnInfo, DbChange, TableInfo};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 #[derive(Debug, Deserialize)]
 pub struct TableQueryParams {
     pub schema: Option<String>,
@@ -90,7 +90,9 @@ pub async fn list_tables(
         Ok(tables) => Json(ApiResponse::success(tables, "获取表列表成功")),
         Err(e) => {
             tracing::error!("获取表列表失败: {}", e);
-            Json(api_error(500, "获取表列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取表列表失败".to_string(),
+            )))
         }
     }
 }
@@ -138,11 +140,15 @@ pub async fn get_table_detail(
         Ok(cols) => cols,
         Err(e) => {
             tracing::error!("获取表结构失败: {}", e);
-            return Json(api_error(500, "获取表结构失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "获取表结构失败".to_string(),
+            )));
         }
     };
     if columns.is_empty() {
-        return Json(api_error(404, "表不存在"));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "表不存在".to_string(),
+        )));
     }
     let row_count = sqlx::query_scalar(
         only_own_schema_query!("erp", r#"SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = $1"#),
@@ -298,7 +304,10 @@ pub async fn execute_add_column(
         Err(e) => {
             tracing::error!("添加字段失败: {}", e);
             (
-                Json(api_error(500, &format!("添加字段失败: {}", e))),
+                Json(ApiResponse::from(TopemsError::internal(
+                    "添加字段失败: {}",
+                    e,
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -414,7 +423,10 @@ pub async fn execute_modify_column(
         Err(e) => {
             tracing::error!("修改字段失败: {}", e);
             (
-                Json(api_error(500, &format!("修改字段失败: {}", e))),
+                Json(ApiResponse::from(TopemsError::internal(
+                    "修改字段失败: {}",
+                    e,
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -502,7 +514,10 @@ pub async fn execute_drop_column(
         Err(e) => {
             tracing::error!("删除字段失败: {}", e);
             (
-                Json(api_error(500, &format!("删除字段失败: {}", e))),
+                Json(ApiResponse::from(TopemsError::internal(
+                    "删除字段失败: {}",
+                    e,
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -607,7 +622,9 @@ pub async fn list_db_changes(
         }
         Err(e) => {
             tracing::error!("获取数据库变更历史失败: {}", e);
-            Json(api_error(500, "获取数据库变更历史失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取数据库变更历史失败".to_string(),
+            )))
         }
     }
 }

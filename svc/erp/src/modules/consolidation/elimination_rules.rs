@@ -6,8 +6,8 @@ use axum::{
 use uuid::Uuid;
 
 use crate::models::consolidation::*;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use super::common::{log_audit, ConsolidationListParams};
 use super::ApiState;
@@ -32,7 +32,9 @@ pub async fn list_elimination_rules(
         None => unreachable!("rls txn missing"),
     };
     if params.scope_id.is_none() {
-        return Json(api_error(400, "scope_id为必填参数"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "scope_id为必填参数".to_string(),
+        )));
     }
 
     let scope_id = params.scope_id.unwrap_or_default();
@@ -82,7 +84,9 @@ pub async fn list_elimination_rules(
         }
         Err(e) => {
             tracing::error!("获取抵消规则列表失败: {}", e);
-            Json(api_error(500, "获取抵消规则列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取抵消规则列表失败".to_string(),
+            )))
         }
     }
 }
@@ -115,10 +119,14 @@ pub async fn get_elimination_rule(
     .await
     {
         Ok(Some(rule)) => Json(ApiResponse::success(rule, "获取抵消规则成功")),
-        Ok(None) => Json(api_error(404, "抵消规则不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "抵消规则不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取抵消规则失败: {}", e);
-            Json(api_error(500, "获取抵消规则失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取抵消规则失败".to_string(),
+            )))
         }
     }
 }
@@ -182,7 +190,9 @@ pub async fn create_elimination_rule(
         }
         Err(e) => {
             tracing::error!("创建抵消规则失败: {}", e);
-            Json(api_error(500, "创建抵消规则失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建抵消规则失败".to_string(),
+            )))
         }
     }
 }
@@ -260,7 +270,9 @@ pub async fn update_elimination_rule(
         }
         Err(e) => {
             tracing::error!("更新抵消规则失败: {}", e);
-            Json(api_error(500, "更新抵消规则失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新抵消规则失败".to_string(),
+            )))
         }
     }
 }
@@ -293,7 +305,9 @@ pub async fn delete_elimination_rule(
     {
         Ok(result) => {
             if result.rows_affected() == 0 {
-                Json(api_error(404, "抵消规则不存在"))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "抵消规则不存在".to_string(),
+                )))
             } else {
                 log_audit(
                     &state.db,
@@ -314,7 +328,9 @@ pub async fn delete_elimination_rule(
         }
         Err(e) => {
             tracing::error!("删除抵消规则失败: {}", e);
-            Json(api_error(500, "删除抵消规则失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除抵消规则失败".to_string(),
+            )))
         }
     }
 }
@@ -351,7 +367,7 @@ pub async fn export_elimination_worksheet(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("导出抵消工作底稿-查询规则失败: {}", e);
-            return Json(api_error(500, "导出抵消工作底稿失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("导出抵消工作底稿失败".to_string())));
         }
     };
 
@@ -364,7 +380,9 @@ pub async fn export_elimination_worksheet(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("导出抵消工作底稿-查询交易失败: {}", e);
-            return Json(api_error(500, "导出抵消工作底稿失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "导出抵消工作底稿失败".to_string(),
+            )));
         }
     };
 

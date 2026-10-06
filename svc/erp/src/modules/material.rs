@@ -11,8 +11,8 @@ use super::ApiState;
 use crate::models::material::{CreateMaterialRequest, Material, UpdateMaterialRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct MaterialListParams {
@@ -154,7 +154,9 @@ pub async fn list_materials(
         Ok(m) => m,
         Err(e) => {
             tracing::error!("查询物料失败: {}", e);
-            return Json(api_error(500, "查询物料失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询物料失败".to_string(),
+            )));
         }
     };
 
@@ -170,7 +172,7 @@ pub async fn list_materials(
         Ok(t) => t,
         Err(e) => {
             tracing::error!("查询物料总数失败: {}", e);
-            return Json(api_error(500, "查询物料总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询物料总数失败".to_string())));
         }
     };
 
@@ -214,10 +216,14 @@ pub async fn get_material(
 
     match result {
         Ok(Some(material)) => Json(ApiResponse::success(material, "获取物料成功")),
-        Ok(None) => Json(api_error(404, "物料不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "物料不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询物料失败: {}", e);
-            Json(api_error(500, "查询物料失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询物料失败".to_string(),
+            )))
         }
     }
 }
@@ -272,10 +278,14 @@ pub async fn create_material(
 
     match result {
         Ok(Some(material)) => Json(ApiResponse::success(material, "创建物料成功")),
-        Ok(None) => Json(api_error(500, "创建物料失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
+            "创建物料失败".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("创建物料失败: {}", e);
-            Json(api_error(500, "创建物料失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建物料失败".to_string(),
+            )))
         }
     }
 }
@@ -328,10 +338,14 @@ pub async fn update_material(
 
     match result {
         Ok(Some(material)) => Json(ApiResponse::success(material, "更新物料成功")),
-        Ok(None) => Json(api_error(404, "物料不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "物料不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新物料失败: {}", e);
-            Json(api_error(500, "更新物料失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新物料失败".to_string(),
+            )))
         }
     }
 }
@@ -379,10 +393,14 @@ pub async fn delete_material(
             }
             Json(ApiResponse::success("删除成功".to_string(), "删除物料成功"))
         }
-        Ok(_) => Json(api_error(404, "物料不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "物料不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除物料失败: {}", e);
-            Json(api_error(500, "删除物料失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除物料失败".to_string(),
+            )))
         }
     }
 }

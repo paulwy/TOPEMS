@@ -11,8 +11,8 @@ use axum::{
 use chrono::Utc;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
+use topems_shared_core::response::{PaginatedResponse, PaginationParams};
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -97,7 +97,9 @@ pub async fn list_assets(
         }
         Err(e) => {
             tracing::error!("获取资产列表失败: {}", e);
-            Json(api_error(500, "获取资产列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取资产列表失败".to_string(),
+            )))
         }
     }
 }
@@ -131,10 +133,14 @@ pub async fn create_asset(
         return e;
     }
     if req.name.is_empty() {
-        return Json(api_error(400, "资产名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "资产名称不能为空".to_string(),
+        )));
     }
     if req.asset_number.is_empty() {
-        return Json(api_error(400, "资产编号不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "资产编号不能为空".to_string(),
+        )));
     }
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -178,7 +184,9 @@ pub async fn create_asset(
         Err(e) => {
             tracing::error!("创建资产失败: {}", e);
             (
-                Json(api_error(500, "资产创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "资产创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -251,10 +259,14 @@ pub async fn get_asset(
     .await;
     match result {
         Ok(Some(asset)) => Json(ApiResponse::success(asset, "获取资产成功")),
-        Ok(None) => Json(api_error(404, "资产不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "资产不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取资产失败: {}", e);
-            Json(api_error(500, "获取资产失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取资产失败".to_string(),
+            )))
         }
     }
 }
@@ -301,8 +313,17 @@ pub async fn update_asset(
     .await;
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "资产不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询资产失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "资产不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询资产失败: {}",
+                e,
+            )))
+        }
     };
     let request_data = serde_json::to_value(&req).ok();
     let name = req.name.unwrap_or(existing.name);
@@ -363,7 +384,9 @@ pub async fn update_asset(
         Err(e) => {
             tracing::error!("更新资产失败: {}", e);
             (
-                Json(api_error(500, "资产更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "资产更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -446,14 +469,18 @@ pub async fn delete_asset(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "资产不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "资产不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("资产不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除资产失败: {}", e);
             (
-                Json(api_error(500, "资产删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "资产删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )

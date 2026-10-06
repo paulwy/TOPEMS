@@ -13,8 +13,8 @@ use super::ApiState;
 use crate::models::{CreateOfficeSupplyRequest, OfficeSupply, UpdateOfficeSupplyRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct SupplyQueryParams {
@@ -109,7 +109,9 @@ pub async fn list_supplies(
         }
         Err(e) => {
             tracing::error!("获取办公用品列表失败: {}", e);
-            Json(api_error(500, "获取办公用品列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取办公用品列表失败".to_string(),
+            )))
         }
     }
 }
@@ -138,7 +140,7 @@ pub async fn create_supply(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("用品名称", &req.name) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let id = Uuid::new_v4();
@@ -172,7 +174,9 @@ pub async fn create_supply(
         Err(e) => {
             tracing::error!("创建办公用品失败: {}", e);
             (
-                Json(api_error(500, "办公用品创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "办公用品创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -244,10 +248,14 @@ pub async fn get_supply(
 
     match result {
         Ok(Some(supply)) => Json(ApiResponse::success(supply, "获取办公用品成功")),
-        Ok(None) => Json(api_error(404, "办公用品不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "办公用品不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取办公用品失败: {}", e);
-            Json(api_error(500, "获取办公用品失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取办公用品失败".to_string(),
+            )))
         }
     }
 }
@@ -288,8 +296,17 @@ pub async fn update_supply(
 
     let existing = match existing {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(api_error(404, "办公用品不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询办公用品失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "办公用品不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询办公用品失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -332,7 +349,9 @@ pub async fn update_supply(
         Err(e) => {
             tracing::error!("更新办公用品失败: {}", e);
             (
-                Json(api_error(500, "办公用品更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "办公用品更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -414,14 +433,18 @@ pub async fn delete_supply(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "办公用品不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "办公用品不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("办公用品不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除办公用品失败: {}", e);
             (
-                Json(api_error(500, "办公用品删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "办公用品删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )

@@ -723,14 +723,14 @@
 | B4 | **U6 残留 c：checksums.txt 停更恢复** | P1 | S | 无 | U4 残留（09-21 后停登惯例）；F-65（250 vs 283 覆盖不全） | checksums.txt 恢复登记与 `.sqlx/` 一致，或显式废弃声明（二选一落盘） |
 | B5 | **U5 残留 a：gis 表 enable_rls:false** | P1 | M | 无 | U5 条目残留（同款模式登记）；F-06 族 | 新迁移开启 gis RLS + 策略 + 跨租户实测（同 finance 1106 模式） |
 | B6 | **U5 残留 b：lib/shared-db rls.rs 池化 GUC 同源跟进** | P1 | M | 无 | U5 条目（tenant_rls 已修 acquire→set→run→reset；rls.rs 同源模式未改） | 池化 GUC 连接级正确绑定/清空 + 多租户单测绿 |
-| B7 | **U7 残留：1313 处静态 error() TopemsError 化（ADR 阶段二）** | P2 | L | 无（分批） | U7 条目（泄露型 110/110 清零；静态文案 ADR 明确不在泄露面，阶段二扩大覆盖） | 每服务分批 TopemsError 覆盖推进 + 对外响应一致性抽查 |
+| ✅ B7 | **U7 残留：1313 处静态 error() TopemsError 化（ADR 阶段二）** | P2 | L | ✅ erp 首批已完成：327 处静态 api_error(500/404/400)→TopemsError 分类 + 21 处插值泄露残留 internal 化 + 特殊形态 8 处；编译/clippy/fmt 绿，404 冒烟 message 逐字保持（前端兼容） | U7 条目（泄露型 110/110 清零；静态文案 ADR 明确不在泄露面，阶段二扩大覆盖） | 每服务分批 TopemsError 覆盖推进 + 对外响应一致性抽查（erp 已完成，其余服务待后续批次） |
 | B8 | **T1 残留：dev:core 引用 topems-core + build:shared-types DTS @types/dompurify** | P1 | S | 无 | T1 条目（根 package.json:21,26）；R1 基线（DTS TS2688、web 走 alias） | grep topems-core=0；build:shared-types 全绿或显式豁免 |
 | B9 | **T1 残留：GIS leaflet 3 测试** | P2 | S | 无 | R1 基线（vitest 3 既有失败=react-leaflet mock 缺 useMapEvents） | 补 mock 后 3 测试转绿 |
 | B10 | **U4 残留：≤3s 快照窗口 SIGKILL 丢最近写** | P2 | S | 无 | U4 条目 | flush 改同步直写或 WAL 兜底；SIGKILL e2e 后数据不丢 |
 | B11 | **U8 残留：form_assistant 迁出独立 crate** | P2 | M | 无 | U8 条目（3 处有意保留） | lib/src/form_assistant/ 迁至业务 crate；门面引用=0 |
 | B12 | **U9.5：services.yaml↔nginx 一致性校验脚本** | P2 | S | 无 | U9 条目残留（D5 独立可停用项）；F-50/F-69 | 脚本校验 services.yaml↔ports.env↔nginx map 一致；挂 CI 门禁 |
 | B13 | **wms data_sync 文档口径（D3 §2.2 过时）** | P2 | S | 无 | U3 条目（实测真实事件驱动、描述未改） | D3 §2.2 修订 + verifier must-contain 抽查 |
-| B14 | **迁移链空库守卫重构级评估** | P1 | M（评估）/L（实施） | 决策：维持脚本层 vs 迁移大版本重构窗口 | 5433 Homebrew 重放条目；收官①（`ensure-empty-db-prereqs.sh` 已交付） | 决策记录落盘；如实施重构则空库一次通过 292 |
+| ✅ B14 | **迁移链空库守卫重构级评估** | P1 | M（评估）/L（实施） | ✅ 已决策（2026-10-06）：维持脚本层——`ensure-empty-db-prereqs.sh` 空库预检已覆盖核心风险，当前无迁移链故障需求重构窗口，成本≈0 | 5433 Homebrew 重放条目；收官①（`ensure-empty-db-prereqs.sh` 已交付） | ✅ 决策已落盘；未实施重构 |
 | B15 | **runtime 矩阵重采路径** | P1 | M（埋点评估） | 出站客户端+入站 token 埋点落地 | 收官②（`runtime-matrix-decision-2026-10-03.md` 重采路径已记录） | 埋点后生产流量窗口采样重跑 --collect，runtime vs design 对比 |
 
 ### C. 可选新方向（一句话价值判断）

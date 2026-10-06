@@ -13,8 +13,8 @@ use super::ApiState;
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct FixedAsset {
@@ -183,7 +183,9 @@ pub async fn list_fixed_assets(
         }
         Err(e) => {
             tracing::error!("获取固定资产列表失败: {}", e);
-            Json(api_error(500, "获取固定资产列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取固定资产列表失败".to_string(),
+            )))
         }
     }
 }
@@ -214,15 +216,21 @@ pub async fn create_fixed_asset(
     }
 
     if req.asset_code.is_empty() {
-        return Json(api_error(400, "资产编码不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "资产编码不能为空".to_string(),
+        )));
     }
 
     if req.asset_name.is_empty() {
-        return Json(api_error(400, "资产名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "资产名称不能为空".to_string(),
+        )));
     }
 
     if req.original_value <= 0.0 {
-        return Json(api_error(400, "原值必须大于0"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "原值必须大于0".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -273,7 +281,9 @@ pub async fn create_fixed_asset(
         Err(e) => {
             tracing::error!("创建固定资产失败: {}", e);
             (
-                Json(api_error(500, "固定资产创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "固定资产创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -283,7 +293,9 @@ pub async fn create_fixed_asset(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -357,10 +369,14 @@ pub async fn get_fixed_asset(
 
     match result {
         Ok(Some(asset)) => Json(ApiResponse::success(asset, "获取固定资产成功")),
-        Ok(None) => Json(api_error(404, "固定资产不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "固定资产不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取固定资产失败: {}", e);
-            Json(api_error(500, "获取固定资产失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取固定资产失败".to_string(),
+            )))
         }
     }
 }
@@ -405,8 +421,17 @@ pub async fn update_fixed_asset(
 
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "固定资产不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询固定资产失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "固定资产不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询固定资产失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -472,7 +497,9 @@ pub async fn update_fixed_asset(
         Err(e) => {
             tracing::error!("更新固定资产失败: {}", e);
             (
-                Json(api_error(500, "固定资产更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "固定资产更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -482,7 +509,9 @@ pub async fn update_fixed_asset(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -555,14 +584,18 @@ pub async fn delete_fixed_asset(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "固定资产不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "固定资产不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("固定资产不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除固定资产失败: {}", e);
             (
-                Json(api_error(500, "固定资产删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "固定资产删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -572,7 +605,9 @@ pub async fn delete_fixed_asset(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -770,7 +805,10 @@ pub async fn depreciate_assets(
             }
         }
         Err(e) => {
-            return Json(api_error(500, &format!("查询资产失败: {}", e)));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询资产失败: {}",
+                e,
+            )));
         }
     }
 
@@ -811,7 +849,9 @@ pub async fn depreciate_assets(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(result, "固定资产折旧完成"))

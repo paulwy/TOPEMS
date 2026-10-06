@@ -16,8 +16,8 @@ use crate::models::{
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
-use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize)]
 pub struct RoomQueryParams {
@@ -112,7 +112,9 @@ pub async fn list_rooms(
         }
         Err(e) => {
             tracing::error!("获取会议室列表失败: {}", e);
-            Json(api_error(500, "获取会议室列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取会议室列表失败".to_string(),
+            )))
         }
     }
 }
@@ -141,7 +143,7 @@ pub async fn create_room(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("会议室名称", &req.name) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let id = Uuid::new_v4();
@@ -173,7 +175,9 @@ pub async fn create_room(
         Err(e) => {
             tracing::error!("创建会议室失败: {}", e);
             (
-                Json(api_error(500, "会议室创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "会议室创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -183,7 +187,9 @@ pub async fn create_room(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -254,10 +260,14 @@ pub async fn get_room(
 
     match result {
         Ok(Some(room)) => Json(ApiResponse::success(room, "获取会议室成功")),
-        Ok(None) => Json(api_error(404, "会议室不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "会议室不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取会议室失败: {}", e);
-            Json(api_error(500, "获取会议室失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取会议室失败".to_string(),
+            )))
         }
     }
 }
@@ -299,8 +309,17 @@ pub async fn update_room(
 
     let existing = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(api_error(404, "会议室不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询会议室失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "会议室不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询会议室失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -340,7 +359,9 @@ pub async fn update_room(
         Err(e) => {
             tracing::error!("更新会议室失败: {}", e);
             (
-                Json(api_error(500, "会议室更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "会议室更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -350,7 +371,9 @@ pub async fn update_room(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -423,14 +446,18 @@ pub async fn delete_room(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "会议室不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "会议室不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("会议室不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除会议室失败: {}", e);
             (
-                Json(api_error(500, "会议室删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "会议室删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -440,7 +467,9 @@ pub async fn delete_room(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -540,7 +569,9 @@ pub async fn list_bookings(
         }
         Err(e) => {
             tracing::error!("获取会议预约列表失败: {}", e);
-            Json(api_error(500, "获取会议预约列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取会议预约列表失败".to_string(),
+            )))
         }
     }
 }
@@ -569,7 +600,7 @@ pub async fn create_booking(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("会议标题", &req.title) {
-        return Json(api_error(400, &e));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
     }
 
     let room_result = sqlx::query_as::<_, MeetingRoom>(
@@ -581,8 +612,17 @@ pub async fn create_booking(
 
     let room = match room_result {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(api_error(400, "会议室不可用或不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询会议室失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "会议室不可用或不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询会议室失败: {}",
+                e,
+            )))
+        }
     };
 
     let overlapping = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -601,7 +641,9 @@ pub async fn create_booking(
 
     if let Ok(count) = overlapping {
         if count > 0 {
-            return Json(api_error(400, "该时间段已有会议预约"));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "该时间段已有会议预约".to_string(),
+            )));
         }
     }
 
@@ -636,7 +678,9 @@ pub async fn create_booking(
         Err(e) => {
             tracing::error!("创建会议预约失败: {}", e);
             (
-                Json(api_error(500, "会议预约创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "会议预约创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -646,7 +690,9 @@ pub async fn create_booking(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -715,10 +761,14 @@ pub async fn get_booking(
 
     match result {
         Ok(Some(booking)) => Json(ApiResponse::success(booking, "获取会议预约成功")),
-        Ok(None) => Json(api_error(404, "会议预约不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "会议预约不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取会议预约失败: {}", e);
-            Json(api_error(500, "获取会议预约失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取会议预约失败".to_string(),
+            )))
         }
     }
 }
@@ -759,8 +809,17 @@ pub async fn update_booking(
 
     let existing = match existing {
         Ok(Some(b)) => b,
-        Ok(None) => return Json(api_error(404, "会议预约不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询会议预约失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "会议预约不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询会议预约失败: {}",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -799,7 +858,9 @@ pub async fn update_booking(
         Err(e) => {
             tracing::error!("更新会议预约失败: {}", e);
             (
-                Json(api_error(500, "会议预约更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "会议预约更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -809,7 +870,9 @@ pub async fn update_booking(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -881,14 +944,18 @@ pub async fn delete_booking(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "会议预约不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "会议预约不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("会议预约不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除会议预约失败: {}", e);
             (
-                Json(api_error(500, "会议预约删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "会议预约删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -898,7 +965,9 @@ pub async fn delete_booking(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("事务提交失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -968,7 +1037,9 @@ pub async fn get_room_bookings(
         Ok(bookings) => Json(ApiResponse::success(bookings, "获取会议室预约列表成功")),
         Err(e) => {
             tracing::error!("获取会议室预约列表失败: {}", e);
-            Json(api_error(500, "获取会议室预约列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取会议室预约列表失败".to_string(),
+            )))
         }
     }
 }
