@@ -97,13 +97,13 @@ pub async fn impl_service_health_changed() -> ReceiverStream<ServiceHealthGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
         loop {
             interval.tick().await;
             invalidate_cache();
             let mut all_ok = true;
-            for (name, url) in crate::modules::graphql_schema::SUBSCRIPTION_SERVICES {
+            for (name, url) in SUBSCRIPTION_SERVICES {
                 let healthy = probe_service_health(name, url).await;
                 if tx
                     .send(ServiceHealthGql {
@@ -138,7 +138,7 @@ pub async fn impl_master_data_changed(
         .unwrap_or_else(|_| global_event_bus().clone());
 
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut recv = event_bus.subscribe(SubscriptionChannel::MasterDataChanged);
         loop {
             match recv.recv().await {
@@ -176,7 +176,7 @@ pub async fn impl_notification_received(
         .unwrap_or_else(|_| global_event_bus().clone());
 
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut recv = event_bus.subscribe(SubscriptionChannel::NotificationReceived);
         loop {
             match recv.recv().await {
@@ -211,7 +211,7 @@ pub async fn impl_workflow_task_assigned(
         .unwrap_or_else(|_| global_event_bus().clone());
 
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut recv = event_bus.subscribe(SubscriptionChannel::WorkflowTaskAssigned);
         loop {
             match recv.recv().await {
@@ -246,7 +246,7 @@ pub async fn impl_order_status_changed(
         .unwrap_or_else(|_| global_event_bus().clone());
 
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut recv = event_bus.subscribe(SubscriptionChannel::OrderStatusChanged);
         loop {
             match recv.recv().await {
@@ -284,7 +284,7 @@ pub async fn impl_data_changed(
         .unwrap_or_else(|_| global_event_bus().clone());
 
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut recv = event_bus.subscribe(SubscriptionChannel::DataChanged);
         loop {
             match recv.recv().await {
@@ -341,7 +341,7 @@ pub async fn impl_realtime_data_stream(
     let ut = update_type.clone();
 
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut interval = tokio::time::interval(std::time::Duration::from_millis(500));
         let mut last_seq: i64 = 0;
         loop {
@@ -382,7 +382,7 @@ pub async fn impl_incremental_updates(
     let eid = entity_id.clone();
 
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut interval = tokio::time::interval(std::time::Duration::from_millis(500));
         let mut seen: HashSet<String> = HashSet::new();
         loop {
@@ -411,7 +411,7 @@ pub async fn impl_sync_state_changed(client_id: Option<String>) -> ReceiverStrea
     let cid = client_id.clone();
 
     tokio::spawn(async move {
-        let _defer = crate::modules::graphql_schema::DeferSubscriptionCount;
+        let _defer = DeferSubscriptionCount;
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(2));
         let mut last_count: usize = 0;
         loop {
@@ -429,4 +429,25 @@ pub async fn impl_sync_state_changed(client_id: Option<String>) -> ReceiverStrea
     });
 
     ReceiverStream::new(rx)
+}
+
+// ====== 从 graphql_schema.rs 迁移：订阅服务列表 + 订阅计数守卫（批次5 收尾） ======
+/// 服务健康监控的目标服务列表
+pub const SUBSCRIPTION_SERVICES: &[(&str, &str)] = &[
+    ("erp", "http://localhost:8010"),
+    ("crm", "http://localhost:8029"),
+    ("hrm", "http://localhost:8020"),
+    ("finance", "http://localhost:8011"),
+    ("mes", "http://localhost:8030"),
+    ("workflow", "http://localhost:8000"),
+    ("iam", "http://localhost:8000"),
+    ("notification", "http://localhost:8084"),
+];
+
+pub struct DeferSubscriptionCount;
+
+impl Drop for DeferSubscriptionCount {
+    fn drop(&mut self) {
+        decrement_subscriptions();
+    }
 }

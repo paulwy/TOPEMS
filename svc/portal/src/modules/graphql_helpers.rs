@@ -328,3 +328,42 @@ pub fn service_url(service_name: &str) -> &'static str {
         _ => "http://localhost:8000",
     }
 }
+
+// ====== 从 graphql_schema.rs 迁移：缓存版本号 + 活跃订阅计数（批次5 收尾） ======
+static CACHE_VERSION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// 获取当前缓存版本号
+pub fn get_cache_version() -> u64 {
+    CACHE_VERSION.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// 递增缓存版本号（订阅事件推送时调用）
+/// 这会使所有基于旧版本号的 CDN 缓存失效。
+pub fn invalidate_cache() {
+    CACHE_VERSION.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    tracing::debug!("[graphql] CDN 缓存版本递增至 {}", get_cache_version());
+}
+
+// ==================== V38.0: 活跃订阅计数器 ====================
+
+/// 全局活跃订阅数计数器
+/// 每个订阅开始时递增，结束时递减。
+pub static ACTIVE_SUBSCRIPTIONS: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(0);
+
+/// 获取当前活跃订阅数
+pub fn get_active_subscriptions() -> usize {
+    ACTIVE_SUBSCRIPTIONS.load(std::sync::atomic::Ordering::Relaxed)
+}
+
+/// 递增活跃订阅数
+pub fn increment_subscriptions() {
+    ACTIVE_SUBSCRIPTIONS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    tracing::debug!("[graphql] 活跃订阅数递增至 {}", get_active_subscriptions());
+}
+
+/// 递减活跃订阅数
+pub fn decrement_subscriptions() {
+    ACTIVE_SUBSCRIPTIONS.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
+    tracing::debug!("[graphql] 活跃订阅数递减至 {}", get_active_subscriptions());
+}

@@ -62,6 +62,7 @@ pub use crate::modules::graphql_query_business::*;
 pub use crate::modules::graphql_query_impls::*;
 pub use crate::modules::graphql_realtime_stream::*;
 pub use crate::modules::graphql_redis_pubsub::*;
+pub use crate::modules::graphql_schema_builder::{build_schema, PortalSchema};
 #[allow(unused_imports)]
 pub use crate::modules::graphql_security::*;
 #[allow(unused_imports)]
@@ -2066,18 +2067,6 @@ impl MutationRoot {
 
 pub struct SubscriptionRoot;
 
-/// 服务健康监控的目标服务列表
-pub const SUBSCRIPTION_SERVICES: &[(&str, &str)] = &[
-    ("erp", "http://localhost:8010"),
-    ("crm", "http://localhost:8029"),
-    ("hrm", "http://localhost:8020"),
-    ("finance", "http://localhost:8011"),
-    ("mes", "http://localhost:8030"),
-    ("workflow", "http://localhost:8000"),
-    ("iam", "http://localhost:8000"),
-    ("notification", "http://localhost:8084"),
-];
-
 #[Subscription]
 impl SubscriptionRoot {
     /// 订阅服务健康状态变化（每 30 秒推送所有服务状态）
@@ -2183,108 +2172,20 @@ impl SubscriptionRoot {
     }
 }
 
-pub struct DeferSubscriptionCount;
-
-impl Drop for DeferSubscriptionCount {
-    fn drop(&mut self) {
-        decrement_subscriptions();
-    }
-}
-
 // ==================== V37.0 Phase 7: GraphQL 订阅 CDN 缓存失效 ====================
 
 /// 全局缓存版本号
 /// 每次订阅事件推送时递增，用于 CDN 缓存失效。
 /// GET GraphQL 响应包含 ETag 头，客户端可据此判断缓存是否过期。
-static CACHE_VERSION: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-
-/// 获取当前缓存版本号
-pub fn get_cache_version() -> u64 {
-    CACHE_VERSION.load(std::sync::atomic::Ordering::Relaxed)
-}
-
-/// 递增缓存版本号（订阅事件推送时调用）
-/// 这会使所有基于旧版本号的 CDN 缓存失效。
-pub fn invalidate_cache() {
-    CACHE_VERSION.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    tracing::debug!("[graphql] CDN 缓存版本递增至 {}", get_cache_version());
-}
-
-// ==================== V38.0: 活跃订阅计数器 ====================
-
-/// 全局活跃订阅数计数器
-/// 每个订阅开始时递增，结束时递减。
-pub static ACTIVE_SUBSCRIPTIONS: std::sync::atomic::AtomicUsize =
-    std::sync::atomic::AtomicUsize::new(0);
-
-/// 获取当前活跃订阅数
-pub fn get_active_subscriptions() -> usize {
-    ACTIVE_SUBSCRIPTIONS.load(std::sync::atomic::Ordering::Relaxed)
-}
-
-/// 递增活跃订阅数
-pub fn increment_subscriptions() {
-    ACTIVE_SUBSCRIPTIONS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-    tracing::debug!("[graphql] 活跃订阅数递增至 {}", get_active_subscriptions());
-}
-
-/// 递减活跃订阅数
-pub fn decrement_subscriptions() {
-    ACTIVE_SUBSCRIPTIONS.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
-    tracing::debug!("[graphql] 活跃订阅数递减至 {}", get_active_subscriptions());
-}
 
 // ==================== Schema 构建 ====================
-
-pub type PortalSchema = Schema<QueryRoot, MutationRoot, SubscriptionRoot>;
 
 /// V35.0 Phase 5: 查询复杂度限制
 pub const MAX_QUERY_COMPLEXITY: usize = 1000;
 /// V35.0 Phase 5: 查询深度限制
 pub const MAX_QUERY_DEPTH: usize = 10;
 /// V35.0 Phase 6: APQ 缓存容量
-const APQ_CACHE_CAPACITY: usize = 256;
 /// V40.0: 全局安全事件存储（内存环形缓冲）
-pub fn build_schema(state: AppState) -> PortalSchema {
-    let pool = state.pool.clone();
-
-    // V42.0 Track E: 初始化企业级安全规则（字段权限 + 掩码规则）
-    init_enterprise_security();
-    // V42.0 Track B: 初始化联邦网关 V2 服务注册表（5 个服务元数据）
-    init_service_registry();
-    // V43.0 Track E: 初始化 AI 辅助功能（示例数据 + 缓存推荐）
-    init_ai_assistance();
-    // V45.0 Track E: 初始化 Schema 治理（5 个服务预置 Schema + 默认契约测试）
-    init_schema_governance();
-    // V49.0: 初始化自适应限流 + 熔断降级 + 负载感知路由
-    init_rate_limiting();
-    // V50.0: 初始化持久化查询管理 + 查询审计 + 企业级治理
-    init_query_governance();
-    // V51.0: 初始化 Schema 演进 + 破坏性变更检测 + 版本协商
-    init_schema_versioning();
-
-    Schema::build(QueryRoot, MutationRoot, SubscriptionRoot)
-        .data(state)
-        // V39.0 Phase 9: 注入 EventBus（多频道事件总线）
-        .data(global_event_bus().clone())
-        // V35.0 Phase 5: 注册 DataLoader
-        .data(DataLoader::new(ServiceHealthLoader, tokio::spawn))
-        .data(DataLoader::new(TodoLoader::new(pool), tokio::spawn))
-        // V35.0 Phase 5: 查询复杂度限制（防止恶意复杂查询）
-        .limit_complexity(MAX_QUERY_COMPLEXITY)
-        // V35.0 Phase 5: 查询深度限制（防止过深嵌套查询）
-        .limit_depth(MAX_QUERY_DEPTH)
-        // V35.0 Phase 6: Apollo 持久化查询（APQ）— 查询白名单 + CDN 缓存基础
-        // 前端发送查询哈希，后端从 LRU 缓存查找查询字符串，减少请求体积
-        .extension(
-            async_graphql::extensions::apollo_persisted_queries::ApolloPersistedQueries::new(
-                async_graphql::extensions::apollo_persisted_queries::LruCacheStorage::new(
-                    APQ_CACHE_CAPACITY,
-                ),
-            ),
-        )
-        .finish()
-}
 
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]

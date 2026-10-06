@@ -33,6 +33,7 @@ pub mod graphql_query_impls;
 pub mod graphql_realtime_stream;
 pub mod graphql_redis_pubsub;
 pub mod graphql_schema;
+pub mod graphql_schema_builder;
 pub mod graphql_security;
 pub mod graphql_semantic_cache;
 pub mod graphql_subscription_enhanced;
