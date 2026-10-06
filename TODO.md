@@ -733,7 +733,7 @@
 | B9 | **T1 残留：GIS leaflet 3 测试** | P2 | S | 无 | R1 基线（vitest 3 既有失败=react-leaflet mock 缺 useMapEvents） | 补 mock 后 3 测试转绿 |
 | B10 | **U4 残留：≤3s 快照窗口 SIGKILL 丢最近写** | P2 | S | 无 | U4 条目 | flush 改同步直写或 WAL 兜底；SIGKILL e2e 后数据不丢 |
 | B11 | **U8 残留：form_assistant 迁出独立 crate** | P2 | M | 无 | U8 条目（3 处有意保留） | lib/src/form_assistant/ 迁至业务 crate；门面引用=0 |
-| B12 | **U9.5：services.yaml↔nginx 一致性校验脚本** | P2 | S | 无 | U9 条目残留（D5 独立可停用项）；F-50/F-69 | 脚本校验 services.yaml↔ports.env↔nginx map 一致；挂 CI 门禁 |
+| ✅ B12 | **U9.5：services.yaml↔nginx 一致性校验脚本** | P2 | S | 无 | U9 条目残留（D5 独立可停用项）；F-50/F-69 | ✅ 已实施（2026-10-06）：scripts/dev/check-config-consistency.py 三方一致性校验（services.yaml 29 服务 ↔ ports.env 38 项 ↔ nginx map 27 路由，含 aps→mes / feedback→ticket 合并别名 + plugin→plugin-registry 命名别名）；已挂 lefthook pre-push 门禁（config-consistency） |
 | B13 | **wms data_sync 文档口径（D3 §2.2 过时）** | P2 | S | 无 | U3 条目（实测真实事件驱动、描述未改） | D3 §2.2 修订 + verifier must-contain 抽查 |
 | ✅ B14 | **迁移链空库守卫重构级评估** | P1 | M（评估）/L（实施） | ✅ 已决策（2026-10-06）：维持脚本层——`ensure-empty-db-prereqs.sh` 空库预检已覆盖核心风险，当前无迁移链故障需求重构窗口，成本≈0 | 5433 Homebrew 重放条目；收官①（`ensure-empty-db-prereqs.sh` 已交付） | ✅ 决策已落盘；未实施重构 |
 | ✅ B15 | **runtime 矩阵重采路径** | P1 | M（埋点评估） | ✅ 已实施（2026-10-06）：出站客户端埋点（shared-service-client execute_request/边缘方法 record_service_call）+ 入站 token 埋点实测（auth 中间件 protected 路由边指标 `topems_service_to_service_calls_total{service,target}` 正确采集）；--collect 重跑 runtime.csv（28 边/17 节点，search→erp 捕获）；STATIC_DEPS 修正（3 残留环边 + server-*-module 镜像行删除，design.csv 清零；search→erp 真实边补入）；runtime vs design 一致性对比输出正常（仅 runtime 1 条已补，仅 design 27 条=本地无业务流量预期） | 收官②（`runtime-matrix-decision-2026-10-03.md` 重采路径已记录） | ✅ 埋点落地 + 重采路径可用；生产流量窗口采样待真实流量环境（本地无业务流量，机制已验证） |
