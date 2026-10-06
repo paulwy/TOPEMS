@@ -12,7 +12,7 @@ BEGIN
     WHERE table_schema = 'public' AND table_name = 'audit_logs' AND column_name = 'user_id'
       AND data_type = 'character varying'
   ) THEN
-    EXECUTE 'UPDATE audit_logs SET user_id = NULL WHERE user_id = $1' USING '';
+    EXECUTE 'UPDATE public.audit_logs SET user_id = NULL WHERE user_id = $1' USING '';
   END IF;
 END $$;
 
@@ -35,5 +35,5 @@ ALTER TABLE wms.transfer_orders ALTER COLUMN to_location_id TYPE UUID USING to_l
 ALTER TABLE wms.transfer_order_items ALTER COLUMN from_location_id TYPE UUID USING from_location_id::UUID;
 ALTER TABLE wms.transfer_order_items ALTER COLUMN to_location_id TYPE UUID USING to_location_id::UUID;
 
--- Phase 6: audit_logs — user_id column
-ALTER TABLE audit_logs ALTER COLUMN user_id TYPE UUID USING user_id::UUID;
+-- Phase 6: public.audit_logs — user_id column
+ALTER TABLE public.audit_logs ALTER COLUMN user_id TYPE UUID USING user_id::UUID;

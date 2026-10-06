@@ -21,8 +21,8 @@
 --    代码状态机：create→draft → calculate→calculated → pay→paid（WHERE 守卫 pending）
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables
-               WHERE table_schema='hrm' AND table_name='payroll_runs') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='hrm' AND table_name='payroll_runs' AND column_name='status') THEN
         ALTER TABLE hrm.payroll_runs DROP CONSTRAINT IF EXISTS ck_payroll_runs_status_standard;
         ALTER TABLE hrm.payroll_runs ADD CONSTRAINT ck_payroll_runs_status_standard
             CHECK (status IS NULL OR status IN (
@@ -37,8 +37,8 @@ END $$;
 --    （R2 已手工放宽同集，此处幂等重放）
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables
-               WHERE table_schema='erp' AND table_name='financial_vouchers') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='erp' AND table_name='financial_vouchers' AND column_name='status') THEN
         ALTER TABLE erp.financial_vouchers DROP CONSTRAINT IF EXISTS ck_financial_vouchers_status_standard;
         ALTER TABLE erp.financial_vouchers ADD CONSTRAINT ck_financial_vouchers_status_standard
             CHECK (status IS NULL OR status IN (
@@ -53,8 +53,8 @@ END $$;
 --    （R2 已手工放宽同集，此处幂等重放）
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables
-               WHERE table_schema='erp' AND table_name='erp_production_orders') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='erp' AND table_name='erp_production_orders' AND column_name='status') THEN
         ALTER TABLE erp.erp_production_orders DROP CONSTRAINT IF EXISTS ck_erp_production_orders_status_standard;
         ALTER TABLE erp.erp_production_orders ADD CONSTRAINT ck_erp_production_orders_status_standard
             CHECK (status IS NULL OR status IN (
@@ -69,8 +69,8 @@ END $$;
 --    （注：表在 public schema，非 lims.qa_lab_samples——后者已被 20260921000100 cleanup）
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables
-               WHERE table_schema='public' AND table_name='qa_lab_samples') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='public' AND table_name='qa_lab_samples' AND column_name='status') THEN
         ALTER TABLE public.qa_lab_samples DROP CONSTRAINT IF EXISTS ck_qa_lab_samples_status_standard;
         ALTER TABLE public.qa_lab_samples ADD CONSTRAINT ck_qa_lab_samples_status_standard
             CHECK (status IS NULL OR status IN (
@@ -84,8 +84,8 @@ END $$;
 --    schema_defense 默认 'success'；R2 测试插入 status='success' 被窄约束拦
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables
-               WHERE table_schema='crm' AND table_name='audit_logs') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='crm' AND table_name='audit_logs' AND column_name='status') THEN
         ALTER TABLE crm.audit_logs DROP CONSTRAINT IF EXISTS ck_audit_logs_status_standard;
         ALTER TABLE crm.audit_logs ADD CONSTRAINT ck_audit_logs_status_standard
             CHECK (status IS NULL OR status IN (
@@ -99,8 +99,8 @@ END $$;
 --    同 crm.audit_logs 同族；默认 'success'
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables
-               WHERE table_schema='wms' AND table_name='audit_logs') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='wms' AND table_name='audit_logs' AND column_name='status') THEN
         ALTER TABLE wms.audit_logs DROP CONSTRAINT IF EXISTS ck_audit_logs_status_standard;
         ALTER TABLE wms.audit_logs ADD CONSTRAINT ck_audit_logs_status_standard
             CHECK (status IS NULL OR status IN (
@@ -114,8 +114,8 @@ END $$;
 --    lims schema_defense.rs:533 / models/mod.rs:939 默认 'success'
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables
-               WHERE table_schema='lims' AND table_name='qa_lims_audit_logs') THEN
+    IF EXISTS (SELECT 1 FROM information_schema.columns
+               WHERE table_schema='lims' AND table_name='qa_lims_audit_logs' AND column_name='status') THEN
         ALTER TABLE lims.qa_lims_audit_logs DROP CONSTRAINT IF EXISTS ck_qa_lims_audit_logs_status_standard;
         ALTER TABLE lims.qa_lims_audit_logs ADD CONSTRAINT ck_qa_lims_audit_logs_status_standard
             CHECK (status IS NULL OR status IN (

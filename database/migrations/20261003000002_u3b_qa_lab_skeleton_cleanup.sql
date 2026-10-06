@@ -24,5 +24,7 @@
 
 DROP TABLE IF EXISTS qms.qa_lab_samples;
 DROP TABLE IF EXISTS qms.qa_lab_tasks;
-DROP TABLE IF EXISTS lims.qa_lab_samples;
+-- 注意顺序：lims.qa_lab_tasks 有 FK(qa_lab_tasks_sample_id_fkey) 引用 lims.qa_lab_samples，
+-- 必须先删引用方再删被引用方（演进库上 DROP 被引用表会被依赖阻止）。
 DROP TABLE IF EXISTS lims.qa_lab_tasks;
+DROP TABLE IF EXISTS lims.qa_lab_samples;

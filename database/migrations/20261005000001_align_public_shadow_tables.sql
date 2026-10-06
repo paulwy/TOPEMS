@@ -9,6 +9,18 @@
 -- 方案：显式 public. 前缀补齐两表结构（列/索引/触发器），与 20260725000001 全量结构一致；
 -- 对已完整表零副作用（IF NOT EXISTS），对裸骨架影子表自动补齐。
 
+-- ============ 空库重建链兼容：影子表骨架前缀 ============
+-- public 影子表由 schema_defense 运行时阶段 0 创建（非迁移）；纯迁移链（空库重放）
+-- 无运行时干预，此处先补骨架再对齐（IDEMPOTENT）。
+CREATE TABLE IF NOT EXISTS public.schema_registry (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    deleted_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS public.dynamic_data (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    deleted_at TIMESTAMPTZ
+);
+
 -- ============ public.schema_registry 补齐 ============
 ALTER TABLE public.schema_registry ADD COLUMN IF NOT EXISTS name VARCHAR(100) NOT NULL;
 ALTER TABLE public.schema_registry ADD COLUMN IF NOT EXISTS title VARCHAR(200) NOT NULL;

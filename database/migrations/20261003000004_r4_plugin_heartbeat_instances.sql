@@ -61,6 +61,11 @@ DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_constraint WHERE conname = 'core_plugins_code_key'
+    ) AND EXISTS (
+        -- 空库重建链中 core.core_plugins 可能是 id 骨架（003 的表被后续 drop 重建），
+        -- 无 code 列时 ADD UNIQUE(code) 会 column does not exist——列缺失则跳过
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = 'core' AND table_name = 'core_plugins' AND column_name = 'code'
     ) THEN
         ALTER TABLE core.core_plugins
             ADD CONSTRAINT core_plugins_code_key UNIQUE (code);
