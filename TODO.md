@@ -1244,3 +1244,18 @@
 - 潜伏：读路径默认租户回退（pm/rd/gis/flow 等，有意保留已标注非缺口）
 - 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
 - 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）
+
+### ✅ B7 第 15 批：收尾批 14 服务 map_err(format!) TopemsError 化（commit f0a9c2e86，22 文件）
+- gis/crm/pm/mobile/srm/rd/hrm/communication/ehs/portal/pdm/server/lims/analytics 77 处
+  - 事件 payload 解析/位置路径解析/邮箱校验/user_id 解析 → ValidationFailed（55 处）
+  - 插入/查询/写入/更新/余额锁读取 → DatabaseQuery（20 处）
+  - build message → NetworkRequest（2 处）
+- 5 处变体形态（{e} 内联/多参数 format）：dataset_whitelist/erp-e2e-cli×2/projector/tenant handlers
+- 3 签名 String → TopemsError（build_message/resolve_employee_id_from_req/resolve_leave_employee_id）
+- 消费适配：mail.rs 3 处测试断言 + sql_injection_tests is_empty→to_string
+- 34 文件补 import + 20 文件重复 import 清理 + chart_service/projector 误删补回
+- 验证：全仓 map_err(format!) 82→0（Err(format!) 已于第 9 批清零）；cargo check 0 warning；单测 communication 192/hrm 129/analytics 417 全绿；pre-commit 23 项全绿
+
+### 🏁 B7 里程碑：map_err(format!) + Err(format! 全仓双清零
+- 累计迁移 487 处（静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 签名 20+）
+- 剩余形态：Result<_, String> 465 处（下一候选批，待用户定）
