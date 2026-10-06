@@ -1,10 +1,10 @@
 //! Tenant API handlers
 
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::models::*;
@@ -259,7 +259,9 @@ async fn seed_tenant_defaults(
             .await
             .map_err(|e| format!("Failed to check existing admin user: {}", e))?;
     if dup > 0 {
-        return Err(TopemsError::BusinessLogic("Admin username or email already exists".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Admin username or email already exists".to_string(),
+        ));
     }
 
     // 3. Create the admin user tied to the new tenant.

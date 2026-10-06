@@ -1130,3 +1130,36 @@
 - 测试：opportunity_fsm_test 4 处 + return_fsm_test 9 处 assert_eq unwrap_err → matches!
 - 验证：编译 0 错误、clippy 0 警告、单测 504/504 全绿
 - **crm 静态 Err = 27→0**；累计清零：mobile 8 + lims 3 + crm 27 = 38
+
+## 2026-10-06 契约面收口 + RLS 治理 + 门禁固化（全链路闭环）
+
+> 承接 10-05 mobile 契约面收口主线，扩展至 web(portal) 契约面、全库 RLS 治理、硬编码租户对齐、双门禁固化与全仓实例统一。全部本地提交未 push（除既有主线提交链）。
+
+### ✅ mobile 契约面收口（已完成闭环）
+- 117 端点静态核对 → 页面级缺口 9 批 + 死代码兜底 3 批 → 25 上游实例刷新 → 全量实跑冒烟 117/117
+- 冒烟脚本固化 + Gate MCS 门禁（b908f9a0b）：触发 apps/mobile/src/api|svc/mobile/src|lib/shared-service-client，离线 SKIP、在线全量实跑
+- WARN 根因排查修复（e6f5efd99，12 类根因：Uuid bind/check 约束/缺列 from_row/路由 405/脚本 POST_BODIES 不符等）→ 117/117 零 FAIL
+
+### ✅ web(portal) 契约面收口（组织者 o_000cunERH90 执行，thread 57596950730198018）
+- svc/server BFF 5081 路由对静态核对 + 带 token 实跑判定；33 服务批次 + 二轮 16 commit + RLS 迁移收敛 **1363→39→0**
+- 关键根因：master SEARCH_PATH `master_data, public, shared`（dict 500→404，schema-registry 显式 public. 前缀）；communication BFF 挂载对齐前端 base；workflow flow schema 无防护 RLS 策略 DROP（20261006000002→0000 重排，幂等）
+- web 冒烟脚本固化（c0235ed19）：4152 去重端点、现签 token、FAIL 判据对齐 mobile（500 记 FAIL/4xx 记 WARN）
+- **前端双前缀 39 项真修复（894f7c48a）**：38 双前缀拼接 + 2 模板提取异常 → 4135/4135 真全绿、load_expected_fails 豁免机制移除
+- **5 后端真缺口补实现（558bbf82e）**：copilot records/context 真实写入、documents download、governance metrics/export → 4139/4139
+- Gate WCS 门禁（d06b8500c）：触发 apps/web/src/api|apps/web/src/utils/apiPath.ts|svc/server/src|lib/shared-service-client
+
+### ✅ 全库 RLS 治理（212 条清除，27 个幂等迁移 20261006000003-0029）
+- 危险形态 `tenant_id = (current_setting(...))::uuid` 无 NULLIF/空串防护 → DROP（同表保留 tenant_isolation_* 安全策略）；判定 SQL：`qual LIKE '%current_setting(%' AND qual LIKE '%::uuid%' AND qual NOT LIKE '%NULLIF(current_setting%'`
+- 硬编码租户 25 处写路径对齐（4 批：924d576aa unified-core / 7750ec651 mobile+hrm / caadcee5d crm / 028589755 wms）：超管→NULL、用户→claims.tenant_id、COALESCE 零 uuid 解码
+- 部署暴露缺口收口（50e81047e）：barcode 随机租户（Uuid::new_v4 反模式）+ 读路径 5 处 SELECT COALESCE + RLS 不可见残留行清理（register 500 真根因）
+
+### ✅ 全仓实例统一（27 重建 + 双实例重建，零漂移）
+- 27 个 Oct 5 旧代码镜像实例逐个重建（kill→端口释放→nohup→健康检查），新 PID 对照表完整交付
+- :8099 BFF（44753 终态）与 :8070 mobile（36660）重建部署全部修复生效；心智链路 /api/core/flow 4/4 200
+- 终态冒烟：**web 4139/4139 PASS 0 FAIL exit=0**；mobile 117/117；pre-commit 23 项全绿（MCS/WCS 实跑）
+
+### ⬜ 遗留待办
+- **并行会话 WIP 归属待确认（未触碰）**：svc/finance 3 个 M（settlement_center/service.rs、finance/collection.rs、finance/payment_record.rs）+ svc/unified-core 6 个 M（master/handlers.rs、tenant/handlers.rs、business_tools/{audit_export_api,permission_audit_log,permission_export_import_api,permission_store_factory}.rs）；flow 迁移重排 `20261006000002→0000`（内容逐字节相同，建议归属方 git mv 提交）；.sqlx 删除若干 + `.sqlx/query-57ec2a25...json` 新增；长期未跟踪 lib/Cargo.lock、shared/、svc/migration-sdk/
+- 潜伏：读路径默认租户回退（pm/rd/gis/flow 等，有意保留已标注非缺口）
+- 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
+- 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）

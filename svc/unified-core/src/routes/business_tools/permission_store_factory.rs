@@ -5,8 +5,8 @@
 //! allowing seamless switching between storage backends without changing
 //! application code.
 
-use topems_shared_core::error::TopemsError;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -44,7 +44,10 @@ impl std::str::FromStr for PermissionStoreType {
         match s.to_lowercase().as_str() {
             "memory" => Ok(Self::Memory),
             "database" | "db" | "postgres" | "postgresql" => Ok(Self::Database),
-            _ => Err(TopemsError::BusinessLogic(format!("Unknown permission store type: {}", s))),
+            _ => Err(TopemsError::BusinessLogic(format!(
+                "Unknown permission store type: {}",
+                s
+            ))),
         }
     }
 }

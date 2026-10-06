@@ -4,9 +4,9 @@
 //! delete, activate, deactivate, and role change operations with before/after
 //! snapshots, actor information, and timestamps.
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -62,7 +62,10 @@ impl std::str::FromStr for AuditAction {
             "deactivate" => Ok(Self::Deactivate),
             "role_change" | "rolechange" => Ok(Self::RoleChange),
             "check" => Ok(Self::Check),
-            _ => Err(TopemsError::BusinessLogic(format!("Unknown audit action: {}", s))),
+            _ => Err(TopemsError::BusinessLogic(format!(
+                "Unknown audit action: {}",
+                s
+            ))),
         }
     }
 }

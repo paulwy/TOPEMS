@@ -335,3 +335,8 @@ docs/可空tenant_id补齐处理结果.md
 
 # JWT 私钥/公钥（generate-jwt-keys.sh 产物，禁止提交）
 config/keys/*.pem
+
+# 孤儿 Cargo.lock（workspace 统一以根 Cargo.lock 为权威，子 crate 独立生成的 lock 不入库）
+/lib/Cargo.lock
+/shared/lib/Cargo.lock
+/svc/migration-sdk/Cargo.lock

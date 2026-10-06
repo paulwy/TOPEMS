@@ -917,7 +917,12 @@ async fn publish_master_data_event(
 ) -> Result<(), TopemsError> {
     let domain = match MasterDataDomain::from_str(&ref_data.domain) {
         Ok(d) => d,
-        Err(_) => return Err(TopemsError::ValidationFailed(format!("Invalid domain: {}", ref_data.domain))),
+        Err(_) => {
+            return Err(TopemsError::ValidationFailed(format!(
+                "Invalid domain: {}",
+                ref_data.domain
+            )))
+        }
     };
 
     let event_payload = payload.unwrap_or_else(|| {

@@ -643,7 +643,7 @@ pub async fn approve_settlement(
     sqlx::query(only_own_schema_query!(
         "finance",
         r#"UPDATE finance.settlement_snapshots
-           SET status = 'approved', approved_by = $1, approved_at = $2,
+           SET status = 'approved', approved_by = $1::uuid, approved_at = $2,
                updated_at = NOW(), synced_at = NOW()
            WHERE id = $3 AND tenant_id = $4 AND status = 'pending'"#
     ))

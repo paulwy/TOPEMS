@@ -144,7 +144,7 @@ impl FinanceService {
         let row = sqlx::query(
             only_own_schema_query!("finance", "INSERT INTO erp_collection_records (tenant_id, collection_no, customer_name, amount, status, created_by)
              VALUES ($1, $2, $3, $4, NULL, $5)
-             RETURNING id, collection_no, customer_name, amount, status, created_at"),
+             RETURNING id, collection_no, customer_name, amount::float8 AS amount, status::text AS status, created_at"),
         )
         .bind(tenant_id)
         .bind(collection_no)
@@ -158,7 +158,7 @@ impl FinanceService {
         let collection_no: String = sqlx::Row::get(&row, "collection_no");
         let customer_name: String = sqlx::Row::get(&row, "customer_name");
         let amount: f64 = sqlx::Row::get(&row, "amount");
-        let status: String = sqlx::Row::get(&row, "status");
+        let status: Option<String> = sqlx::Row::get(&row, "status");
 
         Ok(json!({
             "id": id.to_string(),
