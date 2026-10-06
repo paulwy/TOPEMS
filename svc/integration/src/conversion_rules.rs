@@ -648,7 +648,7 @@ pub fn execute_conversion(
 fn apply_field_mapping(
     mapping: &FieldMapping,
     source: &serde_json::Value,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     // 1. 从源数据获取值
     let mut value = get_nested_value(source, &mapping.source_field);
 
@@ -902,7 +902,7 @@ fn evaluate_simple_transform(
 pub fn execute_conversions(
     rules: &[ConversionRule],
     source: &serde_json::Value,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     let mut sorted_rules: Vec<&ConversionRule> = rules
         .iter()
         .filter(|r| r.is_enabled && matches!(r.status, RuleStatus::Active))

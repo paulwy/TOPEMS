@@ -6,6 +6,7 @@
 //! - 死信队列（处理失败的消息）
 //! - 消息重试机制
 
+use topems_shared_core::error::TopemsError;
 use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
@@ -23,11 +24,11 @@ use tracing::{debug, error, info, warn};
 
 /// 事件处理器回调类型（返回 Result，失败时会触发重试/DLQ）
 pub type StreamEventHandler =
-    Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync>;
+    Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>> + Send + Sync>;
 
 /// MDM 主数据事件处理器回调类型（返回 Result，失败时会触发重试）
 pub type StreamMdmEventHandler = Arc<
-    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>>
+    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>>
         + Send
         + Sync,
 >;
@@ -156,7 +157,7 @@ impl StreamEventSubscriber {
     pub fn subscribe<F, Fut>(mut self, event_type: EventType, handler: F) -> Self
     where
         F: Fn(Event) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = Result<(), String>> + Send + 'static,
+        Fut: Future<Output = Result<(), TopemsError>> + Send + 'static,
     {
         let handler_arc: StreamEventHandler = Arc::new(move |event| Box::pin(handler(event)));
 
@@ -172,7 +173,7 @@ impl StreamEventSubscriber {
     pub fn subscribe_master_data<F, Fut>(mut self, domain: MasterDataDomain, handler: F) -> Self
     where
         F: Fn(MasterDataEvent) -> Fut + Send + Sync + 'static,
-        Fut: Future<Output = Result<(), String>> + Send + 'static,
+        Fut: Future<Output = Result<(), TopemsError>> + Send + 'static,
     {
         let handler_arc: StreamMdmEventHandler = Arc::new(move |event| Box::pin(handler(event)));
 

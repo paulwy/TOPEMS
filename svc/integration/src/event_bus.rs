@@ -240,7 +240,7 @@ pub type EventHandlerFn = Arc<
     dyn Fn(
             IntegrationEvent,
         )
-            -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+            -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
         + Send
         + Sync,
 >;
@@ -261,7 +261,7 @@ impl EventHandlerRegistry {
     pub async fn register<F, Fut>(&self, event_type: String, handler: F)
     where
         F: Fn(IntegrationEvent) -> Fut + Send + Sync + 'static,
-        Fut: std::future::Future<Output = Result<(), String>> + Send + 'static,
+        Fut: std::future::Future<Output = Result<(), TopemsError>> + Send + 'static,
     {
         let handler_fn: EventHandlerFn = Arc::new(move |event| Box::pin(handler(event)));
         let mut handlers = self.handlers.write().await;
@@ -283,7 +283,7 @@ impl EventHandlerRegistry {
     /// 触发事件处理
     pub async fn handle(&self, event_type: &str, event: IntegrationEvent) -> Result<(), TopemsError> {
         if let Some(handler) = self.get(event_type).await {
-            handler(event).await.map_err(|e| TopemsError::BusinessLogic(e))
+            handler(event).await
         } else {
             Err(TopemsError::BusinessLogic(format!(
                 "No handler registered for event type: {}",
@@ -313,7 +313,7 @@ impl ConversionEventHandler {
     }
 
     /// 处理事件
-    pub async fn handle(&self, event: IntegrationEvent) -> Result<(), String> {
+    pub async fn handle(&self, event: IntegrationEvent) -> Result<(), TopemsError> {
         tracing::info!(
             "[EventHandler] Processing event {} for rule {}",
             event.id,
@@ -349,7 +349,7 @@ impl WebhookSender {
     }
 
     /// 发送 webhook
-    pub async fn send(&self, url: &str, payload: &IntegrationEvent) -> Result<(), String> {
+    pub async fn send(&self, url: &str, payload: &IntegrationEvent) -> Result<(), TopemsError> {
         tracing::info!("[Webhook] Sending to {}: {:?}", url, payload);
 
         // 在实际实现中，这里会发送 HTTP POST 请求
@@ -358,7 +358,7 @@ impl WebhookSender {
         //     .json(payload)
         //     .send()
         //     .await
-        //     .map_err(|e| e.to_string())?;
+        //     ?;
 
         Ok(())
     }

@@ -174,24 +174,24 @@ pub struct EntityReference {
 #[async_trait::async_trait]
 pub trait BusinessSystemAdapter: Send + Sync {
     fn system_type(&self) -> BusinessSystemType;
-    async fn test_connection(&self) -> Result<(), String>;
+    async fn test_connection(&self) -> Result<(), TopemsError>;
     async fn fetch_data(
         &self,
         entity: &str,
         filters: HashMap<String, serde_json::Value>,
         limit: u32,
         offset: u32,
-    ) -> Result<Vec<serde_json::Value>, String>;
+    ) -> Result<Vec<serde_json::Value>, TopemsError>;
     async fn push_data(
         &self,
         entity: &str,
         data: Vec<serde_json::Value>,
-    ) -> Result<PushResult, String>;
+    ) -> Result<PushResult, TopemsError>;
     async fn execute_operation(
         &self,
         operation: &str,
         parameters: serde_json::Value,
-    ) -> Result<serde_json::Value, String>;
+    ) -> Result<serde_json::Value, TopemsError>;
 }
 
 /// 推送结果
@@ -225,7 +225,7 @@ impl BusinessIntegrationManager {
         }
     }
 
-    pub async fn register_config(&self, config: BusinessSystemConfig) -> Result<(), String> {
+    pub async fn register_config(&self, config: BusinessSystemConfig) -> Result<(), TopemsError> {
         let mut configs = self.configs.write().await;
         if configs.contains_key(&config.system_id) {
             return Err(TopemsError::BusinessLogic(format!("系统 '{}' 已注册", config.system_id)));
@@ -234,7 +234,7 @@ impl BusinessIntegrationManager {
         Ok(())
     }
 
-    pub async fn update_config(&self, config: BusinessSystemConfig) -> Result<(), String> {
+    pub async fn update_config(&self, config: BusinessSystemConfig) -> Result<(), TopemsError> {
         let mut configs = self.configs.write().await;
         if !configs.contains_key(&config.system_id) {
             return Err(TopemsError::BusinessLogic(format!("系统 '{}' 未注册", config.system_id)));
@@ -243,7 +243,7 @@ impl BusinessIntegrationManager {
         Ok(())
     }
 
-    pub async fn remove_config(&self, system_id: &str) -> Result<(), String> {
+    pub async fn remove_config(&self, system_id: &str) -> Result<(), TopemsError> {
         let mut configs = self.configs.write().await;
         if !configs.contains_key(system_id) {
             return Err(TopemsError::BusinessLogic(format!("系统 '{}' 未注册", system_id)));

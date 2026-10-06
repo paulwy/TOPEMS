@@ -58,7 +58,7 @@ impl RecommendationService {
     pub async fn recommend(
         &self,
         request: RecommendationRequest,
-    ) -> Result<RecommendationResponse, String> {
+    ) -> Result<RecommendationResponse, TopemsError> {
         let top_k = request.top_k.unwrap_or(10);
         let rec_type = &request.recommendation_type;
         let tenant_id = request.tenant_id;
@@ -107,7 +107,7 @@ impl RecommendationService {
         _request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let query = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -149,7 +149,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
 
@@ -179,7 +179,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let items = vec![
             RecommendationItem {
                 id: "opp-1".to_string(),
@@ -215,7 +215,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
 
@@ -246,7 +246,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let query = request
             .context
             .get("query")
@@ -279,7 +279,7 @@ impl RecommendationService {
         _request: &RecommendationRequest,
         top_k: usize,
         _tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let items = vec![
             RecommendationItem {
                 id: "similar-1".to_string(),
@@ -306,7 +306,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         _tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
 
@@ -335,7 +335,7 @@ impl RecommendationService {
     fn extract_recommendations_from_json(
         &self,
         result: serde_json::Value,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let items_array = result.get("items").and_then(|v| v.as_array());
 
         if let Some(items) = items_array {
@@ -372,7 +372,7 @@ impl RecommendationService {
         }
     }
 
-    pub async fn get_user_profile(&self, user_id: Uuid) -> Result<UserProfile, String> {
+    pub async fn get_user_profile(&self, user_id: Uuid) -> Result<UserProfile, TopemsError> {
         let profile = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -409,7 +409,7 @@ impl RecommendationService {
         &self,
         user_id: Uuid,
         updates: serde_json::Value,
-    ) -> Result<UserProfile, String> {
+    ) -> Result<UserProfile, TopemsError> {
         let now = chrono::Utc::now();
 
         let _ = sqlx::query(
@@ -440,7 +440,7 @@ impl RecommendationService {
         _request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let query = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -481,7 +481,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let items = vec![
             RecommendationItem {
                 id: "event-1".to_string(),
@@ -515,7 +515,7 @@ impl RecommendationService {
         &self,
         _request: &RecommendationRequest,
         top_k: usize,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let items = vec![
             RecommendationItem {
                 id: "user-1".to_string(),
@@ -542,7 +542,7 @@ impl RecommendationService {
         request: &RecommendationRequest,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let query = request
             .context
             .get("query")
@@ -574,7 +574,7 @@ impl RecommendationService {
         _request: &RecommendationRequest,
         top_k: usize,
         _tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let items = vec![
             RecommendationItem {
                 id: "personalized-1".to_string(),
@@ -601,7 +601,7 @@ impl RecommendationService {
         _request: &RecommendationRequest,
         top_k: usize,
         _tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let items = vec![
             RecommendationItem {
                 id: "cross-1".to_string(),
@@ -632,7 +632,7 @@ impl RecommendationService {
         _request: &RecommendationRequest,
         top_k: usize,
         _tenant_id: Uuid,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let items = vec![
             RecommendationItem {
                 id: "up-1".to_string(),
@@ -662,7 +662,7 @@ impl RecommendationService {
         &self,
         user_id: Uuid,
         items: Vec<RecommendationItem>,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let profile = self.get_user_profile(user_id).await?;
 
         let preferences: Vec<String> = profile
@@ -704,7 +704,7 @@ impl RecommendationService {
         &self,
         request: &RecommendationRequest,
         items: Vec<RecommendationItem>,
-    ) -> Result<Vec<RecommendationItem>, String> {
+    ) -> Result<Vec<RecommendationItem>, TopemsError> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
 

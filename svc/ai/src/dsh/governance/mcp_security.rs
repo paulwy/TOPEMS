@@ -6,6 +6,7 @@
 //! - MCP 安全事件监控
 //! - MCP 越权检测
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -200,7 +201,7 @@ impl McpSecurityGovernance {
         tenant_id: &str,
         tool_name: &str,
         user_roles: &[String],
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let tool_permissions = self.tool_permissions.read().await;
         let Some(permission) = tool_permissions.get(tool_name) else {
             // 如果没有注册权限，默认允许（向后兼容）
@@ -236,7 +237,7 @@ impl McpSecurityGovernance {
                     "high",
                 ))
                 .await;
-                return Err(err);
+                return Err(TopemsError::PermissionDenied { required: err });
             }
         }
 
@@ -258,7 +259,7 @@ impl McpSecurityGovernance {
                     "medium",
                 ))
                 .await;
-                return Err(err);
+                return Err(TopemsError::PermissionDenied { required: err });
             }
         }
 

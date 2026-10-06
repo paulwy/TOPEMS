@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
@@ -36,7 +37,7 @@ impl PgVoucherSummaryView {
         page: i64,
         page_size: i64,
         status: Option<String>,
-    ) -> Result<(Vec<PgVoucherSummary>, i64), String> {
+    ) -> Result<(Vec<PgVoucherSummary>, i64), TopemsError> {
         let offset = ((page - 1) * page_size).max(0);
 
         let count_row = if let Some(s) = &status {
@@ -87,7 +88,7 @@ impl PgVoucherSummaryView {
         Ok((items, total))
     }
 
-    pub async fn get_by_id(&self, id: &str) -> Result<Option<PgVoucherSummary>, String> {
+    pub async fn get_by_id(&self, id: &str) -> Result<Option<PgVoucherSummary>, TopemsError> {
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE id = $1"))
             .bind(id)
             .fetch_optional(&self.pool)
@@ -100,7 +101,7 @@ impl PgVoucherSummaryView {
         }
     }
 
-    pub async fn get_by_no(&self, no: &str) -> Result<Option<PgVoucherSummary>, String> {
+    pub async fn get_by_no(&self, no: &str) -> Result<Option<PgVoucherSummary>, TopemsError> {
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE voucher_no = $1"))
             .bind(no)
             .fetch_optional(&self.pool)
@@ -113,7 +114,7 @@ impl PgVoucherSummaryView {
         }
     }
 
-    fn row_to_voucher(row: &sqlx::postgres::PgRow) -> Result<PgVoucherSummary, String> {
+    fn row_to_voucher(row: &sqlx::postgres::PgRow) -> Result<PgVoucherSummary, TopemsError> {
         Ok(PgVoucherSummary {
             id: row.try_get("id").map_err(|e| e.to_string())?,
             voucher_no: row.try_get("voucher_no").map_err(|e| e.to_string())?,
@@ -136,7 +137,7 @@ impl MaterializedView for PgVoucherSummaryView {
         "voucher_summary"
     }
 
-    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), String> {
+    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
         match event {
             FinanceDomainEvent::VoucherCreated(e) => {
                 let total = rust_decimal::Decimal::from_f64(e.total_amount)
@@ -200,7 +201,7 @@ impl MaterializedView for PgVoucherSummaryView {
         Ok(())
     }
 
-    async fn rebuild(&self) -> Result<(), String> {
+    async fn rebuild(&self) -> Result<(), TopemsError> {
         sqlx::query(only_own_schema_query!(
             "finance",
             "DELETE FROM mv_voucher_summary"
@@ -243,7 +244,7 @@ impl PgReceivableAgingView {
         page: i64,
         page_size: i64,
         status: Option<String>,
-    ) -> Result<(Vec<PgReceivableAging>, i64), String> {
+    ) -> Result<(Vec<PgReceivableAging>, i64), TopemsError> {
         let offset = ((page - 1) * page_size).max(0);
 
         let count_row = if let Some(s) = &status {
@@ -294,7 +295,7 @@ impl PgReceivableAgingView {
         Ok((items, total))
     }
 
-    pub async fn get_by_id(&self, id: &str) -> Result<Option<PgReceivableAging>, String> {
+    pub async fn get_by_id(&self, id: &str) -> Result<Option<PgReceivableAging>, TopemsError> {
         let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, receivable_no, customer_id, customer_name, invoice_no, due_date, amount, received_amount, status, days_overdue, created_at, updated_at FROM mv_receivable_aging WHERE id = $1"))
             .bind(id)
             .fetch_optional(&self.pool)
@@ -307,7 +308,7 @@ impl PgReceivableAgingView {
         }
     }
 
-    fn row_to_aging(row: &sqlx::postgres::PgRow) -> Result<PgReceivableAging, String> {
+    fn row_to_aging(row: &sqlx::postgres::PgRow) -> Result<PgReceivableAging, TopemsError> {
         Ok(PgReceivableAging {
             id: row.try_get("id").map_err(|e| e.to_string())?,
             customer_id: row.try_get("customer_id").map_err(|e| e.to_string())?,
@@ -327,7 +328,7 @@ impl PgReceivableAgingView {
         })
     }
 
-    pub async fn total_by_bucket(&self) -> Result<Vec<super::value_objects::AgingBucket>, String> {
+    pub async fn total_by_bucket(&self) -> Result<Vec<super::value_objects::AgingBucket>, TopemsError> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "SELECT SUM(current_amount) as current, 
@@ -405,7 +406,7 @@ impl MaterializedView for PgReceivableAgingView {
         "receivable_aging"
     }
 
-    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), String> {
+    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
         match event {
             FinanceDomainEvent::ReceivableCreated(e) => {
                 let amount = rust_decimal::Decimal::from_f64(e.amount)
@@ -484,7 +485,7 @@ impl MaterializedView for PgReceivableAgingView {
         Ok(())
     }
 
-    async fn rebuild(&self) -> Result<(), String> {
+    async fn rebuild(&self) -> Result<(), TopemsError> {
         sqlx::query(only_own_schema_query!(
             "finance",
             "DELETE FROM mv_receivable_aging"

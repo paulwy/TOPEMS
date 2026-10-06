@@ -161,7 +161,7 @@ impl MesErpSyncService {
 
         let result = self
             .retry_executor
-            .execute(|| async { self.do_erp_to_mes_sync(&erp_order).await.map_err(|e| e.to_string()) })
+            .execute(|| async { self.do_erp_to_mes_sync(&erp_order).await })
             .await;
 
         match result {
@@ -313,7 +313,7 @@ impl MesErpSyncService {
 
         let result = self
             .retry_executor
-            .execute(|| async { self.do_mes_to_erp_sync(&progress_data).await.map_err(|e| e.to_string()) })
+            .execute(|| async { self.do_mes_to_erp_sync(&progress_data).await })
             .await;
 
         match result {

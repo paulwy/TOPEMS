@@ -96,7 +96,7 @@ impl AgentService {
         }
     }
 
-    pub async fn run(&self, request: AgentRequest) -> Result<AgentResponse, String> {
+    pub async fn run(&self, request: AgentRequest) -> Result<AgentResponse, TopemsError> {
         let conversation_id = request
             .conversation_id
             .unwrap_or_else(|| Uuid::new_v4().to_string());
@@ -203,7 +203,7 @@ impl AgentService {
         &self,
         state: &AgentState,
         available_tools: &[AgentTool],
-    ) -> Result<Vec<ToolCall>, String> {
+    ) -> Result<Vec<ToolCall>, TopemsError> {
         let messages_str = state
             .messages
             .iter()
@@ -315,7 +315,7 @@ impl AgentService {
                 tool: AgentTool::Search,
                 success: false,
                 result: "".to_string(),
-                error: Some(e),
+                error: Some(e.to_string()),
             },
         }
     }
@@ -343,7 +343,7 @@ impl AgentService {
                 tool: AgentTool::DocumentQA,
                 success: false,
                 result: "".to_string(),
-                error: Some(e),
+                error: Some(e.to_string()),
             },
         }
     }
@@ -587,12 +587,12 @@ impl AgentService {
                 tool: AgentTool::CodeExecution,
                 success: false,
                 result: code.to_string(),
-                error: Some(e),
+                error: Some(e.to_string()),
             },
         }
     }
 
-    fn evaluate_code(&self, code: &str) -> Result<String, String> {
+    fn evaluate_code(&self, code: &str) -> Result<String, TopemsError> {
         let code_clean = code.trim().to_lowercase();
 
         if code_clean.contains("print") || code_clean.contains("console.log") {
@@ -680,7 +680,7 @@ impl AgentService {
             .join("\n\n")
     }
 
-    async fn generate_final_answer(&self, state: &AgentState) -> Result<String, String> {
+    async fn generate_final_answer(&self, state: &AgentState) -> Result<String, TopemsError> {
         let messages_str = state
             .messages
             .iter()
@@ -1002,7 +1002,7 @@ impl WorkflowOrchestrator {
     pub async fn execute_workflow(
         &self,
         request: WorkflowExecutionRequest,
-    ) -> Result<WorkflowExecutionResponse, String> {
+    ) -> Result<WorkflowExecutionResponse, TopemsError> {
         let workflow = self
             .workflows
             .get(&request.workflow_id)

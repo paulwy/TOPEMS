@@ -638,7 +638,7 @@ async fn write_to_staging(
     connection_id: Uuid,
     entity: &str,
     items: &[serde_json::Value],
-) -> Result<(i32, i32), String> {
+) -> Result<(i32, i32), TopemsError> {
     let mut inserted = 0;
     let mut skipped = 0;
 

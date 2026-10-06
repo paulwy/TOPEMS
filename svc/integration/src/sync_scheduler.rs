@@ -127,7 +127,7 @@ impl SyncScheduler {
     }
 
     /// 执行一次同步周期
-    async fn run_sync_cycle(&self) -> Result<(), String> {
+    async fn run_sync_cycle(&self) -> Result<(), TopemsError> {
         tracing::debug!("[sync-scheduler] 开始同步周期");
 
         // 查询所有激活的 ERP 连接
@@ -216,7 +216,7 @@ impl SyncScheduler {
                     );
                     // 更新失败状态
                     if let Err(update_err) =
-                        self.update_sync_failure(conn.id, Some(e.clone())).await
+                        self.update_sync_failure(conn.id, Some(e.to_string())).await
                     {
                         tracing::warn!(
                             "[sync-scheduler] 更新连接 '{}' 失败状态失败: {}",
@@ -256,7 +256,7 @@ impl SyncScheduler {
     }
 
     /// 执行增量同步（带重试和超时）
-    async fn execute_sync_with_retry(&self, conn: &ErpConnection) -> Result<SyncResult, String> {
+    async fn execute_sync_with_retry(&self, conn: &ErpConnection) -> Result<SyncResult, TopemsError> {
         let mut last_error: Option<String> = None;
         let mut retry_count = 0;
 
@@ -291,7 +291,7 @@ impl SyncScheduler {
                         attempt + 1,
                         e
                     );
-                    last_error = Some(e);
+                    last_error = Some(e.to_string());
                 }
             }
         }
@@ -307,7 +307,7 @@ impl SyncScheduler {
     }
 
     /// 执行单次同步（带超时）
-    async fn execute_single_sync(&self, conn: &ErpConnection) -> Result<(i64, i64), String> {
+    async fn execute_single_sync(&self, conn: &ErpConnection) -> Result<(i64, i64), TopemsError> {
         tracing::info!("[sync-scheduler] 开始执行连接 '{}' 的增量同步", conn.name);
 
         // 解析 tenant_id
@@ -377,7 +377,7 @@ impl SyncScheduler {
     }
 
     /// 查询所有激活的 ERP 连接
-    async fn get_active_connections(&self) -> Result<Vec<ErpConnection>, String> {
+    async fn get_active_connections(&self) -> Result<Vec<ErpConnection>, TopemsError> {
         let rows: Vec<(
             Uuid,
             String,
@@ -455,7 +455,7 @@ impl SyncScheduler {
     }
 
     /// 更新同步成功状态
-    async fn update_sync_success(&self, conn_id: Uuid) -> Result<(), String> {
+    async fn update_sync_success(&self, conn_id: Uuid) -> Result<(), TopemsError> {
         sqlx::query(
             "UPDATE integration.erp_connections
              SET last_sync_at = NOW(),
@@ -478,7 +478,7 @@ impl SyncScheduler {
         &self,
         conn_id: Uuid,
         error: Option<String>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let error_msg = error.unwrap_or_else(|| "未知错误".to_string());
         // 截断错误信息，避免过长
         let truncated_error = if error_msg.len() > 500 {

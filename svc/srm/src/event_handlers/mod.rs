@@ -13,7 +13,7 @@ use topems_shared_event::event::{
 };
 use uuid::Uuid;
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct SrmEventHandlers {
@@ -388,7 +388,7 @@ pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
     supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = SrmEventHandlers::new(db, event_publisher, supplier_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 

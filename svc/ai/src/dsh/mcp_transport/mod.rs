@@ -452,7 +452,7 @@ impl TransportManager {
     }
 
     /// 断开传输会话
-    pub fn disconnect(&self, session_id: &str) -> Result<(), String> {
+    pub fn disconnect(&self, session_id: &str) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         let session = sessions
             .get_mut(session_id)
@@ -467,7 +467,7 @@ impl TransportManager {
     }
 
     /// 获取传输状态
-    pub fn get_status(&self, session_id: &str) -> Result<TransportStatus, String> {
+    pub fn get_status(&self, session_id: &str) -> Result<TransportStatus, TopemsError> {
         let sessions = self.sessions.lock();
         let session = sessions
             .get(session_id)
@@ -551,7 +551,7 @@ impl TransportManager {
         &self,
         session_id: &str,
         message: TransportMessage,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         let session = sessions
             .get_mut(session_id)
@@ -562,7 +562,7 @@ impl TransportManager {
     }
 
     /// 获取传输统计
-    pub fn get_stats(&self, session_id: &str) -> Result<TransportStats, String> {
+    pub fn get_stats(&self, session_id: &str) -> Result<TransportStats, TopemsError> {
         let sessions = self.sessions.lock();
         let session = sessions
             .get(session_id)

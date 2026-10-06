@@ -722,7 +722,7 @@ impl WorkflowEngine {
 
             let (status, output_data, error_message) = match node_result {
                 Ok(output) => (NodeExecutionStatus::Success, Some(output), None),
-                Err(err) => (NodeExecutionStatus::Failed, None, Some(err)),
+                Err(err) => (NodeExecutionStatus::Failed, None, Some(err.to_string())),
             };
 
             let executed_node = ExecutedNode {
@@ -803,7 +803,7 @@ impl WorkflowEngine {
         &self,
         node: &WorkflowNode,
         execution: &mut WorkflowExecution,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         match node.node_type {
             NodeType::Start => {
                 debug!(node_id = %node.id, "Start node executed");

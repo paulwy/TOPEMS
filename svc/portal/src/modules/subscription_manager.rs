@@ -442,7 +442,7 @@ impl SubscriptionGateway {
     pub async fn broadcast(
         channels: Vec<SubscriptionChannel>,
         payload: serde_json::Value,
-    ) -> Result<Vec<SubscriptionMessage>, String> {
+    ) -> Result<Vec<SubscriptionMessage>, TopemsError> {
         let mut results = Vec::new();
         for channel in channels {
             match Self::publish(channel, payload.clone()).await {
@@ -534,7 +534,7 @@ impl MessageQueueBridge {
     pub async fn consume_from_queue(
         queue_name: &str,
         max_messages: usize,
-    ) -> Result<Vec<QueueMessage>, String> {
+    ) -> Result<Vec<QueueMessage>, TopemsError> {
         let store = get_subscription_store();
         let mut queues = store.queues.lock().await;
 

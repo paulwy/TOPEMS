@@ -107,7 +107,7 @@ pub struct AsyncTaskStats {
 pub async fn enqueue_task(
     pool: &PgPool,
     req: &CreateAsyncTaskRequest,
-) -> Result<AsyncTask, String> {
+) -> Result<AsyncTask, TopemsError> {
     let max_retries = req.max_retries.unwrap_or(5);
     let priority = req.priority.unwrap_or(0);
     let scheduled_at = req.scheduled_at.unwrap_or_else(Utc::now);
@@ -146,7 +146,7 @@ pub async fn dequeue_task(
     pool: &PgPool,
     task_types: &[&str],
     limit: i64,
-) -> Result<Vec<AsyncTask>, String> {
+) -> Result<Vec<AsyncTask>, TopemsError> {
     let types_array: Vec<String> = task_types.iter().map(|s| s.to_string()).collect();
 
     let rows = sqlx::query(
@@ -188,7 +188,7 @@ pub async fn complete_task(
     pool: &PgPool,
     task_id: Uuid,
     result: Option<serde_json::Value>,
-) -> Result<AsyncTask, String> {
+) -> Result<AsyncTask, TopemsError> {
     let row = sqlx::query(
         r#"
         UPDATE integration.async_tasks
@@ -213,7 +213,7 @@ pub async fn complete_task(
 }
 
 /// 标记任务失败
-pub async fn fail_task(pool: &PgPool, task_id: Uuid, error: &str) -> Result<AsyncTask, String> {
+pub async fn fail_task(pool: &PgPool, task_id: Uuid, error: &str) -> Result<AsyncTask, TopemsError> {
     let row = sqlx::query(
         r#"
         UPDATE integration.async_tasks
@@ -241,7 +241,7 @@ pub async fn retry_task(
     pool: &PgPool,
     task_id: Uuid,
     delay_secs: Option<i64>,
-) -> Result<AsyncTask, String> {
+) -> Result<AsyncTask, TopemsError> {
     let scheduled_at = match delay_secs {
         Some(secs) => Utc::now() + chrono::Duration::seconds(secs),
         None => Utc::now(),
@@ -279,7 +279,7 @@ pub async fn mark_max_retries_exceeded(
     pool: &PgPool,
     task_id: Uuid,
     error: &str,
-) -> Result<AsyncTask, String> {
+) -> Result<AsyncTask, TopemsError> {
     let row = sqlx::query(
         r#"
         UPDATE integration.async_tasks
@@ -316,7 +316,7 @@ pub async fn mark_max_retries_exceeded(
     ),
     tag = "AsyncTaskQueue"
 )]
-pub async fn get_task(pool: &PgPool, task_id: Uuid) -> Result<Option<AsyncTask>, String> {
+pub async fn get_task(pool: &PgPool, task_id: Uuid) -> Result<Option<AsyncTask>, TopemsError> {
     let row = sqlx::query(
         r#"
         SELECT id, tenant_id, task_type, source_service, target_service,
@@ -342,7 +342,7 @@ pub async fn list_tasks(
     task_type: Option<&str>,
     limit: i64,
     offset: i64,
-) -> Result<Vec<AsyncTask>, String> {
+) -> Result<Vec<AsyncTask>, TopemsError> {
     let rows = sqlx::query(
         r#"
         SELECT id, tenant_id, task_type, source_service, target_service,
@@ -369,7 +369,7 @@ pub async fn list_tasks(
 }
 
 /// 获取任务统计
-pub async fn get_task_stats(pool: &PgPool) -> Result<AsyncTaskStats, String> {
+pub async fn get_task_stats(pool: &PgPool) -> Result<AsyncTaskStats, TopemsError> {
     let row = sqlx::query(
         r#"
         SELECT
@@ -399,7 +399,7 @@ pub async fn get_task_stats(pool: &PgPool) -> Result<AsyncTaskStats, String> {
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 清理已完成的旧任务（软删除）
-pub async fn cleanup_completed_tasks(pool: &PgPool, older_than_days: i64) -> Result<i64, String> {
+pub async fn cleanup_completed_tasks(pool: &PgPool, older_than_days: i64) -> Result<i64, TopemsError> {
     let result = sqlx::query(
         r#"
         UPDATE integration.async_tasks

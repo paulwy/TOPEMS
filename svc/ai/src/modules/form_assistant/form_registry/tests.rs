@@ -5,6 +5,8 @@
 use super::common::FormDomain;
 use super::registry::FormRegistry;
 use super::*;
+use super::common::FormDomain;
+use super::registry::FormRegistry;
 
 #[test]
 fn test_default_registry_has_30_plus_forms() {

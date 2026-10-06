@@ -166,7 +166,7 @@ impl QAService {
         _top_k: usize,
         tenant_id: Uuid,
         user_name: Option<&str>,
-    ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
+    ) -> Result<(String, Vec<SearchResult>, Uuid, f64), TopemsError> {
         // 构建提示词
         let prompt = if let Some(ctx) = context {
             format!(
@@ -215,7 +215,7 @@ impl QAService {
         context_chunks: &[SearchResult],
         tenant_id: Uuid,
         user_name: Option<&str>,
-    ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
+    ) -> Result<(String, Vec<SearchResult>, Uuid, f64), TopemsError> {
         // 构建上下文
         let context = context_chunks
             .iter()
@@ -268,7 +268,7 @@ impl QAService {
         &self,
         limit: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<QAHistory>, String> {
+    ) -> Result<Vec<QAHistory>, TopemsError> {
         self.get_qa_history_paged(0, limit, tenant_id).await
     }
 
@@ -279,7 +279,7 @@ impl QAService {
         offset: usize,
         limit: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<QAHistory>, String> {
+    ) -> Result<Vec<QAHistory>, TopemsError> {
         let rows = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -321,7 +321,7 @@ impl QAService {
     }
 
     /// 获取问答历史总数
-    pub async fn get_qa_history_count(&self, tenant_id: Uuid) -> Result<i64, String> {
+    pub async fn get_qa_history_count(&self, tenant_id: Uuid) -> Result<i64, TopemsError> {
         let count: i64 = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
@@ -345,7 +345,7 @@ impl QAService {
         offset: usize,
         limit: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<QAHistory>, String> {
+    ) -> Result<Vec<QAHistory>, TopemsError> {
         let rows = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -393,7 +393,7 @@ impl QAService {
         &self,
         query: &str,
         tenant_id: Uuid,
-    ) -> Result<i64, String> {
+    ) -> Result<i64, TopemsError> {
         let count: i64 = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
@@ -413,7 +413,7 @@ impl QAService {
     }
 
     /// 删除问答历史（软删除）
-    pub async fn delete_qa_history(&self, qa_id: Uuid, tenant_id: Uuid) -> Result<bool, String> {
+    pub async fn delete_qa_history(&self, qa_id: Uuid, tenant_id: Uuid) -> Result<bool, TopemsError> {
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -438,7 +438,7 @@ impl QAService {
         &self,
         qa_ids: &[Uuid],
         tenant_id: Uuid,
-    ) -> Result<i64, String> {
+    ) -> Result<i64, TopemsError> {
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -464,7 +464,7 @@ impl QAService {
         feedback: &str,
         rating: Option<i32>,
         tenant_id: Uuid,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -512,7 +512,7 @@ impl QAService {
         status: &str,
         duration_ms: i32,
         tokens: Option<(u64, u64)>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let (tokens_in, tokens_out) = match tokens {
             Some((i, o)) => (Some(i as i64), Some(o as i64)),
             None => (None, None),
@@ -579,7 +579,7 @@ impl QAService {
     }
 
     /// 分类问题类型
-    pub async fn classify_question(&self, question: &str) -> Result<QuestionType, String> {
+    pub async fn classify_question(&self, question: &str) -> Result<QuestionType, TopemsError> {
         let prompt = format!("{}{}", QUESTION_CLASSIFICATION_PROMPT, question);
         let response = self.call_ai_api(&prompt).await?;
 
@@ -605,7 +605,7 @@ impl QAService {
         question: &str,
         context_chunks: &[SearchResult],
         _tenant_id: Uuid,
-    ) -> Result<StructuredAnswer, String> {
+    ) -> Result<StructuredAnswer, TopemsError> {
         // 分类问题类型
         let question_type = self.classify_question(question).await?;
 
@@ -734,7 +734,7 @@ impl QAService {
         &self,
         question: &str,
         answer: &str,
-    ) -> Result<Vec<String>, String> {
+    ) -> Result<Vec<String>, TopemsError> {
         let prompt = format!(
             r#"
 根据以下对话内容，生成3个相关的后续问题，帮助用户深入了解主题。
@@ -779,7 +779,7 @@ impl QAService {
         history: &[(String, String)],
         context_chunks: &[SearchResult],
         tenant_id: Uuid,
-    ) -> Result<(String, Vec<SearchResult>, Uuid, f64), String> {
+    ) -> Result<(String, Vec<SearchResult>, Uuid, f64), TopemsError> {
         // 构建对话历史
         let history_str: String = history
             .iter()
@@ -851,7 +851,7 @@ impl QAService {
         context: Option<serde_json::Value>,
         sources: Option<&[SearchResult]>,
         tenant_id: Uuid,
-    ) -> Result<Uuid, String> {
+    ) -> Result<Uuid, TopemsError> {
         let mut txn = self
             .db
             .pool()
@@ -889,7 +889,7 @@ impl QAService {
     }
 
     /// 意图识别
-    pub async fn recognize_intent(&self, question: &str) -> Result<IntentResult, String> {
+    pub async fn recognize_intent(&self, question: &str) -> Result<IntentResult, TopemsError> {
         let prompt = format!("{}{}", INTENT_RECOGNITION_PROMPT, question);
         let response = self.call_ai_api(&prompt).await?;
 
@@ -906,7 +906,7 @@ impl QAService {
         &self,
         question: &str,
         answer: &str,
-    ) -> Result<i32, String> {
+    ) -> Result<i32, TopemsError> {
         let prompt = ANSWER_QUALITY_PROMPT
             .replace("{}", question)
             .replace("{}", answer);
@@ -926,7 +926,7 @@ impl QAService {
         query: &str,
         top_k: usize,
         context_chunks: &[SearchResult],
-    ) -> Result<Vec<SearchResult>, String> {
+    ) -> Result<Vec<SearchResult>, TopemsError> {
         let intent_result = self.recognize_intent(query).await?;
 
         let mut enhanced_results = context_chunks.to_vec();
@@ -960,7 +960,7 @@ impl QAService {
         query: &str,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<SearchResult>, String> {
+    ) -> Result<Vec<SearchResult>, TopemsError> {
         let query_embedding = self.generate_query_embedding(query).await?;
 
         if query_embedding.is_empty() {
@@ -1025,7 +1025,7 @@ impl QAService {
         vector_weight: f64,
         keyword_weight: f64,
         tenant_id: Uuid,
-    ) -> Result<Vec<SearchResult>, String> {
+    ) -> Result<Vec<SearchResult>, TopemsError> {
         let vector_results = self.semantic_search(query, top_k * 2, tenant_id).await?;
 
         let keyword_results = self

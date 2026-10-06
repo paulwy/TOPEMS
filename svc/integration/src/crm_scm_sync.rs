@@ -367,7 +367,7 @@ pub async fn convert_opportunity_to_purchase(
     crm_url: &str,
     scm_url: &str,
     req: &OpportunityToPurchaseRequest,
-) -> Result<CrmScmSync, String> {
+) -> Result<CrmScmSync, TopemsError> {
     info!("商机转采购订单 - 商机ID: {}", req.opportunity_id);
 
     let opportunity_id =
@@ -699,7 +699,7 @@ async fn fetch_crm_opportunity(
     _pool: &PgPool,
     _crm_url: &str,
     opportunity_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取CRM商机记录 - ID: {}", opportunity_id);
 
     Ok(serde_json::json!({
@@ -725,7 +725,7 @@ async fn create_scm_purchase_order(
     _scm_url: &str,
     opportunity_data: &serde_json::Value,
     supplier_id: Option<&str>,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let purchase_id = uuid::Uuid::new_v4();
     info!(
         "创建SCM采购订单 - 产品: {}, 数量: {}, 供应商: {:?}",
@@ -746,7 +746,7 @@ async fn fetch_crm_supplier(
     _pool: &PgPool,
     _crm_url: &str,
     supplier_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取CRM供应商记录 - ID: {}", supplier_id);
 
     Ok(serde_json::json!({
@@ -770,7 +770,7 @@ async fn fetch_scm_supplier(
     _pool: &PgPool,
     _scm_url: &str,
     supplier_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取SCM供应商记录 - ID: {}", supplier_id);
 
     Ok(serde_json::json!({
@@ -793,7 +793,7 @@ async fn fetch_scm_supplier(
 async fn create_scm_supplier(
     _scm_url: &str,
     supplier_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let scm_id = uuid::Uuid::new_v4();
     info!(
         "创建SCM供应商 - 名称: {}",
@@ -808,7 +808,7 @@ async fn create_scm_supplier(
 async fn create_crm_supplier(
     _crm_url: &str,
     supplier_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let crm_id = uuid::Uuid::new_v4();
     info!(
         "创建CRM供应商 - 名称: {}",
@@ -824,7 +824,7 @@ async fn fetch_crm_product(
     _pool: &PgPool,
     _crm_url: &str,
     product_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取CRM产品记录 - ID: {}", product_id);
 
     Ok(serde_json::json!({
@@ -844,7 +844,7 @@ async fn fetch_scm_product(
     _pool: &PgPool,
     _scm_url: &str,
     product_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取SCM产品记录 - ID: {}", product_id);
 
     Ok(serde_json::json!({
@@ -865,7 +865,7 @@ async fn fetch_scm_product(
 async fn create_scm_product(
     _scm_url: &str,
     product_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let scm_id = uuid::Uuid::new_v4();
     info!(
         "创建SCM产品 - 名称: {}",
@@ -880,7 +880,7 @@ async fn create_scm_product(
 async fn create_crm_product(
     _crm_url: &str,
     product_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let crm_id = uuid::Uuid::new_v4();
     info!(
         "创建CRM产品 - 名称: {}",
@@ -1011,7 +1011,7 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, crm_url, scm_url, &sync_type, &payload).await.map_err(|e| e.to_string())
+            execute_sync_by_type(pool, sync.tenant_id, crm_url, scm_url, &sync_type, &payload).await
         })
         .await;
 
@@ -1019,7 +1019,7 @@ pub async fn retry_failed_sync(
         RetryResult::Success(_) => {
             let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
@@ -1027,7 +1027,7 @@ pub async fn retry_failed_sync(
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
             increment_retry_count(pool, sync_id, &error)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error

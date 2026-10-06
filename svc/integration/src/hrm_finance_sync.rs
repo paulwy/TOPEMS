@@ -363,7 +363,7 @@ pub async fn sync_payroll(
     hrm_url: &str,
     finance_url: &str,
     req: &SyncPayrollRequest,
-) -> Result<HrmFinanceSync, String> {
+) -> Result<HrmFinanceSync, TopemsError> {
     info!(
         "同步薪资数据 - 薪资ID: {}, 账期: {}",
         req.payroll_id, req.pay_period
@@ -556,7 +556,7 @@ pub async fn sync_social_insurance(
     hrm_url: &str,
     finance_url: &str,
     req: &SyncSocialInsuranceRequest,
-) -> Result<HrmFinanceSync, String> {
+) -> Result<HrmFinanceSync, TopemsError> {
     info!(
         "同步社保数据 - 员工ID: {}, 账期: {}",
         req.employee_id, req.pay_period
@@ -624,7 +624,7 @@ pub async fn sync_housing_fund(
     hrm_url: &str,
     finance_url: &str,
     req: &SyncHousingFundRequest,
-) -> Result<HrmFinanceSync, String> {
+) -> Result<HrmFinanceSync, TopemsError> {
     info!(
         "同步公积金数据 - 员工ID: {}, 账期: {}",
         req.employee_id, req.pay_period
@@ -689,7 +689,7 @@ async fn fetch_hrm_payroll(
     _pool: &PgPool,
     _hrm_url: &str,
     payroll_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取HRM薪资记录 - ID: {}", payroll_id);
 
     Ok(serde_json::json!({
@@ -719,7 +719,7 @@ async fn create_finance_payroll(
     _finance_url: &str,
     payroll_data: &serde_json::Value,
     pay_period: &str,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let finance_id = uuid::Uuid::new_v4();
     info!(
         "创建Finance薪资 - 员工: {}, 账期: {}, 实发: {}",
@@ -740,7 +740,7 @@ async fn fetch_hrm_employee(
     _pool: &PgPool,
     _hrm_url: &str,
     employee_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取HRM员工记录 - ID: {}", employee_id);
 
     Ok(serde_json::json!({
@@ -769,7 +769,7 @@ async fn fetch_finance_employee(
     _pool: &PgPool,
     _finance_url: &str,
     employee_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取Finance员工记录 - ID: {}", employee_id);
 
     Ok(serde_json::json!({
@@ -789,7 +789,7 @@ async fn fetch_finance_employee(
 async fn create_finance_employee(
     _finance_url: &str,
     employee_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let finance_id = uuid::Uuid::new_v4();
     info!(
         "创建Finance员工 - 姓名: {}",
@@ -804,7 +804,7 @@ async fn create_finance_employee(
 async fn create_hrm_employee(
     _hrm_url: &str,
     employee_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let hrm_id = uuid::Uuid::new_v4();
     info!(
         "创建HRM员工 - 姓名: {}",
@@ -821,7 +821,7 @@ async fn fetch_hrm_social_insurance(
     _hrm_url: &str,
     employee_id: Uuid,
     pay_period: &str,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!(
         "获取HRM社保数据 - 员工ID: {}, 账期: {}",
         employee_id, pay_period
@@ -853,7 +853,7 @@ async fn create_finance_social_insurance(
     _finance_url: &str,
     insurance_data: &serde_json::Value,
     pay_period: &str,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let finance_id = uuid::Uuid::new_v4();
     info!(
         "创建Finance社保记录 - 员工: {}, 账期: {}",
@@ -871,7 +871,7 @@ async fn fetch_hrm_housing_fund(
     _hrm_url: &str,
     employee_id: Uuid,
     pay_period: &str,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!(
         "获取HRM公积金数据 - 员工ID: {}, 账期: {}",
         employee_id, pay_period
@@ -899,7 +899,7 @@ async fn create_finance_housing_fund(
     _finance_url: &str,
     fund_data: &serde_json::Value,
     pay_period: &str,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let finance_id = uuid::Uuid::new_v4();
     info!(
         "创建Finance公积金记录 - 员工: {}, 账期: {}",
@@ -1059,7 +1059,7 @@ pub async fn retry_failed_sync(
                 &sync_type,
                 &payload,
             )
-            .await.map_err(|e| e.to_string())
+            .await
         })
         .await;
 
@@ -1067,7 +1067,7 @@ pub async fn retry_failed_sync(
         RetryResult::Success(_) => {
             let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
@@ -1075,7 +1075,7 @@ pub async fn retry_failed_sync(
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
             increment_retry_count(pool, sync_id, &error)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error

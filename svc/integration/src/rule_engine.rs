@@ -2,6 +2,7 @@
 //!
 //! 实现转换规则解析器和执行引擎
 
+use topems_shared_core::error::TopemsError;
 use serde_json::Value as JsonValue;
 
 use super::conversion_rules::{
@@ -83,7 +84,7 @@ pub struct RuleEvaluator;
 
 impl RuleEvaluator {
     /// 从 JSON 解析条件表达式
-    pub fn parse_condition(condition: &JsonValue) -> Result<ConditionExpression, String> {
+    pub fn parse_condition(condition: &JsonValue) -> Result<ConditionExpression, TopemsError> {
         let obj = condition
             .as_object()
             .ok_or("Condition must be a JSON object")?;
@@ -290,7 +291,7 @@ impl FieldMapper {
     pub fn apply_mappings(
         source_data: &JsonValue,
         mappings: &[FieldMapping],
-    ) -> Result<JsonValue, String> {
+    ) -> Result<JsonValue, TopemsError> {
         let mut result = serde_json::json!({});
 
         for mapping in mappings {
@@ -310,7 +311,7 @@ impl FieldMapper {
         source_value: Option<JsonValue>,
         mapping: &FieldMapping,
         source_data: &JsonValue,
-    ) -> Result<JsonValue, String> {
+    ) -> Result<JsonValue, TopemsError> {
         // 检查源值是否存在且非空
         if source_value.is_none() || source_value.as_ref().map(|v| v.is_null()).unwrap_or(true) {
             // 返回默认值
@@ -401,7 +402,7 @@ impl FieldMapper {
     }
 
     /// 应用转换表达式
-    fn apply_transform(value: &JsonValue, transform: &str) -> Result<JsonValue, String> {
+    fn apply_transform(value: &JsonValue, transform: &str) -> Result<JsonValue, TopemsError> {
         // 支持简单的转换表达式
         // 格式: "field.toUpperCase()" 或 "field.trim()" 等
 
@@ -461,7 +462,7 @@ impl FieldMapper {
     }
 
     /// 从 JSON 数组解析字段映射
-    pub fn parse_field_mappings(mappings: &JsonValue) -> Result<Vec<FieldMapping>, String> {
+    pub fn parse_field_mappings(mappings: &JsonValue) -> Result<Vec<FieldMapping>, TopemsError> {
         let arr = mappings
             .as_array()
             .ok_or("Field mappings must be a JSON array")?;
@@ -546,7 +547,7 @@ impl ConversionEngine {
         rule: &ConversionRule,
         source_record_id: &str,
         source_data: &JsonValue,
-    ) -> Result<ConversionExecution, String> {
+    ) -> Result<ConversionExecution, TopemsError> {
         let start_time = Utc::now();
 
         // 解析字段映射
@@ -613,17 +614,17 @@ pub trait RuleRepository: Send + Sync {
     fn get_rule_by_code(
         &self,
         code: &str,
-    ) -> impl std::future::Future<Output = Result<Option<ConversionRule>, String>> + Send;
+    ) -> impl std::future::Future<Output = Result<Option<ConversionRule>, TopemsError>> + Send;
     /// 保存执行记录
     fn save_execution(
         &self,
         execution: &ConversionExecution,
-    ) -> impl std::future::Future<Output = Result<(), String>> + Send;
+    ) -> impl std::future::Future<Output = Result<(), TopemsError>> + Send;
     /// 更新执行记录
     fn update_execution(
         &self,
         execution: &ConversionExecution,
-    ) -> impl std::future::Future<Output = Result<(), String>> + Send;
+    ) -> impl std::future::Future<Output = Result<(), TopemsError>> + Send;
 }
 
 #[cfg(test)]

@@ -4,6 +4,7 @@
 //! configurations. Supports batch create, update, and delete with
 //! partial success reporting.
 
+use topems_shared_core::error::TopemsError;
 use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
@@ -109,8 +110,8 @@ pub struct BatchDeleteResponse {
 // ===== Conversion Helpers =====
 
 /// Convert a PermissionRequest to TenantPermission, returning an error string on failure.
-fn try_convert(request: &PermissionRequest) -> Result<TenantPermission, String> {
-    TenantPermission::try_from(request)
+fn try_convert(request: &PermissionRequest) -> Result<TenantPermission, TopemsError> {
+    TenantPermission::try_from(request).map_err(TopemsError::ValidationFailed)
 }
 
 // ===== Route Handlers =====
@@ -143,7 +144,7 @@ async fn execute_batch_create(
                     tenant_id: req.tenant_id.clone(),
                     user_id: req.user_id.clone(),
                     success: false,
-                    error: Some(e),
+                    error: Some(e.to_string()),
                 });
             }
         }
@@ -190,7 +191,7 @@ async fn execute_batch_update(
                     tenant_id: req.tenant_id.clone(),
                     user_id: req.user_id.clone(),
                     success: false,
-                    error: Some(e),
+                    error: Some(e.to_string()),
                 });
             }
         }
@@ -401,7 +402,7 @@ mod tests {
         };
         let result = try_convert(&req);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Invalid role"));
+        assert!(result.unwrap_err().to_string().contains("Invalid role"));
     }
 
     #[test]

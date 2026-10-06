@@ -232,7 +232,7 @@ mod tests {
             vec![("A".into(), "B".into(), 1.0), ("B".into(), "A".into(), 1.0)];
         let r = explode_bom(&edges, "A", 1.0);
         assert!(r.is_err());
-        assert!(r.unwrap_err().contains("循环依赖"));
+        assert!(r.unwrap_err().to_string().contains("循环依赖"));
     }
 
     #[test]

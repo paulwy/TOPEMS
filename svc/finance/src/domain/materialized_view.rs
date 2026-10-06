@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -8,8 +9,8 @@ use super::value_objects::AgingBucket;
 #[async_trait]
 pub trait MaterializedView: Send + Sync {
     fn view_name(&self) -> &str;
-    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), String>;
-    async fn rebuild(&self) -> Result<(), String>;
+    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError>;
+    async fn rebuild(&self) -> Result<(), TopemsError>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,7 +49,7 @@ impl VoucherSummaryMaterializedView {
         page: i64,
         page_size: i64,
         status: Option<String>,
-    ) -> Result<(Vec<VoucherSummaryView>, i64), String> {
+    ) -> Result<(Vec<VoucherSummaryView>, i64), TopemsError> {
         let data = self.data.lock().map_err(|e| e.to_string())?;
 
         let mut items: Vec<VoucherSummaryView> = data
@@ -67,12 +68,12 @@ impl VoucherSummaryMaterializedView {
         Ok((page_items, total))
     }
 
-    pub async fn get_by_id(&self, id: &str) -> Result<Option<VoucherSummaryView>, String> {
+    pub async fn get_by_id(&self, id: &str) -> Result<Option<VoucherSummaryView>, TopemsError> {
         let data = self.data.lock().map_err(|e| e.to_string())?;
         Ok(data.get(id).cloned())
     }
 
-    pub async fn get_by_no(&self, no: &str) -> Result<Option<VoucherSummaryView>, String> {
+    pub async fn get_by_no(&self, no: &str) -> Result<Option<VoucherSummaryView>, TopemsError> {
         let data = self.data.lock().map_err(|e| e.to_string())?;
         Ok(data.values().find(|v| v.voucher_no == no).cloned())
     }
@@ -90,7 +91,7 @@ impl MaterializedView for VoucherSummaryMaterializedView {
         "voucher_summary"
     }
 
-    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), String> {
+    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
         let mut data = self.data.lock().map_err(|e| e.to_string())?;
 
         match event {
@@ -126,7 +127,7 @@ impl MaterializedView for VoucherSummaryMaterializedView {
         Ok(())
     }
 
-    async fn rebuild(&self) -> Result<(), String> {
+    async fn rebuild(&self) -> Result<(), TopemsError> {
         let mut data = self.data.lock().map_err(|e| e.to_string())?;
         data.clear();
         Ok(())
@@ -172,7 +173,7 @@ impl ReceivableAgingMaterializedView {
         page: i64,
         page_size: i64,
         status: Option<String>,
-    ) -> Result<(Vec<ReceivableAgingView>, i64), String> {
+    ) -> Result<(Vec<ReceivableAgingView>, i64), TopemsError> {
         let data = self.data.lock().map_err(|e| e.to_string())?;
 
         let mut items: Vec<ReceivableAgingView> = data
@@ -191,12 +192,12 @@ impl ReceivableAgingMaterializedView {
         Ok((page_items, total))
     }
 
-    pub async fn get_by_id(&self, id: &str) -> Result<Option<ReceivableAgingView>, String> {
+    pub async fn get_by_id(&self, id: &str) -> Result<Option<ReceivableAgingView>, TopemsError> {
         let data = self.data.lock().map_err(|e| e.to_string())?;
         Ok(data.get(id).cloned())
     }
 
-    pub async fn total_by_bucket(&self) -> Result<Vec<AgingBucket>, String> {
+    pub async fn total_by_bucket(&self) -> Result<Vec<AgingBucket>, TopemsError> {
         let data = self.data.lock().map_err(|e| e.to_string())?;
         let mut bucket_map: HashMap<String, f64> = HashMap::new();
 
@@ -246,7 +247,7 @@ impl MaterializedView for ReceivableAgingMaterializedView {
         "receivable_aging"
     }
 
-    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), String> {
+    async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
         let mut data = self.data.lock().map_err(|e| e.to_string())?;
 
         match event {
@@ -297,7 +298,7 @@ impl MaterializedView for ReceivableAgingMaterializedView {
         Ok(())
     }
 
-    async fn rebuild(&self) -> Result<(), String> {
+    async fn rebuild(&self) -> Result<(), TopemsError> {
         let mut data = self.data.lock().map_err(|e| e.to_string())?;
         data.clear();
         Ok(())

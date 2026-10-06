@@ -11,7 +11,7 @@ use topems_shared_event::event::{
     ScmShipmentReceivedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct PdmEventHandlers {
@@ -264,7 +264,7 @@ impl PdmEventHandlers {
 pub async fn start_event_subscribers(
     db: PgPool,
     dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = PdmEventHandlers::new(db, dict_cache.clone());
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 

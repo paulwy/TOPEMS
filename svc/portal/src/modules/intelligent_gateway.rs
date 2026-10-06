@@ -861,7 +861,7 @@ struct AutoSchemaStitcher;
 impl AutoSchemaStitcher {
     async fn discover_subgraphs(
         subgraph_urls: Option<Vec<String>>,
-    ) -> Result<Vec<SubgraphInfo>, String> {
+    ) -> Result<Vec<SubgraphInfo>, TopemsError> {
         let urls = subgraph_urls.unwrap_or_else(|| {
             vec![
                 "http://localhost:8029/graphql".to_string(),

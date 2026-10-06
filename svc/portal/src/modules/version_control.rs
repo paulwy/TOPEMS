@@ -892,7 +892,7 @@ impl CompatibilityChecker {
     pub async fn get_migration_path(
         from_version: &str,
         to_version: &str,
-    ) -> Result<Vec<String>, String> {
+    ) -> Result<Vec<String>, TopemsError> {
         let store = get_version_control_store();
         let reports = store.compatibility_reports.lock().await;
 

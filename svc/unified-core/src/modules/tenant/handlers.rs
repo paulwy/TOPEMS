@@ -1,10 +1,10 @@
 //! Tenant API handlers
 
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
-use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::models::*;
@@ -389,7 +389,7 @@ const BASIC_MODULE_CODES: &[(&str, &str)] = &[
 async fn activate_basic_modules(
     tx: &mut sqlx::Transaction<'_, sqlx::Postgres>,
     tenant_id: Uuid,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     for (module_code, module_name) in BASIC_MODULE_CODES.iter() {
         sqlx::query(
             r#"

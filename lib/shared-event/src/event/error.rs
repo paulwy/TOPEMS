@@ -34,3 +34,21 @@ pub enum EventError {
     #[error("事件 Schema/版本校验失败: {0}")]
     ValidationError(String),
 }
+
+impl From<EventError> for topems_shared_core::error::TopemsError {
+    fn from(e: EventError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            EventError::RedisError(inner) => TopemsError::NetworkRequest(format!("Redis: {inner}")),
+            EventError::SerializationError(inner) => TopemsError::ValidationFailed(inner.to_string()),
+            EventError::InvalidEventType(s) => TopemsError::ValidationFailed(s),
+            EventError::SubscriberNotFound(s) => TopemsError::ResourceNotFound(s),
+            EventError::PublishTimeout => TopemsError::RequestTimeout,
+            EventError::ConfigError(s) => TopemsError::ConfigValidation(s),
+            EventError::ConnectionError(s) => TopemsError::NetworkRequest(s),
+            EventError::SubscribeError(s) => TopemsError::NetworkRequest(s),
+            EventError::PublishError(s) => TopemsError::NetworkRequest(s),
+            EventError::ValidationError(s) => TopemsError::ValidationFailed(s),
+        }
+    }
+}

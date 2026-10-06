@@ -15,7 +15,7 @@ use topems_shared_event::event::{
 };
 
 /// 启动 MES 业务事件订阅（在 main.rs 中与缓存失效订阅并行 spawn）。
-pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), String> {
+pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
     let subscriber = EventSubscriber::new("mes-business")
         .map_err(|e| TopemsError::NetworkRequest(format!("创建 MES 业务事件订阅者失败: {}", e)))?;
 
@@ -49,7 +49,7 @@ pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), String> 
 
 /// ErpProductionOrderDispatched → 在 MES 本地创建生产工单。
 /// 幂等：source_order_id = erp_order_id 已存在则跳过（事件重放不重复建单）。
-async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Result<(), String> {
+async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Result<(), TopemsError> {
     let payload: ErpProductionOrderDispatchedPayload = event
         .parse_payload()
         .map_err(|e| TopemsError::ValidationFailed(format!("解析 ErpProductionOrderDispatched payload 失败: {}", e)))?;

@@ -18,7 +18,7 @@ use topems_shared_event::event::{
     WmsWarehouseTransferCompletedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 /// WMS 事件处理器
 ///
@@ -169,8 +169,8 @@ impl WmsEventHandlers {
             .clone();
         publisher
             .publish_inventory_shipped(payload)
-            .await
-            .map_err(|e| e.to_string())
+            .await.map_err(Into::into)
+            
     }
 
     /// 发布库存入库事件
@@ -188,8 +188,8 @@ impl WmsEventHandlers {
             .clone();
         publisher
             .publish_inventory_received(payload)
-            .await
-            .map_err(|e| e.to_string())
+            .await.map_err(Into::into)
+            
     }
 
     /// 发布仓库间调拨完成事件
@@ -207,8 +207,8 @@ impl WmsEventHandlers {
             .clone();
         publisher
             .publish_warehouse_transfer_completed(payload)
-            .await
-            .map_err(|e| e.to_string())
+            .await.map_err(Into::into)
+            
     }
 
     /// 发布库存不足预警事件
@@ -226,8 +226,8 @@ impl WmsEventHandlers {
             .clone();
         publisher
             .publish_inventory_low_stock(payload)
-            .await
-            .map_err(|e| e.to_string())
+            .await.map_err(Into::into)
+            
     }
 }
 
@@ -237,9 +237,9 @@ impl WmsEventHandlers {
 pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = WmsEventHandlers::new(db, event_publisher);
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers.build_subscriber()?;
 
     tracing::info!("[wms] 启动事件订阅者，注册 PurchaseOrderCreated + PurchaseOrderApproved + InboundOrderRequested 事件 handler");
     tokio::spawn(async move {
@@ -257,7 +257,7 @@ pub async fn start_event_subscribers(
 pub async fn emit_low_stock_alerts(
     db: &PgPool,
     event_publisher: &Option<Arc<EventPublisher>>,
-) -> Result<u64, String> {
+) -> Result<u64, TopemsError> {
     let publisher = match event_publisher {
         Some(p) => p.clone(),
         None => return Ok(0),

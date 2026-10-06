@@ -649,7 +649,7 @@ impl CopilotSessionManager {
         &self,
         session_id: &str,
         message: ConversationMessage,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         let context = sessions
             .get_mut(session_id)
@@ -672,7 +672,7 @@ impl CopilotSessionManager {
         &self,
         session_id: &str,
         records: Vec<SelectedRecord>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         let context = sessions
             .get_mut(session_id)
@@ -689,7 +689,7 @@ impl CopilotSessionManager {
         session_id: &str,
         key: &str,
         value: serde_json::Value,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         let context = sessions
             .get_mut(session_id)

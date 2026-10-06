@@ -484,7 +484,7 @@ impl DocumentService {
     }
 
     /// 从 CSV 文件提取文本
-    fn extract_text_from_csv(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_csv(&self, data: &[u8]) -> Result<String, TopemsError> {
         let content =
             String::from_utf8(data.to_vec()).map_err(|e| TopemsError::FileFormatError(format!("CSV 编码错误: {}", e)))?;
         let mut result = String::new();
@@ -503,7 +503,7 @@ impl DocumentService {
     }
 
     /// 从 JSON 文件提取文本
-    fn extract_text_from_json(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_json(&self, data: &[u8]) -> Result<String, TopemsError> {
         let content =
             String::from_utf8(data.to_vec()).map_err(|e| TopemsError::FileFormatError(format!("JSON 编码错误: {}", e)))?;
         let value: serde_json::Value =
@@ -512,14 +512,14 @@ impl DocumentService {
     }
 
     /// 从 XML/HTML 内容提取文本
-    fn extract_text_from_xml_content(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_xml_content(&self, data: &[u8]) -> Result<String, TopemsError> {
         let content =
             String::from_utf8(data.to_vec()).map_err(|e| TopemsError::FileFormatError(format!("XML/HTML 编码错误: {}", e)))?;
         Ok(self.extract_text_from_xml(&content))
     }
 
     /// 从 DOC 文件提取文本（简化版，读取纯文本部分）
-    fn extract_text_from_doc(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_doc(&self, data: &[u8]) -> Result<String, TopemsError> {
         let mut reader = BufReader::new(data);
         let mut buffer = [0; 1024];
         let mut text = String::new();
@@ -545,7 +545,7 @@ impl DocumentService {
     }
 
     /// 从 XLS 文件提取文本（简化版）
-    fn extract_text_from_xls(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_xls(&self, data: &[u8]) -> Result<String, TopemsError> {
         let content = String::from_utf8_lossy(data).into_owned();
         let text: String = content
             .chars()
@@ -555,7 +555,7 @@ impl DocumentService {
     }
 
     /// 从 PPTX 文件提取文本
-    fn extract_text_from_pptx(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_pptx(&self, data: &[u8]) -> Result<String, TopemsError> {
         use std::io::Cursor;
         use zip::ZipArchive;
 
@@ -582,7 +582,7 @@ impl DocumentService {
     }
 
     /// 从 RTF 文件提取文本
-    fn extract_text_from_rtf(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_rtf(&self, data: &[u8]) -> Result<String, TopemsError> {
         let content = String::from_utf8_lossy(data).into_owned();
         let mut text = String::new();
         let mut in_tag = false;
@@ -607,7 +607,7 @@ impl DocumentService {
     }
 
     /// 从 OpenDocument 文件提取文本
-    fn extract_text_from_opendocument(&self, data: &[u8], ext: &str) -> Result<String, String> {
+    fn extract_text_from_opendocument(&self, data: &[u8], ext: &str) -> Result<String, TopemsError> {
         use std::io::Cursor;
         use zip::ZipArchive;
 
@@ -640,7 +640,7 @@ impl DocumentService {
     }
 
     /// 从 DOCX 文件提取文本
-    fn extract_text_from_docx(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_docx(&self, data: &[u8]) -> Result<String, TopemsError> {
         use std::io::Cursor;
         use zip::ZipArchive;
 
@@ -666,7 +666,7 @@ impl DocumentService {
     }
 
     /// 从 XLSX 文件提取文本
-    fn extract_text_from_xlsx(&self, data: &[u8]) -> Result<String, String> {
+    fn extract_text_from_xlsx(&self, data: &[u8]) -> Result<String, TopemsError> {
         use std::io::Cursor;
         use zip::ZipArchive;
 
@@ -721,7 +721,7 @@ impl DocumentService {
         document_ids: Option<&[Uuid]>,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<DocumentQAAnswer, String> {
+    ) -> Result<DocumentQAAnswer, TopemsError> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
         let context_chunks = if let Some(doc_ids) = document_ids {
@@ -807,7 +807,7 @@ impl DocumentService {
         document_ids: &[Uuid],
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<SearchResult>, String> {
+    ) -> Result<Vec<SearchResult>, TopemsError> {
         let vs = self.vector_service.read().await;
         let mut all_chunks: Vec<SearchResult> = Vec::new();
 
@@ -845,7 +845,7 @@ impl DocumentService {
         question: &str,
         top_k: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<SearchResult>, String> {
+    ) -> Result<Vec<SearchResult>, TopemsError> {
         let vs = self.vector_service.read().await;
 
         if let Ok(docs) = vs.list_documents(tenant_id).await {
@@ -1137,7 +1137,7 @@ impl DocumentService {
         question: &str,
         answer: &str,
         config: &DocumentQAConfig,
-    ) -> Result<Vec<String>, String> {
+    ) -> Result<Vec<String>, TopemsError> {
         let prompt = format!(
             "根据以下对话内容，生成3个相关的后续问题，帮助用户深入了解主题。\n\n问题：{}\n\n回答：{}\n\n请生成3个后续问题，每个问题用数字编号。",
             question, answer

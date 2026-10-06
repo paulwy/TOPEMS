@@ -308,42 +308,42 @@ mod tests {
     fn test_validate_oee_inputs_negative_planned_time() {
         let result = validate_oee_inputs(-1.0, 100.0, 0.0, 1.0, 50.0, 45.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Planned production time"));
+        assert!(result.unwrap_err().to_string().contains("Planned production time"));
     }
 
     #[test]
     fn test_validate_oee_inputs_negative_run_time() {
         let result = validate_oee_inputs(480.0, -1.0, 0.0, 1.0, 50.0, 45.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Run time"));
+        assert!(result.unwrap_err().to_string().contains("Run time"));
     }
 
     #[test]
     fn test_validate_oee_inputs_negative_downtime() {
         let result = validate_oee_inputs(480.0, 400.0, -1.0, 1.0, 50.0, 45.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Downtime"));
+        assert!(result.unwrap_err().to_string().contains("Downtime"));
     }
 
     #[test]
     fn test_validate_oee_inputs_negative_cycle_time() {
         let result = validate_oee_inputs(480.0, 400.0, 80.0, -1.0, 50.0, 45.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Ideal cycle time"));
+        assert!(result.unwrap_err().to_string().contains("Ideal cycle time"));
     }
 
     #[test]
     fn test_validate_oee_inputs_negative_actual_output() {
         let result = validate_oee_inputs(480.0, 400.0, 80.0, 1.0, -1.0, 0.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Actual output"));
+        assert!(result.unwrap_err().to_string().contains("Actual output"));
     }
 
     #[test]
     fn test_validate_oee_inputs_negative_good_output() {
         let result = validate_oee_inputs(480.0, 400.0, 80.0, 1.0, 50.0, -1.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Good output"));
+        assert!(result.unwrap_err().to_string().contains("Good output"));
     }
 
     #[test]

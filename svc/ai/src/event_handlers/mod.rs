@@ -8,7 +8,7 @@ use topems_shared_event::event::{
     LimsInspectionAbnormalDetectedPayload, QmsQualityIssueCreatedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 #[allow(dead_code)]
@@ -242,7 +242,7 @@ impl AiEventHandlers {
 pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = AiEventHandlers::new(db, event_publisher);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 

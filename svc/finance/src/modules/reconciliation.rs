@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Json, Path, Query, State},
     Extension, Router,
@@ -335,7 +336,7 @@ pub async fn get_report_handler(
 async fn create_ticket_for_reconciliation(
     report: &ReconciliationReport,
     claims: &Claims,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let core_url = std::env::var("UNIFIED_CORE_URL")
         .or_else(|_| std::env::var("CORE_URL"))
         .unwrap_or_else(|_| "http://localhost:8000".to_string());
@@ -407,12 +408,12 @@ async fn create_ticket_for_reconciliation(
             } else {
                 let text = resp.text().await.unwrap_or_default();
                 tracing::warn!("对账差异工单创建失败: {}", text);
-                Err(text)
+                Err(TopemsError::BusinessLogic(text))
             }
         }
         Err(e) => {
             tracing::warn!("对账差异工单创建请求失败: {}", e);
-            Err(e.to_string())
+            Err(TopemsError::NetworkRequest(e.to_string()))
         }
     }
 }

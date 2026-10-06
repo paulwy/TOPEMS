@@ -353,7 +353,7 @@ impl ResourceManager {
     }
 
     /// 更新资源
-    pub fn update(&self, uri: &str, updates: ResourceUpdate) -> Result<(), String> {
+    pub fn update(&self, uri: &str, updates: ResourceUpdate) -> Result<(), TopemsError> {
         let mut resources = self.resources.lock();
         let resource = resources
             .get_mut(uri)
@@ -404,7 +404,7 @@ impl ResourceManager {
     }
 
     /// 删除资源
-    pub fn delete(&self, uri: &str) -> Result<(), String> {
+    pub fn delete(&self, uri: &str) -> Result<(), TopemsError> {
         let mut resources = self.resources.lock();
         let resource = resources
             .remove(uri)
@@ -697,7 +697,7 @@ impl ResourceManager {
         resource_uri: &str,
         role: &str,
         operation: &str,
-    ) -> Result<bool, String> {
+    ) -> Result<bool, TopemsError> {
         let resources = self.resources.lock();
         let resource = resources
             .get(resource_uri)

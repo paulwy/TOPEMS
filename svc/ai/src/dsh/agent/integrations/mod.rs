@@ -6,6 +6,7 @@
 //! - 将知识图谱和 RAG 结果注入 Agent 上下文
 //! - 将知识图谱和 RAG 封装为 MCP 工具
 
+use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -331,7 +332,7 @@ impl AgentIntegrationService {
     pub async fn query_knowledge_graph(
         &self,
         query: KnowledgeGraphQuery,
-    ) -> Result<KnowledgeGraphQueryResult, String> {
+    ) -> Result<KnowledgeGraphQueryResult, TopemsError> {
         let kg = self.knowledge_graph.read().await;
         let kg = kg.as_ref().ok_or("知识图谱未初始化")?;
 
@@ -430,7 +431,7 @@ impl AgentIntegrationService {
     }
 
     /// RAG 检索
-    pub async fn query_rag(&self, query: RagQuery) -> Result<RagQueryResult, String> {
+    pub async fn query_rag(&self, query: RagQuery) -> Result<RagQueryResult, TopemsError> {
         let rag = self.rag_retriever.read().await;
         let _rag = rag.as_ref().ok_or("RAG 检索器未初始化")?;
 
@@ -482,7 +483,7 @@ impl AgentIntegrationService {
         query: &str,
         system_prompt: &str,
         user_prompt: &str,
-    ) -> Result<EnhancedAgentContext, String> {
+    ) -> Result<EnhancedAgentContext, TopemsError> {
         let start = std::time::Instant::now();
 
         let mut knowledge_graph_result = None;

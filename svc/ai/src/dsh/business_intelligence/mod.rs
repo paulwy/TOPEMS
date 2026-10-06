@@ -2,6 +2,7 @@
 //!
 //! 提供智能表单（自动填充、验证、生成）和文档智能（解析、生成、摘要）能力。
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 
@@ -464,7 +465,7 @@ impl SmartFormEngine {
         &self,
         form_id: &str,
         data: &FormData,
-    ) -> Result<FormValidationResult, String> {
+    ) -> Result<FormValidationResult, TopemsError> {
         let form = self
             .get_form(form_id)
             .ok_or_else(|| format!("表单 {} 不存在", form_id))?;
@@ -635,7 +636,7 @@ impl SmartFormEngine {
         &self,
         form_id: &str,
         context: &HashMap<String, serde_json::Value>,
-    ) -> Result<FormData, String> {
+    ) -> Result<FormData, TopemsError> {
         let form = self
             .get_form(form_id)
             .ok_or_else(|| format!("表单 {} 不存在", form_id))?;
@@ -693,7 +694,7 @@ impl SmartFormEngine {
     }
 
     /// 从自然语言生成表单数据
-    pub fn generate_from_text(&self, form_id: &str, text: &str) -> Result<FormData, String> {
+    pub fn generate_from_text(&self, form_id: &str, text: &str) -> Result<FormData, TopemsError> {
         let form = self
             .get_form(form_id)
             .ok_or_else(|| format!("表单 {} 不存在", form_id))?;
@@ -2188,7 +2189,7 @@ impl DocumentIntelligenceEngine {
         &self,
         document_id: &str,
         content: &str,
-    ) -> Result<DocumentParseResult, String> {
+    ) -> Result<DocumentParseResult, TopemsError> {
         let _document = self
             .get_document(document_id)
             .ok_or_else(|| format!("文档 {} 不存在", document_id))?;
@@ -2322,7 +2323,7 @@ impl DocumentIntelligenceEngine {
         &self,
         document_id: &str,
         summary_type: SummaryType,
-    ) -> Result<DocumentSummary, String> {
+    ) -> Result<DocumentSummary, TopemsError> {
         let document = self
             .get_document(document_id)
             .ok_or_else(|| format!("文档 {} 不存在", document_id))?;
@@ -2403,7 +2404,7 @@ impl DocumentIntelligenceEngine {
     pub fn generate_document(
         &self,
         request: DocumentGenerationRequest,
-    ) -> Result<DocumentInfo, String> {
+    ) -> Result<DocumentInfo, TopemsError> {
         let document_id = format!("doc_{}", uuid::Uuid::new_v4());
         let now = chrono::Utc::now().to_rfc3339();
         let title = request.title.clone();

@@ -555,7 +555,7 @@ impl PlanExecuteOrchestrator {
 
     #[allow(clippy::as_conversions)]
     /// 获取可执行的子任务
-    pub fn get_ready_subtasks(&self, plan_id: &str) -> Result<Vec<Subtask>, String> {
+    pub fn get_ready_subtasks(&self, plan_id: &str) -> Result<Vec<Subtask>, TopemsError> {
         let plans = self.plans.lock();
         let plan = plans
             .get(plan_id)
@@ -761,7 +761,7 @@ impl PlanExecuteOrchestrator {
         plan_id: &str,
         subtask_id: &str,
         reason: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let mut plans = self.plans.lock();
         let plan = plans
             .get_mut(plan_id)
@@ -783,7 +783,7 @@ impl PlanExecuteOrchestrator {
     }
 
     /// 添加子任务
-    pub fn add_subtask(&self, plan_id: &str, subtask: Subtask) -> Result<(), String> {
+    pub fn add_subtask(&self, plan_id: &str, subtask: Subtask) -> Result<(), TopemsError> {
         let mut plans = self.plans.lock();
         let plan = plans
             .get_mut(plan_id)
@@ -836,7 +836,7 @@ impl PlanExecuteOrchestrator {
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 生成执行报告
-    pub fn generate_report(&self, plan_id: &str) -> Result<ExecutionReport, String> {
+    pub fn generate_report(&self, plan_id: &str) -> Result<ExecutionReport, TopemsError> {
         let plans = self.plans.lock();
         let plan = plans
             .get(plan_id)

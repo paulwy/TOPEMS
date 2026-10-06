@@ -4,6 +4,7 @@
 //! configurations. Supports CRUD operations for permissions and a
 //! permission check endpoint for runtime authorization.
 
+use topems_shared_core::error::TopemsError;
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::Json;
@@ -194,7 +195,7 @@ impl TryFrom<&PermissionRequest> for TenantPermission {
                     max_permission,
                 })
             })
-            .collect::<Result<Vec<_>, String>>()?;
+            .collect::<Result<Vec<_>, TopemsError>>()?;
 
         Ok(TenantPermission {
             tenant_id: req.tenant_id.clone(),

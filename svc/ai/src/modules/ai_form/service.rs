@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::routing::{get, post};
 use axum::Router;
 
@@ -34,22 +35,22 @@ pub async fn suggest_fields(
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
     target_field: Option<&str>,
-) -> Result<Vec<crate::modules::form_assistant::FieldSuggestion>, String> {
+) -> Result<Vec<crate::modules::form_assistant::FieldSuggestion>, TopemsError> {
     assistant
         .suggest_fields(form_type, form_schema, current_data, target_field)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| TopemsError::NetworkRequest(e.to_string()))
 }
 
 pub async fn enhance_text(
     assistant: &dyn AiFormAssistant,
     text: &str,
     enhancement_type: &str,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     assistant
         .enhance_text(text, enhancement_type)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| TopemsError::NetworkRequest(e.to_string()))
 }
 
 pub async fn validate_form(
@@ -57,29 +58,29 @@ pub async fn validate_form(
     form_type: &str,
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
-) -> Result<Vec<crate::modules::form_assistant::ValidationResult>, String> {
+) -> Result<Vec<crate::modules::form_assistant::ValidationResult>, TopemsError> {
     assistant
         .validate_form(form_type, form_schema, current_data)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| TopemsError::NetworkRequest(e.to_string()))
 }
 
 pub async fn translate_term(
     assistant: &dyn AiFormAssistant,
     term: &str,
     form_type: &str,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     assistant
         .translate_term(term, form_type)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| TopemsError::NetworkRequest(e.to_string()))
 }
 
 pub async fn assist(
     assistant: &dyn AiFormAssistant,
     request: crate::modules::form_assistant::AiFormAssistantRequest,
-) -> Result<crate::modules::form_assistant::AiFormAssistantResponse, String> {
-    assistant.assist(request).await.map_err(|e| e.to_string())
+) -> Result<crate::modules::form_assistant::AiFormAssistantResponse, TopemsError> {
+    assistant.assist(request).await.map_err(|e| TopemsError::NetworkRequest(e.to_string()))
 }
 
 pub async fn suggest_fields_for_form(
@@ -88,11 +89,11 @@ pub async fn suggest_fields_for_form(
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
     target_field: Option<&str>,
-) -> Result<Vec<crate::modules::form_assistant::FieldSuggestion>, String> {
+) -> Result<Vec<crate::modules::form_assistant::FieldSuggestion>, TopemsError> {
     assistant
         .suggest_fields_with_config(form_type, form_schema, current_data, target_field)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| TopemsError::NetworkRequest(e.to_string()))
 }
 
 pub async fn enhance_text_for_form(
@@ -100,9 +101,9 @@ pub async fn enhance_text_for_form(
     text: &str,
     enhancement_type: &str,
     form_type: &str,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     assistant
         .enhance_text_for_form(text, enhancement_type, form_type)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| TopemsError::NetworkRequest(e.to_string()))
 }

@@ -118,7 +118,7 @@ struct DeviceLocationRecord {
 async fn insert_device_location(
     pool: &PgPool,
     record: &DeviceLocationRecord,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let position: serde_json::Value =
         serde_json::from_str(&record.position).map_err(|e| TopemsError::ValidationFailed(format!("位置解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
@@ -153,7 +153,7 @@ struct PipelineRecord {
     description: Option<String>,
 }
 
-async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), String> {
+async fn insert_pipeline(pool: &PgPool, record: &PipelineRecord) -> Result<(), TopemsError> {
     let path: serde_json::Value =
         serde_json::from_str(&record.path).map_err(|e| TopemsError::ValidationFailed(format!("路径解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");
@@ -188,7 +188,7 @@ struct WarehouseRecord {
     description: Option<String>,
 }
 
-async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> Result<(), String> {
+async fn insert_warehouse_location(pool: &PgPool, record: &WarehouseRecord) -> Result<(), TopemsError> {
     let position: serde_json::Value =
         serde_json::from_str(&record.position).map_err(|e| TopemsError::ValidationFailed(format!("位置解析失败: {}", e)))?;
     let status = record.status.as_deref().unwrap_or("active");

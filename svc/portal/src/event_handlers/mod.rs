@@ -33,15 +33,15 @@ impl PortalEventHandlers {
         Ok(subscriber
             .subscribe_handler(vec![EventType::EmployeeOnboarded], move |event| {
                 let h = h1.clone();
-                Box::pin(async move { h.handle_employee_onboarded(event).await.map_err(|e| e.to_string()) })
+                Box::pin(async move { h.handle_employee_onboarded(event).await })
             })
             .subscribe_handler(vec![EventType::PmProjectCreated], move |event| {
                 let h = h2.clone();
-                Box::pin(async move { h.handle_project_created(event).await.map_err(|e| e.to_string()) })
+                Box::pin(async move { h.handle_project_created(event).await })
             })
             .subscribe_handler(vec![EventType::AfterSalesTicketCreated], move |event| {
                 let h = h3.clone();
-                Box::pin(async move { h.handle_after_sales_ticket(event).await.map_err(|e| e.to_string()) })
+                Box::pin(async move { h.handle_after_sales_ticket(event).await })
             }))
     }
 

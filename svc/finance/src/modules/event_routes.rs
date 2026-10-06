@@ -208,7 +208,7 @@ pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<S
                 "Saga 已启动并执行",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 
@@ -225,7 +225,7 @@ pub async fn compensate_saga(
             CompensateSagaResponse { saga_id, status },
             "补偿完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e)),
+        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
 }
 

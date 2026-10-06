@@ -17,7 +17,7 @@ impl EventProjector {
         self.views.push(view);
     }
 
-    pub async fn project(&self, event: &FinanceDomainEvent) -> Result<(), String> {
+    pub async fn project(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
         for view in &self.views {
             view.handle_event(event).await.map_err(|e| {
                 format!(
@@ -30,14 +30,14 @@ impl EventProjector {
         Ok(())
     }
 
-    pub async fn project_batch(&self, events: &[FinanceDomainEvent]) -> Result<(), String> {
+    pub async fn project_batch(&self, events: &[FinanceDomainEvent]) -> Result<(), TopemsError> {
         for event in events {
             self.project(event).await?;
         }
         Ok(())
     }
 
-    pub async fn rebuild_all(&self) -> Result<(), String> {
+    pub async fn rebuild_all(&self) -> Result<(), TopemsError> {
         for view in &self.views {
             view.rebuild()
                 .await

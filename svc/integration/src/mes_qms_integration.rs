@@ -400,7 +400,7 @@ pub async fn trigger_qms_inspection(
     mes_url: &str,
     qms_url: &str,
     req: &TriggerInspectionRequest,
-) -> Result<MesQmsSync, String> {
+) -> Result<MesQmsSync, TopemsError> {
     info!("触发QMS质检任务 - 生产记录ID: {}", req.production_record_id);
 
     let record_id = Uuid::parse_str(&req.production_record_id)
@@ -506,7 +506,7 @@ pub async fn sync_quality_result_to_mes(
     mes_url: &str,
     qms_url: &str,
     req: &SyncQualityResultRequest,
-) -> Result<MesQmsSync, String> {
+) -> Result<MesQmsSync, TopemsError> {
     info!("同步QMS质检结果到MES - 质检ID: {}", req.inspection_id);
 
     let inspection_id =
@@ -615,7 +615,7 @@ pub async fn sync_trace_chain_data(
     mes_url: &str,
     _qms_url: &str,
     req: &TraceChainSyncRequest,
-) -> Result<MesQmsSync, String> {
+) -> Result<MesQmsSync, TopemsError> {
     info!("同步质量追溯链数据 - 工单ID: {}", req.order_id);
 
     let order_id = Uuid::parse_str(&req.order_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的工单ID: {}", e)))?;
@@ -692,7 +692,7 @@ pub async fn handle_defect_handling(
     mes_url: &str,
     qms_url: &str,
     req: &DefectHandlingRequest,
-) -> Result<MesQmsSync, String> {
+) -> Result<MesQmsSync, TopemsError> {
     info!("处理不合格品流程联动 - 质检ID: {}", req.inspection_id);
 
     let inspection_id =
@@ -818,7 +818,7 @@ async fn fetch_mes_production_record(
     _pool: &PgPool,
     _mes_url: &str,
     record_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取MES生产记录 - ID: {}", record_id);
 
     Ok(serde_json::json!({
@@ -848,7 +848,7 @@ async fn create_qms_inspection_task(
     production_data: &serde_json::Value,
     quantity: f64,
     triggered_by: &str,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let inspection_id = uuid::Uuid::new_v4();
     info!(
         "创建QMS质检任务 - 类型: {}, 数量: {}",
@@ -865,7 +865,7 @@ async fn fetch_qms_inspection(
     _pool: &PgPool,
     _qms_url: &str,
     inspection_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取QMS质检记录 - ID: {}", inspection_id);
 
     Ok(serde_json::json!({
@@ -895,7 +895,7 @@ async fn update_mes_quality_record(
     _mes_url: &str,
     record_id: Uuid,
     inspection_data: &serde_json::Value,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     info!("更新MES质量记录 - ID: {}", record_id);
     let _ = inspection_data;
     Ok(())
@@ -906,7 +906,7 @@ async fn fetch_mes_trace_chain(
     _mes_url: &str,
     order_id: Uuid,
     direction: &str,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取MES追溯链 - 工单ID: {}, 方向: {}", order_id, direction);
 
     Ok(serde_json::json!({
@@ -966,7 +966,7 @@ async fn trigger_mes_rework_process(
     quantity: f64,
     reason: &str,
     operator: Option<&str>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("触发MES返工流程 - 数量: {}, 原因: {}", quantity, reason);
 
     Ok(serde_json::json!({
@@ -987,7 +987,7 @@ async fn trigger_mes_scrap_process(
     quantity: f64,
     reason: &str,
     operator: Option<&str>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("触发MES报废流程 - 数量: {}, 原因: {}", quantity, reason);
 
     Ok(serde_json::json!({
@@ -1147,7 +1147,7 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, mes_url, qms_url, &sync_type, &payload).await.map_err(|e| e.to_string())
+            execute_sync_by_type(pool, sync.tenant_id, mes_url, qms_url, &sync_type, &payload).await
         })
         .await;
 
@@ -1155,7 +1155,7 @@ pub async fn retry_failed_sync(
         RetryResult::Success(_) => {
             let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
@@ -1163,7 +1163,7 @@ pub async fn retry_failed_sync(
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
             increment_retry_count(pool, sync_id, &error)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error

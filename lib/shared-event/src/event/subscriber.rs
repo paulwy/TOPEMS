@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
@@ -19,7 +20,7 @@ pub type EventHandler =
 /// 返回 Result 的事件处理器（失败触发重试/DLQ）——与 `EventHandler` 分离，
 /// 避免 `subscribe_handler` 把 Err 吞成 `()` 导致 Stream 层永远看到 `Ok(())`。
 pub type ResultEventHandler =
-    Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>> + Send + Sync>;
+    Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>> + Send + Sync>;
 
 /// MDM 事件处理器回调类型
 pub type MasterDataEventHandler =
@@ -31,7 +32,7 @@ pub type MasterDataEventHandler =
 /// 包成 `Ok(())` 直传 Stream 层 → process_mdm_message 永远 all_succeeded →
 /// 立即 ACK，重试计数/MDM DLQ 成为死代码（R-6 双缺陷的 MDM 侧残留）。
 pub type MasterDataResultEventHandler = Arc<
-    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), String>> + Send>>
+    dyn Fn(MasterDataEvent) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>>
         + Send
         + Sync,
 >;
@@ -116,14 +117,14 @@ impl EventSubscriber {
     ///
     /// R-6 修复：此前把 `Err` 经 `error!` 日志吞成 `()`，再由 `start_listening`
     /// 包装为 `Ok(())` 直传 Stream 层 → StreamEventSubscriber 永远认为成功 →
-    /// 立即 ACK，`settle_failed`/DLQ 从不触发。现在直传 `Result<(), String>`，
+    /// 立即 ACK，`settle_failed`/DLQ 从不触发。现在直传 `Result<(), TopemsError>`，
     /// 失败由 Stream 层走重试计数 → 超限入 DLQ。
     pub fn subscribe_handler<F>(mut self, event_types: Vec<EventType>, handler: F) -> Self
     where
         F: Fn(
                 Event,
             )
-                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
             + Send
             + Sync
             + Clone
@@ -168,7 +169,7 @@ impl EventSubscriber {
                     // 将标准事件 handlers 转发到 StreamEventSubscriber
                     for (event_types, handler) in &self.handlers {
                         for event_type in event_types {
-                            // 适配：将返回 () 的 handler 包装为返回 Result<(), String>
+                            // 适配：将返回 () 的 handler 包装为返回 Result<(), TopemsError>
                             let handler_clone = handler.clone();
                             stream_sub = stream_sub.subscribe(*event_type, move |event| {
                                 let handler_clone = handler_clone.clone();
@@ -197,7 +198,7 @@ impl EventSubscriber {
                     //   XADD 持久化 + 消费者组 ACK + 重试，替代无持久化的 Pub/Sub 频道）
                     for (domains, handler) in &self.mdm_handlers {
                         for domain in domains {
-                            // 适配：将返回 () 的 MDM handler 包装为返回 Result<(), String>
+                            // 适配：将返回 () 的 MDM handler 包装为返回 Result<(), TopemsError>
                             let handler_clone = handler.clone();
                             stream_sub =
                                 stream_sub.subscribe_master_data(*domain, move |mdm_event| {
@@ -512,7 +513,7 @@ impl EventSubscriber {
     /// 的 handler 返回 `()`，stream 模式下 start_listening 统一包成 `Ok(())`，
     /// process_mdm_message 永远 all_succeeded → 立即 ACK，重试计数/MDM DLQ
     /// 对 MDM 订阅是死代码（R-6 双缺陷中"Err 被吞成 Ok 立即 ACK"的 MDM 侧残留）。
-    /// 此变体直传 `Result<(), String>`：Err 走重试计数 → 超限推入 MDM DLQ。
+    /// 此变体直传 `Result<(), TopemsError>`：Err 走重试计数 → 超限推入 MDM DLQ。
     /// 旧 `subscribe_master_data`（返回 ()）保留兼容 pdm/portal/scm 等 best-effort 调用方。
     pub fn subscribe_master_data_handler<F>(
         mut self,
@@ -523,7 +524,7 @@ impl EventSubscriber {
         F: Fn(
                 MasterDataEvent,
             )
-                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
             + Send
             + Sync
             + Clone
@@ -545,7 +546,7 @@ impl EventSubscriber {
         F: Fn(
                 MasterDataEvent,
             )
-                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
             + Send
             + Sync
             + Clone
@@ -560,7 +561,7 @@ impl EventSubscriber {
         F: Fn(
                 MasterDataEvent,
             )
-                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
             + Send
             + Sync
             + Clone

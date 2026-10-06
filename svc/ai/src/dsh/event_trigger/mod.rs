@@ -457,7 +457,7 @@ impl EventTriggerEngine {
     }
 
     /// 更新触发器规则
-    pub fn update_rule(&self, rule_id: &str, updates: RuleUpdate) -> Result<(), String> {
+    pub fn update_rule(&self, rule_id: &str, updates: RuleUpdate) -> Result<(), TopemsError> {
         let mut rules = self.rules.lock();
         let rule = rules
             .get_mut(rule_id)
@@ -570,7 +570,7 @@ impl EventTriggerEngine {
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 处理单个事件
-    pub fn process_event(&self, event: BusinessEvent) -> Result<EventProcessingRecord, String> {
+    pub fn process_event(&self, event: BusinessEvent) -> Result<EventProcessingRecord, TopemsError> {
         let start_time = Instant::now();
         let event_id = event.event_id.clone();
         let event_type = event.event_type.clone();
@@ -841,7 +841,7 @@ impl EventTriggerEngine {
     }
 
     /// 注册事件订阅者
-    pub fn register_subscriber(&self, subscriber: EventSubscriber) -> Result<String, String> {
+    pub fn register_subscriber(&self, subscriber: EventSubscriber) -> Result<String, TopemsError> {
         let subscriber_id = subscriber.subscriber_id.clone();
         self.subscribers
             .lock()

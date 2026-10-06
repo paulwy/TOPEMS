@@ -78,7 +78,7 @@ async fn account_balance(provider: Arc<dyn AccountBalanceProvider>, code: String
         })),
         Err(e) => Json(json!({
             "status": "error",
-            "error": e,
+            "error": e.to_string(),
             "call_mode": "in_proc_trait"
         })),
     }

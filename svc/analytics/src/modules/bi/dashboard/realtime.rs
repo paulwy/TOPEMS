@@ -130,7 +130,7 @@ pub async fn query_dashboard_realtime_data(
             Ok(chart_result) => serde_json::to_value(&chart_result).unwrap_or_default(),
             Err(e) => {
                 warn!("Failed to generate chart for widget {}: {}", widget.id, e);
-                serde_json::json!({ "error": e })
+                serde_json::json!({ "error": e.to_string() })
             }
         };
 

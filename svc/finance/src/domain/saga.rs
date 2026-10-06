@@ -3,6 +3,7 @@
 // 分布式事务编排 + 补偿动作
 // 步骤模型：正向 action + 补偿 compensation
 
+use topems_shared_core::error::TopemsError;
 use std::sync::Mutex;
 
 use super::event_publisher::event_type_name;
@@ -163,7 +164,7 @@ impl SagaCoordinator {
         &self,
         saga_type: &str,
         payload: serde_json::Value,
-    ) -> Result<String, String> {
+    ) -> Result<String, TopemsError> {
         let steps = {
             let defs = self.definitions.lock().map_err(|e| e.to_string())?;
             let def = defs
@@ -194,7 +195,7 @@ impl SagaCoordinator {
     }
 
     /// 执行 Saga：依次执行每个步骤的正向 action（内存模拟，标记为完成）
-    pub async fn execute_saga(&self, saga_id: &str) -> Result<SagaStatus, String> {
+    pub async fn execute_saga(&self, saga_id: &str) -> Result<SagaStatus, TopemsError> {
         let snapshot = {
             let instances = self.instances.lock().map_err(|e| e.to_string())?;
             instances
@@ -254,7 +255,7 @@ impl SagaCoordinator {
     }
 
     /// 补偿 Saga：从最后一个已完成步骤倒序执行 compensation
-    pub async fn compensate_saga(&self, saga_id: &str) -> Result<SagaStatus, String> {
+    pub async fn compensate_saga(&self, saga_id: &str) -> Result<SagaStatus, TopemsError> {
         let snapshot = {
             let instances = self.instances.lock().map_err(|e| e.to_string())?;
             instances

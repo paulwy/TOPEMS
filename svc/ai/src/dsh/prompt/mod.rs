@@ -275,7 +275,7 @@ impl PromptEngine {
         variables: Option<HashMap<String, String>>,
         changelog: &str,
         updated_by: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let mut templates = self.templates.lock();
         let template = templates
             .get_mut(template_id)
@@ -358,7 +358,7 @@ impl PromptEngine {
         template_id: &str,
         version: &str,
         rolled_back_by: &str,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let history = self.version_history.lock();
         let versions = history
             .get(template_id)
@@ -386,7 +386,7 @@ impl PromptEngine {
         &self,
         template_id: &str,
         variables: &HashMap<String, String>,
-    ) -> Result<RenderResult, String> {
+    ) -> Result<RenderResult, TopemsError> {
         let start = std::time::Instant::now();
 
         let template = self

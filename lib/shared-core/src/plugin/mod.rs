@@ -85,7 +85,7 @@ impl Default for PluginManifest {
 
 impl PluginManifest {
     /// 从 plugin.yaml 文件路径加载配置
-    pub fn from_file<P: AsRef<std::path::Path>>(path: P) -> Result<Self, String> {
+    pub fn from_file<P: AsRef<std::path::Path>>(path: P) -> Result<Self, TopemsError> {
         let content = std::fs::read_to_string(&path).map_err(|e| {
             format!(
                 "Failed to read plugin manifest at {:?}: {}",
@@ -99,6 +99,7 @@ impl PluginManifest {
                 path.as_ref(),
                 e
             )
+            .into()
         })
     }
 }
@@ -669,7 +670,7 @@ version: "1.0"
     fn plugin_manifest_from_file_nonexistent_returns_err() {
         let result = PluginManifest::from_file("/nonexistent/path/plugin.yaml");
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Failed to read"));
+        assert!(result.unwrap_err().to_string().contains("Failed to read"));
     }
 
     #[test]

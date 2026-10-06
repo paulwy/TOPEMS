@@ -6,7 +6,7 @@ use topems_shared_event::event::{Event, EventResult, EventSubscriber, EventType}
 
 use crate::qms_lims_ehs;
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct IntegrationEventHandlers {
@@ -206,9 +206,9 @@ impl IntegrationEventHandlers {
     }
 }
 
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
+pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
     let handlers = IntegrationEventHandlers::new(db);
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers.build_subscriber()?;
 
     tracing::info!("[integration] 启动事件订阅者，注册 3 类触发事件 + 7 类业务事件编排 handler");
     tokio::spawn(async move {

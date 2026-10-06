@@ -140,7 +140,7 @@ pub async fn validate_columns(
 pub async fn auto_register_from_information_schema(
     pool: &PgPool,
     tables: &[&str],
-) -> Result<u64, String> {
+) -> Result<u64, TopemsError> {
     let enabled = env::var("BI_WHITELIST_AUTO_REGISTER")
         .ok()
         .map(|s| s.eq_ignore_ascii_case("true") || s == "1")

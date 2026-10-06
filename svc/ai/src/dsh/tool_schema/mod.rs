@@ -591,7 +591,7 @@ impl ToolSchemaAdapter {
     }
 
     /// 弃用工具
-    pub fn deprecate_tool(&self, tool_name: &str, replaced_by: Option<&str>) -> Result<(), String> {
+    pub fn deprecate_tool(&self, tool_name: &str, replaced_by: Option<&str>) -> Result<(), TopemsError> {
         let mut tools = self.tools.lock();
         let tool = tools
             .get_mut(tool_name)

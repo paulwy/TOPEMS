@@ -7,6 +7,7 @@
 //! - 错误恢复机制
 //! - 多轮对话管理
 
+use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
@@ -516,7 +517,7 @@ impl AgentOrchestrator {
     pub async fn execute_streaming(
         &self,
         request: AgentExecuteRequest,
-    ) -> Result<StreamingResponse, String> {
+    ) -> Result<StreamingResponse, TopemsError> {
         let session_id = request
             .session_id
             .clone()
@@ -580,7 +581,7 @@ impl AgentOrchestrator {
         &self,
         request: AgentExecuteRequest,
         sender: tokio::sync::mpsc::UnboundedSender<StreamChunk>,
-    ) -> Result<AgentExecuteResponse, String> {
+    ) -> Result<AgentExecuteResponse, TopemsError> {
         // 这里复用非流式的执行逻辑，但在关键节点发送流式事件
         // 为了简化，我们直接调用 execute 方法
         let response = self.execute(request).await;

@@ -663,7 +663,7 @@ impl ConsistencyManager {
     }
 
     #[allow(clippy::indexing_slicing)]
-    pub async fn detect_conflicts(entity_ids: Vec<String>) -> Result<Vec<ConflictInfo>, String> {
+    pub async fn detect_conflicts(entity_ids: Vec<String>) -> Result<Vec<ConflictInfo>, TopemsError> {
         let store = get_deep_federation_store();
         let vectors = store.version_vectors.lock().await;
         let mut conflicts = Vec::new();

@@ -63,16 +63,16 @@ impl Default for FinanceModule {
 /// 实现进程内调用契约（AccountBalanceProvider）
 #[async_trait::async_trait]
 impl AccountBalanceProvider for FinanceModule {
-    async fn get_account_balance(&self, account_code: &str) -> Result<f64, String> {
+    async fn get_account_balance(&self, account_code: &str) -> Result<f64, TopemsError> {
         self.balances
             .read()
             .map_err(|e| TopemsError::DatabaseQuery(format!("余额锁读取失败: {}", e)))?
             .get(account_code)
             .copied()
-            .ok_or_else(|| format!("科目 {} 不存在", account_code))
+            .ok_or_else(|| TopemsError::ResourceNotFound(format!("科目 {} 不存在", account_code)))
     }
 
-    async fn get_total_assets(&self) -> Result<f64, String> {
+    async fn get_total_assets(&self) -> Result<f64, TopemsError> {
         let balances = self
             .balances
             .read()

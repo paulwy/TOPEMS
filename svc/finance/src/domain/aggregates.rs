@@ -250,7 +250,7 @@ mod tests {
     fn test_voucher_post_ok() {
         let mut v = make_voucher_aggregate(VoucherStatus::Approved, 500.0, 500.0, vec![]);
         assert!(v.is_balanced());
-        assert_eq!(v.post(), Ok(()));
+        assert!(v.post().is_ok());
         assert_eq!(v.status, VoucherStatus::Posted);
         assert!(v.posted_at.is_some());
     }
@@ -271,7 +271,7 @@ mod tests {
     #[test]
     fn test_voucher_reverse_ok() {
         let mut v = make_voucher_aggregate(VoucherStatus::Posted, 500.0, 500.0, vec![]);
-        assert_eq!(v.reverse(), Ok(()));
+        assert!(v.reverse().is_ok());
         assert_eq!(v.status, VoucherStatus::Reversed);
     }
 
@@ -312,7 +312,7 @@ mod tests {
             bank_account: None,
             status: SettlementStatus::Settled,
         };
-        assert_eq!(a.settle(collection), Ok(()));
+        assert!(a.settle(collection).is_ok());
         assert_eq!(a.receivable.settled_amount, 5000.0);
         assert_eq!(a.receivable.status, SettlementStatus::Settled);
         assert_eq!(a.remaining_amount(), 0.0);
@@ -484,7 +484,7 @@ mod tests {
     #[test]
     fn test_voucher_reverse_then_post_impossible() {
         let mut v = make_voucher_aggregate(VoucherStatus::Posted, 100.0, 100.0, vec![]);
-        assert_eq!(v.reverse(), Ok(()));
+        assert!(v.reverse().is_ok());
         assert_eq!(v.status, VoucherStatus::Reversed);
         assert!(v.post().is_err(), "Reversed voucher cannot be re-posted");
     }

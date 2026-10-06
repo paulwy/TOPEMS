@@ -8,7 +8,7 @@ use topems_shared_event::event::{
     PmProjectCompletedPayload, PmProjectCreatedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct RdEventHandlers {
@@ -272,7 +272,7 @@ impl RdEventHandlers {
 pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = RdEventHandlers::new(db, event_publisher);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 

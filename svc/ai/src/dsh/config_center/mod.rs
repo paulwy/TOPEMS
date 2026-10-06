@@ -645,7 +645,7 @@ impl ConfigCenter {
     }
 
     /// 删除配置项
-    pub fn delete(&self, key: &str, modified_by: &str) -> Result<(), String> {
+    pub fn delete(&self, key: &str, modified_by: &str) -> Result<(), TopemsError> {
         let mut items = self.items.lock();
         let item = items
             .remove(key)
@@ -707,7 +707,7 @@ impl ConfigCenter {
     }
 
     /// 回滚到指定版本
-    pub fn rollback(&self, key: &str, version: u32, modified_by: &str) -> Result<(), String> {
+    pub fn rollback(&self, key: &str, version: u32, modified_by: &str) -> Result<(), TopemsError> {
         let history = self.version_history.lock();
         let versions = history
             .get(key)

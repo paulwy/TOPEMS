@@ -285,7 +285,7 @@ pub async fn test_smtp_config(
     }
 }
 
-fn build_transport(config: &SmtpConfig) -> Result<SmtpTransport, String> {
+fn build_transport(config: &SmtpConfig) -> Result<SmtpTransport, TopemsError> {
     let tls = match config.tls.as_str() {
         "none" => Tls::None,
         "tls" => TlsParameters::new(config.host.clone())
@@ -306,7 +306,7 @@ fn build_transport(config: &SmtpConfig) -> Result<SmtpTransport, String> {
         .build())
 }
 
-fn send_test_email(config: &SmtpConfig, to: &str, subject: &str, body: &str) -> Result<(), String> {
+fn send_test_email(config: &SmtpConfig, to: &str, subject: &str, body: &str) -> Result<(), TopemsError> {
     let from = Mailbox::new(
         Some(config.from_name.clone()),
         config

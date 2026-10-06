@@ -1241,7 +1241,7 @@ fn build_message(
     }
 }
 
-fn create_mailer() -> Result<SmtpTransport, String> {
+fn create_mailer() -> Result<SmtpTransport, TopemsError> {
     let smtp_host = std::env::var("SMTP_HOST").unwrap_or_else(|_| "localhost".to_string());
     let smtp_port = std::env::var("SMTP_PORT")
         .unwrap_or_else(|_| "587".to_string())
@@ -1255,9 +1255,9 @@ fn create_mailer() -> Result<SmtpTransport, String> {
         Ok(p) => p,
         Err(_) => {
             if smtp_host != "localhost" {
-                return Err(
+                return Err(TopemsError::ConfigValidation(
                     "SMTP_PASSWORD 未配置：非 localhost 模式下要求显式配置邮箱密码".to_string(),
-                );
+                ));
             }
             tracing::warn!("SMTP_PASSWORD 未配置 - localhost 模式下邮件发送可能失败");
             String::new()

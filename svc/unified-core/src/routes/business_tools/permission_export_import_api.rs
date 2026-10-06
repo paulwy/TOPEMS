@@ -259,7 +259,7 @@ impl TryFrom<&PermissionExportItem> for TenantPermission {
                     max_permission,
                 })
             })
-            .collect::<Result<Vec<_>, String>>()?;
+            .collect::<Result<Vec<_>, TopemsError>>()?;
 
         Ok(TenantPermission {
             tenant_id: item.tenant_id.clone(),
@@ -627,7 +627,7 @@ mod tests {
         };
         let result = TenantPermission::try_from(&item);
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("Invalid role"));
+        assert!(result.unwrap_err().to_string().contains("Invalid role"));
     }
 
     #[test]

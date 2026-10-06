@@ -623,7 +623,7 @@ pub async fn get_widget_data(
                 Ok(chart_result) => serde_json::to_value(&chart_result).unwrap_or_default(),
                 Err(e) => {
                     warn!("Failed to generate chart for widget {}: {}", id, e);
-                    serde_json::json!({ "error": e })
+                    serde_json::json!({ "error": e.to_string() })
                 }
             };
 

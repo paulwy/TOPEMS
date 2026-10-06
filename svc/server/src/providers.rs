@@ -16,6 +16,7 @@
 //! 2. 在 `InProcProvider` 枚举中添加变体
 //! 3. 在 registry 中实现对应 `register_xxx` / `get_xxx` 方法
 
+use topems_shared_core::error::TopemsError;
 use std::sync::Arc;
 
 /// 财务模块提供的账户余额查询能力
@@ -25,10 +26,10 @@ use std::sync::Arc;
 #[async_trait::async_trait]
 pub trait AccountBalanceProvider: Send + Sync {
     /// 按科目编码查询账户余额
-    async fn get_account_balance(&self, account_code: &str) -> Result<f64, String>;
+    async fn get_account_balance(&self, account_code: &str) -> Result<f64, TopemsError>;
 
     /// 查询总资产（汇总所有资产类科目）
-    async fn get_total_assets(&self) -> Result<f64, String>;
+    async fn get_total_assets(&self) -> Result<f64, TopemsError>;
 }
 
 /// 进程内 provider 类型枚举（编译期已知的模块能力集合）

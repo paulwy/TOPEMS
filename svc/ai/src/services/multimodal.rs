@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -92,7 +93,7 @@ impl MultimodalService {
     pub async fn analyze_image(
         &self,
         request: ImageAnalysisRequest,
-    ) -> Result<ImageAnalysisResponse, String> {
+    ) -> Result<ImageAnalysisResponse, TopemsError> {
         let image_id = Uuid::new_v4().to_string();
 
         let result = match request.analysis_type.as_str() {
@@ -121,7 +122,7 @@ impl MultimodalService {
         &self,
         _image_base64: &str,
         _prompt: &Option<String>,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let caption = "这是一张展示现代办公环境的图片，包含多台电脑和办公设备".to_string();
         let tags = vec!["办公室", "电脑", "办公设备", "现代", "工作环境"];
 
@@ -132,7 +133,7 @@ impl MultimodalService {
         }))
     }
 
-    pub async fn detect_objects(&self, image_base64: &str) -> Result<serde_json::Value, String> {
+    pub async fn detect_objects(&self, image_base64: &str) -> Result<serde_json::Value, TopemsError> {
         let image_features = self.extract_image_features(image_base64);
 
         let mut objects = vec![
@@ -216,7 +217,7 @@ impl MultimodalService {
         }))
     }
 
-    pub async fn extract_text(&self, _image_base64: &str) -> Result<serde_json::Value, String> {
+    pub async fn extract_text(&self, _image_base64: &str) -> Result<serde_json::Value, TopemsError> {
         let text_regions = vec![
             TextRegion {
                 text: "TOPEMS".to_string(),
@@ -251,7 +252,7 @@ impl MultimodalService {
         &self,
         _image_base64: &str,
         prompt: &Option<String>,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let custom_prompt = prompt.clone().unwrap_or("请详细描述这张图片".to_string());
 
         let prompt_text = format!(
@@ -274,7 +275,7 @@ impl MultimodalService {
     pub async fn analyze_general(
         &self,
         request: &ImageAnalysisRequest,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let prompt = format!(
             "分析图片内容，类型：{}，提示：{}",
             request.analysis_type,
@@ -296,7 +297,7 @@ impl MultimodalService {
     pub async fn analyze_video(
         &self,
         request: VideoAnalysisRequest,
-    ) -> Result<VideoAnalysisResponse, String> {
+    ) -> Result<VideoAnalysisResponse, TopemsError> {
         let video_id = Uuid::new_v4().to_string();
 
         let result = match request.analysis_type.as_str() {
@@ -314,7 +315,7 @@ impl MultimodalService {
         })
     }
 
-    async fn summarize_video(&self, _video_url: &str) -> Result<serde_json::Value, String> {
+    async fn summarize_video(&self, _video_url: &str) -> Result<serde_json::Value, TopemsError> {
         Ok(serde_json::json!({
             "summary": "视频内容为企业产品介绍，包含公司介绍、产品功能展示、客户案例等部分",
             "duration": "3:45",
@@ -322,7 +323,7 @@ impl MultimodalService {
         }))
     }
 
-    async fn detect_scenes(&self, _video_url: &str) -> Result<serde_json::Value, String> {
+    async fn detect_scenes(&self, _video_url: &str) -> Result<serde_json::Value, TopemsError> {
         Ok(serde_json::json!({
             "scenes": [
                 {"time": "0:00-0:30", "description": "开场动画", "confidence": 0.95},
@@ -333,7 +334,7 @@ impl MultimodalService {
         }))
     }
 
-    async fn track_objects(&self, _video_url: &str) -> Result<serde_json::Value, String> {
+    async fn track_objects(&self, _video_url: &str) -> Result<serde_json::Value, TopemsError> {
         Ok(serde_json::json!({
             "tracked_objects": [
                 {"name": "演讲者", "frames": [10, 20, 30, 40, 50], "confidence": 0.98},
@@ -345,7 +346,7 @@ impl MultimodalService {
     async fn analyze_video_general(
         &self,
         request: &VideoAnalysisRequest,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let prompt = format!(
             "分析视频内容：{}，类型：{}",
             request.video_url, request.analysis_type
@@ -461,7 +462,7 @@ impl MultimodalService {
     pub async fn assess_image_quality(
         &self,
         image_base64: &str,
-    ) -> Result<ImageQualityAssessment, String> {
+    ) -> Result<ImageQualityAssessment, TopemsError> {
         let _features = self.extract_image_features(image_base64);
 
         let sharpness = 0.85 + (image_base64.len() % 10) as f64 * 0.01;
@@ -500,7 +501,7 @@ impl MultimodalService {
         })
     }
 
-    pub async fn analyze_chart(&self, image_base64: &str) -> Result<ChartAnalysisResult, String> {
+    pub async fn analyze_chart(&self, image_base64: &str) -> Result<ChartAnalysisResult, TopemsError> {
         let chart_types = ["line", "bar", "pie", "scatter", "area"];
         let chart_type = chart_types
             .get(image_base64.len() % chart_types.len())
@@ -570,7 +571,7 @@ impl MultimodalService {
         clippy::cast_possible_truncation,
         clippy::cast_precision_loss
     )]
-    pub async fn detect_faces(&self, image_base64: &str) -> Result<FaceDetectionResult, String> {
+    pub async fn detect_faces(&self, image_base64: &str) -> Result<FaceDetectionResult, TopemsError> {
         let face_count = (image_base64.len() % 4).min(3);
 
         let emotions = vec![
@@ -618,7 +619,7 @@ impl MultimodalService {
         &self,
         image1_base64: &str,
         image2_base64: &str,
-    ) -> Result<serde_json::Value, String> {
+    ) -> Result<serde_json::Value, TopemsError> {
         let similarity = 0.5
             + ((image1_base64.len() as f64 - image2_base64.len() as f64).abs() / 1000.0).min(0.3);
 
@@ -649,7 +650,7 @@ impl MultimodalService {
         }))
     }
 
-    pub async fn generate_image_tags(&self, image_base64: &str) -> Result<Vec<String>, String> {
+    pub async fn generate_image_tags(&self, image_base64: &str) -> Result<Vec<String>, TopemsError> {
         let features = self.extract_image_features(image_base64);
 
         let mut tags = features.features;

@@ -431,7 +431,7 @@ mod tests {
     fn test_parse_action_unknown() {
         let r = parse_action("unknown", &serde_json::json!({}));
         assert!(r.is_err());
-        assert_eq!(r.unwrap_err(), "无效的 action 参数");
+        assert!(r.unwrap_err().to_string().contains("无效的 action 参数"));
     }
 
     // ==================== service 层 + MockAssistant ====================

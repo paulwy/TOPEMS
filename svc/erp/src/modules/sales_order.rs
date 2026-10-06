@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -807,7 +808,7 @@ async fn batch_update_status(
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ids: &[Uuid],
     status: &str,
-) -> Result<Vec<SalesOrder>, String> {
+) -> Result<Vec<SalesOrder>, TopemsError> {
     if ids.is_empty() {
         return Ok(vec![]);
     }
@@ -822,7 +823,7 @@ async fn batch_update_status(
     for id in ids {
         query = query.bind(id);
     }
-    query.fetch_all(&mut **txn).await.map_err(|e| e.to_string())
+    query.fetch_all(&mut **txn).await.map_err(|e| TopemsError::DatabaseQuery(e.to_string()))
 }
 #[utoipa::path(
     post,

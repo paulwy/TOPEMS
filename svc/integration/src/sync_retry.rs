@@ -2,6 +2,7 @@
 //!
 //! Provides retry logic with exponential backoff for data synchronization.
 
+use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
@@ -59,7 +60,7 @@ impl RetryExecutor {
     pub async fn execute<F, Fut, T>(&self, operation: F) -> RetryResult<T>
     where
         F: Fn() -> Fut,
-        Fut: std::future::Future<Output = Result<T, String>>,
+        Fut: std::future::Future<Output = Result<T, TopemsError>>,
     {
         let mut attempts = 0;
         let mut last_error = String::new();
@@ -70,10 +71,10 @@ impl RetryExecutor {
             match operation().await {
                 Ok(result) => return RetryResult::Success(result),
                 Err(error) => {
-                    last_error = error.clone();
+                    last_error = error.to_string();
 
-                    if !self.is_retryable(&error) || attempts >= self.config.max_retries {
-                        return RetryResult::MaxRetriesExceeded { error, attempts };
+                    if !self.is_retryable(&error.to_string()) || attempts >= self.config.max_retries {
+                        return RetryResult::MaxRetriesExceeded { error: error.to_string(), attempts };
                     }
 
                     let delay = self.calculate_delay(attempts);
@@ -96,7 +97,7 @@ impl RetryExecutor {
     ) -> RetryResult<T>
     where
         F: Fn() -> Fut,
-        Fut: std::future::Future<Output = Result<T, String>>,
+        Fut: std::future::Future<Output = Result<T, TopemsError>>,
     {
         if !circuit_breaker.allow_request() {
             return RetryResult::Failed {
@@ -262,7 +263,7 @@ impl SyncTaskManager {
     pub async fn execute_sync_task<F, Fut>(&self, task: &mut SyncTask, operation: F)
     where
         F: Fn() -> Fut,
-        Fut: std::future::Future<Output = Result<(), String>>,
+        Fut: std::future::Future<Output = Result<(), TopemsError>>,
     {
         task.status = SyncStatus::InProgress;
 

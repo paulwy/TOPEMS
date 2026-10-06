@@ -9,8 +9,8 @@ use super::value_objects::*;
 
 #[async_trait]
 pub trait EventSourcedRepository<A> {
-    async fn load(&self, id: &str) -> Result<Option<A>, String>;
-    async fn save(&self, aggregate: &mut A, metadata: Option<EventMetadata>) -> Result<(), String>;
+    async fn load(&self, id: &str) -> Result<Option<A>, TopemsError>;
+    async fn save(&self, aggregate: &mut A, metadata: Option<EventMetadata>) -> Result<(), TopemsError>;
 }
 
 pub struct VoucherEventSourcedRepository<T: EventStore> {
@@ -33,7 +33,7 @@ impl<T: EventStore> VoucherEventSourcedRepository<T> {
         }
     }
 
-    async fn load_from_events(&self, id: &str) -> Result<Option<VoucherAggregate>, String> {
+    async fn load_from_events(&self, id: &str) -> Result<Option<VoucherAggregate>, TopemsError> {
         let snapshot = self.event_store.get_latest_snapshot(id).await?;
 
         let (aggregate, from_version) = match snapshot {
@@ -103,7 +103,7 @@ impl<T: EventStore> VoucherEventSourcedRepository<T> {
         &self,
         aggregate: &VoucherAggregate,
         version: u64,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
             let state = serde_json::to_value(aggregate)
                 .map_err(|e| TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e)))?;
@@ -124,7 +124,7 @@ impl<T: EventStore> VoucherEventSourcedRepository<T> {
 impl<T: EventStore + Send + Sync> EventSourcedRepository<VoucherAggregate>
     for VoucherEventSourcedRepository<T>
 {
-    async fn load(&self, id: &str) -> Result<Option<VoucherAggregate>, String> {
+    async fn load(&self, id: &str) -> Result<Option<VoucherAggregate>, TopemsError> {
         self.load_from_events(id).await
     }
 
@@ -133,7 +133,7 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<VoucherAggregate>
         &self,
         aggregate: &mut VoucherAggregate,
         metadata: Option<EventMetadata>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let current_version = self
             .event_store
             .get_aggregate_version(&aggregate.id)
@@ -165,7 +165,7 @@ impl<T: EventStore> ReceivableEventSourcedRepository<T> {
         }
     }
 
-    async fn load_from_events(&self, id: &str) -> Result<Option<ReceivableAggregate>, String> {
+    async fn load_from_events(&self, id: &str) -> Result<Option<ReceivableAggregate>, TopemsError> {
         let snapshot = self.event_store.get_latest_snapshot(id).await?;
 
         let (aggregate, from_version) = match snapshot {
@@ -237,7 +237,7 @@ impl<T: EventStore> ReceivableEventSourcedRepository<T> {
         &self,
         aggregate: &ReceivableAggregate,
         version: u64,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
             let state = serde_json::to_value(aggregate)
                 .map_err(|e| TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e)))?;
@@ -258,7 +258,7 @@ impl<T: EventStore> ReceivableEventSourcedRepository<T> {
 impl<T: EventStore + Send + Sync> EventSourcedRepository<ReceivableAggregate>
     for ReceivableEventSourcedRepository<T>
 {
-    async fn load(&self, id: &str) -> Result<Option<ReceivableAggregate>, String> {
+    async fn load(&self, id: &str) -> Result<Option<ReceivableAggregate>, TopemsError> {
         self.load_from_events(id).await
     }
 
@@ -267,7 +267,7 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<ReceivableAggregate>
         &self,
         aggregate: &mut ReceivableAggregate,
         metadata: Option<EventMetadata>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let current_version = self
             .event_store
             .get_aggregate_version(&aggregate.receivable.id)
@@ -305,7 +305,7 @@ impl<T: EventStore> PayableEventSourcedRepository<T> {
         }
     }
 
-    async fn load_from_events(&self, id: &str) -> Result<Option<PayableAggregate>, String> {
+    async fn load_from_events(&self, id: &str) -> Result<Option<PayableAggregate>, TopemsError> {
         let snapshot = self.event_store.get_latest_snapshot(id).await?;
 
         let (aggregate, from_version) = match snapshot {
@@ -377,7 +377,7 @@ impl<T: EventStore> PayableEventSourcedRepository<T> {
         &self,
         aggregate: &PayableAggregate,
         version: u64,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
             let state = serde_json::to_value(aggregate)
                 .map_err(|e| TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e)))?;
@@ -398,7 +398,7 @@ impl<T: EventStore> PayableEventSourcedRepository<T> {
 impl<T: EventStore + Send + Sync> EventSourcedRepository<PayableAggregate>
     for PayableEventSourcedRepository<T>
 {
-    async fn load(&self, id: &str) -> Result<Option<PayableAggregate>, String> {
+    async fn load(&self, id: &str) -> Result<Option<PayableAggregate>, TopemsError> {
         self.load_from_events(id).await
     }
 
@@ -407,7 +407,7 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<PayableAggregate>
         &self,
         aggregate: &mut PayableAggregate,
         metadata: Option<EventMetadata>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let current_version = self
             .event_store
             .get_aggregate_version(&aggregate.payable.id)

@@ -166,7 +166,7 @@ pub async fn stream_agent(
         Err(e) => {
             let stream = futures::stream::iter(vec![Ok(Event::default()
                 .event("error")
-                .data(format!(r#"{{"error":"{}"}}"#, e.replace('"', "'"))))]);
+                .data(format!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "'"))))]);
             Sse::new(Box::pin(stream))
         }
     }

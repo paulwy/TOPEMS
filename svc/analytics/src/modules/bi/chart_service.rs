@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc};
 use topems_shared_core::error::TopemsError;
+use chrono::{DateTime, Utc};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
@@ -210,7 +210,7 @@ pub fn validate_identifier(name: &str) -> Result<String, TopemsError> {
 }
 
 /// Wraps a validated SQL identifier in double quotes for PostgreSQL.
-pub fn quote_identifier(name: &str) -> Result<String, String> {
+pub fn quote_identifier(name: &str) -> Result<String, TopemsError> {
     let validated = validate_identifier(name)?;
     let escaped = validated.replace('"', "\"\"");
     Ok(format!("\"{}\"", escaped))
@@ -220,7 +220,7 @@ pub fn quote_identifier(name: &str) -> Result<String, String> {
 pub fn validate_dataset(
     data_source: &str,
     columns: &[String],
-) -> Result<(String, Vec<String>), String> {
+) -> Result<(String, Vec<String>), TopemsError> {
     let table = quote_identifier(data_source)?;
     let mut quoted_cols = Vec::with_capacity(columns.len());
     for col in columns {
@@ -234,7 +234,7 @@ impl ChartService {
         Self { pool }
     }
 
-    pub async fn generate_chart(&self, query: ChartQuery) -> Result<ChartResult, String> {
+    pub async fn generate_chart(&self, query: ChartQuery) -> Result<ChartResult, TopemsError> {
         let data = self.execute_query(&query).await?;
         self.build_chart(query, data).await
     }
@@ -245,7 +245,7 @@ impl ChartService {
         x_column: &str,
         y_columns: &[String],
         title: Option<String>,
-    ) -> Result<ChartResult, String> {
+    ) -> Result<ChartResult, TopemsError> {
         let mut all_columns = vec![x_column.to_string()];
         all_columns.extend(y_columns.iter().cloned());
         let (table, cols) = validate_dataset(data_source, &all_columns)?;
@@ -272,7 +272,7 @@ impl ChartService {
         x_column: &str,
         y_columns: &[String],
         title: Option<String>,
-    ) -> Result<ChartResult, String> {
+    ) -> Result<ChartResult, TopemsError> {
         let mut all_columns = vec![x_column.to_string()];
         all_columns.extend(y_columns.iter().cloned());
         let (table, cols) = validate_dataset(data_source, &all_columns)?;
@@ -298,7 +298,7 @@ impl ChartService {
         label_column: &str,
         _value_column: &str,
         title: Option<String>,
-    ) -> Result<ChartResult, String> {
+    ) -> Result<ChartResult, TopemsError> {
         let columns = vec![label_column.to_string()];
         let (table, cols) = validate_dataset(data_source, &columns)?;
         // S1.2: 不再拼接 SQL 字符串到 ChartQuery.query；改用结构化 columns 传递列信息。
@@ -323,7 +323,7 @@ impl ChartService {
         min: f64,
         max: f64,
         title: Option<String>,
-    ) -> Result<ChartResult, String> {
+    ) -> Result<ChartResult, TopemsError> {
         let data_points = vec![ChartDataPoint {
             x: "value".to_string(),
             y: vec![value],
@@ -360,7 +360,7 @@ impl ChartService {
     async fn execute_query(
         &self,
         query: &ChartQuery,
-    ) -> Result<Vec<HashMap<String, serde_json::Value>>, String> {
+    ) -> Result<Vec<HashMap<String, serde_json::Value>>, TopemsError> {
         let mut results: Vec<HashMap<String, serde_json::Value>> = Vec::new();
 
         let sample_data = self.generate_sample_data(query).await;
@@ -496,7 +496,7 @@ impl ChartService {
         &self,
         query: ChartQuery,
         data: Vec<HashMap<String, serde_json::Value>>,
-    ) -> Result<ChartResult, String> {
+    ) -> Result<ChartResult, TopemsError> {
         let mut datasets = Vec::new();
         let mut legend = Vec::new();
 

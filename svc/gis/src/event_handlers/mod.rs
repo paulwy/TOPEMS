@@ -7,7 +7,7 @@ use topems_shared_event::event::{
     ScmShipmentReceivedPayload, StockInboundPayload, StockOutboundPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct GisEventHandlers {
@@ -256,7 +256,7 @@ impl GisEventHandlers {
     }
 }
 
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
+pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
     let handlers = GisEventHandlers::new(db);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 

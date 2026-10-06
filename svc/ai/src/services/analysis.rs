@@ -38,7 +38,7 @@ impl AnalysisService {
         &self,
         text: &str,
         tenant_id: Uuid,
-    ) -> Result<SentimentAnalysisResponse, String> {
+    ) -> Result<SentimentAnalysisResponse, TopemsError> {
         let prompt = format!(
             "请分析以下文本的情感倾向。返回 JSON 格式结果：\n\
             {{\n  \"sentiment\": \"positive/negative/neutral\",\n  \"confidence\": 0.0-1.0,\n  \"details\": {{\n    \"positive_words\": [],\n    \"negative_words\": [],\n    \"emotional_intensity\": 0.0-1.0\n  }}\n}}\n\n文本：{}",
@@ -82,7 +82,7 @@ impl AnalysisService {
         text: &str,
         categories: Option<&[String]>,
         tenant_id: Uuid,
-    ) -> Result<ClassifyTextResponse, String> {
+    ) -> Result<ClassifyTextResponse, TopemsError> {
         let categories_str = if let Some(cats) = categories {
             cats.join(", ")
         } else {
@@ -148,7 +148,7 @@ impl AnalysisService {
         text: &str,
         entity_types: Option<&[String]>,
         tenant_id: Uuid,
-    ) -> Result<ExtractEntitiesResponse, String> {
+    ) -> Result<ExtractEntitiesResponse, TopemsError> {
         let entity_types_str = if let Some(types) = entity_types {
             types.join(", ")
         } else {
@@ -203,7 +203,7 @@ impl AnalysisService {
         text: &str,
         max_keywords: Option<i32>,
         tenant_id: Uuid,
-    ) -> Result<ExtractKeywordsResponse, String> {
+    ) -> Result<ExtractKeywordsResponse, TopemsError> {
         let max_count = max_keywords.unwrap_or(10);
 
         let prompt = format!(
@@ -249,7 +249,7 @@ impl AnalysisService {
         analysis_type: Option<&str>,
         limit: usize,
         tenant_id: Uuid,
-    ) -> Result<Vec<AnalysisResult>, String> {
+    ) -> Result<Vec<AnalysisResult>, TopemsError> {
         let query = if let Some(type_) = analysis_type {
             sqlx::query(only_own_schema_query!(
                 "ai",
@@ -384,7 +384,7 @@ impl AnalysisService {
         result: &serde_json::Value,
         confidence: Option<f64>,
         tenant_id: Uuid,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         sqlx::query(
             only_own_schema_query!("ai", r#"
             INSERT INTO ai.analysis_results (tenant_id, analysis_type, input_text, result, confidence)

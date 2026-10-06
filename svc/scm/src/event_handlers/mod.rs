@@ -16,7 +16,7 @@ use topems_shared_event::event::{
     WmsInventoryItemShippedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct ScmEventHandlers {
@@ -909,7 +909,7 @@ pub async fn start_event_subscribers(
     supplier_cache: Arc<AsyncL2Cache<serde_json::Value>>,
     purchase_cache: Arc<AsyncL2Cache<serde_json::Value>>,
     dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = ScmEventHandlers::new(
         db,
         supplier_cache.clone(),

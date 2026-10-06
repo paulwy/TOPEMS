@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
@@ -21,7 +22,7 @@ async fn validate_prediction_fields(
     pool: &sqlx::PgPool,
     time_field: &str,
     value_field: &str,
-) -> Result<(String, String), String> {
+) -> Result<(String, String), TopemsError> {
     let t = quote_identifier(time_field)?;
     let v = quote_identifier(value_field)?;
 

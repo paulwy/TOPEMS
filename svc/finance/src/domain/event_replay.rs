@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
@@ -29,7 +30,7 @@ impl<T: EventStore + Send + Sync + 'static> EventReplayer<T> {
         &self,
         aggregate_id: &str,
         aggregate_type: &str,
-    ) -> Result<ReplayResult, String> {
+    ) -> Result<ReplayResult, TopemsError> {
         let start = Instant::now();
         let events = self.event_store.read_events(aggregate_id, 1, None).await?;
         let final_state = self.build_state(aggregate_type, &events);
@@ -51,7 +52,7 @@ impl<T: EventStore + Send + Sync + 'static> EventReplayer<T> {
         aggregate_id: &str,
         aggregate_type: &str,
         target_time: DateTime<Utc>,
-    ) -> Result<ReplayResult, String> {
+    ) -> Result<ReplayResult, TopemsError> {
         let start = Instant::now();
         let all_events = self.event_store.read_events(aggregate_id, 1, None).await?;
 
@@ -79,7 +80,7 @@ impl<T: EventStore + Send + Sync + 'static> EventReplayer<T> {
         aggregate_id: &str,
         aggregate_type: &str,
         target_version: u64,
-    ) -> Result<ReplayResult, String> {
+    ) -> Result<ReplayResult, TopemsError> {
         let start = Instant::now();
         let events = self
             .event_store

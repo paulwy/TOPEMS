@@ -346,7 +346,7 @@ impl AgentRuntime {
     }
 
     /// 执行任务
-    pub async fn execute_task(&self, task: &TaskDefinition) -> Result<serde_json::Value, String> {
+    pub async fn execute_task(&self, task: &TaskDefinition) -> Result<serde_json::Value, TopemsError> {
         // 增加当前任务数
         {
             let mut current = self.current_tasks.lock();
@@ -365,7 +365,7 @@ impl AgentRuntime {
     }
 
     /// 实际执行任务
-    async fn do_execute(&self, task: &TaskDefinition) -> Result<serde_json::Value, String> {
+    async fn do_execute(&self, task: &TaskDefinition) -> Result<serde_json::Value, TopemsError> {
         info!(
             agent_id = %self.config.agent_id,
             task_id = %task.task_id,
@@ -400,9 +400,9 @@ impl AgentRuntime {
                 "duration_ms": response.total_duration_ms,
             }))
         } else {
-            Err(response
+            Err(TopemsError::BusinessLogic(response
                 .error
-                .unwrap_or_else(|| "Unknown error".to_string()))
+                .unwrap_or_else(|| "Unknown error".to_string())))
         }
     }
 
@@ -667,7 +667,7 @@ impl MultiAgentCoordinator {
                     }
                     Err(e) => {
                         t.status = TaskStatus::Failed;
-                        t.error = Some(e.clone());
+                        t.error = Some(e.to_string());
                         t.completed_at = Some(chrono::Utc::now().to_rfc3339());
                     }
                 }
@@ -688,7 +688,7 @@ impl MultiAgentCoordinator {
             "Task execution completed"
         );
 
-        result.map_err(TopemsError::BusinessLogic)
+        result.map_err(|e| TopemsError::BusinessLogic(e.to_string()))
     }
 
     /// 分解任务为子任务

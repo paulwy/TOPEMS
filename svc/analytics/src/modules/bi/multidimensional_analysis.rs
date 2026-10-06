@@ -16,7 +16,7 @@ use super::dataset_whitelist::validate_columns;
 const DEFAULT_BI_TABLE: &str = "analytics_data";
 
 /// Validates a list of column names and returns them as quoted identifiers.
-fn validate_identifiers(names: &[String]) -> Result<Vec<String>, String> {
+fn validate_identifiers(names: &[String]) -> Result<Vec<String>, TopemsError> {
     names.iter().map(|n| quote_identifier(n)).collect()
 }
 

@@ -12,7 +12,7 @@ use topems_shared_event::event::{
     SettlementCreatedPayload, SettlementRejectedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 /// U6-2：事件 payload 金额已全链升级为 Decimal，Finance 入站直接消费 Decimal。
 
@@ -113,7 +113,7 @@ impl FinanceEventHandlers {
         source_id: uuid::Uuid,
         created_by: Option<&str>,
         tenant_id: uuid::Uuid,
-    ) -> Result<Option<uuid::Uuid>, String> {
+    ) -> Result<Option<uuid::Uuid>, TopemsError> {
         let now = Utc::now();
         let period = format!("{:04}{:02}", now.year(), now.month());
         let voucher_no = Self::generate_voucher_no(voucher_type, now);
@@ -699,7 +699,7 @@ impl FinanceEventHandlers {
     async fn store_reconciliation_snapshot(
         &self,
         payload: &ReconciliationCreatedPayload,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let now = Utc::now();
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -740,7 +740,7 @@ impl FinanceEventHandlers {
     async fn update_reconciliation_snapshot(
         &self,
         payload: &ReconciliationUpdatedPayload,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.reconciliation_snapshots
@@ -770,7 +770,7 @@ impl FinanceEventHandlers {
     async fn approve_reconciliation_snapshot(
         &self,
         payload: &ReconciliationApprovedPayload,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.reconciliation_snapshots
@@ -794,7 +794,7 @@ impl FinanceEventHandlers {
     async fn store_settlement_snapshot(
         &self,
         payload: &SettlementCreatedPayload,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let now = Utc::now();
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -833,7 +833,7 @@ impl FinanceEventHandlers {
     async fn approve_settlement_snapshot(
         &self,
         payload: &SettlementApprovedPayload,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.settlement_snapshots
@@ -857,7 +857,7 @@ impl FinanceEventHandlers {
     async fn reject_settlement_snapshot(
         &self,
         payload: &SettlementRejectedPayload,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         sqlx::query(only_own_schema_query!(
             "finance",
             r#"UPDATE finance.settlement_snapshots
@@ -878,7 +878,7 @@ impl FinanceEventHandlers {
 pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = FinanceEventHandlers::new(db, event_publisher);
     let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
 

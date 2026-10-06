@@ -371,7 +371,7 @@ pub async fn sync_order_to_wms(
     erp_url: &str,
     wms_url: &str,
     req: &SyncOrderRequest,
-) -> Result<ErpWmsSync, String> {
+) -> Result<ErpWmsSync, TopemsError> {
     info!(
         "同步ERP订单到WMS - 订单ID: {}, 类型: {}",
         req.order_id, req.order_type
@@ -448,7 +448,7 @@ pub async fn sync_stock_to_erp(
     erp_url: &str,
     wms_url: &str,
     req: &SyncStockRequest,
-) -> Result<ErpWmsSync, String> {
+) -> Result<ErpWmsSync, TopemsError> {
     info!("同步WMS库存到ERP - 产品ID: {}", req.product_id);
 
     let product_id =
@@ -623,7 +623,7 @@ async fn fetch_erp_order(
     _pool: &PgPool,
     _erp_url: &str,
     order_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取ERP订单记录 - ID: {}", order_id);
 
     Ok(serde_json::json!({
@@ -648,7 +648,7 @@ async fn create_wms_transaction(
     _wms_url: &str,
     order_data: &serde_json::Value,
     order_type: &str,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let transaction_id = uuid::Uuid::new_v4();
     info!(
         "创建WMS事务 - 类型: {}, 订单: {}, 数量: {}",
@@ -670,7 +670,7 @@ async fn fetch_wms_stock(
     _wms_url: &str,
     product_id: Uuid,
     warehouse_code: Option<&str>,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!(
         "获取WMS库存数据 - 产品ID: {}, 仓库: {:?}",
         product_id, warehouse_code
@@ -694,7 +694,7 @@ async fn fetch_wms_stock(
 async fn update_erp_inventory(
     _erp_url: &str,
     stock_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let inventory_id = uuid::Uuid::new_v4();
     info!(
         "更新ERP库存 - 产品: {}, 数量: {}",
@@ -714,7 +714,7 @@ async fn fetch_erp_inventory_adjustment(
     _pool: &PgPool,
     _erp_url: &str,
     adjustment_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取ERP库存调整记录 - ID: {}", adjustment_id);
 
     Ok(serde_json::json!({
@@ -739,7 +739,7 @@ async fn fetch_wms_inventory_adjustment(
     _pool: &PgPool,
     _wms_url: &str,
     adjustment_id: Uuid,
-) -> Result<serde_json::Value, String> {
+) -> Result<serde_json::Value, TopemsError> {
     info!("获取WMS库存调整记录 - ID: {}", adjustment_id);
 
     Ok(serde_json::json!({
@@ -764,7 +764,7 @@ async fn fetch_wms_inventory_adjustment(
 async fn apply_wms_inventory_adjustment(
     _wms_url: &str,
     adjustment_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let wms_id = uuid::Uuid::new_v4();
     info!(
         "应用WMS库存调整 - 产品: {}, 调整数量: {}",
@@ -783,7 +783,7 @@ async fn apply_wms_inventory_adjustment(
 async fn apply_erp_inventory_adjustment(
     _erp_url: &str,
     adjustment_data: &serde_json::Value,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     let erp_id = uuid::Uuid::new_v4();
     info!(
         "应用ERP库存调整 - 产品: {}, 调整数量: {}",
@@ -921,7 +921,7 @@ pub async fn retry_failed_sync(
 
     let result = executor
         .execute(|| async {
-            execute_sync_by_type(pool, sync.tenant_id, erp_url, wms_url, &sync_type, &payload).await.map_err(|e| e.to_string())
+            execute_sync_by_type(pool, sync.tenant_id, erp_url, wms_url, &sync_type, &payload).await
         })
         .await;
 
@@ -929,7 +929,7 @@ pub async fn retry_failed_sync(
         RetryResult::Success(_) => {
             let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
@@ -937,7 +937,7 @@ pub async fn retry_failed_sync(
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
             increment_retry_count(pool, sync_id, &error)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -1107,7 +1107,7 @@ pub async fn get_last_sync_time(
     pool: &PgPool,
     sync_type: &str,
     direction: &str,
-) -> Result<Option<DateTime<Utc>>, String> {
+) -> Result<Option<DateTime<Utc>>, TopemsError> {
     let row = sqlx::query(only_own_schema_query!(
         "integration",
         "SELECT MAX(last_synced_at) as last_sync
@@ -1132,7 +1132,7 @@ pub async fn get_pending_syncs(
     direction: &str,
     since: Option<DateTime<Utc>>,
     limit: i64,
-) -> Result<Vec<ErpWmsSync>, String> {
+) -> Result<Vec<ErpWmsSync>, TopemsError> {
     let rows = sqlx::query(only_own_schema_query!(
         "integration",
         r#"
@@ -1203,7 +1203,7 @@ pub async fn sync_incremental_orders(
     since: Option<DateTime<Utc>>,
     limit: i64,
     dry_run: bool,
-) -> Result<IncrementalSyncResult, String> {
+) -> Result<IncrementalSyncResult, TopemsError> {
     let started_at = Utc::now();
 
     // 获取上次同步时间（如果未指定）
@@ -1275,7 +1275,7 @@ pub async fn sync_incremental_orders(
                     e
                 ));
                 // 增加重试次数
-                let _ = increment_retry_count(pool, record.id, &e).await;
+                let _ = increment_retry_count(pool, record.id, &e.to_string()).await;
             }
         }
     }
@@ -1311,7 +1311,7 @@ pub async fn sync_incremental_stock(
     since: Option<DateTime<Utc>>,
     limit: i64,
     dry_run: bool,
-) -> Result<IncrementalSyncResult, String> {
+) -> Result<IncrementalSyncResult, TopemsError> {
     let started_at = Utc::now();
 
     // 获取上次同步时间
@@ -1382,7 +1382,7 @@ pub async fn sync_incremental_stock(
                     record.product_code.clone().unwrap_or_default(),
                     e
                 ));
-                let _ = increment_retry_count(pool, record.id, &e).await;
+                let _ = increment_retry_count(pool, record.id, &e.to_string()).await;
             }
         }
     }
@@ -1417,7 +1417,7 @@ pub async fn sync_incremental_all(
     since: Option<DateTime<Utc>>,
     limit: i64,
     dry_run: bool,
-) -> Result<Vec<IncrementalSyncResult>, String> {
+) -> Result<Vec<IncrementalSyncResult>, TopemsError> {
     let mut results = Vec::new();
 
     // 同步订单（ERP → WMS）
@@ -1436,7 +1436,7 @@ pub async fn sync_incremental_all(
                 total_skipped: 0,
                 started_at: Utc::now(),
                 completed_at: Utc::now(),
-                errors: vec![e],
+                errors: vec![e.to_string()],
             });
         }
     }
@@ -1457,7 +1457,7 @@ pub async fn sync_incremental_all(
                 total_skipped: 0,
                 started_at: Utc::now(),
                 completed_at: Utc::now(),
-                errors: vec![e],
+                errors: vec![e.to_string()],
             });
         }
     }
