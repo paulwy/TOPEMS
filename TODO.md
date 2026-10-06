@@ -717,7 +717,7 @@
 
 | # | 项 | 优先级 | 工作量 | 依赖 | 依据 | 可测量验收 |
 |---|---|---|---|---|---|---|
-| B1 | **T3 临时白名单撤销（search→erp，F-37）** | P0 | M | search 3 处直读（handlers.rs:113,167,197）改走 erp HTTP API/事件投影——需先决策 API 化 vs 事件投影 | T3 条目（撤销时机 U1/U3 已满足）；implementation-overview §7 | 撤销 allowlist + schema_boundary.json search.allow 后双门禁仍零 FAIL |
+| ✅ B1 | **T3 临时白名单撤销（search→erp，F-37）** | P0 | M | ✅ 已实施（API 化，b23b79ab8）：search 3 处直读改走 erp HTTP API（erp_api.rs service token 鉴权 + list API）；已撤销 schema_boundary.json search.allow + allowlist 双条目 | T3 条目（撤销时机 U1/U3 已满足）；implementation-overview §7 | ✅ 双门禁零 FAIL（python/node）；端到端：keyword=B1TEST 命中客户/销售/采购 3 类，测试数据已清理 |
 | B2 | **U6 残留 a：事件 payload 金额 f64→Decimal（跨服务契约）** | P1 | M | shared-event 366 测试基线；先盘点各事件金额字段 | U6 条目（commit `f331be2b6` 仅 finance 4 文件+crm billing）；F-07 | 全仓事件 payload 金额字段 Decimal；grep f64 金额路径=0 |
 | B3 | **U6 残留 b：crm sales_forecast/dashboard 金额 f64** | P1 | S | 无 | U6 条目（crm/models/billing.rs:14,54-78 已改，预测/看板未覆盖） | 两处改 Decimal + 精度单测绿 |
 | B4 | **U6 残留 c：checksums.txt 停更恢复** | P1 | S | 无 | U4 残留（09-21 后停登惯例）；F-65（250 vs 283 覆盖不全） | checksums.txt 恢复登记与 `.sqlx/` 一致，或显式废弃声明（二选一落盘） |
@@ -747,8 +747,8 @@
 - **可并行批（文件面互斥）**：
   - **批 1（快赢收口）**：A3（svc/wms）+ A4（lib/shared-event）+ B3（svc/crm）+ B4（checksums）+ B13（文档）——全 S/M 独立项，5 代理并行
   - **批 2（残留偿还）**：B2（lib/shared-event payload）+ B5/B6（svc/gis+lib/shared-db）+ B8/B9（前端）+ A5（DB 侧）——文件面互斥，并行
-  - **批 3（决策先行）**：B1（F-37 方案拍板后实施）+ B14（守卫重构决策）+ B15（埋点决策）+ B7（L 级分批启动）
-- **决策先行项**：B1（API 化 vs 事件投影）、B14（维持脚本层 vs 重构窗口）、B15（埋点投入确认）、A2（docker 授权回归）、A5（受限用户接入）——需用户/各 owner 拍板后开工
+  - **批 3（决策先行）**：B14（守卫重构决策）+ B15（埋点决策）+ B7（L 级分批启动）——B1 已完成（API 化，b23b79ab8）
+- **决策先行项**：B14（维持脚本层 vs 重构窗口）、B15（埋点投入确认）、A2（docker 授权回归）、A5（受限用户接入）——需用户/各 owner 拍板后开工（B1 已拍板 API 化并完成）
 - **前三批建议顺序**：批 1 → 批 2 → 批 3（批 3 内 B1 建议最先，涉及门禁收紧）
 - 每批纪律：pathspeg 只加自身文件、门禁绿、本地提交不 push、并行线共享工作区提交后立即锁定
 ## 方向② mobile 页面级精确深挖（2026-10-04）——页面在用 attendance 链路修复
