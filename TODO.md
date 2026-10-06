@@ -917,3 +917,11 @@
 - **深层发现**：上轮 91 个"文档幽灵"实为**相对路径注解假端点**（path=/im/xxx 等，normalize 补前缀，反查曾漏判）——已按 normalize 感知定位清理：unified-core file 系 22、communication 18、integration 7、plugin-registry 6、settlement-center(finance) 6、ai-form(ai) 9、internal(lims/qms) 4、health/detailed 5 文件、gis/mes/pdm 零星 → 13+7 crate 编译通过
 - **最终**：文档 2525 端点（=注解集 ∪ SERVER_OWNED），探测 **0 假端点** ✓；提交待完成
 - **登记**：生成器修剪掉 42 个"无注解真路由"（ai 系 12 等——探测 200 但无注解来源，文档不再宣称）→ 待补注解（低优先，文档一致性已优先）
+## [2026-10-06] P0 推送完成 + P1 BI 数据源治理（✅ 均已达成）
+
+- **P0**：19+1 个本地提交全量推送 origin/main（665d7b5f8..3f1a124d8）。经历：磁盘满（99%→17%，清理 sccache+incremental 释放 60GiB）→ 门禁修复（unused imports×2 + rustfmt 16 文件，commit 1a38d410e）→ rebase 20/20（TODO.md 冲突保留两侧章节；rebase --continue 被 vi 编辑器挂起 → GIT_EDITOR=true 绕过）→ 全门禁绿（check/clippy/test 550/shellcheck/fmt，348s）
+- **P1**：BI 数据集创建数据源下拉接真实 datasource（commit 7ed0e7365）
+  - 移除硬编码 Select（ds-mysql-001 等桩值）→ useEffect 加载 /api/bi/data-sources 真实列表（含加载中/空态）
+  - 修复 createDataset 422：请求字段 data_source_id → datasource_id（后端 CreateDatasetRequest 命名不一致）
+  - DB：插入 2 条真实 datasource（topems 主业务库 5432 / aux 分析库 5433，真实连接信息）；端到端验证：下拉显示 2 条真实数据 → 创建数据集外键通过 → 列表显示 → 测试数据集已清理
+  - 遗留小项：数据集列表"数据源"列显示 "-"（后端 list 未 join datasource 名称）——可选改进，非本次范围
