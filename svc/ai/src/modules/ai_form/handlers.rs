@@ -1,11 +1,12 @@
 use axum::extract::{Path, State};
 use axum::Json;
+use topems_shared_core::TopemsError;
 
 use crate::modules::form_assistant::{AiFormAssistantClient, FormAssistantAction};
 use crate::shared::AppState;
 use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType};
+use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
 
 use super::models::{
     AiFormAssistRequest, AiFormConfigResponse, AiFormEnhanceForFormRequest, AiFormEnhanceRequest,
@@ -65,7 +66,11 @@ pub async fn ai_form_assist(
 
     let action = match parse_action(&req.action, &req.current_data) {
         Ok(a) => a,
-        Err(msg) => return Json(api_error(400, msg)),
+        Err(msg) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                msg.to_string(),
+            )))
+        }
     };
 
     let assistant_request = crate::modules::form_assistant::AiFormAssistantRequest {
@@ -86,7 +91,9 @@ pub async fn ai_form_assist(
             });
             Json(api_success(json_response))
         }
-        Err(e) => Json(api_error(500, &format!("AI 服务调用失败: {}", e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal(
+            "AI 服务调用失败".to_string(),
+        ))),
     }
 }
 
@@ -112,7 +119,9 @@ pub async fn ai_form_suggest(
                 suggestions: converted,
             }))
         }
-        Err(e) => Json(api_error(500, &format!("AI 服务调用失败: {}", e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal(
+            "AI 服务调用失败".to_string(),
+        ))),
     }
 }
 
@@ -121,7 +130,9 @@ pub async fn ai_form_enhance(
     Json(req): Json<AiFormEnhanceRequest>,
 ) -> Json<ApiResponse<AiFormEnhanceResponse>> {
     if req.text.is_empty() {
-        return Json(api_error(400, "文本内容不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "文本内容不能为空".to_string(),
+        )));
     }
 
     let assistant = default_assistant();
@@ -130,7 +141,9 @@ pub async fn ai_form_enhance(
         Ok(enhanced) => Json(api_success(AiFormEnhanceResponse {
             enhanced_text: enhanced,
         })),
-        Err(e) => Json(api_error(500, &format!("AI 服务调用失败: {}", e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal(
+            "AI 服务调用失败".to_string(),
+        ))),
     }
 }
 
@@ -157,7 +170,9 @@ pub async fn ai_form_validate(
                 is_valid,
             }))
         }
-        Err(e) => Json(api_error(500, &format!("AI 服务调用失败: {}", e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal(
+            "AI 服务调用失败".to_string(),
+        ))),
     }
 }
 
@@ -166,7 +181,9 @@ pub async fn ai_form_translate(
     Json(req): Json<AiFormTranslateRequest>,
 ) -> Json<ApiResponse<AiFormTranslateResponse>> {
     if req.term.is_empty() {
-        return Json(api_error(400, "术语不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "术语不能为空".to_string(),
+        )));
     }
 
     let assistant = default_assistant();
@@ -175,7 +192,9 @@ pub async fn ai_form_translate(
         Ok(translated) => Json(api_success(AiFormTranslateResponse {
             translated_text: translated,
         })),
-        Err(e) => Json(api_error(500, &format!("AI 服务调用失败: {}", e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal(
+            "AI 服务调用失败".to_string(),
+        ))),
     }
 }
 
@@ -204,13 +223,9 @@ pub async fn get_form(
     let registry = crate::modules::form_assistant::default_registry();
     match registry.get(&form_type) {
         Some(cfg) => Json(api_success(AiFormConfigResponse::from(cfg))),
-        None => Json(api_error(
-            404,
-            &format!(
-                "未找到表单类型「{}」，请调用 GET /api/core/ai-form/forms 查看支持的表单列表",
-                form_type
-            ),
-        )),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "未找到表单类型，请调用 GET /api/core/ai-form/forms 查看支持的表单列表".to_string(),
+        ))),
     }
 }
 
@@ -221,31 +236,22 @@ pub async fn suggest_for_form(
 ) -> Json<ApiResponse<AiFormSuggestResponse>> {
     let registry = crate::modules::form_assistant::default_registry();
     if !registry.contains(&form_type) {
-        return Json(api_error(
-            404,
-            &format!(
-                "未找到表单类型「{}」，请调用 GET /api/core/ai-form/forms 查看支持的表单列表",
-                form_type
-            ),
-        ));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "未找到表单类型，请调用 GET /api/core/ai-form/forms 查看支持的表单列表".to_string(),
+        )));
     }
     let cfg = match registry.get(&form_type) {
         Some(cfg) => cfg,
         None => {
-            return Json(api_error(
-                404,
-                &format!(
-                    "未找到表单类型「{}」，请调用 GET /api/core/ai-form/forms 查看支持的表单列表",
-                    form_type
-                ),
-            ));
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "未找到表单类型，请调用 GET /api/core/ai-form/forms 查看支持的表单列表".to_string(),
+            )));
         }
     };
     if !cfg.supports("suggest") {
-        return Json(api_error(
-            400,
-            &format!("表单「{}」未启用字段建议功能", cfg.display_name),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "表单未启用字段建议功能".to_string(),
+        )));
     }
 
     let assistant = default_assistant();
@@ -266,7 +272,9 @@ pub async fn suggest_for_form(
                 suggestions: converted,
             }))
         }
-        Err(e) => Json(api_error(500, &format!("AI 服务调用失败: {}", e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal(
+            "AI 服务调用失败".to_string(),
+        ))),
     }
 }
 
@@ -276,36 +284,29 @@ pub async fn enhance_for_form(
     Json(req): Json<AiFormEnhanceForFormRequest>,
 ) -> Json<ApiResponse<AiFormEnhanceResponse>> {
     if req.text.is_empty() {
-        return Json(api_error(400, "文本内容不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "文本内容不能为空".to_string(),
+        )));
     }
 
     let registry = crate::modules::form_assistant::default_registry();
     if !registry.contains(&form_type) {
-        return Json(api_error(
-            404,
-            &format!(
-                "未找到表单类型「{}」，请调用 GET /api/core/ai-form/forms 查看支持的表单列表",
-                form_type
-            ),
-        ));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "未找到表单类型，请调用 GET /api/core/ai-form/forms 查看支持的表单列表".to_string(),
+        )));
     }
     let cfg = match registry.get(&form_type) {
         Some(cfg) => cfg,
         None => {
-            return Json(api_error(
-                404,
-                &format!(
-                    "未找到表单类型「{}」，请调用 GET /api/core/ai-form/forms 查看支持的表单列表",
-                    form_type
-                ),
-            ));
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "未找到表单类型，请调用 GET /api/core/ai-form/forms 查看支持的表单列表".to_string(),
+            )));
         }
     };
     if !cfg.supports("enhance") {
-        return Json(api_error(
-            400,
-            &format!("表单「{}」未启用文本增强功能", cfg.display_name),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "表单未启用文本增强功能".to_string(),
+        )));
     }
 
     let assistant = default_assistant();
@@ -314,7 +315,9 @@ pub async fn enhance_for_form(
         Ok(enhanced) => Json(api_success(AiFormEnhanceResponse {
             enhanced_text: enhanced,
         })),
-        Err(e) => Json(api_error(500, &format!("AI 服务调用失败: {}", e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal(
+            "AI 服务调用失败".to_string(),
+        ))),
     }
 }
 

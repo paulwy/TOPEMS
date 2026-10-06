@@ -4,6 +4,7 @@
 //! 按业务域分组：知识库管理 / 文档管理 / 问答 / 检索
 
 use std::sync::Arc;
+use topems_shared_core::TopemsError;
 
 use axum::{
     extract::{Extension, Multipart, Path as AxumPath, Query, State},
@@ -12,8 +13,8 @@ use axum::{
 use serde_json::json;
 use topems_shared_ai::ai_client::UnifiedAIClient;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -83,7 +84,9 @@ pub async fn list_knowledge_bases(
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_knowledge_bases 失败: {}", e);
-            Json(api_error(500, "获取知识库列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取知识库列表失败".to_string(),
+            )))
         }
     }
 }
@@ -105,23 +108,29 @@ pub async fn create_knowledge_base(
     Json(req): Json<CreateKbRequest>,
 ) -> Json<ApiResponse<KnowledgeBase>> {
     if req.name.trim().is_empty() {
-        return Json(api_error(400, "知识库名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "知识库名称不能为空".to_string(),
+        )));
     }
     let valid_types = ["general", "product", "internal", "faq"];
     if !valid_types.contains(&req.kb_type.as_str()) {
-        return Json(api_error(400, "无效的知识库类型"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "无效的知识库类型".to_string(),
+        )));
     }
 
     let tenant_id = current_tenant_id(&claims);
     let Some(creator) = current_user_id(&claims) else {
-        return Json(api_error(401, "无效的用户身份"));
+        return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
     match service::create_knowledge_base(&state.pool, tenant_id, &req, creator).await {
         Ok(item) => Json(api_success(item)),
         Err(e) => {
             tracing::error!("[AiKnowledge] create_knowledge_base 失败: {}", e);
-            Json(api_error(500, "创建知识库失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建知识库失败".to_string(),
+            )))
         }
     }
 }
@@ -148,10 +157,14 @@ pub async fn get_knowledge_base(
     let tenant_id = current_tenant_id(&claims);
     match service::get_knowledge_base(&state.pool, tenant_id, id).await {
         Ok(Some(item)) => Json(api_success(item)),
-        Ok(None) => Json(api_error(404, "知识库不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "知识库不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[AiKnowledge] get_knowledge_base 失败: {}", e);
-            Json(api_error(500, "获取知识库失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取知识库失败".to_string(),
+            )))
         }
     }
 }
@@ -179,22 +192,30 @@ pub async fn update_knowledge_base(
     // 校验状态值
     if let Some(ref status) = req.status {
         if !["active", "inactive"].contains(&status.as_str()) {
-            return Json(api_error(400, "无效的状态值"));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的状态值".to_string(),
+            )));
         }
     }
     if let Some(ref kb_type) = req.kb_type {
         if !["general", "product", "internal", "faq"].contains(&kb_type.as_str()) {
-            return Json(api_error(400, "无效的知识库类型"));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的知识库类型".to_string(),
+            )));
         }
     }
 
     let tenant_id = current_tenant_id(&claims);
     match service::update_knowledge_base(&state.pool, tenant_id, id, &req).await {
         Ok(Some(item)) => Json(api_success(item)),
-        Ok(None) => Json(api_error(404, "知识库不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "知识库不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[AiKnowledge] update_knowledge_base 失败: {}", e);
-            Json(api_error(500, "更新知识库失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新知识库失败".to_string(),
+            )))
         }
     }
 }
@@ -221,10 +242,14 @@ pub async fn delete_knowledge_base(
     let tenant_id = current_tenant_id(&claims);
     match service::delete_knowledge_base(&state.pool, tenant_id, id).await {
         Ok(true) => Json(api_success(json!({ "deleted": true }))),
-        Ok(false) => Json(api_error(404, "知识库不存在")),
+        Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "知识库不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[AiKnowledge] delete_knowledge_base 失败: {}", e);
-            Json(api_error(500, "删除知识库失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除知识库失败".to_string(),
+            )))
         }
     }
 }
@@ -254,7 +279,9 @@ pub async fn list_documents(
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_documents 失败: {}", e);
-            Json(api_error(500, "获取文档列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取文档列表失败".to_string(),
+            )))
         }
     }
 }
@@ -280,7 +307,7 @@ pub async fn upload_document(
 ) -> Json<ApiResponse<KnowledgeDocument>> {
     let tenant_id = current_tenant_id(&claims);
     let Some(user_id) = current_user_id(&claims) else {
-        return Json(api_error(401, "无效的用户身份"));
+        return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
     let mut kb_id: Option<Uuid> = None;
@@ -312,28 +339,35 @@ pub async fn upload_document(
     }
 
     let Some(kb_id) = kb_id else {
-        return Json(api_error(400, "缺少 kb_id 参数"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "缺少 kb_id 参数".to_string(),
+        )));
     };
     let Some(file_name) = file_name else {
-        return Json(api_error(400, "缺少文件"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "缺少文件".to_string(),
+        )));
     };
     let Some(file_data) = file_data else {
-        return Json(api_error(400, "文件内容为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "文件内容为空".to_string(),
+        )));
     };
 
     // 文件大小限制：50MB
     if file_data.len() > 50 * 1024 * 1024 {
-        return Json(api_error(400, "文件大小超过限制（最大 50MB）"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "文件大小超过限制（最大 50MB）".to_string(),
+        )));
     }
 
     // 推断文档类型
     let doc_type = match infer_doc_type(&file_name) {
         Some(t) => t,
         None => {
-            return Json(api_error(
-                400,
-                "不支持的文件类型，仅支持 txt/md/pdf/docx/html",
-            ));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "不支持的文件类型，仅支持 txt/md/pdf/docx/html".to_string(),
+            )));
         }
     };
 
@@ -342,7 +376,9 @@ pub async fn upload_document(
         Ok(text) => text,
         Err(e) => {
             tracing::error!("[AiKnowledge] 文档解析失败: {}", e);
-            return Json(api_error(400, &format!("文档解析失败: {}", e)));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "文档解析失败".to_string(),
+            )));
         }
     };
 
@@ -369,11 +405,15 @@ pub async fn upload_document(
     {
         Ok(doc) => doc,
         Err(sqlx::Error::RowNotFound) => {
-            return Json(api_error(404, "知识库不存在"));
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "知识库不存在".to_string(),
+            )));
         }
         Err(e) => {
             tracing::error!("[AiKnowledge] 创建文档记录失败: {}", e);
-            return Json(api_error(500, "创建文档记录失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "创建文档记录失败".to_string(),
+            )));
         }
     };
 
@@ -422,10 +462,14 @@ pub async fn get_document(
     let tenant_id = current_tenant_id(&claims);
     match service::get_document_detail(&state.pool, tenant_id, id).await {
         Ok(Some(detail)) => Json(api_success(detail)),
-        Ok(None) => Json(api_error(404, "文档不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "文档不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[AiKnowledge] get_document 失败: {}", e);
-            Json(api_error(500, "获取文档详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取文档详情失败".to_string(),
+            )))
         }
     }
 }
@@ -478,10 +522,14 @@ pub async fn update_document(
 
             Json(api_success(doc))
         }
-        Ok(None) => Json(api_error(404, "文档不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "文档不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[AiKnowledge] update_document 失败: {}", e);
-            Json(api_error(500, "更新文档失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新文档失败".to_string(),
+            )))
         }
     }
 }
@@ -508,10 +556,14 @@ pub async fn delete_document(
     let tenant_id = current_tenant_id(&claims);
     match service::delete_document(&state.pool, tenant_id, id).await {
         Ok(true) => Json(api_success(json!({ "deleted": true }))),
-        Ok(false) => Json(api_error(404, "文档不存在")),
+        Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "文档不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[AiKnowledge] delete_document 失败: {}", e);
-            Json(api_error(500, "删除文档失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除文档失败".to_string(),
+            )))
         }
     }
 }
@@ -544,10 +596,16 @@ pub async fn reprocess_document(
     // 校验文档存在
     match service::get_document_detail(&state.pool, tenant_id, id).await {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(api_error(404, "文档不存在")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "文档不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("[AiKnowledge] reprocess_document 查询失败: {}", e);
-            return Json(api_error(500, "查询文档失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询文档失败".to_string(),
+            )));
         }
     }
 
@@ -589,24 +647,34 @@ pub async fn ask_question(
     Json(req): Json<AskRequest>,
 ) -> Json<ApiResponse<AskResponse>> {
     if req.question.trim().is_empty() {
-        return Json(api_error(400, "问题不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "问题不能为空".to_string(),
+        )));
     }
     if req.top_k < 1 || req.top_k > 20 {
-        return Json(api_error(400, "top_k 必须在 1-20 之间"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "top_k 必须在 1-20 之间".to_string(),
+        )));
     }
 
     let tenant_id = current_tenant_id(&claims);
     let Some(user_id) = current_user_id(&claims) else {
-        return Json(api_error(401, "无效的用户身份"));
+        return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
     // 校验知识库存在
     match service::get_knowledge_base(&state.pool, tenant_id, req.kb_id).await {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(api_error(404, "知识库不存在")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "知识库不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("[AiKnowledge] ask_question 校验知识库失败: {}", e);
-            return Json(api_error(500, "校验知识库失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "校验知识库失败".to_string(),
+            )));
         }
     }
 
@@ -626,7 +694,9 @@ pub async fn ask_question(
         Err(e) => {
             tracing::error!("[AiKnowledge] ask_question 失败: {}", e);
             // 降级策略：AI 调用失败时返回明确错误，不阻塞用户
-            Json(api_error(500, &format!("问答服务暂时不可用: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "问答服务暂时不可用".to_string(),
+            )))
         }
     }
 }
@@ -653,7 +723,9 @@ pub async fn list_qa_history(
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[AiKnowledge] list_qa_history 失败: {}", e);
-            Json(api_error(500, "获取问答历史失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取问答历史失败".to_string(),
+            )))
         }
     }
 }
@@ -679,16 +751,22 @@ pub async fn submit_feedback(
     Json(req): Json<FeedbackRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if req.feedback != 1 && req.feedback != -1 {
-        return Json(api_error(400, "feedback 必须为 1（赞）或 -1（踩）"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "feedback 必须为 1（赞）或 -1（踩）".to_string(),
+        )));
     }
 
     let tenant_id = current_tenant_id(&claims);
     match service::update_qa_feedback(&state.pool, tenant_id, id, req.feedback).await {
         Ok(true) => Json(api_success(json!({ "updated": true }))),
-        Ok(false) => Json(api_error(404, "问答记录不存在")),
+        Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "问答记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[AiKnowledge] submit_feedback 失败: {}", e);
-            Json(api_error(500, "更新反馈失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新反馈失败".to_string(),
+            )))
         }
     }
 }
@@ -716,10 +794,14 @@ pub async fn semantic_search(
     Json(req): Json<SearchRequest>,
 ) -> Json<ApiResponse<SearchResponse>> {
     if req.query.trim().is_empty() {
-        return Json(api_error(400, "检索内容不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "检索内容不能为空".to_string(),
+        )));
     }
     if req.top_k < 1 || req.top_k > 50 {
-        return Json(api_error(400, "top_k 必须在 1-50 之间"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "top_k 必须在 1-50 之间".to_string(),
+        )));
     }
 
     let tenant_id = current_tenant_id(&claims);
@@ -727,10 +809,16 @@ pub async fn semantic_search(
     // 校验知识库存在
     match service::get_knowledge_base(&state.pool, tenant_id, req.kb_id).await {
         Ok(Some(_)) => {}
-        Ok(None) => return Json(api_error(404, "知识库不存在")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "知识库不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("[AiKnowledge] semantic_search 校验知识库失败: {}", e);
-            return Json(api_error(500, "校验知识库失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "校验知识库失败".to_string(),
+            )));
         }
     }
 
@@ -743,7 +831,9 @@ pub async fn semantic_search(
         })),
         Err(e) => {
             tracing::error!("[AiKnowledge] semantic_search 失败: {}", e);
-            Json(api_error(500, &format!("检索失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "检索失败".to_string(),
+            )))
         }
     }
 }
