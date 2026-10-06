@@ -982,3 +982,4 @@
 | **C-2 CI 强化** | ✅ | 已挂 CI（9f6afe74b）：migration-test 升级为空库守卫 ensure-empty-db-prereqs.sh（探活+幂等补 4 处前置+失败自动重放+零失败断言） |
 
 **U 系列结论**：U1-U12/U3b/U6-延伸 全部闭环（15/15）。真实开放项仅：A1/A2（环境/授权依赖）、B5 发现项（14 张 gis 无 tenant_id 表，另立条目）；A5 ✅（e182ffd50）、C-2 ✅（9f6afe74b）、U3 ✅（e1065182d）、U12b ✅（本批）均已闭环。
+| F-54 | **crm 售后事件发布原子性（Saga/补偿）** | P1 | M | 无 | 后端 | ✅ 已闭环（2026-10-07，commit `8e3a1c2b7`）：根因=complete/confirm 在事务 commit 前 tokio::spawn 发布 ReturnProcessed/ReturnCompleted（回滚即幽灵事件）；修复=publish 移至 commit 后 await + 失败登记 `crm.return_event_outbox` 补偿表（迁移 20261007000001）+ POST /returns/events/replay 重放端点；实测全链路 PASS（complete+confirm 事件均 commit 后发布、outbox 0、用后清理）| 售后结案链路失败可补偿（事件不丢不重） |
