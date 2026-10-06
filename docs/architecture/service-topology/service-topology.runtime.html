@@ -34,8 +34,6 @@ erp-service → h, r, m, -, s, e, r, v, i, c, e
 erp-service → m, e, s, -, s, e, r, v, i, c, e
 erp-service → w, m, s, -, s, e, r, v, i, c, e
 finance-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-hrm-service → e, r, p, -, s, e, r, v, i, c, e
-mes-service → e, r, p, -, s, e, r, v, i, c, e
 mobile-service → h, r, m, -, s, e, r, v, i, c, e
 mobile-service → m, e, s, -, s, e, r, v, i, c, e
 mobile-service → n, o, t, i, f, i, c, a, t, i, o, n, -, s, e, r, v, i, c, e
@@ -53,18 +51,8 @@ portal-service → m, o, n, i, t, o, r, -, s, e, r, v, i, c, e
 portal-service → n, o, t, i, f, i, c, a, t, i, o, n, -, s, e, r, v, i, c, e
 portal-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
 qms-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-server-crm-module → e, r, p, -, s, e, r, v, i, c, e
-server-crm-module → w, m, s, -, s, e, r, v, i, c, e
-server-crm-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-server-ehs-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-server-erp-module → f, i, n, a, n, c, e, -, s, e, r, v, i, c, e
-server-erp-module → h, r, m, -, s, e, r, v, i, c, e
-server-finance-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-server-pm-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-server-qms-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-server-srm-module → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-srm-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e
-unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
+search-service → e, r, p, -, s, e, r, v, i, c, e
+srm-service → w, o, r, k, f, l, o, w, -, s, e, r, v, i, c, e</pre></div>
   <div id="matrix"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
@@ -175,51 +163,9 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
           "symbolSize": 34
         },
         {
-          "id": "server-erp-module",
-          "name": "server-erp-module",
-          "category": "模块化单体模块",
-          "symbolSize": 26
-        },
-        {
-          "id": "server-crm-module",
-          "name": "server-crm-module",
-          "category": "模块化单体模块",
-          "symbolSize": 26
-        },
-        {
-          "id": "server-pm-module",
-          "name": "server-pm-module",
-          "category": "模块化单体模块",
-          "symbolSize": 26
-        },
-        {
-          "id": "server-qms-module",
-          "name": "server-qms-module",
-          "category": "模块化单体模块",
-          "symbolSize": 26
-        },
-        {
-          "id": "server-finance-module",
-          "name": "server-finance-module",
-          "category": "模块化单体模块",
-          "symbolSize": 26
-        },
-        {
-          "id": "server-srm-module",
-          "name": "server-srm-module",
-          "category": "模块化单体模块",
-          "symbolSize": 26
-        },
-        {
-          "id": "server-ehs-module",
-          "name": "server-ehs-module",
-          "category": "模块化单体模块",
-          "symbolSize": 26
-        },
-        {
-          "id": "unified-core-service",
-          "name": "unified-core-service",
-          "category": "调用方服务",
+          "id": "search-service",
+          "name": "search-service",
+          "category": "被调用平台服务",
           "symbolSize": 34
         }
       ],
@@ -254,15 +200,6 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
         {
           "source": "erp-service",
           "target": "mes-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "mes-service",
-          "target": "erp-service",
           "value": 1,
           "lineStyle": {
             "width": 2
@@ -396,15 +333,6 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
           "sourceFlag": "design"
         },
         {
-          "source": "hrm-service",
-          "target": "erp-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
           "source": "portal-service",
           "target": "notification-service",
           "value": 1,
@@ -425,11 +353,11 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
         {
           "source": "portal-service",
           "target": "mes-service",
-          "value": 2,
+          "value": 1,
           "lineStyle": {
-            "width": 3
+            "width": 2
           },
-          "sourceFlag": "runtime"
+          "sourceFlag": "design"
         },
         {
           "source": "portal-service",
@@ -452,29 +380,29 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
         {
           "source": "portal-service",
           "target": "hrm-service",
-          "value": 2,
+          "value": 1,
           "lineStyle": {
-            "width": 3
+            "width": 2
           },
-          "sourceFlag": "runtime"
+          "sourceFlag": "design"
         },
         {
           "source": "portal-service",
           "target": "erp-service",
-          "value": 5,
+          "value": 1,
           "lineStyle": {
-            "width": 6
+            "width": 2
           },
-          "sourceFlag": "runtime"
+          "sourceFlag": "design"
         },
         {
           "source": "portal-service",
           "target": "crm-service",
-          "value": 3,
+          "value": 1,
           "lineStyle": {
-            "width": 4
+            "width": 2
           },
-          "sourceFlag": "runtime"
+          "sourceFlag": "design"
         },
         {
           "source": "portal-service",
@@ -483,106 +411,16 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
           "lineStyle": {
             "width": 2
           },
-          "sourceFlag": "runtime"
-        },
-        {
-          "source": "server-erp-module",
-          "target": "hrm-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
           "sourceFlag": "design"
         },
         {
-          "source": "server-erp-module",
-          "target": "finance-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "server-crm-module",
+          "source": "search-service",
           "target": "erp-service",
           "value": 1,
           "lineStyle": {
             "width": 2
           },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "server-crm-module",
-          "target": "wms-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "server-crm-module",
-          "target": "workflow-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "server-pm-module",
-          "target": "workflow-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "server-qms-module",
-          "target": "workflow-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "server-finance-module",
-          "target": "workflow-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "server-srm-module",
-          "target": "workflow-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "server-ehs-module",
-          "target": "workflow-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
-        },
-        {
-          "source": "unified-core-service",
-          "target": "portal-service",
-          "value": 1,
-          "lineStyle": {
-            "width": 2
-          },
-          "sourceFlag": "design"
+          "sourceFlag": "runtime"
         }
       ],
       "categories": [
@@ -642,7 +480,7 @@ unified-core-service → p, o, r, t, a, l, -, s, e, r, v, i, c, e</pre></div>
 </script>
 <script>
 (function(){
-  var data = {"erp-service": {"wms-service": 1, "finance-service": 1, "hrm-service": 1, "mes-service": 1}, "mes-service": {"erp-service": 1}, "crm-service": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "mobile-service": {"wms-service": 1, "mes-service": 1, "qms-service": 1, "hrm-service": 1, "workflow-service": 1, "notification-service": 1}, "srm-service": {"workflow-service": 1}, "qms-service": {"workflow-service": 1}, "pm-service": {"workflow-service": 1}, "finance-service": {"workflow-service": 1}, "ehs-service": {"workflow-service": 1}, "hrm-service": {"erp-service": 1}, "portal-service": {"notification-service": 1, "workflow-service": 1, "mes-service": 2, "monitor-service": 1, "iam-service": 1, "hrm-service": 2, "erp-service": 5, "crm-service": 3, "finance-service": 1}, "server-erp-module": {"hrm-service": 1, "finance-service": 1}, "server-crm-module": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "server-pm-module": {"workflow-service": 1}, "server-qms-module": {"workflow-service": 1}, "server-finance-module": {"workflow-service": 1}, "server-srm-module": {"workflow-service": 1}, "server-ehs-module": {"workflow-service": 1}, "unified-core-service": {"portal-service": 1}};
+  var data = {"erp-service": {"wms-service": 1, "finance-service": 1, "hrm-service": 1, "mes-service": 1}, "crm-service": {"erp-service": 1, "wms-service": 1, "workflow-service": 1}, "mobile-service": {"wms-service": 1, "mes-service": 1, "qms-service": 1, "hrm-service": 1, "workflow-service": 1, "notification-service": 1}, "srm-service": {"workflow-service": 1}, "qms-service": {"workflow-service": 1}, "pm-service": {"workflow-service": 1}, "finance-service": {"workflow-service": 1}, "ehs-service": {"workflow-service": 1}, "portal-service": {"notification-service": 1, "workflow-service": 1, "mes-service": 1, "monitor-service": 1, "iam-service": 1, "hrm-service": 1, "erp-service": 1, "crm-service": 1, "finance-service": 1}, "search-service": {"erp-service": 1}};
   var el = document.getElementById('matrix');
   if (!el) return;
   var callers = Object.keys(data);

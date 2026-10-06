@@ -7,6 +7,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use topems_shared_auth::service::record_service_call;
 use topems_shared_core::error::TopemsError;
 
 struct TraceHeaderInjector(HashMap<String, String>);
@@ -71,7 +72,7 @@ impl BaseServiceClient {
     pub async fn get<T: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<T> {
         let url = self.build_url(path);
         let request = self.client.get(&url);
-        self.execute_request(request).await
+        self.execute_request(request, path).await
     }
 
     pub async fn post<T: DeserializeOwned, B: Serialize>(
@@ -81,7 +82,7 @@ impl BaseServiceClient {
     ) -> ServiceClientResult<T> {
         let url = self.build_url(path);
         let request = self.client.post(&url).json(body);
-        self.execute_request(request).await
+        self.execute_request(request, path).await
     }
 
     /// POST with body，附加 per-request 额外 header（如 accept-language），
@@ -98,7 +99,7 @@ impl BaseServiceClient {
         for &(key, value) in extra_headers {
             request = request.header(key, value);
         }
-        self.execute_request(request).await
+        self.execute_request(request, path).await
     }
 
     pub async fn post_without_body<T: DeserializeOwned>(
@@ -107,7 +108,7 @@ impl BaseServiceClient {
     ) -> ServiceClientResult<T> {
         let url = self.build_url(path);
         let request = self.client.post(&url);
-        self.execute_request(request).await
+        self.execute_request(request, path).await
     }
 
     pub async fn put<T: DeserializeOwned, B: Serialize>(
@@ -117,20 +118,28 @@ impl BaseServiceClient {
     ) -> ServiceClientResult<T> {
         let url = self.build_url(path);
         let request = self.client.put(&url).json(body);
-        self.execute_request(request).await
+        self.execute_request(request, path).await
     }
 
     pub async fn delete<T: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<T> {
         let url = self.build_url(path);
         let request = self.client.delete(&url);
-        self.execute_request(request).await
+        self.execute_request(request, path).await
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     async fn execute_request<T: DeserializeOwned>(
         &self,
         request: RequestBuilder,
+        path: &str,
     ) -> ServiceClientResult<T> {
+        // B15: 出站服务间调用可观测埋点（service=当前服务、target 由路径推导），
+        // 与入站（auth 中间件 record_service_call）互补；独立部署时经
+        // TOPEMS_SERVICE_NAME 环境变量提供调用方服务名。
+        record_service_call(
+            &std::env::var("TOPEMS_SERVICE_NAME").unwrap_or_else(|_| "unknown-service".to_string()),
+            path,
+        );
         // 熔断快速失败：OPEN 期间直接返回，不发请求
         if !self.breaker.allow_request() {
             self.metrics.record_circuit_block();
@@ -206,6 +215,10 @@ impl BaseServiceClient {
     }
 
     async fn get_without_response_inner(&self, path: &str) -> ServiceClientResult<()> {
+        record_service_call(
+            &std::env::var("TOPEMS_SERVICE_NAME").unwrap_or_else(|_| "unknown-service".to_string()),
+            path,
+        );
         let url = self.build_url(path);
         let response = self.client.get(&url).send().await?;
 
@@ -236,6 +249,10 @@ impl BaseServiceClient {
     ) -> Result<reqwest::Response, reqwest::Error> {
         let started = Instant::now();
         let _guard = self.metrics.begin_request();
+        record_service_call(
+            &std::env::var("TOPEMS_SERVICE_NAME").unwrap_or_else(|_| "unknown-service".to_string()),
+            path,
+        );
         let url = self.build_url(path);
         let mut request = self.client.get(&url);
         if let Some(q) = query {

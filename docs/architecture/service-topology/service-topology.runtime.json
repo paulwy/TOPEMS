@@ -97,51 +97,9 @@
       "symbolSize": 34
     },
     {
-      "id": "server-erp-module",
-      "name": "server-erp-module",
-      "category": "模块化单体模块",
-      "symbolSize": 26
-    },
-    {
-      "id": "server-crm-module",
-      "name": "server-crm-module",
-      "category": "模块化单体模块",
-      "symbolSize": 26
-    },
-    {
-      "id": "server-pm-module",
-      "name": "server-pm-module",
-      "category": "模块化单体模块",
-      "symbolSize": 26
-    },
-    {
-      "id": "server-qms-module",
-      "name": "server-qms-module",
-      "category": "模块化单体模块",
-      "symbolSize": 26
-    },
-    {
-      "id": "server-finance-module",
-      "name": "server-finance-module",
-      "category": "模块化单体模块",
-      "symbolSize": 26
-    },
-    {
-      "id": "server-srm-module",
-      "name": "server-srm-module",
-      "category": "模块化单体模块",
-      "symbolSize": 26
-    },
-    {
-      "id": "server-ehs-module",
-      "name": "server-ehs-module",
-      "category": "模块化单体模块",
-      "symbolSize": 26
-    },
-    {
-      "id": "unified-core-service",
-      "name": "unified-core-service",
-      "category": "调用方服务",
+      "id": "search-service",
+      "name": "search-service",
+      "category": "被调用平台服务",
       "symbolSize": 34
     }
   ],
@@ -176,15 +134,6 @@
     {
       "source": "erp-service",
       "target": "mes-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "mes-service",
-      "target": "erp-service",
       "value": 1,
       "lineStyle": {
         "width": 2
@@ -318,15 +267,6 @@
       "sourceFlag": "design"
     },
     {
-      "source": "hrm-service",
-      "target": "erp-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
       "source": "portal-service",
       "target": "notification-service",
       "value": 1,
@@ -347,11 +287,11 @@
     {
       "source": "portal-service",
       "target": "mes-service",
-      "value": 2,
+      "value": 1,
       "lineStyle": {
-        "width": 3
+        "width": 2
       },
-      "sourceFlag": "runtime"
+      "sourceFlag": "design"
     },
     {
       "source": "portal-service",
@@ -374,29 +314,29 @@
     {
       "source": "portal-service",
       "target": "hrm-service",
-      "value": 2,
+      "value": 1,
       "lineStyle": {
-        "width": 3
+        "width": 2
       },
-      "sourceFlag": "runtime"
+      "sourceFlag": "design"
     },
     {
       "source": "portal-service",
       "target": "erp-service",
-      "value": 5,
+      "value": 1,
       "lineStyle": {
-        "width": 6
+        "width": 2
       },
-      "sourceFlag": "runtime"
+      "sourceFlag": "design"
     },
     {
       "source": "portal-service",
       "target": "crm-service",
-      "value": 3,
+      "value": 1,
       "lineStyle": {
-        "width": 4
+        "width": 2
       },
-      "sourceFlag": "runtime"
+      "sourceFlag": "design"
     },
     {
       "source": "portal-service",
@@ -405,106 +345,16 @@
       "lineStyle": {
         "width": 2
       },
-      "sourceFlag": "runtime"
-    },
-    {
-      "source": "server-erp-module",
-      "target": "hrm-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
       "sourceFlag": "design"
     },
     {
-      "source": "server-erp-module",
-      "target": "finance-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "server-crm-module",
+      "source": "search-service",
       "target": "erp-service",
       "value": 1,
       "lineStyle": {
         "width": 2
       },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "server-crm-module",
-      "target": "wms-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "server-crm-module",
-      "target": "workflow-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "server-pm-module",
-      "target": "workflow-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "server-qms-module",
-      "target": "workflow-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "server-finance-module",
-      "target": "workflow-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "server-srm-module",
-      "target": "workflow-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "server-ehs-module",
-      "target": "workflow-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
-    },
-    {
-      "source": "unified-core-service",
-      "target": "portal-service",
-      "value": 1,
-      "lineStyle": {
-        "width": 2
-      },
-      "sourceFlag": "design"
+      "sourceFlag": "runtime"
     }
   ],
   "categories": [

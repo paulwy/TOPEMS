@@ -39,31 +39,24 @@ OUT_DIR = os.path.join(REPO, "docs", "architecture", "service-topology")
 # ---------------------------------------------------------------------------
 STATIC_DEPS = {
     "erp-service":     ["wms-service", "finance-service", "hrm-service", "mes-service"],  # 09-04 生产执行闭环：审核后下达 mes 生产工单
-    "mes-service":     ["erp-service"],   # 09-04 生产执行闭环：报工后回传 erp 生产进度
+    "mes-service":     [],   # 09-04 已事件化（MesWorkReportSubmitted→erp），无 HTTP 调用（runtime-matrix §5 删除残留环边）
     "crm-service":     ["erp-service", "wms-service", "workflow-service"],
     "mobile-service":  ["wms-service", "mes-service", "qms-service", "hrm-service",
                         "workflow-service", "notification-service"],
     "srm-service":     ["workflow-service"],
+    "search-service":   ["erp-service"],   # B1 API 化后真实调用：search 聚合检索走 erp list API（2026-10-06）
     "qms-service":     ["workflow-service"],
     "pdm-service":     [],   # 09-04 叶子服务，无跨服务调用（CORE_URL 注册不计入业务边）
     "lims-service":    [],   # 09-04 叶子服务，无跨服务调用（CORE_URL 注册不计入业务边）
     "pm-service":      ["workflow-service"],
     "finance-service": ["workflow-service"],
     "ehs-service":     ["workflow-service"],
-    "hrm-service":     ["erp-service"],   # 09-03 跨服务直读走 API：payroll 凭证改走 erp 凭证 API
+    "hrm-service":     [],   # 09-03 已事件化（HrmPayrollPosted），无 HTTP 调用（runtime-matrix §5 删除残留环边）
     "portal-service":  ["notification-service", "workflow-service", "mes-service",
                         "monitor-service", "iam-service", "hrm-service",
                         "erp-service", "crm-service", "finance-service"],
-    # 模块化单体 server 内部模块
-    "server-erp-module":    ["hrm-service", "finance-service"],
-    "server-crm-module":    ["erp-service", "wms-service", "workflow-service"],
-    "server-pm-module":     ["workflow-service"],
-    "server-qms-module":    ["workflow-service"],
-    "server-finance-module":["workflow-service"],
-    "server-srm-module":    ["workflow-service"],
-    "server-ehs-module":    ["workflow-service"],
     # 平台核心服务：unified-core 调各域服务（拆分前置 #2 起 unified-core → portal 偏好 API）
-    "unified-core-service": ["portal-service"],
+    "unified-core-service": [],   # 偏好 API 已本地化 core.user_preferences，无出站调用（runtime-matrix §5 删除残留环边）
 }
 
 # 被调用方集合（图谱中被调用节点也计入 nodes）
