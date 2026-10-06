@@ -1190,6 +1190,17 @@
 - 验证：全仓 map_err(format!) 259→215；cargo check 0 warning；pre-commit 23 项全绿
 - 剩余：map_err(format!) 215 处（ai 其余 48 / finance 26 / scm 19 / unified-core 15 / wms 14 / mes 13 / gis 10 / crm 10 / pm 9 / mobile 9 / srm 7 / rd 6 / hrm 6 / communication 6 / ehs 4 / portal 3 / pdm 3 / server 2 / lims 2 / analytics 1）
 
+### ✅ B7 第 13 批：ai 其余 48 处 map_err(format!) TopemsError 化（commit d326051d8，7 文件）
+- qa/recommendation/analysis/agent/pdf/event_handlers/multi_agent 48 处 → 语义变体
+  - 问答历史/usage 日志/用户画像/文章 sqlx → DatabaseQuery（26 处）
+  - 推荐结果/事件 payload/AI 响应解析 → ValidationFailed（13 处）
+  - 调用 AI API/生成嵌入/决策工具/消息发送 → NetworkRequest（7 处）
+  - PDF 任务/加载 → FileOperation（2 处）
+- 3 处 String 签名 → TopemsError（call_ai_api/generate_query_embedding/call_ai_api_with_usage）
+- qa/recommendation 补 TopemsError import
+- 验证：全仓 map_err(format!) 215→167；**ai 全部清零**；cargo check 0 warning；pre-commit 23 项全绿
+- 剩余：map_err(format!) 167 处（finance 26 / scm 19 / unified-core 15 / wms 14 / mes 13 / gis 10 / crm 10 / pm 9 / mobile 9 / srm 7 / rd 6 / hrm 6 / communication 6 / ehs 4 / portal 3 / pdm 3 / server 2 / lims 2 / analytics 1）
+
 ## 2026-10-06 契约面收口 + RLS 治理 + 门禁固化（全链路闭环）
 
 > 承接 10-05 mobile 契约面收口主线，扩展至 web(portal) 契约面、全库 RLS 治理、硬编码租户对齐、双门禁固化与全仓实例统一。全部本地提交未 push（除既有主线提交链）。
