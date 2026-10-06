@@ -117,10 +117,11 @@ if [[ $RC -ne 0 ]]; then
   exit 1
 fi
 
-# --- 3. 断言 _sqlx_migrations 全量 success=true --------------------------------
+# --- 3. 断言 _sqlx_migrations 全量 success=true + 记录数 = 文件数 ----------------
 TOTAL="$($DB_CONN -t -A -c "SELECT count(*) FROM _sqlx_migrations WHERE success=true;" 2>/dev/null || echo 0)"
 PENDING="$($DB_CONN -t -A -c "SELECT count(*) FROM _sqlx_migrations WHERE success=false;" 2>/dev/null || echo 0)"
-echo "  已应用迁移: $TOTAL 条，失败: $PENDING 条"
+FILES="$(find "$(dirname "$0")/../database/migrations" -maxdepth 1 -name '*.sql' | wc -l | tr -d ' ')"
+echo "  已应用迁移: $TOTAL 条，失败: $PENDING 条，迁移文件: $FILES 个"
 if [[ "$PENDING" != "0" ]]; then
   echo "❌ 存在失败迁移记录" >&2
   exit 1
@@ -129,8 +130,12 @@ if [[ "$TOTAL" == "0" ]]; then
   echo "❌ 迁移记录为空（迁移未执行？）" >&2
   exit 1
 fi
+if [[ "$TOTAL" != "$FILES" ]]; then
+  echo "❌ 账本记录数($TOTAL) ≠ 迁移文件数($FILES)——有迁移未应用或账本缺记录（2026-10-07 A2 教训：5432 曾 280 记录 vs 300 文件）" >&2
+  exit 1
+fi
 
 # --- 4. 清理验证库 --------------------------------------------------------------
 echo "== 清理验证库 =="
 $PSQL -q -c "DROP DATABASE IF EXISTS \"$PG_DB\";" 2>/dev/null || echo "  (清理跳过: 库可能被占用)"
-echo "✅ 空库全量迁移验证通过：$TOTAL/$TOTAL 迁移应用，0 错误"
+echo "✅ 空库全量迁移验证通过：$TOTAL/$FILES 迁移应用，0 错误"
