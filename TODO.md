@@ -958,4 +958,4 @@
   - sig_bound 支持 `{` 独立行签名的字段；委托壳对 `{` 独立行签名补开括号
   - Subscription 模式：不注入 ctx（&self 无 Context），字段体私有符号（SUBSCRIPTION_SERVICES/DeferSubscriptionCount/ACTIVE_SUBSCRIPTIONS）改主文件 pub + 全路径引用
   - 主文件顶部 `#![allow(unused_imports)]`（兼容层 pub use 供 feature_routes 等外部经 modules::graphql_schema::* 引用）
-- **遗留**：主文件保留 V37/V38 计数函数（get_cache_version/invalidate_cache/get_active_subscriptions/increment/decrement_subscriptions）+ Schema 构建区（PortalSchema/APQ_CACHE_CAPACITY/build_schema，~280 行）；5.1-5.6 提交待 push
+- **遗留**：主文件保留 V37/V38 计数函数（get_cache_version/invalidate_cache/get_active_subscriptions/increment/decrement_subscriptions）+ Schema 构建区（PortalSchema/APQ_CACHE_CAPACITY/build_schema，~280 行）；5.1-5.6 提交已 push origin/main（pre-push 门禁 clippy/fmt/test 全绿）
