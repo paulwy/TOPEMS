@@ -448,7 +448,7 @@
   - 方案：3 处 `FROM public.audit_logs` → `wms.audit_logs` 归位（参考 U12 修复模式），顺带核对其余服务（mes/hrm/erp/rd 已确认读自有 schema）有无同类错位
   - 验证：wms 读自有 schema（grep 清零）、审计单测绿、boundary 双门禁 exit 0；若 wms 审计事件历史上未写入 wms.audit_logs 需评估数据可见性影响
 
-- [ ] **U3b qa_lab_* 空骨架表清理（方案 B 迁移收敛）**（P2，依赖：U3 完成 + R2 回归兜底；qa_lab_* 归属用户已拍板选 B）：
+- [x] **U3b qa_lab_* 空骨架表清理（方案 B 迁移收敛）**（P2，依赖：U3 完成 + R2 回归兜底；qa_lab_* 归属用户已拍板选 B）：
   - 根因/事实：`public.qa_lab_samples` 为事实标准表（09-21 cleanup 迁移补建 14 列、lims 55 处显式 public 引用、历史数据已迁入）；`qms.qa_lab_*`（`business_base_tables.sql:3398-3399` 裸骨架 + `missing_tables.sql:190-224` 防御升级）与 `lims.qa_lab_*`（`business_base_tables.sql:1289+` 全列 + rehome SET SCHEMA）均为零业务消费方空表。**注意：U3 声称"lims 全部读写 public"不准确**——lims `main.rs:74` 硬编码 `SEARCH_PATH="lims, public"`（lims 优先），存在 **18 处真实无前缀引用**（`models/mod.rs` 13 处 DDL、`main.rs:136`、`inspection_record.rs` 4 处 JOIN）运行时会解析到 lims schema；直接 DROP 后 `models/mod.rs` 的 `CREATE TABLE IF NOT EXISTS` 会在 lims 重建空表、无前缀 SQL 继续命中空表 → 读写分裂
   - 方案（按序，每步可 revert）：
     1. **代码对齐**（✅ 2026-10-03 已完成，commit 见下）：lims 18 处无前缀引用改显式 `public.qa_lab_*`——`models/mod.rs` 13 处 DDL/FK/索引、`main.rs:136`、`inspection_record.rs` 4 处 JOIN（行为变化=无前缀引用从 lims 空表切到 public 真实数据，需业务回归确认）；cargo check -p topems-lims 0 错误、双门禁 exit 0
@@ -959,3 +959,26 @@
   - Subscription 模式：不注入 ctx（&self 无 Context），字段体私有符号（SUBSCRIPTION_SERVICES/DeferSubscriptionCount/ACTIVE_SUBSCRIPTIONS）改主文件 pub + 全路径引用
   - 主文件顶部 `#![allow(unused_imports)]`（兼容层 pub use 供 feature_routes 等外部经 modules::graphql_schema::* 引用）
 - **遗留**：主文件保留 V37/V38 计数函数（get_cache_version/invalidate_cache/get_active_subscriptions/increment/decrement_subscriptions）+ Schema 构建区（PortalSchema/APQ_CACHE_CAPACITY/build_schema，~280 行）；5.1-5.6 提交已 push origin/main（pre-push 门禁 clippy/fmt/test 全绿）；收尾 7288c40ed：Schema 构建区→graphql_schema_builder（PortalSchema/build_schema/APQ 容量），V37/V38 缓存与订阅计数函数→graphql_helpers，SUBSCRIPTION_SERVICES/DeferSubscriptionCount→graphql_subscription_impls，主文件 2,293→2,200 行
+
+## ✅ U 系列收尾盘点（2026-10-06）
+
+| U 条目 | 状态 | 收尾结论 |
+|---|---|---|
+| U1 unified-core 瘦身 | ✅ | 残留已注（:8099 直跑 mes 看板 404，生产 nginx 无影响） |
+| U2 调用环消除 | ✅ | 环边 HTTP 残留=0（仅注释） |
+| U3 integration 直写改造 | ✅ | **残留开放**：历史脏 sync_records 未清洗（需另出迁移，P2） |
+| U3b qa_lab 骨架表清理 | ✅ | 5433 收尾完成（账本登记 success=t）；本节补勾 ✅ |
+| U4 master-data 落库 | ✅ | 残留 B10 已闭环（写时同步直写） |
+| U5 RLS 开启 | ✅ | 残留 B5/B6 已闭环（gis RLS + rls.rs GUC） |
+| U6 金额精度 | ✅ | 残留 B2/B3/B4 已闭环（事件/模型/checksums） |
+| U6-延伸 模型层 | ✅ | pm/qms/crm 三域 Decimal 化 |
+| U7 错误处理 | ✅ | 残留 B7 已闭环（api_error 全仓清零 1738 处） |
+| U8 门面清理 | ✅ | 残留 B11 已闭环（form_assistant 迁出） |
+| U9 服务发现 | ✅ | 残留 B12 已闭环（一致性校验脚本） |
+| U10 启动 panic 治理 | ✅ | 13 处治理 + A 类 fail-fast 保留 |
+| U11 插件心跳 | ✅ | 嵌入模式 30s/90s 扫描 |
+| U12/U12b 审计直读 | ✅ | crm/wms 读路径归位；**残留开放**：schema_defense.rs:590 TABLE_DEFS legacy 快照对齐（P2 建议项） |
+| **A 区联动** | — | A3 ✅（wms 审计 status COALESCE 补漏，7864d107b）、A4 ✅（MDM DLQ list/replay，8209774e5 已入库）、A5 待决策（erp RLS policy） |
+| **C-2 CI 强化** | 待启动 | ensure-empty-db-prereqs.sh 挂 CI 空库验证（防迁移链回归） |
+
+**U 系列结论**：U1-U12/U3b/U6-延伸 全部闭环（15/15）。真实开放项仅：U3 脏 sync_records 清洗、U12b TABLE_DEFS 对齐（均 P2）、A1/A2/A5（环境/授权依赖）、B5 发现项（14 张 gis 无 tenant_id 表）。
