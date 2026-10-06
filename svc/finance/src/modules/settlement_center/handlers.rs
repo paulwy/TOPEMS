@@ -8,8 +8,9 @@ use axum::{
 };
 use serde_json::json;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -46,7 +47,9 @@ pub async fn list_reconciliations(
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_reconciliations 失败: {}", e);
-            Json(api_error(500, "获取对账列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取对账列表失败".to_string(),
+            )))
         }
     }
 }
@@ -58,13 +61,19 @@ pub async fn create_reconciliation(
     Json(req): Json<CreateReconciliationRequest>,
 ) -> Json<ApiResponse<UnifiedReconciliation>> {
     if req.recon_name.is_empty() {
-        return Json(api_error(400, "对账名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "对账名称不能为空".to_string(),
+        )));
     }
     if req.period.is_empty() {
-        return Json(api_error(400, "对账期间不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "对账期间不能为空".to_string(),
+        )));
     }
     if req.recon_type.is_empty() {
-        return Json(api_error(400, "对账类型不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "对账类型不能为空".to_string(),
+        )));
     }
 
     let tenant_id = current_tenant_id(&claims);
@@ -82,7 +91,9 @@ pub async fn create_reconciliation(
         Ok(item) => Json(api_success(item)),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_reconciliation 失败: {}", e);
-            Json(api_error(500, "创建对账单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建对账单失败".to_string(),
+            )))
         }
     }
 }
@@ -96,10 +107,14 @@ pub async fn get_reconciliation(
     let tenant_id = current_tenant_id(&claims);
     match service::get_reconciliation_detail(&state.pool, tenant_id, id).await {
         Ok(Some(detail)) => Json(api_success(detail)),
-        Ok(None) => Json(api_error(404, "对账单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "对账单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[SettlementCenter] get_reconciliation 失败: {}", e);
-            Json(api_error(500, "获取对账详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取对账详情失败".to_string(),
+            )))
         }
     }
 }
@@ -124,7 +139,9 @@ pub async fn reconcile(
         Ok(affected) => Json(api_success(json!({ "matched_count": affected }))),
         Err(e) => {
             tracing::error!("[SettlementCenter] manual_reconcile 失败: {}", e);
-            Json(api_error(500, "手工对账失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "手工对账失败".to_string(),
+            )))
         }
     }
 }
@@ -136,14 +153,18 @@ pub async fn auto_reconcile(
     Json(req): Json<AutoReconcileRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if req.period.is_empty() {
-        return Json(api_error(400, "期间不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "期间不能为空".to_string(),
+        )));
     }
     let tenant_id = current_tenant_id(&claims);
     match service::auto_reconcile(&state.pool, tenant_id, &req).await {
         Ok(affected) => Json(api_success(json!({ "matched_count": affected }))),
         Err(e) => {
             tracing::error!("[SettlementCenter] auto_reconcile 失败: {}", e);
-            Json(api_error(500, "自动对账失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "自动对账失败".to_string(),
+            )))
         }
     }
 }
@@ -163,7 +184,9 @@ pub async fn list_settlements(
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_settlements 失败: {}", e);
-            Json(api_error(500, "获取结算列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取结算列表失败".to_string(),
+            )))
         }
     }
 }
@@ -175,10 +198,14 @@ pub async fn create_settlement(
     Json(req): Json<CreateSettlementRequest>,
 ) -> Json<ApiResponse<UnifiedSettlement>> {
     if req.settlement_name.is_empty() {
-        return Json(api_error(400, "结算名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "结算名称不能为空".to_string(),
+        )));
     }
     if req.settlement_type.is_empty() {
-        return Json(api_error(400, "结算类型不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "结算类型不能为空".to_string(),
+        )));
     }
 
     let tenant_id = current_tenant_id(&claims);
@@ -196,7 +223,9 @@ pub async fn create_settlement(
         Ok(item) => Json(api_success(item)),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_settlement 失败: {}", e);
-            Json(api_error(500, "创建结算单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建结算单失败".to_string(),
+            )))
         }
     }
 }
@@ -210,10 +239,14 @@ pub async fn get_settlement(
     let tenant_id = current_tenant_id(&claims);
     match service::get_settlement_detail(&state.pool, tenant_id, id).await {
         Ok(Some(detail)) => Json(api_success(detail)),
-        Ok(None) => Json(api_error(404, "结算单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "结算单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[SettlementCenter] get_settlement 失败: {}", e);
-            Json(api_error(500, "获取结算详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取结算详情失败".to_string(),
+            )))
         }
     }
 }
@@ -236,10 +269,14 @@ pub async fn approve_reconciliation(
     .await
     {
         Ok(Some(item)) => Json(api_success(item)),
-        Ok(None) => Json(api_error(400, "对账单不存在或当前状态不允许审批")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "对账单不存在或当前状态不允许审批".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[SettlementCenter] approve_reconciliation 失败: {}", e);
-            Json(api_error(500, "审批对账单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审批对账单失败".to_string(),
+            )))
         }
     }
 }
@@ -262,10 +299,14 @@ pub async fn approve_settlement(
     .await
     {
         Ok(Some(item)) => Json(api_success(item)),
-        Ok(None) => Json(api_error(400, "结算单不存在或当前状态不允许审批")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "结算单不存在或当前状态不允许审批".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[SettlementCenter] approve_settlement 失败: {}", e);
-            Json(api_error(500, "审批结算失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审批结算失败".to_string(),
+            )))
         }
     }
 }
@@ -281,18 +322,22 @@ pub async fn create_link(
     Json(req): Json<CreateLinkRequest>,
 ) -> Json<ApiResponse<ReconciliationSettlementLink>> {
     if !["pre_settlement", "post_settlement", "adjustment"].contains(&req.link_type.as_str()) {
-        return Json(api_error(400, "无效的关联类型"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "无效的关联类型".to_string(),
+        )));
     }
     let tenant_id = current_tenant_id(&claims);
     let Some(creator) = current_user_id(&claims) else {
-        return Json(api_error(401, "无效的用户身份"));
+        return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
     match service::create_link(&state.pool, tenant_id, &req, creator).await {
         Ok(link) => Json(api_success(link)),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_link 失败: {}", e);
-            Json(api_error(500, "创建关联失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建关联失败".to_string(),
+            )))
         }
     }
 }
@@ -306,10 +351,14 @@ pub async fn delete_link(
     let tenant_id = current_tenant_id(&claims);
     match service::cancel_link(&state.pool, tenant_id, id).await {
         Ok(true) => Json(api_success(json!({ "cancelled": true }))),
-        Ok(false) => Json(api_error(404, "关联不存在或已解除")),
+        Ok(false) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "关联不存在或已解除".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[SettlementCenter] delete_link 失败: {}", e);
-            Json(api_error(500, "解除关联失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "解除关联失败".to_string(),
+            )))
         }
     }
 }
@@ -325,7 +374,9 @@ pub async fn list_links(
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_links 失败: {}", e);
-            Json(api_error(500, "获取关联列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取关联列表失败".to_string(),
+            )))
         }
     }
 }
@@ -345,7 +396,9 @@ pub async fn list_differences(
         Ok(items) => Json(api_success(items)),
         Err(e) => {
             tracing::error!("[SettlementCenter] list_differences 失败: {}", e);
-            Json(api_error(500, "获取差异列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取差异列表失败".to_string(),
+            )))
         }
     }
 }
@@ -357,30 +410,40 @@ pub async fn create_difference(
     Json(req): Json<CreateDifferenceRequest>,
 ) -> Json<ApiResponse<DifferenceAdjustment>> {
     if !["reconciliation", "settlement"].contains(&req.source_type.as_str()) {
-        return Json(api_error(400, "无效的来源类型"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "无效的来源类型".to_string(),
+        )));
     }
     if !["amount", "timing", "missing", "duplicate"].contains(&req.difference_type.as_str()) {
-        return Json(api_error(400, "无效的差异类型"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "无效的差异类型".to_string(),
+        )));
     }
     if let Some(ref t) = req.adjustment_type {
         if !["write_off", "supplement", "transfer"].contains(&t.as_str()) {
-            return Json(api_error(400, "无效的调整类型"));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调整类型".to_string(),
+            )));
         }
     }
     if req.reason.is_empty() {
-        return Json(api_error(400, "差异原因不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "差异原因不能为空".to_string(),
+        )));
     }
 
     let tenant_id = current_tenant_id(&claims);
     let Some(creator) = current_user_id(&claims) else {
-        return Json(api_error(401, "无效的用户身份"));
+        return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
     match service::create_difference(&state.pool, tenant_id, &req, creator).await {
         Ok(item) => Json(api_success(item)),
         Err(e) => {
             tracing::error!("[SettlementCenter] create_difference 失败: {}", e);
-            Json(api_error(500, "创建差异调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建差异调整失败".to_string(),
+            )))
         }
     }
 }
@@ -393,15 +456,19 @@ pub async fn approve_difference(
 ) -> Json<ApiResponse<DifferenceAdjustment>> {
     let tenant_id = current_tenant_id(&claims);
     let Some(approver) = current_user_id(&claims) else {
-        return Json(api_error(401, "无效的用户身份"));
+        return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
     match service::approve_difference(&state.pool, tenant_id, id, approver).await {
         Ok(Some(item)) => Json(api_success(item)),
-        Ok(None) => Json(api_error(400, "差异调整不存在或当前状态不允许审批")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "差异调整不存在或当前状态不允许审批".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[SettlementCenter] approve_difference 失败: {}", e);
-            Json(api_error(500, "审批差异调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审批差异调整失败".to_string(),
+            )))
         }
     }
 }
@@ -414,15 +481,19 @@ pub async fn reject_difference(
 ) -> Json<ApiResponse<DifferenceAdjustment>> {
     let tenant_id = current_tenant_id(&claims);
     let Some(approver) = current_user_id(&claims) else {
-        return Json(api_error(401, "无效的用户身份"));
+        return Json(ApiResponse::from(TopemsError::Unauthorized));
     };
 
     match service::reject_difference(&state.pool, tenant_id, id, approver).await {
         Ok(Some(item)) => Json(api_success(item)),
-        Ok(None) => Json(api_error(400, "差异调整不存在或当前状态不允许拒绝")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "差异调整不存在或当前状态不允许拒绝".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[SettlementCenter] reject_difference 失败: {}", e);
-            Json(api_error(500, "拒绝差异调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "拒绝差异调整失败".to_string(),
+            )))
         }
     }
 }
@@ -441,7 +512,9 @@ pub async fn get_dashboard(
         Ok(summary) => Json(api_success(summary)),
         Err(e) => {
             tracing::error!("[SettlementCenter] get_dashboard 失败: {}", e);
-            Json(api_error(500, "获取仪表盘失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取仪表盘失败".to_string(),
+            )))
         }
     }
 }
@@ -456,7 +529,9 @@ pub async fn get_statistics(
         Ok(stats) => Json(api_success(stats)),
         Err(e) => {
             tracing::error!("[SettlementCenter] get_statistics 失败: {}", e);
-            Json(api_error(500, "获取统计数据失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取统计数据失败".to_string(),
+            )))
         }
     }
 }
