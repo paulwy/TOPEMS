@@ -977,8 +977,8 @@
 | U9 服务发现 | ✅ | 残留 B12 已闭环（一致性校验脚本） |
 | U10 启动 panic 治理 | ✅ | 13 处治理 + A 类 fail-fast 保留 |
 | U11 插件心跳 | ✅ | 嵌入模式 30s/90s 扫描 |
-| U12/U12b 审计直读 | ✅ | crm/wms 读路径归位；**残留开放**：schema_defense.rs:590 TABLE_DEFS legacy 快照对齐（P2 建议项） |
+| U12/U12b 审计直读 | ✅ | crm/wms 读路径归位；**残留已闭环**（2026-10-06）：wms schema_defense.rs audit_logs TABLE_DEFS 补齐为事实源 22 列（+deleted_at/entity_type/entity_id/entity_ids/user_name/request_details/response_details/status/error_message/success），与真实 23 列（除 id）0 缺失 0 多余，启动自检漂移消除 |
 | **A 区联动** | — | A3 ✅（wms 审计 status COALESCE 补漏，7864d107b）、A4 ✅（MDM DLQ list/replay，8209774e5 已入库）、A5 待决策（erp RLS policy） |
 | **C-2 CI 强化** | ✅ | 已挂 CI（9f6afe74b）：migration-test 升级为空库守卫 ensure-empty-db-prereqs.sh（探活+幂等补 4 处前置+失败自动重放+零失败断言） |
 
-**U 系列结论**：U1-U12/U3b/U6-延伸 全部闭环（15/15）。真实开放项仅：U12b TABLE_DEFS 对齐（P2 建议项）、A1/A2（环境/授权依赖）、B5 发现项（14 张 gis 无 tenant_id 表，另立条目）；A5 ✅（e182ffd50）、C-2 ✅（9f6afe74b，均已由并行线推送）。
+**U 系列结论**：U1-U12/U3b/U6-延伸 全部闭环（15/15）。真实开放项仅：A1/A2（环境/授权依赖）、B5 发现项（14 张 gis 无 tenant_id 表，另立条目）；A5 ✅（e182ffd50）、C-2 ✅（9f6afe74b）、U3 ✅（e1065182d）、U12b ✅（本批）均已闭环。

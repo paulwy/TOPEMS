@@ -589,6 +589,19 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
     (
         "audit_logs",
         &[
+            // Cluster-A 标准审计列（与 shared-db SchemaAwareAuditLogService 一致；
+            // U12b 对齐：legacy/CDC 列快照补齐为事实源全列，与真实 wms.audit_logs 23 列吻合，
+            // id 由迁移 20260918000033 建，此处不重复；仅 ADD COLUMN 补齐缺列）
+            ("deleted_at", "TIMESTAMPTZ"),
+            ("entity_type", "TEXT"),
+            ("entity_id", "UUID"),
+            ("entity_ids", "JSONB"),
+            ("user_name", "TEXT"),
+            ("request_details", "JSONB"),
+            ("response_details", "JSONB"),
+            ("status", "VARCHAR(20)"),
+            ("error_message", "TEXT"),
+            ("success", "BOOLEAN"),
             ("organization_id", "UUID NOT NULL"),
             ("user_id", "UUID"),
             ("action", "VARCHAR(100) NOT NULL"),
