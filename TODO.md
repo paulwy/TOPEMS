@@ -443,7 +443,7 @@
   - 方案：改审计服务接口/事件写入，或确认 public.audit_logs 归属后纳入受控白名单
   - 验证：crm 无跨 schema 直读（grep 清零或白名单登记）；审计记录完整性 e2e 通过
 
-- [x] **U12b wms 审计读写错位跟进**（P2，依赖：无，U12 连带发现）——✅ 2026-10-03 commit `9caed92a3`（1 文件 audit.rs +14/−6，未 push）：3 处读路径 `FROM public.audit_logs`→`wms.audit_logs` 归位 + 写路径注释澄清（search_path=`wms,public,shared` 落 wms.audit_logs）；Cluster-A 15 列经迁移 20260918000033/38/44/45 补齐确认；历史数据已在自有表无需迁移；wms 全服务无其他同类错位；审计单测 4/4、clippy、双门禁（py wms 343 refs/node 29 服务）全绿；残留：schema_defense.rs:590 TABLE_DEFS 仍为 legacy/CDC 列快照（启动自检事实源漂移，仅 ADD COLUMN+WARN 不破坏表，建议后续对齐 crm 写法）：
+- [x] **U12b wms 审计读写错位跟进**（P2，依赖：无，U12 连带发现）——✅ 2026-10-03 commit `9caed92a3`（1 文件 audit.rs +14/−6，未 push）：3 处读路径 `FROM public.audit_logs`→`wms.audit_logs` 归位 + 写路径注释澄清（search_path=`wms,public,shared` 落 wms.audit_logs）；Cluster-A 15 列经迁移 20260918000033/38/44/45 补齐确认；历史数据已在自有表无需迁移；wms 全服务无其他同类错位；审计单测 4/4、clippy、双门禁（py wms 343 refs/node 29 服务）全绿；残留：schema_defense.rs:590 TABLE_DEFS 仍为 legacy/CDC 列快照——**✅ 2026-10-06 闭环（commit `d05924574`）**：TABLE_DEFS 28→42 表全量对齐 DB 事实源（从 information_schema 生成全列定义，补 13 张漏检业务表，零行为变化、defs=actual 零差异，集成测试经 init_database→run_schema_migration_and_verify 对 42 表运行验证通过）；连带修复 integration_tests 'calibration' 违反 ck_instruments_status_standard 预存在缺陷；：
   - 根因：`svc/wms/src/modules/audit.rs:65,92,151` 写 `wms.audit_logs` 却读公共 `public.audit_logs`——与 U12 crm 同款读写错位 bug（crm 已于 commit `87b606cdc` 归位自有 schema，wms 未在 U12 所有权内未改）
   - 方案：3 处 `FROM public.audit_logs` → `wms.audit_logs` 归位（参考 U12 修复模式），顺带核对其余服务（mes/hrm/erp/rd 已确认读自有 schema）有无同类错位
   - 验证：wms 读自有 schema（grep 清零）、审计单测绿、boundary 双门禁 exit 0；若 wms 审计事件历史上未写入 wms.audit_logs 需评估数据可见性影响
