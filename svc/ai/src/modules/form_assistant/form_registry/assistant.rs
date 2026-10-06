@@ -223,16 +223,17 @@ impl AiFormAssistant for AiFormAssistantClient {
 // ==================== 单元测试 ====================
 
 #[cfg(test)]
+#[allow(clippy::unwrap_used, clippy::expect_used)]
 mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};
 
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
-        let json = serde_json::to_string(item).unwrap();
-        let v1: serde_json::Value = serde_json::from_str(&json).unwrap();
-        let back: T = serde_json::from_str(&json).unwrap();
-        let json2 = serde_json::to_string(&back).unwrap();
-        let v2: serde_json::Value = serde_json::from_str(&json2).unwrap();
+        let json = serde_json::to_string(item).expect("serialize item");
+        let v1: serde_json::Value = serde_json::from_str(&json).expect("parse json");
+        let back: T = serde_json::from_str(&json).expect("deserialize back");
+        let json2 = serde_json::to_string(&back).expect("serialize back");
+        let v2: serde_json::Value = serde_json::from_str(&json2).expect("parse json2");
         assert_eq!(v1, v2);
     }
 

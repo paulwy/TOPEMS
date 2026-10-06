@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used, clippy::expect_used)]
+
 // ==================== 单元测试 ====================
 
 use super::common::FormDomain;
@@ -30,8 +32,8 @@ fn test_get_form_config() {
     let registry = default_registry();
     let customer = registry.get("customer");
     assert!(customer.is_some());
-    assert_eq!(customer.unwrap().display_name, "客户");
-    assert_eq!(customer.unwrap().domain, FormDomain::Crm);
+    assert_eq!(customer.expect("customer form missing").display_name, "客户");
+    assert_eq!(customer.expect("customer form missing").domain, FormDomain::Crm);
 }
 
 #[test]
@@ -46,7 +48,7 @@ fn test_list_by_domain() {
 #[test]
 fn test_form_config_supports_features() {
     let registry = default_registry();
-    let customer = registry.get("customer").unwrap();
+    let customer = registry.get("customer").expect("customer form missing");
     assert!(customer.supports("suggest"));
     assert!(customer.supports("validate"));
     assert!(customer.supports("translate"));
@@ -55,7 +57,7 @@ fn test_form_config_supports_features() {
 #[test]
 fn test_fields_description_text() {
     let registry = default_registry();
-    let customer = registry.get("customer").unwrap();
+    let customer = registry.get("customer").expect("customer form missing");
     let text = customer.fields_description_text();
     assert!(text.contains("name"));
     assert!(text.contains("客户名称"));
@@ -64,7 +66,7 @@ fn test_fields_description_text() {
 #[test]
 fn test_business_terms_text() {
     let registry = default_registry();
-    let voucher = registry.get("voucher").unwrap();
+    let voucher = registry.get("voucher").expect("voucher form missing");
     let text = voucher.business_terms_text();
     assert!(text.contains("借贷必相等"));
 }
