@@ -276,6 +276,14 @@ impl DeadLetterQueue {
         Ok(())
     }
 
+    /// A4: 获取单条 MDM 死信（按 event_id，跨全部 MDM DLQ keyspace 扫描）
+    ///
+    /// 复用 `find_mdm_dlq_entry` 的批量扫描逻辑；未找到返回 `Ok(None)`（路由层映射 404）。
+    pub async fn get_mdm_dead_letter(&self, event_id: Uuid) -> EventResult<Option<MdmDeadLetter>> {
+        let target = self.find_mdm_dlq_entry(event_id).await?;
+        Ok(target.map(|(_, _, dl)| dl))
+    }
+
     /// A4: 列出 MDM DLQ 键，可选按域 prefix 过滤
     async fn list_mdm_dlq_keys(&self, prefix: Option<&str>) -> EventResult<Vec<String>> {
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
@@ -1166,6 +1174,21 @@ mod tests {
         assert!(
             result.is_err(),
             "Redis 不可达时 replay 应返回 Err（连接失败而非假成功）"
+        );
+    }
+
+    #[tokio::test]
+    async fn test_mdm_get_returns_err_when_redis_unavailable() {
+        if redis_pubsub::maybe_connect_redis().await.is_some() {
+            eprintln!("[skip] Redis 可用，跳过不可达错误路径测试");
+            return;
+        }
+        let queue = DeadLetterQueue::new().expect("lazy construction succeeds");
+        let event_id = Uuid::new_v4();
+        let result = queue.get_mdm_dead_letter(event_id).await;
+        assert!(
+            result.is_err(),
+            "Redis 不可达时 get 应返回 Err（连接失败而非假成功）"
         );
     }
 }
