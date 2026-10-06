@@ -925,3 +925,11 @@
   - 修复 createDataset 422：请求字段 data_source_id → datasource_id（后端 CreateDatasetRequest 命名不一致）
   - DB：插入 2 条真实 datasource（topems 主业务库 5432 / aux 分析库 5433，真实连接信息）；端到端验证：下拉显示 2 条真实数据 → 创建数据集外键通过 → 列表显示 → 测试数据集已清理
   - 遗留小项：数据集列表"数据源"列显示 "-"（后端 list 未 join datasource 名称）——可选改进，非本次范围
+## [2026-10-06] 批 2 残留偿还完成（B5/B6/B8/B9/A5 ✅）
+
+- **B5**（d00010ed0）：gis schema RLS 策略补齐（新迁移 20261006000001，evidence_records/locations/track_records 建 rls_tenant_isolation，maps 系保留既有）+ svc/gis enable_rls: false→true；monolith 重启后冒烟正常；受限角色 topems_app 跨租户实测（租户A=1行/nil=2行）
+- **B6**（d00010ed0）：rls_middleware 响应后 RESET app.tenant_id（防池化连接跨租户残留）；shared-db 152 测试绿
+- **B8**（f9d945d85）：移除 dev:core 死脚本（topems-core 包不存在）+ @types/dompurify deprecated stub（TS2688 根因，dompurify 3.x 自带类型）；build:shared-types DTS 构建成功
+- **B9**（2c7156fa2）：react-leaflet mock 补 useMap/useMapEvents（MapEventHandler/HeatmapLayer/GisMapTemplate 用）→ DataInfraComponents 15/15 全绿
+- **A5**（e182ffd50）：erp.erp_master_data_refs RLS 策略（新迁移 20261006000002，幂等 rls_tenant_isolation，供 topems_app）
+- **待办**：6 个提交（7ed0e7365→e182ffd50）待 pre-push 门禁全绿后推送 origin/main
