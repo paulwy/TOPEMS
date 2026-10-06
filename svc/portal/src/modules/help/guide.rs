@@ -4,11 +4,12 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::shared::AppState;
+use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Guide {
@@ -128,7 +129,7 @@ pub async fn list_guides(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南总数失败: {}", e);
-            return Json(api_error(500, "查询指南总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询指南总数失败".to_string())));
         }
     };
 
@@ -151,7 +152,7 @@ pub async fn list_guides(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南列表失败: {}", e);
-            return Json(api_error(500, "查询指南列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询指南列表失败".to_string())));
         }
     };
 
@@ -191,13 +192,17 @@ pub async fn get_guide(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南详情失败: {}", e);
-            return Json(api_error(500, "查询指南详情失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询指南详情失败".to_string())));
         }
     };
 
     let guide = match guide {
         Some(g) => g,
-        None => return Json(api_error(404, "指南不存在")),
+        None => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "指南不存在".to_string(),
+            )))
+        }
     };
 
     let lessons: Vec<GuideLesson> = match sqlx::query_as(
@@ -211,7 +216,7 @@ pub async fn get_guide(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南课程失败: {}", e);
-            return Json(api_error(500, "查询指南课程失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询指南课程失败".to_string())));
         }
     };
 
@@ -237,7 +242,9 @@ pub async fn create_guide(
     Json(req): Json<CreateGuideRequest>,
 ) -> Json<ApiResponse<Guide>> {
     if req.title.trim().is_empty() {
-        return Json(api_error(400, "标题不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "标题不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -264,7 +271,7 @@ pub async fn create_guide(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建指南失败: {}", e);
-            return Json(api_error(500, "创建指南失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("创建指南失败".to_string())));
         }
     };
 
@@ -290,7 +297,9 @@ pub async fn add_lesson(
     Json(req): Json<CreateLessonRequest>,
 ) -> Json<ApiResponse<GuideLesson>> {
     if req.title.trim().is_empty() {
-        return Json(api_error(400, "课程标题不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "课程标题不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -315,7 +324,7 @@ pub async fn add_lesson(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("添加课程失败: {}", e);
-            return Json(api_error(500, "添加课程失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("添加课程失败".to_string())));
         }
     };
 
@@ -349,7 +358,9 @@ pub async fn get_guide_categories(State(state): State<AppState>) -> Json<ApiResp
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询指南分类失败: {}", e);
-            return Json(api_error(500, "查询指南分类失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询指南分类失败".to_string(),
+            )));
         }
     };
 

@@ -6,13 +6,14 @@
 //! 即"不写回 unified-core 之外"。停掉 portal 不影响 unified-core 偏好接口（它已无对 portal 的运行时调用）。
 //! 数据归属：unified-core IAM 域；portal 仅作 BFF 转发。
 
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Query, State},
     http::HeaderMap,
     Json,
 };
 use serde::Deserialize;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::{ ApiResponse};
 use topems_shared_service_client::service_client::api::iam_api::IamApi;
 use topems_shared_service_client::TypedServiceClient;
 
@@ -53,7 +54,7 @@ pub async fn get_user_preferences(
         Ok(prefs) => Json(ApiResponse::success(prefs, "获取用户偏好设置成功")),
         Err(e) => {
             tracing::warn!("proxy get preferences to IAM failed: {}", e);
-            Json(api_error(502, "IAM 偏好服务暂不可用"))
+            Json(ApiResponse::from(TopemsError::ServiceUnavailable("IAM 偏好服务暂不可用".to_string())))
         }
     }
 }
@@ -70,7 +71,7 @@ pub async fn update_user_preferences(
         Ok(prefs) => Json(ApiResponse::success(prefs, "保存用户偏好设置成功")),
         Err(e) => {
             tracing::warn!("proxy update preferences to IAM failed: {}", e);
-            Json(api_error(502, "IAM 偏好服务暂不可用"))
+            Json(ApiResponse::from(TopemsError::ServiceUnavailable("IAM 偏好服务暂不可用".to_string())))
         }
     }
 }

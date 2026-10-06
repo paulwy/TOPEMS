@@ -4,11 +4,12 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::shared::AppState;
+use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Faq {
@@ -91,7 +92,7 @@ pub async fn list_faqs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询FAQ总数失败: {}", e);
-            return Json(api_error(500, "查询FAQ总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询FAQ总数失败".to_string())));
         }
     };
 
@@ -114,7 +115,7 @@ pub async fn list_faqs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询FAQ列表失败: {}", e);
-            return Json(api_error(500, "查询FAQ列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询FAQ列表失败".to_string())));
         }
     };
 
@@ -154,7 +155,7 @@ pub async fn get_faq(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询FAQ详情失败: {}", e);
-            return Json(api_error(500, "查询FAQ详情失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询FAQ详情失败".to_string())));
         }
     };
 
@@ -168,7 +169,9 @@ pub async fn get_faq(
             .await;
             Json(api_success(faq))
         }
-        None => Json(api_error(404, "FAQ不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "FAQ不存在".to_string(),
+        ))),
     }
 }
 
@@ -187,10 +190,14 @@ pub async fn create_faq(
     Json(req): Json<CreateFaqRequest>,
 ) -> Json<ApiResponse<Faq>> {
     if req.question.trim().is_empty() {
-        return Json(api_error(400, "问题不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "问题不能为空".to_string(),
+        )));
     }
     if req.answer.trim().is_empty() {
-        return Json(api_error(400, "答案不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "答案不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -215,7 +222,7 @@ pub async fn create_faq(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建FAQ失败: {}", e);
-            return Json(api_error(500, "创建FAQ失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("创建FAQ失败".to_string())));
         }
     };
 
@@ -264,13 +271,15 @@ pub async fn update_faq(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新FAQ失败: {}", e);
-            return Json(api_error(500, "更新FAQ失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("更新FAQ失败".to_string())));
         }
     };
 
     match faq {
         Some(faq) => Json(api_success(faq)),
-        None => Json(api_error(404, "FAQ不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "FAQ不存在".to_string(),
+        ))),
     }
 }
 
@@ -288,10 +297,14 @@ pub async fn delete_faq(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(api_success(true)),
-        Ok(_) => Json(api_error(404, "FAQ不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "FAQ不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除FAQ失败: {}", e);
-            Json(api_error(500, "删除FAQ失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除FAQ失败".to_string(),
+            )))
         }
     }
 }
@@ -316,7 +329,9 @@ pub async fn get_faq_categories(State(state): State<AppState>) -> Json<ApiRespon
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询FAQ分类失败: {}", e);
-            return Json(api_error(500, "查询FAQ分类失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询FAQ分类失败".to_string(),
+            )));
         }
     };
 
