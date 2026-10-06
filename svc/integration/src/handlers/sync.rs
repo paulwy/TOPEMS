@@ -7,10 +7,11 @@
 use axum::extract::{Json, State};
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::models::AppState;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateStatusRequest {
@@ -157,7 +158,9 @@ pub async fn create_task(
         Ok(row) => Json(ApiResponse::success(row.into(), "同步任务创建成功")),
         Err(e) => {
             tracing::error!("创建同步任务失败: {}", e);
-            Json(api_error(500, "创建同步任务失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建同步任务失败".to_string(),
+            )))
         }
     }
 }
@@ -195,11 +198,15 @@ pub async fn get_task(
                 )),
                 Err(e) => {
                     tracing::error!("查询同步任务失败: {}", e);
-                    Json(api_error(500, "查询同步任务失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "查询同步任务失败".to_string(),
+                    )))
                 }
             }
         }
-        Err(_) => Json(api_error(400, "任务ID格式错误")),
+        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "任务ID格式错误".to_string(),
+        ))),
     }
 }
 
@@ -245,11 +252,15 @@ pub async fn update_status(
                 Ok(row) => Json(ApiResponse::success(row.into(), "同步任务状态更新成功")),
                 Err(e) => {
                     tracing::error!("更新同步任务状态失败: {}", e);
-                    Json(api_error(500, "更新同步任务状态失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "更新同步任务状态失败".to_string(),
+                    )))
                 }
             }
         }
-        Err(_) => Json(api_error(400, "任务ID格式错误")),
+        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "任务ID格式错误".to_string(),
+        ))),
     }
 }
 
@@ -279,7 +290,7 @@ pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<
         }
         Err(e) => {
             tracing::error!("查询待处理同步任务失败: {}", e);
-            Json(api_error(500, "查询待处理同步任务失败"))
+            Json(ApiResponse::from(TopemsError::Internal("查询待处理同步任务失败".to_string())))
         }
     }
 }
@@ -337,7 +348,9 @@ pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<S
         Ok(stats) => Json(ApiResponse::success(stats, "获取同步统计数据成功")),
         Err(e) => {
             tracing::error!("获取同步统计数据失败: {}", e);
-            Json(api_error(500, "获取同步统计数据失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取同步统计数据失败".to_string(),
+            )))
         }
     }
 }
@@ -419,7 +432,9 @@ pub async fn retry_failed(
         )),
         Err(e) => {
             tracing::error!("重试失败任务失败: {}", e);
-            Json(api_error(500, "重试失败任务失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "重试失败任务失败".to_string(),
+            )))
         }
     }
 }
@@ -463,11 +478,13 @@ pub async fn trigger_scm_wms(
                 Ok(row) => Json(ApiResponse::success(row.into(), "触发SCM→WMS同步成功")),
                 Err(e) => {
                     tracing::error!("触发SCM→WMS同步失败: {}", e);
-                    Json(api_error(500, "触发SCM→WMS同步失败"))
+                    Json(ApiResponse::from(TopemsError::Internal("触发SCM→WMS同步失败".to_string())))
                 }
             }
         }
-        Err(_) => Json(api_error(400, "采购订单ID格式错误")),
+        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购订单ID格式错误".to_string(),
+        ))),
     }
 }
 
@@ -510,11 +527,13 @@ pub async fn trigger_wms_crm(
                 Ok(row) => Json(ApiResponse::success(row.into(), "触发WMS→CRM同步成功")),
                 Err(e) => {
                     tracing::error!("触发WMS→CRM同步失败: {}", e);
-                    Json(api_error(500, "触发WMS→CRM同步失败"))
+                    Json(ApiResponse::from(TopemsError::Internal("触发WMS→CRM同步失败".to_string())))
                 }
             }
         }
-        Err(_) => Json(api_error(400, "出库单ID格式错误")),
+        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "出库单ID格式错误".to_string(),
+        ))),
     }
 }
 
@@ -557,11 +576,13 @@ pub async fn trigger_srm_scm(
                 Ok(row) => Json(ApiResponse::success(row.into(), "触发SRM→SCM同步成功")),
                 Err(e) => {
                     tracing::error!("触发SRM→SCM同步失败: {}", e);
-                    Json(api_error(500, "触发SRM→SCM同步失败"))
+                    Json(ApiResponse::from(TopemsError::Internal("触发SRM→SCM同步失败".to_string())))
                 }
             }
         }
-        Err(_) => Json(api_error(400, "供应商ID格式错误")),
+        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "供应商ID格式错误".to_string(),
+        ))),
     }
 }
 
@@ -695,7 +716,9 @@ pub async fn get_integration_sync_stats(
         Ok(stats) => Json(ApiResponse::success(stats, "获取同步统计成功")),
         Err(e) => {
             tracing::error!("获取同步统计失败: {}", e);
-            Json(api_error(500, "获取同步统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取同步统计失败".to_string(),
+            )))
         }
     }
 }
@@ -789,7 +812,9 @@ pub async fn get_sync_history(
         Ok(items) => Json(ApiResponse::success(items, "获取同步历史成功")),
         Err(e) => {
             tracing::error!("获取同步历史失败: {}", e);
-            Json(api_error(500, "获取同步历史失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取同步历史失败".to_string(),
+            )))
         }
     }
 }
