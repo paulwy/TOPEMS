@@ -67,7 +67,7 @@ pub struct UpdateQualityCostRequest {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CostCategorySummary {
     pub category: String,
-    pub total_amount: f64,
+    pub total_amount: BigDecimal,
     pub count: i64,
     pub percentage: f64,
 }
@@ -75,24 +75,24 @@ pub struct CostCategorySummary {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CostTrendItem {
     pub period: String,
-    pub prevention: f64,
-    pub appraisal: f64,
-    pub internal_failure: f64,
-    pub external_failure: f64,
-    pub total: f64,
+    pub prevention: BigDecimal,
+    pub appraisal: BigDecimal,
+    pub internal_failure: BigDecimal,
+    pub external_failure: BigDecimal,
+    pub total: BigDecimal,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct CostDepartmentSummary {
     pub department: String,
-    pub total_amount: f64,
+    pub total_amount: BigDecimal,
     pub count: i64,
     pub percentage: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct QualityCostStatistics {
-    pub total_cost: f64,
+    pub total_cost: BigDecimal,
     pub category_summary: Vec<CostCategorySummary>,
     pub department_summary: Vec<CostDepartmentSummary>,
 }
@@ -101,6 +101,7 @@ pub struct QualityCostStatistics {
 mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};
+    use std::str::FromStr;
 
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
         let json = serde_json::to_string(item).unwrap();
@@ -183,7 +184,7 @@ mod tests {
     fn test_cost_category_summary() {
         roundtrip(&CostCategorySummary {
             category: "prevention".to_string(),
-            total_amount: 0.0,
+            total_amount: BigDecimal::from_str("0.0").unwrap(),
             count: 0,
             percentage: 0.0,
         });
@@ -193,11 +194,11 @@ mod tests {
     fn test_cost_trend_item() {
         roundtrip(&CostTrendItem {
             period: "2025-Q1".to_string(),
-            prevention: 0.0,
-            appraisal: 0.0,
-            internal_failure: 0.0,
-            external_failure: 0.0,
-            total: 0.0,
+            prevention: BigDecimal::from_str("0.0").unwrap(),
+            appraisal: BigDecimal::from_str("0.0").unwrap(),
+            internal_failure: BigDecimal::from_str("0.0").unwrap(),
+            external_failure: BigDecimal::from_str("0.0").unwrap(),
+            total: BigDecimal::from_str("0.0").unwrap(),
         });
     }
 
@@ -205,7 +206,7 @@ mod tests {
     fn test_cost_department_summary() {
         roundtrip(&CostDepartmentSummary {
             department: "d".to_string(),
-            total_amount: 0.0,
+            total_amount: BigDecimal::from_str("0.0").unwrap(),
             count: 0,
             percentage: 0.0,
         });
@@ -214,10 +215,10 @@ mod tests {
     #[test]
     fn test_quality_cost_statistics() {
         roundtrip(&QualityCostStatistics {
-            total_cost: 0.0,
+            total_cost: BigDecimal::from_str("0.0").unwrap(),
             category_summary: vec![CostCategorySummary {
                 category: "c".to_string(),
-                total_amount: 0.0,
+                total_amount: BigDecimal::from_str("0.0").unwrap(),
                 count: 0,
                 percentage: 0.0,
             }],
@@ -266,35 +267,35 @@ mod tests {
     fn test_cost_trend_item_nonzero() {
         roundtrip(&CostTrendItem {
             period: "2025-Q1".to_string(),
-            prevention: 1000.0,
-            appraisal: 2000.0,
-            internal_failure: 500.0,
-            external_failure: 2500.0,
-            total: 6000.0,
+            prevention: BigDecimal::from_str("1000.0").unwrap(),
+            appraisal: BigDecimal::from_str("2000.0").unwrap(),
+            internal_failure: BigDecimal::from_str("500.0").unwrap(),
+            external_failure: BigDecimal::from_str("2500.0").unwrap(),
+            total: BigDecimal::from_str("6000.0").unwrap(),
         });
     }
 
     #[test]
     fn test_quality_cost_statistics_nonzero() {
         roundtrip(&QualityCostStatistics {
-            total_cost: 1_000_000.0,
+            total_cost: BigDecimal::from_str("1000000.0").unwrap(),
             category_summary: vec![
                 CostCategorySummary {
                     category: "prevention".to_string(),
-                    total_amount: 100_000.0,
+                    total_amount: BigDecimal::from_str("100000.0").unwrap(),
                     count: 10,
                     percentage: 10.0,
                 },
                 CostCategorySummary {
                     category: "appraisal".to_string(),
-                    total_amount: 200_000.0,
+                    total_amount: BigDecimal::from_str("200000.0").unwrap(),
                     count: 20,
                     percentage: 20.0,
                 },
             ],
             department_summary: vec![CostDepartmentSummary {
                 department: "QA".to_string(),
-                total_amount: 300_000.0,
+                total_amount: BigDecimal::from_str("300000.0").unwrap(),
                 count: 15,
                 percentage: 30.0,
             }],

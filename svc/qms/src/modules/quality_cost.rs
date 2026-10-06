@@ -8,6 +8,7 @@ use axum::{
 };
 use bigdecimal::BigDecimal;
 use sqlx::{types::Uuid, Row};
+use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
@@ -409,7 +410,7 @@ pub async fn get_cost_statistics(
                 };
                 CostCategorySummary {
                     category: r.get::<String, _>("category"),
-                    total_amount: cat_total,
+                    total_amount: BigDecimal::from_str(&cat_total.to_string()).unwrap_or_default(),
                     count: r.get::<i64, _>("count"),
                     percentage: (percentage * 100.0).round() / 100.0,
                 }
@@ -445,7 +446,7 @@ pub async fn get_cost_statistics(
                     department: r
                         .get::<Option<String>, _>("department")
                         .unwrap_or_else(|| "未分配".to_string()),
-                    total_amount: dept_total,
+                    total_amount: BigDecimal::from_str(&dept_total.to_string()).unwrap_or_default(),
                     count: r.get::<i64, _>("count"),
                     percentage: (percentage * 100.0).round() / 100.0,
                 }
@@ -458,7 +459,7 @@ pub async fn get_cost_statistics(
     };
 
     let stats = QualityCostStatistics {
-        total_cost,
+        total_cost: BigDecimal::from_str(&total_cost.to_string()).unwrap_or_default(),
         category_summary,
         department_summary,
     };
@@ -558,15 +559,11 @@ pub async fn get_cost_trend(
                 .iter()
                 .map(|r| CostTrendItem {
                     period: r.get::<Option<String>, _>("period").unwrap_or_default(),
-                    prevention: big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("prevention")),
-                    appraisal: big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("appraisal")),
-                    internal_failure: big_decimal_to_f64_non_opt(
-                        r.get::<BigDecimal, _>("internal_failure"),
-                    ),
-                    external_failure: big_decimal_to_f64_non_opt(
-                        r.get::<BigDecimal, _>("external_failure"),
-                    ),
-                    total: big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("total")),
+                    prevention: r.get::<BigDecimal, _>("prevention"),
+                    appraisal: r.get::<BigDecimal, _>("appraisal"),
+                    internal_failure: r.get::<BigDecimal, _>("internal_failure"),
+                    external_failure: r.get::<BigDecimal, _>("external_failure"),
+                    total: r.get::<BigDecimal, _>("total"),
                 })
                 .collect();
             Json(ApiResponse::success(trend, "获取质量成本趋势成功"))

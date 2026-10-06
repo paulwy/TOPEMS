@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -10,9 +11,9 @@ pub struct Budget {
     pub budget_code: String,
     pub budget_name: String,
     pub budget_type: Option<String>,
-    pub total_amount: f64,
-    pub allocated_amount: f64,
-    pub spent_amount: f64,
+    pub total_amount: Decimal,
+    pub allocated_amount: Decimal,
+    pub spent_amount: Decimal,
     pub status: String,
     pub version: i32,
     pub created_by: Option<String>,
@@ -27,7 +28,7 @@ pub struct CreateBudgetRequest {
     pub budget_code: String,
     pub budget_name: String,
     pub budget_type: Option<String>,
-    pub total_amount: f64,
+    pub total_amount: Decimal,
     pub created_by: Option<String>,
 }
 
@@ -35,7 +36,7 @@ pub struct CreateBudgetRequest {
 pub struct UpdateBudgetRequest {
     pub budget_name: Option<String>,
     pub budget_type: Option<String>,
-    pub total_amount: Option<f64>,
+    pub total_amount: Option<Decimal>,
     pub status: Option<String>,
 }
 
@@ -47,9 +48,9 @@ pub struct BudgetItem {
     pub item_name: String,
     pub category: Option<String>,
     pub subcategory: Option<String>,
-    pub budget_amount: f64,
-    pub allocated_amount: f64,
-    pub spent_amount: f64,
+    pub budget_amount: Decimal,
+    pub allocated_amount: Decimal,
+    pub spent_amount: Decimal,
     pub description: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -61,7 +62,7 @@ pub struct CreateBudgetItemRequest {
     pub item_name: String,
     pub category: Option<String>,
     pub subcategory: Option<String>,
-    pub budget_amount: f64,
+    pub budget_amount: Decimal,
     pub description: Option<String>,
 }
 
@@ -70,13 +71,14 @@ pub struct UpdateBudgetItemRequest {
     pub item_name: Option<String>,
     pub category: Option<String>,
     pub subcategory: Option<String>,
-    pub budget_amount: Option<f64>,
+    pub budget_amount: Option<Decimal>,
     pub description: Option<String>,
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     fn now() -> DateTime<Utc> {
         Utc::now()
@@ -95,9 +97,9 @@ mod tests {
             budget_code: "B-001".to_string(),
             budget_name: "年度预算".to_string(),
             budget_type: Some("annual".to_string()),
-            total_amount: 1_000_000.0,
-            allocated_amount: 800_000.0,
-            spent_amount: 500_000.0,
+            total_amount: Decimal::from_str("1000000.0").unwrap(),
+            allocated_amount: Decimal::from_str("800000.0").unwrap(),
+            spent_amount: Decimal::from_str("500000.0").unwrap(),
             status: "approved".to_string(),
             version: 2,
             created_by: Some("admin".to_string()),
@@ -135,9 +137,9 @@ mod tests {
             budget_code: "B-002".to_string(),
             budget_name: "n".to_string(),
             budget_type: None,
-            total_amount: 0.0,
-            allocated_amount: 0.0,
-            spent_amount: 0.0,
+            total_amount: Decimal::from_str("0.0").unwrap(),
+            allocated_amount: Decimal::from_str("0.0").unwrap(),
+            spent_amount: Decimal::from_str("0.0").unwrap(),
             status: "draft".to_string(),
             version: 1,
             created_by: None,
@@ -154,10 +156,10 @@ mod tests {
     #[test]
     fn test_budget_negative_amounts_roundtrip() {
         let mut b = sample_budget();
-        b.spent_amount = -10.5;
+        b.spent_amount = Decimal::from_str("-10.5").unwrap();
         let s = serde_json::to_string(&b).unwrap();
         let back: Budget = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.spent_amount, -10.5);
+        assert_eq!(back.spent_amount, Decimal::from_str("-10.5").unwrap());
     }
 
     // ---- CreateBudgetRequest ----
@@ -169,7 +171,7 @@ mod tests {
             budget_code: "C-001".to_string(),
             budget_name: "新预算".to_string(),
             budget_type: Some("quarterly".to_string()),
-            total_amount: 250_000.0,
+            total_amount: Decimal::from_str("250000.0").unwrap(),
             created_by: Some("u1".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -186,7 +188,7 @@ mod tests {
             budget_code: "C-002".to_string(),
             budget_name: "x".to_string(),
             budget_type: None,
-            total_amount: 0.0,
+            total_amount: Decimal::from_str("0.0").unwrap(),
             created_by: None,
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -216,7 +218,7 @@ mod tests {
         let r = UpdateBudgetRequest {
             budget_name: Some("updated".to_string()),
             budget_type: Some("yearly".to_string()),
-            total_amount: Some(999.99),
+            total_amount: Some(Decimal::from_str("999.99").unwrap()),
             status: Some("approved".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -235,9 +237,9 @@ mod tests {
             item_name: "材料费".to_string(),
             category: Some("material".to_string()),
             subcategory: Some("steel".to_string()),
-            budget_amount: 100_000.0,
-            allocated_amount: 80_000.0,
-            spent_amount: 50_000.0,
+            budget_amount: Decimal::from_str("100000.0").unwrap(),
+            allocated_amount: Decimal::from_str("80000.0").unwrap(),
+            spent_amount: Decimal::from_str("50000.0").unwrap(),
             description: Some("原材料".to_string()),
             created_at: now(),
             updated_at: now(),
@@ -272,9 +274,9 @@ mod tests {
             item_name: "n".to_string(),
             category: None,
             subcategory: None,
-            budget_amount: 0.0,
-            allocated_amount: 0.0,
-            spent_amount: 0.0,
+            budget_amount: Decimal::from_str("0.0").unwrap(),
+            allocated_amount: Decimal::from_str("0.0").unwrap(),
+            spent_amount: Decimal::from_str("0.0").unwrap(),
             description: None,
             created_at: now(),
             updated_at: now(),
@@ -294,7 +296,7 @@ mod tests {
             item_name: "人工费".to_string(),
             category: Some("labor".to_string()),
             subcategory: Some("engineer".to_string()),
-            budget_amount: 5000.0,
+            budget_amount: Decimal::from_str("5000.0").unwrap(),
             description: Some("d".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -310,7 +312,7 @@ mod tests {
             item_name: "x".to_string(),
             category: None,
             subcategory: None,
-            budget_amount: 0.0,
+            budget_amount: Decimal::from_str("0.0").unwrap(),
             description: None,
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -326,7 +328,7 @@ mod tests {
             item_name: Some("new".to_string()),
             category: Some("c".to_string()),
             subcategory: Some("s".to_string()),
-            budget_amount: Some(123.45),
+            budget_amount: Some(Decimal::from_str("123.45").unwrap()),
             description: Some("d".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();

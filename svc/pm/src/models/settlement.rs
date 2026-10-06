@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -18,7 +19,7 @@ pub struct Settlement {
     pub settlement_type: String,
     pub status: String,
     pub settlement_date: DateTime<Utc>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub currency: Option<String>,
     pub remarks: Option<String>,
     pub settlement_period_start: Option<DateTime<Utc>>,
@@ -44,7 +45,7 @@ pub struct CreateSettlementRequest {
 pub struct UpdateSettlementRequest {
     pub settlement_name: Option<String>,
     pub status: Option<String>,
-    pub actual_amount: Option<f64>,
+    pub actual_amount: Option<Decimal>,
     pub description: Option<String>,
 }
 
@@ -55,9 +56,9 @@ pub struct SettlementItem {
     pub item_code: Option<String>,
     pub item_name: String,
     pub category: Option<String>,
-    pub budget_amount: f64,
-    pub actual_amount: f64,
-    pub variance_amount: f64,
+    pub budget_amount: Decimal,
+    pub actual_amount: Decimal,
+    pub variance_amount: Decimal,
     pub variance_percent: Option<f64>,
     pub description: Option<String>,
     pub expense_ref_id: Option<String>,
@@ -71,8 +72,8 @@ pub struct CreateSettlementItemRequest {
     pub item_code: Option<String>,
     pub item_name: String,
     pub category: Option<String>,
-    pub budget_amount: f64,
-    pub actual_amount: f64,
+    pub budget_amount: Decimal,
+    pub actual_amount: Decimal,
     pub description: Option<String>,
     pub expense_ref_id: Option<String>,
     pub contract_ref_id: Option<String>,
@@ -82,7 +83,7 @@ pub struct CreateSettlementItemRequest {
 pub struct UpdateSettlementItemRequest {
     pub item_name: Option<String>,
     pub category: Option<String>,
-    pub actual_amount: Option<f64>,
+    pub actual_amount: Option<Decimal>,
     pub description: Option<String>,
 }
 
@@ -93,7 +94,7 @@ pub struct SettlementAdjustment {
     pub adjustment_type: String,
     pub adjustment_code: Option<String>,
     pub description: Option<String>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub reason: Option<String>,
     pub supporting_documents: Option<serde_json::Value>,
     pub created_by: Option<String>,
@@ -105,7 +106,7 @@ pub struct CreateSettlementAdjustmentRequest {
     pub adjustment_type: String,
     pub adjustment_code: Option<String>,
     pub description: Option<String>,
-    pub amount: f64,
+    pub amount: Decimal,
     pub reason: Option<String>,
     pub supporting_documents: Option<serde_json::Value>,
     pub created_by: Option<String>,
@@ -114,6 +115,7 @@ pub struct CreateSettlementAdjustmentRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::FromStr;
 
     fn now() -> DateTime<Utc> {
         Utc::now()
@@ -134,7 +136,7 @@ mod tests {
             settlement_type: "monthly".to_string(),
             status: "draft".to_string(),
             settlement_date: now(),
-            amount: 95_000.0,
+            amount: Decimal::from_str("95000.0").unwrap(),
             currency: Some("CNY".to_string()),
             remarks: Some("d".to_string()),
             settlement_period_start: Some(now()),
@@ -168,7 +170,7 @@ mod tests {
             settlement_type: "final".to_string(),
             status: "draft".to_string(),
             settlement_date: now(),
-            amount: 0.0,
+            amount: Decimal::from_str("0.0").unwrap(),
             currency: None,
             remarks: None,
             settlement_period_start: None,
@@ -250,7 +252,7 @@ mod tests {
         let r = UpdateSettlementRequest {
             settlement_name: Some("updated".to_string()),
             status: Some("approved".to_string()),
-            actual_amount: Some(99_000.0),
+            actual_amount: Some(Decimal::from_str("99000.0").unwrap()),
             description: Some("d".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -268,9 +270,9 @@ mod tests {
             item_code: Some("SI-001".to_string()),
             item_name: "人力成本".to_string(),
             category: Some("labor".to_string()),
-            budget_amount: 50_000.0,
-            actual_amount: 48_000.0,
-            variance_amount: -2_000.0,
+            budget_amount: Decimal::from_str("50000.0").unwrap(),
+            actual_amount: Decimal::from_str("48000.0").unwrap(),
+            variance_amount: Decimal::from_str("-2000.0").unwrap(),
             variance_percent: Some(-4.0),
             description: Some("d".to_string()),
             expense_ref_id: Some("exp-001".to_string()),
@@ -301,9 +303,9 @@ mod tests {
             item_code: None,
             item_name: "n".to_string(),
             category: None,
-            budget_amount: 0.0,
-            actual_amount: 0.0,
-            variance_amount: 0.0,
+            budget_amount: Decimal::from_str("0.0").unwrap(),
+            actual_amount: Decimal::from_str("0.0").unwrap(),
+            variance_amount: Decimal::from_str("0.0").unwrap(),
             variance_percent: None,
             description: None,
             expense_ref_id: None,
@@ -320,11 +322,11 @@ mod tests {
     #[test]
     fn test_settlement_item_positive_variance_roundtrip() {
         let mut i = sample_item();
-        i.variance_amount = 3_000.0;
+        i.variance_amount = Decimal::from_str("3000.0").unwrap();
         i.variance_percent = Some(6.0);
         let s = serde_json::to_string(&i).unwrap();
         let back: SettlementItem = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.variance_amount, 3_000.0);
+        assert_eq!(back.variance_amount, Decimal::from_str("3000.0").unwrap());
         assert_eq!(back.variance_percent, Some(6.0));
     }
 
@@ -336,8 +338,8 @@ mod tests {
             item_code: Some("SI-002".to_string()),
             item_name: "材料费".to_string(),
             category: Some("material".to_string()),
-            budget_amount: 30_000.0,
-            actual_amount: 28_000.0,
+            budget_amount: Decimal::from_str("30000.0").unwrap(),
+            actual_amount: Decimal::from_str("28000.0").unwrap(),
             description: Some("d".to_string()),
             expense_ref_id: Some("e1".to_string()),
             contract_ref_id: None,
@@ -355,8 +357,8 @@ mod tests {
             item_code: None,
             item_name: "n".to_string(),
             category: None,
-            budget_amount: 0.0,
-            actual_amount: 0.0,
+            budget_amount: Decimal::from_str("0.0").unwrap(),
+            actual_amount: Decimal::from_str("0.0").unwrap(),
             description: None,
             expense_ref_id: None,
             contract_ref_id: None,
@@ -388,7 +390,7 @@ mod tests {
         let r = UpdateSettlementItemRequest {
             item_name: Some("updated".to_string()),
             category: Some("other".to_string()),
-            actual_amount: Some(35_000.0),
+            actual_amount: Some(Decimal::from_str("35000.0").unwrap()),
             description: Some("d".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -407,7 +409,7 @@ mod tests {
             adjustment_type: "increase".to_string(),
             adjustment_code: Some("ADJ-001".to_string()),
             description: Some("增加预算".to_string()),
-            amount: 5_000.0,
+            amount: Decimal::from_str("5000.0").unwrap(),
             reason: Some("材料涨价".to_string()),
             supporting_documents: Some(serde_json::json!(["doc1.pdf", "doc2.pdf"])),
             created_by: Some("admin".to_string()),
@@ -429,7 +431,7 @@ mod tests {
             adjustment_type: "decrease".to_string(),
             adjustment_code: None,
             description: None,
-            amount: -2_000.0,
+            amount: Decimal::from_str("-2000.0").unwrap(),
             reason: None,
             supporting_documents: None,
             created_by: None,
@@ -449,7 +451,7 @@ mod tests {
             adjustment_type: "decrease".to_string(),
             adjustment_code: Some("ADJ-002".to_string()),
             description: Some("减少预算".to_string()),
-            amount: -3_000.0,
+            amount: Decimal::from_str("-3000.0").unwrap(),
             reason: Some("节约成本".to_string()),
             supporting_documents: None,
             created_by: Some("u".to_string()),
@@ -457,7 +459,7 @@ mod tests {
         };
         let s = serde_json::to_string(&a).unwrap();
         let back: SettlementAdjustment = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.amount, -3_000.0);
+        assert_eq!(back.amount, Decimal::from_str("-3000.0").unwrap());
     }
 
     // ---- CreateSettlementAdjustmentRequest ----
@@ -468,7 +470,7 @@ mod tests {
             adjustment_type: "increase".to_string(),
             adjustment_code: Some("ADJ-003".to_string()),
             description: Some("d".to_string()),
-            amount: 10_000.0,
+            amount: Decimal::from_str("10000.0").unwrap(),
             reason: Some("新增需求".to_string()),
             supporting_documents: Some(serde_json::json!(["doc.pdf"])),
             created_by: Some("u".to_string()),
@@ -486,7 +488,7 @@ mod tests {
             adjustment_type: "decrease".to_string(),
             adjustment_code: None,
             description: None,
-            amount: -1_000.0,
+            amount: Decimal::from_str("-1000.0").unwrap(),
             reason: None,
             supporting_documents: None,
             created_by: None,

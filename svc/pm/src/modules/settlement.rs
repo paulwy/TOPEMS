@@ -5,7 +5,7 @@ use axum::{
     Json, Router,
 };
 use chrono::Utc;
-use rust_decimal::prelude::FromPrimitive;
+use rust_decimal::prelude::ToPrimitive;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
@@ -185,10 +185,7 @@ async fn create_settlement(
                     settlement_no: s.settlement_no.clone().unwrap_or_else(|| "".to_string()),
                     settlement_type: s.settlement_type.clone(),
                     status: s.status.clone(),
-                    amount: Some(
-                        rust_decimal::Decimal::from_f64(s.amount)
-                            .unwrap_or(rust_decimal::Decimal::ZERO),
-                    ),
+                    amount: Some(s.amount),
                     settlement_date: s.settlement_period_start,
                     remarks: s.remarks.clone(),
                     created_by: s.created_by.clone(),
@@ -360,8 +357,12 @@ async fn create_settlement_item(
     let id = Uuid::new_v4();
     let now = Utc::now();
     let variance_amount = req.actual_amount - req.budget_amount;
-    let variance_percent = if req.budget_amount != 0.0 {
-        Some((variance_amount / req.budget_amount) * 100.0)
+    let variance_percent = if req.budget_amount != rust_decimal::Decimal::ZERO {
+        Some(
+            ((variance_amount / req.budget_amount) * rust_decimal::Decimal::from(100))
+                .to_f64()
+                .unwrap_or(0.0),
+        )
     } else {
         None
     };

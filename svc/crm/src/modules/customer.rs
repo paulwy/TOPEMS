@@ -12,6 +12,7 @@ use super::ApiState;
 use crate::models::customer::{CreateCustomerRequest, Customer, UpdateCustomerRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
+use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
@@ -1090,7 +1091,7 @@ pub struct CustomerFinanceInfo {
     pub credit_term_days: i64,
     pub receivable_balance: f64,
     pub accounts_receivable: f64,
-    pub overdue_amount: f64,
+    pub overdue_amount: rust_decimal::Decimal,
     pub overdue_receivable: f64,
     pub avg_collection_days: i64,
     pub total_sales: f64,
@@ -1116,7 +1117,7 @@ impl CustomerFinanceInfo {
             credit_term_days: 0,
             receivable_balance: 0.0,
             accounts_receivable: 0.0,
-            overdue_amount: 0.0,
+            overdue_amount: rust_decimal::Decimal::ZERO,
             overdue_receivable: 0.0,
             avg_collection_days: 0,
             total_sales: 0.0,
@@ -1168,7 +1169,7 @@ pub struct UpdateCustomerFinanceRequest {
     pub credit_term_days: Option<i64>,
     pub receivable_balance: Option<f64>,
     pub accounts_receivable: Option<f64>,
-    pub overdue_amount: Option<f64>,
+    pub overdue_amount: Option<rust_decimal::Decimal>,
     pub overdue_receivable: Option<f64>,
     pub avg_collection_days: Option<i64>,
     pub total_sales: Option<f64>,
@@ -1260,7 +1261,8 @@ pub async fn get_customer_finance(
                 credit_term_days: r.credit_term_days as i64,
                 receivable_balance: num_f64(r.receivable_balance),
                 accounts_receivable: num_f64(r.accounts_receivable),
-                overdue_amount: num_f64(r.overdue_amount),
+                overdue_amount: rust_decimal::Decimal::from_str(&r.overdue_amount.to_string())
+                    .unwrap_or_default(),
                 overdue_receivable: num_f64(r.overdue_receivable),
                 avg_collection_days: r.avg_collection_days as i64,
                 total_sales: num_f64(r.total_sales),
@@ -1371,7 +1373,8 @@ pub async fn update_customer_finance(
                 credit_term_days: r.credit_term_days as i64,
                 receivable_balance: num_f64(r.receivable_balance),
                 accounts_receivable: num_f64(r.accounts_receivable),
-                overdue_amount: num_f64(r.overdue_amount),
+                overdue_amount: rust_decimal::Decimal::from_str(&r.overdue_amount.to_string())
+                    .unwrap_or_default(),
                 overdue_receivable: num_f64(r.overdue_receivable),
                 avg_collection_days: r.avg_collection_days as i64,
                 total_sales: num_f64(r.total_sales),
@@ -1451,7 +1454,7 @@ pub async fn update_customer_finance(
         merged.credit_term_days as i32,
         to_bd(merged.receivable_balance),
         to_bd(merged.accounts_receivable),
-        to_bd(merged.overdue_amount),
+        sqlx::types::BigDecimal::from_str(&merged.overdue_amount.to_string()).unwrap_or_default(),
         to_bd(merged.overdue_receivable),
         merged.avg_collection_days as i32,
         to_bd(merged.total_sales),
@@ -1489,7 +1492,7 @@ pub async fn update_customer_finance(
                 merged.credit_term_days as i32,
                 to_bd(merged.receivable_balance),
                 to_bd(merged.accounts_receivable),
-                to_bd(merged.overdue_amount),
+                sqlx::types::BigDecimal::from_str(&merged.overdue_amount.to_string()).unwrap_or_default(),
                 to_bd(merged.overdue_receivable),
                 merged.avg_collection_days as i32,
                 to_bd(merged.total_sales),
