@@ -36,6 +36,7 @@ pub mod graphql_schema;
 pub mod graphql_security;
 pub mod graphql_semantic_cache;
 pub mod graphql_subscription_enhanced;
+pub mod graphql_subscription_impls;
 pub mod graphql_types;
 // V68.1 A2.4.2: 帮助中心模块从 unified-core 迁移至门户（Portal BFF 用户服务域）
 pub mod help;
@@ -62,6 +63,8 @@ pub mod subscription_manager;
 pub mod todos;
 pub mod user;
 pub mod version_control;
+
+
 
 
 
