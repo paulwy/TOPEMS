@@ -74,8 +74,8 @@ pub struct ValidationResult {
     pub suggestion: Option<String>,
 }
 
-impl From<topems_shared::form_assistant::FieldSuggestion> for FieldSuggestion {
-    fn from(src: topems_shared::form_assistant::FieldSuggestion) -> Self {
+impl From<crate::modules::form_assistant::FieldSuggestion> for FieldSuggestion {
+    fn from(src: crate::modules::form_assistant::FieldSuggestion) -> Self {
         Self {
             field_name: src.field_name,
             suggested_value: src.suggested_value,
@@ -85,8 +85,8 @@ impl From<topems_shared::form_assistant::FieldSuggestion> for FieldSuggestion {
     }
 }
 
-impl From<topems_shared::form_assistant::ValidationResult> for ValidationResult {
-    fn from(src: topems_shared::form_assistant::ValidationResult) -> Self {
+impl From<crate::modules::form_assistant::ValidationResult> for ValidationResult {
+    fn from(src: crate::modules::form_assistant::ValidationResult) -> Self {
         Self {
             field_name: src.field_name,
             validation_type: src.validation_type,
@@ -112,8 +112,8 @@ pub struct FormSummary {
     pub supports_translate: bool,
 }
 
-impl From<&topems_shared::form_assistant::FormConfig> for FormSummary {
-    fn from(cfg: &topems_shared::form_assistant::FormConfig) -> Self {
+impl From<&crate::modules::form_assistant::FormConfig> for FormSummary {
+    fn from(cfg: &crate::modules::form_assistant::FormConfig) -> Self {
         Self {
             form_type: cfg.form_type.clone(),
             display_name: cfg.display_name.clone(),
@@ -159,8 +159,8 @@ pub struct FormFieldDefinitionDto {
     pub example: String,
 }
 
-impl From<&topems_shared::form_assistant::FieldDefinition> for FormFieldDefinitionDto {
-    fn from(f: &topems_shared::form_assistant::FieldDefinition) -> Self {
+impl From<&crate::modules::form_assistant::FieldDefinition> for FormFieldDefinitionDto {
+    fn from(f: &crate::modules::form_assistant::FieldDefinition) -> Self {
         Self {
             name: f.name.clone(),
             label: f.label.clone(),
@@ -180,8 +180,8 @@ pub struct FormValidationRuleDto {
     pub pattern: Option<String>,
 }
 
-impl From<&topems_shared::form_assistant::FormValidationRule> for FormValidationRuleDto {
-    fn from(r: &topems_shared::form_assistant::FormValidationRule) -> Self {
+impl From<&crate::modules::form_assistant::FormValidationRule> for FormValidationRuleDto {
+    fn from(r: &crate::modules::form_assistant::FormValidationRule) -> Self {
         Self {
             field_name: r.field_name.clone(),
             rule_type: r.rule_type.clone(),
@@ -198,8 +198,8 @@ pub struct BusinessTermDto {
     pub explanation: String,
 }
 
-impl From<&topems_shared::form_assistant::BusinessTerm> for BusinessTermDto {
-    fn from(t: &topems_shared::form_assistant::BusinessTerm) -> Self {
+impl From<&crate::modules::form_assistant::BusinessTerm> for BusinessTermDto {
+    fn from(t: &crate::modules::form_assistant::BusinessTerm) -> Self {
         Self {
             term: t.term.clone(),
             english: t.english.clone(),
@@ -216,8 +216,8 @@ pub struct AiFeaturesDto {
     pub translate: bool,
 }
 
-impl From<&topems_shared::form_assistant::AiFeatures> for AiFeaturesDto {
-    fn from(f: &topems_shared::form_assistant::AiFeatures) -> Self {
+impl From<&crate::modules::form_assistant::AiFeatures> for AiFeaturesDto {
+    fn from(f: &crate::modules::form_assistant::AiFeatures) -> Self {
         Self {
             suggest: f.suggest,
             enhance: f.enhance,
@@ -227,8 +227,8 @@ impl From<&topems_shared::form_assistant::AiFeatures> for AiFeaturesDto {
     }
 }
 
-impl From<&topems_shared::form_assistant::FormConfig> for AiFormConfigResponse {
-    fn from(cfg: &topems_shared::form_assistant::FormConfig) -> Self {
+impl From<&crate::modules::form_assistant::FormConfig> for AiFormConfigResponse {
+    fn from(cfg: &crate::modules::form_assistant::FormConfig) -> Self {
         Self {
             form_type: cfg.form_type.clone(),
             display_name: cfg.display_name.clone(),

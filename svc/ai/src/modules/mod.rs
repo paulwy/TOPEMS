@@ -10,6 +10,7 @@ pub mod chat_conversations;
 pub mod code_assistant;
 pub mod document;
 pub mod embedding;
+pub mod form_assistant; // B11: 自 lib/src/form_assistant 迁出（U8 遗留），仅供 ai_form 使用
 pub mod models;
 pub mod multimodal;
 pub mod openapi;

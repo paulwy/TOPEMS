@@ -97,7 +97,6 @@ pub use topems_shared_db::database::{
     test_database_connection, HealthCheckResult, ReadWriteConfig, ReadWritePool,
 };
 // --- AI Form Assistant（门面 crate 内部模块，非子 crate re-export）---
-pub mod form_assistant;
 
 // =============================================================================
 // 扩展 trait

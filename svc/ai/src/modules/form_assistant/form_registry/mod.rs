@@ -45,6 +45,6 @@ pub use assistant::{
     AiFormAssistant, AiFormAssistantClient, AiFormAssistantRequest, AiFormAssistantResponse,
     FieldSuggestion, FormAssistantAction, ValidationResult,
 };
-pub use common::{AiFeatures, BusinessTerm, FieldDefinition, FormDomain, FormValidationRule};
+pub use common::{AiFeatures, BusinessTerm, FieldDefinition, FormValidationRule};
 pub use config::FormConfig;
-pub use registry::{default_registry, FormRegistry};
+pub use registry::default_registry;

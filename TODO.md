@@ -732,7 +732,7 @@
 | B8 | **T1 残留：dev:core 引用 topems-core + build:shared-types DTS @types/dompurify** | P1 | S | 无 | T1 条目（根 package.json:21,26）；R1 基线（DTS TS2688、web 走 alias） | grep topems-core=0；build:shared-types 全绿或显式豁免 |
 | B9 | **T1 残留：GIS leaflet 3 测试** | P2 | S | 无 | R1 基线（vitest 3 既有失败=react-leaflet mock 缺 useMapEvents） | 补 mock 后 3 测试转绿 |
 | ✅ B10 | **U4 残留：≤3s 快照窗口 SIGKILL 丢最近写** | P2 | S | 无 | U4 条目 | ✅ 已实施（2026-10-06）：master-data 10 模块全部写点（quality/lineage/knowledge/versioning/commercial/disaster/semantic/governance/ai_governance/metadata，共 55 处）改为写时同步直写（persist::save 落库），后台 3s flush 降级为兜底；SIGKILL 不再丢近写；编译零警告 + lib 450 测试全绿 |
-| B11 | **U8 残留：form_assistant 迁出独立 crate** | P2 | M | 无 | U8 条目（3 处有意保留） | lib/src/form_assistant/ 迁至业务 crate；门面引用=0 |
+| ✅ B11 | **U8 残留：form_assistant 迁出独立 crate** | P2 | M | 无 | U8 条目（3 处有意保留） | ✅ 已实施（2026-10-06）：lib/src/form_assistant（4,580 行）→ svc/ai/src/modules/form_assistant（git mv）；引用改 crate::modules::form_assistant（ai_form 3 文件）；lib.rs 门面引用归零；清理冗余 re-export（FormDomain/FormRegistry 改内部直接引用）；ai lib 1190 测试全绿 + clippy 0 |
 | ✅ B12 | **U9.5：services.yaml↔nginx 一致性校验脚本** | P2 | S | 无 | U9 条目残留（D5 独立可停用项）；F-50/F-69 | ✅ 已实施（2026-10-06）：scripts/dev/check-config-consistency.py 三方一致性校验（services.yaml 29 服务 ↔ ports.env 38 项 ↔ nginx map 27 路由，含 aps→mes / feedback→ticket 合并别名 + plugin→plugin-registry 命名别名）；已挂 lefthook pre-push 门禁（config-consistency） |
 | B13 | **wms data_sync 文档口径（D3 §2.2 过时）** | P2 | S | 无 | U3 条目（实测真实事件驱动、描述未改） | D3 §2.2 修订 + verifier must-contain 抽查 |
 | ✅ B14 | **迁移链空库守卫重构级评估** | P1 | M（评估）/L（实施） | ✅ 已决策（2026-10-06）：维持脚本层——`ensure-empty-db-prereqs.sh` 空库预检已覆盖核心风险，当前无迁移链故障需求重构窗口，成本≈0 | 5433 Homebrew 重放条目；收官①（`ensure-empty-db-prereqs.sh` 已交付） | ✅ 决策已落盘；未实施重构 |

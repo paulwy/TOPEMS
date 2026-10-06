@@ -1,8 +1,8 @@
 use axum::extract::{Path, State};
 use axum::Json;
 
+use crate::modules::form_assistant::{AiFormAssistantClient, FormAssistantAction};
 use crate::shared::AppState;
-use topems_shared::form_assistant::{AiFormAssistantClient, FormAssistantAction};
 use topems_shared_ai::ai_client::{create_client, AIModelConfig, AIProviderType};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::{api_error, api_success};
@@ -68,7 +68,7 @@ pub async fn ai_form_assist(
         Err(msg) => return Json(api_error(400, msg)),
     };
 
-    let assistant_request = topems_shared::form_assistant::AiFormAssistantRequest {
+    let assistant_request = crate::modules::form_assistant::AiFormAssistantRequest {
         form_type: req.form_type,
         form_schema: req.form_schema,
         current_data: req.current_data,
@@ -182,7 +182,7 @@ pub async fn ai_form_translate(
 // ==================== 表单注册表 API ====================
 
 pub async fn list_forms(State(_state): State<AppState>) -> Json<ApiResponse<AiFormListResponse>> {
-    let registry = topems_shared::form_assistant::default_registry();
+    let registry = crate::modules::form_assistant::default_registry();
     let forms: Vec<FormSummary> = registry.list().into_iter().map(FormSummary::from).collect();
     let domains: Vec<String> = registry
         .domains()
@@ -201,7 +201,7 @@ pub async fn get_form(
     State(_state): State<AppState>,
     Path(form_type): Path<String>,
 ) -> Json<ApiResponse<AiFormConfigResponse>> {
-    let registry = topems_shared::form_assistant::default_registry();
+    let registry = crate::modules::form_assistant::default_registry();
     match registry.get(&form_type) {
         Some(cfg) => Json(api_success(AiFormConfigResponse::from(cfg))),
         None => Json(api_error(
@@ -219,7 +219,7 @@ pub async fn suggest_for_form(
     Path(form_type): Path<String>,
     Json(req): Json<AiFormSuggestForFormRequest>,
 ) -> Json<ApiResponse<AiFormSuggestResponse>> {
-    let registry = topems_shared::form_assistant::default_registry();
+    let registry = crate::modules::form_assistant::default_registry();
     if !registry.contains(&form_type) {
         return Json(api_error(
             404,
@@ -279,7 +279,7 @@ pub async fn enhance_for_form(
         return Json(api_error(400, "文本内容不能为空"));
     }
 
-    let registry = topems_shared::form_assistant::default_registry();
+    let registry = crate::modules::form_assistant::default_registry();
     if !registry.contains(&form_type) {
         return Json(api_error(
             404,
@@ -322,10 +322,10 @@ pub async fn enhance_for_form(
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     use super::*;
-    use async_trait::async_trait;
-    use topems_shared::form_assistant::{
+    use crate::modules::form_assistant::{
         AiFormAssistant, AiFormAssistantRequest, AiFormAssistantResponse, ValidationResult,
     };
+    use async_trait::async_trait;
 
     #[derive(Default, Clone)]
     struct MockAssistant;
@@ -339,10 +339,10 @@ mod tests {
             _current_data: &serde_json::Value,
             _target_field: Option<&str>,
         ) -> Result<
-            Vec<topems_shared::form_assistant::FieldSuggestion>,
+            Vec<crate::modules::form_assistant::FieldSuggestion>,
             topems_shared_ai::ai_client::AIClientError,
         > {
-            Ok(vec![topems_shared::form_assistant::FieldSuggestion::new(
+            Ok(vec![crate::modules::form_assistant::FieldSuggestion::new(
                 "f1", "v1", 1.0, "test",
             )])
         }
@@ -511,26 +511,26 @@ mod tests {
 
     #[test]
     fn test_list_forms_is_nonempty() {
-        let registry = topems_shared::form_assistant::default_registry();
+        let registry = crate::modules::form_assistant::default_registry();
         assert!(registry.list().len() >= 30);
     }
 
     #[test]
     fn test_get_form_existing() {
-        let registry = topems_shared::form_assistant::default_registry();
+        let registry = crate::modules::form_assistant::default_registry();
         let cfg = registry.get("purchase_order");
         assert!(cfg.is_some(), "purchase_order 应该存在");
     }
 
     #[test]
     fn test_get_form_nonexistent() {
-        let registry = topems_shared::form_assistant::default_registry();
+        let registry = crate::modules::form_assistant::default_registry();
         assert!(registry.get("totally_fake_form_xyz").is_none());
     }
 
     #[test]
     fn test_form_supports_all_features() {
-        let registry = topems_shared::form_assistant::default_registry();
+        let registry = crate::modules::form_assistant::default_registry();
         let cfg = registry.get("purchase_order").unwrap();
         assert!(cfg.supports("suggest"));
         assert!(cfg.supports("enhance"));

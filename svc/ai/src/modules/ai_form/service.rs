@@ -5,8 +5,8 @@ use super::handlers::{
     ai_form_assist, ai_form_enhance, ai_form_suggest, ai_form_translate, ai_form_validate,
     enhance_for_form, get_form, list_forms, suggest_for_form,
 };
+use crate::modules::form_assistant::AiFormAssistant;
 use crate::shared::AppState;
-use topems_shared::form_assistant::AiFormAssistant;
 
 pub fn create_routes(state: AppState) -> Router<AppState> {
     Router::new()
@@ -34,7 +34,7 @@ pub async fn suggest_fields(
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
     target_field: Option<&str>,
-) -> Result<Vec<topems_shared::form_assistant::FieldSuggestion>, String> {
+) -> Result<Vec<crate::modules::form_assistant::FieldSuggestion>, String> {
     assistant
         .suggest_fields(form_type, form_schema, current_data, target_field)
         .await
@@ -57,7 +57,7 @@ pub async fn validate_form(
     form_type: &str,
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
-) -> Result<Vec<topems_shared::form_assistant::ValidationResult>, String> {
+) -> Result<Vec<crate::modules::form_assistant::ValidationResult>, String> {
     assistant
         .validate_form(form_type, form_schema, current_data)
         .await
@@ -77,8 +77,8 @@ pub async fn translate_term(
 
 pub async fn assist(
     assistant: &dyn AiFormAssistant,
-    request: topems_shared::form_assistant::AiFormAssistantRequest,
-) -> Result<topems_shared::form_assistant::AiFormAssistantResponse, String> {
+    request: crate::modules::form_assistant::AiFormAssistantRequest,
+) -> Result<crate::modules::form_assistant::AiFormAssistantResponse, String> {
     assistant.assist(request).await.map_err(|e| e.to_string())
 }
 
@@ -88,7 +88,7 @@ pub async fn suggest_fields_for_form(
     form_schema: &serde_json::Value,
     current_data: &serde_json::Value,
     target_field: Option<&str>,
-) -> Result<Vec<topems_shared::form_assistant::FieldSuggestion>, String> {
+) -> Result<Vec<crate::modules::form_assistant::FieldSuggestion>, String> {
     assistant
         .suggest_fields_with_config(form_type, form_schema, current_data, target_field)
         .await
