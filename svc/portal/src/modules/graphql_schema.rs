@@ -1,5 +1,6 @@
 #![allow(dead_code)] // Reserved: GraphQL 聚合层模块，待业务接入后启用
 #![allow(ambiguous_glob_reexports, hidden_glob_reexports)] // portal 模块级 glob re-export 设计模式
+#![allow(unused_imports)] // 兼容层 pub use：供 feature_routes 等外部经 modules::graphql_schema::* 引用
 //! V33.0 Portal BFF Phase 3: GraphQL 聚合层
 //! V34.0 Portal BFF Phase 4: GraphQL Mutation + Subscription 支持
 //! V35.0 Portal BFF Phase 5: DataLoader 批量加载 + 查询复杂度限制
@@ -55,6 +56,7 @@ pub use crate::modules::graphql_governance::*;
 pub use crate::modules::graphql_helpers::*;
 pub use crate::modules::graphql_monitoring::*;
 pub use crate::modules::graphql_persisted_queries::*;
+pub use crate::modules::graphql_mutation_admin::*;
 pub use crate::modules::graphql_mutation_impls::*;
 pub use crate::modules::graphql_query_business::*;
 pub use crate::modules::graphql_query_impls::*;
@@ -1539,10 +1541,7 @@ impl MutationRoot {
         service: String,
         to_version: String,
     ) -> async_graphql::Result<bool> {
-        let mut manager = schema_version_manager()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        Ok(manager.rollback(&service, &to_version))
+        impl_rollback_schema(_ctx, service, to_version).await
     }
 
     // ==================== V49.0: 自适应限流 + 熔断降级 + 负载感知路由 ====================
@@ -1554,20 +1553,7 @@ impl MutationRoot {
         service: String,
         config: RateLimiterConfigInput,
     ) -> async_graphql::Result<RateLimiterConfigGql> {
-        configure_rate_limiter(
-            &service,
-            config.max_requests_per_second,
-            config.burst_capacity,
-            config.adaptive.unwrap_or(true),
-        );
-        let limiter = crate::modules::rate_limiting::rate_limiter()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        limiter
-            .get_configs()
-            .into_iter()
-            .find(|c| c.service == service)
-            .ok_or_else(|| async_graphql::Error::new("Rate limiter config not found"))
+        impl_configure_rate_limiter(_ctx, service, config).await
     }
 
     /// V49.0: 配置服务熔断器
@@ -1577,17 +1563,7 @@ impl MutationRoot {
         service: String,
         config: crate::modules::rate_limiting::CircuitBreakerConfigInput,
     ) -> async_graphql::Result<crate::modules::rate_limiting::CircuitBreakerStateGql> {
-        configure_circuit_breaker(
-            &service,
-            config.failure_threshold,
-            config.recovery_timeout_sec,
-            config.half_open_max_requests,
-        );
-        let mut mgr = circuit_breaker_manager()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        mgr.get_state(&service)
-            .ok_or_else(|| async_graphql::Error::new("Circuit breaker state not found"))
+        impl_configure_circuit_breaker(_ctx, service, config).await
     }
 
     /// V49.0: 重置服务熔断器
@@ -1596,8 +1572,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         service: String,
     ) -> async_graphql::Result<bool> {
-        reset_circuit_breaker(&service);
-        Ok(true)
+        impl_reset_circuit_breaker(_ctx, service).await
     }
 
     /// V49.0: 配置服务降级策略
@@ -1607,18 +1582,7 @@ impl MutationRoot {
         service: String,
         config: DegradationConfigInput,
     ) -> async_graphql::Result<ServiceDegradationConfigGql> {
-        configure_degradation(
-            &service,
-            config.enabled,
-            &config.strategy,
-            config.fallback_ttl_sec,
-            config.max_degradation_duration_sec,
-        );
-        let mgr = circuit_breaker_manager()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        mgr.get_degradation_config(&service)
-            .ok_or_else(|| async_graphql::Error::new("Degradation config not found"))
+        impl_configure_degradation(_ctx, service, config).await
     }
 
     /// V49.0: 注册服务实例
@@ -1629,16 +1593,7 @@ impl MutationRoot {
         instance_id: String,
         url: String,
     ) -> async_graphql::Result<InstanceHealthGql> {
-        register_service_instance(&service, &instance_id, &url);
-        mark_instance_healthy(&service, &instance_id);
-        let router = load_aware_router()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        let healths = router.get_instance_healths(&service);
-        healths
-            .into_iter()
-            .find(|h| h.instance_id == instance_id)
-            .ok_or_else(|| async_graphql::Error::new("Instance not found after registration"))
+        impl_register_instance(_ctx, service, instance_id, url).await
     }
 
     /// V49.0: 更新实例负载指标
@@ -1654,21 +1609,7 @@ impl MutationRoot {
         latency_ms: f64,
         error_rate: f64,
     ) -> async_graphql::Result<LoadMetricsGql> {
-        update_instance_metrics(
-            &service,
-            &instance_id,
-            cpu_usage,
-            memory_usage,
-            active_requests,
-            queue_length,
-            latency_ms,
-            error_rate,
-        );
-        let metrics = get_load_metrics(&service);
-        metrics
-            .into_iter()
-            .find(|m| m.instance_id == instance_id)
-            .ok_or_else(|| async_graphql::Error::new("Metrics not found after update"))
+        impl_update_instance_metrics(_ctx, service, instance_id, cpu_usage, memory_usage, active_requests, queue_length, latency_ms, error_rate).await
     }
 
     /// V49.0: 标记实例为健康
@@ -1678,8 +1619,7 @@ impl MutationRoot {
         service: String,
         instance_id: String,
     ) -> async_graphql::Result<bool> {
-        mark_instance_healthy(&service, &instance_id);
-        Ok(true)
+        impl_mark_instance_healthy(_ctx, service, instance_id).await
     }
 
     /// V49.0: 标记实例为不健康（同时记录熔断失败）
@@ -1689,9 +1629,7 @@ impl MutationRoot {
         service: String,
         instance_id: String,
     ) -> async_graphql::Result<bool> {
-        mark_instance_unhealthy(&service, &instance_id);
-        circuit_record_failure(&service);
-        Ok(true)
+        impl_mark_instance_unhealthy(_ctx, service, instance_id).await
     }
 
     /// V49.0: 创建路由规则
@@ -1700,12 +1638,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         rule: RoutingRuleInput,
     ) -> async_graphql::Result<RoutingRuleGql> {
-        Ok(set_routing_rule(
-            &rule.service,
-            &rule.condition,
-            &rule.target_instance,
-            rule.priority.unwrap_or(100),
-        ))
+        impl_set_routing_rule(_ctx, rule).await
     }
 
     /// V49.0: 删除路由规则
@@ -1714,7 +1647,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         rule_id: String,
     ) -> async_graphql::Result<bool> {
-        Ok(delete_routing_rule(&rule_id))
+        impl_delete_routing_rule(_ctx, rule_id).await
     }
 
     // ==================== V49.0 Phase 19: AI 查询路由 + Schema Stitching + 智能缓存 ====================
@@ -1725,7 +1658,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query: String,
     ) -> async_graphql::Result<AiRoutingDecisionGql> {
-        Ok(crate::modules::rate_limiting::ai_route_query(&query))
+        impl_ai_route_query(_ctx, query).await
     }
 
     /// AI 查询意图识别
@@ -1734,7 +1667,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query: String,
     ) -> async_graphql::Result<AiQueryIntent> {
-        Ok(crate::modules::rate_limiting::ai_detect_intent(&query))
+        impl_ai_detect_intent(_ctx, query).await
     }
 
     /// 获取指定名称的 Stitched Schema
@@ -1743,7 +1676,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         name: String,
     ) -> async_graphql::Result<StitchedSchemaGql> {
-        Ok(crate::modules::rate_limiting::stitch_schema(&name))
+        impl_stitched_schema(_ctx, name).await
     }
 
     /// 获取所有已注册的子 Schema 列表
@@ -1751,7 +1684,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<SubSchemaEntryGql>> {
-        Ok(crate::modules::rate_limiting::stitch_list_sub_schemas())
+        impl_stitched_sub_schemas(_ctx).await
     }
 
     /// 获取字段映射规则列表
@@ -1759,7 +1692,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<FieldMappingRuleGql>> {
-        Ok(crate::modules::rate_limiting::stitch_list_field_mappings())
+        impl_stitched_field_mappings(_ctx).await
     }
 
     /// 智能缓存整体统计
@@ -1767,7 +1700,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<crate::modules::rate_limiting::CacheStatsGql> {
-        Ok(crate::modules::rate_limiting::cache_stats())
+        impl_mutation_cache_stats(_ctx).await
     }
 
     /// 查询单个缓存条目
@@ -1776,7 +1709,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         key: String,
     ) -> async_graphql::Result<Option<crate::modules::rate_limiting::CacheEntryGql>> {
-        Ok(crate::modules::rate_limiting::cache_get_entry(&key))
+        impl_cache_get_entry(_ctx, key).await
     }
 
     /// 按模式列出缓存条目
@@ -1785,9 +1718,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         pattern: Option<String>,
     ) -> async_graphql::Result<Vec<crate::modules::rate_limiting::CacheEntryGql>> {
-        Ok(crate::modules::rate_limiting::cache_list_entries(
-            pattern.as_deref(),
-        ))
+        impl_cache_list_entries(_ctx, pattern).await
     }
 
     /// 列出所有缓存策略
@@ -1795,7 +1726,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<crate::modules::rate_limiting::CachePolicyGql>> {
-        Ok(crate::modules::rate_limiting::cache_list_policies())
+        impl_cache_list_policies(_ctx).await
     }
 
     // ==================== V50.0 Phase 20: 持久化查询管理 + 查询审计 + 企业级治理 ====================
@@ -1806,9 +1737,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_hash: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::PersistedQueryGql>> {
-        Ok(crate::modules::query_governance::get_persisted_query(
-            &query_hash,
-        ))
+        impl_persisted_query(_ctx, query_hash).await
     }
 
     /// 列出持久化查询
@@ -1819,11 +1748,7 @@ impl MutationRoot {
         page_size: Option<u32>,
         status: Option<crate::modules::query_governance::QueryStatus>,
     ) -> async_graphql::Result<crate::modules::query_governance::PersistedQueryListGql> {
-        Ok(crate::modules::query_governance::list_persisted_queries(
-            page.unwrap_or(1),
-            page_size.unwrap_or(20),
-            status,
-        ))
+        impl_persisted_queries(_ctx, page, page_size, status).await
     }
 
     /// 按标签搜索持久化查询
@@ -1832,7 +1757,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         tag: String,
     ) -> async_graphql::Result<Vec<crate::modules::query_governance::PersistedQueryGql>> {
-        Ok(crate::modules::query_governance::search_persisted_queries_by_tag(&tag))
+        impl_persisted_queries_by_tag(_ctx, tag).await
     }
 
     /// 获取审计统计
@@ -1840,7 +1765,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<crate::modules::query_governance::AuditStatsGql> {
-        Ok(crate::modules::query_governance::get_audit_stats())
+        impl_audit_stats(_ctx).await
     }
 
     /// 查询审计日志
@@ -1851,11 +1776,7 @@ impl MutationRoot {
         page: Option<u32>,
         page_size: Option<u32>,
     ) -> async_graphql::Result<Vec<crate::modules::query_governance::QueryAuditEntryGql>> {
-        Ok(crate::modules::query_governance::query_audit_entries(
-            filter,
-            page.unwrap_or(1),
-            page_size.unwrap_or(20),
-        ))
+        impl_audit_entries(_ctx, filter, page, page_size).await
     }
 
     /// 获取查询配额
@@ -1865,10 +1786,7 @@ impl MutationRoot {
         entity_type: String,
         entity_id: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::QueryQuotaGql>> {
-        Ok(crate::modules::query_governance::get_query_quota(
-            &entity_type,
-            &entity_id,
-        ))
+        impl_query_quota(_ctx, entity_type, entity_id).await
     }
 
     /// 获取审批请求
@@ -1878,9 +1796,7 @@ impl MutationRoot {
         request_id: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::QueryApprovalRequestGql>>
     {
-        Ok(crate::modules::query_governance::get_approval_request(
-            &request_id,
-        ))
+        impl_approval_request(_ctx, request_id).await
     }
 
     /// 列出待审批请求
@@ -1888,7 +1804,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<crate::modules::query_governance::QueryApprovalRequestGql>> {
-        Ok(crate::modules::query_governance::list_pending_approval_requests())
+        impl_pending_approval_requests(_ctx).await
     }
 
     /// 获取治理策略
@@ -1897,9 +1813,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         policy_id: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::GovernancePolicyGql>> {
-        Ok(crate::modules::query_governance::get_governance_policy(
-            &policy_id,
-        ))
+        impl_governance_policy(_ctx, policy_id).await
     }
 
     /// 列出治理策略
@@ -1907,7 +1821,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<Vec<crate::modules::query_governance::GovernancePolicyGql>> {
-        Ok(crate::modules::query_governance::list_governance_policies())
+        impl_governance_policies(_ctx).await
     }
 
     /// 获取字段访问控制
@@ -1917,9 +1831,7 @@ impl MutationRoot {
         field_path: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::FieldAccessControlGql>>
     {
-        Ok(crate::modules::query_governance::get_field_access_control(
-            &field_path,
-        ))
+        impl_field_access_control(_ctx, field_path).await
     }
 
     /// 检查查询治理
@@ -1931,12 +1843,7 @@ impl MutationRoot {
         user_roles: Vec<String>,
         query_fields: Vec<String>,
     ) -> async_graphql::Result<crate::modules::query_governance::GovernanceCheckResultGql> {
-        Ok(crate::modules::query_governance::check_query_governance(
-            &query_hash,
-            &user_id,
-            &user_roles,
-            &query_fields,
-        ))
+        impl_check_governance(_ctx, query_hash, user_id, user_roles, query_fields).await
     }
 
     // ==================== V49.0 Phase 19 Mutation: AI 查询路由 + Schema Stitching + 智能缓存 ====================
@@ -1947,7 +1854,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         entry: crate::modules::rate_limiting::SubSchemaEntryInput,
     ) -> async_graphql::Result<crate::modules::rate_limiting::SubSchemaEntryGql> {
-        crate::modules::rate_limiting::register_sub_schema(entry)
+        impl_register_sub_schema(_ctx, entry).await
     }
 
     /// 移除子 Schema
@@ -1956,7 +1863,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         service_name: String,
     ) -> async_graphql::Result<bool> {
-        crate::modules::rate_limiting::remove_sub_schema(&service_name)
+        impl_remove_sub_schema(_ctx, service_name).await
     }
 
     /// 设置类型合并策略
@@ -1965,7 +1872,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         strategy: crate::modules::rate_limiting::TypeMergeStrategy,
     ) -> async_graphql::Result<bool> {
-        crate::modules::rate_limiting::set_merge_strategy(strategy)
+        impl_set_merge_strategy(_ctx, strategy).await
     }
 
     /// 添加字段映射规则
@@ -1974,7 +1881,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         rule: crate::modules::rate_limiting::FieldMappingRuleInput,
     ) -> async_graphql::Result<bool> {
-        crate::modules::rate_limiting::add_field_mapping(rule)
+        impl_add_field_mapping(_ctx, rule).await
     }
 
     /// 移除字段映射规则
@@ -1984,7 +1891,7 @@ impl MutationRoot {
         source_field: String,
         target_field: String,
     ) -> async_graphql::Result<bool> {
-        crate::modules::rate_limiting::remove_field_mapping(&source_field, &target_field)
+        impl_remove_field_mapping(_ctx, source_field, target_field).await
     }
 
     /// 刷新 Stitched Schema
@@ -1993,7 +1900,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         name: String,
     ) -> async_graphql::Result<crate::modules::rate_limiting::StitchedSchemaGql> {
-        crate::modules::rate_limiting::refresh_stitched_schema(&name)
+        impl_refresh_stitched_schema(_ctx, name).await
     }
 
     /// 设置缓存条目
@@ -2004,7 +1911,7 @@ impl MutationRoot {
         value: String,
         policy: Option<crate::modules::rate_limiting::CachePolicyInput>,
     ) -> async_graphql::Result<Option<crate::modules::rate_limiting::CacheEntryGql>> {
-        crate::modules::rate_limiting::cache_set(&key, value, policy)
+        impl_cache_set(_ctx, key, value, policy).await
     }
 
     /// 获取缓存条目
@@ -2013,12 +1920,12 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         key: String,
     ) -> async_graphql::Result<Option<crate::modules::rate_limiting::CacheEntryGql>> {
-        Ok(crate::modules::rate_limiting::cache_get_entry(&key))
+        impl_cache_get(_ctx, key).await
     }
 
     /// 删除缓存条目
     async fn cache_delete(&self, _ctx: &Context<'_>, key: String) -> async_graphql::Result<bool> {
-        crate::modules::rate_limiting::cache_delete(&key)
+        impl_cache_delete(_ctx, key).await
     }
 
     /// 按模式清空智能缓存条目
@@ -2027,7 +1934,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         pattern: Option<String>,
     ) -> async_graphql::Result<u64> {
-        crate::modules::rate_limiting::cache_clear(pattern.as_deref())
+        impl_cache_clear_entries(_ctx, pattern).await
     }
 
     /// 设置缓存策略
@@ -2037,12 +1944,12 @@ impl MutationRoot {
         pattern: String,
         policy: crate::modules::rate_limiting::CachePolicyInput,
     ) -> async_graphql::Result<bool> {
-        crate::modules::rate_limiting::cache_set_policy(&pattern, policy)
+        impl_cache_set_policy(_ctx, pattern, policy).await
     }
 
     /// 清空缓存策略
     async fn cache_clear_policies(&self, _ctx: &Context<'_>) -> async_graphql::Result<bool> {
-        crate::modules::rate_limiting::cache_clear_policies()
+        impl_cache_clear_policies(_ctx).await
     }
 
     // ==================== V50.0 Phase 20 Mutation: 持久化查询管理 + 查询审计 + 企业级治理 ====================
@@ -2053,9 +1960,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::PersistedQueryInput,
     ) -> async_graphql::Result<crate::modules::query_governance::PersistedQueryGql> {
-        Ok(crate::modules::query_governance::register_persisted_query(
-            input,
-        ))
+        impl_register_persisted_query(_ctx, input).await
     }
 
     /// 更新持久化查询状态
@@ -2065,7 +1970,7 @@ impl MutationRoot {
         query_hash: String,
         status: crate::modules::query_governance::QueryStatus,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::PersistedQueryGql>> {
-        Ok(crate::modules::query_governance::update_persisted_query_status(&query_hash, status))
+        impl_update_persisted_query_status(_ctx, query_hash, status).await
     }
 
     /// 删除持久化查询
@@ -2074,9 +1979,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_hash: String,
     ) -> async_graphql::Result<bool> {
-        Ok(crate::modules::query_governance::delete_persisted_query(
-            &query_hash,
-        ))
+        impl_delete_persisted_query(_ctx, query_hash).await
     }
 
     /// 添加持久化查询标签
@@ -2086,10 +1989,7 @@ impl MutationRoot {
         query_hash: String,
         tag: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::PersistedQueryGql>> {
-        Ok(crate::modules::query_governance::add_persisted_query_tag(
-            &query_hash,
-            &tag,
-        ))
+        impl_add_persisted_query_tag(_ctx, query_hash, tag).await
     }
 
     /// 移除持久化查询标签
@@ -2099,7 +1999,7 @@ impl MutationRoot {
         query_hash: String,
         tag: String,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::PersistedQueryGql>> {
-        Ok(crate::modules::query_governance::remove_persisted_query_tag(&query_hash, &tag))
+        impl_remove_persisted_query_tag(_ctx, query_hash, tag).await
     }
 
     /// 设置查询配额
@@ -2108,7 +2008,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::QueryQuotaInput,
     ) -> async_graphql::Result<crate::modules::query_governance::QueryQuotaGql> {
-        Ok(crate::modules::query_governance::set_query_quota(input))
+        impl_set_query_quota(_ctx, input).await
     }
 
     /// 创建审批请求
@@ -2117,9 +2017,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::ApprovalRequestInput,
     ) -> async_graphql::Result<crate::modules::query_governance::QueryApprovalRequestGql> {
-        Ok(crate::modules::query_governance::create_approval_request(
-            input,
-        ))
+        impl_create_approval_request(_ctx, input).await
     }
 
     /// 审批请求
@@ -2129,9 +2027,7 @@ impl MutationRoot {
         input: crate::modules::query_governance::ApprovalReviewInput,
     ) -> async_graphql::Result<Option<crate::modules::query_governance::QueryApprovalRequestGql>>
     {
-        Ok(crate::modules::query_governance::review_approval_request(
-            input,
-        ))
+        impl_review_approval_request(_ctx, input).await
     }
 
     /// 创建治理策略
@@ -2140,9 +2036,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::GovernancePolicyInput,
     ) -> async_graphql::Result<crate::modules::query_governance::GovernancePolicyGql> {
-        Ok(crate::modules::query_governance::create_governance_policy(
-            input,
-        ))
+        impl_create_governance_policy(_ctx, input).await
     }
 
     /// 设置字段访问控制
@@ -2151,9 +2045,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: crate::modules::query_governance::FieldAccessControlInput,
     ) -> async_graphql::Result<crate::modules::query_governance::FieldAccessControlGql> {
-        Ok(crate::modules::query_governance::set_field_access_control(
-            input,
-        ))
+        impl_set_field_access_control(_ctx, input).await
     }
 }
 
@@ -2668,6 +2560,8 @@ pub fn build_schema(state: AppState) -> PortalSchema {
 mod tests {
     include!("graphql_schema_tests.rs");
 }
+
+
 
 
 

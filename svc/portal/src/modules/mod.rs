@@ -25,6 +25,7 @@ pub mod graphql_gateway_security;
 pub mod graphql_governance;
 pub mod graphql_helpers;
 pub mod graphql_monitoring;
+pub mod graphql_mutation_admin;
 pub mod graphql_mutation_impls;
 pub mod graphql_persisted_queries;
 pub mod graphql_query_business;
@@ -61,6 +62,8 @@ pub mod subscription_manager;
 pub mod todos;
 pub mod user;
 pub mod version_control;
+
+
 
 
 
