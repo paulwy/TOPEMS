@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -10,7 +11,7 @@ use uuid::Uuid;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::service::is_service_claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::{ PaginatedResponse};
 
 use super::models::{CreateInstanceRequest, WorkflowInstance};
 
@@ -117,7 +118,7 @@ pub async fn list_instances(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流实例总数失败: {}", e);
-                return Json(api_error(500, "查询工作流实例总数失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("查询工作流实例总数失败".to_string())));
             }
         }
     };
@@ -149,7 +150,7 @@ pub async fn list_instances(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流实例列表失败: {}", e);
-                return Json(api_error(500, "查询工作流实例列表失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("查询工作流实例列表失败".to_string())));
             }
         }
     } else {
@@ -191,7 +192,7 @@ pub async fn list_instances(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流实例列表失败: {}", e);
-                return Json(api_error(500, "查询工作流实例列表失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("查询工作流实例列表失败".to_string())));
             }
         }
     };
@@ -230,10 +231,10 @@ pub async fn get_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "工作流实例不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
             }
             tracing::error!("查询工作流实例失败: {}", e);
-            return Json(api_error(500, "查询工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询工作流实例失败".to_string())));
         }
     };
 
@@ -279,7 +280,7 @@ pub async fn create_instance(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建工作流实例失败: {}", e);
-            return Json(api_error(500, "创建工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("创建工作流实例失败".to_string())));
         }
     };
 
@@ -326,10 +327,10 @@ pub async fn start_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "工作流实例不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
             }
             tracing::error!("启动工作流实例失败: {}", e);
-            return Json(api_error(500, "启动工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("启动工作流实例失败".to_string())));
         }
     };
 
@@ -376,10 +377,10 @@ pub async fn approve_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "工作流实例不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
             }
             tracing::error!("审批工作流实例失败: {}", e);
-            return Json(api_error(500, "审批工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("审批工作流实例失败".to_string())));
         }
     };
 
@@ -426,10 +427,10 @@ pub async fn reject_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "工作流实例不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
             }
             tracing::error!("拒绝工作流实例失败: {}", e);
-            return Json(api_error(500, "拒绝工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("拒绝工作流实例失败".to_string())));
         }
     };
 
@@ -476,10 +477,10 @@ pub async fn cancel_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "工作流实例不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
             }
             tracing::error!("取消工作流实例失败: {}", e);
-            return Json(api_error(500, "取消工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("取消工作流实例失败".to_string())));
         }
     };
 
@@ -526,10 +527,10 @@ pub async fn resume_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "工作流实例不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
             }
             tracing::error!("恢复工作流实例失败: {}", e);
-            return Json(api_error(500, "恢复工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("恢复工作流实例失败".to_string())));
         }
     };
 
@@ -576,10 +577,10 @@ pub async fn suspend_instance(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "工作流实例不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
             }
             tracing::error!("暂停工作流实例失败: {}", e);
-            return Json(api_error(500, "暂停工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("暂停工作流实例失败".to_string())));
         }
     };
 
@@ -671,7 +672,7 @@ pub async fn overdue_instances(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询逾期工作流实例总数失败: {}", e);
-            return Json(api_error(500, "查询逾期工作流实例总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询逾期工作流实例总数失败".to_string())));
         }
     };
 
@@ -696,7 +697,7 @@ pub async fn overdue_instances(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询逾期工作流实例列表失败: {}", e);
-            return Json(api_error(500, "查询逾期工作流实例列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询逾期工作流实例列表失败".to_string())));
         }
     };
 
@@ -760,10 +761,10 @@ pub async fn retry_instance(
         Ok(v) => Json(ApiResponse::success(v, "重试成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "工作流实例不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
             }
             tracing::error!("重试工作流实例失败: {}", e);
-            Json(api_error(500, "重试工作流实例失败"))
+            Json(ApiResponse::from(TopemsError::Internal("重试工作流实例失败".to_string())))
         }
     }
 }

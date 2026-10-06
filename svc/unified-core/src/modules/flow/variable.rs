@@ -13,6 +13,7 @@
 //!   GET    /variables/global/{workflowId}                global 变量
 //!   POST   /variables/global/{workflowId}/{key}          set global 变量
 
+use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Path, Query, State},
@@ -24,7 +25,7 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared_core::response::{ ApiResponse, PaginatedResponse};
 
 #[derive(Debug, FromRow)]
 pub struct VariableRow {
@@ -317,7 +318,7 @@ pub async fn list_instance_variables(
         }
         Err(e) => {
             tracing::error!("查询实例变量失败: {}", e);
-            Json(api_error(500, "查询实例变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("查询实例变量失败".to_string())))
         }
     }
 }
@@ -328,10 +329,10 @@ pub async fn get_instance_variable(
 ) -> Json<ApiResponse<WorkflowVariable>> {
     match find_variable(&state.pool, "instance", Some(instance_id), None, None, &key).await {
         Ok(Some(r)) => Json(ApiResponse::success(WorkflowVariable::from(r), "查询成功")),
-        Ok(None) => Json(api_error(404, "变量不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()))),
         Err(e) => {
             tracing::error!("查询实例变量失败: {}", e);
-            Json(api_error(500, "查询实例变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("查询实例变量失败".to_string())))
         }
     }
 }
@@ -354,10 +355,10 @@ pub async fn set_instance_variable(
     .await
     {
         Ok(Some(r)) => Json(ApiResponse::success(WorkflowVariable::from(r), "设置成功")),
-        Ok(None) => Json(api_error(500, "设置变量失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::Internal("设置变量失败".to_string()))),
         Err(e) => {
             tracing::error!("设置实例变量失败: {}", e);
-            Json(api_error(500, "设置实例变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("设置实例变量失败".to_string())))
         }
     }
 }
@@ -385,7 +386,7 @@ pub async fn set_instance_variables_batch(
             Ok(None) => {}
             Err(e) => {
                 tracing::error!("批量设置实例变量失败: {}", e);
-                return Json(api_error(500, "批量设置实例变量失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("批量设置实例变量失败".to_string())));
             }
         }
     }
@@ -404,10 +405,10 @@ pub async fn delete_instance_variable(
             serde_json::json!({"deleted": n}),
             "删除成功",
         )),
-        Ok(_) => Json(api_error(404, "变量不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()))),
         Err(e) => {
             tracing::error!("删除实例变量失败: {}", e);
-            Json(api_error(500, "删除实例变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("删除实例变量失败".to_string())))
         }
     }
 }
@@ -420,7 +421,7 @@ pub async fn get_variables_by_scope(
         "global" | "local" => scope,
         other => {
             tracing::warn!("未知变量作用域: {}", other);
-            return Json(api_error(400, "未知变量作用域"));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed("未知变量作用域".to_string())));
         }
     };
     match list_variables(&state.pool, &scope, Some(instance_id), None, None, 1, 500).await {
@@ -431,7 +432,7 @@ pub async fn get_variables_by_scope(
         }
         Err(e) => {
             tracing::error!("查询作用域变量失败: {}", e);
-            Json(api_error(500, "查询作用域变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("查询作用域变量失败".to_string())))
         }
     }
 }
@@ -462,7 +463,7 @@ pub async fn get_variable_history(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询变量历史失败: {}", e);
-            return Json(api_error(500, "查询变量历史失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询变量历史失败".to_string())));
         }
     };
     let total = i64::try_from(rows.len()).unwrap_or(0);
@@ -515,7 +516,7 @@ pub async fn list_task_variables(
         }
         Err(e) => {
             tracing::error!("查询任务变量失败: {}", e);
-            Json(api_error(500, "查询任务变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("查询任务变量失败".to_string())))
         }
     }
 }
@@ -538,10 +539,10 @@ pub async fn set_task_variable(
     .await
     {
         Ok(Some(r)) => Json(ApiResponse::success(WorkflowVariable::from(r), "设置成功")),
-        Ok(None) => Json(api_error(500, "设置变量失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::Internal("设置变量失败".to_string()))),
         Err(e) => {
             tracing::error!("设置任务变量失败: {}", e);
-            Json(api_error(500, "设置任务变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("设置任务变量失败".to_string())))
         }
     }
 }
@@ -582,7 +583,7 @@ pub async fn get_global_variables(
         }
         Err(e) => {
             tracing::error!("查询全局变量失败: {}", e);
-            Json(api_error(500, "查询全局变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("查询全局变量失败".to_string())))
         }
     }
 }
@@ -605,10 +606,10 @@ pub async fn set_global_variable(
     .await
     {
         Ok(Some(r)) => Json(ApiResponse::success(WorkflowVariable::from(r), "设置成功")),
-        Ok(None) => Json(api_error(500, "设置变量失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::Internal("设置变量失败".to_string()))),
         Err(e) => {
             tracing::error!("设置全局变量失败: {}", e);
-            Json(api_error(500, "设置全局变量失败"))
+            Json(ApiResponse::from(TopemsError::Internal("设置全局变量失败".to_string())))
         }
     }
 }

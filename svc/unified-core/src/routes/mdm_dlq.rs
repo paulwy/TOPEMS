@@ -10,6 +10,7 @@
 //! 重投语义：保留事件原 event_id（嵌在 payload JSON 内，复用既有幂等 UPSERT），
 //! XADD `*` 生成新 message_id 使消费者组重新投递、重试计数从 0 累积；重投成功后从 DLQ 移除条目。
 
+use topems_shared_core::TopemsError;
 use axum::extract::{Path, Query, State};
 use axum::routing::{get, post};
 use axum::{Json, Router};
@@ -17,7 +18,7 @@ use uuid::Uuid;
 
 use crate::middleware::permission::require_permission;
 use crate::AppState;
-use topems_shared_core::response::{api_error, api_success, ApiResponse};
+use topems_shared_core::response::{ api_success, ApiResponse};
 use topems_shared_event::event::dead_letter_queue::{DeadLetterQueue, MdmDeadLetterList};
 
 /// list 查询参数（全部可选）
@@ -48,9 +49,9 @@ async fn list_mdm_dlq(
             .await
         {
             Ok(list) => Json(api_success(list)),
-            Err(e) => Json(api_error(500, &err_message(&e))),
+            Err(_) => Json(ApiResponse::from(TopemsError::Internal("查询 MDM 死信记录失败".to_string()))),
         },
-        Err(e) => Json(api_error(500, &err_message(&e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal("查询 MDM 死信记录失败".to_string()))),
     }
 }
 
@@ -63,7 +64,7 @@ async fn replay_mdm_dlq(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let dlq = match DeadLetterQueue::new() {
         Ok(d) => d,
-        Err(e) => return Json(api_error(500, &err_message(&e))),
+        Err(_) => return Json(ApiResponse::from(TopemsError::Internal("查询 MDM 死信记录失败".to_string()))),
     };
     match dlq.replay_mdm_dead_letter(event_id).await {
         Ok(()) => Json(api_success(serde_json::json!({
@@ -72,12 +73,11 @@ async fn replay_mdm_dlq(
         }))),
         Err(topems_shared_event::EventError::ConfigError(_)) => {
             // 未找到条目
-            Json(api_error(
-                404,
-                &format!("未找到 MDM 事件 {} 的死信记录", event_id),
-            ))
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "未找到 MDM 事件死信记录".to_string(),
+            )))
         }
-        Err(e) => Json(api_error(500, &err_message(&e))),
+        Err(_) => Json(ApiResponse::from(TopemsError::Internal("查询 MDM 死信记录失败".to_string()))),
     }
 }
 

@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     Extension, Json,
@@ -8,7 +9,7 @@ use uuid::Uuid;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
+use topems_shared_core::response::{ api_success};
 
 use super::audit_query::AuditLogQueryParams;
 use super::models::{
@@ -83,7 +84,7 @@ pub async fn list_operation_logs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计日志总数失败: {}", e);
-            return Json(api_error(500, "查询操作审计日志总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询操作审计日志总数失败".to_string())));
         }
     };
 
@@ -127,7 +128,7 @@ pub async fn list_operation_logs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计日志列表失败: {}", e);
-            return Json(api_error(500, "查询操作审计日志列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询操作审计日志列表失败".to_string())));
         }
     };
 
@@ -165,13 +166,13 @@ pub async fn get_operation_log(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计日志详情失败: {}", e);
-            return Json(api_error(500, "查询操作审计日志详情失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询操作审计日志详情失败".to_string())));
         }
     };
 
     match log {
         Some(log) => Json(api_success(log)),
-        None => Json(api_error(404, "操作审计日志不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("操作审计日志不存在".to_string()))),
     }
 }
 
@@ -195,7 +196,7 @@ pub async fn get_operation_log_stats(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计统计总数失败: {}", e);
-            return Json(api_error(500, "查询操作审计统计失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string())));
         }
     };
 
@@ -211,7 +212,7 @@ pub async fn get_operation_log_stats(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计按模块统计失败: {}", e);
-            return Json(api_error(500, "查询操作审计统计失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string())));
         }
     };
 
@@ -227,7 +228,7 @@ pub async fn get_operation_log_stats(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询操作审计按操作类型统计失败: {}", e);
-            return Json(api_error(500, "查询操作审计统计失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询操作审计统计失败".to_string())));
         }
     };
 
@@ -283,7 +284,11 @@ pub async fn list_permission_changes(
                 "page_size": paginated.page_size,
             })))
         }
-        None => Json(api_error(result.code, &result.message)),
+        None => Json(ApiResponse::from(match result.code {
+            404 => TopemsError::ResourceNotFound(result.message),
+            400 => TopemsError::ValidationFailed(result.message),
+            _ => TopemsError::Internal(result.message),
+        })),
     }
 }
 
@@ -325,10 +330,10 @@ pub async fn get_permission_change(
         Ok(Some(entry)) => Json(api_success(
             serde_json::to_value(entry).unwrap_or(serde_json::json!({})),
         )),
-        Ok(None) => Json(api_error(404, &format!("权限变更记录 {} 不存在", id))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("权限变更记录不存在".to_string()))),
         Err(e) => {
             tracing::error!("查询权限变更记录失败: {}", e);
-            Json(api_error(500, "查询权限变更记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal("查询权限变更记录失败".to_string())))
         }
     }
 }
@@ -385,7 +390,11 @@ pub async fn get_permission_change_stats(
                 "trend": stats.trend.iter().map(|t| serde_json::json!({"date": t.date, "count": t.count})).collect::<Vec<_>>(),
             })))
         }
-        None => Json(api_error(result.code, &result.message)),
+        None => Json(ApiResponse::from(match result.code {
+            404 => TopemsError::ResourceNotFound(result.message),
+            400 => TopemsError::ValidationFailed(result.message),
+            _ => TopemsError::Internal(result.message),
+        })),
     }
 }
 
@@ -447,7 +456,11 @@ pub async fn list_access_logs(
                 "page_size": paginated.page_size,
             })))
         }
-        None => Json(api_error(result.code, &result.message)),
+        None => Json(ApiResponse::from(match result.code {
+            404 => TopemsError::ResourceNotFound(result.message),
+            400 => TopemsError::ValidationFailed(result.message),
+            _ => TopemsError::Internal(result.message),
+        })),
     }
 }
 
@@ -489,10 +502,10 @@ pub async fn get_access_log(
         Ok(Some(entry)) => Json(api_success(
             serde_json::to_value(entry).unwrap_or(serde_json::json!({})),
         )),
-        Ok(None) => Json(api_error(404, &format!("访问日志 {} 不存在", id))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("访问日志不存在".to_string()))),
         Err(e) => {
             tracing::error!("查询访问日志失败: {}", e);
-            Json(api_error(500, "查询访问日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal("查询访问日志失败".to_string())))
         }
     }
 }
@@ -537,7 +550,11 @@ pub async fn get_access_log_stats(
                 "trend": stats.trend.iter().map(|t| serde_json::json!({"date": t.date, "count": t.count})).collect::<Vec<_>>(),
             })))
         }
-        None => Json(api_error(result.code, &result.message)),
+        None => Json(ApiResponse::from(match result.code {
+            404 => TopemsError::ResourceNotFound(result.message),
+            400 => TopemsError::ValidationFailed(result.message),
+            _ => TopemsError::Internal(result.message),
+        })),
     }
 }
 

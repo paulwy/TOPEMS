@@ -20,7 +20,8 @@ use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
+use topems_shared_core::response::{ api_success};
+use topems_shared_core::TopemsError;
 
 // ==================== 数据模型 ====================
 
@@ -658,10 +659,10 @@ pub async fn export_audit_logs(
 
     let items = fetch_export_rows(&state, source, &params, start_date, end_date)
         .await
-        .map_err(|e| {
+        .map_err(|_| {
             (
                 StatusCode::INTERNAL_SERVER_ERROR,
-                Json(api_error::<()>(500, &format!("查询审计日志失败: {}", e))),
+                Json(ApiResponse::<()>::from(TopemsError::Internal("查询审计日志失败".to_string()))),
             )
                 .into_response()
         })?;

@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     Extension, Json,
@@ -9,7 +10,7 @@ use uuid::Uuid;
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
+use topems_shared_core::response::{ api_success};
 
 use super::login_log_models::{
     DeleteLoginLogRequest, LoginLog, LoginLogListResponse, LoginLogQuery, RecordLoginRequest,
@@ -51,7 +52,7 @@ pub async fn record_login(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("记录登录日志失败: {}", e);
-            return Json(api_error(500, "记录登录日志失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("记录登录日志失败".to_string())));
         }
     };
 
@@ -112,7 +113,7 @@ pub async fn list_login_logs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询登录日志总数失败: {}", e);
-            return Json(api_error(500, "查询登录日志总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询登录日志总数失败".to_string())));
         }
     };
 
@@ -160,7 +161,7 @@ pub async fn list_login_logs(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询登录日志列表失败: {}", e);
-            return Json(api_error(500, "查询登录日志列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询登录日志列表失败".to_string())));
         }
     };
 
@@ -195,13 +196,13 @@ pub async fn get_login_log(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询登录日志详情失败: {}", e);
-            return Json(api_error(500, "查询登录日志详情失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询登录日志详情失败".to_string())));
         }
     };
 
     match log {
         Some(log) => Json(api_success(log)),
-        None => Json(api_error(404, "登录日志不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("登录日志不存在".to_string()))),
     }
 }
 
@@ -221,10 +222,10 @@ pub async fn delete_login_log(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(api_success(true)),
-        Ok(_) => Json(api_error(404, "登录日志不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("登录日志不存在".to_string()))),
         Err(e) => {
             tracing::error!("删除登录日志失败: {}", e);
-            Json(api_error(500, "删除登录日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal("删除登录日志失败".to_string())))
         }
     }
 }
@@ -234,7 +235,7 @@ pub async fn batch_delete_login_logs(
     Json(req): Json<DeleteLoginLogRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if req.ids.is_empty() {
-        return Json(api_error(400, "ID列表不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed("ID列表不能为空".to_string())));
     }
 
     let tenant_id = Uuid::nil();
@@ -246,7 +247,7 @@ pub async fn batch_delete_login_logs(
         .collect();
 
     if uuids.is_empty() {
-        return Json(api_error(400, "无效的ID格式"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的ID格式".to_string())));
     }
 
     let placeholders = uuids
@@ -270,7 +271,7 @@ pub async fn batch_delete_login_logs(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("批量删除登录日志失败: {}", e);
-            return Json(api_error(500, "批量删除登录日志失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("批量删除登录日志失败".to_string())));
         }
     };
 

@@ -14,6 +14,7 @@
 //!   GET    /delegates/{id}/workflows        委托关联的工作流
 //!   GET    /delegates/check/{workflowId}    检查该流程下是否有委托
 
+use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -26,7 +27,7 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared_core::response::{ ApiResponse, PaginatedResponse};
 
 #[derive(Debug, FromRow)]
 pub struct DelegateRow {
@@ -137,7 +138,7 @@ pub async fn list_delegates(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托总数失败: {}", e);
-            return Json(api_error(500, "查询委托总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询委托总数失败".to_string())));
         }
     };
 
@@ -162,7 +163,7 @@ pub async fn list_delegates(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托列表失败: {}", e);
-            return Json(api_error(500, "查询委托列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询委托列表失败".to_string())));
         }
     };
 
@@ -194,12 +195,12 @@ pub async fn get_delegate(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托失败: {}", e);
-            return Json(api_error(500, "查询委托失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询委托失败".to_string())));
         }
     };
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "查询成功")),
-        None => Json(api_error(404, "委托不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
     }
 }
 
@@ -233,13 +234,13 @@ pub async fn create_delegate(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建委托失败: {}", e);
-            return Json(api_error(500, "创建委托失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("创建委托失败".to_string())));
         }
     };
 
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "创建成功")),
-        None => Json(api_error(500, "创建委托失败")),
+        None => Json(ApiResponse::from(TopemsError::Internal("创建委托失败".to_string()))),
     }
 }
 
@@ -275,13 +276,13 @@ pub async fn update_delegate(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新委托失败: {}", e);
-            return Json(api_error(500, "更新委托失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("更新委托失败".to_string())));
         }
     };
 
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "更新成功")),
-        None => Json(api_error(404, "委托不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
     }
 }
 
@@ -302,10 +303,10 @@ pub async fn delete_delegate(
             serde_json::json!({"id": id}),
             "删除成功",
         )),
-        Ok(_) => Json(api_error(404, "委托不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
         Err(e) => {
             tracing::error!("删除委托失败: {}", e);
-            Json(api_error(500, "删除委托失败"))
+            Json(ApiResponse::from(TopemsError::Internal("删除委托失败".to_string())))
         }
     }
 }
@@ -329,10 +330,10 @@ pub async fn set_delegate_status(
             serde_json::json!({"id": id, "status": status}),
             "操作成功",
         )),
-        Ok(_) => Json(api_error(404, "委托不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
         Err(e) => {
             tracing::error!("更新委托状态失败: {}", e);
-            Json(api_error(500, "更新委托状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal("更新委托状态失败".to_string())))
         }
     }
 }
@@ -414,7 +415,7 @@ pub async fn get_active_delegate(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询有效委托失败: {}", e);
-            return Json(api_error(500, "查询有效委托失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询有效委托失败".to_string())));
         }
     };
     let items: Vec<WorkflowDelegate> = rows.into_iter().map(WorkflowDelegate::from).collect();
@@ -436,7 +437,7 @@ pub async fn get_delegate_workflows(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托失败: {}", e);
-            return Json(api_error(500, "查询委托失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询委托失败".to_string())));
         }
     };
 
@@ -454,7 +455,7 @@ pub async fn get_delegate_workflows(
                     Ok(v) => v,
                     Err(e) => {
                         tracing::error!("查询委托关联流程失败: {}", e);
-                        return Json(api_error(500, "查询委托关联流程失败"));
+                        return Json(ApiResponse::from(TopemsError::Internal("查询委托关联流程失败".to_string())));
                     }
                 };
                 Json(ApiResponse::success(
@@ -476,7 +477,7 @@ pub async fn get_delegate_workflows(
                 ))
             }
         }
-        None => Json(api_error(404, "委托不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
     }
 }
 
@@ -505,7 +506,7 @@ pub async fn check_delegation(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("检查委托失败: {}", e);
-            return Json(api_error(500, "检查委托失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("检查委托失败".to_string())));
         }
     };
     let items: Vec<WorkflowDelegate> = rows.into_iter().map(WorkflowDelegate::from).collect();

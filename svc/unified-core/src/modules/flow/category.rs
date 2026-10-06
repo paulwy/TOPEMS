@@ -11,6 +11,7 @@
 //!   GET    /categories/tree         树形
 //!   POST   /categories/sort         排序
 
+use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Path, Query, State},
@@ -22,7 +23,7 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared_core::response::{ ApiResponse, PaginatedResponse};
 
 #[derive(Debug, FromRow)]
 pub struct CategoryRow {
@@ -126,7 +127,7 @@ pub async fn list_categories(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询流程分类总数失败: {}", e);
-            return Json(api_error(500, "查询流程分类总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询流程分类总数失败".to_string())));
         }
     };
 
@@ -149,7 +150,7 @@ pub async fn list_categories(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询流程分类列表失败: {}", e);
-            return Json(api_error(500, "查询流程分类列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询流程分类列表失败".to_string())));
         }
     };
 
@@ -181,13 +182,13 @@ pub async fn get_category(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询流程分类失败: {}", e);
-            return Json(api_error(500, "查询流程分类失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询流程分类失败".to_string())));
         }
     };
 
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowCategory::from(r), "查询成功")),
-        None => Json(api_error(404, "流程分类不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("流程分类不存在".to_string()))),
     }
 }
 
@@ -196,7 +197,7 @@ pub async fn create_category(
     Json(payload): Json<CreateCategoryRequest>,
 ) -> Json<ApiResponse<WorkflowCategory>> {
     if payload.name.trim().is_empty() {
-        return Json(api_error(400, "分类名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed("分类名称不能为空".to_string())));
     }
     let code = payload
         .code
@@ -223,13 +224,13 @@ pub async fn create_category(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建流程分类失败: {}", e);
-            return Json(api_error(500, "创建流程分类失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("创建流程分类失败".to_string())));
         }
     };
 
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowCategory::from(r), "创建成功")),
-        None => Json(api_error(500, "创建流程分类失败")),
+        None => Json(ApiResponse::from(TopemsError::Internal("创建流程分类失败".to_string()))),
     }
 }
 
@@ -249,12 +250,12 @@ pub async fn update_category(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询流程分类失败: {}", e);
-            return Json(api_error(500, "查询流程分类失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询流程分类失败".to_string())));
         }
     };
 
     let Some(cur) = existing else {
-        return Json(api_error(404, "流程分类不存在"));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound("流程分类不存在".to_string())));
     };
 
     let name = payload.name.clone().unwrap_or(cur.name);
@@ -284,13 +285,13 @@ pub async fn update_category(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新流程分类失败: {}", e);
-            return Json(api_error(500, "更新流程分类失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("更新流程分类失败".to_string())));
         }
     };
 
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowCategory::from(r), "更新成功")),
-        None => Json(api_error(404, "流程分类不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("流程分类不存在".to_string()))),
     }
 }
 
@@ -311,10 +312,10 @@ pub async fn delete_category(
             serde_json::json!({"id": id}),
             "删除成功",
         )),
-        Ok(_) => Json(api_error(404, "流程分类不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("流程分类不存在".to_string()))),
         Err(e) => {
             tracing::error!("删除流程分类失败: {}", e);
-            Json(api_error(500, "删除流程分类失败"))
+            Json(ApiResponse::from(TopemsError::Internal("删除流程分类失败".to_string())))
         }
     }
 }
@@ -334,7 +335,7 @@ pub async fn list_active_categories(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询启用流程分类失败: {}", e);
-            return Json(api_error(500, "查询启用流程分类失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询启用流程分类失败".to_string())));
         }
     };
 
@@ -378,7 +379,7 @@ pub async fn get_category_tree(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询流程分类树失败: {}", e);
-            return Json(api_error(500, "查询流程分类树失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询流程分类树失败".to_string())));
         }
     };
 
@@ -411,7 +412,7 @@ pub async fn sort_categories(
     Json(payload): Json<SortCategoriesRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     if payload.ids.is_empty() {
-        return Json(api_error(400, "分类 ID 列表不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed("分类 ID 列表不能为空".to_string())));
     }
     for (idx, id) in payload.ids.iter().enumerate() {
         let sort_order = i32::try_from(idx).unwrap_or(i32::MAX);
@@ -424,7 +425,7 @@ pub async fn sort_categories(
         .await;
         if let Err(e) = res {
             tracing::error!("排序流程分类失败: {}", e);
-            return Json(api_error(500, "排序流程分类失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("排序流程分类失败".to_string())));
         }
     }
     Json(ApiResponse::success(

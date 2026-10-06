@@ -1,11 +1,12 @@
 use axum::extract::State;
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 use axum::{
     body::Body,
     http::{Request, StatusCode},
     middleware::Next,
     response::{IntoResponse, Json, Response},
 };
-use topems_shared_core::response::api_error;
 
 #[derive(Debug, Clone)]
 pub struct InputValidationConfig {
@@ -192,7 +193,7 @@ fn detect_xss(input: &str) -> bool {
 }
 
 fn bad_request(message: &str) -> impl IntoResponse {
-    (StatusCode::BAD_REQUEST, Json(api_error::<()>(400, message)))
+    (StatusCode::BAD_REQUEST, Json(ApiResponse::<()>::from(TopemsError::ValidationFailed(message.to_string()))))
 }
 
 #[cfg(test)]

@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -12,7 +13,6 @@ use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::{TaskActionRequest, Workflow, WorkflowInstance, WorkflowTask};
@@ -149,7 +149,7 @@ pub async fn list_approval_tasks(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询审批任务总数失败: {}", e);
-            return Json(api_error(500, "查询审批任务总数失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询审批任务总数失败".to_string())));
         }
     };
 
@@ -176,7 +176,7 @@ pub async fn list_approval_tasks(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询审批任务列表失败: {}", e);
-            return Json(api_error(500, "查询审批任务列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询审批任务列表失败".to_string())));
         }
     };
 
@@ -237,7 +237,7 @@ pub async fn get_approval_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的任务ID".to_string()))),
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
@@ -257,7 +257,7 @@ pub async fn get_approval_task(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询审批任务失败: {}", e);
-            return Json(api_error(500, "查询审批任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询审批任务失败".to_string())));
         }
     };
 
@@ -284,7 +284,7 @@ pub async fn get_approval_task(
             },
             "查询成功",
         )),
-        None => Json(api_error(404, "审批任务不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("审批任务不存在".to_string()))),
     }
 }
 
@@ -321,7 +321,7 @@ pub async fn list_pending_approvals(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询待审批任务失败: {}", e);
-            return Json(api_error(500, "查询待审批任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询待审批任务失败".to_string())));
         }
     };
 
@@ -376,7 +376,7 @@ pub async fn approve_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的任务ID".to_string()))),
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
@@ -396,7 +396,7 @@ pub async fn approve_task(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("审批任务失败: {}", e);
-            return Json(api_error(500, "审批任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("审批任务失败".to_string())));
         }
     };
 
@@ -410,7 +410,7 @@ pub async fn approve_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流实例失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流实例失败".to_string()))),
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
@@ -422,7 +422,7 @@ pub async fn approve_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流定义失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流定义失败".to_string()))),
             };
 
             Json(ApiResponse::success(
@@ -448,7 +448,7 @@ pub async fn approve_task(
                 "审批成功",
             ))
         }
-        None => Json(api_error(404, "审批任务不存在或状态不正确")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("审批任务不存在或状态不正确".to_string()))),
     }
 }
 
@@ -477,7 +477,7 @@ pub async fn reject_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的任务ID".to_string()))),
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
@@ -497,7 +497,7 @@ pub async fn reject_task(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("驳回任务失败: {}", e);
-            return Json(api_error(500, "驳回任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("驳回任务失败".to_string())));
         }
     };
 
@@ -511,7 +511,7 @@ pub async fn reject_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流实例失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流实例失败".to_string()))),
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
@@ -523,7 +523,7 @@ pub async fn reject_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流定义失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流定义失败".to_string()))),
             };
 
             Json(ApiResponse::success(
@@ -549,7 +549,7 @@ pub async fn reject_task(
                 "驳回成功",
             ))
         }
-        None => Json(api_error(404, "审批任务不存在或状态不正确")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("审批任务不存在或状态不正确".to_string()))),
     }
 }
 
@@ -576,7 +576,7 @@ pub async fn claim_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的任务ID".to_string()))),
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
@@ -593,7 +593,7 @@ pub async fn claim_task(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("认领任务失败: {}", e);
-            return Json(api_error(500, "认领任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("认领任务失败".to_string())));
         }
     };
 
@@ -607,7 +607,7 @@ pub async fn claim_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流实例失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流实例失败".to_string()))),
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
@@ -619,7 +619,7 @@ pub async fn claim_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流定义失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流定义失败".to_string()))),
             };
 
             Json(ApiResponse::success(
@@ -645,7 +645,7 @@ pub async fn claim_task(
                 "认领成功",
             ))
         }
-        None => Json(api_error(404, "审批任务不存在或状态不正确")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("审批任务不存在或状态不正确".to_string()))),
     }
 }
 
@@ -672,7 +672,7 @@ pub async fn unclaim_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的任务ID".to_string()))),
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
@@ -689,7 +689,7 @@ pub async fn unclaim_task(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("取消认领任务失败: {}", e);
-            return Json(api_error(500, "取消认领任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("取消认领任务失败".to_string())));
         }
     };
 
@@ -703,7 +703,7 @@ pub async fn unclaim_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流实例失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流实例失败".to_string()))),
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
@@ -715,7 +715,7 @@ pub async fn unclaim_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流定义失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流定义失败".to_string()))),
             };
 
             Json(ApiResponse::success(
@@ -741,7 +741,7 @@ pub async fn unclaim_task(
                 "取消认领成功",
             ))
         }
-        None => Json(api_error(404, "审批任务不存在或状态不正确")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("审批任务不存在或状态不正确".to_string()))),
     }
 }
 
@@ -770,17 +770,17 @@ pub async fn delegate_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的任务ID".to_string()))),
     };
 
     let delegate_to = match payload.get("delegate_to") {
         Some(v) => v.as_str().unwrap_or_default(),
-        None => return Json(api_error(400, "缺少delegate_to参数")),
+        None => return Json(ApiResponse::from(TopemsError::ValidationFailed("缺少delegate_to参数".to_string()))),
     };
 
     let delegate_to_id = match Uuid::parse_str(delegate_to) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的被委托人ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的被委托人ID".to_string()))),
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
@@ -798,7 +798,7 @@ pub async fn delegate_task(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("委托任务失败: {}", e);
-            return Json(api_error(500, "委托任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("委托任务失败".to_string())));
         }
     };
 
@@ -812,7 +812,7 @@ pub async fn delegate_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流实例失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流实例失败".to_string()))),
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
@@ -824,7 +824,7 @@ pub async fn delegate_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流定义失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流定义失败".to_string()))),
             };
 
             Json(ApiResponse::success(
@@ -850,7 +850,7 @@ pub async fn delegate_task(
                 "委托成功",
             ))
         }
-        None => Json(api_error(404, "审批任务不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("审批任务不存在".to_string()))),
     }
 }
 
@@ -879,17 +879,17 @@ pub async fn reassign_task(
     let locale = Locale::from_headers(&headers).as_sql();
     let task_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的任务ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的任务ID".to_string()))),
     };
 
     let assignee_id = match payload.get("assignee_id") {
         Some(v) => v.as_str().unwrap_or_default(),
-        None => return Json(api_error(400, "缺少assignee_id参数")),
+        None => return Json(ApiResponse::from(TopemsError::ValidationFailed("缺少assignee_id参数".to_string()))),
     };
 
     let assignee_uuid = match Uuid::parse_str(assignee_id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的被分配人ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的被分配人ID".to_string()))),
     };
 
     let result: Option<ApprovalTaskRow> = match sqlx::query_as(
@@ -907,7 +907,7 @@ pub async fn reassign_task(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("重新分配任务失败: {}", e);
-            return Json(api_error(500, "重新分配任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("重新分配任务失败".to_string())));
         }
     };
 
@@ -921,7 +921,7 @@ pub async fn reassign_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流实例失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流实例失败".to_string()))),
             };
 
             let workflow = match sqlx::query_as::<_, Workflow>(
@@ -933,7 +933,7 @@ pub async fn reassign_task(
             .await
             {
                 Ok(v) => v,
-                Err(_) => return Json(api_error(500, "获取工作流定义失败")),
+                Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流定义失败".to_string()))),
             };
 
             Json(ApiResponse::success(
@@ -959,7 +959,7 @@ pub async fn reassign_task(
                 "重新分配成功",
             ))
         }
-        None => Json(api_error(404, "审批任务不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("审批任务不存在".to_string()))),
     }
 }
 
@@ -995,7 +995,7 @@ pub async fn list_approvals(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询审批列表失败: {}", e);
-            return Json(api_error(500, "查询审批列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询审批列表失败".to_string())));
         }
     };
 
@@ -1075,12 +1075,12 @@ pub async fn create_approval(
         .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let workflow_id_str = match payload.get("workflow_id") {
         Some(v) => v.as_str().unwrap_or_default(),
-        None => return Json(api_error(400, "缺少workflow_id参数")),
+        None => return Json(ApiResponse::from(TopemsError::ValidationFailed("缺少workflow_id参数".to_string()))),
     };
 
     let workflow_id = match Uuid::parse_str(workflow_id_str) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的工作流ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的工作流ID".to_string()))),
     };
 
     let title = payload
@@ -1089,12 +1089,12 @@ pub async fn create_approval(
         .unwrap_or("审批申请");
     let initiator_id_str = match payload.get("initiator_id") {
         Some(v) => v.as_str().unwrap_or_default(),
-        None => return Json(api_error(400, "缺少initiator_id参数")),
+        None => return Json(ApiResponse::from(TopemsError::ValidationFailed("缺少initiator_id参数".to_string()))),
     };
 
     let initiator_id = match Uuid::parse_str(initiator_id_str) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的发起人ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的发起人ID".to_string()))),
     };
 
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
@@ -1112,18 +1112,18 @@ pub async fn create_approval(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建工作流实例失败: {}", e);
-            return Json(api_error(500, "创建工作流实例失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("创建工作流实例失败".to_string())));
         }
     };
 
     let assignee_id_str = match payload.get("assignee_id") {
         Some(v) => v.as_str().unwrap_or_default(),
-        None => return Json(api_error(400, "缺少assignee_id参数")),
+        None => return Json(ApiResponse::from(TopemsError::ValidationFailed("缺少assignee_id参数".to_string()))),
     };
 
     let assignee_id = match Uuid::parse_str(assignee_id_str) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的审批人ID")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::ValidationFailed("无效的审批人ID".to_string()))),
     };
 
     let task = match sqlx::query_as::<_, WorkflowTask>(
@@ -1140,7 +1140,7 @@ pub async fn create_approval(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建审批任务失败: {}", e);
-            return Json(api_error(500, "创建审批任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("创建审批任务失败".to_string())));
         }
     };
 
@@ -1153,7 +1153,7 @@ pub async fn create_approval(
     .await
     {
         Ok(v) => v,
-        Err(_) => return Json(api_error(500, "获取工作流定义失败")),
+        Err(_) => return Json(ApiResponse::from(TopemsError::Internal("获取工作流定义失败".to_string()))),
     };
 
     Json(ApiResponse::success(
@@ -1204,12 +1204,12 @@ pub async fn process_approval(
 ) -> Json<ApiResponse<ApprovalTask>> {
     let action = match payload.variables.as_ref().and_then(|v| v.get("action")) {
         Some(v) => v.as_str().unwrap_or_default(),
-        None => return Json(api_error(400, "缺少action参数")),
+        None => return Json(ApiResponse::from(TopemsError::ValidationFailed("缺少action参数".to_string()))),
     };
 
     match action {
         "approve" => approve_task(State(state), Path(id), headers, Json(payload)).await,
         "reject" => reject_task(State(state), Path(id), headers, Json(payload)).await,
-        _ => Json(api_error(400, "无效的操作类型")),
+        _ => Json(ApiResponse::from(TopemsError::ValidationFailed("无效的操作类型".to_string()))),
     }
 }

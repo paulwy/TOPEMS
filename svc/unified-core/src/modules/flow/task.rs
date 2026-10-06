@@ -1,3 +1,4 @@
+use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -10,7 +11,7 @@ use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, PaginatedResponse};
+use topems_shared_core::response::{ PaginatedResponse};
 
 use super::models::{
     TaskActionRequest, TaskBatchRequest, TaskBatchResult, TaskFailure, TaskStats, WorkflowTask,
@@ -90,7 +91,7 @@ pub async fn list_tasks(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询任务总数失败: {}", e);
-                return Json(api_error(500, "查询任务总数失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("查询任务总数失败".to_string())));
             }
         }
     };
@@ -107,7 +108,7 @@ pub async fn list_tasks(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询任务列表失败: {}", e);
-                return Json(api_error(500, "查询任务列表失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("查询任务列表失败".to_string())));
             }
         }
     } else {
@@ -135,7 +136,7 @@ pub async fn list_tasks(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询任务列表失败: {}", e);
-                return Json(api_error(500, "查询任务列表失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("查询任务列表失败".to_string())));
             }
         }
     };
@@ -174,10 +175,10 @@ pub async fn get_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "任务不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
             }
             tracing::error!("查询任务失败: {}", e);
-            return Json(api_error(500, "查询任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询任务失败".to_string())));
         }
     };
 
@@ -222,10 +223,10 @@ pub async fn claim_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "任务不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
             }
             tracing::error!("认领任务失败: {}", e);
-            return Json(api_error(500, "认领任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("认领任务失败".to_string())));
         }
     };
 
@@ -270,10 +271,10 @@ pub async fn unclaim_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "任务不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
             }
             tracing::error!("取消认领任务失败: {}", e);
-            return Json(api_error(500, "取消认领任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("取消认领任务失败".to_string())));
         }
     };
 
@@ -321,10 +322,10 @@ pub async fn approve_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "任务不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
             }
             tracing::error!("审批任务失败: {}", e);
-            return Json(api_error(500, "审批任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("审批任务失败".to_string())));
         }
     };
 
@@ -372,10 +373,10 @@ pub async fn reject_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "任务不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
             }
             tracing::error!("拒绝任务失败: {}", e);
-            return Json(api_error(500, "拒绝任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("拒绝任务失败".to_string())));
         }
     };
 
@@ -423,10 +424,10 @@ pub async fn complete_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "任务不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
             }
             tracing::error!("完成任务失败: {}", e);
-            return Json(api_error(500, "完成任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("完成任务失败".to_string())));
         }
     };
 
@@ -474,10 +475,10 @@ pub async fn delegate_task(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(api_error(404, "任务不存在"));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound("任务不存在".to_string())));
             }
             tracing::error!("委托任务失败: {}", e);
-            return Json(api_error(500, "委托任务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("委托任务失败".to_string())));
         }
     };
 
@@ -848,7 +849,7 @@ pub async fn get_task_count(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询任务数量失败: {}", e);
-            return Json(api_error(500, "查询任务数量失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("查询任务数量失败".to_string())));
         }
     };
 
