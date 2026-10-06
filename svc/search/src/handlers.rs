@@ -32,35 +32,6 @@ struct UserSearchRow {
 }
 
 #[derive(Debug, Clone, FromRow)]
-struct CustomerSearchRow {
-    id: Uuid,
-    #[allow(dead_code)]
-    code: String,
-    name: String,
-    contact_person: Option<String>,
-    contact_phone: Option<String>,
-    #[allow(dead_code)]
-    email: Option<String>,
-    address: Option<String>,
-}
-
-#[derive(Debug, Clone, FromRow)]
-struct SalesOrderSearchRow {
-    id: Uuid,
-    order_no: String,
-    status: String,
-    remark: Option<String>,
-}
-
-#[derive(Debug, Clone, FromRow)]
-struct PurchaseOrderSearchRow {
-    id: Uuid,
-    order_no: String,
-    status: String,
-    remark: Option<String>,
-}
-
-#[derive(Debug, Clone, FromRow)]
 struct DocumentSearchRow {
     id: Uuid,
     name: String,
@@ -105,29 +76,11 @@ async fn search_users(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRes
         .collect()
 }
 
-async fn search_customers(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
-    let keyword_like = format!("%{}%", keyword);
+async fn search_customers(_pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
+    // B1/F-37：改为调 erp HTTP API（不再直读 erp.customers）
+    let hits = crate::erp_api::search_customers_via_api(keyword, limit).await;
 
-    let rows: Vec<CustomerSearchRow> = match sqlx::query_as(
-        r#"SELECT id, code, name, contact_person, contact_phone, email, address
-           FROM erp.customers
-           WHERE code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1 OR contact_phone ILIKE $1 OR email ILIKE $1
-           ORDER BY created_at DESC
-           LIMIT $2"#,
-    )
-    .bind(keyword_like)
-    .bind(limit)
-    .fetch_all(pool)
-    .await
-    {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!("搜索客户失败: {}", e);
-            return Vec::new();
-        }
-    };
-
-    rows.into_iter()
+    hits.into_iter()
         .map(|r| {
             let description = match (
                 r.contact_person.as_ref(),
@@ -157,34 +110,15 @@ async fn search_customers(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
         .collect()
 }
 
-async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
-    let keyword_val = keyword.to_string();
-
+async fn search_orders(_pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
+    // B1/F-37：改为调 erp HTTP API（不再直读 erp.sales_orders / erp.purchase_orders）
     let mut results: Vec<SearchResult> = Vec::new();
 
-    let sales_rows: Vec<SalesOrderSearchRow> = match sqlx::query_as(
-        r#"SELECT id, order_no, status, remark
-           FROM erp.sales_orders
-           WHERE order_no ILIKE $1 OR remark ILIKE $1
-           ORDER BY created_at DESC
-           LIMIT $2"#,
-    )
-    .bind(format!("%{}%", keyword_val))
-    .bind(limit / 2)
-    .fetch_all(pool)
-    .await
-    {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!("搜索销售订单失败: {}", e);
-            Vec::new()
-        }
-    };
-
-    results.extend(sales_rows.into_iter().map(|r| SearchResult {
+    let sales_hits = crate::erp_api::search_sales_orders_via_api(keyword, limit / 2).await;
+    results.extend(sales_hits.into_iter().map(|r| SearchResult {
         id: r.id.to_string(),
         title: r.order_no,
-        description: r.remark.or_else(|| Some(r.status.clone())),
+        description: r.remark.or(r.status),
         module: "order".to_string(),
         path: format!("/sales/orders/{}", r.id),
         type_name: "订单".to_string(),
@@ -192,29 +126,11 @@ async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRe
         snippet: None,
     }));
 
-    let purchase_rows: Vec<PurchaseOrderSearchRow> = match sqlx::query_as(
-        r#"SELECT id, order_no, status, remark
-           FROM erp.purchase_orders
-           WHERE order_no ILIKE $1 OR remark ILIKE $1
-           ORDER BY created_at DESC
-           LIMIT $2"#,
-    )
-    .bind(format!("%{}%", keyword_val))
-    .bind(limit / 2)
-    .fetch_all(pool)
-    .await
-    {
-        Ok(v) => v,
-        Err(e) => {
-            tracing::error!("搜索采购订单失败: {}", e);
-            Vec::new()
-        }
-    };
-
-    results.extend(purchase_rows.into_iter().map(|r| SearchResult {
+    let purchase_hits = crate::erp_api::search_purchase_orders_via_api(keyword, limit / 2).await;
+    results.extend(purchase_hits.into_iter().map(|r| SearchResult {
         id: r.id.to_string(),
         title: r.order_no,
-        description: r.remark.or_else(|| Some(r.status.clone())),
+        description: r.remark.or(r.status),
         module: "order".to_string(),
         path: format!("/purchase/orders/{}", r.id),
         type_name: "订单".to_string(),

@@ -31,6 +31,7 @@
 //! // 挂载到 Axum 应用
 //! ```
 
+pub mod erp_api;
 pub mod handlers;
 pub mod models;
 pub mod openapi;

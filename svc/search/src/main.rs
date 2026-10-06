@@ -6,6 +6,7 @@ use axum::{routing::get, Router};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, build_application, run, ServiceConfig};
 
+mod erp_api;
 mod handlers;
 mod models;
 pub mod openapi;

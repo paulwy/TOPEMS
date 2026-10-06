@@ -125,13 +125,7 @@
     },
     "search": {
       "schema": "public",
-      "search_path": "public",
-      "allow": [
-        "erp"
-      ],
-      "allow_temporary": true,
-      "allow_reason": "search 聚合检索只读直读 erp.*（svc/search/src/handlers.rs:113,167,197 → erp.customers/sales_orders/purchase_orders）；聚合检索设计使然，待阶段2 治理为走服务 API/事件后撤销。",
-      "allow_decision": "阶段2 跨域检索治理（D1/D3 联动：unified-core 下架后检索需求收敛）→ 撤销本 allow"
+      "search_path": "public"
     },
     "srm": {
       "schema": "srm",
