@@ -621,9 +621,9 @@ pub async fn db_get_push_devices(
     user_id: Option<Uuid>,
 ) -> sqlx::Result<Vec<PushDevice>> {
     let query = if let Some(uid) = user_id {
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at FROM mobile.push_devices WHERE user_id = $1 AND is_active = true")).bind(uid)
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at FROM mobile.push_devices WHERE user_id = $1 AND is_active = true")).bind(uid)
     } else {
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at FROM mobile.push_devices WHERE is_active = true"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, device_token, platform, device_model, app_version, os_version, is_active, created_at, updated_at FROM mobile.push_devices WHERE is_active = true"))
     };
 
     let rows = query.fetch_all(pool).await?;
@@ -701,7 +701,7 @@ pub async fn db_update_push_notification_stats(
 }
 
 pub async fn db_get_push_templates(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PushTemplate>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, name, notification_type, title_template, body_template, description, is_active, created_at, updated_at FROM mobile.push_templates WHERE is_active = true ORDER BY name"))
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, notification_type, title_template, body_template, description, is_active, created_at, updated_at FROM mobile.push_templates WHERE is_active = true ORDER BY name"))
         .fetch_all(pool)
         .await?;
 
@@ -758,12 +758,12 @@ pub async fn db_get_barcode_scans(
 ) -> sqlx::Result<Vec<BarcodeScan>> {
     let query = if let Some(bt) = barcode_type {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE user_id = $1 AND barcode_type = $2 ORDER BY scanned_at DESC"),
+            only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE user_id = $1 AND barcode_type = $2 ORDER BY scanned_at DESC"),
         )
         .bind(user_id)
         .bind(bt)
     } else {
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, user_id, barcode, barcode_type, decoded_data, location_lat, location_lng, result_action, result_data, scanned_at, created_at FROM mobile.barcode_scans WHERE user_id = $1 ORDER BY scanned_at DESC"))
             .bind(user_id)
     };
 
@@ -773,7 +773,7 @@ pub async fn db_get_barcode_scans(
 
 pub async fn db_create_barcode_scan(
     pool: &Pool<Postgres>,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     user_id: Uuid,
     data: CreateBarcodeScan,
 ) -> sqlx::Result<BarcodeScan> {
@@ -799,7 +799,7 @@ pub async fn db_create_barcode_scan(
 
     Ok(BarcodeScan {
         id,
-        tenant_id,
+        tenant_id: tenant_id.unwrap_or(Uuid::nil()),
         user_id,
         barcode: data.barcode,
         barcode_type: data.barcode_type,

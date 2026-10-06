@@ -9,10 +9,10 @@ use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
-use super::auth_utils::extract_user_id_from_token;
+use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 use crate::db::repository::*;
 use crate::models::{BarcodeScan, CreateBarcodeScan};
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{verify_jwt_token, AuthState};
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,7 +183,18 @@ pub async fn scan_barcode(
         location_lng: payload.location_lng,
     };
 
-    let tenant_id = Uuid::new_v4();
+    // 租户绑定复制 middleware 的超管豁免语义（同 sync-policy 惯例）：
+    // 超管/服务 claims → None（SQL NULL，命中策略 tenant_id IS NULL 分支）；
+    // 普通用户 → claims.tenant_id 解析值；解析失败回退 NULL。
+    let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
+        .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
+        .and_then(|c| {
+            if c.is_superuser {
+                None
+            } else {
+                c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
+            }
+        });
     let scan = match db_create_barcode_scan(&pool, tenant_id, user_id, create_data).await {
         Ok(s) => s,
         Err(e) => {
