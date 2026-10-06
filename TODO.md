@@ -1,5 +1,14 @@
 # TOPEMS 项目 TODO 列表
 
+### B7-16 里程碑：Result<_, String> 形态全仓清零（commit `cd18f65cb`）
+- 签名迁移 ≈ 542 处（portal 146 于 `dabfe38cf` + 嵌套泛型 296 处：ai/integration/finance/shared-event/analytics/erp/rd/gis/scm/srm/pdm）
+- shared-event 新增 `impl From<EventError> for TopemsError` 桥接（EventError → 语义变体）
+- erp/pm event_handlers `Err(e.to_string())`→`Err(e)` 直通 22 处；wms publish 补 `.map_err(Into::into)`
+- 测试断言适配：`unwrap_err().to_string().contains` / `is_ok()`（ServiceClientError 无 PartialEq）
+- **三形态清零达成**：`Result<_, String>` 0 残留 + `map_err(format!)`/`Err(format!` 0 残留（B7-15 起）+ 静态 Err 0 残留（B7-9 起）
+- 全仓 check 0 error 0 warning；单测 ai 1190 / shared-event 16 / finance 39 / integration 8 / portal 7 全绿
+- mcp_stdio_integration 8 测试 stdio 5s 超时：环境性失败（本批未改该文件）
+
 ## ✅ 今日已完成（2026-09-29）——脚本体系整治批次
 
 ### 已根治/已完成（全部已推 origin/main）
