@@ -2,16 +2,24 @@
 // 拆分自 graphql_schema.rs：字段函数体搬移至此（pub async fn impl_*），主文件保留委托壳。
 
 #![allow(ambiguous_glob_reexports, unused)]
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    clippy::as_conversions,
+    clippy::indexing_slicing,
+    clippy::cast_lossless
+)]
 
-use async_graphql::Context;
 use async_graphql::dataloader::DataLoader;
+use async_graphql::Context;
 use futures_util::future::join_all;
+use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
-use sha2::{Digest, Sha256};
 
 use crate::modules::graphql_dataloader::*;
 use crate::modules::graphql_helpers::*;
@@ -34,9 +42,12 @@ use crate::modules::graphql_cache::*;
 use crate::modules::graphql_dataloader::*;
 use crate::modules::graphql_edge_computing::*;
 use crate::modules::graphql_edge_v2::*;
+use crate::modules::graphql_enterprise_security::MaskingRule;
 use crate::modules::graphql_enterprise_security::*;
 use crate::modules::graphql_entities::*;
+use crate::modules::graphql_event_bus::SubscriptionChannel;
 use crate::modules::graphql_event_bus::*;
+use crate::modules::graphql_federation::reset_circuit_breaker;
 use crate::modules::graphql_federation::*;
 use crate::modules::graphql_federation_runtime::*;
 use crate::modules::graphql_federation_sdl::*;
@@ -44,10 +55,15 @@ use crate::modules::graphql_federation_v4::*;
 use crate::modules::graphql_gateway_security::*;
 use crate::modules::graphql_governance::*;
 use crate::modules::graphql_helpers::*;
+use crate::modules::graphql_monitoring::acknowledge_alert;
 use crate::modules::graphql_monitoring::*;
 use crate::modules::graphql_persisted_queries::*;
 use crate::modules::graphql_realtime_stream::*;
 use crate::modules::graphql_redis_pubsub::*;
+use crate::modules::graphql_schema::{
+    decrement_subscriptions, get_active_subscriptions, get_cache_version, increment_subscriptions,
+    invalidate_cache,
+};
 use crate::modules::graphql_security::*;
 use crate::modules::graphql_semantic_cache::*;
 use crate::modules::graphql_subscription_enhanced::*;
@@ -76,16 +92,8 @@ use crate::modules::subscription_manager::*;
 use crate::modules::todos::*;
 use crate::modules::user::*;
 use crate::modules::version_control::*;
-use crate::modules::graphql_schema::{
-    get_active_subscriptions, get_cache_version, increment_subscriptions,
-    invalidate_cache, decrement_subscriptions,
-};
-use crate::modules::graphql_federation::reset_circuit_breaker;
-use crate::modules::graphql_event_bus::SubscriptionChannel;
-use crate::modules::graphql_enterprise_security::MaskingRule;
-use crate::modules::graphql_monitoring::acknowledge_alert;
 
-    pub async fn impl_service_health_changed() -> ReceiverStream<ServiceHealthGql> {
+pub async fn impl_service_health_changed() -> ReceiverStream<ServiceHealthGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     tokio::spawn(async move {
@@ -118,7 +126,10 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
     ReceiverStream::new(rx)
 }
 
-    pub async fn impl_master_data_changed(         ctx: &Context<'_>, domain: Option<String>     ) -> ReceiverStream<MasterDataEventGql> {
+pub async fn impl_master_data_changed(
+    ctx: &Context<'_>,
+    domain: Option<String>,
+) -> ReceiverStream<MasterDataEventGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     let event_bus = ctx
@@ -153,7 +164,10 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
     ReceiverStream::new(rx)
 }
 
-    pub async fn impl_notification_received(         ctx: &Context<'_>, user_id: String     ) -> ReceiverStream<NotificationEventGql> {
+pub async fn impl_notification_received(
+    ctx: &Context<'_>,
+    user_id: String,
+) -> ReceiverStream<NotificationEventGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     let event_bus = ctx
@@ -185,7 +199,10 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
     ReceiverStream::new(rx)
 }
 
-    pub async fn impl_workflow_task_assigned(         ctx: &Context<'_>, assignee_id: String     ) -> ReceiverStream<WorkflowTaskEventGql> {
+pub async fn impl_workflow_task_assigned(
+    ctx: &Context<'_>,
+    assignee_id: String,
+) -> ReceiverStream<WorkflowTaskEventGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     let event_bus = ctx
@@ -217,7 +234,10 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
     ReceiverStream::new(rx)
 }
 
-    pub async fn impl_order_status_changed(         ctx: &Context<'_>, order_type: Option<String>     ) -> ReceiverStream<OrderStatusEventGql> {
+pub async fn impl_order_status_changed(
+    ctx: &Context<'_>,
+    order_type: Option<String>,
+) -> ReceiverStream<OrderStatusEventGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     let event_bus = ctx
@@ -251,7 +271,11 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
     ReceiverStream::new(rx)
 }
 
-    pub async fn impl_data_changed(         ctx: &Context<'_>, entity_type: Option<String>, update_type: Option<String>     ) -> ReceiverStream<DataChangeEventGql> {
+pub async fn impl_data_changed(
+    ctx: &Context<'_>,
+    entity_type: Option<String>,
+    update_type: Option<String>,
+) -> ReceiverStream<DataChangeEventGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     let event_bus = ctx
@@ -307,7 +331,10 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
     ReceiverStream::new(rx)
 }
 
-    pub async fn impl_realtime_data_stream(         entity_type: Option<String>, update_type: Option<String>     ) -> ReceiverStream<RealtimeStreamUpdateGql> {
+pub async fn impl_realtime_data_stream(
+    entity_type: Option<String>,
+    update_type: Option<String>,
+) -> ReceiverStream<RealtimeStreamUpdateGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     let et = entity_type.clone();
@@ -320,8 +347,7 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
         loop {
             interval.tick().await;
             let target_et = et.clone().unwrap_or_else(|| "order".to_string());
-            let updates =
-                RealtimeStreamManager::get_stream_updates(&target_et, last_seq, Some(50));
+            let updates = RealtimeStreamManager::get_stream_updates(&target_et, last_seq, Some(50));
             for u in updates {
                 last_seq = last_seq.max(u.sequence_number);
                 if let Some(ref ut) = ut {
@@ -346,7 +372,10 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
     ReceiverStream::new(rx)
 }
 
-    pub async fn impl_incremental_updates(         entity_type: Option<String>, entity_id: Option<String>     ) -> ReceiverStream<IncrementalUpdateGql> {
+pub async fn impl_incremental_updates(
+    entity_type: Option<String>,
+    entity_id: Option<String>,
+) -> ReceiverStream<IncrementalUpdateGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     let et = entity_type.clone();
@@ -360,8 +389,7 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
             interval.tick().await;
             let target_et = et.clone().unwrap_or_else(|| "order".to_string());
             let target_eid = eid.clone().unwrap_or_default();
-            let updates =
-                IncrementalUpdateEngine::get_pending_updates(&target_et, &target_eid, 0);
+            let updates = IncrementalUpdateEngine::get_pending_updates(&target_et, &target_eid, 0);
             for u in updates {
                 if seen.contains(&u.update_id) {
                     continue;
@@ -377,7 +405,7 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
     ReceiverStream::new(rx)
 }
 
-    pub async fn impl_sync_state_changed(         client_id: Option<String>     ) -> ReceiverStream<SyncSessionGql> {
+pub async fn impl_sync_state_changed(client_id: Option<String>) -> ReceiverStream<SyncSessionGql> {
     increment_subscriptions();
     let (tx, rx) = mpsc::channel(32);
     let cid = client_id.clone();
@@ -402,4 +430,3 @@ use crate::modules::graphql_monitoring::acknowledge_alert;
 
     ReceiverStream::new(rx)
 }
-

@@ -55,10 +55,9 @@ pub use crate::modules::graphql_gateway_security::*;
 pub use crate::modules::graphql_governance::*;
 pub use crate::modules::graphql_helpers::*;
 pub use crate::modules::graphql_monitoring::*;
-pub use crate::modules::graphql_persisted_queries::*;
-pub use crate::modules::graphql_subscription_impls::*;
 pub use crate::modules::graphql_mutation_admin::*;
 pub use crate::modules::graphql_mutation_impls::*;
+pub use crate::modules::graphql_persisted_queries::*;
 pub use crate::modules::graphql_query_business::*;
 pub use crate::modules::graphql_query_impls::*;
 pub use crate::modules::graphql_realtime_stream::*;
@@ -69,6 +68,7 @@ pub use crate::modules::graphql_security::*;
 pub use crate::modules::graphql_semantic_cache::*;
 #[allow(unused_imports)]
 pub use crate::modules::graphql_subscription_enhanced::*;
+pub use crate::modules::graphql_subscription_impls::*;
 pub use crate::modules::graphql_types::*;
 pub use crate::modules::query_governance::*;
 pub use crate::modules::rate_limiting::*;
@@ -1116,7 +1116,8 @@ impl MutationRoot {
         priority: String,
         status: String,
     ) -> async_graphql::Result<WorkflowTaskEventGql> {
-        impl_publish_workflow_task(ctx, task_id, assignee_id, instance_title, priority, status).await
+        impl_publish_workflow_task(ctx, task_id, assignee_id, instance_title, priority, status)
+            .await
     }
 
     /// 发布订单状态变更事件
@@ -1610,7 +1611,18 @@ impl MutationRoot {
         latency_ms: f64,
         error_rate: f64,
     ) -> async_graphql::Result<LoadMetricsGql> {
-        impl_update_instance_metrics(_ctx, service, instance_id, cpu_usage, memory_usage, active_requests, queue_length, latency_ms, error_rate).await
+        impl_update_instance_metrics(
+            _ctx,
+            service,
+            instance_id,
+            cpu_usage,
+            memory_usage,
+            active_requests,
+            queue_length,
+            latency_ms,
+            error_rate,
+        )
+        .await
     }
 
     /// V49.0: 标记实例为健康
@@ -2279,12 +2291,3 @@ pub fn build_schema(state: AppState) -> PortalSchema {
 mod tests {
     include!("graphql_schema_tests.rs");
 }
-
-
-
-
-
-
-
-
-

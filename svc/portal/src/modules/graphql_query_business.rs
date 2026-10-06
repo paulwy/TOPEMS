@@ -2,9 +2,17 @@
 // 拆分自 graphql_schema.rs：字段函数体搬移至此（pub async fn impl_*），主文件保留委托壳。
 
 #![allow(ambiguous_glob_reexports, unused_imports)]
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    clippy::as_conversions,
+    clippy::indexing_slicing,
+    clippy::cast_lossless
+)]
 
-use async_graphql::Context;
 use async_graphql::dataloader::DataLoader;
+use async_graphql::Context;
 use futures_util::future::join_all;
 
 use crate::modules::graphql_dataloader::*;
@@ -14,8 +22,8 @@ use crate::shared::AppState;
 
 pub use crate::modules::graphql_ai_assist::*;
 pub use crate::modules::graphql_cache::*;
-pub use crate::modules::graphql_entities::*;
 pub use crate::modules::graphql_enterprise_security::*;
+pub use crate::modules::graphql_entities::*;
 pub use crate::modules::graphql_federation::*;
 pub use crate::modules::graphql_federation_runtime::*;
 pub use crate::modules::graphql_federation_sdl::*;
@@ -23,12 +31,12 @@ pub use crate::modules::graphql_federation_v4::*;
 pub use crate::modules::graphql_governance::*;
 pub use crate::modules::graphql_monitoring::*;
 pub use crate::modules::graphql_persisted_queries::*;
+use crate::modules::graphql_schema::get_active_subscriptions;
 pub use crate::modules::graphql_security::*;
 pub use crate::modules::graphql_semantic_cache::*;
 pub use crate::modules::graphql_subscription_enhanced::*;
-use crate::modules::graphql_schema::get_active_subscriptions;
 
-    pub async fn impl_module_stats(_ctx: &Context<'_>) -> async_graphql::Result<Vec<ModuleStatGql>> {
+pub async fn impl_module_stats(_ctx: &Context<'_>) -> async_graphql::Result<Vec<ModuleStatGql>> {
     let modules = [
         (
             "qms",
@@ -90,7 +98,9 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     Ok(results)
 }
 
-    pub async fn impl_federated_services(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<FederatedServiceGql>> {
+pub async fn impl_federated_services(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<FederatedServiceGql>> {
     let registry = [
         (
             "erp",
@@ -132,7 +142,12 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     Ok(results)
 }
 
-    pub async fn impl_federated_entity(         _ctx: &Context<'_>, service: String, entity_type: String, id: String     ) -> async_graphql::Result<FederatedEntityGql> {
+pub async fn impl_federated_entity(
+    _ctx: &Context<'_>,
+    service: String,
+    entity_type: String,
+    id: String,
+) -> async_graphql::Result<FederatedEntityGql> {
     let base_url = service_url(&service);
     let path = match entity_type.as_str() {
         "customers" => format!("/api/erp/customers/{}", id),
@@ -151,20 +166,18 @@ use crate::modules::graphql_schema::get_active_subscriptions;
 
     let url = format!("{}{}", base_url, path);
     let data = match service_auth_get(&url, FEDERATION_READ_PERMS).await {
-        Ok(resp) if resp.status().is_success() => {
-            match resp.json::<serde_json::Value>().await {
-                Ok(j) => j,
-                Err(e) => {
-                    tracing::warn!(
-                        "Failed to parse federation entity JSON for {}/{}: {}",
-                        service,
-                        id,
-                        e
-                    );
-                    serde_json::Value::Null
-                }
+        Ok(resp) if resp.status().is_success() => match resp.json::<serde_json::Value>().await {
+            Ok(j) => j,
+            Err(e) => {
+                tracing::warn!(
+                    "Failed to parse federation entity JSON for {}/{}: {}",
+                    service,
+                    id,
+                    e
+                );
+                serde_json::Value::Null
             }
-        }
+        },
         _ => {
             serde_json::json!({"error": "entity not found", "service": service, "entity_type": entity_type, "id": id})
         }
@@ -178,11 +191,13 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     })
 }
 
-    pub async fn impl_federation_sdl(_ctx: &Context<'_>) -> async_graphql::Result<String> {
+pub async fn impl_federation_sdl(_ctx: &Context<'_>) -> async_graphql::Result<String> {
     Ok(compose_federation_sdl())
 }
 
-    pub async fn impl_federation_service_sdls(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<FederationServiceSdlGql>> {
+pub async fn impl_federation_service_sdls(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<FederationServiceSdlGql>> {
     let services = [
         ("erp", "http://localhost:8010"),
         ("crm", "http://localhost:8029"),
@@ -203,12 +218,14 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     Ok(join_all(futures).await)
 }
 
-    pub async fn impl_federation_entities(         _ctx: &Context<'_>, representations: Vec<serde_json::Value>     ) -> async_graphql::Result<Vec<FederationRepresentationGql>> {
+pub async fn impl_federation_entities(
+    _ctx: &Context<'_>,
+    representations: Vec<serde_json::Value>,
+) -> async_graphql::Result<Vec<FederationRepresentationGql>> {
     use std::collections::HashMap;
 
     let mut by_service: HashMap<String, Vec<(String, String, usize)>> = HashMap::new();
-    let mut results: Vec<Option<FederationRepresentationGql>> =
-        vec![None; representations.len()];
+    let mut results: Vec<Option<FederationRepresentationGql>> = vec![None; representations.len()];
 
     for (idx, rep) in representations.iter().enumerate() {
         let typename = rep
@@ -261,7 +278,12 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     Ok(results.into_iter().flatten().collect())
 }
 
-    pub async fn impl_federation_entity_list(         _ctx: &Context<'_>, service: String, entity_type: String, ids: Vec<String>     ) -> async_graphql::Result<Vec<FederatedEntityGql>> {
+pub async fn impl_federation_entity_list(
+    _ctx: &Context<'_>,
+    service: String,
+    entity_type: String,
+    ids: Vec<String>,
+) -> async_graphql::Result<Vec<FederatedEntityGql>> {
     let base_url = service_url(&service);
     let path = match (service.as_str(), entity_type.as_str()) {
         ("erp", "customers") => "/api/erp/customers/batch",
@@ -390,7 +412,10 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     }
 }
 
-    pub async fn impl_customer_entity(         _ctx: &Context<'_>, id: String     ) -> async_graphql::Result<Option<CustomerEntityGql>> {
+pub async fn impl_customer_entity(
+    _ctx: &Context<'_>,
+    id: String,
+) -> async_graphql::Result<Option<CustomerEntityGql>> {
     let url = format!("http://localhost:8010/api/erp/customers/{}", id);
     match service_auth_get(&url, FEDERATION_READ_PERMS).await {
         Ok(resp) if resp.status().is_success() => {
@@ -441,7 +466,10 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     }
 }
 
-    pub async fn impl_employee_entity(         _ctx: &Context<'_>, id: String     ) -> async_graphql::Result<Option<EmployeeEntityGql>> {
+pub async fn impl_employee_entity(
+    _ctx: &Context<'_>,
+    id: String,
+) -> async_graphql::Result<Option<EmployeeEntityGql>> {
     let url = format!("http://localhost:8020/api/hrm/employees/{}", id);
     match service_auth_get(&url, FEDERATION_READ_PERMS).await {
         Ok(resp) if resp.status().is_success() => {
@@ -494,7 +522,10 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     }
 }
 
-    pub async fn impl_voucher_entity(         _ctx: &Context<'_>, id: String     ) -> async_graphql::Result<Option<VoucherEntityGql>> {
+pub async fn impl_voucher_entity(
+    _ctx: &Context<'_>,
+    id: String,
+) -> async_graphql::Result<Option<VoucherEntityGql>> {
     let url = format!("http://localhost:8011/api/finance/vouchers/{}", id);
     match service_auth_get(&url, FEDERATION_READ_PERMS).await {
         Ok(resp) if resp.status().is_success() => {
@@ -544,11 +575,13 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     }
 }
 
-    pub async fn impl_subscription_count(_ctx: &Context<'_>) -> async_graphql::Result<i32> {
+pub async fn impl_subscription_count(_ctx: &Context<'_>) -> async_graphql::Result<i32> {
     Ok(get_active_subscriptions() as i32)
 }
 
-    pub async fn impl_entity_relationship_graph(         _ctx: &Context<'_>     ) -> async_graphql::Result<EntityRelationshipGraphGql> {
+pub async fn impl_entity_relationship_graph(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<EntityRelationshipGraphGql> {
     let entities = vec![
         "CustomerEntity".to_string(),
         "SupplierEntity".to_string(),
@@ -618,11 +651,18 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     })
 }
 
-    pub async fn impl_federation_stats(         _ctx: &Context<'_>     ) -> async_graphql::Result<FederationStatsGql> {
+pub async fn impl_federation_stats(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<FederationStatsGql> {
     Ok(get_federation_stats())
 }
 
-    pub async fn impl_federation_entity_list_cached(         _ctx: &Context<'_>, service: String, entity_type: String, ids: Vec<String>     ) -> async_graphql::Result<Vec<FederatedEntityGql>> {
+pub async fn impl_federation_entity_list_cached(
+    _ctx: &Context<'_>,
+    service: String,
+    entity_type: String,
+    ids: Vec<String>,
+) -> async_graphql::Result<Vec<FederatedEntityGql>> {
     record_federation_request();
     let results = batch_resolve_entities(&service, &entity_type, &ids).await;
     Ok(results
@@ -636,23 +676,32 @@ use crate::modules::graphql_schema::get_active_subscriptions;
         .collect())
 }
 
-    pub async fn impl_cache_stats(_ctx: &Context<'_>) -> async_graphql::Result<CacheStatsV41Gql> {
+pub async fn impl_cache_stats(_ctx: &Context<'_>) -> async_graphql::Result<CacheStatsV41Gql> {
     Ok(get_cache_stats())
 }
 
-    pub async fn impl_cache_optimization_suggestions(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<CacheOptimizationSuggestionGql>> {
+pub async fn impl_cache_optimization_suggestions(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<CacheOptimizationSuggestionGql>> {
     Ok(get_cache_optimization_suggestions())
 }
 
-    pub async fn impl_prefetch_rules(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<QueryPrefetchRuleGql>> {
+pub async fn impl_prefetch_rules(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<QueryPrefetchRuleGql>> {
     Ok(prefetch_rules().clone())
 }
 
-    pub async fn impl_cache_invalidation_rules(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<CacheInvalidationRuleGql>> {
+pub async fn impl_cache_invalidation_rules(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<CacheInvalidationRuleGql>> {
     Ok(cache_invalidation_rules().clone())
 }
 
-    pub async fn impl_discovered_queries(         _ctx: &Context<'_>, status: Option<String>     ) -> async_graphql::Result<Vec<DiscoveredQueryGql>> {
+pub async fn impl_discovered_queries(
+    _ctx: &Context<'_>,
+    status: Option<String>,
+) -> async_graphql::Result<Vec<DiscoveredQueryGql>> {
     let status_enum = status.as_deref().and_then(|s| match s {
         "new" => Some(DiscoveryStatus::New),
         "under_review" => Some(DiscoveryStatus::UnderReview),
@@ -663,49 +712,78 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     Ok(get_discovered_queries(status_enum))
 }
 
-    pub async fn impl_auto_approval_policy(         _ctx: &Context<'_>     ) -> async_graphql::Result<AutoApprovalPolicyGql> {
+pub async fn impl_auto_approval_policy(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<AutoApprovalPolicyGql> {
     Ok(get_auto_approval_policy())
 }
 
-    pub async fn impl_security_audit_report(         _ctx: &Context<'_>, period: String     ) -> async_graphql::Result<SecurityAuditReportGql> {
+pub async fn impl_security_audit_report(
+    _ctx: &Context<'_>,
+    period: String,
+) -> async_graphql::Result<SecurityAuditReportGql> {
     Ok(generate_security_report(&period))
 }
 
-    pub async fn impl_performance_tuning_suggestions(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<PerformanceTuningSuggestionGql>> {
+pub async fn impl_performance_tuning_suggestions(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<PerformanceTuningSuggestionGql>> {
     Ok(get_performance_tuning_suggestions())
 }
 
-    pub async fn impl_performance_analysis(         _ctx: &Context<'_>     ) -> async_graphql::Result<PerformanceAnalysisGql> {
+pub async fn impl_performance_analysis(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<PerformanceAnalysisGql> {
     Ok(get_performance_analysis())
 }
 
-    pub async fn impl_white_list_health(         _ctx: &Context<'_>     ) -> async_graphql::Result<WhitelistHealthGql> {
+pub async fn impl_white_list_health(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<WhitelistHealthGql> {
     Ok(get_whitelist_health())
 }
 
-    pub async fn impl_field_permissions(         _ctx: &Context<'_>, entity_type: Option<String>     ) -> async_graphql::Result<Vec<FieldPermission>> {
+pub async fn impl_field_permissions(
+    _ctx: &Context<'_>,
+    entity_type: Option<String>,
+) -> async_graphql::Result<Vec<FieldPermission>> {
     Ok(get_field_permissions(entity_type.as_deref()))
 }
 
-    pub async fn impl_masking_rules(         _ctx: &Context<'_>, entity_type: Option<String>     ) -> async_graphql::Result<Vec<MaskingRule>> {
+pub async fn impl_masking_rules(
+    _ctx: &Context<'_>,
+    entity_type: Option<String>,
+) -> async_graphql::Result<Vec<MaskingRule>> {
     Ok(get_masking_rules(entity_type.as_deref()))
 }
 
-    pub async fn impl_field_access_audits(         _ctx: &Context<'_>, limit: Option<i32>, entity_type: Option<String>     ) -> async_graphql::Result<Vec<FieldAccessAudit>> {
+pub async fn impl_field_access_audits(
+    _ctx: &Context<'_>,
+    limit: Option<i32>,
+    entity_type: Option<String>,
+) -> async_graphql::Result<Vec<FieldAccessAudit>> {
     let limit = limit.unwrap_or(100).max(0) as usize;
     Ok(get_field_access_audits(limit, entity_type.as_deref()))
 }
 
-    pub async fn impl_data_change_audits(         _ctx: &Context<'_>, limit: Option<i32>, entity_type: Option<String>     ) -> async_graphql::Result<Vec<DataChangeAudit>> {
+pub async fn impl_data_change_audits(
+    _ctx: &Context<'_>,
+    limit: Option<i32>,
+    entity_type: Option<String>,
+) -> async_graphql::Result<Vec<DataChangeAudit>> {
     let limit = limit.unwrap_or(100).max(0) as usize;
     Ok(get_data_change_audits(limit, entity_type.as_deref()))
 }
 
-    pub async fn impl_security_config(_ctx: &Context<'_>) -> async_graphql::Result<SecurityConfig> {
+pub async fn impl_security_config(_ctx: &Context<'_>) -> async_graphql::Result<SecurityConfig> {
     Ok(get_security_config())
 }
 
-    pub async fn impl_federation_v2_plan(         _ctx: &Context<'_>, query: String, variables: String     ) -> async_graphql::Result<FederationQueryPlanGql> {
+pub async fn impl_federation_v2_plan(
+    _ctx: &Context<'_>,
+    query: String,
+    variables: String,
+) -> async_graphql::Result<FederationQueryPlanGql> {
     record_federation_v2_request();
     let vars = serde_json::from_str(&variables).unwrap_or(serde_json::Value::Null);
     let plan_start = std::time::Instant::now();
@@ -716,7 +794,11 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     Ok(plan.to_gql())
 }
 
-    pub async fn impl_federation_v2_execute(         _ctx: &Context<'_>, query: String, variables: String     ) -> async_graphql::Result<serde_json::Value> {
+pub async fn impl_federation_v2_execute(
+    _ctx: &Context<'_>,
+    query: String,
+    variables: String,
+) -> async_graphql::Result<serde_json::Value> {
     record_federation_v2_request();
     let vars = serde_json::from_str(&variables).unwrap_or(serde_json::Value::Null);
     let query_hash = federation_v2_query_hash(&query);
@@ -742,32 +824,45 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     Ok(result.unwrap_or_else(|e| serde_json::json!({"error": e})))
 }
 
-    pub async fn impl_federation_v2_stats(         _ctx: &Context<'_>     ) -> async_graphql::Result<FederationV2StatsGql> {
+pub async fn impl_federation_v2_stats(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<FederationV2StatsGql> {
     Ok(get_federation_v2_stats())
 }
 
-    pub async fn impl_registered_services(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<ServiceMetadata>> {
+pub async fn impl_registered_services(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<ServiceMetadata>> {
     Ok(list_services())
 }
 
-    pub async fn impl_entity_metadata(         _ctx: &Context<'_>, entity_name: String     ) -> async_graphql::Result<Option<EntityMetadata>> {
+pub async fn impl_entity_metadata(
+    _ctx: &Context<'_>,
+    entity_name: String,
+) -> async_graphql::Result<Option<EntityMetadata>> {
     Ok(get_entity_metadata(&entity_name))
 }
 
-    pub async fn impl_federation_v2_sdl(_ctx: &Context<'_>) -> async_graphql::Result<String> {
+pub async fn impl_federation_v2_sdl(_ctx: &Context<'_>) -> async_graphql::Result<String> {
     Ok(compose_federation_sdl_v2())
 }
 
-    pub async fn impl_subscription_sessions(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<SubscriptionSessionGql>> {
+pub async fn impl_subscription_sessions(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<SubscriptionSessionGql>> {
     let sessions = list_sessions();
     Ok(sessions.into_iter().map(|s| s.into()).collect())
 }
 
-    pub async fn impl_subscription_stats(         _ctx: &Context<'_>     ) -> async_graphql::Result<SubscriptionStatsGql> {
+pub async fn impl_subscription_stats(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<SubscriptionStatsGql> {
     Ok(get_subscription_stats().into())
 }
 
-    pub async fn impl_active_subscriptions(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<SubscriptionInfoGql>> {
+pub async fn impl_active_subscriptions(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<SubscriptionInfoGql>> {
     let sessions = list_sessions();
     let mut subs = Vec::new();
     for session in sessions {
@@ -778,7 +873,10 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     Ok(subs)
 }
 
-    pub async fn impl_query_optimization_suggestions(         _ctx: &Context<'_>, query_hash: Option<String>     ) -> async_graphql::Result<Vec<QueryOptimizationSuggestionGql>> {
+pub async fn impl_query_optimization_suggestions(
+    _ctx: &Context<'_>,
+    query_hash: Option<String>,
+) -> async_graphql::Result<Vec<QueryOptimizationSuggestionGql>> {
     if let Some(hash) = query_hash {
         Ok(get_query_optimization_suggestions(&hash))
     } else {
@@ -786,29 +884,44 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     }
 }
 
-    pub async fn impl_query_health_score(         _ctx: &Context<'_>, query_hash: String     ) -> async_graphql::Result<Option<QueryHealthScoreGql>> {
+pub async fn impl_query_health_score(
+    _ctx: &Context<'_>,
+    query_hash: String,
+) -> async_graphql::Result<Option<QueryHealthScoreGql>> {
     Ok(get_query_health_score(&query_hash))
 }
 
-    pub async fn impl_optimization_roadmap(         _ctx: &Context<'_>     ) -> async_graphql::Result<OptimizationRoadmapGql> {
+pub async fn impl_optimization_roadmap(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<OptimizationRoadmapGql> {
     Ok(generate_optimization_roadmap())
 }
 
-    pub async fn impl_nl2graphql(         _ctx: &Context<'_>, natural_language: String     ) -> async_graphql::Result<Nl2GraphqlResultGql> {
+pub async fn impl_nl2graphql(
+    _ctx: &Context<'_>,
+    natural_language: String,
+) -> async_graphql::Result<Nl2GraphqlResultGql> {
     let result = Nl2GraphqlParser::parse(&natural_language);
     record_nl2graphql_query(result.confidence);
     Ok(result)
 }
 
-    pub async fn impl_cache_recommendations(         _ctx: &Context<'_>     ) -> async_graphql::Result<CacheRecommendationReportGql> {
+pub async fn impl_cache_recommendations(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<CacheRecommendationReportGql> {
     Ok(get_cache_recommendations())
 }
 
-    pub async fn impl_ai_optimization_stats(         _ctx: &Context<'_>     ) -> async_graphql::Result<AiOptimizationStatsGql> {
+pub async fn impl_ai_optimization_stats(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<AiOptimizationStatsGql> {
     Ok(get_ai_optimization_stats())
 }
 
-    pub async fn impl_federation_v3_plan(         _ctx: &Context<'_>, query: String     ) -> async_graphql::Result<FederationV3PlanGql> {
+pub async fn impl_federation_v3_plan(
+    _ctx: &Context<'_>,
+    query: String,
+) -> async_graphql::Result<FederationV3PlanGql> {
     let vars = serde_json::Value::Null;
     let plan_start = std::time::Instant::now();
     let plan = FederationV3Planner::build_plan_v3(&query, &vars);
@@ -824,4 +937,3 @@ use crate::modules::graphql_schema::get_active_subscriptions;
     plan_cache.put(plan.query_hash.clone(), plan.clone());
     Ok(plan_to_gql(&plan))
 }
-

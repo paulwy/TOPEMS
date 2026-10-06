@@ -1,8 +1,17 @@
 // ==================== graphql_query_impls：根类型字段实现（批次5 委托式拆分） ====================
 // 拆分自 graphql_schema.rs：字段函数体搬移至此（pub async fn impl_*），主文件保留委托壳。
 
-use async_graphql::Context;
+#![allow(ambiguous_glob_reexports, unused_imports)]
+#![allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss,
+    clippy::as_conversions,
+    clippy::indexing_slicing,
+    clippy::cast_lossless
+)]
 use async_graphql::dataloader::DataLoader;
+use async_graphql::Context;
 use futures_util::future::join_all;
 
 use crate::modules::graphql_dataloader::*;
@@ -10,7 +19,7 @@ use crate::modules::graphql_helpers::*;
 use crate::modules::graphql_types::*;
 use crate::shared::AppState;
 
-    pub async fn impl_business_stats(ctx: &Context<'_>) -> async_graphql::Result<BusinessStatsGql> {
+pub async fn impl_business_stats(ctx: &Context<'_>) -> async_graphql::Result<BusinessStatsGql> {
     let state = ctx.data::<AppState>()?;
 
     let (erp, crm, hrm, finance, mes, workflow) = tokio::join!(
@@ -62,7 +71,7 @@ use crate::shared::AppState;
     })
 }
 
-    pub async fn impl_unified_todos(ctx: &Context<'_>) -> async_graphql::Result<Vec<UnifiedTodoGql>> {
+pub async fn impl_unified_todos(ctx: &Context<'_>) -> async_graphql::Result<Vec<UnifiedTodoGql>> {
     let state = ctx.data::<AppState>()?;
     let mut todos = Vec::new();
 
@@ -142,7 +151,9 @@ use crate::shared::AppState;
     Ok(todos)
 }
 
-    pub async fn impl_service_health(         _ctx: &Context<'_>     ) -> async_graphql::Result<Vec<ServiceHealthGql>> {
+pub async fn impl_service_health(
+    _ctx: &Context<'_>,
+) -> async_graphql::Result<Vec<ServiceHealthGql>> {
     let services = [
         ("erp", "http://localhost:8010"),
         ("crm", "http://localhost:8029"),
@@ -170,7 +181,7 @@ use crate::shared::AppState;
     Ok(results)
 }
 
-    pub async fn impl_dashboard(ctx: &Context<'_>) -> async_graphql::Result<DashboardGql> {
+pub async fn impl_dashboard(ctx: &Context<'_>) -> async_graphql::Result<DashboardGql> {
     let (stats, todos, services) = tokio::join!(
         impl_business_stats(ctx),
         impl_unified_todos(ctx),
@@ -184,21 +195,29 @@ use crate::shared::AppState;
     })
 }
 
-    pub async fn impl_service_health_by_name(         ctx: &Context<'_>, service: String     ) -> async_graphql::Result<Option<ServiceHealthGql>> {
+pub async fn impl_service_health_by_name(
+    ctx: &Context<'_>,
+    service: String,
+) -> async_graphql::Result<Option<ServiceHealthGql>> {
     let loader = ctx.data::<DataLoader<ServiceHealthLoader>>()?;
     Ok(loader.load_one(service).await?)
 }
 
-    pub async fn impl_service_health_batch(         ctx: &Context<'_>, services: Vec<String>     ) -> async_graphql::Result<Vec<ServiceHealthGql>> {
+pub async fn impl_service_health_batch(
+    ctx: &Context<'_>,
+    services: Vec<String>,
+) -> async_graphql::Result<Vec<ServiceHealthGql>> {
     let loader = ctx.data::<DataLoader<ServiceHealthLoader>>()?;
     let map = loader.load_many(services).await?;
     Ok(map.into_values().collect())
 }
 
-    pub async fn impl_todo_by_id(         ctx: &Context<'_>, id: String     ) -> async_graphql::Result<Option<UnifiedTodoGql>> {
+pub async fn impl_todo_by_id(
+    ctx: &Context<'_>,
+    id: String,
+) -> async_graphql::Result<Option<UnifiedTodoGql>> {
     let uuid = uuid::Uuid::parse_str(&id)
         .map_err(|e| async_graphql::Error::new(format!("无效的 ID: {}", e)))?;
     let loader = ctx.data::<DataLoader<TodoLoader>>()?;
     Ok(loader.load_one(uuid).await?)
 }
-
