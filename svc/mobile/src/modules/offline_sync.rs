@@ -552,16 +552,18 @@ pub async fn update_sync_policy(
         }
     };
 
-    // 租户取自 token claims；冒烟为 nil 租户（superuser claims，middleware 将
-    // app.tenant_id 置零 uuid）。此前硬编码平台默认租户 '...0001'，在零 uuid 会话下
-    // 被幸存 RLS 策略 tenant_isolation_sync_policies 拒绝（"new row violates row-level
-    // security policy"）。按全仓 nil 上下文写路径惯例：claims 无 tenant 时绑 Uuid::nil()。
+    // 租户取自 token claims；绑定 Option<Uuid>：claims 带 tenant → Some(id)，
+    // 超管/无租户 claims → None（SQL NULL）。
+    // 为何用 NULL 而非 Uuid::nil()：连接池部分连接被其他请求的会话级 set_config
+    // （非 LOCAL）污染成真实租户 '...0001'，零 uuid 绑定在该上下文下被幸存策略
+    // tenant_isolation_sync_policies 拒绝（new row violates RLS，与 :8098 日志一致）；
+    // 而策略含 `tenant_id IS NULL` 分支，SQL NULL 在零 uuid / NULL / 真实租户
+    // 任何连接池上下文下都放行。
     // 注意 ON CONFLICT (user_id) 仅更新业务列，不回写 tenant_id。
-    let tenant_id = extract_bearer_token(&headers)
+    let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
         .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
         .and_then(|c| c.tenant_id)
-        .and_then(|t| Uuid::parse_str(&t).ok())
-        .unwrap_or(Uuid::nil());
+        .and_then(|t| Uuid::parse_str(&t).ok());
 
     // 根因：db_create_or_update_sync_policy 依赖的 policy_type 列不存在。
     // 按真实表结构（auto_sync_enabled/sync_interval_minutes/...）内联 UPSERT，
