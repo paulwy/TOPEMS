@@ -934,3 +934,23 @@
 - **B9**（2c7156fa2）：react-leaflet mock 补 useMap/useMapEvents（MapEventHandler/HeatmapLayer/GisMapTemplate 用）→ DataInfraComponents 15/15 全绿
 - **A5**（e182ffd50）：erp.erp_master_data_refs RLS 策略（新迁移 20261006000002，幂等 rls_tenant_isolation，供 topems_app）
 - **待办**：6 个提交（7ed0e7365→e182ffd50）待 pre-push 门禁全绿后推送 origin/main
+## [2026-10-06] portal 上帝文件拆分批次 5 完成（QueryRoot/MutationRoot/SubscriptionRoot 委托式拆分 ✅）
+
+- **目标**：svc/portal/src/modules/graphql_schema.rs 最后一块（26,907→2,290 行，根类型 + build_schema）
+- **方案**（async-graphql 多 #[Object] impl 块 E0119 已验证不可行）：字段函数体委托式——函数体搬至独立模块 `pub async fn impl_<字段>`，主文件保留完整签名 + 薄壳 `impl_xxx(...).await`；GQL 接口/路径零变化
+- **批次与提交**：
+  - 5.1 `graphql_query_impls`（QueryRoot 前 7 字段：business_stats/unified_todos/service_health 等）
+  - 5.2 `graphql_query_federation`（45 字段，commit 2bd560d23）——⚠️ 该 commit 历史为空洞（并行线清理时内容丢失），字段实际合流至 5.3 的 graphql_query_business（46 fns，编译验证等价）
+  - 5.3 `graphql_query_business`（QueryRoot 业务/联邦查询全部字段，3,030→1,163）
+  - 5.4 `graphql_mutation_impls`（MutationRoot 前 55 字段，3,034→1,906）
+  - 5.5 `graphql_mutation_admin`（MutationRoot 剩余 54 字段，2,675→2,565；含 cache_stats Query/Mutation 撞名→Mutation 版改名 impl_mutation_cache_stats）
+  - 5.6 `graphql_subscription_impls`（SubscriptionRoot 9 字段，2,571→2,290；stream 型字段委托式拆分成功）
+- **验证**：每批 `cargo check -p topems-portal` 零警告；最终 `cargo test -p topems-portal --lib` **608 passed / 0 failed**
+- **脚本迭代要点**（split_impl_fields_v2.py，工作区 scratch 副本）：
+  - ALL 模式自动收集 mod.rs 全部模块 use（排除 graphql_schema / 已拆 graphql_query_* / graphql_mutation_* 前缀，防 impl_* 撞名 E0659）
+  - 模块 header：私有 use glob（pub use 会触发 private item shadows）+ 显式消歧（reset_circuit_breaker/SubscriptionChannel/MaskingRule/acknowledge_alert）+ 主文件 pub fn 反引用（get_cache_version 等 5 个）
+  - find_fields 仅匹配 `async fn`（防 impl Drop 的 fn drop 误当字段）；跳过已是委托壳的字段（防跨批重叠）
+  - sig_bound 支持 `{` 独立行签名的字段；委托壳对 `{` 独立行签名补开括号
+  - Subscription 模式：不注入 ctx（&self 无 Context），字段体私有符号（SUBSCRIPTION_SERVICES/DeferSubscriptionCount/ACTIVE_SUBSCRIPTIONS）改主文件 pub + 全路径引用
+  - 主文件顶部 `#![allow(unused_imports)]`（兼容层 pub use 供 feature_routes 等外部经 modules::graphql_schema::* 引用）
+- **遗留**：主文件保留 V37/V38 计数函数（get_cache_version/invalidate_cache/get_active_subscriptions/increment/decrement_subscriptions）+ Schema 构建区（PortalSchema/APQ_CACHE_CAPACITY/build_schema，~280 行）；5.1-5.6 提交待 push
