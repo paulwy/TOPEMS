@@ -766,6 +766,9 @@ pub async fn create_recovery_point(
     let mut points = store.recovery_points.lock().await;
     points.push(rp.clone());
 
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("disaster_v56", "recovery_points", &*points).await;
+
     Json(ApiResponse::success(rp, "恢复点已创建"))
 }
 
@@ -995,6 +998,9 @@ pub async fn create_recovery_plan(
     let mut plans = store.recovery_plans.lock().await;
     plans.push(plan.clone());
 
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("disaster_v56", "recovery_plans", &*plans).await;
+
     Json(ApiResponse::success(plan, "恢复计划已创建"))
 }
 
@@ -1032,16 +1038,24 @@ pub async fn execute_plan(
 
     let completed_steps: Vec<&RecoveryStep> = plan.steps.iter().collect();
     let total_steps = completed_steps.len() as i64;
+    let plan_id = plan.id.clone();
+    let plan_name = plan.name.clone();
+    let rto_minutes = plan.rto_minutes;
+    let rpo_minutes = plan.rpo_minutes;
+    // 结束可变借用（NLL 已自动结束），允许同步直写
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("disaster_v56", "recovery_plans", &*plans).await;
 
     Json(ApiResponse::success(
         serde_json::json!({
-            "plan_id": plan.id,
-            "plan_name": plan.name,
+            "plan_id": plan_id,
+            "plan_name": plan_name,
             "status": "completed",
             "total_steps": total_steps,
             "completed_steps": total_steps,
-            "rto_minutes": plan.rto_minutes,
-            "rpo_minutes": plan.rpo_minutes,
+            "rto_minutes": rto_minutes,
+            "rpo_minutes": rpo_minutes,
             "executed_at": chrono::Utc::now().to_rfc3339(),
         }),
         "恢复计划已执行",
@@ -1217,6 +1231,9 @@ pub async fn create_continuity_plan(
     let mut plans = store.continuity_plans.lock().await;
     plans.push(plan.clone());
 
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("disaster_v56", "continuity_plans", &*plans).await;
+
     Json(ApiResponse::success(plan, "连续性计划已创建"))
 }
 
@@ -1310,8 +1327,13 @@ pub async fn update_plan(
             _ => ContinuityPlanStatus::Draft,
         };
     }
+    let updated = plan.clone();
+    // 结束可变借用（NLL 已自动结束），允许同步直写
 
-    Json(ApiResponse::success(plan.clone(), "连续性计划已更新"))
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("disaster_v56", "continuity_plans", &*plans).await;
+
+    Json(ApiResponse::success(updated, "连续性计划已更新"))
 }
 
 #[utoipa::path(

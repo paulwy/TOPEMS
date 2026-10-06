@@ -162,6 +162,11 @@ impl MetadataManager {
             updated_at: now,
         };
         self.objects.lock().await.push(obj.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let objects = self.objects.lock().await;
+        crate::modules::persist::save("metadata_v60", "objects", &*objects).await;
+
         obj
     }
 
@@ -224,7 +229,13 @@ impl MetadataManager {
             obj.attributes = a;
         }
         obj.updated_at = chrono::Utc::now().to_rfc3339();
-        Some(obj.clone())
+        let updated = obj.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("metadata_v60", "objects", &*objects).await;
+
+        Some(updated)
     }
 
     async fn delete_metadata(&self, id: &str) -> bool {
@@ -232,6 +243,10 @@ impl MetadataManager {
         let pos = objects.iter().position(|o| o.id == id);
         if let Some(p) = pos {
             objects.remove(p);
+
+            // B10: 写时同步直写（SIGKILL 不丢近写）。
+            crate::modules::persist::save("metadata_v60", "objects", &*objects).await;
+
             true
         } else {
             false
@@ -255,6 +270,11 @@ impl MetadataManager {
             is_required,
         };
         self.attributes.lock().await.push(attr.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let attributes = self.attributes.lock().await;
+        crate::modules::persist::save("metadata_v60", "attributes", &*attributes).await;
+
         attr
     }
 
@@ -267,6 +287,11 @@ impl MetadataManager {
             usage_count: 0,
         };
         self.tags.lock().await.push(tag.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let tags = self.tags.lock().await;
+        crate::modules::persist::save("metadata_v60", "tags", &*tags).await;
+
         tag
     }
 
@@ -433,6 +458,15 @@ impl EnhancedLineage {
             graph_edges.extend(edges);
         }
         self.graphs.lock().await.push(graph.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let graph_nodes = self.nodes.lock().await;
+        crate::modules::persist::save("metadata_v60", "lineage_nodes", &*graph_nodes).await;
+        let graph_edges = self.edges.lock().await;
+        crate::modules::persist::save("metadata_v60", "lineage_edges", &*graph_edges).await;
+        let graphs = self.graphs.lock().await;
+        crate::modules::persist::save("metadata_v60", "lineage_graphs", &*graphs).await;
+
         graph
     }
 
@@ -694,6 +728,12 @@ impl LifecycleManager {
             hist.push(history.clone());
         }
 
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let stages = self.current_stages.lock().await;
+        crate::modules::persist::save("metadata_v60", "current_stages", &*stages).await;
+        let hist = self.history.lock().await;
+        crate::modules::persist::save("metadata_v60", "lifecycle_history", &*hist).await;
+
         history
     }
 
@@ -721,6 +761,11 @@ impl LifecycleManager {
             actions,
         };
         self.policies.lock().await.push(policy.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let policies = self.policies.lock().await;
+        crate::modules::persist::save("metadata_v60", "lifecycle_policies", &*policies).await;
+
         policy
     }
 

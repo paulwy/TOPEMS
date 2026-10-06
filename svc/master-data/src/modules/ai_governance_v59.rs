@@ -107,6 +107,11 @@ impl GovernanceAIEngine {
         });
 
         self.suggestions.lock().await.extend(suggestions.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let all = self.suggestions.lock().await;
+        crate::modules::persist::save("ai_governance_v59", "ai_suggestions", &*all).await;
+
         suggestions
     }
 
@@ -138,6 +143,10 @@ impl GovernanceAIEngine {
         let mut suggestions = self.suggestions.lock().await;
         let pos = suggestions.iter().position(|s| s.id == id)?;
         suggestions.remove(pos);
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("ai_governance_v59", "ai_suggestions", &*suggestions).await;
+
         None
     }
 
@@ -151,7 +160,13 @@ impl GovernanceAIEngine {
         let model = models.iter_mut().find(|m| m.id == model_id)?;
         model.accuracy = (model.accuracy + 0.05).min(0.99);
         model.last_trained = Some(chrono::Utc::now().to_rfc3339());
-        Some(model.clone())
+        let trained = model.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("ai_governance_v59", "ai_models", &*models).await;
+
+        Some(trained)
     }
 }
 
@@ -231,6 +246,11 @@ impl IntelligentMatcher {
             enabled: true,
         };
         self.rules.lock().await.push(rule.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let rules = self.rules.lock().await;
+        crate::modules::persist::save("ai_governance_v59", "matcher_rules", &*rules).await;
+
         rule
     }
 
@@ -285,6 +305,12 @@ impl IntelligentMatcher {
         }
 
         self.results.lock().await.extend(results.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let matcher_results = self.results.lock().await;
+        crate::modules::persist::save("ai_governance_v59", "matcher_results", &*matcher_results)
+            .await;
+
         results
     }
 
@@ -297,7 +323,13 @@ impl IntelligentMatcher {
         let mut results = self.results.lock().await;
         let result = results.iter_mut().find(|r| r.id == id)?;
         result.status = status;
-        Some(result.clone())
+        let reviewed = result.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("ai_governance_v59", "matcher_results", &*results).await;
+
+        Some(reviewed)
     }
 
     async fn confirm_match(&self, id: &str) -> Option<MatchResult> {
@@ -414,6 +446,11 @@ impl AutoClassifier {
             status: ClassificationStatus::Active,
         };
         self.models.lock().await.push(model.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let models = self.models.lock().await;
+        crate::modules::persist::save("ai_governance_v59", "classifier_models", &*models).await;
+
         model
     }
 
@@ -463,6 +500,16 @@ impl AutoClassifier {
         };
 
         self.results.lock().await.push(result.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let classifier_results = self.results.lock().await;
+        crate::modules::persist::save(
+            "ai_governance_v59",
+            "classifier_results",
+            &*classifier_results,
+        )
+        .await;
+
         result
     }
 
@@ -494,7 +541,13 @@ impl AutoClassifier {
             }
             result.confidence = (result.confidence + 0.05).min(0.99);
         }
-        Some(result.clone())
+        let reviewed = result.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("ai_governance_v59", "classifier_results", &*results).await;
+
+        Some(reviewed)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
@@ -523,7 +576,12 @@ impl AutoClassifier {
     async fn update_rules(&self, rules: Vec<serde_json::Value>) -> Vec<serde_json::Value> {
         let mut existing = self.rules.lock().await;
         *existing = rules;
-        existing.clone()
+        let updated = existing.clone();
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("ai_governance_v59", "classifier_rules", &*existing).await;
+
+        updated
     }
 }
 

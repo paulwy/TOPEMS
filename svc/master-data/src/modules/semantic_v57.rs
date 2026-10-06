@@ -66,12 +66,18 @@ impl EnhancedKnowledgeGraph {
             .count() as i64;
         node.degree = degree;
         drop(nodes);
-        self.nodes.lock().await.push(node.clone());
+        let mut nodes = self.nodes.lock().await;
+        nodes.push(node.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("semantic_v57", "graph_nodes", &*nodes).await;
+
         node
     }
 
     async fn add_edge(&self, edge: GraphEdgeV57) -> GraphEdgeV57 {
-        self.edges.lock().await.push(edge.clone());
+        let mut edges = self.edges.lock().await;
+        edges.push(edge.clone());
         {
             let mut nodes = self.nodes.lock().await;
             if let Some(n) = nodes.iter_mut().find(|n| n.id == edge.source_id) {
@@ -81,6 +87,12 @@ impl EnhancedKnowledgeGraph {
                 n.degree += 1;
             }
         }
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("semantic_v57", "graph_edges", &*edges).await;
+        let nodes = self.nodes.lock().await;
+        crate::modules::persist::save("semantic_v57", "graph_nodes", &*nodes).await;
+
         edge
     }
 
@@ -291,6 +303,11 @@ impl SemanticSearchEngine {
             metadata,
         };
         self.indexes.lock().await.push(index.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let indexes = self.indexes.lock().await;
+        crate::modules::persist::save("semantic_v57", "search_indexes", &*indexes).await;
+
         index
     }
 
@@ -391,7 +408,12 @@ impl SemanticSearchEngine {
         let mut indexes = self.indexes.lock().await;
         let before = indexes.len();
         indexes.retain(|i| i.id != index_id);
-        indexes.len() < before
+        let removed = indexes.len() < before;
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("semantic_v57", "search_indexes", &*indexes).await;
+
+        removed
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
@@ -441,7 +463,12 @@ struct SmartTagger {
 impl SmartTagger {
     async fn create_tag(&self, mut tag: Tag) -> Tag {
         tag.usage_count = 0;
-        self.tags.lock().await.push(tag.clone());
+        let mut tags = self.tags.lock().await;
+        tags.push(tag.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("semantic_v57", "tagger_tags", &*tags).await;
+
         tag
     }
 
@@ -454,7 +481,7 @@ impl SmartTagger {
         let mut tagged = self.tagged_entities.lock().await;
         let now = chrono::Utc::now().to_rfc3339();
 
-        if let Some(existing) = tagged
+        let result = if let Some(existing) = tagged
             .iter_mut()
             .find(|t| t.entity_type == entity_type && t.entity_id == entity_id)
         {
@@ -474,9 +501,16 @@ impl SmartTagger {
             };
             tagged.push(new.clone());
             new
-        }
+        };
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("semantic_v57", "tagger_tagged_entities", &*tagged).await;
+
+        result
     }
 
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    // （apply_tag 尾部统一落库，见函数末尾）
     async fn auto_tag(
         &self,
         entity_type: &str,
@@ -518,6 +552,9 @@ impl SmartTagger {
                     applied_at: now,
                 });
             }
+
+            // B10: 写时同步直写（SIGKILL 不丢近写）。
+            crate::modules::persist::save("semantic_v57", "tagger_tagged_entities", &*tagged).await;
         }
 
         applied_tags
@@ -556,7 +593,12 @@ impl SmartTagger {
         {
             let before = entity.tag_ids.len();
             entity.tag_ids.retain(|t| t != tag_id);
-            entity.tag_ids.len() < before
+            let removed = entity.tag_ids.len() < before;
+
+            // B10: 写时同步直写（SIGKILL 不丢近写）。
+            crate::modules::persist::save("semantic_v57", "tagger_tagged_entities", &*tagged).await;
+
+            removed
         } else {
             false
         }
@@ -1471,12 +1513,16 @@ pub async fn search_semantic_handler(
     let query_embeddings = generate_simulated_embedding(&req.query, "search_query");
     let results = store.search.search_semantic(&query_embeddings, top_k).await;
 
-    store.search.history.lock().await.push(serde_json::json!({
+    let mut history = store.search.history.lock().await;
+    history.push(serde_json::json!({
         "query": req.query,
         "type": "semantic",
         "results_count": results.len(),
         "timestamp": chrono::Utc::now().to_rfc3339(),
     }));
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("semantic_v57", "search_history", &*history).await;
 
     Json(ApiResponse::success(results, "语义搜索结果"))
 }
@@ -1501,12 +1547,16 @@ pub async fn search_hybrid_handler(
     let top_k = req.top_k.unwrap_or(10);
     let results = store.search.search_hybrid(&req.query, top_k).await;
 
-    store.search.history.lock().await.push(serde_json::json!({
+    let mut history = store.search.history.lock().await;
+    history.push(serde_json::json!({
         "query": req.query,
         "type": "hybrid",
         "results_count": results.len(),
         "timestamp": chrono::Utc::now().to_rfc3339(),
     }));
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("semantic_v57", "search_history", &*history).await;
 
     Json(ApiResponse::success(results, "混合搜索结果"))
 }

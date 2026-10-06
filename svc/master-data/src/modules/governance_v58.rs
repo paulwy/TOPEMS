@@ -211,6 +211,11 @@ impl GovernanceMaturity {
             status: "planned".to_string(),
         };
         self.improvement_plans.lock().await.push(plan.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let plans = self.improvement_plans.lock().await;
+        crate::modules::persist::save("governance_v58", "improvement_plans", &*plans).await;
+
         plan
     }
 
@@ -373,6 +378,11 @@ impl MDMWorkflowEngine {
             updated_at: now,
         };
         self.workflows.lock().await.push(workflow.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let workflows = self.workflows.lock().await;
+        crate::modules::persist::save("governance_v58", "workflows", &*workflows).await;
+
         workflow
     }
 
@@ -400,7 +410,14 @@ impl MDMWorkflowEngine {
             recorded_at: chrono::Utc::now().to_rfc3339(),
         });
 
-        Some(workflow.clone())
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let started = workflow.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
+        crate::modules::persist::save("governance_v58", "workflows", &*workflows).await;
+        let history = self.history.lock().await;
+        crate::modules::persist::save("governance_v58", "workflow_history", &*history).await;
+
+        Some(started)
     }
 
     async fn advance_step(&self, workflow_id: &str) -> Option<WorkflowV58> {
@@ -432,7 +449,13 @@ impl MDMWorkflowEngine {
         }
 
         workflow.updated_at = now;
-        Some(workflow.clone())
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let advanced = workflow.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
+        crate::modules::persist::save("governance_v58", "workflows", &*workflows).await;
+
+        Some(advanced)
     }
 
     async fn get_workflow_status(&self, workflow_id: &str) -> Option<WorkflowV58> {
@@ -497,7 +520,14 @@ impl MDMWorkflowEngine {
             recorded_at: chrono::Utc::now().to_rfc3339(),
         });
 
-        Some(workflow.clone())
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let approved = workflow.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
+        crate::modules::persist::save("governance_v58", "workflows", &*workflows).await;
+        let history = self.history.lock().await;
+        crate::modules::persist::save("governance_v58", "workflow_history", &*history).await;
+
+        Some(approved)
     }
 
     async fn reject_step(&self, workflow_id: &str, step_id: &str) -> Option<WorkflowV58> {
@@ -528,7 +558,14 @@ impl MDMWorkflowEngine {
             recorded_at: chrono::Utc::now().to_rfc3339(),
         });
 
-        Some(workflow.clone())
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let rejected = workflow.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
+        crate::modules::persist::save("governance_v58", "workflows", &*workflows).await;
+        let history = self.history.lock().await;
+        crate::modules::persist::save("governance_v58", "workflow_history", &*history).await;
+
+        Some(rejected)
     }
 
     async fn get_workflow_history(&self, workflow_id: &str) -> Vec<WorkflowHistoryEntry> {
@@ -665,6 +702,11 @@ impl DataProductManager {
             updated_at: now,
         };
         self.products.lock().await.push(product.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let products = self.products.lock().await;
+        crate::modules::persist::save("governance_v58", "data_products", &*products).await;
+
         product
     }
 
@@ -725,6 +767,11 @@ impl DataProductManager {
             product.status = DataProductStatus::Published;
             product.updated_at = now;
         }
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        let contracts = self.contracts.lock().await;
+        crate::modules::persist::save("governance_v58", "data_contracts", &*contracts).await;
+        crate::modules::persist::save("governance_v58", "data_products", &*products).await;
 
         Some(contract)
     }

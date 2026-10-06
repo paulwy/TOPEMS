@@ -724,6 +724,10 @@ pub async fn create_api_product(
     };
 
     products.push(product.clone());
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("commercial_v55", "api_products", &*products).await;
+
     Json(ApiResponse::success(product, "API 产品已创建"))
 }
 
@@ -914,7 +918,13 @@ pub async fn cancel_subscription(
     };
 
     sub.status = SubscriptionStatus::Cancelled;
-    Json(ApiResponse::success(sub.clone(), "订阅已取消"))
+    let updated = sub.clone();
+    // 结束可变借用（NLL 已自动结束），允许同步直写
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("commercial_v55", "subscriptions", &*subs).await;
+
+    Json(ApiResponse::success(updated, "订阅已取消"))
 }
 
 #[utoipa::path(
@@ -948,8 +958,13 @@ pub async fn upgrade_tier(
         sub.tier = tier_from_str(tier_str);
     }
     sub.status = SubscriptionStatus::Active;
+    let updated = sub.clone();
+    // 结束可变借用（NLL 已自动结束），允许同步直写
 
-    Json(ApiResponse::success(sub.clone(), "套餐已升级"))
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("commercial_v55", "subscriptions", &*subs).await;
+
+    Json(ApiResponse::success(updated, "套餐已升级"))
 }
 
 // ==================== 处理器：计量计费 ====================
@@ -984,6 +999,10 @@ pub async fn record_usage(
     };
 
     records.push(record.clone());
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("commercial_v55", "usage_records", &*records).await;
+
     Json(ApiResponse::success(record, "使用记录已保存"))
 }
 
@@ -1239,6 +1258,10 @@ pub async fn create_rate_card(
     };
 
     cards.push(card.clone());
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("commercial_v55", "rate_cards", &*cards).await;
+
     Json(ApiResponse::success(card, "费率卡已创建"))
 }
 
@@ -1598,6 +1621,9 @@ pub async fn create_incident(
 
     let mut incidents = store.sla_incidents.lock().await;
     incidents.push(incident.clone());
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("commercial_v55", "sla_incidents", &*incidents).await;
 
     Json(ApiResponse::success(incident, "SLA 事故已创建"))
 }

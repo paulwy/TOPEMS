@@ -680,6 +680,10 @@ impl KnowledgeGraphEngine {
             graph.last_updated = now;
         }
 
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("knowledge_v53", "kg_nodes", &*nodes).await;
+        crate::modules::persist::save("knowledge_v53", "kg_graphs", &*graphs).await;
+
         Ok(node)
     }
 
@@ -719,6 +723,10 @@ impl KnowledgeGraphEngine {
             graph.version += 1;
             graph.last_updated = now;
         }
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("knowledge_v53", "kg_edges", &*edges).await;
+        crate::modules::persist::save("knowledge_v53", "kg_graphs", &*graphs).await;
 
         Ok(edge)
     }
@@ -1188,6 +1196,10 @@ impl AssetCatalogManager {
             .or_default()
             .push(asset.id.clone());
 
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("knowledge_v53", "assets", &*assets).await;
+        crate::modules::persist::save("knowledge_v53", "search_index", &*search_index).await;
+
         Ok(asset)
     }
 
@@ -1301,8 +1313,14 @@ impl AssetCatalogManager {
             asset.access_level = al;
         }
         asset.updated_at = chrono::Utc::now().to_rfc3339();
+        let updated = asset.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
 
-        Ok(asset.clone())
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("knowledge_v53", "assets", &*assets).await;
+        crate::modules::persist::save("knowledge_v53", "search_index", &*search_index).await;
+
+        Ok(updated)
     }
 
     async fn list_categories() -> Vec<AssetCategory> {

@@ -868,6 +868,10 @@ pub async fn create_snapshot(
         session_id: uuid::Uuid::new_v4().to_string(),
     });
 
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "version_snapshots", &*snapshots).await;
+    crate::modules::persist::save("versioning_v54", "audit_events", &*events).await;
+
     Json(ApiResponse::success(snapshot, "版本快照已创建"))
 }
 
@@ -1017,6 +1021,10 @@ pub async fn restore_version(
         session_id: uuid::Uuid::new_v4().to_string(),
     });
 
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "version_snapshots", &*all).await;
+    crate::modules::persist::save("versioning_v54", "audit_events", &*events).await;
+
     Json(ApiResponse::success(restored, "版本已恢复"))
 }
 
@@ -1117,6 +1125,10 @@ pub async fn create_branch(
     };
 
     branches.push(branch.clone());
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "version_branches", &*branches).await;
+
     Json(ApiResponse::success(branch, "分支已创建"))
 }
 
@@ -1152,8 +1164,13 @@ pub async fn merge_branch(
     target.merged_at = Some(now);
     target.merged_by = Some("current_user".to_string());
     target.status = "merged".to_string();
+    let merged = target.clone();
+    // 结束可变借用（NLL 已自动结束），允许同步直写
 
-    Json(ApiResponse::success(target.clone(), "分支已合并"))
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "version_branches", &*branches).await;
+
+    Json(ApiResponse::success(merged, "分支已合并"))
 }
 
 // ==================== 处理器：审计日志 ====================
@@ -1559,6 +1576,10 @@ pub async fn grant_permission(
     };
 
     perms.push(perm.clone());
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "data_permissions", &*perms).await;
+
     Json(ApiResponse::success(perm, "权限已授予"))
 }
 
@@ -1588,6 +1609,9 @@ pub async fn revoke_permission(
     if perms.len() == len_before {
         return Json(ApiResponse::error(404, "未找到权限"));
     }
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "data_permissions", &*perms).await;
 
     Json(ApiResponse::success_no_data("权限已撤销"))
 }
@@ -1809,6 +1833,10 @@ pub async fn create_role(
     };
 
     roles.push(role.clone());
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "permission_roles", &*roles).await;
+
     Json(ApiResponse::success(role, "角色已创建"))
 }
 
@@ -1840,6 +1868,10 @@ pub async fn assign_role(
     };
 
     assignments.push(assignment.clone());
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "user_role_assignments", &*assignments).await;
+
     Json(ApiResponse::success(assignment, "角色已分配"))
 }
 
@@ -1866,6 +1898,9 @@ pub async fn revoke_role(
     if assignments.len() == len_before {
         return Json(ApiResponse::error(404, "未找到角色分配记录"));
     }
+
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("versioning_v54", "user_role_assignments", &*assignments).await;
 
     Json(ApiResponse::success_no_data("角色已撤销"))
 }

@@ -629,6 +629,11 @@ impl LineageTracker {
             graph.last_updated = now;
         }
 
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("lineage_v52", "lineage_nodes", &*nodes).await;
+        crate::modules::persist::save("lineage_v52", "lineage_edges", &*edges).await;
+        crate::modules::persist::save("lineage_v52", "lineage_graphs", &*graphs).await;
+
         Ok((from_node, to_node, edge))
     }
 
@@ -757,6 +762,11 @@ impl LineageTracker {
             graph.version += 1;
             graph.last_updated = chrono::Utc::now().to_rfc3339();
         }
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）——后台 3s flush 仅作兜底。
+        crate::modules::persist::save("lineage_v52", "lineage_nodes", &*nodes).await;
+        crate::modules::persist::save("lineage_v52", "lineage_edges", &*edges).await;
+        crate::modules::persist::save("lineage_v52", "lineage_graphs", &*graphs).await;
 
         Ok(())
     }
@@ -1068,10 +1078,14 @@ impl ChangePropagator {
 
         let mut events = store.change_events.lock().await;
         events.push(event.clone());
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("lineage_v52", "change_events", &*events).await;
         drop(events);
 
         let mut prop_logs = store.propagation_logs.lock().await;
         prop_logs.extend(logs.clone());
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("lineage_v52", "propagation_logs", &*prop_logs).await;
 
         Ok((event, logs))
     }
@@ -1099,6 +1113,9 @@ impl ChangePropagator {
             action,
         };
         rules.push(rule.clone());
+
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("lineage_v52", "propagation_rules", &*rules).await;
         rule
     }
 
@@ -1138,8 +1155,13 @@ impl ChangePropagator {
 
         log.status = "rolled_back".to_string();
         log.rollback_id = Some(uuid::Uuid::new_v4().to_string());
+        let rolled_back = log.clone();
+        // 结束可变借用（NLL 已自动结束），允许同步直写
 
-        Ok(log.clone())
+        // B10: 写时同步直写（SIGKILL 不丢近写）。
+        crate::modules::persist::save("lineage_v52", "propagation_logs", &*logs).await;
+
+        Ok(rolled_back)
     }
 }
 

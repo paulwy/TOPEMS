@@ -1001,6 +1001,8 @@ pub async fn create_quality_rule(
     };
 
     rules.push(rule.clone());
+    // B10: 写时同步直写（SIGKILL 不丢近写）——后台 3s flush 仅作兜底。
+    crate::modules::persist::save("quality_v51", "quality_rules", &*rules).await;
     Json(ApiResponse::success(rule, "质量规则已创建"))
 }
 #[utoipa::path(
@@ -1065,8 +1067,12 @@ pub async fn update_quality_rule(
         rule.enabled = enabled;
     }
     rule.updated_at = chrono::Utc::now().to_rfc3339();
+    let updated = rule.clone();
+    // 结束可变借用（NLL 已自动结束），允许同步直写
 
-    Json(ApiResponse::success(rule.clone(), "质量规则已更新"))
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("quality_v51", "quality_rules", &*rules).await;
+    Json(ApiResponse::success(updated, "质量规则已更新"))
 }
 
 #[utoipa::path(
@@ -1096,6 +1102,8 @@ pub async fn delete_quality_rule(
         return Json(ApiResponse::error(404, "未找到质量规则"));
     }
 
+    // B10: 写时同步直写（SIGKILL 不丢近写）。
+    crate::modules::persist::save("quality_v51", "quality_rules", &*rules).await;
     Json(ApiResponse::success_no_data("质量规则已删除"))
 }
 
