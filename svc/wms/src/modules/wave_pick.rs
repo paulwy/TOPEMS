@@ -198,6 +198,16 @@ pub async fn create_wave_pick(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, WavePick>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.wave_picks (id, organization_id, wave_pick_number, wave_pick_type,
@@ -220,7 +230,7 @@ pub async fn create_wave_pick(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 

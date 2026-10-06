@@ -198,7 +198,14 @@ pub async fn create_warehouse(
     let request_data = serde_json::to_value(&req).ok();
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let tenant_id = get_tenant_id(&claims, &headers);
+    // 租户绑定对齐新惯例（与 mobile sync-policy v3 同款）：超管→SQL NULL（公共行，
+    // 命中 RLS `tenant_id IS NULL` 分支），普通用户→claims.tenant_id。organization_id
+    // 为业务 NOT NULL 列，保持单租户默认值不动。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        Some(get_tenant_id(&claims, &headers))
+    };
 
     let result = sqlx::query_as::<_, Warehouse>(
         only_own_schema_query!("wms", r#"

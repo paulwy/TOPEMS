@@ -292,6 +292,16 @@ pub async fn create_discrepancy(
         "none"
     };
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
         "wms",
         r#"
@@ -323,7 +333,7 @@ pub async fn create_discrepancy(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -667,11 +677,15 @@ pub async fn process_stock_take_discrepancies(
     }
 
     let now = Utc::now();
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     // 获取盘点单已完成的所有盘点明细
     let items = sqlx::query!(

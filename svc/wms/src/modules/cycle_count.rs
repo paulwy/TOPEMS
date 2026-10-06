@@ -163,6 +163,16 @@ pub async fn create_cycle_count_config(
         _ => now + Duration::days(30),
     };
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, CycleCountConfig>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.cycle_count_configs (id, warehouse_id, location_id, material_category, count_frequency, priority_level, next_count_date, is_active, created_at, updated_at, tenant_id, organization_id)
@@ -179,7 +189,7 @@ pub async fn create_cycle_count_config(
     .bind(next_count_date)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -517,11 +527,15 @@ pub async fn generate_cycle_count(
 
     // 创建盘点单
     let stock_take_id = Uuid::new_v4();
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query!(
         r#"
         INSERT INTO wms.stock_takes (id, stock_take_number, stock_take_type, warehouse_id, warehouse_name,
@@ -636,11 +650,15 @@ pub async fn generate_all_cycle_counts(
     }
 
     let now = Utc::now();
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     // 查询所有到期的配置
     let configs = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(

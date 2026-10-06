@@ -241,6 +241,16 @@ pub async fn create_inbound_order(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
@@ -278,7 +288,7 @@ pub async fn create_inbound_order(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -802,6 +812,16 @@ pub async fn create_inbound_order_item(
     let now = Utc::now();
     let total_value = req.unit_price.map(|p| p * req.expected_quantity);
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
@@ -836,13 +856,7 @@ pub async fn create_inbound_order_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|s| Uuid::parse_str(s).ok())
-            .unwrap_or(Uuid::nil()),
-    )
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1218,11 +1232,16 @@ pub async fn receive_inbound_order(
     }
     let request_data = serde_json::to_value(&items).ok();
     let now = Utc::now();
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    // 用于 INSERT…SELECT 写 inventory.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);

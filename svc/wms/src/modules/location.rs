@@ -184,11 +184,21 @@ pub async fn create_location(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.locations (id, warehouse_id, location_code, location_name, location_type, capacity, status, created_at, updated_at, tenant_id, organization_id)
         VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8, $9, '00000000-0000-0000-0000-000000000001')
-        RETURNING id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
+        RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -199,7 +209,7 @@ pub async fn create_location(
     .bind(req.capacity)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -626,11 +636,15 @@ pub async fn batch_create_locations(
 
     let mut created_locations = Vec::new();
     let now = Utc::now();
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-        .unwrap_or(Uuid::nil());
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     for item in req {
         let id = Uuid::new_v4();
@@ -638,7 +652,7 @@ pub async fn batch_create_locations(
             only_own_schema_query!("wms", r#"
             INSERT INTO wms.locations (id, warehouse_id, location_code, location_name, location_type, capacity, status, created_at, updated_at, tenant_id, organization_id)
             VALUES ($1, $2, $3, $4, $5, $6, 'available', $7, $8, $9, '00000000-0000-0000-0000-000000000001')
-            RETURNING id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
+            RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
             "#),
         )
         .bind(id)

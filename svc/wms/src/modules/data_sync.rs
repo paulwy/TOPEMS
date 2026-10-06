@@ -380,7 +380,9 @@ pub async fn create_inbound_from_scm(
     .bind(po_supplier_id)
     .bind(now)
     .bind(now)
-    .bind(Uuid::nil())
+    // 纯内部 SCM→WMS 同步路径（无用户 claims）：tenant_id 绑 SQL NULL（公共行），
+    // 命中 RLS 严格策略 `tenant_id IS NULL` 分支，零 uuid/NULL/污染真实租户任何上下文放行。
+    .bind(None::<Uuid>)
     .execute(&mut **txn)
     .await;
 

@@ -238,13 +238,23 @@ pub async fn create_stock_take(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, StockTake>(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.stock_takes (id, organization_id, stock_take_number, stock_take_type,
                                      warehouse_id, location_id, status, planned_date,
                                      remarks, created_at, updated_at, tenant_id)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, 'full', $3, $4, 'planned', $5, $6, $7, $8, $9)
-        RETURNING id, tenant_id, warehouse_id, location_id, stock_take_number, status,
+        RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, warehouse_id, location_id, stock_take_number, status,
                   start_time, end_time, remarks, created_at, updated_at
         "#),
     )
@@ -256,7 +266,7 @@ pub async fn create_stock_take(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -657,7 +667,12 @@ pub async fn start_stock_take(
         )
         .bind(id)
         .bind(warehouse_id)
-        .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+        // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+        .bind(if claims.is_superuser {
+            None
+        } else {
+            claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        })
         .execute(&mut *tx)
         .await;
     }
@@ -890,7 +905,12 @@ pub async fn create_stock_take_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    .bind(if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    })
     .fetch_one(&mut **txn)
     .await;
 

@@ -216,6 +216,19 @@ pub async fn create_outbound_order(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    // 租户绑定对齐新惯例（与 mobile sync-policy v3 同款）：超管/服务 claims 绑 SQL NULL
+    // （命中 RLS 严格策略 `tenant_id IS NULL` 分支，零 uuid/NULL/污染真实租户任何连接池
+    // 上下文都放行）；普通用户绑 claims.tenant_id。organization_id 为业务 NOT NULL 列，
+    // 不在此处理（保持单租户默认值）。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
@@ -244,7 +257,7 @@ pub async fn create_outbound_order(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -697,6 +710,16 @@ pub async fn create_outbound_order_item(
     let now = Utc::now();
     let total_value = req.unit_price.map(|p| p * req.requested_quantity);
 
+    // 租户绑定对齐新惯例：超管→SQL NULL（公共行），普通用户→claims.tenant_id。
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let result = sqlx::query(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.outbound_order_items (id, organization_id, order_id, line_number,
@@ -731,7 +754,7 @@ pub async fn create_outbound_order_item(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
