@@ -546,6 +546,8 @@
     "bi_module_detail_page.text_ffb694": "/> 最后更新:",
     "bi_visualization_page.text_6ccbe6": "数值: {{comp_config_value_0}}",
     "dataset_page.text_8f1c59": "字段{{formData_fields_length_0_1}}",
+    "dataset_page.loading": "数据源加载中...",
+    "dataset_page.no_data_sources": "暂无数据源（请先在数据源管理中创建）",
     "stats_section.text_dc0dcb": "启用: {{statistics_active_devices_0}}",
     "stats_section.text_4cf0b3": "启用: {{statistics_active_pipelines_0}}"
   },

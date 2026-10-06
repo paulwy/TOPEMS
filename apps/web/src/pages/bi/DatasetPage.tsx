@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Edit2, Trash2, Eye, Play, Database, RefreshCw, FileText } from 'lucide-react';
 import {
   Box,
@@ -33,10 +33,12 @@ import { useCrudOperations } from '@/hooks/useCrudQueries';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   datasetCrudApi,
+  listDataSources,
   publishDataset,
   queryDataset,
   refreshDataset,
   testSqlQuery,
+  type DataSource,
   type Dataset,
   type DatasetQueryResult,
   type DatasetField,
@@ -58,6 +60,8 @@ const DatasetPage = () => {
   const [queryResult, setQueryResult] = useState<DatasetQueryResult | null>(null);
   const [queryLoading, setQueryLoading] = useState(false);
   const [viewDataset, setViewDataset] = useState<Dataset | null>(null);
+  const [dataSources, setDataSources] = useState<DataSource[]>([]);
+  const [dataSourcesLoading, setDataSourcesLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<Dataset>>({
     name: '',
     description: '',
@@ -80,6 +84,29 @@ const DatasetPage = () => {
     pageParamName: 'page',
     pageSizeParamName: 'pageSize',
   });
+  // 加载真实数据源列表（创建数据集时 Select 需展示，且外键需有效 datasource id）
+  useEffect(() => {
+    let cancelled = false;
+    setDataSourcesLoading(true);
+    listDataSources({ page: 1, pageSize: 200 })
+      .then((res) => {
+        if (cancelled) return;
+        const items = (res?.data?.items as DataSource[] | undefined) ?? [];
+        setDataSources(items);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          logger.warn('Failed to load datasources', err);
+          setDataSources([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setDataSourcesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const publishMutation = useMutation({
     mutationFn: (id: string) => publishDataset(id),
     onSuccess: () => {
@@ -534,10 +561,35 @@ const DatasetPage = () => {
                   value={formData.data_source_id || ''}
                   label={i18n.t('bi.dataset_page.text_c11322')}
                   onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
+                  disabled={dataSourcesLoading}
                 >
-                  <MenuItem value='ds-mysql-001'>{i18n.t('bi.dataset_page.k9')}</MenuItem>
-                  <MenuItem value='ds-mysql-002'>{i18n.t('pages.dataset_page.me_0')}</MenuItem>
-                  <MenuItem value='ds-postgres-001'>{i18n.t('bi.dataset_page.k10')}</MenuItem>
+                  {dataSourcesLoading && (
+                    <MenuItem
+                      value=''
+                      disabled
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <CircularProgress size={16} />
+                        {i18n.t('bi.dataset_page.loading')}
+                      </Box>
+                    </MenuItem>
+                  )}
+                  {!dataSourcesLoading && dataSources.length === 0 && (
+                    <MenuItem
+                      value=''
+                      disabled
+                    >
+                      {i18n.t('bi.dataset_page.no_data_sources')}
+                    </MenuItem>
+                  )}
+                  {dataSources.map((ds) => (
+                    <MenuItem
+                      key={ds.id}
+                      value={ds.id}
+                    >
+                      {ds.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
               <FormControl fullWidth>
