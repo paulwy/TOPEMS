@@ -13,7 +13,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Clone, Deserialize, Serialize, sqlx::FromRow)]
 pub struct WavePick {
@@ -164,7 +165,9 @@ pub async fn list_wave_picks(
         }
         Err(e) => {
             tracing::error!("获取波次拣货列表失败: {}", e);
-            Json(api_error(500, "获取波次拣货列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取波次拣货列表失败".to_string(),
+            )))
         }
     }
 }
@@ -231,7 +234,9 @@ pub async fn create_wave_pick(
         Err(e) => {
             tracing::error!("创建波次拣货失败: {}", e);
             (
-                Json(api_error(500, "波次拣货创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "波次拣货创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -297,10 +302,14 @@ pub async fn get_wave_pick(
 
     match result {
         Ok(Some(wave_pick)) => Json(ApiResponse::success(wave_pick, "获取波次拣货成功")),
-        Ok(None) => Json(api_error(404, "波次拣货不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "波次拣货不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取波次拣货失败: {}", e);
-            Json(api_error(500, "获取波次拣货失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取波次拣货失败".to_string(),
+            )))
         }
     }
 }
@@ -369,7 +378,9 @@ pub async fn update_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(404, "波次拣货不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "波次拣货不存在".to_string(),
+            ))),
             "error",
             Some("波次拣货不存在".to_string()),
             None,
@@ -377,7 +388,9 @@ pub async fn update_wave_pick(
         Err(e) => {
             tracing::error!("更新波次拣货失败: {}", e);
             (
-                Json(api_error(500, "更新波次拣货失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新波次拣货失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -451,7 +464,9 @@ pub async fn delete_wave_pick(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "波次拣货不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "波次拣货不存在".to_string(),
+            ))),
             "error",
             Some("波次拣货不存在".to_string()),
             None,
@@ -459,7 +474,9 @@ pub async fn delete_wave_pick(
         Err(e) => {
             tracing::error!("删除波次拣货失败: {}", e);
             (
-                Json(api_error(500, "删除波次拣货失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "删除波次拣货失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -556,7 +573,9 @@ pub async fn list_wave_pick_items(
         }
         Err(e) => {
             tracing::error!("获取波次拣货明细失败: {}", e);
-            Json(api_error(500, "获取波次拣货明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取波次拣货明细失败".to_string(),
+            )))
         }
     }
 }
@@ -614,7 +633,9 @@ pub async fn assign_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(404, "波次拣货不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "波次拣货不存在".to_string(),
+            ))),
             "error",
             Some("波次拣货不存在".to_string()),
             None,
@@ -622,7 +643,9 @@ pub async fn assign_wave_pick(
         Err(e) => {
             tracing::error!("分配波次拣货失败: {}", e);
             (
-                Json(api_error(500, "分配波次拣货失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "分配波次拣货失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -701,7 +724,9 @@ pub async fn start_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(400, "波次拣货不存在或状态不允许开始")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "波次拣货不存在或状态不允许开始".to_string(),
+            ))),
             "error",
             Some("波次拣货不存在或状态不允许开始".to_string()),
             None,
@@ -709,7 +734,9 @@ pub async fn start_wave_pick(
         Err(e) => {
             tracing::error!("开始波次拣货失败: {}", e);
             (
-                Json(api_error(500, "开始波次拣货失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "开始波次拣货失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -788,7 +815,9 @@ pub async fn complete_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(400, "波次拣货不存在或状态不允许完成")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "波次拣货不存在或状态不允许完成".to_string(),
+            ))),
             "error",
             Some("波次拣货不存在或状态不允许完成".to_string()),
             None,
@@ -796,7 +825,9 @@ pub async fn complete_wave_pick(
         Err(e) => {
             tracing::error!("完成波次拣货失败: {}", e);
             (
-                Json(api_error(500, "完成波次拣货失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "完成波次拣货失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -873,7 +904,9 @@ pub async fn cancel_wave_pick(
             serde_json::to_value(wave_pick).ok(),
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(400, "波次拣货不存在或状态不允许取消")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "波次拣货不存在或状态不允许取消".to_string(),
+            ))),
             "error",
             Some("波次拣货不存在或状态不允许取消".to_string()),
             None,
@@ -881,7 +914,9 @@ pub async fn cancel_wave_pick(
         Err(e) => {
             tracing::error!("取消波次拣货失败: {}", e);
             (
-                Json(api_error(500, "取消波次拣货失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "取消波次拣货失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -981,15 +1016,21 @@ pub async fn pick_line(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(api_error(500, "拣货提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "拣货提交失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(value, "拣货完成"))
         }
-        Ok(None) => Json(api_error(404, "拣货明细不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "拣货明细不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("拣货失败: {}", e);
-            Json(api_error(500, "拣货失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "拣货失败".to_string(),
+            )))
         }
     }
 }
@@ -1056,15 +1097,21 @@ pub async fn short_pick_line(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
-                    return Json(api_error(500, "缺量拣货提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "缺量拣货提交失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(value, "缺量拣货完成"))
         }
-        Ok(None) => Json(api_error(404, "拣货明细不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "拣货明细不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("缺量拣货失败: {}", e);
-            Json(api_error(500, "缺量拣货失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "缺量拣货失败".to_string(),
+            )))
         }
     }
 }

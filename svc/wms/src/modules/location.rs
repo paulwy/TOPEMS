@@ -14,7 +14,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct LocationPaginationParams {
@@ -145,7 +146,9 @@ pub async fn list_locations(
         }
         Err(e) => {
             tracing::error!("获取库位列表失败: {}", e);
-            Json(api_error(500, "获取库位列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取库位列表失败".to_string(),
+            )))
         }
     }
 }
@@ -209,7 +212,9 @@ pub async fn create_location(
         Err(e) => {
             tracing::error!("创建库位失败: {}", e);
             (
-                Json(api_error(500, "库位创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "库位创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -265,7 +270,11 @@ pub async fn get_location(
 
     let location_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的库位ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的库位ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query_as::<_, Location>(
@@ -280,10 +289,14 @@ pub async fn get_location(
 
     match result {
         Ok(Some(location)) => Json(ApiResponse::success(location, "获取库位成功")),
-        Ok(None) => Json(api_error(404, "库位不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "库位不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取库位失败: {}", e);
-            Json(api_error(500, "获取库位失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取库位失败".to_string(),
+            )))
         }
     }
 }
@@ -320,7 +333,11 @@ pub async fn update_location(
 
     let location_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的库位ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的库位ID".to_string(),
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -336,8 +353,12 @@ pub async fn update_location(
 
     let existing = match existing {
         Ok(Some(l)) => l,
-        Ok(None) => return Json(api_error(404, "库位不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询库位失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "库位不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询库位失败", e))),
     };
 
     let warehouse_id = req.warehouse_id.or(existing.warehouse_id);
@@ -377,7 +398,9 @@ pub async fn update_location(
         Err(e) => {
             tracing::error!("更新库位失败: {}", e);
             (
-                Json(api_error(500, "库位更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "库位更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -435,7 +458,11 @@ pub async fn delete_location(
 
     let location_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的库位ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的库位ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -461,14 +488,18 @@ pub async fn delete_location(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "库位不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "库位不存在".to_string(),
+            ))),
             "error",
             Some("库位不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除库位失败: {}", e);
             (
-                Json(api_error(500, "库位删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "库位删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -559,7 +590,9 @@ pub async fn get_location_status(
         }
         Err(e) => {
             tracing::error!("获取库位状态统计失败: {}", e);
-            Json(api_error(500, "获取库位状态统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取库位状态统计失败".to_string(),
+            )))
         }
     }
 }
@@ -664,7 +697,9 @@ pub async fn batch_update_locations(
         .collect();
 
     if ids.is_empty() {
-        return Json(api_error(400, "无效的库位ID列表"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "无效的库位ID列表".to_string(),
+        )));
     }
 
     let now = Utc::now();
@@ -709,7 +744,9 @@ pub async fn batch_update_locations(
         }
         Err(e) => {
             tracing::error!("批量更新库位失败: {}", e);
-            Json(api_error(500, "批量更新库位失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量更新库位失败".to_string(),
+            )))
         }
     }
 }
@@ -752,7 +789,9 @@ pub async fn batch_delete_locations(
         .unwrap_or_default();
 
     if ids.is_empty() {
-        return Json(api_error(400, "无效的库位ID列表"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "无效的库位ID列表".to_string(),
+        )));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -778,7 +817,9 @@ pub async fn batch_delete_locations(
         }
         Err(e) => {
             tracing::error!("批量删除库位失败: {}", e);
-            Json(api_error(500, "批量删除库位失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量删除库位失败".to_string(),
+            )))
         }
     }
 }

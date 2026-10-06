@@ -16,7 +16,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 use topems_shared_db::tenant::get_tenant_id_or_new;
 use topems_shared_event::event::{EventType, WmsInventoryItemShippedPayload};
 
@@ -177,7 +178,9 @@ pub async fn list_outbound_orders(
         }
         Err(e) => {
             tracing::error!("获取出库订单列表失败: {}", e);
-            Json(api_error(500, "获取出库订单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取出库订单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -254,7 +257,9 @@ pub async fn create_outbound_order(
         Err(e) => {
             tracing::error!("创建出库订单失败: {}", e);
             (
-                Json(api_error(500, "出库订单创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "出库订单创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -332,10 +337,14 @@ pub async fn get_outbound_order(
 
     match result {
         Ok(Some(order)) => Json(ApiResponse::success(order, "获取出库订单成功")),
-        Ok(None) => Json(api_error(404, "出库订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "出库订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取出库订单失败: {}", e);
-            Json(api_error(500, "获取出库订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取出库订单失败".to_string(),
+            )))
         }
     }
 }
@@ -391,8 +400,17 @@ pub async fn update_outbound_order(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(api_error(404, "出库订单不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询出库订单失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "出库订单不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询出库订单失败",
+                e,
+            )))
+        }
     };
 
     let warehouse_id = req.warehouse_id.or(existing.warehouse_id);
@@ -442,7 +460,9 @@ pub async fn update_outbound_order(
         Err(e) => {
             tracing::error!("更新出库订单失败: {}", e);
             (
-                Json(api_error(500, "出库订单更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "出库订单更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -524,14 +544,18 @@ pub async fn delete_outbound_order(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "出库订单不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "出库订单不存在".to_string(),
+            ))),
             "error",
             Some("出库订单不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除出库订单失败: {}", e);
             (
-                Json(api_error(500, "出库订单删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "出库订单删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -638,7 +662,9 @@ pub async fn list_outbound_order_items(
         }
         Err(e) => {
             tracing::error!("获取出库订单明细失败: {}", e);
-            Json(api_error(500, "获取出库订单明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取出库订单明细失败".to_string(),
+            )))
         }
     }
 }
@@ -732,7 +758,9 @@ pub async fn create_outbound_order_item(
         Err(e) => {
             tracing::error!("创建出库订单明细失败: {}", e);
             (
-                Json(api_error(500, "出库订单明细创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "出库订单明细创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -828,7 +856,9 @@ pub async fn update_outbound_order_item(
         Err(e) => {
             tracing::error!("更新出库订单明细失败: {}", e);
             (
-                Json(api_error(500, "出库订单明细更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "出库订单明细更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -898,14 +928,18 @@ pub async fn delete_outbound_order_item(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "出库订单明细不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "出库订单明细不存在".to_string(),
+            ))),
             "error",
             Some("出库订单明细不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除出库订单明细失败: {}", e);
             (
-                Json(api_error(500, "出库订单明细删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "出库订单明细删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -997,7 +1031,9 @@ pub async fn confirm_outbound_order(
         Err(e) => {
             tracing::error!("确认出库订单失败: {}", e);
             (
-                Json(api_error(500, "确认出库订单失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "确认出库订单失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1082,7 +1118,9 @@ pub async fn pick_outbound_order(
         Err(e) => {
             tracing::error!("开始拣货失败: {}", e);
             (
-                Json(api_error(500, "开始拣货失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "开始拣货失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1169,7 +1207,9 @@ pub async fn pack_outbound_order(
         Err(e) => {
             tracing::error!("开始打包失败: {}", e);
             (
-                Json(api_error(500, "开始打包失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "开始打包失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1235,7 +1275,9 @@ pub async fn ship_outbound_order(
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
-        Json(api_error(500, "开启事务失败"))
+        Json(ApiResponse::from(TopemsError::Internal(
+            "开启事务失败".to_string(),
+        )))
     });
 
     let mut tx = match tx {
@@ -1338,7 +1380,9 @@ pub async fn ship_outbound_order(
     .await;
 
     if tx.commit().await.is_err() {
-        return Json(api_error(500, "出库操作失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "出库操作失败".to_string(),
+        )));
     }
 
     let order_result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -1422,7 +1466,9 @@ pub async fn ship_outbound_order(
         Err(e) => {
             tracing::error!("获取出库订单失败: {}", e);
             (
-                Json(api_error(500, "出库失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "出库失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1509,7 +1555,9 @@ pub async fn complete_outbound_order(
         Err(e) => {
             tracing::error!("完成出库订单失败: {}", e);
             (
-                Json(api_error(500, "完成出库订单失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "完成出库订单失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )

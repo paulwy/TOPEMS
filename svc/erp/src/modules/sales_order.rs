@@ -13,7 +13,7 @@ use crate::models::material::{CreateSalesOrderRequest, SalesOrder, UpdateSalesOr
 use crate::modules::material_calc::{calculate_sales_order_amounts, default_sales_order_status};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, PaginatedResponse, PaginationParams};
+use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use topems_shared_event::event::{SalesOrderApprovedPayload, SalesOrderCreatedPayload};
 
@@ -501,7 +501,10 @@ async fn update_sales_order_status(
         ))),
         Err(e) => {
             tracing::error!("{}: {}", error_message, e);
-            Json(api_error(500, error_message))
+            Json(ApiResponse::from(TopemsError::internal(
+                "查询销售订单失败",
+                e,
+            )))
         }
     }
 }

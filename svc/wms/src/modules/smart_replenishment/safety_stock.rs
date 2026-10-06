@@ -9,7 +9,8 @@ use uuid::Uuid;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 #[utoipa::path(
     get,
@@ -91,7 +92,9 @@ pub async fn list_safety_stock(
         }
         Err(e) => {
             tracing::error!("获取安全库存设置列表失败: {}", e);
-            Json(api_error(500, "获取安全库存设置列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取安全库存设置列表失败".to_string(),
+            )))
         }
     }
 }
@@ -154,10 +157,14 @@ pub async fn get_safety_stock(
             }),
             "获取安全库存设置详情成功",
         )),
-        Ok(None) => Json(api_error(404, "安全库存设置不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "安全库存设置不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取安全库存设置详情失败: {}", e);
-            Json(api_error(500, "获取安全库存设置详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取安全库存设置详情失败".to_string(),
+            )))
         }
     }
 }
@@ -245,10 +252,14 @@ pub async fn update_safety_stock(
             }),
             "更新安全库存设置成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "安全库存设置不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "安全库存设置不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新安全库存设置失败: {}", e);
-            Json(api_error(500, "更新安全库存设置失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新安全库存设置失败".to_string(),
+            )))
         }
     }
 }

@@ -16,7 +16,8 @@ use uuid::Uuid;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -144,7 +145,9 @@ pub async fn list_labor_efficiency(
         Ok(rows) => Json(ApiResponse::success(rows, "劳动效率获取成功")),
         Err(e) => {
             tracing::error!("获取劳动效率失败: {}", e);
-            Json(api_error(500, "获取劳动效率失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取劳动效率失败".to_string(),
+            )))
         }
     }
 }
@@ -175,7 +178,9 @@ pub async fn user_labor_efficiency(
         Ok(rows) => Json(ApiResponse::success(rows, "员工劳动效率获取成功")),
         Err(e) => {
             tracing::error!("获取员工劳动效率失败: {}", e);
-            Json(api_error(500, "获取员工劳动效率失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取员工劳动效率失败".to_string(),
+            )))
         }
     }
 }
@@ -272,7 +277,9 @@ pub async fn labor_productivity(
         }
         Err(e) => {
             tracing::error!("获取生产率失败: {}", e);
-            Json(api_error(500, "获取生产率失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取生产率失败".to_string(),
+            )))
         }
     }
 }
@@ -355,7 +362,9 @@ pub async fn labor_workload(
         }
         Err(e) => {
             tracing::error!("获取工作量分布失败: {}", e);
-            Json(api_error(500, "获取工作量分布失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取工作量分布失败".to_string(),
+            )))
         }
     }
 }
@@ -576,7 +585,9 @@ pub async fn list_labor_shifts(
         }
         Err(e) => {
             tracing::error!("获取班次列表失败: {}", e);
-            Json(api_error(500, "获取班次列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取班次列表失败".to_string(),
+            )))
         }
     }
 }
@@ -628,14 +639,18 @@ pub async fn create_labor_shift(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("班次事务提交失败: {}", e);
-                    return Json(api_error(500, "班次创建失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "班次创建失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(shift, "班次创建成功"))
         }
         Err(e) => {
             tracing::error!("创建班次失败: {}", e);
-            Json(api_error(500, "创建班次失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建班次失败".to_string(),
+            )))
         }
     }
 }

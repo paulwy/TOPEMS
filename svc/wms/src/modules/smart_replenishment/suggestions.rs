@@ -11,7 +11,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 use super::models::{ConfirmSuggestionRequest, ReplenishmentComputeRequest};
 
@@ -134,7 +135,9 @@ pub async fn list_suggestions(
         }
         Err(e) => {
             tracing::error!("获取补货建议列表失败: {}", e);
-            Json(api_error(500, "获取补货建议列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取补货建议列表失败".to_string(),
+            )))
         }
     }
 }
@@ -182,10 +185,14 @@ pub async fn get_suggestion(
             suggestion_row_to_json(&row),
             "获取补货建议详情成功",
         )),
-        Ok(None) => Json(api_error(404, "补货建议不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "补货建议不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取补货建议详情失败: {}", e);
-            Json(api_error(500, "获取补货建议详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取补货建议详情失败".to_string(),
+            )))
         }
     }
 }
@@ -223,7 +230,9 @@ pub async fn compute_replenishment(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(api_error(500, "补货计算失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "补货计算失败".to_string(),
+            )));
         }
     };
 
@@ -236,7 +245,9 @@ pub async fn compute_replenishment(
     if let Err(e) = clear_result {
         tracing::error!("清理草稿建议失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(api_error(500, "补货计算失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "补货计算失败".to_string(),
+        )));
     }
 
     let now = Utc::now();
@@ -367,13 +378,17 @@ pub async fn compute_replenishment(
                 &headers,
             )
             .await;
-            return Json(api_error(500, "补货计算失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "补货计算失败".to_string(),
+            )));
         }
     };
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(api_error(500, "补货计算失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "补货计算失败".to_string(),
+        )));
     }
 
     let items_json: Vec<serde_json::Value> = items.iter().map(suggestion_row_to_json).collect();
@@ -446,16 +461,25 @@ pub async fn confirm_suggestion(
 
     let existing = match existing {
         Ok(Some(row)) => row,
-        Ok(None) => return Json(api_error(404, "补货建议不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询补货建议失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "补货建议不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询补货建议失败",
+                e,
+            )))
+        }
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status != "draft" {
-        return Json(api_error(
-            400,
-            &format!("补货建议当前状态为{}，无法确认", status),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "补货建议当前状态为{}，无法确认",
+            status
+        ))));
     }
 
     let confirmed_qty = req
@@ -502,7 +526,9 @@ pub async fn confirm_suggestion(
         Err(e) => {
             tracing::error!("确认补货建议失败: {}", e);
             (
-                Json(api_error(500, "确认补货建议失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "确认补货建议失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -591,7 +617,9 @@ pub async fn get_statistics(
         }
         Err(e) => {
             tracing::error!("获取补货统计失败: {}", e);
-            Json(api_error(500, "获取补货统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取补货统计失败".to_string(),
+            )))
         }
     }
 }

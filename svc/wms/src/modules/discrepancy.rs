@@ -16,7 +16,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct DiscrepancyQueryParams {
@@ -173,7 +174,9 @@ pub async fn list_discrepancies(
         }
         Err(e) => {
             tracing::error!("获取差异处理列表失败: {}", e);
-            Json(api_error(500, "获取差异处理列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取差异处理列表失败".to_string(),
+            )))
         }
     }
 }
@@ -218,10 +221,14 @@ pub async fn get_discrepancy(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "获取差异处理详情成功")),
-        Ok(None) => Json(api_error(404, "差异处理记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "差异处理记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取差异处理详情失败: {}", e);
-            Json(api_error(500, "获取差异处理详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取差异处理详情失败".to_string(),
+            )))
         }
     }
 }
@@ -264,8 +271,17 @@ pub async fn create_discrepancy(
 
     let stock_take_item = match stock_take_item {
         Ok(Some(item)) => item,
-        Ok(None) => return Json(api_error(404, "盘点明细不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询盘点明细失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "盘点明细不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询盘点明细失败",
+                e,
+            )))
+        }
     };
 
     let discrepancy_type = if req.adjustment_quantity > 0.0 {
@@ -320,7 +336,9 @@ pub async fn create_discrepancy(
         Err(e) => {
             tracing::error!("创建差异处理记录失败: {}", e);
             (
-                Json(api_error(500, "差异处理记录创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "差异处理记录创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -387,7 +405,11 @@ pub async fn approve_discrepancy(
     let approval_status = match req.action.as_str() {
         "approve" => "approved",
         "reject" => "rejected",
-        _ => return Json(api_error(400, "无效的操作类型")),
+        _ => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的操作类型".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query_as::<_, DiscrepancyRecord>(
@@ -427,14 +449,18 @@ pub async fn approve_discrepancy(
             None,
         ),
         Ok(None) => (
-            Json(api_error(400, "差异处理记录不存在或已处理")),
+            Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "差异处理记录不存在或已处理".to_string(),
+            ))),
             "error",
             Some("记录不存在或已处理".to_string()),
         ),
         Err(e) => {
             tracing::error!("审批差异处理失败: {}", e);
             (
-                Json(api_error(500, "审批差异处理失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "审批差异处理失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -516,8 +542,17 @@ pub async fn adjust_inventory(
 
     let record = match record {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(api_error(400, "差异处理记录不存在或未审批")),
-        Err(e) => return Json(api_error(500, &format!("查询差异处理记录失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "差异处理记录不存在或未审批".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询差异处理记录失败",
+                e,
+            )))
+        }
     };
 
     // 执行库存调整
@@ -543,7 +578,9 @@ pub async fn adjust_inventory(
     .await;
 
     if adjust_result.is_err() {
-        return Json(api_error(500, "库存调整失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "库存调整失败".to_string(),
+        )));
     }
 
     // 更新差异处理记录状态
@@ -592,7 +629,9 @@ pub async fn adjust_inventory(
         }
         Err(e) => {
             tracing::error!("更新差异处理状态失败: {}", e);
-            Json(api_error(500, "库存调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "库存调整失败".to_string(),
+            )))
         }
     }
 }
@@ -651,7 +690,12 @@ pub async fn process_stock_take_discrepancies(
 
     let items = match items {
         Ok(items) => items,
-        Err(e) => return Json(api_error(500, &format!("查询盘点明细失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询盘点明细失败",
+                e,
+            )))
+        }
     };
 
     let mut created_count = 0;

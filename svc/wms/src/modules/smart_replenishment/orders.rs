@@ -9,7 +9,8 @@ use uuid::Uuid;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 #[utoipa::path(
     get,
@@ -86,7 +87,9 @@ pub async fn list_orders(
         }
         Err(e) => {
             tracing::error!("获取补货订单列表失败: {}", e);
-            Json(api_error(500, "获取补货订单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取补货订单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -207,7 +210,9 @@ pub async fn create_order(
         }
         Err(e) => {
             tracing::error!("创建补货订单失败: {}", e);
-            Json(api_error(500, "创建补货订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建补货订单失败".to_string(),
+            )))
         }
     }
 }
@@ -263,10 +268,14 @@ pub async fn get_order(
             }),
             "获取补货订单详情成功",
         )),
-        Ok(None) => Json(api_error(404, "补货订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "补货订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取补货订单详情失败: {}", e);
-            Json(api_error(500, "获取补货订单详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取补货订单详情失败".to_string(),
+            )))
         }
     }
 }
@@ -334,10 +343,14 @@ pub async fn update_order(
             }),
             "更新补货订单成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "补货订单不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "补货订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新补货订单失败: {}", e);
-            Json(api_error(500, "更新补货订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新补货订单失败".to_string(),
+            )))
         }
     }
 }
@@ -388,10 +401,14 @@ pub async fn delete_order(
             }
             Json(ApiResponse::success("".to_string(), "删除补货订单成功"))
         }
-        Ok(_) => Json(api_error(404, "补货订单不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "补货订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除补货订单失败: {}", e);
-            Json(api_error(500, "删除补货订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除补货订单失败".to_string(),
+            )))
         }
     }
 }
@@ -462,7 +479,9 @@ pub async fn list_order_items(
         }
         Err(e) => {
             tracing::error!("获取补货订单明细失败: {}", e);
-            Json(api_error(500, "获取补货订单明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取补货订单明细失败".to_string(),
+            )))
         }
     }
 }
@@ -518,10 +537,14 @@ pub async fn confirm_order(
             }),
             "确认补货订单成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "补货订单不存在或状态不正确")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "补货订单不存在或状态不正确".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("确认补货订单失败: {}", e);
-            Json(api_error(500, "确认补货订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "确认补货订单失败".to_string(),
+            )))
         }
     }
 }
@@ -577,10 +600,14 @@ pub async fn complete_order(
             }),
             "完成补货订单成功",
         )),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "补货订单不存在或状态不正确")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "补货订单不存在或状态不正确".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("完成补货订单失败: {}", e);
-            Json(api_error(500, "完成补货订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "完成补货订单失败".to_string(),
+            )))
         }
     }
 }

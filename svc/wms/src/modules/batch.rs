@@ -13,7 +13,8 @@ use crate::models::{
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -118,7 +119,9 @@ pub async fn list_batches(
         }
         Err(e) => {
             tracing::error!("获取批次列表失败: {}", e);
-            Json(api_error(500, "获取批次列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取批次列表失败".to_string(),
+            )))
         }
     }
 }
@@ -193,7 +196,9 @@ pub async fn create_batch(
         Ok(batch) => Json(ApiResponse::success(batch, "创建批次成功")),
         Err(e) => {
             tracing::error!("创建批次失败: {}", e);
-            Json(api_error(500, "创建批次失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建批次失败".to_string(),
+            )))
         }
     }
 }
@@ -227,7 +232,11 @@ pub async fn get_batch(
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的批次ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的批次ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query_as::<_, Batch>(
@@ -239,10 +248,14 @@ pub async fn get_batch(
 
     match result {
         Ok(Some(batch)) => Json(ApiResponse::success(batch, "获取批次成功")),
-        Ok(None) => Json(api_error(404, "批次不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "批次不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取批次失败: {}", e);
-            Json(api_error(500, "获取批次失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取批次失败".to_string(),
+            )))
         }
     }
 }
@@ -278,7 +291,11 @@ pub async fn update_batch(
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的批次ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的批次ID".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -333,10 +350,14 @@ pub async fn update_batch(
 
     match result {
         Ok(batch) => Json(ApiResponse::success(batch, "更新批次成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "批次不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "批次不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新批次失败: {}", e);
-            Json(api_error(500, "更新批次失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新批次失败".to_string(),
+            )))
         }
     }
 }
@@ -370,7 +391,11 @@ pub async fn delete_batch(
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的批次ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的批次ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -391,10 +416,14 @@ pub async fn delete_batch(
             }
             Json(ApiResponse::success("".to_string(), "删除批次成功"))
         }
-        Ok(_) => Json(api_error(404, "批次不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "批次不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除批次失败: {}", e);
-            Json(api_error(500, "删除批次失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除批次失败".to_string(),
+            )))
         }
     }
 }
@@ -457,7 +486,9 @@ pub async fn get_batch_statistics(
         }
         Err(e) => {
             tracing::error!("获取批次统计失败: {}", e);
-            Json(api_error(500, "获取批次统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取批次统计失败".to_string(),
+            )))
         }
     }
 }
@@ -511,7 +542,9 @@ pub async fn get_expiring_soon(
         Ok(batches) => Json(ApiResponse::success(batches, "获取即将过期批次成功")),
         Err(e) => {
             tracing::error!("获取即将过期批次失败: {}", e);
-            Json(api_error(500, "获取即将过期批次失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取即将过期批次失败".to_string(),
+            )))
         }
     }
 }
@@ -562,7 +595,9 @@ pub async fn get_expired(
         Ok(batches) => Json(ApiResponse::success(batches, "获取已过期批次成功")),
         Err(e) => {
             tracing::error!("获取已过期批次失败: {}", e);
-            Json(api_error(500, "获取已过期批次失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取已过期批次失败".to_string(),
+            )))
         }
     }
 }
@@ -595,7 +630,11 @@ pub async fn adjust_quantity(
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的批次ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的批次ID".to_string(),
+            )))
+        }
     };
 
     let quantity = data.get("quantity").and_then(|v| v.as_f64()).unwrap_or(0.0);
@@ -618,10 +657,14 @@ pub async fn adjust_quantity(
 
     match result {
         Ok(batch) => Json(ApiResponse::success(batch, "调整数量成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "批次不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "批次不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("调整数量失败: {}", e);
-            Json(api_error(500, "调整数量失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "调整数量失败".to_string(),
+            )))
         }
     }
 }
@@ -654,7 +697,11 @@ pub async fn transfer_location(
 
     let batch_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的批次ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的批次ID".to_string(),
+            )))
+        }
     };
 
     let to_location_id = data
@@ -679,10 +726,14 @@ pub async fn transfer_location(
 
     match result {
         Ok(batch) => Json(ApiResponse::success(batch, "转移库位成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "批次不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "批次不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("转移库位失败: {}", e);
-            Json(api_error(500, "转移库位失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "转移库位失败".to_string(),
+            )))
         }
     }
 }

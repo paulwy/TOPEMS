@@ -14,7 +14,8 @@ use crate::models::transfer_order::*;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 use topems_shared_db::tenant::get_tenant_id_or_new;
 use topems_shared_event::event::{EventType, WmsWarehouseTransferCompletedPayload};
 
@@ -121,7 +122,9 @@ pub async fn list_transfers(
         }
         Err(e) => {
             tracing::error!("获取调拨单列表失败: {}", e);
-            Json(api_error(500, "获取调拨单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取调拨单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -250,7 +253,9 @@ pub async fn create_transfer(
         }
         Err(e) => {
             tracing::error!("创建调拨单失败: {}", e);
-            Json(api_error(500, "创建调拨单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建调拨单失败".to_string(),
+            )))
         }
     }
 }
@@ -279,7 +284,11 @@ pub async fn get_transfer(
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的调拨单ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调拨单ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query_as::<_, TransferOrder>(
@@ -291,10 +300,14 @@ pub async fn get_transfer(
 
     match result {
         Ok(Some(transfer)) => Json(ApiResponse::success(transfer, "获取调拨单成功")),
-        Ok(None) => Json(api_error(404, "调拨单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "调拨单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取调拨单失败: {}", e);
-            Json(api_error(500, "获取调拨单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取调拨单失败".to_string(),
+            )))
         }
     }
 }
@@ -323,7 +336,11 @@ pub async fn list_transfer_items(
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的调拨单ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调拨单ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query_as::<_, TransferOrderItem>(
@@ -343,7 +360,9 @@ pub async fn list_transfer_items(
         )),
         Err(e) => {
             tracing::error!("获取调拨单明细失败: {}", e);
-            Json(api_error(500, "获取调拨单明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取调拨单明细失败".to_string(),
+            )))
         }
     }
 }
@@ -373,7 +392,11 @@ pub async fn update_transfer(
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的调拨单ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调拨单ID".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -430,10 +453,14 @@ pub async fn update_transfer(
 
     match result {
         Ok(transfer) => Json(ApiResponse::success(transfer, "更新调拨单成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "调拨单不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "调拨单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新调拨单失败: {}", e);
-            Json(api_error(500, "更新调拨单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新调拨单失败".to_string(),
+            )))
         }
     }
 }
@@ -462,7 +489,11 @@ pub async fn delete_transfer(
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的调拨单ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调拨单ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -475,7 +506,9 @@ pub async fn delete_transfer(
 
     if let Err(e) = result {
         tracing::error!("删除调拨单明细失败: {}", e);
-        return Json(api_error(500, "删除调拨单失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "删除调拨单失败".to_string(),
+        )));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -496,10 +529,14 @@ pub async fn delete_transfer(
             }
             Json(ApiResponse::success("".to_string(), "删除调拨单成功"))
         }
-        Ok(_) => Json(api_error(404, "调拨单不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "调拨单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除调拨单失败: {}", e);
-            Json(api_error(500, "删除调拨单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除调拨单失败".to_string(),
+            )))
         }
     }
 }
@@ -528,7 +565,11 @@ pub async fn confirm_transfer(
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的调拨单ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调拨单ID".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -552,10 +593,14 @@ pub async fn confirm_transfer(
 
     match result {
         Ok(transfer) => Json(ApiResponse::success(transfer, "确认调拨单成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "调拨单不存在或状态不正确")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "调拨单不存在或状态不正确".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("确认调拨单失败: {}", e);
-            Json(api_error(500, "确认调拨单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "确认调拨单失败".to_string(),
+            )))
         }
     }
 }
@@ -584,7 +629,11 @@ pub async fn ship_transfer(
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的调拨单ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调拨单ID".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -608,10 +657,14 @@ pub async fn ship_transfer(
 
     match result {
         Ok(transfer) => Json(ApiResponse::success(transfer, "发货成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "调拨单不存在或状态不正确")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "调拨单不存在或状态不正确".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("发货失败: {}", e);
-            Json(api_error(500, "发货失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "发货失败".to_string(),
+            )))
         }
     }
 }
@@ -641,7 +694,11 @@ pub async fn receive_transfer(
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的调拨单ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调拨单ID".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -701,10 +758,14 @@ pub async fn receive_transfer(
             }
             Json(ApiResponse::success(transfer, "收货成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "调拨单不存在或状态不正确")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "调拨单不存在或状态不正确".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("收货失败: {}", e);
-            Json(api_error(500, "收货失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "收货失败".to_string(),
+            )))
         }
     }
 }
@@ -734,7 +795,11 @@ pub async fn complete_transfer(
 
     let transfer_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的调拨单ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的调拨单ID".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -809,10 +874,14 @@ pub async fn complete_transfer(
 
             Json(ApiResponse::success(transfer, "完成调拨单成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "调拨单不存在或状态不正确")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "调拨单不存在或状态不正确".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("完成调拨单失败: {}", e);
-            Json(api_error(500, "完成调拨单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "完成调拨单失败".to_string(),
+            )))
         }
     }
 }

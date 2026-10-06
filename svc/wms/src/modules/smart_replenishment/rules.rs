@@ -11,7 +11,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 use super::models::{CreateReplenishmentRuleRequest, UpdateReplenishmentRuleRequest};
 
@@ -113,7 +114,9 @@ pub async fn list_rules(
         }
         Err(e) => {
             tracing::error!("获取补货规则列表失败: {}", e);
-            Json(api_error(500, "获取补货规则列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取补货规则列表失败".to_string(),
+            )))
         }
     }
 }
@@ -197,7 +200,9 @@ pub async fn create_rule(
         Err(e) => {
             tracing::error!("创建补货规则失败: {}", e);
             (
-                Json(api_error(500, "创建补货规则失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建补货规则失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -266,10 +271,14 @@ pub async fn get_rule(
             rule_row_to_json(&row),
             "获取补货规则详情成功",
         )),
-        Ok(None) => Json(api_error(404, "补货规则不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "补货规则不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取补货规则详情失败: {}", e);
-            Json(api_error(500, "获取补货规则详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取补货规则详情失败".to_string(),
+            )))
         }
     }
 }
@@ -311,8 +320,16 @@ pub async fn update_rule(
 
     match existing {
         Ok(Some(_)) => (),
-        Ok(None) => return Json(api_error(404, "补货规则不存在")),
-        Err(_) => return Json(api_error(500, "查询补货规则失败")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "补货规则不存在".to_string(),
+            )))
+        }
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询补货规则失败".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query(
@@ -369,7 +386,9 @@ pub async fn update_rule(
         Err(e) => {
             tracing::error!("更新补货规则失败: {}", e);
             (
-                Json(api_error(500, "更新补货规则失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新补货规则失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -442,7 +461,9 @@ pub async fn delete_rule(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "补货规则不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "补货规则不存在".to_string(),
+            ))),
             "error",
             Some("补货规则不存在".to_string()),
             None,
@@ -450,7 +471,9 @@ pub async fn delete_rule(
         Err(e) => {
             tracing::error!("删除补货规则失败: {}", e);
             (
-                Json(api_error(500, "删除补货规则失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "删除补货规则失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,

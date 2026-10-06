@@ -14,7 +14,8 @@ use crate::modules::ApiState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 fn warehouse_cache_key(tenant_id: &Option<Uuid>, id: Uuid, locale: Option<&str>) -> String {
     let t = tenant_id.map_or("all".to_string(), |t| t.to_string());
@@ -164,7 +165,9 @@ pub async fn list_warehouses(
         }
         Err(e) => {
             tracing::error!("获取仓库列表失败: {}", e);
-            Json(api_error(500, "获取仓库列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取仓库列表失败".to_string(),
+            )))
         }
     }
 }
@@ -227,7 +230,9 @@ pub async fn create_warehouse(
         Err(e) => {
             tracing::error!("创建仓库失败: {}", e);
             (
-                Json(api_error(500, "仓库创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "仓库创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -342,10 +347,14 @@ pub async fn get_warehouse(
             }
             Json(ApiResponse::success(warehouse, "获取仓库成功"))
         }
-        Ok(None) => Json(api_error(404, "仓库不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "仓库不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取仓库失败: {}", e);
-            Json(api_error(500, "获取仓库失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取仓库失败".to_string(),
+            )))
         }
     }
 }
@@ -394,8 +403,12 @@ pub async fn update_warehouse(
 
     let existing = match existing {
         Ok(Some(w)) => w,
-        Ok(None) => return Json(api_error(404, "仓库不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询仓库失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "仓库不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询仓库失败", e))),
     };
 
     let name = req.name.unwrap_or(existing.name);
@@ -437,7 +450,9 @@ pub async fn update_warehouse(
         Err(e) => {
             tracing::error!("更新仓库失败: {}", e);
             (
-                Json(api_error(500, "仓库更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "仓库更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -542,14 +557,18 @@ pub async fn delete_warehouse(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "仓库不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "仓库不存在".to_string(),
+            ))),
             "error",
             Some("仓库不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除仓库失败: {}", e);
             (
-                Json(api_error(500, "仓库删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "仓库删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )

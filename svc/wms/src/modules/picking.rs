@@ -17,7 +17,8 @@ use crate::models::wave_pick::{WavePick, WavePickItem};
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginatedResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -110,7 +111,9 @@ pub async fn list_picking_lists(
                 "拣货单列表获取成功",
             ))
         }
-        Err(_e) => Json(api_error(500, "获取拣货单列表失败")),
+        Err(_e) => Json(ApiResponse::from(TopemsError::Internal(
+            "获取拣货单列表失败".to_string(),
+        ))),
     }
 }
 
@@ -182,8 +185,12 @@ pub async fn get_picking_list(
                 "拣货单详情获取成功",
             ))
         }
-        Ok(None) => Json(api_error(404, "拣货单不存在")),
-        Err(_e) => Json(api_error(500, "获取拣货单详情失败")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "拣货单不存在".to_string(),
+        ))),
+        Err(_e) => Json(ApiResponse::from(TopemsError::Internal(
+            "获取拣货单详情失败".to_string(),
+        ))),
     }
 }
 

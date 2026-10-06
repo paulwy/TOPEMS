@@ -14,7 +14,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct CycleCountQueryParams {
@@ -126,7 +127,9 @@ pub async fn list_cycle_count_configs(
         }
         Err(e) => {
             tracing::error!("获取循环盘点配置列表失败: {}", e);
-            Json(api_error(500, "获取循环盘点配置列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取循环盘点配置列表失败".to_string(),
+            )))
         }
     }
 }
@@ -189,7 +192,9 @@ pub async fn create_cycle_count_config(
         Err(e) => {
             tracing::error!("创建循环盘点配置失败: {}", e);
             (
-                Json(api_error(500, "循环盘点配置创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "循环盘点配置创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -265,10 +270,14 @@ pub async fn get_cycle_count_config(
 
     match result {
         Ok(Some(config)) => Json(ApiResponse::success(config, "获取循环盘点配置成功")),
-        Ok(None) => Json(api_error(404, "循环盘点配置不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "循环盘点配置不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取循环盘点配置失败: {}", e);
-            Json(api_error(500, "获取循环盘点配置失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取循环盘点配置失败".to_string(),
+            )))
         }
     }
 }
@@ -333,7 +342,9 @@ pub async fn update_cycle_count_config(
         Err(e) => {
             tracing::error!("更新循环盘点配置失败: {}", e);
             (
-                Json(api_error(500, "循环盘点配置更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "循环盘点配置更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -409,14 +420,18 @@ pub async fn delete_cycle_count_config(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "循环盘点配置不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "循环盘点配置不存在".to_string(),
+            ))),
             "error",
             Some("不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除循环盘点配置失败: {}", e);
             (
-                Json(api_error(500, "循环盘点配置删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "循环盘点配置删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -488,8 +503,12 @@ pub async fn generate_cycle_count(
 
     let config = match config {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(api_error(404, "循环盘点配置不存在或已停用")),
-        Err(e) => return Json(api_error(500, &format!("查询配置失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "循环盘点配置不存在或已停用".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配置失败", e))),
     };
 
     // 生成盘点单号
@@ -529,7 +548,12 @@ pub async fn generate_cycle_count(
 
     let new_stock_take_id = match result {
         Ok(r) => r.id,
-        Err(e) => return Json(api_error(500, &format!("创建盘点单失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "创建盘点单失败",
+                e,
+            )))
+        }
     };
 
     // 更新配置的最后盘点日期和下次盘点日期
@@ -635,7 +659,7 @@ pub async fn generate_all_cycle_counts(
 
     let configs = match configs {
         Ok(c) => c,
-        Err(e) => return Json(api_error(500, &format!("查询配置失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配置失败", e))),
     };
 
     let mut generated_count = 0;

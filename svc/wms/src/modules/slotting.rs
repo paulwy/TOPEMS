@@ -33,7 +33,8 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 // ============================================
 // 查询参数
@@ -344,7 +345,7 @@ pub async fn list_suggestions(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("查询建议失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询建议失败", e))),
     };
 
     let total_row = match sqlx::query!(
@@ -361,7 +362,7 @@ pub async fn list_suggestions(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("统计建议失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("统计建议失败", e))),
     };
 
     let suggestions: Vec<SlottingSuggestion> = items
@@ -432,7 +433,7 @@ pub async fn get_suggestion(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("查询建议失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询建议失败", e))),
     };
 
     match row {
@@ -457,7 +458,9 @@ pub async fn get_suggestion(
             .unwrap_or(serde_json::Value::Null),
             "success",
         )),
-        None => Json(api_error(404, "建议不存在")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "建议不存在".to_string(),
+        ))),
     }
 }
 
@@ -497,7 +500,7 @@ pub async fn apply_suggestion(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("应用建议失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("应用建议失败", e))),
     };
 
     match row {
@@ -505,7 +508,9 @@ pub async fn apply_suggestion(
             serde_json::json!({ "id": r.id, "status": r.status }),
             "success",
         )),
-        None => Json(api_error(404, "建议不存在或已处理")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "建议不存在或已处理".to_string(),
+        ))),
     }
 }
 
@@ -545,7 +550,7 @@ pub async fn reject_suggestion(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("拒绝建议失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("拒绝建议失败", e))),
     };
 
     match row {
@@ -553,7 +558,9 @@ pub async fn reject_suggestion(
             serde_json::json!({ "id": r.id, "status": r.status }),
             "success",
         )),
-        None => Json(api_error(404, "建议不存在或已处理")),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "建议不存在或已处理".to_string(),
+        ))),
     }
 }
 
@@ -598,7 +605,7 @@ pub async fn list_zones(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("查询分区失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询分区失败", e))),
     };
 
     let zones: Vec<SlottingZone> = rows
@@ -650,7 +657,11 @@ pub async fn create_zone(
         .and_then(|s| Uuid::parse_str(s).ok())
     {
         Some(v) => v,
-        None => return Json(api_error(400, "warehouse_id 必填")),
+        None => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "warehouse_id 必填".to_string(),
+            )))
+        }
     };
     let name = payload
         .get("name")
@@ -688,7 +699,7 @@ pub async fn create_zone(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("创建分区失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("创建分区失败", e))),
     };
 
     Json(ApiResponse::success(
@@ -742,7 +753,7 @@ pub async fn list_rules(
     .fetch_all(&mut **txn)
     .await {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("查询规则失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询规则失败", e))),
     };
 
     let rules: Vec<SlottingRule> = rows
@@ -796,7 +807,11 @@ pub async fn create_rule(
         .and_then(|s| Uuid::parse_str(s).ok())
     {
         Some(v) => v,
-        None => return Json(api_error(400, "warehouse_id 必填")),
+        None => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "warehouse_id 必填".to_string(),
+            )))
+        }
     };
     let rule_type = payload
         .get("rule_type")
@@ -837,7 +852,7 @@ pub async fn create_rule(
     .fetch_one(&mut **txn)
     .await {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("创建规则失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("创建规则失败", e))),
     };
 
     Json(ApiResponse::success(
@@ -896,7 +911,7 @@ pub async fn get_impact_analysis(
     .await
     {
         Ok(v) => v,
-        Err(e) => return Json(api_error(500, &format!("分析失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("分析失败", e))),
     };
 
     let total_improvement = agg.total_improvement.unwrap_or(0.0);

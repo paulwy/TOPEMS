@@ -12,7 +12,8 @@ use uuid::Uuid;
 
 use crate::models::OutboundOrder;
 use crate::modules::ApiState;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 use topems_shared_event::event::ShippingOrderRequestedPayload;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -178,7 +179,9 @@ pub async fn create_shipping_from_outbound_internal(
         }
         Err(e) => {
             tracing::error!("查询出库单失败: {}", e);
-            return Json(api_error(500, "查询出库单失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询出库单失败".to_string(),
+            )));
         }
     };
 
@@ -353,7 +356,9 @@ pub async fn create_inbound_from_scm(
         }
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
-            return Json(api_error(500, "查询采购订单失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询采购订单失败".to_string(),
+            )));
         }
     };
 
@@ -418,7 +423,9 @@ pub async fn create_inbound_from_scm(
         }
         Err(e) => {
             tracing::error!("创建入库单失败: {}", e);
-            Json(api_error(500, "创建入库单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建入库单失败".to_string(),
+            )))
         }
     }
 }
@@ -500,7 +507,9 @@ pub async fn get_sync_logs(
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);
-            Json(api_error(500, "查询同步日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询同步日志失败".to_string(),
+            )))
         }
     }
 }

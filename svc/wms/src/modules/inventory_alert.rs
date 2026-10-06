@@ -15,7 +15,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 #[derive(Debug, Deserialize, IntoParams)]
@@ -273,7 +274,9 @@ pub async fn list_alerts(
         }
         Err(e) => {
             tracing::error!("获取库存预警列表失败: {}", e);
-            Json(api_error(500, "获取库存预警列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取库存预警列表失败".to_string(),
+            )))
         }
     }
 }
@@ -377,10 +380,14 @@ pub async fn get_alert(
             };
             Json(ApiResponse::success(alert, "获取预警详情成功"))
         }
-        Ok(None) => Json(api_error(404, "预警不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "预警不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取预警详情失败: {}", e);
-            Json(api_error(500, "获取预警详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取预警详情失败".to_string(),
+            )))
         }
     }
 }
@@ -446,10 +453,14 @@ pub async fn acknowledge_alert(
                 "预警已确认",
             ))
         }
-        Ok(_) => Json(api_error(404, "预警不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "预警不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("确认预警失败: {}", e);
-            Json(api_error(500, "确认预警失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "确认预警失败".to_string(),
+            )))
         }
     }
 }
@@ -518,7 +529,9 @@ pub async fn get_alert_statistics(
         },
         Err(e) => {
             tracing::error!("获取预警汇总失败: {}", e);
-            return Json(api_error(500, "获取预警统计失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "获取预警统计失败".to_string(),
+            )));
         }
     };
 
@@ -684,7 +697,9 @@ pub async fn get_alert_summary(
         }
         Err(e) => {
             tracing::error!("获取预警汇总失败: {}", e);
-            Json(api_error(500, "获取预警汇总失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取预警汇总失败".to_string(),
+            )))
         }
     }
 }
@@ -818,7 +833,9 @@ pub async fn get_alerts_by_warehouse(
         }
         Err(e) => {
             tracing::error!("获取仓库预警列表失败: {}", e);
-            Json(api_error(500, "获取仓库预警列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取仓库预警列表失败".to_string(),
+            )))
         }
     }
 }
@@ -953,7 +970,9 @@ pub async fn list_alert_rules(
         }
         Err(e) => {
             tracing::error!("获取预警规则列表失败: {}", e);
-            Json(api_error(500, "获取预警规则列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取预警规则列表失败".to_string(),
+            )))
         }
     }
 }
@@ -1036,7 +1055,9 @@ pub async fn create_alert_rule(
         Err(e) => {
             tracing::error!("创建预警规则失败: {}", e);
             (
-                Json(api_error(500, "创建预警规则失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建预警规则失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1113,10 +1134,14 @@ pub async fn get_alert_rule(
             });
             Json(ApiResponse::success(rule_json, "获取预警规则成功"))
         }
-        Ok(None) => Json(api_error(404, "预警规则不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "预警规则不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取预警规则失败: {}", e);
-            Json(api_error(500, "获取预警规则失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取预警规则失败".to_string(),
+            )))
         }
     }
 }
@@ -1201,7 +1226,9 @@ pub async fn update_alert_rule(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(404, "预警规则不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "预警规则不存在".to_string(),
+            ))),
             "error",
             Some("预警规则不存在".to_string()),
             None,
@@ -1209,7 +1236,9 @@ pub async fn update_alert_rule(
         Err(e) => {
             tracing::error!("更新预警规则失败: {}", e);
             (
-                Json(api_error(500, "更新预警规则失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新预警规则失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1288,7 +1317,9 @@ pub async fn delete_alert_rule(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "预警规则不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "预警规则不存在".to_string(),
+            ))),
             "error",
             Some("预警规则不存在".to_string()),
             None,
@@ -1296,7 +1327,9 @@ pub async fn delete_alert_rule(
         Err(e) => {
             tracing::error!("删除预警规则失败: {}", e);
             (
-                Json(api_error(500, "删除预警规则失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "删除预警规则失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1425,7 +1458,9 @@ pub async fn list_alert_records(
         }
         Err(e) => {
             tracing::error!("获取预警记录列表失败: {}", e);
-            Json(api_error(500, "获取预警记录列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取预警记录列表失败".to_string(),
+            )))
         }
     }
 }
@@ -1485,10 +1520,14 @@ pub async fn get_alert_record(
             });
             Json(ApiResponse::success(record_json, "获取预警记录成功"))
         }
-        Ok(None) => Json(api_error(404, "预警记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "预警记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取预警记录失败: {}", e);
-            Json(api_error(500, "获取预警记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取预警记录失败".to_string(),
+            )))
         }
     }
 }
@@ -1561,7 +1600,9 @@ pub async fn confirm_alert_record(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(404, "预警记录不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "预警记录不存在".to_string(),
+            ))),
             "error",
             Some("预警记录不存在".to_string()),
             None,
@@ -1569,7 +1610,9 @@ pub async fn confirm_alert_record(
         Err(e) => {
             tracing::error!("确认预警记录失败: {}", e);
             (
-                Json(api_error(500, "确认预警记录失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "确认预警记录失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,

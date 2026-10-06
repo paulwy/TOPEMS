@@ -16,7 +16,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 use topems_shared_db::tenant::get_tenant_id_or_new;
 
 fn stock_take_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
@@ -199,7 +200,9 @@ pub async fn list_stock_takes(
         }
         Err(e) => {
             tracing::error!("获取盘点列表失败: {}", e);
-            Json(api_error(500, "获取盘点列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取盘点列表失败".to_string(),
+            )))
         }
     }
 }
@@ -262,7 +265,9 @@ pub async fn create_stock_take(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("盘点事务提交失败: {}", e);
-                    return Json(api_error(500, "盘点创建失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "盘点创建失败".to_string(),
+                    )));
                 }
             }
             (
@@ -274,7 +279,9 @@ pub async fn create_stock_take(
         Err(e) => {
             tracing::error!("创建盘点失败: {}", e);
             (
-                Json(api_error(500, "盘点创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "盘点创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -347,10 +354,14 @@ pub async fn get_stock_take(
             let stock_take_json = stock_take_row_to_json(&stock_take);
             Json(ApiResponse::success(stock_take_json, "获取盘点成功"))
         }
-        Ok(None) => Json(api_error(404, "盘点不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "盘点不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取盘点失败: {}", e);
-            Json(api_error(500, "获取盘点失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取盘点失败".to_string(),
+            )))
         }
     }
 }
@@ -400,8 +411,12 @@ pub async fn update_stock_take(
 
     let existing = match existing {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(api_error(404, "盘点不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询盘点失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "盘点不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询盘点失败", e))),
     };
 
     let warehouse_id = req.warehouse_id.or(existing.warehouse_id);
@@ -439,7 +454,9 @@ pub async fn update_stock_take(
         Err(e) => {
             tracing::error!("更新盘点失败: {}", e);
             (
-                Json(api_error(500, "盘点更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "盘点更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -517,14 +534,18 @@ pub async fn delete_stock_take(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "盘点不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "盘点不存在".to_string(),
+            ))),
             "error",
             Some("盘点不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除盘点失败: {}", e);
             (
-                Json(api_error(500, "盘点删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "盘点删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -588,7 +609,9 @@ pub async fn start_stock_take(
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
-        Json(api_error(500, "开启事务失败"))
+        Json(ApiResponse::from(TopemsError::Internal(
+            "开启事务失败".to_string(),
+        )))
     });
 
     let mut tx = match tx {
@@ -640,7 +663,9 @@ pub async fn start_stock_take(
     }
 
     if tx.commit().await.is_err() {
-        return Json(api_error(500, "开始盘点失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "开始盘点失败".to_string(),
+        )));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -669,7 +694,9 @@ pub async fn start_stock_take(
         Err(e) => {
             tracing::error!("获取盘点失败: {}", e);
             (
-                Json(api_error(500, "开始盘点失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "开始盘点失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -774,7 +801,9 @@ pub async fn list_stock_take_items(
         }
         Err(e) => {
             tracing::error!("获取盘点明细失败: {}", e);
-            Json(api_error(500, "获取盘点明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取盘点明细失败".to_string(),
+            )))
         }
     }
 }
@@ -872,7 +901,9 @@ pub async fn create_stock_take_item(
         Err(e) => {
             tracing::error!("创建盘点明细失败: {}", e);
             (
-                Json(api_error(500, "盘点明细创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "盘点明细创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -933,7 +964,9 @@ pub async fn count_stock_take(
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
-        Json(api_error(500, "开启事务失败"))
+        Json(ApiResponse::from(TopemsError::Internal(
+            "开启事务失败".to_string(),
+        )))
     });
 
     let mut tx = match tx {
@@ -987,7 +1020,9 @@ pub async fn count_stock_take(
     }
 
     if tx.commit().await.is_err() {
-        return Json(api_error(500, "盘点计数失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "盘点计数失败".to_string(),
+        )));
     }
 
     Json(ApiResponse::success(
@@ -1040,10 +1075,14 @@ pub async fn get_stock_take_item(
             let item_json = stock_take_item_row_to_json(&item);
             Json(ApiResponse::success(item_json, "获取盘点明细成功"))
         }
-        Ok(None) => Json(api_error(404, "盘点明细不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "盘点明细不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取盘点明细失败: {}", e);
-            Json(api_error(500, "获取盘点明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取盘点明细失败".to_string(),
+            )))
         }
     }
 }
@@ -1089,8 +1128,17 @@ pub async fn update_stock_take_item(
 
     let existing = match existing {
         Ok(Some(i)) => i,
-        Ok(None) => return Json(api_error(404, "盘点明细不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询盘点明细失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "盘点明细不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询盘点明细失败",
+                e,
+            )))
+        }
     };
 
     let system_qty = existing.try_get::<f64, _>("system_quantity").unwrap_or(0.0);
@@ -1165,7 +1213,9 @@ pub async fn update_stock_take_item(
         Err(e) => {
             tracing::error!("更新盘点明细失败: {}", e);
             (
-                Json(api_error(500, "盘点明细更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "盘点明细更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1236,14 +1286,18 @@ pub async fn delete_stock_take_item(
             )
         }
         Ok(_) => (
-            Json(api_error(404, "盘点明细不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "盘点明细不存在".to_string(),
+            ))),
             "error",
             Some("盘点明细不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除盘点明细失败: {}", e);
             (
-                Json(api_error(500, "盘点明细删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "盘点明细删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1308,7 +1362,9 @@ pub async fn complete_stock_take(
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
-        Json(api_error(500, "开启事务失败"))
+        Json(ApiResponse::from(TopemsError::Internal(
+            "开启事务失败".to_string(),
+        )))
     });
 
     let mut tx = match tx {
@@ -1381,7 +1437,9 @@ pub async fn complete_stock_take(
     .await;
 
     if tx.commit().await.is_err() {
-        return Json(api_error(500, "完成盘点失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "完成盘点失败".to_string(),
+        )));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -1412,7 +1470,9 @@ pub async fn complete_stock_take(
         Err(e) => {
             tracing::error!("获取盘点失败: {}", e);
             (
-                Json(api_error(500, "完成盘点失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "完成盘点失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1471,7 +1531,9 @@ pub async fn adjust_stock_take(
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
-        Json(api_error(500, "开启事务失败"))
+        Json(ApiResponse::from(TopemsError::Internal(
+            "开启事务失败".to_string(),
+        )))
     });
 
     let mut tx = match tx {
@@ -1539,7 +1601,9 @@ pub async fn adjust_stock_take(
     .await;
 
     if tx.commit().await.is_err() {
-        return Json(api_error(500, "库存调整失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "库存调整失败".to_string(),
+        )));
     }
 
     Json(ApiResponse::success(

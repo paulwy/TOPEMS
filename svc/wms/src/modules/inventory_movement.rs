@@ -14,7 +14,8 @@ use crate::models::{
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 /// 生成移动单号: MV-YYYYMMDD-6位序列号
 async fn generate_movement_no(
@@ -84,9 +85,17 @@ async fn list_inventory_movements(
         Some(match &claims.tenant_id {
             Some(id) => match Uuid::parse_str(id) {
                 Ok(id) => id,
-                Err(_) => return Json(api_error(401, "无效的租户ID")),
+                Err(_) => {
+                    return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                        "无效的租户ID".to_string(),
+                    )))
+                }
             },
-            None => return Json(api_error(401, "缺少租户ID")),
+            None => {
+                return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                    "缺少租户ID".to_string(),
+                )))
+            }
         })
     };
 
@@ -163,7 +172,9 @@ async fn list_inventory_movements(
         }
         Err(e) => {
             tracing::error!("获取库存移动记录列表失败: {}", e);
-            Json(api_error(500, "获取库存移动记录列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取库存移动记录列表失败".to_string(),
+            )))
         }
     }
 }
@@ -196,9 +207,17 @@ async fn create_inventory_movement(
     let tenant_id = match &claims.tenant_id {
         Some(id) => match Uuid::parse_str(id) {
             Ok(id) => id,
-            Err(_) => return Json(api_error(401, "无效的租户ID")),
+            Err(_) => {
+                return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                    "无效的租户ID".to_string(),
+                )))
+            }
         },
-        None => return Json(api_error(401, "缺少租户ID")),
+        None => {
+            return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                "缺少租户ID".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -251,7 +270,9 @@ async fn create_inventory_movement(
         Ok(record) => Json(ApiResponse::success(record, "创建库存移动记录成功")),
         Err(e) => {
             tracing::error!("创建库存移动记录失败: {}", e);
-            Json(api_error(500, "创建库存移动记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建库存移动记录失败".to_string(),
+            )))
         }
     }
 }
@@ -287,9 +308,17 @@ async fn get_inventory_movement(
         Some(match &claims.tenant_id {
             Some(id) => match Uuid::parse_str(id) {
                 Ok(id) => id,
-                Err(_) => return Json(api_error(401, "无效的租户ID")),
+                Err(_) => {
+                    return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                        "无效的租户ID".to_string(),
+                    )))
+                }
             },
-            None => return Json(api_error(401, "缺少租户ID")),
+            None => {
+                return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                    "缺少租户ID".to_string(),
+                )))
+            }
         })
     };
 
@@ -311,10 +340,14 @@ async fn get_inventory_movement(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "获取库存移动记录成功")),
-        Ok(None) => Json(api_error(404, "库存移动记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "库存移动记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取库存移动记录失败: {}", e);
-            Json(api_error(500, "获取库存移动记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取库存移动记录失败".to_string(),
+            )))
         }
     }
 }

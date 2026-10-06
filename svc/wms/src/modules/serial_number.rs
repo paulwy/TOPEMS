@@ -15,7 +15,8 @@ use crate::models::{
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -139,7 +140,9 @@ pub async fn list_serial_numbers(
         }
         Err(e) => {
             tracing::error!("获取序列号列表失败: {}", e);
-            Json(api_error(500, "获取序列号列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取序列号列表失败".to_string(),
+            )))
         }
     }
 }
@@ -214,7 +217,9 @@ pub async fn create_serial_number(
         Ok(serial) => Json(ApiResponse::success(serial, "创建序列号成功")),
         Err(e) => {
             tracing::error!("创建序列号失败: {}", e);
-            Json(api_error(500, "创建序列号失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建序列号失败".to_string(),
+            )))
         }
     }
 }
@@ -325,7 +330,11 @@ pub async fn get_serial_number(
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的序列号ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的序列号ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query_as::<_, SerialNumber>(
@@ -337,10 +346,14 @@ pub async fn get_serial_number(
 
     match result {
         Ok(Some(serial)) => Json(ApiResponse::success(serial, "获取序列号成功")),
-        Ok(None) => Json(api_error(404, "序列号不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "序列号不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取序列号失败: {}", e);
-            Json(api_error(500, "获取序列号失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取序列号失败".to_string(),
+            )))
         }
     }
 }
@@ -379,10 +392,14 @@ pub async fn get_by_serial_no(
 
     match result {
         Ok(Some(serial)) => Json(ApiResponse::success(serial, "获取序列号成功")),
-        Ok(None) => Json(api_error(404, "序列号不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "序列号不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取序列号失败: {}", e);
-            Json(api_error(500, "获取序列号失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取序列号失败".to_string(),
+            )))
         }
     }
 }
@@ -423,7 +440,9 @@ pub async fn get_by_batch(
         Ok(serials) => Json(ApiResponse::success(serials, "获取批次序列号成功")),
         Err(e) => {
             tracing::error!("获取批次序列号失败: {}", e);
-            Json(api_error(500, "获取批次序列号失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取批次序列号失败".to_string(),
+            )))
         }
     }
 }
@@ -459,7 +478,11 @@ pub async fn update_serial_number(
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的序列号ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的序列号ID".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -516,10 +539,14 @@ pub async fn update_serial_number(
 
     match result {
         Ok(serial) => Json(ApiResponse::success(serial, "更新序列号成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "序列号不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "序列号不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新序列号失败: {}", e);
-            Json(api_error(500, "更新序列号失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新序列号失败".to_string(),
+            )))
         }
     }
 }
@@ -553,7 +580,11 @@ pub async fn delete_serial_number(
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的序列号ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的序列号ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -574,10 +605,14 @@ pub async fn delete_serial_number(
             }
             Json(ApiResponse::success("".to_string(), "删除序列号成功"))
         }
-        Ok(_) => Json(api_error(404, "序列号不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "序列号不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除序列号失败: {}", e);
-            Json(api_error(500, "删除序列号失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除序列号失败".to_string(),
+            )))
         }
     }
 }
@@ -640,7 +675,9 @@ pub async fn get_serial_number_statistics(
         }
         Err(e) => {
             tracing::error!("获取序列号统计失败: {}", e);
-            Json(api_error(500, "获取序列号统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取序列号统计失败".to_string(),
+            )))
         }
     }
 }
@@ -673,7 +710,11 @@ pub async fn transfer_location(
 
     let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的序列号ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的序列号ID".to_string(),
+            )))
+        }
     };
 
     let to_location_id = data
@@ -698,10 +739,14 @@ pub async fn transfer_location(
 
     match result {
         Ok(serial) => Json(ApiResponse::success(serial, "转移库位成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "序列号不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "序列号不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("转移库位失败: {}", e);
-            Json(api_error(500, "转移库位失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "转移库位失败".to_string(),
+            )))
         }
     }
 }
@@ -733,7 +778,11 @@ pub async fn get_trace(
 
     let _serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的序列号ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的序列号ID".to_string(),
+            )))
+        }
     };
 
     Json(ApiResponse::success(vec![], "获取序列号追踪成功"))

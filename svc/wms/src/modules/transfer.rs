@@ -17,7 +17,8 @@ use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct TransferPaginationParams {
@@ -131,7 +132,7 @@ pub async fn list_transfers(
         }
         Err(e) => {
             tracing::error!("获取调拨列表失败: {}", e);
-            Json(api_error(500, "获取调拨列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal("获取调拨列表失败".to_string())))
         }
     }
 }
@@ -184,7 +185,7 @@ pub async fn create_transfer(
         Err(e) => {
             tracing::error!("创建调拨失败: {}", e);
             (
-                Json(api_error(500, "调拨创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal("调拨创建失败".to_string()))),
                 "error",
                 Some(e.to_string()),
             )
@@ -242,10 +243,10 @@ pub async fn get_transfer(
 
     match result {
         Ok(Some(transfer)) => Json(ApiResponse::success(transfer, "获取调拨成功")),
-        Ok(None) => Json(api_error(404, "调拨不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("调拨不存在".to_string()))),
         Err(e) => {
             tracing::error!("获取调拨失败: {}", e);
-            Json(api_error(500, "获取调拨失败"))
+            Json(ApiResponse::from(TopemsError::Internal("获取调拨失败".to_string())))
         }
     }
 }
@@ -279,8 +280,8 @@ pub async fn update_transfer(
 
     let existing = match existing {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(api_error(404, "调拨不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询调拨失败: {}", e))),
+        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("调拨不存在".to_string()))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询调拨失败", e))),
     };
 
     let from_warehouse_id = req.from_warehouse_id.or(existing.from_warehouse_id);
@@ -320,7 +321,7 @@ pub async fn update_transfer(
         Err(e) => {
             tracing::error!("更新调拨失败: {}", e);
             (
-                Json(api_error(500, "调拨更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal("调拨更新失败".to_string()))),
                 "error",
                 Some(e.to_string()),
             )
@@ -387,14 +388,14 @@ pub async fn delete_transfer(
         )
         },
         Ok(_) => (
-            Json(api_error(404, "调拨不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound("调拨不存在".to_string()))),
             "error",
             Some("调拨不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除调拨失败: {}", e);
             (
-                Json(api_error(500, "调拨删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal("调拨删除失败".to_string()))),
                 "error",
                 Some(e.to_string()),
             )
@@ -471,7 +472,7 @@ pub async fn list_transfer_items(
         }
         Err(e) => {
             tracing::error!("获取调拨明细失败: {}", e);
-            Json(api_error(500, "获取调拨明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal("获取调拨明细失败".to_string())))
         }
     }
 }
@@ -523,7 +524,7 @@ pub async fn create_transfer_item(
         Err(e) => {
             tracing::error!("创建调拨明细失败: {}", e);
             (
-                Json(api_error(500, "调拨明细创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal("调拨明细创建失败".to_string()))),
                 "error",
                 Some(e.to_string()),
             )
@@ -582,10 +583,10 @@ pub async fn get_transfer_item(
 
     match result {
         Ok(Some(item)) => Json(ApiResponse::success(item, "获取调拨明细成功")),
-        Ok(None) => Json(api_error(404, "调拨明细不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("调拨明细不存在".to_string()))),
         Err(e) => {
             tracing::error!("获取调拨明细失败: {}", e);
-            Json(api_error(500, "获取调拨明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal("获取调拨明细失败".to_string())))
         }
     }
 }
@@ -620,8 +621,8 @@ pub async fn update_transfer_item(
 
     let existing = match existing {
         Ok(Some(i)) => i,
-        Ok(None) => return Json(api_error(404, "调拨明细不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询调拨明细失败: {}", e))),
+        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("调拨明细不存在".to_string()))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询调拨明细失败", e))),
     };
 
     let quantity = req.quantity.unwrap_or(existing.quantity);
@@ -656,7 +657,7 @@ pub async fn update_transfer_item(
         Err(e) => {
             tracing::error!("更新调拨明细失败: {}", e);
             (
-                Json(api_error(500, "调拨明细更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal("调拨明细更新失败".to_string()))),
                 "error",
                 Some(e.to_string()),
             )
@@ -724,14 +725,14 @@ pub async fn delete_transfer_item(
         )
         },
         Ok(_) => (
-            Json(api_error(404, "调拨明细不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound("调拨明细不存在".to_string()))),
             "error",
             Some("调拨明细不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除调拨明细失败: {}", e);
             (
-                Json(api_error(500, "调拨明细删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal("调拨明细删除失败".to_string()))),
                 "error",
                 Some(e.to_string()),
             )
@@ -791,12 +792,12 @@ pub async fn execute_transfer(
 
     let transfer = match transfer {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(api_error(404, "调拨不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询调拨失败: {}", e))),
+        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("调拨不存在".to_string()))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询调拨失败", e))),
     };
 
     if transfer.status == "completed" {
-        return Json(api_error(400, "调拨已执行"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed("调拨已执行".to_string())));
     }
 
     let items = sqlx::query_as::<_, TransferItem>(
@@ -811,11 +812,11 @@ pub async fn execute_transfer(
 
     let items = match items {
         Ok(i) => i,
-        Err(e) => return Json(api_error(500, &format!("查询调拨明细失败: {}", e))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询调拨明细失败", e))),
     };
 
     if items.is_empty() {
-        return Json(api_error(400, "调拨明细不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed("调拨明细不能为空".to_string())));
     }
 
     for item in &items {
@@ -834,14 +835,11 @@ pub async fn execute_transfer(
 
         match result {
             Ok(r) if r.rows_affected() == 0 => {
-                return Json(api_error(
-                    400,
-                    &format!("库存不足，无法调拨商品 {}", item.inventory_item_id),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!("库存不足，无法调拨商品 {}", item.inventory_item_id))));
             }
             Err(e) => {
                 tracing::error!("扣减库存失败: {}", e);
-                return Json(api_error(500, "扣减库存失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("扣减库存失败".to_string())));
             }
             _ => {}
         }
@@ -865,7 +863,7 @@ pub async fn execute_transfer(
 
         if let Err(e) = update_result {
             tracing::error!("更新库存位置失败: {}", e);
-            return Json(api_error(500, "更新库存位置失败"));
+            return Json(ApiResponse::from(TopemsError::Internal("更新库存位置失败".to_string())));
         }
     }
 
@@ -897,7 +895,7 @@ Json(ApiResponse::success(transfer.clone(), "调拨执行成功")),
         Err(e) => {
             tracing::error!("执行调拨失败: {}", e);
             (
-                Json(api_error(500, "执行调拨失败")),
+                Json(ApiResponse::from(TopemsError::Internal("执行调拨失败".to_string()))),
                 "error",
                 Some(e.to_string()),
             )
