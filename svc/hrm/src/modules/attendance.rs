@@ -8,6 +8,7 @@ use chrono::{Datelike, Utc};
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -15,7 +16,7 @@ use crate::models::{AttendanceRecord, CreateAttendanceRequest, UpdateAttendanceR
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -284,7 +285,9 @@ pub async fn create_attendance(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
-        return Json(api_error(400, "员工ID不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "员工ID不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -330,7 +333,9 @@ pub async fn create_attendance(
         Err(e) => {
             tracing::error!("创建考勤记录失败: {}", e);
             (
-                Json(api_error(500, "考勤记录创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "考勤记录创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -558,14 +563,18 @@ pub async fn delete_attendance(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "考勤记录不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "考勤记录不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("考勤记录不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除考勤记录失败: {}", e);
             (
-                Json(api_error(500, "考勤记录删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "考勤记录删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -803,10 +812,16 @@ pub async fn check_in(
     let employee_id =
         match resolve_employee_id_from_req(txn, req.user_id.as_deref(), req.employee_id).await {
             Ok(Some(eid)) => eid,
-            Ok(None) => return Json(api_error(400, "员工ID不能为空")),
+            Ok(None) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "员工ID不能为空".to_string(),
+                )))
+            }
             Err(msg) => {
                 tracing::error!("解析员工信息失败: {}", msg);
-                return Json(api_error(500, "解析员工信息失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "解析员工信息失败".to_string(),
+                )));
             }
         };
     let now = Utc::now();
@@ -848,7 +863,9 @@ pub async fn check_in(
                 Ok(rec) => Json(ApiResponse::success(rec, "上班打卡成功")),
                 Err(e) => {
                     tracing::error!("上班打卡更新失败: {}", e);
-                    Json(api_error(500, "上班打卡失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "上班打卡失败".to_string(),
+                    )))
                 }
             }
         }
@@ -876,13 +893,17 @@ pub async fn check_in(
                 Ok(rec) => Json(ApiResponse::success(rec, "上班打卡成功")),
                 Err(e) => {
                     tracing::error!("上班打卡创建失败: {}", e);
-                    Json(api_error(500, "上班打卡失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "上班打卡失败".to_string(),
+                    )))
                 }
             }
         }
         Err(e) => {
             tracing::error!("查询当天考勤失败: {}", e);
-            Json(api_error(500, "上班打卡失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "上班打卡失败".to_string(),
+            )))
         }
     }
 }
@@ -910,10 +931,16 @@ pub async fn check_out(
     let employee_id =
         match resolve_employee_id_from_req(txn, req.user_id.as_deref(), req.employee_id).await {
             Ok(Some(eid)) => eid,
-            Ok(None) => return Json(api_error(400, "员工ID不能为空")),
+            Ok(None) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "员工ID不能为空".to_string(),
+                )))
+            }
             Err(msg) => {
                 tracing::error!("解析员工信息失败: {}", msg);
-                return Json(api_error(500, "解析员工信息失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "解析员工信息失败".to_string(),
+                )));
             }
         };
     let now = Utc::now();
@@ -933,10 +960,16 @@ pub async fn check_out(
 
     let record = match existing {
         Ok(Some(r)) => r,
-        Ok(None) => return Json(api_error(404, "当天无上班打卡记录，请先打卡上班")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "当天无上班打卡记录，请先打卡上班".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("查询当天考勤失败: {}", e);
-            return Json(api_error(500, "下班打卡失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "下班打卡失败".to_string(),
+            )));
         }
     };
 
@@ -960,7 +993,9 @@ pub async fn check_out(
         Ok(rec) => Json(ApiResponse::success(rec, "下班打卡成功")),
         Err(e) => {
             tracing::error!("下班打卡更新失败: {}", e);
-            Json(api_error(500, "下班打卡失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "下班打卡失败".to_string(),
+            )))
         }
     }
 }

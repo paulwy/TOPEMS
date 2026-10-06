@@ -1,6 +1,7 @@
 use axum::{extract::Extension, routing::*, Json, Router};
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -13,7 +14,6 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::ListResponse;
 use topems_shared_event::event::EventType;
@@ -315,10 +315,14 @@ pub async fn get_employee_details(
             });
             Json(ApiResponse::success(details, "获取员工详细信息成功"))
         }
-        Ok(None) => Json(api_error(404, "员工不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "员工不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取员工详细信息失败: {}", e);
-            Json(api_error(500, "获取员工详细信息失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取员工详细信息失败".to_string(),
+            )))
         }
     }
 }
@@ -755,13 +759,14 @@ pub async fn export_employees(
     let employees = match &req.ids {
         Some(ids) => {
             if ids.is_empty() {
-                return Json(api_error(400, "导出员工ID列表不能为空"));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "导出员工ID列表不能为空".to_string(),
+                )));
             }
             if ids.len() as i64 > MAX_EXPORT_COUNT {
-                return Json(api_error(
-                    400,
-                    &format!("导出数量不能超过 {}", MAX_EXPORT_COUNT),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "导出数量超出上限".to_string(),
+                )));
             }
             sqlx::query_as::<_, Employee>(only_own_schema_query!(
                 "hrm",
@@ -824,7 +829,9 @@ pub async fn export_employees(
         }
         Err(e) => {
             tracing::error!("导出员工失败: {}", e);
-            Json(api_error(500, "导出失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "导出失败".to_string(),
+            )))
         }
     }
 }

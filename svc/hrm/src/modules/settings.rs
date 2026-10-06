@@ -9,9 +9,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::collections::HashMap;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 
 use super::ApiState;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new().route(
@@ -69,7 +70,9 @@ pub async fn get_settings(
         }
         Err(e) => {
             tracing::error!("获取模块设置失败: {}", e);
-            Json(api_error(500, "获取模块设置失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取模块设置失败".to_string(),
+            )))
         }
     }
 }
@@ -99,7 +102,9 @@ pub async fn update_settings(
             Ok(_) => updated += 1,
             Err(e) => {
                 tracing::error!("更新模块设置失败 (key={}): {}", key, e);
-                return Json(api_error(500, &format!("更新设置项失败: {}", key)));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "更新设置项失败".to_string(),
+                )));
             }
         }
     }

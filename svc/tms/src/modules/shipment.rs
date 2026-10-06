@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -16,7 +17,7 @@ use crate::shared::fsm::{shipment_can_transition, shipment_requires_approval};
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Shipment {
@@ -175,7 +176,9 @@ pub async fn list_shipments(
         }
         Err(e) => {
             tracing::error!("获取运单列表失败: {}", e);
-            Json(api_error(500, "获取运单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取运单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -246,7 +249,9 @@ pub async fn create_shipment(
         }
         Err(e) => {
             tracing::error!("创建运单失败: {}", e);
-            Json(api_error(500, "创建运单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建运单失败".to_string(),
+            )))
         }
     }
 }
@@ -295,10 +300,14 @@ pub async fn get_shipment(
 
     match result {
         Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "获取运单成功")),
-        Ok(None) => Json(api_error(404, "运单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取运单失败: {}", e);
-            Json(api_error(500, "获取运单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取运单失败".to_string(),
+            )))
         }
     }
 }
@@ -369,10 +378,14 @@ pub async fn update_shipment(
 
     match result {
         Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "运单更新成功")),
-        Ok(None) => Json(api_error(404, "运单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新运单失败: {}", e);
-            Json(api_error(500, "更新运单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新运单失败".to_string(),
+            )))
         }
     }
 }
@@ -412,10 +425,14 @@ pub async fn delete_shipment(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "运单删除成功"))
         }
-        Ok(_) => Json(api_error(404, "运单不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除运单失败: {}", e);
-            Json(api_error(500, "删除运单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除运单失败".to_string(),
+            )))
         }
     }
 }
@@ -457,7 +474,9 @@ pub async fn dispatch_shipment(
     match current {
         Ok(Some(status)) => {
             if shipment_can_transition(&status, "in_transit").is_err() {
-                return Json(api_error(400, &format!("当前状态 {} 不允许发车", status)));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许发车".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Shipment>(
                 r#"
@@ -480,17 +499,25 @@ pub async fn dispatch_shipment(
 
             match result {
                 Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "运单已发车")),
-                Ok(None) => Json(api_error(404, "运单不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运单不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("发车失败: {}", e);
-                    Json(api_error(500, "发车失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "发车失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "运单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询运单状态失败: {}", e);
-            Json(api_error(500, "查询运单状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询运单状态失败".to_string(),
+            )))
         }
     }
 }
@@ -532,7 +559,9 @@ pub async fn arrive_shipment(
     match current {
         Ok(Some(status)) => {
             if shipment_can_transition(&status, "delivered").is_err() {
-                return Json(api_error(400, &format!("当前状态 {} 不允许到达", status)));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许到达".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Shipment>(
                 r#"
@@ -555,17 +584,25 @@ pub async fn arrive_shipment(
 
             match result {
                 Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "运单已到达")),
-                Ok(None) => Json(api_error(404, "运单不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运单不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("到达确认失败: {}", e);
-                    Json(api_error(500, "到达确认失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "到达确认失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "运单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询运单状态失败: {}", e);
-            Json(api_error(500, "查询运单状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询运单状态失败".to_string(),
+            )))
         }
     }
 }
@@ -607,7 +644,9 @@ pub async fn cancel_shipment(
     match current {
         Ok(Some(status)) => {
             if shipment_can_transition(&status, "cancelled").is_err() {
-                return Json(api_error(400, &format!("当前状态 {} 不允许取消", status)));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许取消".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Shipment>(
                 r#"
@@ -628,17 +667,25 @@ pub async fn cancel_shipment(
 
             match result {
                 Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "运单已取消")),
-                Ok(None) => Json(api_error(404, "运单不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运单不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("取消运单失败: {}", e);
-                    Json(api_error(500, "取消运单失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "取消运单失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "运单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询运单状态失败: {}", e);
-            Json(api_error(500, "查询运单状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询运单状态失败".to_string(),
+            )))
         }
     }
 }
@@ -694,10 +741,9 @@ pub async fn submit_approval(
     match current {
         Ok(Some(status)) => {
             if shipment_can_transition(&status, "pending").is_err() {
-                return Json(api_error(
-                    400,
-                    &format!("当前状态 {} 不允许提交审批", status),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许提交审批".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Shipment>(&format!(
                 r#"UPDATE tms.tms_shipments SET status = 'pending', updated_at = $2
@@ -720,17 +766,25 @@ pub async fn submit_approval(
                     );
                     Json(ApiResponse::success(shipment, "运单已提交调度审批"))
                 }
-                Ok(None) => Json(api_error(404, "运单不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运单不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("提交审批失败: {}", e);
-                    Json(api_error(500, "提交审批失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "提交审批失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "运单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询运单状态失败: {}", e);
-            Json(api_error(500, "查询运单状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询运单状态失败".to_string(),
+            )))
         }
     }
 }
@@ -775,10 +829,9 @@ pub async fn approve_shipment(
     match current {
         Ok(Some(status)) => {
             if shipment_can_transition(&status, "in_transit").is_err() {
-                return Json(api_error(
-                    400,
-                    &format!("当前状态 {} 不允许审批发车", status),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许审批发车".to_string(),
+                )));
             }
             let requires_approval = shipment_requires_approval(&status, "in_transit");
             let result = sqlx::query_as::<_, Shipment>(
@@ -806,17 +859,25 @@ pub async fn approve_shipment(
                     );
                     Json(ApiResponse::success(shipment, "运单审批通过，已发车"))
                 }
-                Ok(None) => Json(api_error(404, "运单不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运单不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("审批失败: {}", e);
-                    Json(api_error(500, "审批失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "审批失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "运单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询运单状态失败: {}", e);
-            Json(api_error(500, "查询运单状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询运单状态失败".to_string(),
+            )))
         }
     }
 }
@@ -861,7 +922,9 @@ pub async fn reject_shipment(
     match current {
         Ok(Some(status)) => {
             if shipment_can_transition(&status, "cancelled").is_err() {
-                return Json(api_error(400, &format!("当前状态 {} 不允许驳回", status)));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许驳回".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Shipment>(&format!(
                 r#"UPDATE tms.tms_shipments SET status = 'cancelled', updated_at = $2
@@ -884,17 +947,25 @@ pub async fn reject_shipment(
                     );
                     Json(ApiResponse::success(shipment, "运单已驳回"))
                 }
-                Ok(None) => Json(api_error(404, "运单不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运单不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("驳回失败: {}", e);
-                    Json(api_error(500, "驳回失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "驳回失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "运单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询运单状态失败: {}", e);
-            Json(api_error(500, "查询运单状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询运单状态失败".to_string(),
+            )))
         }
     }
 }

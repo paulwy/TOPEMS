@@ -7,6 +7,7 @@ use axum::{
 use chrono::{Duration, Utc};
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -16,7 +17,7 @@ use crate::models::{
 };
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -254,11 +255,15 @@ pub async fn create_contract(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
-        return Json(api_error(400, "员工ID不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "员工ID不能为空".to_string(),
+        )));
     }
 
     if req.contract_type.is_empty() {
-        return Json(api_error(400, "合同类型不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "合同类型不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -321,7 +326,9 @@ pub async fn create_contract(
         Err(e) => {
             tracing::error!("创建合同失败: {}", e);
             (
-                Json(api_error(500, "合同创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "合同创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -464,8 +471,16 @@ pub async fn update_contract(
 
     let _contract = match contract_result {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(api_error(404, "合同不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询合同失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "合同不存在".to_string(),
+            )))
+        }
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询合同失败".to_string(),
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -524,7 +539,9 @@ pub async fn update_contract(
         Err(e) => {
             tracing::error!("更新合同失败: {}", e);
             (
-                Json(api_error(500, "合同更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "合同更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -595,14 +612,18 @@ pub async fn delete_contract(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "合同不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "合同不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("合同不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除合同失败: {}", e);
             (
-                Json(api_error(500, "合同删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "合同删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )

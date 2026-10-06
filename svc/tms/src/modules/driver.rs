@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -17,7 +18,7 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Driver {
@@ -198,7 +199,9 @@ pub async fn list_drivers(
         }
         Err(e) => {
             tracing::error!("获取司机列表失败: {}", e);
-            Json(api_error(500, "获取司机列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取司机列表失败".to_string(),
+            )))
         }
     }
 }
@@ -281,7 +284,9 @@ pub async fn create_driver(
         }
         Err(e) => {
             tracing::error!("创建司机失败: {}", e);
-            Json(api_error(500, "司机创建失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "司机创建失败".to_string(),
+            )))
         }
     }
 }
@@ -328,10 +333,14 @@ pub async fn get_driver(
 
     match result {
         Ok(Some(driver)) => Json(ApiResponse::success(driver, "获取司机成功")),
-        Ok(None) => Json(api_error(404, "司机不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "司机不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取司机失败: {}", e);
-            Json(api_error(500, "获取司机失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取司机失败".to_string(),
+            )))
         }
     }
 }
@@ -392,10 +401,14 @@ pub async fn update_driver(
 
     match result {
         Ok(Some(driver)) => Json(ApiResponse::success(driver, "司机更新成功")),
-        Ok(None) => Json(api_error(404, "司机不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "司机不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新司机失败: {}", e);
-            Json(api_error(500, "更新司机失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新司机失败".to_string(),
+            )))
         }
     }
 }
@@ -435,10 +448,14 @@ pub async fn delete_driver(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "司机删除成功"))
         }
-        Ok(_) => Json(api_error(404, "司机不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "司机不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除司机失败: {}", e);
-            Json(api_error(500, "司机删除失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "司机删除失败".to_string(),
+            )))
         }
     }
 }
@@ -494,10 +511,9 @@ pub async fn submit_verification(
     match current {
         Ok(Some(status)) => {
             if driver_can_transition(&status, "suspended").is_err() {
-                return Json(api_error(
-                    400,
-                    &format!("当前状态 {} 不允许提交审核", status),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许提交审核".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Driver>(&format!(
                 r#"UPDATE tms.tms_drivers SET status = 'suspended', updated_at = $2
@@ -520,17 +536,25 @@ pub async fn submit_verification(
                     );
                     Json(ApiResponse::success(driver, "司机已提交审核"))
                 }
-                Ok(None) => Json(api_error(404, "司机不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "司机不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("提交审核失败: {}", e);
-                    Json(api_error(500, "提交审核失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "提交审核失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "司机不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "司机不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询司机状态失败: {}", e);
-            Json(api_error(500, "查询司机状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询司机状态失败".to_string(),
+            )))
         }
     }
 }
@@ -575,10 +599,9 @@ pub async fn approve_driver(
     match current {
         Ok(Some(status)) => {
             if driver_can_transition(&status, "active").is_err() {
-                return Json(api_error(
-                    400,
-                    &format!("当前状态 {} 不允许审批通过", status),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许审批通过".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Driver>(&format!(
                 r#"UPDATE tms.tms_drivers SET status = 'active', updated_at = $2
@@ -601,17 +624,25 @@ pub async fn approve_driver(
                     );
                     Json(ApiResponse::success(driver, "司机审批通过"))
                 }
-                Ok(None) => Json(api_error(404, "司机不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "司机不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("审批失败: {}", e);
-                    Json(api_error(500, "审批失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "审批失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "司机不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "司机不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询司机状态失败: {}", e);
-            Json(api_error(500, "查询司机状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询司机状态失败".to_string(),
+            )))
         }
     }
 }
@@ -656,7 +687,9 @@ pub async fn reject_driver(
     match current {
         Ok(Some(status)) => {
             if driver_can_transition(&status, "inactive").is_err() {
-                return Json(api_error(400, &format!("当前状态 {} 不允许驳回", status)));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许驳回".to_string(),
+                )));
             }
             let requires_approval = driver_requires_approval(&status, "inactive");
             let result = sqlx::query_as::<_, Driver>(&format!(
@@ -681,17 +714,25 @@ pub async fn reject_driver(
                     );
                     Json(ApiResponse::success(driver, "司机已驳回"))
                 }
-                Ok(None) => Json(api_error(404, "司机不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "司机不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("驳回失败: {}", e);
-                    Json(api_error(500, "驳回失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "驳回失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "司机不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "司机不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询司机状态失败: {}", e);
-            Json(api_error(500, "查询司机状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询司机状态失败".to_string(),
+            )))
         }
     }
 }

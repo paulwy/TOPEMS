@@ -8,12 +8,13 @@ use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PerformanceReview {
@@ -223,11 +224,15 @@ pub async fn create_review(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
-        return Json(api_error(400, "员工ID不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "员工ID不能为空".to_string(),
+        )));
     }
 
     if req.review_period.is_empty() {
-        return Json(api_error(400, "评核周期不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "评核周期不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -264,7 +269,9 @@ pub async fn create_review(
         Err(e) => {
             tracing::error!("创建绩效评核失败: {}", e);
             (
-                Json(api_error(500, "创建绩效评核失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建绩效评核失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -423,14 +430,18 @@ pub async fn delete_review(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "绩效评核不存在或状态不正确")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "绩效评核不存在或状态不正确".to_string(),
+            ))),
             "error".to_string(),
             Some("绩效评核不存在或状态不正确".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除绩效评核失败: {}", e);
             (
-                Json(api_error(500, "删除绩效评核失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "删除绩效评核失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -660,11 +671,15 @@ pub async fn create_goal(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.employee_id.is_nil() {
-        return Json(api_error(400, "员工ID不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "员工ID不能为空".to_string(),
+        )));
     }
 
     if req.title.is_empty() {
-        return Json(api_error(400, "目标标题不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "目标标题不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -704,7 +719,9 @@ pub async fn create_goal(
         Err(e) => {
             tracing::error!("创建绩效目标失败: {}", e);
             (
-                Json(api_error(500, "创建绩效目标失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建绩效目标失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -857,14 +874,18 @@ pub async fn delete_goal(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "绩效目标不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "绩效目标不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("绩效目标不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除绩效目标失败: {}", e);
             (
-                Json(api_error(500, "删除绩效目标失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "删除绩效目标失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )

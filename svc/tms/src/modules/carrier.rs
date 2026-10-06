@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -18,7 +19,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Carrier {
@@ -202,7 +203,9 @@ pub async fn list_carriers(
         }
         Err(e) => {
             tracing::error!("获取承运商列表失败: {}", e);
-            Json(api_error(500, "获取承运商列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取承运商列表失败".to_string(),
+            )))
         }
     }
 }
@@ -286,7 +289,9 @@ pub async fn create_carrier(
         }
         Err(e) => {
             tracing::error!("创建承运商失败: {}", e);
-            Json(api_error(500, "承运商创建失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "承运商创建失败".to_string(),
+            )))
         }
     }
 }
@@ -334,10 +339,14 @@ pub async fn get_carrier(
 
     match result {
         Ok(Some(carrier)) => Json(ApiResponse::success(carrier, "获取承运商成功")),
-        Ok(None) => Json(api_error(404, "承运商不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "承运商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取承运商失败: {}", e);
-            Json(api_error(500, "获取承运商失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取承运商失败".to_string(),
+            )))
         }
     }
 }
@@ -421,10 +430,14 @@ pub async fn update_carrier(
 
             Json(ApiResponse::success(carrier, "承运商更新成功"))
         }
-        Ok(None) => Json(api_error(404, "承运商不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "承运商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新承运商失败: {}", e);
-            Json(api_error(500, "更新承运商失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新承运商失败".to_string(),
+            )))
         }
     }
 }
@@ -490,10 +503,14 @@ pub async fn delete_carrier(
 
             Json(ApiResponse::success("".to_string(), "承运商删除成功"))
         }
-        Ok(_) => Json(api_error(404, "承运商不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "承运商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除承运商失败: {}", e);
-            Json(api_error(500, "承运商删除失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "承运商删除失败".to_string(),
+            )))
         }
     }
 }
@@ -566,10 +583,14 @@ pub async fn submit_qualification(
             );
             Json(ApiResponse::success(carrier, "承运商已提交资质审核"))
         }
-        Ok(None) => Json(api_error(404, "承运商不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "承运商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("提交资质审核失败: {}", e);
-            Json(api_error(500, "提交资质审核失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "提交资质审核失败".to_string(),
+            )))
         }
     }
 }
@@ -614,10 +635,9 @@ pub async fn approve_carrier(
     match current {
         Ok(Some(status)) => {
             if carrier_can_transition(&status, "active").is_err() {
-                return Json(api_error(
-                    400,
-                    &format!("当前状态 {} 不允许审批通过", status),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许审批通过".to_string(),
+                )));
             }
             let requires_approval = carrier_requires_approval(&status, "active");
             let result = sqlx::query_as::<_, Carrier>(&format!(
@@ -643,17 +663,25 @@ pub async fn approve_carrier(
                     );
                     Json(ApiResponse::success(carrier, "承运商审批通过"))
                 }
-                Ok(None) => Json(api_error(404, "承运商不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "承运商不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("审批失败: {}", e);
-                    Json(api_error(500, "审批失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "审批失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "承运商不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "承运商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询承运商状态失败: {}", e);
-            Json(api_error(500, "查询承运商状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询承运商状态失败".to_string(),
+            )))
         }
     }
 }
@@ -698,7 +726,9 @@ pub async fn reject_carrier(
     match current {
         Ok(Some(status)) => {
             if carrier_can_transition(&status, "rejected").is_err() {
-                return Json(api_error(400, &format!("当前状态 {} 不允许驳回", status)));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许驳回".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Carrier>(&format!(
                 r#"UPDATE tms.tms_carriers SET status = 'rejected', updated_at = $2
@@ -722,17 +752,25 @@ pub async fn reject_carrier(
                     );
                     Json(ApiResponse::success(carrier, "承运商已驳回"))
                 }
-                Ok(None) => Json(api_error(404, "承运商不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "承运商不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("驳回失败: {}", e);
-                    Json(api_error(500, "驳回失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "驳回失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "承运商不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "承运商不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询承运商状态失败: {}", e);
-            Json(api_error(500, "查询承运商状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询承运商状态失败".to_string(),
+            )))
         }
     }
 }

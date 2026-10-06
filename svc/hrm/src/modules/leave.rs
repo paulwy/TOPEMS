@@ -8,13 +8,14 @@ use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct LeaveRequest {
@@ -249,15 +250,23 @@ pub async fn create_leave(
     let employee_id =
         match resolve_leave_employee_id(txn, req.user_id.as_deref(), req.employee_id).await {
             Ok(Some(eid)) => eid,
-            Ok(None) => return Json(api_error(400, "员工ID不能为空")),
+            Ok(None) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "员工ID不能为空".to_string(),
+                )))
+            }
             Err(msg) => {
                 tracing::error!("解析员工信息失败: {}", msg);
-                return Json(api_error(500, "解析员工信息失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "解析员工信息失败".to_string(),
+                )));
             }
         };
 
     if req.leave_type.is_empty() {
-        return Json(api_error(400, "请假类型不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "请假类型不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -298,7 +307,9 @@ pub async fn create_leave(
         Err(e) => {
             tracing::error!("创建请假申请失败: {}", e);
             (
-                Json(api_error(500, "创建请假申请失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建请假申请失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -475,14 +486,18 @@ pub async fn delete_leave(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "请假申请不存在或已处理")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "请假申请不存在或已处理".to_string(),
+            ))),
             "error".to_string(),
             Some("请假申请不存在或已处理".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除请假申请失败: {}", e);
             (
-                Json(api_error(500, "删除请假申请失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "删除请假申请失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )

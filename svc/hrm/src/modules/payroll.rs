@@ -5,6 +5,7 @@ use axum::{
     Json, Router,
 };
 use bigdecimal::BigDecimal;
+use topems_shared_core::TopemsError;
 
 /// U6-2：hrm 内部 BigDecimal -> 事件 rust_decimal::Decimal，字符串往返精确（不经过 f64，避免尾差）。
 fn bd_to_dec(bd: &BigDecimal) -> rust_decimal::Decimal {
@@ -24,7 +25,7 @@ use crate::modules::payroll_calc::{
     generate_voucher_number, mock_employee_salary_components, net_salary_from_deductions,
     split_deductions_into_social_security, validate_pay_period, PayrollVoucherSummary,
 };
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PayrollRun {
@@ -232,7 +233,9 @@ pub async fn create_payroll_run(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if !validate_pay_period(&req.pay_period) {
-        return Json(api_error(400, "薪资周期为空或格式不正确（应为 YYYY-MM）"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "薪资周期为空或格式不正确（应为 YYYY-MM）".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -262,7 +265,9 @@ pub async fn create_payroll_run(
         Err(e) => {
             tracing::error!("创建薪资周期失败: {}", e);
             (
-                Json(api_error(500, "创建薪资周期失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建薪资周期失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -381,14 +386,18 @@ pub async fn delete_payroll_run(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "薪资周期不存在或状态不正确")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "薪资周期不存在或状态不正确".to_string(),
+            ))),
             "error".to_string(),
             Some("薪资周期不存在或状态不正确".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除薪资周期失败: {}", e);
             (
-                Json(api_error(500, "删除薪资周期失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "删除薪资周期失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )

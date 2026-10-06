@@ -8,6 +8,7 @@ use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -16,7 +17,7 @@ use crate::modules::audit::log_audit_event;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::hrm::{PaginatedResult, PaginationQuery};
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
 pub struct Position {
@@ -213,7 +214,9 @@ pub async fn create_position(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     if req.name.is_empty() {
-        return Json(api_error(400, "岗位名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "岗位名称不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -264,7 +267,9 @@ pub async fn create_position(
         Err(e) => {
             tracing::error!("创建岗位失败: {}", e);
             (
-                Json(api_error(500, "创建岗位失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建岗位失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -461,14 +466,18 @@ pub async fn delete_position(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "岗位不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "岗位不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("岗位不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除岗位失败: {}", e);
             (
-                Json(api_error(500, "删除岗位失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "删除岗位失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )

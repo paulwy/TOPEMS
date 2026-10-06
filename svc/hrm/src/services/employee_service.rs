@@ -1,10 +1,11 @@
 use chrono::Utc;
 use sqlx::postgres::PgPool;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::models::{CreateEmployeeRequest, Employee, UpdateEmployeeRequest};
 use topems_shared_auth::security::encryption::FieldEncryptionService;
-use topems_shared_core::response::{api_error, ApiResponse, ListResponse};
+use topems_shared_core::response::{ApiResponse, ListResponse};
 
 pub struct EmployeeService {
     db: PgPool,
@@ -108,7 +109,7 @@ impl EmployeeService {
             }
             Err(e) => {
                 tracing::error!("获取员工列表失败: {}", e);
-                api_error(500, "获取员工列表失败")
+                ApiResponse::from(TopemsError::Internal("获取员工列表失败".to_string()))
             }
         }
     }
@@ -143,21 +144,25 @@ impl EmployeeService {
                 let _ = employee.decrypt_fields(&self.encryption);
                 ApiResponse::success(employee, "获取员工成功")
             }
-            Ok(None) => api_error(404, "员工不存在"),
+            Ok(None) => ApiResponse::from(TopemsError::ResourceNotFound("员工不存在".to_string())),
             Err(e) => {
                 tracing::error!("获取员工失败: {}", e);
-                api_error(500, "获取员工失败")
+                ApiResponse::from(TopemsError::Internal("获取员工失败".to_string()))
             }
         }
     }
 
     pub async fn create_employee(&self, req: CreateEmployeeRequest) -> ApiResponse<Employee> {
         if req.name.is_empty() {
-            return api_error(400, "员工姓名不能为空");
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "员工姓名不能为空".to_string(),
+            ));
         }
 
         if req.employee_number.is_empty() {
-            return api_error(400, "员工编号不能为空");
+            return ApiResponse::from(TopemsError::ValidationFailed(
+                "员工编号不能为空".to_string(),
+            ));
         }
 
         let exists = sqlx::query_scalar::<_, bool>(
@@ -170,7 +175,9 @@ impl EmployeeService {
         .unwrap_or(false);
 
         if exists {
-            return api_error(409, "员工编号已存在");
+            return ApiResponse::from(TopemsError::ResourceAlreadyExists(
+                "员工编号已存在".to_string(),
+            ));
         }
 
         let id = Uuid::new_v4();
@@ -288,7 +295,7 @@ impl EmployeeService {
             }
             Err(e) => {
                 tracing::error!("创建员工失败: {}", e);
-                api_error(500, "员工创建失败")
+                ApiResponse::from(TopemsError::Internal("员工创建失败".to_string()))
             }
         }
     }
@@ -322,8 +329,10 @@ impl EmployeeService {
 
         let mut existing = match existing {
             Ok(Some(e)) => e,
-            Ok(None) => return api_error(404, "员工不存在"),
-            Err(e) => return api_error(500, &format!("查询员工失败: {}", e)),
+            Ok(None) => {
+                return ApiResponse::from(TopemsError::ResourceNotFound("员工不存在".to_string()))
+            }
+            Err(_) => return ApiResponse::from(TopemsError::Internal("查询员工失败".to_string())),
         };
 
         let _ = existing.decrypt_fields(&self.encryption);
@@ -465,7 +474,7 @@ impl EmployeeService {
             }
             Err(e) => {
                 tracing::error!("更新员工失败: {}", e);
-                api_error(500, "员工更新失败")
+                ApiResponse::from(TopemsError::Internal("员工更新失败".to_string()))
             }
         }
     }
@@ -485,10 +494,10 @@ impl EmployeeService {
 
         match result {
             Ok(r) if r.rows_affected() > 0 => ApiResponse::success("".to_string(), "员工删除成功"),
-            Ok(_) => api_error(404, "员工不存在"),
+            Ok(_) => ApiResponse::from(TopemsError::ResourceNotFound("员工不存在".to_string())),
             Err(e) => {
                 tracing::error!("删除员工失败: {}", e);
-                api_error(500, "员工删除失败")
+                ApiResponse::from(TopemsError::Internal("员工删除失败".to_string()))
             }
         }
     }

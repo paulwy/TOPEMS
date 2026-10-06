@@ -18,11 +18,12 @@ use axum::{
 use bigdecimal::{BigDecimal, FromPrimitive};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 // ==================== 订单分配 ====================
 
@@ -261,12 +262,16 @@ pub async fn optimize_route_handler(
     let mut guard = txn_arc.lock().await;
     let _txn = guard.as_mut().expect("rls txn missing");
     if req.distances.is_empty() {
-        return Json(api_error(400, "距离矩阵不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "距离矩阵不能为空".to_string(),
+        )));
     }
     let n = req.distances.len();
     for row in &req.distances {
         if row.len() != n {
-            return Json(api_error(400, "距离矩阵必须为方阵"));
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "距离矩阵必须为方阵".to_string(),
+            )));
         }
     }
     let visit_order = optimize_route(&req.distances);
@@ -299,7 +304,9 @@ pub async fn freight_quote_handler(
         || req.rate_per_kg < 0.0
         || req.min_charge < 0.0
     {
-        return Json(api_error(400, "运费参数不能为负"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "运费参数不能为负".to_string(),
+        )));
     }
     let quote = calculate_freight(
         req.distance_km,

@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -17,7 +18,7 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Vehicle {
@@ -195,7 +196,9 @@ pub async fn list_vehicles(
         }
         Err(e) => {
             tracing::error!("获取车辆列表失败: {}", e);
-            Json(api_error(500, "获取车辆列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取车辆列表失败".to_string(),
+            )))
         }
     }
 }
@@ -278,7 +281,9 @@ pub async fn create_vehicle(
         }
         Err(e) => {
             tracing::error!("创建车辆失败: {}", e);
-            Json(api_error(500, "车辆创建失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "车辆创建失败".to_string(),
+            )))
         }
     }
 }
@@ -325,10 +330,14 @@ pub async fn get_vehicle(
 
     match result {
         Ok(Some(vehicle)) => Json(ApiResponse::success(vehicle, "获取车辆成功")),
-        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "车辆不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取车辆失败: {}", e);
-            Json(api_error(500, "获取车辆失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取车辆失败".to_string(),
+            )))
         }
     }
 }
@@ -411,10 +420,14 @@ pub async fn update_vehicle(
 
             Json(ApiResponse::success(vehicle, "车辆更新成功"))
         }
-        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "车辆不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新车辆失败: {}", e);
-            Json(api_error(500, "更新车辆失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新车辆失败".to_string(),
+            )))
         }
     }
 }
@@ -474,10 +487,14 @@ pub async fn delete_vehicle(
 
             Json(ApiResponse::success("".to_string(), "车辆删除成功"))
         }
-        Ok(_) => Json(api_error(404, "车辆不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "车辆不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除车辆失败: {}", e);
-            Json(api_error(500, "车辆删除失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "车辆删除失败".to_string(),
+            )))
         }
     }
 }
@@ -531,10 +548,9 @@ pub async fn submit_inspection(
     match current {
         Ok(Some(status)) => {
             if vehicle_can_transition(&status, "maintenance").is_err() {
-                return Json(api_error(
-                    400,
-                    &format!("当前状态 {} 不允许提交检修", status),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许提交检修".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Vehicle>(
                 r#"
@@ -559,17 +575,25 @@ pub async fn submit_inspection(
                     );
                     Json(ApiResponse::success(vehicle, "车辆已提交检修"))
                 }
-                Ok(None) => Json(api_error(404, "车辆不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "车辆不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("提交检修失败: {}", e);
-                    Json(api_error(500, "提交检修失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "提交检修失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "车辆不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询车辆状态失败: {}", e);
-            Json(api_error(500, "查询车辆状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询车辆状态失败".to_string(),
+            )))
         }
     }
 }
@@ -618,14 +642,15 @@ pub async fn approve_vehicle(
             } else if status == "inactive" {
                 "retired"
             } else {
-                return Json(api_error(400, &format!("当前状态 {} 不允许审批", status)));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许审批".to_string(),
+                )));
             };
 
             if vehicle_can_transition(&status, target).is_err() {
-                return Json(api_error(
-                    400,
-                    &format!("当前状态 {} 不允许审批为 {}", status, target),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许执行该审批操作".to_string(),
+                )));
             }
             let requires_approval = vehicle_requires_approval(&status, target);
 
@@ -655,17 +680,25 @@ pub async fn approve_vehicle(
                     );
                     Json(ApiResponse::success(vehicle, "车辆审批通过"))
                 }
-                Ok(None) => Json(api_error(404, "车辆不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "车辆不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("审批失败: {}", e);
-                    Json(api_error(500, "审批失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "审批失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "车辆不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询车辆状态失败: {}", e);
-            Json(api_error(500, "查询车辆状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询车辆状态失败".to_string(),
+            )))
         }
     }
 }
@@ -710,7 +743,9 @@ pub async fn reject_vehicle(
     match current {
         Ok(Some(status)) => {
             if vehicle_can_transition(&status, "active").is_err() {
-                return Json(api_error(400, &format!("当前状态 {} 不允许驳回", status)));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "当前状态不允许驳回".to_string(),
+                )));
             }
             let result = sqlx::query_as::<_, Vehicle>(
                 r#"
@@ -735,17 +770,25 @@ pub async fn reject_vehicle(
                     );
                     Json(ApiResponse::success(vehicle, "车辆检修已驳回"))
                 }
-                Ok(None) => Json(api_error(404, "车辆不存在")),
+                Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "车辆不存在".to_string(),
+                ))),
                 Err(e) => {
                     tracing::error!("驳回失败: {}", e);
-                    Json(api_error(500, "驳回失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "驳回失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "车辆不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "车辆不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询车辆状态失败: {}", e);
-            Json(api_error(500, "查询车辆状态失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询车辆状态失败".to_string(),
+            )))
         }
     }
 }

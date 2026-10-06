@@ -9,11 +9,12 @@ use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPool, Row};
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{EventPublisher, SupplierDataSyncRequestedPayload};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -159,7 +160,9 @@ pub async fn sync_supplier_from_scm(
         }
         Err(e) => {
             tracing::error!("查询SCM供应商失败: {}", e);
-            return Json(api_error(500, "查询SCM供应商失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询SCM供应商失败".to_string(),
+            )));
         }
     };
 
@@ -213,7 +216,9 @@ pub async fn sync_supplier_from_scm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(api_error(500, "提交事务失败"));
+                        return Json(ApiResponse::from(TopemsError::Internal(
+                            "提交事务失败".to_string(),
+                        )));
                     }
                 }
                 let _ = record_sync_log(
@@ -244,7 +249,9 @@ pub async fn sync_supplier_from_scm(
             }
             Err(e) => {
                 tracing::error!("更新供应商失败: {}", e);
-                Json(api_error(500, "更新供应商失败"))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新供应商失败".to_string(),
+                )))
             }
         }
     } else {
@@ -282,7 +289,9 @@ pub async fn sync_supplier_from_scm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(api_error(500, "提交事务失败"));
+                        return Json(ApiResponse::from(TopemsError::Internal(
+                            "提交事务失败".to_string(),
+                        )));
                     }
                 }
                 let _ = record_sync_log(
@@ -313,7 +322,9 @@ pub async fn sync_supplier_from_scm(
             }
             Err(e) => {
                 tracing::error!("创建供应商失败: {}", e);
-                Json(api_error(500, "创建供应商失败"))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建供应商失败".to_string(),
+                )))
             }
         }
     }
@@ -370,7 +381,9 @@ pub async fn sync_all_suppliers_from_scm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询SCM供应商列表失败: {}", e);
-            return Json(api_error(500, "查询SCM供应商列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询SCM供应商列表失败".to_string(),
+            )));
         }
     };
 
@@ -473,7 +486,9 @@ pub async fn sync_all_suppliers_from_scm(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(api_error(500, "提交事务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "提交事务失败".to_string(),
+            )));
         }
     }
 
@@ -583,7 +598,9 @@ pub async fn sync_supplier_to_scm(
             }
             Err(e) => {
                 tracing::error!("查询SRM供应商失败: {}", e);
-                return Json(api_error(500, "查询SRM供应商失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "查询SRM供应商失败".to_string(),
+                )));
             }
         };
 
@@ -749,7 +766,9 @@ pub async fn sync_all_suppliers_to_scm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询SRM供应商列表失败: {}", e);
-            return Json(api_error(500, "查询SRM供应商列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询SRM供应商列表失败".to_string(),
+            )));
         }
     };
 
@@ -907,7 +926,9 @@ pub async fn get_sync_logs(
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);
-            Json(api_error(500, "查询同步日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询同步日志失败".to_string(),
+            )))
         }
     }
 }

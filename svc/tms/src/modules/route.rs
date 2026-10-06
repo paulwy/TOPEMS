@@ -9,6 +9,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -16,7 +17,7 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
 pub struct Route {
@@ -147,7 +148,9 @@ pub async fn list_routes(
         }
         Err(e) => {
             tracing::error!("获取路线列表失败: {}", e);
-            Json(api_error(500, "获取路线列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取路线列表失败".to_string(),
+            )))
         }
     }
 }
@@ -209,7 +212,9 @@ pub async fn create_route(
         }
         Err(e) => {
             tracing::error!("创建路线失败: {}", e);
-            Json(api_error(500, "路线创建失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "路线创建失败".to_string(),
+            )))
         }
     }
 }
@@ -259,10 +264,14 @@ pub async fn get_route(
 
     match result {
         Ok(Some(route)) => Json(ApiResponse::success(route, "获取路线成功")),
-        Ok(None) => Json(api_error(404, "路线不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "路线不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取路线失败: {}", e);
-            Json(api_error(500, "获取路线失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取路线失败".to_string(),
+            )))
         }
     }
 }
@@ -323,10 +332,14 @@ pub async fn update_route(
 
     match result {
         Ok(Some(route)) => Json(ApiResponse::success(route, "路线更新成功")),
-        Ok(None) => Json(api_error(404, "路线不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "路线不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新路线失败: {}", e);
-            Json(api_error(500, "更新路线失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新路线失败".to_string(),
+            )))
         }
     }
 }
@@ -366,10 +379,14 @@ pub async fn delete_route(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "路线删除成功"))
         }
-        Ok(_) => Json(api_error(404, "路线不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "路线不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除路线失败: {}", e);
-            Json(api_error(500, "删除路线失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除路线失败".to_string(),
+            )))
         }
     }
 }

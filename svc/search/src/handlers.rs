@@ -5,10 +5,11 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
+use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{api_error, api_success};
 
 use crate::models::{
     SearchRequest, SearchResponse, SearchResult, SearchSuggestion, SuggestionKind,
@@ -240,7 +241,9 @@ pub async fn search_handler(
 ) -> Json<ApiResponse<SearchResponse>> {
     let keyword = normalize_query(&req.keyword);
     if keyword.is_empty() {
-        return Json(api_error(400, "搜索关键词不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "搜索关键词不能为空".to_string(),
+        )));
     }
 
     let search_type = detect_search_type(&req.keyword).to_string();

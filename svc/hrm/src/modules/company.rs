@@ -6,6 +6,7 @@ use axum::{
 };
 use chrono::Utc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -13,7 +14,7 @@ use crate::models::{Company, CreateCompanyRequest, UpdateCompanyRequest};
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -137,7 +138,9 @@ pub async fn list_companies(
         }
         Err(e) => {
             tracing::error!("获取公司列表失败: {}", e);
-            Json(api_error(500, "获取公司列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取公司列表失败".to_string(),
+            )))
         }
     }
 }
@@ -239,7 +242,9 @@ pub async fn create_company(
         }
         Err(e) => {
             tracing::error!("创建公司失败: {}", e);
-            Json(api_error(500, &format!("创建公司失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建公司失败".to_string(),
+            )))
         }
     }
 }
@@ -286,10 +291,14 @@ pub async fn get_company(
 
     match result {
         Ok(Some(company)) => Json(ApiResponse::success(company, "公司信息获取成功")),
-        Ok(None) => Json(api_error(404, "公司不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "公司不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取公司失败: {}", e);
-            Json(api_error(500, &format!("获取公司失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取公司失败".to_string(),
+            )))
         }
     }
 }
@@ -339,8 +348,16 @@ pub async fn update_company(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(api_error(404, "公司不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询公司失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "公司不存在".to_string(),
+            )))
+        }
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询公司失败".to_string(),
+            )))
+        }
     };
 
     let now = Utc::now();
@@ -418,7 +435,9 @@ pub async fn update_company(
         }
         Err(e) => {
             tracing::error!("更新公司失败: {}", e);
-            Json(api_error(500, &format!("更新公司失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新公司失败".to_string(),
+            )))
         }
     }
 }
@@ -509,14 +528,20 @@ pub async fn delete_company(
                 }
                 Err(e) => {
                     tracing::error!("删除公司失败: {}", e);
-                    Json(api_error(500, &format!("删除公司失败: {}", e)))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "删除公司失败".to_string(),
+                    )))
                 }
             }
         }
-        Ok(None) => Json(api_error(404, "公司不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "公司不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询公司失败: {}", e);
-            Json(api_error(500, &format!("查询公司失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询公司失败".to_string(),
+            )))
         }
     }
 }

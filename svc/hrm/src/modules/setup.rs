@@ -7,10 +7,11 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct InitializationStatus {
@@ -187,7 +188,9 @@ pub async fn get_init_progress(
         }
         Err(e) => {
             tracing::error!("获取初始化进度失败: {}", e);
-            Json(api_error(500, &format!("获取初始化进度失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取初始化进度失败".to_string(),
+            )))
         }
     }
 }
@@ -213,7 +216,9 @@ pub async fn setup_company_info(
 
     // 验证必填字段
     if req.name.trim().is_empty() {
-        return Json(api_error(400, "公司名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "公司名称不能为空".to_string(),
+        )));
     }
 
     // 更新公司信息
@@ -293,7 +298,9 @@ pub async fn setup_company_info(
         }
         Err(e) => {
             tracing::error!("更新公司信息失败: {}", e);
-            Json(api_error(500, &format!("更新公司信息失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新公司信息失败".to_string(),
+            )))
         }
     }
 }
@@ -340,13 +347,17 @@ pub async fn setup_departments(
     let now = Utc::now();
 
     if req.departments.is_empty() {
-        return Json(api_error(400, "请至少创建一个部门"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "请至少创建一个部门".to_string(),
+        )));
     }
 
     // 验证名称不重复
     let names: Vec<&String> = req.departments.iter().map(|d| &d.name).collect();
     if names.len() != names.iter().collect::<std::collections::HashSet<_>>().len() {
-        return Json(api_error(400, "部门名称不能重复"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "部门名称不能重复".to_string(),
+        )));
     }
 
     let mut created_depts = Vec::new();
@@ -389,10 +400,9 @@ pub async fn setup_departments(
     }
 
     if created_depts.is_empty() {
-        return Json(api_error(
-            500,
-            &format!("创建部门失败: {}", errors.join(", ")),
-        ));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "创建部门失败".to_string(),
+        )));
     }
 
     // 更新初始化状态
@@ -463,7 +473,9 @@ pub async fn setup_positions(
     let now = Utc::now();
 
     if req.positions.is_empty() {
-        return Json(api_error(400, "请至少创建一个职位"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "请至少创建一个职位".to_string(),
+        )));
     }
 
     let mut created_positions = Vec::new();
@@ -506,10 +518,9 @@ pub async fn setup_positions(
     }
 
     if created_positions.is_empty() {
-        return Json(api_error(
-            500,
-            &format!("创建职位失败: {}", errors.join(", ")),
-        ));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "创建职位失败".to_string(),
+        )));
     }
 
     // 更新初始化状态
@@ -581,13 +592,19 @@ pub async fn setup_admin_user(
 
     // 验证必填字段
     if req.name.trim().is_empty() {
-        return Json(api_error(400, "管理员姓名不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "管理员姓名不能为空".to_string(),
+        )));
     }
     if req.employee_number.trim().is_empty() {
-        return Json(api_error(400, "员工编号不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "员工编号不能为空".to_string(),
+        )));
     }
     if req.password.len() < 6 {
-        return Json(api_error(400, "密码长度至少6位"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "密码长度至少6位".to_string(),
+        )));
     }
 
     // 创建员工
@@ -663,7 +680,9 @@ pub async fn setup_admin_user(
         }
         Err(e) => {
             tracing::error!("创建管理员账户失败: {}", e);
-            Json(api_error(500, &format!("创建管理员账户失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建管理员账户失败".to_string(),
+            )))
         }
     }
 }
@@ -706,7 +725,9 @@ pub async fn complete_initialization(
     let now = Utc::now();
 
     if !req.confirm {
-        return Json(api_error(400, "请确认完成初始化"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "请确认完成初始化".to_string(),
+        )));
     }
 
     // 检查前置步骤是否完成
@@ -731,10 +752,9 @@ pub async fn complete_initialization(
                 .collect();
 
             if !incomplete.is_empty() {
-                return Json(api_error(
-                    400,
-                    &format!("请先完成以下步骤: {}", incomplete.join(", ")),
-                ));
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "请先完成初始化步骤".to_string(),
+                )));
             }
 
             // 更新完成状态
@@ -761,7 +781,9 @@ pub async fn complete_initialization(
         }
         Err(e) => {
             tracing::error!("完成初始化失败: {}", e);
-            Json(api_error(500, &format!("完成初始化失败: {}", e)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "完成初始化失败".to_string(),
+            )))
         }
     }
 }

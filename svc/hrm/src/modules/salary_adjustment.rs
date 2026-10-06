@@ -5,6 +5,7 @@ use axum::{
 };
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -12,7 +13,7 @@ use crate::models::{
     ApproveSalaryAdjustmentRequest, CreateSalaryAdjustmentRequest, RejectSalaryAdjustmentRequest,
     SalaryAdjustment, UpdateSalaryAdjustmentRequest,
 };
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct SalaryAdjustmentPaginationParams {
@@ -140,7 +141,9 @@ pub async fn list_salary_adjustments(
         }
         Err(e) => {
             tracing::error!("获取薪资调整列表失败: {}", e);
-            Json(api_error(500, "获取薪资调整列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取薪资调整列表失败".to_string(),
+            )))
         }
     }
 }
@@ -203,7 +206,9 @@ pub async fn get_salary_adjustment(
         Ok(sa) => Json(ApiResponse::success(sa, "获取薪资调整成功")),
         Err(e) => {
             tracing::error!("获取薪资调整失败: {}", e);
-            Json(api_error(500, "获取薪资调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取薪资调整失败".to_string(),
+            )))
         }
     }
 }
@@ -278,7 +283,9 @@ pub async fn create_salary_adjustment(
         }
         Err(e) => {
             tracing::error!("创建薪资调整失败: {}", e);
-            Json(api_error(500, "创建薪资调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建薪资调整失败".to_string(),
+            )))
         }
     }
 }
@@ -342,7 +349,9 @@ pub async fn update_salary_adjustment(
         Ok(None) => return Json(ApiResponse::success(None, "薪资调整不存在")),
         Err(e) => {
             tracing::error!("获取薪资调整失败: {}", e);
-            return Json(api_error(500, "获取薪资调整失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "获取薪资调整失败".to_string(),
+            )));
         }
     };
 
@@ -397,7 +406,9 @@ pub async fn update_salary_adjustment(
         }
         Err(e) => {
             tracing::error!("更新薪资调整失败: {}", e);
-            Json(api_error(500, "更新薪资调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新薪资调整失败".to_string(),
+            )))
         }
     }
 }
@@ -459,7 +470,9 @@ pub async fn approve_salary_adjustment(
         }
         Err(e) => {
             tracing::error!("批准薪资调整失败: {}", e);
-            Json(api_error(500, "批准薪资调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批准薪资调整失败".to_string(),
+            )))
         }
     }
 }
@@ -522,7 +535,9 @@ pub async fn reject_salary_adjustment(
         }
         Err(e) => {
             tracing::error!("拒绝薪资调整失败: {}", e);
-            Json(api_error(500, "拒绝薪资调整失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "拒绝薪资调整失败".to_string(),
+            )))
         }
     }
 }

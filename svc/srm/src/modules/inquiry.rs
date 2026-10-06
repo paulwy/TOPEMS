@@ -11,10 +11,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use std::sync::Arc;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize)]
 pub struct ListInquiryParams {
@@ -151,7 +152,9 @@ pub async fn list_inquiries(
         }
         Err(e) => {
             tracing::error!("获取询价单列表失败: {}", e);
-            Json(api_error(500, "获取询价单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取询价单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -189,10 +192,14 @@ pub async fn get_inquiry(
 
     match result {
         Ok(Some(inquiry)) => Json(ApiResponse::success(inquiry, "询价单获取成功")),
-        Ok(None) => Json(api_error(404, "询价单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "询价单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取询价单失败: {}", e);
-            Json(api_error(500, "获取询价单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取询价单失败".to_string(),
+            )))
         }
     }
 }
@@ -242,14 +249,18 @@ pub async fn create_inquiry(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("询价单事务提交失败: {}", e);
-                    return Json(api_error(500, "询价单创建失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "询价单创建失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(inquiry, "询价单创建成功"))
         }
         Err(e) => {
             tracing::error!("创建询价单失败: {}", e);
-            Json(api_error(500, "创建询价单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建询价单失败".to_string(),
+            )))
         }
     }
 }
@@ -289,15 +300,21 @@ pub async fn update_inquiry(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("询价单更新事务提交失败: {}", e);
-                    return Json(api_error(500, "询价单更新失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "询价单更新失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(inquiry, "询价单更新成功"))
         }
-        Ok(None) => Json(api_error(404, "询价单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "询价单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新询价单失败: {}", e);
-            Json(api_error(500, "更新询价单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新询价单失败".to_string(),
+            )))
         }
     }
 }
@@ -324,7 +341,9 @@ pub async fn delete_inquiry(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("询价单删除事务提交失败: {}", e);
-                    return Json(api_error(500, "询价单删除失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "询价单删除失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(
@@ -332,10 +351,14 @@ pub async fn delete_inquiry(
                 "询价单删除成功",
             ))
         }
-        Ok(_) => Json(api_error(404, "询价单不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "询价单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除询价单失败: {}", e);
-            Json(api_error(500, "删除询价单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除询价单失败".to_string(),
+            )))
         }
     }
 }
@@ -407,18 +430,23 @@ async fn transition_inquiry(
 
     let current = match current {
         Ok(Some(s)) => s,
-        Ok(None) => return Json(api_error(404, "询价单不存在")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "询价单不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("查询询价单状态失败: {}", e);
-            return Json(api_error(500, "询价单状态查询失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "询价单状态查询失败".to_string(),
+            )));
         }
     };
 
     if !allowed_from.contains(&current.as_str()) {
-        return Json(api_error(
-            400,
-            &format!("当前状态 {} 不允许{}", current, action),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "当前状态不允许执行该操作".to_string(),
+        )));
     }
 
     let result = sqlx::query_as::<_, Inquiry>(
@@ -440,7 +468,9 @@ async fn transition_inquiry(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("询价单{}事务提交失败: {}", action, e);
-                    return Json(api_error(500, &format!("询价单{}失败", action)));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "询价单操作失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(
@@ -450,7 +480,9 @@ async fn transition_inquiry(
         }
         Err(e) => {
             tracing::error!("询价单{}失败: {}", action, e);
-            Json(api_error(500, &format!("询价单{}失败", action)))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "询价单操作失败".to_string(),
+            )))
         }
     }
 }

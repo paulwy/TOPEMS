@@ -6,10 +6,11 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -219,7 +220,9 @@ pub async fn employee_summary(
         )),
         _ => {
             tracing::error!("获取员工统计失败");
-            Json(api_error(500, "获取员工统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取员工统计失败".to_string(),
+            )))
         }
     }
 }
@@ -294,7 +297,9 @@ pub async fn department_summary(
         }
         Err(e) => {
             tracing::error!("获取部门统计失败: {}", e);
-            Json(api_error(500, "获取部门统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取部门统计失败".to_string(),
+            )))
         }
     }
 }
@@ -390,7 +395,9 @@ pub async fn contract_summary(
         }
         _ => {
             tracing::error!("获取合同统计失败");
-            Json(api_error(500, "获取合同统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合同统计失败".to_string(),
+            )))
         }
     }
 }
@@ -505,7 +512,9 @@ pub async fn training_summary(
         }
         _ => {
             tracing::error!("获取培训统计失败");
-            Json(api_error(500, "获取培训统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取培训统计失败".to_string(),
+            )))
         }
     }
 }
@@ -611,7 +620,9 @@ pub async fn attendance_summary(
         }
         _ => {
             tracing::error!("获取考勤统计失败");
-            Json(api_error(500, "获取考勤统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取考勤统计失败".to_string(),
+            )))
         }
     }
 }
@@ -718,7 +729,9 @@ pub async fn payroll_summary(
         )),
         _ => {
             tracing::error!("获取薪资统计失败");
-            Json(api_error(500, "获取薪资统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取薪资统计失败".to_string(),
+            )))
         }
     }
 }

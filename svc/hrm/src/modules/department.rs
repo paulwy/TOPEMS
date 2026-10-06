@@ -7,13 +7,13 @@ use axum::{
 use chrono::Utc;
 use serde::Deserialize;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
 use crate::models::{CreateDepartmentRequest, Department, UpdateDepartmentRequest};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::MasterDataAction;
 
@@ -130,7 +130,9 @@ pub async fn list_departments(
         }
         Err(e) => {
             tracing::error!("获取部门列表失败: {}", e);
-            Json(api_error(500, "获取部门列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取部门列表失败".to_string(),
+            )))
         }
     }
 }
@@ -236,7 +238,9 @@ pub async fn create_department(
         }
         Err(e) => {
             tracing::error!("创建部门失败: {}", e);
-            Json(api_error(500, "部门创建失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "部门创建失败".to_string(),
+            )))
         }
     }
 }
@@ -281,10 +285,14 @@ pub async fn get_department(
 
     match result {
         Ok(Some(department)) => Json(ApiResponse::success(department, "获取部门成功")),
-        Ok(None) => Json(api_error(404, "部门不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "部门不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取部门失败: {}", e);
-            Json(api_error(500, "获取部门失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取部门失败".to_string(),
+            )))
         }
     }
 }
@@ -325,8 +333,16 @@ pub async fn update_department(
 
     let existing = match existing {
         Ok(Some(d)) => d,
-        Ok(None) => return Json(api_error(404, "部门不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询部门失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "部门不存在".to_string(),
+            )))
+        }
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询部门失败".to_string(),
+            )))
+        }
     };
 
     let name = req.name.unwrap_or(existing.name);
@@ -404,7 +420,9 @@ pub async fn update_department(
         }
         Err(e) => {
             tracing::error!("更新部门失败: {}", e);
-            Json(api_error(500, "部门更新失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "部门更新失败".to_string(),
+            )))
         }
     }
 }
@@ -469,10 +487,14 @@ pub async fn delete_department(
 
             Json(ApiResponse::success("".to_string(), "部门删除成功"))
         }
-        Ok(_) => Json(api_error(404, "部门不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "部门不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除部门失败: {}", e);
-            Json(api_error(500, "部门删除失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "部门删除失败".to_string(),
+            )))
         }
     }
 }
