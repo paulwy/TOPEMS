@@ -1156,6 +1156,22 @@
 - B7 累计：静态 Err 55 处 + Err(format!) 9 处（含连锁 map_err）= 清零；
   剩余形态：map_err(format!) 417 处 + Result<_, String> 465 处（后续批次候选）
 
+### ✅ B7 第 10 批：integration + shared-event map_err(format!) TopemsError 化（commit 0618e3377，12 文件）
+- integration 106 处 map_err(format!) → 语义变体（DatabaseQuery 73 / ValidationFailed 20 / NetworkRequest 6 / BusinessLogic 1）
+  - 同步记录/任务队列/同步日志/获取订单ID → DatabaseQuery；请求MES/ERP/HTTP → NetworkRequest；
+    响应解析/无效ID（Uuid::parse_str）→ ValidationFailed；业务事件编排 → BusinessLogic
+- mes_erp_sync 8 处 String 签名 → TopemsError（find_erp_order_by_mes_id/create_sync_record/
+  update_sync_success/update_sync_failed/add_sync_log/list_sync_records/get_sync_record/get_sync_logs）
+  ——消费点（handlers/mes_erp.rs）Display 兼容零改动
+- event_handlers 适配：末表达式包 Ok+? 经 From<TopemsError> for String 桥接；HandlerResult 保持 String
+  （subscribe_handler 签名写死 Result<(), String>——R-6 注释约束，泛型化留共享库后续批）
+- async_task_queue/sync_scheduler 补 TopemsError import（crate 依赖已有）
+- shared-event parse_payload → ValidationFailed + 签名 TopemsError（连锁 111 处调用方经桥接兼容）
+  + 测试断言适配（contains→to_string）+ 清理 unused FromStr import
+- 验证：全仓 map_err(format!) 417→310（integration+shared-event 归零）；cargo check 0 warning；
+  shared-event 366 全绿；pre-commit 23 项全绿
+- 剩余：map_err(format!) 310 处（ai/mes/hrm/finance/wms/unified-core/srm/scm/rd/portal/pm/pdm/mobile/lims/gis/erp/ehs/crm/communication/analytics 散点）
+
 ## 2026-10-06 契约面收口 + RLS 治理 + 门禁固化（全链路闭环）
 
 > 承接 10-05 mobile 契约面收口主线，扩展至 web(portal) 契约面、全库 RLS 治理、硬编码租户对齐、双门禁固化与全仓实例统一。全部本地提交未 push（除既有主线提交链）。
