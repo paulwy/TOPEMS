@@ -163,7 +163,8 @@ pub async fn list_audit_logs(
 )]
 pub async fn get_audit_log(
     State(_state): State<ApiState>,
-    Path(id): Path<i64>,
+    // 2026-10-06 修复：id 为 Uuid（AuditLog.id），原 i64 致 UUID 路径 400（get 端点不可用）
+    Path(id): Path<Uuid>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
