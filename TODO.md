@@ -409,6 +409,11 @@
   - 方案：金额字段/计算全链路改 BigDecimal（workspace 已启用 bigdecimal/rust_decimal），DB 层 NUMERIC 对齐
   - 验证：金额路径单测断言精度（如 0.1+0.2 用例）；借贷平衡校验通过
 
+- [ ] **U6-延伸 模型层金额精度 f64→Decimal**（P2，依赖：U6 先例已推；2026-10-06 B2 收尾定案单独立项）——立项登记：pm/qms/crm 模型层金额字段 f64→Decimal（pm `models/budget.rs` 9 字段 total/allocated/spent/budget_amount、pm `models/settlement.rs` amount/actual/budget/variance_amount、qms `models/quality_cost.rs` 7 字段 total_amount/prevention/appraisal/internal_failure/external_failure/total、crm `modules/customer.rs` overdue_amount L1093/L1171）：
+  - 根因：B2（事件契约 Decimal 化）收尾复核残留——模型/响应层 f64 金额字段（非事件契约）；crm overdue_amount 模型 f64 与 DB NUMERIC(15,2)（schema_defense.rs:148）不一致
+  - 方案：同 U6 模式（rust_decimal 字符串序列化、DB NUMERIC 对齐、模型内计算 Decimal）；**保留 f64**：variance_percent/percentage/usage_percent（比率）、ai governance_dashboard 聚合字段（B2 定案 dashboard 聚合保留）
+  - 验证：金额路径单测（0.1+0.2）；API 响应字符串对齐同服务既有 Decimal 惯例；crm overdue 模型与 DB NUMERIC 一致
+
 - [x] **U7 统一错误处理推广**（P1，依赖：无，按服务分批发）——✅ 2026-10-03 commit `d7a28bd09`（31 文件 +227/−168，未 push）：mobile/erp/mes/lims/rd 五服务泄露型错误 110/110=100% 迁移（format!/to_string 直拼清零），剩余 1313 处为无插值静态文案（ADR 明确不在泄露面）；TopemsError::internal 经 classify 脱敏（SQL/表名只进日志）：
   - 根因：手写 `ApiResponse::error()` 3412 处 vs TopemsError 仅 51 文件（报告 F-22/ENTRY-06+ERP-01+WMS-04+CORE-07）；mobile 230 处、erp 121 处 format! 拼接可能泄露内部细节
   - 方案：按 `docs/architecture/unified-error-handling-decision.md` 目标形态，先 mobile/erp/mes/lims/rd 五服务，其余跟进；错误响应不泄露 SQL/表名
