@@ -289,9 +289,8 @@ export async function updateSelectedRecords(
   session_id: string,
   records: SelectedRecord[]
 ): Promise<ApiResponse<void>> {
-  // 后端真缺口：sessions/{id}/records 未注册（core/ai 均 404）。
-  // 指到已存在的 /copilot/sessions/{id}（GET/DELETE），PUT 返回 405（业务性，不阻塞冒烟）。待上游实现。
-  return apiClient.core.put(`/copilot/sessions/${session_id}`, { records });
+  // 后端已实现（2026-10-06）：PUT /dsh/copilot/sessions/{session_id}/records
+  return apiClient.ai.put(`/dsh/copilot/sessions/${session_id}/records`, { records });
 }
 
 /**
@@ -302,8 +301,8 @@ export async function setContextData(
   key: string,
   value: unknown
 ): Promise<ApiResponse<void>> {
-  // 后端真缺口：sessions/{id}/context 未注册。指到 /copilot/sessions/{id}，PUT 405（不阻塞）。待上游实现。
-  return apiClient.core.put(`/copilot/sessions/${session_id}`, { key, value });
+  // 后端已实现（2026-10-06）：PUT /dsh/copilot/sessions/{session_id}/context
+  return apiClient.ai.put(`/dsh/copilot/sessions/${session_id}/context`, { key, value });
 }
 
 /**

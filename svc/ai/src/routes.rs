@@ -17,7 +17,7 @@ use crate::dsh::mcp::{
 
 use axum::{
     extract::DefaultBodyLimit,
-    routing::{delete, get, post},
+    routing::{delete, get, post, put},
     Router,
 };
 use axum_prometheus::{metrics_exporter_prometheus::PrometheusHandle, PrometheusMetricLayer};
@@ -261,6 +261,11 @@ pub fn create_routes(
             get(crate::modules::document::get)
                 .put(crate::modules::document::update)
                 .delete(crate::modules::document::delete),
+        )
+        // 前端契约收口（2026-10-06）：文档原始文件下载（附件流）
+        .route(
+            "/documents/{id}/download",
+            get(crate::modules::document::download),
         )
         .route(
             "/documents/{id}/process",
@@ -578,6 +583,15 @@ pub fn create_routes(
             "/dsh/copilot/sessions/{session_id}/messages",
             post(crate::handlers::business_copilot_handlers::send_message),
         )
+        // 前端契约收口（2026-10-06）：会话选中记录/上下文写入（真实写入内存会话上下文）
+        .route(
+            "/dsh/copilot/sessions/{session_id}/records",
+            put(crate::handlers::business_copilot_handlers::update_selected_records),
+        )
+        .route(
+            "/dsh/copilot/sessions/{session_id}/context",
+            put(crate::handlers::business_copilot_handlers::set_context_data),
+        )
         .route(
             "/dsh/copilot/intent/recognize",
             post(crate::handlers::business_copilot_handlers::recognize_intent),
@@ -619,6 +633,15 @@ pub fn create_routes(
         .route(
             "/dsh/governance/performance",
             get(crate::handlers::governance_dashboard_handlers::get_performance_metrics),
+        )
+        // 前端契约收口（2026-10-06）：关键指标 + 报告导出（复用 generator 聚合）
+        .route(
+            "/dsh/governance/metrics",
+            get(crate::handlers::governance_dashboard_handlers::get_governance_metrics),
+        )
+        .route(
+            "/dsh/governance/export",
+            get(crate::handlers::governance_dashboard_handlers::export_governance_report),
         )
         .route(
             "/dsh/governance/security-events",

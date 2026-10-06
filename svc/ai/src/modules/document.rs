@@ -1,6 +1,7 @@
 use axum::{
     extract::{Extension, Multipart, Path, State},
-    http::HeaderMap,
+    http::{header, HeaderMap, HeaderValue, StatusCode},
+    response::IntoResponse,
     Json,
 };
 use topems_shared_auth::auth::Claims;
@@ -302,6 +303,64 @@ pub async fn get(
             500, &e.to_string(),
         )),
     }
+}
+
+/// GET /api/documents/{id}/download - 下载原始文档文件（附件流）
+///
+/// 前端契约（2026-10-06）：downloadDocument。upload 把原始文件落盘 docs/<filename>
+/// 并把路径记入 document 记录（file_path）。此处取记录 → 读本地文件 →
+/// application/octet-stream + Content-Disposition attachment 附件响应。
+/// 记录不存在 → 内层 404；记录存在但本地文件缺失 → 404「文件不存在」。
+pub async fn download(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
+) -> impl IntoResponse {
+    let tenant_id = get_tenant_id_from_claims(&claims);
+    let doc = match state.document_service.get_document(id, tenant_id).await {
+        Ok(Some(doc)) => doc,
+        Ok(None) => {
+            return Json(ApiResponse::<serde_json::Value>::error(404, "文档不存在")).into_response()
+        }
+        Err(e) => {
+            return Json(ApiResponse::<serde_json::Value>::error(500, &e.to_string()))
+                .into_response()
+        }
+    };
+
+    // upload 落盘路径优先取记录中的 file_path；兜底 docs/<filename>
+    let file_path = doc
+        .file_path
+        .clone()
+        .unwrap_or_else(|| format!("docs/{}", doc.filename));
+    let bytes = match std::fs::read(&file_path) {
+        Ok(b) => b,
+        Err(_) => {
+            return Json(ApiResponse::<serde_json::Value>::error(404, "文件不存在"))
+                .into_response()
+        }
+    };
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/octet-stream"),
+    );
+    // 文件名可能含非 ASCII/引号，构造失败时退化为固定名
+    let disposition = format!("attachment; filename=\"{}\"", doc.filename);
+    match HeaderValue::from_str(&disposition) {
+        Ok(v) => {
+            headers.insert(header::CONTENT_DISPOSITION, v);
+        }
+        Err(_) => {
+            headers.insert(
+                header::CONTENT_DISPOSITION,
+                HeaderValue::from_static("attachment; filename=\"download\""),
+            );
+        }
+    }
+
+    (StatusCode::OK, headers, bytes).into_response()
 }
 
 /// DELETE /api/documents/{id} - 删除文档

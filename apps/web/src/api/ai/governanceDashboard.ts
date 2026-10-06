@@ -309,8 +309,8 @@ export async function getPerformanceMetrics(
  * 获取关键指标
  */
 export async function getKeyMetrics(time_range?: TimeRange): Promise<ApiResponse<KeyMetrics>> {
-  // 后端真缺口：/governance/metrics 未注册。指到已存在的 /governance/performance 契约 stub（GET 200）。待上游实现。
-  return apiClient.core.get(`/governance/performance`, {
+  // 后端已实现（2026-10-06）：GET /dsh/governance/metrics（generator 同源聚合 key_metrics）
+  return apiClient.ai.get(`/dsh/governance/metrics`, {
     params: time_range ? { time_range } : undefined,
   });
 }
@@ -391,8 +391,8 @@ export async function exportGovernanceReport(
   format: 'pdf' | 'excel' | 'json' = 'pdf',
   time_range?: TimeRange
 ): Promise<Blob> {
-  // 后端真缺口：/governance/export 未注册。指到已存在的 /governance/dashboard 契约 stub（GET 200）。待上游实现。
-  const response = await apiClient.core.get(`/governance/dashboard`, {
+  // 后端已实现（2026-10-06）：GET /dsh/governance/export（全量聚合 JSON 附件；pdf/excel 轻量兜底）
+  const response = await apiClient.ai.get(`/dsh/governance/export`, {
     params: { format, time_range },
     responseType: 'blob',
   });

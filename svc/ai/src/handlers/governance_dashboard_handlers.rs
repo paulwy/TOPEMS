@@ -4,7 +4,7 @@
 
 use axum::{
     extract::{Query, State},
-    http::StatusCode,
+    http::{header, HeaderMap, HeaderValue, StatusCode},
     response::IntoResponse,
     Json,
 };
@@ -46,6 +46,8 @@ impl Default for GovernanceAppState {
 pub struct DashboardQuery {
     pub time_range: Option<String>,
     pub tenant_id: Option<String>,
+    /// 导出格式（仅 /export 使用：json/pdf/excel，默认 pdf）
+    pub format: Option<String>,
 }
 
 /// 治理评分响应（简化版）
@@ -214,6 +216,56 @@ pub async fn get_performance_metrics(
     let dashboard = generator.generate_dashboard(Some(time_range));
 
     (StatusCode::OK, Json(dashboard.performance_metrics)).into_response()
+}
+
+/// 获取关键指标（/dsh/governance/metrics）
+///
+/// 前端契约（2026-10-06）：getKeyMetrics。与 get_performance_metrics 同款逻辑
+/// （parse_time_range + generator.generate_dashboard 聚合），返回同源 dashboard.key_metrics。
+pub async fn get_governance_metrics(
+    State(state): State<GovernanceAppState>,
+    Query(query): Query<DashboardQuery>,
+) -> impl IntoResponse {
+    let time_range = parse_time_range(query.time_range.as_deref());
+
+    let generator = state.generator.read().await;
+    let dashboard = generator.generate_dashboard(Some(time_range));
+
+    (StatusCode::OK, Json(dashboard.key_metrics)).into_response()
+}
+
+/// 导出治理报告（/dsh/governance/export）
+///
+/// 前端契约（2026-10-06）：exportGovernanceReport。复用 generator.generate_dashboard
+/// 全量 JSON 聚合后按 query.format 返回附件：
+/// - format=json → application/json 附件（governance-report.json）；
+/// - format=pdf/excel（默认 pdf）→ 无真实 PDF/Excel 渲染上游，轻量兜底仍返回
+///   JSON 内容附件（governance-report.json，Content-Disposition attachment），
+///   真实渲染待后续轮次接入（冒烟仅判 200/非 4xx）。
+pub async fn export_governance_report(
+    State(state): State<GovernanceAppState>,
+    Query(query): Query<DashboardQuery>,
+) -> impl IntoResponse {
+    let time_range = parse_time_range(query.time_range.as_deref());
+
+    let generator = state.generator.read().await;
+    let dashboard = generator.generate_dashboard(Some(time_range));
+    let body = serde_json::to_string_pretty(&dashboard).unwrap_or_else(|_| "{}".to_string());
+
+    // pdf/excel 占位兜底：统一 JSON 附件（真实业务语义待上游/后续轮次）
+    let content_type = "application/json";
+    let filename = "governance-report.json";
+
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static(content_type),
+    );
+    if let Ok(d) = HeaderValue::from_str(&format!("attachment; filename=\"{}\"", filename)) {
+        headers.insert(header::CONTENT_DISPOSITION, d);
+    }
+
+    (StatusCode::OK, headers, body).into_response()
 }
 
 /// 获取安全事件

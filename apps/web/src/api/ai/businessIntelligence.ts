@@ -385,9 +385,8 @@ export async function generateDocument(
  * 下载文档
  */
 export async function downloadDocument(document_id: string): Promise<Blob> {
-  // 后端真缺口：/documents/{id}/download 未注册（core/ai 均 404）。
-  // 指到已存在的 /documents/{id}（GET 契约 stub），待上游实现真实下载后再切回。
-  const response = await apiClient.core.get(`/documents/${document_id}`, {
+  // 后端已实现（2026-10-06）：GET /documents/{document_id}/download（原始文件附件流）
+  const response = await apiClient.ai.get(`/documents/${document_id}/download`, {
     responseType: 'blob',
   });
   return response.data as Blob;

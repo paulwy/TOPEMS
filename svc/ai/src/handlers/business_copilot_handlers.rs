@@ -14,7 +14,7 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::dsh::business_copilot::{
-    BusinessModule, ConversationMessage, CopilotRequest, CopilotSessionManager,
+    BusinessModule, ConversationMessage, CopilotRequest, CopilotSessionManager, SelectedRecord,
 };
 
 /// 应用状态（共享的会话管理器）
@@ -88,6 +88,26 @@ pub struct ActiveSessionsResponse {
 #[derive(Debug, Deserialize)]
 pub struct IntentRecognizeRequest {
     pub text: String,
+}
+
+/// 更新选中记录请求
+#[derive(Debug, Deserialize)]
+pub struct UpdateSelectedRecordsRequest {
+    pub records: Vec<SelectedRecord>,
+}
+
+/// 设置上下文数据请求
+#[derive(Debug, Deserialize)]
+pub struct SetContextDataRequest {
+    pub key: String,
+    pub value: serde_json::Value,
+}
+
+/// 写操作成功响应
+#[derive(Debug, Serialize)]
+pub struct SessionWriteOkResponse {
+    pub success: bool,
+    pub session_id: String,
 }
 
 /// 意图识别响应
@@ -270,6 +290,68 @@ pub async fn send_message(
             Json(ApiError {
                 error: "processing_failed".to_string(),
                 message: e.to_string(),
+            }),
+        )
+            .into_response(),
+    }
+}
+
+/// 更新会话选中记录
+///
+/// 前端契约：PUT /dsh/copilot/sessions/{session_id}/records。
+/// 复用 CopilotSessionManager.update_selected_records 真实写入内存会话上下文；
+/// 会话不存在时按 get_session 的 404 分支返回。
+pub async fn update_selected_records(
+    State(state): State<CopilotAppState>,
+    Path(session_id): Path<String>,
+    Json(req): Json<UpdateSelectedRecordsRequest>,
+) -> impl IntoResponse {
+    let manager = state.session_manager.write().await;
+    match manager.update_selected_records(&session_id, req.records) {
+        Ok(()) => (
+            StatusCode::OK,
+            Json(SessionWriteOkResponse {
+                success: true,
+                session_id,
+            }),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "session_not_found".to_string(),
+                message: e,
+            }),
+        )
+            .into_response(),
+    }
+}
+
+/// 设置会话上下文数据
+///
+/// 前端契约：PUT /dsh/copilot/sessions/{session_id}/context。
+/// 复用 CopilotSessionManager.set_context_data 真实写入内存会话上下文；
+/// 会话不存在时按 get_session 的 404 分支返回。
+pub async fn set_context_data(
+    State(state): State<CopilotAppState>,
+    Path(session_id): Path<String>,
+    Json(req): Json<SetContextDataRequest>,
+) -> impl IntoResponse {
+    let manager = state.session_manager.write().await;
+    match manager.set_context_data(&session_id, &req.key, req.value) {
+        Ok(()) => (
+            StatusCode::OK,
+            Json(SessionWriteOkResponse {
+                success: true,
+                session_id,
+            }),
+        )
+            .into_response(),
+        Err(e) => (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: "session_not_found".to_string(),
+                message: e,
             }),
         )
             .into_response(),
