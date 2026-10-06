@@ -1172,6 +1172,13 @@
   shared-event 366 全绿；pre-commit 23 项全绿
 - 剩余：map_err(format!) 310 处（ai/mes/hrm/finance/wms/unified-core/srm/scm/rd/portal/pm/pdm/mobile/lims/gis/erp/ehs/crm/communication/analytics 散点）
 
+### ✅ B7 第 11 批：erp map_err(format!) TopemsError 化（commit 1226c668d，1 文件）
+- erp event_handlers 51 处 map_err(format!) → 语义变体
+  - 事务开启/提交、凭证/订单/幂等账本查询创建更新 → DatabaseQuery（47 处）
+  - 事件 payload 解析（serde_json）→ ValidationFailed（10 处）
+- 验证：全仓 map_err(format!) 310→259；cargo check 0 warning；pre-commit 23 项全绿
+- 剩余：map_err(format!) 259 处（ai 92 / finance 26 / scm 19 / unified-core 15 / wms 14 / mes 13 / gis 10 / crm 10 / pm 9 / mobile 9 / srm 7 / rd 6 / hrm 6 / communication 6 / ehs 4 / portal 3 / pdm 3 / server 2 / lims 2 / analytics 1）
+
 ## 2026-10-06 契约面收口 + RLS 治理 + 门禁固化（全链路闭环）
 
 > 承接 10-05 mobile 契约面收口主线，扩展至 web(portal) 契约面、全库 RLS 治理、硬编码租户对齐、双门禁固化与全仓实例统一。全部本地提交未 push（除既有主线提交链）。
