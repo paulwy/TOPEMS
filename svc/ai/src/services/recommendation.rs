@@ -1,3 +1,4 @@
+use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
@@ -122,7 +123,7 @@ impl RecommendationService {
         .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await
-        .map_err(|e| format!("查询文档失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询文档失败: {}", e)))?;
 
         let mut items = Vec::new();
         for row in query {
@@ -150,7 +151,7 @@ impl RecommendationService {
         tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
-            .map_err(|e| format!("序列化上下文失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
 
         let prompt = format!(
             "基于以下上下文，推荐相关产品：\n\n上下文: {}\n\n请返回 JSON 格式的产品推荐列表，包含 id、title、description、score。最多返回 {} 个。",
@@ -169,7 +170,7 @@ impl RecommendationService {
             .to_string();
 
         let result: serde_json::Value =
-            serde_json::from_str(&cleaned).map_err(|e| format!("解析推荐结果失败: {}", e))?;
+            serde_json::from_str(&cleaned).map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
 
         self.extract_recommendations_from_json(result)
     }
@@ -216,7 +217,7 @@ impl RecommendationService {
         tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
-            .map_err(|e| format!("序列化上下文失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
 
         let prompt = format!(
             "基于用户上下文，推荐下一步应该完成的任务：\n\n上下文: {}\n\n请返回 JSON 格式的任务推荐列表，包含 id、title、description、score。最多返回 {} 个。",
@@ -235,7 +236,7 @@ impl RecommendationService {
             .to_string();
 
         let result: serde_json::Value =
-            serde_json::from_str(&cleaned).map_err(|e| format!("解析推荐结果失败: {}", e))?;
+            serde_json::from_str(&cleaned).map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
 
         self.extract_recommendations_from_json(result)
     }
@@ -307,7 +308,7 @@ impl RecommendationService {
         _tenant_id: Uuid,
     ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
-            .map_err(|e| format!("序列化上下文失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
 
         let prompt = format!(
             "基于以下上下文，进行智能推荐：\n\n上下文: {}\n推荐类型: {}\n\n请返回 JSON 格式的推荐列表，包含 id、title、description、score。最多返回 {} 个。",
@@ -326,7 +327,7 @@ impl RecommendationService {
             .to_string();
 
         let result: serde_json::Value =
-            serde_json::from_str(&cleaned).map_err(|e| format!("解析推荐结果失败: {}", e))?;
+            serde_json::from_str(&cleaned).map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
 
         self.extract_recommendations_from_json(result)
     }
@@ -384,7 +385,7 @@ impl RecommendationService {
         .bind(user_id)
         .fetch_optional(self.db.pool())
         .await
-        .map_err(|e| format!("查询用户画像失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询用户画像失败: {}", e)))?;
 
         match profile {
             Some(row) => Ok(UserProfile {
@@ -428,7 +429,7 @@ impl RecommendationService {
         .bind(now)
         .execute(self.db.pool())
         .await
-        .map_err(|e| format!("更新用户画像失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新用户画像失败: {}", e)))?;
 
         self.get_user_profile(user_id).await
     }
@@ -455,7 +456,7 @@ impl RecommendationService {
         .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await
-        .map_err(|e| format!("查询文章失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询文章失败: {}", e)))?;
 
         let mut items = Vec::new();
         for row in query {
@@ -705,7 +706,7 @@ impl RecommendationService {
         items: Vec<RecommendationItem>,
     ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
-            .map_err(|e| format!("序列化上下文失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("序列化上下文失败: {}", e)))?;
 
         let item_titles: Vec<String> = items.iter().map(|i| i.title.clone()).collect();
         let titles_str = item_titles.join(", ");

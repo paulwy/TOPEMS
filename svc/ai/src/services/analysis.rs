@@ -50,7 +50,7 @@ impl AnalysisService {
         let cleaned_response = cleaned.trim();
 
         let result: serde_json::Value = serde_json::from_str(cleaned_response)
-            .map_err(|e| format!("解析情感分析结果失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析情感分析结果失败: {}", e)))?;
 
         // 保存分析结果
         self.save_analysis_result(
@@ -100,7 +100,7 @@ impl AnalysisService {
         let cleaned_response = cleaned.trim();
 
         let result: serde_json::Value = serde_json::from_str(cleaned_response)
-            .map_err(|e| format!("解析分类结果失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析分类结果失败: {}", e)))?;
 
         // 保存分析结果
         self.save_analysis_result(
@@ -166,7 +166,7 @@ impl AnalysisService {
         let cleaned_response = cleaned.trim();
 
         let result: serde_json::Value = serde_json::from_str(cleaned_response)
-            .map_err(|e| format!("解析实体提取结果失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析实体提取结果失败: {}", e)))?;
 
         // 保存分析结果
         self.save_analysis_result("entities", text, &result, None, tenant_id)
@@ -217,7 +217,7 @@ impl AnalysisService {
         let cleaned_response = cleaned.trim();
 
         let result: serde_json::Value = serde_json::from_str(cleaned_response)
-            .map_err(|e| format!("解析关键词提取结果失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析关键词提取结果失败: {}", e)))?;
 
         // 保存分析结果
         self.save_analysis_result("keywords", text, &result, None, tenant_id)
@@ -284,7 +284,7 @@ impl AnalysisService {
         let rows = query
             .fetch_all(self.db.pool())
             .await
-            .map_err(|e| format!("查询分析历史失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询分析历史失败: {}", e)))?;
 
         let history = rows
             .iter()
@@ -353,7 +353,7 @@ impl AnalysisService {
             .json(&request)
             .send()
             .await
-            .map_err(|e| format!("调用 AI API 失败: {}", e))?;
+            .map_err(|e| TopemsError::NetworkRequest(format!("调用 AI API 失败: {}", e)))?;
 
         let status = response.status();
         if !status.is_success() {
@@ -367,7 +367,7 @@ impl AnalysisService {
         let openai_response: OpenAIResponse = response
             .json()
             .await
-            .map_err(|e| format!("解析 AI 响应失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 AI 响应失败: {}", e)))?;
 
         if let Some(choice) = openai_response.choices.first() {
             Ok(choice.message.content.clone())
@@ -398,7 +398,7 @@ impl AnalysisService {
         .bind(confidence)
         .execute(self.db.pool())
         .await
-        .map_err(|e| format!("保存分析结果失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("保存分析结果失败: {}", e)))?;
 
         Ok(())
     }

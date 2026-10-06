@@ -114,7 +114,7 @@ impl AiEventHandlers {
 
         let payload: QmsQualityIssueCreatedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析质量问题事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析质量问题事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[ai] 质量问题创建: {} ({})，严重度: {:?}",
@@ -161,7 +161,7 @@ impl AiEventHandlers {
 
         let payload: LimsInspectionAbnormalDetectedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析检验异常事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析检验异常事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[ai] 检验异常: 任务 {}，样品 {}，检测项: {}，结论: {}",
@@ -202,7 +202,7 @@ impl AiEventHandlers {
 
         let payload: EhsHazardReportedPayload = event
             .parse_payload()
-            .map_err(|e| format!("解析隐患报告事件 payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析隐患报告事件 payload 失败: {}", e)))?;
 
         tracing::info!(
             "[ai] 隐患报告: {} ({})，类别: {}，等级: {}",

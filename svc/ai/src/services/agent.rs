@@ -135,7 +135,7 @@ impl AgentService {
             let tool_calls = self
                 .decide_tools(&state, &available_tools)
                 .await
-                .map_err(|e| format!("决策工具失败: {}", e))?;
+                .map_err(|e| TopemsError::NetworkRequest(format!("决策工具失败: {}", e)))?;
 
             if tool_calls.is_empty() {
                 break;
@@ -188,7 +188,7 @@ impl AgentService {
         let final_answer = self
             .generate_final_answer(&state)
             .await
-            .map_err(|e| format!("生成最终答案失败: {}", e))?;
+            .map_err(|e| TopemsError::NetworkRequest(format!("生成最终答案失败: {}", e)))?;
 
         Ok(AgentResponse {
             answer: final_answer,
@@ -229,7 +229,7 @@ impl AgentService {
             .map(|r| r.0)?;
 
         let response_json: serde_json::Value =
-            serde_json::from_str(&response).map_err(|e| format!("解析工具调用响应失败: {}", e))?;
+            serde_json::from_str(&response).map_err(|e| TopemsError::ValidationFailed(format!("解析工具调用响应失败: {}", e)))?;
 
         let tool_calls_json = response_json.get("tool_calls").and_then(|v| v.as_array());
 
@@ -1148,7 +1148,7 @@ impl WorkflowOrchestrator {
                 let resp = dify
                     .chat(req)
                     .await
-                    .map_err(|e| format!("Difystepfailed:{}", e))?;
+                    .map_err(|e| TopemsError::BusinessLogic(format!("Difystepfailed:{}", e)))?;
                 return Ok(resp.answer);
             } else {
                 return Err(TopemsError::BusinessLogic("Difystep配置但DifyService不可用".to_string()));

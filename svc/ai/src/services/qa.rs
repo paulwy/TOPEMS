@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 
+use topems_shared_core::error::TopemsError;
 use crate::modules::models::{QAHistory, SearchResult};
 use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
@@ -295,7 +296,7 @@ impl QAService {
         .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await
-        .map_err(|e| format!("查询问答历史失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史失败: {}", e)))?;
 
         let history = rows
             .iter()
@@ -331,7 +332,7 @@ impl QAService {
         .bind(tenant_id)
         .fetch_one(self.db.pool())
         .await
-        .map_err(|e| format!("查询问答历史总数失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询问答历史总数失败: {}", e)))?;
 
         Ok(count)
     }
@@ -363,7 +364,7 @@ impl QAService {
         .bind(tenant_id)
         .fetch_all(self.db.pool())
         .await
-        .map_err(|e| format!("搜索问答历史失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史失败: {}", e)))?;
 
         let history = rows
             .iter()
@@ -406,7 +407,7 @@ impl QAService {
         .bind(tenant_id)
         .fetch_one(self.db.pool())
         .await
-        .map_err(|e| format!("搜索问答历史总数失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("搜索问答历史总数失败: {}", e)))?;
 
         Ok(count)
     }
@@ -426,7 +427,7 @@ impl QAService {
         .bind(tenant_id)
         .execute(self.db.pool())
         .await
-        .map_err(|e| format!("删除问答历史失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("删除问答历史失败: {}", e)))?;
 
         Ok(result.rows_affected() > 0)
     }
@@ -451,7 +452,7 @@ impl QAService {
         .bind(tenant_id)
         .execute(self.db.pool())
         .await
-        .map_err(|e| format!("批量删除问答历史失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("批量删除问答历史失败: {}", e)))?;
 
         Ok(result.rows_affected() as i64)
     }
@@ -479,13 +480,13 @@ impl QAService {
         .bind(tenant_id)
         .execute(self.db.pool())
         .await
-        .map_err(|e| format!("更新反馈失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新反馈失败: {}", e)))?;
 
         Ok(())
     }
 
     /// 调用 AI API（使用统一客户端）
-    async fn call_ai_api(&self, prompt: &str) -> Result<String, String> {
+    async fn call_ai_api(&self, prompt: &str) -> Result<String, TopemsError> {
         Ok(self.call_ai_api_with_usage(prompt).await?.0)
     }
 
@@ -493,12 +494,12 @@ impl QAService {
     async fn call_ai_api_with_usage(
         &self,
         prompt: &str,
-    ) -> Result<(String, Option<(u64, u64)>), String> {
+    ) -> Result<(String, Option<(u64, u64)>), TopemsError> {
         let messages = vec![ChatMessage::user(prompt)];
         self.ai_client
             .chat_with_usage(messages)
             .await
-            .map_err(|e| format!("调用 AI API 失败: {}", e))
+            .map_err(|e| TopemsError::NetworkRequest(format!("调用 AI API 失败: {}", e)))
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
@@ -521,13 +522,13 @@ impl QAService {
             .pool()
             .begin()
             .await
-            .map_err(|e| format!("写入 usage 日志失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
         // 显式设置租户上下文（与 save_qa_history 一致，保证 RLS 租户隔离正确）
         sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
             .bind(tenant_id.to_string())
             .execute(&mut *txn)
             .await
-            .map_err(|e| format!("写入 usage 日志失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
@@ -545,10 +546,10 @@ impl QAService {
         .bind(tokens_out)
         .execute(&mut *txn)
         .await
-        .map_err(|e| format!("写入 usage 日志失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
         txn.commit()
             .await
-            .map_err(|e| format!("写入 usage 日志失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("写入 usage 日志失败: {}", e)))?;
         let _ = result;
         Ok(())
     }
@@ -856,13 +857,13 @@ impl QAService {
             .pool()
             .begin()
             .await
-            .map_err(|e| format!("保存问答历史失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
         // 显式设置租户上下文（连接池共享连接，避免残留/缺失 GUC 触发 RLS 误判）
         sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
             .bind(tenant_id.to_string())
             .execute(&mut *txn)
             .await
-            .map_err(|e| format!("保存问答历史失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
         let id: Uuid = sqlx::query_scalar(only_own_schema_query!(
             "ai",
             r#"
@@ -879,10 +880,10 @@ impl QAService {
         .bind(sources.map(|s| serde_json::to_value(s).unwrap_or(serde_json::json!([]))))
         .fetch_one(&mut *txn)
         .await
-        .map_err(|e| format!("保存问答历史失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
         txn.commit()
             .await
-            .map_err(|e| format!("保存问答历史失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("保存问答历史失败: {}", e)))?;
 
         Ok(id)
     }
@@ -999,7 +1000,7 @@ impl QAService {
                 .bind(tenant_id),
             )
             .await
-            .map_err(|e| format!("语义搜索失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("语义搜索失败: {}", e)))?;
 
         let search_results = results
             .iter()
@@ -1053,7 +1054,7 @@ impl QAService {
                 .bind((top_k * 2) as i64),
             )
             .await
-            .map_err(|e| format!("关键词搜索失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("关键词搜索失败: {}", e)))?;
 
         let mut combined_map: std::collections::HashMap<uuid::Uuid, SearchResult> =
             std::collections::HashMap::new();
@@ -1089,11 +1090,11 @@ impl QAService {
     }
 
     /// 生成查询向量嵌入（使用统一客户端）
-    async fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>, String> {
+    async fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>, TopemsError> {
         self.embedding_client
             .embed(query)
             .await
-            .map_err(|e| format!("生成嵌入失败: {}", e))
+            .map_err(|e| TopemsError::NetworkRequest(format!("生成嵌入失败: {}", e)))
     }
 
     /// 多轮对话优化 - 检测问题是否需要上下文

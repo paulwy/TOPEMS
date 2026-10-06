@@ -427,7 +427,7 @@ impl AgentRuntime {
             };
             sender
                 .send(message)
-                .map_err(|e| format!("Failed to send message: {}", e))?;
+                .map_err(|e| TopemsError::NetworkRequest(format!("Failed to send message: {}", e)))?;
             Ok(())
         } else {
             Err(TopemsError::ResourceNotFound(format!("Receiver agent {} not found", receiver_id)))
