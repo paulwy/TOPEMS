@@ -623,6 +623,19 @@ vi.mock('react-leaflet', () => {
     Polyline: mk('Polyline'),
     Polygon: mk('Polygon'),
     Circle: mk('Circle'),
+    // B9: 组件使用 useMap / useMapEvents（MapEventHandler、HeatmapLayer、GisMapTemplate），
+    // 此前 mock 缺失导致 3 个 GIS 测试渲染崩溃（R1 基线登记项）
+    useMap: () => ({
+      fitBounds: vi.fn(),
+      latLngToContainerPoint: vi.fn(() => ({ x: 0, y: 0 })),
+      on: vi.fn(),
+      off: vi.fn(),
+      addLayer: vi.fn(),
+      removeLayer: vi.fn(),
+      flyTo: vi.fn(),
+      panTo: vi.fn(),
+    }),
+    useMapEvents: () => vi.fn(),
   };
 });
 
