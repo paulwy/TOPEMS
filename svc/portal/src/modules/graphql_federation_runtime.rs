@@ -8,7 +8,9 @@ use futures_util::future::join_all;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use crate::modules::graphql_helpers::{service_auth_get, service_request, service_url, FEDERATION_READ_PERMS};
+use crate::modules::graphql_helpers::{
+    service_auth_get, service_request, service_url, FEDERATION_READ_PERMS,
+};
 
 // ==================== V40.0 Phase 10: Federation 网关查询优化 ====================
 
@@ -338,6 +340,3 @@ pub async fn batch_resolve_entities(
     record_entities_resolved(uncached_ids.len() as u64);
     results
 }
-
-
-

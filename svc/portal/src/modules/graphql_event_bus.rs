@@ -145,4 +145,3 @@ static GLOBAL_EVENT_BUS: std::sync::OnceLock<Arc<EventBus>> = std::sync::OnceLoc
 pub fn global_event_bus() -> &'static Arc<EventBus> {
     GLOBAL_EVENT_BUS.get_or_init(|| Arc::new(EventBus::new()))
 }
-

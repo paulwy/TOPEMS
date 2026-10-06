@@ -42,14 +42,14 @@ pub use crate::modules::graphql_ai_assist::*;
 pub use crate::modules::graphql_cache::*;
 pub use crate::modules::graphql_dataloader::*;
 pub use crate::modules::graphql_edge_computing::*;
-pub use crate::modules::graphql_entities::*;
 pub use crate::modules::graphql_edge_v2::*;
-pub use crate::modules::graphql_event_bus::*;
 pub use crate::modules::graphql_enterprise_security::*;
+pub use crate::modules::graphql_entities::*;
+pub use crate::modules::graphql_event_bus::*;
 pub use crate::modules::graphql_federation::*;
-pub use crate::modules::graphql_federation_v4::*;
-pub use crate::modules::graphql_federation_sdl::*;
 pub use crate::modules::graphql_federation_runtime::*;
+pub use crate::modules::graphql_federation_sdl::*;
+pub use crate::modules::graphql_federation_v4::*;
 pub use crate::modules::graphql_gateway_security::*;
 pub use crate::modules::graphql_governance::*;
 pub use crate::modules::graphql_helpers::*;
@@ -3800,10 +3800,8 @@ pub fn build_schema(state: AppState) -> PortalSchema {
         .finish()
 }
 
-
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
     include!("graphql_schema_tests.rs");
 }
-

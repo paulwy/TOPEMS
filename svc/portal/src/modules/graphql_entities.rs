@@ -355,4 +355,3 @@ pub struct FederationServiceSdlGql {
     pub sdl: String,
     pub available: bool,
 }
-

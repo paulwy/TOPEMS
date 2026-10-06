@@ -174,4 +174,3 @@ pub async fn resolve_federated_entity(typename: &str, id: &str) -> serde_json::V
         _ => serde_json::json!({"error": "entity not found", "__typename": typename, "id": id}),
     }
 }
-

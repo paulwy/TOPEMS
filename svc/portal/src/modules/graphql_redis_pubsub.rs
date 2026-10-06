@@ -4,8 +4,8 @@
 use std::sync::Arc;
 
 use crate::modules::graphql_event_bus::{
-    EventBus, MasterDataEventGql, NotificationEventGql, OrderStatusEventGql,
-    SubscriptionChannel, WorkflowTaskEventGql,
+    EventBus, MasterDataEventGql, NotificationEventGql, OrderStatusEventGql, SubscriptionChannel,
+    WorkflowTaskEventGql,
 };
 
 // ==================== V39.0 Phase 9: Redis PubSub 后端 + 降级模式 ====================
@@ -215,4 +215,3 @@ pub fn start_demo_simulator(event_bus: Arc<EventBus>) {
         }
     });
 }
-
