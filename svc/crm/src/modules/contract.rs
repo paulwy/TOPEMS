@@ -13,7 +13,8 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, CrmPermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -135,7 +136,9 @@ pub async fn list_contracts(
         }
         Err(e) => {
             tracing::error!("获取合同列表失败: {}", e);
-            Json(api_error(500, "获取合同列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合同列表失败".to_string(),
+            )))
         }
     }
 }
@@ -169,7 +172,9 @@ pub async fn create_contract(
     }
 
     if req.contract_no.trim().is_empty() || req.title.trim().is_empty() {
-        return Json(api_error(400, "合同编号与标题不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "合同编号与标题不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -224,7 +229,9 @@ pub async fn create_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(api_error(500, "合同创建失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "合同创建失败".to_string(),
+                )));
             }
         }
     }
@@ -238,7 +245,9 @@ pub async fn create_contract(
         Err(e) => {
             tracing::error!("创建合同失败: {}", e);
             (
-                Json(api_error(500, "合同创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "合同创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -330,10 +339,14 @@ pub async fn get_contract(
 
     match result {
         Ok(Some(contract)) => Json(ApiResponse::success(contract, "获取合同成功")),
-        Ok(None) => Json(api_error(404, "合同不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "合同不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取合同失败: {}", e);
-            Json(api_error(500, "获取合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取合同失败".to_string(),
+            )))
         }
     }
 }
@@ -427,17 +440,23 @@ pub async fn update_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(api_error(500, "合同更新失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "合同更新失败".to_string(),
+                )));
             }
         }
     }
 
     match result {
         Ok(Some(contract)) => Json(ApiResponse::success(contract, "合同更新成功")),
-        Ok(None) => Json(api_error(404, "合同不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "合同不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新合同失败: {}", e);
-            Json(api_error(500, "更新合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新合同失败".to_string(),
+            )))
         }
     }
 }
@@ -498,7 +517,9 @@ pub async fn delete_contract(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(api_error(500, "删除合同失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "删除合同失败".to_string(),
+                )));
             }
         }
     }
@@ -527,10 +548,14 @@ pub async fn delete_contract(
                 "合同删除成功",
             ))
         }
-        Ok(_) => Json(api_error(404, "合同不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "合同不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除合同失败: {}", e);
-            Json(api_error(500, "删除合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除合同失败".to_string(),
+            )))
         }
     }
 }

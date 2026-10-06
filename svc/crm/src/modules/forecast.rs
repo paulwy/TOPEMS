@@ -15,7 +15,8 @@ use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateL
 use utoipa::ToSchema;
 
 use super::ApiState;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 // ---------------------------------------------------------------------------
 // 数据模型
@@ -459,10 +460,14 @@ pub fn create_routes() -> Router<ApiState> {
 )]
 pub async fn predict_handler(Json(req): Json<ForecastConfig>) -> Json<ApiResponse<ForecastResult>> {
     if req.history_data.is_empty() {
-        return Json(api_error(400, "历史数据不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "历史数据不能为空".to_string(),
+        )));
     }
     if req.forecast_periods == 0 {
-        return Json(api_error(400, "预测周期数必须大于 0"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "预测周期数必须大于 0".to_string(),
+        )));
     }
 
     let result = predict(&req);
@@ -505,7 +510,9 @@ pub async fn get_methods() -> Json<ApiResponse<Vec<ForecastMethodInfo>>> {
 )]
 async fn evaluate(Json(req): Json<ForecastConfig>) -> Json<ApiResponse<ForecastEvaluation>> {
     if req.history_data.len() < 3 {
-        return Json(api_error(400, "评估至少需要 3 个历史数据点"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "评估至少需要 3 个历史数据点".to_string(),
+        )));
     }
 
     let evaluation = evaluate_all(&req);

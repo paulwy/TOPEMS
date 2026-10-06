@@ -12,8 +12,8 @@ use super::ApiState;
 use crate::models::AuditLog;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 use topems_shared_db::SchemaAwareAuditLogService;
 
 /// 审计日志参数包装（消除 clippy::too_many_arguments 告警）
@@ -145,7 +145,9 @@ pub async fn list_audit_logs(
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(api_error(500, "获取审计日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取审计日志失败".to_string(),
+            )))
         }
     }
 }
@@ -193,10 +195,14 @@ pub async fn get_audit_log(
 
     match result {
         Ok(Some(log)) => Json(ApiResponse::success(log, "获取审计日志成功")),
-        Ok(None) => Json(api_error(404, "审计日志不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "审计日志不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(api_error(500, "获取审计日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取审计日志失败".to_string(),
+            )))
         }
     }
 }

@@ -13,8 +13,8 @@ use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 pub struct CustomerSegment {
@@ -153,7 +153,9 @@ pub async fn list_segments(
         }
         Err(e) => {
             tracing::error!("获取客户分群列表失败: {}", e);
-            Json(api_error(500, "获取客户分群列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户分群列表失败".to_string(),
+            )))
         }
     }
 }
@@ -202,10 +204,14 @@ pub async fn get_segment(
 
     match result {
         Ok(Some(segment)) => Json(ApiResponse::success(segment, "获取客户分群成功")),
-        Ok(None) => Json(api_error(404, "客户分群不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "客户分群不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取客户分群失败: {}", e);
-            Json(api_error(500, "获取客户分群失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户分群失败".to_string(),
+            )))
         }
     }
 }
@@ -227,7 +233,9 @@ async fn create_segment(
     }
 
     if req.name.is_empty() {
-        return Json(api_error(400, "分群名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "分群名称不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -262,14 +270,18 @@ async fn create_segment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(segment, "客户分群创建成功"))
         }
         Err(e) => {
             tracing::error!("创建客户分群失败: {}", e);
-            Json(api_error(500, "创建客户分群失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建客户分群失败".to_string(),
+            )))
         }
     }
 }
@@ -315,14 +327,20 @@ pub async fn delete_segment(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
-            Json(api_error(404, "客户分群不存在"))
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户分群不存在".to_string(),
+            )))
         }
         Err(e) => {
             tracing::error!("删除客户分群失败: {}", e);
-            Json(api_error(500, "删除客户分群失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除客户分群失败".to_string(),
+            )))
         }
     }
 }
@@ -369,10 +387,16 @@ pub async fn get_segment_customers(
 
     let (segment_name, criteria) = match segment_result {
         Ok(Some(s)) => (s.get::<String, _>(0), s.get::<serde_json::Value, _>(1)),
-        Ok(None) => return Json(api_error(404, "客户分群不存在")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户分群不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("获取客户分群失败: {}", e);
-            return Json(api_error(500, "获取客户分群失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户分群失败".to_string(),
+            )));
         }
     };
 

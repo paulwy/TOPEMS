@@ -14,7 +14,8 @@ use crate::models::{
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::{ApiResponse};
+use topems_shared_core::TopemsError;
 
 use super::ApiState;
 
@@ -250,10 +251,10 @@ async fn get_customer_details(
 
             Json(ApiResponse::success(details, "获取客户详情成功"))
         }
-        Ok(None) => Json(api_error(404, "客户不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string()))),
         Err(e) => {
             tracing::error!("获取客户详情失败: {}", e);
-            Json(api_error(500, "获取客户详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal("获取客户详情失败".to_string())))
         }
     }
 }

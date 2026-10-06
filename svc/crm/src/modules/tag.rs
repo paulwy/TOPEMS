@@ -17,8 +17,8 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct TagPaginationParams {
@@ -135,7 +135,9 @@ pub async fn list_tags(
         }
         Err(e) => {
             tracing::error!("获取标签列表失败: {}", e);
-            Json(api_error(500, "获取标签列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取标签列表失败".to_string(),
+            )))
         }
     }
 }
@@ -157,7 +159,9 @@ async fn create_tag(
     }
 
     if req.name.is_empty() {
-        return Json(api_error(400, "标签名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "标签名称不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -207,7 +211,9 @@ async fn create_tag(
         Err(e) => {
             tracing::error!("创建标签失败: {}", e);
             (
-                Json(api_error(500, "标签创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "标签创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -298,10 +304,14 @@ pub async fn get_tag(
 
     match result {
         Ok(Some(tag)) => Json(ApiResponse::success(tag, "获取标签成功")),
-        Ok(None) => Json(api_error(404, "标签不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "标签不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取标签失败: {}", e);
-            Json(api_error(500, "获取标签失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取标签失败".to_string(),
+            )))
         }
     }
 }
@@ -346,8 +356,12 @@ async fn update_tag(
 
     let existing = match existing {
         Ok(Some(t)) => t,
-        Ok(None) => return Json(api_error(404, "标签不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询标签失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "标签不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询标签失败", e))),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -388,7 +402,9 @@ async fn update_tag(
         Err(e) => {
             tracing::error!("更新标签失败: {}", e);
             (
-                Json(api_error(500, "标签更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "标签更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -459,7 +475,9 @@ async fn delete_tag(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -470,14 +488,18 @@ async fn delete_tag(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "标签不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "标签不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("标签不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除标签失败: {}", e);
             (
-                Json(api_error(500, "标签删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "标签删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -569,7 +591,9 @@ pub async fn get_customer_tags(
         Ok(tags) => Json(ApiResponse::success(tags, "获取客户标签成功")),
         Err(e) => {
             tracing::error!("获取客户标签失败: {}", e);
-            Json(api_error(500, "获取客户标签失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户标签失败".to_string(),
+            )))
         }
     }
 }
@@ -617,7 +641,9 @@ async fn add_tag_to_customer(
     .unwrap_or(false);
 
     if exists {
-        return Json(api_error(400, "标签已添加到客户"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "标签已添加到客户".to_string(),
+        )));
     }
 
     let result = sqlx::query(
@@ -633,7 +659,9 @@ async fn add_tag_to_customer(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -646,7 +674,9 @@ async fn add_tag_to_customer(
         Err(e) => {
             tracing::error!("添加标签失败: {}", e);
             (
-                Json(api_error(500, "添加标签失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "添加标签失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -730,7 +760,9 @@ pub async fn remove_tag_from_customer(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -741,14 +773,18 @@ pub async fn remove_tag_from_customer(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "客户标签关系不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户标签关系不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("客户标签关系不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("移除标签失败: {}", e);
             (
-                Json(api_error(500, "移除标签失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "移除标签失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -860,7 +896,9 @@ pub async fn get_tagged_customers(
         }
         Err(e) => {
             tracing::error!("获取标签关联客户失败: {}", e);
-            Json(api_error(500, "获取标签关联客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取标签关联客户失败".to_string(),
+            )))
         }
     }
 }

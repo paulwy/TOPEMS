@@ -12,8 +12,8 @@ use crate::models::interaction::CreateInteractionRequest;
 use crate::models::{Interaction, UpdateInteractionRequest};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::{ApiResponse, ListResponse};
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct InteractionPaginationParams {
@@ -146,7 +146,9 @@ pub async fn list_interactions(
         }
         Err(e) => {
             tracing::error!("获取交互记录列表失败: {}", e);
-            Json(api_error(500, "获取交互记录列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取交互记录列表失败".to_string(),
+            )))
         }
     }
 }
@@ -204,10 +206,14 @@ pub async fn get_interaction(
 
     match result {
         Ok(Some(interaction)) => Json(ApiResponse::success(interaction, "获取交互记录成功")),
-        Ok(None) => Json(api_error(404, "交互记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "交互记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取交互记录失败: {}", e);
-            Json(api_error(500, "获取交互记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取交互记录失败".to_string(),
+            )))
         }
     }
 }
@@ -243,7 +249,9 @@ async fn create_interaction(
     let org_id = Uuid::parse_str(ORG_ID_FALLBACK).expect("valid org uuid");
     let now = chrono::Utc::now();
     let type_ = if req.type_.trim().is_empty() {
-        return Json(api_error(400, "交互类型 type 不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "交互类型 type 不能为空".to_string(),
+        )));
     } else {
         req.type_
     };
@@ -274,7 +282,9 @@ async fn create_interaction(
         Ok(record) => Json(ApiResponse::success(record, "创建交互记录成功")),
         Err(e) => {
             tracing::error!("创建交互记录失败: {}", e);
-            Json(api_error(500, "创建交互记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建交互记录失败".to_string(),
+            )))
         }
     }
 }
@@ -344,10 +354,14 @@ async fn update_interaction(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "更新交互记录成功")),
-        Ok(None) => Json(api_error(404, "交互记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "交互记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新交互记录失败: {}", e);
-            Json(api_error(500, "更新交互记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新交互记录失败".to_string(),
+            )))
         }
     }
 }
@@ -392,10 +406,14 @@ async fn delete_interaction(
             serde_json::json!({ "deleted": true }),
             "删除交互记录成功",
         )),
-        Ok(_) => Json(api_error(404, "交互记录不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "交互记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除交互记录失败: {}", e);
-            Json(api_error(500, "删除交互记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除交互记录失败".to_string(),
+            )))
         }
     }
 }
@@ -471,7 +489,9 @@ pub async fn batch_delete_interactions(
         )),
         Err(e) => {
             tracing::error!("批量删除交互记录失败: {}", e);
-            Json(api_error(500, "批量删除交互记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量删除交互记录失败".to_string(),
+            )))
         }
     }
 }

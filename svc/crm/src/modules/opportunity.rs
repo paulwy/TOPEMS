@@ -15,8 +15,8 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OppStage {
@@ -337,7 +337,9 @@ pub async fn list_opportunities(
         }
         Err(e) => {
             tracing::error!("获取销售机会列表失败: {}", e);
-            Json(api_error(500, "获取销售机会列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取销售机会列表失败".to_string(),
+            )))
         }
     }
 }
@@ -371,7 +373,9 @@ pub async fn create_opportunity(
     }
 
     if req.name.is_empty() {
-        return Json(api_error(400, "销售机会名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "销售机会名称不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -441,7 +445,9 @@ pub async fn create_opportunity(
         Err(e) => {
             tracing::error!("创建销售机会失败: {}", e);
             (
-                Json(api_error(500, "销售机会创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "销售机会创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -451,7 +457,9 @@ pub async fn create_opportunity(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
         // 创建商机后失效商机列表缓存
@@ -562,10 +570,14 @@ pub async fn get_opportunity(
             }
             Json(ApiResponse::success(opportunity, "获取销售机会成功"))
         }
-        Ok(None) => Json(api_error(404, "销售机会不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "销售机会不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取销售机会失败: {}", e);
-            Json(api_error(500, "获取销售机会失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取销售机会失败".to_string(),
+            )))
         }
     }
 }
@@ -610,8 +622,17 @@ async fn update_opportunity(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(api_error(404, "销售机会不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询销售机会失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "销售机会不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询销售机会失败",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -672,7 +693,9 @@ async fn update_opportunity(
         Err(e) => {
             tracing::error!("更新销售机会失败: {}", e);
             (
-                Json(api_error(500, "销售机会更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "销售机会更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -682,7 +705,9 @@ async fn update_opportunity(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
         // 更新商机后失效商机详情与列表缓存
@@ -754,7 +779,9 @@ async fn delete_opportunity(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -770,14 +797,18 @@ async fn delete_opportunity(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "销售机会不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "销售机会不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("销售机会不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除销售机会失败: {}", e);
             (
-                Json(api_error(500, "销售机会删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "销售机会删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -838,7 +869,9 @@ pub async fn batch_delete_opportunities(
     }
 
     if req.ids.is_empty() {
-        return Json(api_error(400, "请选择要删除的销售机会"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "请选择要删除的销售机会".to_string(),
+        )));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -863,7 +896,9 @@ pub async fn batch_delete_opportunities(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -884,7 +919,9 @@ pub async fn batch_delete_opportunities(
         Err(e) => {
             tracing::error!("批量删除销售机会失败: {}", e);
             (
-                Json(api_error(500, "批量删除销售机会失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "批量删除销售机会失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1355,29 +1392,47 @@ pub async fn advance_opportunity(
     .await
     {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(api_error(404, "商机不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询商机失败: {}", e))),
+        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("商机不存在".to_string()))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询商机失败", e))),
     };
 
     let is_owner_or_admin = true;
 
     let from_stage = match OppStage::from_str(&existing.stage) {
         Some(s) => s,
-        None => return Json(api_error(400, &format!("未知商机阶段: {}", existing.stage))),
+        None => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "未知商机阶段: {}",
+                existing.stage
+            ))))
+        }
     };
     let to_stage = next_advance_stage(from_stage);
 
     match can_transition(from_stage, to_stage, is_owner_or_admin) {
         Ok(_) => {}
-        Err("NOT_OWNER") => return Json(api_error(403, "仅负责人或管理员可推进阶段")),
-        Err("TERMINAL_CANNOT_TRANSITION") => return Json(api_error(400, "终态商机不可推进")),
-        Err("INVALID_TRANSITION") => {
-            return Json(api_error(
-                400,
-                &format!("无效推进: {} → {}", from_stage.as_str(), to_stage.as_str()),
-            ))
+        Err("NOT_OWNER") => {
+            return Json(ApiResponse::from(TopemsError::ForbiddenStr(
+                "仅负责人或管理员可推进阶段".to_string(),
+            )))
         }
-        Err(e) => return Json(api_error(400, e)),
+        Err("TERMINAL_CANNOT_TRANSITION") => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "终态商机不可推进".to_string(),
+            )))
+        }
+        Err("INVALID_TRANSITION") => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "无效推进: {} → {}",
+                from_stage.as_str(),
+                to_stage.as_str()
+            ))))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                e.to_string(),
+            )))
+        }
     }
 
     let now = Utc::now();
@@ -1411,7 +1466,9 @@ pub async fn advance_opportunity(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             // 阶段推进后失效商机详情与列表缓存
@@ -1435,7 +1492,9 @@ pub async fn advance_opportunity(
         Err(e) => {
             tracing::error!("推进商机阶段失败: {}", e);
             (
-                Json(api_error(500, "推进商机阶段失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "推进商机阶段失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -1531,33 +1590,47 @@ pub async fn rollback_opportunity(
     .await
     {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(api_error(404, "商机不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询商机失败: {}", e))),
+        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("商机不存在".to_string()))),
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询商机失败", e))),
     };
 
     let is_owner_or_admin = true;
 
     let from_stage = match OppStage::from_str(&existing.stage) {
         Some(s) => s,
-        None => return Json(api_error(400, &format!("未知商机阶段: {}", existing.stage))),
+        None => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "未知商机阶段: {}",
+                existing.stage
+            ))))
+        }
     };
     let to_stage = prev_stage(from_stage);
 
     match can_transition(from_stage, to_stage, is_owner_or_admin) {
         Ok(_) => {}
-        Err("NOT_OWNER") => return Json(api_error(403, "仅负责人或管理员可回退阶段")),
-        Err("TERMINAL_CANNOT_TRANSITION") => return Json(api_error(400, "终态商机不可回退")),
-        Err("INVALID_TRANSITION") => {
-            return Json(api_error(
-                400,
-                &format!(
-                    "无效回退(仅相邻阶段允许): {} → {}",
-                    from_stage.as_str(),
-                    to_stage.as_str()
-                ),
-            ))
+        Err("NOT_OWNER") => {
+            return Json(ApiResponse::from(TopemsError::ForbiddenStr(
+                "仅负责人或管理员可回退阶段".to_string(),
+            )))
         }
-        Err(e) => return Json(api_error(400, e)),
+        Err("TERMINAL_CANNOT_TRANSITION") => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "终态商机不可回退".to_string(),
+            )))
+        }
+        Err("INVALID_TRANSITION") => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "无效回退(仅相邻阶段允许): {} → {}",
+                from_stage.as_str(),
+                to_stage.as_str()
+            ))))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                e.to_string(),
+            )))
+        }
     }
 
     let now = Utc::now();
@@ -1601,7 +1674,9 @@ pub async fn rollback_opportunity(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             // 阶段回退后失效商机详情与列表缓存
@@ -1625,7 +1700,9 @@ pub async fn rollback_opportunity(
         Err(e) => {
             tracing::error!("回退商机阶段失败: {}", e);
             (
-                Json(api_error(500, "回退商机阶段失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "回退商机阶段失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )

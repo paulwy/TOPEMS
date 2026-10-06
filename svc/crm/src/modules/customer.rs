@@ -16,7 +16,8 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse, ListResponse};
+use topems_shared_core::response::{ApiResponse, ListResponse};
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct CustomerPaginationParams {
@@ -244,7 +245,9 @@ pub async fn create_customer(
     }
 
     if req.name.is_empty() {
-        return Json(api_error(400, "客户名称不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "客户名称不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -294,7 +297,9 @@ pub async fn create_customer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             // 创建客户后失效客户列表缓存
@@ -324,7 +329,9 @@ pub async fn create_customer(
         }
         Err(e) => {
             tracing::error!("创建客户失败: {}", e);
-            Json(api_error(500, "客户创建失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "客户创建失败".to_string(),
+            )))
         }
     }
 }
@@ -398,10 +405,10 @@ pub async fn get_customer(
             }
             Json(ApiResponse::success(customer, "获取客户成功"))
         }
-        Ok(None) => Json(api_error(404, "客户不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("客户不存在".to_string()))),
         Err(e) => {
             tracing::error!("获取客户失败: {}", e);
-            Json(api_error(500, "获取客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal("获取客户失败".to_string())))
         }
     }
 }
@@ -457,8 +464,12 @@ pub async fn update_customer(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(api_error(404, "客户不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询客户失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询客户失败", e))),
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -498,7 +509,7 @@ pub async fn update_customer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal("事务提交失败".to_string())));
                 }
             }
             let response_data = serde_json::to_value(&customer).ok();
@@ -527,7 +538,7 @@ pub async fn update_customer(
         }
         Err(e) => {
             tracing::error!("更新客户失败: {}", e);
-            Json(api_error(500, "客户更新失败"))
+            Json(ApiResponse::from(TopemsError::Internal("客户更新失败".to_string())))
         }
     }
 }
@@ -583,7 +594,9 @@ pub async fn delete_customer(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             // 删除客户后失效缓存
@@ -610,10 +623,14 @@ pub async fn delete_customer(
             });
             Json(ApiResponse::success_no_data("客户删除成功"))
         }
-        Ok(_) => Json(api_error(404, "客户不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "客户不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除客户失败: {}", e);
-            Json(api_error(500, "客户删除失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "客户删除失败".to_string(),
+            )))
         }
     }
 }
@@ -648,7 +665,9 @@ pub async fn batch_delete_customers(
     }
 
     if req.ids.is_empty() {
-        return Json(api_error(400, "请选择要删除的客户"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "请选择要删除的客户".to_string(),
+        )));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -674,7 +693,9 @@ pub async fn batch_delete_customers(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             // 批量删除客户后失效缓存
@@ -707,7 +728,9 @@ pub async fn batch_delete_customers(
         }
         Err(e) => {
             tracing::error!("批量删除客户失败: {}", e);
-            Json(api_error(500, "批量删除客户失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "批量删除客户失败".to_string(),
+            )))
         }
     }
 }
@@ -777,7 +800,11 @@ pub async fn start_customer_approval(
 
     let customer = match customer {
         Ok(c) => c,
-        Err(_) => return Json(api_error(404, "客户不存在")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户不存在".to_string(),
+            )))
+        }
     };
     let old_approval_status = customer.approval_status.clone();
     let new_approval_status = "pending".to_string();
@@ -813,7 +840,9 @@ pub async fn start_customer_approval(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -910,7 +939,11 @@ pub async fn approve_customer(
 
     let customer = match customer {
         Ok(c) => c,
-        Err(_) => return Json(api_error(404, "客户不存在")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户不存在".to_string(),
+            )))
+        }
     };
     let old_approval_status = customer.approval_status.clone();
     let new_approval_status = "approved".to_string();
@@ -925,7 +958,9 @@ pub async fn approve_customer(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -1019,7 +1054,11 @@ pub async fn reject_customer(
 
     let customer = match customer {
         Ok(c) => c,
-        Err(_) => return Json(api_error(404, "客户不存在")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户不存在".to_string(),
+            )))
+        }
     };
     let old_approval_status = customer.approval_status.clone();
     let new_approval_status = "rejected".to_string();
@@ -1034,7 +1073,9 @@ pub async fn reject_customer(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -1299,7 +1340,9 @@ pub async fn get_customer_finance(
         }
         Err(e) => {
             tracing::error!("获取客户财务信息失败: {}", e);
-            Json(api_error(500, "获取客户财务信息失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户财务信息失败".to_string(),
+            )))
         }
     }
 }
@@ -1405,7 +1448,9 @@ pub async fn update_customer_finance(
             }
             Err(e) => {
                 tracing::error!("读取客户财务现值失败: {}", e);
-                return Json(api_error(500, "更新客户财务信息失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "更新客户财务信息失败".to_string(),
+                )));
             }
         }
     };
@@ -1512,14 +1557,18 @@ pub async fn update_customer_finance(
                 Ok(_) => Json(ApiResponse::success(merged, "更新客户财务信息成功")),
                 Err(e) => {
                     tracing::error!("插入客户财务信息失败: {}", e);
-                    Json(api_error(500, "更新客户财务信息失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "更新客户财务信息失败".to_string(),
+                    )))
                 }
             }
         }
         Ok(_) => Json(ApiResponse::success(merged, "更新客户财务信息成功")),
         Err(e) => {
             tracing::error!("更新客户财务信息失败: {}", e);
-            Json(api_error(500, "更新客户财务信息失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新客户财务信息失败".to_string(),
+            )))
         }
     }
 }

@@ -22,7 +22,8 @@ use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 // ---------------------------------------------------------------------------
 // 数据模型
 // ---------------------------------------------------------------------------
@@ -394,7 +395,9 @@ pub async fn analyze_rfm(
         Ok(rows) => rows,
         Err(e) => {
             tracing::error!("[rfm] 查询客户订单聚合失败: {}", e);
-            return Json(api_error(500, "RFM 分析失败：无法查询订单数据"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "RFM 分析失败：无法查询订单数据".to_string(),
+            )));
         }
     };
 
@@ -436,7 +439,9 @@ pub async fn analyze_rfm(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(records, "RFM 分析完成"))
@@ -512,7 +517,9 @@ pub async fn get_segments(
         Ok(rows) => rows.into_iter().map(|r| (r.segment.clone(), r)).collect(),
         Err(e) => {
             tracing::error!("[rfm] 查询分群统计失败: {}", e);
-            return Json(api_error(500, "获取分群统计失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "获取分群统计失败".to_string(),
+            )));
         }
     };
 
@@ -641,10 +648,14 @@ async fn get_customer_rfm(
             };
             Json(ApiResponse::success(record, "获取客户 RFM 记录成功"))
         }
-        Ok(None) => Json(api_error(404, "未找到该客户的 RFM 记录，请先执行 RFM 分析")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "未找到该客户的 RFM 记录，请先执行 RFM 分析".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("[rfm] 查询客户 RFM 记录失败: {}", e);
-            Json(api_error(500, "获取客户 RFM 记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户 RFM 记录失败".to_string(),
+            )))
         }
     }
 }

@@ -22,8 +22,8 @@ use crate::modules::scoring_logic::{
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct BatchCalculateRequest {
@@ -137,7 +137,9 @@ pub async fn list_customer_scores(
         }
         Err(e) => {
             tracing::error!("获取客户评分列表失败: {}", e);
-            Json(api_error(500, "获取客户评分列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户评分列表失败".to_string(),
+            )))
         }
     }
 }
@@ -195,10 +197,14 @@ pub async fn get_customer_score(
 
     match result {
         Ok(Some(score)) => Json(ApiResponse::success(score, "获取客户评分成功")),
-        Ok(None) => Json(api_error(404, "客户评分不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "客户评分不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取客户评分失败: {}", e);
-            Json(api_error(500, "获取客户评分失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户评分失败".to_string(),
+            )))
         }
     }
 }
@@ -242,8 +248,12 @@ async fn create_customer_score(
 
     let customer_name = match customer {
         Ok(Some(name)) => name,
-        Ok(None) => return Json(api_error(400, "客户不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询客户失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "客户不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询客户失败", e))),
     };
 
     let id = Uuid::new_v4();
@@ -300,7 +310,9 @@ async fn create_customer_score(
         Err(e) => {
             tracing::error!("创建客户评分失败: {}", e);
             (
-                Json(api_error(500, "客户评分创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "客户评分创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -309,7 +321,9 @@ async fn create_customer_score(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -381,8 +395,17 @@ async fn update_customer_score(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(api_error(404, "客户评分不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询客户评分失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户评分不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询客户评分失败",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -418,7 +441,9 @@ async fn update_customer_score(
         Err(e) => {
             tracing::error!("更新客户评分失败: {}", e);
             (
-                Json(api_error(500, "客户评分更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "客户评分更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -427,7 +452,9 @@ async fn update_customer_score(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -500,14 +527,18 @@ async fn delete_customer_score(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "客户评分不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户评分不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("客户评分不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除客户评分失败: {}", e);
             (
-                Json(api_error(500, "客户评分删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "客户评分删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -516,7 +547,9 @@ async fn delete_customer_score(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -574,7 +607,9 @@ pub async fn batch_calculate(
     }
 
     if req.customer_ids.is_empty() {
-        return Json(api_error(400, "请选择要计算评分的客户"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "请选择要计算评分的客户".to_string(),
+        )));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -708,7 +743,9 @@ pub async fn batch_calculate(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success(

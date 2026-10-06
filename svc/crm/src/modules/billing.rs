@@ -13,8 +13,8 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -127,7 +127,9 @@ pub async fn list_billing_records(
         }
         Err(e) => {
             tracing::error!("获取账单列表失败: {}", e);
-            Json(api_error(500, "获取账单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取账单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -185,10 +187,14 @@ pub async fn get_billing_record(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "获取账单成功")),
-        Ok(None) => Json(api_error(404, "账单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "账单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取账单失败: {}", e);
-            Json(api_error(500, "获取账单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取账单失败".to_string(),
+            )))
         }
     }
 }
@@ -274,7 +280,9 @@ async fn create_billing_record(
         }
         Err(e) => {
             tracing::error!("创建账单失败: {}", e);
-            Json(api_error(500, "创建账单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建账单失败".to_string(),
+            )))
         }
     }
 }
@@ -342,10 +350,14 @@ async fn update_billing_record(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "更新账单成功")),
-        Ok(None) => Json(api_error(404, "账单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "账单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新账单失败: {}", e);
-            Json(api_error(500, "更新账单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新账单失败".to_string(),
+            )))
         }
     }
 }
@@ -390,10 +402,14 @@ async fn delete_billing_record(
             serde_json::json!({ "deleted": true }),
             "删除账单成功",
         )),
-        Ok(_) => Json(api_error(404, "账单不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "账单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除账单失败: {}", e);
-            Json(api_error(500, "删除账单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除账单失败".to_string(),
+            )))
         }
     }
 }
@@ -456,10 +472,14 @@ pub async fn mark_billing_paid(
             serde_json::json!({ "id": id, "status": "paid", "paid_at": now }),
             "标记已收款成功",
         )),
-        Ok(_) => Json(api_error(404, "账单不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "账单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("标记已收款失败: {}", e);
-            Json(api_error(500, "标记已收款失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "标记已收款失败".to_string(),
+            )))
         }
     }
 }
@@ -513,7 +533,9 @@ pub async fn send_billing_notification(
     .unwrap_or(0);
 
     if exists == 0 {
-        return Json(api_error(404, "账单不存在"));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "账单不存在".to_string(),
+        )));
     }
     // 通知设施为后续专项（站内信/邮件）；当前记录日志并返回已入队
     tracing::info!("[crm] 账单催款通知已入队 - id={}", id);

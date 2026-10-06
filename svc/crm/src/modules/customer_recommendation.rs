@@ -13,8 +13,8 @@ use super::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Serialize)]
 pub struct RecommendationResult {
@@ -158,7 +158,9 @@ pub async fn list_recommendations(
         }
         Err(e) => {
             tracing::error!("获取推荐列表失败: {}", e);
-            Json(api_error(500, "获取推荐列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取推荐列表失败".to_string(),
+            )))
         }
     }
 }
@@ -218,10 +220,14 @@ pub async fn get_recommendation(
                 "获取推荐成功",
             ))
         }
-        Ok(None) => Json(api_error(404, "推荐记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "推荐记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取推荐失败: {}", e);
-            Json(api_error(500, "获取推荐失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取推荐失败".to_string(),
+            )))
         }
     }
 }
@@ -252,8 +258,12 @@ async fn create_recommendation(
 
     let customer_name = match customer_name_result {
         Ok(Some(name)) => name,
-        Ok(None) => return Json(api_error(400, "客户不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询客户失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "客户不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询客户失败", e))),
     };
 
     let top_k = req.top_k.unwrap_or(10);
@@ -297,7 +307,9 @@ async fn create_recommendation(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             let items: Vec<RecommendationItem> =
@@ -317,7 +329,9 @@ async fn create_recommendation(
         }
         Err(e) => {
             tracing::error!("创建推荐失败: {}", e);
-            Json(api_error(500, "创建推荐失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建推荐失败".to_string(),
+            )))
         }
     }
 }
@@ -363,8 +377,12 @@ pub async fn get_customer_recommendations(
 
     let customer_name = match customer_name_result {
         Ok(Some(name)) => name,
-        Ok(None) => return Json(api_error(404, "客户不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询客户失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户不存在".to_string(),
+            )))
+        }
+        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询客户失败", e))),
     };
 
     let rec_type = params.recommendation_type.as_deref().unwrap_or("product");

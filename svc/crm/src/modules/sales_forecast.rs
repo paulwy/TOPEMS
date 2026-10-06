@@ -16,8 +16,8 @@ use crate::models::{CreateSalesForecastRequest, SalesForecast, SalesForecastQuer
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -129,7 +129,9 @@ pub async fn list_sales_forecasts(
         }
         Err(e) => {
             tracing::error!("获取销售预测列表失败: {}", e);
-            Json(api_error(500, "获取销售预测列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取销售预测列表失败".to_string(),
+            )))
         }
     }
 }
@@ -174,10 +176,14 @@ async fn get_sales_forecast(
 
     match result {
         Ok(Some(forecast)) => Json(ApiResponse::success(forecast, "获取销售预测成功")),
-        Ok(None) => Json(api_error(404, "销售预测不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "销售预测不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取销售预测失败: {}", e);
-            Json(api_error(500, "获取销售预测失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取销售预测失败".to_string(),
+            )))
         }
     }
 }
@@ -199,7 +205,9 @@ async fn create_sales_forecast(
     }
 
     if req.period_type.is_empty() || req.period.is_empty() {
-        return Json(api_error(400, "周期类型和周期不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "周期类型和周期不能为空".to_string(),
+        )));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -249,7 +257,9 @@ async fn create_sales_forecast(
         Err(e) => {
             tracing::error!("创建销售预测失败: {}", e);
             (
-                Json(api_error(500, "销售预测创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "销售预测创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -259,7 +269,9 @@ async fn create_sales_forecast(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -319,7 +331,9 @@ pub async fn generate_forecast(
     }
 
     if req.period_type.is_empty() || req.period.is_empty() {
-        return Json(api_error(400, "周期类型和周期不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "周期类型和周期不能为空".to_string(),
+        )));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -377,14 +391,18 @@ pub async fn generate_forecast(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("提交事务失败: {}", e);
-                    return Json(api_error(500, "事务提交失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
                 }
             }
             Json(ApiResponse::success(forecast, "销售预测生成成功"))
         }
         Err(e) => {
             tracing::error!("生成销售预测失败: {}", e);
-            Json(api_error(500, "销售预测生成失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "销售预测生成失败".to_string(),
+            )))
         }
     }
 }
@@ -429,8 +447,17 @@ async fn update_sales_forecast(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(api_error(404, "销售预测不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询销售预测失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "销售预测不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询销售预测失败",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -489,7 +516,9 @@ async fn update_sales_forecast(
         Err(e) => {
             tracing::error!("更新销售预测失败: {}", e);
             (
-                Json(api_error(500, "销售预测更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "销售预测更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -499,7 +528,9 @@ async fn update_sales_forecast(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -573,14 +604,18 @@ async fn delete_sales_forecast(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "销售预测不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "销售预测不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("销售预测不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除销售预测失败: {}", e);
             (
-                Json(api_error(500, "销售预测删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "销售预测删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -590,7 +625,9 @@ async fn delete_sales_forecast(
         if let Some(t) = guard.take() {
             if let Err(e) = t.commit().await {
                 tracing::error!("提交事务失败: {}", e);
-                return Json(api_error(500, "事务提交失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "事务提交失败".to_string(),
+                )));
             }
         }
     }
@@ -745,7 +782,9 @@ pub async fn get_sales_trend(
         }
         Err(e) => {
             tracing::error!("获取销售趋势数据失败: {}", e);
-            Json(api_error(500, "获取销售趋势数据失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取销售趋势数据失败".to_string(),
+            )))
         }
     }
 }
@@ -797,7 +836,9 @@ pub async fn compare_sales_forecasts(
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
 
     if periods.len() < 2 {
-        return Json(api_error(400, "至少需要对比两个周期"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "至少需要对比两个周期".to_string(),
+        )));
     }
 
     let result = sqlx::query(
@@ -900,7 +941,9 @@ pub async fn compare_sales_forecasts(
         }
         Err(e) => {
             tracing::error!("销售预测对比分析失败: {}", e);
-            Json(api_error(500, "销售预测对比分析失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "销售预测对比分析失败".to_string(),
+            )))
         }
     }
 }
@@ -1061,7 +1104,9 @@ pub async fn get_accuracy_report(
         }
         Err(e) => {
             tracing::error!("获取预测准确率报告失败: {}", e);
-            Json(api_error(500, "获取预测准确率报告失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取预测准确率报告失败".to_string(),
+            )))
         }
     }
 }

@@ -11,8 +11,8 @@ use super::ApiState;
 use crate::models::opportunity::Opportunity;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FunnelStage {
@@ -218,7 +218,9 @@ pub async fn get_funnel_metrics(
         }
         Err(e) => {
             tracing::error!("获取漏斗指标失败: {}", e);
-            Json(api_error(500, "获取销售漏斗指标失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取销售漏斗指标失败".to_string(),
+            )))
         }
     }
 }
@@ -353,7 +355,9 @@ pub async fn get_funnel_trend(
         }
         Err(e) => {
             tracing::error!("获取漏斗趋势失败: {}", e);
-            Json(api_error(500, "获取销售漏斗趋势失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取销售漏斗趋势失败".to_string(),
+            )))
         }
     }
 }
@@ -431,7 +435,9 @@ pub async fn get_stage_opportunities(
         }
         Err(e) => {
             tracing::error!("获取阶段商机失败: {}", e);
-            Json(api_error(500, "获取阶段商机失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取阶段商机失败".to_string(),
+            )))
         }
     }
 }

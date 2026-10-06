@@ -13,8 +13,8 @@ use super::ApiState;
 use crate::models::Customer;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Serialize)]
 pub struct CustomerProfile {
@@ -147,10 +147,16 @@ pub async fn get_customer_profile(
 
     let customer = match customer_result {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(api_error(404, "客户不存在")),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "客户不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("获取客户信息失败: {}", e);
-            return Json(api_error(500, "获取客户信息失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户信息失败".to_string(),
+            )));
         }
     };
 
@@ -408,14 +414,18 @@ pub async fn add_profile_tags(
 
         if let Err(e) = result {
             tracing::error!("添加标签失败: {}", e);
-            return Json(api_error(500, "添加标签失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "添加标签失败".to_string(),
+            )));
         }
     }
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success("".to_string(), "标签添加成功"))
@@ -460,14 +470,18 @@ pub async fn remove_profile_tags(
 
         if let Err(e) = result {
             tracing::error!("删除标签失败: {}", e);
-            return Json(api_error(500, "删除标签失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "删除标签失败".to_string(),
+            )));
         }
     }
 
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
     Json(ApiResponse::success("".to_string(), "标签删除成功"))
@@ -590,7 +604,9 @@ pub async fn list_customer_profiles(
         }
         Err(e) => {
             tracing::error!("获取客户画像列表失败: {}", e);
-            Json(api_error(500, "获取客户画像列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取客户画像列表失败".to_string(),
+            )))
         }
     }
 }

@@ -14,8 +14,8 @@ use crate::models::{Contact, CreateContactRequest, UpdateContactRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct ContactPaginationParams {
@@ -150,7 +150,9 @@ pub async fn list_contacts(
         }
         Err(e) => {
             tracing::error!("获取联系人列表失败: {}", e);
-            Json(api_error(500, "获取联系人列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取联系人列表失败".to_string(),
+            )))
         }
     }
 }
@@ -184,7 +186,9 @@ pub async fn create_contact(
     }
 
     if req.first_name.is_empty() {
-        return Json(api_error(400, "联系人名字不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "联系人名字不能为空".to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -234,7 +238,9 @@ pub async fn create_contact(
         Err(e) => {
             tracing::error!("创建联系人失败: {}", e);
             (
-                Json(api_error(500, "联系人创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "联系人创建失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -322,10 +328,14 @@ pub async fn get_contact(
 
     match result {
         Ok(Some(contact)) => Json(ApiResponse::success(contact, "获取联系人成功")),
-        Ok(None) => Json(api_error(404, "联系人不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "联系人不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取联系人失败: {}", e);
-            Json(api_error(500, "获取联系人失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取联系人失败".to_string(),
+            )))
         }
     }
 }
@@ -370,8 +380,17 @@ async fn update_contact(
 
     let existing = match existing {
         Ok(Some(c)) => c,
-        Ok(None) => return Json(api_error(404, "联系人不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询联系人失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "联系人不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询联系人失败",
+                e,
+            )))
+        }
     };
 
     let request_data = serde_json::to_value(&req).ok();
@@ -418,7 +437,9 @@ async fn update_contact(
         Err(e) => {
             tracing::error!("更新联系人失败: {}", e);
             (
-                Json(api_error(500, "联系人更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "联系人更新失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -489,7 +510,9 @@ async fn delete_contact(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -500,14 +523,18 @@ async fn delete_contact(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "联系人不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "联系人不存在".to_string(),
+            ))),
             "error".to_string(),
             Some("联系人不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除联系人失败: {}", e);
             (
-                Json(api_error(500, "联系人删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "联系人删除失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -568,7 +595,9 @@ pub async fn batch_delete_contacts(
     }
 
     if req.ids.is_empty() {
-        return Json(api_error(400, "请选择要删除的联系人"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "请选择要删除的联系人".to_string(),
+        )));
     }
 
     let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
@@ -593,7 +622,9 @@ pub async fn batch_delete_contacts(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -609,7 +640,9 @@ pub async fn batch_delete_contacts(
         Err(e) => {
             tracing::error!("批量删除联系人失败: {}", e);
             (
-                Json(api_error(500, "批量删除联系人失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "批量删除联系人失败".to_string(),
+                ))),
                 "error".to_string(),
                 Some(e.to_string()),
             )
@@ -709,7 +742,11 @@ pub async fn start_contact_approval(
 
     let contact = match contact {
         Ok(c) => c,
-        Err(_) => return Json(api_error(404, "联系人不存在")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "联系人不存在".to_string(),
+            )))
+        }
     };
     let old_approval_status = contact.approval_status.clone();
     let new_approval_status = "pending".to_string();
@@ -745,7 +782,9 @@ pub async fn start_contact_approval(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -844,7 +883,11 @@ pub async fn approve_contact(
 
     let contact = match contact {
         Ok(c) => c,
-        Err(_) => return Json(api_error(404, "联系人不存在")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "联系人不存在".to_string(),
+            )))
+        }
     };
     let old_approval_status = contact.approval_status.clone();
     let new_approval_status = "approved".to_string();
@@ -859,7 +902,9 @@ pub async fn approve_contact(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
@@ -955,7 +1000,11 @@ pub async fn reject_contact(
 
     let contact = match contact {
         Ok(c) => c,
-        Err(_) => return Json(api_error(404, "联系人不存在")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "联系人不存在".to_string(),
+            )))
+        }
     };
     let old_approval_status = contact.approval_status.clone();
     let new_approval_status = "rejected".to_string();
@@ -970,7 +1019,9 @@ pub async fn reject_contact(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("提交事务失败: {}", e);
-            return Json(api_error(500, "事务提交失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
         }
     }
 
