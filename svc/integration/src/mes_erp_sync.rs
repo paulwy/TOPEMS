@@ -228,7 +228,7 @@ impl MesErpSyncService {
             .timeout(Duration::from_secs(30))
             .send()
             .await
-            .map_err(|e| format!("请求MES服务失败: {}", e))?;
+            .map_err(|e| TopemsError::NetworkRequest(format!("请求MES服务失败: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -239,7 +239,7 @@ impl MesErpSyncService {
         let result: serde_json::Value = response
             .json()
             .await
-            .map_err(|e| format!("解析MES响应失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析MES响应失败: {}", e)))?;
 
         if result.get("code").and_then(|v| v.as_i64()) != Some(0)
             && result.get("success").and_then(|v| v.as_bool()) != Some(true)
@@ -364,7 +364,7 @@ impl MesErpSyncService {
             .timeout(Duration::from_secs(30))
             .send()
             .await
-            .map_err(|e| format!("请求ERP服务失败: {}", e))?;
+            .map_err(|e| TopemsError::NetworkRequest(format!("请求ERP服务失败: {}", e)))?;
 
         if !response.status().is_success() {
             let status = response.status();
@@ -375,7 +375,7 @@ impl MesErpSyncService {
         let result: serde_json::Value = response
             .json()
             .await
-            .map_err(|e| format!("解析ERP响应失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析ERP响应失败: {}", e)))?;
 
         if result.get("code").and_then(|v| v.as_i64()) != Some(0)
             && result.get("success").and_then(|v| v.as_bool()) != Some(true)
@@ -409,7 +409,7 @@ impl MesErpSyncService {
             .timeout(Duration::from_secs(30))
             .send()
             .await
-            .map_err(|e| format!("获取ERP订单失败: {}", e))?;
+            .map_err(|e| TopemsError::NetworkRequest(format!("获取ERP订单失败: {}", e)))?;
 
         if !response.status().is_success() {
             return Err(TopemsError::BusinessLogic(format!("获取ERP订单失败: HTTP {}", response.status())));
@@ -418,7 +418,7 @@ impl MesErpSyncService {
         let result: serde_json::Value = response
             .json()
             .await
-            .map_err(|e| format!("解析ERP订单响应失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析ERP订单响应失败: {}", e)))?;
 
         let data = result.get("data").unwrap_or(&result);
 
@@ -497,7 +497,7 @@ impl MesErpSyncService {
             .timeout(Duration::from_secs(30))
             .send()
             .await
-            .map_err(|e| format!("获取MES订单失败: {}", e))?;
+            .map_err(|e| TopemsError::NetworkRequest(format!("获取MES订单失败: {}", e)))?;
 
         if !response.status().is_success() {
             return Err(TopemsError::BusinessLogic(format!("获取MES订单失败: HTTP {}", response.status())));
@@ -506,7 +506,7 @@ impl MesErpSyncService {
         let result: serde_json::Value = response
             .json()
             .await
-            .map_err(|e| format!("解析MES订单响应失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析MES订单响应失败: {}", e)))?;
 
         let data = result.get("data").unwrap_or(&result);
 
@@ -538,7 +538,7 @@ impl MesErpSyncService {
         &self,
         tenant_id: Uuid,
         mes_order_id: Uuid,
-    ) -> Result<Option<Uuid>, String> {
+    ) -> Result<Option<Uuid>, TopemsError> {
         let result = sqlx::query_scalar::<_, Option<Uuid>>(only_own_schema_query!(
             "integration",
             "SELECT erp_order_id FROM integration.mes_erp_sync 
@@ -549,7 +549,7 @@ impl MesErpSyncService {
         .bind(mes_order_id)
         .fetch_optional(&self.pool)
         .await
-        .map_err(|e| format!("查询ERP订单ID失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询ERP订单ID失败: {}", e)))?;
 
         Ok(result.flatten())
     }
@@ -566,7 +566,7 @@ impl MesErpSyncService {
         order_number: &str,
         sync_type: &str,
         payload: Option<serde_json::Value>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let now = Utc::now();
 
         sqlx::query(only_own_schema_query!(
@@ -590,7 +590,7 @@ impl MesErpSyncService {
         .bind(now.naive_utc())
         .execute(&self.pool)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
         Ok(())
     }
@@ -599,7 +599,7 @@ impl MesErpSyncService {
         &self,
         sync_id: Uuid,
         mes_order_id: Option<Uuid>,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let now = Utc::now();
 
         if let Some(mes_id) = mes_order_id {
@@ -620,7 +620,7 @@ impl MesErpSyncService {
             .bind(now.naive_utc())
             .execute(&self.pool)
             .await
-            .map_err(|e| format!("更新同步记录失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步记录失败: {}", e)))?;
         } else {
             sqlx::query(only_own_schema_query!(
                 "integration",
@@ -637,7 +637,7 @@ impl MesErpSyncService {
             .bind(now.naive_utc())
             .execute(&self.pool)
             .await
-            .map_err(|e| format!("更新同步记录失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步记录失败: {}", e)))?;
         }
 
         Ok(())
@@ -648,7 +648,7 @@ impl MesErpSyncService {
         sync_id: Uuid,
         error: &str,
         retry_count: i32,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let now = Utc::now();
 
         sqlx::query(only_own_schema_query!(
@@ -668,7 +668,7 @@ impl MesErpSyncService {
         .bind(now.naive_utc())
         .execute(&self.pool)
         .await
-        .map_err(|e| format!("更新同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步记录失败: {}", e)))?;
 
         Ok(())
     }
@@ -681,7 +681,7 @@ impl MesErpSyncService {
         status: &str,
         error_message: Option<&str>,
         attempt: i32,
-    ) -> Result<(), String> {
+    ) -> Result<(), TopemsError> {
         let id = Uuid::new_v4();
         let now = Utc::now();
 
@@ -704,7 +704,7 @@ impl MesErpSyncService {
         .bind(now.naive_utc())
         .execute(&self.pool)
         .await
-        .map_err(|e| format!("添加同步日志失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("添加同步日志失败: {}", e)))?;
 
         Ok(())
     }
@@ -725,7 +725,7 @@ impl MesErpSyncService {
         .bind(sync_id)
         .fetch_optional(&self.pool)
         .await
-        .map_err(|e| format!("查询同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))?;
 
         let sync_record = match sync_record {
             Some(r) => r,
@@ -765,7 +765,7 @@ impl MesErpSyncService {
         status: Option<&str>,
         limit: i64,
         offset: i64,
-    ) -> Result<Vec<MesErpSyncRecord>, String> {
+    ) -> Result<Vec<MesErpSyncRecord>, TopemsError> {
         sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"
@@ -785,10 +785,10 @@ impl MesErpSyncService {
         .bind(offset)
         .fetch_all(&self.pool)
         .await
-        .map_err(|e| format!("查询同步记录失败: {}", e))
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))
     }
 
-    pub async fn get_sync_record(&self, sync_id: Uuid) -> Result<Option<MesErpSyncRecord>, String> {
+    pub async fn get_sync_record(&self, sync_id: Uuid) -> Result<Option<MesErpSyncRecord>, TopemsError> {
         sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"
@@ -802,10 +802,10 @@ impl MesErpSyncService {
         .bind(sync_id)
         .fetch_optional(&self.pool)
         .await
-        .map_err(|e| format!("查询同步记录失败: {}", e))
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))
     }
 
-    pub async fn get_sync_logs(&self, sync_id: Uuid) -> Result<Vec<SyncLog>, String> {
+    pub async fn get_sync_logs(&self, sync_id: Uuid) -> Result<Vec<SyncLog>, TopemsError> {
         sqlx::query_as::<_, SyncLog>(only_own_schema_query!(
             "integration",
             r#"
@@ -819,7 +819,7 @@ impl MesErpSyncService {
         .bind(sync_id)
         .fetch_all(&self.pool)
         .await
-        .map_err(|e| format!("查询同步日志失败: {}", e))
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步日志失败: {}", e)))
     }
 }
 

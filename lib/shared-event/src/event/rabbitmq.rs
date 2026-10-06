@@ -1183,7 +1183,7 @@ mod tests {
         assert!(result.is_err());
         let err = result.unwrap_err();
         assert!(
-            err.contains("解析事件 payload 失败"),
+            err.to_string().contains("解析事件 payload 失败"),
             "错误信息应包含 '解析事件 payload 失败': {}",
             err
         );

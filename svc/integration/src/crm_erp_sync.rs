@@ -384,7 +384,7 @@ pub async fn sync_customer(
     );
 
     let customer_id =
-        Uuid::parse_str(&req.customer_id).map_err(|e| format!("无效的客户ID: {}", e))?;
+        Uuid::parse_str(&req.customer_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的客户ID: {}", e)))?;
 
     let (customer_data, direction) = match req.source_system.as_str() {
         "crm" => {
@@ -426,7 +426,7 @@ pub async fn sync_customer(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "erp_customer_id": erp_customer_id,
@@ -442,7 +442,7 @@ pub async fn sync_customer(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!(
                 "客户数据从CRM同步到ERP成功 - 同步ID: {}, ERP客户ID: {}",
@@ -476,7 +476,7 @@ pub async fn sync_customer(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "crm_customer_id": crm_customer_id,
@@ -492,7 +492,7 @@ pub async fn sync_customer(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!(
                 "客户数据从ERP同步到CRM成功 - 同步ID: {}, CRM客户ID: {}",
@@ -517,7 +517,7 @@ pub async fn sync_contact(
     );
 
     let contact_id =
-        Uuid::parse_str(&req.contact_id).map_err(|e| format!("无效的联系人ID: {}", e))?;
+        Uuid::parse_str(&req.contact_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的联系人ID: {}", e)))?;
 
     let (contact_data, direction) = match req.source_system.as_str() {
         "crm" => {
@@ -552,7 +552,7 @@ pub async fn sync_contact(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "erp_contact_id": erp_contact_id,
@@ -568,7 +568,7 @@ pub async fn sync_contact(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!("联系人数据从CRM同步到ERP成功 - 同步ID: {}", updated.id);
             Ok(updated)
@@ -593,7 +593,7 @@ pub async fn sync_contact(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "crm_contact_id": crm_contact_id,
@@ -609,7 +609,7 @@ pub async fn sync_contact(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!("联系人数据从ERP同步到CRM成功 - 同步ID: {}", updated.id);
             Ok(updated)
@@ -628,7 +628,7 @@ pub async fn convert_opportunity_to_order(
     info!("商机转订单 - 商机ID: {}", req.opportunity_id);
 
     let opportunity_id =
-        Uuid::parse_str(&req.opportunity_id).map_err(|e| format!("无效的商机ID: {}", e))?;
+        Uuid::parse_str(&req.opportunity_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的商机ID: {}", e)))?;
 
     let opportunity_data = fetch_crm_opportunity(pool, crm_url, opportunity_id).await?;
 
@@ -666,7 +666,7 @@ pub async fn convert_opportunity_to_order(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "erp_order_id": erp_order_id,
@@ -683,7 +683,7 @@ pub async fn convert_opportunity_to_order(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!(
         "商机转订单成功 - 同步ID: {}, ERP订单ID: {}",
@@ -999,7 +999,7 @@ pub async fn retry_failed_sync(
 
     let sync = get_crm_erp_sync(pool, sync_id)
         .await
-        .map_err(|e| format!("获取同步记录失败: {}", e))?
+        .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {

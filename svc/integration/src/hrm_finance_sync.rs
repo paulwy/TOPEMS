@@ -370,7 +370,7 @@ pub async fn sync_payroll(
     );
 
     let payroll_id =
-        Uuid::parse_str(&req.payroll_id).map_err(|e| format!("无效的薪资ID: {}", e))?;
+        Uuid::parse_str(&req.payroll_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的薪资ID: {}", e)))?;
 
     let payroll_data = fetch_hrm_payroll(pool, hrm_url, payroll_id).await?;
 
@@ -402,7 +402,7 @@ pub async fn sync_payroll(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "finance_payroll_id": finance_payroll_id,
@@ -419,7 +419,7 @@ pub async fn sync_payroll(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!(
         "薪资数据从HRM同步到Finance成功 - 同步ID: {}, Finance薪资ID: {}",
@@ -441,7 +441,7 @@ pub async fn sync_employee(
     );
 
     let employee_id =
-        Uuid::parse_str(&req.employee_id).map_err(|e| format!("无效的员工ID: {}", e))?;
+        Uuid::parse_str(&req.employee_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
 
     let (employee_data, direction) = match req.source_system.as_str() {
         "hrm" => {
@@ -480,7 +480,7 @@ pub async fn sync_employee(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "finance_employee_id": finance_employee_id,
@@ -496,7 +496,7 @@ pub async fn sync_employee(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!("员工数据从HRM同步到Finance成功 - 同步ID: {}", updated.id);
             Ok(updated)
@@ -525,7 +525,7 @@ pub async fn sync_employee(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "hrm_employee_id": hrm_employee_id,
@@ -541,7 +541,7 @@ pub async fn sync_employee(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!("员工数据从Finance同步到HRM成功 - 同步ID: {}", updated.id);
             Ok(updated)
@@ -563,7 +563,7 @@ pub async fn sync_social_insurance(
     );
 
     let employee_id =
-        Uuid::parse_str(&req.employee_id).map_err(|e| format!("无效的员工ID: {}", e))?;
+        Uuid::parse_str(&req.employee_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
 
     let insurance_data =
         fetch_hrm_social_insurance(pool, hrm_url, employee_id, &req.pay_period).await?;
@@ -595,7 +595,7 @@ pub async fn sync_social_insurance(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "finance_insurance_id": finance_insurance_id,
@@ -612,7 +612,7 @@ pub async fn sync_social_insurance(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!("社保数据同步成功 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -631,7 +631,7 @@ pub async fn sync_housing_fund(
     );
 
     let employee_id =
-        Uuid::parse_str(&req.employee_id).map_err(|e| format!("无效的员工ID: {}", e))?;
+        Uuid::parse_str(&req.employee_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
 
     let fund_data = fetch_hrm_housing_fund(pool, hrm_url, employee_id, &req.pay_period).await?;
 
@@ -662,7 +662,7 @@ pub async fn sync_housing_fund(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "finance_fund_id": finance_fund_id,
@@ -679,7 +679,7 @@ pub async fn sync_housing_fund(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!("公积金数据同步成功 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -1022,7 +1022,7 @@ pub async fn retry_failed_sync(
 
     let sync = get_hrm_finance_sync(pool, sync_id)
         .await
-        .map_err(|e| format!("获取同步记录失败: {}", e))?
+        .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {

@@ -404,7 +404,7 @@ pub async fn trigger_qms_inspection(
     info!("触发QMS质检任务 - 生产记录ID: {}", req.production_record_id);
 
     let record_id = Uuid::parse_str(&req.production_record_id)
-        .map_err(|e| format!("无效的生产记录ID: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的生产记录ID: {}", e)))?;
 
     let production_data = fetch_mes_production_record(pool, mes_url, record_id).await?;
 
@@ -473,7 +473,7 @@ pub async fn trigger_qms_inspection(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "inspection_id": qms_inspection_id,
@@ -490,7 +490,7 @@ pub async fn trigger_qms_inspection(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!(
         "QMS质检任务创建成功 - 同步ID: {}, 质检ID: {}",
@@ -510,7 +510,7 @@ pub async fn sync_quality_result_to_mes(
     info!("同步QMS质检结果到MES - 质检ID: {}", req.inspection_id);
 
     let inspection_id =
-        Uuid::parse_str(&req.inspection_id).map_err(|e| format!("无效的质检ID: {}", e))?;
+        Uuid::parse_str(&req.inspection_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的质检ID: {}", e)))?;
 
     let inspection_data = fetch_qms_inspection(pool, qms_url, inspection_id).await?;
 
@@ -585,7 +585,7 @@ pub async fn sync_quality_result_to_mes(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "mes_record_id": mes_record_id_str,
@@ -602,7 +602,7 @@ pub async fn sync_quality_result_to_mes(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!("质检结果同步到MES成功 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -618,7 +618,7 @@ pub async fn sync_trace_chain_data(
 ) -> Result<MesQmsSync, String> {
     info!("同步质量追溯链数据 - 工单ID: {}", req.order_id);
 
-    let order_id = Uuid::parse_str(&req.order_id).map_err(|e| format!("无效的工单ID: {}", e))?;
+    let order_id = Uuid::parse_str(&req.order_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的工单ID: {}", e)))?;
 
     let direction = req.direction.as_deref().unwrap_or("forward");
 
@@ -655,7 +655,7 @@ pub async fn sync_trace_chain_data(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "trace_direction": direction,
@@ -679,7 +679,7 @@ pub async fn sync_trace_chain_data(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!("追溯链数据同步成功 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -696,7 +696,7 @@ pub async fn handle_defect_handling(
     info!("处理不合格品流程联动 - 质检ID: {}", req.inspection_id);
 
     let inspection_id =
-        Uuid::parse_str(&req.inspection_id).map_err(|e| format!("无效的质检ID: {}", e))?;
+        Uuid::parse_str(&req.inspection_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的质检ID: {}", e)))?;
 
     let handling_result = match req.handling_type.as_str() {
         "rework" => {
@@ -789,7 +789,7 @@ pub async fn handle_defect_handling(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "handling_result": handling_result,
@@ -806,7 +806,7 @@ pub async fn handle_defect_handling(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!("不合格品处理联动完成 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -1118,7 +1118,7 @@ pub async fn retry_failed_sync(
 
     let sync = get_mes_qms_sync(pool, sync_id)
         .await
-        .map_err(|e| format!("获取同步记录失败: {}", e))?
+        .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {

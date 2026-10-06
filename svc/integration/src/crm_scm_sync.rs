@@ -371,7 +371,7 @@ pub async fn convert_opportunity_to_purchase(
     info!("商机转采购订单 - 商机ID: {}", req.opportunity_id);
 
     let opportunity_id =
-        Uuid::parse_str(&req.opportunity_id).map_err(|e| format!("无效的商机ID: {}", e))?;
+        Uuid::parse_str(&req.opportunity_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的商机ID: {}", e)))?;
 
     let opportunity_data = fetch_crm_opportunity(pool, crm_url, opportunity_id).await?;
 
@@ -410,7 +410,7 @@ pub async fn convert_opportunity_to_purchase(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "scm_purchase_order_id": scm_purchase_order_id,
@@ -426,7 +426,7 @@ pub async fn convert_opportunity_to_purchase(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!(
         "商机转采购订单成功 - 同步ID: {}, SCM采购订单ID: {}",
@@ -448,7 +448,7 @@ pub async fn sync_supplier(
     );
 
     let supplier_id =
-        Uuid::parse_str(&req.supplier_id).map_err(|e| format!("无效的供应商ID: {}", e))?;
+        Uuid::parse_str(&req.supplier_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的供应商ID: {}", e)))?;
 
     let (supplier_data, direction) = match req.source_system.as_str() {
         "crm" => {
@@ -491,7 +491,7 @@ pub async fn sync_supplier(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "scm_supplier_id": scm_supplier_id,
@@ -507,7 +507,7 @@ pub async fn sync_supplier(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!("供应商数据从CRM同步到SCM成功 - 同步ID: {}", updated.id);
             Ok(updated)
@@ -540,7 +540,7 @@ pub async fn sync_supplier(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "crm_supplier_id": crm_supplier_id,
@@ -556,7 +556,7 @@ pub async fn sync_supplier(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!("供应商数据从SCM同步到CRM成功 - 同步ID: {}", updated.id);
             Ok(updated)
@@ -578,7 +578,7 @@ pub async fn sync_product(
     );
 
     let product_id =
-        Uuid::parse_str(&req.product_id).map_err(|e| format!("无效的产品ID: {}", e))?;
+        Uuid::parse_str(&req.product_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的产品ID: {}", e)))?;
 
     let (product_data, direction) = match req.source_system.as_str() {
         "crm" => {
@@ -621,7 +621,7 @@ pub async fn sync_product(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "scm_product_id": scm_product_id,
@@ -637,7 +637,7 @@ pub async fn sync_product(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!("产品数据从CRM同步到SCM成功 - 同步ID: {}", updated.id);
             Ok(updated)
@@ -670,7 +670,7 @@ pub async fn sync_product(
 
             let sync_record = create_sync_record(pool, &sync_req)
                 .await
-                .map_err(|e| format!("创建同步记录失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
             let result_payload = serde_json::json!({
                 "crm_product_id": crm_product_id,
@@ -686,7 +686,7 @@ pub async fn sync_product(
                 Some(&result_payload),
             )
             .await
-            .map_err(|e| format!("更新同步状态失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
             info!("产品数据从SCM同步到CRM成功 - 同步ID: {}", updated.id);
             Ok(updated)
@@ -982,7 +982,7 @@ pub async fn retry_failed_sync(
 
     let sync = get_crm_scm_sync(pool, sync_id)
         .await
-        .map_err(|e| format!("获取同步记录失败: {}", e))?
+        .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {

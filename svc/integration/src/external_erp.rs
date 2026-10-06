@@ -556,7 +556,7 @@ async fn call_erp_api(
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
         .build()
-        .map_err(|e| format!("HTTP client build failed: {}", e))?;
+        .map_err(|e| TopemsError::NetworkRequest(format!("HTTP client build failed: {}", e)))?;
 
     let url = format!("{}{}", connection.api_url.trim_end_matches('/'), path);
     let mut request = match method {
@@ -586,7 +586,7 @@ async fn call_erp_api(
     let resp = request
         .send()
         .await
-        .map_err(|e| format!("HTTP request failed: {}", e))?;
+        .map_err(|e| TopemsError::NetworkRequest(format!("HTTP request failed: {}", e)))?;
     let status = resp.status();
 
     if !status.is_success() {
@@ -600,7 +600,7 @@ async fn call_erp_api(
     let data: serde_json::Value = resp
         .json()
         .await
-        .map_err(|e| format!("Failed to parse response: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("Failed to parse response: {}", e)))?;
     Ok(data)
 }
 
@@ -663,7 +663,7 @@ async fn write_to_staging(
             .bind(eid)
             .fetch_optional(pool)
             .await
-            .map_err(|e| format!("检查重复记录失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("检查重复记录失败: {}", e)))?;
 
             if exists.map(|(c,)| c > 0).unwrap_or(false) {
                 skipped += 1;

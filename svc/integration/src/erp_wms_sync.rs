@@ -377,7 +377,7 @@ pub async fn sync_order_to_wms(
         req.order_id, req.order_type
     );
 
-    let order_id = Uuid::parse_str(&req.order_id).map_err(|e| format!("无效的订单ID: {}", e))?;
+    let order_id = Uuid::parse_str(&req.order_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的订单ID: {}", e)))?;
 
     let order_data = fetch_erp_order(pool, erp_url, order_id).await?;
 
@@ -416,7 +416,7 @@ pub async fn sync_order_to_wms(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "wms_transaction_id": wms_transaction_id,
@@ -433,7 +433,7 @@ pub async fn sync_order_to_wms(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!(
         "ERP订单同步到WMS成功 - 同步ID: {}, WMS事务ID: {}",
@@ -452,7 +452,7 @@ pub async fn sync_stock_to_erp(
     info!("同步WMS库存到ERP - 产品ID: {}", req.product_id);
 
     let product_id =
-        Uuid::parse_str(&req.product_id).map_err(|e| format!("无效的产品ID: {}", e))?;
+        Uuid::parse_str(&req.product_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的产品ID: {}", e)))?;
 
     let stock_data =
         fetch_wms_stock(pool, wms_url, product_id, req.warehouse_code.as_deref()).await?;
@@ -492,7 +492,7 @@ pub async fn sync_stock_to_erp(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         "erp_inventory_id": erp_inventory_id,
@@ -508,7 +508,7 @@ pub async fn sync_stock_to_erp(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!("WMS库存同步到ERP成功 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -527,7 +527,7 @@ pub async fn sync_inventory_adjustment(
     );
 
     let adjustment_id =
-        Uuid::parse_str(&req.adjustment_id).map_err(|e| format!("无效的调整ID: {}", e))?;
+        Uuid::parse_str(&req.adjustment_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的调整ID: {}", e)))?;
 
     let adjustment_data = match req.adjustment_type.as_str() {
         "erp" => fetch_erp_inventory_adjustment(pool, erp_url, adjustment_id).await?,
@@ -596,7 +596,7 @@ pub async fn sync_inventory_adjustment(
 
     let sync_record = create_sync_record(pool, &sync_req)
         .await
-        .map_err(|e| format!("创建同步记录失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建同步记录失败: {}", e)))?;
 
     let result_payload = serde_json::json!({
         format!("{}_id", target_system): target_id,
@@ -613,7 +613,7 @@ pub async fn sync_inventory_adjustment(
         Some(&result_payload),
     )
     .await
-    .map_err(|e| format!("更新同步状态失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步状态失败: {}", e)))?;
 
     info!("库存调整同步成功 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -892,7 +892,7 @@ pub async fn retry_failed_sync(
 
     let sync = get_erp_wms_sync(pool, sync_id)
         .await
-        .map_err(|e| format!("获取同步记录失败: {}", e))?
+        .map_err(|e| TopemsError::DatabaseQuery(format!("获取同步记录失败: {}", e)))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
@@ -1118,7 +1118,7 @@ pub async fn get_last_sync_time(
     .bind(direction)
     .fetch_one(pool)
     .await
-    .map_err(|e| format!("获取上次同步时间失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("获取上次同步时间失败: {}", e)))?;
 
     Ok(row.try_get("last_sync").ok())
 }
@@ -1158,7 +1158,7 @@ pub async fn get_pending_syncs(
     .bind(since)
     .fetch_all(pool)
     .await
-    .map_err(|e| format!("获取待同步记录失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("获取待同步记录失败: {}", e)))?;
 
     let mut results = Vec::with_capacity(rows.len());
     for row in rows {

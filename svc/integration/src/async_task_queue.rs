@@ -7,6 +7,7 @@
 //! - 优先级调度
 //! - 租户隔离
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
@@ -133,7 +134,7 @@ pub async fn enqueue_task(
     .bind(scheduled_at)
     .fetch_one(pool)
     .await
-    .map_err(|e| format!("入队任务失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("入队任务失败: {}", e)))?;
 
     Ok(row_to_task(&row))
 }
@@ -177,7 +178,7 @@ pub async fn dequeue_task(
     .bind(limit)
     .fetch_all(pool)
     .await
-    .map_err(|e| format!("出队任务失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("出队任务失败: {}", e)))?;
 
     Ok(rows.iter().map(row_to_task).collect())
 }
@@ -206,7 +207,7 @@ pub async fn complete_task(
     .bind(result)
     .fetch_one(pool)
     .await
-    .map_err(|e| format!("标记任务完成失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("标记任务完成失败: {}", e)))?;
 
     Ok(row_to_task(&row))
 }
@@ -230,7 +231,7 @@ pub async fn fail_task(pool: &PgPool, task_id: Uuid, error: &str) -> Result<Asyn
     .bind(error)
     .fetch_one(pool)
     .await
-    .map_err(|e| format!("标记任务失败失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("标记任务失败失败: {}", e)))?;
 
     Ok(row_to_task(&row))
 }
@@ -268,7 +269,7 @@ pub async fn retry_task(
     .bind(scheduled_at)
     .fetch_one(pool)
     .await
-    .map_err(|e| format!("重试任务失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("重试任务失败: {}", e)))?;
 
     Ok(row_to_task(&row))
 }
@@ -296,7 +297,7 @@ pub async fn mark_max_retries_exceeded(
     .bind(error)
     .fetch_one(pool)
     .await
-    .map_err(|e| format!("标记任务超过最大重试次数失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("标记任务超过最大重试次数失败: {}", e)))?;
 
     Ok(row_to_task(&row))
 }
@@ -329,7 +330,7 @@ pub async fn get_task(pool: &PgPool, task_id: Uuid) -> Result<Option<AsyncTask>,
     .bind(task_id)
     .fetch_optional(pool)
     .await
-    .map_err(|e| format!("获取任务详情失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("获取任务详情失败: {}", e)))?;
 
     Ok(row.as_ref().map(row_to_task))
 }
@@ -362,7 +363,7 @@ pub async fn list_tasks(
     .bind(offset)
     .fetch_all(pool)
     .await
-    .map_err(|e| format!("列出任务失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("列出任务失败: {}", e)))?;
 
     Ok(rows.iter().map(row_to_task).collect())
 }
@@ -384,7 +385,7 @@ pub async fn get_task_stats(pool: &PgPool) -> Result<AsyncTaskStats, String> {
     )
     .fetch_one(pool)
     .await
-    .map_err(|e| format!("获取任务统计失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("获取任务统计失败: {}", e)))?;
 
     Ok(AsyncTaskStats {
         total: row.try_get("total").unwrap_or(0),
@@ -411,7 +412,7 @@ pub async fn cleanup_completed_tasks(pool: &PgPool, older_than_days: i64) -> Res
     .bind(older_than_days)
     .execute(pool)
     .await
-    .map_err(|e| format!("清理旧任务失败: {}", e))?;
+    .map_err(|e| TopemsError::DatabaseQuery(format!("清理旧任务失败: {}", e)))?;
 
     Ok(result.rows_affected() as i64)
 }

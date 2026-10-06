@@ -1,6 +1,7 @@
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -246,9 +247,9 @@ impl Event {
         self
     }
 
-    pub fn parse_payload<T: serde::de::DeserializeOwned>(&self) -> Result<T, String> {
+    pub fn parse_payload<T: serde::de::DeserializeOwned>(&self) -> Result<T, TopemsError> {
         serde_json::from_value::<T>(self.payload.clone())
-            .map_err(|e| format!("解析事件 payload 失败: {}", e))
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析事件 payload 失败: {}", e)))
     }
 }
 
@@ -1679,7 +1680,7 @@ mod tests {
         );
         let res: Result<HrmEmployeeCreatedPayload, _> = bad.parse_payload();
         assert!(res.is_err());
-        assert!(res.unwrap_err().contains("解析事件 payload 失败"));
+        assert!(res.unwrap_err().to_string().contains("解析事件 payload 失败"));
     }
 
     #[test]
@@ -1932,7 +1933,6 @@ mod tests {
     /// 4) 在途旧数字 JSON 兼容：数字反解后 to_string 精确（宽进）
     #[test]
     fn payroll_payload_decimal_precision_and_wire_shape() {
-        use std::str::FromStr;
         let gross = Decimal::from_str_exact("20000.0015").unwrap();
         let entry = HrmPayrollVoucherEntryPayload {
             line_number: 1,

@@ -8,6 +8,7 @@
 //! - 同步状态跟踪：记录 last_sync_status、last_sync_error、consecutive_failures
 //! - 并发控制：全局互斥锁，避免多个同步周期重叠
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Duration, Utc};
 use sqlx::PgPool;
 use std::sync::Arc;
@@ -311,7 +312,7 @@ impl SyncScheduler {
 
         // 解析 tenant_id
         let tenant_id =
-            Uuid::parse_str(&conn.tenant_id).map_err(|e| format!("解析 tenant_id 失败: {}", e))?;
+            Uuid::parse_str(&conn.tenant_id).map_err(|e| TopemsError::DatabaseQuery(format!("解析 tenant_id 失败: {}", e)))?;
 
         // WMS URL（从环境变量获取，或使用默认值）
         let wms_url =
@@ -334,7 +335,7 @@ impl SyncScheduler {
         )
         .await
         .map_err(|_| format!("同步超时（超过 {}s）", SYNC_TIMEOUT_SECS))?
-        .map_err(|e| format!("同步执行失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("同步执行失败: {}", e)))?;
 
         // 统计结果
         let total_success: i64 = results.iter().map(|r| r.total_success).sum();
@@ -398,7 +399,7 @@ impl SyncScheduler {
         )
         .fetch_all(&self.pool)
         .await
-        .map_err(|e| format!("查询 ERP 连接失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询 ERP 连接失败: {}", e)))?;
 
         let connections: Vec<ErpConnection> = rows
             .into_iter()
@@ -467,7 +468,7 @@ impl SyncScheduler {
         .bind(conn_id)
         .execute(&self.pool)
         .await
-        .map_err(|e| format!("更新同步成功状态失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步成功状态失败: {}", e)))?;
 
         Ok(())
     }
@@ -499,7 +500,7 @@ impl SyncScheduler {
         .bind(conn_id)
         .execute(&self.pool)
         .await
-        .map_err(|e| format!("更新同步失败状态失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新同步失败状态失败: {}", e)))?;
 
         Ok(())
     }
