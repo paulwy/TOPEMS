@@ -8,9 +8,9 @@ use axum::extract::{Json, State};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
-use topems_shared_core::response::api_error;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -149,7 +149,9 @@ pub async fn get_pending_records(
         }
         Err(e) => {
             tracing::error!("查询离线记录失败: {}", e);
-            Json(api_error(500, "查询离线记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询离线记录失败".to_string(),
+            )))
         }
     }
 }
@@ -183,11 +185,15 @@ pub async fn mark_synced(
                 Ok(_) => Json(ApiResponse::success((), "标记同步成功")),
                 Err(e) => {
                     tracing::error!("更新离线记录状态失败: {}", e);
-                    Json(api_error(500, "更新状态失败"))
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "更新状态失败".to_string(),
+                    )))
                 }
             }
         }
-        Err(_) => Json(api_error(400, "记录ID格式错误")),
+        Err(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "记录ID格式错误".to_string(),
+        ))),
     }
 }
 
@@ -213,7 +219,9 @@ pub async fn clear_synced(State(pool): State<PgPool>) -> Json<ApiResponse<()>> {
         Ok(_) => Json(ApiResponse::success((), "清理已同步记录成功")),
         Err(e) => {
             tracing::error!("清理已同步记录失败: {}", e);
-            Json(api_error(500, "清理失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "清理失败".to_string(),
+            )))
         }
     }
 }

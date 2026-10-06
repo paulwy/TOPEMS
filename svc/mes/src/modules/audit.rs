@@ -11,12 +11,13 @@ use axum::{
 };
 use serde::Deserialize;
 use sqlx::postgres::PgPool;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::models::audit_log::AuditLog;
 use crate::shared::permission::{check_permission, MesPermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
 use topems_shared_db::SchemaAwareAuditLogService;
 
 /// 审计日志参数包装（消除 clippy::too_many_arguments 告警）
@@ -139,7 +140,9 @@ async fn list_audit_logs(
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(api_error(500, "获取审计日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取审计日志失败".to_string(),
+            )))
         }
     }
 }
@@ -184,10 +187,14 @@ async fn get_audit_log(
             let v = serde_json::to_value(&log).unwrap_or(serde_json::json!({}));
             Json(ApiResponse::success(v, "获取审计日志成功"))
         }
-        Ok(None) => Json(api_error(404, "审计日志不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "审计日志不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(api_error(500, "获取审计日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取审计日志失败".to_string(),
+            )))
         }
     }
 }
