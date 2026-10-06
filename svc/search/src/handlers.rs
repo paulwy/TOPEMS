@@ -22,6 +22,20 @@ use crate::scoring::{
 };
 
 use std::collections::HashSet;
+use std::sync::OnceLock;
+
+use topems_shared_service_client::service_client::api::erp_api::ErpApi;
+use topems_shared_service_client::TypedServiceClient;
+use url::form_urlencoded;
+
+/// ERP 服务客户端（B1 API 化：search 直读 erp schema 改走 erp HTTP API）。
+/// main.rs 初始化（对齐 crm 先例 TypedServiceClient::<ErpApi> + service token）；
+/// 初始化失败为 None，客户/订单搜索模块优雅降级为空结果。
+static ERP_CLIENT: OnceLock<Option<TypedServiceClient<ErpApi>>> = OnceLock::new();
+
+pub fn init_erp_client(client: Option<TypedServiceClient<ErpApi>>) {
+    let _ = ERP_CLIENT.set(client);
+}
 
 #[derive(Debug, Clone, FromRow)]
 struct UserSearchRow {
@@ -185,6 +199,7 @@ async fn search_documents(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
 )]
 async fn search_all(
     pool: &PgPool,
+    erp: Option<&TypedServiceClient<ErpApi>>,
     keyword: &str,
     modules: &Option<Vec<String>>,
     limit: i64,
@@ -203,11 +218,15 @@ async fn search_all(
     }
 
     if should_search("customer") {
-        results.extend(search_customers(pool, keyword, per_module_limit).await);
+        if let Some(c) = erp {
+            results.extend(search_customers(c, keyword, per_module_limit).await);
+        }
     }
 
     if should_search("order") {
-        results.extend(search_orders(pool, keyword, per_module_limit).await);
+        if let Some(c) = erp {
+            results.extend(search_orders(c, keyword, per_module_limit).await);
+        }
     }
 
     if should_search("document") {
@@ -253,7 +272,8 @@ pub async fn search_handler(
 
     let query_terms = tokenize(&keyword);
 
-    let mut results = search_all(&pool, &keyword, &req.modules, page_size).await;
+    let erp = ERP_CLIENT.get().and_then(|c| c.as_ref());
+    let mut results = search_all(&pool, erp, &keyword, &req.modules, page_size).await;
 
     for r in &mut results {
         let doc_fields = vec![

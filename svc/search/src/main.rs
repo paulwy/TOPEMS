@@ -30,6 +30,25 @@ async fn main() -> anyhow::Result<()> {
     let ctx = bootstrap_service(&config).await?;
     tracing::info!("🚀 TOPEMS Search Service starting...");
 
+    // 初始化 ERP 服务客户端（B1 API 化：客户/订单搜索改走 erp HTTP API）。
+    // 失败不阻塞启动——客户/订单模块优雅降级为空结果。
+    let jwt_secret = ctx.auth_state.jwt_secret.clone();
+    let erp_client = match topems_shared_service_client::TypedServiceClient::<
+        topems_shared_service_client::service_client::api::erp_api::ErpApi,
+    >::from_env_default()
+    .and_then(|c| c.with_service_token(&jwt_secret, "search-service", &["erp:admin"]))
+    {
+        Ok(client) => {
+            tracing::info!("🔗 ERP 服务客户端初始化成功（service token）");
+            Some(client)
+        }
+        Err(e) => {
+            tracing::warn!("⚠️ ERP 服务客户端初始化失败: {}", e);
+            None
+        }
+    };
+    handlers::init_erp_client(erp_client);
+
     // ── public_routes（无状态） ──────────────────────────────────────
     let public_routes = Router::new()
         .route(
