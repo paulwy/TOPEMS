@@ -8,10 +8,10 @@ use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
-use super::auth_utils::extract_user_id_from_token;
+use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
 use crate::db::repository::*;
 use crate::models::{CreatePushDevice, CreatePushNotification, PushNotification};
-use topems_shared_auth::auth::AuthState;
+use topems_shared_auth::auth::{verify_jwt_token, AuthState};
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -92,7 +92,18 @@ pub async fn register_device(
         );
     }
 
-    let tenant_id = Uuid::new_v4();
+    // 租户绑定复制 middleware 超管豁免语义（同 offline_sync）：
+    // 超管绑 None（SQL NULL，命中 tenant_isolation_* 的 `tenant_id IS NULL` 分支），
+    // 普通用户绑 claims.tenant_id 解析值；随机/nil uuid 在 nil 上下文会被 RLS 拒绝。
+    let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
+        .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
+        .and_then(|c| {
+            if c.is_superuser {
+                None
+            } else {
+                c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
+            }
+        });
     let device = match db_register_push_device(&pool, tenant_id, user_id, payload).await {
         Ok(d) => d,
         Err(e) => {
@@ -220,7 +231,15 @@ pub async fn send_notification(
         target_ids: payload.target_ids.clone(),
     };
 
-    let tenant_id = Uuid::new_v4();
+    let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
+        .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
+        .and_then(|c| {
+            if c.is_superuser {
+                None
+            } else {
+                c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
+            }
+        });
     let notification = match db_create_push_notification(&pool, tenant_id, create_data).await {
         Ok(n) => n,
         Err(e) => {
@@ -282,11 +301,11 @@ fn render_template(template: &str, params: &serde_json::Value) -> String {
 )]
 pub async fn send_broadcast(
     headers: HeaderMap,
-    State(_auth_state): State<AuthState>,
+    State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Json(payload): Json<SendNotificationRequest>,
 ) -> impl IntoResponse {
-    let _ = extract_user_id_from_token(&headers, &_auth_state.jwt_secret);
+    let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
     let devices = match db_get_push_devices(&pool, None).await {
         Ok(d) => d,
@@ -336,7 +355,15 @@ pub async fn send_broadcast(
         target_ids: target_ids.clone(),
     };
 
-    let tenant_id = Uuid::new_v4();
+    let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
+        .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
+        .and_then(|c| {
+            if c.is_superuser {
+                None
+            } else {
+                c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
+            }
+        });
     let notification = match db_create_push_notification(&pool, tenant_id, create_data).await {
         Ok(n) => n,
         Err(e) => {
@@ -542,7 +569,15 @@ pub async fn create_template(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let tenant_id = Uuid::new_v4();
+    let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
+        .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
+        .and_then(|c| {
+            if c.is_superuser {
+                None
+            } else {
+                c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
+            }
+        });
     let template = match db_create_push_template(
         &pool,
         tenant_id,

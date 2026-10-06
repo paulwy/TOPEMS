@@ -9,8 +9,8 @@ use sqlx::{postgres::PgRow, PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
-use super::auth_utils::extract_user_id_from_token;
-use topems_shared_auth::auth::AuthState;
+use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
+use topems_shared_auth::auth::{verify_jwt_token, AuthState};
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -151,6 +151,18 @@ pub async fn register_device(
         }
     };
 
+    // 租户绑定复制 middleware 超管豁免语义（同 offline_sync）：超管绑 None（SQL NULL），
+    // 普通用户绑 claims.tenant_id；nil/随机 uuid 在 nil 上下文会被 RLS 拒绝。
+    let tenant_id: Option<Uuid> = extract_bearer_token(&headers)
+        .and_then(|t| verify_jwt_token(&t, &auth_state.jwt_secret).ok())
+        .and_then(|c| {
+            if c.is_superuser {
+                None
+            } else {
+                c.tenant_id.and_then(|t| Uuid::parse_str(&t).ok())
+            }
+        });
+
     let existing_device = match sqlx::query(only_own_schema_query!(
         "mobile",
         "SELECT id FROM mobile.devices WHERE user_id::text = $1 AND device_id = $2"
@@ -204,7 +216,7 @@ pub async fn register_device(
         .bind(&payload.app_version)
         .bind(&payload.push_token)
         .bind(true)
-        .bind(Uuid::nil())
+        .bind(tenant_id)
         .execute(&pool)
         .await
     {

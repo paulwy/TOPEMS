@@ -575,7 +575,7 @@ pub async fn db_create_or_update_sync_policy(
 
 pub async fn db_register_push_device(
     pool: &Pool<Postgres>,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     user_id: Uuid,
     data: CreatePushDevice,
 ) -> sqlx::Result<PushDevice> {
@@ -603,7 +603,7 @@ pub async fn db_register_push_device(
 
     Ok(PushDevice {
         id,
-        tenant_id,
+        tenant_id: tenant_id.unwrap_or(Uuid::nil()),
         user_id,
         device_token: data.device_token,
         platform: data.platform,
@@ -632,7 +632,7 @@ pub async fn db_get_push_devices(
 
 pub async fn db_create_push_notification(
     pool: &Pool<Postgres>,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     data: CreatePushNotification,
 ) -> sqlx::Result<PushNotification> {
     let id = Uuid::new_v4();
@@ -660,7 +660,7 @@ pub async fn db_create_push_notification(
 
     Ok(PushNotification {
         id,
-        tenant_id,
+        tenant_id: tenant_id.unwrap_or(Uuid::nil()),
         title: data.title,
         body: data.body,
         notification_type: data.notification_type,
@@ -710,7 +710,7 @@ pub async fn db_get_push_templates(pool: &Pool<Postgres>) -> sqlx::Result<Vec<Pu
 
 pub async fn db_create_push_template(
     pool: &Pool<Postgres>,
-    tenant_id: Uuid,
+    tenant_id: Option<Uuid>,
     name: &str,
     title_template: &str,
     body_template: &str,
@@ -739,7 +739,7 @@ pub async fn db_create_push_template(
 
     Ok(PushTemplate {
         id,
-        tenant_id,
+        tenant_id: tenant_id.unwrap_or(Uuid::nil()),
         name: name.to_string(),
         title_template: title_template.to_string(),
         body_template: body_template.to_string(),

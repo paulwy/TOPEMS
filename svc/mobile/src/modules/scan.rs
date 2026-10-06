@@ -393,7 +393,7 @@ async fn save_scan_record(
         .bind(result_data)
         .bind(location_lat)
         .bind(location_lng)
-        .bind(Uuid::nil())
+        .bind(None::<Uuid>)
         .execute(pool)
         .await
     {
