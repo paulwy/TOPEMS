@@ -33,7 +33,7 @@
     - update.sh dry-run基本通过：后端二进制更新流程正常，前端构建因pnpm/npm差异失败（预期）
     - rollback.sh需要root权限，无dry-run模式，待生产环境实跑验证
   - ⏳ Linux生产实跑install/update/rollback全流程（dry-run已验证逻辑，systemd真实部署待验）
-  - ⏳ 主库运维模式约定：半迁移状态下未来结构演进走"直接 DDL 运维"而非 sqlx migrate run
+  - ✅ **主库运维模式约定已收口**（2026-10-01 `docs/database/database-half-migration-ops.md`）：半迁移状态下未来结构演进一律走**直接 DDL 运维**而非 `sqlx migrate run`；防护机制 `check_stale_migration_state`（migrate.sh:414，积压≥10 拒绝 + `MIGRATE_ALLOW_STALE=1` 显式放行）实跑验证正确拒绝；**2026-10-06 数字刷新**（账本 280 / 文件 298 / 缺口 18 含停登惯例）+ 补精确记账变体（`sha384(文件字节)` 手工记账先例 U3/U12b/B5b）
 
 - **P1（本机可继续）**：
   - ✅ **MES模块编译错误清零**（2026-09-30 本轮复核）：

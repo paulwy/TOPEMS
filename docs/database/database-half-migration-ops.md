@@ -6,7 +6,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 现状 | 主库 `topems` 的 `_sqlx_migrations` 仅 **25 条**记录（最高版本 `20260725000002`），而 `database/migrations/` 已有 **300+ 个**迁移文件（最高 `20260928120000`），**积压 258 个** |
+| 现状 | 主库 `topems` 的 `_sqlx_migrations` 已有 **280 条**记录，`database/migrations/` 现有 **298 个**迁移文件，缺口 **18 个**（含 09-21 后"停登惯例"的有意不记账迁移；2026-10-06 实测口径，旧值 25/300+ 已更新） |
 | 成因 | 结构经**运行时演进**至 2026-09-26（直接 DDL / 应用启动建表等），未通过 `sqlx migrate run` 记录 |
 | 决策（用户拍板 2026-09-30） | **接受现状 + 文档化 + 防护**：`_sqlx_migrations` **不补跑**历史积压；未来结构演进走**直接 DDL 运维**，而非 `sqlx migrate run` |
 | 风险 | 若直接 `sqlx migrate run`，会把 258 个历史版本**补跑到运行库**（含数据操作迁移），存在数据损坏/生产停机风险 |
@@ -22,6 +22,12 @@
 3. **执行 DDL**：直接在目标库执行（`psql "$DATABASE_URL" -f <新迁移文件>`），**不经过 migrate 补跑机制**；
 4. **同步离线缓存**：跑 `scripts/sqlx-prepare.sh --check`（或等价 `cargo sqlx prepare`）刷新 `.sqlx/` 离线缓存，保证编译期查询校验新鲜度门禁通过（pre-commit Gate S）；
 5. **记录迁移**（可选，推荐）：用 `migrate.sh` 的 `record_migration` 机制向 `_sqlx_migrations` 写入手动记录（`version` 取新迁移文件版本号、`description` 取描述、`checksum` = `manual-via-migrate-sh`、`ON CONFLICT DO NOTHING`），使记录随结构演进而非一次性补跑。
+   - **精确记账变体（2026-10-06 先例，推荐）**：主库账本存在既有 checksum 漂移（sqlx migrate run 报 "previously applied but has been modified"），新迁移一律手工记账且 checksum 取**迁移文件原始字节的 SHA-384**（`sha384(文件字节)`，与 sqlx-core 0.8.6 `Sha384::digest(sql.as_bytes())` 算法一致）：
+     ```sql
+     INSERT INTO _sqlx_migrations (version, description, installed_on, success, checksum, execution_time)
+     VALUES (<version>, '<desc>', NOW(), true, decode('<sha384-hex>','hex'), <ms>);
+     ```
+     先例：U3（`20261006000003_u3_fake_sync_records_cleanup.sql`）、U12b 对齐、B5b（`20261006000004_b5b_gis_rls_allowall_policy.sql`，checksum=`3bf48843…c3228`）均按此记账。
 
 ### 2.2 防护机制（migrate.sh 内置）
 
