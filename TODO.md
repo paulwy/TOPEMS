@@ -714,7 +714,7 @@
 |---|---|---|---|---|---|---|---|
 | A1 | **nginx 生产 conf 首部署复核** | P0 | S | 生产/容器 Linux 环境（macOS `use epoll` 不可加载） | 部署/运维 | F-34/R-7；R4 演练 conf `/tmp/topems-nginx-drill.conf` 逐字复制生产 map 路由表 | 生产 nginx 加载 conf 成功 + map 路由表逐字比对 + 6 冒烟端点全 200 |
 | A2 | **5433 docker 口径回归（可选）** | P2 | S | Docker Desktop GUI 管理员授权（macOS 特权 helper 弹窗） | DBA/运维 | 排期项 1 阻塞点；Homebrew 已等价验证 292 收敛 | docker 容器 5433 空库重放 292 迁移、checksum 不一致 0 |
-| A3 | **wms 审计读路径 P2 加固** | P1 | S | 无 | wms backend owner | R2 复测新观察（手插 NULL entity_type/inet ip 行 500，真实写路径合规） | 手插异常行返回 200 或明确 4xx，不再 500；既有单测 4/4 绿 |
+| A3 | **wms 审计读路径 P2 加固** | P1 | S | ✅ 已完成（2026-10-06 全闭环）：既有加固 `eed5ddbe4`（entity_type COALESCE/ip::text）+ 补漏 `7864d107b`（status COALESCE，NULL status 经 CHECK 三值逻辑可入库）+ 收尾 `76e74a95e`（get 端点 Path<i64>→Uuid，UUID 路径 400 预存在缺陷）；**运行验证闭环**（新二进制重启实测）：list（NULL status/entity_type+inet ip 行）→ 200 空串兜底（此前 500）、get 单条 → 200、404 分支 body code 404；wms 测试 552+12+12 全绿 | wms backend owner | R2 复测新观察（手插 NULL entity_type/inet ip 行 500，真实写路径合规） | 手插异常行返回 200 或明确 4xx，不再 500；既有单测 4/4 绿 |
 | A4 | **MDM DLQ 管理 API（list/replay）** | P1 | M | R-7b 已定案独立 keyspace `topems:mdm_dlq:{prefix}` | shared-event owner | R-7b 残留（仅 push 未接 list/replay） | `topems:mdm_dlq:*` 可 list/get/republish；共享库测试 +N 全绿 |
 | A5 | **erp RLS policy（topems_app 切换）** | P2 | S | ✅ 已实施（并行会话 commit `e182ffd50` 2026-10-06）：迁移 `20261006000002_a5_erp_master_data_refs_rls.sql` 固化 rls_tenant_isolation 策略（语义同 B5/U5：GUC 空/nil UUID/tenant_id IS NULL 全放行，否则仅本租户；NOT EXISTS 幂等不覆盖既有）；**5432 已应用**（账本 success=t）+ pg_policies 策略存在；空库 0→296 全量重放含本迁移通过（C-2 验证） | DBA | R-7b 联动残留（FORCE RLS 无 policy，superuser 绕过） | topems_app 可读写 erp.erp_master_data_refs（非 superuser 实测） |
 
