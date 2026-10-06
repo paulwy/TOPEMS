@@ -1,4 +1,3 @@
-use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -7,12 +6,13 @@ use axum::{
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{ PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
 
 use super::instance::InstanceQueryParams;
 use super::models::{ProcessLog, WorkflowInstance};
@@ -744,10 +744,14 @@ pub async fn get_log(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("日志不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "日志不存在".to_string(),
+                )))
             } else {
                 tracing::error!("查询流程日志失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("查询流程日志失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询流程日志失败".to_string(),
+                )))
             }
         }
     }
@@ -1286,10 +1290,14 @@ pub async fn skip_node(
         Ok(v) => Json(ApiResponse::success(v, "跳过节点成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "工作流实例不存在".to_string(),
+                )))
             } else {
                 tracing::error!("跳过节点失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("跳过节点失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "跳过节点失败".to_string(),
+                )))
             }
         }
     }
@@ -1317,10 +1325,14 @@ pub async fn force_complete(
         Ok(v) => Json(ApiResponse::success(v, "强制完成成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "工作流实例不存在".to_string(),
+                )))
             } else {
                 tracing::error!("强制完成失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("强制完成失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "强制完成失败".to_string(),
+                )))
             }
         }
     }
@@ -1348,10 +1360,14 @@ pub async fn force_terminate(
         Ok(v) => Json(ApiResponse::success(v, "强制终止成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "工作流实例不存在".to_string(),
+                )))
             } else {
                 tracing::error!("强制终止失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("强制终止失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "强制终止失败".to_string(),
+                )))
             }
         }
     }

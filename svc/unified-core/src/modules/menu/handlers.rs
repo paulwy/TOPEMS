@@ -1,14 +1,14 @@
-use topems_shared_core::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::AppState;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::api_success;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{ api_success};
 
 use super::models::{
     CreateMenuGroupRequest, CreateMenuRequest, Menu, MenuGroup, MenuGroupListResponse,
@@ -69,7 +69,9 @@ pub async fn list_groups(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单分组列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询菜单分组列表失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询菜单分组列表失败".to_string(),
+            )));
         }
     };
 
@@ -98,13 +100,17 @@ pub async fn get_group(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单分组详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询菜单分组详情失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询菜单分组详情失败".to_string(),
+            )));
         }
     };
 
     match group {
         Some(g) => Json(api_success(g)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("菜单分组不存在".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "菜单分组不存在".to_string(),
+        ))),
     }
 }
 
@@ -113,10 +119,14 @@ pub async fn create_group(
     Json(req): Json<CreateMenuGroupRequest>,
 ) -> Json<ApiResponse<MenuGroup>> {
     if req.code.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed("菜单分组编码不能为空".to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "菜单分组编码不能为空".to_string(),
+        )));
     }
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed("菜单分组名称不能为空".to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "菜单分组名称不能为空".to_string(),
+        )));
     }
 
     let sql = format!(
@@ -138,7 +148,9 @@ pub async fn create_group(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建菜单分组失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建菜单分组失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "创建菜单分组失败".to_string(),
+            )));
         }
     };
 
@@ -187,13 +199,17 @@ pub async fn update_group(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新菜单分组失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("更新菜单分组失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "更新菜单分组失败".to_string(),
+            )));
         }
     };
 
     match group {
         Some(g) => Json(api_success(g)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("菜单分组不存在".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "菜单分组不存在".to_string(),
+        ))),
     }
 }
 
@@ -218,10 +234,14 @@ pub async fn delete_group(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(api_success("菜单分组删除成功".to_string())),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("菜单分组不存在".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "菜单分组不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除菜单分组失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("删除菜单分组失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除菜单分组失败".to_string(),
+            )))
         }
     }
 }
@@ -256,7 +276,9 @@ pub async fn list_menus(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单项总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询菜单项总数失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询菜单项总数失败".to_string(),
+            )));
         }
     };
 
@@ -284,7 +306,9 @@ pub async fn list_menus(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单项列表失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询菜单项列表失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询菜单项列表失败".to_string(),
+            )));
         }
     };
 
@@ -313,13 +337,17 @@ pub async fn get_menu(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询菜单项详情失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询菜单项详情失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询菜单项详情失败".to_string(),
+            )));
         }
     };
 
     match menu {
         Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("菜单项不存在".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "菜单项不存在".to_string(),
+        ))),
     }
 }
 
@@ -328,10 +356,14 @@ pub async fn create_menu(
     Json(req): Json<CreateMenuRequest>,
 ) -> Json<ApiResponse<Menu>> {
     if req.code.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed("菜单项编码不能为空".to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "菜单项编码不能为空".to_string(),
+        )));
     }
     if req.name.trim().is_empty() {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed("菜单项名称不能为空".to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "菜单项名称不能为空".to_string(),
+        )));
     }
 
     let sql = format!(
@@ -357,7 +389,9 @@ pub async fn create_menu(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("创建菜单项失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("创建菜单项失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "创建菜单项失败".to_string(),
+            )));
         }
     };
 
@@ -414,13 +448,17 @@ pub async fn update_menu(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("更新菜单项失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("更新菜单项失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "更新菜单项失败".to_string(),
+            )));
         }
     };
 
     match menu {
         Some(m) => Json(api_success(m)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("菜单项不存在".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "菜单项不存在".to_string(),
+        ))),
     }
 }
 
@@ -445,10 +483,14 @@ pub async fn delete_menu(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(api_success("菜单项删除成功".to_string())),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("菜单项不存在".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "菜单项不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除菜单项失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("删除菜单项失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除菜单项失败".to_string(),
+            )))
         }
     }
 }

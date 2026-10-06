@@ -1,16 +1,16 @@
-use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::Deserialize;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{ PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
 
 use super::models::{CreateWorkflowRequest, UpdateWorkflowRequest, Workflow, WorkflowVersion};
 
@@ -83,7 +83,9 @@ pub async fn list_workflows(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询工作流总数失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询工作流总数失败".to_string())));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "查询工作流总数失败".to_string(),
+                )));
             }
         }
     };
@@ -336,14 +338,18 @@ pub async fn delete_workflow(
     match result {
         Ok(v) => {
             if v.rows_affected() == 0 {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "工作流不存在".to_string(),
+                )))
             } else {
                 Json(ApiResponse::success_no_data("删除成功"))
             }
         }
         Err(e) => {
             tracing::error!("删除工作流失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("删除工作流失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除工作流失败".to_string(),
+            )))
         }
     }
 }
@@ -749,7 +755,9 @@ pub async fn list_workflow_versions(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             tracing::error!("查询工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("查询工作流版本失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询工作流版本失败".to_string(),
+            )))
         }
     }
 }
@@ -799,7 +807,9 @@ pub async fn create_workflow_version(
         }
     };
     if !wf_ok {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流不存在".to_string())));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "工作流不存在".to_string(),
+        )));
     }
     // definition 未传时从当前工作流快照
     let definition = match payload.definition {
@@ -853,7 +863,9 @@ pub async fn create_workflow_version(
         Ok(v) => Json(ApiResponse::success(v, "创建版本成功")),
         Err(e) => {
             tracing::error!("创建工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("创建工作流版本失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建工作流版本失败".to_string(),
+            )))
         }
     }
 }
@@ -901,10 +913,14 @@ pub async fn get_workflow_version(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流版本不存在".to_string())));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "工作流版本不存在".to_string(),
+                )));
             }
             tracing::error!("查询工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("查询工作流版本失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询工作流版本失败".to_string(),
+            )))
         }
     }
 }
@@ -942,7 +958,9 @@ pub async fn activate_workflow_version(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("激活版本开启事务失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "激活工作流版本失败".to_string(),
+            )));
         }
     };
 
@@ -961,11 +979,15 @@ pub async fn activate_workflow_version(
     match exists {
         Ok(true) => {}
         Ok(false) => {
-            return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流版本不存在".to_string())));
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "工作流版本不存在".to_string(),
+            )));
         }
         Err(e) => {
             tracing::error!("校验版本失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "激活工作流版本失败".to_string(),
+            )));
         }
     }
 
@@ -996,13 +1018,17 @@ pub async fn activate_workflow_version(
         Ok(v) => {
             if let Err(e) = tx.commit().await {
                 tracing::error!("提交激活版本事务失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string())));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "激活工作流版本失败".to_string(),
+                )));
             }
             Json(ApiResponse::success(v, "版本激活成功"))
         }
         Err(e) => {
             tracing::error!("激活工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("激活工作流版本失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "激活工作流版本失败".to_string(),
+            )))
         }
     }
 }
@@ -1048,14 +1074,18 @@ pub async fn delete_workflow_version(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流版本不存在".to_string()))),
+        Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "工作流版本不存在".to_string(),
+        ))),
         Ok(_) => Json(ApiResponse::success(
             serde_json::json!({ "deleted": true, "version_id": version_id }),
             "版本删除成功",
         )),
         Err(e) => {
             tracing::error!("删除工作流版本失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("删除工作流版本失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除工作流版本失败".to_string(),
+            )))
         }
     }
 }

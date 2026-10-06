@@ -1,6 +1,5 @@
 //! Automation module - 自动化编排规则/运行/变量/设计器/仪表盘
 
-use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -10,11 +9,12 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{ PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
 
 // ─── Models ──────────────────────────────────────────────────────────────────
 
@@ -272,10 +272,14 @@ pub async fn get_rule(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )))
             } else {
                 tracing::error!("查询规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("查询规则失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询规则失败".to_string(),
+                )))
             }
         }
     }
@@ -295,10 +299,14 @@ pub async fn get_rule_by_code(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )))
             } else {
                 tracing::error!("查询规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("查询规则失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询规则失败".to_string(),
+                )))
             }
         }
     }
@@ -337,7 +345,9 @@ pub async fn create_rule(
         Ok(v) => Json(ApiResponse::success(v, "创建成功")),
         Err(e) => {
             tracing::error!("创建规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("创建规则失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建规则失败".to_string(),
+            )))
         }
     }
 }
@@ -376,10 +386,14 @@ pub async fn update_rule(
         Ok(v) => Json(ApiResponse::success(v, "更新成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )))
             } else {
                 tracing::error!("更新规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("更新规则失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新规则失败".to_string(),
+                )))
             }
         }
     }
@@ -399,10 +413,14 @@ pub async fn delete_rule(
             serde_json::json!({"success": true}),
             "删除成功",
         )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "规则不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除规则失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("删除规则失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除规则失败".to_string(),
+            )))
         }
     }
 }
@@ -422,10 +440,14 @@ pub async fn enable_rule(
         Ok(v) => Json(ApiResponse::success(v, "启用成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )))
             } else {
                 tracing::error!("启用规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("启用规则失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "启用规则失败".to_string(),
+                )))
             }
         }
     }
@@ -446,10 +468,14 @@ pub async fn disable_rule(
         Ok(v) => Json(ApiResponse::success(v, "禁用成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )))
             } else {
                 tracing::error!("禁用规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("禁用规则失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "禁用规则失败".to_string(),
+                )))
             }
         }
     }
@@ -473,10 +499,14 @@ pub async fn duplicate_rule(
         Ok(v) => Json(ApiResponse::success(v, "复制成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )))
             } else {
                 tracing::error!("复制规则失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("复制规则失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "复制规则失败".to_string(),
+                )))
             }
         }
     }
@@ -497,10 +527,14 @@ pub async fn trigger_rule(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )));
             }
             tracing::error!("触发规则失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("触发规则失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "触发规则失败".to_string(),
+            )));
         }
     };
 
@@ -533,7 +567,9 @@ pub async fn trigger_rule(
         }
         Err(e) => {
             tracing::error!("创建运行记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("触发规则失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "触发规则失败".to_string(),
+            )))
         }
     }
 }
@@ -602,10 +638,14 @@ pub async fn get_run(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("运行记录不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运行记录不存在".to_string(),
+                )))
             } else {
                 tracing::error!("查询运行记录失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("查询运行记录失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询运行记录失败".to_string(),
+                )))
             }
         }
     }
@@ -625,9 +665,13 @@ pub async fn retry_run(
         Ok(v) => v,
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("运行记录不存在".to_string())));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运行记录不存在".to_string(),
+                )));
             }
-            return Json(ApiResponse::from(TopemsError::Internal("查询运行记录失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询运行记录失败".to_string(),
+            )));
         }
     };
 
@@ -649,7 +693,9 @@ pub async fn retry_run(
         )),
         Err(e) => {
             tracing::error!("重试运行失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("重试运行失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "重试运行失败".to_string(),
+            )))
         }
     }
 }
@@ -670,10 +716,14 @@ pub async fn cancel_run(
             serde_json::json!({"success": true}),
             "取消成功",
         )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("运行记录不存在或非运行中".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "运行记录不存在或非运行中".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("取消运行失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("取消运行失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "取消运行失败".to_string(),
+            )))
         }
     }
 }
@@ -693,9 +743,13 @@ pub async fn get_run_steps(
         Ok(None) => Json(ApiResponse::success(serde_json::json!([]), "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("运行记录不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运行记录不存在".to_string(),
+                )))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal("查询步骤失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询步骤失败".to_string(),
+                )))
             }
         }
     }
@@ -726,9 +780,13 @@ pub async fn get_run_logs(
         )),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("运行记录不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "运行记录不存在".to_string(),
+                )))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal("查询日志失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询日志失败".to_string(),
+                )))
             }
         }
     }
@@ -755,7 +813,9 @@ pub async fn purge_runs(
         )),
         Err(e) => {
             tracing::error!("清理运行记录失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("清理运行记录失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "清理运行记录失败".to_string(),
+            )))
         }
     }
 }
@@ -836,10 +896,14 @@ pub async fn get_variable(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "变量不存在".to_string(),
+                )))
             } else {
                 tracing::error!("查询变量失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("查询变量失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询变量失败".to_string(),
+                )))
             }
         }
     }
@@ -882,7 +946,9 @@ pub async fn create_variable(
         Ok(v) => Json(ApiResponse::success(v, "创建成功")),
         Err(e) => {
             tracing::error!("创建变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("创建变量失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建变量失败".to_string(),
+            )))
         }
     }
 }
@@ -916,10 +982,14 @@ pub async fn update_variable(
         Ok(v) => Json(ApiResponse::success(v, "更新成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "变量不存在".to_string(),
+                )))
             } else {
                 tracing::error!("更新变量失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("更新变量失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新变量失败".to_string(),
+                )))
             }
         }
     }
@@ -939,10 +1009,14 @@ pub async fn delete_variable(
             serde_json::json!({"success": true}),
             "删除成功",
         )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("变量不存在".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "变量不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除变量失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("删除变量失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除变量失败".to_string(),
+            )))
         }
     }
 }
@@ -963,12 +1037,18 @@ pub async fn reveal_variable(
             serde_json::json!({"value": v}),
             "查询成功",
         )),
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("密钥变量不存在".to_string()))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "密钥变量不存在".to_string(),
+        ))),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("密钥变量不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "密钥变量不存在".to_string(),
+                )))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal("查询失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询失败".to_string(),
+                )))
             }
         }
     }
@@ -1194,9 +1274,13 @@ pub async fn get_designer_canvas(
         )),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal("查询画布失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询画布失败".to_string(),
+                )))
             }
         }
     }
@@ -1217,10 +1301,14 @@ pub async fn save_designer_canvas(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(payload.canvas, "保存成功")),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "规则不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("保存画布失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("保存画布失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "保存画布失败".to_string(),
+            )))
         }
     }
 }
@@ -1252,10 +1340,14 @@ pub async fn sync_to_rule(
             serde_json::json!({"success": true, "message": "已同步到规则定义"}),
             "同步成功",
         )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "规则不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("同步失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("同步失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "同步失败".to_string(),
+            )))
         }
     }
 }
@@ -1278,9 +1370,13 @@ pub async fn sync_from_rule(
         )),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("规则不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "规则不存在".to_string(),
+                )))
             } else {
-                Json(ApiResponse::from(TopemsError::Internal("同步失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "同步失败".to_string(),
+                )))
             }
         }
     }

@@ -14,7 +14,6 @@
 //!   GET    /delegates/{id}/workflows        委托关联的工作流
 //!   GET    /delegates/check/{workflowId}    检查该流程下是否有委托
 
-use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
@@ -23,11 +22,12 @@ use axum::{
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{ ApiResponse, PaginatedResponse};
+use topems_shared_core::response::{ApiResponse, PaginatedResponse};
 
 #[derive(Debug, FromRow)]
 pub struct DelegateRow {
@@ -138,7 +138,9 @@ pub async fn list_delegates(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询委托总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询委托总数失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询委托总数失败".to_string(),
+            )));
         }
     };
 
@@ -200,7 +202,9 @@ pub async fn get_delegate(
     };
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "查询成功")),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "委托不存在".to_string(),
+        ))),
     }
 }
 
@@ -240,7 +244,9 @@ pub async fn create_delegate(
 
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "创建成功")),
-        None => Json(ApiResponse::from(TopemsError::Internal("创建委托失败".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::Internal(
+            "创建委托失败".to_string(),
+        ))),
     }
 }
 
@@ -282,7 +288,9 @@ pub async fn update_delegate(
 
     match row {
         Some(r) => Json(ApiResponse::success(WorkflowDelegate::from(r), "更新成功")),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "委托不存在".to_string(),
+        ))),
     }
 }
 
@@ -303,10 +311,14 @@ pub async fn delete_delegate(
             serde_json::json!({"id": id}),
             "删除成功",
         )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "委托不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除委托失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("删除委托失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除委托失败".to_string(),
+            )))
         }
     }
 }
@@ -330,10 +342,14 @@ pub async fn set_delegate_status(
             serde_json::json!({"id": id, "status": status}),
             "操作成功",
         )),
-        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "委托不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新委托状态失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("更新委托状态失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新委托状态失败".to_string(),
+            )))
         }
     }
 }
@@ -455,7 +471,9 @@ pub async fn get_delegate_workflows(
                     Ok(v) => v,
                     Err(e) => {
                         tracing::error!("查询委托关联流程失败: {}", e);
-                        return Json(ApiResponse::from(TopemsError::Internal("查询委托关联流程失败".to_string())));
+                        return Json(ApiResponse::from(TopemsError::Internal(
+                            "查询委托关联流程失败".to_string(),
+                        )));
                     }
                 };
                 Json(ApiResponse::success(
@@ -477,7 +495,9 @@ pub async fn get_delegate_workflows(
                 ))
             }
         }
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("委托不存在".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "委托不存在".to_string(),
+        ))),
     }
 }
 

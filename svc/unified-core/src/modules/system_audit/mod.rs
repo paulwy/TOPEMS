@@ -1,6 +1,5 @@
 //! System Audit Logs module - /system/audit-logs 端点实现
 
-use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Path, Query, State},
@@ -10,10 +9,11 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{ PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
 
 // ─── Models ──────────────────────────────────────────────────────────────────
 
@@ -144,10 +144,14 @@ pub async fn get_audit_log(
         Ok(v) => Json(ApiResponse::success(v, "查询成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                Json(ApiResponse::from(TopemsError::ResourceNotFound("审计日志不存在".to_string())))
+                Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "审计日志不存在".to_string(),
+                )))
             } else {
                 tracing::error!("查询审计日志失败: {}", e);
-                Json(ApiResponse::from(TopemsError::Internal("查询审计日志失败".to_string())))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询审计日志失败".to_string(),
+                )))
             }
         }
     }

@@ -1,17 +1,17 @@
-use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::Deserialize;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{ PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
 
 use super::models::{
     TaskActionRequest, TaskBatchRequest, TaskBatchResult, TaskFailure, TaskStats, WorkflowTask,
@@ -91,7 +91,9 @@ pub async fn list_tasks(
             Ok(v) => v,
             Err(e) => {
                 tracing::error!("查询任务总数失败: {}", e);
-                return Json(ApiResponse::from(TopemsError::Internal("查询任务总数失败".to_string())));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "查询任务总数失败".to_string(),
+                )));
             }
         }
     };
@@ -849,7 +851,9 @@ pub async fn get_task_count(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询任务数量失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询任务数量失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询任务数量失败".to_string(),
+            )));
         }
     };
 

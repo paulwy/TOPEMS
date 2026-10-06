@@ -1,17 +1,17 @@
-use topems_shared_core::TopemsError;
 use crate::AppState;
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
 use serde::Deserialize;
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::service::is_service_claims;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::response::{ PaginatedResponse};
+use topems_shared_core::response::PaginatedResponse;
 
 use super::models::{CreateInstanceRequest, WorkflowInstance};
 
@@ -672,7 +672,9 @@ pub async fn overdue_instances(
         Ok(v) => v,
         Err(e) => {
             tracing::error!("查询逾期工作流实例总数失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal("查询逾期工作流实例总数失败".to_string())));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询逾期工作流实例总数失败".to_string(),
+            )));
         }
     };
 
@@ -761,10 +763,14 @@ pub async fn retry_instance(
         Ok(v) => Json(ApiResponse::success(v, "重试成功")),
         Err(e) => {
             if matches!(e, sqlx::Error::RowNotFound) {
-                return Json(ApiResponse::from(TopemsError::ResourceNotFound("工作流实例不存在".to_string())));
+                return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                    "工作流实例不存在".to_string(),
+                )));
             }
             tracing::error!("重试工作流实例失败: {}", e);
-            Json(ApiResponse::from(TopemsError::Internal("重试工作流实例失败".to_string())))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "重试工作流实例失败".to_string(),
+            )))
         }
     }
 }

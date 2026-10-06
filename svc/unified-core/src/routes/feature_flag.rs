@@ -1,13 +1,13 @@
-use topems_shared_core::TopemsError;
 use axum::extract::{Path, State};
 use axum::routing::{get, post, put};
 use axum::{Json, Router};
+use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 
 use crate::middleware::permission::require_permission;
 use crate::AppState;
 use topems_shared_core::feature_flag::{FeatureFlag, FeatureState};
-use topems_shared_core::response::{ api_success, ApiResponse};
+use topems_shared_core::response::{api_success, ApiResponse};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize, ToSchema)]
 pub struct UpdateFeatureFlagRequest {
@@ -48,7 +48,9 @@ async fn get_feature_flag(
     let flags = state.feature_flag_service.list_all();
     match flags.into_iter().find(|f| f.key == key) {
         Some(flag) => Json(api_success(flag)),
-        None => Json(ApiResponse::from(TopemsError::ResourceNotFound("Feature flag 不存在".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "Feature flag 不存在".to_string(),
+        ))),
     }
 }
 
@@ -79,13 +81,17 @@ async fn update_feature_flag(
 
     let updated = state.feature_flag_service.update_state(&key, new_state);
     if !updated {
-        return Json(ApiResponse::from(TopemsError::ResourceNotFound("Feature flag 不存在".to_string())));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "Feature flag 不存在".to_string(),
+        )));
     }
 
     let flags = state.feature_flag_service.list_all();
     match flags.into_iter().find(|f| f.key == key) {
         Some(flag) => Json(api_success(flag)),
-        None => Json(ApiResponse::from(TopemsError::Internal("更新后查找失败".to_string()))),
+        None => Json(ApiResponse::from(TopemsError::Internal(
+            "更新后查找失败".to_string(),
+        ))),
     }
 }
 
