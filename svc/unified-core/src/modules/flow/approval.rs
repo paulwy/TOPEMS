@@ -1128,11 +1128,15 @@ pub async fn create_approval(
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ApprovalTask>> {
     let locale = Locale::from_headers(&headers).as_sql();
-    let create_tenant: Uuid = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    // 租户绑定对齐 nil 上下文惯例（超管/无 claims → None/SQL NULL；普通用户 → Some(claims.tenant_id)）。
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let workflow_id_str = match payload.get("workflow_id") {
         Some(v) => v.as_str().unwrap_or_default(),
         None => {
@@ -1181,7 +1185,7 @@ pub async fn create_approval(
     .bind(workflow_id)
     .bind(title)
     .bind(initiator_id)
-    .bind(create_tenant)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -1217,7 +1221,7 @@ pub async fn create_approval(
     )
     .bind(instance.id)
     .bind(assignee_id)
-    .bind(create_tenant)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {

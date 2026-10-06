@@ -202,7 +202,9 @@ pub async fn create_workflow(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateWorkflowRequest>,
 ) -> Json<ApiResponse<Workflow>> {
-    let _tenant_opt: Option<Uuid> = if claims.is_superuser {
+    // 租户绑定对齐 nil 上下文惯例（与本文件其余写路径一致）：
+    // 超管/无 claims → None（SQL NULL，命中 tenant_id IS NULL 分支）；普通用户 → Some(claims.tenant_id)。
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         claims
@@ -210,11 +212,6 @@ pub async fn create_workflow(
             .as_deref()
             .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let create_tenant: Uuid = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
     let workflow = match sqlx::query_as::<_, Workflow>(
         "INSERT INTO core_workflows (name, code, description, definition, status, version, created_by, tenant_id) 
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
@@ -227,7 +224,7 @@ pub async fn create_workflow(
     .bind(payload.status.unwrap_or("draft".to_string()))
     .bind(1)
     .bind(payload.created_by.or_else(|| Uuid::parse_str(&claims.sub).ok()))
-    .bind(create_tenant)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {
@@ -855,7 +852,7 @@ pub async fn create_workflow_version(
     .bind(definition)
     .bind(&payload.change_description)
     .bind(payload.created_by.as_deref().unwrap_or("system"))
-    .bind(tenant_opt.unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()))
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 

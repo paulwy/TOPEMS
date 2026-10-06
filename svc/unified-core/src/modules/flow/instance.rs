@@ -258,11 +258,15 @@ pub async fn create_instance(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateInstanceRequest>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let create_tenant: Uuid = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| Uuid::parse_str(t).ok())
-        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
+    // 租户绑定对齐 nil 上下文惯例（超管/无 claims → None/SQL NULL；普通用户 → Some(claims.tenant_id)）。
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
         "INSERT INTO core_workflow_instances (workflow_id, title, initiator_id, variables, status, started_at, tenant_id) 
          VALUES ($1, $2, $3, $4, $5, NOW(), $6) 
@@ -273,7 +277,7 @@ pub async fn create_instance(
     .bind(payload.initiator_id)
     .bind(payload.variables)
     .bind("running")
-    .bind(create_tenant)
+    .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
     {

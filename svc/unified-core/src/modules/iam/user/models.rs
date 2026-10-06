@@ -31,9 +31,13 @@ pub(crate) async fn record_audit_log(
     let result = sqlx::query(
         r#"
         INSERT INTO public.audit_logs (id, tenant_id, user_id, action, entity_type, entity_id, request_details, response_details, status, created_at)
-        VALUES (uuid_generate_v4(), '00000000-0000-0000-0000-000000000001', $1, $2, $3, $4, $5, $6, $7, NOW())
+        VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, NOW())
         "#,
     )
+    // 审计日志为无 claims 的内部路径：租户位一律绑 SQL NULL（Option::<Uuid>::None），
+    // 命中 RLS `tenant_id IS NULL` 公共分支（与 mobile sync-policy v4 同款）；
+    // 不再硬编码真实租户 ...0001 —— 超管/nil 上下文会被幸存严格策略拒绝。
+    .bind(Option::<uuid::Uuid>::None)
     .bind(user_id)
     .bind(action)
     .bind(resource_type)
