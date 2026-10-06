@@ -7,6 +7,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Instant;
 use tracing::info;
 
+use crate::error::TopemsError;
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ServiceHealth {
     pub service_name: String,
@@ -112,7 +114,7 @@ impl ServiceMonitor {
             }
             Err(e) => {
                 self.error_count += 1;
-                (HealthStatus::Unhealthy, e)
+                (HealthStatus::Unhealthy, e.to_string())
             }
         };
 
@@ -300,7 +302,7 @@ impl HealthCheckResponse {
     }
 }
 
-pub async fn check_http_health(url: &str) -> Result<HealthStatus, String> {
+pub async fn check_http_health(url: &str) -> Result<HealthStatus, TopemsError> {
     let client = reqwest::Client::new();
 
     match client
@@ -316,7 +318,10 @@ pub async fn check_http_health(url: &str) -> Result<HealthStatus, String> {
                 Ok(HealthStatus::Degraded)
             }
         }
-        Err(e) => Err(format!("Failed to reach service: {}", e)),
+        Err(e) => Err(TopemsError::ServiceUnavailable(format!(
+            "无法连接服务: {}",
+            e
+        ))),
     }
 }
 
@@ -1267,7 +1272,7 @@ mod tests {
         let result = check_http_health("http://127.0.0.1:1/health").await;
         assert!(result.is_err());
         let err = result.unwrap_err();
-        assert!(err.contains("Failed to reach service") || err.contains("error"));
+        assert!(err.to_string().contains("无法连接服务") || err.to_string().contains("error"));
     }
 
     #[tokio::test]

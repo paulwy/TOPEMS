@@ -20,6 +20,7 @@ use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 /// 默认时间戳容差（秒）：客户端与服务端时间偏差
@@ -401,15 +402,20 @@ fn resolve_rule<'a>(
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 校验时间戳
-fn validate_timestamp(value: &str, tolerance_secs: u64) -> Result<(), String> {
-    let ts: i64 = value.parse().map_err(|_| "invalid timestamp".to_string())?;
+fn validate_timestamp(value: &str, tolerance_secs: u64) -> Result<(), TopemsError> {
+    let ts: i64 = value
+        .parse()
+        .map_err(|_| TopemsError::ValidationFailed("无效的时间戳".to_string()))?;
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0);
     let diff = (now - ts).unsigned_abs();
     if diff > tolerance_secs {
-        return Err(format!("timestamp out of tolerance: {}s", diff));
+        return Err(TopemsError::ValidationFailed(format!(
+            "时间戳超出容差: {}s",
+            diff
+        )));
     }
     Ok(())
 }

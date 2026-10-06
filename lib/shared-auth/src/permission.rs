@@ -1,5 +1,6 @@
 use crate::auth::Claims;
 use sqlx::PgPool;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 
@@ -948,31 +949,40 @@ pub fn check_iam_permission(
 ///
 /// 合法格式：`module:action` 或 `module:resource:action` 或 `module:resource:action:scope`
 #[allow(clippy::indexing_slicing)]
-pub fn validate_permission_code(code: &str) -> Result<(), String> {
+pub fn validate_permission_code(code: &str) -> Result<(), TopemsError> {
     let parts: Vec<&str> = code.split(':').collect();
 
     if parts.len() < 2 || parts.len() > 4 {
-        return Err(format!(
+        return Err(TopemsError::ValidationFailed(format!(
             "权限码格式错误：需要 2-4 段（实际 {} 段）",
             parts.len()
-        ));
+        )));
     }
 
     let module = ModuleCode::from_str(parts[0]);
     if module.is_none() {
-        return Err(format!("无效的模块码: {}", parts[0]));
+        return Err(TopemsError::ValidationFailed(format!(
+            "无效的模块码: {}",
+            parts[0]
+        )));
     }
 
     let action_idx = if parts.len() == 2 { 1 } else { 2 };
     let action = PermissionAction::from_str(parts[action_idx]);
     if action.is_none() {
-        return Err(format!("无效的权限动作: {}", parts[action_idx]));
+        return Err(TopemsError::ValidationFailed(format!(
+            "无效的权限动作: {}",
+            parts[action_idx]
+        )));
     }
 
     if parts.len() == 4 {
         let scope = PermissionScope::from_str(parts[3]);
         if scope.is_none() {
-            return Err(format!("无效的数据范围: {}", parts[3]));
+            return Err(TopemsError::ValidationFailed(format!(
+                "无效的数据范围: {}",
+                parts[3]
+            )));
         }
     }
 

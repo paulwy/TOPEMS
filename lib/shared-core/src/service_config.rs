@@ -7,6 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
 
+use crate::error::TopemsError;
+
 /// 服务配置定义
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ServiceDefinition {
@@ -345,7 +347,7 @@ impl ServiceConfigRegistry {
     }
 
     /// 获取启动顺序（拓扑排序）
-    pub fn get_startup_order(&self) -> Result<Vec<String>, String> {
+    pub fn get_startup_order(&self) -> Result<Vec<String>, TopemsError> {
         let mut visited = std::collections::HashSet::new();
         let mut result = vec![];
 
@@ -355,12 +357,15 @@ impl ServiceConfigRegistry {
             visited: &mut std::collections::HashSet<String>,
             result: &mut Vec<String>,
             path: &mut Vec<String>,
-        ) -> Result<(), String> {
+        ) -> Result<(), TopemsError> {
             if visited.contains(code) {
                 return Ok(());
             }
             if path.contains(&code.to_string()) {
-                return Err(format!("Circular dependency detected: {:?}", path));
+                return Err(TopemsError::ConfigValidation(format!(
+                    "检测到循环依赖: {:?}",
+                    path
+                )));
             }
 
             path.push(code.to_string());

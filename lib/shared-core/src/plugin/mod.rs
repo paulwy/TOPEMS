@@ -9,6 +9,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::error::TopemsError;
+
 // ============================================================================
 // 通用数据结构（消除各服务 *_plugin.rs 中的重复 struct 定义）
 // ============================================================================
@@ -217,7 +219,7 @@ pub fn generate_plugin_install_token(
     secret: &str,
     plugin_code: Option<&str>,
     expire_minutes: i64,
-) -> Result<String, String> {
+) -> Result<String, TopemsError> {
     use chrono::Utc;
     use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 
@@ -243,19 +245,20 @@ pub fn generate_plugin_install_token(
 
     let encoding_key = if is_pem {
         EncodingKey::from_rsa_pem(secret.as_bytes())
-            .map_err(|e| format!("Invalid RSA key: {}", e))?
+            .map_err(|e| TopemsError::ValidationFailed(format!("无效的 RSA 密钥: {}", e)))?
     } else {
         EncodingKey::from_secret(secret.as_ref())
     };
 
-    encode(&header, &claims, &encoding_key).map_err(|e| format!("JWT encode error: {}", e))
+    encode(&header, &claims, &encoding_key)
+        .map_err(|e| TopemsError::ValidationFailed(format!("JWT 编码失败: {}", e)))
 }
 
 /// 校验插件安装 JWT 令牌
 pub fn verify_plugin_install_token(
     secret: &str,
     token: &str,
-) -> Result<PluginInstallClaims, String> {
+) -> Result<PluginInstallClaims, TopemsError> {
     use jsonwebtoken::{decode, Algorithm, DecodingKey, Validation};
 
     let is_pem = secret.contains("-----BEGIN");
@@ -267,7 +270,7 @@ pub fn verify_plugin_install_token(
 
     let decoding_key = if is_pem {
         DecodingKey::from_rsa_pem(secret.as_bytes())
-            .map_err(|e| format!("Invalid RSA key: {}", e))?
+            .map_err(|e| TopemsError::ValidationFailed(format!("无效的 RSA 密钥: {}", e)))?
     } else {
         DecodingKey::from_secret(secret.as_ref())
     };
@@ -277,14 +280,14 @@ pub fn verify_plugin_install_token(
     validation.validate_exp = true;
 
     let token_data = decode::<PluginInstallClaims>(token, &decoding_key, &validation)
-        .map_err(|e| format!("Plugin token JWT verify failed: {}", e))?;
+        .map_err(|e| TopemsError::AuthenticationFailed(format!("插件令牌 JWT 校验失败: {}", e)))?;
 
     let claims = &token_data.claims;
     if claims.scope != "plugin_install" {
-        return Err(format!(
-            "Plugin token invalid scope: expected 'plugin_install', got '{}'",
+        return Err(TopemsError::ValidationFailed(format!(
+            "插件令牌作用域无效: 期望 'plugin_install'，实际 '{}'",
             claims.scope
-        ));
+        )));
     }
 
     Ok(token_data.claims)

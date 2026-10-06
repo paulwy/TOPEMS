@@ -16,6 +16,7 @@ use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 use tracing::info;
 use uuid::Uuid;
 
@@ -236,7 +237,7 @@ fn validate_against_schema(
     // type
     if let Some(type_val) = obj.get("type") {
         if let Err(e) = check_type(value, type_val) {
-            result.add_error(e);
+            result.add_error(e.to_string());
         }
     }
 
@@ -331,7 +332,7 @@ fn validate_against_schema(
     result
 }
 
-fn check_type(value: &serde_json::Value, type_val: &serde_json::Value) -> Result<(), String> {
+fn check_type(value: &serde_json::Value, type_val: &serde_json::Value) -> Result<(), TopemsError> {
     let expected = match type_val.as_str() {
         Some(s) => s,
         None => return Ok(()),
@@ -345,7 +346,10 @@ fn check_type(value: &serde_json::Value, type_val: &serde_json::Value) -> Result
     if matched {
         Ok(())
     } else {
-        Err(format!("类型不匹配：期望 {}，实际 {}", expected, actual))
+        Err(TopemsError::ValidationFailed(format!(
+            "类型不匹配：期望 {}，实际 {}",
+            expected, actual
+        )))
     }
 }
 
