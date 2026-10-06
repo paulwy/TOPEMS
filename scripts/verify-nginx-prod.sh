@@ -13,7 +13,8 @@
 #     --repo-conf ./deploy/nginx/topems.conf \
 #     --base http://nginx-host \
 #     --services "erp bi hrm portal core wms" \
-#     --probe "/health"
+#     --probe "/health" \
+#     --insecure   # 自签证书演练环境（生产正式证书不需要）
 # ============================================================================
 set -uo pipefail
 
@@ -22,6 +23,7 @@ REPO_CONF="./deploy/nginx/topems.conf"
 BASE=""
 SERVICES="erp bi hrm portal core wms"
 PROBE="/health"
+CURL_INSECURE=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -30,6 +32,7 @@ while [[ $# -gt 0 ]]; do
     --base) BASE="$2"; shift 2 ;;
     --services) SERVICES="$2"; shift 2 ;;
     --probe) PROBE="$2"; shift 2 ;;
+    --insecure) CURL_INSECURE=1; shift ;;
     *) echo "未知参数: $1" >&2; exit 2 ;;
   esac
 done
@@ -71,12 +74,15 @@ else
   ok=0; total=0
   for svc in $SERVICES; do
     total=$((total+1))
-    code="$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$BASE/api/$svc$PROBE" 2>/dev/null || echo 000)"
+    curlopts="-s -L -o /dev/null -w %{http_code} --max-time 10"
+    [[ "$CURL_INSECURE" == "1" ]] && curlopts="-s -L -k -o /dev/null -w %{http_code} --max-time 10"
+    code="$(curl $curlopts "$BASE/api/$svc$PROBE" 2>/dev/null || echo 000)"
     if [[ "$code" == "200" ]]; then ok=$((ok+1)); echo "  $svc -> 200 OK"
     else echo "  $svc -> $code FAIL"; fi
   done
   echo "SMOKE $ok/$total 200"
-  [[ "$ok" -lt 5 ]] && FAIL=1
+  # 冒烟须全部 200（生产验收标准：6 域全 200；演练可按可用域收窄）
+  [[ "$ok" -ne "$total" ]] && FAIL=1
 fi
 
 echo "== 结果: $([ $FAIL -eq 0 ] && echo PASS || echo FAIL) =="

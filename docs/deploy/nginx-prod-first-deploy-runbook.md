@@ -4,6 +4,29 @@
 > 依据：TODO A1（P0）；F-34/R-7 发现项（nginx map 路由表为生产流量入口事实源）；
 > R4 演练（`/tmp/topems-nginx-drill.conf` 逐字复制生产 map 路由表）已完成，本 Runbook 为演练成果固化。
 
+## 0. 本机演练路径（macOS，已实测通过 2026-10-07）
+
+> 生产 conf 含平台专属指令无法直接在 macOS 加载——根因（实测定位）与解决：
+> `user www-data`（无此用户→删）、`use epoll`（macOS kqueue→删）、`pid /run`（→本机前缀）、
+> `include /etc/nginx/mime.types`（→brew 路径）、certs（→自签）、upstream 端口 8000-8096
+> （monolith 统一 8099）、`brotli`（brew 无此模块→删）。**map 路由表逐字保留**。
+
+```bash
+# 1. 生成演练 conf（自签证书 + 等价 conf，map 段逐字）
+bash scripts/gen-nginx-drill-conf.sh /tmp/topems-nginx-dev
+# 2. 语法校验 + 启动（监听 80/443；80→301、443 SSL）
+nginx -t -c /tmp/topems-nginx-dev/topems-drill.conf && nginx -c /tmp/topems-nginx-dev/topems-drill.conf
+# 3. 校验（map 逐字比对 + 冒烟；本机 4 域有 /health：erp/bi/hrm/monitor）
+bash scripts/verify-nginx-prod.sh --conf /tmp/topems-nginx-dev/topems-drill.conf \
+  --repo-conf ./deploy/nginx/topems.conf --base https://localhost \
+  --services "erp bi hrm monitor" --probe "/health" --insecure
+# 期望：MAP_OK + SMOKE 4/4 200 + PASS
+# 4. 停止：kill $(cat /tmp/topems-nginx-dev/nginx.pid)
+```
+
+> 本机演练已验证：map 命中正确 upstream、SSL 链路、反代到 monolith 全链路。
+> 生产原文（含 epoll/brotli/www-data——生产编译 nginx 特性）加载验证仍需 Linux 环境。
+
 ## 1. 背景与目标
 
 - 生产流量入口 = `deploy/nginx/topems.conf`（map `$request_uri $api_upstream` 驱动统一反代，
