@@ -55,6 +55,7 @@ pub use crate::modules::graphql_governance::*;
 pub use crate::modules::graphql_helpers::*;
 pub use crate::modules::graphql_monitoring::*;
 pub use crate::modules::graphql_persisted_queries::*;
+pub use crate::modules::graphql_mutation_impls::*;
 pub use crate::modules::graphql_query_business::*;
 pub use crate::modules::graphql_query_impls::*;
 pub use crate::modules::graphql_realtime_stream::*;
@@ -1025,74 +1026,17 @@ impl MutationRoot {
         title: String,
         user_id: Option<String>,
     ) -> async_graphql::Result<UnifiedTodoGql> {
-        let state = ctx.data::<AppState>()?;
-        let uid = user_id.unwrap_or_else(|| "system".to_string());
-
-        let row = sqlx::query(
-            r#"INSERT INTO portal.portal_todos
-               (user_id, title, service_code, service_name, priority, todo_type)
-               VALUES ($1, $2, 'portal', '门户中心', 'medium', 'personal')
-               RETURNING id, title, created_at"#,
-        )
-        .bind(&uid)
-        .bind(&title)
-        .fetch_one(&state.pool)
-        .await
-        .map_err(|e| async_graphql::Error::new(format!("创建待办失败: {}", e)))?;
-
-        use sqlx::Row;
-        let id: uuid::Uuid = row.try_get("id")?;
-        let title: String = row.try_get("title")?;
-        let created_at: chrono::DateTime<chrono::Utc> = row
-            .try_get("created_at")
-            .unwrap_or_else(|_| chrono::Utc::now());
-
-        Ok(UnifiedTodoGql {
-            id: id.to_string(),
-            title,
-            source: "portal".into(),
-            priority: 0,
-            status: "pending".into(),
-            created_at: created_at.to_rfc3339(),
-        })
+        impl_create_todo(ctx, title, user_id).await
     }
 
     /// 完成待办事项
     async fn complete_todo(&self, ctx: &Context<'_>, id: String) -> async_graphql::Result<bool> {
-        let state = ctx.data::<AppState>()?;
-        let uuid = uuid::Uuid::parse_str(&id)
-            .map_err(|e| async_graphql::Error::new(format!("无效的 ID: {}", e)))?;
-
-        let result = sqlx::query(
-            r#"UPDATE portal.portal_todos
-               SET completed = TRUE, completed_at = NOW(), updated_at = NOW()
-               WHERE id = $1 AND deleted_at IS NULL"#,
-        )
-        .bind(uuid)
-        .execute(&state.pool)
-        .await
-        .map_err(|e| async_graphql::Error::new(format!("更新待办失败: {}", e)))?;
-
-        Ok(result.rows_affected() > 0)
+        impl_complete_todo(ctx, id).await
     }
 
     /// 删除待办事项（软删除）
     async fn delete_todo(&self, ctx: &Context<'_>, id: String) -> async_graphql::Result<bool> {
-        let state = ctx.data::<AppState>()?;
-        let uuid = uuid::Uuid::parse_str(&id)
-            .map_err(|e| async_graphql::Error::new(format!("无效的 ID: {}", e)))?;
-
-        let result = sqlx::query(
-            r#"UPDATE portal.portal_todos
-               SET deleted_at = NOW(), updated_at = NOW()
-               WHERE id = $1 AND deleted_at IS NULL"#,
-        )
-        .bind(uuid)
-        .execute(&state.pool)
-        .await
-        .map_err(|e| async_graphql::Error::new(format!("删除待办失败: {}", e)))?;
-
-        Ok(result.rows_affected() > 0)
+        impl_delete_todo(ctx, id).await
     }
 
     /// V38.0: 创建实体（通用 CRUD）
@@ -1104,54 +1048,7 @@ impl MutationRoot {
         entity_type: String,
         data: serde_json::Value,
     ) -> async_graphql::Result<serde_json::Value> {
-        let base_url = service_url(&service);
-        let path = match (service.as_str(), entity_type.as_str()) {
-            ("erp", "customers") => "/api/erp/customers",
-            ("erp", "suppliers") => "/api/erp/suppliers",
-            ("erp", "materials") => "/api/erp/materials",
-            ("crm", "contacts") => "/api/crm/contacts",
-            ("crm", "leads") => "/api/crm/leads",
-            ("hrm", "employees") => "/api/hrm/employees",
-            ("hrm", "departments") => "/api/hrm/departments",
-            ("finance", "accounts") => "/api/finance/accounts",
-            ("finance", "vouchers") => "/api/finance/vouchers",
-            ("finance", "expenses") => "/api/finance/expenses",
-            ("mes", "work-orders") => "/api/mes/work-orders",
-            _ => {
-                return Err(async_graphql::Error::new(format!(
-                    "不支持的服务或实体类型: {}/{}",
-                    service, entity_type
-                )))
-            }
-        };
-
-        let url = format!("{}{}", base_url, path);
-        let client = service_request(reqwest::Method::POST, &url, FEDERATION_WRITE_PERMS);
-
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(10),
-            client.json(&data).send(),
-        )
-        .await
-        {
-            Ok(Ok(resp)) if resp.status().is_success() => {
-                let result: serde_json::Value = resp
-                    .json()
-                    .await
-                    .unwrap_or(serde_json::json!({"success": true}));
-                Ok(result)
-            }
-            Ok(Ok(resp)) => {
-                let status = resp.status();
-                let error_body = resp.text().await.unwrap_or_default();
-                Err(async_graphql::Error::new(format!(
-                    "创建实体失败 ({}): {}",
-                    status, error_body
-                )))
-            }
-            Ok(Err(e)) => Err(async_graphql::Error::new(format!("HTTP 请求失败: {}", e))),
-            Err(_) => Err(async_graphql::Error::new("创建实体超时")),
-        }
+        impl_create_entity(_ctx, service, entity_type, data).await
     }
 
     /// V38.0: 更新实体（通用 CRUD）
@@ -1164,54 +1061,7 @@ impl MutationRoot {
         id: String,
         data: serde_json::Value,
     ) -> async_graphql::Result<serde_json::Value> {
-        let base_url = service_url(&service);
-        let path = match (service.as_str(), entity_type.as_str()) {
-            ("erp", "customers") => format!("/api/erp/customers/{}", id),
-            ("erp", "suppliers") => format!("/api/erp/suppliers/{}", id),
-            ("erp", "materials") => format!("/api/erp/materials/{}", id),
-            ("crm", "contacts") => format!("/api/crm/contacts/{}", id),
-            ("crm", "leads") => format!("/api/crm/leads/{}", id),
-            ("hrm", "employees") => format!("/api/hrm/employees/{}", id),
-            ("hrm", "departments") => format!("/api/hrm/departments/{}", id),
-            ("finance", "accounts") => format!("/api/finance/accounts/{}", id),
-            ("finance", "vouchers") => format!("/api/finance/vouchers/{}", id),
-            ("finance", "expenses") => format!("/api/finance/expenses/{}", id),
-            ("mes", "work-orders") => format!("/api/mes/work-orders/{}", id),
-            _ => {
-                return Err(async_graphql::Error::new(format!(
-                    "不支持的服务或实体类型: {}/{}",
-                    service, entity_type
-                )))
-            }
-        };
-
-        let url = format!("{}{}", base_url, path);
-        let client = service_request(reqwest::Method::PUT, &url, FEDERATION_WRITE_PERMS);
-
-        match tokio::time::timeout(
-            std::time::Duration::from_secs(10),
-            client.json(&data).send(),
-        )
-        .await
-        {
-            Ok(Ok(resp)) if resp.status().is_success() => {
-                let result: serde_json::Value = resp
-                    .json()
-                    .await
-                    .unwrap_or(serde_json::json!({"success": true}));
-                Ok(result)
-            }
-            Ok(Ok(resp)) => {
-                let status = resp.status();
-                let error_body = resp.text().await.unwrap_or_default();
-                Err(async_graphql::Error::new(format!(
-                    "更新实体失败 ({}): {}",
-                    status, error_body
-                )))
-            }
-            Ok(Err(e)) => Err(async_graphql::Error::new(format!("HTTP 请求失败: {}", e))),
-            Err(_) => Err(async_graphql::Error::new("更新实体超时")),
-        }
+        impl_update_entity(_ctx, service, entity_type, id, data).await
     }
 
     /// V38.0: 删除实体（通用 CRUD）
@@ -1223,36 +1073,7 @@ impl MutationRoot {
         entity_type: String,
         id: String,
     ) -> async_graphql::Result<bool> {
-        let base_url = service_url(&service);
-        let path = match (service.as_str(), entity_type.as_str()) {
-            ("erp", "customers") => format!("/api/erp/customers/{}", id),
-            ("erp", "suppliers") => format!("/api/erp/suppliers/{}", id),
-            ("erp", "materials") => format!("/api/erp/materials/{}", id),
-            ("crm", "contacts") => format!("/api/crm/contacts/{}", id),
-            ("crm", "leads") => format!("/api/crm/leads/{}", id),
-            ("hrm", "employees") => format!("/api/hrm/employees/{}", id),
-            ("hrm", "departments") => format!("/api/hrm/departments/{}", id),
-            ("finance", "accounts") => format!("/api/finance/accounts/{}", id),
-            ("finance", "vouchers") => format!("/api/finance/vouchers/{}", id),
-            ("finance", "expenses") => format!("/api/finance/expenses/{}", id),
-            ("mes", "work-orders") => format!("/api/mes/work-orders/{}", id),
-            _ => {
-                return Err(async_graphql::Error::new(format!(
-                    "不支持的服务或实体类型: {}/{}",
-                    service, entity_type
-                )))
-            }
-        };
-
-        let url = format!("{}{}", base_url, path);
-        let client = service_request(reqwest::Method::DELETE, &url, FEDERATION_WRITE_PERMS);
-
-        match tokio::time::timeout(std::time::Duration::from_secs(10), client.send()).await {
-            Ok(Ok(resp)) if resp.status().is_success() => Ok(true),
-            Ok(Ok(_)) => Ok(false),
-            Ok(Err(_)) => Ok(false),
-            Err(_) => Err(async_graphql::Error::new("删除实体超时")),
-        }
+        impl_delete_entity(_ctx, service, entity_type, id).await
     }
 
     // ==================== V39.0 Phase 9: 事件发布 Mutations ====================
@@ -1267,33 +1088,7 @@ impl MutationRoot {
         master_data_id: String,
         source_service: String,
     ) -> async_graphql::Result<MasterDataEventGql> {
-        let event = MasterDataEventGql {
-            domain: domain.clone(),
-            action: action.clone(),
-            master_data_id: master_data_id.clone(),
-            source_service: source_service.clone(),
-            timestamp: chrono::Utc::now().to_rfc3339(),
-        };
-
-        // 发布到本地 EventBus
-        global_event_bus().publish(
-            SubscriptionChannel::MasterDataChanged,
-            serde_json::to_value(&event).unwrap_or_default(),
-        );
-
-        // 如果 Redis 可用，同时发布到 Redis（多实例广播）
-        let state = ctx.data::<AppState>()?;
-        if let Some(publisher) = &state.event_publisher {
-            let _ = publisher
-                .publish_event(
-                    topems_shared_event::event::EventType::HealthCheck,
-                    serde_json::to_value(&event).unwrap_or_default(),
-                )
-                .await;
-        }
-
-        invalidate_cache();
-        Ok(event)
+        impl_publish_master_data_event(ctx, domain, action, master_data_id, source_service).await
     }
 
     /// 发布通知事件
@@ -1305,32 +1100,7 @@ impl MutationRoot {
         content: String,
         notification_type: String,
     ) -> async_graphql::Result<NotificationEventGql> {
-        let event = NotificationEventGql {
-            id: uuid::Uuid::new_v4().to_string(),
-            user_id: user_id.clone(),
-            title: title.clone(),
-            content: content.clone(),
-            notification_type: notification_type.clone(),
-            timestamp: chrono::Utc::now().to_rfc3339(),
-        };
-
-        global_event_bus().publish(
-            SubscriptionChannel::NotificationReceived,
-            serde_json::to_value(&event).unwrap_or_default(),
-        );
-
-        let state = ctx.data::<AppState>()?;
-        if let Some(publisher) = &state.event_publisher {
-            let _ = publisher
-                .publish_event(
-                    topems_shared_event::event::EventType::PortalNotificationPublished,
-                    serde_json::to_value(&event).unwrap_or_default(),
-                )
-                .await;
-        }
-
-        invalidate_cache();
-        Ok(event)
+        impl_publish_notification(ctx, user_id, title, content, notification_type).await
     }
 
     /// 发布工作流任务事件
@@ -1343,32 +1113,7 @@ impl MutationRoot {
         priority: String,
         status: String,
     ) -> async_graphql::Result<WorkflowTaskEventGql> {
-        let event = WorkflowTaskEventGql {
-            task_id: task_id.clone(),
-            assignee_id: assignee_id.clone(),
-            instance_title: instance_title.clone(),
-            priority: priority.clone(),
-            status: status.clone(),
-            timestamp: chrono::Utc::now().to_rfc3339(),
-        };
-
-        global_event_bus().publish(
-            SubscriptionChannel::WorkflowTaskAssigned,
-            serde_json::to_value(&event).unwrap_or_default(),
-        );
-
-        let state = ctx.data::<AppState>()?;
-        if let Some(publisher) = &state.event_publisher {
-            let _ = publisher
-                .publish_event(
-                    topems_shared_event::event::EventType::WorkflowStarted,
-                    serde_json::to_value(&event).unwrap_or_default(),
-                )
-                .await;
-        }
-
-        invalidate_cache();
-        Ok(event)
+        impl_publish_workflow_task(ctx, task_id, assignee_id, instance_title, priority, status).await
     }
 
     /// 发布订单状态变更事件
@@ -1380,31 +1125,7 @@ impl MutationRoot {
         old_status: String,
         new_status: String,
     ) -> async_graphql::Result<OrderStatusEventGql> {
-        let event = OrderStatusEventGql {
-            order_id: order_id.clone(),
-            order_type: order_type.clone(),
-            old_status: old_status.clone(),
-            new_status: new_status.clone(),
-            timestamp: chrono::Utc::now().to_rfc3339(),
-        };
-
-        global_event_bus().publish(
-            SubscriptionChannel::OrderStatusChanged,
-            serde_json::to_value(&event).unwrap_or_default(),
-        );
-
-        let state = ctx.data::<AppState>()?;
-        if let Some(publisher) = &state.event_publisher {
-            let _ = publisher
-                .publish_event(
-                    topems_shared_event::event::EventType::SalesOrderApproved,
-                    serde_json::to_value(&event).unwrap_or_default(),
-                )
-                .await;
-        }
-
-        invalidate_cache();
-        Ok(event)
+        impl_publish_order_status(ctx, order_id, order_type, old_status, new_status).await
     }
 
     /// V41.0: 手动失效缓存（按模式匹配）
@@ -1413,16 +1134,12 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         pattern: String,
     ) -> async_graphql::Result<bool> {
-        let count = cache_invalidate_pattern(&pattern);
-        tracing::debug!("[cache] 手动失效模式 '{}'，共 {} 条", pattern, count);
-        Ok(true)
+        impl_cache_invalidate(_ctx, pattern).await
     }
 
     /// V41.0: 清空所有缓存
     async fn cache_clear(&self, _ctx: &Context<'_>) -> async_graphql::Result<bool> {
-        cache_clear_all();
-        tracing::debug!("[cache] 所有缓存已清空");
-        Ok(true)
+        impl_cache_clear(_ctx).await
     }
 
     /// V41.0: 触发查询预取
@@ -1431,8 +1148,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_name: String,
     ) -> async_graphql::Result<bool> {
-        let triggered = trigger_prefetch(&query_name);
-        Ok(triggered)
+        impl_prefetch_trigger(_ctx, query_name).await
     }
 
     /// V41.0 Track E: 审批通过发现的查询
@@ -1441,7 +1157,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         hash: String,
     ) -> async_graphql::Result<bool> {
-        Ok(approve_discovered_query(&hash, Some("admin")))
+        impl_approve_discovered_query(_ctx, hash).await
     }
 
     /// V41.0 Track E: 拒绝发现的查询
@@ -1450,7 +1166,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         hash: String,
     ) -> async_graphql::Result<bool> {
-        Ok(reject_discovered_query(&hash, Some("admin")))
+        impl_reject_discovered_query(_ctx, hash).await
     }
 
     /// V41.0 Track E: 更新自动审批策略
@@ -1459,13 +1175,13 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         policy: AutoApprovalPolicyInput,
     ) -> async_graphql::Result<bool> {
-        Ok(update_auto_approval_policy(policy))
+        impl_update_auto_approval_policy(_ctx, policy).await
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// V41.0 Track E: 手动触发自动审批扫描
     async fn run_auto_approval_scan(&self, _ctx: &Context<'_>) -> async_graphql::Result<i32> {
-        Ok(run_auto_approval_scan() as i32)
+        impl_run_auto_approval_scan(_ctx).await
     }
 
     /// V42.0 Track E: 设置字段权限（覆盖同 entity_type + field_name 的规则）
@@ -1474,9 +1190,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         permission: FieldPermissionInput,
     ) -> async_graphql::Result<FieldPermission> {
-        let perm: FieldPermission = permission.into();
-        set_field_permission(perm.clone());
-        Ok(perm)
+        impl_set_field_permission(_ctx, permission).await
     }
 
     /// V42.0 Track E: 移除字段权限
@@ -1486,7 +1200,7 @@ impl MutationRoot {
         entity_type: String,
         field_name: String,
     ) -> async_graphql::Result<bool> {
-        Ok(remove_field_permission(&entity_type, &field_name))
+        impl_remove_field_permission(_ctx, entity_type, field_name).await
     }
 
     /// V42.0 Track E: 设置掩码规则（覆盖同 entity_type + field_name 的规则）
@@ -1495,9 +1209,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         rule: MaskingRuleInput,
     ) -> async_graphql::Result<MaskingRule> {
-        let r: MaskingRule = rule.into();
-        set_masking_rule(r.clone());
-        Ok(r)
+        impl_set_masking_rule(_ctx, rule).await
     }
 
     /// V42.0 Track E: 移除掩码规则
@@ -1507,7 +1219,7 @@ impl MutationRoot {
         entity_type: String,
         field_name: String,
     ) -> async_graphql::Result<bool> {
-        Ok(remove_masking_rule(&entity_type, &field_name))
+        impl_remove_masking_rule(_ctx, entity_type, field_name).await
     }
 
     /// V42.0 Track E: 更新安全配置
@@ -1516,26 +1228,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         config: SecurityConfigInput,
     ) -> async_graphql::Result<SecurityConfig> {
-        let current = get_security_config();
-        let new_config = SecurityConfig {
-            field_permissions_enabled: config
-                .field_permissions_enabled
-                .unwrap_or(current.field_permissions_enabled),
-            data_masking_enabled: config
-                .data_masking_enabled
-                .unwrap_or(current.data_masking_enabled),
-            field_audit_enabled: config
-                .field_audit_enabled
-                .unwrap_or(current.field_audit_enabled),
-            data_change_audit_enabled: config
-                .data_change_audit_enabled
-                .unwrap_or(current.data_change_audit_enabled),
-            default_deny: config.default_deny.unwrap_or(current.default_deny),
-            audit_sensitive_fields_only: config
-                .audit_sensitive_fields_only
-                .unwrap_or(current.audit_sensitive_fields_only),
-        };
-        Ok(update_security_config(new_config))
+        impl_update_security_config(_ctx, config).await
     }
 
     /// V43.0 Track B: 取消指定订阅
@@ -1544,7 +1237,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<bool> {
-        Ok(cancel_subscription_by_id(&id))
+        impl_cancel_subscription(_ctx, id).await
     }
 
     /// V43.0 Track B: 取消指定连接的所有订阅
@@ -1553,7 +1246,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         connection_id: String,
     ) -> async_graphql::Result<u64> {
-        Ok(cancel_all_subscriptions_by_connection(&connection_id))
+        impl_cancel_all_subscriptions(_ctx, connection_id).await
     }
 
     /// V43.0 Track E: 应用查询优化建议
@@ -1563,7 +1256,7 @@ impl MutationRoot {
         query_hash: String,
         suggestion_id: String,
     ) -> async_graphql::Result<bool> {
-        Ok(apply_optimization_suggestion(&query_hash, &suggestion_id))
+        impl_apply_optimization(_ctx, query_hash, suggestion_id).await
     }
 
     /// V43.0 Track E: 生成缓存推荐（返回推荐变更数）
@@ -1571,7 +1264,7 @@ impl MutationRoot {
         &self,
         _ctx: &Context<'_>,
     ) -> async_graphql::Result<u32> {
-        Ok(generate_cache_recommendations())
+        impl_generate_cache_recommendations(_ctx).await
     }
 
     /// V43.0 Track E: 接受缓存推荐
@@ -1580,7 +1273,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_hash: String,
     ) -> async_graphql::Result<bool> {
-        Ok(accept_cache_recommendation(&query_hash))
+        impl_accept_cache_recommendation(_ctx, query_hash).await
     }
 
     /// V44.0 Track B: 重置熔断器
@@ -1589,7 +1282,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         service: String,
     ) -> async_graphql::Result<bool> {
-        Ok(reset_circuit_breaker(&service))
+        impl_federation_reset_circuit_breaker(_ctx, service).await
     }
 
     /// V44.0 Track B: 失效查询缓存
@@ -1598,16 +1291,12 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_hash: Option<String>,
     ) -> async_graphql::Result<bool> {
-        if let Some(hash) = query_hash {
-            Ok(FederatedCacheManager::invalidate_query_cache(&hash))
-        } else {
-            Ok(FederatedCacheManager::clear_all_cache())
-        }
+        impl_federation_cache_invalidate(_ctx, query_hash).await
     }
 
     /// V44.0 Track B: 清除所有缓存
     async fn federation_cache_clear(&self, _ctx: &Context<'_>) -> async_graphql::Result<bool> {
-        Ok(FederatedCacheManager::clear_all_cache())
+        impl_federation_cache_clear(_ctx).await
     }
 
     /// V44.0 Track B: 设置熔断器配置
@@ -1617,7 +1306,7 @@ impl MutationRoot {
         service: String,
         config: CircuitBreakerConfigInputGql,
     ) -> async_graphql::Result<bool> {
-        Ok(set_circuit_breaker_config(&service, config))
+        impl_federation_set_circuit_breaker_config(_ctx, service, config).await
     }
 
     /// V44.0 Track E: 添加告警规则
@@ -1626,7 +1315,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: AlertRuleInput,
     ) -> async_graphql::Result<String> {
-        Ok(add_alert_rule(input))
+        impl_add_alert_rule(_ctx, input).await
     }
 
     /// V44.0 Track E: 更新告警规则
@@ -1636,7 +1325,7 @@ impl MutationRoot {
         id: String,
         input: AlertRuleInput,
     ) -> async_graphql::Result<bool> {
-        Ok(update_alert_rule(&id, input))
+        impl_update_alert_rule(_ctx, id, input).await
     }
 
     /// V44.0 Track E: 删除告警规则
@@ -1645,7 +1334,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<bool> {
-        Ok(delete_alert_rule(&id))
+        impl_delete_alert_rule(_ctx, id).await
     }
 
     /// V44.0 Track E: 确认告警
@@ -1654,12 +1343,12 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<bool> {
-        Ok(acknowledge_alert(&id))
+        impl_acknowledge_alert(_ctx, id).await
     }
 
     /// V44.0 Track E: 解决告警
     async fn resolve_alert(&self, _ctx: &Context<'_>, id: String) -> async_graphql::Result<bool> {
-        Ok(resolve_alert(&id))
+        impl_resolve_alert(_ctx, id).await
     }
 
     /// V44.0 Track E: 测试告警
@@ -1669,13 +1358,12 @@ impl MutationRoot {
         alert_type: AlertType,
         level: AlertLevel,
     ) -> async_graphql::Result<String> {
-        Ok(test_alert(alert_type, level))
+        impl_test_alert(_ctx, alert_type, level).await
     }
 
     /// V44.0 Track E: 重置指标
     async fn reset_graphql_metrics(&self, _ctx: &Context<'_>) -> async_graphql::Result<bool> {
-        reset_metrics();
-        Ok(true)
+        impl_reset_graphql_metrics(_ctx).await
     }
 
     // ==================== V45.0 Track B: GraphQL 边缘计算 + CDN 缓存 + 流式响应 ====================
@@ -1689,12 +1377,7 @@ impl MutationRoot {
         route_pattern: String,
         cache_ttl_ms: i64,
     ) -> async_graphql::Result<String> {
-        Ok(EdgeComputeManager::deploy_function(
-            &name,
-            &handler,
-            &route_pattern,
-            cache_ttl_ms,
-        ))
+        impl_deploy_edge_function(_ctx, name, handler, route_pattern, cache_ttl_ms).await
     }
 
     /// V45.0: 在边缘节点执行函数
@@ -1705,11 +1388,7 @@ impl MutationRoot {
         input: serde_json::Value,
         region: Option<String>,
     ) -> async_graphql::Result<serde_json::Value> {
-        Ok(EdgeComputeManager::execute_at_edge(
-            &function_name,
-            &input,
-            region.as_deref(),
-        ))
+        impl_execute_at_edge(_ctx, function_name, input, region).await
     }
 
     /// V45.0: CDN 缓存预热
@@ -1718,7 +1397,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_hashes: Vec<String>,
     ) -> async_graphql::Result<u32> {
-        Ok(CdnCacheManager::warm_cache(&query_hashes))
+        impl_cdn_cache_warm(_ctx, query_hashes).await
     }
 
     /// V45.0: CDN 缓存预取
@@ -1727,7 +1406,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         query_hashes: Vec<String>,
     ) -> async_graphql::Result<u32> {
-        Ok(CdnCacheManager::prefetch(&query_hashes))
+        impl_cdn_cache_prefetch(_ctx, query_hashes).await
     }
 
     /// V45.0: 按标签失效 CDN 缓存
@@ -1736,12 +1415,12 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         tags: Vec<String>,
     ) -> async_graphql::Result<u32> {
-        Ok(CdnCacheManager::invalidate_by_tag(&tags))
+        impl_cdn_cache_invalidate_by_tag(_ctx, tags).await
     }
 
     /// V45.0: 清空所有 CDN 缓存
     async fn cdn_cache_purge_all(&self, _ctx: &Context<'_>) -> async_graphql::Result<bool> {
-        Ok(CdnCacheManager::purge_all())
+        impl_cdn_cache_purge_all(_ctx).await
     }
 
     /// V45.0: 更新流式配置
@@ -1750,7 +1429,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         config: StreamConfigInput,
     ) -> async_graphql::Result<bool> {
-        Ok(StreamingResponseManager::update_config(config))
+        impl_update_stream_config(_ctx, config).await
     }
 
     // ==================== V45.0 Track E: GraphQL 企业级治理 ====================
@@ -1763,15 +1442,7 @@ impl MutationRoot {
         version: String,
         sdl: String,
     ) -> async_graphql::Result<String> {
-        let entry = {
-            let mut registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
-            registry.register(&service, &version, &sdl, "user")
-        };
-        let mut manager = schema_version_manager()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        manager.publish(&service, &version, "", &sdl);
-        Ok(entry.version)
+        impl_register_schema(_ctx, service, version, sdl).await
     }
 
     /// V45.0: 废弃 Schema 版本
@@ -1781,8 +1452,7 @@ impl MutationRoot {
         service: String,
         version: String,
     ) -> async_graphql::Result<bool> {
-        let mut registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
-        Ok(registry.deprecate(&service, &version))
+        impl_deprecate_schema_version(_ctx, service, version).await
     }
 
     /// V45.0: 退役 Schema 版本
@@ -1792,8 +1462,7 @@ impl MutationRoot {
         service: String,
         version: String,
     ) -> async_graphql::Result<bool> {
-        let mut registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
-        Ok(registry.retire(&service, &version))
+        impl_retire_schema_version(_ctx, service, version).await
     }
 
     /// V45.0: 添加契约测试
@@ -1802,10 +1471,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         input: ContractTestInput,
     ) -> async_graphql::Result<String> {
-        let mut runner = contract_test_runner()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        Ok(runner.add_test(input))
+        impl_add_contract_test(_ctx, input).await
     }
 
     /// V45.0: 更新契约测试
@@ -1815,10 +1481,7 @@ impl MutationRoot {
         id: String,
         input: ContractTestInput,
     ) -> async_graphql::Result<bool> {
-        let mut runner = contract_test_runner()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        Ok(runner.update_test(&id, input))
+        impl_update_contract_test(_ctx, id, input).await
     }
 
     /// V45.0: 删除契约测试
@@ -1827,10 +1490,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<bool> {
-        let mut runner = contract_test_runner()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        Ok(runner.remove_test(&id))
+        impl_delete_contract_test(_ctx, id).await
     }
 
     /// V45.0: 运行契约测试
@@ -1839,12 +1499,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         id: String,
     ) -> async_graphql::Result<ContractTestResultGql> {
-        let mut runner = contract_test_runner()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        runner
-            .run_test(&id)
-            .ok_or_else(|| async_graphql::Error::new(format!("Contract test '{}' not found", id)))
+        impl_run_contract_test(_ctx, id).await
     }
 
     /// V45.0: 运行所有契约测试（可按 service 过滤，返回运行数量）
@@ -1853,10 +1508,7 @@ impl MutationRoot {
         _ctx: &Context<'_>,
         service: Option<String>,
     ) -> async_graphql::Result<u32> {
-        let mut runner = contract_test_runner()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        Ok(runner.run_all(service.as_deref()))
+        impl_run_all_contract_tests(_ctx, service).await
     }
 
     /// V45.0: 发布 Schema 版本（从注册表获取 SDL 并发布到版本管理器）
@@ -1867,17 +1519,7 @@ impl MutationRoot {
         version: String,
         changelog: String,
     ) -> async_graphql::Result<String> {
-        let sdl = {
-            let registry = schema_registry().lock().unwrap_or_else(|e| e.into_inner());
-            registry
-                .get_version(&service, &version)
-                .map(|v| v.sdl)
-                .unwrap_or_default()
-        };
-        let mut manager = schema_version_manager()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        Ok(manager.publish(&service, &version, &changelog, &sdl))
+        impl_publish_schema_version(_ctx, service, version, changelog).await
     }
 
     /// V45.0: 提升 Schema 版本为 Active
@@ -1887,10 +1529,7 @@ impl MutationRoot {
         service: String,
         version: String,
     ) -> async_graphql::Result<bool> {
-        let mut manager = schema_version_manager()
-            .lock()
-            .unwrap_or_else(|e| e.into_inner());
-        Ok(manager.promote(&service, &version))
+        impl_promote_schema_version(_ctx, service, version).await
     }
 
     /// V45.0: 回滚 Schema 到指定版本
@@ -3029,6 +2668,8 @@ pub fn build_schema(state: AppState) -> PortalSchema {
 mod tests {
     include!("graphql_schema_tests.rs");
 }
+
+
 
 
 
