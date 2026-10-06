@@ -13,7 +13,8 @@ use crate::models::supplier_admission::{
 };
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -97,7 +98,9 @@ pub async fn list_admissions(
         )),
         Err(e) => {
             tracing::error!("获取供应商准入列表失败: {}", e);
-            Json(api_error(500, "获取供应商准入列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取供应商准入列表失败".to_string(),
+            )))
         }
     }
 }
@@ -163,7 +166,9 @@ pub async fn create_admission(
         }
         Err(e) => {
             tracing::error!("创建供应商准入失败: {}", e);
-            Json(api_error(500, "创建供应商准入失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建供应商准入失败".to_string(),
+            )))
         }
     }
 }
@@ -199,7 +204,11 @@ pub async fn get_admission(
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的供应商准入ID".to_string(),
+            )))
+        }
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
@@ -212,10 +221,14 @@ pub async fn get_admission(
 
     match admission {
         Ok(item) => Json(ApiResponse::success(item, "获取供应商准入成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "供应商准入不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商准入不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取供应商准入失败: {}", e);
-            Json(api_error(500, "获取供应商准入失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取供应商准入失败".to_string(),
+            )))
         }
     }
 }
@@ -239,7 +252,11 @@ pub async fn update_admission(
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的供应商准入ID".to_string(),
+            )))
+        }
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(only_own_schema_query!(
@@ -300,10 +317,14 @@ pub async fn update_admission(
             }
             Json(ApiResponse::success(item, "更新供应商准入成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "供应商准入不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商准入不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新供应商准入失败: {}", e);
-            Json(api_error(500, "更新供应商准入失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新供应商准入失败".to_string(),
+            )))
         }
     }
 }
@@ -326,7 +347,11 @@ pub async fn delete_admission(
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的供应商准入ID".to_string(),
+            )))
+        }
     };
 
     let result = sqlx::query(
@@ -347,10 +372,14 @@ pub async fn delete_admission(
             }
             Json(ApiResponse::success("".to_string(), "删除供应商准入成功"))
         }
-        Ok(_) => Json(api_error(404, "供应商准入不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商准入不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除供应商准入失败: {}", e);
-            Json(api_error(500, "删除供应商准入失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除供应商准入失败".to_string(),
+            )))
         }
     }
 }
@@ -387,7 +416,11 @@ pub async fn submit_admission(
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的供应商准入ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -414,10 +447,14 @@ pub async fn submit_admission(
             }
             Json(ApiResponse::success(item, "提交供应商准入成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "供应商准入状态不正确，无法提交")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "供应商准入状态不正确，无法提交".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("提交供应商准入失败: {}", e);
-            Json(api_error(500, "提交供应商准入失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "提交供应商准入失败".to_string(),
+            )))
         }
     }
 }
@@ -454,7 +491,11 @@ pub async fn approve_admission(
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的供应商准入ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -490,10 +531,14 @@ pub async fn approve_admission(
             }
             Json(ApiResponse::success(item, "审批通过供应商准入成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "供应商准入状态不正确，无法审批")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "供应商准入状态不正确，无法审批".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("审批供应商准入失败: {}", e);
-            Json(api_error(500, "审批供应商准入失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审批供应商准入失败".to_string(),
+            )))
         }
     }
 }
@@ -530,7 +575,11 @@ pub async fn reject_admission(
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的供应商准入ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -566,10 +615,14 @@ pub async fn reject_admission(
             }
             Json(ApiResponse::success(item, "拒绝供应商准入成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "供应商准入状态不正确，无法拒绝")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "供应商准入状态不正确，无法拒绝".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("拒绝供应商准入失败: {}", e);
-            Json(api_error(500, "拒绝供应商准入失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "拒绝供应商准入失败".to_string(),
+            )))
         }
     }
 }
@@ -606,7 +659,11 @@ pub async fn audit_admission(
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的供应商准入ID".to_string(),
+            )))
+        }
     };
 
     for item in &data.audit_items {
@@ -661,10 +718,14 @@ pub async fn audit_admission(
             }
             Json(ApiResponse::success(item, "审核供应商准入成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "供应商准入不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商准入不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("审核供应商准入失败: {}", e);
-            Json(api_error(500, "审核供应商准入失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审核供应商准入失败".to_string(),
+            )))
         }
     }
 }
@@ -700,7 +761,11 @@ pub async fn activate_supplier(
 
     let admission_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的供应商准入ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的供应商准入ID".to_string(),
+            )))
+        }
     };
 
     let admission = sqlx::query_as::<_, SupplierAdmission>(
@@ -721,10 +786,14 @@ pub async fn activate_supplier(
             }
             Json(ApiResponse::success(item, "激活供应商成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "供应商准入状态不正确，无法激活")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "供应商准入状态不正确，无法激活".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("激活供应商失败: {}", e);
-            Json(api_error(500, "激活供应商失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "激活供应商失败".to_string(),
+            )))
         }
     }
 }

@@ -12,7 +12,8 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::models::purchase_order::PurchaseOrder;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 use crate::shared::permission::tenant_bind_value;
 use topems_shared_event::{EventType, InboundOrderRequestedPayload};
@@ -143,7 +144,9 @@ pub async fn purchase_to_inbound(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(api_error(500, "提交事务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "提交事务失败".to_string(),
+            )));
         }
     }
     result
@@ -178,7 +181,9 @@ pub async fn create_inbound_from_purchase(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(api_error(500, "提交事务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "提交事务失败".to_string(),
+            )));
         }
     }
     result
@@ -255,7 +260,9 @@ pub async fn create_inbound_from_purchase_internal(
                 tenant_bind,
             )
             .await;
-            return Json(api_error(500, "查询采购订单失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询采购订单失败".to_string(),
+            )));
         }
     };
 
@@ -471,7 +478,9 @@ pub async fn create_inbound_from_purchase_internal(
                     "创建入库单失败，将重试",
                 ))
             } else {
-                Json(api_error(500, "创建入库单失败，已达到最大重试次数"))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建入库单失败，已达到最大重试次数".to_string(),
+                )))
             }
         }
     }
@@ -578,7 +587,9 @@ pub async fn sync_supplier_from_srm(
             }
             Err(e) => {
                 tracing::error!("查询SRM供应商失败: {}", e);
-                return Json(api_error(500, "查询SRM供应商失败"));
+                return Json(ApiResponse::from(TopemsError::Internal(
+                    "查询SRM供应商失败".to_string(),
+                )));
             }
         };
 
@@ -648,7 +659,9 @@ pub async fn sync_supplier_from_srm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(api_error(500, "提交事务失败"));
+                        return Json(ApiResponse::from(TopemsError::Internal(
+                            "提交事务失败".to_string(),
+                        )));
                     }
                 }
                 Json(ApiResponse::success(
@@ -680,7 +693,9 @@ pub async fn sync_supplier_from_srm(
                     tenant_bind,
                 )
                 .await;
-                Json(api_error(500, "更新供应商失败"))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新供应商失败".to_string(),
+                )))
             }
         }
     } else {
@@ -733,7 +748,9 @@ pub async fn sync_supplier_from_srm(
                 if let Some(t) = guard.take() {
                     if let Err(e) = t.commit().await {
                         tracing::error!("rls commit failed: {}", e);
-                        return Json(api_error(500, "提交事务失败"));
+                        return Json(ApiResponse::from(TopemsError::Internal(
+                            "提交事务失败".to_string(),
+                        )));
                     }
                 }
                 Json(ApiResponse::success(
@@ -765,7 +782,9 @@ pub async fn sync_supplier_from_srm(
                     tenant_bind,
                 )
                 .await;
-                Json(api_error(500, "创建供应商失败"))
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建供应商失败".to_string(),
+                )))
             }
         }
     }
@@ -820,7 +839,9 @@ pub async fn sync_all_suppliers_from_srm(
         Ok(s) => s,
         Err(e) => {
             tracing::error!("查询SRM供应商列表失败: {}", e);
-            return Json(api_error(500, "查询SRM供应商列表失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询SRM供应商列表失败".to_string(),
+            )));
         }
     };
 
@@ -923,7 +944,9 @@ pub async fn sync_all_suppliers_from_srm(
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("rls commit failed: {}", e);
-            return Json(api_error(500, "提交事务失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "提交事务失败".to_string(),
+            )));
         }
     }
 
@@ -1029,7 +1052,9 @@ pub async fn get_sync_logs(
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);
-            Json(api_error(500, "查询同步日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询同步日志失败".to_string(),
+            )))
         }
     }
 }
@@ -1138,7 +1163,9 @@ pub async fn retry_failed_syncs(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(api_error(500, "提交事务失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "提交事务失败".to_string(),
+                    )));
                 }
             }
 
@@ -1154,7 +1181,9 @@ pub async fn retry_failed_syncs(
         }
         Err(e) => {
             tracing::error!("查询失败同步记录失败: {}", e);
-            Json(api_error(500, "查询失败同步记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询失败同步记录失败".to_string(),
+            )))
         }
     }
 }
@@ -1488,7 +1517,9 @@ pub async fn batch_sync_purchase_to_wms(
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("rls commit failed: {}", e);
-                    return Json(api_error(500, "提交事务失败"));
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "提交事务失败".to_string(),
+                    )));
                 }
             }
 
@@ -1505,7 +1536,9 @@ pub async fn batch_sync_purchase_to_wms(
         }
         Err(e) => {
             tracing::error!("查询待同步采购订单失败: {}", e);
-            Json(api_error(500, "查询待同步采购订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询待同步采购订单失败".to_string(),
+            )))
         }
     }
 }

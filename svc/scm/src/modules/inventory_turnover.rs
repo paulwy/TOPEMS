@@ -11,8 +11,9 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginationParams;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::TopemsError;
 
 // =============================================================================
 // Pure functions for inventory turnover analysis
@@ -416,7 +417,9 @@ pub async fn calculate_turnover(
         }
         Err(e) => {
             tracing::error!("计算库存周转率失败: {}", e);
-            Json(api_error(500, "计算库存周转率失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "计算库存周转率失败".to_string(),
+            )))
         }
     }
 }
@@ -526,10 +529,14 @@ pub async fn turnover_days(
                 "库存周转天数查询成功",
             ))
         }
-        Ok(None) => Json(api_error(404, "暂无数据")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "暂无数据".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("查询库存周转天数失败: {}", e);
-            Json(api_error(500, "查询库存周转天数失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询库存周转天数失败".to_string(),
+            )))
         }
     }
 }
@@ -671,7 +678,9 @@ pub async fn abc_analysis(
         }
         Err(e) => {
             tracing::error!("ABC分类分析失败: {}", e);
-            Json(api_error(500, "ABC分类分析失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "ABC分类分析失败".to_string(),
+            )))
         }
     }
 }
@@ -790,7 +799,9 @@ pub async fn turnover_trend(
         }
         Err(e) => {
             tracing::error!("查询库存周转率趋势失败: {}", e);
-            Json(api_error(500, "查询库存周转率趋势失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "查询库存周转率趋势失败".to_string(),
+            )))
         }
     }
 }
@@ -908,10 +919,14 @@ pub async fn get_turnover_detail(
             });
             Json(ApiResponse::success(stat, "获取单物料周转统计成功"))
         }
-        Ok(None) => Json(api_error(404, "未找到该物料的库存周转数据")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "未找到该物料的库存周转数据".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取单物料周转统计失败: {}", e);
-            Json(api_error(500, "获取单物料周转统计失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取单物料周转统计失败".to_string(),
+            )))
         }
     }
 }

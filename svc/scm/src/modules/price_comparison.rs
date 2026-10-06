@@ -18,7 +18,8 @@ use crate::models::price_comparison::{
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 // =============================================================================
 // Pure functions for price comparison / supplier quote scoring
@@ -433,7 +434,10 @@ pub async fn list_quotes(
                 "获取报价单列表成功",
             ))
         }
-        Err(e) => Json(api_error(500, &format!("获取报价单列表失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "获取报价单列表失败",
+            e,
+        ))),
     }
 }
 
@@ -489,7 +493,10 @@ pub async fn create_quote(
             serde_json::json!({"id": id, "quote_no": quote_no}),
             "创建报价单成功",
         )),
-        Err(e) => Json(api_error(500, &format!("创建报价单失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "创建报价单失败",
+            e,
+        ))),
     }
 }
 
@@ -567,8 +574,13 @@ pub async fn get_quote(
                 "获取报价单详情成功",
             ))
         }
-        Ok(None) => Json(api_error(404, "报价单不存在")),
-        Err(e) => Json(api_error(500, &format!("获取报价单详情失败: {}", e))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "报价单不存在".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "获取报价单详情失败",
+            e,
+        ))),
     }
 }
 
@@ -618,8 +630,13 @@ pub async fn update_quote(
             serde_json::json!({"id": id}),
             "更新报价单成功",
         )),
-        Ok(_) => Json(api_error(400, "只能更新草稿状态的报价单")),
-        Err(e) => Json(api_error(500, &format!("更新报价单失败: {}", e))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "只能更新草稿状态的报价单".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "更新报价单失败",
+            e,
+        ))),
     }
 }
 
@@ -677,8 +694,13 @@ pub async fn submit_quote(
             serde_json::json!({"id": id}),
             "报价单已提交",
         )),
-        Ok(_) => Json(api_error(400, "只能提交草稿状态的报价单")),
-        Err(e) => Json(api_error(500, &format!("提交报价单失败: {}", e))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "只能提交草稿状态的报价单".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "提交报价单失败",
+            e,
+        ))),
     }
 }
 
@@ -767,7 +789,10 @@ pub async fn list_comparisons(
                 "获取比价分析列表成功",
             ))
         }
-        Err(e) => Json(api_error(500, &format!("获取比价分析列表失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "获取比价分析列表失败",
+            e,
+        ))),
     }
 }
 
@@ -867,7 +892,10 @@ pub async fn create_comparison(
                 "创建比价分析成功",
             ))
         }
-        Err(e) => Json(api_error(500, &format!("创建比价分析失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "创建比价分析失败",
+            e,
+        ))),
     }
 }
 
@@ -949,8 +977,13 @@ pub async fn get_comparison(
                 "获取比价分析详情成功",
             ))
         }
-        Ok(None) => Json(api_error(404, "比价分析不存在")),
-        Err(e) => Json(api_error(500, &format!("获取比价分析详情失败: {}", e))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "比价分析不存在".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "获取比价分析详情失败",
+            e,
+        ))),
     }
 }
 
@@ -1012,8 +1045,13 @@ pub async fn approve_comparison(
             serde_json::json!({"id": id}),
             "比价分析已审批",
         )),
-        Ok(_) => Json(api_error(404, "比价分析不存在")),
-        Err(e) => Json(api_error(500, &format!("审批比价分析失败: {}", e))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "比价分析不存在".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "审批比价分析失败",
+            e,
+        ))),
     }
 }
 
@@ -1079,8 +1117,13 @@ pub async fn update_comparison(
             serde_json::json!({"id": id}),
             "比价分析已更新",
         )),
-        Ok(_) => Json(api_error(404, "比价分析不存在")),
-        Err(e) => Json(api_error(500, &format!("更新比价分析失败: {}", e))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "比价分析不存在".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "更新比价分析失败",
+            e,
+        ))),
     }
 }
 
@@ -1136,7 +1179,12 @@ pub async fn delete_comparison(
             serde_json::json!({"id": id}),
             "比价分析已删除",
         )),
-        Ok(_) => Json(api_error(404, "比价分析不存在")),
-        Err(e) => Json(api_error(500, &format!("删除比价分析失败: {}", e))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "比价分析不存在".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "删除比价分析失败",
+            e,
+        ))),
     }
 }

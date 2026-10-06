@@ -15,8 +15,9 @@ use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginationParams;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::TopemsError;
 
 // =============================================================================
 // Pure functions (unit-tested via mrp_logic_tests.rs & inline tests)
@@ -328,7 +329,9 @@ pub async fn list_suggestions(
         }
         Err(e) => {
             tracing::error!("获取MRP建议列表失败: {}", e);
-            Json(api_error(500, "获取MRP建议列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取MRP建议列表失败".to_string(),
+            )))
         }
     }
 }
@@ -381,10 +384,14 @@ pub async fn get_suggestion(
             mrp_suggestion_row_to_json(&row),
             "获取MRP建议详情成功",
         )),
-        Ok(None) => Json(api_error(404, "MRP建议不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "MRP建议不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取MRP建议详情失败: {}", e);
-            Json(api_error(500, "获取MRP建议详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取MRP建议详情失败".to_string(),
+            )))
         }
     }
 }
@@ -447,8 +454,13 @@ pub async fn update_suggestion(
             serde_json::json!({"id": id}),
             "MRP 建议已更新",
         )),
-        Ok(_) => Json(api_error(404, "MRP 建议不存在")),
-        Err(e) => Json(api_error(500, &format!("更新 MRP 建议失败: {}", e))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "MRP 建议不存在".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "更新 MRP 建议失败",
+            e,
+        ))),
     }
 }
 
@@ -492,8 +504,13 @@ pub async fn delete_suggestion(
             serde_json::json!({"id": id}),
             "MRP 建议已删除",
         )),
-        Ok(_) => Json(api_error(404, "MRP 建议不存在")),
-        Err(e) => Json(api_error(500, &format!("删除 MRP 建议失败: {}", e))),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "MRP 建议不存在".to_string(),
+        ))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "删除 MRP 建议失败",
+            e,
+        ))),
     }
 }
 
@@ -525,7 +542,9 @@ pub async fn compute_mrp(
         Ok(tx) => tx,
         Err(e) => {
             tracing::error!("开启事务失败: {}", e);
-            return Json(api_error(500, "MRP计算失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "MRP计算失败".to_string(),
+            )));
         }
     };
 
@@ -542,7 +561,9 @@ pub async fn compute_mrp(
         tx.rollback()
             .await
             .unwrap_or_else(|e| tracing::warn!("事务回滚失败: {}", e));
-        return Json(api_error(500, "MRP计算失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "MRP计算失败".to_string(),
+        )));
     }
 
     let now = Utc::now();
@@ -659,13 +680,17 @@ pub async fn compute_mrp(
                 &headers,
             )
             .await;
-            return Json(api_error(500, "MRP计算失败"));
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "MRP计算失败".to_string(),
+            )));
         }
     };
 
     if let Err(e) = tx.commit().await {
         tracing::error!("提交事务失败: {}", e);
-        return Json(api_error(500, "MRP计算失败"));
+        return Json(ApiResponse::from(TopemsError::Internal(
+            "MRP计算失败".to_string(),
+        )));
     }
 
     let items_json: Vec<serde_json::Value> = items.iter().map(mrp_suggestion_row_to_json).collect();
@@ -745,16 +770,25 @@ pub async fn confirm_suggestion(
 
     let existing = match existing {
         Ok(Some(row)) => row,
-        Ok(None) => return Json(api_error(404, "MRP建议不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询MRP建议失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "MRP建议不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询MRP建议失败",
+                e,
+            )))
+        }
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status != "draft" {
-        return Json(api_error(
-            400,
-            &format!("MRP建议当前状态为{}，无法确认", status),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "MRP建议当前状态为{}，无法确认",
+            status
+        ))));
     }
 
     let confirmed_qty = req
@@ -802,7 +836,9 @@ pub async fn confirm_suggestion(
         Err(e) => {
             tracing::error!("确认MRP建议失败: {}", e);
             (
-                Json(api_error(500, "确认MRP建议失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "确认MRP建议失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -934,7 +970,9 @@ pub async fn material_requirement_summary(
         }
         Err(e) => {
             tracing::error!("获取物料需求汇总失败: {}", e);
-            Json(api_error(500, "获取物料需求汇总失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取物料需求汇总失败".to_string(),
+            )))
         }
     }
 }

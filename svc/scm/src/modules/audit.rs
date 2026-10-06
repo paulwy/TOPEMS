@@ -13,7 +13,8 @@ use super::ApiState;
 use crate::models::audit_log::AuditLog;
 use crate::shared::permission::tenant_bind_value;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct ListAuditLogsQuery {
@@ -125,7 +126,9 @@ pub async fn list_audit_logs(
         }
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(api_error(500, "获取审计日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取审计日志失败".to_string(),
+            )))
         }
     }
 }
@@ -172,10 +175,14 @@ pub async fn get_audit_log(
 
     match result {
         Ok(Some(log)) => Json(ApiResponse::success(log, "获取审计日志成功")),
-        Ok(None) => Json(api_error(404, "审计日志不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "审计日志不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取审计日志失败: {}", e);
-            Json(api_error(500, "获取审计日志失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取审计日志失败".to_string(),
+            )))
         }
     }
 }

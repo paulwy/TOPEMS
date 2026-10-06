@@ -14,7 +14,8 @@ use crate::models::purchase_requisition::{
 };
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -110,7 +111,9 @@ pub async fn list_requisitions(
         )),
         Err(e) => {
             tracing::error!("获取采购申请列表失败: {}", e);
-            Json(api_error(500, "获取采购申请列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取采购申请列表失败".to_string(),
+            )))
         }
     }
 }
@@ -195,7 +198,9 @@ pub async fn create_requisition(
         }
         Err(e) => {
             tracing::error!("创建采购申请失败: {}", e);
-            Json(api_error(500, "创建采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建采购申请失败".to_string(),
+            )))
         }
     }
 }
@@ -230,7 +235,11 @@ pub async fn get_requisition(
 
     let requisition_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购申请ID".to_string(),
+            )))
+        }
     };
 
     let tenant_bind = tenant_bind_value(&claims);
@@ -244,10 +253,14 @@ pub async fn get_requisition(
 
     match requisition {
         Ok(item) => Json(ApiResponse::success(item, "获取采购申请成功")),
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "采购申请不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购申请不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取采购申请失败: {}", e);
-            Json(api_error(500, "获取采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取采购申请失败".to_string(),
+            )))
         }
     }
 }
@@ -270,7 +283,11 @@ pub async fn update_requisition(
 
     let requisition_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购申请ID".to_string(),
+            )))
+        }
     };
     let tenant_bind = tenant_bind_value(&claims);
 
@@ -320,10 +337,14 @@ pub async fn update_requisition(
             }
             Json(ApiResponse::success(item, "更新采购申请成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "采购申请不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购申请不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新采购申请失败: {}", e);
-            Json(api_error(500, "更新采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新采购申请失败".to_string(),
+            )))
         }
     }
 }
@@ -345,7 +366,11 @@ pub async fn delete_requisition(
 
     let requisition_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购申请ID".to_string(),
+            )))
+        }
     };
 
     let tenant_bind = tenant_bind_value(&claims);
@@ -367,10 +392,14 @@ pub async fn delete_requisition(
             }
             Json(ApiResponse::success("".to_string(), "删除采购申请成功"))
         }
-        Ok(_) => Json(api_error(404, "采购申请不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购申请不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除采购申请失败: {}", e);
-            Json(api_error(500, "删除采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除采购申请失败".to_string(),
+            )))
         }
     }
 }
@@ -406,7 +435,11 @@ pub async fn submit_requisition(
 
     let requisition_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购申请ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -434,10 +467,14 @@ pub async fn submit_requisition(
             }
             Json(ApiResponse::success(item, "提交采购申请成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法提交")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购申请状态不正确，无法提交".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("提交采购申请失败: {}", e);
-            Json(api_error(500, "提交采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "提交采购申请失败".to_string(),
+            )))
         }
     }
 }
@@ -473,7 +510,11 @@ pub async fn approve_requisition(
 
     let requisition_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购申请ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -509,10 +550,14 @@ pub async fn approve_requisition(
             }
             Json(ApiResponse::success(item, "审批通过采购申请成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法审批")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购申请状态不正确，无法审批".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("审批采购申请失败: {}", e);
-            Json(api_error(500, "审批采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审批采购申请失败".to_string(),
+            )))
         }
     }
 }
@@ -548,7 +593,11 @@ pub async fn reject_requisition(
 
     let requisition_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购申请ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -584,10 +633,14 @@ pub async fn reject_requisition(
             }
             Json(ApiResponse::success(item, "拒绝采购申请成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法拒绝")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购申请状态不正确，无法拒绝".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("拒绝采购申请失败: {}", e);
-            Json(api_error(500, "拒绝采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "拒绝采购申请失败".to_string(),
+            )))
         }
     }
 }
@@ -623,7 +676,11 @@ pub async fn cancel_requisition(
 
     let requisition_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购申请ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -651,10 +708,14 @@ pub async fn cancel_requisition(
             }
             Json(ApiResponse::success(item, "取消采购申请成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法取消")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购申请状态不正确，无法取消".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("取消采购申请失败: {}", e);
-            Json(api_error(500, "取消采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "取消采购申请失败".to_string(),
+            )))
         }
     }
 }
@@ -689,7 +750,11 @@ pub async fn convert_to_order(
 
     let requisition_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购申请ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购申请ID".to_string(),
+            )))
+        }
     };
 
     let tenant_bind = tenant_bind_value(&claims);
@@ -711,10 +776,14 @@ pub async fn convert_to_order(
             }
             Json(ApiResponse::success(item, "转换为采购订单成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购申请状态不正确，无法转换")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购申请状态不正确，无法转换".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("转换采购申请失败: {}", e);
-            Json(api_error(500, "转换采购申请失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "转换采购申请失败".to_string(),
+            )))
         }
     }
 }

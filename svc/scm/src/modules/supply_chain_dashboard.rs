@@ -13,7 +13,8 @@ use super::ApiState;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -569,7 +570,9 @@ pub async fn supplier_performance(
         }
         Err(e) => {
             tracing::error!("获取供应商绩效概览失败: {}", e);
-            Json(api_error(500, "获取供应商绩效概览失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取供应商绩效概览失败".to_string(),
+            )))
         }
     }
 }

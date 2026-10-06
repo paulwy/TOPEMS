@@ -14,7 +14,8 @@ use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new().route(
@@ -89,7 +90,9 @@ pub async fn get_settings(
         }
         Err(e) => {
             tracing::error!("获取模块设置失败: {}", e);
-            Json(api_error(500, "获取模块设置失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取模块设置失败".to_string(),
+            )))
         }
     }
 }
@@ -137,7 +140,10 @@ pub async fn update_settings(
             Ok(_) => updated += 1,
             Err(e) => {
                 tracing::error!("更新模块设置失败 (key={}): {}", key, e);
-                return Json(api_error(500, &format!("更新设置项失败: {}", key)));
+                return Json(ApiResponse::from(TopemsError::Internal(format!(
+                    "更新设置项失败: {}",
+                    key
+                ))));
             }
         }
     }

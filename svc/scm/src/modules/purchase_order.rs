@@ -17,7 +17,8 @@ use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use rust_decimal::prelude::FromPrimitive;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse, PaginationParams};
+use topems_shared_core::response::{ApiResponse, PaginationParams};
+use topems_shared_core::TopemsError;
 use topems_shared_event::event::{EventType, PurchaseOrderApprovedPayload};
 
 pub fn create_routes() -> Router<ApiState> {
@@ -115,7 +116,9 @@ pub async fn list_orders(
         }
         Err(e) => {
             tracing::error!("获取采购订单列表失败: {}", e);
-            Json(api_error(500, "获取采购订单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取采购订单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -179,7 +182,9 @@ pub async fn create_order(
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
             (
-                Json(api_error(500, "采购订单创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "采购订单创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -252,10 +257,14 @@ pub async fn get_order(
 
     match result {
         Ok(Some(order)) => Json(ApiResponse::success(order, "获取采购订单成功")),
-        Ok(None) => Json(api_error(404, "采购订单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购订单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取采购订单失败: {}", e);
-            Json(api_error(500, "获取采购订单失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取采购订单失败".to_string(),
+            )))
         }
     }
 }
@@ -303,8 +312,17 @@ pub async fn update_order(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(api_error(404, "采购订单不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询采购订单失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "采购订单不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询采购订单失败",
+                e,
+            )))
+        }
     };
 
     let supplier_id = req.supplier_id.or(existing.supplier_id);
@@ -342,7 +360,9 @@ pub async fn update_order(
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
             (
-                Json(api_error(500, "采购订单更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "采购订单更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -419,14 +439,18 @@ pub async fn delete_order(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "采购订单不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "采购订单不存在".to_string(),
+            ))),
             "error",
             Some("采购订单不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
             (
-                Json(api_error(500, "采购订单删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "采购订单删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -507,15 +531,24 @@ pub async fn approve_order(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(api_error(404, "采购订单不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询采购订单失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "采购订单不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询采购订单失败",
+                e,
+            )))
+        }
     };
 
     if existing.status != "pending" {
-        return Json(api_error(
-            400,
-            &format!("采购订单当前状态为{}，无法审批", existing.status),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "采购订单当前状态为{}，无法审批",
+            existing.status
+        ))));
     }
 
     let approver_name = req.approver_name.clone().or(Some(claims.username.clone()));
@@ -620,7 +653,9 @@ pub async fn approve_order(
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
             (
-                Json(api_error(500, "审批采购订单失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "审批采购订单失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -695,15 +730,24 @@ pub async fn reject_order(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(api_error(404, "采购订单不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询采购订单失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "采购订单不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询采购订单失败",
+                e,
+            )))
+        }
     };
 
     if existing.status != "pending" {
-        return Json(api_error(
-            400,
-            &format!("采购订单当前状态为{}，无法驳回", existing.status),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "采购订单当前状态为{}，无法驳回",
+            existing.status
+        ))));
     }
 
     let approver_name = req.approver_name.clone().or(Some(claims.username.clone()));
@@ -748,7 +792,9 @@ pub async fn reject_order(
         Err(e) => {
             tracing::error!("驳回采购订单失败: {}", e);
             (
-                Json(api_error(500, "驳回采购订单失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "驳回采购订单失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -812,15 +858,24 @@ async fn transition_order(
 
     let existing = match existing {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(api_error(404, "采购订单不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询采购订单失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "采购订单不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询采购订单失败",
+                e,
+            )))
+        }
     };
 
     if !allowed_states.contains(&existing.status.as_str()) {
-        return Json(api_error(
-            400,
-            &format!("采购订单当前状态为{}，无法{}", existing.status, success_msg),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "采购订单当前状态为{}，无法{}",
+            existing.status, success_msg
+        ))));
     }
 
     let operator_name = req.approver_name.clone().or(Some(claims.username.clone()));
@@ -871,7 +926,10 @@ async fn transition_order(
         Err(e) => {
             tracing::error!("{}采购订单失败: {}", success_msg, e);
             (
-                Json(api_error(500, &format!("{}采购订单失败", success_msg))),
+                Json(ApiResponse::from(TopemsError::Internal(format!(
+                    "{}采购订单失败",
+                    success_msg
+                )))),
                 "error",
                 Some(e.to_string()),
             )

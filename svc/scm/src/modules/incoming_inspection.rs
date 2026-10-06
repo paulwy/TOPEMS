@@ -14,8 +14,9 @@ use super::ApiState;
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginationParams;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::TopemsError;
 
 // =============================================================================
 // Pure functions for incoming inspection quality sampling & judgment
@@ -332,7 +333,9 @@ pub async fn list_notices(
         }
         Err(e) => {
             tracing::error!("获取到货通知单列表失败: {}", e);
-            Json(api_error(500, "获取到货通知单列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取到货通知单列表失败".to_string(),
+            )))
         }
     }
 }
@@ -419,7 +422,9 @@ pub async fn create_notice(
         Err(e) => {
             tracing::error!("创建到货通知单失败: {}", e);
             (
-                Json(api_error(500, "创建到货通知单失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建到货通知单失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -498,10 +503,14 @@ pub async fn get_notice(
             notice_row_to_json(&row),
             "获取到货通知单详情成功",
         )),
-        Ok(None) => Json(api_error(404, "到货通知单不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "到货通知单不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取到货通知单详情失败: {}", e);
-            Json(api_error(500, "获取到货通知单详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取到货通知单详情失败".to_string(),
+            )))
         }
     }
 }
@@ -547,10 +556,16 @@ pub async fn update_notice(
 
     let existing = match existing {
         Ok(e) => e,
-        Err(_) => return Json(api_error(500, "查询到货通知单失败")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询到货通知单失败".to_string(),
+            )))
+        }
     };
     if existing.is_none() {
-        return Json(api_error(404, "到货通知单不存在"));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "到货通知单不存在".to_string(),
+        )));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -593,7 +608,9 @@ pub async fn update_notice(
         Err(e) => {
             tracing::error!("更新到货通知单失败: {}", e);
             (
-                Json(api_error(500, "更新到货通知单失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新到货通知单失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -711,7 +728,9 @@ pub async fn list_inspections(
         }
         Err(e) => {
             tracing::error!("获取检验记录列表失败: {}", e);
-            Json(api_error(500, "获取检验记录列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取检验记录列表失败".to_string(),
+            )))
         }
     }
 }
@@ -813,7 +832,9 @@ pub async fn create_inspection(
         Err(e) => {
             tracing::error!("创建检验记录失败: {}", e);
             (
-                Json(api_error(500, "创建检验记录失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "创建检验记录失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -893,10 +914,14 @@ pub async fn get_inspection(
             inspection_row_to_json(&row),
             "获取检验记录详情成功",
         )),
-        Ok(None) => Json(api_error(404, "检验记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "检验记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取检验记录详情失败: {}", e);
-            Json(api_error(500, "获取检验记录详情失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取检验记录详情失败".to_string(),
+            )))
         }
     }
 }
@@ -940,10 +965,16 @@ pub async fn update_inspection(
 
     let existing = match existing {
         Ok(e) => e,
-        Err(_) => return Json(api_error(500, "查询检验记录失败")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "查询检验记录失败".to_string(),
+            )))
+        }
     };
     if existing.is_none() {
-        return Json(api_error(404, "检验记录不存在"));
+        return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "检验记录不存在".to_string(),
+        )));
     }
 
     let result = sqlx::query(only_own_schema_query!(
@@ -989,7 +1020,9 @@ pub async fn update_inspection(
         Err(e) => {
             tracing::error!("更新检验记录失败: {}", e);
             (
-                Json(api_error(500, "更新检验记录失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "更新检验记录失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1072,13 +1105,24 @@ pub async fn inspection_pass(
 
     let existing = match existing {
         Ok(Some(row)) => row,
-        Ok(None) => return Json(api_error(404, "检验记录不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询检验记录失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "检验记录不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询检验记录失败",
+                e,
+            )))
+        }
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status == "passed" || status == "failed" {
-        return Json(api_error(400, "检验记录已完成，无法重复操作"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "检验记录已完成，无法重复操作".to_string(),
+        )));
     }
 
     let failed_qty = req.failed_quantity.unwrap_or_else(|| {
@@ -1129,7 +1173,9 @@ pub async fn inspection_pass(
         Err(e) => {
             tracing::error!("检验合格处理失败: {}", e);
             (
-                Json(api_error(500, "检验合格处理失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "检验合格处理失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1204,13 +1250,24 @@ pub async fn inspection_fail(
 
     let existing = match existing {
         Ok(Some(row)) => row,
-        Ok(None) => return Json(api_error(404, "检验记录不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询检验记录失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "检验记录不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询检验记录失败",
+                e,
+            )))
+        }
     };
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status == "passed" || status == "failed" {
-        return Json(api_error(400, "检验记录已完成，无法重复操作"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "检验记录已完成，无法重复操作".to_string(),
+        )));
     }
 
     let passed_qty = req.passed_quantity;
@@ -1262,7 +1319,9 @@ pub async fn inspection_fail(
         Err(e) => {
             tracing::error!("检验不合格处理失败: {}", e);
             (
-                Json(api_error(500, "检验不合格处理失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "检验不合格处理失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
                 None,
@@ -1396,7 +1455,9 @@ pub async fn list_inspection_records(
         }
         Err(e) => {
             tracing::error!("获取检验记录明细失败: {}", e);
-            Json(api_error(500, "获取检验记录明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取检验记录明细失败".to_string(),
+            )))
         }
     }
 }
@@ -1461,7 +1522,9 @@ pub async fn create_inspection_record(
         }
         Err(e) => {
             tracing::error!("创建检验记录明细失败: {}", e);
-            Json(api_error(500, "创建检验记录明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建检验记录明细失败".to_string(),
+            )))
         }
     }
 }
@@ -1519,10 +1582,14 @@ pub async fn get_inspection_record(
             inspection_record_row_to_json(&row),
             "获取检验记录明细成功",
         )),
-        Ok(None) => Json(api_error(404, "检验记录明细不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "检验记录明细不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取检验记录明细失败: {}", e);
-            Json(api_error(500, "获取检验记录明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取检验记录明细失败".to_string(),
+            )))
         }
     }
 }
@@ -1595,10 +1662,14 @@ pub async fn update_inspection_record(
                 "更新检验记录明细成功",
             ))
         }
-        Ok(None) => Json(api_error(404, "检验记录明细不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "检验记录明细不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新检验记录明细失败: {}", e);
-            Json(api_error(500, "更新检验记录明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新检验记录明细失败".to_string(),
+            )))
         }
     }
 }
@@ -1642,10 +1713,14 @@ pub async fn delete_inspection_record(
                 "删除检验记录明细成功",
             ))
         }
-        Ok(_) => Json(api_error(404, "检验记录明细不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "检验记录明细不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除检验记录明细失败: {}", e);
-            Json(api_error(500, "删除检验记录明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除检验记录明细失败".to_string(),
+            )))
         }
     }
 }

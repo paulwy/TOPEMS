@@ -16,7 +16,8 @@ use crate::models::supplier_evaluation::{
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct SupplierEvaluationQueryParams {
@@ -120,7 +121,9 @@ pub async fn list_evaluations(
         }
         Err(e) => {
             tracing::error!("获取供应商评估列表失败: {}", e);
-            Json(api_error(500, "获取供应商评估列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取供应商评估列表失败".to_string(),
+            )))
         }
     }
 }
@@ -188,7 +191,9 @@ pub async fn create_evaluation(
         Err(e) => {
             tracing::error!("创建供应商评估失败: {}", e);
             (
-                Json(api_error(500, "供应商评估创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "供应商评估创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -276,10 +281,14 @@ pub async fn get_evaluation(
 
     match result {
         Ok(Some(evaluation)) => Json(ApiResponse::success(evaluation, "获取供应商评估成功")),
-        Ok(None) => Json(api_error(404, "供应商评估不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商评估不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取供应商评估失败: {}", e);
-            Json(api_error(500, "获取供应商评估失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取供应商评估失败".to_string(),
+            )))
         }
     }
 }
@@ -319,8 +328,17 @@ pub async fn update_evaluation(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(api_error(404, "供应商评估不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询供应商评估失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商评估不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询供应商评估失败",
+                e,
+            )))
+        }
     };
 
     let quality_score = req.quality_score.or(existing.quality_score);
@@ -365,7 +383,9 @@ pub async fn update_evaluation(
         Err(e) => {
             tracing::error!("更新供应商评估失败: {}", e);
             (
-                Json(api_error(500, "供应商评估更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "供应商评估更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -444,14 +464,18 @@ pub async fn delete_evaluation(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "供应商评估不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商评估不存在".to_string(),
+            ))),
             "error",
             Some("供应商评估不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除供应商评估失败: {}", e);
             (
-                Json(api_error(500, "供应商评估删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "供应商评估删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )

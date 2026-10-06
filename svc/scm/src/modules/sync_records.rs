@@ -13,7 +13,8 @@ use sqlx::{FromRow, Row};
 use crate::modules::ApiState;
 use crate::shared::permission::tenant_bind_value;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 #[derive(Debug, Deserialize)]
 pub struct ListSyncRecordParams {
@@ -173,7 +174,9 @@ pub async fn list_sync_records(
         }
         Err(e) => {
             tracing::error!("获取同步记录列表失败: {}", e);
-            Json(api_error(500, "获取同步记录列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取同步记录列表失败".to_string(),
+            )))
         }
     }
 }
@@ -213,10 +216,14 @@ pub async fn get_sync_record(
 
     match result {
         Ok(Some(record)) => Json(ApiResponse::success(record, "同步记录获取成功")),
-        Ok(None) => Json(api_error(404, "同步记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "同步记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取同步记录失败: {}", e);
-            Json(api_error(500, "获取同步记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取同步记录失败".to_string(),
+            )))
         }
     }
 }
@@ -276,7 +283,9 @@ pub async fn create_sync_record(
         }
         Err(e) => {
             tracing::error!("创建同步记录失败: {}", e);
-            Json(api_error(500, "创建同步记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建同步记录失败".to_string(),
+            )))
         }
     }
 }
@@ -333,10 +342,14 @@ pub async fn retry_sync_record(
                 "同步记录重试成功",
             ))
         }
-        Ok(None) => Json(api_error(404, "同步记录不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "同步记录不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("重试同步记录失败: {}", e);
-            Json(api_error(500, "重试同步记录失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "重试同步记录失败".to_string(),
+            )))
         }
     }
 }
@@ -405,7 +418,9 @@ pub async fn list_sync_details(
         }
         Err(e) => {
             tracing::error!("获取同步明细失败: {}", e);
-            Json(api_error(500, "获取同步明细失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取同步明细失败".to_string(),
+            )))
         }
     }
 }
@@ -454,7 +469,9 @@ async fn trigger_sync(
         )),
         Err(e) => {
             tracing::error!("触发同步失败: {}", e);
-            Json(api_error(500, "触发同步失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "触发同步失败".to_string(),
+            )))
         }
     }
 }

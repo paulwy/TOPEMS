@@ -18,8 +18,9 @@ use crate::models::supplier_delivery_appointment::{
 use crate::modules::audit::log_audit_event;
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginationParams;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::TopemsError;
 
 // =============================================================================
 // Pure functions for delivery appointment scheduling & scoring
@@ -435,7 +436,9 @@ pub async fn list_appointments(
         }
         Err(e) => {
             tracing::error!("获取供应商送货预约列表失败: {}", e);
-            Json(api_error(500, "获取供应商送货预约列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取供应商送货预约列表失败".to_string(),
+            )))
         }
     }
 }
@@ -469,7 +472,9 @@ pub async fn create_appointment(
     let tenant_bind = tenant_bind_value(&claims);
 
     if req.delivery_method.trim().is_empty() {
-        return Json(api_error(400, "送货方式不能为空"));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "送货方式不能为空".to_string(),
+        )));
     }
 
     let request_data = serde_json::to_value(&req).ok();
@@ -527,7 +532,9 @@ pub async fn create_appointment(
         Err(e) => {
             tracing::error!("创建供应商送货预约失败: {}", e);
             (
-                Json(api_error(500, "供应商送货预约创建失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "供应商送货预约创建失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -611,10 +618,14 @@ pub async fn get_appointment(
 
     match result {
         Ok(Some(apt)) => Json(ApiResponse::success(apt, "获取供应商送货预约成功")),
-        Ok(None) => Json(api_error(404, "供应商送货预约不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "供应商送货预约不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取供应商送货预约失败: {}", e);
-            Json(api_error(500, "获取供应商送货预约失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取供应商送货预约失败".to_string(),
+            )))
         }
     }
 }
@@ -653,15 +664,24 @@ pub async fn update_appointment(
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "供应商送货预约不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询供应商送货预约失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商送货预约不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询供应商送货预约失败",
+                e,
+            )))
+        }
     };
 
     if !matches!(existing.status.as_str(), "pending" | "rejected") {
-        return Json(api_error(
-            400,
-            &format!("当前状态为 {}，仅待审批或已驳回状态可修改", existing.status),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "当前状态为 {}，仅待审批或已驳回状态可修改",
+            existing.status
+        ))));
     }
 
     let purchase_order_id = req.purchase_order_id.or(existing.purchase_order_id);
@@ -727,7 +747,9 @@ pub async fn update_appointment(
         Err(e) => {
             tracing::error!("更新供应商送货预约失败: {}", e);
             (
-                Json(api_error(500, "供应商送货预约更新失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "供应商送货预约更新失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -808,14 +830,18 @@ pub async fn delete_appointment(
             None,
         ),
         Ok(_) => (
-            Json(api_error(404, "供应商送货预约不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商送货预约不存在".to_string(),
+            ))),
             "error",
             Some("供应商送货预约不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除供应商送货预约失败: {}", e);
             (
-                Json(api_error(500, "供应商送货预约删除失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "供应商送货预约删除失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -906,15 +932,24 @@ pub async fn approve_appointment(
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "供应商送货预约不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询供应商送货预约失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商送货预约不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询供应商送货预约失败",
+                e,
+            )))
+        }
     };
 
     if existing.status != "pending" {
-        return Json(api_error(
-            400,
-            &format!("当前状态为{}，无法审批", existing.status),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "当前状态为{}，无法审批",
+            existing.status
+        ))));
     }
 
     let approver = req
@@ -957,7 +992,9 @@ pub async fn approve_appointment(
         Err(e) => {
             tracing::error!("审批供应商送货预约失败: {}", e);
             (
-                Json(api_error(500, "审批供应商送货预约失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "审批供应商送货预约失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1043,15 +1080,24 @@ pub async fn reject_appointment(
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "供应商送货预约不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询供应商送货预约失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商送货预约不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询供应商送货预约失败",
+                e,
+            )))
+        }
     };
 
     if existing.status != "pending" {
-        return Json(api_error(
-            400,
-            &format!("当前状态为{}，无法驳回", existing.status),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "当前状态为{}，无法驳回",
+            existing.status
+        ))));
     }
 
     let approver = req
@@ -1097,7 +1143,9 @@ pub async fn reject_appointment(
         Err(e) => {
             tracing::error!("驳回供应商送货预约失败: {}", e);
             (
-                Json(api_error(500, "驳回供应商送货预约失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "驳回供应商送货预约失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1183,18 +1231,24 @@ pub async fn confirm_arrival(
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "供应商送货预约不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询供应商送货预约失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商送货预约不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询供应商送货预约失败",
+                e,
+            )))
+        }
     };
 
     if existing.status != "approved" {
-        return Json(api_error(
-            400,
-            &format!(
-                "当前状态为{}，仅已审批通过的预约可确认到货",
-                existing.status
-            ),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "当前状态为{}，仅已审批通过的预约可确认到货",
+            existing.status
+        ))));
     }
 
     let actual_arrival = req.actual_arrival_time.unwrap_or_else(Utc::now);
@@ -1233,7 +1287,9 @@ pub async fn confirm_arrival(
         Err(e) => {
             tracing::error!("到货确认失败: {}", e);
             (
-                Json(api_error(500, "到货确认失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "到货确认失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1319,18 +1375,24 @@ pub async fn complete_appointment(
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "供应商送货预约不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询供应商送货预约失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商送货预约不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询供应商送货预约失败",
+                e,
+            )))
+        }
     };
 
     if existing.status != "arrived" {
-        return Json(api_error(
-            400,
-            &format!(
-                "当前状态为{}，仅已到货确认的预约可标记完成",
-                existing.status
-            ),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "当前状态为{}，仅已到货确认的预约可标记完成",
+            existing.status
+        ))));
     }
 
     let new_remarks = match (existing.remarks.clone(), req.remarks.clone()) {
@@ -1366,7 +1428,9 @@ pub async fn complete_appointment(
         Err(e) => {
             tracing::error!("完成供应商送货预约失败: {}", e);
             (
-                Json(api_error(500, "完成供应商送货预约失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "完成供应商送货预约失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )
@@ -1452,15 +1516,24 @@ pub async fn cancel_appointment(
         .await;
     let existing = match existing {
         Ok(Some(a)) => a,
-        Ok(None) => return Json(api_error(404, "供应商送货预约不存在")),
-        Err(e) => return Json(api_error(500, &format!("查询供应商送货预约失败: {}", e))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "供应商送货预约不存在".to_string(),
+            )))
+        }
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询供应商送货预约失败",
+                e,
+            )))
+        }
     };
 
     if matches!(existing.status.as_str(), "completed" | "cancelled") {
-        return Json(api_error(
-            400,
-            &format!("当前状态为{}，无法取消", existing.status),
-        ));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+            "当前状态为{}，无法取消",
+            existing.status
+        ))));
     }
 
     let reason = req.reason.clone().unwrap_or_default();
@@ -1496,7 +1569,9 @@ pub async fn cancel_appointment(
         Err(e) => {
             tracing::error!("取消供应商送货预约失败: {}", e);
             (
-                Json(api_error(500, "取消供应商送货预约失败")),
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "取消供应商送货预约失败".to_string(),
+                ))),
                 "error",
                 Some(e.to_string()),
             )

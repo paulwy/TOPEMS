@@ -13,7 +13,8 @@ use crate::models::purchase_contract::{
 };
 use crate::shared::permission::{check_permission, tenant_bind_value, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{api_error, ApiResponse};
+use topems_shared_core::response::ApiResponse;
+use topems_shared_core::TopemsError;
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -97,7 +98,9 @@ pub async fn list_contracts(
         )),
         Err(e) => {
             tracing::error!("获取采购合同列表失败: {}", e);
-            Json(api_error(500, "获取采购合同列表失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取采购合同列表失败".to_string(),
+            )))
         }
     }
 }
@@ -198,7 +201,9 @@ pub async fn create_contract(
         }
         Err(e) => {
             tracing::error!("创建采购合同失败: {}", e);
-            Json(api_error(500, "创建采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "创建采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -229,7 +234,11 @@ pub async fn get_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let tenant_bind = tenant_bind_value(&claims);
@@ -260,10 +269,14 @@ pub async fn get_contract(
                 "获取采购合同成功",
             ))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "采购合同不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购合同不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("获取采购合同失败: {}", e);
-            Json(api_error(500, "获取采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "获取采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -291,7 +304,11 @@ pub async fn update_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let tenant_bind = tenant_bind_value(&claims);
@@ -377,10 +394,14 @@ pub async fn update_contract(
             }
             Json(ApiResponse::success(item, "更新采购合同成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(404, "采购合同不存在")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购合同不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新采购合同失败: {}", e);
-            Json(api_error(500, "更新采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "更新采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -402,7 +423,11 @@ pub async fn delete_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let tenant_bind = tenant_bind_value(&claims);
@@ -428,7 +453,7 @@ pub async fn delete_contract(
             .await
             {
                 tracing::error!("删除合同子表失败: {}", e);
-                return Json(api_error(500, "删除合同子表失败"));
+                return Json(ApiResponse::from(TopemsError::Internal("删除合同子表失败".to_string())));
             }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
@@ -438,10 +463,14 @@ pub async fn delete_contract(
             }
             Json(ApiResponse::success("".to_string(), "删除采购合同成功"))
         }
-        Ok(_) => Json(api_error(404, "采购合同不存在")),
+        Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购合同不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("删除采购合同失败: {}", e);
-            Json(api_error(500, "删除采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "删除采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -477,7 +506,11 @@ pub async fn submit_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -505,10 +538,14 @@ pub async fn submit_contract(
             }
             Json(ApiResponse::success(item, "提交采购合同成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法提交")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购合同状态不正确，无法提交".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("提交采购合同失败: {}", e);
-            Json(api_error(500, "提交采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "提交采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -544,7 +581,11 @@ pub async fn approve_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -580,10 +621,14 @@ pub async fn approve_contract(
             }
             Json(ApiResponse::success(item, "审批通过采购合同成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法审批")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购合同状态不正确，无法审批".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("审批采购合同失败: {}", e);
-            Json(api_error(500, "审批采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "审批采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -619,7 +664,11 @@ pub async fn reject_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -655,10 +704,14 @@ pub async fn reject_contract(
             }
             Json(ApiResponse::success(item, "拒绝采购合同成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法拒绝")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购合同状态不正确，无法拒绝".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("拒绝采购合同失败: {}", e);
-            Json(api_error(500, "拒绝采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "拒绝采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -694,7 +747,11 @@ pub async fn cancel_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -722,10 +779,14 @@ pub async fn cancel_contract(
             }
             Json(ApiResponse::success(item, "取消采购合同成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法取消")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购合同状态不正确，无法取消".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("取消采购合同失败: {}", e);
-            Json(api_error(500, "取消采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "取消采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -761,7 +822,11 @@ pub async fn terminate_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let remarks = data
@@ -789,10 +854,14 @@ pub async fn terminate_contract(
             }
             Json(ApiResponse::success(item, "终止采购合同成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法终止")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购合同状态不正确，无法终止".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("终止采购合同失败: {}", e);
-            Json(api_error(500, "终止采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "终止采购合同失败".to_string(),
+            )))
         }
     }
 }
@@ -827,7 +896,11 @@ pub async fn renew_contract(
 
     let contract_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
-        Err(_) => return Json(api_error(400, "无效的采购合同ID")),
+        Err(_) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                "无效的采购合同ID".to_string(),
+            )))
+        }
     };
 
     let tenant_bind = tenant_bind_value(&claims);
@@ -849,10 +922,14 @@ pub async fn renew_contract(
             }
             Json(ApiResponse::success(item, "续签采购合同成功"))
         }
-        Err(sqlx::Error::RowNotFound) => Json(api_error(400, "采购合同状态不正确，无法续签")),
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ValidationFailed(
+            "采购合同状态不正确，无法续签".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("续签采购合同失败: {}", e);
-            Json(api_error(500, "续签采购合同失败"))
+            Json(ApiResponse::from(TopemsError::Internal(
+                "续签采购合同失败".to_string(),
+            )))
         }
     }
 }
