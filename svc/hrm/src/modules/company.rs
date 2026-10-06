@@ -181,12 +181,14 @@ pub async fn create_company(
             id, tenant_id, name, short_name, registration_number, tax_number, address,
             contact_phone, contact_email, website, description, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'active', $12, $13)
-        RETURNING id, tenant_id, name, short_name, registration_number, tax_number, address,
+        RETURNING id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, name, short_name, registration_number, tax_number, address,
                   contact_phone, contact_email as email, website, description, status, created_at, updated_at
         "#),
     )
     .bind(id)
-    .bind(req.tenant_id.or(Some(Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())))
+    // 直接绑请求租户（Option<Uuid>）：None → SQL NULL，命中 RLS 策略 `tenant_id IS NULL` 放行分支；
+    // 去掉原硬编码 '...0001' 回退（超管/nil 上下文下会被幸存严格策略拒绝）。
+    .bind(req.tenant_id)
     .bind(&req.name)
     .bind(&req.short_name)
     .bind(&req.registration_number)
