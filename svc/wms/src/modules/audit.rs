@@ -73,11 +73,12 @@ pub async fn list_audit_logs(
         r#"
         SELECT id, tenant_id, action, COALESCE(entity_type, '') AS entity_type, entity_id, entity_ids,
                user_id::text, user_name, request_details, response_details,
-               status, error_message, ip_address::text, user_agent, created_at
-        -- A3 防御性加固：wms.audit_logs.entity_type 为可空 text、ip_address 为 inet 列。
-        -- 共享 AuditLog 结构体要求 entity_type 为非空 String、ip_address 按 text 解码；
-        -- 一旦出现历史/手插的 NULL entity_type 或非空 inet ip 行，sqlx 反序列化直接报错
-        -- （外层 200/内层 code:500）。COALESCE(entity_type,'') 保证非空 String 解码；
+               COALESCE(status, '') AS status, error_message, ip_address::text, user_agent, created_at
+        -- A3 防御性加固：wms.audit_logs.entity_type 为可空 text、ip_address 为 inet 列、
+        -- status 为可空 varchar（CHECK 约束对 NULL 放行，SQL 三值逻辑）。
+        -- 共享 AuditLog 结构体要求 entity_type/status 为非空 String、ip_address 按 text 解码；
+        -- 一旦出现历史/手插的 NULL entity_type/status 或非空 inet ip 行，sqlx 反序列化直接报错
+        -- （外层 200/内层 code:500）。COALESCE(entity_type,'')/COALESCE(status,'') 保证非空 String 解码；
         -- ip_address::text 把 inet 统一转 text（NULL 仍为 NULL，映射 Option<String>）。
         -- 真实写路径（log_audit_event→SchemaAwareAuditLogService）写入合规行不受影响。
         -- U12b: 读归位 wms 自有 schema（原误读 public.audit_logs 平台公共表，与写路径
@@ -174,7 +175,7 @@ pub async fn get_audit_log(
         r#"
         SELECT id, tenant_id, action, COALESCE(entity_type, '') AS entity_type, entity_id, entity_ids,
                user_id::text, user_name, request_details, response_details,
-               status, error_message, ip_address::text, user_agent, created_at
+               COALESCE(status, '') AS status, error_message, ip_address::text, user_agent, created_at
         -- U12b: 读归位 wms.audit_logs（见 list_audit_logs 注释）
         -- R-5: user_id::text、补 tenant_id（对齐 crm，见 list 注释）
         -- A3: COALESCE(entity_type,'') + ip_address::text（见 list 注释，防御 NULL/inet 行 500）
@@ -289,6 +290,20 @@ mod tests {
         let params: ListAuditLogsQuery = serde_urlencoded::from_str(query).unwrap();
         assert_eq!(params.start_date.as_deref(), Some("2024-01-01"));
         assert_eq!(params.end_date.as_deref(), Some("2024-12-31"));
+    }
+
+    #[test]
+    fn test_audit_sql_guards_nullable_decode() {
+        // A3 扩展：entity_type/status 可空列 + inet ip 的解码防护必须在 list/get 两条 SQL 同时存在，
+        // 防止未来重构回归（NULL 行经 CHECK 三值逻辑可入库，String 非 Option 字段解码即 500）。
+        let src = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/modules/audit.rs"));
+        let src = src.split("#[cfg(test)]").next().unwrap_or(src); // 排除测试段自匹配
+        let count_et = src.matches("COALESCE(entity_type, '') AS entity_type").count();
+        let count_st = src.matches("COALESCE(status, '') AS status").count();
+        let count_ip = src.matches("ip_address::text, user_agent").count();
+        assert_eq!(count_et, 2, "list+get 均应含 COALESCE(entity_type,'')");
+        assert_eq!(count_st, 2, "list+get 均应含 COALESCE(status,'')");
+        assert_eq!(count_ip, 2, "list+get 均应含 ip_address::text");
     }
 
     #[test]
