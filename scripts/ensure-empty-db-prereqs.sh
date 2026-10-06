@@ -102,6 +102,18 @@ ALTER TABLE IF EXISTS crm.audit_logs
 -- 5432 实测: code varchar(100)（可空）。其余 32 列由运行时内联 DDL 自补，守卫不越权。
 ALTER TABLE IF EXISTS core.core_plugins
     ADD COLUMN IF NOT EXISTS code VARCHAR(100);
+
+-- 前置 4: 20261005000001/0002(align_public_*) 依赖 public.schema_registry /
+-- dynamic_data / core_dict_items / core_dict_types 已存在——正是 09-01
+-- (20260901000020) 重建清理 DROP 的全部 4 张 public 影子表，由 master-data /
+-- unified-core schema_defense 阶段 0 服务内联重建（仅 id 骨架，对齐
+-- business_base_tables L3307/3308/3355/3382 形态）；干净库从 0 应用时缺位，
+-- ALTER TABLE public.xxx 即报 relation does not exist（2026-10-06 C-2 实测发现，
+-- 已覆盖 0001/0002 两迁移的全部引用）。仅建 id 骨架：结构列由迁移自身补齐。
+CREATE TABLE IF NOT EXISTS public.schema_registry (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS public.dynamic_data (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS public.core_dict_items (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
+CREATE TABLE IF NOT EXISTS public.core_dict_types (id UUID PRIMARY KEY DEFAULT gen_random_uuid());
 SQL
 }
 
@@ -137,4 +149,4 @@ if [[ "${TOTAL}" == "0" ]]; then
     exit 1
 fi
 
-echo "✅ 空库建库守卫通过：${TOTAL}/${TOTAL} 迁移应用，0 错误（3 处前置已幂等补齐）"
+echo "✅ 空库建库守卫通过：${TOTAL}/${TOTAL} 迁移应用，0 错误（4 处前置已幂等补齐）"
