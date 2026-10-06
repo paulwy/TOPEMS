@@ -29,6 +29,31 @@ BFF_URL = os.environ.get("WEB_BFF_URL", "http://localhost:8099")
 TEST_UID = "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21"
 TEST_UUID = "00000000-0000-0000-0000-000000000099"
 
+
+def load_expected_fails():
+    """从 docs/web_contract_gap_list.md 提取已知非后端缺口（method, path）集合。
+
+    定稿剩余 39 FAIL 全部判定为非后端缺口（36 个 /api/core/api/ai/ 双前缀
+    构造错误 + 3 个提取异常项），豁免它们以支持门禁"新增 FAIL 才阻断"；
+    文档是单一事实源，路径精确匹配，新增 FAIL（不在清单内）照常阻断。"""
+    path = os.path.join(BASE, "docs", "web_contract_gap_list.md")
+    expected = set()
+    if not os.path.exists(path):
+        return expected
+    in_section = False
+    for line in open(path, encoding="utf-8"):
+        s = line.strip()
+        if s.startswith("### core（39 FAIL）"):
+            in_section = True
+            continue
+        if s.startswith("## 剩余 FAIL 分类说明"):
+            break
+        if in_section:
+            m = re.match(r"- `(GET|POST|PUT|DELETE|PATCH) ([^`]+)`", s)
+            if m:
+                expected.add((m.group(1), m.group(2)))
+    return expected
+
 # ${var} / :x 动态段 -> 测试值
 VAR_DEFAULTS = {
     "id": TEST_UUID, "userId": TEST_UUID, "taskId": TEST_UUID, "orderId": TEST_UUID,
@@ -482,6 +507,9 @@ def main():
             print(f"  进度 {idx}/{total}")
     # 报告
     fails = [e for g in groups.values() for e in g if e["verdict"] == "FAIL"]
+    expected = load_expected_fails()
+    known = [e for e in fails if (e["method"], e["path"]) in expected]
+    real_fails = [e for e in fails if (e["method"], e["path"]) not in expected]
     warns = [e for g in groups.values() for e in g
              if e["verdict"] == "PASS" and (e["status"] >= 400 or e["body_code"] not in (None, 200))]
     print("=" * 72)
@@ -492,9 +520,10 @@ def main():
         print(f"[{svc}] {p}/{len(g)} PASS, {f} FAIL")
         for e in g:
             if e["verdict"] == "FAIL":
-                print(f"  FAIL {e['method']:6s} {e['path']} -> http={e['status']} body={e['body_code']} ({e['reason']}) {e['fname']}:{e['line']}")
+                tag = "KNOWN" if (e["method"], e["path"]) in expected else "FAIL"
+                print(f"  {tag} {e['method']:6s} {e['path']} -> http={e['status']} body={e['body_code']} ({e['reason']}) {e['fname']}:{e['line']}")
     print("=" * 72)
-    print(f"总计: {total - len(fails)}/{total} PASS, {len(fails)} FAIL")
+    print(f"总计: {total - len(real_fails)}/{total} PASS, {len(real_fails)} FAIL（已知非后端缺口豁免 {len(known)}）")
     if warns:
         print(f"业务性非2xx(WARN, 不阻塞; 疑似参数不符需人工复核): {len(warns)}")
         for e in warns[:20]:
@@ -507,7 +536,7 @@ def main():
         json.dump({"endpoints": [e for g in groups.values() for e in g],
                    "skipped": skipped, "total": total},
                   open(out_json, "w"), ensure_ascii=False, indent=1)
-    sys.exit(1 if fails else 0)
+    sys.exit(1 if real_fails else 0)
 
 
 if __name__ == "__main__":

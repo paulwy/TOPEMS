@@ -256,6 +256,27 @@ pre-commit:
           exit 1
         fi
 
+    # [Gate WCS] Web 前端契约全量实跑回归（portal 契约面，4152 端点）。
+    # 触发：web 前端契约 / web BFF(svc/server) / shared-service-client 变更。
+    # BFF 服务(8099)在线才执行（离线秒级跳过并提示，避免破坏无服务开发流）；
+    # 已知 39 项前端双前缀缺口已在脚本内豁免（docs/web_contract_gap_list.md 单一事实源），
+    # 新增 FAIL 照常阻断；日志落 /tmp/web_smoke_precommit.log。
+    web-contract-smoke:
+      tags: web contract smoke
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(apps/web/src/api/|apps/web/src/utils/apiPath.ts|svc/server/src/|lib/shared-service-client/src/)' || true)
+        [ -z "$STAGED" ] && exit 0
+        if ! lsof -iTCP:8099 -sTCP:LISTEN >/dev/null 2>&1; then
+          printf '\033[33m[Gate WCS] SKIP\033[0m BFF 服务(8099)未运行，契约回归可手动执行 python3 scripts/web_contract_smoke.py\n'
+          exit 0
+        fi
+        if python3 scripts/web_contract_smoke.py > /tmp/web_smoke_precommit.log 2>&1; then
+          printf '\033[32m[Gate WCS] PASS\033[0m web 契约实跑回归全绿（4152 端点，已知双前缀 39 项豁免）\n'
+        else
+          printf '\033[31m[Gate WCS] FAIL\033[0m 见 /tmp/web_smoke_precommit.log 末尾 FAIL 行；若为未重启到新二进制，请重启 BFF 后重提\n'
+          exit 1
+        fi
+
 pre-push:
   # V300: parallel:true → false。四个 cargo 命令共享 target/包缓存锁，并行会竞争
   # 导致随机失败（曾实测 cargo-test-workspace 并行失败、串行全绿）。
