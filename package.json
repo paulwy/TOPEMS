@@ -12,7 +12,6 @@
     "prepare": "lefthook install && node scripts/patch-react-transition-group.cjs",
     "dev": "./scripts/start-local.sh",
     "dev:web": "pnpm --filter topems-portal dev",
-    "dev:core": "pnpm --filter topems-core dev",
     "dev:backend": "./scripts/topems.sh start iam",
     "dev:all": "./scripts/topems.sh start-all",
     "dev:stop": "./scripts/topems.sh stop-all",
