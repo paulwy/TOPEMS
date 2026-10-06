@@ -10,7 +10,6 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 // ==================== Data Structures ====================
@@ -223,112 +222,18 @@ pub async fn get_sync_record(
     tag = "sync"
 )]
 pub async fn sync_inspection_to_lims(
-    State(state): State<crate::AppState>,
-    Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
-    Json(req): Json<SyncInspectionToLimsRequest>,
+    State(_state): State<crate::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: axum::http::HeaderMap,
+    Json(_req): Json<SyncInspectionToLimsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    let inspection_id = match Uuid::parse_str(&req.inspection_id) {
-        Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
-    };
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let locale = Locale::from_headers(&headers).as_sql();
-
-    // Fetch inspection data
-    let inspection = sqlx::query(
-        only_own_schema_query!("qms", "SELECT id, inspection_no, inspection_type, CASE WHEN $3 = 'en' THEN COALESCE(product_name_en, product_name) ELSE product_name END AS product_name, quantity, qualified_quantity, unqualified_quantity, qualification_rate, result, status, inspector, inspected_at::TEXT FROM qms.qa_quality_inspections WHERE id = $1 AND tenant_id = $2")
-    )
-    .bind(inspection_id)
-    .bind(tenant_id)
-    .bind(locale)
-    .fetch_one(&state.pool)
-    .await;
-
-    let inspection_row = match inspection {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("Inspection not found: {}", e);
-            return Json(ApiResponse::error(404, "质检记录不存在"));
-        }
-    };
-
-    let sync_no = format!(
-        "SYNC-{}-LIMS",
-        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-    );
-    let payload = serde_json::json!({
-        "inspection_id": req.inspection_id,
-        "inspection_no": inspection_row.get::<String, _>("inspection_no"),
-        "inspection_type": inspection_row.get::<String, _>("inspection_type"),
-        "product_name": inspection_row.get::<Option<String>, _>("product_name"),
-        "quantity": inspection_row.get::<Option<String>, _>("quantity"),
-        "qualified_quantity": inspection_row.get::<Option<String>, _>("qualified_quantity"),
-        "unqualified_quantity": inspection_row.get::<Option<String>, _>("unqualified_quantity"),
-        "qualification_rate": inspection_row.get::<Option<String>, _>("qualification_rate"),
-        "result": inspection_row.get::<Option<String>, _>("result"),
-        "inspector": inspection_row.get::<Option<String>, _>("inspector"),
-        "inspected_at": inspection_row.get::<Option<String>, _>("inspected_at"),
-    });
-
-    // Simulate sending to LIMS service
-    let target_task_id = req
-        .target_task_id
-        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
-    let lims_url =
-        std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
-    tracing::debug!(
-        "Syncing inspection {} to LIMS at {}",
-        req.inspection_id,
-        lims_url
-    );
-
-    // In production, use reqwest to call LIMS API
-    // For now, mark as completed
-    let status = "completed";
-    let response = serde_json::json!({
-        "target_service": "lims",
-        "target_task_id": target_task_id,
-        "synced_at": chrono::Utc::now().to_rfc3339(),
-    });
-
-    let row = sqlx::query(
-        only_own_schema_query!("qms", "INSERT INTO qms.qa_qms_sync_records (tenant_id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, $2, 'inspection_to_lims', $3, 'lims', $4, $5, $6, $7) RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
-    )
-    .bind(tenant_id)
-    .bind(&sync_no)
-    .bind(req.inspection_id)
-    .bind(&target_task_id)
-    .bind(status)
-    .bind(&payload)
-    .bind(&response)
-    .fetch_one(&state.pool)
-    .await;
-
-    match row {
-        Ok(r) => Json(ApiResponse::success(
-            SyncRecord {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                sync_no: r.get("sync_no"),
-                sync_type: r.get("sync_type"),
-                source_id: r.get("source_id"),
-                target_service: r.get("target_service"),
-                target_id: r.get("target_id"),
-                status: r.get("status"),
-                payload: r.get("payload"),
-                response: r.get("response"),
-                error_msg: r.get("error_msg"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "质检结果同步到 LIMS 成功",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to create sync record: {}", e);
-            Json(ApiResponse::error(500, "同步记录创建失败"))
-        }
-    }
+    // D3 §5.2：手动假同步通道下线。原实现读取 LIMS_SERVICE_URL 后从不发 HTTP，
+    // 直接编造 target_task_id 并本地插入 status=completed 脏记录。
+    // 真实链路：InspectionCompleted 事件 → integration 编排 → lims internal 端点。
+    Json(ApiResponse::error(
+        410,
+        "手动同步通道已下线：检验结果经事件总线自动同步，请勿使用",
+    ))
 }
 
 #[utoipa::path(
@@ -342,101 +247,18 @@ pub async fn sync_inspection_to_lims(
     tag = "sync"
 )]
 pub async fn sync_issue_to_ehs(
-    State(state): State<crate::AppState>,
-    Extension(claims): Extension<Claims>,
-    headers: axum::http::HeaderMap,
-    Json(req): Json<SyncIssueToEhsRequest>,
+    State(_state): State<crate::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: axum::http::HeaderMap,
+    Json(_req): Json<SyncIssueToEhsRequest>,
 ) -> Json<ApiResponse<SyncRecord>> {
-    let issue_id = match Uuid::parse_str(&req.issue_id) {
-        Ok(u) => u,
-        Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
-    };
-    let tenant_id = get_tenant_id(&claims, &headers);
-    let locale = Locale::from_headers(&headers).as_sql();
-
-    // Fetch issue data
-    let issue = sqlx::query(
-        only_own_schema_query!("qms", "SELECT id, issue_no, CASE WHEN $3 = 'en' THEN COALESCE(title_en, title) ELSE title END AS title, description, severity, status, related_inspection_id, created_by FROM qms.qa_quality_issues WHERE id = $1 AND tenant_id = $2")
-    )
-    .bind(issue_id)
-    .bind(tenant_id)
-    .bind(locale)
-    .fetch_one(&state.pool)
-    .await;
-
-    let issue_row = match issue {
-        Ok(r) => r,
-        Err(e) => {
-            tracing::error!("Issue not found: {}", e);
-            return Json(ApiResponse::error(404, "质量问题不存在"));
-        }
-    };
-
-    let sync_no = format!(
-        "SYNC-{}-EHS",
-        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-    );
-    let payload = serde_json::json!({
-        "issue_id": req.issue_id,
-        "issue_no": issue_row.get::<String, _>("issue_no"),
-        "title": issue_row.get::<String, _>("title"),
-        "description": issue_row.get::<Option<String>, _>("description"),
-        "severity": issue_row.get::<Option<String>, _>("severity"),
-        "status": issue_row.get::<Option<String>, _>("status"),
-        "related_inspection_id": issue_row.get::<Option<Uuid>, _>("related_inspection_id").map(|u| u.to_string()),
-        "created_by": issue_row.get::<Option<String>, _>("created_by"),
-    });
-
-    let ehs_url =
-        std::env::var("EHS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
-    tracing::debug!("Syncing issue {} to EHS at {}", req.issue_id, ehs_url);
-
-    let target_hazard_id = uuid::Uuid::new_v4().to_string();
-    let status = "completed";
-    let response = serde_json::json!({
-        "target_service": "ehs",
-        "target_hazard_id": target_hazard_id,
-        "safety_check_triggered": true,
-        "synced_at": chrono::Utc::now().to_rfc3339(),
-    });
-
-    let row = sqlx::query(
-        only_own_schema_query!("qms", "INSERT INTO qms.qa_qms_sync_records (tenant_id, sync_no, sync_type, source_id, target_service, target_id, status, payload, response) VALUES ($1, $2, 'issue_to_ehs', $3, 'ehs', $4, $5, $6, $7) RETURNING id, tenant_id::TEXT, sync_no, sync_type, source_id, target_service, target_id, status, payload, response, error_msg, created_at::TEXT, updated_at::TEXT")
-    )
-    .bind(tenant_id)
-    .bind(&sync_no)
-    .bind(req.issue_id)
-    .bind(&target_hazard_id)
-    .bind(status)
-    .bind(&payload)
-    .bind(&response)
-    .fetch_one(&state.pool)
-    .await;
-
-    match row {
-        Ok(r) => Json(ApiResponse::success(
-            SyncRecord {
-                id: r.get("id"),
-                tenant_id: r.get("tenant_id"),
-                sync_no: r.get("sync_no"),
-                sync_type: r.get("sync_type"),
-                source_id: r.get("source_id"),
-                target_service: r.get("target_service"),
-                target_id: r.get("target_id"),
-                status: r.get("status"),
-                payload: r.get("payload"),
-                response: r.get("response"),
-                error_msg: r.get("error_msg"),
-                created_at: r.get("created_at"),
-                updated_at: r.get("updated_at"),
-            },
-            "质量问题已触发 EHS 安全检查",
-        )),
-        Err(e) => {
-            tracing::error!("Failed to create sync record: {}", e);
-            Json(ApiResponse::error(500, "同步记录创建失败"))
-        }
-    }
+    // D3 §5.2：手动假同步通道下线。原实现读取 EHS_SERVICE_URL 后从不发 HTTP，
+    // 直接编造 target_task_id 并本地插入 status=completed 脏记录。
+    // 真实链路：IssueResolved 事件 → integration 编排 → ehs internal 端点。
+    Json(ApiResponse::error(
+        410,
+        "手动同步通道已下线：质量问题经事件总线自动同步，请勿使用",
+    ))
 }
 
 #[utoipa::path(

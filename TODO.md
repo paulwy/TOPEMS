@@ -966,7 +966,7 @@
 |---|---|---|
 | U1 unified-core 瘦身 | ✅ | 残留已注（:8099 直跑 mes 看板 404，生产 nginx 无影响） |
 | U2 调用环消除 | ✅ | 环边 HTTP 残留=0（仅注释） |
-| U3 integration 直写改造 | ✅ | **残留开放**：历史脏 sync_records 未清洗（需另出迁移，P2） |
+| U3 integration 直写改造 | ✅ | **残留已闭环**（2026-10-06）：qms 假同步入口下线（inspection_to_lims/issue_to_ehs 返回 410，不再写脏记录）+ 脏数据清洗迁移 `20261006000003_u3_fake_sync_records_cleanup.sql`（lims/ehs/qms 三表按假同步 sync_type 幂等 DELETE，重放验证通过，5432 账本 success=t） |
 | U3b qa_lab 骨架表清理 | ✅ | 5433 收尾完成（账本登记 success=t）；本节补勾 ✅ |
 | U4 master-data 落库 | ✅ | 残留 B10 已闭环（写时同步直写） |
 | U5 RLS 开启 | ✅ | 残留 B5/B6 已闭环（gis RLS + rls.rs GUC） |
@@ -979,6 +979,6 @@
 | U11 插件心跳 | ✅ | 嵌入模式 30s/90s 扫描 |
 | U12/U12b 审计直读 | ✅ | crm/wms 读路径归位；**残留开放**：schema_defense.rs:590 TABLE_DEFS legacy 快照对齐（P2 建议项） |
 | **A 区联动** | — | A3 ✅（wms 审计 status COALESCE 补漏，7864d107b）、A4 ✅（MDM DLQ list/replay，8209774e5 已入库）、A5 待决策（erp RLS policy） |
-| **C-2 CI 强化** | 待启动 | ensure-empty-db-prereqs.sh 挂 CI 空库验证（防迁移链回归） |
+| **C-2 CI 强化** | ✅ | 已挂 CI（9f6afe74b）：migration-test 升级为空库守卫 ensure-empty-db-prereqs.sh（探活+幂等补 4 处前置+失败自动重放+零失败断言） |
 
-**U 系列结论**：U1-U12/U3b/U6-延伸 全部闭环（15/15）。真实开放项仅：U3 脏 sync_records 清洗、U12b TABLE_DEFS 对齐（均 P2）、A1/A2/A5（环境/授权依赖）、B5 发现项（14 张 gis 无 tenant_id 表）。
+**U 系列结论**：U1-U12/U3b/U6-延伸 全部闭环（15/15）。真实开放项仅：U12b TABLE_DEFS 对齐（P2 建议项）、A1/A2（环境/授权依赖）、B5 发现项（14 张 gis 无 tenant_id 表，另立条目）；A5 ✅（e182ffd50）、C-2 ✅（9f6afe74b，均已由并行线推送）。
