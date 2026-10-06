@@ -358,7 +358,7 @@ impl ErpEventHandlers {
     /// SalesOrderApproved → 自动生成应收账款 + 销售凭证
     async fn handle_sales_order_approved(&self, event: Event) -> HandlerResult {
         let payload: SalesOrderApprovedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 SalesOrderApproved payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SalesOrderApproved payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] SalesOrderApproved 处理 - order_no={}, order_id={}, trace_id={:?}",
@@ -373,7 +373,7 @@ impl ErpEventHandlers {
         .bind(payload.order_id)
         .fetch_optional(&self.db)
         .await
-        .map_err(|e| format!("查询销售订单失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售订单失败: {}", e)))?;
 
         if let Some((amount, customer_id, customer_name, order_date)) = order {
             let amount = amount.unwrap_or(0.0);
@@ -387,7 +387,7 @@ impl ErpEventHandlers {
                 .db
                 .begin()
                 .await
-                .map_err(|e| format!("开启事务失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
 
             let receivable_result = sqlx::query(
                 r#"INSERT INTO erp.receivables
@@ -430,7 +430,7 @@ impl ErpEventHandlers {
             .bind(&period)
             .fetch_optional(&mut *tx)
             .await
-            .map_err(|e| format!("查询销售凭证失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售凭证失败: {}", e)))?;
 
             if existing_voucher.is_none() {
                 let voucher_id = uuid::Uuid::new_v4();
@@ -451,7 +451,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
-                .map_err(|e| format!("创建销售凭证失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建销售凭证失败: {}", e)))?;
 
                 sqlx::query(
                     r#"INSERT INTO erp.voucher_items
@@ -466,7 +466,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
-                .map_err(|e| format!("创建凭证明细（应收账款）失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细（应收账款）失败: {}", e)))?;
 
                 sqlx::query(
                     r#"INSERT INTO erp.voucher_items
@@ -481,7 +481,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
-                .map_err(|e| format!("创建凭证明细（主营业务收入）失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细（主营业务收入）失败: {}", e)))?;
 
                 tracing::info!(
                     "[erp] 已生成销售凭证 {} 金额={} 关联订单 {}",
@@ -495,7 +495,7 @@ impl ErpEventHandlers {
 
             tx.commit()
                 .await
-                .map_err(|e| format!("提交事务失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
         } else {
             tracing::warn!(
                 "[erp] SalesOrderApproved 未找到对应订单 {}，跳过应收账款和凭证生成",
@@ -510,7 +510,7 @@ impl ErpEventHandlers {
     async fn handle_purchase_order_approved(&self, event: Event) -> HandlerResult {
         let payload: PurchaseOrderApprovedPayload =
             serde_json::from_value(event.payload.clone())
-                .map_err(|e| format!("解析 PurchaseOrderApproved payload 失败: {}", e))?;
+                .map_err(|e| TopemsError::ValidationFailed(format!("解析 PurchaseOrderApproved payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] PurchaseOrderApproved 处理 - order_no={}, order_id={}, trace_id={:?}",
@@ -525,7 +525,7 @@ impl ErpEventHandlers {
         .bind(payload.order_id)
         .fetch_optional(&self.db)
         .await
-        .map_err(|e| format!("查询采购订单失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询采购订单失败: {}", e)))?;
 
         if let Some((amount, supplier_id, supplier_name, order_date)) = order {
             let amount = amount.unwrap_or(0.0);
@@ -539,7 +539,7 @@ impl ErpEventHandlers {
                 .db
                 .begin()
                 .await
-                .map_err(|e| format!("开启事务失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
 
             let payable_result = sqlx::query(
                 r#"INSERT INTO erp.payables
@@ -582,7 +582,7 @@ impl ErpEventHandlers {
             .bind(&period)
             .fetch_optional(&mut *tx)
             .await
-            .map_err(|e| format!("查询采购凭证失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("查询采购凭证失败: {}", e)))?;
 
             if existing_voucher.is_none() {
                 let voucher_id = uuid::Uuid::new_v4();
@@ -603,7 +603,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
-                .map_err(|e| format!("创建采购凭证失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建采购凭证失败: {}", e)))?;
 
                 sqlx::query(
                     r#"INSERT INTO erp.voucher_items
@@ -618,7 +618,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
-                .map_err(|e| format!("创建凭证明细（原材料）失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细（原材料）失败: {}", e)))?;
 
                 sqlx::query(
                     r#"INSERT INTO erp.voucher_items
@@ -633,7 +633,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
                 .execute(&mut *tx)
                 .await
-                .map_err(|e| format!("创建凭证明细（应付账款）失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("创建凭证明细（应付账款）失败: {}", e)))?;
 
                 tracing::info!(
                     "[erp] 已生成采购凭证 {} 金额={} 关联订单 {}",
@@ -647,7 +647,7 @@ impl ErpEventHandlers {
 
             tx.commit()
                 .await
-                .map_err(|e| format!("提交事务失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
         } else {
             tracing::warn!(
                 "[erp] PurchaseOrderApproved 未找到对应订单 {}，跳过应付账款和凭证生成",
@@ -662,7 +662,7 @@ impl ErpEventHandlers {
     /// 表在库中不存在、无发布方闭环，未来如需成本归集按新功能立项）
     async fn handle_work_order_completed(&self, event: Event) -> HandlerResult {
         let payload: WorkOrderCompletedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 WorkOrderCompleted payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 WorkOrderCompleted payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] WorkOrderCompleted 处理 - work_order_no={}, completed_qty={:?}, trace_id={:?}",
@@ -677,7 +677,7 @@ impl ErpEventHandlers {
     /// StockInbound → 自动生成库存凭证
     async fn handle_stock_inbound(&self, event: Event) -> HandlerResult {
         let payload: StockInboundPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 StockInbound payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 StockInbound payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] StockInbound 处理 - inbound_no={}, material={:?}, qty={}, reference_order_id={:?}, trace_id={:?}",
@@ -703,7 +703,7 @@ impl ErpEventHandlers {
         .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await
-        .map_err(|e| format!("创建入库凭证失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建入库凭证失败: {}", e)))?;
 
         tracing::info!("[erp] 已生成库存入库凭证 {}", voucher_no);
 
@@ -741,7 +741,7 @@ impl ErpEventHandlers {
     /// StockOutbound → 自动生成库存凭证
     async fn handle_stock_outbound(&self, event: Event) -> HandlerResult {
         let payload: StockOutboundPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 StockOutbound payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 StockOutbound payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] StockOutbound 处理 - outbound_no={}, material={:?}, qty={:?}, trace_id={:?}",
@@ -766,7 +766,7 @@ impl ErpEventHandlers {
         .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await
-        .map_err(|e| format!("创建出库凭证失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建出库凭证失败: {}", e)))?;
 
         tracing::info!("[erp] 已生成库存出库凭证 {}", voucher_no);
         Ok(())
@@ -778,7 +778,7 @@ impl ErpEventHandlers {
     /// 并生成对应的财务凭证。使用 graceful fallback：若 DB 操作失败，记录警告并继续。
     async fn handle_employee_onboarded(&self, event: Event) -> HandlerResult {
         let payload: EmployeeOnboardedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 EmployeeOnboarded payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 EmployeeOnboarded payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] EmployeeOnboarded 处理 - employee_id={}, name={}, department={:?}, trace_id={:?}",
@@ -939,7 +939,7 @@ impl ErpEventHandlers {
     /// 使用 graceful fallback：若 DB 操作失败，记录警告并继续。
     async fn handle_pm_project_completed(&self, event: Event) -> HandlerResult {
         let payload: PmProjectCompletedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 PmProjectCompleted payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 PmProjectCompleted payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] PmProjectCompleted 处理 - project_name={}, project_id={}, completed_at={:?}, trace_id={:?}",
@@ -1103,7 +1103,7 @@ impl ErpEventHandlers {
     /// 使用 graceful fallback：若 DB 操作失败，记录警告并继续。
     async fn handle_pm_project_settled(&self, event: Event) -> HandlerResult {
         let payload: PmProjectSettledPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 PmProjectSettled payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 PmProjectSettled payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] PmProjectSettled 处理 - project_name={}, project_id={}, settled_amount={:?}, settled_at={:?}, trace_id={:?}",
@@ -1264,7 +1264,7 @@ impl ErpEventHandlers {
     /// OpportunityWon → CRM 商机赢单自动创建销售订单（幂等处理）
     async fn handle_opportunity_won(&self, event: Event) -> HandlerResult {
         let payload: OpportunityWonPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 OpportunityWon payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 OpportunityWon payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] OpportunityWon 处理 - opportunity_id={}, opportunity_name={}, amount={:?}, trace_id={:?}",
@@ -1280,7 +1280,7 @@ impl ErpEventHandlers {
                 .bind(format!("from_crm_opportunity:{}", payload.opportunity_id))
                 .fetch_optional(&self.db)
                 .await
-                .map_err(|e| format!("查询销售订单是否存在失败: {}", e))?;
+                .map_err(|e| TopemsError::DatabaseQuery(format!("查询销售订单是否存在失败: {}", e)))?;
 
         if existing_order.is_some() {
             tracing::info!(
@@ -1342,7 +1342,7 @@ impl ErpEventHandlers {
     /// 若 material_code 在 erp.account_balances 中不存在，记录警告（graceful fallback，不让事件处理失败）。
     async fn handle_inventory_updated(&self, event: Event) -> HandlerResult {
         let payload: InventoryUpdatedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 InventoryUpdated payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 InventoryUpdated payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] InventoryUpdated 处理 - material_code={}, material_name={}, delta={}, change_type={}, trace_id={:?}",
@@ -1403,7 +1403,7 @@ impl ErpEventHandlers {
     /// ERP 订阅后自动生成退款凭证（借：主营业务收入/应交税费，贷：应收账款/银行存款）。
     async fn handle_return_completed(&self, event: Event) -> HandlerResult {
         let payload: ReturnCompletedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 ReturnCompleted payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 ReturnCompleted payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] ReturnCompleted 处理 - return_no={}, customer_id={:?}, customer_name={:?}, refund_amount={}, return_type={}, status={}, trace_id={:?}",
@@ -1443,7 +1443,7 @@ impl ErpEventHandlers {
         .bind(&period)
         .fetch_optional(&self.db)
         .await
-        .map_err(|e| format!("查询退款凭证失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询退款凭证失败: {}", e)))?;
 
         if existing_voucher.is_some() {
             tracing::info!("[erp] 退款凭证已存在 {}，跳过创建", voucher_no);
@@ -1454,7 +1454,7 @@ impl ErpEventHandlers {
             .db
             .begin()
             .await
-            .map_err(|e| format!("开启事务失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
 
         // 创建退款凭证头
         let voucher_id = uuid::Uuid::new_v4();
@@ -1480,7 +1480,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await
-        .map_err(|e| format!("创建退款凭证失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建退款凭证失败: {}", e)))?;
 
         // 凭证明细1：借 - 主营业务收入（冲减收入）
         sqlx::query(
@@ -1496,7 +1496,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await
-        .map_err(|e| format!("创建退款凭证明细（收入冲减）失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建退款凭证明细（收入冲减）失败: {}", e)))?;
 
         // 凭证明细2：贷 - 应收账款/银行存款
         let customer_label = payload.customer_name.as_deref().unwrap_or("客户");
@@ -1513,11 +1513,11 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&mut *tx)
         .await
-        .map_err(|e| format!("创建退款凭证明细（应收退款）失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建退款凭证明细（应收退款）失败: {}", e)))?;
 
         tx.commit()
             .await
-            .map_err(|e| format!("提交事务失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("提交事务失败: {}", e)))?;
 
         tracing::info!(
             "[erp] 已生成退款凭证 {} 金额={} 关联退换单 {}",
@@ -1535,7 +1535,7 @@ impl ErpEventHandlers {
     /// 使用 graceful fallback：若未找到匹配记录或更新失败，记录警告并继续。
     async fn handle_payment_received(&self, event: Event) -> HandlerResult {
         let payload: PaymentReceivedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 PaymentReceived payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 PaymentReceived payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] PaymentReceived 处理 - payment_no={}, customer_id={:?}, amount={}, trace_id={:?}",
@@ -1652,7 +1652,7 @@ impl ErpEventHandlers {
     /// 使用 graceful fallback：若未找到匹配记录或更新失败，记录警告并继续。
     async fn handle_payment_made(&self, event: Event) -> HandlerResult {
         let payload: PaymentMadePayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 PaymentMade payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 PaymentMade payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] PaymentMade 处理 - payment_no={}, supplier_id={:?}, amount={}, trace_id={:?}",
@@ -1932,7 +1932,7 @@ impl ErpEventHandlers {
     async fn handle_reconciliation_created(&self, event: Event) -> HandlerResult {
         let payload: ReconciliationCreatedPayload =
             serde_json::from_value(event.payload.clone())
-                .map_err(|e| format!("解析 ReconciliationCreated payload 失败: {}", e))?;
+                .map_err(|e| TopemsError::ValidationFailed(format!("解析 ReconciliationCreated payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] ReconciliationCreated 处理 - id={}, recon_code={}, trace_id={:?}",
@@ -1966,14 +1966,14 @@ impl ErpEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("写入 erp.fin_reconciliations 失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 erp.fin_reconciliations 失败: {}", e)))?;
 
         Ok(())
     }
 
     async fn handle_reconciliation_approved(&self, event: Event) -> HandlerResult {
         let payload: ReconciliationApprovedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 ReconciliationApproved payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 ReconciliationApproved payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] ReconciliationApproved 处理 - id={}, approved_by={}, trace_id={:?}",
@@ -1992,7 +1992,7 @@ impl ErpEventHandlers {
         .bind(payload.tenant_id)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("更新 erp.fin_reconciliations 失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新 erp.fin_reconciliations 失败: {}", e)))?;
 
         Ok(())
     }
@@ -2000,7 +2000,7 @@ impl ErpEventHandlers {
     async fn handle_reconciliation_updated(&self, event: Event) -> HandlerResult {
         let payload: ReconciliationUpdatedPayload =
             serde_json::from_value(event.payload.clone())
-                .map_err(|e| format!("解析 ReconciliationUpdated payload 失败: {}", e))?;
+                .map_err(|e| TopemsError::ValidationFailed(format!("解析 ReconciliationUpdated payload 失败: {}", e)))?;
 
         tracing::debug!(
             "[erp] ReconciliationUpdated 处理 - id={}, status={}, trace_id={:?}",
@@ -2020,7 +2020,7 @@ impl ErpEventHandlers {
         .bind(payload.tenant_id)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("更新 erp.fin_reconciliations 失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新 erp.fin_reconciliations 失败: {}", e)))?;
 
         Ok(())
     }
@@ -2030,7 +2030,7 @@ impl ErpEventHandlers {
     /// 幂等：按 (source_system='HRM', source_id=payroll_run_id) 去重，同 payroll_run_id 重放只建证一次。
     async fn handle_hrm_payroll_posted(&self, event: Event) -> HandlerResult {
         let payload: HrmPayrollPostedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 HrmPayrollPosted payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 HrmPayrollPosted payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] HrmPayrollPosted 处理 - voucher_number={}, payroll_run_id={}, entries={}, trace_id={:?}",
@@ -2047,7 +2047,7 @@ impl ErpEventHandlers {
         .bind(payload.payroll_run_id.to_string())
         .fetch_one(&self.db)
         .await
-        .map_err(|e| format!("查询幂等键(payroll_run_id)失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("查询幂等键(payroll_run_id)失败: {}", e)))?;
         if already {
             tracing::info!(
                 "[erp] HrmPayrollPosted 幂等跳过 - payroll_run_id={} 已存在凭证",
@@ -2081,7 +2081,7 @@ impl ErpEventHandlers {
 .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await
-        .map_err(|e| format!("创建 erp.financial_vouchers 失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建 erp.financial_vouchers 失败: {}", e)))?;
 
         // 创建凭证分录（借贷平衡由 hrm 侧纯函数保证）
         for entry in &payload.entries {
@@ -2105,7 +2105,7 @@ impl ErpEventHandlers {
             .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
             .execute(&self.db)
             .await
-            .map_err(|e| format!("创建 erp.voucher_items 失败: {}", e))?;
+            .map_err(|e| TopemsError::DatabaseQuery(format!("创建 erp.voucher_items 失败: {}", e)))?;
         }
 
         tracing::info!(
@@ -2130,7 +2130,7 @@ impl ErpEventHandlers {
         )
         .execute(&self.db)
         .await
-        .map_err(|e| format!("创建 erp.event_idempotency 失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("创建 erp.event_idempotency 失败: {}", e)))?;
         Ok(())
     }
 
@@ -2139,7 +2139,7 @@ impl ErpEventHandlers {
     /// DLQ 兜底由 shared-event 订阅器统一提供（handler 返回 Err 即入 topems:dlq，retry_count 累加）。
     async fn handle_mes_work_report_submitted(&self, event: Event) -> HandlerResult {
         let payload: MesWorkReportSubmittedPayload = serde_json::from_value(event.payload.clone())
-            .map_err(|e| format!("解析 MesWorkReportSubmitted payload 失败: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析 MesWorkReportSubmitted payload 失败: {}", e)))?;
 
         tracing::info!(
             "[erp] MesWorkReportSubmitted 处理 - work_report_id={}, erp_order_id={:?}, qty={:?}, trace_id={:?}",
@@ -2159,7 +2159,7 @@ impl ErpEventHandlers {
         .bind(&key)
         .execute(&self.db)
         .await
-        .map_err(|e| format!("写入幂等账本失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("写入幂等账本失败: {}", e)))?;
         if inserted.rows_affected() == 0 {
             tracing::info!(
                 "[erp] MesWorkReportSubmitted 幂等跳过 - work_report_id={} 已处理",
@@ -2179,7 +2179,7 @@ impl ErpEventHandlers {
                     .bind(mid.to_string())
                     .fetch_optional(&self.db)
                     .await
-                    .map_err(|e| format!("按 mes_order_id 反查 erp 订单失败: {}", e))?
+                    .map_err(|e| TopemsError::DatabaseQuery(format!("按 mes_order_id 反查 erp 订单失败: {}", e)))?
                     .flatten()
                 }
                 None => None,
@@ -2211,7 +2211,7 @@ impl ErpEventHandlers {
         .bind(now.naive_utc())
         .execute(&self.db)
         .await
-        .map_err(|e| format!("更新 erp.erp_production_orders 进度失败: {}", e))?;
+        .map_err(|e| TopemsError::DatabaseQuery(format!("更新 erp.erp_production_orders 进度失败: {}", e)))?;
 
         tracing::info!(
             "[erp] MesWorkReportSubmitted 完成 - work_report_id={}, erp_order_id={}, qty={:?}",
