@@ -31,28 +31,13 @@ TEST_UUID = "00000000-0000-0000-0000-000000000099"
 
 
 def load_expected_fails():
-    """从 docs/web_contract_gap_list.md 提取已知非后端缺口（method, path）集合。
+    """KNOWN 豁免机制已移除（2026-10-06 契约收口）。
 
-    定稿剩余 39 FAIL 全部判定为非后端缺口（36 个 /api/core/api/ai/ 双前缀
-    构造错误 + 3 个提取异常项），豁免它们以支持门禁"新增 FAIL 才阻断"；
-    文档是单一事实源，路径精确匹配，新增 FAIL（不在清单内）照常阻断。"""
-    path = os.path.join(BASE, "docs", "web_contract_gap_list.md")
-    expected = set()
-    if not os.path.exists(path):
-        return expected
-    in_section = False
-    for line in open(path, encoding="utf-8"):
-        s = line.strip()
-        if s.startswith("### core（39 FAIL）"):
-            in_section = True
-            continue
-        if s.startswith("## 剩余 FAIL 分类说明"):
-            break
-        if in_section:
-            m = re.match(r"- `(GET|POST|PUT|DELETE|PATCH) ([^`]+)`", s)
-            if m:
-                expected.add((m.group(1), m.group(2)))
-    return expected
+    原机制：从 docs/web_contract_gap_list.md 提取已知非后端缺口（method, path）集合，
+    豁免它们以支持门禁"新增 FAIL 才阻断"。本轮 39 项 KNOWN 已全部由前端修复清零，
+    文档不再保留豁免清单，故此处恒返回空集——任何 FAIL（含回归）都会直接阻断门禁。
+    文档与脚本一致：docs/web_contract_gap_list.md 无豁免条目。"""
+    return set()
 
 # ${var} / :x 动态段 -> 测试值
 VAR_DEFAULTS = {

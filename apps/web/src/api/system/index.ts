@@ -141,9 +141,9 @@ export const dictItemApi = {
     if (params?.search) searchParams.set('search', params.search);
 
     const queryString = searchParams.toString();
-    return apiClient.core.get(
-      `/dict/dict-types/${dictTypeId}/items${queryString ? `?${queryString}` : ''}`
-    );
+    // 直拼 ?${queryString}（空串时为尾 ?）：避免嵌套三元模板被静态提取
+    // 误折叠为 /items/:x 伪路径（items 列表实为 /dict-types/{id}/items）
+    return apiClient.core.get(`/dict/dict-types/${dictTypeId}/items?${queryString}`);
   },
 
   async get(id: string): Promise<ApiResponse<DictItem>> {

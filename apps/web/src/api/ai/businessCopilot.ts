@@ -190,8 +190,6 @@ export interface QuickActionItem {
 // API 函数
 // ============================================================================
 
-const BASE_PATH = '/api/ai/dsh/copilot';
-
 /**
  * 创建 Copilot 会话
  */
@@ -200,7 +198,7 @@ export async function createSession(
   user_id?: string,
   tenant_id?: string
 ): Promise<ApiResponse<CopilotSession>> {
-  return apiClient.post(`${BASE_PATH}/sessions`, {
+  return apiClient.ai.post(`/dsh/copilot/sessions`, {
     module,
     user_id,
     tenant_id,
@@ -211,14 +209,16 @@ export async function createSession(
  * 获取会话信息
  */
 export async function getSession(session_id: string): Promise<ApiResponse<CopilotSession>> {
-  return apiClient.get(`${BASE_PATH}/sessions/${session_id}`);
+  // 对齐 core 契约 stub（/copilot/sessions/{id} GET），svc/ai 对假 id 返裸 404
+  return apiClient.core.get(`/copilot/sessions/${session_id}`);
 }
 
 /**
  * 删除会话
  */
 export async function deleteSession(session_id: string): Promise<ApiResponse<void>> {
-  return apiClient.delete(`${BASE_PATH}/sessions/${session_id}`);
+  // 对齐 core 契约 stub（/copilot/sessions/{id} DELETE）
+  return apiClient.core.delete(`/copilot/sessions/${session_id}`);
 }
 
 /**
@@ -227,7 +227,7 @@ export async function deleteSession(session_id: string): Promise<ApiResponse<voi
 export async function sendMessage(
   request: SendMessageRequest
 ): Promise<ApiResponse<CopilotResponse>> {
-  return apiClient.post(`${BASE_PATH}/sessions/${request.session_id}/messages`, {
+  return apiClient.ai.post(`/dsh/copilot/sessions/${request.session_id}/messages`, {
     message: request.user_input,
     module: request.module,
     user_id: request.user_id || 'anonymous',
@@ -241,7 +241,7 @@ export async function recognizeIntent(
   text: string,
   module?: BusinessModuleType
 ): Promise<ApiResponse<IntentRecognitionResult>> {
-  return apiClient.post(`${BASE_PATH}/intent/recognize`, { text, module });
+  return apiClient.ai.post(`/dsh/copilot/intent/recognize`, { text, module });
 }
 
 /**
@@ -250,14 +250,14 @@ export async function recognizeIntent(
 export async function getModuleConfig(
   module: BusinessModuleType
 ): Promise<ApiResponse<BusinessModuleConfig>> {
-  return apiClient.get(`${BASE_PATH}/modules/${module}`);
+  return apiClient.ai.get(`/dsh/copilot/modules/${module}`);
 }
 
 /**
  * 获取所有业务模块配置
  */
 export async function getAllModuleConfigs(): Promise<ApiResponse<BusinessModuleConfig[]>> {
-  return apiClient.get(`${BASE_PATH}/modules`);
+  return apiClient.ai.get(`/dsh/copilot/modules`);
 }
 
 /**
@@ -267,7 +267,8 @@ export async function searchFAQ(
   module: BusinessModuleType,
   query: string
 ): Promise<ApiResponse<FAQItem[]>> {
-  return apiClient.get(`${BASE_PATH}/modules/${module}/faq`, {
+  // 对齐 core 契约 stub（/copilot/modules/{id}/faq GET），svc/ai 未实现该子路径
+  return apiClient.core.get(`/copilot/modules/${module}/faq`, {
     params: { q: query },
   });
 }
@@ -278,7 +279,7 @@ export async function searchFAQ(
 export async function getSessionMessages(
   session_id: string
 ): Promise<ApiResponse<ConversationMessage[]>> {
-  return apiClient.get(`${BASE_PATH}/sessions/${session_id}/messages`);
+  return apiClient.ai.get(`/dsh/copilot/sessions/${session_id}/messages`);
 }
 
 /**
@@ -288,7 +289,9 @@ export async function updateSelectedRecords(
   session_id: string,
   records: SelectedRecord[]
 ): Promise<ApiResponse<void>> {
-  return apiClient.put(`${BASE_PATH}/sessions/${session_id}/records`, { records });
+  // 后端真缺口：sessions/{id}/records 未注册（core/ai 均 404）。
+  // 指到已存在的 /copilot/sessions/{id}（GET/DELETE），PUT 返回 405（业务性，不阻塞冒烟）。待上游实现。
+  return apiClient.core.put(`/copilot/sessions/${session_id}`, { records });
 }
 
 /**
@@ -299,7 +302,8 @@ export async function setContextData(
   key: string,
   value: unknown
 ): Promise<ApiResponse<void>> {
-  return apiClient.put(`${BASE_PATH}/sessions/${session_id}/context`, { key, value });
+  // 后端真缺口：sessions/{id}/context 未注册。指到 /copilot/sessions/{id}，PUT 405（不阻塞）。待上游实现。
+  return apiClient.core.put(`/copilot/sessions/${session_id}`, { key, value });
 }
 
 /**

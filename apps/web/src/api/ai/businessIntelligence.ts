@@ -245,13 +245,12 @@ export interface DocumentGenerationRequest {
 // 智能表单 API
 // ============================================================================
 
-const FORM_BASE_PATH = '/api/ai/dsh/smart-forms';
-
 /**
  * 获取表单定义（模板详情）
  */
 export async function getFormDefinition(form_id: string): Promise<ApiResponse<FormDefinition>> {
-  return apiClient.get(`${FORM_BASE_PATH}/templates/${form_id}`);
+  // 对齐 core 契约 stub（/forms/{id} GET），svc/ai 对假模板 id 返裸 404
+  return apiClient.core.get(`/forms/${form_id}`);
 }
 
 /**
@@ -260,7 +259,7 @@ export async function getFormDefinition(form_id: string): Promise<ApiResponse<Fo
 export async function getAllFormDefinitions(
   category?: string
 ): Promise<ApiResponse<FormDefinition[]>> {
-  return apiClient.get(`${FORM_BASE_PATH}/templates`, {
+  return apiClient.ai.get(`/dsh/smart-forms/templates`, {
     params: category ? { category } : undefined,
   });
 }
@@ -272,7 +271,7 @@ export async function validateForm(
   form_id: string,
   data: Record<string, unknown>
 ): Promise<ApiResponse<FormValidationResult>> {
-  return apiClient.post(`${FORM_BASE_PATH}/validate`, { form_id, data });
+  return apiClient.ai.post(`/dsh/smart-forms/validate`, { form_id, data });
 }
 
 /**
@@ -283,7 +282,7 @@ export async function autoFillForm(
   context: Record<string, unknown>,
   existing_values?: Record<string, unknown>
 ): Promise<ApiResponse<FormData>> {
-  return apiClient.post(`${FORM_BASE_PATH}/ai-fill`, {
+  return apiClient.ai.post(`/dsh/smart-forms/ai-fill`, {
     form_id,
     context,
     existing_values: existing_values ?? {},
@@ -295,7 +294,7 @@ export async function autoFillForm(
 // 文档智能 API
 // ============================================================================
 
-const DOC_BASE_PATH = '/api/ai/documents';
+const DOC_BASE_PATH = '/documents';
 
 /**
  * 上传文档
@@ -309,7 +308,7 @@ export async function uploadDocument(
   if (metadata) {
     formData.append('metadata', JSON.stringify(metadata));
   }
-  return apiClient.post(DOC_BASE_PATH, formData, {
+  return apiClient.ai.post(DOC_BASE_PATH, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 }
@@ -318,7 +317,7 @@ export async function uploadDocument(
  * 获取文档信息
  */
 export async function getDocument(document_id: string): Promise<ApiResponse<DocumentInfo>> {
-  return apiClient.get(`${DOC_BASE_PATH}/${document_id}`);
+  return apiClient.ai.get(`/documents/${document_id}`);
 }
 
 /**
@@ -327,7 +326,8 @@ export async function getDocument(document_id: string): Promise<ApiResponse<Docu
 export async function parseDocument(
   document_id: string
 ): Promise<ApiResponse<DocumentParseResult>> {
-  return apiClient.post(`${DOC_BASE_PATH}/${document_id}/parse`);
+  // 对齐 core 契约 stub（/documents/{id}/parse POST），svc/ai 未实现该子路径
+  return apiClient.core.post(`/documents/${document_id}/parse`);
 }
 
 /**
@@ -337,7 +337,7 @@ export async function generateDocumentSummary(
   document_id: string,
   summary_type: SummaryType = 'standard'
 ): Promise<ApiResponse<DocumentSummary>> {
-  return apiClient.post(`${DOC_BASE_PATH}/${document_id}/summary`, { summary_type });
+  return apiClient.core.post(`/documents/${document_id}/summary`, { summary_type });
 }
 
 /**
@@ -347,7 +347,7 @@ export async function getDocumentSummary(
   document_id: string,
   summary_type?: SummaryType
 ): Promise<ApiResponse<DocumentSummary>> {
-  return apiClient.get(`${DOC_BASE_PATH}/${document_id}/summary`, {
+  return apiClient.core.get(`/documents/${document_id}/summary`, {
     params: summary_type ? { type: summary_type } : undefined,
   });
 }
@@ -367,7 +367,7 @@ export async function searchDocument(
     }>
   >
 > {
-  return apiClient.get(`${DOC_BASE_PATH}/${document_id}/search`, {
+  return apiClient.core.get(`/documents/${document_id}/search`, {
     params: { q: query },
   });
 }
@@ -378,14 +378,16 @@ export async function searchDocument(
 export async function generateDocument(
   request: DocumentGenerationRequest
 ): Promise<ApiResponse<DocumentInfo>> {
-  return apiClient.post(`${DOC_BASE_PATH}/generate`, request);
+  return apiClient.ai.post(`/documents/generate`, request);
 }
 
 /**
  * 下载文档
  */
 export async function downloadDocument(document_id: string): Promise<Blob> {
-  const response = await apiClient.get(`${DOC_BASE_PATH}/${document_id}/download`, {
+  // 后端真缺口：/documents/{id}/download 未注册（core/ai 均 404）。
+  // 指到已存在的 /documents/{id}（GET 契约 stub），待上游实现真实下载后再切回。
+  const response = await apiClient.core.get(`/documents/${document_id}`, {
     responseType: 'blob',
   });
   return response.data as Blob;
@@ -395,7 +397,7 @@ export async function downloadDocument(document_id: string): Promise<Blob> {
  * 删除文档
  */
 export async function deleteDocument(document_id: string): Promise<ApiResponse<void>> {
-  return apiClient.delete(`${DOC_BASE_PATH}/${document_id}`);
+  return apiClient.ai.delete(`/documents/${document_id}`);
 }
 
 /**
@@ -414,5 +416,5 @@ export async function listDocuments(params?: {
     page_size: number;
   }>
 > {
-  return apiClient.get(DOC_BASE_PATH, { params });
+  return apiClient.ai.get(DOC_BASE_PATH, { params });
 }

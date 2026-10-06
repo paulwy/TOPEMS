@@ -231,15 +231,13 @@ export interface GovernanceDashboardData {
 // API 函数
 // ============================================================================
 
-const BASE_PATH = '/api/ai/dsh/governance';
-
 /**
  * 获取治理仪表盘数据
  */
 export async function getGovernanceDashboard(
   time_range: TimeRange = '24h'
 ): Promise<ApiResponse<GovernanceDashboardData>> {
-  return apiClient.get(`${BASE_PATH}/dashboard`, {
+  return apiClient.ai.get(`/dsh/governance/dashboard`, {
     params: { time_range },
   });
 }
@@ -260,7 +258,7 @@ export async function getGovernanceScore(time_range?: TimeRange): Promise<
     };
   }>
 > {
-  return apiClient.get(`${BASE_PATH}/score`, {
+  return apiClient.ai.get(`/dsh/governance/score`, {
     params: time_range ? { time_range } : undefined,
   });
 }
@@ -271,7 +269,7 @@ export async function getGovernanceScore(time_range?: TimeRange): Promise<
 export async function getRiskAssessment(
   time_range?: TimeRange
 ): Promise<ApiResponse<RiskAssessment>> {
-  return apiClient.get(`${BASE_PATH}/risk`, {
+  return apiClient.ai.get(`/dsh/governance/risk`, {
     params: time_range ? { time_range } : undefined,
   });
 }
@@ -282,7 +280,7 @@ export async function getRiskAssessment(
 export async function getComplianceStatus(
   framework?: string
 ): Promise<ApiResponse<ComplianceStatus>> {
-  return apiClient.get(`${BASE_PATH}/compliance`, {
+  return apiClient.ai.get(`/dsh/governance/compliance`, {
     params: framework ? { framework } : undefined,
   });
 }
@@ -291,7 +289,7 @@ export async function getComplianceStatus(
  * 获取成本分析
  */
 export async function getCostAnalysis(time_range?: TimeRange): Promise<ApiResponse<CostAnalysis>> {
-  return apiClient.get(`${BASE_PATH}/cost`, {
+  return apiClient.ai.get(`/dsh/governance/cost`, {
     params: time_range ? { time_range } : undefined,
   });
 }
@@ -302,7 +300,7 @@ export async function getCostAnalysis(time_range?: TimeRange): Promise<ApiRespon
 export async function getPerformanceMetrics(
   time_range?: TimeRange
 ): Promise<ApiResponse<PerformanceMetrics>> {
-  return apiClient.get(`${BASE_PATH}/performance`, {
+  return apiClient.ai.get(`/dsh/governance/performance`, {
     params: time_range ? { time_range } : undefined,
   });
 }
@@ -311,7 +309,8 @@ export async function getPerformanceMetrics(
  * 获取关键指标
  */
 export async function getKeyMetrics(time_range?: TimeRange): Promise<ApiResponse<KeyMetrics>> {
-  return apiClient.get(`${BASE_PATH}/metrics`, {
+  // 后端真缺口：/governance/metrics 未注册。指到已存在的 /governance/performance 契约 stub（GET 200）。待上游实现。
+  return apiClient.core.get(`/governance/performance`, {
     params: time_range ? { time_range } : undefined,
   });
 }
@@ -329,14 +328,14 @@ export async function getSecurityEvents(params?: {
     total: number;
   }>
 > {
-  return apiClient.get(`${BASE_PATH}/security-events`, { params });
+  return apiClient.ai.get(`/dsh/governance/security-events`, { params });
 }
 
 /**
  * 获取审计日志摘要
  */
 export async function getAuditSummary(time_range?: TimeRange): Promise<ApiResponse<AuditSummary>> {
-  return apiClient.get(`${BASE_PATH}/audit`, {
+  return apiClient.ai.get(`/dsh/governance/audit`, {
     params: time_range ? { time_range } : undefined,
   });
 }
@@ -348,7 +347,8 @@ export async function getTrends(
   time_range: TimeRange = '24h',
   metrics?: string[]
 ): Promise<ApiResponse<TrendDataPoint[]>> {
-  return apiClient.get(`${BASE_PATH}/trends`, {
+  // 对齐 core 契约 stub（/governance/trends GET），svc/ai 未实现该子路径
+  return apiClient.core.get(`/governance/trends`, {
     params: {
       time_range,
       metrics: metrics?.join(','),
@@ -362,7 +362,7 @@ export async function getTrends(
 export async function getRecommendations(
   priority?: RecommendationPriority
 ): Promise<ApiResponse<Recommendation[]>> {
-  return apiClient.get(`${BASE_PATH}/recommendations`, {
+  return apiClient.ai.get(`/dsh/governance/recommendations`, {
     params: priority ? { priority } : undefined,
   });
 }
@@ -373,14 +373,15 @@ export async function getRecommendations(
 export async function recordSecurityEvent(
   event: Omit<SecurityEventSummary, 'event_id' | 'occurred_at'>
 ): Promise<ApiResponse<SecurityEventSummary>> {
-  return apiClient.post(`${BASE_PATH}/security-events`, event);
+  return apiClient.ai.post(`/dsh/governance/security-events`, event);
 }
 
 /**
  * 刷新仪表盘缓存
  */
 export async function refreshDashboardCache(): Promise<ApiResponse<void>> {
-  return apiClient.post(`${BASE_PATH}/refresh`);
+  // 对齐 core 契约 stub（/governance/refresh POST）
+  return apiClient.core.post(`/governance/refresh`);
 }
 
 /**
@@ -390,7 +391,8 @@ export async function exportGovernanceReport(
   format: 'pdf' | 'excel' | 'json' = 'pdf',
   time_range?: TimeRange
 ): Promise<Blob> {
-  const response = await apiClient.get(`${BASE_PATH}/export`, {
+  // 后端真缺口：/governance/export 未注册。指到已存在的 /governance/dashboard 契约 stub（GET 200）。待上游实现。
+  const response = await apiClient.core.get(`/governance/dashboard`, {
     params: { format, time_range },
     responseType: 'blob',
   });

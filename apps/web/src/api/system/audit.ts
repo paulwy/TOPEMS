@@ -38,12 +38,11 @@ export const systemAuditApi = {
     if (params?.search) queryParams.append('search', params.search);
 
     const queryString = queryParams.toString();
-    const response = await apiClient.core.get(
-      `/system/audit-logs/export${queryString ? `?${queryString}` : ''}`,
-      {
-        responseType: 'blob',
-      }
-    );
+    // 直拼 ?${queryString}（空串时为尾 ?，HTTP 等价无 query）：
+    // 避免嵌套三元模板被静态提取误折叠为 /export/:x 伪路径
+    const response = await apiClient.core.get(`/system/audit-logs/export?${queryString}`, {
+      responseType: 'blob',
+    });
     return response.data as unknown as Blob;
   },
 
