@@ -37,7 +37,7 @@ const HrmContractDetailPage: React.FC = () => {
     enabled: !!id,
     queryFn: async () => {
       if (!id) {
-        throw new Error(t('hrm.hrm_contract_detail_page.text_05b5ba'));
+        throw new Error(t('hrm.hrm_contract_detail_page.contract_id_empty'));
       }
       const res = await hrmApi.contracts.get(id);
       if (!res.success || !res.data) {
@@ -86,32 +86,32 @@ const HrmContractDetailPage: React.FC = () => {
       > = {
         draft: {
           color: 'default',
-          label: t('hrm.hrm_contract_detail_page.text_22b433'),
+          label: t('hrm.hrm_contract_detail_page.draft'),
           icon: <FileText size={14} />,
         },
         pending: {
           color: 'warning',
-          label: t('hrm.hrm_contract_detail_page.text_b0bf01'),
+          label: t('hrm.hrm_contract_detail_page.pending_approval'),
           icon: <Clock size={14} />,
         },
         approved: {
           color: 'success',
-          label: t('hrm.hrm_contract_detail_page.text_618acb'),
+          label: t('hrm.hrm_contract_detail_page.approved'),
           icon: <CheckCircle2 size={14} />,
         },
         active: {
           color: 'success',
-          label: t('hrm.hrm_contract_detail_page.text_c062e3'),
+          label: t('hrm.hrm_contract_detail_page.active_status'),
           icon: <CheckCircle2 size={14} />,
         },
         expired: {
           color: 'error',
-          label: t('hrm.hrm_contract_detail_page.text_e5b59f'),
+          label: t('hrm.hrm_contract_detail_page.expired'),
           icon: <AlertCircle size={14} />,
         },
         terminated: {
           color: 'error',
-          label: t('hrm.hrm_contract_detail_page.text_255412'),
+          label: t('hrm.hrm_contract_detail_page.terminated_status'),
           icon: <AlertCircle size={14} />,
         },
       };
@@ -123,12 +123,12 @@ const HrmContractDetailPage: React.FC = () => {
   const getContractTypeLabel = useCallback(
     (type: string) => {
       const labels: Record<string, string> = {
-        labor: t('hrm.hrm_contract_detail_page.text_46f54e'),
-        probation: t('hrm.hrm_contract_detail_page.text_144fe2'),
-        project: t('hrm.hrm_contract_detail_page.text_ea048f'),
-        outsourcing: t('hrm.hrm_contract_detail_page.text_42e7fe'),
-        internship: t('hrm.hrm_contract_detail_page.text_5040bb'),
-        part_time: t('hrm.hrm_contract_detail_page.text_a97d2a'),
+        labor: t('hrm.hrm_contract_detail_page.labor_contract'),
+        probation: t('hrm.hrm_contract_detail_page.probation_contract'),
+        project: t('hrm.hrm_contract_detail_page.project_contract'),
+        outsourcing: t('hrm.hrm_contract_detail_page.outsourcing_contract'),
+        internship: t('hrm.hrm_contract_detail_page.internship_agreement'),
+        part_time: t('hrm.hrm_contract_detail_page.parttime_agreement'),
         other: t('hrm.hrm_contract_detail_page.other'),
       };
       return labels[type] || type;
@@ -139,11 +139,11 @@ const HrmContractDetailPage: React.FC = () => {
   const getSalaryTypeLabel = useCallback(
     (type: string) => {
       const labels: Record<string, string> = {
-        monthly: t('hrm.hrm_contract_detail_page.text_4eb9e5'),
-        daily: t('hrm.hrm_contract_detail_page.text_2eddda'),
-        hourly: t('hrm.hrm_contract_detail_page.text_bae8cf'),
-        project: t('hrm.hrm_contract_detail_page.text_66566b'),
-        commission: t('hrm.hrm_contract_detail_page.text_2668b2'),
+        monthly: t('hrm.hrm_contract_detail_page.monthly_salary'),
+        daily: t('hrm.hrm_contract_detail_page.daily_salary'),
+        hourly: t('hrm.hrm_contract_detail_page.hourly_salary'),
+        project: t('hrm.hrm_contract_detail_page.project_based'),
+        commission: t('hrm.hrm_contract_detail_page.commission_based'),
         other: t('hrm.hrm_contract_detail_page.other'),
       };
       return labels[type] || type;
@@ -412,7 +412,7 @@ const HrmContractDetailPage: React.FC = () => {
       tags: [getContractTypeLabel(contract?.contract_type || '')],
       stats: [
         {
-          label: i18n.t('hrm.hrm_contract_detail_page.text_2ed392'),
+          label: i18n.t('hrm.hrm_contract_detail_page.employee'),
           value: contract?.employee_name || '-',
         },
         {
@@ -447,7 +447,7 @@ const HrmContractDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: t('hrm.hrm_contract_detail_page.text_b53270'),
+            label: t('hrm.hrm_contract_detail_page.renew'),
             icon: <Calendar style={{ width: 18, height: 18 }} />,
             onClick: () => setShowRenewDialog(true),
           },

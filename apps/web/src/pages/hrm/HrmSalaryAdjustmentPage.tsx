@@ -25,7 +25,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
           addNotification({
             type: 'success',
             title: t('hrm.hrm_salary_adjustment_page.success'),
-            message: t('hrm.hrm_salary_adjustment_page.text_c0b5ba'),
+            message: t('hrm.hrm_salary_adjustment_page.approved_passed'),
           });
         }
       } catch {
@@ -52,7 +52,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       },
     },
     {
-      label: t('hrm.hrm_salary_adjustment_page.text_0273ba'),
+      label: t('hrm.hrm_salary_adjustment_page.approval'),
       icon: <CheckCircle size={16} />,
       onClick: handleApprove,
       color: 'success',
@@ -62,8 +62,8 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
 
   return (
     <PageContainer
-      title={t('hrm.hrm_salary_adjustment_page.text_56e426')}
-      subtitle={t('hrm.hrm_salary_adjustment_page.text_cfb890')}
+      title={t('hrm.hrm_salary_adjustment_page.salary_adjustment')}
+      subtitle={t('hrm.hrm_salary_adjustment_page.emp_salary_adj_mgmt')}
     >
       <CrudPage
         schema={salaryAdjustmentSchema}

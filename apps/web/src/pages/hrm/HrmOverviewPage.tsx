@@ -26,29 +26,29 @@ import i18n from '@/i18n';
 const ct = designTokens.colors;
 
 const departmentData = [
-  { name: i18n.t('hrm.hrm_overview_page.text_c6a757'), value: 85 },
+  { name: i18n.t('hrm.hrm_overview_page.tech_dept'), value: 85 },
   { name: i18n.t('hrm.hrm_overview_page.product'), value: 42 },
-  { name: i18n.t('hrm.hrm_overview_page.text_73b111'), value: 35 },
-  { name: i18n.t('hrm.hrm_overview_page.text_b159e5'), value: 22 },
-  { name: i18n.t('hrm.hrm_overview_page.text_f802d1'), value: 18 },
-  { name: i18n.t('hrm.hrm_overview_page.text_b890b3'), value: 28 },
-  { name: i18n.t('hrm.hrm_overview_page.text_afdedb'), value: 26 },
+  { name: i18n.t('hrm.hrm_overview_page.marketing_dept'), value: 35 },
+  { name: i18n.t('hrm.hrm_overview_page.finance_dept'), value: 22 },
+  { name: i18n.t('hrm.hrm_overview_page.hr_department'), value: 18 },
+  { name: i18n.t('hrm.hrm_overview_page.operations_dept'), value: 28 },
+  { name: i18n.t('hrm.hrm_overview_page.sales_dept'), value: 26 },
 ];
 
 const monthlyTrendData = [
-  { name: i18n.t('hrm.hrm_overview_page.text_fccc2b'), value: 5 },
-  { name: i18n.t('hrm.hrm_overview_page.text_c1d13f'), value: 3 },
-  { name: i18n.t('hrm.hrm_overview_page.text_c4767b'), value: 8 },
-  { name: i18n.t('hrm.hrm_overview_page.text_3eaf4b'), value: 6 },
-  { name: i18n.t('hrm.hrm_overview_page.text_0545f1'), value: 7 },
-  { name: i18n.t('hrm.hrm_overview_page.text_f2422a'), value: 8 },
+  { name: i18n.t('hrm.hrm_overview_page.january'), value: 5 },
+  { name: i18n.t('hrm.hrm_overview_page.february'), value: 3 },
+  { name: i18n.t('hrm.hrm_overview_page.march'), value: 8 },
+  { name: i18n.t('hrm.hrm_overview_page.april'), value: 6 },
+  { name: i18n.t('hrm.hrm_overview_page.may'), value: 7 },
+  { name: i18n.t('hrm.hrm_overview_page.june'), value: 8 },
 ];
 
 const performanceData = [
-  { name: i18n.t('hrm.hrm_overview_page.text_c08ed9'), value: 25 },
-  { name: i18n.t('hrm.hrm_overview_page.text_c5c01c'), value: 40 },
+  { name: i18n.t('hrm.hrm_overview_page.excellent'), value: 25 },
+  { name: i18n.t('hrm.hrm_overview_page.good'), value: 40 },
   { name: i18n.t('hrm.hrm_overview_page.qualified'), value: 28 },
-  { name: i18n.t('hrm.hrm_overview_page.text_e10613'), value: 7 },
+  { name: i18n.t('hrm.hrm_overview_page.needs_improvement'), value: 7 },
 ];
 
 const HrmOverviewPage: React.FC = () => {
@@ -66,7 +66,7 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'total-employees',
-        title: i18n.t('hrm.hrm_overview_page.text_97e957'),
+        title: i18n.t('hrm.hrm_overview_page.total_employees'),
         value: '256',
         icon: <Users size={24} />,
         change: 12,
@@ -93,7 +93,7 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'pending-leave',
-        title: i18n.t('hrm.hrm_overview_page.text_7c3c05'),
+        title: i18n.t('hrm.hrm_overview_page.pending_leave'),
         value: '6',
         icon: <Calendar size={24} />,
         change: 2,
@@ -102,7 +102,7 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'avg-performance',
-        title: i18n.t('hrm.hrm_overview_page.text_d8ddb8'),
+        title: i18n.t('hrm.hrm_overview_page.avg_performance'),
         value: '85.3',
         icon: <Award size={24} />,
         change: 3.2,
@@ -126,7 +126,7 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'department-distribution',
-        title: i18n.t('hrm.hrm_overview_page.text_a2487e'),
+        title: i18n.t('hrm.hrm_overview_page.dept_headcount_dist'),
         chart: (
           <LazyChart
             type='bar'
@@ -139,7 +139,7 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'hire-trend',
-        title: i18n.t('hrm.hrm_overview_page.text_0b2824'),
+        title: i18n.t('hrm.hrm_overview_page.monthly_onboarding_turnover'),
         chart: (
           <LazyChart
             type='line'
@@ -152,7 +152,7 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'performance-distribution',
-        title: i18n.t('hrm.hrm_overview_page.text_5890cb'),
+        title: i18n.t('hrm.hrm_overview_page.performance_distribution'),
         chart: (
           <LazyChart
             type='pie'
@@ -169,42 +169,42 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'employee-manage',
-        label: i18n.t('hrm.hrm_overview_page.text_b33603'),
+        label: i18n.t('hrm.hrm_overview_page.employee_management'),
         icon: <Users size={20} />,
         onClick: () => navigate(HRM_PATHS.employees),
         color: ct.primary.dark,
       },
       {
         id: 'attendance-manage',
-        label: i18n.t('hrm.hrm_overview_page.text_2a2338'),
+        label: i18n.t('hrm.hrm_overview_page.attendance_management'),
         icon: <Clock size={20} />,
         onClick: () => navigate(HRM_PATHS.attendance),
         color: ct.secondary[700],
       },
       {
         id: 'leave-manage',
-        label: i18n.t('hrm.hrm_overview_page.text_f2b75f'),
+        label: i18n.t('hrm.hrm_overview_page.leave_management'),
         icon: <Calendar size={20} />,
         onClick: () => navigate(HRM_PATHS.leave),
         color: ct.success[700],
       },
       {
         id: 'salary-manage',
-        label: i18n.t('hrm.hrm_overview_page.text_bf8ab5'),
+        label: i18n.t('hrm.hrm_overview_page.payroll_management'),
         icon: <DollarSign size={20} />,
         onClick: () => navigate(HRM_PATHS.payroll),
         color: ct.warning[600],
       },
       {
         id: 'performance-review',
-        label: i18n.t('hrm.hrm_overview_page.text_5ad4ab'),
+        label: i18n.t('hrm.hrm_overview_page.performance_review'),
         icon: <Award size={20} />,
         onClick: () => navigate(HRM_PATHS.performance),
         color: ct.success[700],
       },
       {
         id: 'recruitment',
-        label: i18n.t('hrm.hrm_overview_page.text_b4f20d'),
+        label: i18n.t('hrm.hrm_overview_page.recruitment_management'),
         icon: <Briefcase size={20} />,
         onClick: () => navigate(HRM_PATHS.recruitment),
         color: ct.error[700],
@@ -217,18 +217,18 @@ const HrmOverviewPage: React.FC = () => {
     () => [
       {
         id: 'leave1',
-        title: i18n.t('hrm.hrm_overview_page.text_3f1c1f'),
-        description: i18n.t('hrm.hrm_overview_page.text_16737a'),
+        title: i18n.t('hrm.hrm_overview_page.leave_app_li_si'),
+        description: i18n.t('hrm.hrm_overview_page.annual_leave_sample'),
         time: '2026-06-29 09:30',
         icon: <Calendar size={18} />,
         status: 'warning',
-        tags: [{ label: i18n.t('hrm.hrm_overview_page.text_b0bf01'), color: ct.warning[600] }],
+        tags: [{ label: i18n.t('hrm.hrm_overview_page.pending_approval'), color: ct.warning[600] }],
         onClick: () => navigate(HRM_PATHS.leave),
       },
       {
         id: 'emp1',
-        title: i18n.t('hrm.hrm_overview_page.text_729463'),
-        description: i18n.t('hrm.hrm_overview_page.text_3d1fda'),
+        title: i18n.t('hrm.hrm_overview_page.new_hire_wang_wu'),
+        description: i18n.t('hrm.hrm_overview_page.tech_senior_frontend'),
         time: '2026-06-29 08:00',
         icon: <UserPlus size={18} />,
         status: 'success',
@@ -237,7 +237,7 @@ const HrmOverviewPage: React.FC = () => {
       {
         id: 'att1',
         title: i18n.t('hrm.hrm_overview_page.abnormal_1'),
-        description: i18n.t('hrm.hrm_overview_page.text_f127db'),
+        description: i18n.t('hrm.hrm_overview_page.late_remark_sample'),
         time: '2026-06-28 17:30',
         icon: <Clock size={18} />,
         status: 'error',
@@ -254,7 +254,7 @@ const HrmOverviewPage: React.FC = () => {
       },
       {
         id: 'train1',
-        title: i18n.t('hrm.hrm_overview_page.text_2a2606'),
+        title: i18n.t('hrm.hrm_overview_page.new_hire_training_s3'),
         description: i18n.t('hrm.hrm_overview_page.completed_2'),
         time: '2026-06-27 15:00',
         icon: <GraduationCap size={18} />,
@@ -268,7 +268,7 @@ const HrmOverviewPage: React.FC = () => {
 
   return (
     <PageContainer
-      title={t('hrm.hrm_overview_page.text_c19ad7')}
+      title={t('hrm.hrm_overview_page.hr_management_sys')}
       padding={false}
       maxWidth={false}
     >
@@ -277,12 +277,12 @@ const HrmOverviewPage: React.FC = () => {
         subtitle=''
         breadcrumbs={[
           { label: t('hrm.hrm_overview_page.home'), href: '/dashboard' },
-          { label: t('hrm.hrm_overview_page.text_40fb54') },
+          { label: t('hrm.hrm_overview_page.human_resources') },
         ]}
         stats={stats}
         charts={charts}
         recentItems={recentItems}
-        recentTitle={t('hrm.hrm_overview_page.text_32773c')}
+        recentTitle={t('hrm.hrm_overview_page.recent_activities')}
         quickActions={quickActions}
         quickActionsTitle={t('hrm.hrm_overview_page.action')}
         loading={loading}
