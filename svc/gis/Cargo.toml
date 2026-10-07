@@ -3,6 +3,7 @@ name = "topems-gis"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS GIS - 厂区空间数字化系统"
 
 [dependencies]

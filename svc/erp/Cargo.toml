@@ -3,6 +3,7 @@ name = "topems-erp"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS-ERP 企业资源计划系统"
 
 [features]

@@ -3,6 +3,7 @@ name = "topems-shared-auth"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS shared auth library - authentication, authorization, middleware"
 
 [dependencies]

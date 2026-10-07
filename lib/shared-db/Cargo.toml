@@ -3,6 +3,7 @@ name = "topems-shared-db"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS shared database library - database access, migrations, repositories"
 
 [dependencies]

@@ -121,6 +121,7 @@ resolver = "2"
 version = "0.1.0"
 edition = "2021"
 authors = ["TOPEMS Team"]
+license = "MIT"
 
 # ================================================
 # 工作区级 lint 配置 (P0-1 clippy 统一)

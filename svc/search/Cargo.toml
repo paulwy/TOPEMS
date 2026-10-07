@@ -3,6 +3,7 @@ name = "topems-search"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS Search Service - 全局搜索服务"
 
 [dependencies]

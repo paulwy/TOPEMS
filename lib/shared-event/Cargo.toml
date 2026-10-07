@@ -3,6 +3,7 @@ name = "topems-shared-event"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS shared event library - event-driven, messaging, caching"
 
 [dependencies]

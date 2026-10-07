@@ -3,6 +3,7 @@ name = "topems-shared-observability"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS shared observability library - telemetry, tracing, metrics, alerting"
 
 [dependencies]

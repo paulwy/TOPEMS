@@ -3,6 +3,7 @@ name = "topems-hrm"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS-HRM 人力资源管理系统"
 
 [features]

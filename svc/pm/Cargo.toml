@@ -3,6 +3,7 @@ name = "topems-pm"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS-PM 统一项目管理服务"
 
 [dependencies]

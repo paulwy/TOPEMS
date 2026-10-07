@@ -3,6 +3,7 @@ name = "topems-shared-service-client"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS shared service client library - typed HTTP clients for inter-service communication"
 
 [dependencies]

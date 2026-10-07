@@ -3,6 +3,7 @@ name = "topems-server"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS 模块化单体统一入口服务（P0 架构优化）"
 
 [dependencies]

@@ -3,6 +3,7 @@ name = "topems-master-data"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS Master Data Service - MDM Quality, Auto-Fix, Data Governance AI"
 
 [dependencies]

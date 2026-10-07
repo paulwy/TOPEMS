@@ -3,6 +3,7 @@ name = "topems-wms"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS-WMS 仓库管理系统"
 
 [dependencies]

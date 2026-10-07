@@ -3,6 +3,7 @@ name = "topems-scm"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS-SCM 供应链管理系统"
 
 [dependencies]

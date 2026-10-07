@@ -3,6 +3,7 @@ name = "topems-communication"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS Communication Service - 通知/邮件/即时消息通信服务"
 
 [dependencies]

@@ -3,6 +3,7 @@ name = "topems-unified-core"
 version.workspace = true
 edition = "2021"
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS Unified Core Platform - IAM + Doc + Flow + File + Communication + Tenant + Billing + AI"
 
 [dependencies]

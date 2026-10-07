@@ -3,6 +3,7 @@ name = "topems-shared-core"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS shared core library - foundational types and utilities"
 
 [dependencies]

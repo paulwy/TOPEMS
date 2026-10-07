@@ -3,6 +3,7 @@ name = "topems-integration"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS System Integration Service"
 
 [features]

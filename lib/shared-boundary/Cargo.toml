@@ -3,6 +3,7 @@ name = "topems-shared-boundary"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS compile-time schema boundary check - only_own_schema_query! macro"
 
 [lib]

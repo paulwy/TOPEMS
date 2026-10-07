@@ -3,6 +3,7 @@ name = "topems-monitor"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS Monitor Service - Alerts, Metrics, SLO, Business Metrics, Health Checks (V68.1 A2.1 拆分)"
 
 [dependencies]

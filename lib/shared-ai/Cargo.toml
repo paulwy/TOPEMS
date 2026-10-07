@@ -3,6 +3,7 @@ name = "topems-shared-ai"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS shared AI library - vector store, embeddings, AI clients"
 
 [dependencies]

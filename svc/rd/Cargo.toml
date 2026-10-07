@@ -3,6 +3,7 @@ name = "topems-rd"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS-RD 科研研发管理系统"
 
 [dependencies]

@@ -3,6 +3,7 @@ name = "topems-analytics"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS Analytics Service - BI and Report (Unified)"
 
 [dependencies]

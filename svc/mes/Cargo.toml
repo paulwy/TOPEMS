@@ -3,6 +3,7 @@ name = "topems-mes"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
+license.workspace = true
 description = "TOPEMS-MES 生产执行系统"
 
 [dependencies]
