@@ -814,9 +814,11 @@ impl CrmEventHandlers {
 }
 
 /// 启动 CRM 服务的事件订阅
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
+pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
     let handlers = CrmEventHandlers::new(db);
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers
+        .build_subscriber()
+        .map_err(|e| TopemsError::internal("构建事件订阅者失败", e))?;
 
     tracing::info!("[crm] 启动事件订阅者，注册 4 个业务事件 handler（含 ShippingOrderRequested）");
     tokio::spawn(async move {

@@ -517,9 +517,11 @@ impl MobileEventHandlers {
 pub async fn start_event_subscribers(
     db: PgPool,
     event_publisher: Option<Arc<EventPublisher>>,
-) -> Result<(), String> {
+) -> Result<(), TopemsError> {
     let handlers = MobileEventHandlers::new(db, event_publisher);
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers
+        .build_subscriber()
+        .map_err(|e| TopemsError::internal("构建事件订阅者失败", e))?;
 
     tracing::info!("[mobile] 启动事件订阅者，注册 7 类业务事件 handler");
     tokio::spawn(async move {

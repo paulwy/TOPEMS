@@ -158,9 +158,11 @@ impl LimsEventHandlers {
     }
 }
 
-pub async fn start_event_subscribers(db: PgPool) -> Result<(), String> {
+pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
     let handlers = LimsEventHandlers::new(db);
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers
+        .build_subscriber()
+        .map_err(|e| TopemsError::internal("构建事件订阅者失败", e))?;
 
     tracing::info!("[lims] 启动事件订阅者，注册 2 类业务事件 handler");
     tokio::spawn(async move {

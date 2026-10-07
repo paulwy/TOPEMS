@@ -11,6 +11,7 @@ use sqlx::Row;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::{ApiResponse, ListResponse};
 
 #[derive(Debug, Deserialize)]
@@ -558,11 +559,14 @@ pub async fn query_dataset(
             },
             "message": "查询数据集成功",
         })),
-        Ok(Err(msg)) => Json(serde_json::json!({
-            "success": false,
-            "data": { "columns": [], "rows": [], "total": 0 },
-            "message": msg,
-        })),
+        Ok(Err(e)) => {
+            let (_, msg, _) = e.classify();
+            Json(serde_json::json!({
+                "success": false,
+                "data": { "columns": [], "rows": [], "total": 0 },
+                "message": msg,
+            }))
+        }
         Err(_) => Json(serde_json::json!({
             "success": false,
             "data": { "columns": [], "rows": [], "total": 0 },
@@ -594,7 +598,7 @@ async fn execute_bi_sql(
     sql: &str,
     limit: i64,
     offset: i64,
-) -> Result<(Vec<String>, Vec<serde_json::Value>), String> {
+) -> Result<(Vec<String>, Vec<serde_json::Value>), TopemsError> {
     // 友好预检：非只读语句（非 SELECT/WITH 开头）提前给出明确提示；
     // 真正拦截仍由「子查询语法层 + BEGIN READ ONLY」双层保证（WITH 内的 data-modifying CTE 由只读事务兜底）。
     let head = sql
@@ -603,15 +607,18 @@ async fn execute_bi_sql(
         .unwrap_or("")
         .to_ascii_lowercase();
     if !head.starts_with("select") && !head.starts_with("with") {
-        return Err("仅支持只读查询（SQL 须以 SELECT 或 WITH 开头）".to_string());
+        return Err(TopemsError::ValidationFailed(
+            "仅支持只读查询（SQL 须以 SELECT 或 WITH 开头）".to_string(),
+        ));
     }
     let mut conn = pool
         .acquire()
         .await
-        .map_err(|e| format!("数据库连接失败: {e}"))?;
-    if let Err(e) = sqlx::query("BEGIN READ ONLY").execute(&mut *conn).await {
-        return Err(format!("只读事务开启失败: {e}"));
-    }
+        .map_err(|e| TopemsError::internal("数据库连接失败", e))?;
+    sqlx::query("BEGIN READ ONLY")
+        .execute(&mut *conn)
+        .await
+        .map_err(|e| TopemsError::internal("只读事务开启失败", e))?;
     let outcome = async {
         // limit/offset 为 i64 数字（调用方 clamp/校验），直接格式化拼接无注入风险
         let wrapped = format!(
@@ -622,15 +629,22 @@ async fn execute_bi_sql(
         let row = sqlx::query(&wrapped)
             .fetch_one(&mut *conn)
             .await
-            .map_err(|e| e.to_string())?;
+            // 用户 SQL 的语法/执行错误需回显给测试者（BI SQL 测试工具的核心反馈），
+            // 非内部状态泄露；其余内部失败走 internal（细节仅进日志）。
+            .map_err(|e| TopemsError::ValidationFailed(format!("SQL 执行失败: {e}")))?;
         let idx = row
             .columns()
             .iter()
             .position(|c| c.name() == "__bi_result")
-            .ok_or_else(|| "结果列缺失".to_string())?;
-        let raw = row.try_get_raw(idx).map_err(|e| e.to_string())?;
-        let bytes = raw.as_bytes().map_err(|e| format!("结果读取失败: {e}"))?;
-        serde_json::from_slice::<serde_json::Value>(bytes).map_err(|e| format!("结果解析失败: {e}"))
+            .ok_or_else(|| TopemsError::internal("BI SQL 结果列缺失", "结果列缺失"))?;
+        let raw = row
+            .try_get_raw(idx)
+            .map_err(|e| TopemsError::internal("BI SQL 结果读取失败", e))?;
+        let bytes = raw
+            .as_bytes()
+            .map_err(|e| TopemsError::internal("BI SQL 结果读取失败", e))?;
+        serde_json::from_slice::<serde_json::Value>(bytes)
+            .map_err(|e| TopemsError::internal("BI SQL 结果解析失败", e))
     }
     .await;
     // 无论成败都结束只读事务（查询报错时连接处于 aborted 状态，必须 ROLLBACK 恢复才能归还池）
@@ -680,11 +694,14 @@ pub async fn test_sql_query(
             "data": { "columns": columns, "data": data, "valid": true, "rows": data.len() },
             "message": "SQL测试成功",
         })),
-        Ok(Err(msg)) => Json(serde_json::json!({
-            "success": false,
-            "data": { "columns": [], "data": [], "valid": false },
-            "message": msg,
-        })),
+        Ok(Err(e)) => {
+            let (_, msg, _) = e.classify();
+            Json(serde_json::json!({
+                "success": false,
+                "data": { "columns": [], "data": [], "valid": false },
+                "message": msg,
+            }))
+        }
         Err(_) => Json(serde_json::json!({
             "success": false,
             "data": { "columns": [], "data": [], "valid": false },
