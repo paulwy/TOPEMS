@@ -270,3 +270,25 @@
 ### 🏁 B7 里程碑：map_err(format!) + Err(format! 全仓双清零
 - 累计迁移 487 处（静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 签名 20+）
 - 剩余形态：Result<_, String> 465 处（下一候选批，待用户定）
+
+---
+
+## 🔧 前端 UI 审计批次（2026-10-07）
+
+### P0（止血）
+- ✅ **ESLint resolver 噪音清零（恢复 lint 门禁信号）**：根因=apps/web 配置 `import/resolver: {typescript}` 但 `eslint-import-resolver-typescript` 未安装 → 每文件 5 条 Resolve error 噪音（crm/hrm 233 条全为噪音）。修复=安装 `eslint-import-resolver-typescript@4.4.5`；验证 crm+hrm 233 条 → **0 警告 0 错误**
+- ✅ **FieldSelector 全局监听泄漏修复**：`FieldSelector.tsx` onMouseDown 每次点击向 document 挂 dragover/drop 监听且永不移除，且 `getData('index')` 无 setData 来源（拖拽实际失效）→ 重构 React 合成事件完整拖拽，无全局监听
+- ✅ **mobile approval.ts 重复端点清理**：getTasks 与 getApprovals 同端点 `/approval/tasks`（getTasks 零引用已删）；approve/reject 两对提取共享实现（approveTask/rejectTask），API 面不变
+
+### P1（收敛）
+- ⏳ **设计令牌违规清零（159 → 0）**：真实违规 159 处（hardcoded 101 / rgba 48 / box-shadow 4 / fixed-px 6）。已改进脚本（CSS `var(--token, fallback)` 兜底豁免，index.css 14 处误报清零）+ 修正 index.css 3 处 fallback（`#3b82f6`→`#365ae3`）+ ai/business 状态色令牌化示范（DocumentIntelligence/GovernanceDashboard → theme.palette）；剩余：ai/business 图表色、charts/chartTheme rgba、gis 热力色带、redesign/layout 12、redesign/primitives 6
+- ⏳ **组件收敛：7 类 17 份 → 单一实现**：EmptyState×4、StatusBadge×4、FileUpload×3、ConfirmDialog×2、Pagination×2、LoadingSpinner×2、BackButton×2
+- ⏳ **模板瘦身：ListPageTemplate 4153 行拆分**：按职责拆 hooks/子组件
+- ⏳ **页面三态补齐**：加载 53%/空态 16%/错误 39% → 模板默认注入 + 按模块分批
+
+### P2（加固）
+- ✅ **死代码与目录清理（第一批）**：components/ui/Loading.tsx 零引用已删；Tabs/CommandPalette 有引用保留；待续：_archive-microfrontend、tmp、schema/schemas 双目录合并
+- ⏳ **三端共享包接入**：mobile 零引用、desktop 仅 4 处 → 先接 tokens/shared-types/api-client
+- ⏳ **i18n hash key 语义化 + z-index 语义化**：1006 个 text_xxxxxx key；z-index 魔数 100+ 处统一 theme.zIndex
+
+> 全量审计报告：`docs/quality/前端UI审计报告-2026-10-07.md`（六维结论 + 违规清单 + 验证记录）
