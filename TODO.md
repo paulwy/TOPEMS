@@ -520,3 +520,19 @@
 - **BE-02 后续**：组织计数真实接线需 hrm 主数据（当前 0 行）；租户 GUC 口径（handler 读 app.current_tenant vs 中间件写 app.tenant_id）为既有语义，未改；userGrowth/activityTypes 演示数据未动（点名范围外）
 - **FE-17 后续**：snakeCaseParams 全量启用需逐服务验证后端吃 page_size（当前仅 wms；回滚=移除 Set 中服务名）；desktop 401 目前整页跳转（未接 zustand store 实例，循环依赖规避）；shared-utils 本包 vitest 接线为预存环境问题（用 tsc build 等价验证）
 - **WCS 手动回归**：BFF(8099) 离线时门禁 SKIP（仓库设计），建议重启后 `python3 scripts/web_contract_smoke.py`
+
+## 2026-10-07 第三梯队实施（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第三梯队修复摘要.md`）
+
+### ✅ 已完成并提交
+- **AR-09 TABLE_DEFS 对拍止血**（commit `b768b3f4f`，方案 C）：`scripts/check-schema-defense-drift.py` 纯静态对拍——**实测修正前提**：29 个 schema_defense*.rs 的 CREATE 均为骨架占位符，真「同文件双写」仅 gis/db/schema.rs（20 表）+ ehs/models/mod.rs（43 表），扫描单位改为「全部 28 个 TABLE_DEFS 定义点」；现状 63 对拍表 0 漂移、575 表无双写跳过；双向注入测试证明能抓漂移；接线：lefthook `schema-defense-drift`（WARN 先行）+ ci.yml job（python3 全量可硬阻断，quality-gate 挂载）
+- **BE-05 OpenAPI 覆盖门禁**（commit 随门禁批次 `ef400ac32`，方向甲）：`extract-live-routes.py`（4843 条，两次运行 diff=0）+ `check-openapi-coverage.cjs`（路径参数归一化 {id}/{user_id}→{p}；两阶段：无基线 WARN-only、有基线白名单「新漂移才失败」，注入 fake 路由验证 exit1）+ 基线 `docs/api/openapi-baseline-gaps.json`（2963 条：missing 1975 + extra 988）。**方向乙登记后续**：聚合回写 openapi.json 高风险（仅 9/28 服务即 2993 paths、删 1597/增 1092、+789KB、operationId 冲突 9 处），待 utoipa 覆盖率 ~80% 重估
+- **DIR 迁移目录低风险四项**（重命名随用户并发提交 `a9eb6c90e` 以 0-line rename 入库；READMEs/checksums 收尾 commit `52bdbac2c`）：`.snippets`→`docs/database/snippets/`、`deploy/migrations/migrate_feedback_to_ticket.sql`→`scripts/db/`（README 同迁改路径）；新建 `database/migrations/README.md`（**实测前缀由来：000-013 共 14 个序号制**——任务描述「000-017」系误；2026-07-16 起 14 位时间戳；重名 2 对 crm_contracts/mes_material_plans；巨型 12 个最大 ~530KB 保留背景）；validate.sh 重跑 EXIT 0、checksums 325→326 仅 +1 行（挪动零 checksum 改动）；lefthook `migration-validate` 实跑 10.5s 通过
+- **FE-17 snakeCase 灰度推广**（commit `d16b4905d`）：`SNAKE_CASE_SERVICES` 扩至 **29 服务**（wms 先行实测 page_size 生效后推广）；**保持关闭 11**：mobile/ticket/core（仅吃 pageSize，证据：svc/mobile rename=pageSize、unified-core ListTenantsQuery rename=pageSize）、iam/file/doc（无分页 struct）、migration（保守）、gis（limit 无 page_size）、plugin-registry/aps/jaeger；body 层 camelCase rename 扫描确认不受 paramsSerializer 影响；typecheck exit0 / eslint 0 错
+- **门禁接线**（commit `ef400ac32`）：lefthook 新增 `schema-defense-drift`（WARN 不阻断）+ `migration-validate`；ci.yml 新增 `schema-defense-drift` job + quality-gate needs；`check-migration-names.mjs` ROOTS 扩 database（323 个 central 迁移纳入扫描）+ **RE_HIST_3（14 个序号制）+ 序列秒 hack（40 个 YYYYMMDD0000NN 秒≥60）均 grandfathered WARN**——默认与 --strict 均 PASS（此前这批文件从未被扫描，若直接扩 ROOTS 不配套降级会红 CI）；`check-large-files.sh` 新增迁移 SQL >100KB WARN 分支（临时 146KB 文件实测告警、exit 0）
+
+### 📋 剩余登记 / 遗留
+- **方向乙（OpenAPI 回写）**：登记后续批次，待 utoipa 注解覆盖率提升后再评估
+- **AR-09 范围**：只比列名集合不比 DDL（UNIQUE/REFERENCES/CHECK 只在 CREATE 文本）；26 服务迁移目录 DDL 未纳入对拍（属方案 B 大重构）；lefthook 侧 WARN 先行，稳定后转硬阻断
+- **DIR**：历史文档旧路径引用（XCUT.md:65、docs/archive/**、artifacts/**）为时点快照刻意未改；模板内 Location 注释（docs/database/snippets/add_tenant_id_template.sql:3）下次编辑顺手更新；validate.sh 历史存量警告（21 顺序/26 幂等/323 缺 down/78 多职责）与本次无关
+- **FE-17**：全量启用后建议各服务做一次列表翻页 UI 回归；回滚=从 `SNAKE_CASE_SERVICES` Set 移除服务名
+- **BE-05 checker**：CI 建议用 `--live-csv` 传预生成 CSV 解耦（默认自动调 extractor 需 python3）
