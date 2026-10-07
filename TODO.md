@@ -484,6 +484,22 @@
 - **覆盖分布**：audit/handlers.rs + audit_query.rs（200+ 展开行）+ automation/mod.rs 全 handler（~200）+ doc/handlers.rs + doc/services（~150）+ shared 基建（AppState/中间件/服务发现）——三盲区从 0 到实际执行覆盖
 - **lib 三域 14.39%**（本轮仅新增 tests/ 未改 src/，数字保持）——lib 与集成测试是互补口径
 
+### ✅ wms 集成测试全量扩展完成（2026-10-07，16 模块 48 用例）
+
+- **16 个 e2e 文件 / 48 用例全绿**（10 批扩展）：inventory_movement 3 + outbound 3 + stock_take 3 + transfer 3 + slotting 3 + replenishment 3 + inbound 3 + inventory 3 + inventory_alert 3 + wave_pick 3 + cycle_count 3 + location 3 + batch 3 + serial_number 3 + discrepancy 3 + sync_records 3
+- **测试驱动暴露并修复 9 处生产缺陷**（decode 必挂，全部已修）：
+  1. OutboundOrder struct 缺 #[sqlx(default)]（24 列缺字段）
+  2. TransferOrder struct 缺 #[sqlx(default)] + list_transfers SELECT 缺 order_number/transfer_type
+  3. WavePick total_quantity/picked_quantity f64 ← NUMERIC（5 处 SELECT 加 ::float8）
+  4. CycleCount 6 处 SELECT/RETURNING 缺 tenant_id 列
+  5. SerialNumber unit_price Option<f64> ← NUMERIC(18,4)（4 处 SELECT ::float8）
+  6. Discrepancy 6 处 SELECT/RETURNING 缺 tenant_id 列
+  7. data_sync query_as OutboundOrder SELECT 缺 tenant_id（同类扫描发现）
+  8. inventory create RETURNING 缺 tenant_id + quantity/min/max f64 ← NUMERIC（同类扫描发现）
+- **方法沉淀**：pg_dump 生产 DDL 自动生成建表（60 列 inbound）+ 手写对齐生产类型（NUMERIC 坑）+ direct_query_debug（复制 SELECT + FromRow 打印 decode Err）+ 同类缺陷扫描（python 对比 query_as SELECT vs struct 非 Option 字段）
+- **关键坑位记录**：返回 key 差异（orders/items/stock_takes/records/alerts/configs）、ListResponse 字段式、超管 tenant 全零 UUID 匹配（sync_records）、非 Option insert 必给值（order_date/warehouse_id/next_count_date/system_quantity 等）
+- **剩余盲区**：analytics（无 list handler，全多表聚合统计，测试价值低）——登记为已知盲区
+
 ### ✅ 交叉核验并行线 P1 批次（2026-10-07）
 
 - **第三梯队 7 提交已入库**（c943a02e5 等）：AR-09 TABLE_DEFS 对拍止血（0 漂移 575 表）、BE-05 OpenAPI 门禁（4843 路由 diff=0 + 基线）、DIR 迁移目录低风险四项（validate EXIT 0）、FE-17 snakeCase 29 服务灰度（typecheck exit0）、FE-18 分页键名、门禁接线（SD drift/MIG validate/names/sql 体积）
