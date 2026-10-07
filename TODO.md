@@ -452,6 +452,14 @@
 - **unified-core audit/doc/automation handlers**：AppState 20+ 字段（含 Arc<dyn> 权限/审计存储 mock）——构造成本高——**需先建 AppState 测试工厂基建**（列为独立基建项）
 - **可行替代**：纯逻辑/事件层模块化可测（finance domain 已验证）；handler 薄 SQL 封装测试价值低——建议**优先模块化纯逻辑**，handler 层留待真实服务测试环境
 
+### ✅ AppState 测试工厂基建完成（2026-10-07）
+
+- **tests/common/app_state.rs**：24 字段 AppState 完整构造（dyn trait 用仓库自带 InMemoryPermissionStore/InMemoryAuditLogStore；encryption=None）+ super_claims/tenant_claims 工厂
+- **复用方式**：`#[path = "common/app_state.rs"] mod app_state;`（绕过 common/mod.rs 的 topems-lib 运行时依赖）
+- **audit handlers 已覆盖**（operation_logs_e2e 9 用例全绿）：list_operation_logs（空表/按 user_name/module/success 过滤/分页 5 用例）+ get_operation_log（存在/NotFound 2 用例）+ get_operation_log_stats（空/3 行 2 用例）——commit a24616dd3/e782b78fc
+- **解锁**：audit(381)/doc(508)/automation(618) handler 集成测试路径
+- ⏳ 下一步：doc handlers（core_doc_document_versions 表，Document 模型可测）或 audit 剩余（permission_changes/access_logs——薄包装 + serde_json::Value 断言弱，价值递减）
+
 ## 2026-10-07 第二梯队修复（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第二梯队修复摘要.md`）
 
 ### ✅ 已完成并提交
