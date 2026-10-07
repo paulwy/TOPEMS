@@ -874,6 +874,15 @@ pub fn create_routes(
     // with_state 注入 AppState 后以 Router<()> 形态并入受保护路由链）
     let ai_knowledge_router = Router::new()
         .merge(crate::modules::ai_knowledge::create_routes())
+        // 与其它 protected router 一致：认证在前（Claims 注入），租户解析随后
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.pool.clone(),
+            topems_shared_auth::tenant_middleware(),
+        ))
+        .layer(axum::middleware::from_fn_with_state(
+            app_state.auth_state.clone(),
+            auth_middleware,
+        ))
         .with_state(app_state);
 
     let all_protected_routes = Router::new()
