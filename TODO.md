@@ -498,6 +498,7 @@
   8. inventory create RETURNING 缺 tenant_id + quantity/min/max f64 ← NUMERIC（同类扫描发现）
 - **方法沉淀**：pg_dump 生产 DDL 自动生成建表（60 列 inbound）+ 手写对齐生产类型（NUMERIC 坑）+ direct_query_debug（复制 SELECT + FromRow 打印 decode Err）+ 同类缺陷扫描（python 对比 query_as SELECT vs struct 非 Option 字段）
 - **关键坑位记录**：返回 key 差异（orders/items/stock_takes/records/alerts/configs）、ListResponse 字段式、超管 tenant 全零 UUID 匹配（sync_records）、非 Option insert 必给值（order_date/warehouse_id/next_count_date/system_quantity 等）
+- **覆盖率验证（16 文件全量 tarpaulin）**：`cargo tarpaulin -p topems-wms --test 16 个 e2e --engine llvm` → **910/24653 行（3.69%），较 6 文件基线 309 行（1.24%）提升 +2.46pp（约 3 倍）**；sync_records 63/420（15%）、wave_pick 53/653（8.12%）等 16 个 handler 文件从 0 到实际执行覆盖
 - **剩余盲区**：analytics（无 list handler，全多表聚合统计，测试价值低）——登记为已知盲区
 
 ### ✅ 交叉核验并行线 P1 批次（2026-10-07）
