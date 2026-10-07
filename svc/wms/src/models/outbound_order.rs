@@ -9,66 +9,125 @@ pub struct OutboundOrder {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub order_number: String,
+    #[sqlx(default)]
     pub order_type: Option<String>,
+    #[sqlx(default)]
     pub reference_number: Option<String>,
+    #[sqlx(default)]
     pub reference_type: Option<String>,
+    #[sqlx(default)]
     pub warehouse_id: Option<Uuid>,
+    #[sqlx(default)]
     pub warehouse_name: Option<String>,
+    #[sqlx(default)]
     pub customer_id: Option<Uuid>,
+    #[sqlx(default)]
     pub customer_name: Option<String>,
+    #[sqlx(default)]
     pub customer_code: Option<String>,
+    #[sqlx(default)]
     pub sales_order_id: Option<Uuid>,
+    #[sqlx(default)]
     pub sales_order_number: Option<String>,
+    #[sqlx(default)]
     pub production_order_id: Option<Uuid>,
+    #[sqlx(default)]
     pub production_order_number: Option<String>,
+    #[sqlx(default)]
     pub transfer_order_id: Option<Uuid>,
+    #[sqlx(default)]
     pub transfer_order_number: Option<String>,
+    #[sqlx(default)]
     pub destination_warehouse_id: Option<Uuid>,
+    #[sqlx(default)]
     pub destination_warehouse_name: Option<String>,
+    #[sqlx(default)]
     pub destination_address: Option<String>,
     pub order_date: DateTime<Utc>,
+    #[sqlx(default)]
     pub expected_ship_date: Option<DateTime<Utc>>,
+    #[sqlx(default)]
     pub actual_ship_date: Option<DateTime<Utc>>,
+    #[sqlx(default)]
     pub delivery_date: Option<DateTime<Utc>>,
+    #[sqlx(default)]
     pub expected_delivery: Option<DateTime<Utc>>,
+    #[sqlx(default)]
     pub actual_delivery: Option<DateTime<Utc>>,
+    #[sqlx(default)]
     pub carrier: Option<String>,
+    #[sqlx(default)]
     pub carrier_code: Option<String>,
+    #[sqlx(default)]
     pub vehicle_number: Option<String>,
+    #[sqlx(default)]
     pub driver_name: Option<String>,
+    #[sqlx(default)]
     pub driver_phone: Option<String>,
+    #[sqlx(default)]
     pub tracking_number: Option<String>,
+    #[sqlx(default)]
     pub total_items: Option<i32>,
+    #[sqlx(default)]
     pub total_quantity: Option<f64>,
+    #[sqlx(default)]
     pub total_weight: Option<f64>,
+    #[sqlx(default)]
     pub total_volume: Option<f64>,
+    #[sqlx(default)]
     pub total_value: Option<f64>,
+    #[sqlx(default)]
     pub total_amount: Option<f64>,
+    #[sqlx(default)]
     pub shipping_cost: Option<f64>,
+    #[sqlx(default)]
     pub priority: Option<String>,
     pub status: String,
+    #[sqlx(default)]
     pub picking_status: Option<String>,
+    #[sqlx(default)]
     pub packing_status: Option<String>,
+    #[sqlx(default)]
     pub shipping_status: Option<String>,
+    #[sqlx(default)]
     pub picked_quantity: Option<i32>,
+    #[sqlx(default)]
     pub packed_quantity: Option<i32>,
+    #[sqlx(default)]
     pub shipped_quantity: Option<f64>,
+    #[sqlx(default)]
     pub picker: Option<String>,
+    #[sqlx(default)]
     pub picker_id: Option<Uuid>,
+    #[sqlx(default)]
     pub packer: Option<String>,
+    #[sqlx(default)]
     pub packer_id: Option<Uuid>,
+    #[sqlx(default)]
     pub shipper: Option<String>,
+    #[sqlx(default)]
     pub shipper_id: Option<Uuid>,
+    #[sqlx(default)]
     pub remarks: Option<String>,
+    #[sqlx(default)]
     pub notes: Option<String>,
+    #[sqlx(default)]
     pub special_instructions: Option<String>,
+    #[sqlx(default)]
     pub shipping_notes: Option<String>,
+    #[sqlx(default)]
     pub delivery_notes: Option<String>,
+    #[sqlx(default)]
     pub created_by: Option<Uuid>,
+    #[sqlx(default)]
     pub updated_by: Option<Uuid>,
+    #[sqlx(default)]
     pub approved_by: Option<Uuid>,
+    #[sqlx(default)]
     pub approved_at: Option<DateTime<Utc>>,
+    #[sqlx(default)]
     pub organization_id: Option<Uuid>,
+    #[sqlx(default)]
     pub is_synced_to_crm: Option<bool>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
