@@ -3,6 +3,7 @@ import { useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import { MessageSquare, Users, User, Clock, BellOff, Pin, MoreVertical } from 'lucide-react';
 import type { ChatRoom } from '../../api/im';
+import { imApi } from '../../api/im';
 import { designTokens } from '@topems/tokens';
 import i18n from '@/i18n';
 
@@ -28,9 +29,8 @@ export const ChatRoomItem: React.FC<ChatRoomItemProps> = ({
       const members = Array.isArray(chatRoom.members) ? chatRoom.members : [];
       for (const memberId of members.slice(0, 5)) {
         try {
-          const response = await fetch(`/im/api/users/${memberId}/online-status`);
-          const data = await response.json();
-          status[memberId] = data.data?.is_online || false;
+          const res = await imApi.getUserOnlineStatus(memberId);
+          status[memberId] = (res.data as { is_online?: boolean } | undefined)?.is_online || false;
         } catch {
           status[memberId] = false;
         }

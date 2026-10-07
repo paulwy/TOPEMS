@@ -42,6 +42,7 @@ import {
 import type { DateRange } from '@/components/redesign';
 import { getDashboard } from '@/api/bff';
 import { mesAnalyticsApi } from '@/api/mes/analytics';
+import apiClient from '@/api/client';
 import i18n from '@/i18n';
 
 import '@/theme/redesign-tokens.css';
@@ -148,8 +149,8 @@ const getDefaultModules = (): Array<{
   },
   {
     id: 'ai',
-    name: 'AI智能',
-    desc: 'AI辅助分析平台',
+    name: i18n.t('dashboard.dash_ai_name'),
+    desc: i18n.t('dashboard.dash_ai_desc'),
     icon: Bot,
     status: 'running' as const,
     stat: '',
@@ -213,20 +214,18 @@ const DashboardPage: React.FC = () => {
   const healthQuery = useQuery({
     queryKey: [...QUERY_KEY, 'infra-health'],
     queryFn: async () => {
-      const token = localStorage.getItem('token') || '';
-      const res = await fetch('/api/monitor/infrastructure', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'x-tenant-id': '00000000-0000-0000-0000-000000000001',
-        },
+      // 走统一 axios 拦截器：token 自动注入 / 401 / trace；保留默认租户头
+      const res = await apiClient.monitor.get<
+        Array<{
+          component: string;
+          status: string;
+          value: string;
+          detail: string;
+        }>
+      >('/infrastructure', {
+        headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' },
       });
-      const j = await res.json();
-      return (j?.data ?? []) as Array<{
-        component: string;
-        status: string;
-        value: string;
-        detail: string;
-      }>;
+      return res.data ?? [];
     },
     staleTime: 60 * 1000,
   });
@@ -241,16 +240,15 @@ const DashboardPage: React.FC = () => {
   const ordersQuery = useQuery({
     queryKey: [...QUERY_KEY, 'orders'],
     queryFn: async () => {
-      const token = localStorage.getItem('token') || '';
-      const res = await fetch('/api/mes/orders?page=1&page_size=1000', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'x-tenant-id': '00000000-0000-0000-0000-000000000001',
-        },
+      // 走统一 axios 拦截器：token 自动注入 / 401 / snake_case 分页参数；保留默认租户头
+      const res = await apiClient.mes.get<{
+        total?: number;
+        orders?: Array<Record<string, unknown>>;
+      }>('/orders', {
+        params: { page: 1, page_size: 1000 },
+        headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' },
       });
-      const j = await res.json();
-      const data = j?.data ?? j;
-      return { total: Number(data?.total ?? 0), orders: data?.orders ?? [] };
+      return { total: Number(res.data?.total ?? 0), orders: res.data?.orders ?? [] };
     },
     staleTime: 5 * 60 * 1000,
   });

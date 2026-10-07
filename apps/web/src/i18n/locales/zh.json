@@ -298,6 +298,8 @@
     "dash_hrm_desc": "组织、考勤与薪酬管理",
     "dash_finance_name": "财务管理",
     "dash_finance_desc": "应收应付与总账",
+    "dash_ai_name": "AI 智能助手",
+    "dash_ai_desc": "智能问答与辅助分析平台",
     "dash_business_module": "业务模块",
     "dash_overview": "概览",
     "dash_modules": "模块",

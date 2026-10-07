@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { QUERY_KEYS } from '@/lib/reactQuery';
+import apiClient from '@/api/client';
 
 /**
  * 特性开关状态
@@ -61,16 +62,15 @@ function useFeatureFlag(key: string, context?: FeatureFlagContext): FeatureFlagR
   };
 }
 
-// 内部 API 调用函数
+// 内部 API 调用函数（走统一 axios 拦截器：token 注入 / 401 / 重试 / trace）
 async function checkFeatureFlag(key: string, context?: FeatureFlagContext): Promise<boolean> {
   try {
-    const response = await fetch('/api/core/feature-flags/check', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, context }),
+    // feature-flags/check 直接返回 { enabled }（无 ApiResponse 包装）
+    const res = await apiClient.core.post<{ enabled?: boolean }>('/feature-flags/check', {
+      key,
+      context,
     });
-    const data = await response.json();
-    return data.enabled ?? false;
+    return (res as unknown as { enabled?: boolean }).enabled ?? false;
   } catch {
     // 网络错误时返回 false
     return false;

@@ -298,6 +298,8 @@
     "dash_hrm_desc": "Organization, attendance and payroll",
     "dash_finance_name": "Finance",
     "dash_finance_desc": "AP/AR and general ledger",
+    "dash_ai_name": "AI Assistant",
+    "dash_ai_desc": "Conversational AI and analytics assistant",
     "dash_business_module": "Business module",
     "dash_overview": "Overview",
     "dash_modules": "Modules",
