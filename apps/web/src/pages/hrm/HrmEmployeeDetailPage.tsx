@@ -375,6 +375,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
     >
       <DetailPageTemplate
         title=''
+        emptyState={{ show: !loading && !employee }}
         subtitle=''
         detailItemName={
           employee?.name ||

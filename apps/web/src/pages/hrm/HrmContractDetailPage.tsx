@@ -431,6 +431,7 @@ const HrmContractDetailPage: React.FC = () => {
     >
       <DetailPageTemplate
         title=''
+        emptyState={{ show: !loading && !contract }}
         subtitle=''
         detailItemName={
           contract?.contract_name ||
