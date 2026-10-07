@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -869,7 +870,7 @@ mod permission_logic_tests {
         }
     }
 
-    fn check_permission(claims: &Claims, permission: &ModulePermission) -> Result<(), String> {
+    fn check_permission(claims: &Claims, permission: &ModulePermission) -> Result<(), TopemsError> {
         if claims.is_superuser {
             return Ok(());
         }
@@ -888,7 +889,10 @@ mod permission_logic_tests {
             return Ok(());
         }
 
-        Err(format!("权限不足：需要 {} 权限", permission))
+        Err(TopemsError::OperationNotAllowed(format!(
+            "权限不足：需要 {} 权限",
+            permission
+        )))
     }
 
     #[test]

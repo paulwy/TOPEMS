@@ -119,7 +119,7 @@ impl TestContext {
 // ============== 公共登录辅助 ==============
 
 /// 通用登录：向 unified-core 的 IAM 登录接口发请求，成功返回 access_token
-pub async fn login(client: &Client, username: &str, password: &str) -> Result<String, String> {
+pub async fn login(client: &Client, username: &str, password: &str) -> Result<String, TopemsError> {
     let url = format!(
         "http://localhost:{}/api/core/iam/auth/login",
         UNIFIED_CORE_PORT
@@ -132,7 +132,7 @@ pub async fn login(client: &Client, username: &str, password: &str) -> Result<St
         }))
         .send()
         .await
-        .map_err(|e| format!("login POST {} failed: {}", url, e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("login POST {} failed: {}", url, e)))?;
 
     let status = resp.status();
     let body: Value = resp
@@ -141,22 +141,34 @@ pub async fn login(client: &Client, username: &str, password: &str) -> Result<St
         .unwrap_or_else(|_| json!({"_raw": "not-json"}));
 
     if !status.is_success() {
-        return Err(format!("login HTTP {}: {}", status.as_u16(), body));
+        return Err(TopemsError::ValidationFailed(format!(
+            "login HTTP {}: {}",
+            status.as_u16(),
+            body
+        )));
     }
 
     let success = body["success"].as_bool().unwrap_or(false);
     if !success {
-        return Err(format!("login response success=false: {}", body));
+        return Err(TopemsError::ValidationFailed(format!(
+            "login response success=false: {}",
+            body
+        )));
     }
 
     body["data"]["access_token"]
         .as_str()
         .map(|s| s.to_string())
-        .ok_or_else(|| format!("login missing data.access_token in response: {}", body))
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "login missing data.access_token in response: {}",
+                body
+            ))
+        })
 }
 
 /// 以 admin/admin123 登录（集成测试种子账号）
-pub async fn login_admin(client: &Client) -> Result<String, String> {
+pub async fn login_admin(client: &Client) -> Result<String, TopemsError> {
     login(client, "admin", "admin123").await
 }
 
