@@ -43,7 +43,6 @@ import {
   Radio,
   RadioGroup,
   FormGroup,
-  Input,
 } from '@mui/material';
 import i18n from '@/i18n';
 import {
@@ -86,6 +85,8 @@ import type {
 } from './list';
 import type { FilterConfig } from '@topems/shared-components';
 import { loadColumnConfig, saveColumnConfig, type CardViewConfig } from './list/types';
+import { InlineEditCell } from './list/InlineEditCell';
+import { useInlineEdit } from './list/useInlineEdit';
 import { ListSearchBar } from './list/ListSearchBar';
 import { ListBatchActions } from './list/ListBatchActions';
 import { ListColumnConfig } from './list/ListColumnConfig';
@@ -594,176 +595,20 @@ export function ListPageTemplate<
     return treeCol?.id || resolvedColumns[0]?.id;
   }, [resolvedColumns]);
   // ==================== 行内编辑 ====================
-  const [internalEditingRowId, setInternalEditingRowId] = useState<string | number | null>(null);
-  const [editingData, setEditingData] = useState<Partial<T> | null>(null);
-  const resolvedEditingRowId = editingRowIdProp ?? internalEditingRowId;
-  const setEditingRowId = useCallback(
-    (id: string | number | null) => {
-      if (editingRowIdProp === undefined) {
-        setInternalEditingRowId(id);
-      }
-      onEditingRowIdChange?.(id);
-    },
-    [editingRowIdProp, onEditingRowIdChange]
-  );
-  // 开始编辑行
-  const startEditing = useCallback(
-    (row: T) => {
-      const rowId =
-        getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number);
-      setEditingData({ ...row } as Partial<T>);
-      setEditingRowId(rowId);
-    },
-    [getRowId, setEditingRowId]
-  );
-  // 取消编辑
-  const cancelEditing = useCallback(
-    (row: T) => {
-      setEditingData(null);
-      setEditingRowId(null);
-      onInlineEditCancel?.(row);
-    },
-    [setEditingRowId, onInlineEditCancel]
-  );
-  // 保存编辑
-  const saveEditing = useCallback(
-    async (row: T) => {
-      if (!editingData) return;
-      const changes = editingData;
-      try {
-        await onInlineEditSave?.(row, changes);
-        setEditingData(null);
-        setEditingRowId(null);
-      } catch {
-        // 保存失败，保持编辑状态
-      }
-    },
-    [editingData, onInlineEditSave, setEditingRowId]
-  );
-  // 更新编辑中的字段值
-  const updateEditingField = useCallback((field: keyof T, value: unknown) => {
-    setEditingData(
-      (prev) =>
-        ({
-          ...prev,
-          [field]: value,
-        }) as Partial<T>
-    );
-  }, []);
-  // 行内编辑单元格组件
-  const EditCellComponent = useCallback(
-    ({
-      column,
-      value,
-      onChange,
-      onSave,
-      onCancel,
-    }: {
-      column: ColumnDef<T>;
-      value: unknown;
-      onChange: (value: unknown) => void;
-      onSave: () => void;
-      onCancel: () => void;
-    }) => {
-      const inlineEdit = column.inlineEdit;
-      const editType = inlineEdit?.type ?? 'text';
-      const options = inlineEdit?.options ?? [];
-      const handleKeyDown = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          onSave();
-        } else if (e.key === 'Escape') {
-          e.preventDefault();
-          onCancel();
-        }
-      };
-      switch (editType) {
-        case 'select':
-          return (
-            <FormControl
-              size='small'
-              sx={{ width: '100%', minWidth: 120 }}
-            >
-              <Select
-                value={String(value)}
-                onChange={(e) => onChange(e.target.value)}
-                autoFocus
-                onKeyDown={handleKeyDown}
-                displayEmpty
-              >
-                {options.map((opt) => (
-                  <MenuItem
-                    key={opt.value}
-                    value={opt.value}
-                  >
-                    {opt.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          );
-        case 'number':
-          return (
-            <TextField
-              size='small'
-              type='number'
-              value={value !== undefined ? String(value) : ''}
-              onChange={(e) => onChange(e.target.value ? Number(e.target.value) : '')}
-              autoFocus
-              onKeyDown={handleKeyDown}
-              sx={{ width: '100%', minWidth: 100 }}
-            />
-          );
-        case 'date':
-          return (
-            <TextField
-              size='small'
-              type='date'
-              value={value !== undefined ? String(value).split('T')[0] : ''}
-              onChange={(e) => onChange(e.target.value)}
-              autoFocus
-              onKeyDown={handleKeyDown}
-              sx={{ width: '100%', minWidth: 120 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          );
-        case 'datetime':
-          return (
-            <TextField
-              size='small'
-              type='datetime-local'
-              value={value !== undefined ? String(value).replace('Z', '') : ''}
-              onChange={(e) => onChange(e.target.value)}
-              autoFocus
-              onKeyDown={handleKeyDown}
-              sx={{ width: '100%', minWidth: 150 }}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          );
-        case 'checkbox':
-          return (
-            <Checkbox
-              checked={Boolean(value)}
-              onChange={(e) => onChange(e.target.checked)}
-              onKeyDown={handleKeyDown}
-            />
-          );
-        case 'text':
-        default:
-          return (
-            <Input
-              value={value !== undefined ? String(value) : ''}
-              onChange={(e) => onChange(e.target.value)}
-              size='small'
-              fullWidth
-              autoFocus
-              onKeyDown={handleKeyDown}
-            />
-          );
-      }
-    },
-    []
-  );
+  const {
+    editingData,
+    resolvedEditingRowId,
+    startEditing,
+    cancelEditing,
+    saveEditing,
+    updateEditingField,
+  } = useInlineEdit<T>({
+    editingRowIdProp,
+    onEditingRowIdChange,
+    onInlineEditSave,
+    onInlineEditCancel,
+    getRowId,
+  });
   // crud 模式下自动推断搜索配置
   const resolvedSearchable = useMemo(() => {
     if (searchable !== undefined) return searchable;
@@ -2969,7 +2814,7 @@ export function ListPageTemplate<
                   >
                     {isTreeColumn && <Box sx={{ width: 24, flexShrink: 0 }} />}
                     {isEditing && canEdit ? (
-                      <EditCellComponent
+                      <InlineEditCell
                         column={column}
                         value={editingData?.[column.id as keyof T] ?? cellValue ?? ''}
                         onChange={(value) => updateEditingField(column.id as keyof T, value)}
