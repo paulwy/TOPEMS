@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：wms inbound_order list handler 集成测试。
 //! 复用 common/api_state.rs 工厂；建表由 pg_dump 生产 DDL 自动生成（60 列）。
 

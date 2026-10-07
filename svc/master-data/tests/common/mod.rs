@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! master-data 集成测试共享辅助模块
 //!
 //! 导入方式：在 sibling 测试文件首行写：

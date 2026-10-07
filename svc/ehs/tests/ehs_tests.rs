@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use chrono::Utc;
 use sqlx::postgres::PgPool;
 use sqlx::postgres::PgPoolOptions;

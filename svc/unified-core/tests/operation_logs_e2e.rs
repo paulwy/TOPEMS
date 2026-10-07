@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：audit list_operation_logs handler 集成测试。
 //! 复用 common::app_state 测试工厂；覆盖空表/过滤（user_name/module/success）/分页。
 //! 注：通过 `#[path]` 直接引入工厂（绕过 common/mod.rs 的 topems-lib 运行时依赖）。

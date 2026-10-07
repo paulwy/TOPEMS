@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V59 AI Governance 模块 HTTP 集成测试
 //!
 //! 覆盖数据治理 AI、智能匹配、自动分类三大子模块的主要端点。

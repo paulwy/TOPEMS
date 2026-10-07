@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 // SCM 服务集成测试
 #![allow(dead_code)]
 

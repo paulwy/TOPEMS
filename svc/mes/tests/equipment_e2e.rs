@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：mes equipment list handler 集成测试。
 //! 复用 common/app_state.rs 工厂；暴露生产缺陷：SELECT 列 warranty_expiry_date/
 //! maintenance_frequency_days 不存在（表列 warranty_end_date/maintenance_cycle）已修复。
@@ -5,11 +6,11 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::{super_claims, test_app_state};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::{json, Value};
 use topems_mes::modules::equipment::{list_equipment, ListEquipmentQuery};
-use app_state::{super_claims, test_app_state};
 
 fn empty_query() -> ListEquipmentQuery {
     serde_json::from_value(json!({})).unwrap()
@@ -17,7 +18,9 @@ fn empty_query() -> ListEquipmentQuery {
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS public")
-        .execute(pool).await.unwrap();
+        .execute(pool)
+        .await
+        .unwrap();
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS equipment (
             id UUID PRIMARY KEY,
@@ -41,7 +44,9 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             equipment_type VARCHAR(50)
         )"#,
     )
-    .execute(pool).await.unwrap();
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
@@ -53,7 +58,12 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
     }
     let q: ListEquipmentQuery = serde_json::from_value(query).unwrap();
     let resp = list_equipment(State(state), Extension(claims), Query(q)).await;
-    serde_json::to_value(resp.0.data.unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))).unwrap()
+    serde_json::to_value(
+        resp.0
+            .data
+            .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message)),
+    )
+    .unwrap()
 }
 
 async fn insert_equipment(pool: &sqlx::PgPool, code: &str, status: &str) {

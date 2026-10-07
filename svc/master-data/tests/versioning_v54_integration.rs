@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V54 Versioning 模块 HTTP 集成测试
 //!
 //! 覆盖版本控制、审计日志、数据权限矩阵主要端点。

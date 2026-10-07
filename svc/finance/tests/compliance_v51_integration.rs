@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V51 合规内控模块 HTTP 集成测试
 //!
 //! 运行命令：

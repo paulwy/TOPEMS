@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 // CRM 插件接口集成测试
 // 测试 CRM 插件的 /api/plugins/info 接口和认证功能
 

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V53 Knowledge 模块 HTTP 集成测试
 //!
 //! 覆盖知识图谱、智能推荐、数据资产目录等主要端点。

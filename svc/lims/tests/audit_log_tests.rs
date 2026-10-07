@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #[cfg(test)]
 #[allow(clippy::needless_borrows_for_generic_args)]
 mod tests {

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use topems_shared_service_client::service_client::{
     create_generic_client, BaseServiceClient, ServiceClientError, TypedServiceClient,
 };

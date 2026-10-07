@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #[tokio::test]
 async fn test_get_summary_analytics_response() {
     let result = topems_analytics::modules::bi::analytics::get_summary_analytics().await;

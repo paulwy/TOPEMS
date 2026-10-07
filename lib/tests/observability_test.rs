@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! 可观测性模块集成测试
 //!
 //! 验证 SLO 管理、统一日志查询和告警分级模块的公开 API。

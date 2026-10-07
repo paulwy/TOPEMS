@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P0 补测（2026-10-07）：PgVoucherSummaryView 物化汇总表增量维护。
 //! 覆盖 handle_event 的 VoucherCreated/Posted/Reversed 分支与 rebuild 清空，
 //! 用 sqlx::test 临时库 + finance schema 手动建表（DDL 对齐

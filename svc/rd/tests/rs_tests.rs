@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 // RS 服务单元测试和集成测试
 // 测试项目管理、实验管理、配方管理、项目进度等功能
 

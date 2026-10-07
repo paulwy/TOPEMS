@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V52 Lineage 模块 HTTP 集成测试
 //!
 //! 覆盖数据血缘注册、图谱查询、上游/下游、影响分析等主要端点。

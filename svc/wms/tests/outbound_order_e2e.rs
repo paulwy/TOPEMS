@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：wms outbound_order list handler 集成测试。
 //! 复用超管权限放行路径（check_module_permission 对 is_superuser 直接 Ok），
 //! RLS 事务 Arc（pool.begin）构造，wms schema 最小建表（对齐 list SELECT 24 列）。

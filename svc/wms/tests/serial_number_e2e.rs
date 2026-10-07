@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：wms serial_number list handler 集成测试。
 //! 生产缺陷：unit_price numeric(18,4) ← Option<f64> decode 必挂，已修 SELECT ::float8。
 

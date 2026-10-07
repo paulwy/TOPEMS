@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! EHS 服务事件流集成测试
 //!
 //! 验证 EHS 订阅的事件类型（LIMS 异常检测、QMS 纠正措施、HRM 员工变更）

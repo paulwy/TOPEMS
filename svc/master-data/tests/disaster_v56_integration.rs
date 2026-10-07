@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V56 Disaster 模块 HTTP 集成测试
 //!
 //! 覆盖灾难恢复、业务连续性、跨地域容灾主要端点。

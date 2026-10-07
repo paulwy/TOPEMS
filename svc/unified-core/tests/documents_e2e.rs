@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：doc DocumentService + handlers 集成测试。
 //! 复用 AppState 测试工厂；覆盖 list（超管全量/租户过滤/空表）、create 默认值、
 //! get（存在/不存在）。建表去 FK（core_doc_documents，22 列 + deleted_at）。

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V55 Commercial 模块 HTTP 集成测试
 //!
 //! 覆盖 API 商业化、计量计费、SLA 保障主要端点。

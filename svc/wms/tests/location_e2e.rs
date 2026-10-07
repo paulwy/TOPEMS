@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：wms location list_locations handler 集成测试。
 
 #[path = "common/api_state.rs"]

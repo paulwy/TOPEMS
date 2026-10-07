@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V51 Quality 模块 HTTP 集成测试
 //!
 //! 覆盖质量规则 CRUD、质量检查、仪表盘、AI 建议等主要端点。

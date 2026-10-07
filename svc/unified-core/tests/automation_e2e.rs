@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：automation 模块集成测试（0/618 盲区）。
 //! 复用 AppState 工厂；覆盖 list/create/get/enable/disable/delete 全 handler。
 //! 建表自建（迁移无 DDL），列名对齐 AutomationRule FromRow。

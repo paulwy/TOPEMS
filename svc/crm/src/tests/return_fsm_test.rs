@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use crate::modules::aftersales::{can_transition, ProcessType, ReturnDecision, ReturnStage};
 use topems_shared_core::error::TopemsError;
 

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V57 Semantic 模块 HTTP 集成测试
 //!
 //! 覆盖图谱增强、语义搜索、智能标签三大子模块的主要端点。

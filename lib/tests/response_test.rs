@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use topems_shared_core::response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
 
 #[test]

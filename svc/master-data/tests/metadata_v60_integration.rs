@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V60 Metadata 模块 HTTP 集成测试
 //!
 //! 覆盖元数据管理主要端点：CRUD、搜索、统计、属性、标签等。

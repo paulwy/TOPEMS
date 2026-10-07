@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-07）：wms inventory_alert list_alerts handler 集成测试。
 //! list_alerts 为 inventory JOIN warehouses/locations 动态计算告警（非 rules 表）。
 //! 建表复用 inventory 22 列 + warehouses/locations 小表。

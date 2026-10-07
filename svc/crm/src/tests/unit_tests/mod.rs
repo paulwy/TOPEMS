@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use crate::modules::customer_scoring::BatchCalculateRequest;
 use crate::shared::permission::{check_permission, ModulePermission};
 use std::str::FromStr;

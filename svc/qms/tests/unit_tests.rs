@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

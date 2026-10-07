@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V58 Governance 模块 HTTP 集成测试
 //!
 //! 覆盖治理成熟度、自动化工作流、数据产品化三大子模块的主要端点。

@@ -4,12 +4,16 @@
 use std::sync::Arc;
 use topems_mes::shared::AppState;
 use topems_shared_auth::auth::{AuthState, Claims};
-use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_core::health::SimpleHealthConfig;
+use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 
 pub fn test_app_state(pool: sqlx::PgPool) -> AppState {
     AppState {
-        auth_state: AuthState::new("test-secret-0123456789abcdef0123456789abcdef".to_string(), "test-refresh-secret-0123456789abcdef0123456789abcdef".to_string(), 86400),
+        auth_state: AuthState::new(
+            "test-secret-0123456789abcdef0123456789abcdef".to_string(),
+            "test-refresh-secret-0123456789abcdef0123456789abcdef".to_string(),
+            86400,
+        ),
         pool,
         health_config: SimpleHealthConfig::new("test-mes"),
         event_publisher: None,

@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 #[cfg(feature = "http_endpoint_tests")]
 use rust_decimal::Decimal;
 #[cfg(feature = "http_endpoint_tests")]

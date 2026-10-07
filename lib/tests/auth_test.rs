@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use topems_shared_auth::auth::{
     generate_jwt_token, generate_refresh_token, get_permission_by_id, get_permissions,
     get_role_by_id, get_roles, verify_jwt_token, Claims,

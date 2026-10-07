@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! WMS + TMS + ERP 三联调集成测试 — WMS 视角
 //!
 //! 验证 WMS FSM 在跨模块业务流程中的状态联动正确性。

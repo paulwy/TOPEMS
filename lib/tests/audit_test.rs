@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use chrono::Utc;
 use topems_shared_db::audit::{AuditLog, AuditLogQuery, CreateAuditLogRequest};
 use uuid::Uuid;

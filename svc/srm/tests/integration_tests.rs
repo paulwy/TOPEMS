@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 // SRM 服务集成测试
 
 #[cfg(test)]

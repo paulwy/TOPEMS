@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V58 智能司库模块 HTTP 集成测试
 //!
 //! 运行命令：

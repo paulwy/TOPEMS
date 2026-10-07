@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! MDM 主数据 CRUD 集成测试
 //!
 //! 测试 Master Data 服务的关键业务路径：

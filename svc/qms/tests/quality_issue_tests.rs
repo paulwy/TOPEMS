@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use serde::{Deserialize, Serialize};
 
 use topems_qms::models::quality_issue::{CreateIssueRequest, IssueQuery, UpdateIssueRequest};

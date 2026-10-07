@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! PDM 服务事件流集成测试
 //!
 //! 验证 MdmEventService 发布的 MasterDataEvent 能通过 Redis Pub/Sub 被

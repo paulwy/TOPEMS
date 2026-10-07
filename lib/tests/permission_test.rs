@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::permission::{
     check_any_module_permission, get_all_module_permissions, get_module_actions, ModuleCode,

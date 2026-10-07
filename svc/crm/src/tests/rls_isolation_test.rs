@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use crate::models::customer::{CreateCustomerRequest, Customer};
 use sqlx::PgPool;
 use uuid::Uuid;

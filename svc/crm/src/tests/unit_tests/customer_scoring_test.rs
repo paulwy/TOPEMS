@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 use crate::modules::customer_scoring::BatchCalculateRequest;
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;

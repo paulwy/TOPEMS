@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! V27.0: 领域模型与 API 安全模块集成测试
 //!
 //! 独立测试文件，绕过 lib 内部预存在的测试编译问题

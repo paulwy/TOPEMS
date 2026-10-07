@@ -1,3 +1,4 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! unified-core 集成测试共享辅助模块
 //!
 //! 导入方式：在任意 sibling 测试文件（如 hrm_permission_tests.rs）首行写：
