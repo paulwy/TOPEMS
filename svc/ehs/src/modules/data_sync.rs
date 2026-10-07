@@ -20,8 +20,6 @@ pub fn create_routes() -> Router<AppState> {
             get(get_sync_record).delete(delete_sync_record),
         )
         .route("/sync-records/{id}/retry", post(retry_sync))
-        .route("/sync/hazard-to-qms", post(sync_hazard_to_qms))
-        .route("/sync/accident-to-lims", post(sync_accident_to_lims))
         .route("/sync", get(list_sync_records))
         .route(
             "/sync/configs",

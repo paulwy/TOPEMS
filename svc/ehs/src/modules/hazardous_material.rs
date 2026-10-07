@@ -26,33 +26,11 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/hazardous-materials/{id}",
-            get(get_material)
-                .put(update_material)
-                .delete(delete_material),
-        )
-        .route(
-            "/hazardous-materials/{id}/stocks",
-            get(list_material_stocks),
+            get(get_material),
         )
         .route(
             "/hazardous-materials/{id}/msds",
-            get(get_material_msds).put(update_material_msds),
-        )
-        .route(
-            "/hazardous-materials/stock-records",
-            get(list_stock_records),
-        )
-        .route(
-            "/hazardous-materials/stock-records/stock-in",
-            post(create_stock_in),
-        )
-        .route(
-            "/hazardous-materials/stock-records/stock-out",
-            post(create_stock_out),
-        )
-        .route(
-            "/hazardous-materials/stock-records/{id}",
-            get(get_stock_record),
+            get(get_material_msds),
         )
         .route(
             "/hazardous-materials/inventory",
@@ -709,30 +687,6 @@ pub async fn delete_material(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/hazardous-materials/{id}/stocks",
-    tag = "ehs",
-    params(
-        ("id" = String, Path, description = "id")
-    ),
-
-    responses((status = 200, description = "OK")),
-)]
-pub async fn list_material_stocks(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<MaterialStock>>> {
-    tracing::debug!("Listing stocks for material: {}", id);
-    Json(ApiResponse::success(
-        Vec::<MaterialStock>::new(),
-        "获取库存列表成功",
-    ))
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ehs:read"])),
     path = "/api/ehs/hazardous-materials/stock-records",
     tag = "ehs",
     responses((status = 200, description = "OK")),
@@ -746,112 +700,6 @@ pub async fn list_stock_records(
     Json(ApiResponse::success(
         Vec::<StockRecord>::new(),
         "获取出入库记录列表成功",
-    ))
-}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/hazardous-materials/stock-records/stock-in",
-    request_body = CreateStockRecordRequest,
-    tag = "ehs",
-    responses((status = 200, description = "OK")),
-)]
-pub async fn create_stock_in(
-    State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
-    Json(req): Json<CreateStockRecordRequest>,
-) -> Json<ApiResponse<StockRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating stock in record: {:?}", req);
-    Json(ApiResponse::success(
-        StockRecord {
-            id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!(
-                "SI-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            material_id: req.material_id,
-            material_name: "浓硫酸".to_string(),
-            record_type: "in".to_string(),
-            quantity: req.quantity,
-            unit: Some("kg".to_string()),
-            batch_no: req.batch_no,
-            related_order: req.related_order,
-            operator: req.operator,
-            operation_time: Some(chrono::Utc::now().to_rfc3339()),
-            from_location: req.from_location,
-            to_location: req.to_location,
-            recipient: req.recipient,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "入库记录创建成功",
-    ))
-}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/hazardous-materials/stock-records/stock-out",
-    request_body = CreateStockRecordRequest,
-    tag = "ehs",
-    responses((status = 200, description = "OK")),
-)]
-pub async fn create_stock_out(
-    State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
-    Json(req): Json<CreateStockRecordRequest>,
-) -> Json<ApiResponse<StockRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating stock out record: {:?}", req);
-    Json(ApiResponse::success(
-        StockRecord {
-            id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!(
-                "SO-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            material_id: req.material_id,
-            material_name: "浓硫酸".to_string(),
-            record_type: "out".to_string(),
-            quantity: req.quantity,
-            unit: Some("kg".to_string()),
-            batch_no: req.batch_no,
-            related_order: req.related_order,
-            operator: req.operator,
-            operation_time: Some(chrono::Utc::now().to_rfc3339()),
-            from_location: req.from_location,
-            to_location: req.to_location,
-            recipient: req.recipient,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "出库记录创建成功",
     ))
 }
 
@@ -964,65 +812,6 @@ pub async fn get_material_msds(
             tenant_id,
         },
         "获取MSDS成功",
-    ))
-}
-
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["ehs:update"])),
-    path = "/api/ehs/hazardous-materials/{id}/msds",
-    request_body = UpdateMsdsRequest,
-    tag = "ehs",
-    params(
-        ("id" = String, Path, description = "id")
-    ),
-
-    responses((status = 200, description = "OK")),
-)]
-pub async fn update_material_msds(
-    State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<UpdateMsdsRequest>,
-) -> Json<ApiResponse<MsdsData>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating MSDS for material {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        MsdsData {
-            id: "msds-001".to_string(),
-            material_id: id,
-            material_name: "浓硫酸".to_string(),
-            version: req.version,
-            ingredients: req.ingredients,
-            hazard_identification: req.hazard_identification,
-            first_aid_measures: req.first_aid_measures,
-            fire_fighting_measures: req.fire_fighting_measures,
-            accidental_release_measures: req.accidental_release_measures,
-            handling_and_storage: req.handling_and_storage,
-            exposure_control: req.exposure_control,
-            physical_chemical_properties: req.physical_chemical_properties,
-            stability_reactivity: req.stability_reactivity,
-            toxicological_info: req.toxicological_info,
-            ecological_info: req.ecological_info,
-            disposal_considerations: req.disposal_considerations,
-            transport_info: req.transport_info,
-            regulatory_info: req.regulatory_info,
-            other_info: req.other_info,
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "MSDS更新成功",
     ))
 }
 
@@ -1277,7 +1066,7 @@ pub async fn update_msds_by_id(
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<MsdsData>> {
-    // 待上游支持：MSDS 按 ID 更新，目前复用 update_material_msds 入参宽松映射。
+    // 待上游支持：MSDS 按 ID 更新，入参宽松映射占位。
     let _ = (state, claims, headers, id, req);
     Json(ApiResponse::error(404, "MSDS 不存在"))
 }
