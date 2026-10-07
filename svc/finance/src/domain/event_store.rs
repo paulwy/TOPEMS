@@ -109,6 +109,19 @@ impl Default for InMemoryEventStore {
     }
 }
 
+impl Clone for InMemoryEventStore {
+    fn clone(&self) -> Self {
+        Self {
+            events: std::sync::Mutex::new(
+                self.events.lock().unwrap_or_else(|e| e.into_inner()).clone(),
+            ),
+            snapshots: std::sync::Mutex::new(
+                self.snapshots.lock().unwrap_or_else(|e| e.into_inner()).clone(),
+            ),
+        }
+    }
+}
+
 #[async_trait]
 impl EventStore for InMemoryEventStore {
     async fn append_events(
@@ -210,6 +223,49 @@ impl EventStore for InMemoryEventStore {
             .map(|e| e.version)
             .max()
             .unwrap_or(0))
+    }
+}
+
+// Arc 包装共享语义（测试与并发场景均受益）
+#[async_trait]
+impl<T: EventStore + Send + Sync> EventStore for std::sync::Arc<T> {
+    async fn append_events(
+        &self,
+        aggregate_id: &str,
+        aggregate_type: &str,
+        events: &[FinanceDomainEvent],
+        expected_version: u64,
+        metadata: Option<EventMetadata>,
+    ) -> Result<Vec<EventRecord>, TopemsError> {
+        (**self)
+            .append_events(aggregate_id, aggregate_type, events, expected_version, metadata)
+            .await
+    }
+
+    async fn read_events(
+        &self,
+        aggregate_id: &str,
+        from_version: u64,
+        to_version: Option<u64>,
+    ) -> Result<Vec<EventRecord>, TopemsError> {
+        (**self)
+            .read_events(aggregate_id, from_version, to_version)
+            .await
+    }
+
+    async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), TopemsError> {
+        (**self).save_snapshot(snapshot).await
+    }
+
+    async fn get_latest_snapshot(
+        &self,
+        aggregate_id: &str,
+    ) -> Result<Option<SnapshotRecord>, TopemsError> {
+        (**self).get_latest_snapshot(aggregate_id).await
+    }
+
+    async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, TopemsError> {
+        (**self).get_aggregate_version(aggregate_id).await
     }
 }
 

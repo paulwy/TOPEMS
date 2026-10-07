@@ -879,4 +879,177 @@ mod tests {
             by_type,
         });
     }
+
+    // ─── P0 补测：SagaCoordinator 协调逻辑（2026-10-07，盲区 saga 0/181）───
+    // 协调器纯内存实现：注册定义 → 启动 → 执行（LocalCall 成功/HTTP force_fail 失败）
+    // → 补偿 → 统计/列表。
+
+    struct MockDef {
+        saga_type: String,
+        steps: Vec<SagaStep>,
+    }
+
+    impl SagaDefinition for MockDef {
+        fn saga_type(&self) -> &str {
+            &self.saga_type
+        }
+        fn build_steps(&self, _payload: &serde_json::Value) -> Vec<SagaStep> {
+            self.steps.clone()
+        }
+    }
+
+    fn local_step(id: &str, payload: serde_json::Value) -> SagaStep {
+        make_step(
+            id,
+            id,
+            SagaActionType::LocalCall,
+            "local",
+            "/local",
+            payload,
+            SagaActionType::LocalCall,
+            "/local-comp",
+            serde_json::json!({}),
+        )
+    }
+
+    fn coordinator_with_two_steps() -> SagaCoordinator {
+        let coord = SagaCoordinator::new();
+        let def = MockDef {
+            saga_type: "test-saga".into(),
+            steps: vec![
+                local_step("s1", serde_json::json!({})),
+                local_step("s2", serde_json::json!({})),
+            ],
+        };
+        coord.register_definition(Box::new(def));
+        coord
+    }
+
+    #[tokio::test]
+    async fn start_saga_creates_running_instance() {
+        let coord = coordinator_with_two_steps();
+        assert_eq!(coord.definition_count(), 1);
+        let saga_id = coord
+            .start_saga("test-saga", serde_json::json!({ "a": 1 }))
+            .await
+            .unwrap();
+        let inst = coord.get_saga(&saga_id).await.unwrap();
+        assert_eq!(inst.saga_type, "test-saga");
+        assert_eq!(inst.status, SagaStatus::Running);
+        assert_eq!(inst.steps.len(), 2);
+        assert_eq!(inst.current_step, 0);
+        let stats = coord.get_stats();
+        assert_eq!(stats.total, 1);
+        assert_eq!(stats.running, 1);
+        assert_eq!(stats.by_type.get("test-saga"), Some(&1));
+    }
+
+    #[tokio::test]
+    async fn start_saga_unknown_definition_errors() {
+        let coord = SagaCoordinator::new();
+        let err = coord
+            .start_saga("nope", serde_json::json!({}))
+            .await
+            .unwrap_err();
+        assert!(err.to_string().contains("not found"));
+    }
+
+    #[tokio::test]
+    async fn execute_saga_completes_all_steps() {
+        let coord = coordinator_with_two_steps();
+        let saga_id = coord
+            .start_saga("test-saga", serde_json::json!({}))
+            .await
+            .unwrap();
+        let status = coord.execute_saga(&saga_id).await.unwrap();
+        assert_eq!(status, SagaStatus::Completed);
+        let inst = coord.get_saga(&saga_id).await.unwrap();
+        assert!(
+            inst.steps
+                .iter()
+                .all(|s| s.status == SagaStepStatus::Completed)
+        );
+        assert_eq!(inst.current_step, 2);
+        let result = inst.result.unwrap();
+        assert_eq!(result["ok"], true);
+        assert_eq!(result["steps"], 2);
+        let stats = coord.get_stats();
+        assert_eq!(stats.completed, 1);
+    }
+
+    #[tokio::test]
+    async fn execute_saga_force_fail_marks_failed() {
+        let coord = SagaCoordinator::new();
+        let def = MockDef {
+            saga_type: "flaky".into(),
+            steps: vec![local_step("s1", serde_json::json!({ "force_fail": true }))],
+        };
+        coord.register_definition(Box::new(def));
+        let saga_id = coord
+            .start_saga("flaky", serde_json::json!({}))
+            .await
+            .unwrap();
+        let status = coord.execute_saga(&saga_id).await.unwrap();
+        assert_eq!(status, SagaStatus::Failed);
+        let inst = coord.get_saga(&saga_id).await.unwrap();
+        assert_eq!(inst.steps[0].status, SagaStepStatus::Failed);
+        assert!(inst.steps[0].error.is_some());
+    }
+
+    #[tokio::test]
+    async fn execute_saga_unknown_id_errors() {
+        let coord = SagaCoordinator::new();
+        let err = coord.execute_saga("missing").await.unwrap_err();
+        assert!(err.to_string().contains("not found"));
+    }
+
+    #[tokio::test]
+    async fn compensate_saga_marks_compensated_and_errors_on_missing() {
+        let coord2 = SagaCoordinator::new();
+        let def = MockDef {
+            saga_type: "flaky".into(),
+            steps: vec![local_step("s1", serde_json::json!({ "force_fail": true }))],
+        };
+        coord2.register_definition(Box::new(def));
+        let sid = coord2
+            .start_saga("flaky", serde_json::json!({}))
+            .await
+            .unwrap();
+        coord2.execute_saga(&sid).await.unwrap();
+        let status = coord2.compensate_saga(&sid).await.unwrap();
+        assert_eq!(status, SagaStatus::Compensated);
+        let inst = coord2.get_saga(&sid).await.unwrap();
+        assert_eq!(inst.status, SagaStatus::Compensated);
+
+        let err = coord2.compensate_saga("missing").await.unwrap_err();
+        assert!(err.to_string().contains("not found"));
+    }
+
+    #[tokio::test]
+    async fn compensate_completed_saga_returns_completed() {
+        let coord = coordinator_with_two_steps();
+        let saga_id = coord
+            .start_saga("test-saga", serde_json::json!({}))
+            .await
+            .unwrap();
+        coord.execute_saga(&saga_id).await.unwrap();
+        let status = coord.compensate_saga(&saga_id).await.unwrap();
+        assert_eq!(status, SagaStatus::Completed);
+    }
+
+    #[tokio::test]
+    async fn list_sagas_filters_by_status() {
+        let coord = coordinator_with_two_steps();
+        let saga_id = coord
+            .start_saga("test-saga", serde_json::json!({}))
+            .await
+            .unwrap();
+        let all = coord.list_sagas(None).await;
+        assert_eq!(all.len(), 1);
+        let running = coord.list_sagas(Some(SagaStatus::Running)).await;
+        assert_eq!(running.len(), 1);
+        assert_eq!(running[0].id, saga_id);
+        let completed = coord.list_sagas(Some(SagaStatus::Completed)).await;
+        assert!(completed.is_empty());
+    }
 }

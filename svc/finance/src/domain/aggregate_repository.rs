@@ -441,3 +441,152 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<PayableAggregate>
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::Arc;
+    use crate::domain::event_store::InMemoryEventStore;
+    use crate::domain::events::{VoucherCreatedEvent, VoucherPostedEvent, VoucherReversedEvent};
+
+    fn created_event(voucher_id: &str, voucher_no: &str) -> FinanceDomainEvent {
+        FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {
+            voucher_id: voucher_id.to_string(),
+            voucher_no: voucher_no.to_string(),
+            voucher_type: "general".into(),
+            total_amount: 100.0,
+            created_by: "u1".into(),
+            occurred_at: chrono::Utc::now(),
+        })
+    }
+
+    fn posted_event(voucher_id: &str, voucher_no: &str) -> FinanceDomainEvent {
+        FinanceDomainEvent::VoucherPosted(VoucherPostedEvent {
+            voucher_id: voucher_id.to_string(),
+            voucher_no: voucher_no.to_string(),
+            posted_by: "u2".into(),
+            occurred_at: chrono::Utc::now(),
+        })
+    }
+
+    fn reversed_event(voucher_id: &str, voucher_no: &str) -> FinanceDomainEvent {
+        FinanceDomainEvent::VoucherReversed(VoucherReversedEvent {
+            voucher_id: voucher_id.to_string(),
+            voucher_no: voucher_no.to_string(),
+            reversed_by: "u3".into(),
+            reason: "test".into(),
+            occurred_at: chrono::Utc::now(),
+        })
+    }
+
+    fn snapshot(state: serde_json::Value, version: u64) -> SnapshotRecord {
+        SnapshotRecord {
+            aggregate_id: "v-snap".to_string(),
+            aggregate_type: "Voucher".to_string(),
+            version,
+            state,
+            created_at: chrono::Utc::now(),
+        }
+    }
+
+    #[tokio::test]
+    async fn load_returns_none_when_empty() {
+        let repo = VoucherEventSourcedRepository::new(InMemoryEventStore::new());
+        let loaded = repo.load("v-none").await.unwrap();
+        assert!(loaded.is_none());
+    }
+
+    #[tokio::test]
+    async fn load_reconstructs_aggregate_from_events() {
+        let store = InMemoryEventStore::new();
+        store
+            .append_events("v-1", "Voucher", &[created_event("v-1", "VN-1")], 0, None)
+            .await
+            .unwrap();
+        store
+            .append_events("v-1", "Voucher", &[posted_event("v-1", "VN-1")], 1, None)
+            .await
+            .unwrap();
+        let repo = VoucherEventSourcedRepository::new(store);
+        let agg = repo.load("v-1").await.unwrap().unwrap();
+        assert_eq!(agg.id, "v-1");
+        assert_eq!(agg.voucher_no, "VN-1");
+        assert_eq!(agg.total_debit, 100.0);
+        assert_eq!(agg.status, VoucherStatus::Posted);
+        assert!(agg.posted_at.is_some());
+    }
+
+    #[tokio::test]
+    async fn load_reconstructs_reversed_status() {
+        let store = InMemoryEventStore::new();
+        store
+            .append_events("v-2", "Voucher", &[created_event("v-2", "VN-2")], 0, None)
+            .await
+            .unwrap();
+        store
+            .append_events("v-2", "Voucher", &[reversed_event("v-2", "VN-2")], 1, None)
+            .await
+            .unwrap();
+        let repo = VoucherEventSourcedRepository::new(store);
+        let agg = repo.load("v-2").await.unwrap().unwrap();
+        assert_eq!(agg.status, VoucherStatus::Reversed);
+    }
+
+    #[tokio::test]
+    async fn load_restores_from_snapshot() {
+        let store = InMemoryEventStore::new();
+        let agg = VoucherAggregate {
+            id: "v-snap".to_string(),
+            voucher_no: "VN-S".to_string(),
+            voucher_date: chrono::Utc::now().date_naive(),
+            voucher_type: "general".into(),
+            status: VoucherStatus::Posted,
+            summary: "snap".into(),
+            attachment_count: 0,
+            created_by: "u1".into(),
+            created_at: chrono::Utc::now(),
+            posted_at: Some(chrono::Utc::now()),
+            lines: Vec::new(),
+            total_debit: 200.0,
+            total_credit: 200.0,
+        };
+        store
+            .save_snapshot(snapshot(serde_json::to_value(&agg).unwrap(), 1))
+            .await
+            .unwrap();
+        let repo = VoucherEventSourcedRepository::new(store);
+        let loaded = repo.load("v-snap").await.unwrap().unwrap();
+        assert_eq!(loaded.voucher_no, "VN-S");
+        assert_eq!(loaded.status, VoucherStatus::Posted);
+        assert_eq!(loaded.total_debit, 200.0);
+    }
+
+    #[tokio::test]
+    async fn load_corrupt_snapshot_returns_validation_error() {
+        let store = InMemoryEventStore::new();
+        store
+            .save_snapshot(snapshot(serde_json::json!({ "not": "aggregate" }), 1))
+            .await
+            .unwrap();
+        let repo = VoucherEventSourcedRepository::new(store);
+        let err = repo.load("v-snap").await.unwrap_err();
+        assert!(matches!(err, TopemsError::ValidationFailed(_)));
+    }
+
+    #[tokio::test]
+    async fn save_snapshots_at_threshold() {
+        let store = Arc::new(InMemoryEventStore::new());
+        store
+            .append_events("v-3", "Voucher", &[created_event("v-3", "VN-3")], 0, None)
+            .await
+            .unwrap();
+        let repo = VoucherEventSourcedRepository::with_snapshot_threshold(store.clone(), 1);
+        let mut agg = repo.load("v-3").await.unwrap().unwrap();
+        assert_eq!(agg.status, VoucherStatus::Draft);
+
+        repo.save(&mut agg, None).await.unwrap();
+        let snap = store.get_latest_snapshot("v-3").await.unwrap();
+        assert!(snap.is_some());
+        assert_eq!(snap.unwrap().version, 1);
+    }
+}

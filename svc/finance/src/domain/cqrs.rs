@@ -319,4 +319,113 @@ mod tests {
             events_count: 0,
         });
     }
+
+    // ─── P0 补测：CommandHandler 命令编排（2026-10-07，覆盖率盲区 cqrs 0/115）───
+    // 用 InMemoryEventStore + 空 EventProjector（无 DB 依赖），覆盖
+    // 创建/过账/冲销的版本流与错误路径。
+
+    #[tokio::test]
+    async fn create_voucher_appends_vouchercreated() {
+        let store = Arc::new(InMemoryEventStore::new());
+        let handler = CommandHandler::new(store.clone(), Arc::new(EventProjector::new()));
+        let cmd = CreateVoucherCommand {
+            voucher_id: Some("v-001".into()),
+            voucher_no: "VN-001".into(),
+            voucher_type: "general".into(),
+            total_amount: 100.0,
+            created_by: "u1".into(),
+        };
+        let result = handler.handle_create_voucher(cmd, None).await.unwrap();
+        assert_eq!(result.aggregate_id, "v-001");
+        assert_eq!(result.events_count, 1);
+        assert_eq!(result.version, 1);
+
+        let events = store.read_events("v-001", 0, None).await.unwrap();
+        assert_eq!(events.len(), 1);
+        assert_eq!(events[0].version, 1);
+        assert_eq!(events[0].aggregate_type, "Voucher");
+        assert!(matches!(events[0].payload, FinanceDomainEvent::VoucherCreated(_)));
+    }
+
+    #[tokio::test]
+    async fn post_voucher_returns_not_found_when_absent() {
+        let store = Arc::new(InMemoryEventStore::new());
+        let handler = CommandHandler::new(store.clone(), Arc::new(EventProjector::new()));
+        let cmd = PostVoucherCommand {
+            voucher_no: Some("VN-001".into()),
+            posted_by: "u1".into(),
+        };
+        let err = handler
+            .handle_post_voucher("v-missing", cmd, None)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, TopemsError::ResourceNotFound(_)));
+    }
+
+    #[tokio::test]
+    async fn post_voucher_appends_voucherposted_with_expected_version() {
+        let store = Arc::new(InMemoryEventStore::new());
+        let handler = CommandHandler::new(store.clone(), Arc::new(EventProjector::new()));
+        let create = CreateVoucherCommand {
+            voucher_id: Some("v-002".into()),
+            voucher_no: "VN-002".into(),
+            voucher_type: "general".into(),
+            total_amount: 200.0,
+            created_by: "u1".into(),
+        };
+        handler.handle_create_voucher(create, None).await.unwrap();
+
+        let post = PostVoucherCommand {
+            voucher_no: Some("VN-002".into()),
+            posted_by: "u2".into(),
+        };
+        let result = handler.handle_post_voucher("v-002", post, None).await.unwrap();
+        assert_eq!(result.version, 2);
+        assert_eq!(result.events_count, 1);
+
+        let events = store.read_events("v-002", 0, None).await.unwrap();
+        assert_eq!(events.len(), 2);
+        assert!(matches!(events[1].payload, FinanceDomainEvent::VoucherPosted(_)));
+        assert_eq!(events[1].version, 2);
+    }
+
+    #[tokio::test]
+    async fn reverse_voucher_appends_and_not_found_when_absent() {
+        let store = Arc::new(InMemoryEventStore::new());
+        let handler = CommandHandler::new(store.clone(), Arc::new(EventProjector::new()));
+        let create = CreateVoucherCommand {
+            voucher_id: Some("v-003".into()),
+            voucher_no: "VN-003".into(),
+            voucher_type: "general".into(),
+            total_amount: 300.0,
+            created_by: "u1".into(),
+        };
+        handler.handle_create_voucher(create, None).await.unwrap();
+
+        let rev = ReverseVoucherCommand {
+            voucher_no: Some("VN-003".into()),
+            reversed_by: "u3".into(),
+            reason: "test".into(),
+        };
+        let result = handler.handle_reverse_voucher("v-003", rev, None).await.unwrap();
+        assert_eq!(result.version, 2);
+
+        let events = store.read_events("v-003", 0, None).await.unwrap();
+        assert_eq!(events.len(), 2);
+        assert!(matches!(
+            events[1].payload,
+            FinanceDomainEvent::VoucherReversed(_)
+        ));
+
+        let rev_missing = ReverseVoucherCommand {
+            voucher_no: None,
+            reversed_by: "u3".into(),
+            reason: "x".into(),
+        };
+        let err = handler
+            .handle_reverse_voucher("v-missing", rev_missing, None)
+            .await
+            .unwrap_err();
+        assert!(matches!(err, TopemsError::ResourceNotFound(_)));
+    }
 }

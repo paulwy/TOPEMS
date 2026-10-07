@@ -265,6 +265,8 @@ impl<T: EventStore + Send + Sync + 'static> EventReplayer<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::domain::event_store::InMemoryEventStore;
+    use crate::domain::events::{VoucherCreatedEvent, VoucherPostedEvent, VoucherReversedEvent};
     use serde::{Deserialize, Serialize};
 
     fn roundtrip<T: Serialize + for<'de> Deserialize<'de>>(item: &T) {
@@ -302,5 +304,128 @@ mod tests {
             aggregate_id: "new-agg".into(),
             aggregate_type: "Receivable".into(),
         });
+    }
+
+    // ─── P0 补测：EventReplayer 事件回放（2026-10-07，盲区 event_replay 0/157）───
+    // 用 InMemoryEventStore 注入，覆盖全量回放/时间回放/版本回放的状态重建。
+
+    fn created_event(voucher_id: &str, voucher_no: &str) -> FinanceDomainEvent {
+        FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {
+            voucher_id: voucher_id.to_string(),
+            voucher_no: voucher_no.to_string(),
+            voucher_type: "general".into(),
+            total_amount: 100.0,
+            created_by: "u1".into(),
+            occurred_at: chrono::Utc::now(),
+        })
+    }
+
+    fn posted_event(voucher_id: &str, voucher_no: &str) -> FinanceDomainEvent {
+        FinanceDomainEvent::VoucherPosted(VoucherPostedEvent {
+            voucher_id: voucher_id.to_string(),
+            voucher_no: voucher_no.to_string(),
+            posted_by: "u2".into(),
+            occurred_at: chrono::Utc::now(),
+        })
+    }
+
+    async fn store_with_events(events: Vec<FinanceDomainEvent>) -> Arc<InMemoryEventStore> {
+        let store = Arc::new(InMemoryEventStore::new());
+        for (i, ev) in events.iter().enumerate() {
+            store
+                .append_events("v-agg", "Voucher", &[ev.clone()], i as u64, None)
+                .await
+                .unwrap();
+        }
+        store
+    }
+
+    #[tokio::test]
+    async fn replay_full_empty_aggregate() {
+        let store = Arc::new(InMemoryEventStore::new());
+        let replayer = EventReplayer::new(store);
+        let result = replayer.replay_full("v-agg", "Voucher").await.unwrap();
+        assert_eq!(result.events_count, 0);
+        assert_eq!(result.version, 0);
+        assert_eq!(result.final_state["status"], "Created");
+        assert_eq!(result.aggregate_id, "v-agg");
+    }
+
+    #[tokio::test]
+    async fn replay_full_reconstructs_voucher_state() {
+        let store = store_with_events(vec![created_event("v-agg", "VN-1")]).await;
+        let replayer = EventReplayer::new(store);
+        let result = replayer.replay_full("v-agg", "Voucher").await.unwrap();
+        assert_eq!(result.events_count, 1);
+        assert_eq!(result.version, 1);
+        assert_eq!(result.final_state["id"], "v-agg");
+        assert_eq!(result.final_state["voucher_no"], "VN-1");
+        assert_eq!(result.final_state["status"], "Created");
+    }
+
+    #[tokio::test]
+    async fn replay_full_reflects_posted_and_reversed() {
+        let store = store_with_events(vec![
+            created_event("v-agg", "VN-2"),
+            posted_event("v-agg", "VN-2"),
+            FinanceDomainEvent::VoucherReversed(VoucherReversedEvent {
+                voucher_id: "v-agg".into(),
+                voucher_no: "VN-2".into(),
+                reversed_by: "u3".into(),
+                reason: "test".into(),
+                occurred_at: chrono::Utc::now(),
+            }),
+        ]).await;
+        let replayer = EventReplayer::new(store);
+        let result = replayer.replay_full("v-agg", "Voucher").await.unwrap();
+        assert_eq!(result.events_count, 3);
+        assert_eq!(result.version, 3);
+        assert_eq!(result.final_state["status"], "Reversed");
+        assert!(result.final_state.get("posted_at").is_some());
+    }
+
+    #[tokio::test]
+    async fn replay_to_version_truncates() {
+        let store = store_with_events(vec![
+            created_event("v-agg", "VN-3"),
+            posted_event("v-agg", "VN-3"),
+        ]).await;
+        let replayer = EventReplayer::new(store);
+        let result = replayer.replay_to_version("v-agg", "Voucher", 1).await.unwrap();
+        assert_eq!(result.events_count, 1);
+        assert_eq!(result.version, 1);
+        assert_eq!(result.final_state["status"], "Created");
+    }
+
+    #[tokio::test]
+    async fn replay_to_time_filters() {
+        let store = store_with_events(vec![created_event("v-agg", "VN-4")]).await;
+        let replayer = EventReplayer::new(store);
+
+        // 目标时间在过去 → 过滤掉全部事件
+        let past = chrono::Utc::now() - chrono::Duration::hours(1);
+        let past_result = replayer
+            .replay_to_time("v-agg", "Voucher", past)
+            .await
+            .unwrap();
+        assert_eq!(past_result.events_count, 0);
+        assert_eq!(past_result.version, 0);
+
+        // 目标时间在未来 → 包含全部事件
+        let future = chrono::Utc::now() + chrono::Duration::hours(1);
+        let future_result = replayer
+            .replay_to_time("v-agg", "Voucher", future)
+            .await
+            .unwrap();
+        assert_eq!(future_result.events_count, 1);
+        assert_eq!(future_result.final_state["id"], "v-agg");
+    }
+
+    #[tokio::test]
+    async fn replay_unknown_aggregate_type_yields_null_state() {
+        let store = store_with_events(vec![created_event("v-agg", "VN-5")]).await;
+        let replayer = EventReplayer::new(store);
+        let result = replayer.replay_full("v-agg", "UnknownType").await.unwrap();
+        assert_eq!(result.final_state, serde_json::Value::Null);
     }
 }
