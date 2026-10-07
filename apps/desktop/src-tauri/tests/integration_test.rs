@@ -449,7 +449,7 @@ async fn test_api_business_error() {
     let result = topems_desktop::api_client::get::<Vec<Issue>>(&client, "/tickets/999", None, None, None).await;
 
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("Ticket not found"));
+    assert!(result.unwrap_err().to_string().contains("Ticket not found"));
 }
 
 #[tokio::test]
@@ -471,7 +471,7 @@ async fn test_http_404_error() {
     let result = topems_desktop::api_client::get::<Vec<Issue>>(&client, "/tickets/999", None, None, None).await;
 
     assert!(result.is_err());
-    assert!(result.unwrap_err().contains("404"));
+    assert!(result.unwrap_err().to_string().contains("404"));
 }
 
 // ─── Tests: Retry mechanism ───────────────────────────────────────
