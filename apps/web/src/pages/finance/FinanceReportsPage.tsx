@@ -27,12 +27,7 @@ import {
   useTheme,
 } from '@mui/material';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
-import type {
-  StatCard,
-  ChartConfig,
-  DataTable,
-  TableColumn,
-} from '@/components/templates/StatsPageTemplate';
+import type { ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 
 import { useTranslation } from 'react-i18next';

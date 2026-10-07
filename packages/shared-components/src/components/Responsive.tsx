@@ -13,15 +13,6 @@ export interface ResponsiveProps<T> {
   defaultValue?: T;
 }
 
-const breakpointValues: Record<Breakpoint, number> = {
-  xs: 0,
-  sm: 600,
-  md: 900,
-  lg: 1200,
-  xl: 1536,
-  xxl: 1920,
-};
-
 // eslint-disable-next-line react-refresh/only-export-components
 export const useBreakpoint = (): Breakpoint => {
   const theme = useTheme();

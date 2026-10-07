@@ -188,10 +188,10 @@ const buildReceivablePayableParams = (
   params?: ReceivablePayableQueryParams
 ): Record<string, unknown> | undefined => {
   if (!params) return undefined;
-  const { page, page_size, ...rest } = params;
+  const { page, page_size: pageSize, ...rest } = params;
   const out: Record<string, unknown> = { ...rest };
   if (page !== undefined) out.page = page;
-  if (page_size !== undefined) out.page_size = page_size;
+  if (pageSize !== undefined) out.page_size = pageSize;
   return out;
 };
 

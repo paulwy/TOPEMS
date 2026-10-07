@@ -40,7 +40,7 @@ export interface SidebarItemProps {
 }
 
 export const SidebarItem: React.FC<SidebarItemProps> = ({
-  id,
+  id: _id,
   label,
   icon,
   active = false,

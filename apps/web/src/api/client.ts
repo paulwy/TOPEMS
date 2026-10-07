@@ -243,7 +243,7 @@ const buildNotificationGraceFallback = (
   pageSizeParam: unknown
 ): ApiResponse => {
   const page = typeof pageParam === 'number' ? pageParam : Number(pageParam) || 1;
-  const page_size = typeof pageSizeParam === 'number' ? pageSizeParam : Number(pageSizeParam) || 20;
+  const pageSize = typeof pageSizeParam === 'number' ? pageSizeParam : Number(pageSizeParam) || 20;
   // unread-count: number
   if (relativeUrl.startsWith('/notifications/unread-count')) {
     return {
@@ -282,7 +282,7 @@ const buildNotificationGraceFallback = (
       notifications: [],
       total: 0,
       page,
-      page_size,
+      page_size: pageSize,
       unread_count: 0,
     },
     message: 'Skipped (no auth token)',

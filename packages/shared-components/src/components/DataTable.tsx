@@ -998,7 +998,7 @@ export function DataTable<TData, TValue>({
       loadingLabel: loadingLabel ?? labelsProp?.loadingLabel ?? defaultLabels.loadingLabel,
       refreshLabel: refreshLabel ?? labelsProp?.refreshLabel ?? defaultLabels.refreshLabel,
     }),
-    [labelsProp, searchPlaceholder, createLabel, emptyMessage]
+    [labelsProp, searchPlaceholder, createLabel, emptyMessage, loadingLabel, refreshLabel]
   );
 
   const [sorting, setSorting] = useState<SortingState>([]);
@@ -1022,13 +1022,20 @@ export function DataTable<TData, TValue>({
   const [editValues, setEditValues] = useState<Record<string, unknown>>({});
 
   // 选择状态：优先受控 props，其次内部状态
-  const effectiveSelectedIds = selectedRows ?? selectedIds ?? [];
+  const effectiveSelectedIds = React.useMemo(
+    () => selectedRows ?? selectedIds ?? [],
+    [selectedRows, selectedIds]
+  );
   const [internalSelected, setInternalSelected] = React.useState<string[]>([]);
-  const isSelected = showSelection
-    ? effectiveSelectedIds.length > 0
-      ? effectiveSelectedIds
-      : internalSelected
-    : [];
+  const isSelected = React.useMemo(
+    () =>
+      showSelection
+        ? effectiveSelectedIds.length > 0
+          ? effectiveSelectedIds
+          : internalSelected
+        : [],
+    [showSelection, effectiveSelectedIds, internalSelected]
+  );
 
   useEffect(() => {
     if (persistColumnConfig) {
@@ -1233,9 +1240,11 @@ export function DataTable<TData, TValue>({
       ? controlledMobileCardView
       : isMobile && (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
 
+  const rowModelRows = table.getRowModel().rows;
+
   const virtualRowData: VirtualRowData = useMemo(
     () => ({
-      rows: table.getRowModel().rows,
+      rows: rowModelRows,
       getRowKey: getRowKey as (data: unknown) => string,
       onRowClick: onRowClick as ((data: unknown) => void) | undefined,
       isSelected,
@@ -1251,7 +1260,7 @@ export function DataTable<TData, TValue>({
       labels: mergedLabels,
     }),
     [
-      table.getRowModel().rows,
+      rowModelRows,
       getRowKey,
       onRowClick,
       isSelected,
