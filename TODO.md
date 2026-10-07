@@ -497,6 +497,7 @@
 
 - **根因排查链**：表名（单数 vs 复数）→ 实际复数 OK → **mes.production_orders 缺 order_number 列**（表只有 order_no——handler SQL 用 order_number AS order_no 生产必挂）→ **ALTER 补列**（`ALTER TABLE mes.production_orders ADD COLUMN order_number VARCHAR(64)`，同步 order_no 值）
 - **测试修复**：production_orders INSERT 补 order_no 列（NOT NULL 必给，同 order_number 值 $2 复用）；completed_quantity 断言 BigDecimal → i64（表列 bigint，decode 类型不匹配）
+- **✅ wip 3 用例全绿（2026-10-08）**：list_wips（返回 key "wips"，SELECT 20 列 + LEFT JOIN production_processes/work_stations 2 表——测试建 3 表 public）；quantity NUMERIC 未触发 decode 问题；无新缺陷
 - **✅ capacity/material_plan/material_requirement 补测完成（2026-10-08，7 用例）**：capacity_e2e 2 + material_plan_e2e 3 + material_requirement_e2e 2 全绿
 - **生产缺陷修复（capacity）**：Capacity struct f64 ← NUMERIC decode 必挂（available_hours/used_hours/utilization_rate 3 列）→ SELECT 加 ::float8（同 wms WavePick/SerialNumber 类，第 3 处同类）
 - **无 schema 前缀 SQL 登记**：capacity/material_requirement/equipment 等模块 SQL 无 mes. 前缀（依赖连接 search_path）——生产靠 search_path 含 mes，测试用 public 表模拟；脆弱点登记（work_order/material_plan 已有前缀）
