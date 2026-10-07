@@ -152,7 +152,7 @@ pub async fn create_shipping_from_outbound_internal(
     let outbound_order = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, order_number, warehouse_id, customer_id, order_date, expected_delivery, 
+        SELECT id, tenant_id, order_number, warehouse_id, customer_id, order_date, expected_delivery, 
                actual_delivery, total_amount, status, remarks, created_at, updated_at
         FROM wms.outbound_orders
         WHERE id = $1 AND status = 'confirmed'

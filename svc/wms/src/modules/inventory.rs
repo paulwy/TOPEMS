@@ -413,8 +413,8 @@ pub async fn create_inventory(
                                    quantity, unit, available_quantity,
                                    min_quantity, max_quantity, quality_status, created_at, updated_at, tenant_id)
         VALUES ($1, '00000000-0000-0000-0000-000000000001', $2, $3, $4, $5, $6, $7, $8, $7, $9, $10, 'qualified', $11, $12, $13)
-        RETURNING id, material_code as sku, material_name as name, specification, unit, quantity,
-                  location_id, warehouse_id, min_quantity, max_quantity, quality_status as status,
+        RETURNING id, tenant_id, material_code as sku, material_name as name, specification, unit, quantity::float8,
+                  location_id, warehouse_id, min_quantity::float8, max_quantity::float8, quality_status as status,
                   created_at, updated_at
         "#),
     )
