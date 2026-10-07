@@ -38,10 +38,10 @@ pub(crate) async fn record_audit_log(
     // 命中 RLS `tenant_id IS NULL` 公共分支（与 mobile sync-policy v4 同款）；
     // 不再硬编码真实租户 ...0001 —— 超管/nil 上下文会被幸存严格策略拒绝。
     .bind(Option::<uuid::Uuid>::None)
-    .bind(user_id)
+    .bind(uuid::Uuid::parse_str(user_id).ok())
     .bind(action)
     .bind(resource_type)
-    .bind(resource_id)
+    .bind(uuid::Uuid::parse_str(resource_id).ok())
     .bind(request_body)
     .bind(response_body)
     .bind(if status < 400 { "success" } else { "failed" })
