@@ -1,5 +1,8 @@
 import { invoke } from '@tauri-apps/api/core';
 
+// 本地保留：这是 Tauri `invoke` IPC 的返回信封（success + data + error），
+// 与 @topems/shared-types 的 HTTP ApiResponse（success + code + message + data）
+// 线格式不同——共享包无 `error` 字段且强制 `code: number`，无法表达 Tauri 错误载荷。
 export interface ApiResponse<T> {
   success: boolean;
   data: T | null;
