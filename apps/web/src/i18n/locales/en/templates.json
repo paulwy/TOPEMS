@@ -1163,5 +1163,7 @@
     "k4": "Y-axis Field",
     "k5": "X-axis Field"
   },
-  "templates.listPage.selected_items": "items"
+  "templates.listPage.selected_items": "items",
+  "templates.detail_page_template.k3": "Record not found",
+  "templates.detail_page_template.k4": "The record does not exist or has been deleted"
 }

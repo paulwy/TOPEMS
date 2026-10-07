@@ -638,6 +638,7 @@ const ReturnDetailPage: React.FC = () => {
           detailItemName={record?.return_no || record?.id || t('crm.return_detail_page.k0')}
           backHref={CRM_PATHS.returns}
           loading={loading}
+          emptyState={{ show: !loading && !record }}
           error={returnQuery.isError ? t('crm.returnDetail.error_load') : undefined}
           sections={sections}
           headerContent={

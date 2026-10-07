@@ -541,5 +541,7 @@
   "templates.listPage.k9": "正在处理",
   "templates.editor.k0": "模板名称 *",
   "templates.editor.k1": "模板编码 *",
-  "templates.listPage.selected_items": "项"
+  "templates.listPage.selected_items": "项",
+  "templates.detail_page_template.k3": "未找到记录",
+  "templates.detail_page_template.k4": "该记录不存在或已被删除"
 }

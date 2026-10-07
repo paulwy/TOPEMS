@@ -332,6 +332,7 @@ const OpportunityDetailPage: React.FC = () => {
         detailItemName={opportunity?.name || opportunity?.id || t('crm.opportunity_detail_page.k0')}
         backHref={CRM_PATHS.opportunities}
         loading={loading}
+        emptyState={{ show: !loading && !opportunity }}
         error={errorMessage}
         onEdit={() => navigate(CRM_PATHS.opportunityDetail.replace(':id', id!))}
         onDelete={() => setDeleteDialogOpen(true)}

@@ -13,6 +13,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { EmptyState } from '@topems/shared-components';
 import { Edit, Delete, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBackNavigation } from '@/hooks';
@@ -57,6 +58,13 @@ export interface DetailPageTemplateProps extends BoxProps {
   // 状态
   loading?: boolean;
   error?: string;
+  /** 空态（详情对象不存在时显示，show=true 时替代主内容） */
+  emptyState?: {
+    show?: boolean;
+    emoji?: string;
+    title?: string;
+    description?: string;
+  };
 
   // 返回
   backHref?: string;
@@ -113,6 +121,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   breadcrumbs,
   autoBreadcrumbs = true,
   loading,
+  emptyState,
   backHref,
   onBack,
   actions,
@@ -413,6 +422,16 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
 
   // 渲染主内容
   const renderMainContent = () => {
+    if (emptyState?.show) {
+      return (
+        <EmptyState
+          emoji={emptyState.emoji || '📄'}
+          title={emptyState.title || i18n.t('templates.detail_page_template.k3')}
+          description={emptyState.description || i18n.t('templates.detail_page_template.k4')}
+        />
+      );
+    }
+
     if (tabs) {
       return renderTabs();
     }

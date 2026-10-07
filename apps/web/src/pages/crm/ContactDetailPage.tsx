@@ -331,6 +331,7 @@ const ContactDetailPage: React.FC = () => {
         }
         backHref={CRM_PATHS.contacts}
         loading={loading}
+        emptyState={{ show: !loading && !contact }}
         error={errorMessage}
         onEdit={() => navigate(CRM_PATHS.contactDetail.replace(':id', id!))}
         onDelete={() => setDeleteDialogOpen(true)}

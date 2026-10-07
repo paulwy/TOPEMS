@@ -1086,6 +1086,7 @@ const CustomerDetailPage: React.FC = () => {
         detailItemName={customer?.name || customer?.code || t('crm.customer_detail_page.k0')}
         backHref={CRM_PATHS.customers}
         loading={loading}
+        emptyState={{ show: !loading && !customer }}
         onEdit={() => {}}
         infoCard={infoCard}
         tabs={tabs}
