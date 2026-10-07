@@ -484,6 +484,13 @@
 - **覆盖分布**：audit/handlers.rs + audit_query.rs（200+ 展开行）+ automation/mod.rs 全 handler（~200）+ doc/handlers.rs + doc/services（~150）+ shared 基建（AppState/中间件/服务发现）——三盲区从 0 到实际执行覆盖
 - **lib 三域 14.39%**（本轮仅新增 tests/ 未改 src/，数字保持）——lib 与集成测试是互补口径
 
+### ✅ mes integration_tests 5 个失败修复完成（2026-10-08，47 用例全绿）
+
+- **根因排查链**：表名（单数 vs 复数）→ 实际复数 OK → **mes.production_orders 缺 order_number 列**（表只有 order_no——handler SQL 用 order_number AS order_no 生产必挂）→ **ALTER 补列**（`ALTER TABLE mes.production_orders ADD COLUMN order_number VARCHAR(64)`，同步 order_no 值）
+- **测试修复**：production_orders INSERT 补 order_no 列（NOT NULL 必给，同 order_number 值 $2 复用）；completed_quantity 断言 BigDecimal → i64（表列 bigint，decode 类型不匹配）
+- **⚠️ sqlx prepare 事故记录**：`cargo sqlx prepare` 在本环境不可行（SQLX_OFFLINE=false 连库校验全量 query! 失败 206 处——表在 mes schema 而连接 search_path 无 mes）且**会污染 .sqlx 离线缓存**（prepare 删除 103 + 新增 15 缓存 → 编译 251 错误）——**教训：mes 的 query! SQL 改动需谨慎**（离线缓存校验），修复列名类问题优先 ALTER 表而非改 SQL；污染恢复：`git checkout -- svc/mes/.sqlx` + `git clean -f svc/mes/.sqlx/`
+- **DB 变更待入迁移链**：production_orders.order_number 列（5432 已 ALTER，需补迁移文件登记——低优先）
+
 ### ✅ mes 补测启动（2026-10-07，equipment 模块首测 + 2 处生产缺陷修复）
 
 - **mes 测试工厂**（svc/mes/tests/common/app_state.rs）：AppState 6 字段全构造（auth_state 32+ 字符 secret / pool / health_config / event_publisher None / erp_client None / dict_cache new_l1_only）+ super_claims（is_superuser: true）；import 路径：topems_shared_auth::auth::{AuthState,Claims}、topems_shared_core::l2_cache / health

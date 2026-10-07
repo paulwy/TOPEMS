@@ -160,9 +160,9 @@ mod tests {
         let create_result = sqlx::query(
             r#"
             INSERT INTO mes.production_orders (
-                id, order_number, product_name, product_code, quantity,
+                id, order_no, order_number, product_name, product_code, quantity,
                 completed_quantity, status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             RETURNING id, order_number, product_name, status
             "#,
         )
@@ -219,10 +219,7 @@ mod tests {
             "更新后的产品名称"
         );
         assert_eq!(updated_order.get::<String, _>("status"), "released");
-        assert_eq!(
-            updated_order.get::<BigDecimal, _>("completed_quantity"),
-            BigDecimal::from(500)
-        );
+        assert_eq!(updated_order.get::<i64, _>("completed_quantity"), 500);
 
         let delete_result = sqlx::query(
             r#"
@@ -434,9 +431,9 @@ mod tests {
             r#"
             BEGIN;
             INSERT INTO mes.production_orders (
-                id, order_number, product_name, product_code, quantity,
+                id, order_no, order_number, product_name, product_code, quantity,
                 completed_quantity, status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW());
+            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, NOW(), NOW());
             INSERT INTO mes.production_orders (id) VALUES ('invalid-uuid');
             COMMIT;
             "#,
@@ -482,9 +479,9 @@ mod tests {
         let insert_result = sqlx::query(
             r#"
             INSERT INTO mes.production_orders (
-                id, order_number, product_name, product_code, quantity,
+                id, order_no, order_number, product_name, product_code, quantity,
                 completed_quantity, status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id)
@@ -535,9 +532,9 @@ mod tests {
         let create_result_1 = sqlx::query(
             r#"
             INSERT INTO mes.production_orders (
-                id, order_number, product_name, product_code, quantity,
+                id, order_no, order_number, product_name, product_code, quantity,
                 completed_quantity, status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id_1)
@@ -555,9 +552,9 @@ mod tests {
         let create_result_2 = sqlx::query(
             r#"
             INSERT INTO mes.production_orders (
-                id, order_number, product_name, product_code, quantity,
+                id, order_no, order_number, product_name, product_code, quantity,
                 completed_quantity, status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id_2)
@@ -623,9 +620,9 @@ mod tests {
         let _ = sqlx::query(
             r#"
             INSERT INTO mes.production_orders (
-                id, order_number, product_name, product_code, quantity,
+                id, order_no, order_number, product_name, product_code, quantity,
                 completed_quantity, status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id)
@@ -689,9 +686,9 @@ mod tests {
         let _ = sqlx::query(
             r#"
             INSERT INTO mes.production_orders (
-                id, order_number, product_name, product_code, quantity,
+                id, order_no, order_number, product_name, product_code, quantity,
                 completed_quantity, status, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, NOW(), NOW())
             "#,
         )
         .bind(order_id)
