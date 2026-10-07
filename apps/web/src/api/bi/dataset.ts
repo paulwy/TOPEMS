@@ -18,10 +18,10 @@ export async function getDataset(id: string) {
 
 export async function createDataset(data: Partial<Dataset>) {
   // 后端 CreateDatasetRequest 用 datasource_id（无下划线），前端类型沿用 list 响应的 data_source_id
-  const { data_source_id, ...rest } = data;
+  const { data_source_id: dataSourceId, ...rest } = data;
   return await apiClient.bi.post('/datasets', {
     ...rest,
-    datasource_id: data_source_id,
+    datasource_id: dataSourceId,
   });
 }
 

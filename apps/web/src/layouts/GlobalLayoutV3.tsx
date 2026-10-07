@@ -27,7 +27,6 @@ import {
   TrendingDown,
   TrendingUp,
   Truck,
-  User,
   Users,
 } from 'lucide-react';
 

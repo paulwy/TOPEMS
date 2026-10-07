@@ -34,10 +34,10 @@ interface PaginationParams {
 
 export const bankAccountApi = {
   list: (params?: PaginationParams): Promise<ApiResponse<BankAccountListResponse>> => {
-    const { page, page_size, ...rest } = params || {};
+    const { page, page_size: pageSize, ...rest } = params || {};
     const searchParams: Record<string, unknown> = { ...rest };
     if (page !== undefined) searchParams.page = page;
-    if (page_size !== undefined) searchParams.page_size = page_size;
+    if (pageSize !== undefined) searchParams.page_size = pageSize;
     return apiClient.erp.get('/bank-accounts', { params: searchParams });
   },
 

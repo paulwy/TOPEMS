@@ -31,9 +31,6 @@ export default function PaginationComponent({
   sx,
   disabled = false,
 }: PaginationConfig) {
-  const startItem = totalItems ? (page - 1) * pageSize + 1 : (page - 1) * pageSize + 1;
-  const endItem = totalItems ? Math.min(page * pageSize, totalItems) : page * pageSize;
-
   const getPageNumbers = () => {
     const pages: (number | string)[] = [];
     const maxVisible = 5;
