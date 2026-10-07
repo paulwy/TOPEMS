@@ -105,7 +105,7 @@ export const MobileLayoutV3: React.FC<MobileLayoutV3Props> = ({ children }) => {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '4px',
+                gap: 1,
                 backgroundColor: 'transparent',
                 border: 'none',
                 cursor: 'pointer',

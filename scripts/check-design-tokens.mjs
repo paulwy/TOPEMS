@@ -26,6 +26,11 @@ const ignoredPathParts = [
   '/theme/gradients.',
   '/theme/presets.',
   '/theme/theme.',
+  // redesign 体系令牌定义源（V215 同规：定义层不计偏差）
+  '/theme/redesign-tokens.css',
+  '/theme/redesign-global.css',
+  // GIS 热力色带：canvas 动态 alpha 数据可视化色带（功能映射非主题色）
+  '/components/gis/',
 ];
 
 const allowedFiles = new Set([
@@ -118,6 +123,10 @@ function collectFindings(filePath) {
       pattern.regex.lastIndex = 0;
       const matches = [...trimmed.matchAll(pattern.regex)];
       matches.forEach((match) => {
+        // HTML 实体（&#NNN; 如 &#039;）非颜色，跳过（匹配串可能是 #039，需看前置 &）
+        if (trimmed[match.index - 1] === '&') return;
+        // 值本身已引用 var(--token)（如 boxShadow: '...var(--border-default)'），非硬编码
+        if (pattern.id !== 'fixed-px-spacing' && match[0].includes('var(--')) return;
         if (pattern.id !== 'fixed-px-spacing' && inVarFallback(match.index)) return;
         findings.push({
           file: relativePath,

@@ -273,7 +273,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             value={`${data.key_metrics.average_response_ms.toFixed(0)}ms`}
             subtitle={`P95: ${data.key_metrics.p95_response_ms.toFixed(0)}ms`}
             icon={<Clock size={18} />}
-            color='#f57c00'
+            color={theme.palette.warning.main}
           />
         </Grid>
         <Grid
@@ -285,7 +285,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             title={t('ai.governance_dashboard.stat_token_usage')}
             value={formatNumber(data.key_metrics.total_tokens)}
             icon={<TrendingUp size={18} />}
-            color='#7b1fa2'
+            color={theme.palette.secondary.dark}
           />
         </Grid>
         <Grid
@@ -297,7 +297,7 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
             title={t('ai.governance_dashboard.stat_active_users')}
             value={formatNumber(data.key_metrics.active_users)}
             icon={<Users size={18} />}
-            color='#0097a7'
+            color={theme.palette.info.main}
           />
         </Grid>
         <Grid

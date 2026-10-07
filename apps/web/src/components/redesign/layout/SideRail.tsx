@@ -309,7 +309,7 @@ export const SideRail: React.FC<SideRailProps> = ({
         padding: 'var(--space-3) 0',
         backgroundColor: 'var(--bg-elevated)',
         borderRight: '1px solid var(--border-default)',
-        boxShadow: '2px 0 8px rgba(0, 0, 0, 0.3)',
+        boxShadow: 'var(--shadow-side)',
         overflowY: 'auto',
         overflowX: 'hidden',
         transition: 'width var(--duration-base) var(--ease-out)',
@@ -357,7 +357,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                   border: '1px solid transparent',
                   borderColor: showActive ? 'var(--accent-primary)' : 'transparent',
                   borderRadius: 'var(--radius-md)',
-                  color: showActive ? '#000000' : 'var(--text-primary)',
+                  color: showActive ? 'var(--text-on-accent)' : 'var(--text-primary)',
                   transition: 'all var(--duration-fast) var(--ease-out)',
                   cursor: 'pointer',
                   textAlign: expanded ? 'left' : 'center',
@@ -369,7 +369,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                     strokeWidth={showActive ? 2.5 : 2}
                     style={{
                       flexShrink: 0,
-                      color: showActive ? '#000000' : undefined,
+                      color: showActive ? 'var(--text-on-accent)' : undefined,
                     }}
                   />
                   {expanded && (
@@ -380,7 +380,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        color: showActive ? '#000000' : undefined,
+                        color: showActive ? 'var(--text-on-accent)' : undefined,
                       }}
                     >
                       {item.label}
@@ -414,7 +414,11 @@ export const SideRail: React.FC<SideRailProps> = ({
                 )}
 
                 {hasChildren && expanded && (
-                  <span style={{ color: showActive ? '#000000' : 'var(--text-secondary)' }}>
+                  <span
+                    style={{
+                      color: showActive ? 'var(--text-on-accent)' : 'var(--text-secondary)',
+                    }}
+                  >
                     {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                   </span>
                 )}
@@ -426,7 +430,7 @@ export const SideRail: React.FC<SideRailProps> = ({
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '2px',
+                    gap: 'var(--space-0-5)',
                     marginTop: '4px',
                     marginLeft: '24px',
                     paddingLeft: '12px',

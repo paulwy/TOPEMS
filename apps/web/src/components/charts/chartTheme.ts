@@ -1,7 +1,7 @@
 // BI Chart Color Palette
 // A cohesive, professional color scheme for business intelligence dashboards
 
-import { useTheme } from '@mui/material/styles';
+import { alpha, useTheme } from '@mui/material/styles';
 import { designTokens } from '@topems/tokens';
 
 // ── Chart type enum for future MUI X Charts migration ──────────────────────
@@ -57,10 +57,10 @@ export const BIChartColors = {
       'var(--color-warning)', // 霓虹橙
       'var(--color-fallback-ant-purple)', // 紫电
     ],
-    grid: 'rgba(0, 255, 255, 0.10)',
+    grid: alpha(designTokens.colors.cyan[500], 0.1),
     text: 'var(--cyber-color-text-muted, var(--cyber-color-text-muted))',
     background: 'common.white',
-    border: 'rgba(0, 255, 255, 0.30)',
+    border: alpha(designTokens.colors.cyan[500], 0.3),
   },
   neutral: {
     grid: designTokens.colors.border.default,

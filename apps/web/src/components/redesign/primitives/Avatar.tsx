@@ -97,9 +97,9 @@ const getColorFromName = (name: string): string => {
     'var(--warning-500)',
     'var(--error-500)',
     'var(--info-500)',
-    '#8b5cf6',
-    '#ec4899',
-    '#14b8a6',
+    'var(--violet-500)',
+    'var(--fuchsia-500)',
+    'var(--teal-500)',
   ];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {

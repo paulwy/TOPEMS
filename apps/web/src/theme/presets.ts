@@ -185,3 +185,28 @@ export const themePresets: ThemePreset[] = [
 
 export const getPresetById = (id: string): ThemePreset | undefined =>
   themePresets.find((p) => p.id === id);
+
+// 数据资产分类色板（DataAssetCatalogPage 业务辨识色；值即视觉规范）
+export const assetTypeColors = {
+  table: '#1976d2',
+  view: '#00acc1',
+  function: '#3949ab',
+  api: '#7b1fa2',
+  file: '#f57c00',
+  report: '#388e3c',
+  dashboard: '#c2185b',
+} as const;
+
+export const assetStatusColors = {
+  active: '#388e3c',
+  deprecated: '#f57c00',
+  archived: '#757575',
+  development: '#1976d2',
+} as const;
+
+export const assetSensitivityColors = {
+  public: '#388e3c',
+  internal: '#1976d2',
+  confidential: '#f57c00',
+  restricted: '#d32f2f',
+} as const;

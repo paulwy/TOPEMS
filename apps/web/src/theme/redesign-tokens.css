@@ -12,6 +12,21 @@
      ============================================================ */
 
   /* 背景层 */
+  /* 头像调色板扩展（Avatar 多色背景） */
+  --violet-500: #8b5cf6;
+  --fuchsia-500: #ec4899;
+  --teal-500: #14b8a6;
+
+  /* 强调色背景上的文字（amber 上深色字，对比度 ≥7:1） */
+  --text-on-accent: #18181b;
+
+  /* 阴影扩展 */
+  --shadow-side: 2px 0 8px rgba(0, 0, 0, 0.3);
+  --shadow-topbar: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* 紧凑间距 */
+  --space-0-5: 2px;
+
   --bg-primary: #09090b;
   --bg-secondary: #0e0e10;
   --bg-elevated: #111113;

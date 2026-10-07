@@ -358,7 +358,7 @@ const WorkflowApprovalsPage: React.FC = () => {
               height: 28,
               borderRadius: '50%',
               backgroundColor: 'var(--accent-primary)',
-              color: '#fff',
+              color: 'var(--text-on-accent)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

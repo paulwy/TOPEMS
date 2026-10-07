@@ -201,7 +201,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 backgroundColor: 'var(--bg-primary)',
                 border: '1px solid var(--border-default)',
                 borderRadius: 'var(--radius-md)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                boxShadow: 'var(--shadow-topbar)',
                 zIndex: 1000,
                 overflow: 'hidden',
               }}
@@ -228,7 +228,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: 'var(--space-2)',
                     width: '100%',
                     padding: '8px 16px',
                     border: 'none',
@@ -247,7 +247,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: 'var(--space-2)',
                     width: '100%',
                     padding: '8px 16px',
                     border: 'none',
@@ -274,7 +274,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px',
+                    gap: 'var(--space-2)',
                     width: '100%',
                     padding: '8px 16px',
                     border: 'none',

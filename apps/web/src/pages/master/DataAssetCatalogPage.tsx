@@ -32,39 +32,9 @@ import DatasetIcon from '@mui/icons-material/Dataset';
 import DescriptionIcon from '@mui/icons-material/Description';
 import ApiIcon from '@mui/icons-material/Api';
 import { dataAssetCatalogApiV66 } from '@/api/master/dataAssetCatalogV66';
-import type {
-  DataAsset,
-  AssetType,
-  AssetStatus,
-  AssetSensitivity,
-  AssetCatalogDashboard,
-} from '@/api/master/dataAssetCatalogV66';
+import type { DataAsset, AssetCatalogDashboard } from '@/api/master/dataAssetCatalogV66';
 import i18n from '@/i18n';
-
-// 类型标签颜色映射
-const TYPE_COLORS: Record<AssetType, string> = {
-  table: '#1976d2',
-  view: '#00acc1',
-  function: '#3949ab',
-  api: '#7b1fa2',
-  file: '#f57c00',
-  report: '#388e3c',
-  dashboard: '#c2185b',
-};
-
-const STATUS_COLORS: Record<AssetStatus, string> = {
-  active: '#388e3c',
-  deprecated: '#f57c00',
-  archived: '#757575',
-  development: '#1976d2',
-};
-
-const SENSITIVITY_COLORS: Record<AssetSensitivity, string> = {
-  public: '#388e3c',
-  internal: '#1976d2',
-  confidential: '#f57c00',
-  restricted: '#d32f2f',
-};
+import { assetTypeColors, assetStatusColors, assetSensitivityColors } from '@/theme/presets';
 
 const DataAssetCatalogPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
@@ -423,7 +393,7 @@ const DataAssetCatalogPage: React.FC = () => {
                         label={asset.type}
                         size='small'
                         sx={{
-                          backgroundColor: TYPE_COLORS[asset.type],
+                          backgroundColor: assetTypeColors[asset.type],
                           color: 'common.white',
                           fontWeight: 500,
                         }}
@@ -434,7 +404,7 @@ const DataAssetCatalogPage: React.FC = () => {
                         label={asset.status}
                         size='small'
                         sx={{
-                          backgroundColor: STATUS_COLORS[asset.status],
+                          backgroundColor: assetStatusColors[asset.status],
                           color: 'common.white',
                           fontWeight: 500,
                         }}
@@ -445,7 +415,7 @@ const DataAssetCatalogPage: React.FC = () => {
                         label={asset.sensitivity}
                         size='small'
                         sx={{
-                          backgroundColor: SENSITIVITY_COLORS[asset.sensitivity],
+                          backgroundColor: assetSensitivityColors[asset.sensitivity],
                           color: 'common.white',
                           fontWeight: 500,
                         }}
@@ -589,7 +559,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   label={detailAsset.type}
                   size='small'
                   sx={{
-                    backgroundColor: TYPE_COLORS[detailAsset.type],
+                    backgroundColor: assetTypeColors[detailAsset.type],
                     color: 'common.white',
                     mt: 0.5,
                   }}
@@ -606,7 +576,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   label={detailAsset.status}
                   size='small'
                   sx={{
-                    backgroundColor: STATUS_COLORS[detailAsset.status],
+                    backgroundColor: assetStatusColors[detailAsset.status],
                     color: 'common.white',
                     mt: 0.5,
                   }}
@@ -623,7 +593,7 @@ const DataAssetCatalogPage: React.FC = () => {
                   label={detailAsset.sensitivity}
                   size='small'
                   sx={{
-                    backgroundColor: SENSITIVITY_COLORS[detailAsset.sensitivity],
+                    backgroundColor: assetSensitivityColors[detailAsset.sensitivity],
                     color: 'common.white',
                     mt: 0.5,
                   }}

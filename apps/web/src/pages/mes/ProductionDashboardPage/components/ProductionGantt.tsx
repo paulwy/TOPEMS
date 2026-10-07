@@ -147,7 +147,7 @@ const ProductionGantt: React.FC<{
             sx={{
               position: 'relative',
               height: 28,
-              ml: '180px',
+              ml: 180,
               borderBottom: '1px solid',
               borderColor: 'grey.200',
               mb: 1,
