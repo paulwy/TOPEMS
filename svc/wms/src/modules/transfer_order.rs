@@ -72,7 +72,7 @@ pub async fn list_transfers(
 
     let result = sqlx::query_as::<_, TransferOrder>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, order_number AS transfer_no, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders
+        SELECT id, tenant_id, order_number, transfer_type, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders
         WHERE deleted_at IS NULL AND ($1::text IS NULL OR transfer_type = $1)
           AND ($2::uuid IS NULL OR from_warehouse_id = $2)
           AND ($3::uuid IS NULL OR to_warehouse_id = $3)
@@ -292,7 +292,7 @@ pub async fn get_transfer(
     };
 
     let result = sqlx::query_as::<_, TransferOrder>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, order_number AS transfer_no, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, order_number, transfer_type, from_warehouse_id, to_warehouse_id, status, created_by, created_at, updated_at FROM wms.transfer_orders WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(transfer_id)
     .fetch_optional(&mut **txn)

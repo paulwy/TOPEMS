@@ -11,28 +11,49 @@ pub struct TransferOrder {
     pub order_number: String,
     pub transfer_type: String,
     pub from_warehouse_id: Uuid,
+    #[sqlx(default)]
     pub from_warehouse_name: Option<String>,
+    #[sqlx(default)]
     pub from_location_id: Option<Uuid>,
+    #[sqlx(default)]
     pub from_location_code: Option<String>,
     pub to_warehouse_id: Uuid,
+    #[sqlx(default)]
     pub to_warehouse_name: Option<String>,
+    #[sqlx(default)]
     pub to_location_id: Option<Uuid>,
+    #[sqlx(default)]
     pub to_location_code: Option<String>,
     pub status: String,
+    #[sqlx(default)]
     pub total_quantity: Option<i64>,
+    #[sqlx(default)]
     pub total_amount: Option<f64>,
+    #[sqlx(default)]
     pub planned_date: Option<NaiveDate>,
+    #[sqlx(default)]
     pub actual_date: Option<NaiveDate>,
+    #[sqlx(default)]
     pub transporter: Option<String>,
+    #[sqlx(default)]
     pub tracking_number: Option<String>,
+    #[sqlx(default)]
     pub priority: Option<String>,
+    #[sqlx(default)]
     pub remarks: Option<String>,
+    #[sqlx(default)]
     pub created_by: Option<String>,
+    #[sqlx(default)]
     pub approved_by: Option<String>,
+    #[sqlx(default)]
     pub approved_at: Option<DateTime<Utc>>,
+    #[sqlx(default)]
     pub shipped_by: Option<String>,
+    #[sqlx(default)]
     pub shipped_at: Option<DateTime<Utc>>,
+    #[sqlx(default)]
     pub received_by: Option<String>,
+    #[sqlx(default)]
     pub received_at: Option<DateTime<Utc>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

@@ -2,63 +2,16 @@
 //! 复用超管权限放行路径（check_module_permission 对 is_superuser 直接 Ok），
 //! RLS 事务 Arc（pool.begin）构造，wms schema 最小建表（对齐 list SELECT 24 列）。
 
+#[path = "common/api_state.rs"]
+mod api_state;
+
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use std::time::Instant;
-use topems_shared_auth::auth::{AuthState, Claims};
-use topems_shared_core::health::SystemMetrics;
-use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
-use topems_wms::modules::ApiState;
 use topems_wms::modules::outbound_order::list_outbound_orders;
-use topems_shared_core::response::PaginationParams;
-
-fn api_state(pool: sqlx::PgPool) -> ApiState {
-    ApiState {
-        db: pool,
-        auth_state: AuthState::new(
-            "topems-test-jwt-secret-key-0123456789abcdef-0123456789".to_string(),
-            "topems-test-refresh-secret-0123456789abcdef-0123456789".to_string(),
-            24,
-        ),
-        metrics: Arc::new(SystemMetrics::new()),
-        start_time: Instant::now(),
-        event_publisher: None,
-        warehouse_cache: Arc::new(AsyncL2Cache::new_l1_only(L2CacheConfig::default())),
-        inventory_cache: Arc::new(AsyncL2Cache::new_l1_only(L2CacheConfig::default())),
-        dict_cache: Arc::new(AsyncL2Cache::new_l1_only(L2CacheConfig::default())),
-    }
-}
-
-fn super_claims() -> Claims {
-    Claims {
-        sub: "00000000-0000-0000-0000-000000000001".to_string(),
-        username: "admin".to_string(),
-        role: "super_admin".to_string(),
-        roles: vec!["super_admin".to_string()],
-        permissions: vec![],
-        is_superuser: true,
-        exp: 0,
-        iat: 0,
-        email: None,
-        department: None,
-        tenant_id: None,
-        department_id: None,
-        position_id: None,
-        position_code: None,
-    }
-}
-
-fn empty_params() -> PaginationParams {
-    PaginationParams {
-        page: None,
-        page_size: None,
-        search: None,
-        status: None,
-    }
-}
+use api_state::{api_state, empty_params, super_claims};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
