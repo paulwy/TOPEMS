@@ -1708,4 +1708,43 @@ mod tests {
         };
         rt(&v);
     }
+
+    // ─── P0 补测：纯逻辑函数（2026-10-07，盲区 compliance_v51 0/223）───
+
+    #[test]
+    fn calculate_score_multiplication() {
+        assert_eq!(RiskAssessment::calculate_score("low", "low"), 1);
+        assert_eq!(RiskAssessment::calculate_score("medium", "medium"), 4);
+        assert_eq!(RiskAssessment::calculate_score("high", "high"), 9);
+        assert_eq!(RiskAssessment::calculate_score("critical", "critical"), 16);
+        assert_eq!(RiskAssessment::calculate_score("high", "low"), 3);
+        assert_eq!(RiskAssessment::calculate_score("critical", "medium"), 8);
+    }
+
+    #[test]
+    fn calculate_score_unknown_defaults_to_low() {
+        assert_eq!(RiskAssessment::calculate_score("unknown", "high"), 3);
+        assert_eq!(RiskAssessment::calculate_score("high", ""), 3);
+        assert_eq!(RiskAssessment::calculate_score("", ""), 1);
+    }
+
+    #[test]
+    fn determine_level_boundaries() {
+        assert_eq!(RiskAssessment::determine_level(16), "critical");
+        assert_eq!(RiskAssessment::determine_level(12), "critical");
+        assert_eq!(RiskAssessment::determine_level(11), "high");
+        assert_eq!(RiskAssessment::determine_level(6), "high");
+        assert_eq!(RiskAssessment::determine_level(5), "medium");
+        assert_eq!(RiskAssessment::determine_level(3), "medium");
+        assert_eq!(RiskAssessment::determine_level(2), "low");
+        assert_eq!(RiskAssessment::determine_level(0), "low");
+    }
+
+    #[test]
+    fn severity_as_str_maps_variants() {
+        assert_eq!(Severity::Low.as_str(), "low");
+        assert_eq!(Severity::Medium.as_str(), "medium");
+        assert_eq!(Severity::High.as_str(), "high");
+        assert_eq!(Severity::Critical.as_str(), "critical");
+    }
 }

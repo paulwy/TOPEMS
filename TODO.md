@@ -403,3 +403,15 @@
   - wms：inventory_movement 0/192、outbound_order 0/67、stock_take 0/62、slotting 0/52、transfer_order 0/47、smart_replenishment 全家 0/125
   - unified-core：doc/handlers 0/508、audit/handlers 0/381、login_log_handlers 0/182、ws 0/235 + ws_event_bridge 0/146
 - **建议**：P0 补测优先（财务 domain 事件流正确性 > 自动化编排）；报告产物 target/tarpaulin/（html）
+
+### P0 补测进展（2026-10-07，进行中→部分完成）
+
+- ✅ **finance domain 事件层已补测**（24 单测 + 5 集成，1130→1134 绿）：
+  - cqrs.rs 4 用例（CommandHandler 创建/过账/冲销 + 错误路径）—— commit 862be714b
+  - saga.rs 8 用例（注册/启动/执行/force_fail/补偿/列表/统计）
+  - event_replay.rs 6 用例（全量/时间/版本回放 + 状态重建）
+  - aggregate_repository.rs 6 用例（事件重建/快照恢复/阈值/坏快照）
+  - compliance_v51.rs 4 用例（评分/等级/严重度纯逻辑）
+  - pg_materialized_views **5 集成测试（sqlx::test）** + **修复生产缺陷**：list/get_by_id/get_by_no SELECT 缺 summary/total_amount/posted_at/version 列 → row_to_voucher 必败（测试暴露）
+- ⏳ **unified-core automation/mod.rs（0/618）**：1394 行全 DB/axum handler，单测不可行——**登记为下一批次集成测试**（需 AppState + 路由 + automation 表 DDL）
+- 🧰 测试基建增强：InMemoryEventStore 补 Clone；新增 `Arc<T>: EventStore` blanket impl

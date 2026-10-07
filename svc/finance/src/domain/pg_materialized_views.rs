@@ -62,7 +62,7 @@ impl PgVoucherSummaryView {
 
         let rows = if let Some(s) = &status {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
+                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary WHERE status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3"),
             )
             .bind(s)
             .bind(page_size)
@@ -72,7 +72,7 @@ impl PgVoucherSummaryView {
             .map_err(|e| e.to_string())?
         } else {
             sqlx::query(
-                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+                only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
             )
             .bind(page_size)
             .bind(offset)
@@ -89,7 +89,7 @@ impl PgVoucherSummaryView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<PgVoucherSummary>, TopemsError> {
-        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE id = $1"))
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary WHERE id = $1"))
             .bind(id)
             .fetch_optional(&self.pool)
             .await
@@ -102,7 +102,7 @@ impl PgVoucherSummaryView {
     }
 
     pub async fn get_by_no(&self, no: &str) -> Result<Option<PgVoucherSummary>, TopemsError> {
-        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, created_by, created_at FROM mv_voucher_summary WHERE voucher_no = $1"))
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, period, voucher_type, total_debit, total_credit, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary WHERE voucher_no = $1"))
             .bind(no)
             .fetch_optional(&self.pool)
             .await
