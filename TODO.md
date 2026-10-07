@@ -271,6 +271,28 @@
 - 累计迁移 487 处（静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 签名 20+）
 - 剩余形态：Result<_, String> 465 处（下一候选批，待用户定）
 
+### ✅ B7 第 16 批：业务层 Result<_, String> 清零（本地提交未 push）
+
+> 用户「推进后端 B7 收尾」拍板执行。TODO 原口径「Result<_, String> 465 处」为 10-05 宽口径快照（含注释/误命中/并行线已改），
+> 实测复查：精确形态（第二类型参数=String）全仓 153 处 = svc 业务层 7 + svc tests 48 + apps/desktop(Tauri) 98。
+> 本批完成服务端业务层 7 处（ADR 阶段二/三范畴）；tests 与 desktop 保留（测试辅助代码无客户端出口；
+> Tauri command 返回 Result<T, String> 为框架惯例，建议另立任务处理）。
+
+- **5 个 event_handlers start_event_subscribers**（lims/crm/ehs/hrm/mobile）：`Result<(), String>` → `Result<(), TopemsError>`；
+  `build_subscriber().map_err(|e| e.to_string())` → `TopemsError::internal("构建事件订阅者失败", e)`（hrm 另有
+  `EventSubscriber::new` 同样 internal 化）；main.rs 调用方 `tracing::warn!("...: {}", e)` 零改动（Display 兼容）
+- **hrm record_cache_invalidation**：`Result<uuid::Uuid, String>` → 直接 `uuid::Uuid`（函数实际永不 Err，双分支均 Ok，签名冗余消除）
+- **analytics execute_bi_sql**：`Result<(Vec<String>, Vec<Value>), String>` → `Result<_, TopemsError>`；
+  非只读预检 → ValidationFailed（客户端文案逐字保留）；**用户 SQL 语法/执行错误 → ValidationFailed 回显**（BI SQL 测试工具核心反馈，
+  非内部状态泄露）；连接/只读事务/结果列缺失/读取/解析失败 → TopemsError::internal（细节仅进日志，客户端收「内部服务器错误」）；
+  两个调用方（query_dataset/test_sql_query）`Ok(Err(e))` 改 `e.classify()` 取 msg（原 `Ok(Err(msg))` 直出细节的行为收口）
+- 验证：cargo check 6 服务 0 error 0 warning；单测 lims/mobile/crm/ehs/hrm/analytics 全绿（246/149/504/251/293/192，0 failed）；
+  clippy --all-targets 无新增 warning（既有 training.rs:1147 items-after-test-module 与本次无关）；
+  业务层 Result<_, String> 复查 0 处；check-error-handling --changed-only 无命中
+- **业务层 Result<_, String> 全仓归零**（B7 剩余形态再清一项；累计：静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 业务层 Result<_, String> 7）
+- 剩余（非业务层，建议另议）：svc tests 48 处（unified-core 42 / master-data 3 / finance 2 / crm 1，测试辅助代码）
+  + apps/desktop 98 处（Tauri IPC/keystore）
+
 ---
 
 ## 🔧 前端 UI 审计批次（2026-10-07）
