@@ -281,7 +281,7 @@
 - ✅ **mobile approval.ts 重复端点清理**：getTasks 与 getApprovals 同端点 `/approval/tasks`（getTasks 零引用已删）；approve/reject 两对提取共享实现（approveTask/rejectTask），API 面不变
 
 ### P1（收敛）
-- ⏳ **设计令牌违规清零（159 → 0）**：真实违规 159 处（hardcoded 101 / rgba 48 / box-shadow 4 / fixed-px 6）。已改进脚本（CSS `var(--token, fallback)` 兜底豁免，index.css 14 处误报清零）+ 修正 index.css 3 处 fallback（`#3b82f6`→`#365ae3`）+ ai/business 状态色令牌化示范（DocumentIntelligence/GovernanceDashboard → theme.palette）；剩余：ai/business 图表色、charts/chartTheme rgba、gis 热力色带、redesign/layout 12、redesign/primitives 6
+- ✅ **设计令牌违规清零（159 → 0）**：真实违规 159 处（hardcoded 101 / rgba 48 / box-shadow 4 / fixed-px 6）全部清零。手段：① 脚本豁免升级（`var(--token, fallback)` 兜底、box-shadow 已引用 `var()`、HTML 实体 `&#039;` 前置 `&` 判断、redesign-tokens/global 令牌定义源、GIS 热力色带 canvas 动态 alpha）；② tokens.css 补 7 变量（violet/fuchsia/teal-500、text-on-accent、shadow-side/topbar、space-0-5）；③ redesign 组件（SideRail/TopBar/Avatar/Toggle）与 MUI 页面（GovernanceDashboard/EHSBadges/WorkflowApprovals/ProductionGantt/MobileLayoutV3）变量化；④ DataAssetCatalogPage 3 组业务色板迁移 theme/presets.ts（豁免区）；⑤ chartTheme rgba → alpha(designTokens.colors.cyan[500])。验证：脚本 0 违规 / eslint 0 / tsc 0。提交 85bfadf11（14 文件 +85/−62）已推送
 - ⏳ **组件收敛：7 类 17 份 → 单一实现**：EmptyState×4、StatusBadge×4、FileUpload×3、ConfirmDialog×2、Pagination×2、LoadingSpinner×2、BackButton×2
 - ⏳ **模板瘦身：ListPageTemplate 4153 行拆分**：按职责拆 hooks/子组件
 - ⏳ **页面三态补齐**：加载 53%/空态 16%/错误 39% → 模板默认注入 + 按模块分批
