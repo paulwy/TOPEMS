@@ -149,6 +149,25 @@ pre-commit:
       tags: files size
       run: bash scripts/ci/check-large-files.sh
 
+    # [Gate SD] schema_defense 双写列名对拍止血（第三梯队方案C）
+    # 触发：schema_defense 定义点或迁移变更时，全量扫描 TABLE_DEFS vs 同文件内联 CREATE 列名集合
+    # 首版 WARN 不 block（新脚本先观察，稳定后去 || echo 恢复阻断）
+    schema-defense-drift:
+      tags: database schema
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*/schema_defense[^/]*\.rs$|^svc/.*/db/schema\.rs$|^svc/.*/models/(mod|schema_defense)\.rs$|^database/migrations/' || true)
+        [ -z "$STAGED" ] && exit 0
+        python3 scripts/check-schema-defense-drift.py || echo "WARN: schema_defense 双写疑似漂移（暂不阻断，见上方明细；稳定后转硬阻断）"
+
+    # [Gate MIG] 迁移静态校验（命名/顺序/幂等/checksums 自举）
+    # 注意：validate.sh 每次运行会重写 database/checksums.txt——命中时请随提交一并 git add
+    migration-validate:
+      tags: database migrations
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^database/migrations/.*\.sql$|^database/checksums\.txt$" || true)
+        [ -z "$STAGED" ] && exit 0
+        bash scripts/migration/validate.sh
+
     # [Gate O] Sensitive information scan — migrated from husky #2
     sensitive-info:
       tags: security secrets

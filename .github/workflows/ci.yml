@@ -387,6 +387,26 @@ jobs:
         run: python3 scripts/date-type-audit.py
 
   # ──────────────────────────────────────────────────────────────────────────
+  # schema-defense-drift：TABLE_DEFS vs 同文件内联 CREATE 列名对拍（第三梯队方案C 止血）
+  # 流程：纯静态 Python 扫描（无需 DB）→ 断言 exit 0（双写列名集合一致）
+  # 本地复现：python3 scripts/check-schema-defense-drift.py
+  # ──────────────────────────────────────────────────────────────────────────
+  schema-defense-drift:
+    name: Gate · schema-defense-drift (TABLE_DEFS vs inline CREATE)
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run schema_defense drift check
+        run: python3 scripts/check-schema-defense-drift.py
+
+  # ──────────────────────────────────────────────────────────────────────────
   # [V247 D-track NEW] cargo-test baseline job (non-blocking, establishes run baseline)
   # Goal: upgrade from `cargo test --workspace --no-run` (compile-only) to full
   # `cargo test --workspace` execution. V247 keeps continue-on-error: true;
@@ -1943,6 +1963,7 @@ jobs:
       - axum-layer-gate
       - security-scan
       - schema-defense-gate
+      - schema-defense-drift
       - slow-db-startup-test
       - code-quality
       - migration-test

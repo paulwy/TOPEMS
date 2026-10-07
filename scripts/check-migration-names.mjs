@@ -23,7 +23,7 @@
 import { readdirSync, statSync } from 'node:fs';
 import { join, basename, extname } from 'node:path';
 
-const ROOTS = ['svc', 'lib'];
+const ROOTS = ['svc', 'lib', 'database'];
 
 // --- Regex catalogue --------------------------------------------------------
 // Canonical = 14-digit monotonic timestamp + underscore + kebab/snake summary.
@@ -34,6 +34,8 @@ const RE_CANONICAL_FULL = /^(\d{14})_([A-Za-z0-9]+)_([A-Za-z0-9][A-Za-z0-9_-]*)\
 const RE_CANONICAL_SHORT = /^(\d{14})_([A-Za-z0-9][A-Za-z0-9_-]*)\.sql$/;
 const RE_HIST_12 = /^(\d{12})_([A-Za-z0-9_][A-Za-z0-9_-]*)\.sql$/;
 const RE_HIST_08 = /^(\d{8})_([A-Za-z0-9_][A-Za-z0-9_-]*)\.sql$/;
+// 中央迁移链历史 3 位序号制（000_…013_，2026-07 前）；永久 WARN（grandfathered），strict 也不阻断
+const RE_HIST_3 = /^(\d{3})_([A-Za-z0-9_][A-Za-z0-9_-]*)\.sql$/;
 const RE_FORBIDDEN = /^V\d+_.*\.sql$/;
 
 const strict = process.argv.includes('--strict');
@@ -82,9 +84,16 @@ function validTimestamp12(s) {
 function validTimestamp08(s) {
   return validTimestamp14(s + '000000');
 }
+// 中央链历史「序列秒」hack：YYYYMMDD0000NN（NN=60..99 作为批序号塞进秒位）。
+// 2026-09 批量建表迁移遗留（40 个），grandfathered 为 WARN；新文件若秒≥60 同样只告警。
+function isSeqHackTs(s) {
+  const m = +s.slice(10, 12),
+    sec = +s.slice(12, 14);
+  return m > 59 || sec > 59;
+}
 
 // --- Classify ---------------------------------------------------------------
-const counts = { canonical_full: 0, canonical_short: 0, hist12: 0, hist08: 0, forbidden: 0, other: 0 };
+const counts = { canonical_full: 0, canonical_short: 0, hist12: 0, hist08: 0, hist3: 0, seqhack: 0, forbidden: 0, other: 0 };
 const errors = [];
 const warnings = [];
 const badTs = [];
@@ -99,13 +108,27 @@ for (const p of all) {
   const mFull = name.match(RE_CANONICAL_FULL);
   if (mFull) {
     counts.canonical_full++;
-    if (!validTimestamp14(mFull[1])) badTs.push(`invalid 14-digit ts "${mFull[1]}": ${p}`);
+    if (!validTimestamp14(mFull[1])) {
+      if (isSeqHackTs(mFull[1])) {
+        counts.seqhack++;
+        warnings.push(`HIST seq-second ts (legacy central chain): ${p}`);
+      } else {
+        badTs.push(`invalid 14-digit ts "${mFull[1]}": ${p}`);
+      }
+    }
     continue;
   }
   const mShort = name.match(RE_CANONICAL_SHORT);
   if (mShort) {
     counts.canonical_short++;
-    if (!validTimestamp14(mShort[1])) badTs.push(`invalid 14-digit ts "${mShort[1]}": ${p}`);
+    if (!validTimestamp14(mShort[1])) {
+      if (isSeqHackTs(mShort[1])) {
+        counts.seqhack++;
+        warnings.push(`HIST seq-second ts (legacy central chain): ${p}`);
+      } else {
+        badTs.push(`invalid 14-digit ts "${mShort[1]}": ${p}`);
+      }
+    }
     warnings.push(`canonical but no topic prefix (single segment): ${p}`);
     continue;
   }
@@ -121,6 +144,12 @@ for (const p of all) {
     counts.hist08++;
     if (!validTimestamp08(m08[1])) badTs.push(`invalid 08-digit ts "${m08[1]}": ${p}`);
     (strict ? errors : warnings).push(`HIST 08-digit: ${p}`);
+    continue;
+  }
+  const m3 = name.match(RE_HIST_3);
+  if (m3) {
+    counts.hist3++;
+    warnings.push(`HIST 3-digit (legacy central chain): ${p}`);
     continue;
   }
   counts.other++;
@@ -160,7 +189,7 @@ for (const r of ROOTS) {
 
 // --- Report -----------------------------------------------------------------
 const total =
-  counts.canonical_full + counts.canonical_short + counts.hist12 + counts.hist08 + counts.forbidden + counts.other;
+  counts.canonical_full + counts.canonical_short + counts.hist12 + counts.hist08 + counts.hist3 + counts.forbidden + counts.other;
 console.log(`\
 Migration naming gate (mode: ${strict ? 'STRICT' : 'default'})
 ---------------------------
@@ -168,8 +197,10 @@ Scanned roots      : ${ROOTS.join(', ')}
 Total SQL files    : ${total}
   canonical FULL    (14+topic+summary) : ${counts.canonical_full}
   canonical SHORT   (14+summary only)  : ${counts.canonical_short} (advisory)
+  historical seq-second (central)     : ${counts.seqhack} (grandfathered WARN)
   historical 12-digit                : ${counts.hist12}${strict ? ' (strict → ERR)' : ' (WARN)'}
   historical  8-digit                : ${counts.hist08}${strict ? ' (strict → ERR)' : ' (WARN)'}
+  historical  3-digit (central)      : ${counts.hist3} (grandfathered WARN)
   forbidden  V{NN}_...               : ${counts.forbidden} (ALWAYS ERR)
   other / unmatched                  : ${counts.other} (ALWAYS ERR)
 Invalid timestamps : ${badTs.length}

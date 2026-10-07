@@ -27,4 +27,23 @@ if [ -n "$FOUND" ]; then
   exit 1
 fi
 
+# ── 迁移 SQL 专项（第三梯队 DIR-f）：新增 database/migrations/*.sql >100KB 报警（WARN 不阻断）
+# 只拦暂存新增；历史巨型迁移已入库不受影响；>100KB 请拆分或在 database/migrations/README.md 登记背景
+BIGSQL=''
+for f in $STAGED; do
+  case "$f" in
+    database/migrations/*.sql) ;;
+    *) continue ;;
+  esac
+  [ -f "$f" ] || continue
+  SIZE=$(wc -c < "$f" 2>/dev/null || echo 0)
+  if [ "$SIZE" -gt 102400 ]; then
+    BIGSQL="${BIGSQL}  - $f ($((SIZE/1024))KB)\n"
+  fi
+done
+if [ -n "$BIGSQL" ]; then
+  echo '⚠️  Warning: 新增迁移 SQL >100KB（请拆分或登记背景）:'
+  printf "$BIGSQL"
+fi
+
 exit 0
