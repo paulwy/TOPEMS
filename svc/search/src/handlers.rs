@@ -26,7 +26,6 @@ use std::sync::OnceLock;
 
 use topems_shared_service_client::service_client::api::erp_api::ErpApi;
 use topems_shared_service_client::TypedServiceClient;
-use url::form_urlencoded;
 
 /// ERP 服务客户端（B1 API 化：search 直读 erp schema 改走 erp HTTP API）。
 /// main.rs 初始化（对齐 crm 先例 TypedServiceClient::<ErpApi> + service token）；
@@ -218,13 +217,13 @@ async fn search_all(
     }
 
     if should_search("customer") {
-        if let Some(c) = erp {
+        if let Some(_c) = erp {
             results.extend(search_customers(pool, keyword, per_module_limit).await);
         }
     }
 
     if should_search("order") {
-        if let Some(c) = erp {
+        if let Some(_c) = erp {
             results.extend(search_orders(pool, keyword, per_module_limit).await);
         }
     }
