@@ -390,6 +390,7 @@
     - 测试目标既有债清零：90 测试文件补文件级 allow（unwrap_used/expect_used/indexing_slicing，847f6cdc4）+ 并行线后续新提交 e2e 文件同规补齐（21c8be774）
     - shared-event `to_value(&gross).unwrap()` → `unwrap_or_default()`（da96d2159）；finance event_replay `as` 转换 → `u64::try_from`（65755ce58）
     - ehs accident 引用已下线函数的过时测试移除（ad954b5ab 遗留 E0425 清零，34a156244）
+    - 风格 warning 清零（22 条，2026-10-08 独立批）：wms tests 14×unused_mut（clippy --fix，let mut txn → let txn）、items_after_test_module ×2（hrm/master-data tests 模块移至文件尾）、unused import ×3（wms api_state ×2 + finance AuditLogQuery）、documents_e2e 重复 let claims 删 1、mobile needless_borrows（去 &）、integration needless_question_mark（去 Ok 包裹）→ `-D warnings` 口径全量 0 warning；受影响 7 crate 单元测试全绿（wms 541/mobile 246/integration 182/finance 1141/unified-core 552/hrm 293/master-data 451）
     - fmt 收口：d1941a702 + 21c8be774（cargo fmt --all --check 0 diff）
   - 📝 jsonwebtoken 10.4 需 crypto provider：workspace 已加 `features = ["rust_crypto"]`（并行线提交），dsh::mcp 210/0 绿
   - 📝 环境差异：本机 DB/Redis 有自定义凭据，门禁需 `TEST_DATABASE_URL`（rd 3 个 DB 单测已支持 env 覆盖）+ `REDIS_URL`；ai integration_tests 6 个 DB 用例需真实库（门禁 --lib 不跑）

@@ -143,3 +143,27 @@
 **收官效果（2026-10-02）**：**5,226 处全覆盖**（7 批 4,220 → 合计 5,226）；全 workspace clippy **0 error**（warn=1 仅 zookeeper 依赖未来兼容警告）；测试 42 套件全绿。**deny 版图**：21-deny 组（ai/erp/portal/mes/unified-core + lib 11）+ finance/master-data/srm + 其余 20 crate = **全 workspace 41 crate 五 cast deny 生效**——新增 cast 立即编译失败，数值安全闸门闭环（金额路径 D 项已核实数学安全，非金额存量以 allow 明确标注语义保留）。
 
 **踩坑记录（防重试）**：① 短 lint 名插入无效，必须全名（如 `truncation` → `cast_possible_truncation`）；② FN_RE 必须支持 `pub(super)`（voucher.rs 曾漏归 8 处）；③ `#[axum::debug_handler]` 等宏吞函数属性 → 改 try_from 真修复而非 allow；④ workspace 集含 8 个需剔除 allow 键（三 panic 272-274 行 + 五 cast 226-230 行）；⑤ `[lints] workspace=true` 与本地子表不能共存；⑥ cargo test `--lib` 不可重复（多 `-p` 时仅末位带 `--lib`）；⑦ lib 包名为 `topems-shared-*`（`-p shared-ai` 不匹配）；⑧ 顶层 const 用文件级 `#![allow]`；⑨ 批 7 脚本路径切片 `split('/')[2]` 误取 src → `[1]` 修正；⑩ 期间磁盘满（No space left）阻塞测试输出，用户清理后恢复（环境故障非代码问题）。
+
+## 测试代码 clippy 收口（2026-10-08）
+
+> 背景：TODO 2.1 门禁记录指出 rustc 1.95/clippy 0.1.95 下 `-D clippy::correctness` 展开含 unwrap_used/indexing_slicing/expect_used 等，全仓既有测试代码 30+ 文件 60+ 处违规（新补测试文件无豁免），列为后续项。
+> 命令：`cargo clippy --workspace --all-targets -- -D clippy::correctness`（lefthook pre-push Gate K，SQLX_OFFLINE=true）。
+
+- **mes 查询参数 40 处（98233de8f）**：`as_str().unwrap()` → `unwrap_or("")`，20 文件（params 均为函数内 push 的 Value::String，兜底空串仅消除 unwrap_used）。
+- **测试目标豁免 90 文件（847f6cdc4）**：全部 crate tests/ 与 src/tests/ 文件补文件级 `#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]`，与既有测试文件惯例一致；断言式 unwrap/indexing 语义不变。
+- **并行线新提交 e2e 同规补齐（21c8be774）**：mes material_plan/capacity/material_requirement/wip/work_order 5 文件补文件级 allow + fmt 统一。
+- **真修复 ×2**：shared-event `to_value(&gross).unwrap()` → `unwrap_or_default()`（da96d2159，顺带消除 needless_borrows）；finance event_replay `i as u64` → `u64::try_from(i).unwrap_or_default()`（65755ce58，索引 usize 无符号扩展无损）。
+- **ehs 过时测试移除（34a156244）**：accident 引用已下线函数的测试删除（E0425 编译错误清零）。
+- **验证（独立复检）**：touch 全 workspace 1,841 个 .rs 文件强制重检（防指纹跳过）→ 42 crate 全量 clippy 1m41s，**0 error**；`-D clippy::correctness` 门禁全绿。残余 ~21 条非 correctness 风格 warning（wms tests 14×unused_mut / items_after_test_module×2 / unused import×3 / needless_question_mark / needless_borrows）不影响本门禁，属 CI `-D warnings` 更严口径的独立项，**已于同日独立批清零（见下节）**。经验：**clippy 产物指纹会跳过未变更目标的重检**（首次全量失败后 per-crate 复跑误报全绿），量化必须 touch 或 clean 后重跑。
+
+## 风格 warning 清零（2026-10-08，独立批）
+
+> 目标：CI `-D warnings`（ci.yml）口径全 workspace 0 warning。lefthook `-D clippy::correctness` 不查这些风格 lint，属更严口径补充批。
+
+- **wms tests 14×unused_mut（clippy --fix）**：`let mut txn = pool.begin().await.unwrap()` → `let txn`（txn 仅 move 进 Mutex，无 mut 使用；14 个 e2e 文件）。
+- **items_after_test_module ×2**：hrm/training.rs 与 master-data/modules/mod.rs 中部 `#[cfg(test)] mod tests` 块整体移至文件末尾（生产 items 不再位于测试模块之后；inventory_movement_numbering/outbound_order 的 `let mut txn` 确有 mut 使用，未动）。
+- **unused import ×3**：wms/tests/common/api_state.rs 删 `axum::extract::Query`/`serde::Deserialize`；finance/compliance.rs 测试模块删 `AuditLogQuery`。
+- **unused variable**：unified-core/tests/documents_e2e.rs 删除重复 `let claims = super_claims();`（188/189 双声明 shadow）。
+- **needless_borrows_for_generic_args**：mobile/shared/mod.rs 硬编码兜底 URL `&std::env::var(...)` → 去 `&`（`impl Into<String>` 参数）。
+- **needless_question_mark**：integration/event_handlers/mod.rs `Ok(dispatch(...).map_err(...)?)` → 直接返回 `map_err` 结果。
+- **验证**：touch 全量重检 → `-D clippy::correctness` **0 error 0 warning**（含风格告警清零）；受影响 7 crate 单元测试全绿（wms 541/mobile 246/integration 182/finance 1141/unified-core 552/hrm 293/master-data 451）；`cargo fmt --all --check` 0 diff。
