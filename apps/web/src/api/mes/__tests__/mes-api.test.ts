@@ -270,11 +270,11 @@ describe('MES productionRecordApi', () => {
     expect(mockApiClient.delete).toHaveBeenCalledWith('/records/1');
   });
 
-  it('should call PUT /records/:id/complete for complete', async () => {
+  it('should call POST /records/:id/complete for complete', async () => {
     const data = { actual_quantity: 100 };
-    mockApiClient.put.mockResolvedValue({ success: true, data: { id: '1' } });
+    mockApiClient.post.mockResolvedValue({ success: true, data: { id: '1' } });
     await productionRecordApi.complete('1', data);
-    expect(mockApiClient.put).toHaveBeenCalledWith('/records/1/complete', data);
+    expect(mockApiClient.post).toHaveBeenCalledWith('/records/1/complete', data);
   });
 });
 

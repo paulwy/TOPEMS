@@ -52,13 +52,13 @@ describe('EHS Health Monitoring API Tests', () => {
       expect(apiClient.ehs.get).toHaveBeenCalledWith('/health/rec-001');
     });
 
-    it('createHealthRecord should call POST with data', async () => {
+    it('createHealthRecord should call GET with query data', async () => {
       const { healthMonitoringApi } = await import('../ehs/healthMonitoring');
       const { apiClient } = await import('../client');
-      (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
+      (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: {} });
       const data = { employee_name: '张三', check_type: 'annual', status: 'normal' };
       await healthMonitoringApi.createHealthRecord(data);
-      expect(apiClient.ehs.post).toHaveBeenCalledWith('/health', data);
+      expect(apiClient.ehs.get).toHaveBeenCalledWith('/health', { params: data });
     });
 
     it('updateHealthRecord should call PUT /health/:id', async () => {
