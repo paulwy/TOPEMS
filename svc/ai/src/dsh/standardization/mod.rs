@@ -367,15 +367,15 @@ impl ErrorCode {
     pub fn http_status(&self) -> u16 {
         match self {
             ErrorCode::InternalError | ErrorCode::UnderMaintenance => 500,
-            ErrorCode::ServiceUnavailable => 503,
-            ErrorCode::GatewayTimeout => 504,
+            ErrorCode::ServiceUnavailable | ErrorCode::ExternalServiceUnavailable => 503,
+            ErrorCode::GatewayTimeout | ErrorCode::ExternalServiceTimeout => 502,
 
             ErrorCode::InvalidParameter
             | ErrorCode::MissingParameter
             | ErrorCode::InvalidFormat
-            | ErrorCode::OutOfRange => 400,
-            ErrorCode::PayloadTooLarge => 413,
-            ErrorCode::UnsupportedMediaType => 415,
+            | ErrorCode::OutOfRange
+            | ErrorCode::PayloadTooLarge
+            | ErrorCode::UnsupportedMediaType => 400,
 
             ErrorCode::Unauthenticated
             | ErrorCode::AuthenticationFailed
@@ -386,15 +386,16 @@ impl ErrorCode {
             | ErrorCode::AccountLocked
             | ErrorCode::AccountDisabled => 403,
 
-            ErrorCode::NotFound => 404,
-            ErrorCode::AlreadyExists | ErrorCode::Conflict => 409,
-            ErrorCode::ResourceLocked => 423,
-            ErrorCode::ResourceExpired => 410,
-            ErrorCode::QuotaExceeded => 429,
+            ErrorCode::NotFound | ErrorCode::ResourceExpired => 404,
+            ErrorCode::AlreadyExists | ErrorCode::Conflict | ErrorCode::ResourceLocked => 409,
+
+            ErrorCode::QuotaExceeded
+            | ErrorCode::UserQuotaExceeded
+            | ErrorCode::TenantQuotaExceeded => 400,
 
             ErrorCode::BusinessRuleViolation
             | ErrorCode::OperationNotAllowed
-            | ErrorCode::InvalidState => 422,
+            | ErrorCode::InvalidState => 400,
             ErrorCode::OperationTimeout => 408,
             ErrorCode::OperationFailed | ErrorCode::DataInconsistency => 500,
 
@@ -404,8 +405,6 @@ impl ErrorCode {
             | ErrorCode::DatabaseError
             | ErrorCode::CacheError
             | ErrorCode::MessageQueueError => 502,
-            ErrorCode::ExternalServiceTimeout => 504,
-            ErrorCode::ExternalServiceUnavailable => 503,
 
             ErrorCode::ConfigMissing
             | ErrorCode::ConfigInvalid
@@ -414,9 +413,7 @@ impl ErrorCode {
 
             ErrorCode::RateLimitExceeded
             | ErrorCode::ConcurrencyLimitExceeded
-            | ErrorCode::BurstLimitExceeded
-            | ErrorCode::UserQuotaExceeded
-            | ErrorCode::TenantQuotaExceeded => 429,
+            | ErrorCode::BurstLimitExceeded => 503,
 
             ErrorCode::UnknownError => 500,
         }
@@ -855,7 +852,7 @@ mod tests {
         assert_eq!(ErrorCode::Unauthenticated.http_status(), 401);
         assert_eq!(ErrorCode::NotFound.http_status(), 404);
         assert_eq!(ErrorCode::AlreadyExists.http_status(), 409);
-        assert_eq!(ErrorCode::RateLimitExceeded.http_status(), 429);
+        assert_eq!(ErrorCode::RateLimitExceeded.http_status(), 503);
     }
 
     #[test]

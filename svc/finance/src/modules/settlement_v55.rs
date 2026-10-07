@@ -172,15 +172,16 @@ impl ValidationError {
             | ValidationError::CurrencyNotWhitelisted(_)
             | ValidationError::ReconEmptyInput { .. }
             | ValidationError::ReconCurrencyMismatch { .. } => 400,
-            // 业务规则不允许 → 422 Unprocessable Entity
+            // 业务规则不允许（请求阶段即不满足）→ 400 Bad Request
             ValidationError::SelfTransfer(_, _)
             | ValidationError::AmountAboveLimit { .. }
-            | ValidationError::StaleReconciliation { .. }
             | ValidationError::ScheduledPaymentInPast { .. }
             | ValidationError::InvoiceTaxMismatch { .. }
             | ValidationError::InvoiceItemsTotalMismatch { .. }
             | ValidationError::InvoiceDateInFuture { .. }
-            | ValidationError::InvalidStatus(_) => 422,
+            | ValidationError::InvalidStatus(_) => 400,
+            // 资源状态冲突（乐观锁/状态机）→ 409 Conflict
+            ValidationError::StaleReconciliation { .. } => 409,
         }
     }
 
@@ -2003,7 +2004,7 @@ pub async fn reconcile_batch_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::reconcile_batch(&pool, tenant_id, req).await {
         Ok(results) => Json(ApiResponse::success(results, "批量对账完成")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2021,7 +2022,7 @@ pub async fn reconcile_single_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match AutoReconciler::reconcile_single(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "对账完成")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2177,12 +2178,12 @@ pub async fn validate_invoice_handler(
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
     // 在 validate_invoice 内部调用 prevalidate_recognize；为使语义化错误向上透出，这里把 sqlx::Error::Decode
-    // 还原为 ValidationError，并通过 handler 返回精确 HTTP code（400/422）。
+    // 还原为 ValidationError，并通过 handler 返回精确 HTTP code（400/409）。
     match InvoiceRecognizer::validate_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "验证通过")),
         Err(sqlx::Error::Decode(msg)) => {
-            // 保守：无法从 Box<dyn Error> 直接下钻时，以 422 抛出完整消息（已包含 ValidationError Display）
-            Json(ApiResponse::error(422, &msg.to_string()))
+            // 保守：无法从 Box<dyn Error> 直接下钻时，以 400 抛出完整消息（已包含 ValidationError Display）
+            Json(ApiResponse::error(400, &msg.to_string()))
         }
         Err(e) => Json(crate::shared::err_resp(e)),
     }
@@ -2199,7 +2200,7 @@ pub async fn post_invoice_handler(
     // 若识别层已批准未来日期，可在后续审批流里单独覆盖 allow_future_date=true 分支。
     match InvoiceRecognizer::post_invoice(&pool, tenant_id, id).await {
         Ok(invoice) => Json(ApiResponse::success(invoice, "过账成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2269,7 +2270,7 @@ pub async fn initiate_payment_handler(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match ElectronicPaymentProcessor::initiate_payment(&pool, tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "支付发起成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2298,10 +2299,10 @@ pub async fn reverse_payment_handler(
 ) -> Json<ApiResponse<PaymentResult>> {
     let pool = state.pool.clone();
     let tenant_id = get_tenant_id_from_claims(&claims);
-    // PaymentResult 状态纯函数校验：仅 Completed 允许冲正；否则在 handler 层以 422 返回精确语义错误。
+    // PaymentResult 状态纯函数校验：仅 Completed 允许冲正；否则在 handler 层以 400 返回精确语义错误。
     match ElectronicPaymentProcessor::reverse_payment(&pool, tenant_id, id).await {
         Ok(result) => Json(ApiResponse::success(result, "冲正成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -2361,7 +2362,7 @@ pub async fn schedule_payment_handler(
         .await
     {
         Ok(request) => Json(ApiResponse::success(request, "调度成功")),
-        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(422, &msg.to_string())),
+        Err(sqlx::Error::Decode(msg)) => Json(ApiResponse::error(400, &msg.to_string())),
         Err(e) => Json(crate::shared::err_resp(e)),
     }
 }
@@ -3983,15 +3984,15 @@ mod tests {
     }
 
     #[test]
-    fn http_status_code_422_for_business_rule_errors() {
+    fn http_status_code_400_for_business_rule_errors() {
         let now = Utc::now();
         assert_eq!(
             ValidationError::InvalidStatus("x".into()).http_status_code(),
-            422
+            400
         );
         assert_eq!(
             ValidationError::SelfTransfer("a".into(), "b".into()).http_status_code(),
-            422
+            400
         );
         assert_eq!(
             ValidationError::AmountAboveLimit {
@@ -3999,7 +4000,7 @@ mod tests {
                 limit: 0.5
             }
             .http_status_code(),
-            422
+            400
         );
         assert_eq!(
             ValidationError::StaleReconciliation {
@@ -4007,7 +4008,7 @@ mod tests {
                 max_age_days: 180
             }
             .http_status_code(),
-            422
+            409
         );
         assert_eq!(
             ValidationError::ScheduledPaymentInPast {
@@ -4015,7 +4016,7 @@ mod tests {
                 now
             }
             .http_status_code(),
-            422
+            400
         );
         assert_eq!(
             ValidationError::InvoiceTaxMismatch {
@@ -4023,7 +4024,7 @@ mod tests {
                 items_tax: 2.0
             }
             .http_status_code(),
-            422
+            400
         );
         assert_eq!(
             ValidationError::InvoiceItemsTotalMismatch {
@@ -4031,7 +4032,7 @@ mod tests {
                 items_total: 2.0
             }
             .http_status_code(),
-            422
+            400
         );
         assert_eq!(
             ValidationError::InvoiceDateInFuture {
@@ -4039,7 +4040,7 @@ mod tests {
                 now
             }
             .http_status_code(),
-            422
+            400
         );
     }
 
@@ -5055,7 +5056,7 @@ mod tests {
         w.invoice.status = InvoiceStatus::Recognized.as_str().to_string();
         let e = w.prevalidate_post(now, false).unwrap_err();
         assert!(matches!(e, ValidationError::InvalidStatus(_)));
-        assert_eq!(e.http_status_code(), 422);
+        assert_eq!(e.http_status_code(), 400);
     }
 
     // ----- 规则 E · EmptyField / ReconEmptyInput / StaleRecon / ScheduledInPast · 5 cases -----
@@ -5178,7 +5179,7 @@ mod tests {
         w.invoice.invoice_date = now + Duration::days(30);
         let e = w.prevalidate_post(now, false).unwrap_err();
         assert!(matches!(e, ValidationError::InvoiceDateInFuture { .. }));
-        assert_eq!(e.http_status_code(), 422);
+        assert_eq!(e.http_status_code(), 400);
     }
 
     // ----- 规则 G · ReconCurrencyMismatch · 1 case -----
