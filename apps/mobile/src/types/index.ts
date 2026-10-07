@@ -1,14 +1,18 @@
-export type ApiResponse<T> = {
-  success: boolean;
-  message?: string;
-  data: T;
+// 与 @topems/shared-types 形状一致的类型改为共享包单一信源（薄壳），
+// 避免本地重复定义。
+// - ApiResponse：复用共享 HTTP 信封（success/message/data/timestamp），仅把 code
+//   放宽为可选——mobile 的离线/同步合成响应不带 code（见 src/api/offline.ts）。
+// - LoginCredentials：与共享 LoginRequest 形状一致（username + password），保留旧导出名。
+// 其余 mobile 业务模型（camelCase UI 态，含 User 的 name/roles/full_name 等别名）
+// 与共享包 dist 形状不同，保留本地定义（差异见交付说明）。
+import type { ApiResponse as SharedApiResponse, LoginRequest } from '@topems/shared-types';
+
+export type ApiResponse<T> = Omit<SharedApiResponse<T>, 'code'> & {
   code?: number;
 };
 
-export type LoginCredentials = {
-  username: string;
-  password: string;
-};
+/** 登录入参：与共享包 LoginRequest 形状一致（username + password），保留旧导出名。 */
+export type LoginCredentials = LoginRequest;
 
 export type User = {
   id: string;
