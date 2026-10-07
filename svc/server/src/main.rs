@@ -16,6 +16,7 @@ use topems_server::modules::dashboard_module::DashboardModule;
 use topems_server::modules::finance_module::FinanceModule;
 use topems_server::platform_module::PlatformModule;
 use topems_server::ModuleRegistry;
+use topems_shared_bootstrap::shutdown_signal;
 use topems_shared_core::logging::init_logging;
 
 #[tokio::main]
@@ -554,6 +555,12 @@ async fn main() -> Result<()> {
         port
     );
 
-    axum::serve(listener, app).await?;
+    // 优雅停机：SIGTERM/Ctrl+C → 停止接受新连接、排空在途请求。
+    // 模块化单体的 PgPool 由各 real_module 内部持有（经 bootstrap_service 创建），
+    // 本函数不直接触达；HTTP 排空后随 runtime 退出由 sqlx 自行回收。
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+    tracing::info!("✅ topems-server 优雅停机完成");
     Ok(())
 }

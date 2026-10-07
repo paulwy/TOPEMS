@@ -93,6 +93,69 @@ use topems_shared_observability::telemetry::{init_telemetry, telemetry_middlewar
 
 use topems_shared_event::event::{EventPublisher, RabbitMqSubscriber};
 
+/// 优雅停机信号 future：合并 SIGTERM 与 Ctrl+C。
+///
+/// 用法：
+/// ```ignore
+/// axum::serve(listener, app)
+///     .with_graceful_shutdown(shutdown_signal())
+///     .await?;
+/// ```
+///
+/// 首次信号到达后本 future 完成，axum 随即停止接受新连接并排空在途请求；
+/// 若排空期间再次收到信号（兜底，避免慢请求卡死停机），直接以退出码 130 终止进程。
+/// 在非 Unix 平台（如 Windows）仅监听 Ctrl+C。
+pub async fn shutdown_signal() {
+    let ctrl_c = async {
+        if let Err(e) = tokio::signal::ctrl_c().await {
+            tracing::warn!("ctrl_c 监听异常: {:?}", e);
+        }
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        use tokio::signal::unix::{signal, SignalKind};
+        match signal(SignalKind::terminate()) {
+            Ok(mut s) => {
+                s.recv().await;
+            }
+            Err(e) => {
+                tracing::warn!("SIGTERM handler 安装失败: {:?}", e);
+                // 挂起，等价于「永远不会收到 SIGTERM」
+                std::future::pending::<()>().await
+            }
+        }
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    tracing::info!("📩 收到停机信号，开始优雅停机：停止接受新连接、排空在途请求...");
+
+    // 二次信号强制退出（兜底）—— 作为独立后台任务，不阻塞本 future 的返回；
+    // 本 future 返回后 axum 才开始排空，此任务在排空期间持续监听第二次信号。
+    #[cfg(unix)]
+    tokio::spawn(async {
+        use tokio::signal::unix::{signal, SignalKind};
+        let ctrl_c2 = tokio::signal::ctrl_c();
+        let mut sig2 = match signal(SignalKind::terminate()) {
+            Ok(s) => s,
+            Err(_) => return, // 监听器装不上就放弃兜底
+        };
+        tokio::select! {
+            _ = ctrl_c2 => {}
+            _ = sig2.recv() => {}
+        }
+        tracing::warn!("⚠️ 收到第二次停机信号，强制退出（排空被取消）");
+        std::process::exit(130);
+    });
+}
+
 /// 服务启动配置
 #[derive(Debug, Clone)]
 pub struct BootstrapConfig {
@@ -305,7 +368,14 @@ impl ServiceBootstrap {
         );
 
         let listener = tokio::net::TcpListener::bind(&addr).await?;
-        axum::serve(listener, app).await?;
+        axum::serve(listener, app)
+            .with_graceful_shutdown(shutdown_signal())
+            .await?;
+
+        // 优雅停机：HTTP 层已排空，关闭数据库连接池（等待在途查询结束）
+        tracing::info!("🔌 正在关闭数据库连接池...");
+        db.close().await;
+        tracing::info!("✅ 优雅停机完成");
 
         Ok(())
     }
@@ -934,7 +1004,13 @@ pub async fn run(app: Application) -> Result<()> {
     tracing::info!("🌐 {} 服务地址: {}", app.name, addr);
     tracing::info!("🔒 认证保护已启用");
     let listener = tokio::net::TcpListener::bind(&addr).await?;
-    axum::serve(listener, app.router).await?;
+    // 优雅停机：SIGTERM/Ctrl+C → 停止接受新连接、排空在途请求。
+    // 本函数不持有 PgPool（连接池由调用方通过 bootstrap_service 拿到的 ctx.db 管理），
+    // HTTP 排空后直接返回；sqlx 连接随 runtime 结束关闭。
+    axum::serve(listener, app.router)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+    tracing::info!("✅ {} 优雅停机完成", app.name);
     Ok(())
 }
 

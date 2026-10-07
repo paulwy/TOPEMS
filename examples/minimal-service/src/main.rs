@@ -61,7 +61,29 @@ async fn main() {
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8099").await.unwrap();
     info!("🌐 服务地址: http://localhost:8099");
 
-    axum::serve(listener, app).await.unwrap();
+    // 优雅停机：监听 Ctrl+C / SIGTERM，停止接受新连接并排空在途请求
+    let shutdown = async {
+        let ctrl_c = tokio::signal::ctrl_c();
+        #[cfg(unix)]
+        let terminate = async {
+            let mut sig = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+                .expect("install SIGTERM handler");
+            sig.recv().await;
+        };
+        #[cfg(not(unix))]
+        let terminate = std::future::pending::<()>();
+        tokio::select! {
+            _ = ctrl_c => {}
+            _ = terminate => {}
+        }
+        info!("📩 收到停机信号，开始优雅停机...");
+    };
+
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown)
+        .await
+        .unwrap();
+    info!("✅ minimal-service 优雅停机完成");
 }
 
 /// Ping 端点 - 使用 shared-core 的统一响应格式
