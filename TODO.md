@@ -474,6 +474,13 @@
 - **覆盖分布**：audit/handlers.rs + audit_query.rs（200+ 展开行）+ automation/mod.rs 全 handler（~200）+ doc/handlers.rs + doc/services（~150）+ shared 基建（AppState/中间件/服务发现）——三盲区从 0 到实际执行覆盖
 - **lib 三域 14.39%**（本轮仅新增 tests/ 未改 src/，数字保持）——lib 与集成测试是互补口径
 
+### ✅ 集成测试扩展（2026-10-07，commit f03e87b8e/94b931a0a）
+
+- **doc templates/folders**（doc_meta_e2e 5 用例全绿）：list_templates 空 / create_template（name+category）/ get_template roundtrip（Option）/ list_folders 空 / create_folder
+- **automation variables**（automation_variables_e2e 5 用例全绿）：list / create / get roundtrip（Path<String>）/ update value / delete（{success:true} + 后 get None）
+- **unified-core 集成测试累计 35 用例全绿**（audit 9 + doc 8 + automation 8 + doc_meta 5 + variables 5）
+- ⏳ 剩余低价值目标评估：audit permission_changes/access_logs（依赖 audit_logs/permission_audit_logs/core_login_logs 3 表 + Value 断言弱）、automation runs（SELECT * 15+ 列建表 + 空场景为主）——**建议暂缓**，等 http_endpoint_tests 批次
+
 ## 2026-10-07 第二梯队修复（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第二梯队修复摘要.md`）
 
 ### ✅ 已完成并提交
