@@ -1,10 +1,10 @@
-use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType,
@@ -95,9 +95,9 @@ impl HrmEventHandlers {
 
         match event.event_type {
             EventType::PermissionChanged => {
-                let payload: PermissionChangedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析权限变更事件 payload 失败: {}", e)))?;
+                let payload: PermissionChangedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析权限变更事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[hrm] 权限变更: user_id={}, 新增 {} 项, 移除 {} 项",
@@ -119,9 +119,9 @@ impl HrmEventHandlers {
                 tracing::info!("[hrm] 用户权限缓存已失效: user_id={}", payload.user_id);
             }
             EventType::PositionCreated => {
-                let payload: PositionCreatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析岗位创建事件 payload 失败: {}", e)))?;
+                let payload: PositionCreatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析岗位创建事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[hrm] 岗位创建: {} ({}, {})",
@@ -145,9 +145,9 @@ impl HrmEventHandlers {
                 );
             }
             EventType::PositionUpdated => {
-                let payload: PositionUpdatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析岗位更新事件 payload 失败: {}", e)))?;
+                let payload: PositionUpdatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析岗位更新事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[hrm] 岗位更新: position_id={}, changes={}",
@@ -172,9 +172,9 @@ impl HrmEventHandlers {
                 tracing::info!("[hrm] 岗位缓存已失效: position_id={}", payload.position_id);
             }
             EventType::PositionDeleted => {
-                let payload: PositionDeletedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析岗位删除事件 payload 失败: {}", e)))?;
+                let payload: PositionDeletedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析岗位删除事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!("[hrm] 岗位删除: position_id={}", payload.position_id);
 

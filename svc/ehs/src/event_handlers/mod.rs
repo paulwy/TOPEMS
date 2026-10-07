@@ -1,8 +1,8 @@
-use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, HrmEmployeeCreatedPayload,
     HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
@@ -60,9 +60,10 @@ impl EhsEventHandlers {
             event.trace_id
         );
 
-        let payload: LimsInspectionAbnormalDetectedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 LIMS 异常检测事件 payload 失败: {}", e)))?;
+        let payload: LimsInspectionAbnormalDetectedPayload =
+            event.parse_payload().map_err(|e| {
+                TopemsError::ValidationFailed(format!("解析 LIMS 异常检测事件 payload 失败: {}", e))
+            })?;
 
         tracing::info!(
             "[ehs] 检测异常: 任务 {}，样品 {}，检测项: {}，结论: {}",
@@ -117,9 +118,9 @@ impl EhsEventHandlers {
             event.trace_id
         );
 
-        let payload: QmsCorrectiveActionCreatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析纠正措施创建事件 payload 失败: {}", e)))?;
+        let payload: QmsCorrectiveActionCreatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析纠正措施创建事件 payload 失败: {}", e))
+        })?;
 
         tracing::info!(
             "[ehs] 纠正措施: {} ({})，负责人: {}",
@@ -180,9 +181,9 @@ impl EhsEventHandlers {
 
         match event.event_type {
             EventType::HrmEmployeeCreated => {
-                let payload: HrmEmployeeCreatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析员工创建事件 payload 失败: {}", e)))?;
+                let payload: HrmEmployeeCreatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析员工创建事件 payload 失败: {}", e))
+                })?;
                 employee_id = payload.employee_id;
                 name = Some(payload.name);
                 email = Some(payload.email);
@@ -194,9 +195,9 @@ impl EhsEventHandlers {
                 );
             }
             EventType::HrmEmployeeUpdated => {
-                let payload: HrmEmployeeUpdatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析员工更新事件 payload 失败: {}", e)))?;
+                let payload: HrmEmployeeUpdatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析员工更新事件 payload 失败: {}", e))
+                })?;
                 employee_id = payload.employee_id;
                 if let Some(new_data) = payload.new_data {
                     name = new_data

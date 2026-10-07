@@ -1,6 +1,6 @@
-use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
     EhsHazardReportedPayload, Event, EventResult, EventSubscriber, EventType,
     QmsInspectionCompletedPayload,
@@ -42,9 +42,9 @@ impl LimsEventHandlers {
             event.trace_id
         );
 
-        let payload: QmsInspectionCompletedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 QMS 检验完成事件 payload 失败: {}", e)))?;
+        let payload: QmsInspectionCompletedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 QMS 检验完成事件 payload 失败: {}", e))
+        })?;
 
         tracing::info!(
             "[lims] QMS 检验完成: {} ({})，产品: {:?}，结果: {}，合格率: {:?}%",
@@ -102,9 +102,9 @@ impl LimsEventHandlers {
             event.trace_id
         );
 
-        let payload: EhsHazardReportedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 EHS 隐患报告事件 payload 失败: {}", e)))?;
+        let payload: EhsHazardReportedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 EHS 隐患报告事件 payload 失败: {}", e))
+        })?;
 
         tracing::info!(
             "[lims] EHS 隐患报告: {} ({})，类别: {}，等级: {}，位置: {:?}",
