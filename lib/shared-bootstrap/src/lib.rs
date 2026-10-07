@@ -780,7 +780,9 @@ pub async fn register_with_consul(
 /// 包装函数。调用者传入服务特定的 `schema_defense::run_schema_migration_and_verify`
 /// 即可获得统一行为：
 ///   1. 可选 master_data_refs 表创建（模式 B：crm/erp/scm/pdm 为 true）
-///   2. schema_defense 调用 + 失败仅日志记录（不阻塞启动）
+///   2. schema_defense 调用；失败默认仅日志记录（不阻塞启动）。
+///      设置环境变量 `SCHEMA_DEFENSE_STRICT=1`（/true/yes/on）后进入严格模式：
+///      schema 防御失败会向上传播导致启动 fail-fast（AR-06）。
 ///
 /// # 参数
 /// - `pool`: 数据库连接池
@@ -825,8 +827,33 @@ where
     }
     if let Err(e) = schema_defense_fn(pool).await {
         tracing::error!("[{}] Schema 防御检查失败: {:?}", service_name, e);
+        // AR-06: SCHEMA_DEFENSE_STRICT=true 时进入严格模式 → 把错误向上传播，导致启动 fail-fast；
+        // 默认（未设置 / 假值）保持现状：仅记录错误，不阻塞启动。
+        if schema_defense_strict() {
+            anyhow::bail!(
+                "[{}] Schema 防御检查失败（SCHEMA_DEFENSE_STRICT 已启用，启动中止）: {:?}",
+                service_name,
+                e
+            );
+        }
     }
     Ok(())
+}
+
+/// AR-06: 是否启用 schema 防御「严格模式」。
+///
+/// 环境变量 `SCHEMA_DEFENSE_STRICT` 取真值（`1` / `true` / `yes` / `on`，大小写不敏感、可带空白）
+/// 时返回 `true`；未设置、为空或为任何其他值时返回 `false`（默认行为：schema 防御失败仅记录、
+/// 不阻塞启动）。严格模式下 [`default_init_db`] 会把 schema 防御错误向上传播使服务启动失败。
+fn schema_defense_strict() -> bool {
+    matches!(
+        env::var("SCHEMA_DEFENSE_STRICT")
+            .unwrap_or_default()
+            .trim()
+            .to_ascii_lowercase()
+            .as_str(),
+        "1" | "true" | "yes" | "on"
+    )
 }
 
 /// 组装最终的应用路由：rate_limit + auth + rls 中间件、CORS、Prometheus、telemetry 层

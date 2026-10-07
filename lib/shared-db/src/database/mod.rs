@@ -76,10 +76,62 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
         })
     });
 
-    let pool = options
-        .connect(&config.url)
-        .await
-        .map_err(|e| TopemsError::Database(format!("Failed to create database pool: {}", e)))?;
+    // AR-07: 启动期 DB 连接「有限重试 + 指数退避」。
+    // 场景：编排（docker-compose / k8s）同时拉起应用与 Postgres，应用先到会一次性失败 crash；
+    // 重试 3 次（500ms → 1s → 2s，累计约 3.5s）覆盖 Postgres 就绪窗口；三次仍失败则照旧
+    // fail-fast 向上返回错误（语义与改动前一致，只是日志多了重试信息）。
+    const DB_CONNECT_MAX_ATTEMPTS: u32 = 3;
+    const DB_CONNECT_BACKOFF_MS: [u64; 3] = [500, 1_000, 2_000];
+
+    let mut last_err: Option<sqlx::Error> = None;
+    let pool = {
+        let mut ready: Option<PgPool> = None;
+        for attempt in 1..=DB_CONNECT_MAX_ATTEMPTS {
+            match options.clone().connect(&config.url).await {
+                Ok(p) => {
+                    if attempt > 1 {
+                        info!(
+                            "数据库连接池在第 {}/{} 次尝试后创建成功",
+                            attempt, DB_CONNECT_MAX_ATTEMPTS
+                        );
+                    }
+                    ready = Some(p);
+                    break;
+                }
+                Err(e) => {
+                    let backoff_ms =
+                        DB_CONNECT_BACKOFF_MS[((attempt - 1) as usize).min(DB_CONNECT_BACKOFF_MS.len() - 1)];
+                    if attempt < DB_CONNECT_MAX_ATTEMPTS {
+                        tracing::warn!(
+                            "数据库连接池第 {}/{} 次尝试失败: {e} — {}ms 后重试",
+                            attempt,
+                            DB_CONNECT_MAX_ATTEMPTS,
+                            backoff_ms
+                        );
+                        tokio::time::sleep(Duration::from_millis(backoff_ms)).await;
+                    } else {
+                        tracing::error!(
+                            "数据库连接池第 {}/{} 次尝试仍失败（已用尽 {} 次尝试，fail-fast）: {e}",
+                            attempt,
+                            DB_CONNECT_MAX_ATTEMPTS,
+                            DB_CONNECT_MAX_ATTEMPTS
+                        );
+                    }
+                    last_err = Some(e);
+                }
+            }
+        }
+        match ready {
+            Some(p) => p,
+            None => {
+                let last = last_err.expect("循环仅在所有尝试失败后落到此处，last_err 必为 Some");
+                return Err(TopemsError::Database(format!(
+                    "Failed to create database pool after {DB_CONNECT_MAX_ATTEMPTS} attempts: {last}"
+                ))
+                .into());
+            }
+        }
+    };
 
     info!(
         "✅ 数据库连接池创建成功 (max: {}, min: {}, timeout: {}s, lifetime: {}s)",
