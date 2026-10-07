@@ -222,9 +222,9 @@ const ReportBuilderPage = () => {
   };
   const getStatusChip = (status: string) => {
     const configs: Record<string, { color: 'success' | 'warning' | 'primary'; label: string }> = {
-      published: { color: 'success', label: i18n.t('bi.report_builder_page.text_dca0c1') },
-      draft: { color: 'warning', label: i18n.t('bi.report_builder_page.text_22b433') },
-      archived: { color: 'primary', label: i18n.t('bi.report_builder_page.text_c3ba16') },
+      published: { color: 'success', label: i18n.t('bi.report_builder_page.status_published') },
+      draft: { color: 'warning', label: i18n.t('bi.report_builder_page.status_draft') },
+      archived: { color: 'primary', label: i18n.t('bi.report_builder_page.status_archived') },
     };
     const config = configs[status] || configs.draft;
     return (
@@ -238,11 +238,11 @@ const ReportBuilderPage = () => {
   };
   const getTypeLabel = (type: string) => {
     const types: Record<string, string> = {
-      sales: i18n.t('bi.report_builder_page.text_87821b'),
-      quality: i18n.t('bi.report_builder_page.text_c42f64'),
-      inventory: i18n.t('bi.report_builder_page.text_25f371'),
-      hr: i18n.t('bi.report_builder_page.text_76cb67'),
-      finance: i18n.t('bi.report_builder_page.text_af7d91'),
+      sales: i18n.t('bi.report_builder_page.sales_report_type'),
+      quality: i18n.t('bi.report_builder_page.quality_report_status'),
+      inventory: i18n.t('bi.report_builder_page.inventory_report_type'),
+      hr: i18n.t('bi.report_builder_page.hr_report_type'),
+      finance: i18n.t('bi.report_builder_page.finance_report_type'),
       production: i18n.t('bi.report_builder_page.production'),
     };
     return types[type] || type;
@@ -487,9 +487,9 @@ const ReportBuilderPage = () => {
             sx={{ mb: 3 }}
           >
             <Tab label={i18n.t('bi.report_builder_page.info')} />
-            <Tab label={i18n.t('bi.report_builder_page.text_8abf44')} />
-            <Tab label={i18n.t('bi.report_builder_page.text_d75a79')} />
-            <Tab label={i18n.t('bi.report_builder_page.text_a1bd97')} />
+            <Tab label={i18n.t('bi.report_builder_page.datasource_tab')} />
+            <Tab label={i18n.t('bi.report_builder_page.field_config_tab')} />
+            <Tab label={i18n.t('bi.report_builder_page.schedule_tab')} />
           </Tabs>
           {builderTab === 0 && (
             <Box sx={{ maxWidth: 600 }}>
@@ -536,7 +536,7 @@ const ReportBuilderPage = () => {
                 <InputLabel>{i18n.t('bi.report_builder_page.k30')}</InputLabel>
                 <Select
                   value={formData.format || 'excel'}
-                  label={i18n.t('bi.report_builder_page.text_6f07cd')}
+                  label={i18n.t('bi.report_builder_page.default_format_label')}
                   onChange={(e) => setFormData({ ...formData, format: e.target.value })}
                 >
                   <MenuItem value='excel'>Excel</MenuItem>
@@ -578,20 +578,20 @@ const ReportBuilderPage = () => {
               >
                 {[
                   {
-                    name: i18n.t('bi.report_builder_page.text_93c5b1'),
-                    desc: i18n.t('bi.report_builder_page.text_08d85e'),
+                    name: i18n.t('bi.report_builder_page.monthly_sales_report'),
+                    desc: i18n.t('bi.report_builder_page.sales_report_desc'),
                   },
                   {
-                    name: i18n.t('bi.report_builder_page.text_945783'),
-                    desc: i18n.t('bi.report_builder_page.text_a13eb6'),
+                    name: i18n.t('bi.report_builder_page.quality_weekly_report'),
+                    desc: i18n.t('bi.report_builder_page.quality_report_desc'),
                   },
                   {
-                    name: i18n.t('bi.report_builder_page.text_4ae3a8'),
-                    desc: i18n.t('bi.report_builder_page.text_386c14'),
+                    name: i18n.t('bi.report_builder_page.inventory_monthly_report'),
+                    desc: i18n.t('bi.report_builder_page.inventory_report_desc'),
                   },
                   {
-                    name: i18n.t('bi.report_builder_page.text_3d2c48'),
-                    desc: i18n.t('bi.report_builder_page.text_95ccc2'),
+                    name: i18n.t('bi.report_builder_page.hr_monthly_report'),
+                    desc: i18n.t('bi.report_builder_page.hr_report_desc'),
                   },
                 ].map((template, idx) => (
                   <Grid
@@ -660,7 +660,7 @@ const ReportBuilderPage = () => {
                 <InputLabel>{i18n.t('bi.report_builder_page.k35')}</InputLabel>
                 <Select
                   value=''
-                  label={i18n.t('bi.report_builder_page.text_0bca05')}
+                  label={i18n.t('bi.report_builder_page.select_dataset_label')}
                   onChange={() => {}}
                 >
                   <MenuItem value='ds-001'>{i18n.t('bi.report_builder_page.k36')}</MenuItem>
@@ -693,7 +693,7 @@ const ReportBuilderPage = () => {
                 <InputLabel>{i18n.t('bi.report_builder_page.k39')}</InputLabel>
                 <Select
                   value='daily'
-                  label={i18n.t('bi.report_builder_page.text_6b6f80')}
+                  label={i18n.t('bi.report_builder_page.execution_frequency_label')}
                   onChange={() => {}}
                 >
                   <MenuItem value='daily'>{i18n.t('bi.report_builder_page.k40')}</MenuItem>
@@ -731,7 +731,7 @@ const ReportBuilderPage = () => {
   );
   return (
     <PageContainer
-      title={i18n.t('bi.report_builder_page.text_95a8d1')}
+      title={i18n.t('bi.report_builder_page.report_builder_title')}
       subtitle={i18n.t('bi.report_builder_page.create_1')}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
@@ -746,7 +746,7 @@ const ReportBuilderPage = () => {
         breadcrumbs={[
           { label: i18n.t('bi.report_builder_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: i18n.t('bi.report_builder_page.text_fc00f3') },
+          { label: i18n.t('bi.report_builder_page.report_tab') },
         ]}
       >
         {viewMode === 'list' ? renderListView() : renderBuilderView()}

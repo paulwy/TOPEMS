@@ -221,10 +221,10 @@ const BiPermissionPage = () => {
   );
   const getResourceTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
-      dashboard: i18n.t('bi.bi_permission_page.text_3fa8b3'),
-      dataset: i18n.t('bi.bi_permission_page.text_e20804'),
-      datasource: i18n.t('bi.bi_permission_page.text_c11322'),
-      report: i18n.t('bi.bi_permission_page.text_fc00f3'),
+      dashboard: i18n.t('bi.bi_permission_page.dashboard_resource'),
+      dataset: i18n.t('bi.bi_permission_page.dataset_resource'),
+      datasource: i18n.t('bi.bi_permission_page.datasource_resource'),
+      report: i18n.t('bi.bi_permission_page.report_resource'),
     };
     return labels[type] || type;
   };
@@ -232,7 +232,7 @@ const BiPermissionPage = () => {
     const labels: Record<string, string> = {
       view: i18n.t('bi.bi_permission_page.view'),
       edit: i18n.t('bi.bi_permission_page.edit'),
-      admin: i18n.t('bi.bi_permission_page.text_08b55f'),
+      admin: i18n.t('bi.bi_permission_page.system_mgmt_role'),
       export: i18n.t('bi.bi_permission_page.export'),
     };
     return labels[type] || type;
@@ -248,8 +248,8 @@ const BiPermissionPage = () => {
   };
   return (
     <PageContainer
-      title={i18n.t('bi.bi_permission_page.text_c62b5d')}
-      subtitle={i18n.t('bi.bi_permission_page.text_6a9997')}
+      title={i18n.t('bi.bi_permission_page.permission_mgmt_heading')}
+      subtitle={i18n.t('bi.bi_permission_page.page_subtitle')}
       headerProps={{
         pageIcon: <Shield style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.error.main} 0%, ${ct.error[600]} 100%)`,
@@ -263,7 +263,7 @@ const BiPermissionPage = () => {
         breadcrumbs={[
           { label: i18n.t('bi.bi_permission_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: i18n.t('bi.bi_permission_page.text_23bbdd') },
+          { label: i18n.t('bi.bi_permission_page.permission_mgmt_tab') },
         ]}
       >
         <Box sx={{ p: 3 }}>
@@ -445,13 +445,13 @@ const BiPermissionPage = () => {
               >
                 <Tab
                   value='row-level'
-                  label={i18n.t('bi.bi_permission_page.text_578248')}
+                  label={i18n.t('bi.bi_permission_page.row_level_tab')}
                   icon={<KeyRound size={16} />}
                   iconPosition='start'
                 />
                 <Tab
                   value='data'
-                  label={i18n.t('bi.bi_permission_page.text_679f4e')}
+                  label={i18n.t('bi.bi_permission_page.data_permission_tab')}
                   icon={<Database size={16} />}
                   iconPosition='start'
                 />
@@ -833,7 +833,7 @@ const BiPermissionPage = () => {
             <DialogTitle>
               {editingItem
                 ? i18n.t('bi.bi_permission_page.edit_3')
-                : i18n.t('bi.bi_permission_page.text_f36bf2')}
+                : i18n.t('bi.bi_permission_page.new_rule_button')}
             </DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
               <Grid
@@ -863,7 +863,7 @@ const BiPermissionPage = () => {
                     <InputLabel>{i18n.t('bi.bi_permission_page.k20')}</InputLabel>
                     <Select
                       value={formData.data_source_id}
-                      label={i18n.t('bi.bi_permission_page.text_c11322')}
+                      label={i18n.t('bi.bi_permission_page.datasource_resource')}
                       onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
                     >
                       <MenuItem value='ds-001'>{i18n.t('bi.bi_permission_page.k21')}</MenuItem>
@@ -875,7 +875,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label={i18n.t('bi.bi_permission_page.text_099652')}
+                    label={i18n.t('bi.bi_permission_page.rule_name_label')}
                     fullWidth
                     value={formData.table_name}
                     onChange={(e) => setFormData({ ...formData, table_name: e.target.value })}
@@ -883,7 +883,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <TextField
-                    label={i18n.t('bi.bi_permission_page.text_924fa0')}
+                    label={i18n.t('bi.bi_permission_page.data_table_label')}
                     multiline
                     rows={4}
                     fullWidth
@@ -895,12 +895,12 @@ const BiPermissionPage = () => {
                         fontSize: 14,
                       },
                     }}
-                    helperText={i18n.t('bi.bi_permission_page.text_848c70')}
+                    helperText={i18n.t('bi.bi_permission_page.sql_condition_hint')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label={i18n.t('bi.bi_permission_page.text_5885b5')}
+                    label={i18n.t('bi.bi_permission_page.applicable_roles_label')}
                     fullWidth
                     value={(formData.roles || []).join(', ')}
                     onChange={(e) =>
@@ -916,7 +916,7 @@ const BiPermissionPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
-                    label={i18n.t('bi.bi_permission_page.text_d0959e')}
+                    label={i18n.t('bi.bi_permission_page.user_label')}
                     fullWidth
                     value={(formData.users || []).join(', ')}
                     onChange={(e) =>
@@ -933,13 +933,13 @@ const BiPermissionPage = () => {
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <TextField
                     type='number'
-                    label={i18n.t('bi.bi_permission_page.text_ee8ecb')}
+                    label={i18n.t('bi.bi_permission_page.priority_label')}
                     fullWidth
                     value={formData.priority}
                     onChange={(e) =>
                       setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
                     }
-                    helperText={i18n.t('bi.bi_permission_page.text_3446e5')}
+                    helperText={i18n.t('bi.bi_permission_page.priority_hint')}
                   />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>

@@ -22,7 +22,7 @@ export const getStatusStyle = (status: string) => {
     return { bgcolor: 'warning.light', color: 'warning.700' };
   if (
     s.includes('inactive') ||
-    s.includes(i18n.t('bi.gis_page_components__table_utils.text_710ad0'))
+    s.includes(i18n.t('bi.gis_page_components__table_utils.disabled_filter'))
   )
     return { bgcolor: 'error.lighter', color: 'error.darker' };
   return { bgcolor: 'grey.100', color: 'grey.600' };
@@ -75,8 +75,8 @@ export const getDevicePointColumns = (
 ): ColumnDef<DevicePoint>[] => [
   { accessorKey: 'name', header: i18n.t('bi.gis_page_components__table_utils.equipment_name') },
   { accessorKey: 'device_type', header: i18n.t('bi.gis_page_components__table_utils.type') },
-  { accessorKey: 'latitude', header: i18n.t('bi.gis_page_components__table_utils.text_6acaee') },
-  { accessorKey: 'longitude', header: i18n.t('bi.gis_page_components__table_utils.text_3d18ca') },
+  { accessorKey: 'latitude', header: i18n.t('bi.gis_page_components__table_utils.latitude_col') },
+  { accessorKey: 'longitude', header: i18n.t('bi.gis_page_components__table_utils.longitude_col') },
   {
     accessorKey: 'status',
     header: i18n.t('bi.gis_page_components__table_utils.status'),
@@ -102,7 +102,7 @@ export const getPipelineColumns = (
   { accessorKey: 'pipeline_type', header: i18n.t('bi.gis_page_components__table_utils.type') },
   {
     accessorKey: 'start_point',
-    header: i18n.t('bi.gis_page_components__table_utils.text_9b5774'),
+    header: i18n.t('bi.gis_page_components__table_utils.start_point_col'),
     cell: ({ row }) => {
       const point = row.original.start_point;
       return Array.isArray(point) ? `${point[0].toFixed(4)}, ${point[1].toFixed(4)}` : '';
@@ -110,7 +110,7 @@ export const getPipelineColumns = (
   },
   {
     accessorKey: 'end_point',
-    header: i18n.t('bi.gis_page_components__table_utils.text_950b2a'),
+    header: i18n.t('bi.gis_page_components__table_utils.end_point_col'),
     cell: ({ row }) => {
       const point = row.original.end_point;
       return Array.isArray(point) ? `${point[0].toFixed(4)}, ${point[1].toFixed(4)}` : '';
@@ -139,14 +139,14 @@ export const getStorageLocationColumns = (
 ): ColumnDef<StorageLocation>[] => [
   { accessorKey: 'name', header: i18n.t('bi.gis_page_components__table_utils.location_name') },
   { accessorKey: 'location_type', header: i18n.t('bi.gis_page_components__table_utils.type') },
-  { accessorKey: 'capacity', header: i18n.t('bi.gis_page_components__table_utils.text_fe7d74') },
+  { accessorKey: 'capacity', header: i18n.t('bi.gis_page_components__table_utils.capacity_col') },
   {
     accessorKey: 'current_usage',
-    header: i18n.t('bi.gis_page_components__table_utils.text_de3b57'),
+    header: i18n.t('bi.gis_page_components__table_utils.current_usage_col'),
   },
   {
     accessorKey: 'latitude',
-    header: i18n.t('bi.gis_page_components__table_utils.text_d5490c'),
+    header: i18n.t('bi.gis_page_components__table_utils.latitude_alt_col'),
     cell: ({ row }) => {
       return `${row.original.latitude?.toFixed(4)}, ${row.original.longitude?.toFixed(4)}`;
     },
@@ -169,7 +169,10 @@ export const getEvidenceRecordColumns = (
 ): ColumnDef<EvidenceRecord>[] => [
   { accessorKey: 'title', header: i18n.t('bi.gis_page_components__table_utils.title') },
   { accessorKey: 'evidence_type', header: i18n.t('bi.gis_page_components__table_utils.type') },
-  { accessorKey: 'recorded_by', header: i18n.t('bi.gis_page_components__table_utils.text_bf425d') },
+  {
+    accessorKey: 'recorded_by',
+    header: i18n.t('bi.gis_page_components__table_utils.recorded_by_col'),
+  },
   {
     accessorKey: 'recorded_at',
     header: i18n.t('bi.gis_page_components__table_utils.time'),
@@ -196,7 +199,7 @@ export const getFactoryMapColumns = (
   onDelete: (id: string) => void
 ): ColumnDef<FactoryMap>[] => [
   { accessorKey: 'name', header: i18n.t('bi.gis_page_components__table_utils.name_1') },
-  { accessorKey: 'code', header: i18n.t('bi.gis_page_components__table_utils.text_c515f3') },
+  { accessorKey: 'code', header: i18n.t('bi.gis_page_components__table_utils.code_col') },
   { accessorKey: 'map_type', header: i18n.t('bi.gis_page_components__table_utils.type_1') },
   {
     accessorKey: 'created_at',

@@ -286,7 +286,7 @@ const BIModuleDetailPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const config = moduleConfig[moduleId || 'rs'] || {
-    name: i18n.t('bi.bi_module_detail_page.text_912fa5'),
+    name: i18n.t('bi.bi_module_detail_page.rd_mgmt_crumb'),
     icon: '📊',
     color: 'grey.500',
   };
@@ -343,11 +343,11 @@ const BIModuleDetailPage = () => {
           ([key, value]) => ({
             name:
               key === 'research'
-                ? i18n.t('bi.bi_module_detail_page.text_fc7393')
+                ? i18n.t('bi.bi_module_detail_page.status_research')
                 : key === 'development'
-                  ? i18n.t('bi.bi_module_detail_page.text_3ff3c3')
+                  ? i18n.t('bi.bi_module_detail_page.status_development')
                   : key === 'improvement'
-                    ? i18n.t('bi.bi_module_detail_page.text_50b419')
+                    ? i18n.t('bi.bi_module_detail_page.status_improvement')
                     : key,
             value: value as number,
           })
@@ -370,7 +370,7 @@ const BIModuleDetailPage = () => {
         distributionData = Object.entries(summaryData.defect_types).map(([key, value]) => ({
           name:
             key === 'material'
-              ? i18n.t('bi.bi_module_detail_page.text_ebc9d9')
+              ? i18n.t('bi.bi_module_detail_page.material_category')
               : key === 'process'
                 ? i18n.t('bi.bi_module_detail_page.process_route')
                 : key === 'equipment'
@@ -382,10 +382,10 @@ const BIModuleDetailPage = () => {
         distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
           name:
             key === 'high'
-              ? i18n.t('bi.bi_module_detail_page.text_4433e7')
+              ? i18n.t('bi.bi_module_detail_page.risk_high')
               : key === 'medium'
-                ? i18n.t('bi.bi_module_detail_page.text_8a8992')
-                : i18n.t('bi.bi_module_detail_page.text_b56976'),
+                ? i18n.t('bi.bi_module_detail_page.risk_medium')
+                : i18n.t('bi.bi_module_detail_page.risk_low'),
           value: value as number,
         }));
       } else if (modId === 'pdm' && summaryData?.product_line_usage) {
@@ -445,8 +445,8 @@ const BIModuleDetailPage = () => {
   const chartCards: ChartCardType[] = [
     {
       id: 'timeline-chart',
-      title: i18n.t('bi.bi_module_detail_page.text_a819e1'),
-      subtitle: i18n.t('bi.bi_module_detail_page.text_8268d9'),
+      title: i18n.t('bi.bi_module_detail_page.time_trend_title'),
+      subtitle: i18n.t('bi.bi_module_detail_page.kpi_trend_subtitle'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -482,8 +482,8 @@ const BIModuleDetailPage = () => {
     },
     {
       id: 'distribution-chart',
-      title: i18n.t('bi.bi_module_detail_page.text_772b34'),
-      subtitle: i18n.t('bi.bi_module_detail_page.text_c9454d'),
+      title: i18n.t('bi.bi_module_detail_page.distribution_analysis_title'),
+      subtitle: i18n.t('bi.bi_module_detail_page.metric_distribution_subtitle'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -529,7 +529,7 @@ const BIModuleDetailPage = () => {
     return (
       <PageContainer
         title={i18n.t('bi.bi_module_detail_page.detail')}
-        subtitle={i18n.t('bi.bi_module_detail_page.text_b5cd64')}
+        subtitle={i18n.t('bi.bi_module_detail_page.module_insights_subtitle')}
         padding={false}
         maxWidth={false}
       >
@@ -549,7 +549,7 @@ const BIModuleDetailPage = () => {
   return (
     <PageContainer
       title={`${config.name}${i18n.t('pages.bi_module_detail_page.k37')}`}
-      subtitle={i18n.t('bi.bi_module_detail_page.text_b5cd64')}
+      subtitle={i18n.t('bi.bi_module_detail_page.module_insights_subtitle')}
       padding={false}
       maxWidth={false}
     >
@@ -610,8 +610,8 @@ const BIModuleDetailPage = () => {
         )}
         <Card>
           <CardHeader
-            title={i18n.t('bi.bi_module_detail_page.text_615db0')}
-            subheader={i18n.t('bi.bi_module_detail_page.text_e6af8d')}
+            title={i18n.t('bi.bi_module_detail_page.detail_data_title')}
+            subheader={i18n.t('bi.bi_module_detail_page.module_data_details')}
             avatar={<TableIcon size={20} />}
           />
           <CardContent>

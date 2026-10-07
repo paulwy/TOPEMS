@@ -203,12 +203,12 @@ const DataAnalysisPage = () => {
               }
             >
               {type === 'bar'
-                ? t('bi.data_analysis_page.text_7c8ee6')
+                ? t('bi.data_analysis_page.chart_bar')
                 : type === 'line'
-                  ? t('bi.data_analysis_page.text_c9c9bd')
+                  ? t('bi.data_analysis_page.chart_line')
                   : type === 'area'
-                    ? t('bi.data_analysis_page.text_af99db')
-                    : t('bi.data_analysis_page.text_d5e33d')}
+                    ? t('bi.data_analysis_page.chart_area')
+                    : t('bi.data_analysis_page.chart_pie')}
             </Button>
           ))}
         </Box>
@@ -261,9 +261,9 @@ const DataAnalysisPage = () => {
             <Chip
               label={
                 drillLevel === 0
-                  ? t('bi.data_analysis_page.text_047d4a')
+                  ? t('bi.data_analysis_page.region_nationwide')
                   : drillLevel === 1
-                    ? t('bi.data_analysis_page.text_4a7b52')
+                    ? t('bi.data_analysis_page.region_label')
                     : t('bi.data_analysis_page.product_2')
               }
               size='small'
@@ -364,7 +364,7 @@ const DataAnalysisPage = () => {
                     color: 'secondary.main',
                   },
                   {
-                    label: t('bi.data_analysis_page.text_53c7e7'),
+                    label: t('bi.data_analysis_page.sales_amount_axis'),
                     value: '¥291.7',
                     change: '+3.8%',
                     color: 'warning.main',
@@ -540,8 +540,8 @@ const DataAnalysisPage = () => {
                   {
                     date: '2026-06-28',
                     order: 'SO-20260628-001',
-                    customer: t('bi.data_analysis_page.text_615db5'),
-                    product: t('bi.data_analysis_page.text_161783'),
+                    customer: t('bi.data_analysis_page.customer_zhangsan'),
+                    product: t('bi.data_analysis_page.product_electronics'),
                     qty: 2,
                     amount: 12800,
                     status: t('bi.data_analysis_page.completed'),
@@ -549,8 +549,8 @@ const DataAnalysisPage = () => {
                   {
                     date: '2026-06-28',
                     order: 'SO-20260628-002',
-                    customer: t('bi.data_analysis_page.text_36c942'),
-                    product: t('bi.data_analysis_page.text_86f5cb'),
+                    customer: t('bi.data_analysis_page.customer_lisi'),
+                    product: t('bi.data_analysis_page.product_clothing'),
                     qty: 5,
                     amount: 1950,
                     status: t('bi.data_analysis_page.completed'),
@@ -558,17 +558,17 @@ const DataAnalysisPage = () => {
                   {
                     date: '2026-06-27',
                     order: 'SO-20260627-001',
-                    customer: t('bi.data_analysis_page.text_3228f3'),
-                    product: t('bi.data_analysis_page.text_0c3bd4'),
+                    customer: t('bi.data_analysis_page.customer_wangwu'),
+                    product: t('bi.data_analysis_page.product_home_goods'),
                     qty: 1,
                     amount: 2299,
-                    status: t('bi.data_analysis_page.text_d8476e'),
+                    status: t('bi.data_analysis_page.status_completed'),
                   },
                   {
                     date: '2026-06-27',
                     order: 'SO-20260627-002',
-                    customer: t('bi.data_analysis_page.text_b43536'),
-                    product: t('bi.data_analysis_page.text_e7e7de'),
+                    customer: t('bi.data_analysis_page.customer_zhaoliu'),
+                    product: t('bi.data_analysis_page.product_food'),
                     qty: 3,
                     amount: 8997,
                     status: t('bi.data_analysis_page.completed'),
@@ -576,8 +576,8 @@ const DataAnalysisPage = () => {
                   {
                     date: '2026-06-26',
                     order: 'SO-20260626-001',
-                    customer: t('bi.data_analysis_page.text_f9c684'),
-                    product: t('bi.data_analysis_page.text_467546'),
+                    customer: t('bi.data_analysis_page.customer_qianqi'),
+                    product: t('bi.data_analysis_page.product_other'),
                     qty: 4,
                     amount: 1196,
                     status: t('bi.data_analysis_page.completed'),
@@ -617,8 +617,8 @@ const DataAnalysisPage = () => {
 
   return (
     <PageContainer
-      title={t('bi.data_analysis_page.text_ffa095')}
-      subtitle={t('bi.data_analysis_page.text_131448')}
+      title={t('bi.data_analysis_page.page_title')}
+      subtitle={t('bi.data_analysis_page.page_subtitle')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary.main} 0%, ${ct.secondary[400]} 100%)`,
@@ -632,7 +632,7 @@ const DataAnalysisPage = () => {
         breadcrumbs={[
           { label: t('bi.data_analysis_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: t('bi.data_analysis_page.text_3faef8') },
+          { label: t('bi.data_analysis_page.data_analysis_tab') },
         ]}
       >
         <Box sx={{ p: 3 }}>
@@ -666,17 +666,17 @@ const DataAnalysisPage = () => {
                 onChange={(_, v) => setActiveTab(v)}
               >
                 <Tab
-                  label={t('bi.data_analysis_page.text_c6b32e')}
+                  label={t('bi.data_analysis_page.analysis_tab')}
                   icon={<BarChart3 size={16} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label={t('bi.data_analysis_page.text_7f3ddd')}
+                  label={t('bi.data_analysis_page.detail_tab')}
                   icon={<Table2 size={16} />}
                   iconPosition='start'
                 />
                 <Tab
-                  label={t('bi.data_analysis_page.text_56a37c')}
+                  label={t('bi.data_analysis_page.data_detail_tab')}
                   icon={<Layers size={16} />}
                   iconPosition='start'
                 />

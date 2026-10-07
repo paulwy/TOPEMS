@@ -163,21 +163,21 @@ const BIComparisonPage = () => {
   const statsCards: StatCard[] = [
     {
       id: 'total-items',
-      title: i18n.t('bi.bi_comparison_page.text_82bbf6'),
+      title: i18n.t('bi.bi_comparison_page.total_comparison_items'),
       value: filteredData.length,
       icon: <TrendingUp size={24} />,
       color: 'primary',
     },
     {
       id: 'positive-change',
-      title: i18n.t('bi.bi_comparison_page.text_192089'),
+      title: i18n.t('bi.bi_comparison_page.increased_items_count'),
       value: filteredData.filter((d) => d.changeRate > 0).length,
       icon: <TrendingUp size={24} />,
       color: 'success',
     },
     {
       id: 'negative-change',
-      title: i18n.t('bi.bi_comparison_page.text_dd5404'),
+      title: i18n.t('bi.bi_comparison_page.decreased_items_count'),
       value: filteredData.filter((d) => d.changeRate < 0).length,
       icon: <TrendingDown size={24} />,
       color: 'error',
@@ -206,7 +206,7 @@ const BIComparisonPage = () => {
   }
   return (
     <PageContainer
-      title={i18n.t('bi.bi_comparison_page.text_440e3b')}
+      title={i18n.t('bi.bi_comparison_page.comparison_analysis_title')}
       subtitle={i18n.t('bi.bi_comparison_page.time')}
       padding={false}
       maxWidth={false}
@@ -217,7 +217,7 @@ const BIComparisonPage = () => {
         breadcrumbs={[
           { label: i18n.t('bi.bi_comparison_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: i18n.t('bi.bi_comparison_page.text_faa198') },
+          { label: i18n.t('bi.bi_comparison_page.comparison_analysis_tab') },
         ]}
         stats={statsCards}
         loading={loading}
@@ -272,7 +272,7 @@ const BIComparisonPage = () => {
                   <InputLabel>{i18n.t('bi.bi_comparison_page.k0')}</InputLabel>
                   <Select
                     value={currentComparisonId || ''}
-                    label={i18n.t('bi.bi_comparison_page.text_1a2beb')}
+                    label={i18n.t('bi.bi_comparison_page.comparison_scheme')}
                     onChange={(e) => setCurrentComparisonId(e.target.value)}
                   >
                     {comparisons.map((comp) => (
@@ -309,7 +309,7 @@ const BIComparisonPage = () => {
                 <InputLabel>{i18n.t('bi.bi_comparison_page.k3')}</InputLabel>
                 <Select
                   value={comparisonDimension}
-                  label={i18n.t('bi.bi_comparison_page.text_457941')}
+                  label={i18n.t('bi.bi_comparison_page.comparison_dimension')}
                   onChange={(e) => setComparisonDimension(e.target.value)}
                 >
                   <MenuItem value='halfYear'>{i18n.t('bi.bi_comparison_page.k4')}</MenuItem>
@@ -328,11 +328,11 @@ const BIComparisonPage = () => {
               <ExportButton
                 data={exportData}
                 columns={[
-                  i18n.t('bi.bi_comparison_page.text_97d1f3'),
-                  i18n.t('bi.bi_comparison_page.text_f776bc'),
-                  i18n.t('bi.bi_comparison_page.text_841866'),
+                  i18n.t('bi.bi_comparison_page.comparison_item_label'),
+                  i18n.t('bi.bi_comparison_page.scheme_a_label'),
+                  i18n.t('bi.bi_comparison_page.scheme_b_label'),
                   i18n.t('bi.bi_comparison_page.difference'),
-                  i18n.t('bi.bi_comparison_page.text_afb4b6'),
+                  i18n.t('bi.bi_comparison_page.k18'),
                 ]}
                 filename='bi-comparison-data'
               />
@@ -342,8 +342,8 @@ const BIComparisonPage = () => {
         {/* Comparison chart */}
         <Card sx={{ mb: 3 }}>
           <CardHeader
-            title={i18n.t('bi.bi_comparison_page.text_70ef92')}
-            subheader={i18n.t('bi.bi_comparison_page.text_d7d403')}
+            title={i18n.t('bi.bi_comparison_page.trend_comparison_title')}
+            subheader={i18n.t('bi.bi_comparison_page.change_rate_trend')}
           />
           <CardContent>
             <ResponsiveContainer
@@ -366,12 +366,12 @@ const BIComparisonPage = () => {
                 <Tooltip />
                 <Legend />
                 <Bar
-                  dataKey={i18n.t('bi.bi_comparison_page.text_f776bc')}
+                  dataKey={i18n.t('bi.bi_comparison_page.scheme_a_label')}
                   fill={BIChartColors.series[0]}
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
-                  dataKey={i18n.t('bi.bi_comparison_page.text_841866')}
+                  dataKey={i18n.t('bi.bi_comparison_page.scheme_b_label')}
                   fill={BIChartColors.series[1]}
                   radius={[4, 4, 0, 0]}
                 />
@@ -382,8 +382,8 @@ const BIComparisonPage = () => {
         {/* Comparison data table */}
         <Card>
           <CardHeader
-            title={i18n.t('bi.bi_comparison_page.text_f9aa62')}
-            subheader={i18n.t('bi.bi_comparison_page.text_008210')}
+            title={i18n.t('bi.bi_comparison_page.comparison_details_title')}
+            subheader={i18n.t('bi.bi_comparison_page.comparison_item_details')}
           />
           <CardContent>
             <Paper sx={{ overflow: 'auto' }}>
@@ -488,7 +488,7 @@ const BIComparisonPage = () => {
                 onPageChange={handleChangePage}
                 rowsPerPage={rowsPerPage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
-                labelRowsPerPage={i18n.t('bi.bi_comparison_page.text_b6960b')}
+                labelRowsPerPage={i18n.t('bi.bi_comparison_page.rows_per_page')}
               />
             </Paper>
           </CardContent>

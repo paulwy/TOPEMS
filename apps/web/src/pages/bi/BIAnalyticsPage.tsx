@@ -121,7 +121,7 @@ const ModuleCard = ({
         />
       </Box>
 
-      <Box sx={{ position: 'relative', zIndex: 10 }}>
+      <Box sx={{ position: 'relative', zIndex: (theme) => theme.zIndex.contentLayer }}>
         <Box
           sx={{
             display: 'flex',
@@ -509,7 +509,7 @@ const BIAnalyticsPage = () => {
   const statsCards: StatCard[] = [
     {
       id: 'total-projects',
-      title: t('bi.bi_analytics_page.text_3ea3ec'),
+      title: t('bi.bi_analytics_page.total_projects'),
       value: (overview?.total_projects as number) ?? 120,
       change: 12.5,
       changeLabel: t('bi.bi_analytics_page.last_month'),
@@ -519,7 +519,7 @@ const BIAnalyticsPage = () => {
     },
     {
       id: 'total-samples',
-      title: t('bi.bi_analytics_page.text_14078c'),
+      title: t('bi.bi_analytics_page.total_samples'),
       value: (overview?.total_samples as number) ?? 2450,
       change: 8.3,
       changeLabel: t('bi.bi_analytics_page.last_month'),
@@ -539,7 +539,7 @@ const BIAnalyticsPage = () => {
     },
     {
       id: 'active-risks',
-      title: t('bi.bi_analytics_page.text_b77979'),
+      title: t('bi.bi_analytics_page.total_risks'),
       value: (overview?.active_risks as number) ?? 15,
       change: -3.2,
       changeLabel: t('bi.bi_analytics_page.last_month'),
@@ -558,8 +558,8 @@ const BIAnalyticsPage = () => {
   const chartCards: ChartCardType[] = [
     {
       id: 'module-bar-chart',
-      title: t('bi.bi_analytics_page.text_7057af'),
-      subtitle: t('bi.bi_analytics_page.text_f9e510'),
+      title: t('bi.bi_analytics_page.module_data_distribution'),
+      subtitle: t('bi.bi_analytics_page.module_metric_comparison'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -598,8 +598,8 @@ const BIAnalyticsPage = () => {
     },
     {
       id: 'module-pie-chart',
-      title: t('bi.bi_analytics_page.text_c7dd9d'),
-      subtitle: t('bi.bi_analytics_page.text_ab0b07'),
+      title: t('bi.bi_analytics_page.module_share_analysis'),
+      subtitle: t('bi.bi_analytics_page.module_metric_share'),
       chart: (
         <ResponsiveContainer
           width='100%'
@@ -639,8 +639,8 @@ const BIAnalyticsPage = () => {
 
   return (
     <PageContainer
-      title={t('bi.bi_analytics_page.text_9cfb27')}
-      subtitle={t('bi.bi_analytics_page.text_1ca74a')}
+      title={t('bi.bi_analytics_page.data_analytics_heading')}
+      subtitle={t('bi.bi_analytics_page.multi_dim_insights')}
       padding={false}
       maxWidth={false}
     >
@@ -650,7 +650,7 @@ const BIAnalyticsPage = () => {
         breadcrumbs={[
           { label: t('bi.bi_analytics_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: t('bi.bi_analytics_page.text_c93998') },
+          { label: t('bi.bi_analytics_page.data_analytics_tab') },
         ]}
         stats={statsCards}
         charts={chartCards}

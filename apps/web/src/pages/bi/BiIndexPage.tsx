@@ -167,9 +167,9 @@ const BiIndexPage = () => {
 
   const keyMetrics = [
     {
-      title: t('bi.bi_index_page.text_3fa8b3'),
+      title: t('bi.bi_index_page.dashboard_stat'),
       value: '12',
-      unit: t('bi.bi_index_page.text_930882'),
+      unit: t('bi.bi_index_page.unit_count'),
       change: 2,
       trend: 'up' as const,
       color: 'secondary.main',
@@ -177,9 +177,9 @@ const BiIndexPage = () => {
       sparklineData: [2, 4, 5, 6, 8, 10, 12],
     },
     {
-      title: t('bi.bi_index_page.text_fc00f3'),
+      title: t('bi.bi_index_page.report_stat'),
       value: '28',
-      unit: t('bi.bi_index_page.text_2a5da6'),
+      unit: t('bi.bi_index_page.data_unit'),
       change: 5,
       trend: 'up' as const,
       color: 'warning.main',
@@ -187,9 +187,9 @@ const BiIndexPage = () => {
       sparklineData: [10, 12, 15, 18, 22, 25, 28],
     },
     {
-      title: t('bi.bi_index_page.text_e20804'),
+      title: t('bi.bi_index_page.dataset_stat'),
       value: '16',
-      unit: t('bi.bi_index_page.text_930882'),
+      unit: t('bi.bi_index_page.unit_count'),
       change: 3,
       trend: 'up' as const,
       color: 'success.main',
@@ -197,9 +197,9 @@ const BiIndexPage = () => {
       sparklineData: [5, 7, 8, 10, 12, 14, 16],
     },
     {
-      title: t('bi.bi_index_page.text_fff307'),
+      title: t('bi.bi_index_page.insights_stat'),
       value: '8',
-      unit: t('bi.bi_index_page.text_cc1bac'),
+      unit: t('bi.bi_index_page.unit_insight'),
       change: 1,
       trend: 'up' as const,
       color: 'primary.main',
@@ -209,19 +209,19 @@ const BiIndexPage = () => {
   ];
 
   const trendData = [
-    { name: t('bi.bi_index_page.text_1603b0'), 访问量: 1200, 报表数: 45, 分析数: 32 },
-    { name: t('bi.bi_index_page.text_b5a6a0'), 访问量: 1500, 报表数: 52, 分析数: 38 },
-    { name: t('bi.bi_index_page.text_e60725'), 访问量: 1800, 报表数: 61, 分析数: 45 },
-    { name: t('bi.bi_index_page.text_170fc8'), 访问量: 1600, 报表数: 55, 分析数: 42 },
-    { name: t('bi.bi_index_page.text_eb79ce'), 访问量: 2100, 报表数: 68, 分析数: 52 },
-    { name: t('bi.bi_index_page.text_245751'), 访问量: 900, 报表数: 30, 分析数: 20 },
-    { name: t('bi.bi_index_page.text_562d74'), 访问量: 800, 报表数: 25, 分析数: 18 },
+    { name: t('bi.bi_index_page.monday'), 访问量: 1200, 报表数: 45, 分析数: 32 },
+    { name: t('bi.bi_index_page.tuesday'), 访问量: 1500, 报表数: 52, 分析数: 38 },
+    { name: t('bi.bi_index_page.wednesday'), 访问量: 1800, 报表数: 61, 分析数: 45 },
+    { name: t('bi.bi_index_page.thursday'), 访问量: 1600, 报表数: 55, 分析数: 42 },
+    { name: t('bi.bi_index_page.friday'), 访问量: 2100, 报表数: 68, 分析数: 52 },
+    { name: t('bi.bi_index_page.saturday'), 访问量: 900, 报表数: 30, 分析数: 20 },
+    { name: t('bi.bi_index_page.sunday'), 访问量: 800, 报表数: 25, 分析数: 18 },
   ];
 
   return (
     <PageContainer
-      title={t('bi.bi_index_page.text_7d6871')}
-      subtitle={t('bi.bi_index_page.text_22e202')}
+      title={t('bi.bi_index_page.bi_hero_title')}
+      subtitle={t('bi.bi_index_page.hero_subtitle')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.main} 100%)`,
@@ -392,7 +392,7 @@ const BiIndexPage = () => {
                       {t('bi.bi_index_page.k15')}
                     </Typography>
                     <Chip
-                      label={t('bi.bi_index_page.text_531609')}
+                      label={t('bi.bi_index_page.last_7_days')}
                       size='small'
                       variant='outlined'
                     />
@@ -402,9 +402,9 @@ const BiIndexPage = () => {
                     data={trendData}
                     xKey='name'
                     yKeys={[
-                      t('bi.bi_index_page.text_4461a6'),
-                      t('bi.bi_index_page.text_67211e'),
-                      t('bi.bi_index_page.text_3d5d87'),
+                      t('bi.bi_index_page.visit_count'),
+                      t('bi.bi_index_page.report_count'),
+                      t('bi.bi_index_page.analysis_count'),
                     ]}
                     chartHeight={280}
                     chartWidth={700}
@@ -451,23 +451,23 @@ const BiIndexPage = () => {
                       >
                         {[
                           {
-                            name: t('bi.bi_index_page.text_5c4640'),
-                            desc: t('bi.bi_index_page.text_e8ccfa'),
+                            name: t('bi.bi_index_page.rd_mgmt_category'),
+                            desc: t('bi.bi_index_page.rd_project_analysis_desc'),
                             type: 'bar',
                           },
                           {
                             name: t('bi.bi_index_page.production'),
-                            desc: t('bi.bi_index_page.text_1a3263'),
+                            desc: t('bi.bi_index_page.production_analysis_desc'),
                             type: 'line',
                           },
                           {
-                            name: t('bi.bi_index_page.text_e556ab'),
+                            name: t('bi.bi_index_page.supply_chain_category'),
                             desc: t('bi.bi_index_page.warehouse'),
                             type: 'pie',
                           },
                           {
-                            name: t('bi.bi_index_page.text_96f1d5'),
-                            desc: t('bi.bi_index_page.text_f9b6a5'),
+                            name: t('bi.bi_index_page.quality_mgmt_category'),
+                            desc: t('bi.bi_index_page.quality_inspection_analysis'),
                             type: 'table',
                           },
                         ].map((item, idx) => (
@@ -539,21 +539,25 @@ const BiIndexPage = () => {
                       >
                         {[
                           {
-                            name: t('bi.bi_index_page.text_a71de2'),
-                            type: t('bi.bi_index_page.text_7f0dc5'),
+                            name: t('bi.bi_index_page.monthly_sales_report'),
+                            type: t('bi.bi_index_page.sales_report_type'),
                             format: 'Excel',
                           },
                           {
-                            name: t('bi.bi_index_page.text_da4ee0'),
-                            type: t('bi.bi_index_page.text_3a7170'),
+                            name: t('bi.bi_index_page.quality_weekly_report'),
+                            type: t('bi.bi_index_page.quality_report_type'),
                             format: 'PDF',
                           },
                           {
-                            name: t('bi.bi_index_page.text_51c296'),
-                            type: t('bi.bi_index_page.text_0eac88'),
+                            name: t('bi.bi_index_page.inventory_monthly_report'),
+                            type: t('bi.bi_index_page.inventory_report_type'),
                             format: 'Excel',
                           },
-                          { name: t('bi.bi_index_page.text_c272ae'), type: 'HR', format: 'PDF' },
+                          {
+                            name: t('bi.bi_index_page.hr_monthly_report'),
+                            type: 'HR',
+                            format: 'PDF',
+                          },
                         ].map((item, idx) => (
                           <ListItem
                             key={idx}
@@ -674,19 +678,19 @@ const BiIndexPage = () => {
                   >
                     {[
                       {
-                        name: t('bi.bi_index_page.text_f94f6c'),
-                        rows: t('bi.bi_index_page.text_bbaf48'),
+                        name: t('bi.bi_index_page.sales_analysis_dataset'),
+                        rows: t('bi.bi_index_page.rows_12450'),
                         status: t('bi.bi_index_page.normal'),
                       },
                       {
                         name: t('bi.bi_index_page.production_1'),
-                        rows: t('bi.bi_index_page.text_1d93f6'),
+                        rows: t('bi.bi_index_page.rows_3680'),
                         status: t('bi.bi_index_page.normal'),
                       },
                       {
-                        name: t('bi.bi_index_page.text_7252f8'),
-                        rows: t('bi.bi_index_page.text_2ded3c'),
-                        status: t('bi.bi_index_page.text_22b433'),
+                        name: t('bi.bi_index_page.inventory_turnover_dataset'),
+                        rows: t('bi.bi_index_page.rows_8215'),
+                        status: t('bi.bi_index_page.draft_status'),
                       },
                     ].map((item, idx) => (
                       <ListItem

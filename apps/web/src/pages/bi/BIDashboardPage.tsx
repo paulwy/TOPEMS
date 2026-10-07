@@ -232,7 +232,7 @@ const BIDashboardPage = () => {
   });
   const handleCreateDashboard = () => {
     const data: Partial<Dashboard> = {
-      name: createDialog.name || i18n.t('bi.bi_dashboard_page.text_d5e229'),
+      name: createDialog.name || i18n.t('bi.bi_dashboard_page.name_label'),
       description: createDialog.description,
       owner_id: 'current-user',
       is_public: false,
@@ -297,7 +297,7 @@ const BIDashboardPage = () => {
   }
   return (
     <PageContainer
-      title={i18n.t('bi.bi_dashboard_page.text_286397')}
+      title={i18n.t('bi.bi_dashboard_page.bi_heading')}
       subtitle={i18n.t('bi.bi_dashboard_page.create')}
       headerProps={{
         pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
@@ -312,7 +312,7 @@ const BIDashboardPage = () => {
         breadcrumbs={[
           { label: i18n.t('bi.bi_dashboard_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: i18n.t('bi.bi_dashboard_page.text_286397') },
+          { label: i18n.t('bi.bi_dashboard_page.bi_heading') },
         ]}
       >
         <Box sx={{ p: 3 }}>
@@ -332,13 +332,13 @@ const BIDashboardPage = () => {
               >
                 <Tab
                   value='dashboards'
-                  label={i18n.t('bi.bi_dashboard_page.text_3fa8b3')}
+                  label={i18n.t('bi.bi_dashboard_page.dashboard_tab')}
                   icon={<LayoutDashboard size={18} />}
                   iconPosition='start'
                 />
                 <Tab
                   value='templates'
-                  label={i18n.t('bi.bi_dashboard_page.text_59cf15')}
+                  label={i18n.t('bi.bi_dashboard_page.template_tab')}
                   icon={<FolderOpen size={18} />}
                   iconPosition='start'
                 />
@@ -464,7 +464,7 @@ const BIDashboardPage = () => {
                     >
                       {dashboard.is_public && (
                         <Chip
-                          label={i18n.t('bi.bi_dashboard_page.text_b6a098')}
+                          label={i18n.t('bi.bi_dashboard_page.public_badge')}
                           size='small'
                           color='primary'
                           sx={{ position: 'absolute', top: 8, right: 8 }}
@@ -529,12 +529,12 @@ const BIDashboardPage = () => {
                         )}
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Chip
-                            label={i18n.t('bi.bi_dashboard_page.text_d09504')}
+                            label={i18n.t('bi.bi_dashboard_page.analysis_tab')}
                             size='small'
                             variant='outlined'
                           />
                           <Chip
-                            label={i18n.t('bi.bi_dashboard_page.text_7e6875')}
+                            label={i18n.t('bi.bi_dashboard_page.visualization_tab')}
                             size='small'
                             variant='outlined'
                           />
@@ -553,7 +553,7 @@ const BIDashboardPage = () => {
                             <Edit2 sx={{ width: 18, height: 18 }} />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title={i18n.t('bi.bi_dashboard_page.text_25fe25')}>
+                        <Tooltip title={i18n.t('bi.bi_dashboard_page.delete_action')}>
                           <IconButton
                             size='small'
                             onClick={(e) => {
@@ -568,8 +568,8 @@ const BIDashboardPage = () => {
                         <Tooltip
                           title={
                             dashboard.is_public
-                              ? i18n.t('bi.bi_dashboard_page.text_a81fcd')
-                              : i18n.t('bi.bi_dashboard_page.text_8b4b56')
+                              ? i18n.t('bi.bi_dashboard_page.public_label')
+                              : i18n.t('bi.bi_dashboard_page.private_label')
                           }
                         >
                           <IconButton
@@ -772,8 +772,8 @@ const BIDashboardPage = () => {
                         <Eye sx={{ mr: 2 }} />
                       )}
                       {contextDashboard.is_public
-                        ? i18n.t('bi.bi_dashboard_page.text_a81fcd')
-                        : i18n.t('bi.bi_dashboard_page.text_8b4b56')}
+                        ? i18n.t('bi.bi_dashboard_page.public_label')
+                        : i18n.t('bi.bi_dashboard_page.private_label')}
                     </MenuItem>
                     <Divider />
                     <MenuItem
