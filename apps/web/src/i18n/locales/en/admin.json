@@ -1275,8 +1275,15 @@
   "admin.database_structure_page.cancel": "Cancel",
   "admin.database_structure_page.preview_sql": "Preview SQL",
   "admin.database_structure_page.sql_preview": "SQL Preview",
-  "admin.database_structure_page.execute_confirm": "This operation will modify the table structure and record it in change history. Confirm Execute??",
-  "admin.database_structure_page.confirm_execute": "Confirm Execute",
+  "admin.database_structure_page.execute_confirm": "This action no longer executes DDL directly. Click \"Get Migration Suggestion\" to generate idempotent SQL, then apply via the migration chain.",
+  "admin.database_structure_page.confirm_execute": "Get Migration Suggestion",
+  "admin.database_structure_page.migration_suggestion_title": "Migration Suggestion (Read-only, Not Executed)",
+  "admin.database_structure_page.migration_suggestion_notice": "DDL must go through the migration chain (database/migrations + scripts/migrate.sh). This action no longer executes directly. Copy the SQL below, write it into a migration file, then run via migrate.sh.",
+  "admin.database_structure_page.copy_sql": "Copy SQL",
+  "admin.database_structure_page.copy_success": "SQL copied to clipboard",
+  "admin.database_structure_page.suggestion_add_title": "Add Column Migration Suggestion",
+  "admin.database_structure_page.suggestion_drop_title": "Drop Column Migration Suggestion",
+  "admin.database_structure_page.manage_modify_delete": "View database table structure (DDL is now read-only migration suggestions; apply via migration chain)",
   "admin.rate_limit_config_page.title": "Rate Limiting Configuration",
   "admin.rate_limit_config_page.subtitle": "Multi-dimensional rate limiting and anti-replay protection",
   "admin.rate_limit_config_page.enable_rate_limit": "Enable Rate Limiting",
@@ -2465,7 +2472,6 @@
     "loading_fail": "Load Table Structure Failed",
     "loading_list_fail": "Load List failed",
     "manage": "Database Structure Management",
-    "manage_modify_delete": "View and manage database table structure, supporting add, modify, delete fields",
     "modify": "Modify Field",
     "new_field": "e.g.: new_field",
     "null": "Allow NULL",
@@ -2519,9 +2525,7 @@
     "max_length": "Max Length",
     "cancel": "Cancel",
     "preview_sql": "Preview SQL",
-    "sql_preview": "SQL Preview",
-    "execute_confirm": "This operation will modify the table structure and record it in change history. Confirm Execute??",
-    "confirm_execute": "Confirm Execute"
+    "sql_preview": "SQL Preview"
   },
   "databasestructurepage": {},
   "dict_management_page": {
@@ -4029,7 +4033,6 @@
       "fill": "Field name is required",
       "confirm_delete_column": "Confirm Delete Field \"{{column Name}}\" ??Action Restore!",
       "manage": "Database Structure Management",
-      "manage_modify_delete": "View and manage database table structure, supporting add, modify, delete fields",
       "modify": "Modify Field",
       "delete": "Delete Field",
       "add_column": "Add Field",
@@ -4058,9 +4061,7 @@
       "max_length": "Max Length",
       "cancel": "Cancel",
       "preview_sql": "Preview SQL",
-      "sql_preview": "SQL Preview",
-      "execute_confirm": "This operation will modify the table structure and record it in change history. Confirm Execute??",
-      "confirm_execute": "Confirm Execute"
+      "sql_preview": "SQL Preview"
     },
     "dict_management_page": {
       "text_be5fbb": "Save",

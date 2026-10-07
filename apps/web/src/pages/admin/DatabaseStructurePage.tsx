@@ -5,17 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { MasterDetailPageTemplate, type MasterColumn } from '@/components/templates';
 import { useNavigate } from 'react-router-dom';
-import {
-  Database,
-  Table,
-  Plus,
-  Trash2,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Eye,
-  FileCode,
-} from 'lucide-react';
+import { Database, Table, Plus, Trash2, AlertTriangle, Clock, Eye, FileCode } from 'lucide-react';
 import i18n from '@/i18n';
 import {
   Box,
@@ -75,6 +65,12 @@ const DatabaseStructurePage: React.FC = () => {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [sqlPreview, setSqlPreview] = useState<SqlPreview | null>(null);
   const [pendingColumn, setPendingColumn] = useState<DbColumnDefinition | null>(null);
+  const [suggestionDialog, setSuggestionDialog] = useState<{
+    open: boolean;
+    sql: string;
+    operation: 'add' | 'drop';
+  }>({ open: false, sql: '', operation: 'add' });
+  const [copied, setCopied] = useState(false);
   const [newColumn, setNewColumn] = useState<DbColumnDefinition>({
     column_name: '',
     data_type: 'VARCHAR',
@@ -179,11 +175,10 @@ const DatabaseStructurePage: React.FC = () => {
   const executeAddColumnMutation = useMutation({
     mutationFn: async (params: { table_name: string; column: DbColumnDefinition }) => {
       const res = await dbStructureApi.addColumn(params);
-      if (res.success) return true;
+      if (res.success && res.data) return res.data;
       throw new Error(res.message || i18n.t('admin.database_structure_page.fail'));
     },
-    onSuccess: async () => {
-      showNotification('success', i18n.t('admin.database_structure_page.success'));
+    onSuccess: async (data: string) => {
       setShowPreviewModal(false);
       setShowAddColumnModal(false);
       setNewColumn({
@@ -193,16 +188,7 @@ const DatabaseStructurePage: React.FC = () => {
         default_value: '',
         max_length: 255,
       });
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
+      setSuggestionDialog({ open: true, sql: data, operation: 'add' });
     },
     onError: (err: unknown) => {
       showNotification(
@@ -214,21 +200,11 @@ const DatabaseStructurePage: React.FC = () => {
   const dropColumnMutation = useMutation({
     mutationFn: async (params: { tableName: string; columnName: string }) => {
       const res = await dbStructureApi.dropColumn(params.tableName, params.columnName);
-      if (res.success) return true;
+      if (res.success && res.data) return res.data;
       throw new Error(res.message || i18n.t('admin.database_structure_page.delete_fail'));
     },
-    onSuccess: async () => {
-      showNotification('success', i18n.t('admin.database_structure_page.delete_success'));
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_TABLE_DETAIL_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
-      await queryClient.invalidateQueries({
-        queryKey: QUERY_KEYS.AD_HOC.ADMIN_DB_CHANGES_BASE,
-        exact: false,
-        refetchType: 'active',
-      });
+    onSuccess: async (data: string) => {
+      setSuggestionDialog({ open: true, sql: data, operation: 'drop' });
     },
     onError: (err: unknown) => {
       showNotification(
@@ -262,6 +238,16 @@ const DatabaseStructurePage: React.FC = () => {
       tableName: selectedTable.table_name,
       columnName,
     });
+  };
+  const handleCopySql = async () => {
+    try {
+      await navigator.clipboard.writeText(suggestionDialog.sql);
+      setCopied(true);
+      showNotification('success', i18n.t('admin.database_structure_page.copy_success'));
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      showNotification('error', i18n.t('admin.database_structure_page.copy_success'));
+    }
   };
   const masterColumns: MasterColumn<TableInfo>[] = [
     {
@@ -961,16 +947,101 @@ const DatabaseStructurePage: React.FC = () => {
           </Button>
           <Button
             variant='contained'
-            color='error'
             onClick={handleExecuteAddColumn}
-            startIcon={<CheckCircle size={16} />}
+            startIcon={<FileCode size={16} />}
             sx={{
               textTransform: 'none',
-              bgcolor: 'error.dark',
-              '&:hover': { bgcolor: 'error.darker' },
+              bgcolor: 'primary.dark',
+              '&:hover': { bgcolor: 'primary.dark' },
             }}
           >
             {i18n.t('admin.database_structure_page.confirm_execute')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* 迁移建议结果对话框（只读，不执行） */}
+      <Dialog
+        open={suggestionDialog.open}
+        onClose={() => setSuggestionDialog({ ...suggestionDialog, open: false })}
+        maxWidth='md'
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Stack
+            direction='row'
+            spacing={1.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <FileCode size={20} />
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
+              {i18n.t(
+                suggestionDialog.operation === 'add'
+                  ? 'admin.database_structure_page.suggestion_add_title'
+                  : 'admin.database_structure_page.suggestion_drop_title'
+              )}
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent>
+          <Alert
+            severity='warning'
+            icon={<AlertTriangle size={20} />}
+            sx={{ mb: 2 }}
+          >
+            {i18n.t('admin.database_structure_page.migration_suggestion_notice')}
+          </Alert>
+          <Paper
+            elevation={0}
+            sx={{
+              bgcolor: 'grey.900',
+              p: 2,
+              borderRadius: 1.5,
+              mb: 2,
+              overflow: 'auto',
+              maxHeight: 320,
+            }}
+          >
+            <Box
+              component='pre'
+              sx={{
+                m: 0,
+                fontSize: designTokens.typography.fontSize.scale['0.875rem'],
+                color: 'warning.300',
+                fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
+                whiteSpace: 'pre-wrap',
+                wordBreak: 'break-all',
+              }}
+            >
+              {suggestionDialog.sql}
+            </Box>
+          </Paper>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => setSuggestionDialog({ ...suggestionDialog, open: false })}
+            sx={{
+              textTransform: 'none',
+              color: 'text.secondary',
+              bgcolor: 'grey.100',
+              '&:hover': { bgcolor: 'border.default' },
+            }}
+          >
+            {i18n.t('admin.database_structure_page.cancel')}
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleCopySql}
+            disabled={copied}
+            sx={{
+              textTransform: 'none',
+              bgcolor: 'primary.dark',
+              '&:hover': { bgcolor: 'primary.dark' },
+            }}
+          >
+            {i18n.t('admin.database_structure_page.copy_sql')}
           </Button>
         </DialogActions>
       </Dialog>

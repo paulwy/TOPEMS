@@ -60,8 +60,12 @@ describe('V142 ERP - dbStructureApi', () => {
     });
   });
 
-  it('should add column', async () => {
-    mockClient.post.mockResolvedValue({ success: true, data: { success: true } });
+  it('should add column (read-only migration suggestion)', async () => {
+    mockClient.post.mockResolvedValue({
+      success: true,
+      data: 'ALTER TABLE orders ADD COLUMN total DECIMAL(12,2);',
+      message: '走迁移链',
+    });
     await dbStructureApi.addColumn({
       table_name: 'orders',
       column_name: 'total',
@@ -74,8 +78,12 @@ describe('V142 ERP - dbStructureApi', () => {
     });
   });
 
-  it('should modify column', async () => {
-    mockClient.put.mockResolvedValue({ success: true, data: { success: true } });
+  it('should modify column (read-only migration suggestion)', async () => {
+    mockClient.put.mockResolvedValue({
+      success: true,
+      data: 'ALTER TABLE orders ALTER COLUMN total TYPE DECIMAL(14,2);',
+      message: '走迁移链',
+    });
     await dbStructureApi.modifyColumn('orders', 'total', { data_type: 'DECIMAL(14,2)' });
     expect(mockClient.put).toHaveBeenCalledWith('/db/columns/orders/total', {
       column: { data_type: 'DECIMAL(14,2)' },
@@ -84,8 +92,12 @@ describe('V142 ERP - dbStructureApi', () => {
     });
   });
 
-  it('should drop column', async () => {
-    mockClient.delete.mockResolvedValue({ success: true, data: { success: true } });
+  it('should drop column (read-only migration suggestion)', async () => {
+    mockClient.delete.mockResolvedValue({
+      success: true,
+      data: 'ALTER TABLE orders DROP COLUMN total;',
+      message: '走迁移链',
+    });
     await dbStructureApi.dropColumn('orders', 'total', { confirm: true, reason: '重构' });
     expect(mockClient.delete).toHaveBeenCalledWith('/db/columns/orders/total');
   });
