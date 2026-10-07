@@ -252,6 +252,7 @@ export default function WmsWavePickDetailPage() {
       autoBreadcrumbs
     >
       <DetailPageTemplate
+        emptyState={{ show: !loading && !wave }}
         title={i18n.t('wms:wms_wave_pick_detail_page.v0_0', { v0: wave.wave_pick_number })}
         subtitle={i18n.t('wms:wms_wave_pick_detail_page.v0_1', {
           v0: wave.created_at.slice(0, 10),

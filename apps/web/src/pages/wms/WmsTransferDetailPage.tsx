@@ -253,6 +253,7 @@ export default function WmsTransferDetailPage() {
       autoBreadcrumbs
     >
       <DetailPageTemplate
+        emptyState={{ show: !loading && !transfer }}
         title={i18n.t('wms:wms_transfer_detail_page.v0_4', { v0: transfer.order_number })}
         subtitle={i18n.t('wms:wms_transfer_detail_page.v0_3', {
           v0: transfer.created_at.slice(0, 10),

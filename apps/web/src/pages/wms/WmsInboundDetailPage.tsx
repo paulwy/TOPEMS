@@ -245,6 +245,7 @@ export default function WmsInboundDetailPage() {
       autoBreadcrumbs
     >
       <DetailPageTemplate
+        emptyState={{ show: !loading && !order }}
         title={i18n.t('wms:wms_inbound_detail_page.v0_3', { v0: order.order_number })}
         subtitle={i18n.t('wms:wms_inbound_detail_page.v0_2', {
           v0: order.created_at.slice(0, 10),

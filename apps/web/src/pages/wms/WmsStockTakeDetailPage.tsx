@@ -241,6 +241,7 @@ export default function WmsStockTakeDetailPage() {
       autoBreadcrumbs
     >
       <DetailPageTemplate
+        emptyState={{ show: !loading && !task }}
         title={`${i18n.t('wms.stockTakeDetail.k0')} ${task.stock_take_number}`}
         subtitle={`${i18n.t('pages.wms_stock_take_detail_page.k2')}${
           task.stock_take_type ?? i18n.t('pages.wms_stock_take_detail_page.k3')

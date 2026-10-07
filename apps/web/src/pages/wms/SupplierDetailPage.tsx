@@ -475,6 +475,7 @@ const SupplierDetailPage: React.FC = () => {
           i18n.t('pages.supplier_detail_page.k0')
         }
         loading={loading}
+        emptyState={{ show: !loading && !supplier }}
         backHref={SCM_PATHS.suppliers}
         onBack={() => navigate(SCM_PATHS.suppliers)}
         onEdit={() => setIsEditing(!isEditing)}

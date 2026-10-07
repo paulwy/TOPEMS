@@ -189,6 +189,7 @@ export default function WmsOutboundDetailPage() {
       autoBreadcrumbs
     >
       <DetailPageTemplate
+        emptyState={{ show: !loading && !order }}
         title={i18n.t('wms:wms_outbound_detail_page.v0_3', { v0: order.order_number })}
         subtitle={i18n.t('wms:wms_outbound_detail_page.v0_2', { v0: order.customer_name ?? '-' })}
         detailItemName={order.order_number}

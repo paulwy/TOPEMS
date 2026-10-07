@@ -274,6 +274,7 @@ export default function WmsInventoryMovementDetailPage() {
       autoBreadcrumbs
     >
       <DetailPageTemplate
+        emptyState={{ show: !loading && !move }}
         title={i18n.t('wms:wms_inventory_movement_detail_page.v0_5', {
           v0: move.movement_number ?? move.movement_no,
         })}
