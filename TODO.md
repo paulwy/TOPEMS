@@ -291,7 +291,7 @@
   业务层 Result<_, String> 复查 0 处；check-error-handling --changed-only 无命中
 - **业务层 Result<_, String> 全仓归零**（B7 剩余形态再清一项；累计：静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 业务层 Result<_, String> 7）
 - 剩余（非业务层，建议另议）：~~svc tests 48 处~~（已清零，见第 17 批）
-  + apps/desktop 98 处（Tauri IPC/keystore）
+  + ~~apps/desktop 98 处~~（已清零，见第 18 批）
 
 ### ✅ B7 第 17 批：svc tests 48 处清零（与并行线协作完成，已推送 origin/main）
 
@@ -308,8 +308,29 @@
 - **修复（本会话）**：fe75526f2 的 crm_tests.rs `mod permission_logic_tests` 缺 `use super::*;`（其余 mod 均有）→
   `TopemsError` 在模块内 E0433 未解析 + 顶层 use 报 unused → 补齐 `use super::*;`，编译通过
 - 验证：cargo test --no-run（unified-core/master-data/finance/crm）全绿 0 error；svc tests 全仓复查 `Result<_, String>` 0 处
-- 剩余：apps/desktop 98 处（Tauri IPC/keystore：TopemsError 无 Serialize derive 且 desktop 不依赖共享库，
-  Tauri command 错误需 Serialize，属框架惯例保留，建议另立任务处理）
+- 剩余：~~apps/desktop 98 处~~（已清零，见第 18 批）
+
+### ✅ B7 第 18 批：apps/desktop(Tauri) 98 处清零（DesktopError 本地类型，协作完成）
+
+> 用户「需要推进」拍板处理 desktop 98 处（Tauri IPC/keystore）。desktop 无法直接引用 `TopemsError`：
+> 该类型无 Serialize derive，而 Tauri `#[tauri::command]` 错误必须 Serialize 才能传前端；且 desktop crate 不依赖
+> topems 共享库。方案：desktop 内新建本地错误类型 `DesktopError`，序列化输出为纯字符串——前端 invoke catch
+> 接收形态与迁移前完全一致（已核前端仅 console.error，无错误内容解析）。
+
+- **新建 `src-tauri/src/error.rs`**：`pub struct DesktopError(pub String)` + `Display`（日志/断言用）+ `From<String>`/`From<&str>`
+  （`?` 传播自动转换）+ `From<DesktopError> for String`（兼容 `ApiResponse::err(e)` 的 `impl Into<String>`）
+  + 手动 `Serialize`（`serialize_str`，前端零影响）
+- **迁移 11 文件 98 处签名 + 48 处错误构造**：`Result<_, String>` → `Result<_, DesktopError>`；
+  34 处 `map_err(|e| format!)` + 7 处 `Err(format!)` + 7 处 `Err("...".to_string())` 脚本批量替换
+  （全文正则 + 全文件括号配平补右括号，含跨行 format!）；动态 String 点（`Err(err)` 变量、
+  `ok_or_else(|| "...".to_string())`、`Err(last_error.unwrap_or_else(...))`）与 keystore `UnlockError`
+  桥接（master_key.rs map_err 闭包、commands.rs `StrongholdInitFailed` → `e.into()`）由并行线协作完成
+- **测试适配**：integration_test.rs 2 处 `unwrap_err().contains(...)` → `unwrap_err().to_string().contains(...)`
+  （DesktopError 无 String 的 contains 方法）
+- 验证：cargo check 0 error 0 warning；clippy 0 error（9 个既有 warning 位于窗口/托盘/菜单区，与本次无关）；
+  单测 23 passed 0 failed；全仓复查 `Result<_, String>` 0 处（error.rs 注释已中性化）
+- **B7 全形态清零收官**（累计：静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 业务层 Result<_, String> 7
+  + svc tests 48 + desktop 98）
 
 ---
 
