@@ -194,6 +194,7 @@ export default function ShipmentDetailPage() {
       title={shipment?.shipment_no ?? ''}
       subtitle={subtitle}
       loading={loading}
+      emptyState={{ show: !loading && !shipment }}
       error={error ?? undefined}
       backHref={TMS_PATHS.shipments}
       headerContent={headerContent}

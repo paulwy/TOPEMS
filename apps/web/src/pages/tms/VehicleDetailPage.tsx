@@ -144,6 +144,7 @@ export default function VehicleDetailPage() {
       title={vehicle?.vehicle_no ?? ''}
       subtitle={vehicle?.plate_number ?? ''}
       loading={loading}
+      emptyState={{ show: !loading && !vehicle }}
       error={error ?? undefined}
       backHref={TMS_PATHS.vehicles}
       headerContent={headerContent}

@@ -138,6 +138,7 @@ export default function CarrierDetailPage() {
       title={carrier?.name ?? ''}
       subtitle={carrier?.carrier_no ?? ''}
       loading={loading}
+      emptyState={{ show: !loading && !carrier }}
       error={error ?? undefined}
       backHref={TMS_PATHS.carriers}
       headerContent={headerContent}

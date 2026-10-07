@@ -144,6 +144,7 @@ export default function RouteDetailPage() {
       title={route?.name ?? ''}
       subtitle={route?.route_no ?? ''}
       loading={loading}
+      emptyState={{ show: !loading && !route }}
       error={error ?? undefined}
       backHref={TMS_PATHS.routes}
       headerContent={headerContent}

@@ -213,6 +213,7 @@ export default function TransportPlanDetailPage() {
     <DetailPageTemplate
       title={isLoading ? t('tms.transport_plan_detail_page.loading') : plan.name}
       subtitle={`${plan.plan_no}${id ? ` | ID: ${id}` : ''}`}
+      emptyState={{ show: !isLoading && !shipmentRes }}
       backHref={TMS_PATHS.dashboard}
       headerContent={headerContent}
       tabs={tabs}

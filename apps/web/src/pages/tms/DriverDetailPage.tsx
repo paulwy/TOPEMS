@@ -144,6 +144,7 @@ export default function DriverDetailPage() {
       title={driver?.name ?? ''}
       subtitle={driver?.driver_no ?? ''}
       loading={loading}
+      emptyState={{ show: !loading && !driver }}
       error={error ?? undefined}
       backHref={TMS_PATHS.drivers}
       headerContent={headerContent}
