@@ -11,6 +11,7 @@ use reqwest::{Client, ClientBuilder, Method, RequestBuilder};
 use serde_json::{json, Value};
 use std::time::Duration;
 
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::service_port::{FINANCE_PORT, UNIFIED_CORE_PORT};
 
 const PLACEHOLDER_TOKEN: &str = "__placeholder_token_for_compile_check__";
