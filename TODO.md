@@ -397,7 +397,8 @@
 - [x] schema-boundary 双门禁 exit 0：29 服务 / 1464 文件 / 3125 call sites，0 cross-schema 裸引用
 - [x] sqlx Gate S：PASS（165 文件，stale: false）
 - [x] 前端 tsc + vite build + vitest 全绿；bundle TOTAL ≤ 30M
-  - ✅ tsc 0 error；vite build 成功；vitest 全量 6486/6490（3 失败为既有 src/api 契约 mock 断言：ehs-health-monitoring POST / hrm DELETE salary-adjustments / mes PUT records complete，与 HEAD 一致）
+  - ✅ tsc 0 error；vite build 成功；vitest 全量 **6477 passed / 1 failed / 1 skipped**（2026-10-08 复跑：原 3 个 src/api 契约 mock 失败已被并行线 c8a17f9b5 同步测试期望清零；**唯一失败 = perm-matrix 门禁 R3 frontend nav（9 > baseline 8）**——并行线活跃区新前端页面缺权限 gate 标注引入，非本次/既有基线项，待并行线或后续批次收敛）
+  - 📝 环境：根 node_modules/vitest symlink 曾悬空（并行线 pnpm 升级 vitest 4.1.10→4.1.11 清理旧 store）；pnpm install 后自 apps/web 本地 bin 跑（4.1.11 正常）
   - ✅ bundle 源产物（js/css，不含 .gz/.br 压缩冗余与 offline_tiles/__p2_artifacts 运营资产）= 18.57MB ≤ 30M（历史记录 16.43MB 为更早构建；离线瓦片 15.2MB 等为功能资产另计）
 
 ### 2.2 环境与部署（生产机）
