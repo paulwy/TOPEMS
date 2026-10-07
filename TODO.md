@@ -489,5 +489,21 @@
 - **第三梯队可行性**（`tier3-feasibility.md`）：TABLE_DEFS 对拍止血（S）+ codegen（L）；OpenAPI 门禁基建已现成（28 crate 提取管线，只差回写，M）；迁移目录治理"子目录/改名高风险不做"（sqlx 校验链约束），只做低风险四项（S–M）
 - **DB-03 残留**：5433 空库重放后残留 329 列（与 5432 的既有差异，审计快照口径）已登记第三梯队
 
-### ⏳ 待用户拍板
-① BE-02 组织计数真实值必要性 + 选 A/B/C（hrm 当前 0 行，接线前需确认填充计划）；② DatabaseStructurePage 前端改造；③ FE-17 收敛实施分批
+### ⏳ 待用户拍板（已实施三项，见下方「最小纠正批次」）
+- ✅ ① BE-02 组织计数真实值必要性 + 选 A/B/C → **已按方案 C + 附带建议实施**（commit `1b78df926`）；剩余拍板：hrm 组织主数据填充计划（接线真实计数前置条件，当前 0 行）
+- ✅ ② DatabaseStructurePage 前端改造 → **已实施**（commit `880bbc3c7`）
+- ✅ ③ FE-17 收敛实施分批 → **阶段 0+1 已实施**（commit `7f68d169f`）；阶段 2-5 分批待后续
+
+## 2026-10-07 最小纠正批次（已实施，摘要 `artifacts/tier2-fixes/TOPEMS最小纠正批次修复摘要.md`）
+
+### ✅ 已完成并提交
+- **BE-02 最小纠正**（commit `1b78df926`）：live handler（main.rs:854/729）改查真实表 core_users/core_roles/core_permissions + public.audit_logs，去掉 5 项 .max() 假数字；组织三计数按方案 C 降级（null + orgStatsStatus=not-connected）；**routes.rs 实证非死代码**（svc/server analytics_real_module.rs:76 经 module-advanced 挂载）→ 对齐为与 main.rs 相同实现而非删除；live GET 实测 0/0/955/0 与 psql 直跑完全一致（permissions=955 铁证真实表）；前端仅对齐 TS 契约（实际消费者丢弃数据，无需 UI 改动）
+- **DBPage 只读化**（commit `880bbc3c7`）：execute 流程改为展示建议 SQL+复制+走迁移链提示（remove 成功语义）；API 层签名零改动；i18n zh/en 双语文案同步（含嵌套残留归一，修掉 i18n-quality 门禁混合结构 3 项）；erp-v142.test 断言同步；typecheck/eslint/vitest 44/i18n 门禁全绿
+- **FE-17 阶段 0+1**（commit `7f68d169f`）：factory.ts 升级 snakeCaseParams（默认关闭回滚安全）/unwrapData/错误归一/重试（默认 0 次）/onUnauthorized；删 shared-utils request.ts 死代码；desktop 401 接线（清 token+跳登录）；**mobile authClient 修正为 /api/core/iam 前缀**（实测 svc/mobile 无 auth 路由、test-backend.ts 证据 auth 走 core iam——审计「缺 /api/mobile 后缀」系误判）；wms 分页灰度（Set(['wms']) 逐服务开关），实测 page_size 生效（pageSize 被忽略回落默认、page_size=5 返回 5 条）；17 工厂单测绿 + 三端验证
+- **i18n 门禁修复**（随 DBPage 提交）：zh/en admin.json 三 key 嵌套残留归一（DBPage 改动仅更新扁平键、遗留嵌套旧对象 → 混合结构 3 项阻断提交，已清除）
+- **预存回归登记（用户已自修）**：提交 `e561d21bc` 升级 jsonwebtoken 9→10 漏加密后端特性 → 任何 JWT 校验 worker panic；用户已并发在 Cargo.toml 加 `features=["rust_crypto"]`，本批未触碰 Cargo 清单
+
+### 📋 剩余登记
+- **BE-02 后续**：组织计数真实接线需 hrm 主数据（当前 0 行）；租户 GUC 口径（handler 读 app.current_tenant vs 中间件写 app.tenant_id）为既有语义，未改；userGrowth/activityTypes 演示数据未动（点名范围外）
+- **FE-17 后续**：snakeCaseParams 全量启用需逐服务验证后端吃 page_size（当前仅 wms；回滚=移除 Set 中服务名）；desktop 401 目前整页跳转（未接 zustand store 实例，循环依赖规避）；shared-utils 本包 vitest 接线为预存环境问题（用 tsc build 等价验证）
+- **WCS 手动回归**：BFF(8099) 离线时门禁 SKIP（仓库设计），建议重启后 `python3 scripts/web_contract_smoke.py`
