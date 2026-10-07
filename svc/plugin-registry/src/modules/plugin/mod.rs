@@ -1,6 +1,21 @@
 //! Plugin Marketplace module
 //!
 //! Manages plugin registration, installation, and marketplace
+//!
+//! ## 路由前缀约定（FE-20 决策，2026-10）
+//!
+//! 本服务对外路由统一挂在单数前缀 `/api/plugin/*` 下。历史上并存少量复数前缀
+//! `/api/plugins/*` 路由（`/api/plugins/my`、`/api/plugins/installed` 等 simple_api 兼容 shim），
+//! 属遗留兼容面，前端（apps/web）实际只调用单数前缀家族。
+//!
+//! **不要把 `/api/plugin/*` 批量重命名为 `/api/plugins/*`**：该前缀是承重路径，与仓库外多处
+//! 硬编码耦合（见 artifacts/tier2-fixes/FE-20-plugin-prefix-unification.md）：
+//!   - `lib/shared-core/src/config/services.rs` 服务注册 api_prefix = "/api/plugin"（反代路由表）
+//!   - `lib/shared-auth/src/auth.rs` 公开白名单 `/api/plugin/marketplace*`（免登录市场；
+//!     一旦改名会让市场页要求 JWT，触发 401→全局登出）
+//!   - `svc/server/.../plugin_registry_real_module.rs` 注释明确"crate 内部路由自带
+//!     /api/plugin/* 完整前缀，直接挂载（不重复 nest）"。
+//! 若未来确需统一到复数前缀，必须上述三处 + nginx runbook + 前端 base 同步改，不能只改本 crate。
 
 pub mod handlers;
 pub mod models;
