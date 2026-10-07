@@ -39,9 +39,9 @@ const METHOD_CONFIG: Record<
   string,
   { labelKey: string; color: React.ComponentProps<typeof Chip>['color'] }
 > = {
-  full: { labelKey: 'finance.consolidation_scope_page.text_a8d219', color: 'primary' },
-  equity: { labelKey: 'finance.consolidation_scope_page.text_08dfd4', color: 'secondary' },
-  proportional: { labelKey: 'finance.consolidation_scope_page.text_ad6e8a', color: 'info' },
+  full: { labelKey: 'finance.consolidation_scope_page.method_full', color: 'primary' },
+  equity: { labelKey: 'finance.consolidation_scope_page.method_equity', color: 'secondary' },
+  proportional: { labelKey: 'finance.consolidation_scope_page.method_proportional', color: 'info' },
 };
 
 const STATUS_CONFIG: Record<
@@ -50,7 +50,7 @@ const STATUS_CONFIG: Record<
 > = {
   active: { labelKey: 'finance.consolidation_scope_page.active', color: 'success' },
   inactive: { labelKey: 'finance.consolidation_scope_page.inactive', color: 'default' },
-  draft: { labelKey: 'finance.consolidation_scope_page.text_22b433', color: 'warning' },
+  draft: { labelKey: 'finance.consolidation_scope_page.status_draft', color: 'warning' },
 };
 
 export default function ConsolidationScopePage() {
@@ -124,7 +124,7 @@ export default function ConsolidationScopePage() {
       },
       {
         id: 'consolidation_method',
-        label: t('finance.consolidation_scope_page.text_e15d05'),
+        label: t('finance.consolidation_scope_page.col_consolidation_method'),
         render: (row) => {
           const config = METHOD_CONFIG[row.consolidation_method] || {
             labelKey: row.consolidation_method,
@@ -194,13 +194,13 @@ export default function ConsolidationScopePage() {
 
   return (
     <PageContainer
-      title={t('finance.consolidation_scope_page.text_1ef9d7')}
-      subtitle={t('finance.consolidation_scope_page.text_1dec08')}
+      title={t('finance.consolidation_scope_page.page_title')}
+      subtitle={t('finance.consolidation_scope_page.page_subtitle')}
       maxWidth='xl'
       headerProps={{
         actions: [
           {
-            label: t('finance.consolidation_scope_page.text_425d69'),
+            label: t('finance.consolidation_scope_page.create_scope_title'),
             icon: <Plus sx={{ width: 16, height: 16 }} />,
             onClick: handleOpenCreateScopeModal,
             variant: 'contained',
@@ -287,11 +287,11 @@ export default function ConsolidationScopePage() {
                   />
                   <Tab
                     value='rules'
-                    label={t('finance.consolidation_scope_page.text_6d836a')}
+                    label={t('finance.consolidation_scope_page.tab_rules')}
                   />
                   <Tab
                     value='transactions'
-                    label={t('finance.consolidation_scope_page.text_efd827')}
+                    label={t('finance.consolidation_scope_page.tab_transactions')}
                   />
                 </Tabs>
 

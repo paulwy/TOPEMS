@@ -47,7 +47,7 @@ export function ScopeFormDialog({
       <DialogTitle>
         {editMode
           ? ` + ${t('finance.consolidation_scope_page.edit')}`
-          : t('finance.consolidation_scope_page.text_425d69')}
+          : t('finance.consolidation_scope_page.create_scope_title')}
       </DialogTitle>
       <DialogContent>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -67,10 +67,12 @@ export function ScopeFormDialog({
             placeholder={t('finance.consolidation_scope_page.please_input_2')}
           />
           <FormControl fullWidth>
-            <InputLabel>{t('finance.consolidation_scope_page.text_e15d05')}</InputLabel>
+            <InputLabel>
+              {t('finance.consolidation_scope_page.col_consolidation_method')}
+            </InputLabel>
             <Select
               value={formData.consolidation_method || 'full'}
-              label={t('finance.consolidation_scope_page.text_e15d05')}
+              label={t('finance.consolidation_scope_page.col_consolidation_method')}
               onChange={(e) =>
                 onFormDataChange({
                   ...formData,
@@ -78,12 +80,12 @@ export function ScopeFormDialog({
                 })
               }
             >
-              <MenuItem value='full'>{t('finance.consolidation_scope_page.text_a8d219')}</MenuItem>
+              <MenuItem value='full'>{t('finance.consolidation_scope_page.method_full')}</MenuItem>
               <MenuItem value='equity'>
-                {t('finance.consolidation_scope_page.text_08dfd4')}
+                {t('finance.consolidation_scope_page.method_equity')}
               </MenuItem>
               <MenuItem value='proportional'>
-                {t('finance.consolidation_scope_page.text_ad6e8a')}
+                {t('finance.consolidation_scope_page.method_proportional')}
               </MenuItem>
             </Select>
           </FormControl>
@@ -101,7 +103,9 @@ export function ScopeFormDialog({
             >
               <MenuItem value='active'>{t('finance.consolidation_scope_page.active')}</MenuItem>
               <MenuItem value='inactive'>{t('finance.consolidation_scope_page.inactive')}</MenuItem>
-              <MenuItem value='draft'>{t('finance.consolidation_scope_page.text_22b433')}</MenuItem>
+              <MenuItem value='draft'>
+                {t('finance.consolidation_scope_page.status_draft')}
+              </MenuItem>
             </Select>
           </FormControl>
           <TextField
@@ -167,10 +171,10 @@ export function AddCompanyDialog({
       <DialogContent>
         <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <FormControl fullWidth>
-            <InputLabel>{t('finance.consolidation_scope_page.text_b868e7')}</InputLabel>
+            <InputLabel>{t('finance.consolidation_scope_page.select_company')}</InputLabel>
             <Select
               value={formData.company_id}
-              label={t('finance.consolidation_scope_page.text_b868e7')}
+              label={t('finance.consolidation_scope_page.select_company')}
               onChange={(e) => onFormDataChange({ ...formData, company_id: e.target.value })}
             >
               <MenuItem value=''>
@@ -203,19 +207,19 @@ export function AddCompanyDialog({
               }
             >
               <MenuItem value='full_control'>
-                {t('finance.consolidation_scope_page.text_918de9')}
+                {t('finance.consolidation_scope_page.control_full')}
               </MenuItem>
               <MenuItem value='joint_venture'>
-                {t('finance.consolidation_scope_page.text_393113')}
+                {t('finance.consolidation_scope_page.control_joint_venture')}
               </MenuItem>
               <MenuItem value='associate'>
-                {t('finance.consolidation_scope_page.text_34ed98')}
+                {t('finance.consolidation_scope_page.control_associate')}
               </MenuItem>
             </Select>
           </FormControl>
           <TextField
             fullWidth
-            label={t('finance.consolidation_scope_page.text_6563f0')}
+            label={t('finance.consolidation_scope_page.field_ownership_percentage')}
             type='number'
             value={formData.ownership_percentage}
             onChange={(e) =>
@@ -228,7 +232,7 @@ export function AddCompanyDialog({
           />
           <TextField
             fullWidth
-            label={t('finance.consolidation_scope_page.text_5c6273')}
+            label={t('finance.consolidation_scope_page.field_consolidation_percentage')}
             type='number'
             value={formData.consolidation_percentage}
             onChange={(e) =>
@@ -254,8 +258,8 @@ export function AddCompanyDialog({
           disabled={isSubmitting}
         >
           {isSubmitting
-            ? ` + ${t('finance.consolidation_scope_page.text_745316')}`
-            : t('finance.consolidation_scope_page.text_b58c75')}
+            ? ` + ${t('finance.consolidation_scope_page.adding')}`
+            : t('finance.consolidation_scope_page.btn_add')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -319,19 +323,19 @@ export function RuleConfigDialog({ open, onClose }: RuleConfigDialogProps) {
             </FormControl>
             <TextField
               fullWidth
-              label={t('finance.consolidation_scope_page.text_0251e1')}
+              label={t('finance.consolidation_scope_page.field_company_name')}
               placeholder={t('finance.consolidation_scope_page.please_input_7')}
             />
             <TextField
               fullWidth
-              label={t('finance.consolidation_scope_page.text_765fea')}
+              label={t('finance.consolidation_scope_page.field_company_code')}
               placeholder={t('finance.consolidation_scope_page.please_input_8')}
             />
             <FormControl fullWidth>
-              <InputLabel>{t('finance.consolidation_scope_page.text_cbc6f6')}</InputLabel>
+              <InputLabel>{t('finance.consolidation_scope_page.field_control_type')}</InputLabel>
               <Select
                 value=''
-                label={t('finance.consolidation_scope_page.text_cbc6f6')}
+                label={t('finance.consolidation_scope_page.field_control_type')}
               >
                 <MenuItem value=''>
                   {t('finance.consolidation_scope_page.please_select_calc_method')}
@@ -347,9 +351,9 @@ export function RuleConfigDialog({ open, onClose }: RuleConfigDialogProps) {
             </FormControl>
             <TextField
               fullWidth
-              label={t('finance.consolidation_scope_page.text_ee8ecb')}
+              label={t('finance.consolidation_scope_page.field_minority_interest')}
               type='number'
-              placeholder={t('finance.consolidation_scope_page.text_3446e5')}
+              placeholder={t('finance.consolidation_scope_page.placeholder_minority_interest')}
             />
           </Box>
           <TextField

@@ -91,7 +91,7 @@ const FinanceCostPage: React.FC = () => {
           throw new Error(response.message || t('finance.finance_cost_page.k0'));
         }
         addNotification({
-          title: t('finance.finance_cost_page.text_7f9f6f'),
+          title: t('finance.finance_cost_page.action_analysis'),
           message: t('finance.finance_cost_page.k1'),
           type: 'success',
         });
@@ -103,7 +103,7 @@ const FinanceCostPage: React.FC = () => {
           throw new Error(response.message || t('finance.finance_cost_page.k2'));
         }
         addNotification({
-          title: t('finance.finance_cost_page.text_7f9f6f'),
+          title: t('finance.finance_cost_page.action_analysis'),
           message: t('finance.finance_cost_page.k3'),
           type: 'success',
         });
@@ -115,7 +115,7 @@ const FinanceCostPage: React.FC = () => {
           throw new Error(response.message || t('finance.finance_cost_page.k4'));
         }
         addNotification({
-          title: t('finance.finance_cost_page.text_7f9f6f'),
+          title: t('finance.finance_cost_page.action_analysis'),
           message: t('finance.finance_cost_page.k5'),
           type: 'success',
         });
@@ -135,7 +135,7 @@ const FinanceCostPage: React.FC = () => {
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: i18n.t('finance.finance_cost_page.text_7f9f6f'),
+        label: i18n.t('finance.finance_cost_page.action_analysis'),
         icon: <BarChart3 size={16} />,
         color: 'success',
         onClick: (row) => setAnalysisTarget(row as unknown as Account),
@@ -151,7 +151,7 @@ const FinanceCostPage: React.FC = () => {
 
       const statCards = [
         {
-          title: t('finance.finance_cost_page.text_27d98b'),
+          title: t('finance.finance_cost_page.stat_account_count'),
           value: rows.length,
           icon: <Wallet size={24} />,
           color: 'primary' as const,
@@ -163,7 +163,7 @@ const FinanceCostPage: React.FC = () => {
           color: 'secondary' as const,
         },
         {
-          title: t('finance.finance_cost_page.text_2058a6'),
+          title: t('finance.finance_cost_page.stat_period_amount'),
           value: `¥${totalPeriodDebit.toLocaleString()}`,
           icon: <TrendingUp size={24} />,
           color: 'success' as const,
@@ -184,8 +184,8 @@ const FinanceCostPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title={t('finance.finance_cost_page.text_86194f')}
-      subtitle={t('finance.finance_cost_page.text_319c67')}
+      title={t('finance.finance_cost_page.page_title')}
+      subtitle={t('finance.finance_cost_page.page_subtitle')}
       autoTitle
       autoBreadcrumbs
     >

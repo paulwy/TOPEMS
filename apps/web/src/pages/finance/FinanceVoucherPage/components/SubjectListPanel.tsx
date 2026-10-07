@@ -64,7 +64,7 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectSt
                   <StatusBadge
                     status='cash_flow'
                     label={t(
-                      'finance.finance_voucher_page_components__subject_list_panel.text_16b663'
+                      'finance.finance_voucher_page_components__subject_list_panel.badge_cash_flow'
                     )}
                     color='secondary'
                   />
@@ -75,7 +75,9 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectSt
                 label={
                   subject.status === 'active'
                     ? t('finance.finance_voucher_page_components__subject_list_panel.active')
-                    : t('finance.finance_voucher_page_components__subject_list_panel.text_710ad0')
+                    : t(
+                        'finance.finance_voucher_page_components__subject_list_panel.badge_inactive'
+                      )
                 }
                 color={subject.status === 'active' ? 'success' : 'default'}
               />
@@ -110,7 +112,7 @@ const SubjectListPanel: React.FC<SubjectListPanelProps> = ({ subjects, subjectSt
               />
               <Typography variant='body2'>
                 {subject.category ||
-                  t('finance.finance_voucher_page_components__subject_list_panel.text_ecf7eb')}
+                  t('finance.finance_voucher_page_components__subject_list_panel.uncategorized')}
               </Typography>
             </Box>
             {subject.parent_code && (

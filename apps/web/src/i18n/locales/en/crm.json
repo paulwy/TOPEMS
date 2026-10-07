@@ -541,13 +541,13 @@
       "text_recommendations_title": "Recommendations ({{count}})",
       "text_item_type": "Type: {{type}}",
       "text_item_score": "Score: {{score}}",
-      "text_confidence": "Confidence",
       "col_cross_sell": "Label",
       "col_cross_sell_sub": "Label",
       "col_upsell": "Label",
       "col_upsell_sub": "Label",
       "col_followup": "Label",
-      "col_followup_sub": "Label"
+      "col_followup_sub": "Label",
+      "confidence_label": "Confidence"
     },
     "salesForecast": {
       "title": "Sales Forecast",
@@ -1182,7 +1182,7 @@
   "crm.recommendation.text_recommendations_title": "Recommendations ({{count}})",
   "crm.recommendation.text_item_type": "Type: {{type}}",
   "crm.recommendation.text_item_score": "Score: {{score}}",
-  "crm.recommendation.text_confidence": "Confidence",
+  "crm.recommendation.confidence_label": "Confidence",
   "crm.salesForecast.title": "Sales Forecast",
   "crm.salesForecast.subtitle": "Predict future sales trends based on historical data",
   "crm.salesForecast.stat_total_predicted": "Total Predicted Revenue",

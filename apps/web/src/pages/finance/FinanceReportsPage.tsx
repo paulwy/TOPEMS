@@ -98,28 +98,28 @@ const FinanceReportsPage: React.FC = () => {
     return [
       {
         id: 'total-assets',
-        title: t('finance.finance_reports_page.text_fa1861'),
+        title: t('finance.finance_reports_page.stat_total_assets'),
         value: formatCurrency(businessOverview.total_assets),
         icon: <DollarSign sx={{ width: 24, height: 24 }} />,
         gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'total-liabilities',
-        title: t('finance.finance_reports_page.text_5701ad'),
+        title: t('finance.finance_reports_page.stat_total_liabilities'),
         value: formatCurrency(businessOverview.total_liabilities),
         icon: <TrendingDown sx={{ width: 24, height: 24 }} />,
         gradient: [ct.warning.main, ct.warning.dark] as [string, string],
       },
       {
         id: 'total-revenue',
-        title: t('finance.finance_reports_page.text_d00a67'),
+        title: t('finance.finance_reports_page.stat_total_revenue'),
         value: formatCurrency(businessOverview.total_revenue),
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
         gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'net-profit',
-        title: t('finance.finance_reports_page.text_80170f'),
+        title: t('finance.finance_reports_page.stat_net_profit'),
         value: formatCurrency(businessOverview.net_profit),
         icon: <Wallet sx={{ width: 24, height: 24 }} />,
         gradient:
@@ -136,7 +136,7 @@ const FinanceReportsPage: React.FC = () => {
     return [
       {
         id: 'monthly-trend',
-        title: t('finance.finance_reports_page.text_573852'),
+        title: t('finance.finance_reports_page.chart_monthly_trend'),
         type: 'line',
         dataKey: 'value',
         nameKey: 'name',
@@ -170,7 +170,7 @@ const FinanceReportsPage: React.FC = () => {
         },
         {
           id: 'received_amount',
-          label: t('finance.finance_reports_page.text_2365c3'),
+          label: t('finance.finance_reports_page.col_received_amount'),
           field: 'received_amount',
           align: 'right',
         },
@@ -182,19 +182,19 @@ const FinanceReportsPage: React.FC = () => {
         },
         {
           id: 'paid_amount',
-          label: t('finance.finance_reports_page.text_22956d'),
+          label: t('finance.finance_reports_page.col_paid_amount'),
           field: 'paid_amount',
           align: 'right',
         },
         {
           id: 'profit',
-          label: t('finance.finance_reports_page.text_53826b'),
+          label: t('finance.finance_reports_page.col_profit'),
           field: 'profit',
           align: 'right',
         },
         {
           id: 'margin',
-          label: t('finance.finance_reports_page.text_2b63f6'),
+          label: t('finance.finance_reports_page.col_margin'),
           field: 'margin',
           align: 'center',
         },
@@ -209,7 +209,7 @@ const FinanceReportsPage: React.FC = () => {
       return [
         {
           id: 'project-table',
-          title: t('finance.finance_reports_page.text_a34842'),
+          title: t('finance.finance_reports_page.table_project_summary'),
           columns,
           data: (projectSummaries || []).map((p) => ({
             project_name: p.project_name || '-',
@@ -235,7 +235,7 @@ const FinanceReportsPage: React.FC = () => {
         },
         {
           id: 'total_expenses',
-          label: t('finance.finance_reports_page.text_136f63'),
+          label: t('finance.finance_reports_page.col_total_expenses'),
           field: 'total_expenses',
           align: 'right',
         },
@@ -247,13 +247,13 @@ const FinanceReportsPage: React.FC = () => {
         },
         {
           id: 'expense_count',
-          label: t('finance.finance_reports_page.text_cf03b2'),
+          label: t('finance.finance_reports_page.col_expense_count'),
           field: 'expense_count',
           align: 'center',
         },
         {
           id: 'budget_usage',
-          label: t('finance.finance_reports_page.text_439d93'),
+          label: t('finance.finance_reports_page.col_budget_usage'),
           field: 'budget_usage',
           align: 'center',
         },
@@ -262,7 +262,7 @@ const FinanceReportsPage: React.FC = () => {
       return [
         {
           id: 'department-table',
-          title: t('finance.finance_reports_page.text_c9941b'),
+          title: t('finance.finance_reports_page.table_department_expenses'),
           columns,
           data: departmentSummaries.map((d) => ({
             department_name: d.department_name,
@@ -281,42 +281,42 @@ const FinanceReportsPage: React.FC = () => {
 
   const tabs = [
     {
-      label: t('finance.finance_reports_page.text_7637e9'),
+      label: t('finance.finance_reports_page.tab_overview'),
       value: 'overview',
       icon: <PieChart sx={{ width: 16, height: 16 }} />,
     },
     {
-      label: t('finance.finance_reports_page.text_97191a'),
+      label: t('finance.finance_reports_page.tab_projects'),
       value: 'projects',
       icon: <PieChart sx={{ width: 16, height: 16 }} />,
     },
     {
-      label: t('finance.finance_reports_page.text_578051'),
+      label: t('finance.finance_reports_page.tab_departments'),
       value: 'departments',
       icon: <Building2 sx={{ width: 16, height: 16 }} />,
     },
     {
-      label: t('finance.finance_reports_page.text_4f4da0'),
+      label: t('finance.finance_reports_page.tab_aging'),
       value: 'aging',
       icon: <Clock sx={{ width: 16, height: 16 }} />,
     },
     {
-      label: t('finance.finance_reports_page.text_54251d'),
+      label: t('finance.finance_reports_page.tab_voucher_summary'),
       value: 'voucher',
       icon: <FileText sx={{ width: 16, height: 16 }} />,
     },
     {
-      label: t('finance.finance_reports_page.text_ec205a'),
+      label: t('finance.finance_reports_page.tab_cashflow'),
       value: 'cashflow',
       icon: <Activity sx={{ width: 16, height: 16 }} />,
     },
     {
-      label: t('finance.finance_reports_page.text_146922'),
+      label: t('finance.finance_reports_page.tab_expense'),
       value: 'expense',
       icon: <Wallet sx={{ width: 16, height: 16 }} />,
     },
     {
-      label: t('finance.finance_reports_page.text_46756e'),
+      label: t('finance.finance_reports_page.tab_profit'),
       value: 'profit',
       icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
     },
@@ -336,7 +336,7 @@ const FinanceReportsPage: React.FC = () => {
           <InputLabel>{t('finance.finance_reports_page.k0')}</InputLabel>
           <Select
             value={period}
-            label={t('finance.finance_reports_page.text_0d80a7')}
+            label={t('finance.finance_reports_page.label_period')}
             onChange={(e) => setPeriod(e.target.value)}
           >
             <MenuItem value=''>{t('finance.finance_reports_page.k1')}</MenuItem>
@@ -362,8 +362,8 @@ const FinanceReportsPage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       <StatsPageTemplate
-        title={t('finance.finance_reports_page.text_9bb20b')}
-        subtitle={t('finance.finance_reports_page.text_fb0fa5')}
+        title={t('finance.finance_reports_page.page_title')}
+        subtitle={t('finance.finance_reports_page.page_subtitle')}
         statCards={statCards}
         statColumns={4}
         charts={charts}

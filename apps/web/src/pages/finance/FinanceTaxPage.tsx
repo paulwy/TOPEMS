@@ -183,14 +183,14 @@ const TaxHeader: React.FC = () => {
   const statCards: StatCard[] = [
     {
       id: 'total-tax',
-      title: t('finance.finance_tax_page.text_d752a2'),
+      title: t('finance.finance_tax_page.stat_total_tax_due'),
       value: `¥${totalTaxAmount.toLocaleString()}`,
       color: 'primary',
       icon: <Receipt size={24} />,
     },
     {
       id: 'total-paid',
-      title: t('finance.finance_tax_page.text_585a98'),
+      title: t('finance.finance_tax_page.stat_total_paid'),
       value: `¥${totalPaid.toLocaleString()}`,
       color: 'success',
       icon: <CheckCircle size={24} />,
@@ -204,7 +204,7 @@ const TaxHeader: React.FC = () => {
     },
     {
       id: 'pending',
-      title: t('finance.finance_tax_page.text_ee8231'),
+      title: t('finance.finance_tax_page.stat_pending_declaration'),
       value: t('finance.finance_tax_page.e1'),
       color: 'warning',
       icon: <Clock size={24} />,
@@ -213,11 +213,14 @@ const TaxHeader: React.FC = () => {
 
   const exportFields = useMemo(
     () => [
-      { key: 'tax_type', title: i18n.t('finance.finance_tax_page.text_185dea') },
-      { key: 'declaration_period', title: i18n.t('finance.finance_tax_page.text_b107cc') },
-      { key: 'taxable_income', title: i18n.t('finance.finance_tax_page.text_45aec3') },
-      { key: 'tax_rate', title: i18n.t('finance.finance_tax_page.text_2a79a7') },
-      { key: 'tax_amount', title: i18n.t('finance.finance_tax_page.text_87b755') },
+      { key: 'tax_type', title: i18n.t('finance.finance_tax_page.col_tax_type') },
+      {
+        key: 'declaration_period',
+        title: i18n.t('finance.finance_tax_page.col_declaration_period'),
+      },
+      { key: 'taxable_income', title: i18n.t('finance.finance_tax_page.col_taxable_income') },
+      { key: 'tax_rate', title: i18n.t('finance.finance_tax_page.col_tax_rate') },
+      { key: 'tax_amount', title: i18n.t('finance.finance_tax_page.col_tax_amount') },
       { key: 'paid_amount', title: i18n.t('finance.finance_tax_page.amount_1') },
       { key: 'owed_amount', title: i18n.t('finance.finance_tax_page.amount_2') },
       { key: 'status', title: i18n.t('finance.finance_tax_page.status_1') },
@@ -235,7 +238,7 @@ const TaxHeader: React.FC = () => {
         <DataExport
           data={taxData as unknown as Record<string, unknown>[]}
           fields={exportFields}
-          defaultFileName={t('finance.finance_tax_page.text_f50d30')}
+          defaultFileName={t('finance.finance_tax_page.export_filename')}
           buttonText=''
         />
       </MuiBox>
@@ -309,21 +312,21 @@ const FinanceTaxPage: React.FC = () => {
   // 自定义行操作：申报 / 缴税 / 分析
   const customRowActions: RowAction[] = [
     {
-      label: t('finance.finance_tax_page.text_e54080'),
+      label: t('finance.finance_tax_page.action_declare'),
       icon: <FileText sx={{ width: 16, height: 16 }} />,
       color: 'success',
       show: (row) => row.status === 'pending',
       onClick: (row) => handleDeclare(row as unknown as TaxEntry),
     },
     {
-      label: t('finance.finance_tax_page.text_78da3e'),
+      label: t('finance.finance_tax_page.action_pay'),
       icon: <DollarSign sx={{ width: 16, height: 16 }} />,
       color: 'warning',
       show: (row) => row.status === 'overdue',
       onClick: (row) => handlePay(row as unknown as TaxEntry),
     },
     {
-      label: t('finance.finance_tax_page.text_5ddaa7'),
+      label: t('finance.finance_tax_page.action_analyze'),
       icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
       onClick: (row) => handleAnalysis(row as unknown as TaxEntry),
     },

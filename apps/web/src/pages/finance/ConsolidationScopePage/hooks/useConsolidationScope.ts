@@ -191,7 +191,7 @@ export function useConsolidationScope() {
 
     return [
       {
-        title: t('finance.consolidation_scope_page.text_75028a'),
+        title: t('finance.consolidation_scope_page.stat_scope_count'),
         value: totalCount,
         icon: 'FolderOpen',
         color: 'primary' as const,
@@ -203,13 +203,13 @@ export function useConsolidationScope() {
         color: 'success' as const,
       },
       {
-        title: t('finance.consolidation_scope_page.text_6e86b8'),
+        title: t('finance.consolidation_scope_page.stat_company_count'),
         value: totalCompanies,
         icon: 'Users2',
         color: 'info' as const,
       },
       {
-        title: t('finance.consolidation_scope_page.text_5d26d3'),
+        title: t('finance.consolidation_scope_page.stat_parent_count'),
         value: parentCount,
         icon: 'Briefcase',
         color: 'secondary' as const,

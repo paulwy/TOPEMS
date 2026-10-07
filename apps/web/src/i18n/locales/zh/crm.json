@@ -499,7 +499,7 @@
       "text_recommendations_title": "推荐项目 ({{count}})",
       "text_item_type": "类型: {{type}}",
       "text_item_score": "评分: {{score}}",
-      "text_confidence": "置信度"
+      "confidence_label": "置信度"
     },
     "salesForecast": {
       "title": "销售预测",
@@ -940,7 +940,7 @@
   "crm.recommendation.type_cross_sell": "交叉销售",
   "crm.recommendation.type_content": "内容推荐",
   "crm.recommendation.section_basic": "基本信息",
-  "crm.recommendation.text_confidence": "置信度",
+  "crm.recommendation.confidence_label": "置信度",
   "crm.salesForecast.title": "销售预测",
   "crm.salesForecast.subtitle": "基于历史数据预测未来销售趋势",
   "crm.salesForecast.stat_avg_confidence": "平均置信度",

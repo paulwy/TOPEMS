@@ -11,7 +11,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
   const statCards: StatCardSchema[] = [
     {
       id: 'voucher-total',
-      title: t('finance.finance_dashboard_page.text_551f4c'),
+      title: t('finance.finance_dashboard_page.stat_total_vouchers'),
       value: () => {
         const stats = financeStats;
         return stats?.total_vouchers.toLocaleString() ?? '-';
@@ -22,7 +22,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
     },
     {
       id: 'voucher-draft',
-      title: t('finance.finance_dashboard_page.text_5c5e91'),
+      title: t('finance.finance_dashboard_page.stat_draft_vouchers'),
       value: () => {
         const stats = financeStats;
         return stats?.draft_vouchers.toLocaleString() ?? '-';
@@ -33,7 +33,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
     },
     {
       id: 'receivable',
-      title: t('finance.finance_dashboard_page.text_c29613'),
+      title: t('finance.finance_dashboard_page.stat_total_receivables'),
       value: () => {
         const stats = financeStats;
         return stats ? `¥${stats.total_receivables.toLocaleString()}` : '-';
@@ -44,7 +44,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
     },
     {
       id: 'payable',
-      title: t('finance.finance_dashboard_page.text_55c9eb'),
+      title: t('finance.finance_dashboard_page.stat_total_payables'),
       value: () => {
         const stats = financeStats;
         return stats ? `¥${stats.total_payables.toLocaleString()}` : '-';
@@ -55,7 +55,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
     },
     {
       id: 'pending-approvals',
-      title: t('finance.finance_dashboard_page.text_b0bf01'),
+      title: t('finance.finance_dashboard_page.stat_pending_approvals'),
       value: () => {
         const stats = financeStats;
         return stats?.pending_approvals.toLocaleString() ?? '-';
@@ -66,7 +66,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
     },
     {
       id: 'pending-payments',
-      title: t('finance.finance_dashboard_page.text_9246fe'),
+      title: t('finance.finance_dashboard_page.stat_pending_payments'),
       value: () => {
         const stats = financeStats;
         return stats?.pending_payments.toLocaleString() ?? '-';
@@ -86,45 +86,75 @@ export function useFinanceDashboardSchema(): DashboardSchema {
         const stats = financeStats;
         if (!stats) return [];
         return [
-          { name: t('finance.finance_dashboard_page.text_22b433'), value: stats.draft_vouchers },
+          {
+            name: t('finance.finance_dashboard_page.series_draft_vouchers'),
+            value: stats.draft_vouchers,
+          },
           { name: t('finance.finance_dashboard_page.submit'), value: stats.submitted_vouchers },
-          { name: t('finance.finance_dashboard_page.text_618acb'), value: stats.approved_vouchers },
-          { name: t('finance.finance_dashboard_page.text_aaea67'), value: stats.posted_vouchers },
+          {
+            name: t('finance.finance_dashboard_page.series_approved_vouchers'),
+            value: stats.approved_vouchers,
+          },
+          {
+            name: t('finance.finance_dashboard_page.series_posted_vouchers'),
+            value: stats.posted_vouchers,
+          },
         ];
       },
       height: 300,
     },
     {
       id: 'receivable-payable',
-      title: t('finance.finance_dashboard_page.text_b1b956'),
+      title: t('finance.finance_dashboard_page.chart_receivable_payable_trend'),
       type: 'line',
       data: () => {
         const stats = financeStats;
         if (!stats) return [];
         return [
-          { name: t('finance.finance_dashboard_page.text_fccab9'), value: stats.total_receivables },
           {
-            name: t('finance.finance_dashboard_page.text_19a5b0'),
+            name: t('finance.finance_dashboard_page.series_total_receivables'),
+            value: stats.total_receivables,
+          },
+          {
+            name: t('finance.finance_dashboard_page.series_overdue_receivables'),
             value: stats.overdue_receivables,
           },
-          { name: t('finance.finance_dashboard_page.text_855bfd'), value: stats.total_payables },
-          { name: t('finance.finance_dashboard_page.text_4f9d0d'), value: stats.overdue_payables },
+          {
+            name: t('finance.finance_dashboard_page.series_total_payables'),
+            value: stats.total_payables,
+          },
+          {
+            name: t('finance.finance_dashboard_page.series_overdue_payables'),
+            value: stats.overdue_payables,
+          },
         ];
       },
       height: 300,
     },
     {
       id: 'expense-category',
-      title: t('finance.finance_dashboard_page.text_039481'),
+      title: t('finance.finance_dashboard_page.chart_status_distribution'),
       type: 'pie',
       data: () => {
         const stats = financeStats;
         if (!stats) return [];
         return [
-          { name: t('finance.finance_dashboard_page.text_b0bf01'), value: stats.pending_approvals },
-          { name: t('finance.finance_dashboard_page.text_9246fe'), value: stats.pending_payments },
-          { name: t('finance.finance_dashboard_page.text_94171c'), value: stats.total_vouchers },
-          { name: t('finance.finance_dashboard_page.text_474cd0'), value: stats.total_payments },
+          {
+            name: t('finance.finance_dashboard_page.stat_pending_approvals'),
+            value: stats.pending_approvals,
+          },
+          {
+            name: t('finance.finance_dashboard_page.stat_pending_payments'),
+            value: stats.pending_payments,
+          },
+          {
+            name: t('finance.finance_dashboard_page.pie_total_vouchers'),
+            value: stats.total_vouchers,
+          },
+          {
+            name: t('finance.finance_dashboard_page.pie_total_payments'),
+            value: stats.total_payments,
+          },
         ];
       },
       height: 300,
@@ -132,7 +162,7 @@ export function useFinanceDashboardSchema(): DashboardSchema {
   ];
 
   return {
-    title: t('finance.finance_dashboard_page.text_ea1f99'),
+    title: t('finance.finance_dashboard_page.page_title'),
     loader: async () => {
       const response = await financeApi.getDashboard();
       if (response.success && response.data) {

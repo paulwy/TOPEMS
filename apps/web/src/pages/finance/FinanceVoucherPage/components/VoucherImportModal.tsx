@@ -68,7 +68,7 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({ open, onClose, 
             multiline
             rows={12}
             placeholder={t(
-              'finance.finance_voucher_page_components__voucher_import_modal.text_a77173'
+              'finance.finance_voucher_page_components__voucher_import_modal.placeholder_import_json'
             )}
             sx={{
               fontFamily: 'monospace',
@@ -78,7 +78,9 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({ open, onClose, 
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <ActionButton
-            label={t('finance.finance_voucher_page_components__voucher_import_modal.text_b7a702')}
+            label={t(
+              'finance.finance_voucher_page_components__voucher_import_modal.btn_fill_sample'
+            )}
             icon={<Download size={16} />}
             variant='secondary'
             onClick={() => {
@@ -86,25 +88,25 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({ open, onClose, 
                 [
                   {
                     voucher_number: t(
-                      'finance.finance_voucher_page_components__voucher_import_modal.text_6357ac'
+                      'finance.finance_voucher_page_components__voucher_import_modal.sample_voucher_number'
                     ),
                     voucher_date: '2024-01-15',
                     period: '2024-01',
                     summary: t(
-                      'finance.finance_voucher_page_components__voucher_import_modal.text_e64dd8'
+                      'finance.finance_voucher_page_components__voucher_import_modal.sample_summary_purchase'
                     ),
                     maker: t(
-                      'finance.finance_voucher_page_components__voucher_import_modal.text_615db5'
+                      'finance.finance_voucher_page_components__voucher_import_modal.sample_maker'
                     ),
                     items: [
                       {
                         line_number: 1,
                         subject_code: '6602',
                         subject_name: t(
-                          'finance.finance_voucher_page_components__voucher_import_modal.text_9d7181'
+                          'finance.finance_voucher_page_components__voucher_import_modal.sample_subject_name_expense'
                         ),
                         summary: t(
-                          'finance.finance_voucher_page_components__voucher_import_modal.text_a554c6'
+                          'finance.finance_voucher_page_components__voucher_import_modal.sample_summary_buy_supplies'
                         ),
                         debit_amount: 500.0,
                         credit_amount: 0,
@@ -113,7 +115,7 @@ const VoucherImportModal: React.FC<VoucherImportModalProps> = ({ open, onClose, 
                         line_number: 2,
                         subject_code: '1002',
                         subject_name: t(
-                          'finance.finance_voucher_page_components__voucher_import_modal.text_54b4fb'
+                          'finance.finance_voucher_page_components__voucher_import_modal.sample_subject_name_bank'
                         ),
                         summary: '',
                         debit_amount: 0,

@@ -97,7 +97,7 @@ const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> =
 const tableColumns: TableColumn[] = [
   {
     id: 'report_no',
-    label: i18n.t('finance.consolidation_reports_page.text_634a94'),
+    label: i18n.t('finance.consolidation_reports_page.col_report_no'),
     field: 'report_no',
   },
   {
@@ -107,28 +107,28 @@ const tableColumns: TableColumn[] = [
   },
   {
     id: 'scope_name',
-    label: i18n.t('finance.consolidation_reports_page.text_2ae758'),
+    label: i18n.t('finance.consolidation_reports_page.col_scope_name'),
     field: 'scope_name',
   },
   {
     id: 'period',
-    label: i18n.t('finance.consolidation_reports_page.text_2f4339'),
+    label: i18n.t('finance.consolidation_reports_page.col_period'),
     field: 'period',
   },
   {
     id: 'company_count',
-    label: i18n.t('finance.consolidation_reports_page.text_ccb91d'),
+    label: i18n.t('finance.consolidation_reports_page.col_company_count'),
     field: 'company_count',
   },
   {
     id: 'total_assets',
-    label: i18n.t('finance.consolidation_reports_page.text_f9dddf'),
+    label: i18n.t('finance.consolidation_reports_page.col_total_assets'),
     field: 'total_assets',
     align: 'right',
   },
   {
     id: 'net_profit',
-    label: i18n.t('finance.consolidation_reports_page.text_80170f'),
+    label: i18n.t('finance.consolidation_reports_page.col_net_profit'),
     field: 'net_profit',
     align: 'right',
   },
@@ -140,7 +140,7 @@ const tableColumns: TableColumn[] = [
   },
   {
     id: 'approval_status',
-    label: i18n.t('finance.consolidation_reports_page.text_0273ba'),
+    label: i18n.t('finance.consolidation_reports_page.col_approval_status'),
     field: 'approval_status',
     align: 'center',
   },
@@ -232,28 +232,28 @@ export default function ConsolidationReportsPage() {
     () => [
       {
         id: 'balance-sheet',
-        title: t('finance.consolidation_reports_page.text_cb3b91'),
+        title: t('finance.consolidation_reports_page.stat_balance_sheet'),
         value: reports.filter((r) => r.report_type === 'consolidated_balance_sheet').length,
         icon: <Building2 sx={{ width: 24, height: 24 }} />,
         gradient: [ct.primary.dark, ct.primary[800]] as [string, string],
       },
       {
         id: 'income-statement',
-        title: t('finance.consolidation_reports_page.text_1fd96a'),
+        title: t('finance.consolidation_reports_page.stat_income_statement'),
         value: reports.filter((r) => r.report_type === 'consolidated_income_statement').length,
         icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
         gradient: [ct.success.main, ct.success.dark] as [string, string],
       },
       {
         id: 'cash-flow',
-        title: t('finance.consolidation_reports_page.text_c4397e'),
+        title: t('finance.consolidation_reports_page.stat_cash_flow_statement'),
         value: reports.filter((r) => r.report_type === 'consolidated_cash_flow').length,
         icon: <DollarSign sx={{ width: 24, height: 24 }} />,
         gradient: [ct.secondary.main, ct.secondary.dark] as [string, string],
       },
       {
         id: 'equity-changes',
-        title: t('finance.consolidation_reports_page.text_b70e57'),
+        title: t('finance.consolidation_reports_page.stat_equity_changes'),
         value: reports.filter((r) => r.report_type === 'consolidated_statement_changes').length,
         icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
         gradient: [ct.warning.main, ct.warning.dark] as [string, string],
@@ -279,12 +279,12 @@ export default function ConsolidationReportsPage() {
         nameKey: 'name',
         data: [
           {
-            name: t('finance.consolidation_reports_page.text_22b433'),
+            name: t('finance.consolidation_reports_page.pie_draft'),
             value: statusDistribution.draft,
             color: 'grey.500',
           },
           {
-            name: t('finance.consolidation_reports_page.text_5930ea'),
+            name: t('finance.consolidation_reports_page.pie_calculating'),
             value: statusDistribution.calculating,
             color: ct.primary.dark,
           },
@@ -294,7 +294,7 @@ export default function ConsolidationReportsPage() {
             color: ct.success.main,
           },
           {
-            name: t('finance.consolidation_reports_page.text_dca0c1'),
+            name: t('finance.consolidation_reports_page.pie_published'),
             value: statusDistribution.published,
             color: 'secondary.main',
           },
@@ -393,7 +393,7 @@ export default function ConsolidationReportsPage() {
       <TextField
         size='small'
         type='month'
-        label={t('finance.consolidation_reports_page.text_6cde16')}
+        label={t('finance.consolidation_reports_page.filter_period')}
         value={period}
         onChange={(e) => setPeriod(e.target.value)}
         sx={{ minWidth: 140 }}
@@ -412,7 +412,7 @@ export default function ConsolidationReportsPage() {
   return (
     <PageContainer maxWidth='xl'>
       <StatsPageTemplate
-        title={t('finance.consolidation_reports_page.text_e2b4a2')}
+        title={t('finance.consolidation_reports_page.page_title')}
         subtitle={t('finance.consolidation_reports_page.view')}
         statCards={statCards}
         statColumns={4}
@@ -423,7 +423,7 @@ export default function ConsolidationReportsPage() {
         search={{
           value: searchKeyword,
           onChange: setSearchKeyword,
-          placeholder: t('finance.consolidation_reports_page.text_f90bca'),
+          placeholder: t('finance.consolidation_reports_page.search_placeholder'),
         }}
         onRefresh={refetch}
         showExport={true}
@@ -700,7 +700,7 @@ export default function ConsolidationReportsPage() {
               <InputLabel>{t('finance.consolidation_reports_page.r1')}</InputLabel>
               <Select
                 value={generateFormData.scope_id}
-                label={t('finance.consolidation_reports_page.text_2ae758')}
+                label={t('finance.consolidation_reports_page.col_scope_name')}
                 onChange={(e) =>
                   setGenerateFormData({ ...generateFormData, scope_id: e.target.value })
                 }
@@ -742,7 +742,7 @@ export default function ConsolidationReportsPage() {
             <TextField
               fullWidth
               type='month'
-              label={t('finance.consolidation_reports_page.text_2902c0')}
+              label={t('finance.consolidation_reports_page.dialog_period')}
               value={generateFormData.period}
               onChange={(e) => setGenerateFormData({ ...generateFormData, period: e.target.value })}
             />
@@ -768,8 +768,8 @@ export default function ConsolidationReportsPage() {
             disabled={generateReport.isPending}
           >
             {generateReport.isPending
-              ? t('finance.consolidation_reports_page.text_4d020b')
-              : t('finance.consolidation_reports_page.text_0b5bc4')}
+              ? t('finance.consolidation_reports_page.btn_generating')
+              : t('finance.consolidation_reports_page.btn_generate')}
           </Button>
         </DialogActions>
       </Dialog>

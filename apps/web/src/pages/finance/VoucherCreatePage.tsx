@@ -201,7 +201,7 @@ const VoucherCreatePage: React.FC = () => {
     if (voucherItems.length < 2) {
       addNotification({
         title: t('finance.voucher_create_page.error'),
-        message: t('finance.voucher_create_page.text_abf017'),
+        message: t('finance.voucher_create_page.error_min_two_items'),
         type: 'warning',
       });
       return false;
@@ -309,10 +309,10 @@ const VoucherCreatePage: React.FC = () => {
           }}
         >
           <TextField
-            label={t('finance.voucher_create_page.text_7c0ad7')}
+            label={t('finance.voucher_create_page.field_voucher_number')}
             value={formData.voucher_number}
             onChange={(e) => handleFieldChange('voucher_number', e.target.value)}
-            placeholder={t('finance.voucher_create_page.text_c87953')}
+            placeholder={t('finance.voucher_create_page.placeholder_voucher_number')}
             required
             fullWidth
             size='small'
@@ -328,14 +328,14 @@ const VoucherCreatePage: React.FC = () => {
             slotProps={{ inputLabel: { shrink: true } } as const}
           />
           <TextField
-            label={t('finance.voucher_create_page.text_2902c0')}
+            label={t('finance.voucher_create_page.field_period')}
             value={formData.period}
             onChange={(e) => handleFieldChange('period', e.target.value)}
-            placeholder={t('finance.voucher_create_page.text_b2fa57')}
+            placeholder={t('finance.voucher_create_page.placeholder_select_period')}
             required
             fullWidth
             size='small'
-            helperText={t('finance.voucher_create_page.text_b526f6')}
+            helperText={t('finance.voucher_create_page.helper_period_required')}
           />
           <TextField
             label={t('finance.voucher_create_page.quantity')}
@@ -354,10 +354,10 @@ const VoucherCreatePage: React.FC = () => {
           />
           <Box sx={{ gridColumn: 'span 2' }}>
             <TextField
-              label={t('finance.voucher_create_page.text_95392b')}
+              label={t('finance.voucher_create_page.field_summary')}
               value={formData.summary}
               onChange={(e) => handleFieldChange('summary', e.target.value)}
-              placeholder={t('finance.voucher_create_page.text_8e986b')}
+              placeholder={t('finance.voucher_create_page.placeholder_summary')}
               fullWidth
               size='small'
               multiline
@@ -391,7 +391,7 @@ const VoucherCreatePage: React.FC = () => {
               <Chip
                 size='small'
                 icon={<AlertCircle size={14} />}
-                label={t('finance.voucher_create_page.text_f4cec4')}
+                label={t('finance.voucher_create_page.chip_imbalanced')}
                 color='warning'
                 variant='outlined'
               />
@@ -471,7 +471,7 @@ const VoucherCreatePage: React.FC = () => {
                   <TableCell>
                     <TextField
                       size='small'
-                      placeholder={t('finance.voucher_create_page.text_5b1bed')}
+                      placeholder={t('finance.voucher_create_page.placeholder_item_summary')}
                       value={item.summary}
                       onChange={(e) => updateVoucherItem(index, 'summary', e.target.value)}
                     />
@@ -688,7 +688,7 @@ const VoucherCreatePage: React.FC = () => {
     },
     {
       id: 'items',
-      title: t('finance.voucher_create_page.text_5f3e09'),
+      title: t('finance.voucher_create_page.section_items'),
       content: voucherItemsSection,
       collapsible: false,
       fields: [],

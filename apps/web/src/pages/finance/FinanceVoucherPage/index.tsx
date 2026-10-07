@@ -479,10 +479,10 @@ const FinanceVoucherPage: React.FC = () => {
         label: string;
       }
     > = {
-      draft: { color: 'default', label: t('finance.finance_voucher_page_index.text_22b433') },
+      draft: { color: 'default', label: t('finance.finance_voucher_page_index.status_draft') },
       pending: { color: 'warning', label: t('finance.finance_voucher_page_index.pending_review') },
       approved: { color: 'success', label: t('finance.finance_voucher_page_index.approved') },
-      posted: { color: 'success', label: t('finance.finance_voucher_page_index.text_4ab08f') },
+      posted: { color: 'success', label: t('finance.finance_voucher_page_index.status_posted') },
       imported: { color: 'secondary', label: t('finance.finance_voucher_page_index.import_5') },
     };
     const config = badges[status] || {
@@ -502,7 +502,7 @@ const FinanceVoucherPage: React.FC = () => {
   const voucherStatCards = useMemo(
     () => [
       {
-        title: i18n.t('finance.finance_voucher_page_index.text_551f4c'),
+        title: i18n.t('finance.finance_voucher_page_index.stat_voucher_count'),
         value: allVouchers.length,
         icon: <FileText size={24} />,
         color: 'primary' as const,
@@ -533,7 +533,7 @@ const FinanceVoucherPage: React.FC = () => {
   const subjectStatCards = useMemo(
     () => [
       {
-        title: i18n.t('finance.finance_voucher_page_index.text_3eb8d3'),
+        title: i18n.t('finance.finance_voucher_page_index.stat_subject_count'),
         value: subjects.length,
         icon: <Building2 size={24} />,
         color: 'primary' as const,
@@ -545,13 +545,13 @@ const FinanceVoucherPage: React.FC = () => {
         color: 'success' as const,
       },
       {
-        title: i18n.t('finance.finance_voucher_page_index.text_6772b0'),
+        title: i18n.t('finance.finance_voucher_page_index.stat_level1_count'),
         value: subjects.filter((s) => s.level === 1).length,
         icon: <DollarSign size={24} />,
         color: 'warning' as const,
       },
       {
-        title: i18n.t('finance.finance_voucher_page_index.text_07d5bc'),
+        title: i18n.t('finance.finance_voucher_page_index.stat_cash_flow_count'),
         value: subjects.filter((s) => s.is_cash_flow).length,
         icon: <Clock size={24} />,
         color: 'info' as const,
@@ -659,13 +659,13 @@ const FinanceVoucherPage: React.FC = () => {
     () => [
       {
         id: 'vouchers',
-        label: i18n.t('finance.finance_voucher_page_index.text_755348'),
+        label: i18n.t('finance.finance_voucher_page_index.tab_vouchers'),
         icon: <FileText size={16} />,
         content: null,
       },
       {
         id: 'subjects',
-        label: i18n.t('finance.finance_voucher_page_index.text_d64865'),
+        label: i18n.t('finance.finance_voucher_page_index.tab_subjects'),
         icon: <Building2 size={16} />,
         content: <SubjectCrudPanel statCards={subjectStatCards} />,
       },
@@ -677,7 +677,7 @@ const FinanceVoucherPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title={t('finance.finance_voucher_page_index.text_6b6598')}
+      title={t('finance.finance_voucher_page_index.page_title')}
       subtitle={t('finance.finance_voucher_page_index.import_6')}
       headerProps={{
         pageIcon: <Wallet style={{ width: 20, height: 20 }} />,
