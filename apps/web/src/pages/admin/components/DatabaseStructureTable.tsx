@@ -95,7 +95,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
             borderRadius: 1.5,
           }}
         >
-          {i18n.t('admin.database_structure_page.text_4484fa')}
+          {i18n.t('admin.database_structure_page.add_field')}
         </Button>
       </Box>
       {/* Field list */}
@@ -133,7 +133,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {i18n.t('admin.database_structure_page.text_d31455')}
+                    {i18n.t('admin.database_structure_page.field_name')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -143,7 +143,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {i18n.t('admin.database_structure_page.text_226b09')}
+                    {i18n.t('admin.database_structure_page.type_select')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -153,7 +153,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {i18n.t('admin.database_structure_page.text_d9b464')}
+                    {i18n.t('admin.database_structure_page.nullable_toggle')}
                   </TableCell>
                   <TableCell
                     sx={{
@@ -163,7 +163,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {i18n.t('admin.database_structure_page.text_225f3e')}
+                    {i18n.t('admin.database_structure_page.default_value_input')}
                   </TableCell>
                   <TableCell
                     align='right'
@@ -174,7 +174,7 @@ export const DatabaseStructureTable: React.FC<DatabaseStructureTableProps> = ({
                       textTransform: 'uppercase',
                     }}
                   >
-                    {i18n.t('admin.database_structure_page.text_2b6bc0')}
+                    {i18n.t('admin.database_structure_page.actions')}
                   </TableCell>
                 </TableRow>
               </TableHead>

@@ -414,7 +414,7 @@ const ReplenishmentPage: React.FC = () => {
   return (
     <PageContainer
       title={t('wms.replenishment_page.breadcrumb_current')}
-      subtitle={t('wms.replenishment_page.text_7bf91a')}
+      subtitle={t('wms.replenishment_page.auto_replenishment_alert')}
       headerProps={{
         pageIcon: <ShoppingCart style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.warning.main}, ${ct.warning.dark})`,

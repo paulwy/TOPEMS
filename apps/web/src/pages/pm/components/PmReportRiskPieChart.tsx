@@ -12,7 +12,9 @@ const PmReportRiskPieChart: React.FC<PmReportRiskPieChartProps> = ({ data, outer
   return (
     <Card>
       <CardHeader
-        title={<Typography variant='h6'>{i18n.t('pm.pm_report_page.text_99ce9e')}</Typography>}
+        title={
+          <Typography variant='h6'>{i18n.t('pm.pm_report_page.risk_distribution')}</Typography>
+        }
       />
       <CardContent>
         <Box sx={{ height: 256 }}>
@@ -41,8 +43,8 @@ const PmReportRiskPieChart: React.FC<PmReportRiskPieChartProps> = ({ data, outer
               </Pie>
               <Tooltip
                 formatter={(value: unknown) => [
-                  i18n.t('pm.pm_report_page.text_57cd04', { value }),
-                  i18n.t('pm.pm_report_page.text_bfaab7'),
+                  i18n.t('pm.pm_report_page.risk_item', { value }),
+                  i18n.t('pm.pm_report_page.tooltip_unit'),
                 ]}
               />
               <Legend />

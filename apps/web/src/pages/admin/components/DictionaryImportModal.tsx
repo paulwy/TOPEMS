@@ -38,7 +38,7 @@ const DictionaryImportModal: React.FC<DictionaryImportModalProps> = ({
             variant='body2'
             sx={{ mb: 1 }}
           >
-            {i18n.t('admin.dictionary_management_page.text_13bf99')}
+            {i18n.t('admin.dictionary_management_page.import_override_tip')}
           </Typography>
           <input
             type='file'
@@ -53,14 +53,14 @@ const DictionaryImportModal: React.FC<DictionaryImportModalProps> = ({
           variant='outlined'
           onClick={onClose}
         >
-          {i18n.t('admin.dictionary_management_page.text_625fb2')}
+          {i18n.t('admin.dictionary_management_page.cancel')}
         </Button>
         <Button
           variant='contained'
           onClick={onImport}
           disabled={!importFile}
         >
-          {i18n.t('admin.dictionary_management_page.text_3e36a9')}
+          {i18n.t('admin.dictionary_management_page.import')}
         </Button>
       </DialogActions>
     </Dialog>

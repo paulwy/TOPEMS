@@ -11,7 +11,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
   return (
     <Card sx={{ mb: 3 }}>
       <CardHeader
-        title={<Typography variant='h6'>{i18n.t('pm.pm_report_page.text_42acf5')}</Typography>}
+        title={<Typography variant='h6'>{i18n.t('pm.pm_report_page.budget_execution')}</Typography>}
       />
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -19,7 +19,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
             variant='body2'
             sx={{ color: 'grey.600' }}
           >
-            {i18n.t('pm.pm_report_page.text_0a134c')}
+            {i18n.t('pm.pm_report_page.total_budget')}
           </Typography>
           <Typography
             variant='body2'
@@ -39,7 +39,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
               variant='body2'
               sx={{ color: 'blue.600' }}
             >
-              {i18n.t('pm.pm_report_page.text_b91eb1')}
+              {i18n.t('pm.pm_report_page.planned_budget')}
             </Typography>
             <Typography
               variant='h6'
@@ -53,7 +53,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
               variant='body2'
               sx={{ color: 'green.600' }}
             >
-              {i18n.t('pm.pm_report_page.text_b59b00')}
+              {i18n.t('pm.pm_report_page.spent_budget')}
             </Typography>
             <Typography
               variant='h6'
@@ -67,7 +67,7 @@ const PmReportBudgetCard: React.FC<PmReportBudgetCardProps> = ({ stats, budgetUt
               variant='body2'
               sx={{ color: 'grey.600' }}
             >
-              {i18n.t('pm.pm_report_page.text_43b510')}
+              {i18n.t('pm.pm_report_page.budget_usage_rate')}
             </Typography>
             <Typography
               variant='h6'

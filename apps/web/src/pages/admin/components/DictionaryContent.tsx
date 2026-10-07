@@ -46,10 +46,10 @@ const DictionaryContent: React.FC<DictionaryContentProps> = ({
           variant='h6'
           sx={{ mb: 1 }}
         >
-          {t('admin.dictionary_management_page.text_4b3a81')}
+          {t('admin.dictionary_management_page.select_type_prompt')}
         </Typography>
         <Typography color='text.secondary'>
-          {t('admin.dictionary_management_page.text_f0736f')}
+          {t('admin.dictionary_management_page.select_type_empty')}
         </Typography>
       </Paper>
     );
@@ -87,7 +87,7 @@ const DictionaryContent: React.FC<DictionaryContentProps> = ({
             startIcon={<Edit size={16} />}
             onClick={() => onEditType(selectedType)}
           >
-            {t('admin.dictionary_management_page.text_63bb91')}
+            {t('admin.dictionary_management_page.edit_type')}
           </Button>
           <Button
             variant='outlined'
@@ -96,7 +96,7 @@ const DictionaryContent: React.FC<DictionaryContentProps> = ({
             startIcon={<Trash2 size={16} />}
             onClick={() => onDeleteType(selectedType)}
           >
-            {t('admin.dictionary_management_page.text_c0a407')}
+            {t('admin.dictionary_management_page.delete_type')}
           </Button>
           <Button
             variant='outlined'
@@ -104,7 +104,7 @@ const DictionaryContent: React.FC<DictionaryContentProps> = ({
             startIcon={<Download size={16} />}
             onClick={onExport}
           >
-            {t('admin.dictionary_management_page.text_55405e')}
+            {t('admin.dictionary_management_page.export_action')}
           </Button>
           <Button
             variant='outlined'
@@ -112,7 +112,7 @@ const DictionaryContent: React.FC<DictionaryContentProps> = ({
             startIcon={<Upload size={16} />}
             onClick={onImport}
           >
-            {t('admin.dictionary_management_page.text_8d9a07')}
+            {t('admin.dictionary_management_page.import_button')}
           </Button>
         </Box>
       }

@@ -162,7 +162,7 @@ const StockTakePage: React.FC = () => {
       addNotification({
         type: 'success',
         title: t('wms.stocktake_page.operation_success'),
-        message: t('wms.stocktake_page.text_cd78ac'),
+        message: t('wms.stocktake_page.variance_adjusted'),
       });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.AD_HOC.WMS_STOCK_TAKES_BASE,
@@ -341,7 +341,7 @@ const StockTakePage: React.FC = () => {
       },
       {
         key: 'start',
-        label: t('wms.stocktake_page.text_a3e3b8'),
+        label: t('wms.stocktake_page.start_stocktake'),
         icon: <Play size={16} />,
         onClick: handleStartStockTake,
         visible: (row: Record<string, unknown>) =>
@@ -612,7 +612,7 @@ const StockTakePage: React.FC = () => {
           )}
           {selectedStockTake.status === 'completed' && selectedStockTake.stock_adjusted && (
             <Chip
-              label={t('wms.stocktake_page.text_cd78ac')}
+              label={t('wms.stocktake_page.variance_adjusted')}
               color='success'
             />
           )}

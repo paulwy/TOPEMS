@@ -47,7 +47,7 @@ const EhsHazardControlDialog: React.FC<EhsHazardControlDialogProps> = ({
       maxWidth='sm'
       fullWidth
     >
-      <DialogTitle>{t('ehs.ehshazarddetailpage.text_676fd4')}</DialogTitle>
+      <DialogTitle>{t('ehs.ehshazarddetailpage.add_control_measure')}</DialogTitle>
       <DialogContent>
         <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
           <Box>
@@ -61,7 +61,7 @@ const EhsHazardControlDialog: React.FC<EhsHazardControlDialogProps> = ({
               fullWidth
               size='small'
             >
-              <InputLabel>{t('ehs.ehshazarddetailpage.text_2edb59')}</InputLabel>
+              <InputLabel>{t('ehs.ehshazarddetailpage.control_measure_type')}</InputLabel>
               <Select
                 value={controlFormData.measure_type}
                 label={t('ehs.ehs_hazard_detail_page.type')}
@@ -72,11 +72,13 @@ const EhsHazardControlDialog: React.FC<EhsHazardControlDialogProps> = ({
                   }))
                 }
               >
-                <MenuItem value='engineering'>{t('ehs.ehshazarddetailpage.text_2c8522')}</MenuItem>
-                <MenuItem value='administrative'>
-                  {t('ehs.ehshazarddetailpage.text_39f2c2')}
+                <MenuItem value='engineering'>
+                  {t('ehs.ehshazarddetailpage.engineering_control')}
                 </MenuItem>
-                <MenuItem value='ppe'>{t('ehs.ehshazarddetailpage.text_24c224')}</MenuItem>
+                <MenuItem value='administrative'>
+                  {t('ehs.ehshazarddetailpage.management_measures')}
+                </MenuItem>
+                <MenuItem value='ppe'>{t('ehs.ehshazarddetailpage.ppe')}</MenuItem>
               </Select>
             </FormControl>
           </Box>
@@ -104,7 +106,7 @@ const EhsHazardControlDialog: React.FC<EhsHazardControlDialogProps> = ({
                 variant='body2'
                 sx={{ mb: 0.5, display: 'block' }}
               >
-                {t('ehs.ehshazarddetailpage.text_022327')}
+                {t('ehs.ehshazarddetailpage.measure_name')}
               </Typography>
               <TextField
                 size='small'
@@ -121,7 +123,7 @@ const EhsHazardControlDialog: React.FC<EhsHazardControlDialogProps> = ({
                 variant='body2'
                 sx={{ mb: 0.5, display: 'block' }}
               >
-                {t('ehs.ehshazarddetailpage.text_2b1a9a')}
+                {t('ehs.ehshazarddetailpage.planned_completion_date')}
               </Typography>
               <TextField
                 type='date'
@@ -141,14 +143,14 @@ const EhsHazardControlDialog: React.FC<EhsHazardControlDialogProps> = ({
           variant='outlined'
           onClick={onClose}
         >
-          {t('ehs.ehshazarddetailpage.text_000a94')}
+          {t('ehs.ehshazarddetailpage.cancel')}
         </Button>
         <Button
           variant='contained'
           onClick={onSave}
           sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: ct.orange[700] } }}
         >
-          {t('ehs.ehshazarddetailpage.text_33412e')}
+          {t('ehs.ehshazarddetailpage.save')}
         </Button>
       </DialogActions>
     </Dialog>

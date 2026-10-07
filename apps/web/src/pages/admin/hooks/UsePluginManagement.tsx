@@ -204,7 +204,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
       });
       addNotification({
         title: i18n.t('admin.plugin_management.enabled_successfully'),
-        message: i18n.t('admin.plugin_management_page.text_773966', { pluginCode }),
+        message: i18n.t('admin.plugin_management_page.plugin_enabled', { pluginCode }),
         type: 'success',
       });
       loadPlugins();
@@ -231,7 +231,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
       });
       addNotification({
         title: i18n.t('admin.plugin_management.disabled_successfully'),
-        message: i18n.t('admin.plugin_management_page.text_c0f589', { pluginCode }),
+        message: i18n.t('admin.plugin_management_page.plugin_uninstalled_msg', { pluginCode }),
         type: 'success',
       });
       loadPlugins();
@@ -258,7 +258,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
       });
       addNotification({
         title: i18n.t('admin.plugin_management.upgraded_successfully'),
-        message: i18n.t('admin.plugin_management_page.text_b13651', { pluginCode }),
+        message: i18n.t('admin.plugin_management_page.plugin_disabled_msg', { pluginCode }),
         type: 'success',
       });
       loadPlugins();
@@ -287,10 +287,10 @@ export function usePluginManagement(): UsePluginManagementReturn {
         title: i18n.t('admin.plugin_management.operation_successful'),
         message:
           tier === 'delete'
-            ? i18n.t('admin.plugin_management_page.text_9e796d', { pluginCode })
+            ? i18n.t('admin.plugin_management_page.plugin_delete', { pluginCode })
             : tier === 'disable'
-              ? i18n.t('admin.plugin_management_page.text_c0f589', { pluginCode })
-              : i18n.t('admin.plugin_management_page.text_46c7c3', { pluginCode }),
+              ? i18n.t('admin.plugin_management_page.plugin_uninstalled_msg', { pluginCode })
+              : i18n.t('admin.plugin_management_page.plugin_uninstalled', { pluginCode }),
         type: 'success',
       });
       loadPlugins();
@@ -328,7 +328,7 @@ export function usePluginManagement(): UsePluginManagementReturn {
         name: pluginDisplayNames[code] || code.toUpperCase(),
         version: '1.0.0',
         latest_version: '1.0.0',
-        description: i18n.t('admin.plugin_management_page.text_97114b', {
+        description: i18n.t('admin.plugin_management_page.confirm_delete_all_data', {
           var0: pluginDisplayNames[code] || code,
           var1: config.port,
         }),
@@ -403,13 +403,13 @@ export function usePluginManagement(): UsePluginManagementReturn {
   const getUninstallMessage = useCallback((pluginCode: string, tier: UninstallTier) => {
     switch (tier) {
       case 'disable':
-        return i18n.t('admin.plugin_management_page.text_ede147', { pluginCode });
+        return i18n.t('admin.plugin_management_page.confirm_disable', { pluginCode });
       case 'uninstall':
-        return i18n.t('admin.plugin_management_page.text_c0b87f', { pluginCode });
+        return i18n.t('admin.plugin_management_page.confirm_uninstall_keep_data', { pluginCode });
       case 'delete':
-        return i18n.t('admin.plugin_management_page.text_5cb48f', { pluginCode });
+        return i18n.t('admin.plugin_management_page.confirm_delete_plugin', { pluginCode });
       default:
-        return i18n.t(`admin.plugin_management_page.text_3ad04c${{ pluginCode }}`);
+        return i18n.t(`admin.plugin_management_page.confirm_uninstall${{ pluginCode }}`);
     }
   }, []);
   const customRowActions: RowAction[] = useMemo(

@@ -123,7 +123,7 @@ export const usePmReport = (): UsePmReportReturn => {
   const benefits = useMemo(() => benefitsQuery.data ?? [], [benefitsQuery.data]);
   const loading = statsQuery.isLoading || benefitsQuery.isLoading;
   const error =
-    statsQuery.isError || benefitsQuery.isError ? i18n.t('pm.pm_report_page.text_ca2c36') : '';
+    statsQuery.isError || benefitsQuery.isError ? i18n.t('pm.pm_report_page.load_failed') : '';
   const projectStatsQuery = useQuery({
     queryKey: [...QUERY_KEYS.PM.STATISTICS_PROJECTS, selectedPeriod],
     queryFn: async () => {
@@ -348,7 +348,7 @@ export const usePmReport = (): UsePmReportReturn => {
   const trendData: TrendDatum[] = useMemo(
     () =>
       benefits.slice(0, 6).map((b, index) => ({
-        month: i18n.t(`pm.pm_report_page.text_31f4ca${{ index_1: index + 1 }}`),
+        month: i18n.t(`pm.pm_report_page.period_label${{ index_1: index + 1 }}`),
         cpi: b.cpi,
         spi: b.spi,
       })),
@@ -370,8 +370,8 @@ export const usePmReport = (): UsePmReportReturn => {
   );
   const pageTitle = i18n.t('pm.pm_report_page.attr_d5179b');
   const pageSubtitle = params.projectId
-    ? i18n.t('pm.pm_report_page.text_fd2114')
-    : i18n.t('pm.pm_report_page.text_939d8c');
+    ? i18n.t('pm.pm_report_page.detail_subtitle')
+    : i18n.t('pm.pm_report_page.project_data_analysis');
   const exportText = i18n.t('pm.pm_report_page.attr_4fcf74');
   return {
     selectedPeriod,

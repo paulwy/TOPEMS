@@ -120,7 +120,7 @@ const InventoryReportPage: React.FC = () => {
       addNotification({
         type: 'error',
         title: t('wms.inventory_report_page.fail_1'),
-        message: t('wms.inventory_report_page.text_d6c5e2'),
+        message: t('wms.inventory_report_page.statistics_load_failed'),
       });
     }
   }, [statisticsQuery.isError, statisticsQuery.error, addNotification, t]);
@@ -154,7 +154,7 @@ const InventoryReportPage: React.FC = () => {
       addNotification({
         type: 'error',
         title: t('wms.inventory_report_page.fail_1'),
-        message: t('wms.inventory_report_page.text_cb3845'),
+        message: t('wms.inventory_report_page.abc_analysis_load_failed'),
       });
     }
   }, [abcAnalysisQuery.isError, abcAnalysisQuery.error, addNotification, t]);
@@ -186,7 +186,7 @@ const InventoryReportPage: React.FC = () => {
       addNotification({
         type: 'error',
         title: t('wms.inventory_report_page.fail_1'),
-        message: t('wms.inventory_report_page.text_898624'),
+        message: t('wms.inventory_report_page.turnover_load_failed'),
       });
     }
   }, [turnoverQuery.isError, turnoverQuery.error, addNotification, t]);

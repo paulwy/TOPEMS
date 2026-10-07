@@ -124,7 +124,7 @@ const TransferPage: React.FC = () => {
       fields: [
         {
           name: 'asset_id',
-          label: t('asset.transfer_page.text_1b6830'),
+          label: t('asset.transfer_page.asset'),
           type: 'select',
           options: ASSETS.map((asset) => ({
             label: asset.label,
@@ -138,14 +138,14 @@ const TransferPage: React.FC = () => {
     {
       id: 'department',
       title: t('asset.transfer_page.info_1'),
-      description: t('asset.transfer_page.text_035d60'),
+      description: t('asset.transfer_page.description'),
       icon: <MapPin style={{ width: 18, height: 18 }} />,
       collapsible: false,
       color: 'secondary',
       fields: [
         {
           name: 'from_department',
-          label: t('asset.transfer_page.text_ca25ca'),
+          label: t('asset.transfer_page.transfer_out_dept'),
           type: 'select',
           options: DEPARTMENTS.map((dept) => ({
             label: dept.label,
@@ -156,7 +156,7 @@ const TransferPage: React.FC = () => {
         },
         {
           name: 'to_department',
-          label: t('asset.transfer_page.text_d619c4'),
+          label: t('asset.transfer_page.transfer_in_dept'),
           type: 'select',
           options: DEPARTMENTS.map((dept) => ({
             label: dept.label,
@@ -167,13 +167,13 @@ const TransferPage: React.FC = () => {
         },
         {
           name: 'from_location',
-          label: t('asset.transfer_page.text_8d9da7'),
+          label: t('asset.transfer_page.transfer_out_location'),
           type: 'text',
           placeholder: t('asset.transfer_page.please_input'),
         },
         {
           name: 'to_location',
-          label: t('asset.transfer_page.text_0cc4cd'),
+          label: t('asset.transfer_page.transfer_in_location'),
           type: 'text',
           placeholder: t('asset.transfer_page.please_input_1'),
         },
@@ -231,7 +231,7 @@ const TransferPage: React.FC = () => {
         backHref={ASSET_PATHS.transfers}
         breadcrumbs={[
           { label: t('asset.transfer_page.home'), href: '/dashboard' },
-          { label: t('asset.transfer_page.text_b1a8be'), href: ASSET_PATHS.root },
+          { label: t('asset.transfer_page.asset_management'), href: ASSET_PATHS.root },
           { label: t('asset.transfer_page.list'), href: ASSET_PATHS.list },
           { label: t('asset.transfer_page.transfer_2') },
         ]}

@@ -80,7 +80,7 @@ const ProductionOrderDetailPage: React.FC = () => {
     getChipStatusColor(status, 'mes');
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, string> = {
-      pending: i18n.t('mes.production_order_detail_page.text_e0468e'),
+      pending: i18n.t('mes.production_order_detail_page.pending'),
       released: i18n.t('mes.production_order_detail_page.status_released'),
       in_progress: i18n.t('mes.production_order_detail_page.status_in_progress'),
       completed: i18n.t('mes.production_order_detail_page.completed'),
@@ -528,7 +528,7 @@ const ProductionOrderDetailPage: React.FC = () => {
       },
       {
         id: 'statistics',
-        label: i18n.t('mes.production_order_detail_page.text_93466b'),
+        label: i18n.t('mes.production_order_detail_page.statistics'),
         content: statisticsContent || <></>,
       },
       {

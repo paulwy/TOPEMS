@@ -25,7 +25,7 @@ const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits 
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        {i18n.t('pm.pm_report_page.text_9d57d4')}
+        {i18n.t('pm.pm_report_page.benefit_summary')}
       </Typography>
       <Card>
         <CardContent>
@@ -35,7 +35,7 @@ const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits 
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 'medium', color: 'grey.600' }}>
-                      {i18n.t('pm.pm_report_page.text_2f4339')}
+                      {i18n.t('pm.pm_report_page.benefit_item')}
                     </TableCell>
                     <TableCell
                       align='right'
@@ -126,7 +126,7 @@ const PmReportBenefitsTable: React.FC<PmReportBenefitsTableProps> = ({ benefits 
           ) : (
             <Box sx={{ textAlign: 'center', py: 4, color: 'grey.500' }}>
               <TrendingUp sx={{ width: 48, height: 48, mx: 'auto', mb: 2, color: 'grey.300' }} />
-              <Typography>{i18n.t('pm.pm_report_page.text_8fe0ff')}</Typography>
+              <Typography>{i18n.t('pm.pm_report_page.no_benefit_data')}</Typography>
             </Box>
           )}
         </CardContent>

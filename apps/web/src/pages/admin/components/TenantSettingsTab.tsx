@@ -28,7 +28,7 @@ const TenantSettingsTab: React.FC<TenantSettingsTabProps> = ({ tenant }) => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              {i18n.t('admin.tenant_detail_page.text_74070e')}
+              {i18n.t('admin.tenant_detail_page.brand_settings')}
             </Typography>
           </Box>
           <List disablePadding>
@@ -81,7 +81,7 @@ const TenantSettingsTab: React.FC<TenantSettingsTabProps> = ({ tenant }) => {
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              {i18n.t('admin.tenant_detail_page.text_c8bf34')}
+              {i18n.t('admin.tenant_detail_page.security_settings')}
             </Typography>
           </Box>
           <List disablePadding>
@@ -114,7 +114,7 @@ const TenantSettingsTab: React.FC<TenantSettingsTabProps> = ({ tenant }) => {
             <ListItem sx={{ px: 0 }}>
               <ListItemText
                 primary={i18n.t('admin.tenant_detail.session_timeout')}
-                secondary={i18n.t('admin.tenant_detail_page.text_3a17b7', {
+                secondary={i18n.t('admin.tenant_detail_page.minute', {
                   tenant_settings_security_session_timeout_minutes:
                     tenant.settings.security.session_timeout_minutes,
                 })}
@@ -132,7 +132,7 @@ const TenantSettingsTab: React.FC<TenantSettingsTabProps> = ({ tenant }) => {
                 variant='h6'
                 sx={{ fontWeight: 600 }}
               >
-                {i18n.t('admin.tenant_detail_page.text_b96130')}
+                {i18n.t('admin.tenant_detail_page.feature_toggles')}
               </Typography>
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>

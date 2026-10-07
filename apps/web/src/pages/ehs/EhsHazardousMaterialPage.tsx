@@ -204,7 +204,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
       }}
     >
       <StatCard
-        label={t('ehs.ehs_hazardous_material_page.text_9856ee')}
+        label={t('ehs.ehs_hazardous_material_page.total_hazmat')}
         value={stats.total}
         icon={<FlaskConical />}
         bgColor='error.light'
@@ -212,7 +212,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
         iconColor='error.main'
       />
       <StatCard
-        label={t('ehs.ehs_hazardous_material_page.text_c516b4')}
+        label={t('ehs.ehs_hazardous_material_page.expiring_soon')}
         value={stats.expiring}
         icon={<AlertTriangle />}
         bgColor='background.paper'
@@ -220,7 +220,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
         iconColor={ct.yellow[600]}
       />
       <StatCard
-        label={t('ehs.ehs_hazardous_material_page.text_edaacc')}
+        label={t('ehs.ehs_hazardous_material_page.high_hazard')}
         value={stats.severe}
         icon={<Package />}
         bgColor='background.paper'

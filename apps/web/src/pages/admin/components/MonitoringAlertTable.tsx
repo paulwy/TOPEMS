@@ -196,19 +196,19 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
     () => [
       {
         key: 'acknowledge',
-        label: i18n.t('admin.monitoring_alert_page.text_e83a25'),
+        label: i18n.t('admin.monitoring_alert_page.confirm_btn'),
         onClick: (row) => onAcknowledge(row.id),
         show: (row) => row.status === 'pending',
       },
       {
         key: 'resolve',
-        label: i18n.t('admin.monitoring_alert_page.text_4b8621'),
+        label: i18n.t('admin.monitoring_alert_page.resolve'),
         onClick: (row) => onResolve(row.id),
         show: (row) => row.status === 'acknowledged',
       },
       {
         key: 'escalate',
-        label: i18n.t('admin.monitoring_alert_page.text_e643c7'),
+        label: i18n.t('admin.monitoring_alert_page.upgrade'),
         color: 'error',
         onClick: (row) => onEscalate(row.id),
         show: (row) => row.status !== 'escalated' && row.status !== 'resolved',
@@ -234,7 +234,7 @@ export const MonitoringAlertTable: React.FC<MonitoringAlertTableProps> = ({
       }}
       headerContent={headerContent}
       filterContent={filterContent}
-      emptyMessage={i18n.t('admin.monitoring_alert_page.text_b2397d')}
+      emptyMessage={i18n.t('admin.monitoring_alert_page.no_alert_record')}
       onRefresh={onRefresh}
       showRowNumber={false}
       exportable={false}

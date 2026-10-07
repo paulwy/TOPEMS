@@ -126,11 +126,11 @@ describe('EhsHazard components', () => {
         />
       );
 
-      expect(screen.getByText('ehs.ehshazarddetailpage.text_2e8dbb')).toBeInTheDocument();
+      expect(screen.getByText('ehs.ehshazarddetailpage.control_measures')).toBeInTheDocument();
       expect(screen.getByText('ehs.ehs_hazard_detail_page.total_measures:0')).toBeInTheDocument();
-      expect(screen.getByText('ehs.ehshazarddetailpage.text_b64d8b')).toBeInTheDocument();
+      expect(screen.getByText('ehs.ehshazarddetailpage.no_control_measures')).toBeInTheDocument();
 
-      fireEvent.click(screen.getByText('ehs.ehshazarddetailpage.text_676fd4'));
+      fireEvent.click(screen.getByText('ehs.ehshazarddetailpage.add_control_measure'));
       expect(onAddControl).toHaveBeenCalledTimes(1);
     });
   });
@@ -139,9 +139,9 @@ describe('EhsHazard components', () => {
     it('renders empty assessments state', () => {
       renderWithProviders(<EhsHazardAssessmentsSection assessments={[]} />);
 
-      expect(screen.getByText('ehs.ehshazarddetailpage.text_48752c')).toBeInTheDocument();
+      expect(screen.getByText('ehs.ehshazarddetailpage.risk_assessment')).toBeInTheDocument();
       expect(screen.getByText('ehs.ehs_hazard_detail_page.total_records:0')).toBeInTheDocument();
-      expect(screen.getByText('ehs.ehshazarddetailpage.text_df834d')).toBeInTheDocument();
+      expect(screen.getByText('ehs.ehshazarddetailpage.no_assessment_records')).toBeInTheDocument();
     });
   });
 
@@ -149,14 +149,16 @@ describe('EhsHazard components', () => {
     it('renders hazard basic fields and risk tiles', () => {
       renderWithProviders(<EhsHazardBasicInfoSection hazard={hazard as any} />);
 
-      expect(screen.getAllByText('ehs.ehshazarddetailpage.text_47ba19').length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText('ehs.ehshazarddetailpage.basic_information').length
+      ).toBeGreaterThan(0);
       expect(screen.getByText('设备设施')).toBeInTheDocument();
       expect(screen.getByText('锅炉房')).toBeInTheDocument();
       expect(screen.getByText('蒸汽管道接口存在泄漏风险')).toBeInTheDocument();
       expect(screen.getByText('ehs.ehs_hazard_detail_page.high_risk')).toBeInTheDocument();
-      expect(screen.getByText('ehs.ehs_hazard_detail_page.text_4296d7')).toBeInTheDocument();
-      expect(screen.getByText('ehs.ehs_hazard_detail_page.text_aed1df')).toBeInTheDocument();
-      expect(screen.getByText('ehs.ehs_hazard_detail_page.text_19ac67')).toBeInTheDocument();
+      expect(screen.getByText('ehs.ehs_hazard_detail_page.hazard_details')).toBeInTheDocument();
+      expect(screen.getByText('ehs.ehs_hazard_detail_page.hazard_details_3')).toBeInTheDocument();
+      expect(screen.getByText('ehs.ehs_hazard_detail_page.low')).toBeInTheDocument();
     });
   });
 
@@ -172,7 +174,9 @@ describe('EhsHazard components', () => {
         />
       );
 
-      expect(screen.queryByText('ehs.ehshazarddetailpage.text_676fd4')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('ehs.ehshazarddetailpage.add_control_measure')
+      ).not.toBeInTheDocument();
     });
   });
 });

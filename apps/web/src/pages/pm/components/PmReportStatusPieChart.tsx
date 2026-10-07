@@ -15,7 +15,11 @@ const PmReportStatusPieChart: React.FC<PmReportStatusPieChartProps> = ({
   return (
     <Card>
       <CardHeader
-        title={<Typography variant='h6'>{i18n.t('pm.pm_report_page.text_068934')}</Typography>}
+        title={
+          <Typography variant='h6'>
+            {i18n.t('pm.pm_report_page.project_status_distribution')}
+          </Typography>
+        }
       />
       <CardContent>
         <Box sx={{ height: 256 }}>
@@ -44,8 +48,8 @@ const PmReportStatusPieChart: React.FC<PmReportStatusPieChartProps> = ({
               </Pie>
               <Tooltip
                 formatter={(value) => [
-                  i18n.t('pm.pm_report_page.text_930882', { value }),
-                  i18n.t('pm.pm_report_page.text_bfaab7'),
+                  i18n.t('pm.pm_report_page.project_count', { value }),
+                  i18n.t('pm.pm_report_page.tooltip_unit'),
                 ]}
               />
               <Legend />

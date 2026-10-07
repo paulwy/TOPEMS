@@ -99,7 +99,7 @@ const EhsHazardControlsSection: React.FC<EhsHazardControlsSectionProps> = ({
           variant='subtitle1'
           sx={{ fontWeight: 600 }}
         >
-          {t('ehs.ehshazarddetailpage.text_2e8dbb')}
+          {t('ehs.ehshazarddetailpage.control_measures')}
         </Typography>
         <Typography
           variant='body2'
@@ -120,7 +120,7 @@ const EhsHazardControlsSection: React.FC<EhsHazardControlsSectionProps> = ({
             component={Shield}
             sx={{ fontSize: 64, color: 'grey.400', mx: 'auto', mb: 2 }}
           />
-          <Typography>{t('ehs.ehshazarddetailpage.text_b64d8b')}</Typography>
+          <Typography>{t('ehs.ehshazarddetailpage.no_control_measures')}</Typography>
           <Button
             variant='outlined'
             size='small'
@@ -133,7 +133,7 @@ const EhsHazardControlsSection: React.FC<EhsHazardControlsSectionProps> = ({
               />
             }
           >
-            {t('ehs.ehshazarddetailpage.text_676fd4')}
+            {t('ehs.ehshazarddetailpage.add_control_measure')}
           </Button>
         </Box>
       )}
