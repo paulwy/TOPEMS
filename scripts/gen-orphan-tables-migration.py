@@ -126,7 +126,11 @@ def main():
             "DO $$\nBEGIN\n"
             f"    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid "
             f"JOIN pg_namespace n ON n.oid=c.relnamespace "
-            f"WHERE con.conname = '{cname}' AND n.nspname = '{s}') THEN\n"
+            f"WHERE con.conname = '{cname}' AND n.nspname = '{s}') "
+            f"AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid "
+            f"JOIN pg_namespace n ON n.oid=c.relnamespace "
+            f"WHERE con.conname = '{cname}' AND n.nspname = '{s}' "
+            f"AND con.conrelid = to_regclass('\"{s}\".\"{t}\"')) THEN\n"
             f'        ALTER TABLE "{s}"."{t}" ADD CONSTRAINT "{cname}" {defn};\n'
             "    END IF;\nEND $$;"
         )
@@ -136,7 +140,8 @@ def main():
             "DO $$\nBEGIN\n"
             f"    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid "
             f"JOIN pg_namespace n ON n.oid=c.relnamespace "
-            f"WHERE con.conname = '{cname}' AND n.nspname = '{s}') THEN\n"
+            f"WHERE con.conname = '{cname}' AND n.nspname = '{s}' "
+            f"AND con.conrelid = to_regclass('\"{s}\".\"{t}\"')) THEN\n"
             f'        ALTER TABLE "{s}"."{t}" ADD CONSTRAINT "{cname}" {defn};\n'
             "    END IF;\nEND $$;"
         )
@@ -145,7 +150,7 @@ def main():
         out_lines.append(
             "DO $$\nBEGIN\n"
             f"    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = '{pname}' "
-            f"AND polrelid = '\"{s}\".\"{t}\"'::regclass) THEN\n"
+            f"AND polrelid = to_regclass('\"{s}\".\"{t}\"')) THEN\n"
             f'        CREATE POLICY "{pname}" ON "{s}"."{t}" {body.rstrip(";")};\n'
             "    END IF;\nEND $$;"
         )

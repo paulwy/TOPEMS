@@ -4281,2479 +4281,2479 @@ CREATE TABLE IF NOT EXISTS public.ticket_knowledge_articles (
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'databases_pkey' AND n.nspname = '_sqlx_test') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'databases_pkey' AND n.nspname = '_sqlx_test') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'databases_pkey' AND n.nspname = '_sqlx_test' AND con.conrelid = to_regclass('"_sqlx_test"."databases"')) THEN
         ALTER TABLE "_sqlx_test"."databases" ADD CONSTRAINT "databases_pkey" PRIMARY KEY (db_name);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_comparison_analyses_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_comparison_analyses_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_comparison_analyses_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_comparison_analyses"')) THEN
         ALTER TABLE "analytics"."analytics_comparison_analyses" ADD CONSTRAINT "analytics_comparison_analyses_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_comparison_results_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_comparison_results_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_comparison_results_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_comparison_results"')) THEN
         ALTER TABLE "analytics"."analytics_comparison_results" ADD CONSTRAINT "analytics_comparison_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboard_shares_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboard_shares_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboard_shares_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_dashboard_shares"')) THEN
         ALTER TABLE "analytics"."analytics_dashboard_shares" ADD CONSTRAINT "analytics_dashboard_shares_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboard_templates_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboard_templates_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboard_templates_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_dashboard_templates"')) THEN
         ALTER TABLE "analytics"."analytics_dashboard_templates" ADD CONSTRAINT "analytics_dashboard_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboards_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboards_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_dashboards_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_dashboards"')) THEN
         ALTER TABLE "analytics"."analytics_dashboards" ADD CONSTRAINT "analytics_dashboards_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_datasets_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_datasets_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_datasets_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_datasets"')) THEN
         ALTER TABLE "analytics"."analytics_datasets" ADD CONSTRAINT "analytics_datasets_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_datasources_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_datasources_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_datasources_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_datasources"')) THEN
         ALTER TABLE "analytics"."analytics_datasources" ADD CONSTRAINT "analytics_datasources_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_drilldown_history_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_drilldown_history_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_drilldown_history_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_drilldown_history"')) THEN
         ALTER TABLE "analytics"."analytics_drilldown_history" ADD CONSTRAINT "analytics_drilldown_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_drilldown_paths_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_drilldown_paths_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_drilldown_paths_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_drilldown_paths"')) THEN
         ALTER TABLE "analytics"."analytics_drilldown_paths" ADD CONSTRAINT "analytics_drilldown_paths_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_row_level_permissions_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_row_level_permissions_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_row_level_permissions_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_row_level_permissions"')) THEN
         ALTER TABLE "analytics"."analytics_row_level_permissions" ADD CONSTRAINT "analytics_row_level_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_self_service_reports_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_self_service_reports_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_self_service_reports_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_self_service_reports"')) THEN
         ALTER TABLE "analytics"."analytics_self_service_reports" ADD CONSTRAINT "analytics_self_service_reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_sync_records_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_sync_records_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_sync_records_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_sync_records"')) THEN
         ALTER TABLE "analytics"."analytics_sync_records" ADD CONSTRAINT "analytics_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_widgets_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_widgets_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_widgets_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."analytics_widgets"')) THEN
         ALTER TABLE "analytics"."analytics_widgets" ADD CONSTRAINT "analytics_widgets_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_execution_records_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_execution_records_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_execution_records_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."report_execution_records"')) THEN
         ALTER TABLE "analytics"."report_execution_records" ADD CONSTRAINT "report_execution_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_schedules_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_schedules_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_schedules_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."report_schedules"')) THEN
         ALTER TABLE "analytics"."report_schedules" ADD CONSTRAINT "report_schedules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_subscriptions_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_subscriptions_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_subscriptions_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."report_subscriptions"')) THEN
         ALTER TABLE "analytics"."report_subscriptions" ADD CONSTRAINT "report_subscriptions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_templates_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_templates_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'report_templates_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."report_templates"')) THEN
         ALTER TABLE "analytics"."report_templates" ADD CONSTRAINT "report_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'reports_pkey' AND n.nspname = 'analytics') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'reports_pkey' AND n.nspname = 'analytics') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'reports_pkey' AND n.nspname = 'analytics' AND con.conrelid = to_regclass('"analytics"."reports"')) THEN
         ALTER TABLE "analytics"."reports" ADD CONSTRAINT "reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'communication') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'communication') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'communication' AND con.conrelid = to_regclass('"communication"."core_emails"')) THEN
         ALTER TABLE "communication"."core_emails" ADD CONSTRAINT "core_emails_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_location_messages_pkey' AND n.nspname = 'communication') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_location_messages_pkey' AND n.nspname = 'communication') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_location_messages_pkey' AND n.nspname = 'communication' AND con.conrelid = to_regclass('"communication"."core_location_messages"')) THEN
         ALTER TABLE "communication"."core_location_messages" ADD CONSTRAINT "core_location_messages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'communication') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'communication') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'communication' AND con.conrelid = to_regclass('"communication"."core_notification_templates"')) THEN
         ALTER TABLE "communication"."core_notification_templates" ADD CONSTRAINT "core_notification_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'communication') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'communication') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'communication' AND con.conrelid = to_regclass('"communication"."core_notifications"')) THEN
         ALTER TABLE "communication"."core_notifications" ADD CONSTRAINT "core_notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'core') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'core') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'core' AND con.conrelid = to_regclass('"core"."core_plugin_categories"')) THEN
         ALTER TABLE "core"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'core') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'core') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'core' AND con.conrelid = to_regclass('"core"."core_plugin_categories"')) THEN
         ALTER TABLE "core"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'core') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'core') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'core' AND con.conrelid = to_regclass('"core"."core_plugin_reviews"')) THEN
         ALTER TABLE "core"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'core') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'core') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'core' AND con.conrelid = to_regclass('"core"."core_plugin_versions"')) THEN
         ALTER TABLE "core"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'core') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'core') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'core' AND con.conrelid = to_regclass('"core"."core_plugin_versions"')) THEN
         ALTER TABLE "core"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_version_key" UNIQUE (plugin_id, version);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_preferences_pkey' AND n.nspname = 'core') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_preferences_pkey' AND n.nspname = 'core') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_preferences_pkey' AND n.nspname = 'core' AND con.conrelid = to_regclass('"core"."user_preferences"')) THEN
         ALTER TABLE "core"."user_preferences" ADD CONSTRAINT "user_preferences_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_preferences_user_id_preference_key_key' AND n.nspname = 'core') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_preferences_user_id_preference_key_key' AND n.nspname = 'core') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_preferences_user_id_preference_key_key' AND n.nspname = 'core' AND con.conrelid = to_regclass('"core"."user_preferences"')) THEN
         ALTER TABLE "core"."user_preferences" ADD CONSTRAINT "user_preferences_user_id_preference_key_key" UNIQUE (user_id, preference_key);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_documents_pkey' AND n.nspname = 'doc_service') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_documents_pkey' AND n.nspname = 'doc_service') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_documents_pkey' AND n.nspname = 'doc_service' AND con.conrelid = to_regclass('"doc_service"."core_doc_documents"')) THEN
         ALTER TABLE "doc_service"."core_doc_documents" ADD CONSTRAINT "core_doc_documents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_folders_pkey' AND n.nspname = 'doc_service') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_folders_pkey' AND n.nspname = 'doc_service') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_folders_pkey' AND n.nspname = 'doc_service' AND con.conrelid = to_regclass('"doc_service"."core_doc_folders"')) THEN
         ALTER TABLE "doc_service"."core_doc_folders" ADD CONSTRAINT "core_doc_folders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_templates_pkey' AND n.nspname = 'doc_service') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_templates_pkey' AND n.nspname = 'doc_service') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_doc_templates_pkey' AND n.nspname = 'doc_service' AND con.conrelid = to_regclass('"doc_service"."core_doc_templates"')) THEN
         ALTER TABLE "doc_service"."core_doc_templates" ADD CONSTRAINT "core_doc_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'event_idempotency_pkey' AND n.nspname = 'erp') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'event_idempotency_pkey' AND n.nspname = 'erp') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'event_idempotency_pkey' AND n.nspname = 'erp' AND con.conrelid = to_regclass('"erp"."event_idempotency"')) THEN
         ALTER TABLE "erp"."event_idempotency" ADD CONSTRAINT "event_idempotency_pkey" PRIMARY KEY (idempotency_key);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'approval_records_pkey' AND n.nspname = 'flow') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'approval_records_pkey' AND n.nspname = 'flow') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'approval_records_pkey' AND n.nspname = 'flow' AND con.conrelid = to_regclass('"flow"."approval_records"')) THEN
         ALTER TABLE "flow"."approval_records" ADD CONSTRAINT "approval_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'approvals_pkey' AND n.nspname = 'flow') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'approvals_pkey' AND n.nspname = 'flow') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'approvals_pkey' AND n.nspname = 'flow' AND con.conrelid = to_regclass('"flow"."approvals"')) THEN
         ALTER TABLE "flow"."approvals" ADD CONSTRAINT "approvals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."_sqlx_migrations"')) THEN
         ALTER TABLE "iam"."_sqlx_migrations" ADD CONSTRAINT "_sqlx_migrations_pkey" PRIMARY KEY (version);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
         ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
         ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_invoice_number_key" UNIQUE (tenant_id, invoice_number);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_plans"')) THEN
         ALTER TABLE "iam"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_plans"')) THEN
         ALTER TABLE "iam"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_members"')) THEN
         ALTER TABLE "iam"."core_chat_members" ADD CONSTRAINT "core_chat_members_pkey" PRIMARY KEY (room_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_messages"')) THEN
         ALTER TABLE "iam"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_rooms"')) THEN
         ALTER TABLE "iam"."core_chat_rooms" ADD CONSTRAINT "core_chat_rooms_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dashboard_refresh_log"')) THEN
         ALTER TABLE "iam"."core_dashboard_refresh_log" ADD CONSTRAINT "core_dashboard_refresh_log_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
         ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_code_key" UNIQUE (dict_type_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
         ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_types"')) THEN
         ALTER TABLE "iam"."core_dict_types" ADD CONSTRAINT "core_dict_types_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_types"')) THEN
         ALTER TABLE "iam"."core_dict_types" ADD CONSTRAINT "core_dict_types_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_email_queue"')) THEN
         ALTER TABLE "iam"."core_email_queue" ADD CONSTRAINT "core_email_queue_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_email_templates"')) THEN
         ALTER TABLE "iam"."core_email_templates" ADD CONSTRAINT "core_email_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_emails"')) THEN
         ALTER TABLE "iam"."core_emails" ADD CONSTRAINT "core_emails_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_faqs"')) THEN
         ALTER TABLE "iam"."core_faqs" ADD CONSTRAINT "core_faqs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_file_folders"')) THEN
         ALTER TABLE "iam"."core_file_folders" ADD CONSTRAINT "core_file_folders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_files"')) THEN
         ALTER TABLE "iam"."core_files" ADD CONSTRAINT "core_files_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_lessons"')) THEN
         ALTER TABLE "iam"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_progress"')) THEN
         ALTER TABLE "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_user_id_key" UNIQUE (guide_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_progress"')) THEN
         ALTER TABLE "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guides"')) THEN
         ALTER TABLE "iam"."core_guides" ADD CONSTRAINT "core_guides_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_inter_module_sync"')) THEN
         ALTER TABLE "iam"."core_inter_module_sync" ADD CONSTRAINT "core_inter_module_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_login_logs"')) THEN
         ALTER TABLE "iam"."core_login_logs" ADD CONSTRAINT "core_login_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menu_groups"')) THEN
         ALTER TABLE "iam"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menu_groups"')) THEN
         ALTER TABLE "iam"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_tenant_id_code_key" UNIQUE (tenant_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
         ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
         ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_tenant_id_code_key" UNIQUE (tenant_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_migration_history"')) THEN
         ALTER TABLE "iam"."core_migration_history" ADD CONSTRAINT "core_migration_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_migration_history"')) THEN
         ALTER TABLE "iam"."core_migration_history" ADD CONSTRAINT "core_migration_history_plugin_name_version_key" UNIQUE (plugin_name, version);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_mobile_offline_records"')) THEN
         ALTER TABLE "iam"."core_mobile_offline_records" ADD CONSTRAINT "core_mobile_offline_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_notification_templates"')) THEN
         ALTER TABLE "iam"."core_notification_templates" ADD CONSTRAINT "core_notification_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_notifications"')) THEN
         ALTER TABLE "iam"."core_notifications" ADD CONSTRAINT "core_notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_permissions"')) THEN
         ALTER TABLE "iam"."core_permissions" ADD CONSTRAINT "core_permissions_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_permissions"')) THEN
         ALTER TABLE "iam"."core_permissions" ADD CONSTRAINT "core_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_categories"')) THEN
         ALTER TABLE "iam"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_categories"')) THEN
         ALTER TABLE "iam"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_instances"')) THEN
         ALTER TABLE "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_instances"')) THEN
         ALTER TABLE "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_key" UNIQUE (plugin_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_permissions"')) THEN
         ALTER TABLE "iam"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_permissions"')) THEN
         ALTER TABLE "iam"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_plugin_code_permission_code_key" UNIQUE (plugin_code, permission_code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_pricing"')) THEN
         ALTER TABLE "iam"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_pricing"')) THEN
         ALTER TABLE "iam"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_plugin_code_key" UNIQUE (plugin_code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_reviews"')) THEN
         ALTER TABLE "iam"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_versions"')) THEN
         ALTER TABLE "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_versions"')) THEN
         ALTER TABLE "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_version_key" UNIQUE (plugin_id, version);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugins"')) THEN
         ALTER TABLE "iam"."core_plugins" ADD CONSTRAINT "core_plugins_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugins"')) THEN
         ALTER TABLE "iam"."core_plugins" ADD CONSTRAINT "core_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_role_permissions"')) THEN
         ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_pkey" PRIMARY KEY (role_id, permission_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_roles"')) THEN
         ALTER TABLE "iam"."core_roles" ADD CONSTRAINT "core_roles_name_key" UNIQUE (name);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_roles"')) THEN
         ALTER TABLE "iam"."core_roles" ADD CONSTRAINT "core_roles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
         ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
         ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_key" UNIQUE (tenant_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_modules"')) THEN
         ALTER TABLE "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_modules"')) THEN
         ALTER TABLE "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_module_code_key" UNIQUE (tenant_id, module_code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
         ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
         ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_plugin_id_key" UNIQUE (tenant_id, plugin_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_settings"')) THEN
         ALTER TABLE "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_settings"')) THEN
         ALTER TABLE "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_setting_key_key" UNIQUE (tenant_id, setting_key);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_usage"')) THEN
         ALTER TABLE "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_usage"')) THEN
         ALTER TABLE "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_period_start_key" UNIQUE (tenant_id, period_start);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
         ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
         ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_email_key" UNIQUE (tenant_id, email);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
         ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_user_id_key" UNIQUE (tenant_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenants"')) THEN
         ALTER TABLE "iam"."core_tenants" ADD CONSTRAINT "core_tenants_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenants"')) THEN
         ALTER TABLE "iam"."core_tenants" ADD CONSTRAINT "core_tenants_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_usage_records"')) THEN
         ALTER TABLE "iam"."core_usage_records" ADD CONSTRAINT "core_usage_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_user_roles"')) THEN
         ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_pkey" PRIMARY KEY (user_id, role_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_users"')) THEN
         ALTER TABLE "iam"."core_users" ADD CONSTRAINT "core_users_email_key" UNIQUE (email);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_users"')) THEN
         ALTER TABLE "iam"."core_users" ADD CONSTRAINT "core_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_users"')) THEN
         ALTER TABLE "iam"."core_users" ADD CONSTRAINT "core_users_username_key" UNIQUE (username);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_instances"')) THEN
         ALTER TABLE "iam"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_tasks"')) THEN
         ALTER TABLE "iam"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflows"')) THEN
         ALTER TABLE "iam"."core_workflows" ADD CONSTRAINT "core_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'crm_dashboard_snapshots_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'crm_dashboard_snapshots_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'crm_dashboard_snapshots_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."crm_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."crm_dashboard_snapshots" ADD CONSTRAINT "crm_dashboard_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'crm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'crm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'crm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."crm_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."crm_dashboard_snapshots" ADD CONSTRAINT "crm_dashboard_snapshots_tenant_id_snapshot_date_key" UNIQUE (tenant_id, snapshot_date);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'dynamic_data_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'dynamic_data_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'dynamic_data_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."dynamic_data"')) THEN
         ALTER TABLE "iam"."dynamic_data" ADD CONSTRAINT "dynamic_data_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ehs_dashboard_snapshots_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ehs_dashboard_snapshots_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ehs_dashboard_snapshots_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."ehs_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."ehs_dashboard_snapshots" ADD CONSTRAINT "ehs_dashboard_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ehs_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ehs_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ehs_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."ehs_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."ehs_dashboard_snapshots" ADD CONSTRAINT "ehs_dashboard_snapshots_tenant_id_snapshot_date_key" UNIQUE (tenant_id, snapshot_date);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'hrm_dashboard_snapshots_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'hrm_dashboard_snapshots_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'hrm_dashboard_snapshots_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."hrm_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."hrm_dashboard_snapshots" ADD CONSTRAINT "hrm_dashboard_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'hrm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'hrm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'hrm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."hrm_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."hrm_dashboard_snapshots" ADD CONSTRAINT "hrm_dashboard_snapshots_tenant_id_snapshot_date_key" UNIQUE (tenant_id, snapshot_date);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'lims_dashboard_snapshots_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'lims_dashboard_snapshots_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'lims_dashboard_snapshots_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."lims_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."lims_dashboard_snapshots" ADD CONSTRAINT "lims_dashboard_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'lims_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'lims_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'lims_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."lims_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."lims_dashboard_snapshots" ADD CONSTRAINT "lims_dashboard_snapshots_tenant_id_snapshot_date_key" UNIQUE (tenant_id, snapshot_date);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'password_reset_tokens_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'password_reset_tokens_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'password_reset_tokens_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."password_reset_tokens"')) THEN
         ALTER TABLE "iam"."password_reset_tokens" ADD CONSTRAINT "password_reset_tokens_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_dashboard_snapshots_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_dashboard_snapshots_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_dashboard_snapshots_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."pdm_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."pdm_dashboard_snapshots" ADD CONSTRAINT "pdm_dashboard_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."pdm_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."pdm_dashboard_snapshots" ADD CONSTRAINT "pdm_dashboard_snapshots_tenant_id_snapshot_date_key" UNIQUE (tenant_id, snapshot_date);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_name_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_name_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_name_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."schema_registry"')) THEN
         ALTER TABLE "iam"."schema_registry" ADD CONSTRAINT "schema_registry_name_key" UNIQUE (name);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."schema_registry"')) THEN
         ALTER TABLE "iam"."schema_registry" ADD CONSTRAINT "schema_registry_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_access_logs_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_access_logs_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_access_logs_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."user_access_logs"')) THEN
         ALTER TABLE "iam"."user_access_logs" ADD CONSTRAINT "user_access_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_roles_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_roles_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_roles_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."user_roles"')) THEN
         ALTER TABLE "iam"."user_roles" ADD CONSTRAINT "user_roles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'wms_dashboard_snapshots_pkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'wms_dashboard_snapshots_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'wms_dashboard_snapshots_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."wms_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."wms_dashboard_snapshots" ADD CONSTRAINT "wms_dashboard_snapshots_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'wms_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'wms_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'wms_dashboard_snapshots_tenant_id_snapshot_date_key' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."wms_dashboard_snapshots"')) THEN
         ALTER TABLE "iam"."wms_dashboard_snapshots" ADD CONSTRAINT "wms_dashboard_snapshots_tenant_id_snapshot_date_key" UNIQUE (tenant_id, snapshot_date);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mes_erp_sync_logs_pkey' AND n.nspname = 'integration') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mes_erp_sync_logs_pkey' AND n.nspname = 'integration') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mes_erp_sync_logs_pkey' AND n.nspname = 'integration' AND con.conrelid = to_regclass('"integration"."mes_erp_sync_logs"')) THEN
         ALTER TABLE "integration"."mes_erp_sync_logs" ADD CONSTRAINT "mes_erp_sync_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mes_qms_sync_pkey' AND n.nspname = 'integration') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mes_qms_sync_pkey' AND n.nspname = 'integration') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mes_qms_sync_pkey' AND n.nspname = 'integration' AND con.conrelid = to_regclass('"integration"."mes_qms_sync"')) THEN
         ALTER TABLE "integration"."mes_qms_sync" ADD CONSTRAINT "mes_qms_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_change_log_pkey' AND n.nspname = 'master_data') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_change_log_pkey' AND n.nspname = 'master_data') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_change_log_pkey' AND n.nspname = 'master_data' AND con.conrelid = to_regclass('"master_data"."core_master_data_change_log"')) THEN
         ALTER TABLE "master_data"."core_master_data_change_log" ADD CONSTRAINT "core_master_data_change_log_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_event_outbox_pkey' AND n.nspname = 'master_data') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_event_outbox_pkey' AND n.nspname = 'master_data') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_event_outbox_pkey' AND n.nspname = 'master_data' AND con.conrelid = to_regclass('"master_data"."core_master_data_event_outbox"')) THEN
         ALTER TABLE "master_data"."core_master_data_event_outbox" ADD CONSTRAINT "core_master_data_event_outbox_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_refs_pkey' AND n.nspname = 'master_data') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_refs_pkey' AND n.nspname = 'master_data') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_master_data_refs_pkey' AND n.nspname = 'master_data' AND con.conrelid = to_regclass('"master_data"."core_master_data_refs"')) THEN
         ALTER TABLE "master_data"."core_master_data_refs" ADD CONSTRAINT "core_master_data_refs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mdm_approvals_pkey' AND n.nspname = 'master_data') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mdm_approvals_pkey' AND n.nspname = 'master_data') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mdm_approvals_pkey' AND n.nspname = 'master_data' AND con.conrelid = to_regclass('"master_data"."core_mdm_approvals"')) THEN
         ALTER TABLE "master_data"."core_mdm_approvals" ADD CONSTRAINT "core_mdm_approvals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mdm_reconciliation_log_pkey' AND n.nspname = 'master_data') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mdm_reconciliation_log_pkey' AND n.nspname = 'master_data') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mdm_reconciliation_log_pkey' AND n.nspname = 'master_data' AND con.conrelid = to_regclass('"master_data"."core_mdm_reconciliation_log"')) THEN
         ALTER TABLE "master_data"."core_mdm_reconciliation_log" ADD CONSTRAINT "core_mdm_reconciliation_log_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."_sqlx_migrations"')) THEN
         ALTER TABLE "mes"."_sqlx_migrations" ADD CONSTRAINT "_sqlx_migrations_pkey" PRIMARY KEY (version);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'bom_items_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'bom_items_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'bom_items_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."bom_items"')) THEN
         ALTER TABLE "mes"."bom_items" ADD CONSTRAINT "bom_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
         ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_invoice_number_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
         ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_invoice_number_key" UNIQUE (tenant_id, invoice_number);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_plans"')) THEN
         ALTER TABLE "mes"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_plans_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_plans"')) THEN
         ALTER TABLE "mes"."core_billing_plans" ADD CONSTRAINT "core_billing_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_members"')) THEN
         ALTER TABLE "mes"."core_chat_members" ADD CONSTRAINT "core_chat_members_pkey" PRIMARY KEY (room_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_messages"')) THEN
         ALTER TABLE "mes"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_rooms_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_rooms"')) THEN
         ALTER TABLE "mes"."core_chat_rooms" ADD CONSTRAINT "core_chat_rooms_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dashboard_refresh_log_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dashboard_refresh_log"')) THEN
         ALTER TABLE "mes"."core_dashboard_refresh_log" ADD CONSTRAINT "core_dashboard_refresh_log_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
         ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_code_key" UNIQUE (dict_type_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
         ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_types"')) THEN
         ALTER TABLE "mes"."core_dict_types" ADD CONSTRAINT "core_dict_types_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_types_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_types"')) THEN
         ALTER TABLE "mes"."core_dict_types" ADD CONSTRAINT "core_dict_types_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_queue_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_email_queue"')) THEN
         ALTER TABLE "mes"."core_email_queue" ADD CONSTRAINT "core_email_queue_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_email_templates_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_email_templates"')) THEN
         ALTER TABLE "mes"."core_email_templates" ADD CONSTRAINT "core_email_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_emails_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_emails"')) THEN
         ALTER TABLE "mes"."core_emails" ADD CONSTRAINT "core_emails_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_faqs_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_faqs"')) THEN
         ALTER TABLE "mes"."core_faqs" ADD CONSTRAINT "core_faqs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_file_folders_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_file_folders"')) THEN
         ALTER TABLE "mes"."core_file_folders" ADD CONSTRAINT "core_file_folders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_files_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_files"')) THEN
         ALTER TABLE "mes"."core_files" ADD CONSTRAINT "core_files_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_lessons"')) THEN
         ALTER TABLE "mes"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_user_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_progress"')) THEN
         ALTER TABLE "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_user_id_key" UNIQUE (guide_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_progress"')) THEN
         ALTER TABLE "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guides_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guides"')) THEN
         ALTER TABLE "mes"."core_guides" ADD CONSTRAINT "core_guides_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_inter_module_sync"')) THEN
         ALTER TABLE "mes"."core_inter_module_sync" ADD CONSTRAINT "core_inter_module_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_login_logs_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_login_logs"')) THEN
         ALTER TABLE "mes"."core_login_logs" ADD CONSTRAINT "core_login_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menu_groups"')) THEN
         ALTER TABLE "mes"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menu_groups_tenant_id_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menu_groups"')) THEN
         ALTER TABLE "mes"."core_menu_groups" ADD CONSTRAINT "core_menu_groups_tenant_id_code_key" UNIQUE (tenant_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
         ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_tenant_id_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
         ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_tenant_id_code_key" UNIQUE (tenant_id, code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_migration_history"')) THEN
         ALTER TABLE "mes"."core_migration_history" ADD CONSTRAINT "core_migration_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_migration_history_plugin_name_version_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_migration_history"')) THEN
         ALTER TABLE "mes"."core_migration_history" ADD CONSTRAINT "core_migration_history_plugin_name_version_key" UNIQUE (plugin_name, version);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mobile_offline_records_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_mobile_offline_records"')) THEN
         ALTER TABLE "mes"."core_mobile_offline_records" ADD CONSTRAINT "core_mobile_offline_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notification_templates_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_notification_templates"')) THEN
         ALTER TABLE "mes"."core_notification_templates" ADD CONSTRAINT "core_notification_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_notifications_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_notifications"')) THEN
         ALTER TABLE "mes"."core_notifications" ADD CONSTRAINT "core_notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_permissions"')) THEN
         ALTER TABLE "mes"."core_permissions" ADD CONSTRAINT "core_permissions_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_permissions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_permissions"')) THEN
         ALTER TABLE "mes"."core_permissions" ADD CONSTRAINT "core_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_categories"')) THEN
         ALTER TABLE "mes"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_categories"')) THEN
         ALTER TABLE "mes"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
         ALTER TABLE "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
         ALTER TABLE "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_key" UNIQUE (plugin_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_permissions"')) THEN
         ALTER TABLE "mes"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_plugin_code_permission_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_permissions"')) THEN
         ALTER TABLE "mes"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_plugin_code_permission_code_key" UNIQUE (plugin_code, permission_code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_pricing"')) THEN
         ALTER TABLE "mes"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_pricing_plugin_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_pricing"')) THEN
         ALTER TABLE "mes"."core_plugin_pricing" ADD CONSTRAINT "core_plugin_pricing_plugin_code_key" UNIQUE (plugin_code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_reviews"')) THEN
         ALTER TABLE "mes"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_versions"')) THEN
         ALTER TABLE "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_version_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_versions"')) THEN
         ALTER TABLE "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_version_key" UNIQUE (plugin_id, version);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugins"')) THEN
         ALTER TABLE "mes"."core_plugins" ADD CONSTRAINT "core_plugins_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugins"')) THEN
         ALTER TABLE "mes"."core_plugins" ADD CONSTRAINT "core_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_role_permissions"')) THEN
         ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_pkey" PRIMARY KEY (role_id, permission_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_name_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_roles"')) THEN
         ALTER TABLE "mes"."core_roles" ADD CONSTRAINT "core_roles_name_key" UNIQUE (name);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_roles_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_roles"')) THEN
         ALTER TABLE "mes"."core_roles" ADD CONSTRAINT "core_roles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
         ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
         ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_key" UNIQUE (tenant_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
         ALTER TABLE "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_module_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
         ALTER TABLE "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_module_code_key" UNIQUE (tenant_id, module_code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
         ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_plugin_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
         ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_plugin_id_key" UNIQUE (tenant_id, plugin_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
         ALTER TABLE "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_setting_key_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
         ALTER TABLE "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_setting_key_key" UNIQUE (tenant_id, setting_key);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
         ALTER TABLE "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_period_start_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
         ALTER TABLE "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_period_start_key" UNIQUE (tenant_id, period_start);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
         ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_email_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
         ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_email_key" UNIQUE (tenant_id, email);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_user_id_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
         ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_user_id_key" UNIQUE (tenant_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_code_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenants"')) THEN
         ALTER TABLE "mes"."core_tenants" ADD CONSTRAINT "core_tenants_code_key" UNIQUE (code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenants_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenants"')) THEN
         ALTER TABLE "mes"."core_tenants" ADD CONSTRAINT "core_tenants_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_usage_records"')) THEN
         ALTER TABLE "mes"."core_usage_records" ADD CONSTRAINT "core_usage_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_user_roles"')) THEN
         ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_pkey" PRIMARY KEY (user_id, role_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_email_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_users"')) THEN
         ALTER TABLE "mes"."core_users" ADD CONSTRAINT "core_users_email_key" UNIQUE (email);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_users"')) THEN
         ALTER TABLE "mes"."core_users" ADD CONSTRAINT "core_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_users_username_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_users"')) THEN
         ALTER TABLE "mes"."core_users" ADD CONSTRAINT "core_users_username_key" UNIQUE (username);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_instances"')) THEN
         ALTER TABLE "mes"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_tasks"')) THEN
         ALTER TABLE "mes"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflows_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflows"')) THEN
         ALTER TABLE "mes"."core_workflows" ADD CONSTRAINT "core_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'dashboard_stats_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'dashboard_stats_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'dashboard_stats_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."dashboard_stats"')) THEN
         ALTER TABLE "mes"."dashboard_stats" ADD CONSTRAINT "dashboard_stats_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'financial_records_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'financial_records_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'financial_records_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."financial_records"')) THEN
         ALTER TABLE "mes"."financial_records" ADD CONSTRAINT "financial_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'inspection_records_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'inspection_records_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'inspection_records_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."inspection_records"')) THEN
         ALTER TABLE "mes"."inspection_records" ADD CONSTRAINT "inspection_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issue_items_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issue_items_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issue_items_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."material_issue_items"')) THEN
         ALTER TABLE "mes"."material_issue_items" ADD CONSTRAINT "material_issue_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'permission_audit_logs_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'permission_audit_logs_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'permission_audit_logs_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."permission_audit_logs"')) THEN
         ALTER TABLE "mes"."permission_audit_logs" ADD CONSTRAINT "permission_audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_name_key' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_name_key' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_name_key' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."schema_registry"')) THEN
         ALTER TABLE "mes"."schema_registry" ADD CONSTRAINT "schema_registry_name_key" UNIQUE (name);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'schema_registry_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."schema_registry"')) THEN
         ALTER TABLE "mes"."schema_registry" ADD CONSTRAINT "schema_registry_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'supply_chain_orders_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'supply_chain_orders_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'supply_chain_orders_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."supply_chain_orders"')) THEN
         ALTER TABLE "mes"."supply_chain_orders" ADD CONSTRAINT "supply_chain_orders_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tenant_permissions_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tenant_permissions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tenant_permissions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."tenant_permissions"')) THEN
         ALTER TABLE "mes"."tenant_permissions" ADD CONSTRAINT "tenant_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tool_permissions_pkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tool_permissions_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tool_permissions_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."tool_permissions"')) THEN
         ALTER TABLE "mes"."tool_permissions" ADD CONSTRAINT "tool_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'uk_tenant_tool' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'uk_tenant_tool' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'uk_tenant_tool' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."tool_permissions"')) THEN
         ALTER TABLE "mes"."tool_permissions" ADD CONSTRAINT "uk_tenant_tool" UNIQUE (tenant_permission_id, tool_name);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'uk_tenant_user' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'uk_tenant_user' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'uk_tenant_user' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."tenant_permissions"')) THEN
         ALTER TABLE "mes"."tenant_permissions" ADD CONSTRAINT "uk_tenant_user" UNIQUE (tenant_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_config_pkey' AND n.nspname = 'mobile') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_config_pkey' AND n.nspname = 'mobile') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_config_pkey' AND n.nspname = 'mobile' AND con.conrelid = to_regclass('"mobile"."push_config"')) THEN
         ALTER TABLE "mobile"."push_config" ADD CONSTRAINT "push_config_pkey" PRIMARY KEY (tenant_id, user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_sync_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_sync_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'analytics_sync_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."analytics_sync_records"')) THEN
         ALTER TABLE "public"."analytics_sync_records" ADD CONSTRAINT "analytics_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'announcements_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'announcements_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'announcements_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."announcements"')) THEN
         ALTER TABLE "public"."announcements" ADD CONSTRAINT "announcements_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'barcode_scans_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'barcode_scans_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'barcode_scans_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."barcode_scans"')) THEN
         ALTER TABLE "public"."barcode_scans" ADD CONSTRAINT "barcode_scans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'conversion_executions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'conversion_executions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'conversion_executions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."conversion_executions"')) THEN
         ALTER TABLE "public"."conversion_executions" ADD CONSTRAINT "conversion_executions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'conversion_rules_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'conversion_rules_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'conversion_rules_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."conversion_rules"')) THEN
         ALTER TABLE "public"."conversion_rules" ADD CONSTRAINT "conversion_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_account_opening_balances_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_account_opening_balances_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_account_opening_balances_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_account_opening_balances"')) THEN
         ALTER TABLE "public"."core_finance_account_opening_balances" ADD CONSTRAINT "core_finance_account_opening_balances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_accounts_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_accounts_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_accounts_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_accounts"')) THEN
         ALTER TABLE "public"."core_finance_accounts" ADD CONSTRAINT "core_finance_accounts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_approval_workflows_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_approval_workflows_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_approval_workflows_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_approval_workflows"')) THEN
         ALTER TABLE "public"."core_finance_approval_workflows" ADD CONSTRAINT "core_finance_approval_workflows_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_aux_accounts_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_aux_accounts_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_aux_accounts_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_aux_accounts"')) THEN
         ALTER TABLE "public"."core_finance_aux_accounts" ADD CONSTRAINT "core_finance_aux_accounts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_aux_balances_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_aux_balances_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_aux_balances_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_aux_balances"')) THEN
         ALTER TABLE "public"."core_finance_aux_balances" ADD CONSTRAINT "core_finance_aux_balances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_ledger_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_ledger_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_ledger_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_ledger"')) THEN
         ALTER TABLE "public"."core_finance_ledger" ADD CONSTRAINT "core_finance_ledger_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_periods_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_periods_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_periods_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_periods"')) THEN
         ALTER TABLE "public"."core_finance_periods" ADD CONSTRAINT "core_finance_periods_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_reconciliation_items_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_reconciliation_items_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_reconciliation_items_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_reconciliation_items"')) THEN
         ALTER TABLE "public"."core_finance_reconciliation_items" ADD CONSTRAINT "core_finance_reconciliation_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_reconciliation_sessions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_reconciliation_sessions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_reconciliation_sessions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_reconciliation_sessions"')) THEN
         ALTER TABLE "public"."core_finance_reconciliation_sessions" ADD CONSTRAINT "core_finance_reconciliation_sessions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_entries_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_entries_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_entries_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_voucher_entries"')) THEN
         ALTER TABLE "public"."core_finance_voucher_entries" ADD CONSTRAINT "core_finance_voucher_entries_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_lines_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_lines_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_lines_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_voucher_lines"')) THEN
         ALTER TABLE "public"."core_finance_voucher_lines" ADD CONSTRAINT "core_finance_voucher_lines_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_templates_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_templates_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_voucher_templates_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_voucher_templates"')) THEN
         ALTER TABLE "public"."core_finance_voucher_templates" ADD CONSTRAINT "core_finance_voucher_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_vouchers_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_vouchers_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_finance_vouchers_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_finance_vouchers"')) THEN
         ALTER TABLE "public"."core_finance_vouchers" ADD CONSTRAINT "core_finance_vouchers_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_categories_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_categories_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_categories_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_flow_categories"')) THEN
         ALTER TABLE "public"."core_flow_categories" ADD CONSTRAINT "core_flow_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_delegates_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_delegates_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_delegates_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_flow_delegates"')) THEN
         ALTER TABLE "public"."core_flow_delegates" ADD CONSTRAINT "core_flow_delegates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_rules_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_rules_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_rules_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_flow_rules"')) THEN
         ALTER TABLE "public"."core_flow_rules" ADD CONSTRAINT "core_flow_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_variable_history_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_variable_history_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_variable_history_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_flow_variable_history"')) THEN
         ALTER TABLE "public"."core_flow_variable_history" ADD CONSTRAINT "core_flow_variable_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_variables_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_variables_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_variables_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_flow_variables"')) THEN
         ALTER TABLE "public"."core_flow_variables" ADD CONSTRAINT "core_flow_variables_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_geofences_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_geofences_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_geofences_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_geofences"')) THEN
         ALTER TABLE "public"."core_geofences" ADD CONSTRAINT "core_geofences_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_inter_module_sync_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_inter_module_sync"')) THEN
         ALTER TABLE "public"."core_inter_module_sync" ADD CONSTRAINT "core_inter_module_sync_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_categories_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_plugin_categories"')) THEN
         ALTER TABLE "public"."core_plugin_categories" ADD CONSTRAINT "core_plugin_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_plugin_instances"')) THEN
         ALTER TABLE "public"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_navigation_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_navigation_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_navigation_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_plugin_navigation"')) THEN
         ALTER TABLE "public"."core_plugin_navigation" ADD CONSTRAINT "core_plugin_navigation_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_permissions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_plugin_permissions"')) THEN
         ALTER TABLE "public"."core_plugin_permissions" ADD CONSTRAINT "core_plugin_permissions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_plugin_reviews"')) THEN
         ALTER TABLE "public"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_plugin_versions"')) THEN
         ALTER TABLE "public"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugins_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_plugins"')) THEN
         ALTER TABLE "public"."core_plugins" ADD CONSTRAINT "core_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_refresh_tokens_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_refresh_tokens_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_refresh_tokens_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_refresh_tokens"')) THEN
         ALTER TABLE "public"."core_refresh_tokens" ADD CONSTRAINT "core_refresh_tokens_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_sessions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_sessions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_sessions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_sessions"')) THEN
         ALTER TABLE "public"."core_sessions" ADD CONSTRAINT "core_sessions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_tenant_plugins"')) THEN
         ALTER TABLE "public"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_activities_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_activities_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_activities_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_ticket_activities"')) THEN
         ALTER TABLE "public"."core_ticket_activities" ADD CONSTRAINT "core_ticket_activities_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_comments_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_comments_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_comments_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_ticket_comments"')) THEN
         ALTER TABLE "public"."core_ticket_comments" ADD CONSTRAINT "core_ticket_comments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_sla_escalations_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_sla_escalations_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_sla_escalations_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_ticket_sla_escalations"')) THEN
         ALTER TABLE "public"."core_ticket_sla_escalations" ADD CONSTRAINT "core_ticket_sla_escalations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_sla_policies_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_sla_policies_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_ticket_sla_policies_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_ticket_sla_policies"')) THEN
         ALTER TABLE "public"."core_ticket_sla_policies" ADD CONSTRAINT "core_ticket_sla_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tickets_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tickets_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tickets_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_tickets"')) THEN
         ALTER TABLE "public"."core_tickets" ADD CONSTRAINT "core_tickets_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_versions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_versions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_versions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."_archive_core_workflow_versions"')) THEN
         ALTER TABLE "public"."_archive_core_workflow_versions" ADD CONSTRAINT "core_workflow_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'devices_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'devices_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'devices_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."devices"')) THEN
         ALTER TABLE "public"."devices" ADD CONSTRAINT "devices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'equipment_inspections_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'equipment_inspections_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'equipment_inspections_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."equipment_inspections"')) THEN
         ALTER TABLE "public"."equipment_inspections" ADD CONSTRAINT "equipment_inspections_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'equipment_maintenance_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'equipment_maintenance_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'equipment_maintenance_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."equipment_maintenance_records"')) THEN
         ALTER TABLE "public"."equipment_maintenance_records" ADD CONSTRAINT "equipment_maintenance_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_boms_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_boms_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_boms_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."material_boms"')) THEN
         ALTER TABLE "public"."material_boms" ADD CONSTRAINT "material_boms_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_categories_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_categories_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_categories_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."material_categories"')) THEN
         ALTER TABLE "public"."material_categories" ADD CONSTRAINT "material_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issue_items_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issue_items_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issue_items_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."material_issue_items"')) THEN
         ALTER TABLE "public"."material_issue_items" ADD CONSTRAINT "material_issue_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issues_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issues_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_issues_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."material_issues"')) THEN
         ALTER TABLE "public"."material_issues" ADD CONSTRAINT "material_issues_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_requirement_items_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_requirement_items_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_requirement_items_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."material_requirement_items"')) THEN
         ALTER TABLE "public"."material_requirement_items" ADD CONSTRAINT "material_requirement_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_requirements_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_requirements_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_requirements_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."material_requirements"')) THEN
         ALTER TABLE "public"."material_requirements" ADD CONSTRAINT "material_requirements_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_return_items_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_return_items_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_return_items_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."material_return_items"')) THEN
         ALTER TABLE "public"."material_return_items" ADD CONSTRAINT "material_return_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_returns_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_returns_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'material_returns_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."material_returns"')) THEN
         ALTER TABLE "public"."material_returns" ADD CONSTRAINT "material_returns_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'media_files_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'media_files_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'media_files_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."media_files"')) THEN
         ALTER TABLE "public"."media_files" ADD CONSTRAINT "media_files_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_scan_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_scan_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_scan_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."mobile_scan_records"')) THEN
         ALTER TABLE "public"."mobile_scan_records" ADD CONSTRAINT "mobile_scan_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_users_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_users_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_users_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."mobile_users"')) THEN
         ALTER TABLE "public"."mobile_users" ADD CONSTRAINT "mobile_users_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_users_username_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_users_username_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_users_username_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."mobile_users"')) THEN
         ALTER TABLE "public"."mobile_users" ADD CONSTRAINT "mobile_users_username_key" UNIQUE (username);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_operations_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_operations_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_operations_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."offline_operations"')) THEN
         ALTER TABLE "public"."offline_operations" ADD CONSTRAINT "offline_operations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_sync_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_sync_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_sync_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."offline_sync_records"')) THEN
         ALTER TABLE "public"."offline_sync_records" ADD CONSTRAINT "offline_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_change_notices_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_change_notices_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_change_notices_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."pdm_change_notices"')) THEN
         ALTER TABLE "public"."pdm_change_notices" ADD CONSTRAINT "pdm_change_notices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_materials_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_materials_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_materials_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."pdm_materials"')) THEN
         ALTER TABLE "public"."pdm_materials" ADD CONSTRAINT "pdm_materials_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_products_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_products_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'pdm_products_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."pdm_products"')) THEN
         ALTER TABLE "public"."pdm_products" ADD CONSTRAINT "pdm_products_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'photo_uploads_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'photo_uploads_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'photo_uploads_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."photo_uploads"')) THEN
         ALTER TABLE "public"."photo_uploads" ADD CONSTRAINT "photo_uploads_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_devices_device_token_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_devices_device_token_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_devices_device_token_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."push_devices"')) THEN
         ALTER TABLE "public"."push_devices" ADD CONSTRAINT "push_devices_device_token_key" UNIQUE (device_token);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_devices_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_devices_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_devices_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."push_devices"')) THEN
         ALTER TABLE "public"."push_devices" ADD CONSTRAINT "push_devices_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_notifications_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_notifications_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_notifications_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."push_notifications"')) THEN
         ALTER TABLE "public"."push_notifications" ADD CONSTRAINT "push_notifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_templates_name_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_templates_name_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_templates_name_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."push_templates"')) THEN
         ALTER TABLE "public"."push_templates" ADD CONSTRAINT "push_templates_name_key" UNIQUE (name);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_templates_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_templates_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_templates_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."push_templates"')) THEN
         ALTER TABLE "public"."push_templates" ADD CONSTRAINT "push_templates_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_investigations_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_investigations_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_investigations_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_accident_investigations"')) THEN
         ALTER TABLE "public"."qa_ehs_accident_investigations" ADD CONSTRAINT "qa_ehs_accident_investigations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_reviews_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_reviews_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_reviews_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_accident_reviews"')) THEN
         ALTER TABLE "public"."qa_ehs_accident_reviews" ADD CONSTRAINT "qa_ehs_accident_reviews_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_treatments_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_treatments_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_treatments_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_accident_treatments"')) THEN
         ALTER TABLE "public"."qa_ehs_accident_treatments" ADD CONSTRAINT "qa_ehs_accident_treatments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accidents_accident_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accidents_accident_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accidents_accident_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_accidents"')) THEN
         ALTER TABLE "public"."qa_ehs_accidents" ADD CONSTRAINT "qa_ehs_accidents_accident_no_key" UNIQUE (accident_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accidents_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accidents_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accidents_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_accidents"')) THEN
         ALTER TABLE "public"."qa_ehs_accidents" ADD CONSTRAINT "qa_ehs_accidents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_evaluations_eval_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_evaluations_eval_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_evaluations_eval_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_compliance_evaluations"')) THEN
         ALTER TABLE "public"."qa_ehs_compliance_evaluations" ADD CONSTRAINT "qa_ehs_compliance_evaluations_eval_no_key" UNIQUE (eval_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_evaluations_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_evaluations_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_evaluations_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_compliance_evaluations"')) THEN
         ALTER TABLE "public"."qa_ehs_compliance_evaluations" ADD CONSTRAINT "qa_ehs_compliance_evaluations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_items_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_items_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_items_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_compliance_items"')) THEN
         ALTER TABLE "public"."qa_ehs_compliance_items" ADD CONSTRAINT "qa_ehs_compliance_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_contraindications_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_contraindications_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_contraindications_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_contraindications"')) THEN
         ALTER TABLE "public"."qa_ehs_contraindications" ADD CONSTRAINT "qa_ehs_contraindications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_detection_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_detection_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_detection_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_detection_records"')) THEN
         ALTER TABLE "public"."qa_ehs_detection_records" ADD CONSTRAINT "qa_ehs_detection_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_detection_records_record_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_detection_records_record_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_detection_records_record_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_detection_records"')) THEN
         ALTER TABLE "public"."qa_ehs_detection_records" ADD CONSTRAINT "qa_ehs_detection_records_record_no_key" UNIQUE (record_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_discharge_permits_permit_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_discharge_permits_permit_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_discharge_permits_permit_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_discharge_permits"')) THEN
         ALTER TABLE "public"."qa_ehs_discharge_permits" ADD CONSTRAINT "qa_ehs_discharge_permits_permit_no_key" UNIQUE (permit_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_discharge_permits_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_discharge_permits_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_discharge_permits_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_discharge_permits"')) THEN
         ALTER TABLE "public"."qa_ehs_discharge_permits" ADD CONSTRAINT "qa_ehs_discharge_permits_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_disease_cases_case_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_disease_cases_case_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_disease_cases_case_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_disease_cases"')) THEN
         ALTER TABLE "public"."qa_ehs_disease_cases" ADD CONSTRAINT "qa_ehs_disease_cases_case_no_key" UNIQUE (case_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_disease_cases_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_disease_cases_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_disease_cases_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_disease_cases"')) THEN
         ALTER TABLE "public"."qa_ehs_disease_cases" ADD CONSTRAINT "qa_ehs_disease_cases_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_evaluations_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_evaluations_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_evaluations_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_evaluations"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_evaluations" ADD CONSTRAINT "qa_ehs_drill_evaluations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_plans_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_plans_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_plans_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_plans"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_plans" ADD CONSTRAINT "qa_ehs_drill_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_plans_plan_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_plans_plan_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_plans_plan_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_plans"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_plans" ADD CONSTRAINT "qa_ehs_drill_plans_plan_no_key" UNIQUE (plan_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_problems_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_problems_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_problems_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_problems"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_problems" ADD CONSTRAINT "qa_ehs_drill_problems_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_records"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_records" ADD CONSTRAINT "qa_ehs_drill_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_records_record_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_records_record_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_records_record_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_records"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_records" ADD CONSTRAINT "qa_ehs_drill_records_record_no_key" UNIQUE (record_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_approvals_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_approvals_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_approvals_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_emergency_plan_approvals"')) THEN
         ALTER TABLE "public"."qa_ehs_emergency_plan_approvals" ADD CONSTRAINT "qa_ehs_emergency_plan_approvals_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_supplies_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_supplies_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_supplies_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_emergency_plan_supplies"')) THEN
         ALTER TABLE "public"."qa_ehs_emergency_plan_supplies" ADD CONSTRAINT "qa_ehs_emergency_plan_supplies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_versions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_versions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_versions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_emergency_plan_versions"')) THEN
         ALTER TABLE "public"."qa_ehs_emergency_plan_versions" ADD CONSTRAINT "qa_ehs_emergency_plan_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plans_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plans_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plans_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_emergency_plans"')) THEN
         ALTER TABLE "public"."qa_ehs_emergency_plans" ADD CONSTRAINT "qa_ehs_emergency_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plans_plan_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plans_plan_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plans_plan_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_emergency_plans"')) THEN
         ALTER TABLE "public"."qa_ehs_emergency_plans" ADD CONSTRAINT "qa_ehs_emergency_plans_plan_no_key" UNIQUE (plan_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_employees_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_employees_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_employees_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_employees"')) THEN
         ALTER TABLE "public"."qa_ehs_employees" ADD CONSTRAINT "qa_ehs_employees_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_env_monitor_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_env_monitor_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_env_monitor_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_env_monitor_records"')) THEN
         ALTER TABLE "public"."qa_ehs_env_monitor_records" ADD CONSTRAINT "qa_ehs_env_monitor_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_env_monitor_records_record_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_env_monitor_records_record_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_env_monitor_records_record_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_env_monitor_records"')) THEN
         ALTER TABLE "public"."qa_ehs_env_monitor_records" ADD CONSTRAINT "qa_ehs_env_monitor_records_record_no_key" UNIQUE (record_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_incidents_incident_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_incidents_incident_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_incidents_incident_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_environment_incidents"')) THEN
         ALTER TABLE "public"."qa_ehs_environment_incidents" ADD CONSTRAINT "qa_ehs_environment_incidents_incident_no_key" UNIQUE (incident_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_incidents_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_incidents_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_incidents_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_environment_incidents"')) THEN
         ALTER TABLE "public"."qa_ehs_environment_incidents" ADD CONSTRAINT "qa_ehs_environment_incidents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_environment"')) THEN
         ALTER TABLE "public"."qa_ehs_environment" ADD CONSTRAINT "qa_ehs_environment_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_record_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_record_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environment_record_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_environment"')) THEN
         ALTER TABLE "public"."qa_ehs_environment" ADD CONSTRAINT "qa_ehs_environment_record_no_key" UNIQUE (record_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environmental_regulations_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environmental_regulations_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environmental_regulations_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_environmental_regulations"')) THEN
         ALTER TABLE "public"."qa_ehs_environmental_regulations" ADD CONSTRAINT "qa_ehs_environmental_regulations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environmental_regulations_reg_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environmental_regulations_reg_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_environmental_regulations_reg_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_environmental_regulations"')) THEN
         ALTER TABLE "public"."qa_ehs_environmental_regulations" ADD CONSTRAINT "qa_ehs_environmental_regulations_reg_no_key" UNIQUE (reg_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_factors_factor_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_factors_factor_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_factors_factor_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazard_factors"')) THEN
         ALTER TABLE "public"."qa_ehs_hazard_factors" ADD CONSTRAINT "qa_ehs_hazard_factors_factor_no_key" UNIQUE (factor_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_factors_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_factors_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_factors_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazard_factors"')) THEN
         ALTER TABLE "public"."qa_ehs_hazard_factors" ADD CONSTRAINT "qa_ehs_hazard_factors_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_rectifications_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_rectifications_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_rectifications_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazard_rectifications"')) THEN
         ALTER TABLE "public"."qa_ehs_hazard_rectifications" ADD CONSTRAINT "qa_ehs_hazard_rectifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_verifications_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_verifications_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_verifications_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazard_verifications"')) THEN
         ALTER TABLE "public"."qa_ehs_hazard_verifications" ADD CONSTRAINT "qa_ehs_hazard_verifications_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazardous_materials_material_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazardous_materials_material_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazardous_materials_material_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazardous_materials"')) THEN
         ALTER TABLE "public"."qa_ehs_hazardous_materials" ADD CONSTRAINT "qa_ehs_hazardous_materials_material_no_key" UNIQUE (material_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazardous_materials_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazardous_materials_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazardous_materials_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazardous_materials"')) THEN
         ALTER TABLE "public"."qa_ehs_hazardous_materials" ADD CONSTRAINT "qa_ehs_hazardous_materials_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazards_hazard_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazards_hazard_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazards_hazard_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazards"')) THEN
         ALTER TABLE "public"."qa_ehs_hazards" ADD CONSTRAINT "qa_ehs_hazards_hazard_no_key" UNIQUE (hazard_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazards_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazards_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazards_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazards"')) THEN
         ALTER TABLE "public"."qa_ehs_hazards" ADD CONSTRAINT "qa_ehs_hazards_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_abnormalities_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_abnormalities_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_abnormalities_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_abnormalities"')) THEN
         ALTER TABLE "public"."qa_ehs_health_abnormalities" ADD CONSTRAINT "qa_ehs_health_abnormalities_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_plans_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_plans_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_plans_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_exam_plans"')) THEN
         ALTER TABLE "public"."qa_ehs_health_exam_plans" ADD CONSTRAINT "qa_ehs_health_exam_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_plans_plan_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_plans_plan_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_plans_plan_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_exam_plans"')) THEN
         ALTER TABLE "public"."qa_ehs_health_exam_plans" ADD CONSTRAINT "qa_ehs_health_exam_plans_plan_no_key" UNIQUE (plan_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_exam_records"')) THEN
         ALTER TABLE "public"."qa_ehs_health_exam_records" ADD CONSTRAINT "qa_ehs_health_exam_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_records_record_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_records_record_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_records_record_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_exam_records"')) THEN
         ALTER TABLE "public"."qa_ehs_health_exam_records" ADD CONSTRAINT "qa_ehs_health_exam_records_record_no_key" UNIQUE (record_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_trainings_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_trainings_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_trainings_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_trainings"')) THEN
         ALTER TABLE "public"."qa_ehs_health_trainings" ADD CONSTRAINT "qa_ehs_health_trainings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_trainings_training_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_trainings_training_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_trainings_training_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_trainings"')) THEN
         ALTER TABLE "public"."qa_ehs_health_trainings" ADD CONSTRAINT "qa_ehs_health_trainings_training_no_key" UNIQUE (training_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_items_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_items_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_items_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_items"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_items" ADD CONSTRAINT "qa_ehs_inspection_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_plans_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_plans_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_plans_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_plans"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_plans" ADD CONSTRAINT "qa_ehs_inspection_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_plans_plan_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_plans_plan_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_plans_plan_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_plans"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_plans" ADD CONSTRAINT "qa_ehs_inspection_plans_plan_no_key" UNIQUE (plan_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_record_items_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_record_items_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_record_items_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_record_items"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_record_items" ADD CONSTRAINT "qa_ehs_inspection_record_items_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_records"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_records" ADD CONSTRAINT "qa_ehs_inspection_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_records_record_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_records_record_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_records_record_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_records"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_records" ADD CONSTRAINT "qa_ehs_inspection_records_record_no_key" UNIQUE (record_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_material_stocks_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_material_stocks_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_material_stocks_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_material_stocks"')) THEN
         ALTER TABLE "public"."qa_ehs_material_stocks" ADD CONSTRAINT "qa_ehs_material_stocks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_msds_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_msds_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_msds_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_msds"')) THEN
         ALTER TABLE "public"."qa_ehs_msds" ADD CONSTRAINT "qa_ehs_msds_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_protection_measures_measure_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_protection_measures_measure_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_protection_measures_measure_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_protection_measures"')) THEN
         ALTER TABLE "public"."qa_ehs_protection_measures" ADD CONSTRAINT "qa_ehs_protection_measures_measure_no_key" UNIQUE (measure_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_protection_measures_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_protection_measures_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_protection_measures_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_protection_measures"')) THEN
         ALTER TABLE "public"."qa_ehs_protection_measures" ADD CONSTRAINT "qa_ehs_protection_measures_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_risks_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_risks_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_risks_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_risks"')) THEN
         ALTER TABLE "public"."qa_ehs_risks" ADD CONSTRAINT "qa_ehs_risks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_risks_risk_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_risks_risk_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_risks_risk_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_risks"')) THEN
         ALTER TABLE "public"."qa_ehs_risks" ADD CONSTRAINT "qa_ehs_risks_risk_no_key" UNIQUE (risk_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_stock_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_stock_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_stock_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_stock_records"')) THEN
         ALTER TABLE "public"."qa_ehs_stock_records" ADD CONSTRAINT "qa_ehs_stock_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_stock_records_record_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_stock_records_record_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_stock_records_record_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_stock_records"')) THEN
         ALTER TABLE "public"."qa_ehs_stock_records" ADD CONSTRAINT "qa_ehs_stock_records_record_no_key" UNIQUE (record_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_sync_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_sync_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_sync_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_sync_records"')) THEN
         ALTER TABLE "public"."qa_ehs_sync_records" ADD CONSTRAINT "qa_ehs_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_sync_records_sync_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_sync_records_sync_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_sync_records_sync_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_sync_records"')) THEN
         ALTER TABLE "public"."qa_ehs_sync_records" ADD CONSTRAINT "qa_ehs_sync_records_sync_no_key" UNIQUE (sync_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_trainings_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_trainings_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_trainings_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_trainings"')) THEN
         ALTER TABLE "public"."qa_ehs_trainings" ADD CONSTRAINT "qa_ehs_trainings_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_trainings_training_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_trainings_training_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_trainings_training_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_trainings"')) THEN
         ALTER TABLE "public"."qa_ehs_trainings" ADD CONSTRAINT "qa_ehs_trainings_training_no_key" UNIQUE (training_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_calibration_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_calibration_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_calibration_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_calibration_records"')) THEN
         ALTER TABLE "public"."qa_lab_calibration_records" ADD CONSTRAINT "qa_lab_calibration_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_inspection_reports_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_inspection_reports_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_inspection_reports_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_inspection_reports"')) THEN
         ALTER TABLE "public"."qa_lab_inspection_reports" ADD CONSTRAINT "qa_lab_inspection_reports_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_inspection_reports_report_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_inspection_reports_report_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_inspection_reports_report_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_inspection_reports"')) THEN
         ALTER TABLE "public"."qa_lab_inspection_reports" ADD CONSTRAINT "qa_lab_inspection_reports_report_no_key" UNIQUE (report_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_instruments_instrument_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_instruments_instrument_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_instruments_instrument_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_instruments"')) THEN
         ALTER TABLE "public"."qa_lab_instruments" ADD CONSTRAINT "qa_lab_instruments_instrument_no_key" UNIQUE (instrument_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_instruments_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_instruments_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_instruments_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_instruments"')) THEN
         ALTER TABLE "public"."qa_lab_instruments" ADD CONSTRAINT "qa_lab_instruments_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_processes_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_processes_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_processes_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_processes"')) THEN
         ALTER TABLE "public"."qa_lab_processes" ADD CONSTRAINT "qa_lab_processes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_processes_process_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_processes_process_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_processes_process_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_processes"')) THEN
         ALTER TABLE "public"."qa_lab_processes" ADD CONSTRAINT "qa_lab_processes_process_no_key" UNIQUE (process_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_alerts_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_alerts_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_alerts_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_reagent_alerts"')) THEN
         ALTER TABLE "public"."qa_lab_reagent_alerts" ADD CONSTRAINT "qa_lab_reagent_alerts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_history_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_history_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_history_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_reagent_history"')) THEN
         ALTER TABLE "public"."qa_lab_reagent_history" ADD CONSTRAINT "qa_lab_reagent_history_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagents_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagents_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagents_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_reagents"')) THEN
         ALTER TABLE "public"."qa_lab_reagents" ADD CONSTRAINT "qa_lab_reagents_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagents_reagent_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagents_reagent_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagents_reagent_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_reagents"')) THEN
         ALTER TABLE "public"."qa_lab_reagents" ADD CONSTRAINT "qa_lab_reagents_reagent_no_key" UNIQUE (reagent_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_records"')) THEN
         ALTER TABLE "public"."qa_lab_records" ADD CONSTRAINT "qa_lab_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_records_record_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_records_record_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_records_record_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_records"')) THEN
         ALTER TABLE "public"."qa_lab_records" ADD CONSTRAINT "qa_lab_records_record_no_key" UNIQUE (record_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_sample_lifecycle_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_sample_lifecycle_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_sample_lifecycle_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_sample_lifecycle"')) THEN
         ALTER TABLE "public"."qa_lab_sample_lifecycle" ADD CONSTRAINT "qa_lab_sample_lifecycle_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_audit_logs_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_audit_logs_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_audit_logs_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_audit_logs"')) THEN
         ALTER TABLE "public"."qa_lims_audit_logs" ADD CONSTRAINT "qa_lims_audit_logs_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_barcode_scan_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_barcode_scan_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_barcode_scan_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_barcode_scan_records"')) THEN
         ALTER TABLE "public"."qa_lims_barcode_scan_records" ADD CONSTRAINT "qa_lims_barcode_scan_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_collection_tasks_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_collection_tasks_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_collection_tasks_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_collection_tasks"')) THEN
         ALTER TABLE "public"."qa_lims_collection_tasks" ADD CONSTRAINT "qa_lims_collection_tasks_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_collection_tasks_task_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_collection_tasks_task_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_collection_tasks_task_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_collection_tasks"')) THEN
         ALTER TABLE "public"."qa_lims_collection_tasks" ADD CONSTRAINT "qa_lims_collection_tasks_task_no_key" UNIQUE (task_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_instrument_data_data_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_instrument_data_data_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_instrument_data_data_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_instrument_data"')) THEN
         ALTER TABLE "public"."qa_lims_instrument_data" ADD CONSTRAINT "qa_lims_instrument_data_data_no_key" UNIQUE (data_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_instrument_data_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_instrument_data_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_instrument_data_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_instrument_data"')) THEN
         ALTER TABLE "public"."qa_lims_instrument_data" ADD CONSTRAINT "qa_lims_instrument_data_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_categories_category_code_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_categories_category_code_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_categories_category_code_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_method_categories"')) THEN
         ALTER TABLE "public"."qa_lims_method_categories" ADD CONSTRAINT "qa_lims_method_categories_category_code_key" UNIQUE (category_code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_categories_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_categories_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_categories_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_method_categories"')) THEN
         ALTER TABLE "public"."qa_lims_method_categories" ADD CONSTRAINT "qa_lims_method_categories_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_validations_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_validations_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_validations_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_method_validations"')) THEN
         ALTER TABLE "public"."qa_lims_method_validations" ADD CONSTRAINT "qa_lims_method_validations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_versions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_versions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_versions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_method_versions"')) THEN
         ALTER TABLE "public"."qa_lims_method_versions" ADD CONSTRAINT "qa_lims_method_versions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_parse_rules_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_parse_rules_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_parse_rules_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_parse_rules"')) THEN
         ALTER TABLE "public"."qa_lims_parse_rules" ADD CONSTRAINT "qa_lims_parse_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_parse_rules_rule_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_parse_rules_rule_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_parse_rules_rule_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_parse_rules"')) THEN
         ALTER TABLE "public"."qa_lims_parse_rules" ADD CONSTRAINT "qa_lims_parse_rules_rule_no_key" UNIQUE (rule_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_corrective_actions_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_corrective_actions_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_corrective_actions_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_corrective_actions"')) THEN
         ALTER TABLE "public"."qa_lims_pt_corrective_actions" ADD CONSTRAINT "qa_lims_pt_corrective_actions_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_evaluations_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_evaluations_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_evaluations_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_evaluations"')) THEN
         ALTER TABLE "public"."qa_lims_pt_evaluations" ADD CONSTRAINT "qa_lims_pt_evaluations_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_plans_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_plans_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_plans_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_plans"')) THEN
         ALTER TABLE "public"."qa_lims_pt_plans" ADD CONSTRAINT "qa_lims_pt_plans_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_plans_plan_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_plans_plan_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_plans_plan_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_plans"')) THEN
         ALTER TABLE "public"."qa_lims_pt_plans" ADD CONSTRAINT "qa_lims_pt_plans_plan_no_key" UNIQUE (plan_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_results_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_results_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_results_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_results"')) THEN
         ALTER TABLE "public"."qa_lims_pt_results" ADD CONSTRAINT "qa_lims_pt_results_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_samples_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_samples_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_samples_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_samples"')) THEN
         ALTER TABLE "public"."qa_lims_pt_samples" ADD CONSTRAINT "qa_lims_pt_samples_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_rfid_tags_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_rfid_tags_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_rfid_tags_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_rfid_tags"')) THEN
         ALTER TABLE "public"."qa_lims_rfid_tags" ADD CONSTRAINT "qa_lims_rfid_tags_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_rfid_tags_tag_id_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_rfid_tags_tag_id_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_rfid_tags_tag_id_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_rfid_tags"')) THEN
         ALTER TABLE "public"."qa_lims_rfid_tags" ADD CONSTRAINT "qa_lims_rfid_tags_tag_id_key" UNIQUE (tag_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sample_barcodes_barcode_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sample_barcodes_barcode_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sample_barcodes_barcode_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_sample_barcodes"')) THEN
         ALTER TABLE "public"."qa_lims_sample_barcodes" ADD CONSTRAINT "qa_lims_sample_barcodes_barcode_key" UNIQUE (barcode);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sample_barcodes_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sample_barcodes_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sample_barcodes_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_sample_barcodes"')) THEN
         ALTER TABLE "public"."qa_lims_sample_barcodes" ADD CONSTRAINT "qa_lims_sample_barcodes_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sync_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sync_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sync_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_sync_records"')) THEN
         ALTER TABLE "public"."qa_lims_sync_records" ADD CONSTRAINT "qa_lims_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sync_records_sync_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sync_records_sync_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_sync_records_sync_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_sync_records"')) THEN
         ALTER TABLE "public"."qa_lims_sync_records" ADD CONSTRAINT "qa_lims_sync_records_sync_no_key" UNIQUE (sync_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_test_methods_method_code_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_test_methods_method_code_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_test_methods_method_code_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_test_methods"')) THEN
         ALTER TABLE "public"."qa_lims_test_methods" ADD CONSTRAINT "qa_lims_test_methods_method_code_key" UNIQUE (method_code);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_test_methods_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_test_methods_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_test_methods_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_test_methods"')) THEN
         ALTER TABLE "public"."qa_lims_test_methods" ADD CONSTRAINT "qa_lims_test_methods_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_components_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_components_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_components_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_uncertainty_components"')) THEN
         ALTER TABLE "public"."qa_lims_uncertainty_components" ADD CONSTRAINT "qa_lims_uncertainty_components_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_projects_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_projects_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_projects_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_uncertainty_projects"')) THEN
         ALTER TABLE "public"."qa_lims_uncertainty_projects" ADD CONSTRAINT "qa_lims_uncertainty_projects_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_projects_project_no_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_projects_project_no_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_projects_project_no_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_uncertainty_projects"')) THEN
         ALTER TABLE "public"."qa_lims_uncertainty_projects" ADD CONSTRAINT "qa_lims_uncertainty_projects_project_no_key" UNIQUE (project_no);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_sources_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_sources_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_sources_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_uncertainty_sources"')) THEN
         ALTER TABLE "public"."qa_lims_uncertainty_sources" ADD CONSTRAINT "qa_lims_uncertainty_sources_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_qms_sync_records_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_qms_sync_records_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_qms_sync_records_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_qms_sync_records"')) THEN
         ALTER TABLE "public"."qa_qms_sync_records" ADD CONSTRAINT "qa_qms_sync_records_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."refresh_tokens"')) THEN
         ALTER TABLE "public"."refresh_tokens" ADD CONSTRAINT "refresh_tokens_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_refresh_token_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_refresh_token_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_refresh_token_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."refresh_tokens"')) THEN
         ALTER TABLE "public"."refresh_tokens" ADD CONSTRAINT "refresh_tokens_refresh_token_key" UNIQUE (refresh_token);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'shortcuts_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'shortcuts_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'shortcuts_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."shortcuts"')) THEN
         ALTER TABLE "public"."shortcuts" ADD CONSTRAINT "shortcuts_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sync_policies_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sync_policies_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sync_policies_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."sync_policies"')) THEN
         ALTER TABLE "public"."sync_policies" ADD CONSTRAINT "sync_policies_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sync_policies_user_id_key' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sync_policies_user_id_key' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sync_policies_user_id_key' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."sync_policies"')) THEN
         ALTER TABLE "public"."sync_policies" ADD CONSTRAINT "sync_policies_user_id_key" UNIQUE (user_id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tenants_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tenants_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tenants_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."tenants"')) THEN
         ALTER TABLE "public"."tenants" ADD CONSTRAINT "tenants_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ticket_automation_rules_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ticket_automation_rules_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ticket_automation_rules_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."ticket_automation_rules"')) THEN
         ALTER TABLE "public"."ticket_automation_rules" ADD CONSTRAINT "ticket_automation_rules_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ticket_knowledge_articles_pkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ticket_knowledge_articles_pkey' AND n.nspname = 'public') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'ticket_knowledge_articles_pkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."ticket_knowledge_articles"')) THEN
         ALTER TABLE "public"."ticket_knowledge_articles" ADD CONSTRAINT "ticket_knowledge_articles_pkey" PRIMARY KEY (id);
     END IF;
 END $$;
@@ -6762,697 +6762,697 @@ END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_subscription_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_subscription_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
         ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES iam.core_subscriptions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
         ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_room_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_room_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_members"')) THEN
         ALTER TABLE "iam"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES iam.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_room_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_room_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_chat_messages"')) THEN
         ALTER TABLE "iam"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES iam.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
         ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES iam.core_dict_types(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_parent_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_parent_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_dict_items"')) THEN
         ALTER TABLE "iam"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES iam.core_dict_items(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_guide_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_guide_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_lessons"')) THEN
         ALTER TABLE "iam"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES iam.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_guide_progress"')) THEN
         ALTER TABLE "iam"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES iam.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_group_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_group_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
         ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES iam.core_menu_groups(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_parent_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_parent_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_menus"')) THEN
         ALTER TABLE "iam"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES iam.core_menus(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_instances"')) THEN
         ALTER TABLE "iam"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES iam.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_plugin_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_reviews"')) THEN
         ALTER TABLE "iam"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES iam.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_plugin_versions"')) THEN
         ALTER TABLE "iam"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES iam.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_permission_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_permission_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_role_permissions"')) THEN
         ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES iam.core_permissions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_role_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_role_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_role_permissions"')) THEN
         ALTER TABLE "iam"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES iam.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_plan_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_plan_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
         ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES iam.core_billing_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_subscriptions"')) THEN
         ALTER TABLE "iam"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_modules"')) THEN
         ALTER TABLE "iam"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_plugin_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_plugin_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
         ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES iam.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_plugins"')) THEN
         ALTER TABLE "iam"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_settings"')) THEN
         ALTER TABLE "iam"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_usage"')) THEN
         ALTER TABLE "iam"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_tenant_users"')) THEN
         ALTER TABLE "iam"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_tenant_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_tenant_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_usage_records"')) THEN
         ALTER TABLE "iam"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES iam.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_role_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_role_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_user_roles"')) THEN
         ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES iam.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_user_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_user_roles"')) THEN
         ALTER TABLE "iam"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES iam.core_users(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_workflow_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_workflow_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_instances"')) THEN
         ALTER TABLE "iam"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES iam.core_workflows(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_instance_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_instance_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_workflow_tasks"')) THEN
         ALTER TABLE "iam"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES iam.core_workflow_instances(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'dynamic_data_schema_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'dynamic_data_schema_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."dynamic_data"')) THEN
         ALTER TABLE "iam"."dynamic_data" ADD CONSTRAINT "dynamic_data_schema_id_fkey" FOREIGN KEY (schema_id) REFERENCES iam.schema_registry(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_user_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."refresh_tokens"')) THEN
         ALTER TABLE "iam"."refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIGN KEY (user_id) REFERENCES mes.core_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sessions_user_id_fkey' AND n.nspname = 'iam') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sessions_user_id_fkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."sessions"')) THEN
         ALTER TABLE "iam"."sessions" ADD CONSTRAINT "sessions_user_id_fkey" FOREIGN KEY (user_id) REFERENCES mes.core_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_subscription_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_subscription_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
         ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_subscription_id_fkey" FOREIGN KEY (subscription_id) REFERENCES mes.core_subscriptions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
         ALTER TABLE "mes"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_room_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_members_room_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_members"')) THEN
         ALTER TABLE "mes"."core_chat_members" ADD CONSTRAINT "core_chat_members_room_id_fkey" FOREIGN KEY (room_id) REFERENCES mes.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_room_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_chat_messages_room_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_chat_messages"')) THEN
         ALTER TABLE "mes"."core_chat_messages" ADD CONSTRAINT "core_chat_messages_room_id_fkey" FOREIGN KEY (room_id) REFERENCES mes.core_chat_rooms(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_dict_type_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
         ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_dict_type_id_fkey" FOREIGN KEY (dict_type_id) REFERENCES mes.core_dict_types(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_parent_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_dict_items_parent_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_dict_items"')) THEN
         ALTER TABLE "mes"."core_dict_items" ADD CONSTRAINT "core_dict_items_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES mes.core_dict_items(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_guide_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_lessons_guide_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_lessons"')) THEN
         ALTER TABLE "mes"."core_guide_lessons" ADD CONSTRAINT "core_guide_lessons_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES mes.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_guide_progress_guide_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_guide_progress"')) THEN
         ALTER TABLE "mes"."core_guide_progress" ADD CONSTRAINT "core_guide_progress_guide_id_fkey" FOREIGN KEY (guide_id) REFERENCES mes.core_guides(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_group_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_group_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
         ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_group_id_fkey" FOREIGN KEY (group_id) REFERENCES mes.core_menu_groups(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_parent_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_menus_parent_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_menus"')) THEN
         ALTER TABLE "mes"."core_menus" ADD CONSTRAINT "core_menus_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES mes.core_menus(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_instances_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
         ALTER TABLE "mes"."core_plugin_instances" ADD CONSTRAINT "core_plugin_instances_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_plugin_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_reviews_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_reviews"')) THEN
         ALTER TABLE "mes"."core_plugin_reviews" ADD CONSTRAINT "core_plugin_reviews_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_plugin_versions_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_plugin_versions"')) THEN
         ALTER TABLE "mes"."core_plugin_versions" ADD CONSTRAINT "core_plugin_versions_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_permission_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_permission_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_role_permissions"')) THEN
         ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_permission_id_fkey" FOREIGN KEY (permission_id) REFERENCES mes.core_permissions(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_role_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_role_permissions_role_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_role_permissions"')) THEN
         ALTER TABLE "mes"."core_role_permissions" ADD CONSTRAINT "core_role_permissions_role_id_fkey" FOREIGN KEY (role_id) REFERENCES mes.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_plan_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_plan_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
         ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES mes.core_billing_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_subscriptions_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_subscriptions"')) THEN
         ALTER TABLE "mes"."core_subscriptions" ADD CONSTRAINT "core_subscriptions_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_modules_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
         ALTER TABLE "mes"."core_tenant_modules" ADD CONSTRAINT "core_tenant_modules_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_plugin_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_plugin_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
         ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_plugin_id_fkey" FOREIGN KEY (plugin_id) REFERENCES mes.core_plugins(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_plugins_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
         ALTER TABLE "mes"."core_tenant_plugins" ADD CONSTRAINT "core_tenant_plugins_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_settings_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
         ALTER TABLE "mes"."core_tenant_settings" ADD CONSTRAINT "core_tenant_settings_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_usage_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
         ALTER TABLE "mes"."core_tenant_usage" ADD CONSTRAINT "core_tenant_usage_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_tenant_users_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_tenant_users"')) THEN
         ALTER TABLE "mes"."core_tenant_users" ADD CONSTRAINT "core_tenant_users_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_tenant_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_usage_records_tenant_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_usage_records"')) THEN
         ALTER TABLE "mes"."core_usage_records" ADD CONSTRAINT "core_usage_records_tenant_id_fkey" FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_role_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_role_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_user_roles"')) THEN
         ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_role_id_fkey" FOREIGN KEY (role_id) REFERENCES mes.core_roles(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_user_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_user_roles_user_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_user_roles"')) THEN
         ALTER TABLE "mes"."core_user_roles" ADD CONSTRAINT "core_user_roles_user_id_fkey" FOREIGN KEY (user_id) REFERENCES mes.core_users(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_workflow_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_instances_workflow_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_instances"')) THEN
         ALTER TABLE "mes"."core_workflow_instances" ADD CONSTRAINT "core_workflow_instances_workflow_id_fkey" FOREIGN KEY (workflow_id) REFERENCES mes.core_workflows(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_instance_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_workflow_tasks_instance_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."core_workflow_tasks"')) THEN
         ALTER TABLE "mes"."core_workflow_tasks" ADD CONSTRAINT "core_workflow_tasks_instance_id_fkey" FOREIGN KEY (instance_id) REFERENCES mes.core_workflow_instances(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tool_permissions_tenant_permission_id_fkey' AND n.nspname = 'mes') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'tool_permissions_tenant_permission_id_fkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."tool_permissions"')) THEN
         ALTER TABLE "mes"."tool_permissions" ADD CONSTRAINT "tool_permissions_tenant_permission_id_fkey" FOREIGN KEY (tenant_permission_id) REFERENCES mes.tenant_permissions(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'barcode_scans_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'barcode_scans_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."barcode_scans"')) THEN
         ALTER TABLE "public"."barcode_scans" ADD CONSTRAINT "barcode_scans_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_variable_history_variable_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_flow_variable_history_variable_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."core_flow_variable_history"')) THEN
         ALTER TABLE "public"."core_flow_variable_history" ADD CONSTRAINT "core_flow_variable_history_variable_id_fkey" FOREIGN KEY (variable_id) REFERENCES public.core_flow_variables(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'devices_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'devices_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."devices"')) THEN
         ALTER TABLE "public"."devices" ADD CONSTRAINT "devices_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_scan_records_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'mobile_scan_records_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."mobile_scan_records"')) THEN
         ALTER TABLE "public"."mobile_scan_records" ADD CONSTRAINT "mobile_scan_records_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_operations_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_operations_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."offline_operations"')) THEN
         ALTER TABLE "public"."offline_operations" ADD CONSTRAINT "offline_operations_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_sync_records_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'offline_sync_records_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."offline_sync_records"')) THEN
         ALTER TABLE "public"."offline_sync_records" ADD CONSTRAINT "offline_sync_records_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'photo_uploads_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'photo_uploads_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."photo_uploads"')) THEN
         ALTER TABLE "public"."photo_uploads" ADD CONSTRAINT "photo_uploads_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_devices_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'push_devices_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."push_devices"')) THEN
         ALTER TABLE "public"."push_devices" ADD CONSTRAINT "push_devices_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_investigations_accident_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_investigations_accident_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_accident_investigations"')) THEN
         ALTER TABLE "public"."qa_ehs_accident_investigations" ADD CONSTRAINT "qa_ehs_accident_investigations_accident_id_fkey" FOREIGN KEY (accident_id) REFERENCES public.qa_ehs_accidents(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_reviews_accident_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_reviews_accident_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_accident_reviews"')) THEN
         ALTER TABLE "public"."qa_ehs_accident_reviews" ADD CONSTRAINT "qa_ehs_accident_reviews_accident_id_fkey" FOREIGN KEY (accident_id) REFERENCES public.qa_ehs_accidents(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_treatments_accident_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_accident_treatments_accident_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_accident_treatments"')) THEN
         ALTER TABLE "public"."qa_ehs_accident_treatments" ADD CONSTRAINT "qa_ehs_accident_treatments_accident_id_fkey" FOREIGN KEY (accident_id) REFERENCES public.qa_ehs_accidents(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_items_evaluation_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_items_evaluation_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_compliance_items"')) THEN
         ALTER TABLE "public"."qa_ehs_compliance_items" ADD CONSTRAINT "qa_ehs_compliance_items_evaluation_id_fkey" FOREIGN KEY (evaluation_id) REFERENCES public.qa_ehs_compliance_evaluations(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_items_regulation_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_compliance_items_regulation_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_compliance_items"')) THEN
         ALTER TABLE "public"."qa_ehs_compliance_items" ADD CONSTRAINT "qa_ehs_compliance_items_regulation_id_fkey" FOREIGN KEY (regulation_id) REFERENCES public.qa_ehs_environmental_regulations(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_detection_records_factor_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_detection_records_factor_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_detection_records"')) THEN
         ALTER TABLE "public"."qa_ehs_detection_records" ADD CONSTRAINT "qa_ehs_detection_records_factor_id_fkey" FOREIGN KEY (factor_id) REFERENCES public.qa_ehs_hazard_factors(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_evaluations_drill_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_evaluations_drill_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_evaluations"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_evaluations" ADD CONSTRAINT "qa_ehs_drill_evaluations_drill_id_fkey" FOREIGN KEY (drill_id) REFERENCES public.qa_ehs_drill_records(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_problems_drill_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_problems_drill_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_problems"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_problems" ADD CONSTRAINT "qa_ehs_drill_problems_drill_id_fkey" FOREIGN KEY (drill_id) REFERENCES public.qa_ehs_drill_records(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_records_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_drill_records_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_drill_records"')) THEN
         ALTER TABLE "public"."qa_ehs_drill_records" ADD CONSTRAINT "qa_ehs_drill_records_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_ehs_drill_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_approvals_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_approvals_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_emergency_plan_approvals"')) THEN
         ALTER TABLE "public"."qa_ehs_emergency_plan_approvals" ADD CONSTRAINT "qa_ehs_emergency_plan_approvals_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_ehs_emergency_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_supplies_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_supplies_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_emergency_plan_supplies"')) THEN
         ALTER TABLE "public"."qa_ehs_emergency_plan_supplies" ADD CONSTRAINT "qa_ehs_emergency_plan_supplies_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_ehs_emergency_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_versions_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_emergency_plan_versions_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_emergency_plan_versions"')) THEN
         ALTER TABLE "public"."qa_ehs_emergency_plan_versions" ADD CONSTRAINT "qa_ehs_emergency_plan_versions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_ehs_emergency_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_rectifications_hazard_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_rectifications_hazard_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazard_rectifications"')) THEN
         ALTER TABLE "public"."qa_ehs_hazard_rectifications" ADD CONSTRAINT "qa_ehs_hazard_rectifications_hazard_id_fkey" FOREIGN KEY (hazard_id) REFERENCES public.qa_ehs_hazards(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_verifications_hazard_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazard_verifications_hazard_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazard_verifications"')) THEN
         ALTER TABLE "public"."qa_ehs_hazard_verifications" ADD CONSTRAINT "qa_ehs_hazard_verifications_hazard_id_fkey" FOREIGN KEY (hazard_id) REFERENCES public.qa_ehs_hazards(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazards_inspection_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_hazards_inspection_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_hazards"')) THEN
         ALTER TABLE "public"."qa_ehs_hazards" ADD CONSTRAINT "qa_ehs_hazards_inspection_id_fkey" FOREIGN KEY (inspection_id) REFERENCES public.qa_ehs_inspection_records(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_abnormalities_record_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_abnormalities_record_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_abnormalities"')) THEN
         ALTER TABLE "public"."qa_ehs_health_abnormalities" ADD CONSTRAINT "qa_ehs_health_abnormalities_record_id_fkey" FOREIGN KEY (record_id) REFERENCES public.qa_ehs_health_exam_records(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_records_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_health_exam_records_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_health_exam_records"')) THEN
         ALTER TABLE "public"."qa_ehs_health_exam_records" ADD CONSTRAINT "qa_ehs_health_exam_records_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_ehs_health_exam_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_items_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_items_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_items"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_items" ADD CONSTRAINT "qa_ehs_inspection_items_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_ehs_inspection_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_record_items_item_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_record_items_item_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_record_items"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_record_items" ADD CONSTRAINT "qa_ehs_inspection_record_items_item_id_fkey" FOREIGN KEY (item_id) REFERENCES public.qa_ehs_inspection_items(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_record_items_record_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_record_items_record_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_record_items"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_record_items" ADD CONSTRAINT "qa_ehs_inspection_record_items_record_id_fkey" FOREIGN KEY (record_id) REFERENCES public.qa_ehs_inspection_records(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_records_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_inspection_records_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_inspection_records"')) THEN
         ALTER TABLE "public"."qa_ehs_inspection_records" ADD CONSTRAINT "qa_ehs_inspection_records_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_ehs_inspection_plans(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_material_stocks_material_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_material_stocks_material_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_material_stocks"')) THEN
         ALTER TABLE "public"."qa_ehs_material_stocks" ADD CONSTRAINT "qa_ehs_material_stocks_material_id_fkey" FOREIGN KEY (material_id) REFERENCES public.qa_ehs_hazardous_materials(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_msds_material_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_msds_material_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_msds"')) THEN
         ALTER TABLE "public"."qa_ehs_msds" ADD CONSTRAINT "qa_ehs_msds_material_id_fkey" FOREIGN KEY (material_id) REFERENCES public.qa_ehs_hazardous_materials(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_stock_records_material_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_ehs_stock_records_material_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_ehs_stock_records"')) THEN
         ALTER TABLE "public"."qa_ehs_stock_records" ADD CONSTRAINT "qa_ehs_stock_records_material_id_fkey" FOREIGN KEY (material_id) REFERENCES public.qa_ehs_hazardous_materials(id);
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_calibration_records_instrument_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_calibration_records_instrument_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_calibration_records"')) THEN
         ALTER TABLE "public"."qa_lab_calibration_records" ADD CONSTRAINT "qa_lab_calibration_records_instrument_id_fkey" FOREIGN KEY (instrument_id) REFERENCES public.qa_lab_instruments(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_alerts_reagent_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_alerts_reagent_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_reagent_alerts"')) THEN
         ALTER TABLE "public"."qa_lab_reagent_alerts" ADD CONSTRAINT "qa_lab_reagent_alerts_reagent_id_fkey" FOREIGN KEY (reagent_id) REFERENCES public.qa_lab_reagents(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_history_reagent_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lab_reagent_history_reagent_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lab_reagent_history"')) THEN
         ALTER TABLE "public"."qa_lab_reagent_history" ADD CONSTRAINT "qa_lab_reagent_history_reagent_id_fkey" FOREIGN KEY (reagent_id) REFERENCES public.qa_lab_reagents(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_barcode_scan_records_barcode_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_barcode_scan_records_barcode_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_barcode_scan_records"')) THEN
         ALTER TABLE "public"."qa_lims_barcode_scan_records" ADD CONSTRAINT "qa_lims_barcode_scan_records_barcode_id_fkey" FOREIGN KEY (barcode_id) REFERENCES public.qa_lims_sample_barcodes(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_collection_tasks_instrument_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_collection_tasks_instrument_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_collection_tasks"')) THEN
         ALTER TABLE "public"."qa_lims_collection_tasks" ADD CONSTRAINT "qa_lims_collection_tasks_instrument_id_fkey" FOREIGN KEY (instrument_id) REFERENCES public.qa_lab_instruments(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_instrument_data_instrument_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_instrument_data_instrument_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_instrument_data"')) THEN
         ALTER TABLE "public"."qa_lims_instrument_data" ADD CONSTRAINT "qa_lims_instrument_data_instrument_id_fkey" FOREIGN KEY (instrument_id) REFERENCES public.qa_lab_instruments(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_categories_parent_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_categories_parent_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_method_categories"')) THEN
         ALTER TABLE "public"."qa_lims_method_categories" ADD CONSTRAINT "qa_lims_method_categories_parent_id_fkey" FOREIGN KEY (parent_id) REFERENCES public.qa_lims_method_categories(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_validations_method_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_validations_method_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_method_validations"')) THEN
         ALTER TABLE "public"."qa_lims_method_validations" ADD CONSTRAINT "qa_lims_method_validations_method_id_fkey" FOREIGN KEY (method_id) REFERENCES public.qa_lims_test_methods(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_versions_method_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_method_versions_method_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_method_versions"')) THEN
         ALTER TABLE "public"."qa_lims_method_versions" ADD CONSTRAINT "qa_lims_method_versions_method_id_fkey" FOREIGN KEY (method_id) REFERENCES public.qa_lims_test_methods(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_corrective_actions_evaluation_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_corrective_actions_evaluation_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_corrective_actions"')) THEN
         ALTER TABLE "public"."qa_lims_pt_corrective_actions" ADD CONSTRAINT "qa_lims_pt_corrective_actions_evaluation_id_fkey" FOREIGN KEY (evaluation_id) REFERENCES public.qa_lims_pt_evaluations(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_corrective_actions_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_corrective_actions_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_corrective_actions"')) THEN
         ALTER TABLE "public"."qa_lims_pt_corrective_actions" ADD CONSTRAINT "qa_lims_pt_corrective_actions_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_lims_pt_plans(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_evaluations_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_evaluations_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_evaluations"')) THEN
         ALTER TABLE "public"."qa_lims_pt_evaluations" ADD CONSTRAINT "qa_lims_pt_evaluations_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_lims_pt_plans(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_evaluations_sample_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_evaluations_sample_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_evaluations"')) THEN
         ALTER TABLE "public"."qa_lims_pt_evaluations" ADD CONSTRAINT "qa_lims_pt_evaluations_sample_id_fkey" FOREIGN KEY (sample_id) REFERENCES public.qa_lims_pt_samples(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_results_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_results_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_results"')) THEN
         ALTER TABLE "public"."qa_lims_pt_results" ADD CONSTRAINT "qa_lims_pt_results_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_lims_pt_plans(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_results_sample_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_results_sample_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_results"')) THEN
         ALTER TABLE "public"."qa_lims_pt_results" ADD CONSTRAINT "qa_lims_pt_results_sample_id_fkey" FOREIGN KEY (sample_id) REFERENCES public.qa_lims_pt_samples(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_samples_plan_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_pt_samples_plan_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_pt_samples"')) THEN
         ALTER TABLE "public"."qa_lims_pt_samples" ADD CONSTRAINT "qa_lims_pt_samples_plan_id_fkey" FOREIGN KEY (plan_id) REFERENCES public.qa_lims_pt_plans(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_test_methods_category_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_test_methods_category_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_test_methods"')) THEN
         ALTER TABLE "public"."qa_lims_test_methods" ADD CONSTRAINT "qa_lims_test_methods_category_id_fkey" FOREIGN KEY (category_id) REFERENCES public.qa_lims_method_categories(id) ON DELETE SET NULL;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_components_project_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_components_project_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_uncertainty_components"')) THEN
         ALTER TABLE "public"."qa_lims_uncertainty_components" ADD CONSTRAINT "qa_lims_uncertainty_components_project_id_fkey" FOREIGN KEY (project_id) REFERENCES public.qa_lims_uncertainty_projects(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_components_source_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_components_source_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_uncertainty_components"')) THEN
         ALTER TABLE "public"."qa_lims_uncertainty_components" ADD CONSTRAINT "qa_lims_uncertainty_components_source_id_fkey" FOREIGN KEY (source_id) REFERENCES public.qa_lims_uncertainty_sources(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_sources_project_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'qa_lims_uncertainty_sources_project_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."qa_lims_uncertainty_sources"')) THEN
         ALTER TABLE "public"."qa_lims_uncertainty_sources" ADD CONSTRAINT "qa_lims_uncertainty_sources_project_id_fkey" FOREIGN KEY (project_id) REFERENCES public.qa_lims_uncertainty_projects(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'refresh_tokens_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."refresh_tokens"')) THEN
         ALTER TABLE "public"."refresh_tokens" ADD CONSTRAINT "refresh_tokens_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'shortcuts_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'shortcuts_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."shortcuts"')) THEN
         ALTER TABLE "public"."shortcuts" ADD CONSTRAINT "shortcuts_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sync_policies_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'sync_policies_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."sync_policies"')) THEN
         ALTER TABLE "public"."sync_policies" ADD CONSTRAINT "sync_policies_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_settings_user_id_fkey' AND n.nspname = 'public') THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'user_settings_user_id_fkey' AND n.nspname = 'public' AND con.conrelid = to_regclass('"public"."user_settings"')) THEN
         ALTER TABLE "public"."user_settings" ADD CONSTRAINT "user_settings_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.mobile_users(id) ON DELETE CASCADE;
     END IF;
 END $$;
@@ -7461,397 +7461,397 @@ END $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_comparison_analyses' AND polrelid = '"analytics"."analytics_comparison_analyses"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_comparison_analyses' AND polrelid = to_regclass('"analytics"."analytics_comparison_analyses"')) THEN
         CREATE POLICY "tenant_isolation_analytics_comparison_analyses" ON "analytics"."analytics_comparison_analyses" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_comparison_results' AND polrelid = '"analytics"."analytics_comparison_results"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_comparison_results' AND polrelid = to_regclass('"analytics"."analytics_comparison_results"')) THEN
         CREATE POLICY "tenant_isolation_analytics_comparison_results" ON "analytics"."analytics_comparison_results" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_dashboard_shares' AND polrelid = '"analytics"."analytics_dashboard_shares"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_dashboard_shares' AND polrelid = to_regclass('"analytics"."analytics_dashboard_shares"')) THEN
         CREATE POLICY "tenant_isolation_analytics_dashboard_shares" ON "analytics"."analytics_dashboard_shares" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_dashboard_templates' AND polrelid = '"analytics"."analytics_dashboard_templates"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_dashboard_templates' AND polrelid = to_regclass('"analytics"."analytics_dashboard_templates"')) THEN
         CREATE POLICY "tenant_isolation_analytics_dashboard_templates" ON "analytics"."analytics_dashboard_templates" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_dashboards' AND polrelid = '"analytics"."analytics_dashboards"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_dashboards' AND polrelid = to_regclass('"analytics"."analytics_dashboards"')) THEN
         CREATE POLICY "tenant_isolation_analytics_dashboards" ON "analytics"."analytics_dashboards" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_datasources' AND polrelid = '"analytics"."analytics_datasources"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_datasources' AND polrelid = to_regclass('"analytics"."analytics_datasources"')) THEN
         CREATE POLICY "tenant_isolation_analytics_datasources" ON "analytics"."analytics_datasources" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_drilldown_history' AND polrelid = '"analytics"."analytics_drilldown_history"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_drilldown_history' AND polrelid = to_regclass('"analytics"."analytics_drilldown_history"')) THEN
         CREATE POLICY "tenant_isolation_analytics_drilldown_history" ON "analytics"."analytics_drilldown_history" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_drilldown_paths' AND polrelid = '"analytics"."analytics_drilldown_paths"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_drilldown_paths' AND polrelid = to_regclass('"analytics"."analytics_drilldown_paths"')) THEN
         CREATE POLICY "tenant_isolation_analytics_drilldown_paths" ON "analytics"."analytics_drilldown_paths" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_row_level_permissions' AND polrelid = '"analytics"."analytics_row_level_permissions"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_row_level_permissions' AND polrelid = to_regclass('"analytics"."analytics_row_level_permissions"')) THEN
         CREATE POLICY "tenant_isolation_analytics_row_level_permissions" ON "analytics"."analytics_row_level_permissions" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_self_service_reports' AND polrelid = '"analytics"."analytics_self_service_reports"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_self_service_reports' AND polrelid = to_regclass('"analytics"."analytics_self_service_reports"')) THEN
         CREATE POLICY "tenant_isolation_analytics_self_service_reports" ON "analytics"."analytics_self_service_reports" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_widgets' AND polrelid = '"analytics"."analytics_widgets"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_analytics_widgets' AND polrelid = to_regclass('"analytics"."analytics_widgets"')) THEN
         CREATE POLICY "tenant_isolation_analytics_widgets" ON "analytics"."analytics_widgets" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = '"mes"."dashboard_stats"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = to_regclass('"mes"."dashboard_stats"')) THEN
         CREATE POLICY "rls_tenant_isolation" ON "mes"."dashboard_stats" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = '"mes"."financial_records"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = to_regclass('"mes"."financial_records"')) THEN
         CREATE POLICY "rls_tenant_isolation" ON "mes"."financial_records" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = '"mes"."inspection_records"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = to_regclass('"mes"."inspection_records"')) THEN
         CREATE POLICY "rls_tenant_isolation" ON "mes"."inspection_records" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = '"mes"."supply_chain_orders"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = to_regclass('"mes"."supply_chain_orders"')) THEN
         CREATE POLICY "rls_tenant_isolation" ON "mes"."supply_chain_orders" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_billing_invoices' AND polrelid = '"mes"."core_billing_invoices"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_billing_invoices' AND polrelid = to_regclass('"mes"."core_billing_invoices"')) THEN
         CREATE POLICY "tenant_isolation_core_billing_invoices" ON "mes"."core_billing_invoices" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_billing_plans' AND polrelid = '"mes"."core_billing_plans"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_billing_plans' AND polrelid = to_regclass('"mes"."core_billing_plans"')) THEN
         CREATE POLICY "tenant_isolation_core_billing_plans" ON "mes"."core_billing_plans" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_members' AND polrelid = '"mes"."core_chat_members"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_members' AND polrelid = to_regclass('"mes"."core_chat_members"')) THEN
         CREATE POLICY "tenant_isolation_core_chat_members" ON "mes"."core_chat_members" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_messages' AND polrelid = '"mes"."core_chat_messages"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_messages' AND polrelid = to_regclass('"mes"."core_chat_messages"')) THEN
         CREATE POLICY "tenant_isolation_core_chat_messages" ON "mes"."core_chat_messages" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_rooms' AND polrelid = '"mes"."core_chat_rooms"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_chat_rooms' AND polrelid = to_regclass('"mes"."core_chat_rooms"')) THEN
         CREATE POLICY "tenant_isolation_core_chat_rooms" ON "mes"."core_chat_rooms" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dashboard_refresh_log' AND polrelid = '"mes"."core_dashboard_refresh_log"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dashboard_refresh_log' AND polrelid = to_regclass('"mes"."core_dashboard_refresh_log"')) THEN
         CREATE POLICY "tenant_isolation_core_dashboard_refresh_log" ON "mes"."core_dashboard_refresh_log" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dict_items' AND polrelid = '"mes"."core_dict_items"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dict_items' AND polrelid = to_regclass('"mes"."core_dict_items"')) THEN
         CREATE POLICY "tenant_isolation_core_dict_items" ON "mes"."core_dict_items" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dict_types' AND polrelid = '"mes"."core_dict_types"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_dict_types' AND polrelid = to_regclass('"mes"."core_dict_types"')) THEN
         CREATE POLICY "tenant_isolation_core_dict_types" ON "mes"."core_dict_types" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_email_queue' AND polrelid = '"mes"."core_email_queue"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_email_queue' AND polrelid = to_regclass('"mes"."core_email_queue"')) THEN
         CREATE POLICY "tenant_isolation_core_email_queue" ON "mes"."core_email_queue" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_email_templates' AND polrelid = '"mes"."core_email_templates"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_email_templates' AND polrelid = to_regclass('"mes"."core_email_templates"')) THEN
         CREATE POLICY "tenant_isolation_core_email_templates" ON "mes"."core_email_templates" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_emails' AND polrelid = '"mes"."core_emails"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_emails' AND polrelid = to_regclass('"mes"."core_emails"')) THEN
         CREATE POLICY "tenant_isolation_core_emails" ON "mes"."core_emails" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_faqs' AND polrelid = '"mes"."core_faqs"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_faqs' AND polrelid = to_regclass('"mes"."core_faqs"')) THEN
         CREATE POLICY "tenant_isolation_core_faqs" ON "mes"."core_faqs" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_file_folders' AND polrelid = '"mes"."core_file_folders"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_file_folders' AND polrelid = to_regclass('"mes"."core_file_folders"')) THEN
         CREATE POLICY "tenant_isolation_core_file_folders" ON "mes"."core_file_folders" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_files' AND polrelid = '"mes"."core_files"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_files' AND polrelid = to_regclass('"mes"."core_files"')) THEN
         CREATE POLICY "tenant_isolation_core_files" ON "mes"."core_files" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guide_lessons' AND polrelid = '"mes"."core_guide_lessons"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guide_lessons' AND polrelid = to_regclass('"mes"."core_guide_lessons"')) THEN
         CREATE POLICY "tenant_isolation_core_guide_lessons" ON "mes"."core_guide_lessons" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guide_progress' AND polrelid = '"mes"."core_guide_progress"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guide_progress' AND polrelid = to_regclass('"mes"."core_guide_progress"')) THEN
         CREATE POLICY "tenant_isolation_core_guide_progress" ON "mes"."core_guide_progress" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guides' AND polrelid = '"mes"."core_guides"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_guides' AND polrelid = to_regclass('"mes"."core_guides"')) THEN
         CREATE POLICY "tenant_isolation_core_guides" ON "mes"."core_guides" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_inter_module_sync' AND polrelid = '"mes"."core_inter_module_sync"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_inter_module_sync' AND polrelid = to_regclass('"mes"."core_inter_module_sync"')) THEN
         CREATE POLICY "tenant_isolation_core_inter_module_sync" ON "mes"."core_inter_module_sync" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_login_logs' AND polrelid = '"mes"."core_login_logs"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_login_logs' AND polrelid = to_regclass('"mes"."core_login_logs"')) THEN
         CREATE POLICY "tenant_isolation_core_login_logs" ON "mes"."core_login_logs" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_menu_groups' AND polrelid = '"mes"."core_menu_groups"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_menu_groups' AND polrelid = to_regclass('"mes"."core_menu_groups"')) THEN
         CREATE POLICY "tenant_isolation_core_menu_groups" ON "mes"."core_menu_groups" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_menus' AND polrelid = '"mes"."core_menus"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_menus' AND polrelid = to_regclass('"mes"."core_menus"')) THEN
         CREATE POLICY "tenant_isolation_core_menus" ON "mes"."core_menus" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_migration_history' AND polrelid = '"mes"."core_migration_history"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_migration_history' AND polrelid = to_regclass('"mes"."core_migration_history"')) THEN
         CREATE POLICY "tenant_isolation_core_migration_history" ON "mes"."core_migration_history" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_mobile_offline_records' AND polrelid = '"mes"."core_mobile_offline_records"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_mobile_offline_records' AND polrelid = to_regclass('"mes"."core_mobile_offline_records"')) THEN
         CREATE POLICY "tenant_isolation_core_mobile_offline_records" ON "mes"."core_mobile_offline_records" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_notification_templates' AND polrelid = '"mes"."core_notification_templates"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_notification_templates' AND polrelid = to_regclass('"mes"."core_notification_templates"')) THEN
         CREATE POLICY "tenant_isolation_core_notification_templates" ON "mes"."core_notification_templates" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_notifications' AND polrelid = '"mes"."core_notifications"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_notifications' AND polrelid = to_regclass('"mes"."core_notifications"')) THEN
         CREATE POLICY "tenant_isolation_core_notifications" ON "mes"."core_notifications" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_categories' AND polrelid = '"mes"."core_plugin_categories"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_categories' AND polrelid = to_regclass('"mes"."core_plugin_categories"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_categories" ON "mes"."core_plugin_categories" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_instances' AND polrelid = '"mes"."core_plugin_instances"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_instances' AND polrelid = to_regclass('"mes"."core_plugin_instances"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_instances" ON "mes"."core_plugin_instances" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_permissions' AND polrelid = '"mes"."core_plugin_permissions"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_permissions' AND polrelid = to_regclass('"mes"."core_plugin_permissions"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_permissions" ON "mes"."core_plugin_permissions" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_pricing' AND polrelid = '"mes"."core_plugin_pricing"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_pricing' AND polrelid = to_regclass('"mes"."core_plugin_pricing"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_pricing" ON "mes"."core_plugin_pricing" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_reviews' AND polrelid = '"mes"."core_plugin_reviews"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugin_reviews' AND polrelid = to_regclass('"mes"."core_plugin_reviews"')) THEN
         CREATE POLICY "tenant_isolation_core_plugin_reviews" ON "mes"."core_plugin_reviews" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugins' AND polrelid = '"mes"."core_plugins"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_plugins' AND polrelid = to_regclass('"mes"."core_plugins"')) THEN
         CREATE POLICY "tenant_isolation_core_plugins" ON "mes"."core_plugins" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_roles' AND polrelid = '"mes"."core_roles"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_roles' AND polrelid = to_regclass('"mes"."core_roles"')) THEN
         CREATE POLICY "tenant_isolation_core_roles" ON "mes"."core_roles" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_subscriptions' AND polrelid = '"mes"."core_subscriptions"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_subscriptions' AND polrelid = to_regclass('"mes"."core_subscriptions"')) THEN
         CREATE POLICY "tenant_isolation_core_subscriptions" ON "mes"."core_subscriptions" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_modules' AND polrelid = '"mes"."core_tenant_modules"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_modules' AND polrelid = to_regclass('"mes"."core_tenant_modules"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_modules" ON "mes"."core_tenant_modules" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_plugins' AND polrelid = '"mes"."core_tenant_plugins"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_plugins' AND polrelid = to_regclass('"mes"."core_tenant_plugins"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_plugins" ON "mes"."core_tenant_plugins" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_settings' AND polrelid = '"mes"."core_tenant_settings"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_settings' AND polrelid = to_regclass('"mes"."core_tenant_settings"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_settings" ON "mes"."core_tenant_settings" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_usage' AND polrelid = '"mes"."core_tenant_usage"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_usage' AND polrelid = to_regclass('"mes"."core_tenant_usage"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_usage" ON "mes"."core_tenant_usage" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_users' AND polrelid = '"mes"."core_tenant_users"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_tenant_users' AND polrelid = to_regclass('"mes"."core_tenant_users"')) THEN
         CREATE POLICY "tenant_isolation_core_tenant_users" ON "mes"."core_tenant_users" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_usage_records' AND polrelid = '"mes"."core_usage_records"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_usage_records' AND polrelid = to_regclass('"mes"."core_usage_records"')) THEN
         CREATE POLICY "tenant_isolation_core_usage_records" ON "mes"."core_usage_records" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_users' AND polrelid = '"mes"."core_users"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_users' AND polrelid = to_regclass('"mes"."core_users"')) THEN
         CREATE POLICY "tenant_isolation_core_users" ON "mes"."core_users" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_instances' AND polrelid = '"mes"."core_workflow_instances"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_instances' AND polrelid = to_regclass('"mes"."core_workflow_instances"')) THEN
         CREATE POLICY "tenant_isolation_core_workflow_instances" ON "mes"."core_workflow_instances" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_tasks' AND polrelid = '"mes"."core_workflow_tasks"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_tasks' AND polrelid = to_regclass('"mes"."core_workflow_tasks"')) THEN
         CREATE POLICY "tenant_isolation_core_workflow_tasks" ON "mes"."core_workflow_tasks" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflows' AND polrelid = '"mes"."core_workflows"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflows' AND polrelid = to_regclass('"mes"."core_workflows"')) THEN
         CREATE POLICY "tenant_isolation_core_workflows" ON "mes"."core_workflows" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_dashboard_stats' AND polrelid = '"mes"."dashboard_stats"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_dashboard_stats' AND polrelid = to_regclass('"mes"."dashboard_stats"')) THEN
         CREATE POLICY "tenant_isolation_dashboard_stats" ON "mes"."dashboard_stats" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_financial_records' AND polrelid = '"mes"."financial_records"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_financial_records' AND polrelid = to_regclass('"mes"."financial_records"')) THEN
         CREATE POLICY "tenant_isolation_financial_records" ON "mes"."financial_records" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_inspection_records' AND polrelid = '"mes"."inspection_records"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_inspection_records' AND polrelid = to_regclass('"mes"."inspection_records"')) THEN
         CREATE POLICY "tenant_isolation_inspection_records" ON "mes"."inspection_records" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_permission_audit_logs' AND polrelid = '"mes"."permission_audit_logs"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_permission_audit_logs' AND polrelid = to_regclass('"mes"."permission_audit_logs"')) THEN
         CREATE POLICY "tenant_isolation_permission_audit_logs" ON "mes"."permission_audit_logs" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_supply_chain_orders' AND polrelid = '"mes"."supply_chain_orders"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_supply_chain_orders' AND polrelid = to_regclass('"mes"."supply_chain_orders"')) THEN
         CREATE POLICY "tenant_isolation_supply_chain_orders" ON "mes"."supply_chain_orders" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_tenant_permissions' AND polrelid = '"mes"."tenant_permissions"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_tenant_permissions' AND polrelid = to_regclass('"mes"."tenant_permissions"')) THEN
         CREATE POLICY "tenant_isolation_tenant_permissions" ON "mes"."tenant_permissions" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = '"public"."_archive_core_workflow_versions"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'rls_tenant_isolation' AND polrelid = to_regclass('"public"."_archive_core_workflow_versions"')) THEN
         CREATE POLICY "rls_tenant_isolation" ON "public"."_archive_core_workflow_versions" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_versions' AND polrelid = '"public"."_archive_core_workflow_versions"'::regclass) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policy WHERE polname = 'tenant_isolation_core_workflow_versions' AND polrelid = to_regclass('"public"."_archive_core_workflow_versions"')) THEN
         CREATE POLICY "tenant_isolation_core_workflow_versions" ON "public"."_archive_core_workflow_versions" USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
     END IF;
 END $$;
