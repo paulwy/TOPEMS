@@ -484,6 +484,16 @@
 - **覆盖分布**：audit/handlers.rs + audit_query.rs（200+ 展开行）+ automation/mod.rs 全 handler（~200）+ doc/handlers.rs + doc/services（~150）+ shared 基建（AppState/中间件/服务发现）——三盲区从 0 到实际执行覆盖
 - **lib 三域 14.39%**（本轮仅新增 tests/ 未改 src/，数字保持）——lib 与集成测试是互补口径
 
+### ✅ mes 补测启动（2026-10-07，equipment 模块首测 + 2 处生产缺陷修复）
+
+- **mes 测试工厂**（svc/mes/tests/common/app_state.rs）：AppState 6 字段全构造（auth_state 32+ 字符 secret / pool / health_config / event_publisher None / erp_client None / dict_cache new_l1_only）+ super_claims（is_superuser: true）；import 路径：topems_shared_auth::auth::{AuthState,Claims}、topems_shared_core::l2_cache / health
+- **mes handler 提取器**：State(AppState) + Extension(Claims) + Query（无 RLS 事务 Arc——比 wms 简单）；表在 mes schema（生产 search_path 含 mes），测试库建 public.equipment（handler 无 schema 前缀）
+- **equipment_e2e 3 用例全绿**（空/有数据/status 过滤）
+- **测试暴露并修复 2 处生产缺陷（equipment list 生产必挂）**：
+  1. **SELECT 列不存在**：items 查询用 warranty_expiry_date/maintenance_frequency_days（表列实为 warranty_end_date/maintenance_cycle）→ 改真实列 + AS 别名保留响应契约
+  2. **Vec<serde_json::Value> bind → JSONB 类型不匹配**：status/search 过滤查询必挂（`operator does not exist: character varying = jsonb`）→ bind 改 `p.as_str().unwrap()`（params 全 String）
+- **⚠️ 同类缺陷扫描发现：mes 30 处 `for p in &params { bind(p.clone()) }`**（svc/mes/src/modules/ 下 team/quality_management/process_flow/equipment_oee 等 30 文件）——**所有带过滤条件的 list 查询在生产均挂**（JSONB 类型不匹配）——**已登记，待批量修复**（需按各 handler params 实际类型处理：String 用 as_str；数字/日期字段需类型匹配分支，勿盲目 unwrap）
+
 ### ✅ wms 集成测试全量扩展完成（2026-10-07，16 模块 48 用例）
 
 - **16 个 e2e 文件 / 48 用例全绿**（10 批扩展）：inventory_movement 3 + outbound 3 + stock_take 3 + transfer 3 + slotting 3 + replenishment 3 + inbound 3 + inventory 3 + inventory_alert 3 + wave_pick 3 + cycle_count 3 + location 3 + batch 3 + serial_number 3 + discrepancy 3 + sync_records 3
