@@ -10,6 +10,7 @@
 
 use reqwest::Client;
 use serde_json::{json, Value};
+use topems_shared_core::error::TopemsError;
 
 const API_URL: &str = "http://localhost:8000";
 
@@ -17,28 +18,28 @@ fn create_client() -> Client {
     Client::new()
 }
 
-async fn login(username: &str, password: &str) -> Result<String, String> {
+async fn login(username: &str, password: &str) -> Result<String, TopemsError> {
     let client = create_client();
     let response = client
         .post(format!("{}/api/core/iam/auth/login", API_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
-        .map_err(|e| format!("请求失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("请求失败: {}", e)))?;
     let body: Value = response
         .json()
         .await
-        .map_err(|e| format!("解析响应失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("解析响应失败: {}", e)))?;
     if body["success"].as_bool().unwrap_or(false) {
         Ok(body["data"]["access_token"]
             .as_str()
             .unwrap_or("")
             .to_string())
     } else {
-        Err(format!(
+        Err(TopemsError::ValidationFailed(format!(
             "登录失败: {}",
             body["message"].as_str().unwrap_or("未知错误")
-        ))
+        )))
     }
 }
 
@@ -48,14 +49,14 @@ async fn auth_request(
     method: &str,
     endpoint: &str,
     body: Option<Value>,
-) -> Result<(u16, Value), String> {
+) -> Result<(u16, Value), TopemsError> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {
         "GET" => client.get(&url),
         "POST" => client.post(&url),
         "PUT" => client.put(&url),
         "DELETE" => client.delete(&url),
-        _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
+        _ => return Err(TopemsError::ValidationFailed(format!("不支持的 HTTP 方法: {}", method))),
     };
     let request = request
         .bearer_auth(token)
@@ -70,12 +71,12 @@ async fn auth_request(
     let response = request
         .send()
         .await
-        .map_err(|e| format!("请求失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("请求失败: {}", e)))?;
     let status = response.status().as_u16();
     let body: Value = response
         .json()
         .await
-        .map_err(|e| format!("解析响应失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("解析响应失败: {}", e)))?;
     Ok((status, body))
 }
 

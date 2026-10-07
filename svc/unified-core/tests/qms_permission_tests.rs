@@ -19,6 +19,7 @@
 
 use reqwest::Client;
 use serde_json::{json, Value};
+use topems_shared_core::error::TopemsError;
 
 /// 登录服务（unified-core）
 const LOGIN_URL: &str = "http://localhost:8000";
@@ -29,28 +30,28 @@ fn create_client() -> Client {
     Client::new()
 }
 
-async fn login(username: &str, password: &str) -> Result<String, String> {
+async fn login(username: &str, password: &str) -> Result<String, TopemsError> {
     let client = create_client();
     let response = client
         .post(format!("{}/api/core/iam/auth/login", LOGIN_URL))
         .json(&json!({ "username": username, "password": password }))
         .send()
         .await
-        .map_err(|e| format!("请求失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("请求失败: {}", e)))?;
     let body: Value = response
         .json()
         .await
-        .map_err(|e| format!("解析响应失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("解析响应失败: {}", e)))?;
     if body["code"].as_i64().unwrap_or(-1) == 0 {
         Ok(body["data"]["access_token"]
             .as_str()
             .unwrap_or("")
             .to_string())
     } else {
-        Err(format!(
+        Err(TopemsError::ValidationFailed(format!(
             "登录失败: {}",
             body["message"].as_str().unwrap_or("未知错误")
-        ))
+        )))
     }
 }
 
@@ -59,30 +60,30 @@ async fn auth_request(
     client: &Client,
     token: &str,
     endpoint: &str,
-) -> Result<(u16, Value), String> {
+) -> Result<(u16, Value), TopemsError> {
     let url = format!("{}{}", API_URL, endpoint);
     let response = client
         .get(&url)
         .bearer_auth(token)
         .send()
         .await
-        .map_err(|e| format!("请求失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("请求失败: {}", e)))?;
     let status = response.status().as_u16();
     let body: Value = response
         .json()
         .await
-        .map_err(|e| format!("解析响应失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("解析响应失败: {}", e)))?;
     Ok((status, body))
 }
 
 /// 无 token 请求 QMS 服务（应被 auth_middleware 拦截 401）
-async fn no_auth_request(client: &Client, endpoint: &str) -> Result<u16, String> {
+async fn no_auth_request(client: &Client, endpoint: &str) -> Result<u16, TopemsError> {
     let url = format!("{}{}", API_URL, endpoint);
     let response = client
         .get(&url)
         .send()
         .await
-        .map_err(|e| format!("请求失败: {}", e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("请求失败: {}", e)))?;
     Ok(response.status().as_u16())
 }
 

@@ -17,6 +17,7 @@ use serde_json::{json, Value};
 use std::time::Duration;
 
 use topems_lib::service_port::{get_service_port, is_group2_service, UNIFIED_CORE_PORT};
+use topems_shared_core::error::TopemsError;
 
 /// 集成测试统一上下文：封装 HTTP 客户端、管理员 Token、路由模式
 pub struct TestContext {
@@ -101,7 +102,7 @@ impl TestContext {
         method: &str,
         endpoint: &str,
         body: Option<Value>,
-    ) -> Result<(u16, Value), String> {
+    ) -> Result<(u16, Value), TopemsError> {
         debug_assert!(
             endpoint.starts_with('/'),
             "endpoint 必须以 '/' 开头，例如 '/employees'，当前值: {}",
@@ -118,7 +119,12 @@ impl TestContext {
             "PUT" => Method::PUT,
             "DELETE" => Method::DELETE,
             "PATCH" => Method::PATCH,
-            other => return Err(format!("unsupported HTTP method: {}", other)),
+            other => {
+                return Err(TopemsError::ValidationFailed(format!(
+                    "unsupported HTTP method: {}",
+                    other
+                )))
+            }
         };
 
         let mut req: RequestBuilder = self.client.request(method, &url);
@@ -135,7 +141,9 @@ impl TestContext {
         let resp = req
             .send()
             .await
-            .map_err(|e| format!("request {} {} failed: {}", method, url, e))?;
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!("request {} {} failed: {}", method, url, e))
+            })?;
 
         let status = resp.status().as_u16();
         let parsed: Value = resp
@@ -152,7 +160,7 @@ impl TestContext {
 /// 通用登录：向 unified-core 的 IAM v1 登录接口发请求，成功返回 access_token
 ///
 /// 使用"含 /v1 的旧路径"以保证即使 Phase 2 还没接入也能命中 handler。
-pub async fn login(client: &Client, username: &str, password: &str) -> Result<String, String> {
+pub async fn login(client: &Client, username: &str, password: &str) -> Result<String, TopemsError> {
     let url = format!(
         "http://localhost:{}/api/core/iam/auth/login",
         UNIFIED_CORE_PORT
@@ -165,7 +173,7 @@ pub async fn login(client: &Client, username: &str, password: &str) -> Result<St
         }))
         .send()
         .await
-        .map_err(|e| format!("login POST {} failed: {}", url, e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("login POST {} failed: {}", url, e)))?;
 
     let status = resp.status();
     let body: Value = resp
@@ -174,22 +182,34 @@ pub async fn login(client: &Client, username: &str, password: &str) -> Result<St
         .unwrap_or_else(|_| json!({"_raw": "not-json"}));
 
     if !status.is_success() {
-        return Err(format!("login HTTP {}: {}", status.as_u16(), body));
+        return Err(TopemsError::ValidationFailed(format!(
+            "login HTTP {}: {}",
+            status.as_u16(),
+            body
+        )));
     }
 
     let success = body["success"].as_bool().unwrap_or(false);
     if !success {
-        return Err(format!("login response success=false: {}", body));
+        return Err(TopemsError::ValidationFailed(format!(
+            "login response success=false: {}",
+            body
+        )));
     }
 
     body["data"]["access_token"]
         .as_str()
         .map(|s| s.to_string())
-        .ok_or_else(|| format!("login missing data.access_token in response: {}", body))
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "login missing data.access_token in response: {}",
+                body
+            ))
+        })
 }
 
 /// 以 admin/admin123 登录（集成测试种子账号）
-pub async fn login_admin(client: &Client) -> Result<String, String> {
+pub async fn login_admin(client: &Client) -> Result<String, TopemsError> {
     login(client, "admin", "admin123").await
 }
 
