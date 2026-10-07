@@ -103,7 +103,7 @@ topems/
 │   ├── getting-started/          # 快速入门
 │   └── user-guide/               # 用户手册
 ├── apps/                          # 前端应用目录
-│   ├── web/                      # Web 主应用 (端口 3000)
+│   ├── web/                      # Web 主应用 (端口 3000, 模块联邦宿主)
 │   │   ├── src/components/       # 可复用组件
 │   │   ├── src/pages/            # 页面组件
 │   │   ├── src/hooks/            # 自定义 hooks
@@ -112,69 +112,80 @@ topems/
 │   ├── desktop/                  # Tauri 桌面应用
 │   │   ├── src/                  # 桌面端前端代码
 │   │   └── src-tauri/            # Tauri Rust 后端
-│   ├── mobile/                   # 移动端应用 (Expo)
-│   │   └── src/                  # 移动端代码
-│   └── server/                   # BFF 服务端
-├── svc/                          # 后端服务 (Rust)
-│   ├── unified-core/            # 统一核心服务 (8000) - IAM/Doc/Flow/File/Monitor
+│   └── mobile/                   # 移动端应用 (Expo)
+│       └── src/                  # 移动端代码
+├── svc/                          # 后端服务 (Rust, 29 个 crate)
+│   ├── server/                   # 模块化单体入口 (8099)
+│   ├── unified-core/             # 统一核心服务 (8000) - IAM/Doc/Flow/File
 │   ├── erp/                     # 企业资源计划 (8010)
-│   ├── finance/                 # 财务管理 (8011)
-│   ├── ai/                      # AI 智能服务 (8013)
-│   ├── hrm/                     # 人力资源管理 (8020)
-│   ├── pm/                      # 项目管理 (8023)
-│   ├── crm/                     # 客户关系管理 (8029)
-│   ├── mes/                     # 制造执行系统 (8030)
-│   ├── pdm/                     # 产品数据管理 (8031)
-│   ├── scm/                     # 供应链管理 (8040)
-│   ├── wms/                     # 仓库管理 (8041)
-│   ├── srm/                     # 供应商管理 (8042)
-│   ├── qms/                     # 质量管理系统 (8050)
-│   ├── lims/                    # 实验室管理系统 (8051)
-│   ├── ehs/                     # 环境健康安全 (8052)
-│   ├── rd/                      # 研发管理 (8053)
-│   ├── analytics/               # 商业智能/报表 (8060)
-│   ├── portal/                  # 企业门户 (8063)
-│   ├── mobile/                  # 移动端服务 (8070)
-│   ├── gis/                     # 地理信息系统 (8071)
-│   ├── integration/             # 系统集成服务 (8072)
-│   ├── master-data/             # 主数据管理 (8090)
-│   ├── communication/           # 通讯服务 (8084)
-│   ├── billing/                 # 计费服务 (8085)
-│   ├── ticket/                  # 工单服务 (8086)
-│   ├── feedback/                # 反馈服务 (8087)
-│   └── search/                  # 搜索服务 (8082)
-├── lib/                          # Rust 共享库
-│   ├── shared-core/             # 核心 API/配置/中间件
-│   ├── shared-db/               # 数据库/审计/迁移
-│   ├── shared-auth/             # 认证/权限/租户
-│   ├── shared-service-client/   # 服务间调用客户端
-│   ├── shared-event/            # 事件总线/Saga
-│   ├── shared-observability/    # 可观测性/遥测
-│   ├── shared-ai/               # AI 客户端/向量存储
-│   └── shared-bootstrap/        # 服务启动引导
-├── packages/                     # TypeScript 共享包
-│   ├── shared-types/            # 类型定义
-│   ├── shared-utils/            # 工具函数
-│   ├── shared-constants/        # 共享常量（由 tokens.ts 同步生成）
-│   ├── shared-components/       # 共享业务组件（@topems/shared-components）
-│   ├── shared-hooks/            # 共享 Hooks
-│   └── tokens/                  # Design Tokens
+│   ├── finance/                  # 财务管理 (8011)
+│   ├── ai/                       # AI 智能服务 (8013)
+│   ├── hrm/                      # 人力资源管理 (8020)
+│   ├── pm/                       # 项目管理 (8023)
+│   ├── crm/                      # 客户关系管理 (8029)
+│   ├── mes/                      # 制造执行系统 (8030)
+│   ├── pdm/                      # 产品数据管理 (8031)
+│   ├── scm/                      # 供应链管理 (8040)
+│   ├── wms/                      # 仓库管理 (8041)
+│   ├── srm/                      # 供应商管理 (8042)
+│   ├── qms/                      # 质量管理系统 (8050)
+│   ├── lims/                     # 实验室管理系统 (8051)
+│   ├── ehs/                      # 环境健康安全 (8052)
+│   ├── rd/                       # 研发管理 (8053)
+│   ├── analytics/                # 商业智能/报表 (8060)
+│   ├── portal/                   # 企业门户 (8063)
+│   ├── mobile/                   # 移动端服务 (8070)
+│   ├── gis/                      # 地理信息系统 (8071)
+│   ├── integration/              # 系统集成服务 (8072)
+│   ├── tms/                      # 运输管理 (8073)
+│   ├── search/                   # 搜索服务 (8082)
+│   ├── communication/            # 通讯服务 (8084)
+│   ├── ticket/                   # 工单服务 (8086)
+│   ├── master-data/              # 主数据管理 (8090)
+│   ├── monitor/                  # 监控服务 (8095)
+│   └── plugin-registry/          # 插件注册服务 (8096)
+├── lib/                          # Rust 共享库 (12 个 crate)
+│   ├── shared-core/              # 核心 API/配置/中间件
+│   ├── shared-db/                # 数据库/审计/迁移
+│   ├── shared-auth/              # 认证/权限/租户
+│   ├── shared-bootstrap/         # 服务启动引导
+│   ├── shared-boundary/          # 编译期 schema 边界检查宏
+│   ├── shared-service-client/    # 服务间调用客户端
+│   ├── shared-event/             # 事件总线/Saga
+│   ├── shared-observability/     # 可观测性/遥测
+│   ├── shared-ai/                # AI 客户端/向量存储
+│   ├── shared-dsh/               # 领域专用 Helper 类型 (Tool/Resource/Prompt)
+│   └── shared-mcp/              # MCP (Model Context Protocol) 库
+├── packages/                     # TypeScript 共享包 (pnpm workspaces, 8 个)
+│   ├── shared-types/            # @topems/shared-types 类型定义
+│   ├── shared-utils/             # @topems/shared-utils 工具函数
+│   ├── shared-components/        # 共享业务组件
+│   ├── shared-hooks/             # 共享 Hooks
+│   ├── api-client/               # @topems/api-client 统一客户端工厂
+│   ├── app-shell/                # @topems/app-shell 应用外壳
+│   ├── business-tools-sdk/       # @topems/business-tools-sdk 业务工具 SDK
+│   └── tokens/                   # Design Tokens
+├── database/                     # PostgreSQL schema
+│   ├── migrations/               # 迁移链 (000-013 + 2026 时间戳两段式)
+│   ├── init/                     # 初始化脚本
+│   ├── seeds/                    # 种子数据
+│   └── postgres/                 # 本地 PG 数据/配置
+├── deploy/                       # 部署配置
+│   ├── systemd/                  # systemd 服务配置
+│   ├── docker/                   # Docker Compose 配置
+│   ├── k8s/                      # Kubernetes 部署
+│   ├── nginx/                    # Nginx 配置
+│   └── migrations/               # 一次性部署迁移
+├── scripts/                     # 管理脚本
+│   ├── topems.sh                 # 统一服务管理脚本 (主入口)
+│   ├── services.conf             # 服务清单/端口配置
+│   ├── dev/                      # 开发工具脚本
+│   ├── deploy/                   # 部署脚本
+│   └── ...
 ├── tools/                        # 工具
 │   └── migration-sdk/           # 迁移 SDK
 ├── examples/                     # 示例
 │   └── minimal-service/         # 最小服务示例
-├── deploy/                       # 部署配置
-│   ├── systemd/                 # systemd 服务配置
-│   ├── docker/                  # Docker Compose 配置
-│   ├── k8s/                     # Kubernetes 部署
-│   ├── nginx/                   # Nginx 配置
-│   └── scripts/                 # 部署脚本
-├── scripts/                      # 管理脚本
-│   ├── topems.sh                # 统一服务管理脚本
-│   ├── services.conf            # 服务配置
-│   ├── dev/                     # 开发工具脚本
-│   ├── deploy/                  # 部署脚本
-│   └── ...
 ├── cli/                          # Python CLI 工具
 ├── Cargo.toml                   # Cargo Workspace 配置
 └── .env.example                 # 环境变量配置

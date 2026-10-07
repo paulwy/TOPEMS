@@ -240,6 +240,12 @@ build/
 # TRAE HTML 分享产物（zip 误入库已移除，2026-10-03）
 .trae-html-share-packages/
 .superpowers/
+# DIR-08: AI/IDE 工具目录含运行态（server.pid 等），文件先入库致 gitignore 失效，已 git rm --cached
+.trae/
+.workbuddy/
+# DIR-01: .cargo/env 为本机 sccache 环境文件（硬编码他人路径 /Users/air/.cache/sccache、
+# 且 export 已废除的 RUSTC_WRAPPER=sccache），非 cargo 生成、不应入库
+.cargo/env
 *.code-workspace
 
 
