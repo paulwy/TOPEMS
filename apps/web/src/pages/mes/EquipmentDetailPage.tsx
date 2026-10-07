@@ -362,6 +362,7 @@ const EquipmentDetailPage: React.FC = () => {
         }
         backHref={MES_PATHS.equipment}
         loading={loading}
+        emptyState={{ show: !loading && !equipment }}
         error={errorMessage}
         onEdit={() => navigate(MES_PATHS.equipment)}
         onDelete={() => setDeleteDialogOpen(true)}

@@ -589,6 +589,7 @@ const ProductionOrderDetailPage: React.FC = () => {
         }
         backHref={MES_PATHS.productionOrders}
         loading={loading}
+        emptyState={{ show: !loading && !order }}
         error={errorMessage}
         infoCard={infoCard}
         tabs={tabs}

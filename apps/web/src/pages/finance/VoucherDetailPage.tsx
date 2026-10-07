@@ -730,6 +730,7 @@ const VoucherDetailPage: React.FC = () => {
         { label: voucherNumber },
       ]}
       backHref={FINANCE_PATHS.vouchers}
+      emptyState={{ show: !loading && !voucher }}
       tabs={tabs}
       infoCard={infoCard}
       onEdit={handleEdit}

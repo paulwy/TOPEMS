@@ -622,6 +622,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         }
         backHref={FINANCE_PATHS.budget}
         loading={loading}
+        emptyState={{ show: !loading && !budget }}
         error={errorMessage}
         onDownload={handleExport}
         infoCard={infoCard}

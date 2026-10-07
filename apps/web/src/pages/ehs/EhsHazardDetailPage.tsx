@@ -687,6 +687,7 @@ const EhsHazardDetailPage: React.FC = () => {
         detailItemName={hazard?.name || hazard?.id || t('ehs.ehs_hazard_detail_page.k9')}
         backHref={EHS_PATHS.hazard}
         loading={loading}
+        emptyState={{ show: !loading && !hazard }}
         error={errorMessage}
         onEdit={() => setShowEditModal(true)}
         infoCard={infoCard}
