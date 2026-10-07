@@ -186,8 +186,9 @@ pub async fn list_capacities(
 
     let result = sqlx::query_as::<_, Capacity>(
         r#"
-        SELECT id, work_center_id, work_center_name, capacity_date, available_hours,
-               used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        SELECT id, work_center_id, work_center_name, capacity_date,
+               available_hours::float8, used_hours::float8, utilization_rate::float8,
+               status, tenant_id, created_at, updated_at
         FROM capacities
         WHERE tenant_id = $1
           AND ($2::text IS NULL OR work_center_name ILIKE $2)
@@ -278,8 +279,9 @@ pub async fn get_capacity(
 
     let result = sqlx::query_as::<_, Capacity>(
         r#"
-        SELECT id, work_center_id, work_center_name, capacity_date, available_hours,
-               used_hours, utilization_rate, status, tenant_id, created_at, updated_at
+        SELECT id, work_center_id, work_center_name, capacity_date,
+               available_hours::float8, used_hours::float8, utilization_rate::float8,
+               status, tenant_id, created_at, updated_at
         FROM capacities
         WHERE id = $1 AND tenant_id = $2
         "#,

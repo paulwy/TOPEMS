@@ -497,6 +497,10 @@
 
 - **根因排查链**：表名（单数 vs 复数）→ 实际复数 OK → **mes.production_orders 缺 order_number 列**（表只有 order_no——handler SQL 用 order_number AS order_no 生产必挂）→ **ALTER 补列**（`ALTER TABLE mes.production_orders ADD COLUMN order_number VARCHAR(64)`，同步 order_no 值）
 - **测试修复**：production_orders INSERT 补 order_no 列（NOT NULL 必给，同 order_number 值 $2 复用）；completed_quantity 断言 BigDecimal → i64（表列 bigint，decode 类型不匹配）
+- **✅ capacity/material_plan/material_requirement 补测完成（2026-10-08，7 用例）**：capacity_e2e 2 + material_plan_e2e 3 + material_requirement_e2e 2 全绿
+- **生产缺陷修复（capacity）**：Capacity struct f64 ← NUMERIC decode 必挂（available_hours/used_hours/utilization_rate 3 列）→ SELECT 加 ::float8（同 wms WavePick/SerialNumber 类，第 3 处同类）
+- **无 schema 前缀 SQL 登记**：capacity/material_requirement/equipment 等模块 SQL 无 mes. 前缀（依赖连接 search_path）——生产靠 search_path 含 mes，测试用 public 表模拟；脆弱点登记（work_order/material_plan 已有前缀）
+- **测试建表对齐经验**：handler SELECT 列全对齐（tenant_id/available_quantity/shortfall_quantity/priority/source_type/remark 易漏）；material_plan handler 无 Extension claims（签名不同）+ 返回 Result（expect 处理）
 - **✅ work_order 3 用例全绿（2026-10-08）**：list_work_orders（返回 key "work_orders"，handler SQL 带 schema 前缀 mes.work_orders——测试库建 mes schema + 21 列表）；无新缺陷（批量 bind 修复已覆盖 + 列名与表对齐）
 - **⚠️ sqlx prepare 事故记录**：`cargo sqlx prepare` 在本环境不可行（SQLX_OFFLINE=false 连库校验全量 query! 失败 206 处——表在 mes schema 而连接 search_path 无 mes）且**会污染 .sqlx 离线缓存**（prepare 删除 103 + 新增 15 缓存 → 编译 251 错误）——**教训：mes 的 query! SQL 改动需谨慎**（离线缓存校验），修复列名类问题优先 ALTER 表而非改 SQL；污染恢复：`git checkout -- svc/mes/.sqlx` + `git clean -f svc/mes/.sqlx/`
 - **DB 变更待入迁移链**：production_orders.order_number 列（5432 已 ALTER，需补迁移文件登记——低优先）
