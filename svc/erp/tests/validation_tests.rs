@@ -153,11 +153,11 @@ fn test_validate_required_field_valid() {
 fn test_validate_required_field_invalid() {
     let result = validate_required_field("名称", "");
     assert!(result.is_err());
-    assert_eq!(result.err().unwrap(), "名称不能为空");
+    assert!(result.err().unwrap().to_string().contains("名称不能为空"));
 
     let result = validate_required_field("名称", "   ");
     assert!(result.is_err());
-    assert_eq!(result.err().unwrap(), "名称不能为空");
+    assert!(result.err().unwrap().to_string().contains("名称不能为空"));
 }
 
 #[test]
@@ -176,14 +176,22 @@ fn test_validate_string_length_valid() {
 fn test_validate_string_length_invalid_too_short() {
     let result = validate_string_length("名称", "a", 2, 10);
     assert!(result.is_err());
-    assert_eq!(result.err().unwrap(), "名称长度不能少于2个字符");
+    assert!(result
+        .err()
+        .unwrap()
+        .to_string()
+        .contains("名称长度不能少于2个字符"));
 }
 
 #[test]
 fn test_validate_string_length_invalid_too_long() {
     let result = validate_string_length("名称", "这是一个非常长的名称超过了十个字符", 2, 10);
     assert!(result.is_err());
-    assert_eq!(result.err().unwrap(), "名称长度不能超过10个字符");
+    assert!(result
+        .err()
+        .unwrap()
+        .to_string()
+        .contains("名称长度不能超过10个字符"));
 }
 
 #[test]

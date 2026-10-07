@@ -1530,8 +1530,8 @@ mod tests {
     #[test]
     fn test_validate_state_transition_error_message() {
         let err = validate_state_transition("pending", "completed").unwrap_err();
-        assert!(err.contains("Invalid state transition"));
-        assert!(err.contains("pending"));
-        assert!(err.contains("completed"));
+        assert!(err.to_string().contains("Invalid state transition"));
+        assert!(err.to_string().contains("pending"));
+        assert!(err.to_string().contains("completed"));
     }
 }

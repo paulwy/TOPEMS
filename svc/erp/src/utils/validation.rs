@@ -201,22 +201,26 @@ mod tests {
 
     #[test]
     fn test_validate_required_ok() {
-        assert_eq!(validate_required_field("姓名", "张三"), Ok(()));
-        assert_eq!(validate_required_field("备注", "."), Ok(()));
-        assert_eq!(validate_required_field("field", "   x   "), Ok(()));
+        assert!(validate_required_field("姓名", "张三").is_ok());
+        assert!(validate_required_field("备注", ".").is_ok());
+        assert!(validate_required_field("field", "   x   ").is_ok());
     }
 
     #[test]
     fn test_validate_required_errors() {
         let e = validate_required_field("姓名", "").unwrap_err();
-        assert!(e.contains("姓名") && e.contains("不能为空"), "err={}", e);
+        assert!(
+            e.to_string().contains("姓名") && e.to_string().contains("不能为空"),
+            "err={}",
+            e
+        );
 
         // All whitespace → counted as empty
         let e = validate_required_field("名称", "   ").unwrap_err();
-        assert!(e.contains("名称"), "err={}", e);
+        assert!(e.to_string().contains("名称"), "err={}", e);
 
         let e = validate_required_field("备注", "\t\n").unwrap_err();
-        assert!(e.contains("备注"));
+        assert!(e.to_string().contains("备注"));
     }
 
     // -----------------------------------------------------------------------
@@ -225,17 +229,19 @@ mod tests {
 
     #[test]
     fn test_validate_string_length_boundaries_and_within() {
-        assert_eq!(validate_string_length("名称", "ab", 2, 5), Ok(())); // exactly min
-        assert_eq!(validate_string_length("名称", "abcde", 2, 5), Ok(())); // exactly max
-        assert_eq!(validate_string_length("名称", "abc", 2, 5), Ok(())); // within
-        assert_eq!(validate_string_length("名称", "", 0, 10), Ok(())); // min=0, empty ok
+        assert!(validate_string_length("名称", "ab", 2, 5).is_ok()); // exactly min
+        assert!(validate_string_length("名称", "abcde", 2, 5).is_ok()); // exactly max
+        assert!(validate_string_length("名称", "abc", 2, 5).is_ok()); // within
+        assert!(validate_string_length("名称", "", 0, 10).is_ok()); // min=0, empty ok
     }
 
     #[test]
     fn test_validate_string_length_too_short() {
         let e = validate_string_length("密码", "a", 6, 20).unwrap_err();
         assert!(
-            e.contains("密码") && e.contains("少于") && e.contains("6"),
+            e.to_string().contains("密码")
+                && e.to_string().contains("少于")
+                && e.to_string().contains("6"),
             "err={}",
             e
         );
@@ -245,7 +251,9 @@ mod tests {
     fn test_validate_string_length_too_long() {
         let e = validate_string_length("标题", "abcdefghijk", 2, 10).unwrap_err();
         assert!(
-            e.contains("标题") && e.contains("超过") && e.contains("10"),
+            e.to_string().contains("标题")
+                && e.to_string().contains("超过")
+                && e.to_string().contains("10"),
             "err={}",
             e
         );
@@ -255,9 +263,9 @@ mod tests {
     fn test_validate_string_length_counts_chars_not_bytes() {
         // CJK chars count 1 per codepoint (not 3-4 bytes)
         // 5 chars, min=3 max=5 → ok
-        assert_eq!(validate_string_length("字段", "你好世界!", 3, 5), Ok(()));
+        assert!(validate_string_length("字段", "你好世界!", 3, 5).is_ok());
         // 6 chars → exceed
         let e = validate_string_length("字段", "你好世界!?", 1, 5).unwrap_err();
-        assert!(e.contains("超过"), "err={}", e);
+        assert!(e.to_string().contains("超过"), "err={}", e);
     }
 }

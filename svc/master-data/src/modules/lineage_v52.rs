@@ -2102,7 +2102,7 @@ mod tests {
             new_value: Some(serde_json::json!({"k": "v"})),
             triggered_at: "2024-01-01T00:00:00Z".to_string(),
         };
-        let json = serde_json::to_string(&e.to_string()).unwrap();
+        let json = serde_json::to_string(&e).unwrap();
         let back: ChangeEvent = serde_json::from_str(&json).unwrap();
         assert_eq!(back.id, "ce-1");
         assert!(back.new_value.is_some());

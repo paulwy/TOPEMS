@@ -487,7 +487,7 @@ pub async fn list_week_events(
     let now = chrono::Utc::now();
     let today = now.date_naive();
     let weekday = today.weekday().num_days_from_monday();
-    let monday = today - chrono::Duration::days(weekday as i64);
+    let monday = today - chrono::Duration::days(i64::from(weekday));
     let start =
         DateTime::<Utc>::from_naive_utc_and_offset(monday.and_hms_opt(0, 0, 0).unwrap(), Utc);
     let end = start + chrono::Duration::days(7);
@@ -510,9 +510,12 @@ pub async fn list_month_events(
 ) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
     let now = chrono::Utc::now();
     let year = params.year.unwrap_or(now.year());
-    let month = params.month.unwrap_or(now.month() as i32).clamp(1, 12);
+    let month = params
+        .month
+        .unwrap_or(i32::try_from(now.month()).unwrap_or(1))
+        .clamp(1, 12);
     let start = DateTime::<Utc>::from_naive_utc_and_offset(
-        chrono::NaiveDate::from_ymd_opt(year, month as u32, 1)
+        chrono::NaiveDate::from_ymd_opt(year, u32::try_from(month.clamp(1, 12)).unwrap_or(1), 1)
             .unwrap()
             .and_hms_opt(0, 0, 0)
             .unwrap(),
@@ -528,10 +531,14 @@ pub async fn list_month_events(
         )
     } else {
         DateTime::<Utc>::from_naive_utc_and_offset(
-            chrono::NaiveDate::from_ymd_opt(year, (month + 1) as u32, 1)
-                .unwrap()
-                .and_hms_opt(0, 0, 0)
-                .unwrap(),
+            chrono::NaiveDate::from_ymd_opt(
+                year,
+                u32::try_from((month + 1).clamp(1, 12)).unwrap_or(1),
+                1,
+            )
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
             Utc,
         )
     };

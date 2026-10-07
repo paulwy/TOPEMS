@@ -1291,9 +1291,9 @@ mod tests {
     #[test]
     fn test_validate_rating_error_message() {
         let err = validate_rating(0).unwrap_err();
-        assert!(err.contains("0"));
-        assert!(err.contains("1"));
-        assert!(err.contains("5"));
+        assert!(err.to_string().contains("0"));
+        assert!(err.to_string().contains("1"));
+        assert!(err.to_string().contains("5"));
     }
 
     // ========== classify_feedback_category ==========

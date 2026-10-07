@@ -394,9 +394,13 @@ mod tests {
     #[test]
     fn test_validate_probability_exact_error_message() {
         let err = validate_probability(-5).unwrap_err();
-        assert!(err.contains("[-0-9]") || err.contains("-5"), "err={}", err);
+        assert!(
+            err.to_string().contains("[-0-9]") || err.to_string().contains("-5"),
+            "err={}",
+            err
+        );
         let err = validate_probability(150).unwrap_err();
-        assert!(err.contains("150"), "err={}", err);
+        assert!(err.to_string().contains("150"), "err={}", err);
     }
 
     #[test]

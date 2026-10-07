@@ -28,7 +28,8 @@ fn l1_rejects_quote_and_comment_sequences() {
     let bad = "'; DROP TABLE users; --".to_string();
     let err = quote_identifier(&bad).expect_err("期望拒绝 quote 注入序列");
     assert!(
-        err.contains("Invalid identifier") || err.contains("Invalid column"),
+        err.to_string().contains("Invalid identifier")
+            || err.to_string().contains("Invalid column"),
         "报错应属于标识符校验类: {err}"
     );
 }
@@ -41,7 +42,8 @@ fn l1_rejects_union_select_with_spaces() {
     let bad = "col UNION SELECT password FROM users".to_string();
     let err = quote_identifier(&bad).expect_err("期望拒绝 UNION SELECT 拼接");
     assert!(
-        err.contains("Invalid identifier") || err.contains("Invalid column"),
+        err.to_string().contains("Invalid identifier")
+            || err.to_string().contains("Invalid column"),
         "{err}"
     );
 }
@@ -54,7 +56,8 @@ fn l1_rejects_semicolon_and_delete_keyword() {
     let bad = "col; DELETE FROM analytics_data".to_string();
     let err = quote_identifier(&bad).expect_err("期望拒绝分号堆叠语句");
     assert!(
-        err.contains("Invalid identifier") || err.contains("Invalid column"),
+        err.to_string().contains("Invalid identifier")
+            || err.to_string().contains("Invalid column"),
         "{err}"
     );
 }
@@ -96,7 +99,8 @@ fn l1_rejects_dot_access_to_information_schema() {
     let bad = "information_schema.tables".to_string();
     let err = quote_identifier(&bad).expect_err("期望拒绝点号跨库访问");
     assert!(
-        err.contains("Invalid identifier") || err.contains("Invalid column"),
+        err.to_string().contains("Invalid identifier")
+            || err.to_string().contains("Invalid column"),
         "{err}"
     );
 }
@@ -109,7 +113,8 @@ fn l1_rejects_function_call_parens_and_string_args() {
     let bad = "pg_read_file('/etc/passwd')".to_string();
     let err = quote_identifier(&bad).expect_err("期望拒绝函数调用括号");
     assert!(
-        err.contains("Invalid identifier") || err.contains("Invalid column"),
+        err.to_string().contains("Invalid identifier")
+            || err.to_string().contains("Invalid column"),
         "{err}"
     );
 }
