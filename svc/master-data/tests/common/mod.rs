@@ -16,6 +16,8 @@ use reqwest::{Client, ClientBuilder, Method, RequestBuilder};
 use serde_json::{json, Value};
 use std::time::Duration;
 
+use topems_shared_core::error::TopemsError;
+
 const MASTER_DATA_PORT: u16 = 8090;
 const PLACEHOLDER_TOKEN: &str = "__placeholder_token_for_compile_check__";
 
@@ -71,7 +73,7 @@ impl TestContext {
         method: &str,
         full_path: &str,
         body: Option<Value>,
-    ) -> Result<(u16, Value), String> {
+    ) -> Result<(u16, Value), TopemsError> {
         debug_assert!(
             full_path.starts_with('/'),
             "full_path 必须以 '/' 开头，例如 '/health'，当前值: {}",
@@ -87,7 +89,12 @@ impl TestContext {
             "PUT" => Method::PUT,
             "DELETE" => Method::DELETE,
             "PATCH" => Method::PATCH,
-            other => return Err(format!("unsupported HTTP method: {}", other)),
+            other => {
+                return Err(TopemsError::ValidationFailed(format!(
+                    "unsupported HTTP method: {}",
+                    other
+                )))
+            }
         };
 
         let mut req: RequestBuilder = self.client.request(method, &url);
@@ -103,7 +110,12 @@ impl TestContext {
         let resp = req
             .send()
             .await
-            .map_err(|e| format!("request {} {} failed: {}", method_str, url, e))?;
+            .map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "request {} {} failed: {}",
+                    method_str, url, e
+                ))
+            })?;
 
         let status = resp.status().as_u16();
         let parsed: Value = resp
@@ -124,7 +136,7 @@ impl TestContext {
         method: &str,
         sub_path: &str,
         body: Option<Value>,
-    ) -> Result<(u16, Value), String> {
+    ) -> Result<(u16, Value), TopemsError> {
         debug_assert!(
             sub_path.starts_with('/'),
             "sub_path 必须以 '/' 开头，例如 '/metadata'，当前值: {}",
@@ -141,7 +153,7 @@ impl TestContext {
 ///
 /// 登录请求直接打到 unified-core（8000 端口）的 IAM 接口，
 /// 这是测试环境的标准种子账号。
-async fn login_admin(client: &Client) -> Result<String, String> {
+async fn login_admin(client: &Client) -> Result<String, TopemsError> {
     let url = "http://localhost:8000/api/core/iam/auth/login";
     let resp = client
         .post(url)
@@ -151,7 +163,7 @@ async fn login_admin(client: &Client) -> Result<String, String> {
         }))
         .send()
         .await
-        .map_err(|e| format!("login POST {} failed: {}", url, e))?;
+        .map_err(|e| TopemsError::ValidationFailed(format!("login POST {} failed: {}", url, e)))?;
 
     let status = resp.status();
     let body: Value = resp
@@ -160,18 +172,30 @@ async fn login_admin(client: &Client) -> Result<String, String> {
         .unwrap_or_else(|_| json!({"_raw": "not-json"}));
 
     if !status.is_success() {
-        return Err(format!("login HTTP {}: {}", status.as_u16(), body));
+        return Err(TopemsError::ValidationFailed(format!(
+            "login HTTP {}: {}",
+            status.as_u16(),
+            body
+        )));
     }
 
     let success = body["success"].as_bool().unwrap_or(false);
     if !success {
-        return Err(format!("login response success=false: {}", body));
+        return Err(TopemsError::ValidationFailed(format!(
+            "login response success=false: {}",
+            body
+        )));
     }
 
     body["data"]["access_token"]
         .as_str()
         .map(|s| s.to_string())
-        .ok_or_else(|| format!("login missing data.access_token in response: {}", body))
+        .ok_or_else(|| {
+            TopemsError::ValidationFailed(format!(
+                "login missing data.access_token in response: {}",
+                body
+            ))
+        })
 }
 
 // ============== 服务可用性检测 ==============
