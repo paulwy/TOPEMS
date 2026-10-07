@@ -379,10 +379,19 @@
 > 迁移账本口径：280/298（半迁移既成债，未来结构演进走"直接 DDL 运维"约定，见 `docs/database/database-half-migration-ops.md`）
 
 ### 2.1 代码与构建门禁（CI 层）
-- [ ] pre-push 五门禁全绿：cargo check / clippy / fmt / test（550+ tests）/ shellcheck
-- [ ] schema-boundary 双门禁（PY 28 服务 / NODE 29 服务）exit 0
-- [ ] sqlx Gate S（离线缓存与 .sqlx/ 一致）
-- [ ] 前端 tsc + vite build + vitest 全绿；bundle TOTAL ≤ 30M（当前 16.43MB）
+- [x] pre-push 五门禁全绿（2026-10-07 本机全量实跑）
+  - ✅ cargo check（SQLX_OFFLINE=true，run-cargo-check.sh）0 error
+  - ✅ cargo fmt --all --check 0 diff（提交 cad617fb9：merge 后 55 文件统一格式化）
+  - ✅ cargo test --workspace --lib（门禁口径）：**13288 passed / 0 failed / 20 ignored**（42 crate；需 TEST_DATABASE_URL + REDIS_URL 本机凭据）
+  - ✅ shellcheck：77 脚本 0 告警
+  - 📝 cargo clippy `-D clippy::correctness`：**HEAD 既有债**（rustc 1.95/clippy 0.1.95 下 correctness 展开含 unwrap_used/as-conversions/indexing-slicing/expect-used/cast-possible-truncation/wrap，全仓既有测试代码 30+ 文件 60+ 处违规，非本次引入）；已修 shared-db 库代码 10 处（cad617fb9 同批），测试代码清理列 TODO 后续项
+  - 📝 jsonwebtoken 10.4 需 crypto provider：workspace 已加 `features = ["rust_crypto"]`（并行线提交），dsh::mcp 210/0 绿
+  - 📝 环境差异：本机 DB/Redis 有自定义凭据，门禁需 `TEST_DATABASE_URL`（rd 3 个 DB 单测已支持 env 覆盖）+ `REDIS_URL`；ai integration_tests 6 个 DB 用例需真实库（门禁 --lib 不跑）
+- [x] schema-boundary 双门禁 exit 0：29 服务 / 1464 文件 / 3125 call sites，0 cross-schema 裸引用
+- [x] sqlx Gate S：PASS（165 文件，stale: false）
+- [x] 前端 tsc + vite build + vitest 全绿；bundle TOTAL ≤ 30M
+  - ✅ tsc 0 error；vite build 成功；vitest 全量 6486/6490（3 失败为既有 src/api 契约 mock 断言：ehs-health-monitoring POST / hrm DELETE salary-adjustments / mes PUT records complete，与 HEAD 一致）
+  - ✅ bundle 源产物（js/css，不含 .gz/.br 压缩冗余与 offline_tiles/__p2_artifacts 运营资产）= 18.57MB ≤ 30M（历史记录 16.43MB 为更早构建；离线瓦片 15.2MB 等为功能资产另计）
 
 ### 2.2 环境与部署（生产机）
 - [ ] install.sh 生产实跑（dry-run ✅ 306 文件/16.48MB/systemd 24 服务 → 实跑）

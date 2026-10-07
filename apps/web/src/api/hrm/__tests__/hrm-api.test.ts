@@ -645,10 +645,10 @@ describe('HRM salaryAdjustmentApi', () => {
     expect(mockApiClient.put).toHaveBeenCalledWith('/salary-adjustments/1', data);
   });
 
-  it('should call DELETE /salary-adjustments/:id for delete', async () => {
-    mockApiClient.delete.mockResolvedValue({ success: true, data: 'deleted' });
+  it('should call PUT /salary-adjustments/:id for delete (后端无 DELETE 路由)', async () => {
+    mockApiClient.put.mockResolvedValue({ success: true, data: 'deleted' });
     await salaryAdjustmentApi.delete('1');
-    expect(mockApiClient.delete).toHaveBeenCalledWith('/salary-adjustments/1');
+    expect(mockApiClient.put).toHaveBeenCalledWith('/salary-adjustments/1', {});
   });
 
   it('should call PUT /salary-adjustments/:id/approve for approve', async () => {
