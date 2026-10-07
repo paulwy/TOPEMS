@@ -13,6 +13,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import { Save, User, Bell, Monitor, Shield, Palette } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 const Settings = () => {
   const [notifications, setNotifications] = useState(true);
@@ -54,7 +55,7 @@ const Settings = () => {
 
           <Paper sx={{ p: 4, mt: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-              <Bell size={24} color="#f59e0b" />
+              <Bell size={24} color={designTokens.colors.warning.main} />
               <Typography variant="h6">通知设置</Typography>
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -71,7 +72,7 @@ const Settings = () => {
 
           <Paper sx={{ p: 4, mt: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-              <Palette size={24} color="#ec4899" />
+              <Palette size={24} color={designTokens.colors.pink.main} />
               <Typography variant="h6">外观设置</Typography>
             </Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
@@ -97,7 +98,7 @@ const Settings = () => {
         <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
           <Paper sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-              <Monitor size={24} color="#22c55e" />
+              <Monitor size={24} color={designTokens.colors.success.main} />
               <Typography variant="h6">系统设置</Typography>
             </Box>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -119,7 +120,7 @@ const Settings = () => {
 
           <Paper sx={{ p: 4, mt: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-              <Shield size={24} color="#06b6d4" />
+              <Shield size={24} color={designTokens.colors.cyan.main} />
               <Typography variant="h6">安全信息</Typography>
             </Box>
             <Typography variant="body2" color="text.secondary">

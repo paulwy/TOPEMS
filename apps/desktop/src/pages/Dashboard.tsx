@@ -20,6 +20,7 @@ import {
   CheckCircle,
   Clock,
 } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 const Dashboard = () => {
   const { notifications, unreadCount } = useNotificationStore();
@@ -116,9 +117,9 @@ const Dashboard = () => {
                   <ListItem key={notification.id} sx={{ py: 2 }}>
                     <ListItemIcon>
                       {notification.read ? (
-                        <CheckCircle size={20} color="#94a3b8" />
+                        <CheckCircle size={20} color={designTokens.colors.text.muted} />
                       ) : (
-                        <AlertCircle size={20} color="#f59e0b" />
+                        <AlertCircle size={20} color={designTokens.colors.warning.main} />
                       )}
                     </ListItemIcon>
                     <ListItemText

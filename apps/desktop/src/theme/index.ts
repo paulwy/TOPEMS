@@ -1,5 +1,6 @@
 import { createTheme } from '@mui/material/styles';
 import { ThemeOptions } from '@mui/material';
+import { designTokens } from '@topems/tokens';
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -17,8 +18,8 @@ export const lightThemeOptions: ThemeOptions = {
       dark: '#9a0036',
     },
     background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
+      default: designTokens.colors.surface[100],
+      paper: designTokens.colors.background.paper,
     },
     text: {
       primary: '#1a202c',
@@ -56,7 +57,7 @@ export const darkThemeOptions: ThemeOptions = {
       paper: '#16213e',
     },
     text: {
-      primary: '#ffffff',
+      primary: designTokens.colors.common.white,
       secondary: '#b0bec5',
     },
   },

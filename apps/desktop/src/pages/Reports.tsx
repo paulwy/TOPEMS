@@ -11,6 +11,7 @@ import {
 } from '@mui/material';
 import { Download, RefreshCw, BarChart3, PieChart, LineChart, Table, Plus } from 'lucide-react';
 import { reportsApi, type Report } from '../api/reports';
+import { designTokens } from '@topems/tokens';
 
 const getIcon = (type: Report['type']) => {
   switch (type) {
@@ -24,10 +25,10 @@ const getIcon = (type: Report['type']) => {
 const getCategoryColor = (category: string) => {
   const colors: Record<string, string> = {
     '财务': '#6366f1',
-    '销售': '#22c55e',
-    '仓储': '#f59e0b',
-    'HR': '#ec4899',
-    '采购': '#06b6d4',
+    '销售': designTokens.colors.success.main,
+    '仓储': designTokens.colors.warning.main,
+    'HR': designTokens.colors.pink.main,
+    '采购': designTokens.colors.cyan.main,
   };
   return colors[category] || '#6b7280';
 };
@@ -172,7 +173,7 @@ const Reports = () => {
                 <Paper sx={{ p: 3, height: 300 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                     <div style={{ textAlign: 'center' }}>
-                      <PieChart size={64} color="#22c55e" />
+                      <PieChart size={64} color={designTokens.colors.success.main} />
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>客户分布饼图</Typography>
                     </div>
                   </Box>

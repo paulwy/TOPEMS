@@ -3,6 +3,7 @@ import { Menu, MenuItem, IconButton, ListItemIcon, ListItemText, Box } from '@mu
 import { Monitor, X, Plus } from 'lucide-react';
 import { windowApi } from '../../utils/tauri';
 import { routes } from '../../routes';
+import { designTokens } from '@topems/tokens';
 
 interface WindowListProps {
   anchorEl: null | HTMLElement;
@@ -93,7 +94,7 @@ const WindowList = ({ anchorEl, onClose }: WindowListProps) => {
               sx={{
                 py: 1,
                 justifyContent: 'space-between',
-                backgroundColor: isMainWindow(window.label) ? '#f5f5f5' : 'transparent',
+                backgroundColor: isMainWindow(window.label) ? designTokens.colors.surface[100] : 'transparent',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

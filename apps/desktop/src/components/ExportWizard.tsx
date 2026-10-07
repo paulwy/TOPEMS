@@ -23,6 +23,7 @@ import {
   Paper,
 } from '@mui/material';
 import { Download, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 import {
   auditApi,
   EXPORT_FORMATS,
@@ -134,7 +135,7 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
       <DialogContent>
         {isComplete ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
-            <CheckCircle size={56} color="#22c55e" />
+            <CheckCircle size={56} color={designTokens.colors.success.main} />
             <Typography variant="h6" sx={{ mt: 2 }}>
               导出成功
             </Typography>
