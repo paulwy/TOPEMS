@@ -120,13 +120,21 @@ const cancelPendingRequest = (config: AxiosRequestConfig): void => {
 };
 
 const buildClient = (): AxiosInstance => {
-  // 共享工厂：baseURL/timeout/JSON 头/paramsSerializer（见 @topems/api-client）。
-  // token 来自异步 AsyncStorage（await storage.getToken()），工厂 getToken 为 sync
-  // 不适用，故不在此处传 getToken，而在下方端内请求拦截器里异步注入；401 登出清理
-  // 同样保留在端内响应错误拦截器（工厂只做 401 回调，未传 onUnauthorized）。
+  // 共享工厂：baseURL/timeout/JSON 头/paramsSerializer/retry（见 @topems/api-client）。
+  //
+  // 端内保留的拦截器（工厂文档明确约定「各端独有拦截器自留」）：
+  //  - token 注入：token 来自异步 AsyncStorage（await storage.getToken()），工厂
+  //    getToken 为同步签名，不适用，故在下方请求拦截器里异步注入。
+  //  - 401 清理：需 await storage.removeToken()/removeUser()，工厂 onUnauthorized
+  //    为同步回调（不 await），故保留在端内响应错误拦截器，语义与旧版一致。
+  //  - GET 内存 TTL 缓存 + 离线队列/兜底：mobile 特有，工厂不提供。
+  //
+  // FE-17 收敛：retry 语义改用工厂统一实现（与 mobile 旧内联逻辑等价——最多 3 次、
+  // 线性退避 1s/2s/3s、仅重试 429/500/502/503/504）；端内不再自维护 retry 块。
   const client = createSharedApiClient({
     baseURL: BASE_URL,
     timeout: 15000,
+    retry: { maxRetries: 3 },
   });
 
   client.interceptors.request.use(
@@ -289,21 +297,7 @@ const buildClient = (): AxiosInstance => {
         }
       }
 
-      const retryCount = (config as unknown as { retryCount?: number })?.retryCount || 0;
-      const maxRetries = (config as unknown as { maxRetries?: number })?.maxRetries || 3;
-      const retryDelay = (config as unknown as { retryDelay?: number })?.retryDelay || 1000;
-
-      const shouldRetry =
-        maxRetries > retryCount &&
-        error.response &&
-        [429, 500, 502, 503, 504].includes(error.response.status);
-
-      if (shouldRetry) {
-        (config as unknown as { retryCount: number }).retryCount = retryCount + 1;
-        await new Promise((resolve) => setTimeout(resolve, retryDelay * (retryCount + 1)));
-        return client(config);
-      }
-
+      // retry 已上移至共享工厂（见上方 retry: { maxRetries: 3 }），此处不再自处理。
       return Promise.reject(error);
     },
   );
