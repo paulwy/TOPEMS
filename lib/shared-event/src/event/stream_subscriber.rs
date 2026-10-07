@@ -616,7 +616,17 @@ impl StreamEventSubscriber {
                 Err(e) => {
                     // 超时是正常的，继续循环
                     let err_msg = e.to_string();
-                    if !err_msg.contains("timeout") {
+                    if err_msg.contains("NOGROUP") {
+                        // 自愈：启动后新出现/被重建的 Stream（publish 侧 MKSTREAM
+                        // 自动建流、或测试 DEL 后重建）缺少消费者组，XREADGROUP 持续
+                        // NOGROUP 且事件滞留不可消费。此处对全部监听 key 幂等重建组
+                        // （BUSYGROUP 已存在则忽略），恢复订阅不中断。
+                        for k in &stream_keys {
+                            if let Err(e2) = self.ensure_consumer_group(k).await {
+                                error!("重建消费者组失败 {}: {}", k, e2);
+                            }
+                        }
+                    } else if !err_msg.contains("timeout") {
                         error!("XREADGROUP 错误: {}", e);
                         tokio::time::sleep(Duration::from_secs(1)).await;
                     }
