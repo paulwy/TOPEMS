@@ -384,7 +384,12 @@
   - ✅ cargo fmt --all --check 0 diff（提交 cad617fb9：merge 后 55 文件统一格式化）
   - ✅ cargo test --workspace --lib（门禁口径）：**13288 passed / 0 failed / 20 ignored**（42 crate；需 TEST_DATABASE_URL + REDIS_URL 本机凭据）
   - ✅ shellcheck：77 脚本 0 告警
-  - 📝 cargo clippy `-D clippy::correctness`：**HEAD 既有债**（rustc 1.95/clippy 0.1.95 下 correctness 展开含 unwrap_used/as-conversions/indexing-slicing/expect-used/cast-possible-truncation/wrap，全仓既有测试代码 30+ 文件 60+ 处违规，非本次引入）；已修 shared-db 库代码 10 处（cad617fb9 同批），测试代码清理列 TODO 后续项
+  - ✅ cargo clippy `-D clippy::correctness`：**全仓 0 error**（2026-10-08 收口；rustc 1.95/clippy 0.1.95 下 correctness 展开含 unwrap_used/as-conversions/indexing-slicing/expect-used 等，已全量清零）：
+    - mes 查询参数既有债 **40 处 `as_str().unwrap()` → `unwrap_or("")`**（20 文件，98233de8f；params 均为函数内 push 的 Value::String，兜底空串仅消除 unwrap_used）
+    - 测试目标既有债清零：90 测试文件补文件级 allow（unwrap_used/expect_used/indexing_slicing，847f6cdc4）+ 并行线后续新提交 e2e 文件同规补齐（21c8be774）
+    - shared-event `to_value(&gross).unwrap()` → `unwrap_or_default()`（da96d2159）；finance event_replay `as` 转换 → `u64::try_from`（65755ce58）
+    - ehs accident 引用已下线函数的过时测试移除（ad954b5ab 遗留 E0425 清零，34a156244）
+    - fmt 收口：d1941a702 + 21c8be774（cargo fmt --all --check 0 diff）
   - 📝 jsonwebtoken 10.4 需 crypto provider：workspace 已加 `features = ["rust_crypto"]`（并行线提交），dsh::mcp 210/0 绿
   - 📝 环境差异：本机 DB/Redis 有自定义凭据，门禁需 `TEST_DATABASE_URL`（rd 3 个 DB 单测已支持 env 覆盖）+ `REDIS_URL`；ai integration_tests 6 个 DB 用例需真实库（门禁 --lib 不跑）
 - [x] schema-boundary 双门禁 exit 0：29 服务 / 1464 文件 / 3125 call sites，0 cross-schema 裸引用
