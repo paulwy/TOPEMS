@@ -347,10 +347,13 @@
 - ✅ **P1-3 跨包双轨收敛**：BackButton 双轨合一——删除 web 本地增强版（129 行，4 variant，home/close 经查零调用），common/index.ts re-export @topems/shared-components（router 感知 + href + RouterBoundary），10 调用方零改动；测试 10/10。提交 19f5eb677（+2/−235）已推送。**评估结论**：FileUpload 双轨保留（common 530 行受控表单版 value/onChange vs shared 294 行非受控版 onUpload，API 形态不同，合并需 shared 大改，留待共享包统一规划）；页面私有 ConfirmDialogs×2 为 shared ConfirmDialog 业务组合器（非重复实现）保留；Pagination/ConfirmDialog/LoadingSpinner 已由 shared 提供
 - ✅ **模板瘦身：ListPageTemplate 拆分（第一批）**：行内编辑状态机 → list/useInlineEdit.ts、内联编辑单元格 → list/InlineEditCell.tsx，主文件 4153→4001 行（727fbf4b3 已推送）
   - 第二批候选（CRUD 表单状态区 806-1100 耦合度高，暂缓）：表单状态/校验/自动渲染与 FormDialog 深度交织，硬拆风险大于收益，待模板整体收敛后再评估
-- 🚧 **页面三态补齐（进行中，已 4 批）**：加载 53%/空态 16%/错误 39% → 模板层加空态能力 + 页面分批接线
+- ✅ **页面三态补齐（完成，10 批，累计接线 48 页）**：加载/空态/错误三态；模板层空态能力 + 全模块分批接线（提交 7634d799a / 9f5a05db5 / 9e965c9d2 / 1b22fbec6 / cf285642c / 640214269）
   - ✅ 模板：DetailPageTemplate / DashboardTemplate 新增 emptyState prop（默认关闭，向后兼容，含 i18n k 文案 zh/en）
-  - ✅ 已接线 15 页：crm（Customer/Contact/Opportunity/Return Detail + Dashboard×2）hrm（Employee/Contract Detail）erp（Dashboard）pm（Contract/Project Detail）lims（Sample/Task/Instrument Detail）
-  - ⏳ 剩余 ~30 页：wms 7 Detail + qms 7 Detail + tms 6 Detail + aps 6 Detail + ehs/mes/finance/im Detail；Dashboard 页多查询无单一数据变量（HrmDashboard/hrm Dashboard/pm Dashboard/wms Dashboard 等）待逐页评估
+  - ✅ 前 4 批 14 页：crm（Customer/Contact/Opportunity/Return Detail + Dashboard×2）hrm（Employee/Contract Detail）erp（Dashboard）pm（Contract/Project Detail）lims（Sample/Task/Instrument Detail）
+  - ✅ 第 5-9 批 31 Detail 页：wms 7（Inbound/InventoryMovement/Outbound/StockTake/Transfer/WavePick/Supplier）+ qms 7（Apqp/AuditPlan/EightD/Fmea/Inspection/Issue/Standard）+ tms 6（Carrier/Driver/Route/Shipment/TransportPlan/Vehicle）+ aps 6（Capacity/Forecast/MaterialPlan/PlanComparison/ProductionPlan/Schedule）+ ehs 1（Hazard）+ mes 2（Equipment/ProductionOrder）+ finance 2（Budget/Voucher）；im 无 Detail 页（MailPage 为主从布局）
+  - ✅ 第 10 批 Dashboard 评估接线：接线 3（wms summary / qms effectiveOverview / finance statsData）
+  - 📝 Dashboard 跳过 8 页（空态语义不适用/无法单一判定，各批提交信息有详因）：hrm×2（多查询无单一数据变量）+ pm（多查询无主导、statsData 恒对象、图表 mock 兜底）+ tms（loadingQuery dummy 与数据脱钩、dashboardData 恒真值）+ aps（查询返回数字 total 0 为有效态、图表/半数统计卡硬编码 mock）+ ehs（queryFn 固定 return null、数据走 schema 状态）+ mes（全本地 useState 多数组）+ im（纯静态无数据源）
+  - 📝 说明：13 个 Detail 页模板前已有三态早返回/守卫覆盖（wms 6 早返回、qms 6 早返回、aps 6 Alert 守卫、finance Voucher 早退；其中 aps 6 + qms 6 有重叠计），所接 emptyState 为声明式兜底（守卫移除后即生效），页面三态保持完整
 
 ### P2（加固）
 - ✅ **死代码与目录清理（第一批）**：components/ui/Loading.tsx 零引用已删；Tabs/CommandPalette 有引用保留；待续：_archive-microfrontend、tmp、schema/schemas 双目录合并
