@@ -462,6 +462,12 @@
 - ℹ️ 超管 update/delete 语义：get_tenant_id_from_claims 对超管（tenant_id=None）解析为全零 UUID——测试插入需匹配
 - ℹ️ unified-core 集成测试累计 17 用例全绿（audit 9 + doc 8），AppState 工厂复用顺畅
 
+### ✅ automation 盲区解锁（2026-10-07，commit e81c573a0）
+
+- **automation/mod.rs（0/618）**：automation_e2e 8 用例全绿——list（空/计数）+ create（draft 默认 + created_by）+ get（存在/不存在）+ enable/disable（状态切换）+ delete（{success:true} + 删除后 None）
+- **unified-core 集成测试累计 25 用例全绿**（audit 9 + doc 8 + automation 8）
+- P1 handler 层三域解锁完毕：audit/doc/automation
+
 ## 2026-10-07 第二梯队修复（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第二梯队修复摘要.md`）
 
 ### ✅ 已完成并提交
