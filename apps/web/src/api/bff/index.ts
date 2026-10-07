@@ -99,6 +99,17 @@ export const bffApi = {
 
 // ==================== GraphQL 查询 API ====================
 
+/** GraphQL 端点统一响应结构（BFF /api/portal/graphql 返回） */
+interface GraphQLError {
+  message: string;
+  [key: string]: unknown;
+}
+
+interface GraphQLResponse<T> {
+  data?: T;
+  errors?: GraphQLError[];
+}
+
 // Apollo 持久化查询（APQ）— 查询哈希缓存
 // 避免重复计算同一查询的 SHA256 哈希
 const queryHashCache = new Map<string, string>();
@@ -163,6 +174,10 @@ function buildMockForQuery<T>(query: string): T | null {
  * 使用 Apollo Persisted Queries 协议:
  * - 首次请求：发送查询哈希，若后端未缓存则回退到完整查询
  * - 后续请求：仅发送哈希，减少请求体积
+ *
+ * FE-17-3 后续：请求改走统一 axios 拦截器（portal 子客户端），
+ * token / x-tenant-id / trace / CSRF / Accept-Language 均由拦截器统一注入，
+ * 不再手动拼接 headers。
  */
 async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
   // V64 早返回：开发环境 mock 模式直接返回空结构，不发送请求
@@ -177,19 +192,8 @@ async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
     }
     // 未匹配到 mock 规则：先尝试真正的请求（portal 已启动时正常使用），失败再回落空结构
     try {
-      const response = await fetch('/api/portal/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-          'x-tenant-id': '00000000-0000-0000-0000-000000000001',
-        },
-        body: JSON.stringify(body),
-      });
-      if (response.ok) {
-        const json = await response.json();
-        if (!json.errors?.length) return json.data as T;
-      }
+      const json = await portal.post<never, GraphQLResponse<T>>('/graphql', body);
+      if (!json.errors?.length) return json.data as T;
     } catch {
       // fall-through to warn + empty
     }
@@ -199,21 +203,7 @@ async function executeGraphQL<T>(body: Record<string, unknown>): Promise<T> {
     return null as unknown as T;
   }
 
-  const response = await fetch('/api/portal/graphql', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${localStorage.getItem('token') || ''}`,
-      'x-tenant-id': '00000000-0000-0000-0000-000000000001',
-    },
-    body: JSON.stringify(body),
-  });
-
-  if (!response.ok) {
-    throw new Error(`GraphQL request failed: ${response.status} ${response.statusText}`);
-  }
-
-  const json = await response.json();
+  const json = await portal.post<never, GraphQLResponse<T>>('/graphql', body);
 
   if (json.errors?.length) {
     throw new Error(`GraphQL errors: ${JSON.stringify(json.errors)}`);

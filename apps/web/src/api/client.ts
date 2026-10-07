@@ -7,6 +7,7 @@ import type {
 import i18n from '@/i18n';
 import axios from 'axios';
 import config, { isProduction, isDevelopment } from '../config/runtime';
+import { deploymentConfig } from '../config/deployment';
 import { createLogger, apiLogger } from '../utils/logger';
 import { API_TIMEOUT } from '@topems/tokens';
 import type {
@@ -370,6 +371,12 @@ export const createAxiosClient = ({
       if (effectiveToken && !requestConfig.headers['Authorization'] && !isPublicPath(url)) {
         requestConfig.headers['Authorization'] = `Bearer ${effectiveToken}`;
       }
+
+      // FE-17-3 后续：租户头统一注入（BFF /api/portal/graphql 等各处手动 token/tenant 收口至此）。
+      // 优先当前登录租户（切换租户时写入 localStorage），回落部署默认租户；
+      // 用 ??= 保证调用方显式设置的 x-tenant-id 优先，不被覆盖。
+      requestConfig.headers['x-tenant-id'] ??=
+        localStorage.getItem('current_tenant_id') || deploymentConfig.defaultTenantId;
 
       // 注入 Accept-Language，后端据此做字段级双语切换（en / zh-CN，其余回退 zh）
       const rawLang = (i18n.language || 'zh').toLowerCase();
