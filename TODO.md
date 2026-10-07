@@ -664,3 +664,16 @@
 - **业务确认**：按报告第六节分批拍板（A 级 141 条优先，ehs/analytics 面最大）；确认"无外部网关/nginx/客户直连"后再走下线（静态口径外）；wms 5 条可直接标记已下线
 - **下线执行**：随模块删除或单条删 route+handler 并同步 OpenAPI；portal C 级 230 条视为"已发布 API"不按孤儿处理
 - 全程只读：无源码改动、无路由删除、未修改任何 inventory/triage/前端 CSV
+
+## 2026-10-08 BE-08 A 级孤儿候选下线实施（已完成，摘要 `artifacts/tier2-fixes/BE-08-A级下线实施摘要.md`）
+
+### ✅ 完成
+- **ehs 119/119 删除**（`ad954b5ab`，13 文件 +8/-3816）：全部复核确认占位（DB 操作审计——6 文件全文件无 DB、其余 DB 在 B 级 handler）+ 零引用；openapi.rs 文档化引用同步清理；跨路由复用 handler 保护（safety/emergency_plan/environmental_compliance/occupational_disease/data_sync/hazardous_material 仅删路由行保留函数体）；hazard.rs StartApprovalRequest 误删已恢复
+- **analytics 13 删 / 4 降级**（`3716a4d8a`）：**api-boundary-gate 拦截发现前端 apps/web/src/api/bi/visualization.ts 仍调用 3 条 links/annotations 路由 → 降级恢复**；generate_gauge_chart 为真实 ChartService 调用降级；其余 13 条前端零调用确属孤儿删除
+- **wms 5 条零代码登记**：transfer.rs 已随 BE-03（b7ca075ca）删除，快照过时，已标记"已下线"
+- **验证**：cargo check ehs+analytics 绿（merge 后 HEAD 复跑绿）；handler 名/路由路径零残留；快照对比 4843→4757（ehs 164→104、analytics 363→337）；审计 CSV 交叉核对 ehs 119/119 消失、analytics 13 消失 4 仍在（=降级）、wms 5/5 已消失
+- 新快照 `artifacts/audit/orphan-review/live_routes_after_ar08.csv`；未改既有 inventory/triage CSV
+
+### 📋 后续
+- 降级 4 条（gauge 真实服务 + 3 条前端在用）按真实业务补全或另行评估；教训：下线前必查前端调用面（api-boundary-gate 可拦截）
+- B 级 1483 条待业务逐批确认（报告第六节批次建议）；C 级 267 条保留观察
