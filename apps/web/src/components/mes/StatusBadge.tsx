@@ -1,3 +1,5 @@
+import { StatusBadge as BaseStatusBadge } from '@/components/common/StatusBadge';
+
 const STATUS_COLORS: Record<string, string> = {
   // ProductionOrder
   draft: 'bg-gray-100 text-gray-700',
@@ -47,12 +49,11 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  const colorClass = STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-700';
   return (
-    <span
-      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorClass}`}
-    >
-      {status.replace(/_/g, ' ')}
-    </span>
+    <BaseStatusBadge
+      status={status}
+      colors={STATUS_COLORS}
+      className='rounded-md'
+    />
   );
 }

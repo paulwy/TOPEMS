@@ -1,3 +1,4 @@
+import { StatusBadge as BaseStatusBadge } from '@/components/common/StatusBadge';
 import i18n from '@/i18n';
 /**
  * QMS 状态徽章组件
@@ -29,7 +30,6 @@ const ORANGE = 'bg-orange-100 text-orange-700';
 const GREEN = 'bg-green-100 text-green-700';
 const RED = 'bg-red-100 text-red-700';
 const PURPLE = 'bg-purple-100 text-purple-700';
-const DEFAULT_COLOR = GRAY;
 
 // 每个 FSM 的状态 → 颜色映射
 const FSM_STATUS_COLORS: Record<QmsFsmType, Record<string, string>> = {
@@ -121,14 +121,14 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ fsm, status, label }: StatusBadgeProps) {
-  const colorClass = FSM_STATUS_COLORS[fsm]?.[status] ?? DEFAULT_COLOR;
-  const text = label ?? STATUS_LABELS[status] ?? status.replace(/_/g, ' ');
   return (
-    <span
-      className={`inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${colorClass}`}
-    >
-      {text}
-    </span>
+    <BaseStatusBadge
+      status={status}
+      label={label}
+      fsm={fsm}
+      fsmColors={FSM_STATUS_COLORS}
+      labelMap={STATUS_LABELS}
+    />
   );
 }
 

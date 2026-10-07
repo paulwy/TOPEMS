@@ -570,12 +570,14 @@ fn stub_routes() -> Router<ApiState> {
     let s = stub_pending_upstream;
     Router::new()
         // 收藏 / 共享
+        .route("/addressbook/favorites", post(s))
         .route("/addressbook/favorites/{id}", delete(s))
         .route("/addressbook/favorites/sort", post(s))
         .route("/addressbook/shared/{id}", get(s).delete(s))
         .route("/addressbook/contacts/{id}/shared-with", get(s))
         // 分组
         .route("/addressbook/groups/{id}", get(s).put(s).delete(s))
+        .route("/addressbook/groups", post(s))
         .route("/addressbook/groups/tree", get(s))
         .route(
             "/addressbook/groups/{id}/contacts",
@@ -591,6 +593,7 @@ fn stub_routes() -> Router<ApiState> {
         .route("/addressbook/groups/{id}/copy", post(s))
         .route("/addressbook/groups/move", post(s))
         // 导入 / 导出任务
+        .route("/addressbook/import/template", get(s))
         .route("/addressbook/import/validate", post(s))
         .route("/addressbook/import/execute", post(s))
         .route("/addressbook/import/tasks", get(s))
@@ -607,6 +610,7 @@ fn stub_routes() -> Router<ApiState> {
         .route("/addressbook/contacts/duplicates", get(s))
         .route("/addressbook/contacts/merge", post(s))
         // 标签
+        .route("/addressbook/tags", post(s))
         .route("/addressbook/tags/{id}", get(s).put(s).delete(s))
         .route("/addressbook/tags/{id}/contacts", get(s).post(s))
         .route("/addressbook/tags/{id}/contacts/{cid}", delete(s))

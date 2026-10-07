@@ -145,7 +145,7 @@ export type { User } from '@topems/shared-types';
 // ===== 统一通知系统 =====
 export { NotificationProvider } from './notification/NotificationProvider';
 
-export { EmptyState } from './common/EmptyState';
+export { EmptyState } from '@topems/shared-components';
 
 export {
   ListEmptyState,

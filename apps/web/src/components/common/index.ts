@@ -138,8 +138,7 @@ export { default as PageContainer } from './PageContainer';
 export { default as StatusChip } from './StatusChip';
 export type { StatusChipProps } from './StatusChip';
 
-export { EmptyState } from './EmptyState';
-
+// EmptyState 本地 MUI 版已删除（零消费者）；EmptyState/ListEmptyState/ErrorEmptyState 统一走 @topems/shared-components
 export {
   ListEmptyState,
   ErrorEmptyState,

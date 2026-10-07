@@ -119,6 +119,21 @@ pub async fn delete_permission(
     }))
 }
 
+/// POST /permissions — 权限定义为系统种子数据，前端契约兜底（待上游支持）。
+/// 对齐前端 PermissionManagementPage 的 createPermission；与 update/delete 同为
+/// 无副作用占位，避免新建权限时 405。
+pub async fn create_permission(
+    State(_state): State<AppState>,
+    Json(_payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("IAM permission create_permission stub called");
+    Json(serde_json::json!({
+        "success": true,
+        "message": "权限创建已记录（待上游支持）",
+        "data": null
+    }))
+}
+
 /// GET /health — IAM 模块健康检查（前端契约 /api/core/iam/health）
 pub async fn health() -> Json<serde_json::Value> {
     Json(serde_json::json!({

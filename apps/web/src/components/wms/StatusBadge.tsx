@@ -1,3 +1,4 @@
+import { StatusBadge } from '@/components/common/StatusBadge';
 import i18n from '@/i18n';
 /**
  * WMS 状态徽章组件
@@ -28,8 +29,6 @@ const BLUE = 'bg-blue-100 text-blue-700';
 const ORANGE = 'bg-orange-100 text-orange-700';
 const GREEN = 'bg-green-100 text-green-700';
 const RED = 'bg-red-100 text-red-700';
-const YELLOW = 'bg-yellow-50 text-yellow-700';
-const DEFAULT_COLOR = GRAY;
 
 const FSM_STATUS_COLORS: Record<WmsFsm, Record<string, string>> = {
   inbound: {
@@ -110,16 +109,15 @@ interface WmsStatusBadgeProps {
 }
 
 export function WmsStatusBadge({ fsm, status, label }: WmsStatusBadgeProps) {
-  const statusLower = status?.toLowerCase() ?? '';
-  const colorClass =
-    FSM_STATUS_COLORS[fsm]?.[statusLower] ?? (statusLower === '' ? DEFAULT_COLOR : YELLOW);
-  const text = label ?? STATUS_LABELS[statusLower] ?? status?.replace(/_/g, ' ') ?? '';
   return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClass}`}
-    >
-      {text}
-    </span>
+    <StatusBadge
+      status={status}
+      label={label}
+      fsm={fsm}
+      fsmColors={FSM_STATUS_COLORS}
+      labelMap={STATUS_LABELS}
+      fallbackColor='bg-yellow-50 text-yellow-700'
+    />
   );
 }
 

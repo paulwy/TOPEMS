@@ -157,6 +157,11 @@ pub fn iam_routes(state: &AppState) -> Router<AppState> {
             "/roles/{id}/permissions",
             post(modules::iam::role::add_role_permission),
         )
+        // 前端 PermissionManagementPage createPermission：POST /permissions（契约兜底 stub）
+        .route(
+            "/permissions",
+            post(modules::iam::permission::create_permission),
+        )
         .route(
             "/permissions/{id}",
             put(modules::iam::permission::update_permission),
