@@ -9,9 +9,11 @@ use axum::extract::{Json, Path, State};
 use axum::Extension;
 use app_state::{super_claims, tenant_claims, test_app_state};
 use topems_unified_core::modules::doc::handlers::{
-    create_document, get_document, list_documents,
+    create_document, delete_document, get_document, list_documents, update_document,
 };
-use topems_unified_core::modules::doc::models::{CreateDocumentRequest, Document};
+use topems_unified_core::modules::doc::models::{
+    CreateDocumentRequest, Document, UpdateDocumentRequest,
+};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -153,4 +155,43 @@ async fn get_missing_returns_none(pool: sqlx::PgPool) {
         get_document(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
     let doc: Option<Document> = resp.0.data.unwrap();
     assert!(doc.is_none());
+}
+
+#[sqlx::test(migrations = false)]
+async fn update_changes_title(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let id = insert_doc(&pool, "00000000-0000-0000-0000-000000000000", "旧标题").await;
+
+    let req = UpdateDocumentRequest {
+        title: Some("新标题".to_string()),
+        folder_id: None,
+        content: None,
+        tags: None,
+        description: None,
+    };
+    let state = test_app_state(pool);
+    let claims = super_claims();
+    let resp = update_document(State(state), Extension(claims), Path(id), Json(req)).await;
+    let doc: Option<Document> = resp.0.data.unwrap();
+    assert_eq!(doc.unwrap().title, "新标题");
+}
+
+#[sqlx::test(migrations = false)]
+async fn delete_hides_from_list(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let id = insert_doc(&pool, "00000000-0000-0000-0000-000000000000", "to-delete").await;
+
+    let state = test_app_state(pool.clone());
+    let claims = super_claims();
+    let resp = delete_document(State(state), Extension(claims), Path(id)).await;
+    let deleted: bool = resp.0.data.unwrap();
+    assert!(deleted);
+
+    // 软删除后 list 不再返回
+    let state = test_app_state(pool.clone());
+    let claims = super_claims();
+    let claims = super_claims();
+    let resp = list_documents(State(state), Extension(claims)).await;
+    let docs: Vec<Document> = resp.0.data.unwrap();
+    assert!(docs.is_empty());
 }
