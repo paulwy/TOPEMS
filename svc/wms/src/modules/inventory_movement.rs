@@ -18,7 +18,9 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
 /// 生成移动单号: MV-YYYYMMDD-6位序列号
-async fn generate_movement_no(
+/// 暴露为 pub 供集成测试验证编号规则（tests/inventory_movement_numbering.rs）。
+#[doc(hidden)]
+pub async fn generate_movement_no(
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     tenant_id: Uuid,
 ) -> String {
