@@ -716,22 +716,29 @@ pub async fn reports_center_stats(
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Dashboard summary stats — try live counts when DB is reachable,
     // fall back to zero placeholders so the UI never errors on 404.
-    let (total_users, active_users, total_roles, total_permissions, total_companies,
-         total_departments, total_employees, recent_activities) = sqlx::query_as::<_, (
-        i64, i64, i64, i64, i64, i64, i64, i64,
+    // NOTE: company/department/employee counts are intentionally NOT live. The analytics
+    // service (schema=bi) is not authorized to read hrm.* tables under the schema-boundary
+    // gate (scripts/check_schema_boundary.py); bi has no org view either. Live org headcounts
+    // would require a bi-side materialized view or an allowlisted integration — tracked as a
+    // follow-up. Keep the existing .max() display placeholders instead of a cross-schema read.
+    let (total_users, active_users, total_roles, total_permissions, recent_activities) = sqlx::query_as::<_, (
+        i64, i64, i64, i64, i64,
     )>(r#"
         SELECT
             (SELECT COUNT(*) FROM core_users WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_users,
             (SELECT COUNT(*) FROM core_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
                AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS active_users,
             (SELECT COUNT(*) FROM core_roles WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_roles,
-            (SELECT COUNT(*) FROM core_permissions WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_permissions,
-            (SELECT COUNT(*) FROM org_companies WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_companies,
-            (SELECT COUNT(*) FROM org_departments WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_departments,
-            (SELECT COUNT(*) FROM org_employees WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_employees,
+            -- core_permissions is a shared global table (public.core_permissions has NO tenant_id column)
+            (SELECT COUNT(*) FROM core_permissions) AS total_permissions,
             (SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= NOW() - INTERVAL '7 days'
                AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS recent_activities
-    "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0, 0, 0, 0));
+    "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
+
+    // Degraded org counts (see note above) — surfaced through the existing .max() placeholders.
+    let total_companies: i64 = 0;
+    let total_departments: i64 = 0;
+    let total_employees: i64 = 0;
 
     // Last 6 months user growth
     let months = [
