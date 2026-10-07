@@ -492,6 +492,8 @@
 - **测试暴露并修复 2 处生产缺陷（equipment list 生产必挂）**：
   1. **SELECT 列不存在**：items 查询用 warranty_expiry_date/maintenance_frequency_days（表列实为 warranty_end_date/maintenance_cycle）→ 改真实列 + AS 别名保留响应契约
   2. **Vec<serde_json::Value> bind → JSONB 类型不匹配**：status/search 过滤查询必挂（`operator does not exist: character varying = jsonb`）→ bind 改 `p.as_str().unwrap()`（params 全 String）
+- **✅ 批量修复完成（38 处，19 文件）**：team/process_flow/equipment_oee/process_route/work_report/production_scheduling/production_order/production_record/work_station/material_requirement/wip/quality_traceability/work_order/quality_management{standard,inspection,patrol}/material_bom{bom,return,issue} 全部 `bind(p.clone())` → `bind(p.as_str().unwrap())`；production_process.rs 2 处为 Vec<String>（本无问题，改回）
+- **预存环境问题登记**：mes integration_tests 5 个失败（test_create_production_order_crud/test_production_order_status_transitions/test_production_record_crud/test_tenant_isolation_rls/test_transaction_commit_on_success）——DB 缺 production_order/production_record 表（迁移存在 20260725000000/20261007000003 但 5432 未应用/被删）——与 bind 修复无关（直连 DB 不调 handler）——待 DB 表补齐后复跑
 - **⚠️ 同类缺陷扫描发现：mes 30 处 `for p in &params { bind(p.clone()) }`**（svc/mes/src/modules/ 下 team/quality_management/process_flow/equipment_oee 等 30 文件）——**所有带过滤条件的 list 查询在生产均挂**（JSONB 类型不匹配）——**已登记，待批量修复**（需按各 handler params 实际类型处理：String 用 as_str；数字/日期字段需类型匹配分支，勿盲目 unwrap）
 
 ### ✅ wms 集成测试全量扩展完成（2026-10-07，16 模块 48 用例）
