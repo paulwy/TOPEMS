@@ -8,7 +8,11 @@ import { logger } from '@/utils/logger';
 import { microFrontendPerf } from '@/microfrontend/performance';
 import { versionManager } from '@/microfrontend/version-manager';
 import { canaryRelease } from '@/microfrontend/canary-release';
-import { modulePerformanceMetrics, errorTracker, userBehaviorAnalytics } from '@/microfrontend/observability';
+import {
+  modulePerformanceMetrics,
+  errorTracker,
+  userBehaviorAnalytics,
+} from '@/microfrontend/observability';
 import i18n from '@/i18n';
 
 /**
