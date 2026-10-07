@@ -1213,6 +1213,7 @@ const PmProjectDetailPage: React.FC = () => {
     >
       <DetailPageTemplate
         title=''
+        emptyState={{ show: !loading && !project }}
         subtitle=''
         detailItemName={project?.name || project?.code || t('pm.pm_project_detail_page.k28')}
         breadcrumbs={[

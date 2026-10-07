@@ -525,6 +525,7 @@ const PmContractDetailPage: React.FC = () => {
     >
       <DetailPageTemplate
         title=''
+        emptyState={{ show: !loading && !contract }}
         subtitle=''
         detailItemName={
           contract?.name || contract?.contractNo || i18n.t('pm.pm_contract_detail_page.k38')

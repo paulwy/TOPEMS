@@ -444,6 +444,7 @@ const LimsTaskDetailPage: React.FC = () => {
     >
       <DetailPageTemplate
         title=''
+        emptyState={{ show: !loading && !detailData }}
         subtitle=''
         detailItemName={
           task?.task_no ||

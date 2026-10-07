@@ -626,6 +626,7 @@ const LimsSampleDetailPage: React.FC = () => {
     >
       <DetailPageTemplate
         title=''
+        emptyState={{ show: !loading && !detailData }}
         subtitle=''
         detailItemName={
           sample?.name ||

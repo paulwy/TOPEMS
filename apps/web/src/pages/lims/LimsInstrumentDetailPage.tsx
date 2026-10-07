@@ -510,6 +510,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
         ]}
         backHref={LIMS_PATHS.instrument}
         loading={isPending}
+        emptyState={{ show: !isPending && !data?.instrument }}
         onRefresh={() => refetch()}
         infoCard={{
           avatar: <Settings sx={{ fontSize: 40, color: 'cyan.dark' }} />,
