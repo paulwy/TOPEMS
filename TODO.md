@@ -364,7 +364,11 @@
   - 📝 保留项与原因：desktop Tauri IPC 信封 ApiResponse、LoginResponse/UserInfo；mobile User/Task 等 camelCase UI 模型（共享包为 snake_case DTO）——详见各提交信息
   - 📝 后续项：shared-types dist 与 src 不同步（dist User 缺 name/roles/full_name），重建 dist 后 mobile User 可再收敛；mobile/desktop 硬编码中文 UI 为既有债（hardcoded-precise 门禁对两端报错，相关提交按脚本注释约定 --no-verify 并已人工验证三件套）
   - 验证：desktop tsc 0 / vitest 32/32 / eslint 0；mobile tsc 0 / eslint 0 / jest 11/11；web tsc 0（锁变更后复跑）；Expo 运行时打包待环境补 expo-asset 后验证
-- ⏳ **i18n hash key 语义化 + z-index 语义化**：1006 个 text_xxxxxx key；z-index 魔数 100+ 处统一 theme.zIndex
+- ✅ **i18n hash key 语义化 + z-index 语义化（5 提交 83f93d970/d873e4918/d895f2b5a/c77d58327/aea5073d6）**：全部 text_xxxxxx 哈希 key 语义化 + z-index 魔数统一 theme.zIndex
+  - ✅ i18n：13 模块 JSON（zh/en）递归清零 text_ hex（hrm 750 / bi 319+94+232 / finance+crm 234 / admin+ehs+pm+asset+wms+mes+iam+lims+utils 461 顶层 + ~1080 幽灵）；~118 个消费源文件同步；en 嵌套镜像树（hrm/finance/pm）与 zh 收敛；glossary 4 处非标准译法与 pm 混合结构 5 处已归一
+  - ✅ z-index：132 处魔数/17 取值全清零（sx→theme.zIndex 函数式、style→designTokens.zIndex）；tokens 新增 12 层级（raised/stickyHeader/dragHandle/contentLayer/annotationPopover/annotationCard/menuBackdrop/overlay/devToolsBar/topmost/devToolsPanel/devToolsModal）；theme.ts 补 MUI ZIndex 类型扩充
+  - 📝 保留项：bi/pm/utils 等 en-only 语义 key（HEAD 既有结构不对称，非 text_ hex，门禁信息项）；useEhsHazardDetail.ts 3 处裸 text_ 死引用（不在任何资源，按规范未动）；src/api 3 个既有 vitest 失败（契约 mock 断言错位，与本次无关）
+  - 验证：web typecheck 0 / eslint 0（4 个既有基线债除外）/ vitest 3003/3006（3 个既有 src/api）/ check-i18n 7-in-1 PASS exit 0 / glossary 0 违规 / 全量残留 0
 
 > 全量审计报告：`docs/quality/前端UI审计报告-2026-10-07.md`（六维结论 + 违规清单 + 验证记录）
 
