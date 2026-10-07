@@ -317,6 +317,7 @@ const QmsStandardDetailPage: React.FC = () => {
         onBack={() => navigate(QMS_PATHS.root)}
         onEdit={() => setShowEditModal(true)}
         loading={loading}
+        emptyState={{ show: !loading && !standard }}
         infoCard={{
           title: standard?.name,
           subtitle: standard?.code || standard?.id,

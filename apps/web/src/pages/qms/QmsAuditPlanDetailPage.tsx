@@ -298,6 +298,7 @@ export default function QmsAuditPlanDetailPage() {
 
   return (
     <DetailPageTemplate
+      emptyState={{ show: !loading && !plan }}
       title={plan.plan_no}
       subtitle={plan.title}
       onBack={handleBack}

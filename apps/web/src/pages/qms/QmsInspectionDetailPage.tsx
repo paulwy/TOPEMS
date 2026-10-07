@@ -321,6 +321,7 @@ export default function QmsInspectionDetailPage() {
 
   return (
     <DetailPageTemplate
+      emptyState={{ show: !loading && !inspection }}
       title={inspection.inspection_no}
       subtitle={inspection.product_name}
       detailItemName={inspection.inspection_no}

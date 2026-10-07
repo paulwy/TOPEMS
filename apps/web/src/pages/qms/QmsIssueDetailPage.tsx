@@ -294,6 +294,7 @@ export default function QmsIssueDetailPage() {
 
   return (
     <DetailPageTemplate
+      emptyState={{ show: !loading && !issue }}
       title={issue.issue_no}
       subtitle={issue.title}
       onBack={handleBack}

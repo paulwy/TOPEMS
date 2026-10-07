@@ -509,6 +509,7 @@ export default function QmsFmeaDetailPage() {
 
   return (
     <DetailPageTemplate
+      emptyState={{ show: !loading && !analysis }}
       title={analysis.fmeaNo}
       subtitle={analysis.fmeaName}
       detailItemName={analysis.fmeaNo}

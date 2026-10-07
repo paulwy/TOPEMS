@@ -391,6 +391,7 @@ export default function QmsEightDDetailPage() {
 
   return (
     <DetailPageTemplate
+      emptyState={{ show: !loading && !report }}
       title={report.reportNo}
       subtitle={report.title}
       detailItemName={report.reportNo}

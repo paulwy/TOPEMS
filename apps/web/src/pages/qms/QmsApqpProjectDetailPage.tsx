@@ -445,6 +445,7 @@ export default function QmsApqpProjectDetailPage() {
 
   return (
     <DetailPageTemplate
+      emptyState={{ show: !loading && !project }}
       title={project.project_no}
       subtitle={project.project_name}
       detailItemName={project.project_no}
