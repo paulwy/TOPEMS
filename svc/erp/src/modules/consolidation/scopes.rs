@@ -238,7 +238,7 @@ pub async fn update_scope(
             .await;
             Json(ApiResponse::success(scope, "更新合并范围成功"))
         }
-        Ok(None) => Json(api_error(404, "合并范围不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("合并范围不存在".to_string()))),
         Err(e) => {
             tracing::error!("更新合并范围失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

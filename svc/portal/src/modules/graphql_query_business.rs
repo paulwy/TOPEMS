@@ -821,7 +821,7 @@ pub async fn impl_federation_v2_execute(
     let result = execute_federation_plan(&plan).await;
     let exec_duration = exec_start.elapsed().as_millis() as u64;
     record_federation_v2_execute_time(exec_duration);
-    Ok(result.unwrap_or_else(|e| serde_json::json!({"error": e})))
+    Ok(result.unwrap_or_else(|e| serde_json::json!({"error": e.to_string()})))
 }
 
 pub async fn impl_federation_v2_stats(

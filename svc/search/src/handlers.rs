@@ -219,13 +219,13 @@ async fn search_all(
 
     if should_search("customer") {
         if let Some(c) = erp {
-            results.extend(search_customers(c, keyword, per_module_limit).await);
+            results.extend(search_customers(pool, keyword, per_module_limit).await);
         }
     }
 
     if should_search("order") {
         if let Some(c) = erp {
-            results.extend(search_orders(c, keyword, per_module_limit).await);
+            results.extend(search_orders(pool, keyword, per_module_limit).await);
         }
     }
 

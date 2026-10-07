@@ -707,7 +707,7 @@ pub async fn start_stock_take(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(404, "盘点单不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound("盘点单不存在".to_string()))),
             "not_found",
             None,
             None,
@@ -1494,7 +1494,7 @@ pub async fn complete_stock_take(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(404, "盘点单不存在")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound("盘点单不存在".to_string()))),
             "not_found",
             None,
             None,

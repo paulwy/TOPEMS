@@ -152,7 +152,7 @@ pub async fn create_vehicle(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("车牌号", &req.plate_number) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
 
     let id = Uuid::new_v4();
@@ -616,7 +616,7 @@ pub async fn create_vehicle_request(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("申请人", &req.requester) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
 
     let vehicle_result = sqlx::query_as::<_, Vehicle>(

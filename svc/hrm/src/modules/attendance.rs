@@ -9,7 +9,6 @@ use chrono::{Datelike, Utc};
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;

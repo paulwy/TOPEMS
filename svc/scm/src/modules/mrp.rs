@@ -18,7 +18,6 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginationParams;
-use topems_shared_core::TopemsError;
 
 // =============================================================================
 // Pure functions (unit-tested via mrp_logic_tests.rs & inline tests)

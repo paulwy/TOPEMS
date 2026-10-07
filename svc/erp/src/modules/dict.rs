@@ -337,11 +337,11 @@ pub async fn create_dict_type(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("字典类型编码", &req.code) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
 
     if let Err(e) = validate_required_field("字典类型名称", &req.name) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
 
     let id = Uuid::new_v4();

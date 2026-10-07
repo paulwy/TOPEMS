@@ -9,7 +9,6 @@ use bigdecimal::BigDecimal;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
-use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 

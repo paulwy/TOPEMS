@@ -20,7 +20,6 @@ use crate::modules::ApiState;
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, ListResponse};
-use topems_shared_core::TopemsError;
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
 use topems_shared_event::event::{EventPublisher, EventType, InventoryUpdatedPayload};
 
@@ -574,7 +573,7 @@ pub async fn update_inventory(
     }
     let tenant_id = match resolve_tenant_id(&claims) {
         Ok(id) => id,
-        Err(msg) => return Json(ApiResponse::from(TopemsError::AuthenticationFailed(msg))),
+        Err(msg) => return Json(ApiResponse::from(TopemsError::AuthenticationFailed(msg.to_string()))),
     };
     let request_data = serde_json::to_value(&req).ok();
 

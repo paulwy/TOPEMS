@@ -15,7 +15,7 @@ use crate::modules::material_calc::{calculate_sales_order_amounts, default_sales
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{PaginatedResponse, PaginationParams};
-use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{SalesOrderApprovedPayload, SalesOrderCreatedPayload};
 
 pub fn create_routes() -> Router<ApiState> {

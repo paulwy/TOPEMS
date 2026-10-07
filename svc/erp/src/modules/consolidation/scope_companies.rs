@@ -169,7 +169,7 @@ pub async fn update_scope_company(
             .await;
             Json(ApiResponse::success(company, "更新合并范围公司成功"))
         }
-        Ok(None) => Json(api_error(404, "合并范围公司不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("合并范围公司不存在".to_string()))),
         Err(e) => {
             tracing::error!("更新合并范围公司失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

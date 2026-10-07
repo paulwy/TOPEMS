@@ -601,7 +601,7 @@ pub async fn publish_report(
             .await;
             Json(ApiResponse::success(report, "发布合并报表成功"))
         }
-        Ok(None) => Json(api_error(404, "合并报表不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("合并报表不存在".to_string()))),
         Err(e) => {
             tracing::error!("发布合并报表失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

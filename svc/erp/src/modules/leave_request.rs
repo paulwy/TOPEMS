@@ -312,10 +312,10 @@ pub async fn create_leave_request(
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("申请人姓名", &req.employee_name) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
     if let Err(e) = validate_required_field("请假原因", &req.reason) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
     if req.start_date > req.end_date {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -874,7 +874,7 @@ pub async fn approve_leave_request(
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
 
     let tenant = tenant_id_from_claims(&claims);
@@ -989,10 +989,10 @@ pub async fn reject_leave_request(
     ensure_table(&state).await;
 
     if let Err(e) = validate_required_field("审批人", &req.approved_by) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
     if let Err(e) = validate_required_field("驳回原因", &req.rejected_reason) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
 
     let tenant = tenant_id_from_claims(&claims);

@@ -21,7 +21,6 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_core::TopemsError;
 use topems_shared_event::event::{EventType, ReturnCompletedPayload, ReturnProcessedPayload};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -268,7 +268,7 @@ pub async fn update_elimination_rule(
             .await;
             Json(ApiResponse::success(rule, "更新抵消规则成功"))
         }
-        Ok(None) => Json(api_error(404, "抵消规则不存在")),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("抵消规则不存在".to_string()))),
         Err(e) => {
             tracing::error!("更新抵消规则失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

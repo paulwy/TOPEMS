@@ -1160,7 +1160,7 @@ pub async fn confirm_inbound_order(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(404, "入库订单不存在或当前状态不允许确认")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound("入库订单不存在或当前状态不允许确认".to_string()))),
             "not_found",
             None,
         ),
@@ -1562,7 +1562,7 @@ pub async fn complete_inbound_order(
             )
         }
         Err(sqlx::Error::RowNotFound) => (
-            Json(api_error(404, "入库订单不存在或当前状态不允许完成")),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound("入库订单不存在或当前状态不允许完成".to_string()))),
             "not_found",
             None,
         ),

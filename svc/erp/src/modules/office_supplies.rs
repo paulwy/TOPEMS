@@ -140,7 +140,7 @@ pub async fn create_supply(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("用品名称", &req.name) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e)));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
     }
 
     let id = Uuid::new_v4();
