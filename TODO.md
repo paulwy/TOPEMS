@@ -442,3 +442,27 @@
 - ✅ **inventory_movement 移动单号规则 3 集成测试**（sqlx::test 临时库）：空表 000001 / 同 tenant 递增 / 跨 tenant 隔离——generate_movement_no 改 pub（#[doc(hidden)]），commit 10ee91223
 - ⏳ **其余 wms 模块（outbound_order 0/67、stock_take 0/62、slotting 0/52、transfer_order 0/47、smart_replenishment 全家 0/125）**：全内联 DB/axum handler 逻辑（无可测纯函数），单测不可行——登记为**DB 集成测试批次**（feature-gated http_endpoint_tests 模式已有，待 http 端点回归时展开）
 - ℹ️ wms 已有 551 lib 测试覆盖 fsm 42/42、util 55/55、permission 33/38 + 12 状态机路径（cross_module_integration_tests）
+
+### P1 handler 层集成测试成本评估（2026-10-07）
+
+- **wms outbound_order/stock_take/slotting/transfer_order/smart_replenishment**：handler 硬性依赖 RLS 事务 Arc（`expect("rls txn missing")`）+ 权限表种子 + 多表 DDL——单测不可行，集成测试每 handler >100 行 setup——**归入 feature-gated http_endpoint_tests 批次**
+- **unified-core audit/doc/automation handlers**：AppState 20+ 字段（含 Arc<dyn> 权限/审计存储 mock）——构造成本高——**需先建 AppState 测试工厂基建**（列为独立基建项）
+- **可行替代**：纯逻辑/事件层模块化可测（finance domain 已验证）；handler 薄 SQL 封装测试价值低——建议**优先模块化纯逻辑**，handler 层留待真实服务测试环境
+
+## 2026-10-07 第二梯队修复（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第二梯队修复摘要.md`）
+
+### ✅ 已完成并提交
+- **DB-04 自助 DDL 入链**（commit `61a25cfb7`）：`/erp/db/columns` modify/drop 三端点全部降级为只读迁移建议（幂等 IF NOT EXISTS SQL + 走迁移链提示），不再执行 DDL；preview 幂等化；标识符转义保留；cargo check 绿 + 25 单测 + 自签 JWT 路由实测。**follow-up**：DatabaseStructurePage 前端仍调用该端点（仅读 success/message 不崩，但"执行"不再建列），已登记前端改造
+- **DB-03 timestamptz 统一**（迁移 `20261007000030`，随用户并发提交 `10ee91223` 入库）：31 列 timestamp→timestamptz，31 表全 0 行零数据风险，统一 UTC 解释对齐 `DateTime<Utc>` 契约；双库应用、NOT NULL/DEFAULT 保留、空库 **323/323 一次重放**、幂等实证、列级 diff 零新增
+- **AR-04 优雅停机**（commit `e0664e3cc`）：全仓 3 处 `axum::serve`（shared-bootstrap 两共享入口覆盖 30/31 服务 + server 单体入口）接入 with_graceful_shutdown（SIGTERM/ctrl_c + 二次信号兜底 + 连接池关闭）；cargo check 全 workspace 绿、启动健康 200。**如实说明**：本环境信号投递受限（最小 tokio repro 同样不响应 SIGTERM），优雅退出日志未现场观测，判定环境问题非代码缺陷，建议正常部署环境复验
+- **FE-04~16 方法错位**（commit `35b5aff6f`，18 文件）：13 组逐项对拍当前后端源码——23 处前端对齐、2 组复核已对齐（审计快照过时）、1 组已移除；typecheck/eslint 全绿。提交时 BFF(8099)/mobile(8070) 离线，WCS/MCS 门禁按仓库设计跳过（非绕过），建议 BFF 重启后手动跑 web_contract_smoke
+- **FE-02 遗留**：两个暂存文件已被用户 refactor 提交吸收（HEAD 已为 GET 对齐后端），原提交计划无对象，已登记
+
+### 📋 调研交付（未实施，方案已备）
+- **FE-17 client 收敛**（`fe17-client-convergence-plan.md`）：实测 9 套请求层（web client.ts 为事实标准 428 模块、shared-utils 死代码、desktop 401 静默/mobile baseURL 缺后缀两个 bug 已点出），5 阶段收敛方案 12–15 人日
+- **BE-02 组织计数**（`be02-bi-org-count-plan.md`）：**关键发现——第一梯队修复落在非 live 的 routes.rs 死代码上**，live 的 main.rs 旧版仍引用不存在的 iam_users/org_* 五表，仪表盘整卡实为占位；组织数据真实归属 hrm（存在但 0 行、RLS 开）；方案 A 物化视图 / B allowlist / C 降级，建议先做最小纠正（0.5 人日）
+- **第三梯队可行性**（`tier3-feasibility.md`）：TABLE_DEFS 对拍止血（S）+ codegen（L）；OpenAPI 门禁基建已现成（28 crate 提取管线，只差回写，M）；迁移目录治理"子目录/改名高风险不做"（sqlx 校验链约束），只做低风险四项（S–M）
+- **DB-03 残留**：5433 空库重放后残留 329 列（与 5432 的既有差异，审计快照口径）已登记第三梯队
+
+### ⏳ 待用户拍板
+① BE-02 组织计数真实值必要性 + 选 A/B/C（hrm 当前 0 行，接线前需确认填充计划）；② DatabaseStructurePage 前端改造；③ FE-17 收敛实施分批
