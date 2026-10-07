@@ -117,7 +117,7 @@ pub async fn list_wave_picks(
         SELECT id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                status, priority, assigned_to, assigned_user_name, batch_id,
                start_time, end_time, total_items, picked_items,
-               total_quantity, picked_quantity, remarks, created_at, updated_at
+               total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         FROM wms.wave_picks
         WHERE ($1::text IS NULL OR wave_pick_number ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -218,7 +218,7 @@ pub async fn create_wave_pick(
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
-                  total_quantity, picked_quantity, remarks, created_at, updated_at
+                  total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -301,7 +301,7 @@ pub async fn get_wave_pick(
         SELECT id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                status, priority, assigned_to, assigned_user_name, batch_id,
                start_time, end_time, total_items, picked_items,
-               total_quantity, picked_quantity, remarks, created_at, updated_at
+               total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         FROM wms.wave_picks
         WHERE id = $1 AND deleted_at IS NULL
         "#
@@ -370,7 +370,7 @@ pub async fn update_wave_pick(
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
-                  total_quantity, picked_quantity, remarks, created_at, updated_at
+                  total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
@@ -626,7 +626,7 @@ pub async fn assign_wave_pick(
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
-                  total_quantity, picked_quantity, remarks, created_at, updated_at
+                  total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
@@ -717,7 +717,7 @@ pub async fn start_wave_pick(
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
-                  total_quantity, picked_quantity, remarks, created_at, updated_at
+                  total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
@@ -808,7 +808,7 @@ pub async fn complete_wave_pick(
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
-                  total_quantity, picked_quantity, remarks, created_at, updated_at
+                  total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
@@ -898,7 +898,7 @@ pub async fn cancel_wave_pick(
         RETURNING id, wave_pick_number, wave_pick_type, warehouse_id, warehouse_name,
                   status, priority, assigned_to, assigned_user_name, batch_id,
                   start_time, end_time, total_items, picked_items,
-                  total_quantity, picked_quantity, remarks, created_at, updated_at
+                  total_quantity::float8, picked_quantity::float8, remarks, created_at, updated_at
         "#
     ))
     .bind(id)
