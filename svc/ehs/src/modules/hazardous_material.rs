@@ -24,14 +24,8 @@ pub fn create_routes() -> Router<AppState> {
             "/hazardous-materials/statistics",
             get(get_material_statistics),
         )
-        .route(
-            "/hazardous-materials/{id}",
-            get(get_material),
-        )
-        .route(
-            "/hazardous-materials/{id}/msds",
-            get(get_material_msds),
-        )
+        .route("/hazardous-materials/{id}", get(get_material))
+        .route("/hazardous-materials/{id}/msds", get(get_material_msds))
         .route(
             "/hazardous-materials/inventory",
             get(list_materials).post(create_material),

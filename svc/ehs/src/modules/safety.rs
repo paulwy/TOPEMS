@@ -1,11 +1,6 @@
 //! Safety handlers - Inspection plans, items, and records
 
-use axum::{
-    extract::State,
-    http::HeaderMap,
-    routing::get,
-    Extension, Json, Router,
-};
+use axum::{extract::State, http::HeaderMap, routing::get, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
