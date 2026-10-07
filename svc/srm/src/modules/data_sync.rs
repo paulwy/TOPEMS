@@ -1,4 +1,3 @@
-use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Json, State},
     routing::post,
@@ -9,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{postgres::PgPool, Row};
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::Result;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 

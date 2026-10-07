@@ -73,7 +73,9 @@ pub fn can_transition(
         return Err(TopemsError::OperationNotAllowed("NOT_OWNER".to_string()));
     }
     if from.is_terminal() {
-        return Err(TopemsError::BusinessLogic("TERMINAL_CANNOT_TRANSITION".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "TERMINAL_CANNOT_TRANSITION".to_string(),
+        ));
     }
     let ok_advance = matches!(
         (from, to),
@@ -92,7 +94,9 @@ pub fn can_transition(
     if ok_advance || ok_rollback {
         Ok(())
     } else {
-        Err(TopemsError::ValidationFailed("INVALID_TRANSITION".to_string()))
+        Err(TopemsError::ValidationFailed(
+            "INVALID_TRANSITION".to_string(),
+        ))
     }
 }
 

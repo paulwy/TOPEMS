@@ -6,13 +6,13 @@
 //! 当前使用内存实现（无需 DB），用于验证进程内调用机制；
 //! 真实接入时替换为 `svc/finance` 的 `plugin_finance.accounting_subjects` 查询。
 
-use topems_shared_core::error::TopemsError;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use crate::providers::AccountBalanceProvider;
 use axum::{Json, Router};
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::RwLock;
+use topems_shared_core::error::TopemsError;
 
 /// 财务模块：持有科目余额（内存实现）
 pub struct FinanceModule {

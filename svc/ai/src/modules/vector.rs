@@ -423,7 +423,10 @@ pub async fn list_collections(
     State(_state): State<AppState>,
     Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(Vec::new(), "向量集合列表（待上游支持）"))
+    Json(ApiResponse::success(
+        Vec::new(),
+        "向量集合列表（待上游支持）",
+    ))
 }
 
 /// POST /api/ai/vector/collections - 创建向量集合（待上游支持，回显 name）

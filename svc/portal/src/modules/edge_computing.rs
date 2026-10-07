@@ -16,12 +16,12 @@
 //!    - LatencyBudget: total_ms / render_ms / network_ms / processing_ms
 //!    - 请求合并 + 服务端推送 + 预计算响应模板
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -585,7 +585,10 @@ impl EdgeRenderer {
         let mut functions = store.edge_functions.lock().await;
 
         if functions.iter().any(|f| f.name == function.name) {
-            return Err(TopemsError::BusinessLogic(format!("函数 '{}' 已存在", function.name)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "函数 '{}' 已存在",
+                function.name
+            )));
         }
 
         functions.push(function.clone());

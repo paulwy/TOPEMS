@@ -15,10 +15,10 @@
 //!    - 超时与重试管理
 //!    - 事务日志与恢复
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, Json};
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -640,7 +640,10 @@ impl TransactionCoordinator {
             .ok_or_else(|| TopemsError::ResourceNotFound("未找到事务".to_string()))?;
 
         if tx.state != TransactionState::Preparing {
-            return Err(TopemsError::BusinessLogic(format!("事务状态不允许提交: {:?}", tx.state)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "事务状态不允许提交: {:?}",
+                tx.state
+            )));
         }
 
         tx.state = TransactionState::Committing;
@@ -663,7 +666,9 @@ impl TransactionCoordinator {
         Ok(tx.clone())
     }
 
-    async fn compensate_transaction(transaction_id: &str) -> Result<TransactionContext, TopemsError> {
+    async fn compensate_transaction(
+        transaction_id: &str,
+    ) -> Result<TransactionContext, TopemsError> {
         let store = get_federation_store();
         let mut transactions = store.transactions.lock().await;
 
@@ -673,7 +678,9 @@ impl TransactionCoordinator {
             .ok_or_else(|| TopemsError::ResourceNotFound("未找到事务".to_string()))?;
 
         if tx.state == TransactionState::Completed {
-            return Err(TopemsError::BusinessLogic("事务已完成，无法补偿".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "事务已完成，无法补偿".to_string(),
+            ));
         }
 
         tx.state = TransactionState::Compensating;
@@ -701,7 +708,9 @@ impl TransactionCoordinator {
         Ok(tx.clone())
     }
 
-    async fn get_transaction_status(transaction_id: &str) -> Result<TransactionContext, TopemsError> {
+    async fn get_transaction_status(
+        transaction_id: &str,
+    ) -> Result<TransactionContext, TopemsError> {
         let store = get_federation_store();
         let transactions = store.transactions.lock().await;
         transactions
@@ -755,7 +764,10 @@ impl TransactionCoordinator {
             .ok_or_else(|| TopemsError::ResourceNotFound("未找到事务".to_string()))?;
 
         if tx.state != TransactionState::Failed && tx.state != TransactionState::Compensating {
-            return Err(TopemsError::BusinessLogic(format!("事务状态不允许恢复: {:?}", tx.state)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "事务状态不允许恢复: {:?}",
+                tx.state
+            )));
         }
 
         tx.state = TransactionState::Recovering;

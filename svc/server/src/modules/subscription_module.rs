@@ -11,7 +11,6 @@
 
 #![cfg(feature = "module-subscription")]
 
-use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::{
     extract::{Path, State},
@@ -26,6 +25,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::tier::{resolve_effective_tier, SubscriptionStatus, Tier};
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
 

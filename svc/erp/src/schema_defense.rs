@@ -613,11 +613,9 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
     // 阶段 0.5：业务表增量列兜底（这些表由独立迁移建表、未纳入 TABLE_DEFS 防御）。
     // asset_category.rs 的 SELECT/INSERT/UPDATE 均引用 name_en（i18n 双语列），
     // 但历史库可能未跑 i18n 迁移导致缺列 → 查询 500。幂等补齐。
-    sqlx::query(
-        "ALTER TABLE erp.asset_categories ADD COLUMN IF NOT EXISTS name_en VARCHAR(255)",
-    )
-    .execute(pool)
-    .await?;
+    sqlx::query("ALTER TABLE erp.asset_categories ADD COLUMN IF NOT EXISTS name_en VARCHAR(255)")
+        .execute(pool)
+        .await?;
 
     // 阶段 1+2：调用 shared-db 抽象完成增量迁移 + 一致性自检
     //   阶段 1 ensure = 逐列 ALTER TABLE ADD COLUMN IF NOT EXISTS（增量补齐）

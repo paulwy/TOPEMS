@@ -518,14 +518,9 @@ pub async fn execute_drop_column(
             let not_found = msg.contains("does not exist");
             (
                 Json(if not_found {
-                    ApiResponse::from(TopemsError::ResourceNotFound(
-                        "表或字段不存在".to_string(),
-                    ))
+                    ApiResponse::from(TopemsError::ResourceNotFound("表或字段不存在".to_string()))
                 } else {
-                    ApiResponse::from(TopemsError::internal(
-                        "删除字段失败: {}",
-                        e,
-                    ))
+                    ApiResponse::from(TopemsError::internal("删除字段失败: {}", e))
                 }),
                 "error".to_string(),
                 Some(msg),

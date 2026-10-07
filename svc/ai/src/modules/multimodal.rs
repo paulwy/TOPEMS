@@ -119,7 +119,10 @@ pub async fn analyze_image(
 ) -> Json<ApiResponse<ImageAnalysisResponse>> {
     match state.multimodal_service.analyze_image(req).await {
         Ok(response) => Json(ApiResponse::success(response, "图片分析成功")),
-        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -141,7 +144,10 @@ pub async fn generate_caption(
     request.analysis_type = "caption".to_string();
     match state.multimodal_service.analyze_image(request).await {
         Ok(response) => Json(ApiResponse::success(response, "图片标题生成成功")),
-        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -163,7 +169,10 @@ pub async fn detect_objects(
     request.analysis_type = "objects".to_string();
     match state.multimodal_service.analyze_image(request).await {
         Ok(response) => Json(ApiResponse::success(response, "物体检测成功")),
-        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -185,7 +194,10 @@ pub async fn extract_text(
     request.analysis_type = "text".to_string();
     match state.multimodal_service.analyze_image(request).await {
         Ok(response) => Json(ApiResponse::success(response, "文字提取成功")),
-        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -207,7 +219,10 @@ pub async fn describe_image(
     request.analysis_type = "describe".to_string();
     match state.multimodal_service.analyze_image(request).await {
         Ok(response) => Json(ApiResponse::success(response, "图片描述成功")),
-        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ImageAnalysisResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -227,7 +242,10 @@ pub async fn analyze_video(
 ) -> Json<ApiResponse<VideoAnalysisResponse>> {
     match state.multimodal_service.analyze_video(req).await {
         Ok(response) => Json(ApiResponse::success(response, "视频分析成功")),
-        Err(e) => Json(ApiResponse::<VideoAnalysisResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<VideoAnalysisResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -249,7 +267,10 @@ pub async fn summarize_video(
     request.analysis_type = "summary".to_string();
     match state.multimodal_service.analyze_video(request).await {
         Ok(response) => Json(ApiResponse::success(response, "视频摘要生成成功")),
-        Err(e) => Json(ApiResponse::<VideoAnalysisResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<VideoAnalysisResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 

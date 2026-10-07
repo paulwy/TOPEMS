@@ -1,6 +1,6 @@
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::events::FinanceDomainEvent;

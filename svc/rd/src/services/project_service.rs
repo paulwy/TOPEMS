@@ -3,8 +3,8 @@
 // 后续复杂业务逻辑（多仓库协作、事务编排）将汇聚于此。
 #![allow(dead_code)]
 
-use topems_shared_core::error::Result;
 use sqlx::postgres::PgPool;
+use topems_shared_core::error::Result;
 use uuid::Uuid;
 
 use crate::models::{CreateProjectRequest, Project, UpdateProjectRequest};

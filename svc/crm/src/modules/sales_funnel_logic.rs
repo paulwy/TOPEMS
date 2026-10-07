@@ -1,7 +1,7 @@
 //! 销售漏斗计算纯函数模块
 
-use topems_shared_core::TopemsError;
 use rust_decimal::Decimal;
+use topems_shared_core::TopemsError;
 
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 /// 计算阶段间转换率（基于存量快照，返回百分比 0-100）

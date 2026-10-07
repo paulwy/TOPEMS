@@ -2,10 +2,10 @@
 //!
 //! Provides retry logic with exponential backoff for data synchronization.
 
-use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::sleep;
+use topems_shared_core::error::TopemsError;
 
 /// Retry configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -73,8 +73,12 @@ impl RetryExecutor {
                 Err(error) => {
                     last_error = error.to_string();
 
-                    if !self.is_retryable(&error.to_string()) || attempts >= self.config.max_retries {
-                        return RetryResult::MaxRetriesExceeded { error: error.to_string(), attempts };
+                    if !self.is_retryable(&error.to_string()) || attempts >= self.config.max_retries
+                    {
+                        return RetryResult::MaxRetriesExceeded {
+                            error: error.to_string(),
+                            attempts,
+                        };
                     }
 
                     let delay = self.calculate_delay(attempts);

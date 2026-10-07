@@ -552,7 +552,10 @@ pub async fn ask_structured(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<AskStructuredResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<AskStructuredResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -666,7 +669,9 @@ pub async fn history(
                 .await
             {
                 Ok(total) => (history, total as i32),
-                Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string())),
+                Err(e) => {
+                    return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string()))
+                }
             },
             Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string())),
         }
@@ -678,7 +683,9 @@ pub async fn history(
         {
             Ok(history) => match state.qa_service.get_qa_history_count(tenant_id).await {
                 Ok(total) => (history, total as i32),
-                Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string())),
+                Err(e) => {
+                    return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string()))
+                }
             },
             Err(e) => return Json(ApiResponse::<QAHistoryResponse>::error(500, &e.to_string())),
         }
@@ -747,7 +754,10 @@ pub async fn batch_delete_history(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<BatchDeleteResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<BatchDeleteResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 

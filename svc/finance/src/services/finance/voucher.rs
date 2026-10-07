@@ -14,17 +14,27 @@ fn parse_period_str(s: &str) -> Result<(i32, i32), TopemsError> {
     if chars.len() == 6 {
         let year_str: String = chars[0..4].iter().collect();
         let month_str: String = chars[4..6].iter().collect();
-        let year = year_str.parse::<i32>().map_err(|_| TopemsError::ValidationFailed("年份解析失败".to_string()))?;
-        let month = month_str.parse::<i32>().map_err(|_| TopemsError::ValidationFailed("月份解析失败".to_string()))?;
+        let year = year_str
+            .parse::<i32>()
+            .map_err(|_| TopemsError::ValidationFailed("年份解析失败".to_string()))?;
+        let month = month_str
+            .parse::<i32>()
+            .map_err(|_| TopemsError::ValidationFailed("月份解析失败".to_string()))?;
         Ok((year, month))
     } else if chars.len() == 7 && chars[4] == '-' {
         let year_str: String = chars[0..4].iter().collect();
         let month_str: String = chars[5..7].iter().collect();
-        let year = year_str.parse::<i32>().map_err(|_| TopemsError::ValidationFailed("年份解析失败".to_string()))?;
-        let month = month_str.parse::<i32>().map_err(|_| TopemsError::ValidationFailed("月份解析失败".to_string()))?;
+        let year = year_str
+            .parse::<i32>()
+            .map_err(|_| TopemsError::ValidationFailed("年份解析失败".to_string()))?;
+        let month = month_str
+            .parse::<i32>()
+            .map_err(|_| TopemsError::ValidationFailed("月份解析失败".to_string()))?;
         Ok((year, month))
     } else {
-        Err(TopemsError::ValidationFailed("无效的期间格式，应为 YYYYMM 或 YYYY-MM".to_string()))
+        Err(TopemsError::ValidationFailed(
+            "无效的期间格式，应为 YYYYMM 或 YYYY-MM".to_string(),
+        ))
     }
 }
 

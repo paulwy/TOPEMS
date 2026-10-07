@@ -1,7 +1,7 @@
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use sqlx::{PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::event_store::{EventMetadata, EventRecord, EventStore, SnapshotRecord};

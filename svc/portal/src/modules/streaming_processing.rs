@@ -16,12 +16,12 @@
 //!    - BackpressureConfig: 配置 (Drop/Backpressure/Sample/Batch)
 //!    - BackpressureState: 实时状态监控
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -508,7 +508,10 @@ impl StreamManagerV2 {
         Ok(event)
     }
 
-    pub async fn subscribe_stream(stream_id: &str, subscriber_id: String) -> Result<bool, TopemsError> {
+    pub async fn subscribe_stream(
+        stream_id: &str,
+        subscriber_id: String,
+    ) -> Result<bool, TopemsError> {
         let store = get_streaming_store();
 
         {
@@ -527,7 +530,10 @@ impl StreamManagerV2 {
         Ok(true)
     }
 
-    pub async fn unsubscribe_stream(stream_id: &str, subscriber_id: &str) -> Result<bool, TopemsError> {
+    pub async fn unsubscribe_stream(
+        stream_id: &str,
+        subscriber_id: &str,
+    ) -> Result<bool, TopemsError> {
         let store = get_streaming_store();
         let mut subs = store.stream_subscribers.lock().await;
 
@@ -938,7 +944,10 @@ impl BackpressureController {
     }
 
     #[allow(clippy::as_conversions)]
-    pub async fn apply_backpressure(stream_id: &str, event_id: String) -> Result<bool, TopemsError> {
+    pub async fn apply_backpressure(
+        stream_id: &str,
+        event_id: String,
+    ) -> Result<bool, TopemsError> {
         let store = get_streaming_store();
 
         let config = {
@@ -1033,9 +1042,9 @@ impl BackpressureController {
         let store = get_streaming_store();
         let mut states = store.bp_states.lock().await;
 
-        let state = states
-            .get_mut(stream_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("背压状态不存在: {}", stream_id)))?;
+        let state = states.get_mut(stream_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("背压状态不存在: {}", stream_id))
+        })?;
 
         let drained = state.queue_depth;
         state.queue_depth = 0;
@@ -1123,7 +1132,10 @@ impl BackpressureController {
 
             Ok(true)
         } else {
-            Err(TopemsError::ResourceNotFound(format!("背压计数器不存在: {}", stream_id)))
+            Err(TopemsError::ResourceNotFound(format!(
+                "背压计数器不存在: {}",
+                stream_id
+            )))
         }
     }
 }

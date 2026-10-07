@@ -1,6 +1,6 @@
-use topems_shared_core::error::TopemsError;
 use axum::extract::{Path, State};
 use axum::Json;
+use topems_shared_core::error::TopemsError;
 
 use crate::modules::form_assistant::{AiFormAssistantClient, FormAssistantAction};
 use crate::shared::AppState;
@@ -54,7 +54,9 @@ pub fn parse_action(
                 .unwrap_or("");
             Ok(FormAssistantAction::TranslateTerm(term.to_string()))
         }
-        _ => Err(TopemsError::ValidationFailed("无效的 action 参数".to_string()))
+        _ => Err(TopemsError::ValidationFailed(
+            "无效的 action 参数".to_string(),
+        )),
     }
 }
 

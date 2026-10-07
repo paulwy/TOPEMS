@@ -39,9 +39,13 @@ impl EventProjector {
 
     pub async fn rebuild_all(&self) -> Result<(), TopemsError> {
         for view in &self.views {
-            view.rebuild()
-                .await
-                .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to rebuild view '{}': {}", view.view_name(), e)))?;
+            view.rebuild().await.map_err(|e| {
+                TopemsError::DatabaseQuery(format!(
+                    "Failed to rebuild view '{}': {}",
+                    view.view_name(),
+                    e
+                ))
+            })?;
         }
         Ok(())
     }

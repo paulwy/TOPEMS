@@ -16,8 +16,8 @@
 //! 2. 在 `InProcProvider` 枚举中添加变体
 //! 3. 在 registry 中实现对应 `register_xxx` / `get_xxx` 方法
 
-use topems_shared_core::error::TopemsError;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 /// 财务模块提供的账户余额查询能力
 ///

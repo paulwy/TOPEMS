@@ -2,9 +2,9 @@
 //!
 //! 提供统一配置管理、动态配置更新、配置版本控制、配置验证、配置回滚等能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -507,7 +507,10 @@ impl ConfigCenter {
         if self.config.enable_validation {
             let validation = self.validate_config_item(&item);
             if !validation.valid {
-                return Err(TopemsError::BusinessLogic(format!("配置验证失败: {:?}", validation.errors)));
+                return Err(TopemsError::BusinessLogic(format!(
+                    "配置验证失败: {:?}",
+                    validation.errors
+                )));
             }
         }
 
@@ -601,7 +604,10 @@ impl ConfigCenter {
 
         // 检查是否可动态更新
         if !item.is_dynamic && self.config.enable_dynamic_config {
-            return Err(TopemsError::BusinessLogic(format!("配置项 {} 不支持动态更新", key)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "配置项 {} 不支持动态更新",
+                key
+            )));
         }
 
         let old_value = item.value.clone();
@@ -610,7 +616,10 @@ impl ConfigCenter {
         if self.config.enable_validation {
             let validation = self.validate_value(key, &value, item);
             if !validation.valid {
-                return Err(TopemsError::BusinessLogic(format!("配置值验证失败: {:?}", validation.errors)));
+                return Err(TopemsError::BusinessLogic(format!(
+                    "配置值验证失败: {:?}",
+                    validation.errors
+                )));
             }
         }
 

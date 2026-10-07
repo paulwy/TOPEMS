@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
@@ -11,6 +10,7 @@ use std::env;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 use tracing::{debug, error, info, warn, Instrument};
 
 /// 事件处理器回调类型
@@ -19,8 +19,9 @@ pub type EventHandler =
 
 /// 返回 Result 的事件处理器（失败触发重试/DLQ）——与 `EventHandler` 分离，
 /// 避免 `subscribe_handler` 把 Err 吞成 `()` 导致 Stream 层永远看到 `Ok(())`。
-pub type ResultEventHandler =
-    Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>> + Send + Sync>;
+pub type ResultEventHandler = Arc<
+    dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>> + Send + Sync,
+>;
 
 /// MDM 事件处理器回调类型
 pub type MasterDataEventHandler =
@@ -123,9 +124,9 @@ impl EventSubscriber {
     where
         F: Fn(
                 Event,
-            )
-                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
-            + Send
+            ) -> std::pin::Pin<
+                Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>,
+            > + Send
             + Sync
             + Clone
             + 'static,
@@ -523,9 +524,9 @@ impl EventSubscriber {
     where
         F: Fn(
                 MasterDataEvent,
-            )
-                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
-            + Send
+            ) -> std::pin::Pin<
+                Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>,
+            > + Send
             + Sync
             + Clone
             + 'static,
@@ -545,9 +546,9 @@ impl EventSubscriber {
     where
         F: Fn(
                 MasterDataEvent,
-            )
-                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
-            + Send
+            ) -> std::pin::Pin<
+                Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>,
+            > + Send
             + Sync
             + Clone
             + 'static,
@@ -560,9 +561,9 @@ impl EventSubscriber {
     where
         F: Fn(
                 MasterDataEvent,
-            )
-                -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>>
-            + Send
+            ) -> std::pin::Pin<
+                Box<dyn std::future::Future<Output = Result<(), TopemsError>> + Send>,
+            > + Send
             + Sync
             + Clone
             + 'static,

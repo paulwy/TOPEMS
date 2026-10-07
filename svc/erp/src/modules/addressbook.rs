@@ -577,7 +577,10 @@ fn stub_routes() -> Router<ApiState> {
         // 分组
         .route("/addressbook/groups/{id}", get(s).put(s).delete(s))
         .route("/addressbook/groups/tree", get(s))
-        .route("/addressbook/groups/{id}/contacts", get(s).post(s).delete(s))
+        .route(
+            "/addressbook/groups/{id}/contacts",
+            get(s).post(s).delete(s),
+        )
         .route("/addressbook/groups/{id}/contacts/batch", post(s))
         .route("/addressbook/groups/{id}/contacts/{cid}", delete(s))
         .route("/addressbook/groups/{id}/sort", put(s))

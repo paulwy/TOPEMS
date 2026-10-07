@@ -1052,7 +1052,9 @@ pub async fn confirm_outbound_order(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound("出库订单不存在或当前状态不允许确认".to_string()))),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "出库订单不存在或当前状态不允许确认".to_string(),
+            ))),
             "not_found",
             None,
         ),
@@ -1144,7 +1146,9 @@ pub async fn pick_outbound_order(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound("出库订单不存在或当前状态不允许拣货".to_string()))),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "出库订单不存在或当前状态不允许拣货".to_string(),
+            ))),
             "not_found",
             None,
         ),
@@ -1238,7 +1242,9 @@ pub async fn pack_outbound_order(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound("出库订单不存在或当前状态不允许打包".to_string()))),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "出库订单不存在或当前状态不允许打包".to_string(),
+            ))),
             "not_found",
             None,
         ),
@@ -1591,7 +1597,9 @@ pub async fn complete_outbound_order(
             None,
         ),
         Err(sqlx::Error::RowNotFound) => (
-            Json(ApiResponse::from(TopemsError::ResourceNotFound("出库订单不存在或当前状态不允许完成".to_string()))),
+            Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "出库订单不存在或当前状态不允许完成".to_string(),
+            ))),
             "not_found",
             None,
         ),

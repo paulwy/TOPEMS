@@ -8,7 +8,6 @@
 
 #![cfg(feature = "module-mes")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::body::Body;
 use axum::extract::Request;
@@ -21,6 +20,7 @@ use std::time::Duration;
 use topems_mes::{modules, AppState};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::event::EventPublisher;

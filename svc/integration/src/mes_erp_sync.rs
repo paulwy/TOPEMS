@@ -6,12 +6,12 @@
 //! - 同步日志记录
 //! - 失败重试机制
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, PgPool};
 use std::time::Duration;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
 
@@ -194,7 +194,10 @@ impl MesErpSyncService {
                 )
                 .await?;
 
-                Err(TopemsError::BusinessLogic(format!("ERP→MES 同步失败（尝试{}次）：{}", attempts, error)))
+                Err(TopemsError::BusinessLogic(format!(
+                    "ERP→MES 同步失败（尝试{}次）：{}",
+                    attempts, error
+                )))
             }
         }
     }
@@ -233,7 +236,10 @@ impl MesErpSyncService {
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(TopemsError::BusinessLogic(format!("MES服务返回错误 {}: {}", status, error_text)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "MES服务返回错误 {}: {}",
+                status, error_text
+            )));
         }
 
         let result: serde_json::Value = response
@@ -351,7 +357,10 @@ impl MesErpSyncService {
         }
     }
 
-    async fn do_mes_to_erp_sync(&self, progress: &MesProductionProgressData) -> Result<(), TopemsError> {
+    async fn do_mes_to_erp_sync(
+        &self,
+        progress: &MesProductionProgressData,
+    ) -> Result<(), TopemsError> {
         let client = reqwest::Client::new();
         let url = format!(
             "{}/api/erp/production-orders/sync/mes-progress",
@@ -369,7 +378,10 @@ impl MesErpSyncService {
         if !response.status().is_success() {
             let status = response.status();
             let error_text = response.text().await.unwrap_or_default();
-            return Err(TopemsError::BusinessLogic(format!("ERP服务返回错误 {}: {}", status, error_text)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "ERP服务返回错误 {}: {}",
+                status, error_text
+            )));
         }
 
         let result: serde_json::Value = response
@@ -384,7 +396,10 @@ impl MesErpSyncService {
                 .get("message")
                 .and_then(|v| v.as_str())
                 .unwrap_or("未知错误");
-            return Err(TopemsError::BusinessLogic(format!("ERP进度同步失败: {}", msg)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "ERP进度同步失败: {}",
+                msg
+            )));
         }
 
         Ok(())
@@ -412,7 +427,10 @@ impl MesErpSyncService {
             .map_err(|e| TopemsError::NetworkRequest(format!("获取ERP订单失败: {}", e)))?;
 
         if !response.status().is_success() {
-            return Err(TopemsError::BusinessLogic(format!("获取ERP订单失败: HTTP {}", response.status())));
+            return Err(TopemsError::BusinessLogic(format!(
+                "获取ERP订单失败: HTTP {}",
+                response.status()
+            )));
         }
 
         let result: serde_json::Value = response
@@ -500,7 +518,10 @@ impl MesErpSyncService {
             .map_err(|e| TopemsError::NetworkRequest(format!("获取MES订单失败: {}", e)))?;
 
         if !response.status().is_success() {
-            return Err(TopemsError::BusinessLogic(format!("获取MES订单失败: HTTP {}", response.status())));
+            return Err(TopemsError::BusinessLogic(format!(
+                "获取MES订单失败: HTTP {}",
+                response.status()
+            )));
         }
 
         let result: serde_json::Value = response
@@ -733,7 +754,9 @@ impl MesErpSyncService {
         };
 
         if sync_record.sync_status != "failed" {
-            return Err(TopemsError::ValidationFailed("只有失败的同步记录才能重试".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "只有失败的同步记录才能重试".to_string(),
+            ));
         }
 
         match sync_record.sync_direction.as_str() {
@@ -742,7 +765,9 @@ impl MesErpSyncService {
                     self.sync_erp_to_mes(sync_record.tenant_id, erp_order_id)
                         .await
                 } else {
-                    Err(TopemsError::ValidationFailed("缺少ERP订单ID，无法重试".to_string()))
+                    Err(TopemsError::ValidationFailed(
+                        "缺少ERP订单ID，无法重试".to_string(),
+                    ))
                 }
             }
             "mes_to_erp" => {
@@ -750,10 +775,15 @@ impl MesErpSyncService {
                     self.sync_mes_progress_to_erp(sync_record.tenant_id, mes_order_id)
                         .await
                 } else {
-                    Err(TopemsError::ValidationFailed("缺少MES订单ID，无法重试".to_string()))
+                    Err(TopemsError::ValidationFailed(
+                        "缺少MES订单ID，无法重试".to_string(),
+                    ))
                 }
             }
-            _ => Err(TopemsError::ValidationFailed(format!("未知的同步方向: {}", sync_record.sync_direction)),)
+            _ => Err(TopemsError::ValidationFailed(format!(
+                "未知的同步方向: {}",
+                sync_record.sync_direction
+            ))),
         }
     }
 
@@ -788,7 +818,10 @@ impl MesErpSyncService {
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询同步记录失败: {}", e)))
     }
 
-    pub async fn get_sync_record(&self, sync_id: Uuid) -> Result<Option<MesErpSyncRecord>, TopemsError> {
+    pub async fn get_sync_record(
+        &self,
+        sync_id: Uuid,
+    ) -> Result<Option<MesErpSyncRecord>, TopemsError> {
         sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"

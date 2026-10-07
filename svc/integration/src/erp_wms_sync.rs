@@ -3,11 +3,11 @@
 //! Implements bidirectional data synchronization between ERP inventory records
 //! and WMS warehouse management system, including stock movements and inventory adjustments.
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -377,7 +377,8 @@ pub async fn sync_order_to_wms(
         req.order_id, req.order_type
     );
 
-    let order_id = Uuid::parse_str(&req.order_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的订单ID: {}", e)))?;
+    let order_id = Uuid::parse_str(&req.order_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的订单ID: {}", e)))?;
 
     let order_data = fetch_erp_order(pool, erp_url, order_id).await?;
 
@@ -451,8 +452,8 @@ pub async fn sync_stock_to_erp(
 ) -> Result<ErpWmsSync, TopemsError> {
     info!("同步WMS库存到ERP - 产品ID: {}", req.product_id);
 
-    let product_id =
-        Uuid::parse_str(&req.product_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的产品ID: {}", e)))?;
+    let product_id = Uuid::parse_str(&req.product_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的产品ID: {}", e)))?;
 
     let stock_data =
         fetch_wms_stock(pool, wms_url, product_id, req.warehouse_code.as_deref()).await?;
@@ -526,13 +527,18 @@ pub async fn sync_inventory_adjustment(
         req.adjustment_id, req.adjustment_type
     );
 
-    let adjustment_id =
-        Uuid::parse_str(&req.adjustment_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的调整ID: {}", e)))?;
+    let adjustment_id = Uuid::parse_str(&req.adjustment_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的调整ID: {}", e)))?;
 
     let adjustment_data = match req.adjustment_type.as_str() {
         "erp" => fetch_erp_inventory_adjustment(pool, erp_url, adjustment_id).await?,
         "wms" => fetch_wms_inventory_adjustment(pool, wms_url, adjustment_id).await?,
-        _ => return Err(TopemsError::ValidationFailed(format!("未知的调整类型: {}", req.adjustment_type)),)
+        _ => {
+            return Err(TopemsError::ValidationFailed(format!(
+                "未知的调整类型: {}",
+                req.adjustment_type
+            )))
+        }
     };
 
     let direction = if req.adjustment_type == "erp" {
@@ -896,7 +902,9 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "已达到最大重试次数".to_string(),
+        ));
     }
 
     let retry_config = RetryConfig {
@@ -927,17 +935,14 @@ pub async fn retry_failed_sync(
 
     match result {
         RetryResult::Success(_) => {
-            let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
-                .await
-                ?;
+            let updated =
+                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error)
-                .await
-                ?;
+            increment_retry_count(pool, sync_id, &error).await?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -994,7 +999,10 @@ async fn execute_sync_by_type(
             sync_inventory_adjustment(pool, tenant_id, erp_url, wms_url, &req).await?;
             Ok(())
         }
-        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
+        _ => Err(TopemsError::ValidationFailed(format!(
+            "不支持的同步类型: {}",
+            sync_type
+        ))),
     }
 }
 

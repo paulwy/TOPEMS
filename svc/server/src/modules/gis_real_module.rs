@@ -8,13 +8,13 @@
 
 #![cfg(feature = "module-gis")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_gis::embedded::{self, AppState};
 use topems_gis::modules::websocket::{WebSocketConfig, WebSocketManager};
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 
 /// 真实 GIS 模块：持有数据库连接池 + 完整业务路由
 pub struct GisRealModule {

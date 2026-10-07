@@ -10,7 +10,6 @@
 
 #![cfg(feature = "module-hrm")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -20,6 +19,7 @@ use topems_shared_auth::middleware::require_permission;
 use topems_shared_auth::security::init_encryption_from_env;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
 use topems_shared_core::config::CacheConfig;
+use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::cache::InMemoryCache as EventInMemoryCache;
 use topems_shared_event::redis::CacheService;

@@ -160,10 +160,14 @@ pub async fn create_announcement(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("公告标题", &req.title) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            e.to_string(),
+        )));
     }
     if let Err(e) = validate_required_field("作者", &req.author) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            e.to_string(),
+        )));
     }
     let id = Uuid::new_v4();
     let now = Utc::now();

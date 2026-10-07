@@ -19,7 +19,10 @@ impl PdfParser {
 
         // 检查文件是否存在
         if !std::path::Path::new(&file_path_owned).exists() {
-            return Err(TopemsError::ResourceNotFound(format!("文件不存在: {}", file_path)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "文件不存在: {}",
+                file_path
+            )));
         }
 
         // 在阻塞线程中执行 PDF 解析
@@ -52,7 +55,8 @@ impl PdfParser {
 
     /// 使用 lopdf 提取文本（备用方法）
     fn extract_with_lopdf(file_path: &str) -> Result<String, TopemsError> {
-        let doc = lopdf::Document::load(file_path).map_err(|e| TopemsError::FileOperation(format!("加载 PDF 失败: {}", e)))?;
+        let doc = lopdf::Document::load(file_path)
+            .map_err(|e| TopemsError::FileOperation(format!("加载 PDF 失败: {}", e)))?;
 
         let mut full_text = String::new();
 
@@ -70,7 +74,9 @@ impl PdfParser {
 
         let cleaned = Self::clean_text(&full_text);
         if cleaned.is_empty() {
-            Err(TopemsError::BusinessLogic("无法从 PDF 提取文本内容".to_string()))
+            Err(TopemsError::BusinessLogic(
+                "无法从 PDF 提取文本内容".to_string(),
+            ))
         } else {
             Ok(cleaned)
         }

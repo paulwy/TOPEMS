@@ -149,9 +149,7 @@ impl DeploymentConfig {
         }
 
         if user_tenant_id != resource_tenant_id {
-            return Err(TopemsError::OperationNotAllowed(
-                "租户不匹配".to_string(),
-            ));
+            return Err(TopemsError::OperationNotAllowed("租户不匹配".to_string()));
         }
 
         Ok(())

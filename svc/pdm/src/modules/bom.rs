@@ -1,4 +1,3 @@
-use topems_shared_core::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     routing::{get, post},
@@ -9,6 +8,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::collections::{HashMap, HashSet};
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::shared::AppState;
@@ -56,7 +56,10 @@ pub fn explode_bom(
                     // 叶子（没子件）累加；非叶子 DFS
                     let child_key = child.to_string();
                     if path.contains(&child_key) {
-                        return Err(TopemsError::BusinessLogic(format!("循环依赖检测：节点 {} 在路径中重复出现", child_key)));
+                        return Err(TopemsError::BusinessLogic(format!(
+                            "循环依赖检测：节点 {} 在路径中重复出现",
+                            child_key
+                        )));
                     }
                     // 累计用量
                     *result.entry(child_key.clone()).or_insert(0.0) += child_mult;
@@ -182,7 +185,10 @@ pub fn bom_max_depth(edges: &[BomEdge], root: &str) -> Result<u32, TopemsError> 
                 for child in list {
                     let child_key = child.to_string();
                     if path.contains(&child_key) {
-                        return Err(TopemsError::BusinessLogic(format!("循环依赖：{}", child_key)));
+                        return Err(TopemsError::BusinessLogic(format!(
+                            "循环依赖：{}",
+                            child_key
+                        )));
                     }
                     let mut np = path.clone();
                     np.insert(child_key);

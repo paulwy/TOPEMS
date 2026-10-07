@@ -1,5 +1,5 @@
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
+use topems_shared_core::error::TopemsError;
 
 use super::aggregates::*;
 
@@ -40,6 +40,9 @@ pub trait ReceivableRepository: Send + Sync {
 pub trait PayableRepository: Send + Sync {
     async fn save(&self, aggregate: &PayableAggregate) -> Result<(), TopemsError>;
     async fn find_by_id(&self, id: &str) -> Result<Option<PayableAggregate>, TopemsError>;
-    async fn list(&self, page: i64, page_size: i64)
-        -> Result<(Vec<PayableAggregate>, i64), TopemsError>;
+    async fn list(
+        &self,
+        page: i64,
+        page_size: i64,
+    ) -> Result<(Vec<PayableAggregate>, i64), TopemsError>;
 }

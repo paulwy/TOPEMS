@@ -8,13 +8,13 @@
 
 #![cfg(feature = "module-wms")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use std::time::Duration;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_unified_core::middleware::tier_gate::{tier_gate_middleware, TierGateConfig};
 use topems_unified_core::modules::subscription::PlanTier;

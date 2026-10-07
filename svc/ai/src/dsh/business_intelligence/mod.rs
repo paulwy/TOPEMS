@@ -2,9 +2,9 @@
 //!
 //! 提供智能表单（自动填充、验证、生成）和文档智能（解析、生成、摘要）能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};

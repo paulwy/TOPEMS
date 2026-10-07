@@ -1,7 +1,7 @@
-use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, PdmBomCreatedPayload,
     PdmBomUpdatedPayload, PdmMaterialCreatedPayload, PdmMaterialUpdatedPayload,
@@ -65,9 +65,9 @@ impl RdEventHandlers {
 
         match event.event_type {
             EventType::PmProjectCreated => {
-                let payload: PmProjectCreatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析项目创建事件 payload 失败: {}", e)))?;
+                let payload: PmProjectCreatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析项目创建事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[rd] PM 项目创建: {} ({})，负责人: {}",
@@ -116,9 +116,9 @@ impl RdEventHandlers {
                 }
             }
             EventType::PmProjectCompleted => {
-                let payload: PmProjectCompletedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析项目完成事件 payload 失败: {}", e)))?;
+                let payload: PmProjectCompletedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析项目完成事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[rd] PM 项目完成: {} ({})，完成人: {:?}",
@@ -169,9 +169,9 @@ impl RdEventHandlers {
 
         match event.event_type {
             EventType::PdmMaterialCreated => {
-                let payload: PdmMaterialCreatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析物料创建事件 payload 失败: {}", e)))?;
+                let payload: PdmMaterialCreatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析物料创建事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[rd] PDM 物料创建: {} {} ({})，类型: {:?}",
@@ -193,9 +193,9 @@ impl RdEventHandlers {
                 );
             }
             EventType::PdmMaterialUpdated => {
-                let payload: PdmMaterialUpdatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析物料更新事件 payload 失败: {}", e)))?;
+                let payload: PdmMaterialUpdatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析物料更新事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[rd] PDM 物料更新: {} ({})，更新字段: {}",
@@ -224,9 +224,9 @@ impl RdEventHandlers {
 
         match event.event_type {
             EventType::PdmBomCreated => {
-                let payload: PdmBomCreatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析 BOM 创建事件 payload 失败: {}", e)))?;
+                let payload: PdmBomCreatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析 BOM 创建事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[rd] PDM BOM 创建: {} ({})，产品: {:?}，版本: {:?}",
@@ -249,9 +249,9 @@ impl RdEventHandlers {
                 );
             }
             EventType::PdmBomUpdated => {
-                let payload: PdmBomUpdatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析 BOM 更新事件 payload 失败: {}", e)))?;
+                let payload: PdmBomUpdatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析 BOM 更新事件 payload 失败: {}", e))
+                })?;
 
                 tracing::info!(
                     "[rd] PDM BOM 更新: {} ({})，更新字段: {}",

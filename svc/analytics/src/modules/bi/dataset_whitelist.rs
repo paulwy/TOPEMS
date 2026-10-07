@@ -10,9 +10,9 @@
 //!
 //! 默认模式 = `warn`。
 
-use topems_shared_core::error::TopemsError;
 use sqlx::PgPool;
 use std::env;
+use topems_shared_core::error::TopemsError;
 use tracing::{error, warn};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -82,7 +82,9 @@ pub async fn validate_columns(
             let msg = format!("BI dataset whitelist 查询失败 (table={table_name}): {e}");
             error!("{msg}");
             return if matches!(mode, EnforceMode::Strict) {
-                Err(TopemsError::BusinessLogic("数据元信息不可用，请稍后重试".to_string()))
+                Err(TopemsError::BusinessLogic(
+                    "数据元信息不可用，请稍后重试".to_string(),
+                ))
             } else {
                 Ok(())
             };
@@ -176,7 +178,11 @@ pub async fn auto_register_from_information_schema(
         .bind(*table)
         .execute(pool)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("auto_register bi_datasets for '{table}' failed: {e}")))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "auto_register bi_datasets for '{table}' failed: {e}"
+            ))
+        })?;
         inserted += rows.rows_affected();
     }
 

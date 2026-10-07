@@ -948,7 +948,10 @@ pub async fn list_incident_actions(
     _headers: HeaderMap,
     axum::extract::Path(_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(Vec::<serde_json::Value>::new(), "获取事故行动列表成功"))
+    Json(ApiResponse::success(
+        Vec::<serde_json::Value>::new(),
+        "获取事故行动列表成功",
+    ))
 }
 
 pub async fn create_incident_action(

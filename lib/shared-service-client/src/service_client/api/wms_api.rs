@@ -67,10 +67,7 @@ impl TypedServiceClient<WmsApi> {
     }
 
     /// 删除库存（DELETE /api/wms/inventory/{id}）
-    pub async fn delete_inventory(
-        &self,
-        id: &str,
-    ) -> ServiceClientResult<serde_json::Value> {
+    pub async fn delete_inventory(&self, id: &str) -> ServiceClientResult<serde_json::Value> {
         let path = format!("/inventory/{}", id);
         self.delete(&self.build_path(&path)).await
     }

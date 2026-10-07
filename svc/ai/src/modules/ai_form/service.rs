@@ -1,6 +1,6 @@
-use topems_shared_core::error::TopemsError;
 use axum::routing::{get, post};
 use axum::Router;
+use topems_shared_core::error::TopemsError;
 
 use super::handlers::{
     ai_form_assist, ai_form_enhance, ai_form_suggest, ai_form_translate, ai_form_validate,
@@ -80,7 +80,10 @@ pub async fn assist(
     assistant: &dyn AiFormAssistant,
     request: crate::modules::form_assistant::AiFormAssistantRequest,
 ) -> Result<crate::modules::form_assistant::AiFormAssistantResponse, TopemsError> {
-    assistant.assist(request).await.map_err(|e| TopemsError::NetworkRequest(e.to_string()))
+    assistant
+        .assist(request)
+        .await
+        .map_err(|e| TopemsError::NetworkRequest(e.to_string()))
 }
 
 pub async fn suggest_fields_for_form(

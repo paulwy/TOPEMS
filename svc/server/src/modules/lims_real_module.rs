@@ -8,7 +8,6 @@
 
 #![cfg(feature = "module-lims")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -17,6 +16,7 @@ use topems_lims::modules;
 use topems_lims::shared::AppState;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 use topems_shared_core::health::SimpleHealthConfig;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 use topems_shared_event::event::EventPublisher;

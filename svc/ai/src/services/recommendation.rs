@@ -1,7 +1,7 @@
-use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -169,8 +169,8 @@ impl RecommendationService {
             .trim()
             .to_string();
 
-        let result: serde_json::Value =
-            serde_json::from_str(&cleaned).map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
+        let result: serde_json::Value = serde_json::from_str(&cleaned)
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
 
         self.extract_recommendations_from_json(result)
     }
@@ -235,8 +235,8 @@ impl RecommendationService {
             .trim()
             .to_string();
 
-        let result: serde_json::Value =
-            serde_json::from_str(&cleaned).map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
+        let result: serde_json::Value = serde_json::from_str(&cleaned)
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
 
         self.extract_recommendations_from_json(result)
     }
@@ -326,8 +326,8 @@ impl RecommendationService {
             .trim()
             .to_string();
 
-        let result: serde_json::Value =
-            serde_json::from_str(&cleaned).map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
+        let result: serde_json::Value = serde_json::from_str(&cleaned)
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析推荐结果失败: {}", e)))?;
 
         self.extract_recommendations_from_json(result)
     }

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
+use topems_shared_core::error::TopemsError;
 
 use reqwest::blocking::Client;
 
@@ -61,7 +61,10 @@ impl SapApiClient {
             }
         } else {
             let status = response.status();
-            Err(TopemsError::BusinessLogic(format!("SAP认证失败: {}", status)))
+            Err(TopemsError::BusinessLogic(format!(
+                "SAP认证失败: {}",
+                status
+            )))
         }
     }
 

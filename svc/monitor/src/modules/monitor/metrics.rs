@@ -243,11 +243,14 @@ pub async fn list_metrics(
         serde_json::json!({"id":"active_connections","name":"活跃连接","category":"network","value":0,"unit":"conn","status":"normal","timestamp":now}),
     ];
     let mut items: Vec<serde_json::Value> = match &q.category {
-        Some(cat) => all.into_iter().filter(|m| m.get("category").and_then(|v| v.as_str()) == Some(cat.as_str())).collect(),
+        Some(cat) => all
+            .into_iter()
+            .filter(|m| m.get("category").and_then(|v| v.as_str()) == Some(cat.as_str()))
+            .collect(),
         None => all,
     };
     if let Some(limit) = q.limit {
-        items.truncate(limit.max(0) as usize);
+        items.truncate(usize::try_from(limit.max(0)).unwrap_or(usize::MAX));
     }
     Json(ApiResponse::success(items, "获取指标列表成功"))
 }

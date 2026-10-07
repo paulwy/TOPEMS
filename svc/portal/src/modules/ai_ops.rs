@@ -19,12 +19,12 @@
 //!    - HealingAction: 自愈动作 (重启/扩容/移除/重定向)
 //!    - RecoveryPlan: 恢复计划
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -1047,7 +1047,9 @@ impl AutoCacheManager {
             None => {
                 let mut misses = store.total_misses.lock().await;
                 *misses += 1;
-                Err(TopemsError::BusinessLogic("缓存未命中且未提供新值".to_string()))
+                Err(TopemsError::BusinessLogic(
+                    "缓存未命中且未提供新值".to_string(),
+                ))
             }
         }
     }

@@ -1,5 +1,5 @@
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
+use topems_shared_core::error::TopemsError;
 
 use super::aggregates::*;
 use super::entities::*;
@@ -10,7 +10,11 @@ use super::value_objects::*;
 #[async_trait]
 pub trait EventSourcedRepository<A> {
     async fn load(&self, id: &str) -> Result<Option<A>, TopemsError>;
-    async fn save(&self, aggregate: &mut A, metadata: Option<EventMetadata>) -> Result<(), TopemsError>;
+    async fn save(
+        &self,
+        aggregate: &mut A,
+        metadata: Option<EventMetadata>,
+    ) -> Result<(), TopemsError>;
 }
 
 pub struct VoucherEventSourcedRepository<T: EventStore> {
@@ -38,8 +42,9 @@ impl<T: EventStore> VoucherEventSourcedRepository<T> {
 
         let (aggregate, from_version) = match snapshot {
             Some(snap) => {
-                let agg: VoucherAggregate = serde_json::from_value(snap.state)
-                    .map_err(|e| TopemsError::ValidationFailed(format!("Failed to deserialize snapshot: {}", e)))?;
+                let agg: VoucherAggregate = serde_json::from_value(snap.state).map_err(|e| {
+                    TopemsError::ValidationFailed(format!("Failed to deserialize snapshot: {}", e))
+                })?;
                 (Some(agg), snap.version)
             }
             None => (None, 0),
@@ -105,8 +110,9 @@ impl<T: EventStore> VoucherEventSourcedRepository<T> {
         version: u64,
     ) -> Result<(), TopemsError> {
         if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
-            let state = serde_json::to_value(aggregate)
-                .map_err(|e| TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e)))?;
+            let state = serde_json::to_value(aggregate).map_err(|e| {
+                TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e))
+            })?;
             let snapshot = SnapshotRecord {
                 aggregate_id: aggregate.id.clone(),
                 aggregate_type: "Voucher".to_string(),
@@ -170,8 +176,9 @@ impl<T: EventStore> ReceivableEventSourcedRepository<T> {
 
         let (aggregate, from_version) = match snapshot {
             Some(snap) => {
-                let agg: ReceivableAggregate = serde_json::from_value(snap.state)
-                    .map_err(|e| TopemsError::ValidationFailed(format!("Failed to deserialize snapshot: {}", e)))?;
+                let agg: ReceivableAggregate = serde_json::from_value(snap.state).map_err(|e| {
+                    TopemsError::ValidationFailed(format!("Failed to deserialize snapshot: {}", e))
+                })?;
                 (Some(agg), snap.version)
             }
             None => (None, 0),
@@ -239,8 +246,9 @@ impl<T: EventStore> ReceivableEventSourcedRepository<T> {
         version: u64,
     ) -> Result<(), TopemsError> {
         if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
-            let state = serde_json::to_value(aggregate)
-                .map_err(|e| TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e)))?;
+            let state = serde_json::to_value(aggregate).map_err(|e| {
+                TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e))
+            })?;
             let snapshot = SnapshotRecord {
                 aggregate_id: aggregate.receivable.id.clone(),
                 aggregate_type: "Receivable".to_string(),
@@ -310,8 +318,9 @@ impl<T: EventStore> PayableEventSourcedRepository<T> {
 
         let (aggregate, from_version) = match snapshot {
             Some(snap) => {
-                let agg: PayableAggregate = serde_json::from_value(snap.state)
-                    .map_err(|e| TopemsError::ValidationFailed(format!("Failed to deserialize snapshot: {}", e)))?;
+                let agg: PayableAggregate = serde_json::from_value(snap.state).map_err(|e| {
+                    TopemsError::ValidationFailed(format!("Failed to deserialize snapshot: {}", e))
+                })?;
                 (Some(agg), snap.version)
             }
             None => (None, 0),
@@ -379,8 +388,9 @@ impl<T: EventStore> PayableEventSourcedRepository<T> {
         version: u64,
     ) -> Result<(), TopemsError> {
         if version.is_multiple_of(self.snapshot_threshold) && version > 0 {
-            let state = serde_json::to_value(aggregate)
-                .map_err(|e| TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e)))?;
+            let state = serde_json::to_value(aggregate).map_err(|e| {
+                TopemsError::ValidationFailed(format!("Failed to serialize snapshot: {}", e))
+            })?;
             let snapshot = SnapshotRecord {
                 aggregate_id: aggregate.payable.id.clone(),
                 aggregate_type: "Payable".to_string(),

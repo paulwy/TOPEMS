@@ -2,9 +2,9 @@
 //!
 //! 提供业务 Copilot 的通用框架、上下文管理、意图识别、工具调用等能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};

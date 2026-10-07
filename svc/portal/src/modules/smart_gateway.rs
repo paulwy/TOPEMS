@@ -16,7 +16,6 @@
 //!    - DegradationPolicy: 触发阈值 + 回退策略
 //!    - AdaptiveDegradationController: 实时健康监控 + 自动降级调整
 
-use topems_shared_core::error::TopemsError;
 use axum::extract::{Json, Path, Query};
 use axum::http::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -24,6 +23,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
+use topems_shared_core::error::TopemsError;
 
 // ==================== 类型定义 ====================
 
@@ -352,18 +352,26 @@ impl ProtocolRouterInner {
         self.handlers.insert(proto, handler);
     }
 
-    fn route_request(&self, protocol: SupportedProtocol, request: &str) -> Result<String, TopemsError> {
-        let config = self
-            .protocols
-            .get(&protocol)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("Protocol {:?} not found", protocol)))?;
+    fn route_request(
+        &self,
+        protocol: SupportedProtocol,
+        request: &str,
+    ) -> Result<String, TopemsError> {
+        let config = self.protocols.get(&protocol).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("Protocol {:?} not found", protocol))
+        })?;
         if !config.enabled {
-            return Err(TopemsError::BusinessLogic(format!("Protocol {:?} is disabled", protocol)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "Protocol {:?} is disabled",
+                protocol
+            )));
         }
-        let handler = self
-            .handlers
-            .get(&protocol)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("No handler registered for protocol {:?}", protocol)))?;
+        let handler = self.handlers.get(&protocol).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!(
+                "No handler registered for protocol {:?}",
+                protocol
+            ))
+        })?;
         handler.handle(request)
     }
 

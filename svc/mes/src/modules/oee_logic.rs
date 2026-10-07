@@ -86,28 +86,44 @@ pub fn validate_oee_inputs(
     good_output: f64,
 ) -> Result<(), TopemsError> {
     if planned_time < 0.0 {
-        return Err(TopemsError::BusinessLogic("Planned production time cannot be negative".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Planned production time cannot be negative".to_string(),
+        ));
     }
     if run_time < 0.0 {
-        return Err(TopemsError::BusinessLogic("Run time cannot be negative".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Run time cannot be negative".to_string(),
+        ));
     }
     if downtime < 0.0 {
-        return Err(TopemsError::BusinessLogic("Downtime cannot be negative".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Downtime cannot be negative".to_string(),
+        ));
     }
     if ideal_cycle_time < 0.0 {
-        return Err(TopemsError::BusinessLogic("Ideal cycle time cannot be negative".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Ideal cycle time cannot be negative".to_string(),
+        ));
     }
     if actual_output < 0.0 {
-        return Err(TopemsError::BusinessLogic("Actual output cannot be negative".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Actual output cannot be negative".to_string(),
+        ));
     }
     if good_output < 0.0 {
-        return Err(TopemsError::BusinessLogic("Good output cannot be negative".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Good output cannot be negative".to_string(),
+        ));
     }
     if good_output > actual_output {
-        return Err(TopemsError::BusinessLogic("Good output cannot exceed actual output".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Good output cannot exceed actual output".to_string(),
+        ));
     }
     if run_time > planned_time + downtime {
-        return Err(TopemsError::BusinessLogic("Run time cannot exceed planned time plus downtime".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "Run time cannot exceed planned time plus downtime".to_string(),
+        ));
     }
 
     Ok(())
@@ -308,7 +324,10 @@ mod tests {
     fn test_validate_oee_inputs_negative_planned_time() {
         let result = validate_oee_inputs(-1.0, 100.0, 0.0, 1.0, 50.0, 45.0);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("Planned production time"));
+        assert!(result
+            .unwrap_err()
+            .to_string()
+            .contains("Planned production time"));
     }
 
     #[test]

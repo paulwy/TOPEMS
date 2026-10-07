@@ -11,7 +11,11 @@
 //! 所有占位 handler 均标注"待上游支持"。上游实现真实业务后，应将对应路由
 //! 替换为真实 handler。本路由表仅挂在 embedded BFF（mobile_real_module.rs）。
 
-use axum::{http::StatusCode, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    http::StatusCode,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde_json::{json, Value};
 
 use topems_shared_core::response::ApiResponse;
@@ -36,7 +40,10 @@ async fn detail_missing() -> (StatusCode, Json<ApiResponse<Value>>) {
 
 /// 写操作（POST/PUT/DELETE）→ 成功空数据。
 async fn mutate_ok() -> Json<ApiResponse<Value>> {
-    Json(ApiResponse::success(json!(null), "操作成功（轻量兜底，待上游支持）"))
+    Json(ApiResponse::success(
+        json!(null),
+        "操作成功（轻量兜底，待上游支持）",
+    ))
 }
 
 /// 组装兜底路由表（与 `build_protected_routes` 相同的 `AppState` 类型，供 .merge）。
@@ -45,7 +52,10 @@ pub fn routes() -> Router<AppState> {
         .route("/ai/chat", post(mutate_ok))
         .route("/ai/commands", get(list_empty))
         .route("/ai/conversations", get(list_empty))
-        .route("/ai/conversations/{p1}", delete(mutate_ok).get(detail_missing))
+        .route(
+            "/ai/conversations/{p1}",
+            delete(mutate_ok).get(detail_missing),
+        )
         .route("/ai/conversations/{p1}/stream", post(mutate_ok))
         .route("/ai/execute", post(mutate_ok))
         .route("/ai/images/generate", post(mutate_ok))
@@ -61,8 +71,14 @@ pub fn routes() -> Router<AppState> {
         .route("/analytics/feature-usage", get(list_empty))
         .route("/analytics/performance", get(list_empty))
         .route("/analytics/screen-time", get(list_empty))
-        .route("/approvals/delegations/{p1}", delete(mutate_ok).put(mutate_ok))
-        .route("/approvals/templates/{p1}", delete(mutate_ok).get(detail_missing).put(mutate_ok))
+        .route(
+            "/approvals/delegations/{p1}",
+            delete(mutate_ok).put(mutate_ok),
+        )
+        .route(
+            "/approvals/templates/{p1}",
+            delete(mutate_ok).get(detail_missing).put(mutate_ok),
+        )
         .route("/approvals/templates/{p1}/apply", post(mutate_ok))
         .route("/approvals/{p1}/approvers", get(detail_missing))
         .route("/approvals/{p1}/cc", post(mutate_ok))
@@ -72,13 +88,25 @@ pub fn routes() -> Router<AppState> {
         .route("/attendance/leaves/{p1}/cancel", post(mutate_ok))
         .route("/company-info", get(list_empty))
         .route("/customers", get(list_empty).post(mutate_ok))
-        .route("/customers/{p1}", delete(mutate_ok).get(detail_missing).put(mutate_ok))
+        .route(
+            "/customers/{p1}",
+            delete(mutate_ok).get(detail_missing).put(mutate_ok),
+        )
         .route("/customers/{p1}/assign", post(mutate_ok))
-        .route("/customers/{p1}/contacts", get(detail_missing).post(mutate_ok))
-        .route("/customers/{p1}/follow-ups", get(detail_missing).post(mutate_ok))
+        .route(
+            "/customers/{p1}/contacts",
+            get(detail_missing).post(mutate_ok),
+        )
+        .route(
+            "/customers/{p1}/follow-ups",
+            get(detail_missing).post(mutate_ok),
+        )
         .route("/dashboards", get(list_empty).post(mutate_ok))
         .route("/dashboards/{p1}", get(detail_missing))
-        .route("/dashboards/{p1}/widgets", get(detail_missing).post(mutate_ok))
+        .route(
+            "/dashboards/{p1}/widgets",
+            get(detail_missing).post(mutate_ok),
+        )
         .route("/dashboards/{p1}/widgets/{p2}", delete(mutate_ok))
         .route("/data/export", get(list_empty))
         .route("/data/query", post(mutate_ok))
@@ -91,9 +119,15 @@ pub fn routes() -> Router<AppState> {
         .route("/devices", get(list_empty))
         .route("/devices/{p1}", delete(mutate_ok).get(detail_missing))
         .route("/document-categories", get(list_empty))
-        .route("/documents/{p1}/approvals", get(detail_missing).post(mutate_ok))
+        .route(
+            "/documents/{p1}/approvals",
+            get(detail_missing).post(mutate_ok),
+        )
         .route("/documents/{p1}/approvals/{p2}", put(mutate_ok))
-        .route("/documents/{p1}/versions", get(detail_missing).post(mutate_ok))
+        .route(
+            "/documents/{p1}/versions",
+            get(detail_missing).post(mutate_ok),
+        )
         .route("/employees", get(list_empty))
         .route("/employees/search", get(list_empty))
         .route("/employees/{p1}", get(detail_missing))
@@ -132,7 +166,10 @@ pub fn routes() -> Router<AppState> {
         .route("/projects", get(list_empty))
         .route("/projects/stats", get(list_empty))
         .route("/projects/{p1}", get(detail_missing))
-        .route("/projects/{p1}/milestones", get(detail_missing).post(mutate_ok))
+        .route(
+            "/projects/{p1}/milestones",
+            get(detail_missing).post(mutate_ok),
+        )
         .route("/projects/{p1}/tasks", get(detail_missing).post(mutate_ok))
         .route("/quality/defects/{p1}", get(detail_missing))
         .route("/quality/defects/{p1}/status", put(mutate_ok))
@@ -144,7 +181,10 @@ pub fn routes() -> Router<AppState> {
         .route("/reports/{p1}/export", post(mutate_ok))
         .route("/reports/{p1}/generate", post(mutate_ok))
         .route("/routes", get(list_empty).post(mutate_ok))
-        .route("/routes/{p1}", delete(mutate_ok).get(detail_missing).put(mutate_ok))
+        .route(
+            "/routes/{p1}",
+            delete(mutate_ok).get(detail_missing).put(mutate_ok),
+        )
         .route("/routes/{p1}/stops", get(detail_missing).post(mutate_ok))
         .route("/scan", post(mutate_ok))
         .route("/shortcuts/reorder", post(mutate_ok))
@@ -152,9 +192,15 @@ pub fn routes() -> Router<AppState> {
         .route("/suppliers", get(list_empty).post(mutate_ok))
         .route("/suppliers/categories", get(list_empty))
         .route("/suppliers/stats", get(list_empty))
-        .route("/suppliers/{p1}", delete(mutate_ok).get(detail_missing).put(mutate_ok))
+        .route(
+            "/suppliers/{p1}",
+            delete(mutate_ok).get(detail_missing).put(mutate_ok),
+        )
         .route("/suppliers/{p1}/contracts", get(detail_missing))
-        .route("/suppliers/{p1}/evaluations", get(detail_missing).post(mutate_ok))
+        .route(
+            "/suppliers/{p1}/evaluations",
+            get(detail_missing).post(mutate_ok),
+        )
         .route("/suppliers/{p1}/products", get(detail_missing))
         .route("/tasks/{p1}/status", put(mutate_ok))
         .route("/workflow/definitions", get(list_empty))
@@ -167,7 +213,10 @@ pub fn routes() -> Router<AppState> {
         .route("/workflow/instances/{p1}/resume", post(mutate_ok))
         .route("/workflow/instances/{p1}/suspend", post(mutate_ok))
         .route("/workflow/instances/{p1}/tasks/{p2}/claim", post(mutate_ok))
-        .route("/workflow/instances/{p1}/tasks/{p2}/complete", post(mutate_ok))
+        .route(
+            "/workflow/instances/{p1}/tasks/{p2}/complete",
+            post(mutate_ok),
+        )
         .route("/workflow/pending-count", get(list_empty))
         .route("/workflow/stats", get(list_empty))
         .route("/workflow/tasks", get(list_empty))
@@ -175,7 +224,8 @@ pub fn routes() -> Router<AppState> {
         .route("/workflow/tasks/{p1}", get(detail_missing))
         .route("/workflow/tasks/{p1}/complete", post(mutate_ok))
         .route("/workflow/tasks/{p1}/delegate", post(mutate_ok))
-        .route("/zones", get(list_empty).post(mutate_ok))}
+        .route("/zones", get(list_empty).post(mutate_ok))
+}
 
 #[cfg(test)]
 mod tests {

@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use topems_shared_core::error::TopemsError;
 use crate::services::pdf::PdfParser;
 use crate::services::vector::{
     CreateDocumentRequest, SaveChunkRequest, SearchResult, VectorService,
@@ -12,6 +11,7 @@ use std::io::{BufReader, Read};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use topems_shared_ai::file_client::FileServiceClient;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 const CHUNK_SIZE: usize = 1024;
@@ -338,7 +338,11 @@ impl DocumentService {
     }
 
     /// 删除文档
-    pub async fn delete_document(&self, id: uuid::Uuid, tenant_id: Uuid) -> Result<bool, TopemsError> {
+    pub async fn delete_document(
+        &self,
+        id: uuid::Uuid,
+        tenant_id: Uuid,
+    ) -> Result<bool, TopemsError> {
         let vs = self.vector_service.read().await;
         vs.delete_document(id, tenant_id)
             .await
@@ -434,9 +438,8 @@ impl DocumentService {
             .to_lowercase();
 
         match ext.as_str() {
-            "txt" | "md" | "markdown" => {
-                String::from_utf8(data.to_vec()).map_err(|e| TopemsError::FileFormatError(format!("文件编码错误: {}", e)))
-            }
+            "txt" | "md" | "markdown" => String::from_utf8(data.to_vec())
+                .map_err(|e| TopemsError::FileFormatError(format!("文件编码错误: {}", e))),
             "csv" => self
                 .extract_text_from_csv(data)
                 .map_err(|e| TopemsError::FileFormatError(format!("解析 CSV 失败: {}", e))),
@@ -446,13 +449,13 @@ impl DocumentService {
             "xml" | "html" | "htm" => self
                 .extract_text_from_xml_content(data)
                 .map_err(|e| TopemsError::FileFormatError(format!("解析 XML/HTML 失败: {}", e))),
-            "yaml" | "yml" => {
-                String::from_utf8(data.to_vec()).map_err(|e| TopemsError::FileFormatError(format!("文件编码错误: {}", e)))
-            }
+            "yaml" | "yml" => String::from_utf8(data.to_vec())
+                .map_err(|e| TopemsError::FileFormatError(format!("文件编码错误: {}", e))),
             "pdf" => {
                 let temp_dir = std::env::temp_dir();
                 let temp_file = temp_dir.join(format!("{}.pdf", Uuid::new_v4()));
-                std::fs::write(&temp_file, data).map_err(|e| TopemsError::FileOperation(format!("保存临时文件失败: {}", e)))?;
+                std::fs::write(&temp_file, data)
+                    .map_err(|e| TopemsError::FileOperation(format!("保存临时文件失败: {}", e)))?;
                 let text = PdfParser::extract_text_sync(temp_file.to_str().unwrap_or(""))
                     .map_err(|e| TopemsError::FileFormatError(format!("解析 PDF 失败: {}", e)))?;
                 let _ = std::fs::remove_file(&temp_file);
@@ -478,15 +481,17 @@ impl DocumentService {
                 .map_err(|e| TopemsError::FileFormatError(format!("解析 RTF 失败: {}", e))),
             "odt" | "ods" | "odp" => self
                 .extract_text_from_opendocument(data, &ext)
-                .map_err(|e| TopemsError::FileFormatError(format!("解析 OpenDocument 失败: {}", e))),
+                .map_err(|e| {
+                    TopemsError::FileFormatError(format!("解析 OpenDocument 失败: {}", e))
+                }),
             _ => Ok(String::from_utf8(data.to_vec()).unwrap_or("[无法解析的文件内容]".to_string())),
         }
     }
 
     /// 从 CSV 文件提取文本
     fn extract_text_from_csv(&self, data: &[u8]) -> Result<String, TopemsError> {
-        let content =
-            String::from_utf8(data.to_vec()).map_err(|e| TopemsError::FileFormatError(format!("CSV 编码错误: {}", e)))?;
+        let content = String::from_utf8(data.to_vec())
+            .map_err(|e| TopemsError::FileFormatError(format!("CSV 编码错误: {}", e)))?;
         let mut result = String::new();
 
         for (i, line) in content.lines().enumerate() {
@@ -504,17 +509,17 @@ impl DocumentService {
 
     /// 从 JSON 文件提取文本
     fn extract_text_from_json(&self, data: &[u8]) -> Result<String, TopemsError> {
-        let content =
-            String::from_utf8(data.to_vec()).map_err(|e| TopemsError::FileFormatError(format!("JSON 编码错误: {}", e)))?;
-        let value: serde_json::Value =
-            serde_json::from_str(&content).map_err(|e| TopemsError::FileFormatError(format!("JSON 解析错误: {}", e)))?;
+        let content = String::from_utf8(data.to_vec())
+            .map_err(|e| TopemsError::FileFormatError(format!("JSON 编码错误: {}", e)))?;
+        let value: serde_json::Value = serde_json::from_str(&content)
+            .map_err(|e| TopemsError::FileFormatError(format!("JSON 解析错误: {}", e)))?;
         Ok(value.to_string())
     }
 
     /// 从 XML/HTML 内容提取文本
     fn extract_text_from_xml_content(&self, data: &[u8]) -> Result<String, TopemsError> {
-        let content =
-            String::from_utf8(data.to_vec()).map_err(|e| TopemsError::FileFormatError(format!("XML/HTML 编码错误: {}", e)))?;
+        let content = String::from_utf8(data.to_vec())
+            .map_err(|e| TopemsError::FileFormatError(format!("XML/HTML 编码错误: {}", e)))?;
         Ok(self.extract_text_from_xml(&content))
     }
 
@@ -560,8 +565,8 @@ impl DocumentService {
         use zip::ZipArchive;
 
         let cursor = Cursor::new(data);
-        let mut archive =
-            ZipArchive::new(cursor).map_err(|e| TopemsError::FileFormatError(format!("无法打开 PPTX 文件: {}", e)))?;
+        let mut archive = ZipArchive::new(cursor)
+            .map_err(|e| TopemsError::FileFormatError(format!("无法打开 PPTX 文件: {}", e)))?;
 
         let mut text = String::new();
         for i in 0..archive.len() {
@@ -570,8 +575,9 @@ impl DocumentService {
                 .map_err(|e| TopemsError::FileFormatError(format!("读取 PPTX 条目失败: {}", e)))?;
             if file.name().starts_with("ppt/slides/slide") && file.name().ends_with(".xml") {
                 let mut content = String::new();
-                file.read_to_string(&mut content)
-                    .map_err(|e| TopemsError::FileFormatError(format!("读取幻灯片内容失败: {}", e)))?;
+                file.read_to_string(&mut content).map_err(|e| {
+                    TopemsError::FileFormatError(format!("读取幻灯片内容失败: {}", e))
+                })?;
                 text.push_str(&format!("幻灯片 {}:\n", i));
                 text.push_str(&self.extract_text_from_xml(&content));
                 text.push('\n');
@@ -607,13 +613,18 @@ impl DocumentService {
     }
 
     /// 从 OpenDocument 文件提取文本
-    fn extract_text_from_opendocument(&self, data: &[u8], ext: &str) -> Result<String, TopemsError> {
+    fn extract_text_from_opendocument(
+        &self,
+        data: &[u8],
+        ext: &str,
+    ) -> Result<String, TopemsError> {
         use std::io::Cursor;
         use zip::ZipArchive;
 
         let cursor = Cursor::new(data);
-        let mut archive =
-            ZipArchive::new(cursor).map_err(|e| TopemsError::FileFormatError(format!("无法打开 OpenDocument 文件: {}", e)))?;
+        let mut archive = ZipArchive::new(cursor).map_err(|e| {
+            TopemsError::FileFormatError(format!("无法打开 OpenDocument 文件: {}", e))
+        })?;
 
         let mut text = String::new();
         let target_file = match ext {
@@ -624,9 +635,9 @@ impl DocumentService {
         };
 
         for i in 0..archive.len() {
-            let mut file = archive
-                .by_index(i)
-                .map_err(|e| TopemsError::FileFormatError(format!("读取 OpenDocument 条目失败: {}", e)))?;
+            let mut file = archive.by_index(i).map_err(|e| {
+                TopemsError::FileFormatError(format!("读取 OpenDocument 条目失败: {}", e))
+            })?;
             if file.name() == target_file {
                 let mut content = String::new();
                 file.read_to_string(&mut content)
@@ -645,8 +656,8 @@ impl DocumentService {
         use zip::ZipArchive;
 
         let cursor = Cursor::new(data);
-        let mut archive =
-            ZipArchive::new(cursor).map_err(|e| TopemsError::FileFormatError(format!("无法打开 DOCX 文件: {}", e)))?;
+        let mut archive = ZipArchive::new(cursor)
+            .map_err(|e| TopemsError::FileFormatError(format!("无法打开 DOCX 文件: {}", e)))?;
 
         let mut text = String::new();
         for i in 0..archive.len() {
@@ -655,8 +666,9 @@ impl DocumentService {
                 .map_err(|e| TopemsError::FileFormatError(format!("读取 DOCX 条目失败: {}", e)))?;
             if file.name() == "word/document.xml" {
                 let mut content = String::new();
-                file.read_to_string(&mut content)
-                    .map_err(|e| TopemsError::FileFormatError(format!("读取文档内容失败: {}", e)))?;
+                file.read_to_string(&mut content).map_err(|e| {
+                    TopemsError::FileFormatError(format!("读取文档内容失败: {}", e))
+                })?;
                 text = self.extract_text_from_xml(&content);
                 break;
             }
@@ -671,8 +683,8 @@ impl DocumentService {
         use zip::ZipArchive;
 
         let cursor = Cursor::new(data);
-        let mut archive =
-            ZipArchive::new(cursor).map_err(|e| TopemsError::FileFormatError(format!("无法打开 XLSX 文件: {}", e)))?;
+        let mut archive = ZipArchive::new(cursor)
+            .map_err(|e| TopemsError::FileFormatError(format!("无法打开 XLSX 文件: {}", e)))?;
 
         let mut text = String::new();
         for i in 0..archive.len() {
@@ -681,8 +693,9 @@ impl DocumentService {
                 .map_err(|e| TopemsError::FileFormatError(format!("读取 XLSX 条目失败: {}", e)))?;
             if file.name().starts_with("xl/worksheets/sheet") && file.name().ends_with(".xml") {
                 let mut content = String::new();
-                file.read_to_string(&mut content)
-                    .map_err(|e| TopemsError::FileFormatError(format!("读取工作表内容失败: {}", e)))?;
+                file.read_to_string(&mut content).map_err(|e| {
+                    TopemsError::FileFormatError(format!("读取工作表内容失败: {}", e))
+                })?;
                 text.push_str(&self.extract_text_from_xml(&content));
                 text.push('\n');
             }
@@ -1094,7 +1107,10 @@ impl DocumentService {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(TopemsError::BusinessLogic(format!("AI API 错误: {} - {}", status, error_text)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "AI API 错误: {} - {}",
+                status, error_text
+            )));
         }
 
         let openai_response: OpenAIResponse = response

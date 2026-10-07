@@ -3,11 +3,11 @@
 //! Implements bidirectional data synchronization between CRM customer records
 //! and ERP customer master data, including contacts and opportunity-to-order conversion.
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -383,8 +383,8 @@ pub async fn sync_customer(
         req.customer_id, req.source_system
     );
 
-    let customer_id =
-        Uuid::parse_str(&req.customer_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的客户ID: {}", e)))?;
+    let customer_id = Uuid::parse_str(&req.customer_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的客户ID: {}", e)))?;
 
     let (customer_data, direction) = match req.source_system.as_str() {
         "crm" => {
@@ -395,7 +395,12 @@ pub async fn sync_customer(
             let data = fetch_erp_customer(pool, erp_url, customer_id).await?;
             (data, DIRECTION_ERP_TO_CRM)
         }
-        _ => return Err(TopemsError::ValidationFailed(format!("未知的来源系统: {}", req.source_system)),)
+        _ => {
+            return Err(TopemsError::ValidationFailed(format!(
+                "未知的来源系统: {}",
+                req.source_system
+            )))
+        }
     };
 
     match direction {
@@ -516,8 +521,8 @@ pub async fn sync_contact(
         req.contact_id, req.source_system
     );
 
-    let contact_id =
-        Uuid::parse_str(&req.contact_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的联系人ID: {}", e)))?;
+    let contact_id = Uuid::parse_str(&req.contact_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的联系人ID: {}", e)))?;
 
     let (contact_data, direction) = match req.source_system.as_str() {
         "crm" => {
@@ -528,7 +533,12 @@ pub async fn sync_contact(
             let data = fetch_erp_contact(pool, erp_url, contact_id).await?;
             (data, DIRECTION_ERP_TO_CRM)
         }
-        _ => return Err(TopemsError::ValidationFailed(format!("未知的来源系统: {}", req.source_system)),)
+        _ => {
+            return Err(TopemsError::ValidationFailed(format!(
+                "未知的来源系统: {}",
+                req.source_system
+            )))
+        }
     };
 
     match direction {
@@ -627,8 +637,8 @@ pub async fn convert_opportunity_to_order(
 ) -> Result<CrmErpSync, TopemsError> {
     info!("商机转订单 - 商机ID: {}", req.opportunity_id);
 
-    let opportunity_id =
-        Uuid::parse_str(&req.opportunity_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的商机ID: {}", e)))?;
+    let opportunity_id = Uuid::parse_str(&req.opportunity_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的商机ID: {}", e)))?;
 
     let opportunity_data = fetch_crm_opportunity(pool, crm_url, opportunity_id).await?;
 
@@ -1003,7 +1013,9 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "已达到最大重试次数".to_string(),
+        ));
     }
 
     let retry_config = RetryConfig {
@@ -1034,17 +1046,14 @@ pub async fn retry_failed_sync(
 
     match result {
         RetryResult::Success(_) => {
-            let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
-                .await
-                ?;
+            let updated =
+                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error)
-                .await
-                ?;
+            increment_retry_count(pool, sync_id, &error).await?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -1091,7 +1100,10 @@ async fn execute_sync_by_type(
             convert_opportunity_to_order(pool, tenant_id, crm_url, erp_url, &req).await?;
             Ok(())
         }
-        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
+        _ => Err(TopemsError::ValidationFailed(format!(
+            "不支持的同步类型: {}",
+            sync_type
+        ))),
     }
 }
 

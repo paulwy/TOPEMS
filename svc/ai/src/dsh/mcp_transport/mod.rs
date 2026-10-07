@@ -2,10 +2,10 @@
 //!
 //! 提供 stdio 传输、SSE 传输、HTTP 传输、传输层自动协商与降级等能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::Instant;
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -477,7 +477,11 @@ impl TransportManager {
 
     #[allow(clippy::as_conversions)]
     /// 发送消息
-    pub fn send_message(&self, session_id: &str, message: TransportMessage) -> Result<(), TopemsError> {
+    pub fn send_message(
+        &self,
+        session_id: &str,
+        message: TransportMessage,
+    ) -> Result<(), TopemsError> {
         let mut sessions = self.sessions.lock();
         let session = sessions
             .get_mut(session_id)
@@ -593,7 +597,10 @@ impl TransportManager {
             info!(session_id = %session_id, "Transport session deleted");
             Ok(())
         } else {
-            Err(TopemsError::ResourceNotFound(format!("传输会话 {} 不存在", session_id)))
+            Err(TopemsError::ResourceNotFound(format!(
+                "传输会话 {} 不存在",
+                session_id
+            )))
         }
     }
 
@@ -680,10 +687,14 @@ impl TransportManager {
                 );
                 Ok(downgrade_type)
             } else {
-                Err(TopemsError::BusinessLogic("已是最低优先级传输类型，无法继续降级".to_string()))
+                Err(TopemsError::BusinessLogic(
+                    "已是最低优先级传输类型，无法继续降级".to_string(),
+                ))
             }
         } else {
-            Err(TopemsError::BusinessLogic("当前传输类型不在优先列表中".to_string()))
+            Err(TopemsError::BusinessLogic(
+                "当前传输类型不在优先列表中".to_string(),
+            ))
         }
     }
 

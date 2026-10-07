@@ -354,7 +354,11 @@ pub async fn update_purchase_order(
 
     let purchase_order = match result {
         Ok(Some(o)) => o,
-        Ok(None) => return Json(ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在".to_string()))),
+        Ok(None) => {
+            return Json(ApiResponse::from(TopemsError::ResourceNotFound(
+                "采购订单不存在".to_string(),
+            )))
+        }
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
             return Json(ApiResponse::from(TopemsError::Internal(
@@ -520,7 +524,9 @@ pub async fn approve_purchase_order(
             }
             Json(ApiResponse::success(order, "采购订单审批成功"))
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在或状态不是待审批".to_string()))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购订单不存在或状态不是待审批".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("审批采购订单失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
@@ -583,7 +589,9 @@ pub async fn cancel_purchase_order(
             }
             Json(ApiResponse::success(r, "采购订单已取消"))
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("采购订单不存在或状态不可取消".to_string()))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "采购订单不存在或状态不可取消".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("取消采购订单失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

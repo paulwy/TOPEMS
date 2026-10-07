@@ -153,7 +153,11 @@ pub async fn update_scope_company(
     .bind(req.ownership_percentage)
     .bind(req.consolidation_percentage)
     .bind(req.minority_interest)
-    .bind(req.expiry_date.as_ref().and_then(|s| s.parse::<chrono::NaiveDate>().ok()))
+    .bind(
+        req.expiry_date
+            .as_ref()
+            .and_then(|s| s.parse::<chrono::NaiveDate>().ok()),
+    )
     .fetch_optional(&mut **txn)
     .await;
 
@@ -169,7 +173,9 @@ pub async fn update_scope_company(
             .await;
             Json(ApiResponse::success(company, "更新合并范围公司成功"))
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("合并范围公司不存在".to_string()))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "合并范围公司不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新合并范围公司失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

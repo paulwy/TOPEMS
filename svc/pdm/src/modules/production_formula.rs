@@ -127,7 +127,9 @@ pub fn estimate_unit_cost(
         }
     }
     if total_output <= 0.0 {
-        return Err(TopemsError::BusinessLogic("无可产出主产（output=0）".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "无可产出主产（output=0）".to_string(),
+        ));
     }
     Ok((input_cost / total_output, missing))
 }

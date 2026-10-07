@@ -19,12 +19,12 @@
 
 #![cfg(feature = "module-communication")]
 
+use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
-use topems_shared_core::error::Result;
-use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use topems_communication::{im, mail, notification};
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 
 /// 轻量兜底：crate 尚未实现的通信子域端点（待上游支持）。
 /// 返回 200 + 空数据，避免前端契约裸 404；非业务实现。
@@ -220,7 +220,10 @@ impl CommunicationRealModule {
                 // --- 通知列表 / 详情 / 归档（前端相对路径 /notifications/*） ---
                 .route("/notifications", get(notification::get_notifications))
                 .route("/notifications", post(notification::create_notification))
-                .route("/notifications", delete(notification::delete_all_notifications))
+                .route(
+                    "/notifications",
+                    delete(notification::delete_all_notifications),
+                )
                 .route(
                     "/notifications/unread-count",
                     get(notification::get_unread_count),
@@ -282,7 +285,10 @@ impl CommunicationRealModule {
                 // --- 主动通知动作（前端相对路径 /notify/*） ---
                 .route("/notify/list", get(notification::list_notifications))
                 .route("/notify/send", post(notification::send_notification))
-                .route("/notify/broadcast", post(notification::broadcast_notification))
+                .route(
+                    "/notify/broadcast",
+                    post(notification::broadcast_notification),
+                )
                 .route("/notify/read-all", post(notification::mark_all_as_read))
                 .route("/notify/{id}/read", post(notification::mark_as_read))
                 // --- 通知模板（前端相对路径 /notification-templates/*） ---

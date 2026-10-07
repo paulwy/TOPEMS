@@ -60,7 +60,9 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/hazardous-materials/inventory/{id}",
-            get(get_material).put(update_material).delete(delete_material),
+            get(get_material)
+                .put(update_material)
+                .delete(delete_material),
         )
         .route("/hazardous-materials/movements", get(list_stock_records))
         .route(
@@ -1259,7 +1261,13 @@ pub async fn get_msds_by_id(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MsdsData>> {
     // 待上游支持：MSDS 按 ID 直取复用现有按 material_id 取数（路径语义对齐）。
-    get_material_msds(State(state), Extension(claims), headers, axum::extract::Path(id)).await
+    get_material_msds(
+        State(state),
+        Extension(claims),
+        headers,
+        axum::extract::Path(id),
+    )
+    .await
 }
 
 pub async fn update_msds_by_id(

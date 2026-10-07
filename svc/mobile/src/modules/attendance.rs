@@ -232,10 +232,7 @@ pub async fn get_today_attendance(
     };
 
     let today = chrono::Utc::now().date_naive().to_string(); // YYYY-MM-DD
-    match client
-        .list_attendance_records(&user_id, None, 1, 100)
-        .await
-    {
+    match client.list_attendance_records(&user_id, None, 1, 100).await {
         Ok(data) => {
             // HRM 返回可能是 { items: [...] } 或纯数组，兼容两种结构
             let records = if let Some(items) = data.get("items").and_then(|v| v.as_array()) {
@@ -293,10 +290,7 @@ pub async fn get_attendance_record_by_id(
         }
     };
 
-    match client
-        .list_attendance_records(&user_id, None, 1, 100)
-        .await
-    {
+    match client.list_attendance_records(&user_id, None, 1, 100).await {
         Ok(data) => {
             let records = if let Some(items) = data.get("items").and_then(|v| v.as_array()) {
                 items.clone()

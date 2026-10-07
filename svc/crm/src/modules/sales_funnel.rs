@@ -70,7 +70,10 @@ pub fn create_routes() -> Router<ApiState> {
         // 待上游正式将这些尾段参数化后可移除。
         .route("/sales-funnel/{tail}", get(get_funnel_data))
         .route("/sales-funnel/metrics/{tail}", get(get_funnel_metrics))
-        .route("/sales-funnel/conversion/{tail}", get(get_funnel_conversion))
+        .route(
+            "/sales-funnel/conversion/{tail}",
+            get(get_funnel_conversion),
+        )
         .route("/sales-funnel/trend/{tail}", get(get_funnel_trend))
         .route(
             "/sales-funnel/stage/{stage}/{tail}",

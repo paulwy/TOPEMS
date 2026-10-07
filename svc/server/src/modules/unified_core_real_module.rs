@@ -8,9 +8,9 @@
 
 #![cfg(feature = "module-core")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
+use topems_shared_core::error::Result;
 
 /// 真实 Unified Core 模块：持有数据库连接池 + 完整业务路由
 pub struct UnifiedCoreRealModule {

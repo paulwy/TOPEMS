@@ -1802,7 +1802,10 @@ pub async fn assign_ticket_handler(
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
             sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
-            other => Json(ApiResponse::from(TopemsError::internal("查询工单失败", other))),
+            other => Json(ApiResponse::from(TopemsError::internal(
+                "查询工单失败",
+                other,
+            ))),
         };
     }
     let assignee_id = body
@@ -1842,7 +1845,10 @@ pub async fn resolve_ticket_handler(
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
             sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
-            other => Json(ApiResponse::from(TopemsError::internal("查询工单失败", other))),
+            other => Json(ApiResponse::from(TopemsError::internal(
+                "查询工单失败",
+                other,
+            ))),
         };
     }
     let now = Utc::now();
@@ -1877,7 +1883,10 @@ pub async fn close_ticket_handler(
     if let Err(e) = service.get_ticket(tenant_id, id).await {
         return match e {
             sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
-            other => Json(ApiResponse::from(TopemsError::internal("查询工单失败", other))),
+            other => Json(ApiResponse::from(TopemsError::internal(
+                "查询工单失败",
+                other,
+            ))),
         };
     }
     let now = Utc::now();
@@ -1914,12 +1923,18 @@ pub async fn list_sla_escalations_handler(
     if let Err(e) = ticket_service.get_ticket(tenant_id, id).await {
         return match e {
             sqlx::Error::RowNotFound => Json(ApiResponse::error(404, "工单不存在")),
-            other => Json(ApiResponse::from(TopemsError::internal("查询工单失败", other))),
+            other => Json(ApiResponse::from(TopemsError::internal(
+                "查询工单失败",
+                other,
+            ))),
         };
     }
     match sla_service.get_escalation_history(tenant_id, id).await {
         Ok(events) => Json(ApiResponse::success(events, "SLA升级历史")),
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询SLA升级失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "查询SLA升级失败",
+            e,
+        ))),
     }
 }
 
@@ -1964,7 +1979,12 @@ pub async fn dashboard_summary_handler(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询看板汇总失败", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询看板汇总失败",
+                e,
+            )))
+        }
     };
     let mut open = 0i64;
     let mut in_progress = 0i64;
@@ -2034,7 +2054,12 @@ pub async fn dashboard_my_handler(
     .await
     {
         Ok(rows) => rows,
-        Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询我的看板失败", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "查询我的看板失败",
+                e,
+            )))
+        }
     };
     let mut open = 0i64;
     let mut in_progress = 0i64;
@@ -2117,7 +2142,10 @@ pub fn ticket_routes() -> Router<PgPool> {
             put(update_comment_handler).delete(delete_comment_handler),
         )
         // ---- 活动 by-id / 时间线（web 契约收口）----
-        .route("/tickets/{id}/activities/{activity_id}", get(get_activity_handler))
+        .route(
+            "/tickets/{id}/activities/{activity_id}",
+            get(get_activity_handler),
+        )
         .route(
             "/tickets/{id}/activities/timeline",
             get(list_activities_timeline_handler),

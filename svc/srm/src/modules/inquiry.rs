@@ -2,7 +2,6 @@
 //! 数据源：srm.inquiries（event_handlers 写入，收敛自 srm_inquiries）
 //! 走 RLS txn（tenant_middleware 注入）
 
-use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -12,6 +11,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use std::sync::Arc;
+use topems_shared_core::error::Result;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
 

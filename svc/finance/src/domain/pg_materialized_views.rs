@@ -1,9 +1,9 @@
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use rust_decimal::prelude::FromPrimitive;
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 
 use super::events::FinanceDomainEvent;
 use super::materialized_view::MaterializedView;
@@ -328,7 +328,9 @@ impl PgReceivableAgingView {
         })
     }
 
-    pub async fn total_by_bucket(&self) -> Result<Vec<super::value_objects::AgingBucket>, TopemsError> {
+    pub async fn total_by_bucket(
+        &self,
+    ) -> Result<Vec<super::value_objects::AgingBucket>, TopemsError> {
         let row = sqlx::query(only_own_schema_query!(
             "finance",
             "SELECT SUM(current_amount) as current, 

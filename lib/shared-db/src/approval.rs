@@ -124,9 +124,7 @@ pub fn validate_approval_decision(
             ))
         }
         Some(stored_id) if stored_id != request_approval_id => {
-            return Err(TopemsError::ValidationFailed(
-                "审批ID不匹配".to_string(),
-            ));
+            return Err(TopemsError::ValidationFailed("审批ID不匹配".to_string()));
         }
         _ => {}
     }

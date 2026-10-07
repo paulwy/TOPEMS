@@ -2,8 +2,8 @@
 //!
 //! 实现转换规则解析器和执行引擎
 
-use topems_shared_core::error::TopemsError;
 use serde_json::Value as JsonValue;
+use topems_shared_core::error::TopemsError;
 
 use super::conversion_rules::{
     ConditionalMapping, ConversionExecution, ConversionRule, FieldMapping, RuleStatus, ValueMap,

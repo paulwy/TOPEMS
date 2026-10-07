@@ -16,12 +16,12 @@
 //!    - MaskingRule: 脱敏规则 (Full/Partial/Hash/Range/Null)
 //!    - MaskedField: 脱敏结果记录
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -565,7 +565,10 @@ impl SecurityGateway {
         let mut policies = store.policies.lock().await;
 
         if policies.iter().any(|p| p.name == policy.name) {
-            return Err(TopemsError::BusinessLogic(format!("策略名称 '{}' 已存在", policy.name)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "策略名称 '{}' 已存在",
+                policy.name
+            )));
         }
 
         policies.push(policy.clone());
@@ -758,7 +761,10 @@ impl ZeroTrustEngine {
         }
     }
 
-    pub async fn verify_identity(identity: &str, context: IdentityContext) -> Result<bool, TopemsError> {
+    pub async fn verify_identity(
+        identity: &str,
+        context: IdentityContext,
+    ) -> Result<bool, TopemsError> {
         let store = get_security_store();
 
         let policies = store.identity_policies.lock().await;
@@ -777,12 +783,17 @@ impl ZeroTrustEngine {
         Ok(true)
     }
 
-    pub async fn create_identity_policy(policy: IdentityPolicy) -> Result<IdentityPolicy, TopemsError> {
+    pub async fn create_identity_policy(
+        policy: IdentityPolicy,
+    ) -> Result<IdentityPolicy, TopemsError> {
         let store = get_security_store();
         let mut policies = store.identity_policies.lock().await;
 
         if policies.iter().any(|p| p.name == policy.name) {
-            return Err(TopemsError::BusinessLogic(format!("策略名称 '{}' 已存在", policy.name)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "策略名称 '{}' 已存在",
+                policy.name
+            )));
         }
 
         policies.push(policy.clone());

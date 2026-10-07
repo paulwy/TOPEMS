@@ -2,9 +2,9 @@
 // =============================================================================
 // 同步+异步发布 + RabbitMQ 集成预留 + 扇出（fan-out）模式
 
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use std::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 
 use super::events::FinanceDomainEvent;
 
@@ -27,9 +27,16 @@ pub fn event_type_name(event: &FinanceDomainEvent) -> &'static str {
 /// 扩展事件发布器 trait：携带 aggregate_id 与元数据
 #[async_trait]
 pub trait DomainEventPublisherExt: Send + Sync {
-    async fn publish(&self, event: &FinanceDomainEvent, aggregate_id: &str) -> Result<(), TopemsError>;
+    async fn publish(
+        &self,
+        event: &FinanceDomainEvent,
+        aggregate_id: &str,
+    ) -> Result<(), TopemsError>;
 
-    async fn publish_batch(&self, events: &[(FinanceDomainEvent, String)]) -> Result<(), TopemsError>;
+    async fn publish_batch(
+        &self,
+        events: &[(FinanceDomainEvent, String)],
+    ) -> Result<(), TopemsError>;
 
     async fn publish_with_metadata(
         &self,
@@ -125,12 +132,19 @@ impl Default for InMemoryEventPublisher {
 
 #[async_trait]
 impl DomainEventPublisherExt for InMemoryEventPublisher {
-    async fn publish(&self, event: &FinanceDomainEvent, aggregate_id: &str) -> Result<(), TopemsError> {
+    async fn publish(
+        &self,
+        event: &FinanceDomainEvent,
+        aggregate_id: &str,
+    ) -> Result<(), TopemsError> {
         self.publish_with_metadata(event, aggregate_id, EventPublishMetadata::default())
             .await
     }
 
-    async fn publish_batch(&self, events: &[(FinanceDomainEvent, String)]) -> Result<(), TopemsError> {
+    async fn publish_batch(
+        &self,
+        events: &[(FinanceDomainEvent, String)],
+    ) -> Result<(), TopemsError> {
         let mut store = self.published_events.lock().map_err(|e| e.to_string())?;
         let now = chrono::Utc::now();
         for (event, aggregate_id) in events {
@@ -196,7 +210,11 @@ impl Default for CompositeEventPublisher {
 
 #[async_trait]
 impl DomainEventPublisherExt for CompositeEventPublisher {
-    async fn publish(&self, event: &FinanceDomainEvent, aggregate_id: &str) -> Result<(), TopemsError> {
+    async fn publish(
+        &self,
+        event: &FinanceDomainEvent,
+        aggregate_id: &str,
+    ) -> Result<(), TopemsError> {
         let mut errors = Vec::new();
         for publisher in &self.publishers {
             if let Err(e) = publisher.publish(event, aggregate_id).await {
@@ -209,12 +227,19 @@ impl DomainEventPublisherExt for CompositeEventPublisher {
             Err(TopemsError::BusinessLogic(format!(
                 "CompositeEventPublisher encountered {} error(s): {}",
                 errors.len(),
-                errors.iter().map(|e| e.to_string()).collect::<Vec<_>>().join("; ")
+                errors
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join("; ")
             )))
         }
     }
 
-    async fn publish_batch(&self, events: &[(FinanceDomainEvent, String)]) -> Result<(), TopemsError> {
+    async fn publish_batch(
+        &self,
+        events: &[(FinanceDomainEvent, String)],
+    ) -> Result<(), TopemsError> {
         let mut errors = Vec::new();
         for publisher in &self.publishers {
             if let Err(e) = publisher.publish_batch(events).await {
@@ -227,7 +252,11 @@ impl DomainEventPublisherExt for CompositeEventPublisher {
             Err(TopemsError::BusinessLogic(format!(
                 "CompositeEventPublisher batch encountered {} error(s): {}",
                 errors.len(),
-                errors.iter().map(|e| e.to_string()).collect::<Vec<_>>().join("; ")
+                errors
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join("; ")
             )))
         }
     }
@@ -253,7 +282,11 @@ impl DomainEventPublisherExt for CompositeEventPublisher {
             Err(TopemsError::BusinessLogic(format!(
                 "CompositeEventPublisher (with metadata) encountered {} error(s): {}",
                 errors.len(),
-                errors.iter().map(|e| e.to_string()).collect::<Vec<_>>().join("; ")
+                errors
+                    .iter()
+                    .map(|e| e.to_string())
+                    .collect::<Vec<_>>()
+                    .join("; ")
             )))
         }
     }

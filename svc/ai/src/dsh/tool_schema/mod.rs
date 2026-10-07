@@ -2,9 +2,9 @@
 //!
 //! 提供工具 Schema 自动生成、工具分组与标签管理、工具版本化、Schema 兼容性校验等能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -442,7 +442,9 @@ impl ToolSchemaAdapter {
     /// 注册工具
     pub fn register_tool(&self, tool: ToolDefinition) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err(TopemsError::BusinessLogic("Tool Schema 适配器未启用".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "Tool Schema 适配器未启用".to_string(),
+            ));
         }
 
         let tool_name = tool.name.clone();
@@ -586,12 +588,19 @@ impl ToolSchemaAdapter {
             info!(tool_name = %tool_name, "Tool deleted");
             Ok(())
         } else {
-            Err(TopemsError::ResourceNotFound(format!("工具 {} 不存在", tool_name)))
+            Err(TopemsError::ResourceNotFound(format!(
+                "工具 {} 不存在",
+                tool_name
+            )))
         }
     }
 
     /// 弃用工具
-    pub fn deprecate_tool(&self, tool_name: &str, replaced_by: Option<&str>) -> Result<(), TopemsError> {
+    pub fn deprecate_tool(
+        &self,
+        tool_name: &str,
+        replaced_by: Option<&str>,
+    ) -> Result<(), TopemsError> {
         let mut tools = self.tools.lock();
         let tool = tools
             .get_mut(tool_name)

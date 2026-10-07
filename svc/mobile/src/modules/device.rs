@@ -475,10 +475,9 @@ pub async fn unregister_device(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "设备已注销")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, Json(ApiResponse::success((), "设备已注销")))
+        }
         Ok(_) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::error(404, "设备不存在")),
@@ -519,10 +518,9 @@ pub async fn activate_device(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "设备已激活")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, Json(ApiResponse::success((), "设备已激活")))
+        }
         Ok(_) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::error(404, "设备不存在")),
@@ -563,10 +561,9 @@ pub async fn disable_device(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success((), "设备已停用")),
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            (StatusCode::OK, Json(ApiResponse::success((), "设备已停用")))
+        }
         Ok(_) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::error(404, "设备不存在")),

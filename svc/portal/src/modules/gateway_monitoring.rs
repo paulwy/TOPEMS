@@ -16,12 +16,12 @@
 //!    - Anomaly: 异常事件 (Spike/Drop/Drift/Cycle/Burst)
 //!    - DetectionModel: 检测模型 (EWMA/Z-Score/Seasonal)
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -958,8 +958,8 @@ impl PerformanceTracer {
 
         match format {
             "json" => {
-                let json =
-                    serde_json::to_value(&filtered).map_err(|e| TopemsError::BusinessLogic(format!("序列化失败: {}", e)))?;
+                let json = serde_json::to_value(&filtered)
+                    .map_err(|e| TopemsError::BusinessLogic(format!("序列化失败: {}", e)))?;
                 Ok(json)
             }
             "summary" => {
@@ -977,7 +977,10 @@ impl PerformanceTracer {
                     "exported_at": chrono::Utc::now().to_rfc3339(),
                 }))
             }
-            _ => Err(TopemsError::ValidationFailed(format!("不支持的导出格式: {}", format))),
+            _ => Err(TopemsError::ValidationFailed(format!(
+                "不支持的导出格式: {}",
+                format
+            ))),
         }
     }
 
@@ -1113,7 +1116,10 @@ impl AnomalyDetector {
         model
     }
 
-    pub async fn update_model(id: &str, updates: DetectionModel) -> Result<DetectionModel, TopemsError> {
+    pub async fn update_model(
+        id: &str,
+        updates: DetectionModel,
+    ) -> Result<DetectionModel, TopemsError> {
         let store = get_monitoring_store();
         let mut models = store.detection_models.lock().await;
 
@@ -1190,7 +1196,9 @@ impl AnomalyDetector {
         let model = models
             .iter_mut()
             .find(|m| m.id == model_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("检测模型 '{}' 不存在", model_id)))?;
+            .ok_or_else(|| {
+                TopemsError::ResourceNotFound(format!("检测模型 '{}' 不存在", model_id))
+            })?;
 
         let metrics = store.metrics.lock().await;
         let relevant_metrics: Vec<f64> = metrics
@@ -1200,7 +1208,9 @@ impl AnomalyDetector {
             .collect();
 
         if relevant_metrics.len() < 5 {
-            return Err(TopemsError::ValidationFailed("数据点不足，至少需要 5 个数据点".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "数据点不足，至少需要 5 个数据点".to_string(),
+            ));
         }
 
         let mean = relevant_metrics.iter().sum::<f64>() / relevant_metrics.len() as f64;

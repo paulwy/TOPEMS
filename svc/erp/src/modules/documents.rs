@@ -132,7 +132,9 @@ pub async fn create_document(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("标题", &payload.title) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            e.to_string(),
+        )));
     }
 
     let doc_type = payload.doc_type.unwrap_or_else(|| "general".to_string());

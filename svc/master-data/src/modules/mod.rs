@@ -10,8 +10,8 @@ use axum::{
 
 pub mod ai_governance_v59;
 // Web 前端契约收口兜底（mdm-v66 预埋 + 静态提取伪动态段）—— 待上游支持
-pub mod contract_fallbacks;
 pub mod commercial_v55;
+pub mod contract_fallbacks;
 pub mod disaster_v56;
 pub mod governance_v58;
 pub mod knowledge_v53;
@@ -59,7 +59,10 @@ pub async fn flush_on_write(
 
 /// 是否写方法（触发写后同步落库）。抽离为纯函数便于单测。
 fn is_write_method(m: &Method) -> bool {
-    matches!(*m, Method::POST | Method::PUT | Method::PATCH | Method::DELETE)
+    matches!(
+        *m,
+        Method::POST | Method::PUT | Method::PATCH | Method::DELETE
+    )
 }
 
 #[cfg(test)]
@@ -339,10 +342,7 @@ pub fn create_routes() -> Router<AppState> {
                     get(disaster_v56::get_failover_history),
                 )
                 // 静态提取折叠尾段兜底（待上游支持）
-                .route(
-                    "/dr/failover/history/{id}",
-                    get(contract_fallbacks::list),
-                )
+                .route("/dr/failover/history/{id}", get(contract_fallbacks::list))
                 .route("/dr/switch", post(disaster_v56::switch_regions))
                 .route("/dr/region-health", get(disaster_v56::get_region_health)),
         )
@@ -676,7 +676,10 @@ pub fn create_routes() -> Router<AppState> {
             "/mdm-v66",
             Router::new()
                 // --- 资产列 ---
-                .route("/assets/{id}/columns", get(contract_fallbacks::array).put(contract_fallbacks::ok))
+                .route(
+                    "/assets/{id}/columns",
+                    get(contract_fallbacks::array).put(contract_fallbacks::ok),
+                )
                 // --- 资产批量/导入导出 ---
                 .route("/assets/bulk", patch(contract_fallbacks::ok))
                 .route("/assets/bulk-delete", post(contract_fallbacks::ok))
@@ -688,15 +691,33 @@ pub fn create_routes() -> Router<AppState> {
                 .route("/lineage/refresh/{id}", post(contract_fallbacks::ok))
                 // --- 资产标签 ---
                 .route("/tags", post(contract_fallbacks::ok))
-                .route("/tags/{id}", get(contract_fallbacks::ok).put(contract_fallbacks::ok).delete(contract_fallbacks::ok))
-                .route("/assets/{id}/tags", post(contract_fallbacks::ok).delete(contract_fallbacks::ok))
+                .route(
+                    "/tags/{id}",
+                    get(contract_fallbacks::ok)
+                        .put(contract_fallbacks::ok)
+                        .delete(contract_fallbacks::ok),
+                )
+                .route(
+                    "/assets/{id}/tags",
+                    post(contract_fallbacks::ok).delete(contract_fallbacks::ok),
+                )
                 // --- 资产分类 ---
                 .route("/categories", post(contract_fallbacks::ok))
                 .route("/categories/tree", get(contract_fallbacks::array))
-                .route("/categories/{id}", get(contract_fallbacks::ok).put(contract_fallbacks::ok).delete(contract_fallbacks::ok))
+                .route(
+                    "/categories/{id}",
+                    get(contract_fallbacks::ok)
+                        .put(contract_fallbacks::ok)
+                        .delete(contract_fallbacks::ok),
+                )
                 // --- 数据地图 ---
                 .route("/maps", post(contract_fallbacks::ok))
-                .route("/maps/{id}", get(contract_fallbacks::ok).put(contract_fallbacks::ok).delete(contract_fallbacks::ok))
+                .route(
+                    "/maps/{id}",
+                    get(contract_fallbacks::ok)
+                        .put(contract_fallbacks::ok)
+                        .delete(contract_fallbacks::ok),
+                )
                 .route("/maps/{id}/export", get(contract_fallbacks::ok))
                 // --- 搜索建议 / 仪表盘 ---
                 .route("/search/suggestions", get(contract_fallbacks::array))

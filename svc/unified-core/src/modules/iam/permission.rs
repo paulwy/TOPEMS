@@ -92,7 +92,10 @@ pub async fn update_permission(
     State(_state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM permission update_permission stub called for id: {}", id);
+    tracing::info!(
+        "IAM permission update_permission stub called for id: {}",
+        id
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "权限更新已记录（待上游支持）",
@@ -105,7 +108,10 @@ pub async fn delete_permission(
     State(_state): State<AppState>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM permission delete_permission stub called for id: {}", id);
+    tracing::info!(
+        "IAM permission delete_permission stub called for id: {}",
+        id
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "权限删除已记录（待上游支持）",

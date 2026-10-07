@@ -24,7 +24,10 @@ pub async fn recommend(
 ) -> Json<ApiResponse<RecommendationResponse>> {
     match state.recommendation_service.recommend(req).await {
         Ok(response) => Json(ApiResponse::success(response, "推荐成功")),
-        Err(e) => Json(ApiResponse::<RecommendationResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<RecommendationResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -126,7 +129,10 @@ pub async fn recommend_documents(
     };
     match state.recommendation_service.recommend(request).await {
         Ok(response) => Json(ApiResponse::success(response, "文档推荐成功")),
-        Err(e) => Json(ApiResponse::<RecommendationResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<RecommendationResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -156,7 +162,10 @@ pub async fn recommend_opportunities(
     };
     match state.recommendation_service.recommend(request).await {
         Ok(response) => Json(ApiResponse::success(response, "商机推荐成功")),
-        Err(e) => Json(ApiResponse::<RecommendationResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<RecommendationResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -186,7 +195,10 @@ pub async fn recommend_knowledge(
     };
     match state.recommendation_service.recommend(request).await {
         Ok(response) => Json(ApiResponse::success(response, "知识推荐成功")),
-        Err(e) => Json(ApiResponse::<RecommendationResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<RecommendationResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 

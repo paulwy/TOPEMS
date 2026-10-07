@@ -1,4 +1,7 @@
-use axum::{extract::{Query, State}, Json};
+use axum::{
+    extract::{Query, State},
+    Json,
+};
 use serde::{Deserialize, Serialize};
 
 use topems_shared_core::response::ApiResponse;
@@ -150,18 +153,19 @@ pub async fn scan_inventory(
                 Vec::new()
             };
             let found = items.iter().find(|item| {
-                ["barcode", "code", "material_code", "sku"]
-                    .iter()
-                    .any(|k| {
-                        item.get(*k)
-                            .and_then(|v| v.as_str())
-                            .map(|v| v.eq_ignore_ascii_case(&barcode))
-                            .unwrap_or(false)
-                    })
+                ["barcode", "code", "material_code", "sku"].iter().any(|k| {
+                    item.get(*k)
+                        .and_then(|v| v.as_str())
+                        .map(|v| v.eq_ignore_ascii_case(&barcode))
+                        .unwrap_or(false)
+                })
             });
             match found {
                 Some(item) => Json(ApiResponse::success(item.clone(), "扫码查询成功")),
-                None => Json(ApiResponse::success(serde_json::Value::Null, "未找到对应库存")),
+                None => Json(ApiResponse::success(
+                    serde_json::Value::Null,
+                    "未找到对应库存",
+                )),
             }
         }
         Err(e) => {

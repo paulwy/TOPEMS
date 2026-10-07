@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -9,6 +8,7 @@ use chrono::{Duration, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -54,10 +54,14 @@ pub fn calculate_eoq(
     holding_cost_per_unit: f64,
 ) -> Result<f64, TopemsError> {
     if annual_demand < 0.0 {
-        return Err(TopemsError::BusinessLogic("annual_demand must be non-negative".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "annual_demand must be non-negative".to_string(),
+        ));
     }
     if holding_cost_per_unit <= 0.0 {
-        return Err(TopemsError::BusinessLogic("holding_cost_per_unit must be > 0".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "holding_cost_per_unit must be > 0".to_string(),
+        ));
     }
     if annual_demand == 0.0 {
         return Ok(0.0);

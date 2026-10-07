@@ -7,12 +7,12 @@
 
 #![cfg(feature = "module-monitor")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::time::Instant;
 use topems_monitor::shared::AppState as MonitorAppState;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 
 /// 真实 Monitor 模块：持有完整业务路由
 pub struct MonitorRealModule {

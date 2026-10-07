@@ -1,5 +1,3 @@
-use topems_shared_core::error::Result;
-use topems_shared_core::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::get,
@@ -10,6 +8,8 @@ use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::Result;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::models::{
@@ -274,23 +274,38 @@ pub async fn create_evaluation(
     let validate_score = |score: Option<f64>, name: &str| -> std::result::Result<(), TopemsError> {
         if let Some(s) = score {
             if !(0.0..=100.0).contains(&s) {
-                return Err(TopemsError::ValidationFailed(format!("{}评分必须在0-100之间", name)));
+                return Err(TopemsError::ValidationFailed(format!(
+                    "{}评分必须在0-100之间",
+                    name
+                )));
             }
         }
         Ok(())
     };
 
     if let Err(msg) = validate_score(req.quality_score, "质量") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
     if let Err(msg) = validate_score(req.delivery_score, "交付") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
     if let Err(msg) = validate_score(req.service_score, "服务") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
     if let Err(msg) = validate_score(req.price_score, "价格") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
 
     let overall_score = if req.overall_score.is_some() {
@@ -561,26 +576,44 @@ pub async fn update_evaluation(
     let validate_score = |score: Option<f64>, name: &str| -> std::result::Result<(), TopemsError> {
         if let Some(s) = score {
             if !(0.0..=100.0).contains(&s) {
-                return Err(TopemsError::ValidationFailed(format!("{}评分必须在0-100之间", name)));
+                return Err(TopemsError::ValidationFailed(format!(
+                    "{}评分必须在0-100之间",
+                    name
+                )));
             }
         }
         Ok(())
     };
 
     if let Err(msg) = validate_score(req.overall_score, "综合") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
     if let Err(msg) = validate_score(req.quality_score, "质量") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
     if let Err(msg) = validate_score(req.delivery_score, "交付") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
     if let Err(msg) = validate_score(req.service_score, "服务") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
     if let Err(msg) = validate_score(req.price_score, "价格") {
-        return Json(ApiResponse::<SupplierEvaluation>::error(400, &msg.to_string()));
+        return Json(ApiResponse::<SupplierEvaluation>::error(
+            400,
+            &msg.to_string(),
+        ));
     }
 
     let evaluation_no = req.evaluation_no.unwrap_or(existing.evaluation_no);

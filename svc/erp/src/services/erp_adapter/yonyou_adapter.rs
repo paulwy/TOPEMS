@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
+use topems_shared_core::error::TopemsError;
 
 use reqwest::blocking::Client;
 

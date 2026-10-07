@@ -4,9 +4,9 @@
 //! management API endpoints. Extracts actor information from request headers
 //! and records audit log entries for create, update, and delete operations.
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use axum::http::HeaderMap;
 
@@ -107,7 +107,9 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
                 actor.user_agent.as_deref(),
             )
             .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to record create audit log: {}", e)))
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!("Failed to record create audit log: {}", e))
+            })
     }
 
     /// Record a permission update.
@@ -126,7 +128,9 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
                 actor.user_agent.as_deref(),
             )
             .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to record update audit log: {}", e)))
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!("Failed to record update audit log: {}", e))
+            })
     }
 
     /// Record a permission deletion.
@@ -143,7 +147,9 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
                 actor.user_agent.as_deref(),
             )
             .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to record delete audit log: {}", e)))
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!("Failed to record delete audit log: {}", e))
+            })
     }
 
     /// Record a permission activation/deactivation.
@@ -162,7 +168,9 @@ impl<S: AuditLogStore> PermissionAuditRecorder<S> {
                 actor.user_agent.as_deref(),
             )
             .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to record activation audit log: {}", e)))
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!("Failed to record activation audit log: {}", e))
+            })
     }
 
     /// Get the underlying audit logger.

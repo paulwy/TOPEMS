@@ -669,10 +669,7 @@ pub fn create_routes() -> Router<AppState> {
         .route("/folders", axum::routing::post(create_folder))
         .route("/folders/{folder_id}", axum::routing::get(get_folder))
         .route("/folders/{folder_id}", axum::routing::put(update_folder))
-        .route(
-            "/folders/{folder_id}",
-            axum::routing::delete(delete_folder),
-        )
+        .route("/folders/{folder_id}", axum::routing::delete(delete_folder))
         // ---------- 文档版本（已有） ----------
         .route(
             "/documents/{document_id}/versions",
@@ -1285,12 +1282,18 @@ pub async fn get_workspace_tree_stub() -> Json<ApiResponse<Vec<serde_json::Value
 
 /// 待上游支持：移动项目
 pub async fn move_items_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"moved": 0}), "操作成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"moved": 0}),
+        "操作成功",
+    ))
 }
 
 /// 待上游支持：复制项目
 pub async fn copy_items_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"copied": 0}), "操作成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"copied": 0}),
+        "操作成功",
+    ))
 }
 
 /// 待上游支持：排序
@@ -1315,7 +1318,10 @@ pub async fn delete_from_trash_stub() -> Json<ApiResponse<()>> {
 
 /// 待上游支持：清空回收站
 pub async fn empty_trash_stub() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"deleted": 0}), "操作成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"deleted": 0}),
+        "操作成功",
+    ))
 }
 
 /// 待上游支持：搜索工作区
@@ -1342,8 +1348,8 @@ pub async fn get_workspace_stats_stub() -> Json<ApiResponse<serde_json::Value>> 
 // ---------- 模板审批 ----------
 
 /// 待上游支持：模板审批列表
-pub async fn list_template_approvals_stub()
--> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
+pub async fn list_template_approvals_stub(
+) -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
     Json(ApiResponse::success(empty_paged(), "查询成功"))
 }
 
@@ -1378,8 +1384,8 @@ pub async fn cancel_approval_stub() -> Json<ApiResponse<serde_json::Value>> {
 }
 
 /// 待上游支持：待审批列表
-pub async fn list_pending_approvals_stub()
--> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
+pub async fn list_pending_approvals_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>>
+{
     Json(ApiResponse::success(empty_paged(), "查询成功"))
 }
 
@@ -1483,8 +1489,8 @@ pub async fn toggle_template_status_stub() -> Json<ApiResponse<serde_json::Value
 // ---------- 模板版本 ----------
 
 /// 待上游支持：模板版本列表
-pub async fn list_template_versions_stub()
--> Json<ApiResponse<PaginatedResponse<serde_json::Value>>> {
+pub async fn list_template_versions_stub() -> Json<ApiResponse<PaginatedResponse<serde_json::Value>>>
+{
     Json(ApiResponse::success(empty_paged(), "查询成功"))
 }
 

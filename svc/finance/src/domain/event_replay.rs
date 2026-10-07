@@ -1,8 +1,8 @@
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use std::time::Instant;
+use topems_shared_core::error::TopemsError;
 
 use super::event_store::{EventRecord, EventStore};
 use super::events::FinanceDomainEvent;

@@ -163,10 +163,16 @@ pub fn create_routes() -> Router<AppState> {
         .route("/analytics/oee-dashboard", get(get_oee_dashboard))
         .route("/analytics/quality-pareto", get(get_quality_pareto))
         // 前端契约兜底：模板带可选路径段 {id}，实际无路径参数 — 待上游支持
-        .route("/analytics/capacity-utilization/{_id}", get(get_capacity_utilization))
+        .route(
+            "/analytics/capacity-utilization/{_id}",
+            get(get_capacity_utilization),
+        )
         .route("/analytics/energy-cost/{_id}", get(get_energy_cost))
         .route("/analytics/equipment-mtbf/{_id}", get(get_equipment_mtbf))
-        .route("/analytics/delivery-analytics/{_id}", get(get_delivery_analytics))
+        .route(
+            "/analytics/delivery-analytics/{_id}",
+            get(get_delivery_analytics),
+        )
         .route("/analytics/oee-dashboard/{_id}", get(get_oee_dashboard))
         .route("/analytics/quality-pareto/{_id}", get(get_quality_pareto))
 }

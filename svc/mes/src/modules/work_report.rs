@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post, put},
@@ -9,6 +8,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::types::BigDecimal;
 use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
+use topems_shared_core::error::TopemsError;
 
 use topems_shared_auth::auth::Claims;
 use utoipa::ToSchema;

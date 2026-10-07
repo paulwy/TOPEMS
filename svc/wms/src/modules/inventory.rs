@@ -1,4 +1,3 @@
-use topems_shared_core::TopemsError;
 use axum::{
     extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
@@ -12,6 +11,7 @@ use serde::Deserialize;
 use sqlx::Row;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::models::{CreateInventoryItemRequest, InventoryItem, UpdateInventoryItemRequest};
@@ -119,7 +119,8 @@ fn publish_inventory_updated(
 /// V19.7: 从 Claims 中解析 tenant_id
 fn resolve_tenant_id(claims: &Claims) -> Result<Uuid, TopemsError> {
     match &claims.tenant_id {
-        Some(id) => Uuid::parse_str(id).map_err(|e| TopemsError::BusinessLogic(format!("无效的租户ID: {}", e))),
+        Some(id) => Uuid::parse_str(id)
+            .map_err(|e| TopemsError::BusinessLogic(format!("无效的租户ID: {}", e))),
         None => Err(TopemsError::BusinessLogic("缺少租户ID".to_string())),
     }
 }
@@ -176,9 +177,8 @@ pub async fn get_wms_dashboard(
         Err(e) => return e,
     }
 
-    let scalar_i64 = |row: &sqlx::postgres::PgRow, col: &str| -> i64 {
-        row.try_get::<i64, _>(col).unwrap_or(0)
-    };
+    let scalar_i64 =
+        |row: &sqlx::postgres::PgRow, col: &str| -> i64 { row.try_get::<i64, _>(col).unwrap_or(0) };
 
     let total_inventory: i64 = sqlx::query_scalar(only_own_schema_query!(
         "wms",
@@ -573,7 +573,11 @@ pub async fn update_inventory(
     }
     let tenant_id = match resolve_tenant_id(&claims) {
         Ok(id) => id,
-        Err(msg) => return Json(ApiResponse::from(TopemsError::AuthenticationFailed(msg.to_string()))),
+        Err(msg) => {
+            return Json(ApiResponse::from(TopemsError::AuthenticationFailed(
+                msg.to_string(),
+            )))
+        }
     };
     let request_data = serde_json::to_value(&req).ok();
 

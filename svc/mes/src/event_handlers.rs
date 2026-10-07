@@ -5,9 +5,9 @@
 //! 幂等键 = erp_order_id（映射到 mes.production_orders.source_order_id），重复投递只建单一次。
 //! 消费失败由 shared-event 订阅器统一进 DLQ（topems:dlq + retry_count）。
 
-use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use topems_shared_event::event::{
@@ -49,10 +49,16 @@ pub async fn start_business_event_subscribers(db: PgPool) -> Result<(), TopemsEr
 
 /// ErpProductionOrderDispatched → 在 MES 本地创建生产工单。
 /// 幂等：source_order_id = erp_order_id 已存在则跳过（事件重放不重复建单）。
-async fn handle_erp_production_order_dispatched(db: &PgPool, event: Event) -> Result<(), TopemsError> {
-    let payload: ErpProductionOrderDispatchedPayload = event
-        .parse_payload()
-        .map_err(|e| TopemsError::ValidationFailed(format!("解析 ErpProductionOrderDispatched payload 失败: {}", e)))?;
+async fn handle_erp_production_order_dispatched(
+    db: &PgPool,
+    event: Event,
+) -> Result<(), TopemsError> {
+    let payload: ErpProductionOrderDispatchedPayload = event.parse_payload().map_err(|e| {
+        TopemsError::ValidationFailed(format!(
+            "解析 ErpProductionOrderDispatched payload 失败: {}",
+            e
+        ))
+    })?;
 
     tracing::info!(
         "[mes] ErpProductionOrderDispatched 处理 - erp_order_id={}, order_no={}, qty={:?}, trace_id={:?}",

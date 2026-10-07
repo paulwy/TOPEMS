@@ -1,9 +1,9 @@
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use rand::Rng;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
+use topems_shared_core::error::TopemsError;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum ChartType {
@@ -92,7 +92,9 @@ pub struct ChartService {
 /// 额外阻止若干危险子串（即使字符集通过，也做二次拦截）。
 pub fn validate_identifier(name: &str) -> Result<String, TopemsError> {
     if name.is_empty() {
-        return Err(TopemsError::ValidationFailed("Identifier cannot be empty".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "Identifier cannot be empty".to_string(),
+        ));
     }
 
     // 长度上限：PostgreSQL 标识符不超过 63 字节（NAMEDATALEN-1）。

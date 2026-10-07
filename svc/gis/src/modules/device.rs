@@ -522,7 +522,10 @@ pub async fn get_device_track_statistics(
             };
             Json(ApiResponse::success(resp, "获取轨迹统计成功"))
         }
-        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询轨迹统计失败", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "查询轨迹统计失败",
+            e,
+        ))),
     }
 }
 

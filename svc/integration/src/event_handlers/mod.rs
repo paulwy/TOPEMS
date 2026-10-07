@@ -1,7 +1,7 @@
-use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{Event, EventResult, EventSubscriber, EventType};
 
 use crate::qms_lims_ehs;
@@ -125,7 +125,10 @@ impl IntegrationEventHandlers {
             }
             Err(e) => {
                 tracing::error!("[integration] 同步日志记录失败: {}", e);
-                Err(TopemsError::BusinessLogic(format!("同步日志记录失败: {}", e)))
+                Err(TopemsError::BusinessLogic(format!(
+                    "同步日志记录失败: {}",
+                    e
+                )))
             }
         }
     }

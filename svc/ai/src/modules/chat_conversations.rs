@@ -275,7 +275,10 @@ pub async fn regenerate_message(
     Path((_id, _message_id)): Path<(uuid::Uuid, uuid::Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     // 待上游支持：消息重算管线未接入，返回内层 404（消息不存在/未实现）
-    Json(ApiResponse::<serde_json::Value>::error(404, "消息重新生成待上游支持"))
+    Json(ApiResponse::<serde_json::Value>::error(
+        404,
+        "消息重新生成待上游支持",
+    ))
 }
 
 /// GET /api/ai/conversations/{id}/messages/{tail} - 折叠产物兜底（忽略尾部段，逻辑同 list_messages）
@@ -286,4 +289,3 @@ pub async fn list_messages_with_tail(
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
     list_messages(state, claims, Path(id)).await
 }
-

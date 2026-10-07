@@ -481,15 +481,15 @@ pub async fn list_today_events(
 }
 
 /// 本周事件（前端 GET /schedule/events/week）
-pub async fn list_week_events(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
+pub async fn list_week_events(
+    State(pool): State<PgPool>,
+) -> Json<ApiResponse<Vec<OaCalendarEvent>>> {
     let now = chrono::Utc::now();
     let today = now.date_naive();
     let weekday = today.weekday().num_days_from_monday();
     let monday = today - chrono::Duration::days(weekday as i64);
-    let start = DateTime::<Utc>::from_naive_utc_and_offset(
-        monday.and_hms_opt(0, 0, 0).unwrap(),
-        Utc,
-    );
+    let start =
+        DateTime::<Utc>::from_naive_utc_and_offset(monday.and_hms_opt(0, 0, 0).unwrap(), Utc);
     let end = start + chrono::Duration::days(7);
     match fetch_events_in_range(&pool, start, end).await {
         Ok(rows) => Json(ApiResponse::success(rows, "ok")),
@@ -562,28 +562,27 @@ pub async fn list_my_events(
     let start_filter = params.start_date.unwrap_or_default();
     let end_filter = params.end_date.unwrap_or_default();
 
-    let events: Vec<OaCalendarEvent> = match sqlx::query_as::<_, OaCalendarEvent>(
-        only_own_schema_query!(
+    let events: Vec<OaCalendarEvent> =
+        match sqlx::query_as::<_, OaCalendarEvent>(only_own_schema_query!(
             "mobile",
             "SELECT * FROM mobile.oa_calendar_events WHERE tenant_id = $1
              AND ($2::text = '' OR start_time::date >= $2::date)
              AND ($3::text = '' OR start_time::date <= $3::date)
              ORDER BY start_time DESC LIMIT $4 OFFSET $5"
-        ),
-    )
-    .bind(&tid)
-    .bind(&start_filter)
-    .bind(&end_filter)
-    .bind(page_size)
-    .bind(offset)
-    .fetch_all(&pool)
-    .await
-    {
-        Ok(r) => r,
-        Err(e) => {
-            return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
-        }
-    };
+        ))
+        .bind(&tid)
+        .bind(&start_filter)
+        .bind(&end_filter)
+        .bind(page_size)
+        .bind(offset)
+        .fetch_all(&pool)
+        .await
+        {
+            Ok(r) => r,
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
+            }
+        };
 
     Json(ApiResponse::success(
         serde_json::json!({ "items": events, "total": events.len() }),
@@ -640,7 +639,10 @@ pub async fn add_event_attendee(
     .execute(&pool)
     .await
     {
-        Ok(_) => Json(ApiResponse::success((), "参与者已添加（占位实现，待 attendees 表）")),
+        Ok(_) => Json(ApiResponse::success(
+            (),
+            "参与者已添加（占位实现，待 attendees 表）",
+        )),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }
@@ -660,7 +662,10 @@ pub async fn remove_event_attendee(
     .execute(&pool)
     .await
     {
-        Ok(_) => Json(ApiResponse::success((), "参与者已移除（占位实现，待 attendees 表）")),
+        Ok(_) => Json(ApiResponse::success(
+            (),
+            "参与者已移除（占位实现，待 attendees 表）",
+        )),
         Err(e) => Json(ApiResponse::from(TopemsError::internal("更新失败", e))),
     }
 }

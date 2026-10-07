@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::*,
@@ -7,6 +6,7 @@ use axum::{
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
@@ -14,8 +14,8 @@ use crate::models::material::{CreateSalesOrderRequest, SalesOrder, UpdateSalesOr
 use crate::modules::material_calc::{calculate_sales_order_amounts, default_sales_order_status};
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 use topems_shared_core::response::ApiResponse;
+use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 use topems_shared_event::event::{SalesOrderApprovedPayload, SalesOrderCreatedPayload};
 
 pub fn create_routes() -> Router<ApiState> {
@@ -823,7 +823,10 @@ async fn batch_update_status(
     for id in ids {
         query = query.bind(id);
     }
-    query.fetch_all(&mut **txn).await.map_err(|e| TopemsError::DatabaseQuery(e.to_string()))
+    query
+        .fetch_all(&mut **txn)
+        .await
+        .map_err(|e| TopemsError::DatabaseQuery(e.to_string()))
 }
 #[utoipa::path(
     post,

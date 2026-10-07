@@ -137,11 +137,27 @@ pub async fn update_record(
         HealthRecord {
             id,
             record_no: "HLT-UPD".to_string(),
-            employee_name: req.get("employee_name").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            check_type: req.get("check_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            check_date: req.get("check_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            result: req.get("result").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("normal").to_string(),
+            employee_name: req
+                .get("employee_name")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            check_type: req
+                .get("check_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            check_date: req
+                .get("check_date")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            result: req
+                .get("result")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("normal")
+                .to_string(),
             tenant_id,
         },
         "健康记录更新成功",

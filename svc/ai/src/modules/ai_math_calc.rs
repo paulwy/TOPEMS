@@ -122,7 +122,7 @@ pub fn calculate(expression: &str) -> Result<String, TopemsError> {
             }
             expect_number = false;
         } else {
-                return Err(TopemsError::ValidationFailed(format!("无效字符: {}", c)));
+            return Err(TopemsError::ValidationFailed(format!("无效字符: {}", c)));
         }
     }
 
@@ -132,7 +132,7 @@ pub fn calculate(expression: &str) -> Result<String, TopemsError> {
 
     while let Some(op) = operators.pop() {
         if op == '(' {
-                return Err(TopemsError::BusinessLogic("括号不匹配".to_string()));
+            return Err(TopemsError::BusinessLogic("括号不匹配".to_string()));
         }
         apply_operator(&mut numbers, op);
     }

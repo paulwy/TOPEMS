@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use crate::modules::models::{
     AnalysisResult, CategoryScore, ClassifyTextResponse, Entity, ExtractEntitiesResponse,
     ExtractKeywordsResponse, Keyword, SentimentAnalysisResponse,
@@ -8,6 +7,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -361,7 +361,10 @@ impl AnalysisService {
                 .text()
                 .await
                 .unwrap_or_else(|_| "Unknown error".to_string());
-            return Err(TopemsError::BusinessLogic(format!("AI API 错误: {} - {}", status, error_text)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "AI API 错误: {} - {}",
+                status, error_text
+            )));
         }
 
         let openai_response: OpenAIResponse = response

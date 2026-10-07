@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use topems_shared_core::error::TopemsError;
 use crate::modules::models::{QAHistory, SearchResult};
 use crate::services::db::Database;
 use serde::{Deserialize, Serialize};
@@ -9,6 +8,7 @@ use topems_shared_ai::ai_client::{
     create_client, AIModelConfig, AIProviderType, ChatMessage, UnifiedAIClient,
 };
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -413,7 +413,11 @@ impl QAService {
     }
 
     /// 删除问答历史（软删除）
-    pub async fn delete_qa_history(&self, qa_id: Uuid, tenant_id: Uuid) -> Result<bool, TopemsError> {
+    pub async fn delete_qa_history(
+        &self,
+        qa_id: Uuid,
+        tenant_id: Uuid,
+    ) -> Result<bool, TopemsError> {
         let result = sqlx::query(only_own_schema_query!(
             "ai",
             r#"

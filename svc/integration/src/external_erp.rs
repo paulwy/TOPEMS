@@ -834,8 +834,16 @@ pub async fn sync_entity(
                         Ok((total, inserted, skipped))
                     }
                     Err(e) => {
-                        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e.to_string()))
-                            .await;
+                        update_sync_log_status(
+                            &state.pool,
+                            task_id,
+                            "failed",
+                            0,
+                            0,
+                            0,
+                            Some(&e.to_string()),
+                        )
+                        .await;
                         Err(e)
                     }
                 }
@@ -869,8 +877,16 @@ pub async fn sync_entity(
                         Ok((created, created, 0))
                     }
                     Err(e) => {
-                        update_sync_log_status(&state.pool, task_id, "failed", 0, 0, 0, Some(&e.to_string()))
-                            .await;
+                        update_sync_log_status(
+                            &state.pool,
+                            task_id,
+                            "failed",
+                            0,
+                            0,
+                            0,
+                            Some(&e.to_string()),
+                        )
+                        .await;
                         Err(e)
                     }
                 }
@@ -1085,7 +1101,10 @@ pub async fn toggle_connection(
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpConnection>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
-    let enabled = body.get("enabled").and_then(|v| v.as_bool()).unwrap_or(true);
+    let enabled = body
+        .get("enabled")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "UPDATE erp_connections SET isactive = $2, updated_at = NOW() \
@@ -1160,10 +1179,26 @@ pub async fn create_company_mapping(
 ) -> Json<ApiResponse<ErpMapping>> {
     let conn_uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     let mapping_id = Uuid::new_v4();
-    let local_code = body.get("local_code").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let local_name = body.get("local_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let external_code = body.get("external_code").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let external_name = body.get("external_name").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let local_code = body
+        .get("local_code")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let local_name = body
+        .get("local_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let external_code = body
+        .get("external_code")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let external_name = body
+        .get("external_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
     match sqlx::query_as::<_, ErpMapping>(only_own_schema_query!(
         "integration",
         "INSERT INTO erp_mappings \
@@ -1439,13 +1474,19 @@ pub fn create_routes() -> Router<AppState> {
         .route("/", get(list_entity_mappings).post(create_entity_mapping))
         .route("/batch", post(batch_entity_mappings))
         .route("/auto-match", post(auto_match_mappings))
-        .route("/{mapping_id}", put(update_entity_mapping).delete(delete_entity_mapping));
+        .route(
+            "/{mapping_id}",
+            put(update_entity_mapping).delete(delete_entity_mapping),
+        );
 
     let preview = Router::new().route("/{entity}", get(preview_entity));
 
     let company_mappings = Router::new()
         .route("/", get(list_company_mappings).post(create_company_mapping))
-        .route("/{mapping_id}", put(update_company_mapping).delete(delete_company_mapping));
+        .route(
+            "/{mapping_id}",
+            put(update_company_mapping).delete(delete_company_mapping),
+        );
 
     let connection_detail = Router::new()
         .route(

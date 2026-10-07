@@ -1,10 +1,10 @@
 //! Tenant API handlers
 
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     Json,
 };
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::models::*;
@@ -257,7 +257,9 @@ async fn seed_tenant_defaults(
             .bind(admin_email)
             .fetch_one(&mut **tx)
             .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to check existing admin user: {}", e)))?;
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!("Failed to check existing admin user: {}", e))
+            })?;
     if dup > 0 {
         return Err(TopemsError::BusinessLogic(
             "Admin username or email already exists".to_string(),
@@ -293,7 +295,9 @@ async fn seed_tenant_defaults(
     .bind(admin_email)
     .execute(&mut **tx)
     .await
-    .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to create tenant membership: {}", e)))?;
+    .map_err(|e| {
+        TopemsError::DatabaseQuery(format!("Failed to create tenant membership: {}", e))
+    })?;
 
     // 5. Assign the admin to the global superadmin role (carries all perms).
     sqlx::query(
@@ -323,7 +327,9 @@ async fn seed_tenant_defaults(
     .bind(default_department_description)
     .execute(&mut **tx)
     .await
-    .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to seed default department setting: {}", e)))?;
+    .map_err(|e| {
+        TopemsError::DatabaseQuery(format!("Failed to seed default department setting: {}", e))
+    })?;
 
     Ok(admin_user_id)
 }
@@ -403,7 +409,12 @@ async fn activate_basic_modules(
         .bind(module_name)
         .execute(&mut **tx)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to activate basic module {}: {}", module_code, e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!(
+                "Failed to activate basic module {}: {}",
+                module_code, e
+            ))
+        })?;
     }
     Ok(())
 }

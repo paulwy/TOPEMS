@@ -1,4 +1,3 @@
-use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Path, State},
     routing::get,
@@ -11,6 +10,7 @@ use sqlx::postgres::PgPool;
 use sqlx::FromRow;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::Result;
 use uuid::Uuid;
 
 use crate::shared::permission::{check_permission, ModulePermission};

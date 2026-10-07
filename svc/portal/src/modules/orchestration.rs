@@ -16,12 +16,12 @@
 //!    - RouteRule: 路由规则 (pattern/target/condition/priority/weight)
 //!    - RoutingDecision: 路由决策 (matched_rule/target/confidence/latency)
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -394,10 +394,9 @@ impl GatewayOrchestrator {
 
         let plan = {
             let plans = store.plans.lock().await;
-            plans
-                .get(plan_id)
-                .cloned()
-                .ok_or_else(|| TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id)))?
+            plans.get(plan_id).cloned().ok_or_else(|| {
+                TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id))
+            })?
         };
 
         if plan.status == PlanStatus::Running {
@@ -405,9 +404,9 @@ impl GatewayOrchestrator {
         }
 
         let mut plans = store.plans.lock().await;
-        let p = plans
-            .get_mut(plan_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id)))?;
+        let p = plans.get_mut(plan_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id))
+        })?;
 
         p.status = PlanStatus::Running;
         p.updated_at = chrono::Utc::now().to_rfc3339();
@@ -533,12 +532,15 @@ impl GatewayOrchestrator {
         let store = get_orchestration_store();
         let mut plans = store.plans.lock().await;
 
-        let p = plans
-            .get_mut(plan_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id)))?;
+        let p = plans.get_mut(plan_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id))
+        })?;
 
         if p.status != PlanStatus::Running && p.status != PlanStatus::Pending {
-            return Err(TopemsError::BusinessLogic(format!("计划状态为 {}，无法取消", p.status.as_str())));
+            return Err(TopemsError::BusinessLogic(format!(
+                "计划状态为 {}，无法取消",
+                p.status.as_str()
+            )));
         }
 
         p.status = PlanStatus::Cancelled;
@@ -575,12 +577,14 @@ impl GatewayOrchestrator {
         let store = get_orchestration_store();
         let mut plans = store.plans.lock().await;
 
-        let p = plans
-            .get_mut(plan_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id)))?;
+        let p = plans.get_mut(plan_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("编排计划 '{}' 不存在", plan_id))
+        })?;
 
         if p.status != PlanStatus::Pending {
-            return Err(TopemsError::BusinessLogic("只能优化待执行的计划".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "只能优化待执行的计划".to_string(),
+            ));
         }
 
         p.execution_steps.sort_by(|a, b| {
@@ -623,7 +627,10 @@ impl ServiceDiscoveryEngine {
         let mut services = store.services.lock().await;
 
         if services.values().any(|s| s.name == name) {
-            return Err(TopemsError::BusinessLogic(format!("服务 '{}' 已注册", name)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "服务 '{}' 已注册",
+                name
+            )));
         }
 
         let descriptor = ServiceDescriptor {
@@ -649,7 +656,10 @@ impl ServiceDiscoveryEngine {
         if removed {
             Ok(true)
         } else {
-            Err(TopemsError::ResourceNotFound(format!("服务 '{}' 不存在", id)))
+            Err(TopemsError::ResourceNotFound(format!(
+                "服务 '{}' 不存在",
+                id
+            )))
         }
     }
 

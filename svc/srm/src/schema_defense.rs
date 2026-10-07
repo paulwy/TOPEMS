@@ -325,11 +325,9 @@ pub async fn run_schema_migration_and_verify(pool: &PgPool) -> Result<(), sqlx::
     // 幂等对齐 srm.inquiries.status 检查约束：handler 状态机为
     // draft -> published -> closed（前端 inquiry schema: draft/published/in_progress/closed/awarded/cancelled），
     // 旧约束 ck_inquiries_status_standard 仅允许 active/inactive/archived，导致 INSERT 'draft' 被拒。
-    sqlx::query(
-        "ALTER TABLE srm.inquiries DROP CONSTRAINT IF EXISTS ck_inquiries_status_standard",
-    )
-    .execute(pool)
-    .await?;
+    sqlx::query("ALTER TABLE srm.inquiries DROP CONSTRAINT IF EXISTS ck_inquiries_status_standard")
+        .execute(pool)
+        .await?;
     sqlx::query(
         r#"
         ALTER TABLE srm.inquiries

@@ -1,6 +1,5 @@
 //! Production Order handlers
 
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::Extension,
     extract::Path,
@@ -17,6 +16,7 @@ use sqlx::{
 };
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
 
@@ -167,7 +167,10 @@ fn opt_naive_to_utc(dt: Option<DateTime<Utc>>) -> Option<DateTime<Utc>> {
 
 // ==================== State Transition ====================
 
-pub fn validate_state_transition(current_status: &str, target_status: &str) -> Result<(), TopemsError> {
+pub fn validate_state_transition(
+    current_status: &str,
+    target_status: &str,
+) -> Result<(), TopemsError> {
     let valid_transitions = [
         ("pending", "released"),
         ("pending", "cancelled"),

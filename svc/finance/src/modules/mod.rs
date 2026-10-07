@@ -2148,10 +2148,7 @@ pub async fn export_template_handler(
     let service = FinanceService::new(state.pool.clone(), state.workflow_client.clone());
     let template = match service.get_voucher_template(tenant_id, template_id).await {
         Ok(t) => t,
-        Err(e) => {
-            return Json(crate::shared::err_resp::<serde_json::Value, _>(e))
-                .into_response()
-        }
+        Err(e) => return Json(crate::shared::err_resp::<serde_json::Value, _>(e)).into_response(),
     };
     let json = serde_json::to_value(template).unwrap_or(serde_json::json!({}));
     let filename = format!("template-{}.json", template_id);

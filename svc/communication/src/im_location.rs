@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -7,6 +6,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, PgPool};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use topems_shared_core::response::ApiResponse;
@@ -745,10 +745,16 @@ async fn sync_geofence_to_gis_internal(geofence: &ImGeofence) -> Result<Option<U
                     .and_then(|s| Uuid::parse_str(s).ok());
                 Ok(gis_id)
             } else {
-                Err(TopemsError::BusinessLogic(format!("GIS 服务返回错误状态: {}", resp.status())))
+                Err(TopemsError::BusinessLogic(format!(
+                    "GIS 服务返回错误状态: {}",
+                    resp.status()
+                )))
             }
         }
-        Err(e) => Err(TopemsError::BusinessLogic(format!("请求 GIS 服务失败: {}", e))),
+        Err(e) => Err(TopemsError::BusinessLogic(format!(
+            "请求 GIS 服务失败: {}",
+            e
+        ))),
     }
 }
 

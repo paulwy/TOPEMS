@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
+use topems_shared_core::error::TopemsError;
 
 use reqwest::blocking::Client;
 
@@ -70,7 +70,10 @@ impl KingdeeApiClient {
             let status = response.status();
             let error_text = response.text().unwrap_or_default();
             tracing::error!("金蝶认证失败: {} - {}", status, error_text);
-            Err(TopemsError::BusinessLogic(format!("认证失败: {} - {}", status, error_text)))
+            Err(TopemsError::BusinessLogic(format!(
+                "认证失败: {} - {}",
+                status, error_text
+            )))
         }
     }
 

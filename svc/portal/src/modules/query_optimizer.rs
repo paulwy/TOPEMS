@@ -16,12 +16,12 @@
 //!    - AccelerationStrategy: 加速策略 (并行/批量/早返回/懒加载/预取)
 //!    - AccelerationResult: 加速结果 + 提速倍数
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -473,7 +473,9 @@ impl QueryCompiler {
         list
     }
 
-    pub async fn enable_rule(rule_type: CompilationRuleType) -> Result<CompilationRule, TopemsError> {
+    pub async fn enable_rule(
+        rule_type: CompilationRuleType,
+    ) -> Result<CompilationRule, TopemsError> {
         let store = get_query_optimizer_store();
         let mut rules = store.compilation_rules.lock().await;
         let key = rule_type.as_str().to_string();
@@ -486,7 +488,9 @@ impl QueryCompiler {
         Ok(rule.clone())
     }
 
-    pub async fn disable_rule(rule_type: CompilationRuleType) -> Result<CompilationRule, TopemsError> {
+    pub async fn disable_rule(
+        rule_type: CompilationRuleType,
+    ) -> Result<CompilationRule, TopemsError> {
         let store = get_query_optimizer_store();
         let mut rules = store.compilation_rules.lock().await;
         let key = rule_type.as_str().to_string();

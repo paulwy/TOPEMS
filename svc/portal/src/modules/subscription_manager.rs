@@ -16,12 +16,12 @@
 //!    - 客户端感知推送 (慢速客户端自动批量)
 //!    - 背压处理 (Backpressure handling)
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -510,7 +510,10 @@ impl MessageQueueBridge {
 
         let configs = store.queue_configs.lock().await;
         if !configs.contains_key(queue_name) {
-            return Err(TopemsError::ResourceNotFound(format!("队列 '{}' 不存在", queue_name)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "队列 '{}' 不存在",
+                queue_name
+            )));
         }
         drop(configs);
 
@@ -555,7 +558,10 @@ impl MessageQueueBridge {
 
         let name = config.name.clone();
         if queues.contains_key(&name) {
-            return Err(TopemsError::BusinessLogic(format!("队列 '{}' 已存在", name)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "队列 '{}' 已存在",
+                name
+            )));
         }
 
         queues.insert(name.clone(), Vec::new());
@@ -709,7 +715,9 @@ impl PushOptimizer {
 
     pub async fn set_batch_window(window_ms: u64) -> Result<PushStats, TopemsError> {
         if window_ms == 0 || window_ms > 5000 {
-            return Err(TopemsError::ValidationFailed("批量窗口必须在 1-5000ms 之间".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "批量窗口必须在 1-5000ms 之间".to_string(),
+            ));
         }
         let store = get_subscription_store();
         let mut window = store.batch_window.lock().await;

@@ -1,4 +1,3 @@
-use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
     routing::{get, post},
@@ -9,6 +8,7 @@ use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::Result;
 use uuid::Uuid;
 
 use crate::models::{AwardBiddingRequest, Bidding, CreateBiddingRequest, UpdateBiddingRequest};
@@ -420,7 +420,10 @@ pub async fn publish_bidding(
             }
             Json(ApiResponse::success(bidding, "招标发布成功"))
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在或当前状态不允许发布")),
+        Ok(None) => Json(ApiResponse::<Bidding>::error(
+            404,
+            "招标不存在或当前状态不允许发布",
+        )),
         Err(e) => {
             tracing::error!("发布招标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "发布招标失败"))
@@ -477,7 +480,10 @@ pub async fn open_bidding(
             }
             Json(ApiResponse::success(bidding, "开标成功"))
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在或当前状态不允许开标")),
+        Ok(None) => Json(ApiResponse::<Bidding>::error(
+            404,
+            "招标不存在或当前状态不允许开标",
+        )),
         Err(e) => {
             tracing::error!("开标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "开标失败"))
@@ -533,7 +539,10 @@ pub async fn evaluate_bidding(
             }
             Json(ApiResponse::success(bidding, "评标完成"))
         }
-        Ok(None) => Json(ApiResponse::<Bidding>::error(404, "招标不存在或当前状态不允许评标")),
+        Ok(None) => Json(ApiResponse::<Bidding>::error(
+            404,
+            "招标不存在或当前状态不允许评标",
+        )),
         Err(e) => {
             tracing::error!("评标失败: {}", e);
             Json(ApiResponse::<Bidding>::error(500, "评标失败"))

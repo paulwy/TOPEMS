@@ -324,7 +324,10 @@ pub async fn get_workflow_by_id(
     State(_pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(build_static_workflow(id), "工作流详情"))
+    Json(ApiResponse::success(
+        build_static_workflow(id),
+        "工作流详情",
+    ))
 }
 
 /// PUT /workflows/{id} —— 静态状态机暂不落库更新（待上游支持）
@@ -333,7 +336,10 @@ pub async fn update_workflow(
     Path(id): Path<Uuid>,
     Json(_body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(build_static_workflow(id), "工作流已更新"))
+    Json(ApiResponse::success(
+        build_static_workflow(id),
+        "工作流已更新",
+    ))
 }
 
 /// DELETE /workflows/{id} —— 默认静态工作流不可删除，契约上回显成功（待上游支持）
@@ -341,7 +347,10 @@ pub async fn delete_workflow(
     State(_pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(json!({"id": id, "deleted": true}), "工作流已删除"))
+    Json(ApiResponse::success(
+        json!({"id": id, "deleted": true}),
+        "工作流已删除",
+    ))
 }
 
 /// GET /workflows/{id}/transitions
@@ -350,7 +359,10 @@ pub async fn list_workflow_transitions(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let wf = build_static_workflow(id);
-    Json(ApiResponse::success(wf["transitions"].clone(), "工作流流转"))
+    Json(ApiResponse::success(
+        wf["transitions"].clone(),
+        "工作流流转",
+    ))
 }
 
 /// POST /workflows/{id}/transitions —— 追加流转不落库，回显契约结构（待上游支持）

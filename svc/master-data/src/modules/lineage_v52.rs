@@ -8,12 +8,12 @@
 //!
 //! 设计风格：ApiResponse + LazyLock 内存存储
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
@@ -738,8 +738,12 @@ impl LineageTracker {
                 dot.push_str("}\n");
                 Ok(dot)
             }
-            "json" => serde_json::to_string_pretty(&graph).map_err(|e| TopemsError::BusinessLogic(e.to_string())),
-            _ => Err(TopemsError::ValidationFailed(format!("不支持的导出格式: {}", format))),
+            "json" => serde_json::to_string_pretty(&graph)
+                .map_err(|e| TopemsError::BusinessLogic(e.to_string())),
+            _ => Err(TopemsError::ValidationFailed(format!(
+                "不支持的导出格式: {}",
+                format
+            ))),
         }
     }
 

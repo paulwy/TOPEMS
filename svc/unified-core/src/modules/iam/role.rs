@@ -550,7 +550,10 @@ pub async fn get_role_permissions(
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(topems_shared_core::response::error_value(400, "无效的角色ID格式"));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的角色ID格式",
+            ));
         }
     };
 
@@ -584,7 +587,10 @@ pub async fn add_role_permission(
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(topems_shared_core::response::error_value(400, "无效的角色ID格式"));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的角色ID格式",
+            ));
         }
     };
 
@@ -592,14 +598,14 @@ pub async fn add_role_permission(
     let permission_id: Option<Uuid> = match payload.get("permission_id").and_then(|v| v.as_str()) {
         Some(pid) => Uuid::parse_str(pid).ok(),
         None => match payload.get("permission_code").and_then(|v| v.as_str()) {
-            Some(code) => {
-                sqlx::query_scalar::<_, Uuid>("SELECT id FROM public.core_permissions WHERE code = $1")
-                    .bind(code)
-                    .fetch_optional(&state.pool)
-                    .await
-                    .ok()
-                    .flatten()
-            }
+            Some(code) => sqlx::query_scalar::<_, Uuid>(
+                "SELECT id FROM public.core_permissions WHERE code = $1",
+            )
+            .bind(code)
+            .fetch_optional(&state.pool)
+            .await
+            .ok()
+            .flatten(),
             None => None,
         },
     };
@@ -607,7 +613,10 @@ pub async fn add_role_permission(
     let permission_id = match permission_id {
         Some(pid) => pid,
         None => {
-            return Json(topems_shared_core::response::error_value(400, "无效的权限标识"));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的权限标识",
+            ));
         }
     };
 
@@ -627,7 +636,10 @@ pub async fn add_role_permission(
         })),
         Err(e) => {
             tracing::error!("角色权限授权失败: {}", e);
-            Json(topems_shared_core::response::error_value(500, &format!("角色权限授权失败: {}", e)))
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("角色权限授权失败: {}", e),
+            ))
         }
     }
 }
@@ -640,13 +652,19 @@ pub async fn remove_role_permission(
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(topems_shared_core::response::error_value(400, "无效的角色ID格式"));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的角色ID格式",
+            ));
         }
     };
     let perm_uuid = match Uuid::parse_str(&permission_id) {
         Ok(u) => u,
         Err(_) => {
-            return Json(topems_shared_core::response::error_value(400, "无效的权限ID格式"));
+            return Json(topems_shared_core::response::error_value(
+                400,
+                "无效的权限ID格式",
+            ));
         }
     };
 
@@ -666,7 +684,10 @@ pub async fn remove_role_permission(
         })),
         Err(e) => {
             tracing::error!("角色权限移除失败: {}", e);
-            Json(topems_shared_core::response::error_value(500, &format!("角色权限移除失败: {}", e)))
+            Json(topems_shared_core::response::error_value(
+                500,
+                &format!("角色权限移除失败: {}", e),
+            ))
         }
     }
 }

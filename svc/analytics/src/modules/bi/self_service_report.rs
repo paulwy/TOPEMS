@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     http::{header, StatusCode},
@@ -8,6 +7,7 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_core::error::TopemsError;
 use tracing::{info, warn};
 use utoipa::ToSchema;
 
@@ -527,7 +527,10 @@ pub async fn query_report_data(
                 if let Err(msg) =
                     validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await
                 {
-                    return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
+                    return Json(topems_shared_core::response::error_value(
+                        500,
+                        &msg.to_string(),
+                    ));
                 }
             } else {
                 // sort_by 必须是已注册列或保留 id
@@ -543,7 +546,10 @@ pub async fn query_report_data(
                 if let Err(msg) =
                     validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await
                 {
-                    return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
+                    return Json(topems_shared_core::response::error_value(
+                        500,
+                        &msg.to_string(),
+                    ));
                 }
             }
         }
@@ -572,7 +578,10 @@ pub async fn query_report_data(
     let sort_order = match validate_sort_order(&sort_order) {
         Ok(o) => o,
         Err(e) => {
-            return Json(topems_shared_core::response::error_value(500, &e.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &e.to_string(),
+            ));
         }
     };
 

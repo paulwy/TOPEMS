@@ -1,7 +1,7 @@
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use topems_shared_core::error::TopemsError;
 
 use super::events::FinanceDomainEvent;
 use super::value_objects::AgingBucket;

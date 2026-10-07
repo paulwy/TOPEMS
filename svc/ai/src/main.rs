@@ -1,6 +1,5 @@
 mod dsh;
 mod event_handlers;
-mod form_assistant;
 mod handlers;
 mod models;
 mod modules;

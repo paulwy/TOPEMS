@@ -16,12 +16,12 @@
 //!    - AggregationConfig: 聚合配置 (Count/Sum/Avg/Min/Max/HLL)
 //!    - TumblingWindow/HoppingWindow/SessionWindow 窗口计算
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -815,9 +815,9 @@ impl RealtimeAggregator {
 
         {
             let configs = store.aggregation_configs.lock().await;
-            configs
-                .get(config_id)
-                .ok_or_else(|| TopemsError::ResourceNotFound(format!("聚合配置不存在: {}", config_id)))?;
+            configs.get(config_id).ok_or_else(|| {
+                TopemsError::ResourceNotFound(format!("聚合配置不存在: {}", config_id))
+            })?;
         }
 
         let mut running = store.running_aggregations.lock().await;

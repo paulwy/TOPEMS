@@ -1,9 +1,9 @@
-use topems_shared_core::error::TopemsError;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventResult, EventSubscriber, EventType, MasterDataAction,
@@ -65,9 +65,9 @@ impl PdmEventHandlers {
             event.trace_id
         );
 
-        let payload: PurchaseOrderCreatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e)))?;
+        let payload: PurchaseOrderCreatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e))
+        })?;
 
         tracing::info!(
             "[pdm] 采购订单: {} ({})，供应商: {:?}，金额: {:?}",
@@ -99,9 +99,9 @@ impl PdmEventHandlers {
             event.trace_id
         );
 
-        let payload: ProductionOrderCreatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析生产订单创建事件 payload 失败: {}", e)))?;
+        let payload: ProductionOrderCreatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析生产订单创建事件 payload 失败: {}", e))
+        })?;
 
         tracing::info!(
             "[pdm] 生产订单: {} ({})，产品: {:?}，数量: {:?}",
@@ -141,9 +141,9 @@ impl PdmEventHandlers {
             event.trace_id
         );
 
-        let payload: ScmShipmentReceivedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析收货事件 payload 失败: {}", e)))?;
+        let payload: ScmShipmentReceivedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析收货事件 payload 失败: {}", e))
+        })?;
 
         tracing::info!(
             "[pdm] 收货单: {} ({})，供应商: {:?}，数量: {:?}，收货人: {:?}",

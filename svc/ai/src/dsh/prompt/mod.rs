@@ -2,9 +2,9 @@
 //!
 //! 提供 Prompt 模板管理、版本控制、变量注入和 A/B 测试能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -331,7 +331,10 @@ impl PromptEngine {
     pub fn delete_template(&self, template_id: &str) -> Result<(), TopemsError> {
         let mut templates = self.templates.lock();
         if templates.remove(template_id).is_none() {
-            return Err(TopemsError::ResourceNotFound(format!("模板 {} 不存在", template_id)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "模板 {} 不存在",
+                template_id
+            )));
         }
         drop(templates);
 

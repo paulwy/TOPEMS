@@ -30,7 +30,10 @@ pub fn create_routes() -> Router<AppState> {
         .route("/traceability/quality-records", get(list_quality_records))
         // 前端契约兜底：模板带可选路径段 — 待上游支持
         .route("/traceability/chain/{_id}", get(get_trace_chain))
-        .route("/traceability/quality-records/{_id}", get(list_quality_records))
+        .route(
+            "/traceability/quality-records/{_id}",
+            get(list_quality_records),
+        )
 }
 
 // ==================== Data Types ====================

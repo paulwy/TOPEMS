@@ -1,4 +1,3 @@
-use topems_shared_core::TopemsError;
 use axum::{
     extract::{Extension, Path, State},
     http::StatusCode,
@@ -10,6 +9,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::env;
+use topems_shared_core::TopemsError;
 use tracing::{debug, error, info, warn};
 use uuid::Uuid;
 
@@ -350,7 +350,10 @@ async fn get_entity_analyses(
     }
 }
 
-async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Result<String, TopemsError> {
+async fn call_ai_service(
+    prompt: &str,
+    ai_service_url: &Option<String>,
+) -> Result<String, TopemsError> {
     let url = ai_service_url.as_deref().unwrap_or(DEFAULT_AI_SERVICE_URL);
     let client = Client::new();
     let endpoint = format!("{}/api/core/rd/ai/chat", url);
@@ -411,7 +414,10 @@ async fn call_ai_service(prompt: &str, ai_service_url: &Option<String>) -> Resul
                 status = %resp.status(),
                 "[AI Service] AI 服务返回非成功状态，请检查 AI 服务端口与可用性"
             );
-            Err(TopemsError::BusinessLogic(format!("AI服务返回错误: {}", resp.status())))
+            Err(TopemsError::BusinessLogic(format!(
+                "AI服务返回错误: {}",
+                resp.status()
+            )))
         }
         Err(e) => {
             error!(

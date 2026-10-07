@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
-use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use topems_shared_core::error::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -228,8 +228,8 @@ impl AgentService {
             .await
             .map(|r| r.0)?;
 
-        let response_json: serde_json::Value =
-            serde_json::from_str(&response).map_err(|e| TopemsError::ValidationFailed(format!("解析工具调用响应失败: {}", e)))?;
+        let response_json: serde_json::Value = serde_json::from_str(&response)
+            .map_err(|e| TopemsError::ValidationFailed(format!("解析工具调用响应失败: {}", e)))?;
 
         let tool_calls_json = response_json.get("tool_calls").and_then(|v| v.as_array());
 
@@ -1132,7 +1132,9 @@ impl WorkflowOrchestrator {
         if step.executor.as_deref() == Some("dify") {
             if let Some(ref dify) = self.dify_service {
                 if !dify.is_configured() {
-                    return Err(TopemsError::ValidationFailed("Dify未配置：缺少DIFY_API_KEY或DIFY_BASE_URL".to_string()));
+                    return Err(TopemsError::ValidationFailed(
+                        "Dify未配置：缺少DIFY_API_KEY或DIFY_BASE_URL".to_string(),
+                    ));
                 }
                 let query = context
                     .get("query")
@@ -1151,7 +1153,9 @@ impl WorkflowOrchestrator {
                     .map_err(|e| TopemsError::BusinessLogic(format!("Difystepfailed:{}", e)))?;
                 return Ok(resp.answer);
             } else {
-                return Err(TopemsError::BusinessLogic("Difystep配置但DifyService不可用".to_string()));
+                return Err(TopemsError::BusinessLogic(
+                    "Difystep配置但DifyService不可用".to_string(),
+                ));
             }
         }
 
@@ -1168,7 +1172,9 @@ impl WorkflowOrchestrator {
             if result.success {
                 Ok(result.result)
             } else {
-                Err(TopemsError::BusinessLogic(result.error.unwrap_or_else(|| "Unknown error".to_string())))
+                Err(TopemsError::BusinessLogic(
+                    result.error.unwrap_or_else(|| "Unknown error".to_string()),
+                ))
             }
         } else {
             // Direct QA without tool

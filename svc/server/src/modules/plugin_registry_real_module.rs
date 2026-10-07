@@ -7,12 +7,12 @@
 
 #![cfg(feature = "module-plugin-registry")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::time::Instant;
 use topems_plugin_registry::shared::AppState as PluginRegistryAppState;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 
 /// 真实 Plugin Registry 模块：持有完整业务路由
 pub struct PluginRegistryRealModule {

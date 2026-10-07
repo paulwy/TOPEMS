@@ -922,11 +922,13 @@ async fn detect_production_anomalies(pool: &sqlx::PgPool) -> Vec<AnomalyAlert> {
             let product_name: String = row.get("product_name");
             let planned_end: Option<chrono::NaiveDate> = row.get("planned_end_date");
             // quantity 可能是 integer 或 numeric，completed_quantity 是 numeric——统一容错解码
-            let quantity: f64 = row.try_get::<sqlx::types::BigDecimal, _>("quantity")
+            let quantity: f64 = row
+                .try_get::<sqlx::types::BigDecimal, _>("quantity")
                 .map(|b| b.to_string().parse().unwrap_or(0.0))
                 .or_else(|_| row.try_get::<i32, _>("quantity").map(|v| v as f64))
                 .unwrap_or(0.0);
-            let completed: f64 = row.try_get::<sqlx::types::BigDecimal, _>("completed_quantity")
+            let completed: f64 = row
+                .try_get::<sqlx::types::BigDecimal, _>("completed_quantity")
                 .map(|b| b.to_string().parse().unwrap_or(0.0))
                 .unwrap_or(0.0);
 

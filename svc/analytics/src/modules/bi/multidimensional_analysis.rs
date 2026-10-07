@@ -1,10 +1,10 @@
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, State},
     Json,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_core::error::TopemsError;
 use tracing::info;
 
 use crate::shared::AppState;
@@ -159,7 +159,10 @@ pub async fn query_cube(
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
-            return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &msg.to_string(),
+            ));
         }
     }
 
@@ -176,7 +179,10 @@ pub async fn query_cube(
     let sort_order = match validate_sort_order(&sort_order) {
         Ok(o) => o,
         Err(e) => {
-            return Json(topems_shared_core::response::error_value(500, &e.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &e.to_string(),
+            ));
         }
     };
     let limit = req.limit.unwrap_or(100);
@@ -286,7 +292,10 @@ pub async fn slice_cube(
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
-            return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &msg.to_string(),
+            ));
         }
     }
 
@@ -303,7 +312,10 @@ pub async fn slice_cube(
     let sort_order = match validate_sort_order(&sort_order) {
         Ok(o) => o,
         Err(e) => {
-            return Json(topems_shared_core::response::error_value(500, &e.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &e.to_string(),
+            ));
         }
     };
     let limit = req.limit.unwrap_or(100);
@@ -414,7 +426,10 @@ pub async fn dice_cube(
         let mut whitelist_cols: Vec<String> = select_cols.clone();
         whitelist_cols.push(sort_by_raw.clone());
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
-            return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &msg.to_string(),
+            ));
         }
     }
 
@@ -431,7 +446,10 @@ pub async fn dice_cube(
     let sort_order = match validate_sort_order(&sort_order) {
         Ok(o) => o,
         Err(e) => {
-            return Json(topems_shared_core::response::error_value(500, &e.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &e.to_string(),
+            ));
         }
     };
     let limit = req.limit.unwrap_or(100);
@@ -528,7 +546,10 @@ pub async fn pivot_table(
     // S1.3: 第二层白名单校验
     if !all_dims.is_empty() {
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &all_dims).await {
-            return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &msg.to_string(),
+            ));
         }
     }
 
@@ -632,7 +653,10 @@ pub async fn rank_data(
     let sort_order = match validate_sort_order(&rank_by) {
         Ok(o) => o,
         Err(e) => {
-            return Json(topems_shared_core::response::error_value(500, &e.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &e.to_string(),
+            ));
         }
     };
 
@@ -640,7 +664,10 @@ pub async fn rank_data(
     {
         let whitelist_cols = vec![req.dimension.clone(), req.measure.clone()];
         if let Err(msg) = validate_columns(&state.pool, DEFAULT_BI_TABLE, &whitelist_cols).await {
-            return Json(topems_shared_core::response::error_value(500, &msg.to_string()));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                &msg.to_string(),
+            ));
         }
     }
 

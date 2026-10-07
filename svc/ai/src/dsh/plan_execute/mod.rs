@@ -2,9 +2,9 @@
 //!
 //! 提供任务规划、计划执行与监控、计划动态调整、计划执行报告等能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -454,7 +454,9 @@ impl PlanExecuteOrchestrator {
         dependencies: HashMap<String, Vec<String>>,
     ) -> Result<String, TopemsError> {
         if !self.config.enabled {
-            return Err(TopemsError::BusinessLogic("Plan-Execute 编排器未启用".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "Plan-Execute 编排器未启用".to_string(),
+            ));
         }
 
         let plan_id = format!("plan_{}", uuid::Uuid::new_v4());
@@ -529,7 +531,10 @@ impl PlanExecuteOrchestrator {
             .ok_or_else(|| format!("计划 {} 不存在", plan_id))?;
 
         if plan.status != PlanStatus::Created && plan.status != PlanStatus::Pending {
-            return Err(TopemsError::BusinessLogic(format!("计划状态为 {}，无法开始执行", plan.status.as_str())));
+            return Err(TopemsError::BusinessLogic(format!(
+                "计划状态为 {}，无法开始执行",
+                plan.status.as_str()
+            )));
         }
 
         plan.status = PlanStatus::Executing;
@@ -817,7 +822,10 @@ impl PlanExecuteOrchestrator {
             .ok_or_else(|| format!("计划 {} 不存在", plan_id))?;
 
         if plan.status == PlanStatus::Completed || plan.status == PlanStatus::Cancelled {
-            return Err(TopemsError::BusinessLogic(format!("计划状态为 {}，无法取消", plan.status.as_str())));
+            return Err(TopemsError::BusinessLogic(format!(
+                "计划状态为 {}，无法取消",
+                plan.status.as_str()
+            )));
         }
 
         plan.status = PlanStatus::Cancelled;

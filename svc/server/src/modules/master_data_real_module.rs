@@ -7,7 +7,6 @@
 
 #![cfg(feature = "module-advanced")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -15,6 +14,7 @@ use topems_master_data::modules;
 use topems_master_data::shared::AppState;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 use topems_shared_event::event::EventPublisher;
 
 /// 真实 MasterData 模块：持有数据库连接池 + 完整业务路由

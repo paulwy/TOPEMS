@@ -23,7 +23,6 @@
 //!    - 心跳与保活
 //!    - 实时过滤与转换
 
-use topems_shared_core::error::TopemsError;
 use axum::extract::{Json, Path, Query};
 use axum::http::StatusCode;
 use chrono::{DateTime, Utc};
@@ -32,6 +31,7 @@ use serde_json::Value;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, OnceLock};
+use topems_shared_core::error::TopemsError;
 
 // ==================== 公共类型 ====================
 
@@ -843,7 +843,10 @@ impl StreamManagerInner {
         subscriber_id: Option<String>,
     ) -> Result<String, TopemsError> {
         if !self.streams.contains_key(stream_id) {
-            return Err(TopemsError::ResourceNotFound(format!("Stream '{}' not found", stream_id)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "Stream '{}' not found",
+                stream_id
+            )));
         }
 
         let sub_id = subscriber_id.unwrap_or_else(generate_id);
@@ -869,10 +872,15 @@ impl StreamManagerInner {
         subscriber_id: Option<String>,
     ) -> Result<bool, TopemsError> {
         if !self.streams.contains_key(stream_id) {
-            return Err(TopemsError::ResourceNotFound(format!("Stream '{}' not found", stream_id)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "Stream '{}' not found",
+                stream_id
+            )));
         }
 
-        let sub_id = subscriber_id.ok_or_else(|| TopemsError::ResourceNotFound("subscriber_id is required".to_string()))?;
+        let sub_id = subscriber_id.ok_or_else(|| {
+            TopemsError::ResourceNotFound("subscriber_id is required".to_string())
+        })?;
 
         let removed = if let Some(subs) = self.subscribers.get_mut(stream_id) {
             subs.unsubscribe(&sub_id)
@@ -1111,11 +1119,17 @@ pub fn create_stream(name: String, topic: String, config: Option<StreamConfig>) 
     stream_manager().create_stream(name, topic, config)
 }
 
-pub fn subscribe_stream(stream_id: &str, subscriber_id: Option<String>) -> Result<String, TopemsError> {
+pub fn subscribe_stream(
+    stream_id: &str,
+    subscriber_id: Option<String>,
+) -> Result<String, TopemsError> {
     stream_manager().subscribe(stream_id, subscriber_id)
 }
 
-pub fn unsubscribe_stream(stream_id: &str, subscriber_id: Option<String>) -> Result<bool, TopemsError> {
+pub fn unsubscribe_stream(
+    stream_id: &str,
+    subscriber_id: Option<String>,
+) -> Result<bool, TopemsError> {
     stream_manager().unsubscribe(stream_id, subscriber_id)
 }
 

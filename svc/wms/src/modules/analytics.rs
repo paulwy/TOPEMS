@@ -2,7 +2,6 @@
 //! 提供库存周转率、订单履约率等聚合查询
 //! 路径前缀: /wms/analytics
 
-use topems_shared_core::TopemsError;
 use axum::{
     extract::{Extension, FromRef, Query, State},
     http::HeaderMap,
@@ -12,6 +11,7 @@ use axum::{
 use chrono::{Datelike, NaiveDate};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
+use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::modules::ApiState;
@@ -86,7 +86,8 @@ pub struct OrderFulfillmentSummary {
 
 fn resolve_tenant_id(claims: &Claims) -> Result<Uuid, TopemsError> {
     match &claims.tenant_id {
-        Some(id) => Uuid::parse_str(id).map_err(|e| TopemsError::BusinessLogic(format!("无效的租户ID: {}", e))),
+        Some(id) => Uuid::parse_str(id)
+            .map_err(|e| TopemsError::BusinessLogic(format!("无效的租户ID: {}", e))),
         None => Err(TopemsError::BusinessLogic("缺少租户ID".to_string())),
     }
 }

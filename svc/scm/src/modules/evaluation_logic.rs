@@ -62,13 +62,18 @@ pub fn validate_scores(
                     "service_score",
                     "price_score",
                 ];
-                return Err(TopemsError::BusinessLogic(format!("{} must be between 0 and 100", field_names[idx])));
+                return Err(TopemsError::BusinessLogic(format!(
+                    "{} must be between 0 and 100",
+                    field_names[idx]
+                )));
             }
         }
     }
 
     if scores.iter().all(|s| s.is_none()) {
-        return Err(TopemsError::BusinessLogic("At least one score must be provided".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "At least one score must be provided".to_string(),
+        ));
     }
 
     Ok(())

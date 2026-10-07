@@ -7,13 +7,13 @@
 
 #![cfg(feature = "module-search")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
 use topems_search::handlers;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 
 /// 真实 Search 模块：持有数据库连接池 + 完整搜索路由
 pub struct SearchRealModule {
@@ -50,7 +50,10 @@ impl SearchRealModule {
         let protected_routes = Router::new()
             .route("/api/search", get(handlers::search_handler))
             .route("/api/search/", get(handlers::search_handler))
-            .route("/api/search/suggestions", get(handlers::suggestions_handler))
+            .route(
+                "/api/search/suggestions",
+                get(handlers::suggestions_handler),
+            )
             .layer(axum::middleware::from_fn(require_permission(
                 "search:admin",
             )))
@@ -60,12 +63,13 @@ impl SearchRealModule {
                 topems_shared_auth::tenant_middleware(),
             ));
 
-        let routes = public_routes
-            .merge(protected_routes)
-            .layer(axum::middleware::from_fn_with_state(
-                ctx.auth_state.clone(),
-                topems_shared_auth::auth::auth_middleware,
-            ));
+        let routes =
+            public_routes
+                .merge(protected_routes)
+                .layer(axum::middleware::from_fn_with_state(
+                    ctx.auth_state.clone(),
+                    topems_shared_auth::auth::auth_middleware,
+                ));
 
         Ok(Self {
             routes,

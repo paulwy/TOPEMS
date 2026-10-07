@@ -61,10 +61,7 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
         .route("/files/search", get(modules::file::manage::search_files))
         // 后端既有统计路由为 /stats；前端 fileApi.getStats 调用 /files/stats。
         // 二者同源（get_file_stats），补一条静态别名对齐前端契约（静态段优先于 {id}）。
-        .route(
-            "/files/stats",
-            get(modules::file::manage::get_file_stats),
-        )
+        .route("/files/stats", get(modules::file::manage::get_file_stats))
         .route("/stats", get(modules::file::manage::get_file_stats))
         .layer(axum::middleware::from_fn_with_state(
             state.clone(),
@@ -169,8 +166,7 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
         .route("/attachments/{id}", delete(stub_action))
         .route("/attachments/{id}/download", get(stub_list));
 
-    read
-        .merge(write)
+    read.merge(write)
         .merge(delete_routes)
         .merge(admin)
         .merge(stubs)

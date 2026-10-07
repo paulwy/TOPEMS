@@ -17,12 +17,12 @@
 //!    - FederatedIdentity: 联邦身份 (JWT/OAuth2/SAML/APIKey)
 //!    - AuthPolicy: 认证策略
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -663,7 +663,9 @@ impl ConsistencyManager {
     }
 
     #[allow(clippy::indexing_slicing)]
-    pub async fn detect_conflicts(entity_ids: Vec<String>) -> Result<Vec<ConflictInfo>, TopemsError> {
+    pub async fn detect_conflicts(
+        entity_ids: Vec<String>,
+    ) -> Result<Vec<ConflictInfo>, TopemsError> {
         let store = get_deep_federation_store();
         let vectors = store.version_vectors.lock().await;
         let mut conflicts = Vec::new();
@@ -719,9 +721,9 @@ impl ConsistencyManager {
         let store = get_deep_federation_store();
         let mut vectors = store.version_vectors.lock().await;
 
-        let vector = vectors
-            .get_mut(entity_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("实体 '{}' 的版本向量不存在", entity_id)))?;
+        let vector = vectors.get_mut(entity_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("实体 '{}' 的版本向量不存在", entity_id))
+        })?;
 
         match strategy.as_str() {
             "merge_by_max" => {
@@ -751,7 +753,10 @@ impl ConsistencyManager {
                 }
             }
             _ => {
-                return Err(TopemsError::ValidationFailed(format!("未知的解决策略: {}", strategy)));
+                return Err(TopemsError::ValidationFailed(format!(
+                    "未知的解决策略: {}",
+                    strategy
+                )));
             }
         }
 
@@ -762,10 +767,9 @@ impl ConsistencyManager {
     pub async fn get_version_vector(entity_id: &str) -> Result<VersionVector, TopemsError> {
         let store = get_deep_federation_store();
         let vectors = store.version_vectors.lock().await;
-        vectors
-            .get(entity_id)
-            .cloned()
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("实体 '{}' 的版本向量不存在", entity_id)))
+        vectors.get(entity_id).cloned().ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("实体 '{}' 的版本向量不存在", entity_id))
+        })
     }
 
     pub async fn compare_vectors(
@@ -890,13 +894,15 @@ impl DistributedQueryEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-    pub async fn execute_distributed_query(query_id: &str) -> Result<DistributedQuery, TopemsError> {
+    pub async fn execute_distributed_query(
+        query_id: &str,
+    ) -> Result<DistributedQuery, TopemsError> {
         let store = get_deep_federation_store();
         let mut queries = store.distributed_queries.lock().await;
 
-        let query = queries
-            .get_mut(query_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("分布式查询 '{}' 不存在", query_id)))?;
+        let query = queries.get_mut(query_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("分布式查询 '{}' 不存在", query_id))
+        })?;
 
         if query.status == QueryStatus::Running {
             return Err(TopemsError::BusinessLogic("查询已在执行中".to_string()));
@@ -992,12 +998,15 @@ impl DistributedQueryEngine {
         let store = get_deep_federation_store();
         let mut queries = store.distributed_queries.lock().await;
 
-        let query = queries
-            .get_mut(query_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("分布式查询 '{}' 不存在", query_id)))?;
+        let query = queries.get_mut(query_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("分布式查询 '{}' 不存在", query_id))
+        })?;
 
         if query.status != QueryStatus::Running && query.status != QueryStatus::Pending {
-            return Err(TopemsError::BusinessLogic(format!("查询状态为 {}，无法取消", query.status.as_str())));
+            return Err(TopemsError::BusinessLogic(format!(
+                "查询状态为 {}，无法取消",
+                query.status.as_str()
+            )));
         }
 
         query.status = QueryStatus::Cancelled;
@@ -1055,7 +1064,9 @@ impl DistributedQueryEngine {
             .unwrap_or(0);
 
         if sub_queries == 0 {
-            return Err(TopemsError::ValidationFailed("查询计划必须包含至少一个子查询".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "查询计划必须包含至少一个子查询".to_string(),
+            ));
         }
 
         let services = query_plan
@@ -1115,9 +1126,9 @@ impl FederatedAuthService {
         let store = get_deep_federation_store();
         let identities = store.federated_identities.lock().await;
 
-        let identity = identities
-            .get(identity_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("身份 '{}' 不存在", identity_id)))?;
+        let identity = identities.get(identity_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("身份 '{}' 不存在", identity_id))
+        })?;
 
         let propagation_results: Vec<serde_json::Value> = target_services
             .iter()
@@ -1233,9 +1244,9 @@ impl FederatedAuthService {
         let store = get_deep_federation_store();
         let identities = store.federated_identities.lock().await;
 
-        let identity = identities
-            .get(identity_id)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("身份 '{}' 不存在", identity_id)))?;
+        let identity = identities.get(identity_id).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("身份 '{}' 不存在", identity_id))
+        })?;
 
         Ok(AuthStatusInfo {
             identity_id: identity.id.clone(),

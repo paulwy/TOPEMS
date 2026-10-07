@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -6,13 +5,16 @@ use axum::{
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
+use topems_shared_core::error::TopemsError;
 use tracing::{info, warn};
 
 use crate::shared::AppState;
 
 fn validate_table_name(table_name: &str) -> Result<(), TopemsError> {
     if table_name.is_empty() {
-        return Err(TopemsError::ValidationFailed("Table name cannot be empty".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "Table name cannot be empty".to_string(),
+        ));
     }
     if table_name.len() > 63 {
         return Err(TopemsError::ValidationFailed(format!(

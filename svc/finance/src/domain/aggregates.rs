@@ -1,5 +1,5 @@
-use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
+use topems_shared_core::error::TopemsError;
 
 use super::entities::*;
 use super::value_objects::*;
@@ -26,11 +26,15 @@ impl VoucherAggregate {
     // 聚合根行为方法
     pub fn post(&mut self) -> Result<(), TopemsError> {
         if self.status != VoucherStatus::Approved {
-            return Err(TopemsError::BusinessLogic("Only approved vouchers can be posted".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "Only approved vouchers can be posted".to_string(),
+            ));
         }
         // 借贷平衡校验
         if (self.total_debit - self.total_credit).abs() > 0.01 {
-            return Err(TopemsError::BusinessLogic("Debit and credit must be balanced".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "Debit and credit must be balanced".to_string(),
+            ));
         }
         self.status = VoucherStatus::Posted;
         self.posted_at = Some(chrono::Utc::now());
@@ -39,7 +43,9 @@ impl VoucherAggregate {
 
     pub fn reverse(&mut self) -> Result<(), TopemsError> {
         if self.status != VoucherStatus::Posted {
-            return Err(TopemsError::BusinessLogic("Only posted vouchers can be reversed".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "Only posted vouchers can be reversed".to_string(),
+            ));
         }
         self.status = VoucherStatus::Reversed;
         Ok(())

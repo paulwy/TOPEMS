@@ -2,7 +2,6 @@
 
 #![allow(dead_code)]
 
-use topems_shared_core::error::TopemsError;
 use axum::Extension;
 use axum::{
     extract::{Path, State},
@@ -21,6 +20,7 @@ use lettre::{
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 
@@ -1176,7 +1176,11 @@ pub async fn send_with_template(
     }
 }
 
-pub async fn send_notification_email(to: &str, subject: &str, body: &str) -> Result<(), TopemsError> {
+pub async fn send_notification_email(
+    to: &str,
+    subject: &str,
+    body: &str,
+) -> Result<(), TopemsError> {
     tracing::info!("Sending notification email to: {}", to);
 
     send_email_with_lettre("system@topems.io", to, subject, body, None, None, None)
@@ -1198,7 +1202,8 @@ fn build_message(
     );
     let to_addr = Mailbox::new(
         Some(to.to_string()),
-        to.parse().map_err(|e| TopemsError::ValidationFailed(format!("Invalid to email: {}", e)))?,
+        to.parse()
+            .map_err(|e| TopemsError::ValidationFailed(format!("Invalid to email: {}", e)))?,
     );
 
     let mut message_builder = Message::builder()
@@ -1210,9 +1215,9 @@ fn build_message(
         for cc_email in cc_list {
             let cc_addr = Mailbox::new(
                 Some(cc_email.to_string()),
-                cc_email
-                    .parse()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("Invalid CC email: {}", e)))?,
+                cc_email.parse().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("Invalid CC email: {}", e))
+                })?,
             );
             message_builder = message_builder.cc(cc_addr);
         }
@@ -1222,9 +1227,9 @@ fn build_message(
         for bcc_email in bcc_list {
             let bcc_addr = Mailbox::new(
                 Some(bcc_email.to_string()),
-                bcc_email
-                    .parse()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("Invalid BCC email: {}", e)))?,
+                bcc_email.parse().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("Invalid BCC email: {}", e))
+                })?,
             );
             message_builder = message_builder.bcc(bcc_addr);
         }
@@ -1374,7 +1379,9 @@ fn send_email_with_lettre(
         }
     }
 
-    Err(TopemsError::BusinessLogic("Max retries exceeded".to_string()))
+    Err(TopemsError::BusinessLogic(
+        "Max retries exceeded".to_string(),
+    ))
 }
 
 pub fn send_email_async(

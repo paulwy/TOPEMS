@@ -257,10 +257,7 @@ pub async fn export_governance_report(
     let filename = "governance-report.json";
 
     let mut headers = HeaderMap::new();
-    headers.insert(
-        header::CONTENT_TYPE,
-        HeaderValue::from_static(content_type),
-    );
+    headers.insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
     if let Ok(d) = HeaderValue::from_str(&format!("attachment; filename=\"{}\"", filename)) {
         headers.insert(header::CONTENT_DISPOSITION, d);
     }

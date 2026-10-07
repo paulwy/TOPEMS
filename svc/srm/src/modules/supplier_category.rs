@@ -1,4 +1,3 @@
-use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -10,6 +9,7 @@ use serde::Deserialize;
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::Result;
 use topems_shared_core::locale::Locale;
 use uuid::Uuid;
 

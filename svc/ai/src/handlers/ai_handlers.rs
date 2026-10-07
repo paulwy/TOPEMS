@@ -761,7 +761,11 @@ async fn call_ai_api(
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
         tracing::error!("AI API 请求失败: {} - {}", status, error_text);
-        return Err(TopemsError::ServiceUnavailable(format!("AI 服务错误: {} - {}", status, error_text)).into());
+        return Err(TopemsError::ServiceUnavailable(format!(
+            "AI 服务错误: {} - {}",
+            status, error_text
+        ))
+        .into());
     }
 
     let openai_response: OpenAIResponse = match response.json().await {

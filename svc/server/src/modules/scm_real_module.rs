@@ -8,7 +8,6 @@
 
 #![cfg(feature = "module-scm")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
@@ -16,6 +15,7 @@ use std::time::Duration;
 use topems_scm::modules::{create_routes, ApiState};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, default_init_db, ServiceConfig};
+use topems_shared_core::error::Result;
 use topems_shared_core::l2_cache::{AsyncL2Cache, L2CacheConfig};
 
 /// 真实 SCM 模块：持有数据库连接池 + 完整业务路由 + 缓存

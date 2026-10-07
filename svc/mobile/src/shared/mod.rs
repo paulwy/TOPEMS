@@ -121,14 +121,18 @@ use crate::modules::missing_endpoints::{
     get_push_config, get_usage_stats, get_user_settings, list_inspection_tasks, update_push_config,
     update_push_template,
 };
+use crate::modules::notifications::{
+    delete_notification, delete_read_notifications, get_notification, get_unread_count,
+    list_notifications, mark_all_notifications_read, mark_notification_read,
+};
 use crate::modules::oa::{
     add_event_attendee, complete_oa_task, create_calendar_event, create_meeting, create_oa_task,
     delete_calendar_event, delete_meeting, delete_oa_task, get_announcement, get_meeting,
-    get_oa_stats, get_oa_task, get_schedule_event, join_meeting, leave_meeting,
-    list_announcements, list_attending_events, list_calendar_events, list_meetings,
-    list_month_events, list_my_events, list_oa_tasks, list_today_events, list_week_events,
-    mark_announcement_read, remove_event_attendee, update_calendar_event, update_event_status,
-    update_meeting, update_oa_task,
+    get_oa_stats, get_oa_task, get_schedule_event, join_meeting, leave_meeting, list_announcements,
+    list_attending_events, list_calendar_events, list_meetings, list_month_events, list_my_events,
+    list_oa_tasks, list_today_events, list_week_events, mark_announcement_read,
+    remove_event_attendee, update_calendar_event, update_event_status, update_meeting,
+    update_oa_task,
 };
 use crate::modules::offline::{get_offline_status, sync_offline_data};
 use crate::modules::offline_records::{
@@ -157,10 +161,6 @@ use crate::modules::push_notification::{
     create_template, get_devices, get_notification_by_id, get_notification_list,
     get_notification_stats, get_templates, register_device as register_push_device, send_broadcast,
     send_notification,
-};
-use crate::modules::notifications::{
-    delete_notification, delete_read_notifications, get_notification, get_unread_count,
-    list_notifications, mark_all_notifications_read, mark_notification_read,
 };
 use crate::modules::quality::{
     get_quality_task, list_defect_records, list_quality_tasks, report_defect,
@@ -434,7 +434,10 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::post(update_task_status),
         )
         // Attendance Routes
-        .route("/attendance", axum::routing::get(get_attendance_overview).post(create_attendance_record))
+        .route(
+            "/attendance",
+            axum::routing::get(get_attendance_overview).post(create_attendance_record),
+        )
         .route(
             "/attendance/{id}",
             axum::routing::get(get_attendance_record_by_id)
@@ -675,8 +678,14 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/approval/tasks/pending",
             axum::routing::get(get_pending_approval_tasks),
         )
-        .route("/approval/history", axum::routing::get(get_approval_history))
-        .route("/approval/tasks/{id}", axum::routing::get(get_approval_task))
+        .route(
+            "/approval/history",
+            axum::routing::get(get_approval_history),
+        )
+        .route(
+            "/approval/tasks/{id}",
+            axum::routing::get(get_approval_task),
+        )
         .route(
             "/approval/tasks/{id}/approve",
             axum::routing::post(approve_approval_task),
@@ -695,10 +704,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
         .route("/task/my", axum::routing::get(get_my_tasks))
         .route("/task/pending", axum::routing::get(get_pending_tasks))
         .route("/task/overdue", axum::routing::get(get_overdue_tasks))
-        .route(
-            "/task/{id}/complete",
-            axum::routing::post(complete_task),
-        )
+        .route("/task/{id}/complete", axum::routing::post(complete_task))
         .route("/task/{id}/reopen", axum::routing::post(reopen_task))
         .route("/task/search", axum::routing::get(search_tasks))
         .route(
@@ -716,16 +722,25 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
                 .put(update_device)
                 .delete(unregister_device),
         )
-        .route("/device/{id}/activate", axum::routing::post(activate_device))
+        .route(
+            "/device/{id}/activate",
+            axum::routing::post(activate_device),
+        )
         .route("/device/{id}/disable", axum::routing::post(disable_device))
-        .route("/device/{id}/test-push", axum::routing::post(test_push_device))
+        .route(
+            "/device/{id}/test-push",
+            axum::routing::post(test_push_device),
+        )
         // dashboard 剩余（前端 /dashboard/activities → 最近动态聚合）
         .route(
             "/dashboard/activities",
             axum::routing::get(get_recent_activities),
         )
         // customer（前端 /customer → CRM 服务完整 CRUD）
-        .route("/customer", axum::routing::get(list_customers).post(create_customer))
+        .route(
+            "/customer",
+            axum::routing::get(list_customers).post(create_customer),
+        )
         .route(
             "/customer/{id}",
             axum::routing::get(get_customer)
@@ -774,7 +789,10 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/documents",
             axum::routing::get(list_documents).post(create_document),
         )
-        .route("/documents/categories", axum::routing::get(get_document_categories))
+        .route(
+            "/documents/categories",
+            axum::routing::get(get_document_categories),
+        )
         .route(
             "/documents/{id}",
             axum::routing::get(get_document)
@@ -793,9 +811,18 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
                 .delete(delete_calendar_event),
         )
         // schedule 死代码兜底（前端 today/week/month/my/attending/status/attendees）
-        .route("/schedule/events/today", axum::routing::get(list_today_events))
-        .route("/schedule/events/week", axum::routing::get(list_week_events))
-        .route("/schedule/events/month", axum::routing::get(list_month_events))
+        .route(
+            "/schedule/events/today",
+            axum::routing::get(list_today_events),
+        )
+        .route(
+            "/schedule/events/week",
+            axum::routing::get(list_week_events),
+        )
+        .route(
+            "/schedule/events/month",
+            axum::routing::get(list_month_events),
+        )
         .route("/schedule/events/my", axum::routing::get(list_my_events))
         .route(
             "/schedule/events/attending",
@@ -814,16 +841,28 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             axum::routing::delete(remove_event_attendee),
         )
         // dashboard announcements（前端 /dashboard/announcements → oa announcements）
-        .route("/dashboard/announcements", axum::routing::get(list_announcements))
+        .route(
+            "/dashboard/announcements",
+            axum::routing::get(list_announcements),
+        )
         .route(
             "/dashboard/announcements/{id}/read",
             axum::routing::post(mark_announcement_read),
         )
         // dashboard 死代码兜底（前端 quick-actions/kpis/charts/alerts）
-        .route("/dashboard/quick-actions", axum::routing::get(get_quick_actions))
+        .route(
+            "/dashboard/quick-actions",
+            axum::routing::get(get_quick_actions),
+        )
         .route("/dashboard/kpis", axum::routing::get(get_dashboard_kpis))
-        .route("/dashboard/charts", axum::routing::get(get_dashboard_charts))
-        .route("/dashboard/alerts", axum::routing::get(get_dashboard_alerts))
+        .route(
+            "/dashboard/charts",
+            axum::routing::get(get_dashboard_charts),
+        )
+        .route(
+            "/dashboard/alerts",
+            axum::routing::get(get_dashboard_alerts),
+        )
         .route(
             "/dashboard/alerts/{id}/acknowledge",
             axum::routing::post(acknowledge_alert),
@@ -843,10 +882,7 @@ pub fn build_protected_routes(_state: AppState) -> Router<AppState> {
             "/inventory/low-stock",
             axum::routing::get(list_low_stock_items),
         )
-        .route(
-            "/inventory/scan",
-            axum::routing::get(scan_inventory),
-        )
+        .route("/inventory/scan", axum::routing::get(scan_inventory))
         // notifications（前端 /notifications 族 → notifications.rs 全量 handler）
         .route("/notifications", axum::routing::get(list_notifications))
         .route(

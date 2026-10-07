@@ -1,4 +1,3 @@
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -9,6 +8,7 @@ use chrono::{Datelike, Utc};
 use serde::Deserialize;
 use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;

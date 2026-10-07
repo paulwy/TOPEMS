@@ -16,12 +16,12 @@
 //!    - CompatibilityReport: 兼容性报告、破坏性变更列表、废弃字段
 //!    - BreakingChange: 破坏性变更详情（字段移除/类型变更/枚举变更等）
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -428,11 +428,17 @@ impl APIVersionManager {
         let mut versions = store.api_versions.lock().await;
 
         if versions.contains_key(&version) {
-            return Err(TopemsError::BusinessLogic(format!("版本 '{}' 已存在", version)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "版本 '{}' 已存在",
+                version
+            )));
         }
 
         if !Self::is_valid_semver(&version) {
-            return Err(TopemsError::ValidationFailed(format!("无效的语义版本号: {}", version)));
+            return Err(TopemsError::ValidationFailed(format!(
+                "无效的语义版本号: {}",
+                version
+            )));
         }
 
         let now = chrono::Utc::now().to_rfc3339();
@@ -510,7 +516,9 @@ impl APIVersionManager {
             .ok_or_else(|| TopemsError::ResourceNotFound(format!("版本 '{}' 不存在", version)))?;
 
         if v.status != APIVersionStatus::Deprecated {
-            return Err(TopemsError::BusinessLogic("只能废弃已标记为 Deprecated 的版本".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "只能废弃已标记为 Deprecated 的版本".to_string(),
+            ));
         }
 
         v.status = APIVersionStatus::Sunset;
@@ -627,7 +635,9 @@ impl CanaryManager {
         end_time: Option<String>,
     ) -> Result<CanaryConfig, TopemsError> {
         if percentage > 100 {
-            return Err(TopemsError::ValidationFailed("百分比不能超过 100".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "百分比不能超过 100".to_string(),
+            ));
         }
 
         let store = get_version_control_store();
@@ -647,7 +657,10 @@ impl CanaryManager {
         Ok(config)
     }
 
-    pub async fn update_canary(id: &str, updates: CanaryConfig) -> Result<CanaryConfig, TopemsError> {
+    pub async fn update_canary(
+        id: &str,
+        updates: CanaryConfig,
+    ) -> Result<CanaryConfig, TopemsError> {
         let store = get_version_control_store();
         let mut configs = store.canary_configs.lock().await;
 
@@ -656,7 +669,9 @@ impl CanaryManager {
             .ok_or_else(|| TopemsError::ResourceNotFound(format!("灰度配置 '{}' 不存在", id)))?;
 
         if config.status == CanaryStatus::Running {
-            return Err(TopemsError::BusinessLogic("运行中的灰度配置不可更新".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "运行中的灰度配置不可更新".to_string(),
+            ));
         }
 
         config.version = updates.version;
@@ -748,12 +763,14 @@ impl CanaryManager {
         let config = {
             let mut configs = store.canary_configs.lock().await;
 
-            let config = configs
-                .get_mut(id)
-                .ok_or_else(|| TopemsError::ResourceNotFound(format!("灰度配置 '{}' 不存在", id)))?;
+            let config = configs.get_mut(id).ok_or_else(|| {
+                TopemsError::ResourceNotFound(format!("灰度配置 '{}' 不存在", id))
+            })?;
 
             if config.status != CanaryStatus::Running && config.status != CanaryStatus::Paused {
-                return Err(TopemsError::BusinessLogic("只能推广运行中或已暂停的灰度配置".to_string()));
+                return Err(TopemsError::BusinessLogic(
+                    "只能推广运行中或已暂停的灰度配置".to_string(),
+                ));
             }
 
             config.status = CanaryStatus::Completed;
@@ -924,7 +941,10 @@ impl CompatibilityChecker {
         let mut policies = store.compatibility_policies.lock().await;
 
         if policies.iter().any(|p| p.name == name) {
-            return Err(TopemsError::BusinessLogic(format!("策略名称 '{}' 已存在", name)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "策略名称 '{}' 已存在",
+                name
+            )));
         }
 
         let policy = CompatibilityPolicy {

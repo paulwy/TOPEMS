@@ -202,9 +202,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS frequency VARCHAR(32)")
         .execute(pool)
         .await?;
-    sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS enabled BOOLEAN DEFAULT TRUE")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS enabled BOOLEAN DEFAULT TRUE",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("ALTER TABLE report_subscriptions ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW()")
         .execute(pool)
         .await?;

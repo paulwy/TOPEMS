@@ -5,7 +5,7 @@
 //! 按"死代码端点轻量兜底"策略补挂，返回零值统计结构（与前端 HrmDashboardStats 对齐），
 //! 待上游支持后替换为真实聚合。
 
-use axum::{extract::State, routing::get, Router, Json};
+use axum::{extract::State, routing::get, Json, Router};
 
 use super::ApiState;
 use topems_shared_core::response::ApiResponse;

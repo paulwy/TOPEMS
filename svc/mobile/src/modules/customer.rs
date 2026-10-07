@@ -10,7 +10,10 @@ pub async fn list_customers(
     State(client): State<TypedServiceClient<CrmApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_customers(1, 100).await {
-        Ok(data) => Json(ApiResponse::success(serde_json::Value::Array(data), "获取客户列表成功")),
+        Ok(data) => Json(ApiResponse::success(
+            serde_json::Value::Array(data),
+            "获取客户列表成功",
+        )),
         Err(e) => {
             tracing::error!("调用CRM服务获取客户列表失败: {}", e);
             Json(ApiResponse::error(500, "获取客户列表失败"))

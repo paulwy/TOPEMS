@@ -6,7 +6,6 @@
 //! - 死信队列（处理失败的消息）
 //! - 消息重试机制
 
-use topems_shared_core::error::TopemsError;
 use super::dead_letter_queue::DeadLetterQueue;
 use super::error::EventResult;
 use super::event_types::{Event, EventType};
@@ -20,11 +19,13 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::time::Duration;
+use topems_shared_core::error::TopemsError;
 use tracing::{debug, error, info, warn};
 
 /// 事件处理器回调类型（返回 Result，失败时会触发重试/DLQ）
-pub type StreamEventHandler =
-    Arc<dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>> + Send + Sync>;
+pub type StreamEventHandler = Arc<
+    dyn Fn(Event) -> Pin<Box<dyn Future<Output = Result<(), TopemsError>> + Send>> + Send + Sync,
+>;
 
 /// MDM 主数据事件处理器回调类型（返回 Result，失败时会触发重试）
 pub type StreamMdmEventHandler = Arc<

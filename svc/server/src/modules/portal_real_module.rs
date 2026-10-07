@@ -10,12 +10,12 @@
 
 #![cfg(feature = "module-portal")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_portal::shared::AppState;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 use topems_shared_event::event::EventPublisher;
 
 /// 真实 Portal 模块：持有数据库连接池 + 完整业务路由（含 GraphQL 聚合层）

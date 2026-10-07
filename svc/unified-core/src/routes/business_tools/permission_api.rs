@@ -4,12 +4,12 @@
 //! configurations. Supports CRUD operations for permissions and a
 //! permission check endpoint for runtime authorization.
 
-use topems_shared_core::error::TopemsError;
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::Json;
 use axum::Router;
 use serde::{Deserialize, Serialize};
+use topems_shared_core::error::TopemsError;
 
 use super::audit_integration::ActorInfo;
 use super::permission_audit_log::AuditLogger;

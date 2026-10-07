@@ -2,7 +2,6 @@
 // 使用静态内存存储（VECTORS / CHUNKS / DOCUMENTS）的旧版向量化流水线
 #![allow(dead_code)]
 
-use topems_shared_core::TopemsError;
 use crate::models::{
     Document, DocumentChunk, EmbeddingRequest, EmbeddingResponse, VectorEmbedding, CHUNKS, CLIENT,
     CONFIG, DOCUMENTS, VECTORS,
@@ -10,6 +9,7 @@ use crate::models::{
 use std::fs;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
+use topems_shared_core::TopemsError;
 use tracing;
 use uuid::Uuid;
 use walkdir::WalkDir;
@@ -171,7 +171,11 @@ pub async fn generate_embeddings(
             .text()
             .await
             .unwrap_or_else(|_| "Unknown error".to_string());
-        return Err(TopemsError::ServiceUnavailable(format!("Embedding API error: {} - {}", status, error_text)).into());
+        return Err(TopemsError::ServiceUnavailable(format!(
+            "Embedding API error: {} - {}",
+            status, error_text
+        ))
+        .into());
     }
 
     let embedding_response: EmbeddingResponse = response.json().await?;

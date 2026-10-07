@@ -18,12 +18,12 @@
 //!    - RollbackPolicy: 回滚策略 (触发条件/步骤/最大回滚次数)
 //!    - RollbackAction: 回滚动作 (RevertConfig/RestartService/ScaleDown)
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -817,7 +817,9 @@ impl DeploymentManager {
         };
 
         if deployment.strategy != DeploymentStrategy::Canary {
-            return Err(TopemsError::BusinessLogic("此部署不是灰度发布策略".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "此部署不是灰度发布策略".to_string(),
+            ));
         }
 
         let mut rollouts = store.deployment_rollouts.lock().await;
@@ -1049,7 +1051,9 @@ impl ConfigurationManager {
                 .iter()
                 .find(|c| c.id == config_id)
                 .cloned()
-                .ok_or_else(|| TopemsError::ResourceNotFound(format!("配置 '{}' 不存在", config_id)))?
+                .ok_or_else(|| {
+                    TopemsError::ResourceNotFound(format!("配置 '{}' 不存在", config_id))
+                })?
         };
 
         let diff = if let Some(_did) = diff_id {
@@ -1066,7 +1070,11 @@ impl ConfigurationManager {
 
         let old_settings = match diff {
             Some(d) => d.old_config,
-            None => return Err(TopemsError::ResourceNotFound("没有可回滚的配置历史".to_string())),
+            None => {
+                return Err(TopemsError::ResourceNotFound(
+                    "没有可回滚的配置历史".to_string(),
+                ))
+            }
         };
 
         let mut configs = store.gateway_configs.lock().await;
@@ -1117,7 +1125,10 @@ impl ConfigurationManager {
 
         let mut envs = store.config_environments.lock().await;
         if envs.iter().any(|e| e.name == name) {
-            return Err(TopemsError::BusinessLogic(format!("环境 '{}' 已存在", name)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "环境 '{}' 已存在",
+                name
+            )));
         }
         envs.push(env.clone());
 
@@ -1180,7 +1191,9 @@ impl RollbackManager {
                 .iter()
                 .find(|p| p.id == policy_id)
                 .cloned()
-                .ok_or_else(|| TopemsError::ResourceNotFound(format!("回滚策略 '{}' 不存在", policy_id)))?
+                .ok_or_else(|| {
+                    TopemsError::ResourceNotFound(format!("回滚策略 '{}' 不存在", policy_id))
+                })?
         };
 
         if !policy.enabled {
@@ -1192,7 +1205,10 @@ impl RollbackManager {
             let counter = counters.get(policy_id).cloned().unwrap_or((0, None, 0));
 
             if counter.0 >= policy.max_rollbacks {
-                return Err(TopemsError::BusinessLogic(format!("已达到最大回滚次数 ({})", policy.max_rollbacks)));
+                return Err(TopemsError::BusinessLogic(format!(
+                    "已达到最大回滚次数 ({})",
+                    policy.max_rollbacks
+                )));
             }
         }
 

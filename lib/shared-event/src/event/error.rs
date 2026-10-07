@@ -40,7 +40,9 @@ impl From<EventError> for topems_shared_core::error::TopemsError {
         use topems_shared_core::error::TopemsError;
         match e {
             EventError::RedisError(inner) => TopemsError::NetworkRequest(format!("Redis: {inner}")),
-            EventError::SerializationError(inner) => TopemsError::ValidationFailed(inner.to_string()),
+            EventError::SerializationError(inner) => {
+                TopemsError::ValidationFailed(inner.to_string())
+            }
             EventError::InvalidEventType(s) => TopemsError::ValidationFailed(s),
             EventError::SubscriberNotFound(s) => TopemsError::ResourceNotFound(s),
             EventError::PublishTimeout => TopemsError::RequestTimeout,

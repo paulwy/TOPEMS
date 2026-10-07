@@ -91,12 +91,10 @@ async fn list_audit_logs(
           AND ($5::text IS NULL OR created_at <= $5::timestamptz)
     "#;
 
-    let result = sqlx::query_as::<_, AuditLog>(
-        &format!(
-            "{} ORDER BY created_at DESC LIMIT $6 OFFSET $7",
-            select_cols
-        ),
-    )
+    let result = sqlx::query_as::<_, AuditLog>(&format!(
+        "{} ORDER BY created_at DESC LIMIT $6 OFFSET $7",
+        select_cols
+    ))
     .bind(&params.action)
     .bind(&params.entity_type)
     .bind(&params.user_id)
@@ -109,15 +107,13 @@ async fn list_audit_logs(
 
     match result {
         Ok(logs) => {
-            let count_result = sqlx::query_scalar::<_, i64>(
-                &format!(
-                    "SELECT COUNT(*) FROM rs.audit_logs WHERE ($1::text IS NULL OR action = $1) \
+            let count_result = sqlx::query_scalar::<_, i64>(&format!(
+                "SELECT COUNT(*) FROM rs.audit_logs WHERE ($1::text IS NULL OR action = $1) \
                      AND ($2::text IS NULL OR entity_type = $2) \
                      AND ($3::uuid IS NULL OR user_id = $3::uuid) \
                      AND ($4::text IS NULL OR created_at >= $4::timestamptz) \
                      AND ($5::text IS NULL OR created_at <= $5::timestamptz)"
-                ),
-            )
+            ))
             .bind(&params.action)
             .bind(&params.entity_type)
             .bind(&params.user_id)

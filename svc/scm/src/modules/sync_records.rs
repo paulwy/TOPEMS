@@ -97,10 +97,7 @@ pub async fn scm_health(State(state): State<ApiState>) -> Json<ApiResponse<Strin
         Ok(_) => Json(ApiResponse::success("ok".to_string(), "SCM 服务正常")),
         Err(e) => {
             tracing::error!("SCM health 检查失败: {}", e);
-            Json(ApiResponse::success(
-                "degraded".to_string(),
-                "SCM 服务异常",
-            ))
+            Json(ApiResponse::success("degraded".to_string(), "SCM 服务异常"))
         }
     }
 }

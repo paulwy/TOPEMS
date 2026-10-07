@@ -2,10 +2,10 @@
 //!
 //! 提供工作流定义、节点执行、状态机驱动、版本管理、模板库等能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Instant;
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -582,13 +582,19 @@ impl WorkflowEngine {
     /// 验证工作流定义
     fn validate_workflow(&self, definition: &WorkflowDefinition) -> Result<(), TopemsError> {
         if definition.id.is_empty() {
-            return Err(TopemsError::ValidationFailed("工作流 ID 不能为空".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "工作流 ID 不能为空".to_string(),
+            ));
         }
         if definition.name.is_empty() {
-            return Err(TopemsError::ValidationFailed("工作流名称不能为空".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "工作流名称不能为空".to_string(),
+            ));
         }
         if definition.nodes.is_empty() {
-            return Err(TopemsError::ValidationFailed("工作流至少需要一个节点".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "工作流至少需要一个节点".to_string(),
+            ));
         }
 
         // 检查起始节点是否存在
@@ -597,14 +603,19 @@ impl WorkflowEngine {
             .iter()
             .any(|n| n.node_type == NodeType::Start);
         if !has_start {
-            return Err(TopemsError::ValidationFailed("工作流必须包含一个起始节点".to_string()));
+            return Err(TopemsError::ValidationFailed(
+                "工作流必须包含一个起始节点".to_string(),
+            ));
         }
 
         // 检查节点 ID 唯一性
         let mut node_ids = std::collections::HashSet::new();
         for node in &definition.nodes {
             if !node_ids.insert(node.id.clone()) {
-                return Err(TopemsError::BusinessLogic(format!("节点 ID 重复: {}", node.id)));
+                return Err(TopemsError::BusinessLogic(format!(
+                    "节点 ID 重复: {}",
+                    node.id
+                )));
             }
         }
 
@@ -668,7 +679,10 @@ impl WorkflowEngine {
             .ok_or_else(|| format!("工作流 {} 不存在", workflow_id))?;
 
         if !workflow.enabled {
-            return Err(TopemsError::BusinessLogic(format!("工作流 {} 未启用", workflow_id)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "工作流 {} 未启用",
+                workflow_id
+            )));
         }
 
         let execution_id = format!("exec_{}", uuid::Uuid::new_v4());

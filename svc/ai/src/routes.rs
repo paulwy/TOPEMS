@@ -335,7 +335,8 @@ pub fn create_routes(
         // 前端契约收口（2026-10-06）：/vector/collections 轻量兜底（待上游支持）
         .route(
             "/vector/collections",
-            get(crate::modules::vector::list_collections).post(crate::modules::vector::create_collection),
+            get(crate::modules::vector::list_collections)
+                .post(crate::modules::vector::create_collection),
         )
         .route(
             "/vector/collections/{id}",
@@ -796,10 +797,7 @@ pub fn create_routes(
         .route("/dify/info", get(dify_handlers::info))
         .route("/dify/parameters", get(dify_handlers::parameters))
         // 前端 `${qs}` 折叠产物兜底：smoke 探测 /dify/parameters/{tail}
-        .route(
-            "/dify/parameters/{tail}",
-            get(dify_handlers::parameters),
-        )
+        .route("/dify/parameters/{tail}", get(dify_handlers::parameters))
         .route("/dify/meta", get(dify_handlers::meta))
         .route(
             "/dify/conversations",

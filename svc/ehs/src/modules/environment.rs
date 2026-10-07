@@ -23,10 +23,7 @@ pub fn create_routes() -> Router<AppState> {
             "/environment/records",
             get(list_records).post(create_record),
         )
-        .route(
-            "/environment/records/{id}",
-            get(get_record),
-        )
+        .route("/environment/records/{id}", get(get_record))
 }
 
 #[derive(Debug, Deserialize)]
@@ -145,10 +142,20 @@ pub async fn update_record(
         EnvironmentRecord {
             id,
             record_no: "ENV-UPD".to_string(),
-            monitor_type: req.get("monitor_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            monitor_point: req.get("monitor_point").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            monitor_type: req
+                .get("monitor_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            monitor_point: req
+                .get("monitor_point")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
             data: req.clone(),
-            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("normal").to_string(),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("normal")
+                .to_string(),
             monitored_at: Some(chrono::Utc::now().to_rfc3339()),
             tenant_id,
         },

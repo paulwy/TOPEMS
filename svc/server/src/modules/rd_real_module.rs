@@ -7,13 +7,13 @@
 
 #![cfg(feature = "module-rd")]
 
-use topems_shared_core::error::{Result, TopemsError};
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_rd::modules::{create_routes, ApiState};
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_event::event::EventPublisher;
 
 /// 真实 RD 模块：持有数据库连接池 + 完整业务路由

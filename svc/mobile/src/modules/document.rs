@@ -253,7 +253,10 @@ pub async fn create_document(
     match result {
         Ok(_) => (
             StatusCode::OK,
-            Json(ApiResponse::success(serde_json::json!({ "id": id }), "创建文档成功")),
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": id }),
+                "创建文档成功",
+            )),
         ),
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
@@ -306,10 +309,7 @@ pub async fn update_document(
             StatusCode::OK,
             Json(ApiResponse::success((), "更新文档成功")),
         ),
-        Ok(_) => (
-            StatusCode::OK,
-            Json(ApiResponse::error(404, "文档不存在")),
-        ),
+        Ok(_) => (StatusCode::OK, Json(ApiResponse::error(404, "文档不存在"))),
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
             (
@@ -337,12 +337,10 @@ pub async fn delete_document(
         }
     };
 
-    let result = sqlx::query(
-        only_own_schema_query!(
-            "mobile",
-            "UPDATE mobile.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
-        ),
-    )
+    let result = sqlx::query(only_own_schema_query!(
+        "mobile",
+        "UPDATE mobile.documents SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"
+    ))
     .bind(id)
     .execute(&pool)
     .await;
@@ -352,10 +350,7 @@ pub async fn delete_document(
             StatusCode::OK,
             Json(ApiResponse::success((), "删除文档成功")),
         ),
-        Ok(_) => (
-            StatusCode::OK,
-            Json(ApiResponse::error(404, "文档不存在")),
-        ),
+        Ok(_) => (StatusCode::OK, Json(ApiResponse::error(404, "文档不存在"))),
         Err(e) => {
             tracing::error!("删除文档失败: {}", e);
             (

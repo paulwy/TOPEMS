@@ -106,39 +106,52 @@ impl ScanRecord {
 /// - expected_format = "text" 任意非空字符串
 pub fn validate_scan_result(code: &str, expected_format: &str) -> Result<(), TopemsError> {
     if code.is_empty() {
-        return Err(TopemsError::ValidationFailed("扫描内容不能为空".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "扫描内容不能为空".to_string(),
+        ));
     }
     match expected_format {
         "url" => {
             if code.starts_with("http://") || code.starts_with("https://") {
                 Ok(())
             } else {
-                Err(TopemsError::ValidationFailed("URL 必须以 http:// 或 https:// 开头".to_string()))
+                Err(TopemsError::ValidationFailed(
+                    "URL 必须以 http:// 或 https:// 开头".to_string(),
+                ))
             }
         }
         "email" => {
             if code.starts_with("mailto:") {
                 Ok(())
             } else {
-                Err(TopemsError::ValidationFailed("邮箱必须以 mailto: 开头".to_string()))
+                Err(TopemsError::ValidationFailed(
+                    "邮箱必须以 mailto: 开头".to_string(),
+                ))
             }
         }
         "phone" => {
             if code.starts_with("tel:") {
                 Ok(())
             } else {
-                Err(TopemsError::ValidationFailed("电话必须以 tel: 开头".to_string()))
+                Err(TopemsError::ValidationFailed(
+                    "电话必须以 tel: 开头".to_string(),
+                ))
             }
         }
         "numeric" => {
             if code.chars().all(|c| c.is_ascii_digit()) {
                 Ok(())
             } else {
-                Err(TopemsError::ValidationFailed("内容必须全部为数字".to_string()))
+                Err(TopemsError::ValidationFailed(
+                    "内容必须全部为数字".to_string(),
+                ))
             }
         }
         "text" => Ok(()),
-        other => Err(TopemsError::ValidationFailed(format!("不支持的预期格式: {}", other))),
+        other => Err(TopemsError::ValidationFailed(format!(
+            "不支持的预期格式: {}",
+            other
+        ))),
     }
 }
 

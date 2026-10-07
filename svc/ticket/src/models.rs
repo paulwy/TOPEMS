@@ -3,10 +3,10 @@
 #[allow(unused_imports)]
 pub use topems_shared_bootstrap::audit::{AuditEventParams, AuditLog, ListAuditLogsQuery};
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_core::error::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -306,7 +306,10 @@ pub fn validate_rating(rating: i32) -> Result<(), TopemsError> {
     if (1..=5).contains(&rating) {
         Ok(())
     } else {
-        Err(TopemsError::BusinessLogic(format!("rating must be between 1 and 5, got {}", rating)))
+        Err(TopemsError::BusinessLogic(format!(
+            "rating must be between 1 and 5, got {}",
+            rating
+        )))
     }
 }
 
@@ -431,7 +434,10 @@ impl std::str::FromStr for TicketStatus {
             "resolved" => Ok(TicketStatus::Resolved),
             "closed" => Ok(TicketStatus::Closed),
             "cancelled" => Ok(TicketStatus::Cancelled),
-            other => Err(TopemsError::ValidationFailed(format!("Invalid ticket status: {}", other))),
+            other => Err(TopemsError::ValidationFailed(format!(
+                "Invalid ticket status: {}",
+                other
+            ))),
         }
     }
 }
@@ -470,7 +476,10 @@ impl std::str::FromStr for TicketSeverity {
             "medium" => Ok(TicketSeverity::Medium),
             "high" => Ok(TicketSeverity::High),
             "critical" => Ok(TicketSeverity::Critical),
-            other => Err(TopemsError::ValidationFailed(format!("Invalid ticket severity: {}", other))),
+            other => Err(TopemsError::ValidationFailed(format!(
+                "Invalid ticket severity: {}",
+                other
+            ))),
         }
     }
 }

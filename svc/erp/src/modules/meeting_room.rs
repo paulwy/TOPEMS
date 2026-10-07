@@ -143,7 +143,9 @@ pub async fn create_room(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("会议室名称", &req.name) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            e.to_string(),
+        )));
     }
 
     let id = Uuid::new_v4();
@@ -600,7 +602,9 @@ pub async fn create_booking(
         None => unreachable!("rls txn missing"),
     };
     if let Err(e) = validate_required_field("会议标题", &req.title) {
-        return Json(ApiResponse::from(TopemsError::ValidationFailed(e.to_string())));
+        return Json(ApiResponse::from(TopemsError::ValidationFailed(
+            e.to_string(),
+        )));
     }
 
     let room_result = sqlx::query_as::<_, MeetingRoom>(

@@ -10,12 +10,12 @@
 
 #![cfg(feature = "module-mobile")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::routing::get;
 use axum::Router;
 use topems_shared_auth::middleware::require_permission;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 
 /// 真实 Mobile 模块：持有数据库连接池 + 移动端完整业务路由
 pub struct MobileRealModule {

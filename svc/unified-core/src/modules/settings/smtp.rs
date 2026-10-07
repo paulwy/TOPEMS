@@ -306,7 +306,12 @@ fn build_transport(config: &SmtpConfig) -> Result<SmtpTransport, TopemsError> {
         .build())
 }
 
-fn send_test_email(config: &SmtpConfig, to: &str, subject: &str, body: &str) -> Result<(), TopemsError> {
+fn send_test_email(
+    config: &SmtpConfig,
+    to: &str,
+    subject: &str,
+    body: &str,
+) -> Result<(), TopemsError> {
     let from = Mailbox::new(
         Some(config.from_name.clone()),
         config
@@ -316,7 +321,8 @@ fn send_test_email(config: &SmtpConfig, to: &str, subject: &str, body: &str) -> 
     );
     let to_addr = Mailbox::new(
         Some(to.to_string()),
-        to.parse().map_err(|e| TopemsError::ValidationFailed(format!("无效的收件人邮箱: {}", e)))?,
+        to.parse()
+            .map_err(|e| TopemsError::ValidationFailed(format!("无效的收件人邮箱: {}", e)))?,
     );
 
     let message = Message::builder()

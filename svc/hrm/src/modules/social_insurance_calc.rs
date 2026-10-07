@@ -18,9 +18,9 @@
 //! 若调用方只提供 `social_average_wage`（社平工资），则 `base_min/base_max` 可通过
 //! `derive_base_range_from_social_average` 自动推导为 60% / 300%。
 
-use topems_shared_core::TopemsError;
 use bigdecimal::BigDecimal;
 use std::str::FromStr;
+use topems_shared_core::TopemsError;
 
 // ── 配置 ────────────────────────────────────────────
 
@@ -296,12 +296,17 @@ pub fn validate_social_insurance_config(cfg: &SocialInsuranceConfig) -> Result<(
     ];
     for (name, r) in pct {
         if r < &zero || r > &one {
-            return Err(TopemsError::BusinessLogic(format!("比例 {} 应在 [0,1]: {}", name, r)));
+            return Err(TopemsError::BusinessLogic(format!(
+                "比例 {} 应在 [0,1]: {}",
+                name, r
+            )));
         }
     }
 
     if cfg.serious_illness_personal_fixed < zero || cfg.serious_illness_company_fixed < zero {
-        return Err(TopemsError::BusinessLogic("大病医疗固定额不可为负".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "大病医疗固定额不可为负".to_string(),
+        ));
     }
 
     Ok(())

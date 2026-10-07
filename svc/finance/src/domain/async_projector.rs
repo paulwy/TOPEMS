@@ -1,9 +1,9 @@
-use topems_shared_core::error::TopemsError;
 use sqlx::{PgPool, Row};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use tokio::time::{self, Duration};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use super::event_store::EventRecord;

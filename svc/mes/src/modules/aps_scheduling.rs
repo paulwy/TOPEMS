@@ -803,7 +803,9 @@ async fn fetch_available_work_stations(
         .collect())
 }
 
-async fn fetch_equipment_map(pool: &sqlx::PgPool) -> Result<HashMap<Uuid, EquipmentInfo>, TopemsError> {
+async fn fetch_equipment_map(
+    pool: &sqlx::PgPool,
+) -> Result<HashMap<Uuid, EquipmentInfo>, TopemsError> {
     let rows = sqlx::query(
         r#"
         SELECT id, equipment_name AS name, status, next_maintenance_date
@@ -860,7 +862,10 @@ async fn check_material_availability(
     Ok(true)
 }
 
-async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Result<(), TopemsError> {
+async fn save_schedule_result(
+    pool: &sqlx::PgPool,
+    item: &ApsScheduleItem,
+) -> Result<(), TopemsError> {
     let now = Utc::now();
 
     let result = sqlx::query(
@@ -905,7 +910,10 @@ async fn save_schedule_result(pool: &sqlx::PgPool, item: &ApsScheduleItem) -> Re
 
     match result {
         Ok(_) => Ok(()),
-        Err(e) => Err(TopemsError::BusinessLogic(format!("保存排程结果失败: {}", e))),
+        Err(e) => Err(TopemsError::BusinessLogic(format!(
+            "保存排程结果失败: {}",
+            e
+        ))),
     }
 }
 

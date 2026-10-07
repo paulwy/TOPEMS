@@ -1,5 +1,5 @@
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
+use topems_shared_core::error::TopemsError;
 
 use super::aggregates::*;
 use super::events::*;
@@ -12,7 +12,11 @@ pub trait VoucherService: Send + Sync {
     ) -> Result<VoucherAggregate, TopemsError>;
     async fn get_voucher(&self, id: &str) -> Result<Option<VoucherAggregate>, TopemsError>;
     async fn post_voucher(&self, id: &str) -> Result<VoucherAggregate, TopemsError>;
-    async fn reverse_voucher(&self, id: &str, reason: &str) -> Result<VoucherAggregate, TopemsError>;
+    async fn reverse_voucher(
+        &self,
+        id: &str,
+        reason: &str,
+    ) -> Result<VoucherAggregate, TopemsError>;
     async fn list_vouchers(
         &self,
         page: i64,

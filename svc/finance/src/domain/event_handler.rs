@@ -2,8 +2,8 @@
 // =============================================================================
 // 事件处理器 trait + 副作用模型 + 路由器 + 4 个具体处理器实现
 
-use topems_shared_core::error::TopemsError;
 use async_trait::async_trait;
+use topems_shared_core::error::TopemsError;
 
 use super::event_publisher::event_type_name;
 use super::events::FinanceDomainEvent;
@@ -205,7 +205,11 @@ impl DomainEventHandler for VoucherPostedHandler {
                 e.voucher_no.clone(),
                 e.posted_by.clone(),
             ),
-            _ => return Err(TopemsError::BusinessLogic("VoucherPostedHandler received non-VoucherPosted event".to_string())),
+            _ => {
+                return Err(TopemsError::BusinessLogic(
+                    "VoucherPostedHandler received non-VoucherPosted event".to_string(),
+                ))
+            }
         };
 
         let mut result = HandlerResult::success();
@@ -270,7 +274,9 @@ impl DomainEventHandler for VoucherReversedHandler {
                 e.reason.clone(),
             ),
             _ => {
-                return Err(TopemsError::BusinessLogic("VoucherReversedHandler received non-VoucherReversed event".to_string()))
+                return Err(TopemsError::BusinessLogic(
+                    "VoucherReversedHandler received non-VoucherReversed event".to_string(),
+                ))
             }
         };
 
@@ -335,9 +341,9 @@ impl DomainEventHandler for ReceivableSettledHandler {
                 e.remaining_amount,
             ),
             _ => {
-                return Err(
-                    TopemsError::BusinessLogic("ReceivableSettledHandler received non-ReceivableSettled event".to_string()),
-                )
+                return Err(TopemsError::BusinessLogic(
+                    "ReceivableSettledHandler received non-ReceivableSettled event".to_string(),
+                ))
             }
         };
 
@@ -402,7 +408,11 @@ impl DomainEventHandler for PayableSettledHandler {
             FinanceDomainEvent::PayableSettled(e) => {
                 (e.payable_id.clone(), e.settled_amount, e.remaining_amount)
             }
-            _ => return Err(TopemsError::BusinessLogic("PayableSettledHandler received non-PayableSettled event".to_string())),
+            _ => {
+                return Err(TopemsError::BusinessLogic(
+                    "PayableSettledHandler received non-PayableSettled event".to_string(),
+                ))
+            }
         };
 
         let mut result = HandlerResult::success();

@@ -310,10 +310,7 @@ pub fn flow_routes(state: &AppState) -> Router<AppState> {
         .route("/rules/{id}", get(modules::flow::rule::get_rule))
         // ===== 前端契约 GET 兜底（workflow 批次，待上游支持）=====
         // 定义/版本对比、导出
-        .route(
-            "/workflows/{id}/compare/{sub}/{extra}",
-            get(stub_list),
-        )
+        .route("/workflows/{id}/compare/{sub}/{extra}", get(stub_list))
         .route("/workflows/{id}/export", get(stub_list))
         // 表单定义 + 表单实例（CRUD 查询侧）
         .route("/form-definitions", get(stub_list))

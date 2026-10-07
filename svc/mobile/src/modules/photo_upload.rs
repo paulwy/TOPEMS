@@ -485,10 +485,7 @@ pub async fn get_photo_by_id(
     } else {
         // 数据不存在语义：HTTP 200 + 内层 code 404（与 announcements 约定一致），
         // 避免裸 HTTP 404 被前端契约探测判为路由缺失。
-        (
-            StatusCode::OK,
-            Json(ApiResponse::error(404, "照片不存在")),
-        )
+        (StatusCode::OK, Json(ApiResponse::error(404, "照片不存在")))
     }
 }
 

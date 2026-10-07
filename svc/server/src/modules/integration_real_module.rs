@@ -7,13 +7,13 @@
 
 #![cfg(feature = "module-integration")]
 
-use topems_shared_core::error::Result;
 use crate::module::{Module, ModuleContext, ModuleGroup, ModuleHealth};
 use axum::Router;
 use std::sync::Arc;
 use topems_integration::mes_erp_sync::MesErpSyncService;
 use topems_integration::models::AppState as IntegrationAppState;
 use topems_shared_bootstrap::{bootstrap_service, ServiceConfig};
+use topems_shared_core::error::Result;
 
 /// 真实 Integration 模块：持有完整业务路由
 pub struct IntegrationRealModule {

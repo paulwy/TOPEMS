@@ -7,10 +7,10 @@
 //! - 优先级调度
 //! - 租户隔离
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 // ============================================================================
@@ -213,7 +213,11 @@ pub async fn complete_task(
 }
 
 /// 标记任务失败
-pub async fn fail_task(pool: &PgPool, task_id: Uuid, error: &str) -> Result<AsyncTask, TopemsError> {
+pub async fn fail_task(
+    pool: &PgPool,
+    task_id: Uuid,
+    error: &str,
+) -> Result<AsyncTask, TopemsError> {
     let row = sqlx::query(
         r#"
         UPDATE integration.async_tasks
@@ -399,7 +403,10 @@ pub async fn get_task_stats(pool: &PgPool) -> Result<AsyncTaskStats, TopemsError
 
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 /// 清理已完成的旧任务（软删除）
-pub async fn cleanup_completed_tasks(pool: &PgPool, older_than_days: i64) -> Result<i64, TopemsError> {
+pub async fn cleanup_completed_tasks(
+    pool: &PgPool,
+    older_than_days: i64,
+) -> Result<i64, TopemsError> {
     let result = sqlx::query(
         r#"
         UPDATE integration.async_tasks

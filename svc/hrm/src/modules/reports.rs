@@ -43,10 +43,7 @@ pub async fn summary_tail(
         "HRM reports summary_tail called with tail={}（忽略尾段，返回空结构）",
         tail
     );
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "获取统计成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "获取统计成功"))
 }
 
 #[derive(Debug, Deserialize)]

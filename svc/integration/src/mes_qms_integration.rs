@@ -3,11 +3,11 @@
 //! Implements bidirectional data synchronization between MES production records
 //! and QMS quality inspection tasks.
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -509,8 +509,8 @@ pub async fn sync_quality_result_to_mes(
 ) -> Result<MesQmsSync, TopemsError> {
     info!("同步QMS质检结果到MES - 质检ID: {}", req.inspection_id);
 
-    let inspection_id =
-        Uuid::parse_str(&req.inspection_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的质检ID: {}", e)))?;
+    let inspection_id = Uuid::parse_str(&req.inspection_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的质检ID: {}", e)))?;
 
     let inspection_data = fetch_qms_inspection(pool, qms_url, inspection_id).await?;
 
@@ -618,7 +618,8 @@ pub async fn sync_trace_chain_data(
 ) -> Result<MesQmsSync, TopemsError> {
     info!("同步质量追溯链数据 - 工单ID: {}", req.order_id);
 
-    let order_id = Uuid::parse_str(&req.order_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的工单ID: {}", e)))?;
+    let order_id = Uuid::parse_str(&req.order_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的工单ID: {}", e)))?;
 
     let direction = req.direction.as_deref().unwrap_or("forward");
 
@@ -695,8 +696,8 @@ pub async fn handle_defect_handling(
 ) -> Result<MesQmsSync, TopemsError> {
     info!("处理不合格品流程联动 - 质检ID: {}", req.inspection_id);
 
-    let inspection_id =
-        Uuid::parse_str(&req.inspection_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的质检ID: {}", e)))?;
+    let inspection_id = Uuid::parse_str(&req.inspection_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的质检ID: {}", e)))?;
 
     let handling_result = match req.handling_type.as_str() {
         "rework" => {
@@ -1122,7 +1123,9 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "已达到最大重试次数".to_string(),
+        ));
     }
 
     let retry_config = RetryConfig {
@@ -1153,17 +1156,14 @@ pub async fn retry_failed_sync(
 
     match result {
         RetryResult::Success(_) => {
-            let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
-                .await
-                ?;
+            let updated =
+                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error)
-                .await
-                ?;
+            increment_retry_count(pool, sync_id, &error).await?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -1202,7 +1202,10 @@ async fn execute_sync_by_type(
             sync_quality_result_to_mes(pool, tenant_id, mes_url, qms_url, &req).await?;
             Ok(())
         }
-        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
+        _ => Err(TopemsError::ValidationFailed(format!(
+            "不支持的同步类型: {}",
+            sync_type
+        ))),
     }
 }
 

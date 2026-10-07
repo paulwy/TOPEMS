@@ -3,10 +3,10 @@
 // ==================== 单元测试 ====================
 
 use super::common::FormDomain;
-use super::registry::FormRegistry;
-use super::*;
 use super::common::FormDomain;
 use super::registry::FormRegistry;
+use super::registry::FormRegistry;
+use super::*;
 
 #[test]
 fn test_default_registry_has_30_plus_forms() {
@@ -34,8 +34,14 @@ fn test_get_form_config() {
     let registry = default_registry();
     let customer = registry.get("customer");
     assert!(customer.is_some());
-    assert_eq!(customer.expect("customer form missing").display_name, "客户");
-    assert_eq!(customer.expect("customer form missing").domain, FormDomain::Crm);
+    assert_eq!(
+        customer.expect("customer form missing").display_name,
+        "客户"
+    );
+    assert_eq!(
+        customer.expect("customer form missing").domain,
+        FormDomain::Crm
+    );
 }
 
 #[test]

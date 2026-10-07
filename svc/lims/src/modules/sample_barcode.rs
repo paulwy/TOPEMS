@@ -1227,10 +1227,14 @@ pub fn validate_barcode(barcode: &str) -> Result<(), TopemsError> {
         return Err(TopemsError::ValidationFailed("条码不能为空".to_string()));
     }
     if b.len() > 64 {
-        return Err(TopemsError::ValidationFailed("条码长度不能超过 64 字符".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "条码长度不能超过 64 字符".to_string(),
+        ));
     }
     if b.chars().any(|c| c.is_control()) {
-        return Err(TopemsError::ValidationFailed("条码包含非法控制字符".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "条码包含非法控制字符".to_string(),
+        ));
     }
     Ok(())
 }

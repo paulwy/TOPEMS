@@ -27,10 +27,7 @@ pub fn create_routes() -> Router<AppState> {
             "/sync/configs",
             get(list_sync_configs).put(update_sync_configs),
         )
-        .route(
-            "/sync/configs/{id}",
-            get(get_sync_config),
-        )
+        .route("/sync/configs/{id}", get(get_sync_config))
         .route("/sync/retry", post(batch_retry_sync))
         .route("/sync/to-lims", post(sync_accident_to_lims))
         .route("/sync/to-qms", post(sync_hazard_to_qms))
@@ -194,9 +191,7 @@ pub async fn get_sync_record(
             },
             "获取同步记录成功",
         )),
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "同步记录不存在"))
-        }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "同步记录不存在")),
         Err(e) => {
             tracing::error!("Failed to fetch sync record: {}", e);
             Json(ApiResponse::error(500, "获取同步记录失败"))
@@ -292,9 +287,7 @@ pub async fn retry_sync(
             },
             "同步记录已重置为待处理",
         )),
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "同步记录不存在"))
-        }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "同步记录不存在")),
         Err(e) => {
             tracing::error!("Failed to retry sync: {}", e);
             Json(ApiResponse::error(500, "同步重试失败"))

@@ -1680,7 +1680,10 @@ mod tests {
         );
         let res: Result<HrmEmployeeCreatedPayload, _> = bad.parse_payload();
         assert!(res.is_err());
-        assert!(res.unwrap_err().to_string().contains("解析事件 payload 失败"));
+        assert!(res
+            .unwrap_err()
+            .to_string()
+            .contains("解析事件 payload 失败"));
     }
 
     #[test]

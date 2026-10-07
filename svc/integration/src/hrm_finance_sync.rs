@@ -3,11 +3,11 @@
 //! Implements bidirectional data synchronization between HRM employee records
 //! and Finance payroll processing, including salary, social insurance, and housing fund.
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, FromRow, PgPool, Row};
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::TopemsError;
 use tracing::{error, info, warn};
 
 use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
@@ -369,8 +369,8 @@ pub async fn sync_payroll(
         req.payroll_id, req.pay_period
     );
 
-    let payroll_id =
-        Uuid::parse_str(&req.payroll_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的薪资ID: {}", e)))?;
+    let payroll_id = Uuid::parse_str(&req.payroll_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的薪资ID: {}", e)))?;
 
     let payroll_data = fetch_hrm_payroll(pool, hrm_url, payroll_id).await?;
 
@@ -440,8 +440,8 @@ pub async fn sync_employee(
         req.employee_id, req.source_system
     );
 
-    let employee_id =
-        Uuid::parse_str(&req.employee_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
+    let employee_id = Uuid::parse_str(&req.employee_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
 
     let (employee_data, direction) = match req.source_system.as_str() {
         "hrm" => {
@@ -452,7 +452,12 @@ pub async fn sync_employee(
             let data = fetch_finance_employee(pool, finance_url, employee_id).await?;
             (data, DIRECTION_FINANCE_TO_HRM)
         }
-        _ => return Err(TopemsError::ValidationFailed(format!("未知的来源系统: {}", req.source_system)),)
+        _ => {
+            return Err(TopemsError::ValidationFailed(format!(
+                "未知的来源系统: {}",
+                req.source_system
+            )))
+        }
     };
 
     match direction {
@@ -562,8 +567,8 @@ pub async fn sync_social_insurance(
         req.employee_id, req.pay_period
     );
 
-    let employee_id =
-        Uuid::parse_str(&req.employee_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
+    let employee_id = Uuid::parse_str(&req.employee_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
 
     let insurance_data =
         fetch_hrm_social_insurance(pool, hrm_url, employee_id, &req.pay_period).await?;
@@ -630,8 +635,8 @@ pub async fn sync_housing_fund(
         req.employee_id, req.pay_period
     );
 
-    let employee_id =
-        Uuid::parse_str(&req.employee_id).map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
+    let employee_id = Uuid::parse_str(&req.employee_id)
+        .map_err(|e| TopemsError::ValidationFailed(format!("无效的员工ID: {}", e)))?;
 
     let fund_data = fetch_hrm_housing_fund(pool, hrm_url, employee_id, &req.pay_period).await?;
 
@@ -1026,7 +1031,9 @@ pub async fn retry_failed_sync(
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
     if sync.retry_count >= sync.max_retries {
-        return Err(TopemsError::ValidationFailed("已达到最大重试次数".to_string()));
+        return Err(TopemsError::ValidationFailed(
+            "已达到最大重试次数".to_string(),
+        ));
     }
 
     let retry_config = RetryConfig {
@@ -1065,17 +1072,14 @@ pub async fn retry_failed_sync(
 
     match result {
         RetryResult::Success(_) => {
-            let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
-                .await
-                ?;
+            let updated =
+                update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None).await?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
         RetryResult::Failed { error, attempts }
         | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error)
-                .await
-                ?;
+            increment_retry_count(pool, sync_id, &error).await?;
             error!(
                 "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
                 sync_id, attempts, error
@@ -1148,7 +1152,10 @@ async fn execute_sync_by_type(
             sync_housing_fund(pool, tenant_id, hrm_url, finance_url, &req).await?;
             Ok(())
         }
-        _ => Err(TopemsError::ValidationFailed(format!("不支持的同步类型: {}", sync_type)),)
+        _ => Err(TopemsError::ValidationFailed(format!(
+            "不支持的同步类型: {}",
+            sync_type
+        ))),
     }
 }
 

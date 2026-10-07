@@ -15,12 +15,12 @@
 //!    - EdgeCacheLocation: CDN/EdgeNode/Regional/Global
 //!    - 缓存复制 + 同步状态 + 复制策略
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -409,12 +409,15 @@ impl PersistedQueryV2 {
         let store = get_persisted_query_store();
         let mut queries = store.persisted_queries.lock().await;
 
-        let entry = queries
-            .get_mut(query_hash)
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("查询哈希不存在: {}", query_hash)))?;
+        let entry = queries.get_mut(query_hash).ok_or_else(|| {
+            TopemsError::ResourceNotFound(format!("查询哈希不存在: {}", query_hash))
+        })?;
 
         if entry.status != QueryStatus::Active {
-            return Err(TopemsError::BusinessLogic(format!("查询状态为 {}，不可执行", entry.status.as_str())));
+            return Err(TopemsError::BusinessLogic(format!(
+                "查询状态为 {}，不可执行",
+                entry.status.as_str()
+            )));
         }
 
         entry.access_count += 1;

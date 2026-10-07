@@ -1,10 +1,10 @@
-use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_db::master_data_refs::{MasterDataRefService, UpsertLocalMasterDataRefRequest};
 use topems_shared_event::event::{
@@ -129,9 +129,12 @@ impl ScmEventHandlers {
 
         match event.event_type {
             EventType::PurchaseOrderCreated => {
-                let payload: PurchaseOrderCreatedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e)))?;
+                let payload: PurchaseOrderCreatedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!(
+                        "解析采购订单创建事件 payload 失败: {}",
+                        e
+                    ))
+                })?;
                 tracing::debug!(
                     "[scm] 采购订单创建: {} ({})，供应商: {:?}，金额: {:?}",
                     payload.order_no,
@@ -168,9 +171,12 @@ impl ScmEventHandlers {
                 }
             }
             EventType::PurchaseOrderApproved => {
-                let payload: PurchaseOrderApprovedPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单审批事件 payload 失败: {}", e)))?;
+                let payload: PurchaseOrderApprovedPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!(
+                        "解析采购订单审批事件 payload 失败: {}",
+                        e
+                    ))
+                })?;
                 tracing::info!(
                     "[scm] 采购订单审批通过: {} ({})，审批人: {:?}",
                     payload.order_no,
@@ -220,9 +226,9 @@ impl ScmEventHandlers {
 
         match event.event_type {
             EventType::StockInbound => {
-                let payload: StockInboundPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析入库事件 payload 失败: {}", e)))?;
+                let payload: StockInboundPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析入库事件 payload 失败: {}", e))
+                })?;
                 tracing::debug!(
                     "[scm] 库存入库: {} ({})，物料: {:?}，数量: {}，关联订单: {:?}",
                     payload.inbound_no,
@@ -262,9 +268,9 @@ impl ScmEventHandlers {
                 }
             }
             EventType::StockOutbound => {
-                let payload: StockOutboundPayload = event
-                    .parse_payload()
-                    .map_err(|e| TopemsError::ValidationFailed(format!("解析出库事件 payload 失败: {}", e)))?;
+                let payload: StockOutboundPayload = event.parse_payload().map_err(|e| {
+                    TopemsError::ValidationFailed(format!("解析出库事件 payload 失败: {}", e))
+                })?;
                 tracing::debug!(
                     "[scm] 库存出库: {} ({})，物料: {:?}，数量: {}，关联订单: {:?}",
                     payload.outbound_no,
@@ -285,9 +291,9 @@ impl ScmEventHandlers {
     }
 
     async fn handle_supplier_data_sync(&self, event: Event) -> HandlerResult {
-        let payload: SupplierDataSyncRequestedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析供应商同步事件 payload 失败: {}", e)))?;
+        let payload: SupplierDataSyncRequestedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析供应商同步事件 payload 失败: {}", e))
+        })?;
         tracing::info!(
             "[scm] 收到 SupplierDataSyncRequested 事件 - supplier_id={}, supplier_name={}, direction={}",
             payload.supplier_id,
@@ -427,7 +433,9 @@ impl ScmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 scm.srm_supplier_snapshots 失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!("写入 scm.srm_supplier_snapshots 失败: {}", e))
+        })?;
 
         Ok(())
     }
@@ -494,9 +502,9 @@ impl ScmEventHandlers {
 
     /// SRM 供应商创建事件处理 - 写快照表
     async fn handle_srm_supplier_created(&self, event: Event) -> HandlerResult {
-        let payload: SrmSupplierCreatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SrmSupplierCreated payload 失败: {}", e)))?;
+        let payload: SrmSupplierCreatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 SrmSupplierCreated payload 失败: {}", e))
+        })?;
 
         tracing::info!(
             "[scm] SRM 供应商创建: {} ({})",
@@ -533,16 +541,18 @@ impl ScmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 srm_supplier_snapshots 失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!("写入 srm_supplier_snapshots 失败: {}", e))
+        })?;
 
         Ok(())
     }
 
     /// SRM 供应商更新事件处理 - 写快照表
     async fn handle_srm_supplier_updated(&self, event: Event) -> HandlerResult {
-        let payload: SrmSupplierUpdatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SrmSupplierUpdated payload 失败: {}", e)))?;
+        let payload: SrmSupplierUpdatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 SrmSupplierUpdated payload 失败: {}", e))
+        })?;
 
         tracing::info!(
             "[scm] SRM 供应商更新: {} ({})",
@@ -569,16 +579,21 @@ impl ScmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("更新 srm_supplier_snapshots 失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!("更新 srm_supplier_snapshots 失败: {}", e))
+        })?;
 
         Ok(())
     }
 
     /// SRM 供应商状态变更事件处理 - 写快照表
     async fn handle_srm_supplier_status_changed(&self, event: Event) -> HandlerResult {
-        let payload: SrmSupplierStatusChangedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SrmSupplierStatusChanged payload 失败: {}", e)))?;
+        let payload: SrmSupplierStatusChangedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!(
+                "解析 SrmSupplierStatusChanged payload 失败: {}",
+                e
+            ))
+        })?;
 
         tracing::info!(
             "[scm] SRM 供应商状态变更: {} ({}) {} -> {}",
@@ -608,7 +623,9 @@ impl ScmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("更新 srm_supplier_snapshots 状态失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!("更新 srm_supplier_snapshots 状态失败: {}", e))
+        })?;
 
         Ok(())
     }
@@ -664,9 +681,12 @@ impl ScmEventHandlers {
 
     /// WMS 入库单接收事件处理 - 写快照表
     async fn handle_wms_inbound_received(&self, event: Event) -> HandlerResult {
-        let payload: WmsInventoryItemReceivedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 WmsInventoryItemReceived payload 失败: {}", e)))?;
+        let payload: WmsInventoryItemReceivedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!(
+                "解析 WmsInventoryItemReceived payload 失败: {}",
+                e
+            ))
+        })?;
 
         tracing::debug!(
             "[scm] WMS入库接收: {} ({})，物料: {:?}，数量: {}",
@@ -705,7 +725,9 @@ impl ScmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 wms_inbound_order_snapshots 失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!("写入 wms_inbound_order_snapshots 失败: {}", e))
+        })?;
 
         // 同步写入入库库存移动历史（供 turnover 趋势查询）
         let _ = sqlx::query(
@@ -745,9 +767,12 @@ impl ScmEventHandlers {
 
     /// WMS 出库单发货事件处理 - 写快照表
     async fn handle_wms_outbound_shipped(&self, event: Event) -> HandlerResult {
-        let payload: WmsInventoryItemShippedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 WmsInventoryItemShipped payload 失败: {}", e)))?;
+        let payload: WmsInventoryItemShippedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!(
+                "解析 WmsInventoryItemShipped payload 失败: {}",
+                e
+            ))
+        })?;
 
         tracing::debug!(
             "[scm] WMS出库发货: {} ({})，物料: {:?}，数量: {}",
@@ -781,7 +806,9 @@ impl ScmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 wms_outbound_order_snapshots 失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!("写入 wms_outbound_order_snapshots 失败: {}", e))
+        })?;
 
         // 同步写入出库库存移动历史（供 turnover 趋势查询）
         let _ = sqlx::query(
@@ -810,9 +837,9 @@ impl ScmEventHandlers {
 
     /// 库存更新事件处理 - 写快照表
     async fn handle_inventory_updated(&self, event: Event) -> HandlerResult {
-        let payload: InventoryUpdatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 InventoryUpdated payload 失败: {}", e)))?;
+        let payload: InventoryUpdatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 InventoryUpdated payload 失败: {}", e))
+        })?;
 
         tracing::debug!(
             "[scm] 库存更新: warehouse={}, material={}, old={}, new={}, delta={}",
@@ -834,7 +861,9 @@ impl ScmEventHandlers {
             .bind(&payload.material_code)
             .execute(&self.db)
             .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("删除 wms_inventory_snapshots 失败: {}", e)))?;
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!("删除 wms_inventory_snapshots 失败: {}", e))
+            })?;
         } else {
             let available = payload.available_quantity.unwrap_or(payload.new_quantity);
             let min_qty = payload.min_quantity.unwrap_or(0.0);
@@ -868,7 +897,9 @@ impl ScmEventHandlers {
             .bind(now)
             .execute(&self.db)
             .await
-            .map_err(|e| TopemsError::DatabaseQuery(format!("写入 wms_inventory_snapshots 失败: {}", e)))?;
+            .map_err(|e| {
+                TopemsError::DatabaseQuery(format!("写入 wms_inventory_snapshots 失败: {}", e))
+            })?;
 
             // 同步写入库存移动历史（供 turnover 趋势查询）
             if payload.delta.abs() > f64::EPSILON {

@@ -1,4 +1,3 @@
-use topems_shared_core::error::Result;
 use axum::{
     extract::{Extension, Path, State},
     routing::get,
@@ -7,6 +6,7 @@ use axum::{
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_core::error::Result;
 use uuid::Uuid;
 
 use crate::models::purchase_order::PurchaseOrder;

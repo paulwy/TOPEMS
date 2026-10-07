@@ -224,7 +224,9 @@ pub async fn update_company_relation(
             .await;
             Json(ApiResponse::success(relation, "更新公司关系成功"))
         }
-        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound("公司关系不存在".to_string()))),
+        Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
+            "公司关系不存在".to_string(),
+        ))),
         Err(e) => {
             tracing::error!("更新公司关系失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

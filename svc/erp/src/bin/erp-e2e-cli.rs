@@ -12,11 +12,11 @@
 //! Exit code: 全部通过=0；任一失败=1；参数错误=2。
 
 #![allow(clippy::as_conversions)]
-use topems_shared_core::error::TopemsError;
 use topems_erp::modules::procurement_e2e::{
     sample_happy_cny, sample_multi_currency_usd_cny, validate_procurement_chain,
     validate_procurement_chain_with_rates, ErpE2eError,
 };
+use topems_shared_core::error::TopemsError;
 
 fn scenario_happy() -> Result<(), TopemsError> {
     let req = sample_happy_cny();
@@ -26,7 +26,9 @@ fn scenario_happy() -> Result<(), TopemsError> {
     let d: f64 = r.journal_entries.iter().map(|l| l.debit).sum();
     let c: f64 = r.journal_entries.iter().map(|l| l.credit).sum();
     if (d - c).abs() > 0.02 {
-        return Err(TopemsError::BusinessLogic(format!("entries not balanced: debit={d} credit={c}")));
+        return Err(TopemsError::BusinessLogic(format!(
+            "entries not balanced: debit={d} credit={c}"
+        )));
     }
     println!(
         "  ok  totals: PO={} GRN={} INV={} PAY={}",
@@ -65,7 +67,9 @@ fn scenario_excess_grn() -> Result<(), TopemsError> {
             );
             Ok(())
         }
-        other => Err(TopemsError::BusinessLogic(format!("wrong error variant: {other:?}")),)
+        other => Err(TopemsError::BusinessLogic(format!(
+            "wrong error variant: {other:?}"
+        ))),
     }
 }
 
@@ -91,7 +95,9 @@ fn scenario_mismatch_inv() -> Result<(), TopemsError> {
             );
             Ok(())
         }
-        other => Err(TopemsError::BusinessLogic(format!("wrong error variant: {other:?}")),)
+        other => Err(TopemsError::BusinessLogic(format!(
+            "wrong error variant: {other:?}"
+        ))),
     }
 }
 
@@ -107,7 +113,9 @@ fn scenario_period_close() -> Result<(), TopemsError> {
             println!("  ok  error code: PERIOD_CLOSED document={document}");
             Ok(())
         }
-        other => Err(TopemsError::BusinessLogic(format!("wrong error variant: {other:?}")),)
+        other => Err(TopemsError::BusinessLogic(format!(
+            "wrong error variant: {other:?}"
+        ))),
     }
 }
 
@@ -133,7 +141,9 @@ fn scenario_multi_currency() -> Result<(), TopemsError> {
     let d: f64 = r.journal_entries.iter().map(|l| l.debit).sum();
     let c: f64 = r.journal_entries.iter().map(|l| l.credit).sum();
     if (d - c).abs() > 0.02 {
-        return Err(TopemsError::BusinessLogic(format!("entries not balanced: debit={d} credit={c}")));
+        return Err(TopemsError::BusinessLogic(format!(
+            "entries not balanced: debit={d} credit={c}"
+        )));
     }
     println!(
         "  ok  USD→CNY totals: PO={:.2} PAY={:.2}",

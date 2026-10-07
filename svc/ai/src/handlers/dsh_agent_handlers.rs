@@ -164,9 +164,9 @@ pub async fn stream_agent(
     match orchestrator.execute_streaming(execute_request).await {
         Ok(streaming_response) => streaming_response.into_pinned_sse(),
         Err(e) => {
-            let stream = futures::stream::iter(vec![Ok(Event::default()
-                .event("error")
-                .data(format!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "'"))))]);
+            let stream = futures::stream::iter(vec![Ok(Event::default().event("error").data(
+                format!(r#"{{"error":"{}"}}"#, e.to_string().replace('"', "'")),
+            ))]);
             Sse::new(Box::pin(stream))
         }
     }

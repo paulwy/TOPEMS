@@ -49,7 +49,10 @@ fn mask_secret(secret: &str) -> String {
     } else {
         format!(
             "****{}",
-            chars[chars.len() - 4..].iter().collect::<String>()
+            chars
+                .get(chars.len() - 4..)
+                .map(|s| s.iter().collect::<String>())
+                .unwrap_or_default()
         )
     }
 }

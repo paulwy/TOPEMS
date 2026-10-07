@@ -8,9 +8,9 @@
 //! P3 事件驱动规范化：补齐 WMS 缺失的出库/入库/调拨/低库存事件，
 //! 让仓储域能够通知 SCM（补货/履约）和 Finance（成本/应付）。
 
-use topems_shared_core::error::TopemsError;
 use sqlx::{PgPool, Row};
 use std::sync::Arc;
+use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
     Event, EventPublisher, EventResult, EventSubscriber, EventType, InboundOrderRequestedPayload,
     PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload, WmsInventoryItemReceivedPayload,
@@ -66,9 +66,9 @@ impl WmsEventHandlers {
     }
 
     async fn handle_po_created(&self, event: Event) -> HandlerResult {
-        let payload: PurchaseOrderCreatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e)))?;
+        let payload: PurchaseOrderCreatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e))
+        })?;
         tracing::debug!(
             "[wms] 收到 PurchaseOrderCreated 事件 - order_id={}, order_no={}",
             payload.order_id,
@@ -92,9 +92,9 @@ impl WmsEventHandlers {
     }
 
     async fn handle_po_approved(&self, event: Event) -> HandlerResult {
-        let payload: PurchaseOrderApprovedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单审批事件 payload 失败: {}", e)))?;
+        let payload: PurchaseOrderApprovedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析采购订单审批事件 payload 失败: {}", e))
+        })?;
         tracing::info!(
             "[wms] 收到 PurchaseOrderApproved 事件 - order_id={}, order_no={}",
             payload.order_id,
@@ -118,9 +118,9 @@ impl WmsEventHandlers {
     }
 
     async fn handle_inbound_order_requested(&self, event: Event) -> HandlerResult {
-        let payload: InboundOrderRequestedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析入库单请求事件 payload 失败: {}", e)))?;
+        let payload: InboundOrderRequestedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析入库单请求事件 payload 失败: {}", e))
+        })?;
         tracing::info!(
             "[wms] 收到 InboundOrderRequested 事件 - inbound_id={}, purchase_order_id={}",
             payload.inbound_order_id,
@@ -169,8 +169,8 @@ impl WmsEventHandlers {
             .clone();
         publisher
             .publish_inventory_shipped(payload)
-            .await.map_err(Into::into)
-            
+            .await
+            .map_err(Into::into)
     }
 
     /// 发布库存入库事件
@@ -188,8 +188,8 @@ impl WmsEventHandlers {
             .clone();
         publisher
             .publish_inventory_received(payload)
-            .await.map_err(Into::into)
-            
+            .await
+            .map_err(Into::into)
     }
 
     /// 发布仓库间调拨完成事件
@@ -207,8 +207,8 @@ impl WmsEventHandlers {
             .clone();
         publisher
             .publish_warehouse_transfer_completed(payload)
-            .await.map_err(Into::into)
-            
+            .await
+            .map_err(Into::into)
     }
 
     /// 发布库存不足预警事件
@@ -226,8 +226,8 @@ impl WmsEventHandlers {
             .clone();
         publisher
             .publish_inventory_low_stock(payload)
-            .await.map_err(Into::into)
-            
+            .await
+            .map_err(Into::into)
     }
 }
 
@@ -307,21 +307,21 @@ pub async fn emit_low_stock_alerts(
         let warehouse_id: Option<uuid::Uuid> = row
             .try_get("warehouse_id")
             .map_err(|e| TopemsError::ValidationFailed(format!("解析 warehouse_id 失败: {}", e)))?;
-        let warehouse_name: Option<String> = row
-            .try_get("warehouse_name")
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 warehouse_name 失败: {}", e)))?;
-        let material_code: String = row
-            .try_get("material_code")
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 material_code 失败: {}", e)))?;
-        let material_name: String = row
-            .try_get("material_name")
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 material_name 失败: {}", e)))?;
-        let current_quantity: f64 = row
-            .try_get("current_quantity")
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 current_quantity 失败: {}", e)))?;
-        let threshold_quantity: f64 = row
-            .try_get("threshold_quantity")
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 threshold_quantity 失败: {}", e)))?;
+        let warehouse_name: Option<String> = row.try_get("warehouse_name").map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 warehouse_name 失败: {}", e))
+        })?;
+        let material_code: String = row.try_get("material_code").map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 material_code 失败: {}", e))
+        })?;
+        let material_name: String = row.try_get("material_name").map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 material_name 失败: {}", e))
+        })?;
+        let current_quantity: f64 = row.try_get("current_quantity").map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 current_quantity 失败: {}", e))
+        })?;
+        let threshold_quantity: f64 = row.try_get("threshold_quantity").map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析 threshold_quantity 失败: {}", e))
+        })?;
         let alert_type: String = row
             .try_get("alert_type")
             .map_err(|e| TopemsError::ValidationFailed(format!("解析 alert_type 失败: {}", e)))?;

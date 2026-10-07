@@ -770,9 +770,7 @@ pub async fn approve_formula(
             Json(ApiResponse::success(formula, "配方审批成功"))
         }
         // RowNotFound：被审批配方不存在，转为业务内层 404（HTTP 仍为 200）
-        Err(sqlx::Error::RowNotFound) => {
-            Json(ApiResponse::error(404, "配方不存在"))
-        }
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "配方不存在")),
         Err(e) => {
             tracing::error!("审批配方失败: {}", e);
             Json(ApiResponse::error(500, "审批配方失败"))

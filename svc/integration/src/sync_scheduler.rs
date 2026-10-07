@@ -8,12 +8,12 @@
 //! - 同步状态跟踪：记录 last_sync_status、last_sync_error、consecutive_failures
 //! - 并发控制：全局互斥锁，避免多个同步周期重叠
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Duration, Utc};
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::time::{interval, timeout, MissedTickBehavior};
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 use crate::erp_wms_sync::sync_incremental_all;
@@ -256,7 +256,10 @@ impl SyncScheduler {
     }
 
     /// 执行增量同步（带重试和超时）
-    async fn execute_sync_with_retry(&self, conn: &ErpConnection) -> Result<SyncResult, TopemsError> {
+    async fn execute_sync_with_retry(
+        &self,
+        conn: &ErpConnection,
+    ) -> Result<SyncResult, TopemsError> {
         let mut last_error: Option<String> = None;
         let mut retry_count = 0;
 
@@ -311,8 +314,8 @@ impl SyncScheduler {
         tracing::info!("[sync-scheduler] 开始执行连接 '{}' 的增量同步", conn.name);
 
         // 解析 tenant_id
-        let tenant_id =
-            Uuid::parse_str(&conn.tenant_id).map_err(|e| TopemsError::DatabaseQuery(format!("解析 tenant_id 失败: {}", e)))?;
+        let tenant_id = Uuid::parse_str(&conn.tenant_id)
+            .map_err(|e| TopemsError::DatabaseQuery(format!("解析 tenant_id 失败: {}", e)))?;
 
         // WMS URL（从环境变量获取，或使用默认值）
         let wms_url =

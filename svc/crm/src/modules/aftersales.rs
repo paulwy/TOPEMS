@@ -86,7 +86,9 @@ pub enum ProcessType {
 pub fn can_transition(from: ReturnStage, to: ReturnStage) -> Result<(), TopemsError> {
     use ReturnStage::*;
     if from.is_terminal() {
-        return Err(TopemsError::BusinessLogic("TERMINAL_CANNOT_TRANSITION".to_string()));
+        return Err(TopemsError::BusinessLogic(
+            "TERMINAL_CANNOT_TRANSITION".to_string(),
+        ));
     }
     let ok = matches!(
         (from, to),
@@ -104,7 +106,9 @@ pub fn can_transition(from: ReturnStage, to: ReturnStage) -> Result<(), TopemsEr
     if ok {
         Ok(())
     } else {
-        Err(TopemsError::ValidationFailed("INVALID_TRANSITION".to_string()))
+        Err(TopemsError::ValidationFailed(
+            "INVALID_TRANSITION".to_string(),
+        ))
     }
 }
 

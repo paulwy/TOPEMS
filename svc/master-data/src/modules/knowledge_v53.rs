@@ -8,12 +8,12 @@
 //!
 //! 设计风格：ApiResponse + LazyLock 内存存储
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
@@ -698,10 +698,16 @@ impl KnowledgeGraphEngine {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         if !nodes.iter().any(|n| n.id == source_id) {
-            return Err(TopemsError::ResourceNotFound(format!("源节点不存在: {}", source_id)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "源节点不存在: {}",
+                source_id
+            )));
         }
         if !nodes.iter().any(|n| n.id == target_id) {
-            return Err(TopemsError::ResourceNotFound(format!("目标节点不存在: {}", target_id)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "目标节点不存在: {}",
+                target_id
+            )));
         }
         drop(nodes);
 
@@ -732,7 +738,10 @@ impl KnowledgeGraphEngine {
         Ok(edge)
     }
 
-    async fn get_subgraph(node_id: &str, depth: Option<i32>) -> Result<KnowledgeGraph, TopemsError> {
+    async fn get_subgraph(
+        node_id: &str,
+        depth: Option<i32>,
+    ) -> Result<KnowledgeGraph, TopemsError> {
         let store = get_knowledge_v53_store();
         let nodes = store.kg_nodes.lock().await;
         let edges = store.kg_edges.lock().await;
@@ -787,10 +796,16 @@ impl KnowledgeGraphEngine {
         let edges = store.kg_edges.lock().await;
 
         if !nodes.iter().any(|n| n.id == start_id) {
-            return Err(TopemsError::ResourceNotFound(format!("起始节点不存在: {}", start_id)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "起始节点不存在: {}",
+                start_id
+            )));
         }
         if !nodes.iter().any(|n| n.id == end_id) {
-            return Err(TopemsError::ResourceNotFound(format!("目标节点不存在: {}", end_id)));
+            return Err(TopemsError::ResourceNotFound(format!(
+                "目标节点不存在: {}",
+                end_id
+            )));
         }
         drop(nodes);
 
@@ -818,7 +833,10 @@ impl KnowledgeGraphEngine {
             }
         }
 
-        Err(TopemsError::BusinessLogic(format!("未找到从 {} 到 {} 的路径", start_id, end_id)))
+        Err(TopemsError::BusinessLogic(format!(
+            "未找到从 {} 到 {} 的路径",
+            start_id, end_id
+        )))
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
@@ -887,8 +905,12 @@ impl KnowledgeGraphEngine {
                 dot.push_str("}\n");
                 Ok(dot)
             }
-            "json" => serde_json::to_string_pretty(&graph).map_err(|e| TopemsError::BusinessLogic(e.to_string())),
-            _ => Err(TopemsError::ValidationFailed(format!("不支持的导出格式: {}", format))),
+            "json" => serde_json::to_string_pretty(&graph)
+                .map_err(|e| TopemsError::BusinessLogic(e.to_string())),
+            _ => Err(TopemsError::ValidationFailed(format!(
+                "不支持的导出格式: {}",
+                format
+            ))),
         }
     }
 }

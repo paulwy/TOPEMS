@@ -748,8 +748,14 @@ pub fn create_routes() -> Router<crate::AppState> {
         .route("/spc/charts/{id}", get(get_spc_chart))
         .route("/spc/charts/{id}", put(update_spc_chart))
         .route("/spc/charts/{id}", delete(delete_spc_chart))
-        .route("/spc/charts/{id}/data-points", get(get_spc_chart_data_points))
-        .route("/spc/charts/{id}/calculate", post(calculate_spc_chart_limits))
+        .route(
+            "/spc/charts/{id}/data-points",
+            get(get_spc_chart_data_points),
+        )
+        .route(
+            "/spc/charts/{id}/calculate",
+            post(calculate_spc_chart_limits),
+        )
         .route("/spc/data-points", get(get_spc_data_points))
         .route("/spc/data-points", post(add_spc_data_point))
         .route("/spc/calculate", post(calculate_control_limits))

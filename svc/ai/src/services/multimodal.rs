@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
-use topems_shared_core::error::TopemsError;
 use serde::{Deserialize, Serialize};
+use topems_shared_core::error::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
@@ -133,7 +133,10 @@ impl MultimodalService {
         }))
     }
 
-    pub async fn detect_objects(&self, image_base64: &str) -> Result<serde_json::Value, TopemsError> {
+    pub async fn detect_objects(
+        &self,
+        image_base64: &str,
+    ) -> Result<serde_json::Value, TopemsError> {
         let image_features = self.extract_image_features(image_base64);
 
         let mut objects = vec![
@@ -217,7 +220,10 @@ impl MultimodalService {
         }))
     }
 
-    pub async fn extract_text(&self, _image_base64: &str) -> Result<serde_json::Value, TopemsError> {
+    pub async fn extract_text(
+        &self,
+        _image_base64: &str,
+    ) -> Result<serde_json::Value, TopemsError> {
         let text_regions = vec![
             TextRegion {
                 text: "TOPEMS".to_string(),
@@ -501,7 +507,10 @@ impl MultimodalService {
         })
     }
 
-    pub async fn analyze_chart(&self, image_base64: &str) -> Result<ChartAnalysisResult, TopemsError> {
+    pub async fn analyze_chart(
+        &self,
+        image_base64: &str,
+    ) -> Result<ChartAnalysisResult, TopemsError> {
         let chart_types = ["line", "bar", "pie", "scatter", "area"];
         let chart_type = chart_types
             .get(image_base64.len() % chart_types.len())
@@ -571,7 +580,10 @@ impl MultimodalService {
         clippy::cast_possible_truncation,
         clippy::cast_precision_loss
     )]
-    pub async fn detect_faces(&self, image_base64: &str) -> Result<FaceDetectionResult, TopemsError> {
+    pub async fn detect_faces(
+        &self,
+        image_base64: &str,
+    ) -> Result<FaceDetectionResult, TopemsError> {
         let face_count = (image_base64.len() % 4).min(3);
 
         let emotions = vec![
@@ -650,7 +662,10 @@ impl MultimodalService {
         }))
     }
 
-    pub async fn generate_image_tags(&self, image_base64: &str) -> Result<Vec<String>, TopemsError> {
+    pub async fn generate_image_tags(
+        &self,
+        image_base64: &str,
+    ) -> Result<Vec<String>, TopemsError> {
         let features = self.extract_image_features(image_base64);
 
         let mut tags = features.features;

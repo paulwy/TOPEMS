@@ -2,12 +2,12 @@
 //!
 //! 实现事件订阅/发布机制，用于触发数据转换
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 // ==================== Event Types ====================
@@ -281,7 +281,11 @@ impl EventHandlerRegistry {
     }
 
     /// 触发事件处理
-    pub async fn handle(&self, event_type: &str, event: IntegrationEvent) -> Result<(), TopemsError> {
+    pub async fn handle(
+        &self,
+        event_type: &str,
+        event: IntegrationEvent,
+    ) -> Result<(), TopemsError> {
         if let Some(handler) = self.get(event_type).await {
             handler(event).await
         } else {

@@ -2,10 +2,10 @@
 //!
 //! 提供业务事件订阅、事件规则引擎、AI 自动响应、事件处理历史记录等能力。
 
-use topems_shared_core::error::TopemsError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
+use topems_shared_core::error::TopemsError;
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -570,7 +570,10 @@ impl EventTriggerEngine {
 
     #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
     /// 处理单个事件
-    pub fn process_event(&self, event: BusinessEvent) -> Result<EventProcessingRecord, TopemsError> {
+    pub fn process_event(
+        &self,
+        event: BusinessEvent,
+    ) -> Result<EventProcessingRecord, TopemsError> {
         let start_time = Instant::now();
         let event_id = event.event_id.clone();
         let event_type = event.event_type.clone();

@@ -520,7 +520,10 @@ pub async fn get_dashboard_charts(
 pub async fn get_dashboard_alerts() -> impl IntoResponse {
     (
         StatusCode::OK,
-        Json(ApiResponse::success(serde_json::json!([]), "获取告警列表成功")),
+        Json(ApiResponse::success(
+            serde_json::json!([]),
+            "获取告警列表成功",
+        )),
     )
 }
 
@@ -541,7 +544,10 @@ pub async fn acknowledge_alert(
     };
     (
         StatusCode::OK,
-        Json(ApiResponse::success((), "告警已确认（占位实现，待告警中心接入）")),
+        Json(ApiResponse::success(
+            (),
+            "告警已确认（占位实现，待告警中心接入）",
+        )),
     )
 }
 

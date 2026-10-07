@@ -234,7 +234,10 @@ pub async fn upload(
             {
                 tracing::warn!("ai audit failed: {audit_err}");
             }
-            Json(ApiResponse::<UploadDocumentResponse>::error(500, &e.to_string()))
+            Json(ApiResponse::<UploadDocumentResponse>::error(
+                500,
+                &e.to_string(),
+            ))
         }
     }
 }
@@ -282,7 +285,10 @@ pub async fn process(
             404,
             "文档不存在",
         )),
-        Err(e) => Json(ApiResponse::<ProcessDocumentResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ProcessDocumentResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -300,7 +306,8 @@ pub async fn get(
             "文档不存在",
         )),
         Err(e) => Json(ApiResponse::<crate::services::vector::Document>::error(
-            500, &e.to_string(),
+            500,
+            &e.to_string(),
         )),
     }
 }
@@ -336,8 +343,7 @@ pub async fn download(
     let bytes = match std::fs::read(&file_path) {
         Ok(b) => b,
         Err(_) => {
-            return Json(ApiResponse::<serde_json::Value>::error(404, "文件不存在"))
-                .into_response()
+            return Json(ApiResponse::<serde_json::Value>::error(404, "文件不存在")).into_response()
         }
     };
 
@@ -429,7 +435,9 @@ pub async fn list(
     let tenant_id = get_tenant_id_from_claims(&claims);
     match state.document_service.list_documents(tenant_id).await {
         Ok(docs) => Json(ApiResponse::success(docs, "Success")),
-        Err(e) => Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e.to_string())),
+        Err(e) => {
+            Json(ApiResponse::<Vec<crate::services::vector::Document>>::error(500, &e.to_string()))
+        }
     }
 }
 
@@ -635,7 +643,10 @@ pub async fn extract(
             404,
             "文档不存在",
         )),
-        Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -672,7 +683,10 @@ pub async fn vectorize_from_file(
         )),
         Err(e) => {
             tracing::error!("从 File 服务向量化失败: {}", e);
-            Json(ApiResponse::<VectorizeFromFileResponse>::error(500, &e.to_string()))
+            Json(ApiResponse::<VectorizeFromFileResponse>::error(
+                500,
+                &e.to_string(),
+            ))
         }
     }
 }
@@ -697,7 +711,10 @@ pub async fn summarize(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<SummarizeDocumentResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<SummarizeDocumentResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 
@@ -738,7 +755,10 @@ pub async fn extract_key_points(
             // 文档不存在 / 无内容（RowNotFound 语义）→ 内层 404，而非 500（web 契约收口）
             let msg = e.to_string();
             if msg.contains("文档内容为空") || msg.contains("文档不存在") {
-                Json(ApiResponse::<ExtractKeyPointsResponse>::error(404, "文档不存在"))
+                Json(ApiResponse::<ExtractKeyPointsResponse>::error(
+                    404,
+                    "文档不存在",
+                ))
             } else {
                 Json(ApiResponse::<ExtractKeyPointsResponse>::error(500, &msg))
             }
@@ -788,7 +808,10 @@ pub async fn document_qa(
             },
             "Success",
         )),
-        Err(e) => Json(ApiResponse::<DocumentQAAnswerResponse>::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::<DocumentQAAnswerResponse>::error(
+            500,
+            &e.to_string(),
+        )),
     }
 }
 

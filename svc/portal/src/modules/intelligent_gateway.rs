@@ -14,12 +14,12 @@
 //!    - 字段级拼接 / 实体类型统一
 //!    - Schema 版本兼容性检查
 
-use topems_shared_core::error::TopemsError;
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -821,7 +821,9 @@ impl AIQueryRouter {
             .iter()
             .find(|a| a.service_id == service_id)
             .cloned()
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("未找到服务亲和度: {}", service_id)))
+            .ok_or_else(|| {
+                TopemsError::ResourceNotFound(format!("未找到服务亲和度: {}", service_id))
+            })
     }
 
     async fn warm_up_routing(
@@ -1071,7 +1073,9 @@ impl AutoSchemaStitcher {
             .ok_or_else(|| TopemsError::ResourceNotFound("未找到 Stitch 计划".to_string()))?;
 
         if plan.status == StitchStatus::Completed && !force {
-            return Err(TopemsError::BusinessLogic("计划已完成，如需重新执行请设置 force=true".to_string()));
+            return Err(TopemsError::BusinessLogic(
+                "计划已完成，如需重新执行请设置 force=true".to_string(),
+            ));
         }
 
         plan.status = StitchStatus::Executing;
@@ -1227,7 +1231,10 @@ impl AutoSchemaStitcher {
             .ok_or_else(|| TopemsError::ResourceNotFound("未找到 Stitch 计划".to_string()))?;
 
         if plan.status != StitchStatus::Completed && plan.status != StitchStatus::Failed {
-            return Err(TopemsError::BusinessLogic(format!("当前状态 ({}) 不允许回滚", plan.status.as_str())));
+            return Err(TopemsError::BusinessLogic(format!(
+                "当前状态 ({}) 不允许回滚",
+                plan.status.as_str()
+            )));
         }
 
         plan.status = StitchStatus::RolledBack;

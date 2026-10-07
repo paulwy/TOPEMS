@@ -1,10 +1,10 @@
-use topems_shared_core::error::TopemsError;
 use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_core::cache::{
     CacheInvalidationEvent, CacheInvalidationListener, InvalidationLevel,
 };
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::l2_cache::{AsyncL2Cache, AsyncL2CacheInvalidationHandler};
 use topems_shared_event::event::{
     CacheInvalidatedPayload, Event, EventPublisher, EventResult, EventSubscriber, EventType,
@@ -69,9 +69,9 @@ impl SrmEventHandlers {
             event.trace_id
         );
 
-        let payload: ScmPurchasePlanCreatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购计划创建事件 payload 失败: {}", e)))?;
+        let payload: ScmPurchasePlanCreatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析采购计划创建事件 payload 失败: {}", e))
+        })?;
 
         tracing::debug!(
             "[srm] 采购计划创建: {} ({})，金额: {:?}，周期: {:?}",
@@ -122,9 +122,9 @@ impl SrmEventHandlers {
             event.trace_id
         );
 
-        let payload: ScmSupplierEvaluatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析供应商考评事件 payload 失败: {}", e)))?;
+        let payload: ScmSupplierEvaluatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析供应商考评事件 payload 失败: {}", e))
+        })?;
 
         tracing::debug!(
             "[srm] 供应商考评: {} ({})，得分: {:?}，等级: {:?}",
@@ -184,9 +184,9 @@ impl SrmEventHandlers {
             event.trace_id
         );
 
-        let payload: PurchaseOrderCreatedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e)))?;
+        let payload: PurchaseOrderCreatedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!("解析采购订单创建事件 payload 失败: {}", e))
+        })?;
 
         tracing::debug!(
             "[srm] 采购订单创建: {} ({})，供应商: {:?}，金额: {:?}",
@@ -242,9 +242,12 @@ impl SrmEventHandlers {
 
     /// 供应商数据同步事件处理（SCM→SRM 方向：写入 scm_supplier_snapshots）
     async fn handle_supplier_data_sync(&self, event: Event) -> HandlerResult {
-        let payload: SupplierDataSyncRequestedPayload = event
-            .parse_payload()
-            .map_err(|e| TopemsError::ValidationFailed(format!("解析 SupplierDataSyncRequested payload 失败: {}", e)))?;
+        let payload: SupplierDataSyncRequestedPayload = event.parse_payload().map_err(|e| {
+            TopemsError::ValidationFailed(format!(
+                "解析 SupplierDataSyncRequested payload 失败: {}",
+                e
+            ))
+        })?;
 
         tracing::info!(
             "[srm] 收到 SupplierDataSyncRequested 事件 - supplier_id={}, supplier_name={}, direction={}",
@@ -378,7 +381,9 @@ impl SrmEventHandlers {
         .bind(now)
         .execute(&self.db)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(format!("写入 srm.scm_supplier_snapshots 失败: {}", e)))?;
+        .map_err(|e| {
+            TopemsError::DatabaseQuery(format!("写入 srm.scm_supplier_snapshots 失败: {}", e))
+        })?;
 
         Ok(())
     }
