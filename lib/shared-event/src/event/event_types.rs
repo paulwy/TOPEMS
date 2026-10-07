@@ -1951,8 +1951,9 @@ mod tests {
         );
         // 借贷平衡语义：hrm 侧分录 debit 合计 == credit 合计（同值直绑）
         assert_eq!(entry.debit_amount, Decimal::from_str_exact("0.1").unwrap());
-        // 出站形态：Decimal 序列化为字符串 "20000.0015"（窄出）
-        let v = serde_json::to_value(&gross).unwrap();
+        // 出站形态：Decimal 序列化为字符串 "20000.0015"（窄出）；to_value 对 Decimal 无失败路径，
+        // 兜底 Null 仅为消除 unwrap（杜绝 panic），若序列化异常后续断言会失败暴露
+        let v = serde_json::to_value(gross).unwrap_or_default();
         assert_eq!(v, serde_json::json!("20000.0015"));
         // 在途旧数字 JSON 兼容：lenient 反解数字 0.3，字符串化精确无漂移
         let old_wire = serde_json::from_str::<Decimal>("0.3").unwrap();
