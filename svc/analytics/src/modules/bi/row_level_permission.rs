@@ -730,63 +730,6 @@ pub async fn get_user_permissions(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:acl:read"])),
-    path = "/permission/rule-types",
-    tag = "Permission",
-    operation_id = "get_permission_rule_types",
-    responses((status = 200, description = "OK")),
-)]
-pub async fn get_permission_rule_types(State(_state): State<AppState>) -> Json<serde_json::Value> {
-    info!("Getting permission rule types");
-
-    let rule_types = vec![
-        serde_json::json!({
-            "type": "row_filter",
-            "name": "行数据过滤",
-            "description": "基于条件过滤数据行",
-            "config_schema": {
-                "field": "string",
-                "operator": "string",
-                "value": "any"
-            }
-        }),
-        serde_json::json!({
-            "type": "column_mask",
-            "name": "列数据脱敏",
-            "description": "对指定列数据进行脱敏处理",
-            "config_schema": {
-                "columns": "array",
-                "mask_type": "string"
-            }
-        }),
-        serde_json::json!({
-            "type": "department_scope",
-            "name": "部门范围",
-            "description": "限制用户只能访问指定部门的数据",
-            "config_schema": {
-                "department_field": "string",
-                "department_ids": "array"
-            }
-        }),
-        serde_json::json!({
-            "type": "owner_only",
-            "name": "仅本人数据",
-            "description": "用户只能访问自己创建或负责的数据",
-            "config_schema": {
-                "owner_field": "string"
-            }
-        }),
-    ];
-
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Get permission rule types",
-        "data": rule_types
-    }))
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["analytics:acl:read"])),
     path = "/api/bi/permissions/check",
     tag = "BI",
     responses((status = 200, description = "OK", body = serde_json::Value))

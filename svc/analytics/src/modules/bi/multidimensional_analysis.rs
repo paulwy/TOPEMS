@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Path, State},
+    extract::State,
     Json,
 };
 use serde::{Deserialize, Serialize};
@@ -712,114 +712,6 @@ pub async fn rank_data(
             &format!("Failed to rank data: {}", e),
         )),
     }
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["analytics:read"])),
-    path = "/multidim/datasource/{datasource_id}/dimensions",
-    tag = "Multidim",
-    operation_id = "get_available_dimensions",
-    responses((status = 200, description = "OK")),
-)]
-pub async fn get_available_dimensions(
-    State(_state): State<AppState>,
-    Path(datasource_id): Path<Uuid>,
-) -> Json<serde_json::Value> {
-    info!(
-        "Getting available dimensions for datasource: {}",
-        datasource_id
-    );
-
-    let dimensions = vec![
-        serde_json::json!({
-            "name": "time",
-            "label": "时间",
-            "type": "time",
-            "hierarchies": ["year", "quarter", "month", "day", "hour"]
-        }),
-        serde_json::json!({
-            "name": "region",
-            "label": "区域",
-            "type": "string",
-            "hierarchies": ["country", "province", "city"]
-        }),
-        serde_json::json!({
-            "name": "product",
-            "label": "产品",
-            "type": "string",
-            "hierarchies": ["category", "product"]
-        }),
-        serde_json::json!({
-            "name": "department",
-            "label": "部门",
-            "type": "string",
-            "hierarchies": ["division", "department", "team"]
-        }),
-    ];
-
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Get available dimensions",
-        "data": {
-            "datasource_id": datasource_id,
-            "dimensions": dimensions,
-        }
-    }))
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["analytics:read"])),
-    path = "/multidim/datasource/{datasource_id}/measures",
-    tag = "Multidim",
-    operation_id = "get_available_measures",
-    responses((status = 200, description = "OK")),
-)]
-pub async fn get_available_measures(
-    State(_state): State<AppState>,
-    Path(datasource_id): Path<Uuid>,
-) -> Json<serde_json::Value> {
-    info!(
-        "Getting available measures for datasource: {}",
-        datasource_id
-    );
-
-    let measures = vec![
-        serde_json::json!({
-            "name": "quantity",
-            "label": "数量",
-            "type": "number",
-            "aggregations": ["sum", "avg", "count", "min", "max"]
-        }),
-        serde_json::json!({
-            "name": "amount",
-            "label": "金额",
-            "type": "number",
-            "aggregations": ["sum", "avg", "count", "min", "max"]
-        }),
-        serde_json::json!({
-            "name": "cost",
-            "label": "成本",
-            "type": "number",
-            "aggregations": ["sum", "avg", "count", "min", "max"]
-        }),
-        serde_json::json!({
-            "name": "profit",
-            "label": "利润",
-            "type": "number",
-            "aggregations": ["sum", "avg", "count", "min", "max"]
-        }),
-    ];
-
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Get available measures",
-        "data": {
-            "datasource_id": datasource_id,
-            "measures": measures,
-        }
-    }))
 }
 
 #[cfg(test)]

@@ -285,10 +285,6 @@ async fn main() -> anyhow::Result<()> {
             post(modules::bi::visualization::create_visualization),
         )
         .route(
-            "/visualization/{id}",
-            get(modules::bi::visualization::get_visualization),
-        )
-        .route(
             "/visualization/chart-types",
             get(modules::bi::visualization::get_chart_types),
         )
@@ -308,55 +304,13 @@ async fn main() -> anyhow::Result<()> {
             "/visualization/gauge",
             post(modules::bi::visualization::generate_gauge_chart),
         )
-        // Visualization Extension (frontend aligned paths)
-        .route(
-            "/widgets/{widget_id}/drilldown",
-            get(modules::bi::visualization::get_drilldown_config),
-        )
-        .route(
-            "/widgets/{widget_id}/drilldown",
-            put(modules::bi::visualization::update_drilldown_config),
-        )
-        .route(
-            "/widgets/{widget_id}/drilldown/execute",
-            post(modules::bi::visualization::execute_drilldown),
-        )
-        .route(
-            "/dashboards/{dashboard_id}/links",
-            get(modules::bi::visualization::get_chart_link_config),
-        )
-        .route(
-            "/dashboards/{dashboard_id}/links",
-            put(modules::bi::visualization::update_chart_link_config),
-        )
-        .route(
-            "/widgets/{widget_id}/annotations",
-            get(modules::bi::visualization::get_chart_annotations),
-        )
-        .route(
-            "/widgets/{widget_id}/annotations",
-            post(modules::bi::visualization::create_chart_annotation),
-        )
-        .route(
-            "/annotations/{annotation_id}",
-            delete(modules::bi::visualization::delete_chart_annotation),
-        )
         .route(
             "/widgets/{widget_id}/export",
             post(modules::bi::visualization::export_chart),
         )
-        .route(
-            "/widgets/{widget_id}/fullscreen",
-            get(modules::bi::visualization::get_fullscreen_chart),
-        )
         // Analysis
         .route("/analysis", get(modules::bi::analysis::list_analyses))
         .route("/analysis", post(modules::bi::analysis::create_analysis))
-        .route("/analysis/{id}", get(modules::bi::analysis::get_analysis))
-        .route(
-            "/analysis/{id}/execute",
-            post(modules::bi::analysis::execute_analysis),
-        )
         // Comparison Analysis
         .route(
             "/comparison-analysis",
@@ -469,19 +423,7 @@ async fn main() -> anyhow::Result<()> {
             "/multidim/rank",
             post(modules::bi::multidimensional_analysis::rank_data),
         )
-        .route(
-            "/multidim/datasource/{datasource_id}/dimensions",
-            get(modules::bi::multidimensional_analysis::get_available_dimensions),
-        )
-        .route(
-            "/multidim/datasource/{datasource_id}/measures",
-            get(modules::bi::multidimensional_analysis::get_available_measures),
-        )
         // Predictive Analysis
-        .route(
-            "/prediction/methods",
-            get(modules::bi::predictive_analysis::get_prediction_methods),
-        )
         .route(
             "/prediction/moving-average",
             post(modules::bi::predictive_analysis::moving_average_forecast),
@@ -530,10 +472,6 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/permission/user/{user_id}",
             get(modules::bi::row_level_permission::get_user_permissions),
-        )
-        .route(
-            "/permission/rule-types",
-            get(modules::bi::row_level_permission::get_permission_rule_types),
         )
         // Permission (frontend aligned paths)
         .route(
