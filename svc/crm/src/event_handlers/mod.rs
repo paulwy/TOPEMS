@@ -16,7 +16,7 @@ use topems_shared_event::event::{
     PaymentReceivedPayload, SalesOrderCreatedPayload, ShippingOrderRequestedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 /// CRM 事件处理器集合，承载必要的依赖
 #[derive(Clone)]

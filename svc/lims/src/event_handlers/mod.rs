@@ -6,7 +6,7 @@ use topems_shared_event::event::{
     QmsInspectionCompletedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct LimsEventHandlers {

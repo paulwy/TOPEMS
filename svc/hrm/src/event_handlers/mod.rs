@@ -12,7 +12,7 @@ use topems_shared_event::event::{
     PositionUpdatedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct HrmEventHandlers {

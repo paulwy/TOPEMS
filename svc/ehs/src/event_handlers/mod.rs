@@ -9,7 +9,7 @@ use topems_shared_event::event::{
     QmsCorrectiveActionCreatedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct EhsEventHandlers {

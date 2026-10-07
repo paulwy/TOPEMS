@@ -10,7 +10,7 @@ use topems_shared_event::event::{
     WorkflowApprovedPayload, WorkflowRejectedPayload,
 };
 
-type HandlerResult = std::result::Result<(), String>;
+type HandlerResult = std::result::Result<(), TopemsError>;
 
 #[derive(Clone)]
 pub struct MobileEventHandlers {
