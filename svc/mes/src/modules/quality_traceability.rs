@@ -608,7 +608,8 @@ pub async fn list_quality_records(
     );
     let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
     for p in &params {
-        count_query = count_query.bind(p.as_str().unwrap());
+        // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
+        count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
 
     let total: i64 = match count_query.fetch_one(&state.pool).await {
@@ -638,7 +639,8 @@ pub async fn list_quality_records(
 
     let mut fetch_query = sqlx::query(&fetch_sql);
     for p in &params {
-        fetch_query = fetch_query.bind(p.as_str().unwrap());
+        // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
+        fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
