@@ -829,6 +829,7 @@ mod scoring_logic_tests {
 
 #[cfg(test)]
 mod permission_logic_tests {
+    use super::*;
 
     #[derive(Debug, Clone, PartialEq)]
     enum ModulePermission {
