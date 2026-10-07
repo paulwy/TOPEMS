@@ -100,7 +100,7 @@ def main():
                 skipped.append((s, t, name, typ, defn))
             continue
         if typ == "f":
-            m = re.search(r"REFERENCES\s+(\S+)", defn)
+            m = re.search(r"REFERENCES\s+([\"\w.]+)", defn)
             ref = m.group(1) if m else None
             if ref:
                 ref = ref.strip('"')
