@@ -5,6 +5,7 @@
  * to the consuming app via `onSuccess` / `onError` callbacks.
  */
 import React, { useState, useRef, useCallback } from 'react';
+import { zh } from '../i18n/zh';
 import {
   Dialog,
   DialogTitle,
@@ -158,8 +159,8 @@ export default function ConfirmDialog({
   title,
   message,
   type = 'confirm',
-  confirmLabel = '确认',
-  cancelLabel = '取消',
+  confirmLabel = zh['confirm_dialog.confirm'],
+  cancelLabel = zh['confirm_dialog.cancel'],
   confirmColor = 'primary',
   danger = false,
   size = 'md',
@@ -257,7 +258,6 @@ export default function ConfirmDialog({
 
   React.useEffect(() => {
     if (!isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition({ x: 0, y: 0 });
       setStatus('idle');
       setErrorMsg('');
@@ -366,7 +366,7 @@ export default function ConfirmDialog({
             onClick={onClose}
             disabled={isLoading}
             sx={{ ml: 'auto' }}
-            aria-label="关闭"
+            aria-label={zh['confirm_dialog.close']}
           >
             <X size={20} />
           </IconButton>
@@ -393,7 +393,7 @@ export default function ConfirmDialog({
             variant="body2"
             sx={{ mt: 1, color: 'success.main' }}
           >
-            操作成功
+            {zh['confirm_dialog.success']}
           </Typography>
         )}
 

@@ -1,5 +1,6 @@
 import { useCallback, useState, useMemo, useRef, useEffect } from 'react';
 import type { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { zh, deletedCount } from './i18n/zh';
 
 export interface UseCrudOptions<T> {
   api: AxiosInstance;
@@ -70,7 +71,7 @@ export function useCrud<
 
   const handleError = useCallback(
     (err: any) => {
-      const message = err?.response?.data?.message || err?.message || err?.toString() || '操作失败';
+      const message = err?.response?.data?.message || err?.message || err?.toString() || zh['crud.operationFailed'];
       setError(message);
       onError?.(err);
       return Promise.reject(err);
@@ -144,7 +145,6 @@ export function useCrud<
 
   useEffect(() => {
     if (autoFetch) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       void fetch().catch(() => {
         // Errors are already handled via handleError + onError callback
       });
@@ -192,7 +192,7 @@ export function useCrud<
         setData((prev) => [...prev, newItem]);
         setError(null);
         clearCache();
-        onSuccess?.('创建成功');
+        onSuccess?.(zh['crud.created']);
         return newItem;
       } catch (err: unknown) {
         return handleError(err);
@@ -212,7 +212,7 @@ export function useCrud<
         setData((prev) => prev.map((d) => (d.id === id ? updatedItem : d)));
         setError(null);
         clearCache();
-        onSuccess?.('更新成功');
+        onSuccess?.(zh['crud.updated']);
         return updatedItem;
       } catch (err: unknown) {
         return handleError(err);
@@ -231,7 +231,7 @@ export function useCrud<
         setData((prev) => prev.filter((d) => d.id !== id));
         setError(null);
         clearCache();
-        onSuccess?.('删除成功');
+        onSuccess?.(zh['crud.deleted']);
       } catch (err: unknown) {
         return handleError(err);
       } finally {
@@ -249,7 +249,7 @@ export function useCrud<
         setData((prev) => prev.filter((d) => !ids.includes(d.id as string | number)));
         setError(null);
         clearCache();
-        onSuccess?.(`已删除 ${ids.length} 条记录`);
+        onSuccess?.(deletedCount(ids.length));
       } catch (err: unknown) {
         return handleError(err);
       } finally {

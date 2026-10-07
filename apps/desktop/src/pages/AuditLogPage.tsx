@@ -28,6 +28,7 @@ import {
 import { Download, RefreshCw, Search, ScrollText, Filter } from 'lucide-react';
 import { auditApi, AUDIT_ACTIONS, type AuditLogEntry, type AuditLogParams } from '../api/audit';
 import ExportWizard from '../components/ExportWizard';
+import { zh } from '../i18n/zh';
 
 const ROWS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
@@ -99,7 +100,7 @@ const AuditLogPage = () => {
       setLogs(data);
       setPage(0);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '获取审计日志失败';
+      const message = err instanceof Error ? err.message : zh['audit.fetchFailed'];
       setError(message);
       setLogs([]);
     } finally {
@@ -108,7 +109,6 @@ const AuditLogPage = () => {
   }, [filters]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchLogs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -152,7 +152,7 @@ const AuditLogPage = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <ScrollText size={28} color="#1976d2" />
           <Typography variant="h4" component="h1">
-            审计日志
+            {zh['audit.title']}
           </Typography>
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -162,14 +162,14 @@ const AuditLogPage = () => {
             onClick={fetchLogs}
             disabled={loading}
           >
-            刷新
+            {zh['audit.refresh']}
           </Button>
           <Button
             variant="contained"
             startIcon={<Download size={18} />}
             onClick={() => setExportWizardOpen(true)}
           >
-            导出数据
+            {zh['audit.exportData']}
           </Button>
         </Box>
       </Box>
@@ -177,14 +177,14 @@ const AuditLogPage = () => {
       <Paper sx={{ p: 3, mb: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
           <Filter size={18} color="#6b7280" />
-          <Typography variant="subtitle1">筛选条件</Typography>
+          <Typography variant="subtitle1">{zh['audit.filterTitle']}</Typography>
         </Box>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
           <FormControl sx={{ flex: '1 1 180px', minWidth: '160px' }}>
-            <InputLabel>操作类型</InputLabel>
+            <InputLabel>{zh['audit.actionType']}</InputLabel>
             <Select
               value={filters.action ?? ''}
-              label="操作类型"
+              label={zh['audit.actionType']}
               onChange={(e) => setFilters((prev) => ({ ...prev, action: e.target.value }))}
             >
               {AUDIT_ACTIONS.map((a) => (
@@ -195,22 +195,22 @@ const AuditLogPage = () => {
             </Select>
           </FormControl>
           <TextField
-            label="目标类型"
+            label={zh['audit.targetType']}
             sx={{ flex: '1 1 180px', minWidth: '160px' }}
             value={filters.target_type ?? ''}
             onChange={(e) => setFilters((prev) => ({ ...prev, target_type: e.target.value }))}
-            placeholder="如: user, project"
+            placeholder={zh['audit.targetTypePlaceholder']}
           />
           <TextField
-            label="用户 ID"
+            label={zh['audit.userId']}
             sx={{ flex: '1 1 180px', minWidth: '160px' }}
             value={filters.user_id ?? ''}
             onChange={(e) => setFilters((prev) => ({ ...prev, user_id: e.target.value }))}
-            placeholder="输入用户 ID"
+            placeholder={zh['audit.userIdPlaceholder']}
           />
           <TextField
             type="date"
-            label="开始日期"
+            label={zh['audit.startDate']}
             sx={{ flex: '1 1 150px', minWidth: '140px' }}
             slotProps={{ inputLabel: { shrink: true } }}
             value={filters.from ?? ''}
@@ -218,7 +218,7 @@ const AuditLogPage = () => {
           />
           <TextField
             type="date"
-            label="结束日期"
+            label={zh['audit.endDate']}
             sx={{ flex: '1 1 150px', minWidth: '140px' }}
             slotProps={{ inputLabel: { shrink: true } }}
             value={filters.to ?? ''}
@@ -227,20 +227,20 @@ const AuditLogPage = () => {
         </Box>
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
           <Button variant="contained" startIcon={<Search size={16} />} onClick={handleSearch} disabled={loading}>
-            查询
+            {zh['audit.search']}
           </Button>
           <Button variant="text" onClick={handleReset} disabled={loading}>
-            重置
+            {zh['audit.reset']}
           </Button>
           <Box sx={{ flex: 1 }} />
-          <Button size="small" onClick={() => handleQuickDateRange(1)}>今天</Button>
-          <Button size="small" onClick={() => handleQuickDateRange(7)}>近7天</Button>
-          <Button size="small" onClick={() => handleQuickDateRange(30)}>近30天</Button>
+          <Button size="small" onClick={() => handleQuickDateRange(1)}>{zh['audit.today']}</Button>
+          <Button size="small" onClick={() => handleQuickDateRange(7)}>{zh['audit.last7Days']}</Button>
+          <Button size="small" onClick={() => handleQuickDateRange(30)}>{zh['audit.last30Days']}</Button>
         </Box>
       </Paper>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={fetchLogs}>重试</Button>}>
+        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" size="small" onClick={fetchLogs}>{zh['audit.retry']}</Button>}>
           {error}
         </Alert>
       )}
@@ -250,13 +250,13 @@ const AuditLogPage = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>时间</TableCell>
-                <TableCell>操作</TableCell>
-                <TableCell>目标类型</TableCell>
-                <TableCell>目标 ID</TableCell>
-                <TableCell>用户</TableCell>
-                <TableCell>IP 地址</TableCell>
-                <TableCell align="right">详情</TableCell>
+                <TableCell>{zh['audit.time']}</TableCell>
+                <TableCell>{zh['audit.action']}</TableCell>
+                <TableCell>{zh['audit.targetType']}</TableCell>
+                <TableCell>{zh['audit.targetId']}</TableCell>
+                <TableCell>{zh['audit.user']}</TableCell>
+                <TableCell>{zh['audit.ipAddress']}</TableCell>
+                <TableCell align="right">{zh['audit.detail']}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -270,7 +270,7 @@ const AuditLogPage = () => {
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                     <Typography variant="body2" color="text.secondary">
-                      暂无审计日志数据
+                      {zh['audit.noData']}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -296,7 +296,7 @@ const AuditLogPage = () => {
                     <TableCell>{String(log.ip_address ?? '-')}</TableCell>
                     <TableCell align="right">
                       {log.details ? (
-                        <Tooltip title="查看详情">
+                        <Tooltip title={zh['audit.viewDetail']}>
                           <IconButton size="small" onClick={() => setDetailRow(log)}>
                             <Search size={16} />
                           </IconButton>
@@ -319,8 +319,8 @@ const AuditLogPage = () => {
           rowsPerPage={rowsPerPage}
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={ROWS_PER_PAGE_OPTIONS}
-          labelRowsPerPage="每页行数"
-          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / 共 ${count} 条`}
+          labelRowsPerPage={zh['audit.rowsPerPage']}
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} / ${zh['audit.totalOf']} ${count} ${zh['audit.rowsUnit']}`}
         />
       </Paper>
 
@@ -330,49 +330,49 @@ const AuditLogPage = () => {
       />
 
       <Dialog open={!!detailRow} onClose={() => setDetailRow(null)} maxWidth="sm" fullWidth>
-        <DialogTitle>日志详情</DialogTitle>
+        <DialogTitle>{zh['audit.logDetail']}</DialogTitle>
         <DialogContent>
           {detailRow && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 1 }}>
               <Box>
-                <Typography variant="caption" color="text.secondary">日志 ID</Typography>
+                <Typography variant="caption" color="text.secondary">{zh['audit.logId']}</Typography>
                 <Typography variant="body2">{detailRow.id}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">操作</Typography>
+                <Typography variant="caption" color="text.secondary">{zh['audit.action']}</Typography>
                 <Typography variant="body2">{detailRow.action}</Typography>
               </Box>
               <Box>
-                <Typography variant="caption" color="text.secondary">目标类型</Typography>
+                <Typography variant="caption" color="text.secondary">{zh['audit.targetType']}</Typography>
                 <Typography variant="body2">{detailRow.target_type}</Typography>
               </Box>
               {detailRow.target_id && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary">目标 ID</Typography>
+                  <Typography variant="caption" color="text.secondary">{zh['audit.targetId']}</Typography>
                   <Typography variant="body2">{detailRow.target_id}</Typography>
                 </Box>
               )}
               {detailRow.user_id && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary">用户 ID</Typography>
+                  <Typography variant="caption" color="text.secondary">{zh['audit.userId']}</Typography>
                   <Typography variant="body2">{detailRow.user_id}</Typography>
                 </Box>
               )}
               {detailRow.ip_address && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary">IP 地址</Typography>
+                  <Typography variant="caption" color="text.secondary">{zh['audit.ipAddress']}</Typography>
                   <Typography variant="body2">{detailRow.ip_address}</Typography>
                 </Box>
               )}
               {detailRow.created_at && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary">时间</Typography>
+                  <Typography variant="caption" color="text.secondary">{zh['audit.time']}</Typography>
                   <Typography variant="body2">{formatDateTime(String(detailRow.created_at))}</Typography>
                 </Box>
               )}
               {detailRow.details && (
                 <Box>
-                  <Typography variant="caption" color="text.secondary">详情</Typography>
+                  <Typography variant="caption" color="text.secondary">{zh['audit.detail']}</Typography>
                   <Paper variant="outlined" sx={{ p: 2, mt: 0.5 }}>
                     <pre style={{ margin: 0, fontSize: '12px', overflow: 'auto', maxHeight: '300px' }}>
                       {JSON.stringify(detailRow.details, null, 2)}

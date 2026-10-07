@@ -108,7 +108,6 @@ export const NumberField: React.FC<NumberFieldProps> = ({
   React.useEffect(() => {
     if (!isComposingRef.current) {
       if (typeof value === 'number') {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setDisplayValue(formatNumber(value, precision));
       } else {
         setDisplayValue(value || '');

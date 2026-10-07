@@ -12,6 +12,7 @@ import {
 import { Download, RefreshCw, BarChart3, PieChart, LineChart, Table, Plus } from 'lucide-react';
 import { reportsApi, type Report } from '../api/reports';
 import { designTokens } from '@topems/tokens';
+import { zh, categoryColors } from '../i18n/zh';
 
 const getIcon = (type: Report['type']) => {
   switch (type) {
@@ -23,13 +24,7 @@ const getIcon = (type: Report['type']) => {
 };
 
 const getCategoryColor = (category: string) => {
-  const colors: Record<string, string> = {
-    '财务': '#6366f1',
-    '销售': designTokens.colors.success.main,
-    '仓储': designTokens.colors.warning.main,
-    'HR': designTokens.colors.pink.main,
-    '采购': designTokens.colors.cyan.main,
-  };
+  const colors = categoryColors;
   return colors[category] || '#6b7280';
 };
 
@@ -45,7 +40,7 @@ const Reports = () => {
       const response = await reportsApi.getReports({ page: 1, pageSize: 20 });
       setReports(response.items);
     } catch (err) {
-      setError('获取报表列表失败');
+      setError(zh['reports.fetchFailed']);
       console.error('Failed to fetch reports:', err);
     } finally {
       setLoading(false);
@@ -53,7 +48,6 @@ const Reports = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchReports();
    
   }, []);
@@ -91,10 +85,10 @@ const Reports = () => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
-          报表分析
+          {zh['reports.title']}
         </Typography>
         <Button variant="contained" startIcon={<Plus size={18} />}>
-          新建报表
+          {zh['reports.create']}
         </Button>
       </Box>
 
@@ -105,7 +99,7 @@ const Reports = () => {
       ) : error ? (
         <Typography variant="body1" color="error" sx={{ textAlign: 'center', mt: 10 }}>
           {error}
-          <Button onClick={handleRefresh} sx={{ ml: 2 }}>重试</Button>
+          <Button onClick={handleRefresh} sx={{ ml: 2 }}>{zh['reports.retry']}</Button>
         </Typography>
       ) : (
         <>
@@ -137,15 +131,15 @@ const Reports = () => {
                         {report.description}
                       </Typography>
                       <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-                        最后生成: {report.lastGenerated}
+                        {zh['reports.lastGenerated']}: {report.lastGenerated}
                       </Typography>
                     </CardContent>
                     <CardActions>
                       <Button size="small" startIcon={<Download size={14} />} onClick={() => handleExport(report.id)}>
-                        导出
+                        {zh['reports.export']}
                       </Button>
                       <Button size="small" startIcon={<RefreshCw size={14} />} onClick={() => handleRefreshReport(report.id)}>
-                        刷新
+                        {zh['reports.refresh']}
                       </Button>
                     </CardActions>
                   </Card>
@@ -156,7 +150,7 @@ const Reports = () => {
 
           <Paper sx={{ mt: 4, p: 4 }}>
             <Typography variant="h6" component="h2" sx={{ mb: 4 }}>
-              实时数据概览
+              {zh['reports.liveOverview']}
             </Typography>
             <Box sx={{ display: 'flex', gap: 3 }}>
               <Box sx={{ flex: 1 }}>
@@ -164,7 +158,7 @@ const Reports = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                     <div style={{ textAlign: 'center' }}>
                       <BarChart3 size={64} color="#6366f1" />
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>销售趋势图表</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>{zh['reports.salesTrend']}</Typography>
                     </div>
                   </Box>
                 </Paper>
@@ -174,7 +168,7 @@ const Reports = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
                     <div style={{ textAlign: 'center' }}>
                       <PieChart size={64} color={designTokens.colors.success.main} />
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>客户分布饼图</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>{zh['reports.customerPie']}</Typography>
                     </div>
                   </Box>
                 </Paper>
