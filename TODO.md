@@ -356,13 +356,14 @@
   - 📝 说明：13 个 Detail 页模板前已有三态早返回/守卫覆盖（wms 6 早返回、qms 6 早返回、aps 6 Alert 守卫、finance Voucher 早退；其中 aps 6 + qms 6 有重叠计），所接 emptyState 为声明式兜底（守卫移除后即生效），页面三态保持完整
 
 ### P2（加固）
-- ✅ **死代码与目录清理（第一批）**：components/ui/Loading.tsx 零引用已删；Tabs/CommandPalette 有引用保留；待续：_archive-microfrontend、tmp、schema/schemas 双目录合并
+- ✅ **死代码与目录清理（第一批 + 第二批核实）**：components/ui/Loading.tsx 零引用已删；Tabs/CommandPalette 有引用保留；第二批核实：_archive-microfrontend 与 schema/schemas 双目录**均已不存在**（前期/并行线完成）；tmp/ 旧日志与 assess-c 评估中间产物已清理（保留 openapi/ 等活跃资产，tmp 未跟踪不入提交）
 - ✅ **三端共享包接入（tokens/shared-types/api-client，6 提交 c476f253b/e416f6c3c/f135529ec/6d5253009/51f776c09/705182765）**：mobile 零引用→已接入、desktop 4 处→收敛
   - ✅ tokens：desktop（theme + 6 组件同值映射 7 色）；mobile 18 文件 241 处同值映射 + Metro monorepo 配置（watchFolders/根 node_modules）+ jest ts-jest 覆盖（ignoreDeprecations）
   - ✅ shared-types：desktop iam LoginRequest 复用薄壳；mobile ApiResponse 薄壳 + LoginCredentials=LoginRequest 别名
   - ✅ api-client：desktop Phase1 已完成（2f964ad57）；mobile client 工厂化（异步 token/离线/缓存拦截器端内保留，导出面不变）
   - 📝 保留项与原因：desktop Tauri IPC 信封 ApiResponse、LoginResponse/UserInfo；mobile User/Task 等 camelCase UI 模型（共享包为 snake_case DTO）——详见各提交信息
-  - 📝 后续项：shared-types dist 与 src 不同步（dist User 缺 name/roles/full_name），重建 dist 后 mobile User 可再收敛；mobile/desktop 硬编码中文 UI 为既有债（hardcoded-precise 门禁对两端报错，相关提交按脚本注释约定 --no-verify 并已人工验证三件套）
+  - ✅ **后续项完成（2026-10-08）**：shared-types dist 与 src 不同步根因修复——**陈旧 src/auth.d.ts 干扰 tsup 构建**（auth.ts 新定义被 .d.ts 旧声明覆盖），删除后 dist 重建 User 含 name/full_name/roles；api-client dist 同步重建（含 retry 配置，factory.d.ts 此前缺失致 mobile tsc 报错）；**mobile User 收敛为共享包扩展**（`SharedUser & { isActive/is_superuser/roles 必填 + departmentName? }`，单一信源随共享包演进）；验证 mobile tsc 0 / eslint 0 / jest 11/11
+  - 📝 仍存后续：mobile/desktop 硬编码中文 UI 为既有债（hardcoded-precise 门禁对两端报错，相关提交按脚本注释约定 --no-verify 并已人工验证三件套）
   - 验证：desktop tsc 0 / vitest 32/32 / eslint 0；mobile tsc 0 / eslint 0 / jest 11/11；web tsc 0（锁变更后复跑）；Expo 运行时打包待环境补 expo-asset 后验证
 - ✅ **i18n hash key 语义化 + z-index 语义化（5 提交 83f93d970/d873e4918/d895f2b5a/c77d58327/aea5073d6）**：全部 text_xxxxxx 哈希 key 语义化 + z-index 魔数统一 theme.zIndex
   - ✅ i18n：13 模块 JSON（zh/en）递归清零 text_ hex（hrm 750 / bi 319+94+232 / finance+crm 234 / admin+ehs+pm+asset+wms+mes+iam+lims+utils 461 顶层 + ~1080 幽灵）；~118 个消费源文件同步；en 嵌套镜像树（hrm/finance/pm）与 zh 收敛；glossary 4 处非标准译法与 pm 混合结构 5 处已归一
