@@ -138,6 +138,7 @@ export default function CapacityDetailPage() {
       subtitle={`${t('aps.capacity_detail_page.k4')}: ${capacity?.capacity_date ?? '-'}`}
       backHref='/aps/capacities'
       loading={loading}
+      emptyState={{ show: !loading && !capacity }}
       headerContent={
         capacity && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>

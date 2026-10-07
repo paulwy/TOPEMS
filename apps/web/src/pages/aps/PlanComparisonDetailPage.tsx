@@ -197,6 +197,7 @@ export default function PlanComparisonDetailPage() {
       subtitle={plan?.plan_no ?? '-'}
       backHref='/aps/production-plans'
       loading={loading}
+      emptyState={{ show: !loading && !plan }}
       headerContent={
         plan && (
           <StatusBadge

@@ -189,6 +189,7 @@ export default function ForecastDetailPage() {
       subtitle={forecast?.product_name ?? '-'}
       backHref='/aps/forecasts'
       loading={loading}
+      emptyState={{ show: !loading && !forecast }}
       headerContent={
         forecast && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>

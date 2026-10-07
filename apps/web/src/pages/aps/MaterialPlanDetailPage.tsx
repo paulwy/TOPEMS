@@ -167,6 +167,7 @@ export default function MaterialPlanDetailPage() {
       subtitle={plan?.material_name ?? '-'}
       backHref='/aps/material-plans'
       loading={loading}
+      emptyState={{ show: !loading && !plan }}
       headerContent={
         plan && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>

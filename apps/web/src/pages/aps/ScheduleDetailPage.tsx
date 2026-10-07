@@ -161,6 +161,7 @@ export default function ScheduleDetailPage() {
       subtitle={schedule?.product_name ?? '-'}
       backHref='/aps/schedules'
       loading={loading}
+      emptyState={{ show: !loading && !schedule }}
       headerContent={
         schedule && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
