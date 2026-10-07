@@ -685,10 +685,46 @@ class ApiClient {
   constructor() {
     initCsrfProtection();
 
-    // FE-18 灰度：仅 wms 服务开启 query 键名 camelCase→snake_case 转换（pageSize→page_size）。
-    // 回滚方式：把 'wms' 从该集合移除即可（逐服务开关，无需改其他端）。
-    // 全量启用其它服务不在本批，登记遗留。
-    const SNAKE_CASE_SERVICES = new Set(['wms']);
+    // FE-17/FE-18 灰度：query 键名 camelCase→snake_case 转换（pageSize→page_size）逐服务开关。
+    // 回滚方式：把对应服务名从该集合移除即可（无需改其他端）。
+    // 已逐服务取证后端 axum Query 分页结构：以下服务列表接口确实吃 page_size（snake_case 字段，
+    // 或同时接受 page_size/pageSize 别名），开启后 pageSize→page_size 才能命中分页参数。
+    // 保持关闭（见下方注释）：mobile/ticket/core 后端部分端点 #[serde(rename="pageSize")] 只吃 camelCase；
+    // iam/file/doc/migration/gis/plugin-registry/aps 未确认或无分页，保守不开。
+    const SNAKE_CASE_SERVICES = new Set([
+      // 第一梯队（FE-18 已上线验证）
+      'wms',
+      // 第二梯队：共享 PaginationParams / ListQueryParams（snake_case 原生）
+      'crm',
+      'erp',
+      'finance',
+      'hrm',
+      'scm',
+      'tms',
+      // 第二梯队：本地 Query struct 均为 pub page_size（snake_case 原生）
+      'pdm',
+      'ehs',
+      'lims',
+      'qms',
+      'mes',
+      'pm',
+      'rd',
+      'bi',
+      'analytics', // bi 别名（同 /api/bi）
+      'monitor',
+      'portal',
+      'search',
+      'integration',
+      'master-data',
+      'master', // master-data 别名
+      'mail',
+      'im',
+      'notification', // svc/communication NotificationQuery/ChannelQuery 均 page_size
+      'ai',
+      'flow',
+      'workflow', // flow 别名
+      'automation', // unified-core automation：page_size 原生 + pageSize_alt 双吃
+    ]);
 
     Object.entries(config.services).forEach(([name, baseURL]) => {
       const timeout = name === 'ai' ? API_TIMEOUT.AI : config.api.timeout;
