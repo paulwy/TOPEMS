@@ -290,8 +290,26 @@
   clippy --all-targets 无新增 warning（既有 training.rs:1147 items-after-test-module 与本次无关）；
   业务层 Result<_, String> 复查 0 处；check-error-handling --changed-only 无命中
 - **业务层 Result<_, String> 全仓归零**（B7 剩余形态再清一项；累计：静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 业务层 Result<_, String> 7）
-- 剩余（非业务层，建议另议）：svc tests 48 处（unified-core 42 / master-data 3 / finance 2 / crm 1，测试辅助代码）
+- 剩余（非业务层，建议另议）：~~svc tests 48 处~~（已清零，见第 17 批）
   + apps/desktop 98 处（Tauri IPC/keystore）
+
+### ✅ B7 第 17 批：svc tests 48 处清零（与并行线协作完成，已推送 origin/main）
+
+> 用户「需要处理这两块」拍板：svc tests 48 处 + apps/desktop 98 处。执行中检测到并行协作线同步在做同一迁移，
+> 双方方案一致（ValidationFailed 语义映射、中文文案、消费点 Display 兼容零改动）；并行线完成提交并 rebase 合并
+> 第 16 批业务层提交（abb44dee0/cf9304819）后一并推送 origin/main。
+
+- **unified-core 42 处**（commit ba7f90647，19 文件）：tests/common/mod.rs request/login/login_admin 签名 + 6 处错误构造
+  → `TopemsError::ValidationFailed(format!(...))`；19 个 *permission_tests.rs login/auth_request 签名 + Err/map_err(format!)
+  包 ValidationFailed（qms 额外 no_auth_request）
+- **master-data 3 处**（commit 4caccedfd）：tests/common/mod.rs request/v60_request/login_admin + unsupported-method/send map_err/login 三段构造
+- **finance 2 处**（commits 43c110d86 + fe75526f2）：tests/common/mod.rs login/login_admin（43c110d86 仅加 use，fe75526f2 补全签名与构造）
+- **crm 1 处**（commit fe75526f2）：crm_tests.rs check_permission → `Result<(), TopemsError>`，`Err(OperationNotAllowed(format!("权限不足：需要 {} 权限")))`
+- **修复（本会话）**：fe75526f2 的 crm_tests.rs `mod permission_logic_tests` 缺 `use super::*;`（其余 mod 均有）→
+  `TopemsError` 在模块内 E0433 未解析 + 顶层 use 报 unused → 补齐 `use super::*;`，编译通过
+- 验证：cargo test --no-run（unified-core/master-data/finance/crm）全绿 0 error；svc tests 全仓复查 `Result<_, String>` 0 处
+- 剩余：apps/desktop 98 处（Tauri IPC/keystore：TopemsError 无 Serialize derive 且 desktop 不依赖共享库，
+  Tauri command 错误需 Serialize，属框架惯例保留，建议另立任务处理）
 
 ---
 
