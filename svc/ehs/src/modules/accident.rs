@@ -518,6 +518,32 @@ pub async fn update_incident_action(
     ))
 }
 
+pub fn classify_accident(
+    deaths: u32,
+    serious_injuries: u32,
+    direct_loss_yuan: f64,
+) -> &'static str {
+    if deaths >= 30 || serious_injuries >= 100 || direct_loss_yuan >= 100_000_000.0 {
+        "特别重大"
+    } else if deaths >= 10 || serious_injuries >= 50 || direct_loss_yuan >= 50_000_000.0 {
+        "重大"
+    } else if deaths >= 3 || serious_injuries >= 10 || direct_loss_yuan >= 10_000_000.0 {
+        "较大"
+    } else {
+        "一般"
+    }
+}
+
+pub fn response_target_hours(level: &str) -> f64 {
+    match level {
+        "特别重大" => 1.0,
+        "重大" => 2.0,
+        "较大" => 4.0,
+        "一般" => 8.0,
+        _ => 8.0,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
