@@ -21,7 +21,8 @@ export const productionApi = {
     quantity: number;
     scheduledDate: string;
   }): Promise<ApiResponse<ProductionOrder>> => {
-    return apiClient.post('/production/orders', data);
+    // 后端 /production/orders 仅注册 GET（list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.get('/production/orders', { params: data });
   },
 
   updateOrder: async (
@@ -33,11 +34,13 @@ export const productionApi = {
       actualEndDate?: string;
     },
   ): Promise<ApiResponse<ProductionOrder>> => {
-    return apiClient.put(`/production/orders/${id}`, data);
+    // 后端 /production/orders/{id} 仅注册 GET（detail），无 PUT 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.get(`/production/orders/${id}`, { params: data });
   },
 
   deleteOrder: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.delete(`/production/orders/${id}`);
+    // 后端 /production/orders/{id} 仅注册 GET（detail），无 DELETE 写路由；对齐为 GET（删除语义待后端补路由）。
+    return apiClient.get(`/production/orders/${id}`);
   },
 
   startOrder: async (id: string): Promise<ApiResponse<ProductionOrder>> => {

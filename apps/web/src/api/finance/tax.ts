@@ -293,9 +293,7 @@ export const taxApi = {
   },
 
   getComparison: (planId?: string): Promise<ApiResponse<TaxComparison>> => {
-    return apiClient.finance.get('/finance-v56/tax/comparison', {
-      params: planId ? { plan_id: planId } : {},
-    });
+    return apiClient.finance.post('/finance-v56/tax/comparison', planId ? { plan_id: planId } : {});
   },
 
   listPlans: (params?: {

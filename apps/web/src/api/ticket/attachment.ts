@@ -93,8 +93,9 @@ export const attachmentApi = {
     ticketId: string,
     attachmentIds: string[]
   ): Promise<ApiResponse<{ deleted_count: number }>> => {
-    return apiClient.ticket.delete(`/tickets/${ticketId}/attachments/batch`, {
-      data: { ids: attachmentIds },
+    // 后端批量删除附件注册于 POST .../attachments/batch-delete（/batch 仅 POST=批量上传），故方法与路径一并对齐。
+    return apiClient.ticket.post(`/tickets/${ticketId}/attachments/batch-delete`, {
+      ids: attachmentIds,
     });
   },
 

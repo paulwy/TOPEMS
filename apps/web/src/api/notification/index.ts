@@ -366,7 +366,7 @@ export const renderTemplate = async (
 };
 
 export const bulkMarkAsRead = async (ids: string[]): Promise<ApiResponse<number>> => {
-  const response = await apiClient.notification.put<number>('/notifications/bulk-read', {
+  const response = await apiClient.notification.post<number>('/notifications/bulk-read', {
     ids,
   });
   return response;

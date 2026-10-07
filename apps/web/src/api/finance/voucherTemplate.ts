@@ -98,11 +98,11 @@ export const voucherTemplateApi = {
   },
 
   toggleTemplate: (templateId: string): Promise<ApiResponse<void>> => {
-    return apiClient.finance.post(`/voucher-templates/${templateId}/toggle`, {});
+    return apiClient.finance.put(`/voucher-templates/${templateId}/toggle`, {});
   },
 
   matchTemplate: (params?: Record<string, unknown>): Promise<ApiResponse<VoucherTemplate[]>> => {
-    return apiClient.finance.get('/voucher-templates/match', { params });
+    return apiClient.finance.post('/voucher-templates/match', params ?? {});
   },
 
   importTemplates: (data: FormData): Promise<ApiResponse<{ imported: number; failed: number }>> => {
@@ -137,7 +137,7 @@ export const voucherTemplateApi = {
   },
 
   reorderTemplateEntries: (templateId: string, entryIds: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.finance.post(`/voucher-templates/${templateId}/entries/reorder`, {
+    return apiClient.finance.put(`/voucher-templates/${templateId}/entries/reorder`, {
       entry_ids: entryIds,
     });
   },
@@ -177,7 +177,7 @@ export const voucherTemplateApi = {
   },
 
   toggleGenerationRule: (ruleId: string): Promise<ApiResponse<void>> => {
-    return apiClient.finance.post(`/voucher-generation-rules/${ruleId}/toggle`, {});
+    return apiClient.finance.put(`/voucher-generation-rules/${ruleId}/toggle`, {});
   },
 
   generateVoucher: (

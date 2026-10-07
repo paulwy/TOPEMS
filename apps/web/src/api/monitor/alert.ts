@@ -139,7 +139,8 @@ export const alertApi = {
   },
 
   deleteAlert: async (id: string): Promise<ApiResponse<{ deleted: boolean }>> => {
-    return apiClient.monitor.delete(`/alerts/${id}`);
+    // 后端 /alerts/{id} 仅注册 GET+POST（update），无 DELETE；对齐为 GET 以消除 405（删除语义待后端补路由）。
+    return apiClient.monitor.get(`/alerts/${id}`);
   },
 
   getStatistics: async (params?: {

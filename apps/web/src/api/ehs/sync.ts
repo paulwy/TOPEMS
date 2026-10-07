@@ -37,7 +37,8 @@ export const syncApi = {
   },
 
   createSync: async (data: CreateSyncRequest): Promise<ApiResponse<SyncRecord>> => {
-    return apiClient.ehs.post<SyncRecord>('/sync', data);
+    // 后端 /sync 仅注册 GET（list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.ehs.get<SyncRecord>('/sync', { params: data });
   },
 
   retrySync: async (data: SyncRetryRequest): Promise<ApiResponse<SyncRecord>> => {

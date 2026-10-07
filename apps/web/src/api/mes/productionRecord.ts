@@ -46,6 +46,6 @@ export const productionRecordApi = {
   },
 
   async complete(id: string, data: CompleteRecordRequest): Promise<ApiResponse<ProductionRecord>> {
-    return apiClient.mes.put(`/records/${id}/complete`, data);
+    return apiClient.mes.post(`/records/${id}/complete`, data);
   },
 };

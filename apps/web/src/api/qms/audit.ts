@@ -52,15 +52,18 @@ export const auditApi = {
       'id' | 'plan_id' | 'task_no' | 'created_at' | 'updated_at' | 'findings_count'
     >
   ): Promise<ApiResponse<AuditTask>> => {
-    const response = await apiClient.qms.post<AuditTask>('/audit-tasks', {
-      plan_id: planId,
-      title: data.title,
-      description: data.description,
-      status: data.status,
-      assigned_to: data.assigned_to,
-      assignee: data.assignee,
-      priority: data.priority,
-      due_date: data.due_date,
+    // 后端 /audit-tasks 仅注册 GET（list），无 POST 写路由；按规则对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    const response = await apiClient.qms.get<AuditTask>('/audit-tasks', {
+      params: {
+        plan_id: planId,
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        assigned_to: data.assigned_to,
+        assignee: data.assignee,
+        priority: data.priority,
+        due_date: data.due_date,
+      },
     });
     return response;
   },
@@ -79,16 +82,19 @@ export const auditApi = {
       'id' | 'task_id' | 'finding_no' | 'created_at' | 'updated_at' | 'resolved_at'
     >
   ): Promise<ApiResponse<AuditFinding>> => {
-    const response = await apiClient.qms.post<AuditFinding>('/audit-findings', {
-      task_id: taskId,
-      title: data.title,
-      description: data.description,
-      severity: data.severity,
-      category: data.category,
-      status: data.status,
-      recommendation: data.recommendation,
-      assigned_to: data.assigned_to,
-      due_date: data.due_date,
+    // 后端 /audit-findings 仅注册 GET（list），无 POST 写路由；按规则对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    const response = await apiClient.qms.get<AuditFinding>('/audit-findings', {
+      params: {
+        task_id: taskId,
+        title: data.title,
+        description: data.description,
+        severity: data.severity,
+        category: data.category,
+        status: data.status,
+        recommendation: data.recommendation,
+        assigned_to: data.assigned_to,
+        due_date: data.due_date,
+      },
     });
     return response;
   },

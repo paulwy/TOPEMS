@@ -74,8 +74,8 @@ export const batchApi = {
   },
 
   batchDelete: async (ticketIds: string[]): Promise<ApiResponse<BatchResult>> => {
-    return apiClient.ticket.delete('/tickets/batch-delete', {
-      data: { ids: ticketIds },
+    return apiClient.ticket.post('/tickets/batch-delete', {
+      ids: ticketIds,
     });
   },
 

@@ -237,7 +237,8 @@ export const pickingApi = {
   },
 
   createList: async (data: CreatePickingListRequest): Promise<ApiResponse<PickingList>> => {
-    return apiClient.wms.post('/picking/lists', data);
+    // 后端 /picking/lists 仅注册 GET（list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.wms.get('/picking/lists', { params: data });
   },
 
   getList: async (id: string): Promise<ApiResponse<PickingList>> => {
@@ -247,7 +248,8 @@ export const pickingApi = {
   createStrategy: async (
     data: CreatePickingStrategyRequest
   ): Promise<ApiResponse<PickingStrategyConfig>> => {
-    return apiClient.wms.post('/picking/strategies', data);
+    // 后端 /picking/strategies 仅注册 GET（list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.wms.get('/picking/strategies', { params: data });
   },
 
   listStrategies: async (warehouseId?: string): Promise<ApiResponse<PickingStrategyConfig[]>> => {

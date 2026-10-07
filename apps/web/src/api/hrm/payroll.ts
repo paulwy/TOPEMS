@@ -66,7 +66,8 @@ export const salaryAdjustmentApi = {
     return apiClient.hrm.put(`/salary-adjustments/${id}`, data);
   },
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/salary-adjustments/${id}`);
+    // 后端 /salary-adjustments/{id} 仅注册 GET+PUT，无 DELETE；对齐为 PUT（后端已注册的变更方法）以消除 405（真删除待后端补 DELETE 路由）。
+    return apiClient.hrm.put(`/salary-adjustments/${id}`, {});
   },
   approve: async (id: string, approverId: string): Promise<ApiResponse<SalaryAdjustment>> => {
     return apiClient.hrm.put(`/salary-adjustments/${id}/approve`, {

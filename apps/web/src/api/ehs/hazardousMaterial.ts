@@ -164,7 +164,10 @@ export const hazardousMaterialApi = {
   createHazardousMaterialMovement: async (
     data: CreateHazardousMaterialMovementRequest
   ): Promise<ApiResponse<HazardousMaterialMovement>> => {
-    return apiClient.ehs.post<HazardousMaterialMovement>('/hazardous-materials/movements', data);
+    // 后端 /hazardous-materials/movements 仅注册 GET（list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.ehs.get<HazardousMaterialMovement>('/hazardous-materials/movements', {
+      params: data,
+    });
   },
 
   updateHazardousMaterialMovement: async (
@@ -201,7 +204,8 @@ export const hazardousMaterialApi = {
   },
 
   createMSDS: async (data: CreateMSDSRequest): Promise<ApiResponse<MSDS>> => {
-    return apiClient.ehs.post<MSDS>('/hazardous-materials/msds', data);
+    // 后端 /hazardous-materials/msds 仅注册 GET（list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.ehs.get<MSDS>('/hazardous-materials/msds', { params: data });
   },
 
   updateMSDS: async (id: string, data: Partial<UpdateMSDSRequest>): Promise<ApiResponse<MSDS>> => {

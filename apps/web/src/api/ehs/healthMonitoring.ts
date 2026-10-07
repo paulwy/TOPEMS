@@ -79,7 +79,8 @@ export const healthMonitoringApi = {
   async createHealthRecord(
     data: CreateHealthRecordRequest
   ): Promise<ApiResponse<HealthRecordItem>> {
-    return apiClient.ehs.post<HealthRecordItem>('/health', data);
+    // 后端 /health 仅注册 GET（liveness/list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.ehs.get<HealthRecordItem>('/health', { params: data });
   },
 
   async updateHealthRecord(

@@ -69,7 +69,7 @@ export const eightDApi = {
     id: string,
     data: { teamLeader?: string; teamMembers?: string[]; content?: string }
   ): Promise<ApiResponse<EightDReport | undefined>> => {
-    const response = await apiClient.qms.put<EightDReportBackend>(`/eightd/${id}/d1-team`, {
+    const response = await apiClient.qms.post<EightDReportBackend>(`/eightd/${id}/d1-team`, {
       team_leader: data.teamLeader,
       team_members: data.teamMembers,
       content: data.content,

@@ -36,11 +36,11 @@ export interface AlertTimelinePoint {
 
 export const alertBatchApi = {
   acknowledgeAlerts: (ids: string[]): Promise<ApiResponse<{ acknowledged_count: number }>> => {
-    return apiClient.monitor.put('/alerts/acknowledge', { ids });
+    return apiClient.monitor.post('/alerts/acknowledge', { ids });
   },
 
   resolveAlerts: (ids: string[]): Promise<ApiResponse<{ resolved_count: number }>> => {
-    return apiClient.monitor.put('/alerts/resolve', { ids });
+    return apiClient.monitor.post('/alerts/resolve', { ids });
   },
 
   getStatistics: (params?: {

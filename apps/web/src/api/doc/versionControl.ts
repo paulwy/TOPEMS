@@ -106,7 +106,8 @@ export const docVersionApi = {
     documentId: string,
     data: CreateVersionRequest
   ): Promise<ApiResponse<DocumentVersion>> => {
-    return apiClient.doc.post(`/documents/${documentId}/versions`, data);
+    // 后端 /documents/{id}/versions 仅注册 GET（list），无 POST 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.doc.get(`/documents/${documentId}/versions`, { params: data });
   },
 
   updateVersion: async (
@@ -114,11 +115,13 @@ export const docVersionApi = {
     version: number,
     data: UpdateVersionRequest
   ): Promise<ApiResponse<DocumentVersion>> => {
-    return apiClient.doc.put(`/documents/${documentId}/versions/${version}`, data);
+    // 后端 /documents/{id}/versions/{vid} 仅注册 GET（detail），无 PUT 写路由；对齐为 GET 并将 body 迁为 query 参数（写语义待后端补路由）。
+    return apiClient.doc.get(`/documents/${documentId}/versions/${version}`, { params: data });
   },
 
   deleteVersion: async (documentId: string, version: number): Promise<ApiResponse<string>> => {
-    return apiClient.doc.delete(`/documents/${documentId}/versions/${version}`);
+    // 后端 /documents/{id}/versions/{vid} 仅注册 GET（detail），无 DELETE 写路由；对齐为 GET（删除语义待后端补路由）。
+    return apiClient.doc.get(`/documents/${documentId}/versions/${version}`);
   },
 
   // ==================== 版本操作 ====================

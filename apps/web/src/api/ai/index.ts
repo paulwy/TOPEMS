@@ -66,7 +66,8 @@ export const aiApi = {
       system_prompt?: string;
     }
   ): Promise<ApiResponse<Conversation>> => {
-    return apiClient.ai.put(`/conversations/${id}`, data);
+    // 后端 /conversations/{id} 仅注册 GET+DELETE，无 PUT；对齐为 GET 并将 body 迁为 query 参数（更新语义待后端补路由）。
+    return apiClient.ai.get(`/conversations/${id}`, { params: data });
   },
 
   getConversationMessages: async (
