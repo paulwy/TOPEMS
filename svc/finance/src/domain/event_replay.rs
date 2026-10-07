@@ -332,8 +332,15 @@ mod tests {
     async fn store_with_events(events: Vec<FinanceDomainEvent>) -> Arc<InMemoryEventStore> {
         let store = Arc::new(InMemoryEventStore::new());
         for (i, ev) in events.iter().enumerate() {
+            // enumerate 索引为 usize，无符号扩展为 u64 无损；try_from 失败仅理论（兜底 0），消除 as 转换
             store
-                .append_events("v-agg", "Voucher", &[ev.clone()], i as u64, None)
+                .append_events(
+                    "v-agg",
+                    "Voucher",
+                    &[ev.clone()],
+                    u64::try_from(i).unwrap_or_default(),
+                    None,
+                )
                 .await
                 .unwrap();
         }
