@@ -160,7 +160,7 @@ pub async fn list_records(
 
     let mut count_query = sqlx::query_scalar(&count_sql);
     for p in &params {
-        count_query = count_query.bind(p.clone());
+        count_query = count_query.bind(p.as_str().unwrap());
     }
 
     let count_result = count_query.fetch_one(&state.pool).await;
@@ -191,7 +191,7 @@ pub async fn list_records(
 
     let mut fetch_query = sqlx::query(&fetch_sql);
     for p in &params {
-        fetch_query = fetch_query.bind(p.clone());
+        fetch_query = fetch_query.bind(p.as_str().unwrap());
     }
     fetch_query = fetch_query.bind(page_size).bind(offset);
 
