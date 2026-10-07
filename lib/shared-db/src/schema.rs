@@ -141,6 +141,201 @@ pub fn portal_table(table_name: &str) -> String {
 // ============================================================================
 
 use sqlx::PgPool;
+use sha2::{Digest, Sha256};
+
+// ============================================================================
+// AR-03: Schema 防御 DDL 版本门控（Phase 1）
+//
+// 在现有两阶段（ensure + verify）之前加一道「规范化 hash 门控」：
+//   - 每个服务的 TABLE_DEFS 规范化后算 SHA-256 hex，记入运行时自建台账表
+//     `schema_defense_ledger`（不在 sqlx 迁移链内，CREATE IF NOT EXISTS 自建）。
+//   - ledger 无记录 / hash 不匹配 → 全量 ensure 重放 + verify + upsert；
+//   - hash 匹配 → 跳过 ensure，仅做轻量 verify + upsert；
+//   - 开关：SCHEMA_DEFENSE_GATE_ENABLED（默认 true；false/0/off/no 时行为与
+//     门控上线前完全一致，不建/不查/不写台账）；SCHEMA_DEFENSE_FORCE_REAPPLY
+//     （默认 false；true 时忽略 ledger 全量重放）。优先级：GATE_ENABLED=false
+//     时 FORCE_REAPPLY 无效。
+//   - 台账任何失败（建表/查询/upsert）仅 warn，退化为全量重放，不阻塞启动。
+// 详见 artifacts/tier2-fixes/ar03-version-gate-design.md。
+// ============================================================================
+
+/// AR-03：读取 SCHEMA_DEFENSE_GATE_ENABLED。默认 true；`0/false/no/off`（大小写不敏感）→ false。
+pub fn schema_defense_gate_enabled() -> bool {
+    schema_defense_gate_enabled_from(
+        std::env::var("SCHEMA_DEFENSE_GATE_ENABLED").unwrap_or_default().as_str(),
+    )
+}
+
+/// 门控开关解析的纯函数版本（便于单测，不读 env）
+pub fn schema_defense_gate_enabled_from(env_value: &str) -> bool {
+    !matches!(
+        env_value.trim().to_ascii_lowercase().as_str(),
+        "0" | "false" | "no" | "off"
+    )
+}
+
+/// AR-03：读取 SCHEMA_DEFENSE_FORCE_REAPPLY。默认 false；`1/true/yes/on` → true。
+pub fn schema_defense_force_reapply() -> bool {
+    is_verify_strict_from( // 与严格开关同语义的真值解析
+        std::env::var("SCHEMA_DEFENSE_FORCE_REAPPLY").unwrap_or_default().as_str(),
+    )
+}
+
+/// AR-03：运行时自建台账表（与 ensure_master_data_refs_table 同通道：裸 sqlx::query）。
+/// 失败由调用方 warn 处理。
+pub async fn ensure_ledger_table(pool: &PgPool) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS schema_defense_ledger (
+            service_schema      TEXT PRIMARY KEY,
+            schema_hash         TEXT NOT NULL,
+            tables_count        INTEGER NOT NULL DEFAULT 0,
+            cols_count          INTEGER NOT NULL DEFAULT 0,
+            applied_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            last_skipped_ensure BOOLEAN NOT NULL DEFAULT false
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+    Ok(())
+}
+
+/// AR-03：DDL 片段规范化（纯函数）——
+///   1) 去除 `--` 行注释（到行尾）；
+///   2) 连续空白压缩为单空格、去首尾空白；
+///   3) 单引号字符串字面量之外的字母序列统一大写（NOT NULL / DEFAULT / VARCHAR…
+///      写法大小写抖动不触发漂移；字符串字面量内容保持原样）。
+pub fn normalize_ddl_fragment(ddl: &str) -> String {
+    // Step 1: 去行注释
+    let mut stripped = String::with_capacity(ddl.len());
+    for line in ddl.lines() {
+        match line.find("--") {
+            Some(pos) => stripped.push_str(&line[..pos]),
+            None => stripped.push_str(line),
+        }
+        stripped.push(' ');
+    }
+
+    // Step 2: 压缩空白 + 引号外字母大写
+    let mut out = String::with_capacity(stripped.len());
+    let mut in_quotes = false;
+    let mut prev_ws = true; // 吃掉前导空白
+    let mut chars = stripped.chars().peekable();
+    while let Some(c) = chars.next() {
+        match c {
+            '\'' => {
+                in_quotes = !in_quotes;
+                out.push(c);
+                prev_ws = false;
+            }
+            _ if c.is_whitespace() => {
+                if !prev_ws {
+                    out.push(' ');
+                }
+                prev_ws = true;
+            }
+            _ if !in_quotes && c.is_ascii_alphabetic() => {
+                let mut run = String::from(c);
+                while let Some(nc) = chars.peek() {
+                    if nc.is_ascii_alphabetic() {
+                        run.push(chars.next().expect("just peeked"));
+                    } else {
+                        break;
+                    }
+                }
+                out.push_str(&run.to_ascii_uppercase());
+                prev_ws = false;
+            }
+            _ => {
+                out.push(c);
+                prev_ws = false;
+            }
+        }
+    }
+    out.trim_end().to_string()
+}
+
+/// AR-03：规范化 schema hash（纯函数，无 DB）。
+///
+/// 规则（与设计 §4.3 一致）：
+///   - 表按表名排序、表内列按列名排序 → 书写顺序不影响 hash；
+///   - 列 DDL 片段走 [`normalize_ddl_fragment`] → 空白/注释/大小写抖动不影响；
+///   - `id` 列不参与（由 skeleton CREATE TABLE 统一管理，与 verify 阶段 id 自动拼接逻辑一致）；
+///   - canonical 串 → SHA-256 → hex。
+pub fn compute_schema_hash(schema: &str, table_defs: &[(&str, &[(&str, &str)])]) -> String {
+    let mut entries: Vec<(String, Vec<(String, String)>)> = table_defs
+        .iter()
+        .map(|(tbl, cols)| {
+            let mut cols_norm: Vec<(String, String)> = cols
+                .iter()
+                .filter(|(col, _)| *col != "id") // id 不参与 hash
+                .map(|(col, ddl)| (col.to_string(), normalize_ddl_fragment(ddl)))
+                .collect();
+            cols_norm.sort_by(|a, b| a.0.cmp(&b.0));
+            ((*tbl).to_string(), cols_norm)
+        })
+        .collect();
+    entries.sort_by(|a, b| a.0.cmp(&b.0));
+
+    let mut canon = String::new();
+    canon.push_str(schema);
+    canon.push('{');
+    for (tbl, cols) in &entries {
+        canon.push_str(tbl);
+        canon.push('[');
+        for (col, ddl) in cols {
+            canon.push_str(col);
+            canon.push(':');
+            canon.push_str(ddl);
+            canon.push(',');
+        }
+        canon.push_str("],");
+    }
+    canon.push('}');
+
+    let mut hasher = Sha256::new();
+    hasher.update(canon.as_bytes());
+    hex::encode(hasher.finalize())
+}
+
+/// AR-03：upsert 台账（INSERT ... ON CONFLICT DO UPDATE）。失败仅 warn，不阻塞启动。
+pub async fn upsert_ledger(
+    pool: &PgPool,
+    schema: &str,
+    schema_hash: &str,
+    tables_count: usize,
+    cols_count: usize,
+    last_skipped_ensure: bool,
+) {
+    let result = sqlx::query(
+        r#"
+        INSERT INTO schema_defense_ledger
+            (service_schema, schema_hash, tables_count, cols_count, last_skipped_ensure, applied_at)
+        VALUES ($1, $2, $3, $4, $5, NOW())
+        ON CONFLICT (service_schema) DO UPDATE SET
+            schema_hash         = EXCLUDED.schema_hash,
+            tables_count        = EXCLUDED.tables_count,
+            cols_count          = EXCLUDED.cols_count,
+            last_skipped_ensure  = EXCLUDED.last_skipped_ensure,
+            applied_at          = NOW()
+        "#,
+    )
+    .bind(schema)
+    .bind(schema_hash)
+    .bind(tables_count as i32)
+    .bind(cols_count as i32)
+    .bind(last_skipped_ensure)
+    .execute(pool)
+    .await;
+    if let Err(e) = result {
+        tracing::warn!(
+            "[{} schema 门控] ledger upsert 失败（不阻塞，下次启动自动补）: {}",
+            schema,
+            e
+        );
+    }
+}
 
 /// 单列原子加列：ALTER TABLE <schema>.<table> ADD COLUMN IF NOT EXISTS <col> <def>
 pub async fn add_column_if_missing(
@@ -317,34 +512,99 @@ pub async fn run_schema_defense(
     table_defs: &[(&str, &[(&str, &str)])],
     service_tag: &str,
 ) -> Result<(usize, usize, usize), sqlx::Error> {
+    let total_tables = table_defs.len();
+    let total_cols: usize = table_defs.iter().map(|(_, c)| c.len()).sum();
+
     // --------------------------------------------------------------------
-    // 阶段 1：增量迁移 —— 逐列 ADD COLUMN IF NOT EXISTS
+    // AR-03 版本门控：在 ensure 之前判断是否可以跳过重放
+    //   - GATE_ENABLED=false → 完全退化为旧行为（不建/查/写台账）
+    //   - 否则按 ledger 里的规范化 hash 决定 skip_ensure
+    // --------------------------------------------------------------------
+    let gate_on = schema_defense_gate_enabled();
+    let force_reapply = schema_defense_force_reapply();
+    let mut skip_ensure = false;
+    let current_hash = compute_schema_hash(schema, table_defs);
+
+    if gate_on {
+        if let Err(e) = ensure_ledger_table(pool).await {
+            tracing::warn!(
+                "[{} schema 门控] ledger 表创建失败（退化为全量重放）: {}",
+                service_tag,
+                e
+            );
+        }
+
+        let stored: Option<String> = if force_reapply {
+            // FORCE_REAPPLY：忽略 ledger，等价于无记录
+            None
+        } else {
+            sqlx::query_scalar(
+                "SELECT schema_hash FROM schema_defense_ledger WHERE service_schema = $1",
+            )
+            .bind(schema)
+            .fetch_optional(pool)
+            .await
+            .unwrap_or_else(|e| {
+                tracing::warn!(
+                    "[{} schema 门控] ledger 查询失败（退化为全量重放）: {}",
+                    service_tag,
+                    e
+                );
+                None
+            })
+        };
+
+        skip_ensure = stored.as_deref() == Some(current_hash.as_str());
+
+        let hash_prefix: &str = current_hash.get(..12).unwrap_or(&current_hash);
+        if force_reapply {
+            tracing::info!(
+                "[{} schema 门控] SCHEMA_DEFENSE_FORCE_REAPPLY=1，忽略 ledger，全量重放（{} 表 / {} 列，hash={}）",
+                service_tag, total_tables, total_cols, hash_prefix
+            );
+        } else if skip_ensure {
+            tracing::info!(
+                "[{} schema 门控] hash 匹配 ({})，跳过 ensure 阶段（{} 表 / {} 列），仅做 verify 自检",
+                service_tag, hash_prefix, total_tables, total_cols
+            );
+        } else {
+            tracing::info!(
+                "[{} schema 门控] ledger 无记录或 hash 不匹配，执行 ensure 全量重放（{} 表 / {} 列，hash={}）",
+                service_tag, total_tables, total_cols, hash_prefix
+            );
+        }
+    }
+
+    // --------------------------------------------------------------------
+    // 阶段 1：增量迁移 —— 逐列 ADD COLUMN IF NOT EXISTS（可被门控跳过）
     // --------------------------------------------------------------------
     let mut tables_done = 0usize;
     let mut cols_added = 0usize;
-    for (tbl, cols_arr) in table_defs {
-        match ensure_table_columns(pool, Some(schema), tbl, cols_arr).await {
-            Ok(n) => {
-                tables_done += 1;
-                cols_added += n;
-            }
-            Err(e) => {
-                tracing::warn!(
-                    "[{} 增量迁移] {}.{} 失败（跳过该表）: {}",
-                    service_tag,
-                    schema,
-                    tbl,
-                    e
-                );
+    if !skip_ensure {
+        for (tbl, cols_arr) in table_defs {
+            match ensure_table_columns(pool, Some(schema), tbl, cols_arr).await {
+                Ok(n) => {
+                    tables_done += 1;
+                    cols_added += n;
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        "[{} 增量迁移] {}.{} 失败（跳过该表）: {}",
+                        service_tag,
+                        schema,
+                        tbl,
+                        e
+                    );
+                }
             }
         }
+        tracing::info!(
+            "[{} 增量迁移] 完成 {} 张表 / {} 列 ADD COLUMN IF NOT EXISTS 检查",
+            service_tag,
+            tables_done,
+            cols_added
+        );
     }
-    tracing::info!(
-        "[{} 增量迁移] 完成 {} 张表 / {} 列 ADD COLUMN IF NOT EXISTS 检查",
-        service_tag,
-        tables_done,
-        cols_added
-    );
 
     // --------------------------------------------------------------------
     // 阶段 2：schema 一致性自检 —— information_schema 对比 TABLE_DEFS
@@ -373,6 +633,13 @@ pub async fn run_schema_defense(
         service_tag,
         verified
     );
+
+    // --------------------------------------------------------------------
+    // AR-03：upsert 台账（GATE_ENABLED=false 时完全不碰台账）
+    // --------------------------------------------------------------------
+    if gate_on {
+        upsert_ledger(pool, schema, &current_hash, total_tables, total_cols, skip_ensure).await;
+    }
 
     Ok((tables_done, cols_added, verified))
 }
@@ -518,5 +785,184 @@ mod tests {
         let cols: [(&str, &str); 0] = [];
         assert_eq!(build_expected_columns(true, &cols), vec!["id"]);
         assert!(build_expected_columns(false, &cols).is_empty());
+    }
+
+    // ===== AR-03: schema_defense_gate_enabled_from =====
+    #[test]
+    fn test_gate_enabled_default_true_and_falsy_values() {
+        // 默认（未设置/空）→ true
+        assert!(schema_defense_gate_enabled_from(""));
+        // 真值写法 → true
+        for v in ["1", "true", "TRUE", "on", "yes", "anything", " false "] {
+            let expected = !matches!(v.trim().to_ascii_lowercase().as_str(), "0" | "false" | "no" | "off");
+            assert_eq!(schema_defense_gate_enabled_from(v), expected, "gate env = {:?}", v);
+        }
+        // 假值写法 → false
+        for v in ["0", "false", "False", "NO", "off", " off "] {
+            assert!(!schema_defense_gate_enabled_from(v), "gate env = {:?}", v);
+        }
+    }
+
+    // ===== AR-03: normalize_ddl_fragment =====
+    #[test]
+    fn test_normalize_ddl_collapses_whitespace() {
+        assert_eq!(
+            normalize_ddl_fragment("VARCHAR(255)   NOT NULL"),
+            "VARCHAR(255) NOT NULL"
+        );
+        assert_eq!(
+            normalize_ddl_fragment("  text \n \t DEFAULT  'x'  "),
+            "TEXT DEFAULT 'x'"
+        );
+    }
+
+    #[test]
+    fn test_normalize_ddl_strips_line_comments() {
+        assert_eq!(
+            normalize_ddl_fragment("INT NOT NULL -- 主键关联字段"),
+            "INT NOT NULL"
+        );
+        assert_eq!(
+            normalize_ddl_fragment("TIMESTAMPTZ DEFAULT NOW() -- 创建时间\n"),
+            "TIMESTAMPTZ DEFAULT NOW()"
+        );
+        // 行内注释与后续片段
+        assert_eq!(
+            normalize_ddl_fragment("VARCHAR(32) -- remark\nNOT NULL"),
+            "VARCHAR(32) NOT NULL"
+        );
+    }
+
+    #[test]
+    fn test_normalize_ddl_uppercases_keywords_but_not_string_literals() {
+        assert_eq!(
+            normalize_ddl_fragment("varchar(255) not null default 'active'"),
+            "VARCHAR(255) NOT NULL DEFAULT 'active'"
+        );
+        assert_eq!(
+            normalize_ddl_fragment("integer references org(id) on delete cascade"),
+            "INTEGER REFERENCES ORG(ID) ON DELETE CASCADE"
+        );
+        // 字符串字面量内的字母保持原样（不参与大小写归一）
+        assert_eq!(
+            normalize_ddl_fragment("text default 'abcDef'"),
+            "TEXT DEFAULT 'abcDef'"
+        );
+    }
+
+    // ===== AR-03: compute_schema_hash 规范化不变量 =====
+    const DEMO_DEFS: &[(&str, &[(&str, &str)])] = &[(
+        "orders",
+        &[
+            ("status", "VARCHAR(32) NOT NULL"),
+            ("total", "NUMERIC(12,2) DEFAULT 0"),
+            ("created_at", "TIMESTAMPTZ"),
+        ],
+    )];
+
+    #[test]
+    fn test_hash_ignores_column_order() {
+        let a = compute_schema_hash(
+            "wms",
+            &[("orders", &[("status", "VARCHAR(32) NOT NULL"), ("total", "NUMERIC(12,2)")])],
+        );
+        let b = compute_schema_hash(
+            "wms",
+            &[("orders", &[("total", "NUMERIC(12,2)"), ("status", "VARCHAR(32) NOT NULL")])],
+        );
+        assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_hash_ignores_table_order() {
+        let defs1: &[(&str, &[(&str, &str)])] = &[
+            ("orders", &[("status", "VARCHAR(32) NOT NULL")]),
+            ("lines", &[("qty", "INT")]),
+        ];
+        let defs2: &[(&str, &[(&str, &str)])] = &[
+            ("lines", &[("qty", "INT")]),
+            ("orders", &[("status", "VARCHAR(32) NOT NULL")]),
+        ];
+        assert_eq!(compute_schema_hash("wms", defs1), compute_schema_hash("wms", defs2));
+    }
+
+    #[test]
+    fn test_hash_ignores_whitespace_comment_and_case() {
+        let base = compute_schema_hash("wms", DEMO_DEFS);
+        let varied: &[(&str, &[(&str, &str)])] = &[(
+            "orders",
+            &[
+                ("status", "varchar(32)   not null -- 状态"),
+                ("total", "numeric(12,2) default 0"),
+                ("created_at", "  timestamptz \n"),
+            ],
+        )];
+        assert_eq!(base, compute_schema_hash("wms", varied));
+    }
+
+    #[test]
+    fn test_hash_changes_on_column_add_remove_or_type() {
+        let base = compute_schema_hash("wms", DEMO_DEFS);
+
+        // 加列
+        let added: &[(&str, &[(&str, &str)])] = &[(
+            "orders",
+            &[
+                ("status", "VARCHAR(32) NOT NULL"),
+                ("total", "NUMERIC(12,2) DEFAULT 0"),
+                ("created_at", "TIMESTAMPTZ"),
+                ("note", "TEXT"),
+            ],
+        )];
+        assert_ne!(base, compute_schema_hash("wms", added));
+
+        // 减列
+        let removed: &[(&str, &[(&str, &str)])] = &[(
+            "orders",
+            &[
+                ("status", "VARCHAR(32) NOT NULL"),
+                ("total", "NUMERIC(12,2) DEFAULT 0"),
+            ],
+        )];
+        assert_ne!(base, compute_schema_hash("wms", removed));
+
+        // 类型变
+        let typed: &[(&str, &[(&str, &str)])] = &[(
+            "orders",
+            &[
+                ("status", "VARCHAR(64) NOT NULL"),
+                ("total", "NUMERIC(12,2) DEFAULT 0"),
+                ("created_at", "TIMESTAMPTZ"),
+            ],
+        )];
+        assert_ne!(base, compute_schema_hash("wms", typed));
+    }
+
+    #[test]
+    fn test_hash_excludes_id_column() {
+        let without_id = compute_schema_hash(
+            "wms",
+            &[("orders", &[("status", "VARCHAR(32) NOT NULL")])],
+        );
+        let with_id = compute_schema_hash(
+            "wms",
+            &[("orders", &[("id", "UUID PRIMARY KEY"), ("status", "VARCHAR(32) NOT NULL")])],
+        );
+        assert_eq!(without_id, with_id);
+    }
+
+    #[test]
+    fn test_hash_differs_across_services() {
+        assert_ne!(
+            compute_schema_hash("wms", DEMO_DEFS),
+            compute_schema_hash("gis", DEMO_DEFS)
+        );
+    }
+
+    #[test]
+    fn test_hash_is_sha256_hex_64chars() {
+        let h = compute_schema_hash("wms", DEMO_DEFS);
+        assert_eq!(h.len(), 64);
+        assert!(h.chars().all(|c| c.is_ascii_hexdigit()));
     }
 }

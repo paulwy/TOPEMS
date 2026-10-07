@@ -784,6 +784,16 @@ pub async fn register_with_consul(
 ///      设置环境变量 `SCHEMA_DEFENSE_STRICT=1`（/true/yes/on）后进入严格模式：
 ///      schema 防御失败会向上传播导致启动 fail-fast（AR-06）。
 ///
+/// # AR-03 版本门控（运行时行为，无需在此接线）
+/// 门控逻辑封装在 [`topems_shared_db::schema::run_schema_defense`] 内部，本函数
+/// **零改动**：schema_defense_fn 照常调用。门控效果为——TABLE_DEFS 规范化 hash
+/// 未变时跳过 ensure 阶段的逐列 ADD COLUMN，仅做轻量 verify；首次升级或列结构
+/// 变化时自动全量重放并记入运行时台账表 `schema_defense_ledger`。
+/// 相关开关（均在 shared-db 内读取）：
+///   - `SCHEMA_DEFENSE_GATE_ENABLED`（默认 true；`false/0/off/no` 时完全退化为旧行为）
+///   - `SCHEMA_DEFENSE_FORCE_REAPPLY`（默认 false；`true` 时忽略台账全量重放）
+/// 注意：`GATE_ENABLED=false` 优先级高于 `FORCE_REAPPLY=true`（关闭时强制重放无效）。
+///
 /// # 参数
 /// - `pool`: 数据库连接池
 /// - `service_name`: 服务名（如 "wms"、"crm"），用于 master_data_refs 表名前缀和日志
