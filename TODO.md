@@ -357,7 +357,13 @@
 
 ### P2（加固）
 - ✅ **死代码与目录清理（第一批）**：components/ui/Loading.tsx 零引用已删；Tabs/CommandPalette 有引用保留；待续：_archive-microfrontend、tmp、schema/schemas 双目录合并
-- ⏳ **三端共享包接入**：mobile 零引用、desktop 仅 4 处 → 先接 tokens/shared-types/api-client
+- ✅ **三端共享包接入（tokens/shared-types/api-client，6 提交 c476f253b/e416f6c3c/f135529ec/6d5253009/51f776c09/705182765）**：mobile 零引用→已接入、desktop 4 处→收敛
+  - ✅ tokens：desktop（theme + 6 组件同值映射 7 色）；mobile 18 文件 241 处同值映射 + Metro monorepo 配置（watchFolders/根 node_modules）+ jest ts-jest 覆盖（ignoreDeprecations）
+  - ✅ shared-types：desktop iam LoginRequest 复用薄壳；mobile ApiResponse 薄壳 + LoginCredentials=LoginRequest 别名
+  - ✅ api-client：desktop Phase1 已完成（2f964ad57）；mobile client 工厂化（异步 token/离线/缓存拦截器端内保留，导出面不变）
+  - 📝 保留项与原因：desktop Tauri IPC 信封 ApiResponse、LoginResponse/UserInfo；mobile User/Task 等 camelCase UI 模型（共享包为 snake_case DTO）——详见各提交信息
+  - 📝 后续项：shared-types dist 与 src 不同步（dist User 缺 name/roles/full_name），重建 dist 后 mobile User 可再收敛；mobile/desktop 硬编码中文 UI 为既有债（hardcoded-precise 门禁对两端报错，相关提交按脚本注释约定 --no-verify 并已人工验证三件套）
+  - 验证：desktop tsc 0 / vitest 32/32 / eslint 0；mobile tsc 0 / eslint 0 / jest 11/11；web tsc 0（锁变更后复跑）；Expo 运行时打包待环境补 expo-asset 后验证
 - ⏳ **i18n hash key 语义化 + z-index 语义化**：1006 个 text_xxxxxx key；z-index 魔数 100+ 处统一 theme.zIndex
 
 > 全量审计报告：`docs/quality/前端UI审计报告-2026-10-07.md`（六维结论 + 违规清单 + 验证记录）
