@@ -282,7 +282,7 @@
 
 ### P1（收敛）
 - ✅ **设计令牌违规清零（159 → 0）**：真实违规 159 处（hardcoded 101 / rgba 48 / box-shadow 4 / fixed-px 6）全部清零。手段：① 脚本豁免升级（`var(--token, fallback)` 兜底、box-shadow 已引用 `var()`、HTML 实体 `&#039;` 前置 `&` 判断、redesign-tokens/global 令牌定义源、GIS 热力色带 canvas 动态 alpha）；② tokens.css 补 7 变量（violet/fuchsia/teal-500、text-on-accent、shadow-side/topbar、space-0-5）；③ redesign 组件（SideRail/TopBar/Avatar/Toggle）与 MUI 页面（GovernanceDashboard/EHSBadges/WorkflowApprovals/ProductionGantt/MobileLayoutV3）变量化；④ DataAssetCatalogPage 3 组业务色板迁移 theme/presets.ts（豁免区）；⑤ chartTheme rgba → alpha(designTokens.colors.cyan[500])。验证：脚本 0 违规 / eslint 0 / tsc 0。提交 85bfadf11（14 文件 +85/−62）已推送
-- ⏳ **组件收敛：7 类 17 份 → 单一实现**：EmptyState×4、StatusBadge×4、FileUpload×3、ConfirmDialog×2、Pagination×2、LoadingSpinner×2、BackButton×2
+- ✅ **组件收敛（第一批）**：StatusBadge 5 份 Tailwind 实现（wms/tms/aps/qms/mes）逻辑合一——common/StatusBadge.tsx 由占位假组件升级为唯一通用实现（扁平 colors/FSM fsmColors/labelMap/fallbackColor 双回退派别），模块文件保留业务映射数据、函数体瘦身 1 行委托；清理 3 个占位/死组件（common/EmptyState.tsx 零消费、common/ConfirmDialog.tsx 占位假组件、common/LoadingSpinner.tsx 零消费）+ 对应 3 测试 3 stories，索引 EmptyState 改 re-export shared（消费方零改动）。验证：tsc 0 / eslint 0 / vitest 94/94。提交 4f02796a2（20 文件）已推送。**待续**：跨体系/跨包双轨（common FileUpload 530 行增强版 vs shared、BackButton common vs shared、页面私有 ConfirmDialogs×2）归 P1-3 共享包接入；Pagination/ConfirmDialog/LoadingSpinner 已由 shared 提供
 - ⏳ **模板瘦身：ListPageTemplate 4153 行拆分**：按职责拆 hooks/子组件
 - ⏳ **页面三态补齐**：加载 53%/空态 16%/错误 39% → 模板默认注入 + 按模块分批
 
