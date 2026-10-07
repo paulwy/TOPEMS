@@ -1,16 +1,20 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-08）：mes capacity list handler 集成测试（缓存 miss → DB 路径）。
 
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::{super_claims, test_app_state};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::{json, Value};
 use topems_mes::modules::capacity::{list_capacities, ListCapacitiesQuery};
-use app_state::{super_claims, test_app_state};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS mes").execute(pool).await.unwrap();
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS mes")
+        .execute(pool)
+        .await
+        .unwrap();
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS capacities (
             id UUID PRIMARY KEY,
@@ -27,7 +31,9 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             deleted_at TIMESTAMPTZ
         )"#,
     )
-    .execute(pool).await.unwrap();
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 async fn body_of(pool: sqlx::PgPool) -> Value {
@@ -35,7 +41,12 @@ async fn body_of(pool: sqlx::PgPool) -> Value {
     let claims = super_claims();
     let q: ListCapacitiesQuery = serde_json::from_value(json!({})).unwrap();
     let resp = list_capacities(State(state), Extension(claims), Query(q)).await;
-    serde_json::to_value(resp.0.data.unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))).unwrap()
+    serde_json::to_value(
+        resp.0
+            .data
+            .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message)),
+    )
+    .unwrap()
 }
 
 #[sqlx::test(migrations = false)]

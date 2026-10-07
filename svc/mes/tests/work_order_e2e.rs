@@ -1,17 +1,21 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-08）：mes work_order list handler 集成测试。
 //! handler SQL 带 schema 前缀（FROM mes.work_orders），测试库建 mes schema + 表。
 
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::{super_claims, test_app_state};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::{json, Value};
 use topems_mes::modules::work_order::{list_work_orders, ListWorkOrdersQuery};
-use app_state::{super_claims, test_app_state};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS mes").execute(pool).await.unwrap();
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS mes")
+        .execute(pool)
+        .await
+        .unwrap();
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS mes.work_orders (
             id UUID PRIMARY KEY,
@@ -38,7 +42,9 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             deleted_at TIMESTAMPTZ
         )"#,
     )
-    .execute(pool).await.unwrap();
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
@@ -48,19 +54,25 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
         json!({ "status": s })
     } else {
         json!({})
-    }).unwrap();
+    })
+    .unwrap();
     let resp = list_work_orders(State(state), Extension(claims), Query(q)).await;
-    serde_json::to_value(resp.0.data.unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))).unwrap()
+    serde_json::to_value(
+        resp.0
+            .data
+            .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message)),
+    )
+    .unwrap()
 }
 
 async fn insert_work_order(pool: &sqlx::PgPool, no: &str, status: &str) {
-    sqlx::query(
-        "INSERT INTO mes.work_orders (id, work_order_no, status) VALUES ($1, $2, $3)",
-    )
-    .bind(uuid::Uuid::new_v4())
-    .bind(no)
-    .bind(status)
-    .execute(pool).await.unwrap();
+    sqlx::query("INSERT INTO mes.work_orders (id, work_order_no, status) VALUES ($1, $2, $3)")
+        .bind(uuid::Uuid::new_v4())
+        .bind(no)
+        .bind(status)
+        .execute(pool)
+        .await
+        .unwrap();
 }
 
 #[sqlx::test(migrations = false)]

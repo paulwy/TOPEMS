@@ -1,15 +1,19 @@
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 //! P1 补测（2026-10-08）：mes material_plan list handler 集成测试。
 
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::test_app_state;
 use axum::extract::{Query, State};
 use serde_json::{json, Value};
 use topems_mes::modules::material_plan::{list_material_plans, ListMaterialPlansQuery};
-use app_state::test_app_state;
 
 async fn setup_schema(pool: &sqlx::PgPool) {
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS mes").execute(pool).await.unwrap();
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS mes")
+        .execute(pool)
+        .await
+        .unwrap();
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS mes.material_plans (
             id UUID PRIMARY KEY,
@@ -29,7 +33,9 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             tenant_id UUID
         )"#,
     )
-    .execute(pool).await.unwrap();
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
@@ -38,9 +44,17 @@ async fn body_of(pool: sqlx::PgPool, status: Option<&str>) -> Value {
         json!({ "status": s })
     } else {
         json!({})
-    }).unwrap();
-    let resp = list_material_plans(State(state), Query(q)).await.expect("handler error");
-    serde_json::to_value(resp.0.data.unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))).unwrap()
+    })
+    .unwrap();
+    let resp = list_material_plans(State(state), Query(q))
+        .await
+        .expect("handler error");
+    serde_json::to_value(
+        resp.0
+            .data
+            .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message)),
+    )
+    .unwrap()
 }
 
 async fn insert_plan(pool: &sqlx::PgPool, plan_no: &str, status: &str) {
