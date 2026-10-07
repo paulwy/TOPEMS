@@ -5,17 +5,42 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
-use uuid::Uuid;
 fn escape_sql_identifier(identifier: &str) -> String {
     format!("\"{}\"", identifier.replace('"', "\"\""))
 }
 use crate::models::{ColumnInfo, DbChange, TableInfo};
-use crate::modules::audit::{log_audit_event, AuditEventParams};
+use crate::models::migration::DbColumnDefinition;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+
+/// 迁移链提示：本模块 DDL 端点已降级为只读「迁移建议」模式，不再直接执行 DDL。
+const MIGRATION_CHAIN_NOTICE: &str = "本端点已改为只读迁移建议模式，不再直接执行 DDL；以下为幂等迁移建议 SQL，请将其写入 database/migrations 并通过 scripts/migrate.sh 走迁移链执行。";
+
+/// 构建「新增列」幂等迁移建议 SQL（ADD COLUMN IF NOT EXISTS），仅生成、不执行。
+/// 复用 build_data_type 类型映射与 escape_sql_identifier 标识符转义。
+fn build_add_column_suggestion(table_name: &str, column: &DbColumnDefinition) -> String {
+    let data_type = build_data_type(
+        &column.data_type,
+        column.max_length,
+        column.numeric_precision,
+        column.numeric_scale,
+    );
+    let null_clause = if column.is_nullable { "NULL" } else { "NOT NULL" };
+    let default_clause = match &column.default_value {
+        Some(default) => format!("DEFAULT {}", default),
+        None => String::new(),
+    };
+    format!(
+        "ALTER TABLE {} ADD COLUMN IF NOT EXISTS {} {} {} {}",
+        escape_sql_identifier(table_name),
+        escape_sql_identifier(&column.column_name),
+        data_type,
+        null_clause,
+        default_clause
+    )
+}
 #[derive(Debug, Deserialize)]
 pub struct TableQueryParams {
     pub schema: Option<String>,
@@ -188,36 +213,22 @@ pub async fn preview_add_column(
         None => unreachable!("rls txn missing"),
     };
     let column = &req.column;
-    let data_type = build_data_type(
-        &column.data_type,
-        column.max_length,
-        column.numeric_precision,
-        column.numeric_scale,
-    );
-    let null_clause = if column.is_nullable {
-        "NULL"
-    } else {
-        "NOT NULL"
-    };
-    let default_clause = match &column.default_value {
-        Some(default) => format!("DEFAULT {}", default),
-        None => String::new(),
-    };
-    let sql = format!(
-        "ALTER TABLE {} ADD COLUMN {} {} {} {}",
-        escape_sql_identifier(&req.table_name),
-        escape_sql_identifier(&column.column_name),
-        data_type,
-        null_clause,
-        default_clause
-    );
-    let warning = if !column.is_nullable && column.default_value.is_none() {
-        Some("警告：添加非空且无默认值的列可能导致现有数据行出错".to_string())
+    let sql = build_add_column_suggestion(&req.table_name, column);
+    // 保留原有「非空无默认值」风险提示，并追加走迁移链的提示。
+    let nullability_warning = if !column.is_nullable && column.default_value.is_none() {
+        Some("警告：添加非空且无默认值的列可能导致现有数据行出错。".to_string())
     } else {
         None
     };
+    let warning = match nullability_warning {
+        Some(w) => format!("{} {}", w, MIGRATION_CHAIN_NOTICE),
+        None => MIGRATION_CHAIN_NOTICE.to_string(),
+    };
     Json(ApiResponse::success(
-        SqlPreview { sql, warning },
+        SqlPreview {
+            sql,
+            warning: Some(warning),
+        },
         "SQL预览生成成功",
     ))
 }
@@ -251,110 +262,14 @@ fn build_data_type(
     tag = "DbStructure",
     operation_id = "execute_add_column",
     responses(
-        (status = 200, description = "操作成功"),
+        (status = 200, description = "只读迁移建议模式：不再执行任何 DDL；返回幂等 ADD COLUMN IF NOT EXISTS 建议 SQL，列不会被创建。DDL 必须走迁移链 database/migrations + scripts/migrate.sh", body = ApiResponse<String>),
     ),
 )]
 pub async fn execute_add_column(
-    State(state): State<ApiState>,
-    headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
     Json(req): Json<crate::models::AddColumnRequest>,
 ) -> Json<ApiResponse<String>> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => unreachable!("rls txn missing"),
-    };
-    let column = &req.column;
-    let data_type = build_data_type(
-        &column.data_type,
-        column.max_length,
-        column.numeric_precision,
-        column.numeric_scale,
-    );
-    let null_clause = if column.is_nullable {
-        "NULL"
-    } else {
-        "NOT NULL"
-    };
-    let default_clause = match &column.default_value {
-        Some(default) => format!("DEFAULT {}", default),
-        None => String::new(),
-    };
-    let sql = format!(
-        "ALTER TABLE {} ADD COLUMN {} {} {} {}",
-        escape_sql_identifier(&req.table_name),
-        escape_sql_identifier(&column.column_name),
-        data_type,
-        null_clause,
-        default_clause
-    );
-    let id = Uuid::new_v4();
-    let now = Utc::now();
-    let new_definition = serde_json::to_value(column).ok();
-    let result = sqlx::query(&sql).execute(&mut **txn).await;
-    let (response, status, error_msg) = match &result {
-        Ok(_) => (
-            Json(ApiResponse::success(sql.clone(), "字段添加成功")),
-            "success".to_string(),
-            None,
-        ),
-        Err(e) => {
-            tracing::error!("添加字段失败: {}", e);
-            (
-                Json(ApiResponse::from(TopemsError::internal(
-                    "添加字段失败: {}",
-                    e,
-                ))),
-                "error".to_string(),
-                Some(e.to_string()),
-            )
-        }
-    };
-    let _ = sqlx::query(
-        only_own_schema_query!("erp", r#"
-        INSERT INTO sys_db_changes (id, change_type, table_name, column_name, new_definition, sql_statement, executed_by, executed_at)
-        VALUES ($1, 'add_column', $2, $3, $4, $5, $6, $7)
-        "#),
-    )
-    .bind(id)
-    .bind(&req.table_name)
-    .bind(&column.column_name)
-    .bind(&new_definition)
-    .bind(&sql)
-    .bind(extract_user_from_headers(&headers))
-    .bind(now)
-    .execute(&mut **txn)
-    .await;
-    let is_success = status == "success";
-    log_audit_event(
-        &state.db,
-        AuditEventParams {
-            action: "db_change".to_string(),
-            entity_type: "add_column".to_string(),
-            entity_id: Some(id),
-            entity_ids: None,
-            user_id: None,
-            user_name: None,
-            request_details: serde_json::to_value(&req).ok(),
-            response_details: Some(serde_json::json!({ "sql": sql })),
-            status,
-            error_message: error_msg,
-        },
-        &headers,
-    )
-    .await;
-    if is_success {
-        if let Some(t) = guard.take() {
-            if let Err(e) = t.commit().await {
-                tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
-            }
-        }
-    }
-    response
+    let sql = build_add_column_suggestion(&req.table_name, &req.column);
+    Json(ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE))
 }
 #[utoipa::path(
     put,
@@ -363,23 +278,13 @@ pub async fn execute_add_column(
     tag = "DbStructure",
     operation_id = "execute_modify_column",
     responses(
-        (status = 200, description = "操作成功"),
+        (status = 200, description = "只读迁移建议模式：不再执行任何 DDL；返回可重复执行的 ALTER COLUMN 建议 SQL，库不会变更。DDL 必须走迁移链 database/migrations + scripts/migrate.sh", body = ApiResponse<String>),
     ),
 )]
 pub async fn execute_modify_column(
-    State(state): State<ApiState>,
     Path((table_name, column_name)): Path<(String, String)>,
-    headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
     Json(req): Json<crate::models::ModifyColumnRequest>,
 ) -> Json<ApiResponse<String>> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => unreachable!("rls txn missing"),
-    };
     let column = &req.column;
     let data_type = build_data_type(
         &column.data_type,
@@ -387,93 +292,23 @@ pub async fn execute_modify_column(
         column.numeric_precision,
         column.numeric_scale,
     );
-    let null_clause = if column.is_nullable {
-        "NULL"
-    } else {
-        "NOT NULL"
-    };
+    // 可重复执行的建议语句：TYPE / SET|DROP DEFAULT / SET|DROP NOT NULL（重复执行收敛到同一状态）。
     let default_clause = match &column.default_value {
-        Some(default) => format!("DEFAULT {}", default),
-        None => String::new(),
+        Some(default) => format!("SET DEFAULT {}", default),
+        None => "DROP DEFAULT".to_string(),
     };
+    let null_clause = if column.is_nullable {
+        "DROP NOT NULL"
+    } else {
+        "SET NOT NULL"
+    };
+    let table = escape_sql_identifier(&table_name);
+    let col = escape_sql_identifier(&column_name);
     let sql = format!(
-        "ALTER TABLE {} ALTER COLUMN {} TYPE {}, ALTER COLUMN {} SET {}, ALTER COLUMN {} {}",
-        escape_sql_identifier(&table_name),
-        escape_sql_identifier(&column_name),
-        data_type,
-        escape_sql_identifier(&column_name),
-        if default_clause.is_empty() {
-            "DEFAULT NULL".to_string()
-        } else {
-            default_clause
-        },
-        escape_sql_identifier(&column_name),
-        null_clause
+        "ALTER TABLE {} ALTER COLUMN {} TYPE {}, ALTER COLUMN {} {}, ALTER COLUMN {} {}",
+        table, col, data_type, col, default_clause, col, null_clause
     );
-    let id = Uuid::new_v4();
-    let now = Utc::now();
-    let new_definition = serde_json::to_value(column).ok();
-    let result = sqlx::query(&sql).execute(&mut **txn).await;
-    let (response, status, error_msg) = match &result {
-        Ok(_) => (
-            Json(ApiResponse::success(sql.clone(), "字段修改成功")),
-            "success".to_string(),
-            None,
-        ),
-        Err(e) => {
-            tracing::error!("修改字段失败: {}", e);
-            (
-                Json(ApiResponse::from(TopemsError::internal(
-                    "修改字段失败: {}",
-                    e,
-                ))),
-                "error".to_string(),
-                Some(e.to_string()),
-            )
-        }
-    };
-    let _ = sqlx::query(
-        only_own_schema_query!("erp", r#"
-        INSERT INTO sys_db_changes (id, change_type, table_name, column_name, new_definition, sql_statement, executed_by, executed_at)
-        VALUES ($1, 'modify_column', $2, $3, $4, $5, $6, $7)
-        "#),
-    )
-    .bind(id)
-    .bind(&table_name)
-    .bind(&column_name)
-    .bind(&new_definition)
-    .bind(&sql)
-    .bind(extract_user_from_headers(&headers))
-    .bind(now)
-    .execute(&mut **txn)
-    .await;
-    let is_success = status == "success";
-    log_audit_event(
-        &state.db,
-        AuditEventParams {
-            action: "db_change".to_string(),
-            entity_type: "modify_column".to_string(),
-            entity_id: Some(id),
-            entity_ids: None,
-            user_id: None,
-            user_name: None,
-            request_details: serde_json::to_value(&req).ok(),
-            response_details: Some(serde_json::json!({ "sql": sql })),
-            status,
-            error_message: error_msg,
-        },
-        &headers,
-    )
-    .await;
-    if is_success {
-        if let Some(t) = guard.take() {
-            if let Err(e) = t.commit().await {
-                tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
-            }
-        }
-    }
-    response
+    Json(ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE))
 }
 #[utoipa::path(
     delete,
@@ -482,92 +317,18 @@ pub async fn execute_modify_column(
     tag = "DbStructure",
     operation_id = "execute_drop_column",
     responses(
-        (status = 200, description = "操作成功"),
+        (status = 200, description = "只读迁移建议模式：不再执行任何 DDL；返回幂等 DROP COLUMN IF EXISTS 建议 SQL，库不会变更。DDL 必须走迁移链 database/migrations + scripts/migrate.sh", body = ApiResponse<String>),
     ),
 )]
 pub async fn execute_drop_column(
-    State(state): State<ApiState>,
     Path((table_name, column_name)): Path<(String, String)>,
-    headers: HeaderMap,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
 ) -> Json<ApiResponse<String>> {
-    let mut guard = txn_arc.lock().await;
-    let txn = match guard.as_mut() {
-        Some(txn) => txn,
-        None => unreachable!("rls txn missing"),
-    };
     let sql = format!(
-        "ALTER TABLE \"{}\" DROP COLUMN \"{}\"",
-        table_name, column_name
+        "ALTER TABLE {} DROP COLUMN IF EXISTS {}",
+        escape_sql_identifier(&table_name),
+        escape_sql_identifier(&column_name)
     );
-    let id = Uuid::new_v4();
-    let now = Utc::now();
-    let result = sqlx::query(&sql).execute(&mut **txn).await;
-    let (response, status_str, error_msg) = match &result {
-        Ok(_) => (
-            Json(ApiResponse::success(sql.clone(), "字段删除成功")),
-            "success".to_string(),
-            None,
-        ),
-        Err(e) => {
-            let msg = e.to_string();
-            tracing::error!("删除字段失败: {}", msg);
-            // 表/字段不存在属于业务性 404（元数据建模端点的合法输入），不当作 500
-            let not_found = msg.contains("does not exist");
-            (
-                Json(if not_found {
-                    ApiResponse::from(TopemsError::ResourceNotFound("表或字段不存在".to_string()))
-                } else {
-                    ApiResponse::from(TopemsError::internal("删除字段失败: {}", e))
-                }),
-                "error".to_string(),
-                Some(msg),
-            )
-        }
-    };
-    let _ = sqlx::query(
-        only_own_schema_query!("erp", r#"
-        INSERT INTO sys_db_changes (id, change_type, table_name, column_name, sql_statement, executed_by, executed_at)
-        VALUES ($1, 'drop_column', $2, $3, $4, $5, $6)
-        "#),
-    )
-    .bind(id)
-    .bind(&table_name)
-    .bind(&column_name)
-    .bind(&sql)
-    .bind(extract_user_from_headers(&headers))
-    .bind(now)
-    .execute(&mut **txn)
-    .await;
-    let is_success = status_str == "success";
-    log_audit_event(
-        &state.db,
-        AuditEventParams {
-            action: "db_change".to_string(),
-            entity_type: "drop_column".to_string(),
-            entity_id: Some(id),
-            entity_ids: None,
-            user_id: None,
-            user_name: None,
-            request_details: None,
-            response_details: Some(serde_json::json!({ "sql": sql })),
-            status: status_str,
-            error_message: error_msg,
-        },
-        &headers,
-    )
-    .await;
-    if is_success {
-        if let Some(t) = guard.take() {
-            if let Err(e) = t.commit().await {
-                tracing::error!("事务提交失败: {}", e);
-                return Json(ApiResponse::error(500, "事务提交失败"));
-            }
-        }
-    }
-    response
+    Json(ApiResponse::success(sql, MIGRATION_CHAIN_NOTICE))
 }
 #[utoipa::path(
     get,
@@ -666,6 +427,66 @@ mod tests {
         assert_eq!(escape_sql_identifier("my.table"), "\"my.table\"");
         assert_eq!(escape_sql_identifier("schema.table"), "\"schema.table\"");
     }
+    // --- build_add_column_suggestion ---
+    #[test]
+    fn test_add_column_suggestion_is_idempotent() {
+        let col = DbColumnDefinition {
+            column_name: "weight".into(),
+            data_type: "varchar".into(),
+            is_nullable: true,
+            default_value: None,
+            max_length: Some(255),
+            numeric_precision: None,
+            numeric_scale: None,
+            comment: None,
+        };
+        let sql = build_add_column_suggestion("products", &col);
+        assert_eq!(
+            sql,
+            "ALTER TABLE \"products\" ADD COLUMN IF NOT EXISTS \"weight\" VARCHAR(255) NULL "
+        );
+        assert!(sql.contains("ADD COLUMN IF NOT EXISTS"));
+    }
+
+    #[test]
+    fn test_add_column_suggestion_not_null_with_default() {
+        let col = DbColumnDefinition {
+            column_name: "total".into(),
+            data_type: "numeric".into(),
+            is_nullable: false,
+            default_value: Some("0".into()),
+            max_length: None,
+            numeric_precision: Some(10),
+            numeric_scale: Some(2),
+            comment: None,
+        };
+        let sql = build_add_column_suggestion("orders", &col);
+        assert_eq!(
+            sql,
+            "ALTER TABLE \"orders\" ADD COLUMN IF NOT EXISTS \"total\" NUMERIC(10, 2) NOT NULL DEFAULT 0"
+        );
+    }
+
+    #[test]
+    fn test_add_column_suggestion_escapes_identifiers() {
+        // 含特殊字符/双引号的表名与列名仍被正确转义，防止注入
+        let col = DbColumnDefinition {
+            column_name: "we\"ird col".into(),
+            data_type: "text".into(),
+            is_nullable: true,
+            default_value: None,
+            max_length: None,
+            numeric_precision: None,
+            numeric_scale: None,
+            comment: None,
+        };
+        let sql = build_add_column_suggestion("my-table.1", &col);
+        assert_eq!(
+            sql,
+            "ALTER TABLE \"my-table.1\" ADD COLUMN IF NOT EXISTS \"we\"\"ird col\" TEXT NULL "
+        );
+    }
+
     // --- build_data_type ---
     #[test]
     fn test_build_data_type_varchar_with_length() {
