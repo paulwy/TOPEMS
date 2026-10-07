@@ -548,3 +548,25 @@
 - **DIR**：历史文档旧路径引用（XCUT.md:65、docs/archive/**、artifacts/**）为时点快照刻意未改；模板内 Location 注释（docs/database/snippets/add_tenant_id_template.sql:3）下次编辑顺手更新；validate.sh 历史存量警告（21 顺序/26 幂等/323 缺 down/78 多职责）与本次无关
 - **FE-17**：全量启用后建议各服务做一次列表翻页 UI 回归；回滚=从 `SNAKE_CASE_SERVICES` Set 移除服务名
 - **BE-05 checker**：CI 建议用 `--live-csv` 传预生成 CSV 解耦（默认自动调 extractor 需 python3）
+
+## 2026-10-07 审计剩余缺陷收尾批次（已完成，摘要 `artifacts/tier2-fixes/TOPEMS审计剩余缺陷收尾修复摘要.md`）
+
+### ✅ 已完成并提交
+- **DB-05 孤儿序列**（commit `8dfb53e84`）：DROP mes.tenant_permissions_id_seq / mes.tool_permissions_id_seq（pg_depend 无列归属、无 DEFAULT nextval 引用，'n' 依赖指向已 DROP 表）——幂等迁移 `20261007204300`，双库（5432+5433）应用 + psql 断言 count=0，public.tenant_permissions_id_seq 未误伤；_sqlx_test.database_ids 无害保留
+- **DB-06 休眠建表**（commit `53782f508`）：qa_approval_events（12 处活跃调用）业务必需 → 补迁移 `20261007204301` 入链（10 列对齐代码、IF NOT EXISTS 幂等）；system_configs（config_store.rs）死路径 → 移除 init() 建表 DDL（shared/mod.rs 仅声明 config_store_simple，不在编译树）；core_backup_records（backup/mod.rs）文件被 .gitignore 覆盖从未入库 → 移除仅本地、登记无提交对象；checksums 自举 +3 行；cargo check unified-core 绿
+- **AR-05/06/07**（commit `90a5a41c4`，3 文件 +93/-8）：.env.example 口径注释（干净 URL 为准、search_path 由运行时 set_config 负责，实测 topems-analytics 启动 /health 200 + schema 自检 4 表）；`SCHEMA_DEFENSE_STRICT` 开关（默认 false 保持 warn、true 时 bail fail-fast）；create_database_pool 3 次指数退避重试（500ms→1s→2s，用尽仍 fail-fast）；两库 cargo check 绿
+- **FE-20 前缀约定**（commit `6553ce11d`）：plugin-registry 保持 `/api/plugin` 现状——翻转会破坏承重耦合（shared-core 网关注册 / shared-auth 免登录白名单 / svc/server bake-in），仅加文档注释禁批量改名；cargo check plugin-registry 绿；证据 `artifacts/tier2-fixes/FE-20-plugin-prefix-unification.md`
+- **FE-21 baseURL 约定**（doc commit `d301fd852` + 代码 commit `a557c431c`）：三端 fallback 对齐权威端口（mobile 8070→8000、desktop 8080→8000、web .env.example 8080→8000；ports.ts 权威 core=8000/单体=8099/plugin-registry=8096，旧值为陈旧错误）；映射文档 `docs/developer/frontend/api-base-url-convention.md`；eslint/typecheck 绿
+- **DIR-07/09/10/14**（commits `1942304b5` + `c287af7af`）：proto/README.md（旧代 flat vs topems/<域>/v1 新风格）；navigation-menu-demo.design 16 文件 `git rm --cached` 移出跟踪（本地保留，生产引用均注释溯源非 import）；.husky/ 从未被 git 跟踪（lefthook 完全接管）本地已删；_archive/README.md 登记 2 归档文件
+
+### 📋 本批仅登记未实施（纪律范围）
+- **BE-06 健康端点收敛**：实测修正——核心逻辑已集中 shared-bootstrap（build_detailed_health_response/create_standard_health_routes），18 个 main.rs 只是服务特有载荷薄包装（池字段/挂载路径/前缀各派系）→ 登记方案不机械重写；文档 `artifacts/tier2-fixes/BE-06-health-plugin-endpoints-consolidation.md`
+- **AR-08 workspace 依赖**：审计 44/17 过期，现快照 143 条外联硬编码/28 crate（A=70 可直接翻、B=2 thiserror 1→2、C=71 需提升根声明）；因 Cargo.* 用户并发（rust_crypto）未提交而零编辑；方案文档 `artifacts/tier2-fixes/ar08-workspace-deps-plan.md`，待 Cargo 干净后按批次执行
+- **DIR-13 Cargo 注释**：billing 已由 66a5ded86 移除，L27/L96 拟改文本已出（L27 finance/billing→finance、L96 A 组 8→7），待 Cargo.* 干净后执行
+- **明确不做（路线图级）**：AR-03 启动 DDL 版本门控、BE-08 2179 路由 triage、FE-17 阶段 2-4、BE-05 方向乙（OpenAPI 回写）、BE-07 422 约定、BE-09 utoipa 升级
+
+### ⚠️ 事件与遗留
+- **并发改动抹除事件（已恢复）**：首次 DB-06 提交时 `git commit --only` 的 hidden-stash 恢复失败（migration-validate 在钩子内重写已暂存 checksums.txt → patch failed:190），吞掉全部未暂存改动（AR×3、FE-20/21 代码、plugin-registry 注释）；恢复：两工作包子代理（在场 IDLE_RESUMABLE）按原记忆精确重放（AR +93/-8、FE-20 注释、FE-21 三文件），重放后均已提交；教训——迁移类提交勿在暂存 checksums.txt 时被钩子重写，先对齐暂存/工作区
+- **FE-21 首提交为空壳已修正**：d301fd852 因代码改动被抹只含文档 → 代码修复单独 commit `a557c431c`（文档与代码分提交，内容完整）
+- **全链 5433 空库守卫阻塞**：用户并发迁移 `20261007140000_align_stub_tables_handler_contract.sql`（未跟踪）引用不存在的 finance.reconciliation_orders → 全链重放失败；DB-05/06 已用「基础链+本批 2 迁移」单独重放绕过验证；待用户修复后补跑全链
+- **AR-08 实施前置**：Cargo.toml/Cargo.lock 用户并发（jsonwebtoken rust_crypto）提交变干净后，按 ar08 方案批次执行（先 A 批 → C 批 → B 批）
