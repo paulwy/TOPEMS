@@ -705,3 +705,54 @@
 ### 📋 待业务拍板
 - 用户填 decision 列（保留/下线/重构/待定）回传 → 集成侧按批生成实施清单 → 按 A 级下线先例执行（逐条复核 + cargo check + grep 零残留 + 快照对比 + api-boundary-gate 前端调用面检查）
 - 建议优先过目：batch_03 下线 1 条 + 各批待定区（150 条，代表项见总览第四节）
+
+## ✅ 执行进度：批 2 + A5 完成态（2026-10-08）
+
+> 依据《下一步工作规划》批 2（B5/B6/B8/B9）与 A5 条目。A5 按用户拍板 B 口径执行（运行时维持 topems superuser、拆 FORCE RLS 无策略脚枪、受限角色切换为后置条件）。提交均为本地、未 push。
+
+### B5 svc/gis RLS 开启 — ✅ 完成
+
+- **实测定案**：代码开关 `svc/gis/src/main.rs:37` 已是 `enable_rls:true`（10-04 已翻）；**真正残留=7 张含 tenant_id(uuid,可空,空表) 的 gis 表仍挂 b5b 当年按"无 tenant_id"建的 `gis_allow_all_*` 全放行策略**（tenant_id 列补回后策略未换，permissive OR 叠加架空隔离）：business_locations/device_location_records/device_locations/devices/factory_maps/location_photos/warehouse_locations
+- **新迁移** `20261003000008_b5_gis_rls.sql`（+103 幂等）：DROP allow-all + CREATE `rls_tenant_isolation`（逐字对齐 finance U5）；gis_map_markers 保留等价 tenant_isolation 不动；geofences/track_positions/schema_defense_ledger 设计内 RLS-off
+- **双库账本**：**权威台账口径澄清=public**（5432 mes=292/iam=49 为陈旧碎片，public 325 为团队实际维护）；收敛后**磁盘 328 = 5432 public 328 = 5433 public 328**、pending=0、checksum 0；附带对齐 2 条历史手工合成 checksum（20261007204300/01）+ 补记 2 个已提交未记账迁移；checksums.txt +1、validate.sh 0 error
+- **跨租户实测**（topems_app）：无 GUC=2/A=1/B=1/nil=2/C=0、带 A 身份插 B 被 RLS 拒绝、superuser 全见、清理
+- **commit**：`01114b5df`（含迁移+checksums.txt；**附带项**：lefthook migration-validate 钩子自动将工作树既有 `scripts/deploy/rollback.sh` 一并暂存进提交，非手动 add，已注明）
+- **残留**：5432 mes/iam 台账碎片未动（建议后续单独台账归并）
+
+### B6 lib/shared-db rls.rs 池化 GUC 修复 — ✅ 完成
+
+- **根因**：旧 `rls_middleware` 对 `&PgPool` 借连接 `set_config`——(a) 借连接不生效（GUC 不落在查询连接，RLS 形同虚设）(b) 归还残留污染（跨租户泄漏）
+- **修复**（`lib/shared-db/src/rls.rs` +8/−6）：兜底分支对齐 `tenant_rls`（无租户头/非法 UUID/失败时不触碰连接池——带租户请求已在独占连接 set→run→RESET→归还）；`clear_tenant_context` 补废弃注释；RLS 隔离语义零改动。参照物带租户分支 10-07 已由并行线改好（`b214cf196`）
+- **验证**：`cargo check --workspace` 0 错、clippy 0、shared-db 163/163、依赖方（integration 182/mobile 246/portal 608/shared-bootstrap 120/unified-core 552）、多租户隔离 18+16、双门禁 exit 0、pre-commit 24 钩子全绿
+- **commit**：`337c22fd5`（仅 rls.rs）
+- **残留**：中间件独占连接 GUC 对 handler 非主防线（tenant_rls 既有设计：业务 SQL 显式 WHERE 为主防线、RLS 纵深防御）
+
+### B8 dev:core + shared-types DTS — ✅ 完成（10-06 已落地，本批实测确认）
+
+- **实测确认**：修复已由 `99b6f5c6c`（2026-10-06，已 push origin/main）完成=移除根 package.json `dev:core` 死脚本 + 移除 `@types/dompurify` deprecated stub（dompurify@3.4.16 自带类型，不丢功能）
+- **验证（本批复测）**：根 package.json 无 dev:core/build:core、前端链 grep 0 残留；`pnpm --filter @topems/shared-types build` DTS 全绿无 TS2688；web typecheck+生产构建 exit 0；desktop typecheck exit 0；mobile 无 build 脚本（既有形态）
+- **commit**：无新提交（修复已在 HEAD==origin/main；TODO.md 第16行记录的 `eca99460b` 为另一台机器未 push 提交，实际落地为 `99b6f5c6c`）
+
+### B9 GIS leaflet 3 测试 — ✅ 完成（10-06 已落地，本批复现验证）
+
+- **根因**：react-leaflet mock 缺 `useMap`/`useMapEvents` 导出（GisMapTemplate.tsx:168 等调用崩溃）——mock 缺失非环境依赖（leaflet 已模块级 mock 为 div 桩，jsdom 无需 canvas/无头浏览器）
+- **修复**：`b5d725395`（2026-10-06 已合并）：mock 返回对象补 `useMap`（含 fitBounds 等 stub）+ `useMapEvents: () => vi.fn()`
+- **验证（本批复现）**：临时删除两导出复现 R1 基线（3 failed/12 passed，`No "useMapEvents" export`）→ 还原后 **10 文件 109 测试全绿**（component 58 + gis-api 51）
+- **commit**：无新提交（修复已在 HEAD）
+
+### A5 全库 FORCE RLS 无策略审计 + 策略补齐（B 口径） — ✅ 完成
+
+- **用户拍板**：运行时角色维持 topems（superuser）不纳入受限访问；本批拆"FORCE RLS 无策略"脚枪；切换受限角色为后置条件（B6 完成→策略已就位→切连接角色→六链路回归）
+- **全库审计**（`scripts/audit/audit-force-rls-no-policy.sql` 只读幂等）：RLS=ON 零 policy 表 **5432=57 / 5433=60**——有 tenant_id(uuid) 业务表 27/29（补齐目标）+ 无 tenant_id 平台表 30/31（仅登记不混做）+ FORCE 空转表 173/192（U5-C 型登记）；**erp_master_data_refs 已有 rls_tenant_isolation 策略（R-7b 残留自行消解）**；非空目标表数据均为单租户或 tenant_id 全 NULL（安全）
+- **新迁移** `20261003000009_a5_rls_policies_align.sql`（114 行幂等）：动态扫描全库非系统 schema「RLS=ON+零 policy+含 tenant_id」基表 → ENABLE+FORCE + `rls_tenant_isolation`（uuid/text 双分支逐字对齐 U5/B5；GUC 未设/空/nil/tenant_id IS NULL 放行）；5432 命中 27 / 5433 命中 29；二次执行零 NOTICE
+- **双库账本**：**磁盘 329 = 5432 public 329 = 5433 public 329**、checksum 0、双向独有 0；checksums.txt +1、validate.sh 0 error；权威=public（iam/mes 陈旧碎片未碰）
+- **NOSUPERUSER 验证**（topems_app 于 integration.core_inter_module_sync，已清理）：superuser 全见=2（零变化）、无 GUC=2、GUC A/B/C=1/1/0、nil=2、带 A 插 B=42501 拒绝、带 A 插 A=放行；迁移后复扫「零 policy 且含 tenant_id」=**0/0**
+- **附带（门禁死锁解除）**：`svc/wms/src/models/mod.rs:15` 残留死声明 `pub mod transfer;`（transfer.rs 已删、全仓零引用、E0583 致 wms 离线编译失败）按 765c67139 先例删 1 行；sqlx 缓存 32 个子目录去重合并到根 `.sqlx/`（165→197 queries）
+- **commit**：`351bababa`（迁移+审计脚本+wms 死声明+sqlx 缓存）
+- **残留登记**：无 tenant_id 平台表 30/31 张（建议按角色 permissive 或补列，待专项决策）；FORCE 空转表 173/192 张（建议后续按 U5-C 同构单独成批）；5432 mes/iam 台账碎片（台账归并另议）
+
+### 协作说明
+
+- B8/B9 任务前提基于旧快照（dev:core/DTS 与 GIS mock 已由并行线 10-06 提前落地并 push），本批以"复现+实测确认"收口，未制造空提交
+- B5/A5 双库口径重要更新：**权威账本=public._sqlx_migrations**（5432 mes=292 为 10-07 对账前陈旧碎片）；收敛终态 329=329=329
+- 全部提交未 push；未动已应用迁移文件、未动 TODO.md 既有条目、未 `git add -A`
