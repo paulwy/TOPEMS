@@ -4,13 +4,13 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, empty_params, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::inbound_order::list_inbound_orders;
-use api_state::{api_state, empty_params, super_claims};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
@@ -94,7 +94,13 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
     let claims = super_claims();
     let mut params = empty_params();
     params.status = status;
-    let resp = list_inbound_orders(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
+    let resp = list_inbound_orders(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
     resp.0
         .data
         .clone()

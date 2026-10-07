@@ -5,12 +5,12 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::{super_claims, test_app_state};
 use axum::extract::{Json, Path, Query, State};
 use axum::Extension;
-use app_state::{super_claims, test_app_state};
 use topems_unified_core::modules::automation::{
-    create_rule, delete_rule, disable_rule, enable_rule, get_rule, list_rules,
-    AutomationRule, CreateRuleRequest, RuleQueryParams,
+    create_rule, delete_rule, disable_rule, enable_rule, get_rule, list_rules, AutomationRule,
+    CreateRuleRequest, RuleQueryParams,
 };
 
 async fn setup_schema(pool: &sqlx::PgPool) {
@@ -69,7 +69,12 @@ fn create_req(name: &str, code: &str) -> CreateRuleRequest {
 async fn create_via_handler(pool: sqlx::PgPool, name: &str, code: &str) -> AutomationRule {
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = create_rule(State(state), Extension(claims), Json(create_req(name, code))).await;
+    let resp = create_rule(
+        State(state),
+        Extension(claims),
+        Json(create_req(name, code)),
+    )
+    .await;
     resp.0.data.unwrap()
 }
 
@@ -89,12 +94,20 @@ async fn create_applies_defaults(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = create_rule(State(state), Extension(claims), Json(create_req("规则A", "RULE_A"))).await;
+    let resp = create_rule(
+        State(state),
+        Extension(claims),
+        Json(create_req("规则A", "RULE_A")),
+    )
+    .await;
     let rule: AutomationRule = resp.0.data.unwrap();
     assert_eq!(rule.name, "规则A");
     assert_eq!(rule.code, "RULE_A");
     assert_eq!(rule.status, "draft");
-    assert_eq!(rule.created_by, Some(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()));
+    assert_eq!(
+        rule.created_by,
+        Some(uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap())
+    );
 }
 
 #[sqlx::test(migrations = false)]

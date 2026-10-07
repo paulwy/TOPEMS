@@ -5,9 +5,9 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::{super_claims, test_app_state};
 use axum::extract::{Path, Query, State};
 use axum::Extension;
-use app_state::{super_claims, test_app_state};
 use topems_unified_core::modules::audit::handlers::{
     get_operation_log, get_operation_log_stats, list_operation_logs,
 };
@@ -172,8 +172,7 @@ async fn get_operation_log_not_found_returns_none(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp =
-        get_operation_log(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
+    let resp = get_operation_log(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
     assert!(resp.0.data.is_none());
 }
 

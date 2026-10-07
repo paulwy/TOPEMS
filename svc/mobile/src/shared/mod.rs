@@ -231,10 +231,11 @@ pub async fn build_service_clients(
             );
             TypedServiceClient::new(
                 MesApi,
-                &std::env::var("MES_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8030".to_string()),
+                &std::env::var("MES_SERVICE_URL")
+                    .unwrap_or_else(|_| "http://localhost:8030".to_string()),
             )
-                .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["mes:admin"]))
-                .expect("hardcoded fallback URL is valid")
+            .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["mes:admin"]))
+            .expect("hardcoded fallback URL is valid")
         }
     };
 

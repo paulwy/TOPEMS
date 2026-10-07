@@ -4,13 +4,13 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::slotting::{list_suggestions, SuggestionQueryParams};
-use api_state::{api_state, super_claims};
 
 fn empty_params() -> SuggestionQueryParams {
     SuggestionQueryParams {
@@ -55,7 +55,13 @@ async fn body_of(pool: sqlx::PgPool, params: SuggestionQueryParams) -> Value {
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
     let claims = super_claims();
-    let resp = list_suggestions(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
+    let resp = list_suggestions(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
     resp.0
         .data
         .clone()

@@ -60,7 +60,12 @@ async fn auth_request(
         "POST" => client.post(&url),
         "PUT" => client.put(&url),
         "DELETE" => client.delete(&url),
-        _ => return Err(TopemsError::ValidationFailed(format!("不支持的 HTTP 方法: {}", method))),
+        _ => {
+            return Err(TopemsError::ValidationFailed(format!(
+                "不支持的 HTTP 方法: {}",
+                method
+            )))
+        }
     };
 
     let request = request

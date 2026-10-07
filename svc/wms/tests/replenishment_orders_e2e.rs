@@ -4,13 +4,13 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, empty_params, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::smart_replenishment::orders::list_orders;
-use api_state::{api_state, empty_params, super_claims};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
@@ -43,8 +43,15 @@ async fn body_of(pool: sqlx::PgPool, page_size: Option<i64>) -> Value {
     let claims = super_claims();
     let mut params = empty_params();
     params.page_size = page_size;
-    let resp = list_orders(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
-    let body = resp.0
+    let resp = list_orders(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
+    let body = resp
+        .0
         .data
         .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));

@@ -44,13 +44,15 @@ async fn sequence_increments_within_tenant(pool: PgPool) {
 
     let mut txn = pool.begin().await.unwrap();
     let no1 = generate_movement_no(&mut txn, tenant).await;
-    sqlx::query("INSERT INTO wms.inventory_movements (id, movement_no, tenant_id) VALUES ($1, $2, $3)")
-        .bind("m-1")
-        .bind(&no1)
-        .bind(tenant)
-        .execute(&mut *txn)
-        .await
-        .unwrap();
+    sqlx::query(
+        "INSERT INTO wms.inventory_movements (id, movement_no, tenant_id) VALUES ($1, $2, $3)",
+    )
+    .bind("m-1")
+    .bind(&no1)
+    .bind(tenant)
+    .execute(&mut *txn)
+    .await
+    .unwrap();
     let no2 = generate_movement_no(&mut txn, tenant).await;
     txn.rollback().await.unwrap();
 
@@ -67,13 +69,15 @@ async fn sequence_is_isolated_per_tenant(pool: PgPool) {
 
     let mut txn = pool.begin().await.unwrap();
     let no_a = generate_movement_no(&mut txn, tenant_a).await;
-    sqlx::query("INSERT INTO wms.inventory_movements (id, movement_no, tenant_id) VALUES ($1, $2, $3)")
-        .bind("m-a")
-        .bind(&no_a)
-        .bind(tenant_a)
-        .execute(&mut *txn)
-        .await
-        .unwrap();
+    sqlx::query(
+        "INSERT INTO wms.inventory_movements (id, movement_no, tenant_id) VALUES ($1, $2, $3)",
+    )
+    .bind("m-a")
+    .bind(&no_a)
+    .bind(tenant_a)
+    .execute(&mut *txn)
+    .await
+    .unwrap();
     let no_b = generate_movement_no(&mut txn, tenant_b).await;
     txn.rollback().await.unwrap();
 

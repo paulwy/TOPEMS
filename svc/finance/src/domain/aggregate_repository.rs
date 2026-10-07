@@ -445,9 +445,9 @@ impl<T: EventStore + Send + Sync> EventSourcedRepository<PayableAggregate>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::Arc;
     use crate::domain::event_store::InMemoryEventStore;
     use crate::domain::events::{VoucherCreatedEvent, VoucherPostedEvent, VoucherReversedEvent};
+    use std::sync::Arc;
 
     fn created_event(voucher_id: &str, voucher_no: &str) -> FinanceDomainEvent {
         FinanceDomainEvent::VoucherCreated(VoucherCreatedEvent {

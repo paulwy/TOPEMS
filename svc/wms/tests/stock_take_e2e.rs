@@ -4,6 +4,7 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
@@ -11,7 +12,6 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::stock_take::list_stock_takes;
 use topems_wms::modules::stock_take::StockTakePaginationParams;
-use api_state::{api_state, super_claims};
 
 fn empty_params() -> StockTakePaginationParams {
     StockTakePaginationParams {
@@ -62,15 +62,18 @@ async fn setup_schema(pool: &sqlx::PgPool) {
     .unwrap();
 }
 
-async fn body_of(
-    pool: sqlx::PgPool,
-    params: StockTakePaginationParams,
-) -> Value {
+async fn body_of(pool: sqlx::PgPool, params: StockTakePaginationParams) -> Value {
     let mut txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
     let claims = super_claims();
-    let resp = list_stock_takes(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
+    let resp = list_stock_takes(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
     resp.0
         .data
         .clone()
@@ -99,7 +102,10 @@ async fn list_returns_inserted_row(pool: sqlx::PgPool) {
 
     let body = body_of(pool, empty_params()).await;
     assert_eq!(body["total"], 1);
-    assert_eq!(body["stock_takes"][0]["stock_take_number"], "ST-20261007-001");
+    assert_eq!(
+        body["stock_takes"][0]["stock_take_number"],
+        "ST-20261007-001"
+    );
 }
 
 #[sqlx::test(migrations = false)]

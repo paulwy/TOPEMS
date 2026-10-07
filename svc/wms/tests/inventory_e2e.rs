@@ -4,14 +4,14 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
-use topems_shared_core::response::ListResponse;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use topems_shared_core::response::ListResponse;
 use topems_wms::modules::inventory::{list_inventory, InventoryPaginationParams};
-use api_state::{api_state, super_claims};
 
 fn empty_params() -> InventoryPaginationParams {
     InventoryPaginationParams {
@@ -66,7 +66,13 @@ async fn body_of(pool: sqlx::PgPool, warehouse_id: Option<uuid::Uuid>) -> ListRe
     let claims = super_claims();
     let mut params = empty_params();
     params.warehouse_id = warehouse_id;
-    let resp = list_inventory(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
+    let resp = list_inventory(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
     resp.0
         .data
         .clone()

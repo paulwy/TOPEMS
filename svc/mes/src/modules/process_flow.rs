@@ -896,7 +896,9 @@ pub async fn update_flow_step(
         equipment_ids.as_deref(),
         standard_time,
         wait_time,
-        body.transfer_time.as_ref().and_then(|t| t.parse::<i32>().ok()),
+        body.transfer_time
+            .as_ref()
+            .and_then(|t| t.parse::<i32>().ok()),
         body.quality_check_required,
         body.description,
         step_uuid,

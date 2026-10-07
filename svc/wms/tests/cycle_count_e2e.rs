@@ -3,20 +3,28 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::cycle_count::{list_cycle_count_configs, CycleCountQueryParams};
-use api_state::{api_state, super_claims};
 
 fn empty_params() -> CycleCountQueryParams {
-    CycleCountQueryParams { page: None, page_size: None, warehouse_id: None, is_active: None }
+    CycleCountQueryParams {
+        page: None,
+        page_size: None,
+        warehouse_id: None,
+        is_active: None,
+    }
 }
 
 async fn setup_schema(pool: &sqlx::PgPool) {
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS wms").execute(pool).await.unwrap();
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
+        .execute(pool)
+        .await
+        .unwrap();
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS wms.cycle_count_configs (
             id UUID PRIMARY KEY,
@@ -36,7 +44,9 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             organization_id UUID
         )"#,
     )
-    .execute(pool).await.unwrap();
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 async fn body_of(pool: sqlx::PgPool, is_active: Option<bool>) -> Value {
@@ -46,8 +56,17 @@ async fn body_of(pool: sqlx::PgPool, is_active: Option<bool>) -> Value {
     let claims = super_claims();
     let mut params = empty_params();
     params.is_active = is_active;
-    let resp = list_cycle_count_configs(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
-    resp.0.data.clone().unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
+    let resp = list_cycle_count_configs(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
+    resp.0
+        .data
+        .clone()
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
 }
 
 async fn insert_config(pool: &sqlx::PgPool, material_category: &str, is_active: bool) {

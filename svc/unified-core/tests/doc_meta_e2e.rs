@@ -5,9 +5,9 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::{super_claims, test_app_state};
 use axum::extract::{Json, Path, State};
 use axum::Extension;
-use app_state::{super_claims, test_app_state};
 use topems_unified_core::modules::doc::handlers::{
     create_folder, create_template, get_template, list_folders, list_templates,
 };
@@ -97,7 +97,12 @@ async fn create_template_returns(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = create_template(State(state), Extension(claims), Json(template_req("报销模板"))).await;
+    let resp = create_template(
+        State(state),
+        Extension(claims),
+        Json(template_req("报销模板")),
+    )
+    .await;
     let tpl: Template = resp.0.data.unwrap();
     assert_eq!(tpl.name, "报销模板");
     assert_eq!(tpl.category.as_deref(), Some("通用"));
@@ -109,7 +114,12 @@ async fn get_template_roundtrip(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool.clone());
     let claims = super_claims();
-    let resp = create_template(State(state), Extension(claims), Json(template_req("合同模板"))).await;
+    let resp = create_template(
+        State(state),
+        Extension(claims),
+        Json(template_req("合同模板")),
+    )
+    .await;
     let tpl: Template = resp.0.data.unwrap();
 
     let state = test_app_state(pool);

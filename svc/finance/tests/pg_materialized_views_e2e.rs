@@ -71,7 +71,9 @@ async fn voucher_created_inserts_summary_row(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let view = PgVoucherSummaryView::new(pool.clone());
 
-    view.handle_event(&created_event("v-1", "VN-1")).await.unwrap();
+    view.handle_event(&created_event("v-1", "VN-1"))
+        .await
+        .unwrap();
 
     let items: Vec<PgVoucherSummary> = view.list(1, 20, None).await.unwrap().0;
     assert_eq!(items.len(), 1);
@@ -87,8 +89,12 @@ async fn voucher_posted_updates_status_and_posted_at(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let view = PgVoucherSummaryView::new(pool.clone());
 
-    view.handle_event(&created_event("v-2", "VN-2")).await.unwrap();
-    view.handle_event(&posted_event("v-2", "VN-2")).await.unwrap();
+    view.handle_event(&created_event("v-2", "VN-2"))
+        .await
+        .unwrap();
+    view.handle_event(&posted_event("v-2", "VN-2"))
+        .await
+        .unwrap();
 
     let got = view.get_by_id("v-2").await.unwrap().unwrap();
     assert_eq!(got.status, "Posted");
@@ -101,8 +107,12 @@ async fn voucher_reversed_updates_status(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let view = PgVoucherSummaryView::new(pool.clone());
 
-    view.handle_event(&created_event("v-3", "VN-3")).await.unwrap();
-    view.handle_event(&reversed_event("v-3", "VN-3")).await.unwrap();
+    view.handle_event(&created_event("v-3", "VN-3"))
+        .await
+        .unwrap();
+    view.handle_event(&reversed_event("v-3", "VN-3"))
+        .await
+        .unwrap();
 
     let got = view.get_by_id("v-3").await.unwrap().unwrap();
     assert_eq!(got.status, "Reversed");
@@ -114,7 +124,9 @@ async fn rebuild_clears_summary_table(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let view = PgVoucherSummaryView::new(pool.clone());
 
-    view.handle_event(&created_event("v-4", "VN-4")).await.unwrap();
+    view.handle_event(&created_event("v-4", "VN-4"))
+        .await
+        .unwrap();
     view.rebuild().await.unwrap();
 
     let items: Vec<PgVoucherSummary> = view.list(1, 20, None).await.unwrap().0;
@@ -126,7 +138,9 @@ async fn get_by_no_returns_matching_summary(pool: sqlx::PgPool) {
     setup_schema(&pool).await;
     let view = PgVoucherSummaryView::new(pool.clone());
 
-    view.handle_event(&created_event("v-5", "VN-5")).await.unwrap();
+    view.handle_event(&created_event("v-5", "VN-5"))
+        .await
+        .unwrap();
 
     let got = view.get_by_no("VN-5").await.unwrap().unwrap();
     assert_eq!(got.id, "v-5");
