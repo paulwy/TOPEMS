@@ -1,5 +1,6 @@
 pub mod api_client;
 pub mod crypto;
+pub mod error;
 pub mod ipc;
 pub mod keystore;
 pub mod offline_cache;

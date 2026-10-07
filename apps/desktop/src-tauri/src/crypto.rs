@@ -1,3 +1,4 @@
+use crate::error::DesktopError;
 use aes_gcm::{
     aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
@@ -9,7 +10,7 @@ use std::fs;
 use std::io::Write;
 use std::path::PathBuf;
 
-fn get_app_data_dir() -> Result<PathBuf, String> {
+fn get_app_data_dir() -> Result<PathBuf, DesktopError> {
     let dirs = directories::ProjectDirs::from("com", "topems", "TOPEMS")
         .ok_or_else(|| "Failed to get project directories".to_string())?;
     Ok(dirs.data_local_dir().to_path_buf())
@@ -55,10 +56,10 @@ pub fn get_or_create_key() -> [u8; 32] {
     key
 }
 
-pub fn encrypt_token(token: &str) -> Result<String, String> {
+pub fn encrypt_token(token: &str) -> Result<String, DesktopError> {
     let key = get_or_create_key();
     let cipher = Aes256Gcm::new_from_slice(&key)
-        .map_err(|e| format!("Failed to create cipher: {}", e))?;
+        .map_err(|e| DesktopError(format!("Failed to create cipher: {}", e)))?;
 
     let mut nonce_bytes = [0u8; 12];
     rand::rngs::OsRng.fill_bytes(&mut nonce_bytes);
@@ -66,7 +67,7 @@ pub fn encrypt_token(token: &str) -> Result<String, String> {
 
     let ciphertext = cipher
         .encrypt(nonce, token.as_bytes())
-        .map_err(|e| format!("Encryption failed: {}", e))?;
+        .map_err(|e| DesktopError(format!("Encryption failed: {}", e)))?;
 
     let mut combined = Vec::with_capacity(12 + ciphertext.len());
     combined.extend_from_slice(&nonce_bytes);
@@ -75,17 +76,17 @@ pub fn encrypt_token(token: &str) -> Result<String, String> {
     Ok(STANDARD.encode(&combined))
 }
 
-pub fn decrypt_token(encrypted: &str) -> Result<String, String> {
+pub fn decrypt_token(encrypted: &str) -> Result<String, DesktopError> {
     let key = get_or_create_key();
     let cipher = Aes256Gcm::new_from_slice(&key)
-        .map_err(|e| format!("Failed to create cipher: {}", e))?;
+        .map_err(|e| DesktopError(format!("Failed to create cipher: {}", e)))?;
 
     let combined = STANDARD
         .decode(encrypted)
-        .map_err(|e| format!("Failed to decode base64: {}", e))?;
+        .map_err(|e| DesktopError(format!("Failed to decode base64: {}", e)))?;
 
     if combined.len() < 12 {
-        return Err("Encrypted data too short".to_string());
+        return Err(DesktopError("Encrypted data too short".to_string()));
     }
 
     let (nonce_bytes, ciphertext) = combined.split_at(12);
@@ -93,8 +94,8 @@ pub fn decrypt_token(encrypted: &str) -> Result<String, String> {
 
     let plaintext = cipher
         .decrypt(nonce, ciphertext)
-        .map_err(|e| format!("Decryption failed: {}", e))?;
+        .map_err(|e| DesktopError(format!("Decryption failed: {}", e)))?;
 
     String::from_utf8(plaintext)
-        .map_err(|e| format!("UTF-8 conversion failed: {}", e))
+        .map_err(|e| DesktopError(format!("UTF-8 conversion failed: {}", e)))
 }

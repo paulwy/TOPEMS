@@ -1,6 +1,7 @@
 //! Stronghold 加密存储实现 + FileKeyStore fallback stub
 //! 迁移自原 keystore.rs（V251 接入 tauri-plugin-stronghold）
 
+use crate::error::DesktopError;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tauri_plugin_stronghold::stronghold::Stronghold;
@@ -29,13 +30,13 @@ impl Default for FileKeyStore {
 }
 
 impl KeyStore for FileKeyStore {
-    fn set(&self, _key: &str, _value: &str) -> Result<(), String> {
-        Err("FileKeyStore: Not implemented yet (fallback only)".to_string())
+    fn set(&self, _key: &str, _value: &str) -> Result<(), DesktopError> {
+        Err(DesktopError("FileKeyStore: Not implemented yet (fallback only)".to_string()))
     }
-    fn get(&self, _key: &str) -> Result<Option<String>, String> {
+    fn get(&self, _key: &str) -> Result<Option<String>, DesktopError> {
         Ok(None)
     }
-    fn delete(&self, _key: &str) -> Result<(), String> {
+    fn delete(&self, _key: &str) -> Result<(), DesktopError> {
         Ok(())
     }
 }
@@ -62,16 +63,16 @@ impl StrongholdKeyStore {
     }
 
     /// 初始化 Stronghold：加载或创建快照 + 确保 client 存在
-    pub fn init(&mut self) -> Result<(), String> {
+    pub fn init(&mut self) -> Result<(), DesktopError> {
         if self.stronghold.is_some() {
             return Ok(());
         }
         let stronghold = Stronghold::new(&self.path, self.password.clone())
-            .map_err(|e| format!("Stronghold init failed: {}", e))?;
+            .map_err(|e| DesktopError(format!("Stronghold init failed: {}", e)))?;
         if stronghold.load_client(DEFAULT_CLIENT).is_err() {
             stronghold
                 .create_client(DEFAULT_CLIENT)
-                .map_err(|e| format!("Stronghold create_client failed: {}", e))?;
+                .map_err(|e| DesktopError(format!("Stronghold create_client failed: {}", e)))?;
         }
         self.stronghold = Some(stronghold);
         Ok(())
@@ -88,62 +89,62 @@ impl StrongholdKeyStore {
     }
 
     /// 将内存中变更持久化到快照文件
-    pub fn save(&self) -> Result<(), String> {
+    pub fn save(&self) -> Result<(), DesktopError> {
         match &self.stronghold {
-            Some(s) => s.save().map_err(|e| format!("Stronghold save failed: {}", e)),
-            None => Err("Stronghold not initialized".to_string()),
+            Some(s) => s.save().map_err(|e| DesktopError(format!("Stronghold save failed: {}", e))),
+            None => Err(DesktopError("Stronghold not initialized".to_string())),
         }
     }
 }
 
 impl KeyStore for StrongholdKeyStore {
-    fn set(&self, key: &str, value: &str) -> Result<(), String> {
+    fn set(&self, key: &str, value: &str) -> Result<(), DesktopError> {
         let stronghold = self
             .stronghold
             .as_ref()
             .ok_or_else(|| "Stronghold not initialized".to_string())?;
         let client = stronghold
             .get_client(DEFAULT_CLIENT)
-            .map_err(|e| format!("Stronghold get_client failed: {}", e))?;
+            .map_err(|e| DesktopError(format!("Stronghold get_client failed: {}", e)))?;
         client
             .store()
             .insert(key.as_bytes().to_vec(), value.as_bytes().to_vec(), None)
-            .map_err(|e| format!("Stronghold store insert failed: {}", e))?;
+            .map_err(|e| DesktopError(format!("Stronghold store insert failed: {}", e)))?;
         Ok(())
     }
 
-    fn get(&self, key: &str) -> Result<Option<String>, String> {
+    fn get(&self, key: &str) -> Result<Option<String>, DesktopError> {
         let stronghold = self
             .stronghold
             .as_ref()
             .ok_or_else(|| "Stronghold not initialized".to_string())?;
         let client = stronghold
             .get_client(DEFAULT_CLIENT)
-            .map_err(|e| format!("Stronghold get_client failed: {}", e))?;
+            .map_err(|e| DesktopError(format!("Stronghold get_client failed: {}", e)))?;
         let bytes = client
             .store()
             .get(key.as_ref())
-            .map_err(|e| format!("Stronghold store get failed: {}", e))?;
+            .map_err(|e| DesktopError(format!("Stronghold store get failed: {}", e)))?;
         match bytes {
             Some(b) => String::from_utf8(b)
                 .map(Some)
-                .map_err(|e| format!("Stronghold value is not valid UTF-8: {}", e)),
+                .map_err(|e| DesktopError(format!("Stronghold value is not valid UTF-8: {}", e))),
             None => Ok(None),
         }
     }
 
-    fn delete(&self, key: &str) -> Result<(), String> {
+    fn delete(&self, key: &str) -> Result<(), DesktopError> {
         let stronghold = self
             .stronghold
             .as_ref()
             .ok_or_else(|| "Stronghold not initialized".to_string())?;
         let client = stronghold
             .get_client(DEFAULT_CLIENT)
-            .map_err(|e| format!("Stronghold get_client failed: {}", e))?;
+            .map_err(|e| DesktopError(format!("Stronghold get_client failed: {}", e)))?;
         client
             .store()
             .delete(key.as_ref())
-            .map_err(|e| format!("Stronghold store delete failed: {}", e))?;
+            .map_err(|e| DesktopError(format!("Stronghold store delete failed: {}", e)))?;
         Ok(())
     }
 }

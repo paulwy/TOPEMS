@@ -1,3 +1,4 @@
+use crate::error::DesktopError;
 use crate::offline_cache;
 use reqwest::Client;
 use serde::de::DeserializeOwned;
@@ -73,11 +74,11 @@ pub fn get_api_base_url() -> String {
         .unwrap_or_else(|_| DEFAULT_API_BASE_URL.to_string())
 }
 
-pub fn create_client() -> Result<Client, String> {
+pub fn create_client() -> Result<Client, DesktopError> {
     Client::builder()
         .timeout(Duration::from_secs(API_TIMEOUT_SECONDS))
         .build()
-        .map_err(|e| format!("Failed to create HTTP client: {}", e))
+        .map_err(|e| DesktopError(format!("Failed to create HTTP client: {}", e)))
 }
 
 fn is_network_error(e: &reqwest::Error) -> bool {
@@ -134,13 +135,13 @@ pub fn unregister_cancel_token(request_id: &str) {
     CANCEL_TOKENS.lock().unwrap().remove(request_id);
 }
 
-pub fn cancel_request(request_id: &str) -> Result<(), String> {
+pub fn cancel_request(request_id: &str) -> Result<(), DesktopError> {
     let tokens = CANCEL_TOKENS.lock().unwrap();
     if let Some(tx) = tokens.get(request_id) {
         let _ = tx.send(true);
         Ok(())
     } else {
-        Err(format!("Request {} not found", request_id))
+        Err(DesktopError(format!("Request {} not found", request_id)))
     }
 }
 
@@ -173,7 +174,7 @@ pub async fn get<T: DeserializeOwned + serde::Serialize>(
     params: Option<&[(&str, &str)]>,
     token: Option<&str>,
     request_id: Option<&str>,
-) -> Result<T, String> {
+) -> Result<T, DesktopError> {
     let base_url = get_api_base_url();
     let url = if let Some(params) = params {
         let query: String = params
@@ -202,7 +203,7 @@ pub async fn get<T: DeserializeOwned + serde::Serialize>(
     for attempt in 0..=MAX_RETRIES {
         if is_cancelled(&cancel_rx) {
             update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-            return Err("Request cancelled by user".to_string());
+            return Err(DesktopError("Request cancelled by user".to_string()));
         }
         if attempt > 0 {
             retry_count += 1;
@@ -230,7 +231,7 @@ pub async fn get<T: DeserializeOwned + serde::Serialize>(
                     if !api_response.success {
                         let err = api_response.error.unwrap_or_else(|| "Unknown API error".to_string());
                         update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-                        return Err(err);
+                        return Err(DesktopError(err));
                     }
 
                     if let Some(ref data) = api_response.data {
@@ -242,7 +243,7 @@ pub async fn get<T: DeserializeOwned + serde::Serialize>(
                     update_metrics(true, retry_count, start.elapsed().as_millis() as u64);
                     return api_response
                         .data
-                        .ok_or_else(|| "No data in API response".to_string());
+                        .ok_or_else(|| DesktopError("No data in API response".to_string()));
                 } else if status.as_u16() >= 500 && status.as_u16() < 600 {
                     let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                     last_error = Some(format!(
@@ -262,12 +263,12 @@ pub async fn get<T: DeserializeOwned + serde::Serialize>(
                 } else {
                     let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                     update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-                    return Err(format!(
+                    return Err(DesktopError(format!(
                         "API error: {} {} - {}",
                         status.as_u16(),
                         status.canonical_reason().unwrap_or("Unknown"),
                         error_text
-                    ));
+                    )));
                 }
             }
             Err(e) => {
@@ -294,7 +295,7 @@ pub async fn get<T: DeserializeOwned + serde::Serialize>(
     }
 
     update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-    Err(last_error.unwrap_or_else(|| "All retry attempts exhausted".to_string()))
+    Err(DesktopError(last_error.unwrap_or_else(|| "All retry attempts exhausted".to_string())))
 }
 
 #[allow(dead_code)]
@@ -304,7 +305,7 @@ pub async fn post<T: DeserializeOwned, B: Serialize>(
     body: &B,
     token: Option<&str>,
     request_id: Option<&str>,
-) -> Result<T, String> {
+) -> Result<T, DesktopError> {
     let base_url = get_api_base_url();
     let url = format!("{}{}", base_url, path);
 
@@ -324,7 +325,7 @@ pub async fn post<T: DeserializeOwned, B: Serialize>(
     for attempt in 0..=MAX_RETRIES {
         if is_cancelled(&cancel_rx) {
             update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-            return Err("Request cancelled by user".to_string());
+            return Err(DesktopError("Request cancelled by user".to_string()));
         }
         if attempt > 0 {
             retry_count += 1;
@@ -352,13 +353,13 @@ pub async fn post<T: DeserializeOwned, B: Serialize>(
                     if !api_response.success {
                         let err = api_response.error.unwrap_or_else(|| "Unknown API error".to_string());
                         update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-                        return Err(err);
+                        return Err(DesktopError(err));
                     }
 
                     update_metrics(true, retry_count, start.elapsed().as_millis() as u64);
                     return api_response
                         .data
-                        .ok_or_else(|| "No data in API response".to_string());
+                        .ok_or_else(|| DesktopError("No data in API response".to_string()));
                 } else if status.as_u16() >= 500 && status.as_u16() < 600 {
                     let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                     last_error = Some(format!(
@@ -378,12 +379,12 @@ pub async fn post<T: DeserializeOwned, B: Serialize>(
                 } else {
                     let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                     update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-                    return Err(format!(
+                    return Err(DesktopError(format!(
                         "API error: {} {} - {}",
                         status.as_u16(),
                         status.canonical_reason().unwrap_or("Unknown"),
                         error_text
-                    ));
+                    )));
                 }
             }
             Err(e) => {
@@ -416,7 +417,7 @@ pub async fn post<T: DeserializeOwned, B: Serialize>(
     }
 
     update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-    Err(last_error.unwrap_or_else(|| "All retry attempts exhausted".to_string()))
+    Err(DesktopError(last_error.unwrap_or_else(|| "All retry attempts exhausted".to_string())))
 }
 
 #[allow(dead_code)]
@@ -426,7 +427,7 @@ pub async fn put<T: DeserializeOwned, B: Serialize>(
     body: &B,
     token: Option<&str>,
     request_id: Option<&str>,
-) -> Result<T, String> {
+) -> Result<T, DesktopError> {
     let base_url = get_api_base_url();
     let url = format!("{}{}", base_url, path);
 
@@ -446,7 +447,7 @@ pub async fn put<T: DeserializeOwned, B: Serialize>(
     for attempt in 0..=MAX_RETRIES {
         if is_cancelled(&cancel_rx) {
             update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-            return Err("Request cancelled by user".to_string());
+            return Err(DesktopError("Request cancelled by user".to_string()));
         }
         if attempt > 0 {
             retry_count += 1;
@@ -474,13 +475,13 @@ pub async fn put<T: DeserializeOwned, B: Serialize>(
                     if !api_response.success {
                         let err = api_response.error.unwrap_or_else(|| "Unknown API error".to_string());
                         update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-                        return Err(err);
+                        return Err(DesktopError(err));
                     }
 
                     update_metrics(true, retry_count, start.elapsed().as_millis() as u64);
                     return api_response
                         .data
-                        .ok_or_else(|| "No data in API response".to_string());
+                        .ok_or_else(|| DesktopError("No data in API response".to_string()));
                 } else if status.as_u16() >= 500 && status.as_u16() < 600 {
                     let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                     last_error = Some(format!(
@@ -500,12 +501,12 @@ pub async fn put<T: DeserializeOwned, B: Serialize>(
                 } else {
                     let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                     update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-                    return Err(format!(
+                    return Err(DesktopError(format!(
                         "API error: {} {} - {}",
                         status.as_u16(),
                         status.canonical_reason().unwrap_or("Unknown"),
                         error_text
-                    ));
+                    )));
                 }
             }
             Err(e) => {
@@ -538,7 +539,7 @@ pub async fn put<T: DeserializeOwned, B: Serialize>(
     }
 
     update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-    Err(last_error.unwrap_or_else(|| "All retry attempts exhausted".to_string()))
+    Err(DesktopError(last_error.unwrap_or_else(|| "All retry attempts exhausted".to_string())))
 }
 
 #[allow(dead_code)]
@@ -547,7 +548,7 @@ pub async fn delete<T: DeserializeOwned + Default>(
     path: &str,
     token: Option<&str>,
     request_id: Option<&str>,
-) -> Result<T, String> {
+) -> Result<T, DesktopError> {
     let base_url = get_api_base_url();
     let url = format!("{}{}", base_url, path);
 
@@ -567,7 +568,7 @@ pub async fn delete<T: DeserializeOwned + Default>(
     for attempt in 0..=MAX_RETRIES {
         if is_cancelled(&cancel_rx) {
             update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-            return Err("Request cancelled by user".to_string());
+            return Err(DesktopError("Request cancelled by user".to_string()));
         }
         if attempt > 0 {
             retry_count += 1;
@@ -595,7 +596,7 @@ pub async fn delete<T: DeserializeOwned + Default>(
                     if !api_response.success {
                         let err = api_response.error.unwrap_or_else(|| "Unknown API error".to_string());
                         update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-                        return Err(err);
+                        return Err(DesktopError(err));
                     }
 
                     let val = api_response.data.unwrap_or_default();
@@ -620,12 +621,12 @@ pub async fn delete<T: DeserializeOwned + Default>(
                 } else {
                     let error_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                     update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-                    return Err(format!(
+                    return Err(DesktopError(format!(
                         "API error: {} {} - {}",
                         status.as_u16(),
                         status.canonical_reason().unwrap_or("Unknown"),
                         error_text
-                    ));
+                    )));
                 }
             }
             Err(e) => {
@@ -657,5 +658,5 @@ pub async fn delete<T: DeserializeOwned + Default>(
     }
 
     update_metrics(false, retry_count, start.elapsed().as_millis() as u64);
-    Err(last_error.unwrap_or_else(|| "All retry attempts exhausted".to_string()))
+    Err(DesktopError(last_error.unwrap_or_else(|| "All retry attempts exhausted".to_string())))
 }

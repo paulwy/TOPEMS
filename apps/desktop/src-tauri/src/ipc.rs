@@ -1,3 +1,4 @@
+use crate::error::DesktopError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -92,11 +93,11 @@ lazy_static::lazy_static! {
     pub static ref TOKEN_EXPIRY: Mutex<Option<i64>> = Mutex::new(None);
 }
 
-fn get_runtime() -> Result<tokio::runtime::Runtime, String> {
-    tokio::runtime::Runtime::new().map_err(|e| format!("Failed to create Tokio runtime: {}", e))
+fn get_runtime() -> Result<tokio::runtime::Runtime, DesktopError> {
+    tokio::runtime::Runtime::new().map_err(|e| DesktopError(format!("Failed to create Tokio runtime: {}", e)))
 }
 
-fn api_get<T>(path: &str, params: Option<&[(&str, &str)]>, request_id: Option<&str>) -> Result<T, String>
+fn api_get<T>(path: &str, params: Option<&[(&str, &str)]>, request_id: Option<&str>) -> Result<T, DesktopError>
 where
     T: serde::de::DeserializeOwned + Clone + serde::Serialize + Default,
 {
@@ -108,7 +109,7 @@ where
     })
 }
 
-fn api_post<T>(path: &str, body: &serde_json::Value, request_id: Option<&str>) -> Result<T, String>
+fn api_post<T>(path: &str, body: &serde_json::Value, request_id: Option<&str>) -> Result<T, DesktopError>
 where
     T: serde::de::DeserializeOwned + Clone + serde::Serialize + Default,
 {
@@ -120,7 +121,7 @@ where
     })
 }
 
-fn api_put<T>(path: &str, body: &serde_json::Value, request_id: Option<&str>) -> Result<T, String>
+fn api_put<T>(path: &str, body: &serde_json::Value, request_id: Option<&str>) -> Result<T, DesktopError>
 where
     T: serde::de::DeserializeOwned + Clone + serde::Serialize + Default,
 {
@@ -132,7 +133,7 @@ where
     })
 }
 
-fn api_delete(path: &str, request_id: Option<&str>) -> Result<(), String> {
+fn api_delete(path: &str, request_id: Option<&str>) -> Result<(), DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -141,7 +142,7 @@ fn api_delete(path: &str, request_id: Option<&str>) -> Result<(), String> {
     })
 }
 
-fn ok_or_err<T: Clone + serde::Serialize>(result: Result<T, String>, error_msg: &str) -> Result<ApiResponse<T>, String> {
+fn ok_or_err<T: Clone + serde::Serialize>(result: Result<T, DesktopError>, error_msg: &str) -> Result<ApiResponse<T>, DesktopError> {
     match result {
         Ok(data) => Ok(ApiResponse::ok(data)),
         Err(e) => {
@@ -157,7 +158,7 @@ pub fn get_issue_list(
     status: Option<String>,
     project_id: Option<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<Vec<Issue>>, String> {
+) -> Result<ApiResponse<Vec<Issue>>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -196,7 +197,7 @@ pub fn create_issue(
     project_id: Option<String>,
     assignee: Option<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<Issue>, String> {
+) -> Result<ApiResponse<Issue>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -231,7 +232,7 @@ pub fn update_issue(
     status: Option<String>,
     assignee: Option<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<Issue>, String> {
+) -> Result<ApiResponse<Issue>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -261,7 +262,7 @@ pub fn delete_issue(
     _app: AppHandle,
     id: String,
     request_id: Option<String>,
-) -> Result<ApiResponse<()>, String> {
+) -> Result<ApiResponse<()>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -285,7 +286,7 @@ pub fn get_issue_detail(
     _app: AppHandle,
     id: String,
     request_id: Option<String>,
-) -> Result<ApiResponse<Issue>, String> {
+) -> Result<ApiResponse<Issue>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -308,7 +309,7 @@ pub fn get_issue_detail(
 pub fn get_project_list(
     _app: AppHandle,
     request_id: Option<String>,
-) -> Result<ApiResponse<Vec<Project>>, String> {
+) -> Result<ApiResponse<Vec<Project>>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -334,7 +335,7 @@ pub fn create_project(
     description: Option<String>,
     members: Option<Vec<String>>,
     request_id: Option<String>,
-) -> Result<ApiResponse<Project>, String> {
+) -> Result<ApiResponse<Project>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -367,7 +368,7 @@ pub fn update_project(
     description: Option<String>,
     members: Option<Vec<String>>,
     request_id: Option<String>,
-) -> Result<ApiResponse<Project>, String> {
+) -> Result<ApiResponse<Project>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -397,7 +398,7 @@ pub fn delete_project(
     _app: AppHandle,
     id: String,
     request_id: Option<String>,
-) -> Result<ApiResponse<()>, String> {
+) -> Result<ApiResponse<()>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -421,7 +422,7 @@ pub fn batch_create_issues(
     _app: AppHandle,
     issues: Vec<serde_json::Value>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let body = serde_json::json!({ "items": issues });
     ok_or_err(api_post("/tickets/batch", &body, request_id.as_deref()), "Failed to batch create issues")
 }
@@ -431,7 +432,7 @@ pub fn batch_delete_issues(
     _app: AppHandle,
     ids: Vec<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<()>, String> {
+) -> Result<ApiResponse<()>, DesktopError> {
     let body = serde_json::json!({ "ids": ids });
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
@@ -448,7 +449,7 @@ pub fn batch_update_issues(
     _app: AppHandle,
     updates: Vec<serde_json::Value>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let body = serde_json::json!({ "items": updates });
     ok_or_err(api_put("/tickets/batch", &body, request_id.as_deref()), "Failed to batch update issues")
 }
@@ -458,7 +459,7 @@ pub fn batch_create_projects(
     _app: AppHandle,
     projects: Vec<serde_json::Value>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let body = serde_json::json!({ "items": projects });
     ok_or_err(api_post("/projects/batch", &body, request_id.as_deref()), "Failed to batch create projects")
 }
@@ -468,7 +469,7 @@ pub fn batch_delete_projects(
     _app: AppHandle,
     ids: Vec<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<()>, String> {
+) -> Result<ApiResponse<()>, DesktopError> {
     let body = serde_json::json!({ "ids": ids });
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
@@ -489,7 +490,7 @@ pub fn get_audit_logs(
     from: Option<String>,
     to: Option<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let mut params: Vec<(&str, String)> = vec![];
     if let Some(ref a) = action { params.push(("action", a.clone())); }
     if let Some(ref t) = target_type { params.push(("target_type", t.clone())); }
@@ -510,7 +511,7 @@ pub fn export_data(
     format: Option<String>,
     filters: Option<serde_json::Value>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let body = serde_json::json!({
         "resource_type": resource_type,
         "format": format.unwrap_or_else(|| "csv".to_string()),
@@ -520,13 +521,13 @@ pub fn export_data(
 }
 
 #[tauri::command]
-pub fn cancel_requests() -> Result<ApiResponse<()>, String> {
+pub fn cancel_requests() -> Result<ApiResponse<()>, DesktopError> {
     api_client::cancel_all_requests();
     Ok(ApiResponse::ok(()))
 }
 
 #[tauri::command]
-pub fn cancel_request(request_id: String) -> Result<ApiResponse<()>, String> {
+pub fn cancel_request(request_id: String) -> Result<ApiResponse<()>, DesktopError> {
     match api_client::cancel_request(&request_id) {
         Ok(()) => Ok(ApiResponse::ok(())),
         Err(e) => Ok(ApiResponse::err(e)),
@@ -534,7 +535,7 @@ pub fn cancel_request(request_id: String) -> Result<ApiResponse<()>, String> {
 }
 
 #[tauri::command]
-pub fn get_active_requests() -> Result<ApiResponse<Vec<String>>, String> {
+pub fn get_active_requests() -> Result<ApiResponse<Vec<String>>, DesktopError> {
     let requests = api_client::get_active_requests();
     Ok(ApiResponse::ok(requests))
 }
@@ -542,13 +543,13 @@ pub fn get_active_requests() -> Result<ApiResponse<Vec<String>>, String> {
 // --- Offline Mode Commands ---
 
 #[tauri::command]
-pub fn get_sync_queue() -> Result<ApiResponse<Vec<offline_cache::CachedRequest>>, String> {
+pub fn get_sync_queue() -> Result<ApiResponse<Vec<offline_cache::CachedRequest>>, DesktopError> {
     let queue = offline_cache::get_queue();
     Ok(ApiResponse::ok(queue))
 }
 
 #[tauri::command]
-pub fn flush_sync() -> Result<ApiResponse<usize>, String> {
+pub fn flush_sync() -> Result<ApiResponse<usize>, DesktopError> {
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
     match offline_cache::flush_sync_queue(&client, token.as_deref()) {
@@ -558,7 +559,7 @@ pub fn flush_sync() -> Result<ApiResponse<usize>, String> {
 }
 
 #[tauri::command]
-pub fn set_offline(offline: bool) -> Result<ApiResponse<()>, String> {
+pub fn set_offline(offline: bool) -> Result<ApiResponse<()>, DesktopError> {
     offline_cache::set_offline_mode(offline);
     let mode = if offline { "offline" } else { "online" };
     info!("Offline mode set to: {}", mode);
@@ -566,7 +567,7 @@ pub fn set_offline(offline: bool) -> Result<ApiResponse<()>, String> {
 }
 
 #[tauri::command]
-pub fn get_offline_status() -> Result<ApiResponse<serde_json::Value>, String> {
+pub fn get_offline_status() -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let offline = offline_cache::is_offline();
     let pending_count = offline_cache::get_queue().len();
     let cached_responses = {
@@ -582,20 +583,20 @@ pub fn get_offline_status() -> Result<ApiResponse<serde_json::Value>, String> {
 }
 
 #[tauri::command]
-pub fn set_token(token: Option<String>) -> Result<ApiResponse<()>, String> {
+pub fn set_token(token: Option<String>) -> Result<ApiResponse<()>, DesktopError> {
     api_client::set_auth_token(token);
     info!("Auth token updated in Tauri backend secure storage");
     Ok(ApiResponse::ok(()))
 }
 
 #[tauri::command]
-pub fn get_token() -> Result<ApiResponse<Option<String>>, String> {
+pub fn get_token() -> Result<ApiResponse<Option<String>>, DesktopError> {
     let token = api_client::get_auth_token();
     Ok(ApiResponse::ok(token))
 }
 
 #[tauri::command]
-pub fn clear_token() -> Result<ApiResponse<()>, String> {
+pub fn clear_token() -> Result<ApiResponse<()>, DesktopError> {
     api_client::clear_auth_token_persistent();
     info!("Auth token cleared from Tauri backend secure storage");
     Ok(ApiResponse::ok(()))
@@ -604,10 +605,10 @@ pub fn clear_token() -> Result<ApiResponse<()>, String> {
 #[tauri::command]
 pub fn set_user_info(
     data: String,
-) -> Result<ApiResponse<()>, String> {
+) -> Result<ApiResponse<()>, DesktopError> {
     info!("set_user_info called with data length: {}", data.len());
     let parsed: serde_json::Value = serde_json::from_str(&data)
-        .map_err(|e| format!("Failed to parse user data JSON: {}", e))?;
+        .map_err(|e| DesktopError(format!("Failed to parse user data JSON: {}", e)))?;
 
     let user_json = parsed.get("user_json")
         .cloned()
@@ -641,14 +642,14 @@ pub fn set_user_info(
 }
 
 #[tauri::command]
-pub fn get_user_info() -> Result<ApiResponse<Option<UserInfo>>, String> {
+pub fn get_user_info() -> Result<ApiResponse<Option<UserInfo>>, DesktopError> {
     let info = USER_INFO.lock().unwrap();
     let result = info.clone();
     Ok(ApiResponse::ok(result))
 }
 
 #[tauri::command]
-pub fn clear_user_info() -> Result<ApiResponse<()>, String> {
+pub fn clear_user_info() -> Result<ApiResponse<()>, DesktopError> {
     let mut info = USER_INFO.lock().unwrap();
     *info = None;
     info!("User info cleared from Tauri backend storage");
@@ -656,7 +657,7 @@ pub fn clear_user_info() -> Result<ApiResponse<()>, String> {
 }
 
 #[tauri::command]
-pub fn set_token_expiry(ts: i64) -> Result<ApiResponse<()>, String> {
+pub fn set_token_expiry(ts: i64) -> Result<ApiResponse<()>, DesktopError> {
     info!("set_token_expiry called: {}", ts);
     let mut expiry = TOKEN_EXPIRY.lock().unwrap();
     *expiry = Some(ts);
@@ -665,7 +666,7 @@ pub fn set_token_expiry(ts: i64) -> Result<ApiResponse<()>, String> {
 }
 
 #[tauri::command]
-pub fn clear_token_expiry() -> Result<ApiResponse<()>, String> {
+pub fn clear_token_expiry() -> Result<ApiResponse<()>, DesktopError> {
     let mut expiry = TOKEN_EXPIRY.lock().unwrap();
     *expiry = None;
     info!("Token expiry cleared from Tauri backend storage");
@@ -673,7 +674,7 @@ pub fn clear_token_expiry() -> Result<ApiResponse<()>, String> {
 }
 
 #[tauri::command]
-pub fn is_token_valid() -> Result<ApiResponse<bool>, String> {
+pub fn is_token_valid() -> Result<ApiResponse<bool>, DesktopError> {
     let expiry = TOKEN_EXPIRY.lock().unwrap();
     let valid = match *expiry {
         Some(ts) => {
@@ -686,19 +687,19 @@ pub fn is_token_valid() -> Result<ApiResponse<bool>, String> {
 }
 
 #[tauri::command]
-pub fn get_token_expiry() -> Result<ApiResponse<Option<i64>>, String> {
+pub fn get_token_expiry() -> Result<ApiResponse<Option<i64>>, DesktopError> {
     let expiry = TOKEN_EXPIRY.lock().unwrap();
     Ok(ApiResponse::ok(*expiry))
 }
 
 #[tauri::command]
-pub fn get_metrics() -> Result<ApiResponse<api_client::ApiMetrics>, String> {
+pub fn get_metrics() -> Result<ApiResponse<api_client::ApiMetrics>, DesktopError> {
     let metrics = api_client::get_metrics();
     Ok(ApiResponse::ok(metrics))
 }
 
 #[tauri::command]
-pub fn get_device_info(_app: AppHandle) -> Result<ApiResponse<DeviceInfo>, String> {
+pub fn get_device_info(_app: AppHandle) -> Result<ApiResponse<DeviceInfo>, DesktopError> {
     let device = DeviceInfo {
         id: format!(
             "device-{}",
@@ -721,7 +722,7 @@ pub fn get_device_info(_app: AppHandle) -> Result<ApiResponse<DeviceInfo>, Strin
 pub fn get_plugin_list(
     _app: AppHandle,
     request_id: Option<String>,
-) -> Result<ApiResponse<Vec<PluginInfo>>, String> {
+) -> Result<ApiResponse<Vec<PluginInfo>>, DesktopError> {
     let runtime = get_runtime()?;
     let client = api_client::create_client()?;
     let token = api_client::get_auth_token();
@@ -761,7 +762,7 @@ pub fn get_user_list(
     per_page: Option<u32>,
     search: Option<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let mut params: Vec<(&str, String)> = vec![];
     if let Some(p) = page {
         params.push(("page", p.to_string()));
@@ -784,7 +785,7 @@ pub fn get_user(
     _app: AppHandle,
     id: String,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     ok_or_err(api_get(&format!("/users/{}", id), None, request_id.as_deref()), "Failed to get user")
 }
 
@@ -796,7 +797,7 @@ pub fn create_user(
     role: Option<String>,
     department: Option<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let body = serde_json::json!({
         "username": username,
         "email": email,
@@ -815,7 +816,7 @@ pub fn update_user(
     role: Option<String>,
     department: Option<String>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let body = serde_json::json!({
         "username": username,
         "email": email,
@@ -830,7 +831,7 @@ pub fn delete_user(
     _app: AppHandle,
     id: String,
     request_id: Option<String>,
-) -> Result<ApiResponse<()>, String> {
+) -> Result<ApiResponse<()>, DesktopError> {
     ok_or_err(api_delete(&format!("/users/{}", id), request_id.as_deref()), "Failed to delete user")
 }
 
@@ -838,7 +839,7 @@ pub fn delete_user(
 pub fn get_role_list(
     _app: AppHandle,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     ok_or_err(api_get("/roles", None, request_id.as_deref()), "Failed to get role list")
 }
 
@@ -849,7 +850,7 @@ pub fn create_role(
     description: Option<String>,
     permissions: Option<Vec<String>>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let body = serde_json::json!({
         "name": name,
         "description": description,
@@ -866,7 +867,7 @@ pub fn update_role(
     description: Option<String>,
     permissions: Option<Vec<String>>,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     let body = serde_json::json!({
         "name": name,
         "description": description,
@@ -880,7 +881,7 @@ pub fn delete_role(
     _app: AppHandle,
     id: String,
     request_id: Option<String>,
-) -> Result<ApiResponse<()>, String> {
+) -> Result<ApiResponse<()>, DesktopError> {
     ok_or_err(api_delete(&format!("/roles/{}", id), request_id.as_deref()), "Failed to delete role")
 }
 
@@ -888,7 +889,7 @@ pub fn delete_role(
 pub fn check_health(
     _app: AppHandle,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     ok_or_err(api_get("/health", None, request_id.as_deref()), "Health check failed")
 }
 
@@ -896,12 +897,12 @@ pub fn check_health(
 pub fn get_system_config(
     _app: AppHandle,
     request_id: Option<String>,
-) -> Result<ApiResponse<serde_json::Value>, String> {
+) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     ok_or_err(api_get("/system/config", None, request_id.as_deref()), "Failed to get system config")
 }
 
 #[tauri::command]
-pub fn handle_message(_app: AppHandle, message: IpcMessage) -> Result<ApiResponse<serde_json::Value>, String> {
+pub fn handle_message(_app: AppHandle, message: IpcMessage) -> Result<ApiResponse<serde_json::Value>, DesktopError> {
     if message.api_version != "1.0" {
         return Ok(ApiResponse::err(format!(
             "Unsupported API version: {}. Supported: 1.0",
@@ -935,7 +936,7 @@ pub fn handle_message(_app: AppHandle, message: IpcMessage) -> Result<ApiRespons
 }
 
 #[tauri::command]
-pub fn subscribe(_app: AppHandle, event: String, window_label: String) -> Result<ApiResponse<()>, String> {
+pub fn subscribe(_app: AppHandle, event: String, window_label: String) -> Result<ApiResponse<()>, DesktopError> {
     let mut subs = SUBSCRIPTIONS.lock().unwrap();
     subs.entry(event.clone())
         .or_insert_with(Vec::new)
@@ -946,7 +947,7 @@ pub fn subscribe(_app: AppHandle, event: String, window_label: String) -> Result
 }
 
 #[tauri::command]
-pub fn unsubscribe(_app: AppHandle, event: String, window_label: String) -> Result<ApiResponse<()>, String> {
+pub fn unsubscribe(_app: AppHandle, event: String, window_label: String) -> Result<ApiResponse<()>, DesktopError> {
     let mut subs = SUBSCRIPTIONS.lock().unwrap();
     if let Some(windows) = subs.get_mut(&event) {
         windows.retain(|w| w != &window_label);

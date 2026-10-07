@@ -1,5 +1,6 @@
 //! 迁移逻辑: auth_token.enc -> Stronghold + JSON 导入
 
+use crate::error::DesktopError;
 use std::collections::HashMap;
 use std::path::Path;
 
@@ -50,16 +51,16 @@ pub fn migrate_auth_token(stronghold: &StrongholdKeyStore) -> MigrationResult {
 ///
 /// 输入格式: { "key1": "value1", "key2": "value2" }
 /// 事务性: 任一条 set 失败则不 save（内存变更未持久化）
-pub fn import_json(stronghold: &StrongholdKeyStore, path: &Path) -> Result<usize, String> {
+pub fn import_json(stronghold: &StrongholdKeyStore, path: &Path) -> Result<usize, DesktopError> {
     let content = std::fs::read_to_string(path)
-        .map_err(|e| format!("read json failed: {}", e))?;
+        .map_err(|e| DesktopError(format!("read json failed: {}", e)))?;
     let map: HashMap<String, String> = serde_json::from_str(&content)
-        .map_err(|e| format!("parse json failed: {}", e))?;
+        .map_err(|e| DesktopError(format!("parse json failed: {}", e)))?;
     let count = map.len();
     for (k, v) in &map {
         stronghold
             .set(k, v)
-            .map_err(|e| format!("set key {} failed: {}", k, e))?;
+            .map_err(|e| DesktopError(format!("set key {} failed: {}", k, e)))?;
     }
     stronghold.save()?;
     Ok(count)

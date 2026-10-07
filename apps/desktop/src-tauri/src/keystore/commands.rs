@@ -1,5 +1,6 @@
 //! Tauri IPC 命令层（原有 3 个 + 新增 4 个）
 
+use crate::error::DesktopError;
 use std::path::Path;
 
 use serde::Serialize;
@@ -11,7 +12,7 @@ use super::store::KeyStore;
 use super::stronghold::StrongholdKeyStore;
 
 /// 构造已解锁的 StrongholdKeyStore（用主密码初始化）
-fn stronghold_for(app: &tauri::AppHandle) -> Result<StrongholdKeyStore, String> {
+fn stronghold_for(app: &tauri::AppHandle) -> Result<StrongholdKeyStore, DesktopError> {
     let master = ensure_unlocked(app).map_err(|e| match e {
         UnlockError::KeychainUnavailable(m) => format!("Keychain unavailable: {}", m),
         UnlockError::StrongholdInitFailed(m) => format!("Stronghold init failed: {}", m),
@@ -32,7 +33,7 @@ pub async fn keystore_set(
     key: String,
     value: String,
     _password: Option<String>,
-) -> Result<(), String> {
+) -> Result<(), DesktopError> {
     let sh = stronghold_for(&app)?;
     sh.set(&key, &value)?;
     sh.save()
@@ -43,7 +44,7 @@ pub async fn keystore_get(
     app: tauri::AppHandle,
     key: String,
     _password: Option<String>,
-) -> Result<Option<String>, String> {
+) -> Result<Option<String>, DesktopError> {
     let sh = stronghold_for(&app)?;
     sh.get(&key)
 }
@@ -53,7 +54,7 @@ pub async fn keystore_delete(
     app: tauri::AppHandle,
     key: String,
     _password: Option<String>,
-) -> Result<(), String> {
+) -> Result<(), DesktopError> {
     let sh = stronghold_for(&app)?;
     sh.delete(&key)?;
     sh.save()
@@ -67,7 +68,7 @@ pub struct UnlockStatus {
 }
 
 #[tauri::command]
-pub async fn keystore_unlocked_status(app: tauri::AppHandle) -> Result<UnlockStatus, String> {
+pub async fn keystore_unlocked_status(app: tauri::AppHandle) -> Result<UnlockStatus, DesktopError> {
     let path = app
         .path()
         .app_config_dir()
@@ -85,7 +86,7 @@ pub async fn keystore_unlocked_status(app: tauri::AppHandle) -> Result<UnlockSta
             first_run,
             keychain_available: false,
         }),
-        Err(UnlockError::StrongholdInitFailed(e)) => Err(e),
+        Err(UnlockError::StrongholdInitFailed(e)) => Err(DesktopError(e)),
     }
 }
 
@@ -93,7 +94,7 @@ pub async fn keystore_unlocked_status(app: tauri::AppHandle) -> Result<UnlockSta
 pub async fn keystore_unlock_with_password(
     app: tauri::AppHandle,
     password: String,
-) -> Result<(), String> {
+) -> Result<(), DesktopError> {
     let path = app
         .path()
         .app_config_dir()
@@ -110,7 +111,7 @@ pub struct MigrateStatus {
 }
 
 #[tauri::command]
-pub async fn keystore_migrate_status(app: tauri::AppHandle) -> Result<MigrateStatus, String> {
+pub async fn keystore_migrate_status(app: tauri::AppHandle) -> Result<MigrateStatus, DesktopError> {
     let sh = stronghold_for(&app)?;
     let r = migrate_auth_token(&sh);
     Ok(match r {
@@ -138,7 +139,7 @@ pub struct ImportResult {
 pub async fn keystore_import_json(
     app: tauri::AppHandle,
     path: String,
-) -> Result<ImportResult, String> {
+) -> Result<ImportResult, DesktopError> {
     let sh = stronghold_for(&app)?;
     let count = import_json(&sh, Path::new(&path))?;
     Ok(ImportResult { imported: count })

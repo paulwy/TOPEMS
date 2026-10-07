@@ -1,3 +1,4 @@
+use crate::error::DesktopError;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::fs;
@@ -52,15 +53,15 @@ fn get_offline_flag_path() -> PathBuf {
     get_cache_dir().join("offline.json")
 }
 
-fn ensure_cache_dir() -> Result<(), String> {
+fn ensure_cache_dir() -> Result<(), DesktopError> {
     let dir = get_cache_dir();
     if !dir.exists() {
-        fs::create_dir_all(&dir).map_err(|e| format!("Failed to create cache directory: {}", e))?;
+        fs::create_dir_all(&dir).map_err(|e| DesktopError(format!("Failed to create cache directory: {}", e)))?;
     }
     Ok(())
 }
 
-pub fn enqueue_request(req: CachedRequest) -> Result<(), String> {
+pub fn enqueue_request(req: CachedRequest) -> Result<(), DesktopError> {
     {
         let mut queue = SYNC_QUEUE.lock().unwrap();
         queue.push_back(req);
@@ -87,7 +88,7 @@ pub fn cache_get_response(
     params: Option<&[(&str, &str)]>,
     data: serde_json::Value,
     ttl_seconds: i64,
-) -> Result<(), String> {
+) -> Result<(), DesktopError> {
     let cache_key = if let Some(params) = params {
         let params_str: String = params
             .iter()
@@ -161,7 +162,7 @@ pub fn is_offline() -> bool {
     *IS_OFFLINE.lock().unwrap()
 }
 
-pub fn flush_sync_queue(client: &reqwest::Client, token: Option<&str>) -> Result<usize, String> {
+pub fn flush_sync_queue(client: &reqwest::Client, token: Option<&str>) -> Result<usize, DesktopError> {
     let mut replayed_count = 0;
 
     loop {
@@ -198,7 +199,7 @@ pub fn flush_sync_queue(client: &reqwest::Client, token: Option<&str>) -> Result
         }
 
         let runtime = tokio::runtime::Runtime::new()
-            .map_err(|e| format!("Failed to create runtime: {}", e))?;
+            .map_err(|e| DesktopError(format!("Failed to create runtime: {}", e)))?;
 
         let success = runtime.block_on(async {
             match request_builder.send().await {

@@ -1,6 +1,7 @@
 //! 主密码 helper: get_or_create + ensure_unlocked
 //! 首启随机生成 32B 主密码写入 PlatformKeyStore，启动时读出解锁 Stronghold
 
+use crate::error::DesktopError;
 use base64::{engine::general_purpose::STANDARD, Engine};
 use rand::RngCore;
 
@@ -22,7 +23,7 @@ pub enum UnlockError {
 /// 获取或创建主密码
 /// - 命中 PlatformKeyStore: 返回主密码（base64 编码后的 32B）
 /// - 未命中: 随机生成 32B + base64 编码 + 写入 PlatformKeyStore
-pub fn get_or_create_master_key(platform: &PlatformKeyStore) -> Result<Vec<u8>, String> {
+pub fn get_or_create_master_key(platform: &PlatformKeyStore) -> Result<Vec<u8>, DesktopError> {
     match platform.get(MASTER_KEY_ENTRY)? {
         Some(s) => Ok(s.into_bytes()),
         None => {
@@ -42,7 +43,7 @@ pub fn get_or_create_master_key(platform: &PlatformKeyStore) -> Result<Vec<u8>, 
 pub fn ensure_unlocked(app: &tauri::AppHandle) -> Result<Vec<u8>, UnlockError> {
     let platform = PlatformKeyStore::new();
     let master = get_or_create_master_key(&platform)
-        .map_err(UnlockError::KeychainUnavailable)?;
+        .map_err(|e: DesktopError| UnlockError::KeychainUnavailable(e.to_string()))?;
     // 校验主密码非空（防御性：空密码等于不加密）
     if master.is_empty() {
         return Err(UnlockError::KeychainUnavailable(
