@@ -129,6 +129,9 @@ impl RlsMiddleware {
         Ok(())
     }
 
+    /// ⚠️ 已废弃（B6 同源修复后不再推荐）：与 [`Self::set_tenant_context`] 成对，直接在 `&PgPool`
+    /// 上随机借一条池连接 RESET——只清这一条随机连接，无法保证其它归还连接干净（CORE-06 同类）。
+    /// 当前仓库无调用方；需要请求级租户上下文请使用 [`rls_middleware`]（独占连接 + 归还前 RESET）。
     pub async fn clear_tenant_context(&self) -> Result<(), sqlx::Error> {
         sqlx::query("RESET app.tenant_id")
             .execute(&self.pool)
@@ -285,12 +288,11 @@ pub async fn rls_middleware(
         }
     }
 
-    // 请求处理完成后清空会话级 GUC，防止池化连接被复用时的跨租户残留
-    // （session 级 set_config 在连接归还后仍保留；下一个请求复用该连接
-    //  若未显式设置租户，将读到上一个请求的 tenant_id —— B6 池化 GUC 同源跟进）
-    let resp = next.run(req).await;
-    let _ = sqlx::query("RESET app.tenant_id").execute(&pool).await;
-    resp
+    // 兜底分支（无租户头 / 非法 UUID / acquire 失败 / set 失败）：不触碰连接池。
+    // 带租户请求已在其独占连接上 set→run→RESET→归还，归还连接均为干净状态；
+    // 此处再对 &PgPool 随机借连接 RESET 只清一条随机连接、既无效又重新引入池化借连接反模式，
+    // 与 unified-core tenant_rls 无租户分支语义对齐（不随机借连接"清场"）。
+    next.run(req).await
 }
 
 #[cfg(test)]
