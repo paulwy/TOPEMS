@@ -193,6 +193,7 @@ export const DashboardPage: React.FC = () => {
     >
       <DashboardTemplate
         title=''
+        emptyState={{ show: !loading && !summary }}
         subtitle=''
         breadcrumbs={[
           { label: t('wms.dashboard_page.breadcrumb_home'), href: '/dashboard' },

@@ -422,6 +422,7 @@ const QmsDashboardPage: React.FC = () => {
     <PageContainer>
       <DashboardTemplate
         title=''
+        emptyState={{ show: !effectiveLoading && !effectiveOverview }}
         stats={stats}
         charts={charts}
         quickActions={quickActions}
