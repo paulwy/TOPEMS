@@ -468,6 +468,12 @@
 - **unified-core 集成测试累计 25 用例全绿**（audit 9 + doc 8 + automation 8）
 - P1 handler 层三域解锁完毕：audit/doc/automation
 
+### ✅ 覆盖率验证（2026-10-07，tarpaulin e2e 口径）
+
+- **e2e 集成测试覆盖 453 行**（`cargo tarpaulin -p topems-unified-core --test operation_logs_e2e --test documents_e2e --test automation_e2e`）
+- **覆盖分布**：audit/handlers.rs + audit_query.rs（200+ 展开行）+ automation/mod.rs 全 handler（~200）+ doc/handlers.rs + doc/services（~150）+ shared 基建（AppState/中间件/服务发现）——三盲区从 0 到实际执行覆盖
+- **lib 三域 14.39%**（本轮仅新增 tests/ 未改 src/，数字保持）——lib 与集成测试是互补口径
+
 ## 2026-10-07 第二梯队修复（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第二梯队修复摘要.md`）
 
 ### ✅ 已完成并提交
