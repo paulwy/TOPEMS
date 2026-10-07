@@ -80,7 +80,7 @@
       "undici": "7.29.1",
       "nanoid": "3.3.18",
       "postcss": "8.5.23",
-      "joi": "17.13.7",
+      "joi": "17.13.8",
       "send": "0.19.2",
       "adm-zip": "0.6.1",
       "@xmldom/xmldom": "0.9.12",
@@ -102,7 +102,10 @@
       "qs": "6.16.0",
       "tmp": "0.2.7",
       "esbuild": "0.28.1",
-      "@puppeteer/browsers": "3.2.3"
+      "@puppeteer/browsers": "3.2.3",
+      "shell-quote": "1.11.0",
+      "source-map-js": "1.2.2",
+      "compression": "1.8.2"
     }
   },
   "type": "module"
