@@ -421,7 +421,7 @@ mod tests {
     // ─── P0 补测：ComplianceChecker 合规检查逻辑（2026-10-07，盲区 compliance.rs 0/115）───
     // 用内存 AuditLogService 注入，覆盖职责分离/审计完整性/数据保留/汇总报告。
 
-    use crate::domain::audit_log::{AuditAction, AuditLogQuery, AuditLogService};
+    use crate::domain::audit_log::{AuditAction, AuditLogService};
     use crate::domain::event_store::InMemoryEventStore;
     use std::sync::Arc;
 

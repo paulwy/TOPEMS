@@ -65,22 +65,6 @@ fn is_write_method(m: &Method) -> bool {
     )
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use axum::http::Method;
-
-    #[test]
-    fn write_method_detection() {
-        for m in [Method::POST, Method::PUT, Method::PATCH, Method::DELETE] {
-            assert!(is_write_method(&m), "{m} 应为写方法");
-        }
-        for m in [Method::GET, Method::HEAD, Method::OPTIONS, Method::TRACE] {
-            assert!(!is_write_method(&m), "{m} 不应触发落库");
-        }
-    }
-}
-
 pub fn create_routes() -> Router<AppState> {
     // 注意：Router::layer 只作用于调用时已注册的路由，必须放在所有 nest/route 之后
     // （B10 曾先 layer 后 nest 导致中间件未生效）。
@@ -726,4 +710,20 @@ pub fn create_routes() -> Router<AppState> {
         )
         // B10：写请求后同步落库中间件（必须位于所有路由注册之后才生效）
         .layer(axum::middleware::from_fn(flush_on_write))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use axum::http::Method;
+
+    #[test]
+    fn write_method_detection() {
+        for m in [Method::POST, Method::PUT, Method::PATCH, Method::DELETE] {
+            assert!(is_write_method(&m), "{m} 应为写方法");
+        }
+        for m in [Method::GET, Method::HEAD, Method::OPTIONS, Method::TRACE] {
+            assert!(!is_write_method(&m), "{m} 不应触发落库");
+        }
+    }
 }

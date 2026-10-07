@@ -66,9 +66,9 @@ impl IntegrationEventHandlers {
             event_type,
             event.trace_id
         );
-        Ok(qms_lims_ehs::dispatch(event_type, &event.payload)
+        qms_lims_ehs::dispatch(event_type, &event.payload)
             .await
-            .map_err(|e| TopemsError::BusinessLogic(format!("业务事件编排失败: {}", e)))?)
+            .map_err(|e| TopemsError::BusinessLogic(format!("业务事件编排失败: {}", e)))
     }
 
     async fn record_sync_log(

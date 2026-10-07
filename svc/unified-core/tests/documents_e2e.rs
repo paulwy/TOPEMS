@@ -186,7 +186,6 @@ async fn delete_hides_from_list(pool: sqlx::PgPool) {
     // 软删除后 list 不再返回
     let state = test_app_state(pool.clone());
     let claims = super_claims();
-    let claims = super_claims();
     let resp = list_documents(State(state), Extension(claims)).await;
     let docs: Vec<Document> = resp.0.data.unwrap();
     assert!(docs.is_empty());

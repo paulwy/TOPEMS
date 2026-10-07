@@ -1143,55 +1143,6 @@ pub struct RecordPaginationParams {
     pub page_size: Option<i64>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_enroll_request_deserialize() {
-        let emp = Uuid::new_v4();
-        let json = format!(r#"{{"employee_id":"{}"}}"#, emp);
-        let req: EnrollRequest = serde_json::from_str(&json).expect("deserialize");
-        assert_eq!(req.employee_id, emp);
-    }
-
-    #[test]
-    fn test_enroll_request_deserialize_nil_uuid() {
-        let json = r#"{"employee_id":"00000000-0000-0000-0000-000000000000"}"#;
-        let req: EnrollRequest = serde_json::from_str(json).expect("deserialize");
-        assert_eq!(req.employee_id, Uuid::nil());
-    }
-
-    #[test]
-    fn test_record_pagination_params_deserialize_all_none() {
-        let json = r#"{}"#;
-        let params: RecordPaginationParams = serde_json::from_str(json).expect("deserialize");
-        assert!(params.page.is_none());
-        assert!(params.page_size.is_none());
-    }
-
-    #[test]
-    fn test_record_pagination_params_deserialize_all_some() {
-        let json = r#"{"page":3,"page_size":25}"#;
-        let params: RecordPaginationParams = serde_json::from_str(json).expect("deserialize");
-        assert_eq!(params.page, Some(3));
-        assert_eq!(params.page_size, Some(25));
-    }
-
-    #[test]
-    fn test_record_pagination_params_deserialize_partial() {
-        let json = r#"{"page_size":50}"#;
-        let params: RecordPaginationParams = serde_json::from_str(json).expect("deserialize");
-        assert!(params.page.is_none());
-        assert_eq!(params.page_size, Some(50));
-    }
-
-    #[test]
-    fn test_create_routes_returns_router() {
-        let _router = create_routes();
-    }
-}
-
 // ============================================================================
 // 培训计划启用/停用、培训记录完成（前端契约 /training-plans/{id}/activate 等）
 // ============================================================================
@@ -1299,5 +1250,54 @@ pub async fn complete_record(
                 "更新培训记录状态失败",
             ))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_enroll_request_deserialize() {
+        let emp = Uuid::new_v4();
+        let json = format!(r#"{{"employee_id":"{}"}}"#, emp);
+        let req: EnrollRequest = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(req.employee_id, emp);
+    }
+
+    #[test]
+    fn test_enroll_request_deserialize_nil_uuid() {
+        let json = r#"{"employee_id":"00000000-0000-0000-0000-000000000000"}"#;
+        let req: EnrollRequest = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(req.employee_id, Uuid::nil());
+    }
+
+    #[test]
+    fn test_record_pagination_params_deserialize_all_none() {
+        let json = r#"{}"#;
+        let params: RecordPaginationParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert!(params.page_size.is_none());
+    }
+
+    #[test]
+    fn test_record_pagination_params_deserialize_all_some() {
+        let json = r#"{"page":3,"page_size":25}"#;
+        let params: RecordPaginationParams = serde_json::from_str(json).expect("deserialize");
+        assert_eq!(params.page, Some(3));
+        assert_eq!(params.page_size, Some(25));
+    }
+
+    #[test]
+    fn test_record_pagination_params_deserialize_partial() {
+        let json = r#"{"page_size":50}"#;
+        let params: RecordPaginationParams = serde_json::from_str(json).expect("deserialize");
+        assert!(params.page.is_none());
+        assert_eq!(params.page_size, Some(50));
+    }
+
+    #[test]
+    fn test_create_routes_returns_router() {
+        let _router = create_routes();
     }
 }

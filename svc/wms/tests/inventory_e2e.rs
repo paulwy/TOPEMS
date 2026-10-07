@@ -61,7 +61,7 @@ async fn setup_schema(pool: &sqlx::PgPool) {
 }
 
 async fn body_of(pool: sqlx::PgPool, warehouse_id: Option<uuid::Uuid>) -> ListResponse<Value> {
-    let mut txn = pool.begin().await.unwrap();
+    let txn = pool.begin().await.unwrap();
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
     let claims = super_claims();

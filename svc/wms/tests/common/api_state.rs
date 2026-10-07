@@ -1,8 +1,6 @@
 //! wms 测试公共基建：ApiState 工厂 + 超管 Claims + 空分页参数。
 //! 复用方式：#[path = "common/api_state.rs"] mod api_state;
 
-use axum::extract::Query;
-use serde::Deserialize;
 use std::sync::Arc;
 use std::time::Instant;
 use topems_shared_auth::auth::{AuthState, Claims};
