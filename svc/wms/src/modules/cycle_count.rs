@@ -80,7 +80,7 @@ pub async fn list_cycle_count_configs(
     let result = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
+        SELECT id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE ($1::uuid IS NULL OR warehouse_id = $1)
@@ -177,7 +177,7 @@ pub async fn create_cycle_count_config(
         only_own_schema_query!("wms", r#"
         INSERT INTO wms.cycle_count_configs (id, warehouse_id, location_id, material_category, count_frequency, priority_level, next_count_date, is_active, created_at, updated_at, tenant_id, organization_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, true, $8, $9, $10, '00000000-0000-0000-0000-000000000001')
-        RETURNING id, warehouse_id, location_id, material_category, count_frequency, priority_level, last_count_date, next_count_date, is_active, created_at, updated_at
+        RETURNING id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level, last_count_date, next_count_date, is_active, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -268,7 +268,7 @@ pub async fn get_cycle_count_config(
     let result = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
+        SELECT id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE id = $1 AND deleted_at IS NULL
@@ -328,7 +328,7 @@ pub async fn update_cycle_count_config(
             warehouse_id = $2, location_id = $3, material_category = $4, count_frequency = $5,
             priority_level = $6, next_count_date = $7, updated_at = $8
         WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, warehouse_id, location_id, material_category, count_frequency, priority_level,
+        RETURNING id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                   last_count_date, next_count_date, is_active, created_at, updated_at
         "#
     ))
@@ -501,7 +501,7 @@ pub async fn generate_cycle_count(
     let config = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
+        SELECT id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE id = $1 AND is_active = true AND deleted_at IS NULL
@@ -664,7 +664,7 @@ pub async fn generate_all_cycle_counts(
     let configs = sqlx::query_as::<_, CycleCountConfig>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, warehouse_id, location_id, material_category, count_frequency, priority_level,
+        SELECT id, tenant_id, warehouse_id, location_id, material_category, count_frequency, priority_level,
                last_count_date, next_count_date, is_active, created_at, updated_at
         FROM wms.cycle_count_configs
         WHERE is_active = true AND next_count_date <= $1 AND deleted_at IS NULL
