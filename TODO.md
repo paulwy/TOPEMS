@@ -436,3 +436,9 @@
   - pg_materialized_views **5 集成测试（sqlx::test）** + **修复生产缺陷**：list/get_by_id/get_by_no SELECT 缺 summary/total_amount/posted_at/version 列 → row_to_voucher 必败（测试暴露）
 - ⏳ **unified-core automation/mod.rs（0/618）**：1394 行全 DB/axum handler，单测不可行——**登记为下一批次集成测试**（需 AppState + 路由 + automation 表 DDL）
 - 🧰 测试基建增强：InMemoryEventStore 补 Clone；新增 `Arc<T>: EventStore` blanket impl
+
+### P1 wms 补测进展（2026-10-07）
+
+- ✅ **inventory_movement 移动单号规则 3 集成测试**（sqlx::test 临时库）：空表 000001 / 同 tenant 递增 / 跨 tenant 隔离——generate_movement_no 改 pub（#[doc(hidden)]），commit 10ee91223
+- ⏳ **其余 wms 模块（outbound_order 0/67、stock_take 0/62、slotting 0/52、transfer_order 0/47、smart_replenishment 全家 0/125）**：全内联 DB/axum handler 逻辑（无可测纯函数），单测不可行——登记为**DB 集成测试批次**（feature-gated http_endpoint_tests 模式已有，待 http 端点回归时展开）
+- ℹ️ wms 已有 551 lib 测试覆盖 fsm 42/42、util 55/55、permission 33/38 + 12 状态机路径（cross_module_integration_tests）
