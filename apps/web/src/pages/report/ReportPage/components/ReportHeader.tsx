@@ -21,7 +21,7 @@ const ReportHeader: React.FC<ReportHeaderProps> = ({ onShowBuilder }) => {
         borderColor: 'grey.200',
         position: 'sticky',
         top: 0,
-        zIndex: 10,
+        zIndex: (theme) => theme.zIndex.contentLayer,
       }}
     >
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 2 }}>

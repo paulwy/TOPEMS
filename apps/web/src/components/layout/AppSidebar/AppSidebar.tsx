@@ -229,7 +229,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         boxShadow: 'none',
         overflow: 'hidden',
         ...(isTablet && {
-          zIndex: 100,
+          zIndex: (theme) => theme.zIndex.dropdown,
         }),
       }}
     >

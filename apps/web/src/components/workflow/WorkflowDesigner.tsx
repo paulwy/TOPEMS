@@ -180,7 +180,7 @@ export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({
           backgroundColor: 'common.white',
           borderBottom: '1px solid grey.200',
           boxShadow: `0 1px 3px ${designTokens.colors.action.selected}`,
-          zIndex: 10,
+          zIndex: (theme) => theme.zIndex.contentLayer,
         }}
       >
         <Typography

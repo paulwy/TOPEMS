@@ -36,7 +36,7 @@ export const ChatSettingsModal: React.FC<ChatSettingsModalProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 50,
+        zIndex: designTokens.zIndex.overlay,
       }}
     >
       <div

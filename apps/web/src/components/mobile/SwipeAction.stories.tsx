@@ -160,7 +160,7 @@ export const StaticPreview: Story = {
             right: 0,
             bottom: 0,
             display: 'flex',
-            zIndex: 0,
+            zIndex: (theme) => theme.zIndex.base,
           }}
         >
           <Box
@@ -202,7 +202,13 @@ export const StaticPreview: Story = {
             </Typography>
           </Box>
         </Box>
-        <Box sx={{ transform: 'translateX(-144px)', position: 'relative', zIndex: 1 }}>
+        <Box
+          sx={{
+            transform: 'translateX(-144px)',
+            position: 'relative',
+            zIndex: (theme) => theme.zIndex.raised,
+          }}
+        >
           <ListItem
             title='工作汇报 #RPT-2024-0023'
             subtitle='周报 | 提交时间: 今日 09:30'

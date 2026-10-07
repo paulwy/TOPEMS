@@ -349,7 +349,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         }}
       />
 
-      <Box sx={{ position: 'relative', zIndex: 10 }}>
+      <Box sx={{ position: 'relative', zIndex: (theme) => theme.zIndex.contentLayer }}>
         <Box
           sx={{
             display: 'flex',

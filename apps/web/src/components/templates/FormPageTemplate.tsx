@@ -1336,7 +1336,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         gap: 2,
         position: stickyFooter ? 'sticky' : 'static',
         bottom: stickyFooter ? 0 : 'auto',
-        zIndex: 10,
+        zIndex: (theme) => theme.zIndex.contentLayer,
         mt: 3,
       }}
     >

@@ -78,7 +78,7 @@ const TemplateList: React.FC<TemplateListProps> = ({
               left: 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 1,
+              zIndex: (theme) => theme.zIndex.raised,
               pointerEvents: 'none',
             }}
           >

@@ -442,7 +442,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               left: 0,
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 2,
+              zIndex: (theme) => theme.zIndex.stickyHeader,
               backgroundColor: 'background.paper',
               boxShadow: 1,
             }}
@@ -458,7 +458,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               right: 0,
               top: '50%',
               transform: 'translateY(-50%)',
-              zIndex: 2,
+              zIndex: (theme) => theme.zIndex.stickyHeader,
               backgroundColor: 'background.paper',
               boxShadow: 1,
             }}

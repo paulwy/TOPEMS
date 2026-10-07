@@ -162,7 +162,7 @@ export const TimelineTabContent: React.FC<{
                   width: 40,
                   height: 40,
                   bgcolor: 'primary.main',
-                  zIndex: 1,
+                  zIndex: (theme) => theme.zIndex.raised,
                 }}
               >
                 <PlayCircle size={20} />
@@ -209,7 +209,7 @@ export const TimelineTabContent: React.FC<{
                       width: 40,
                       height: 40,
                       bgcolor: isApproved ? 'success.main' : 'error.main',
-                      zIndex: 1,
+                      zIndex: (theme) => theme.zIndex.raised,
                     }}
                   >
                     {isApproved ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
@@ -304,7 +304,7 @@ export const TimelineTabContent: React.FC<{
                     width: 40,
                     height: 40,
                     bgcolor: 'warning.main',
-                    zIndex: 1,
+                    zIndex: (theme) => theme.zIndex.raised,
                   }}
                 >
                   <Clock size={20} />

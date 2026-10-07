@@ -86,7 +86,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         position: 'fixed',
         inset: 0,
         backgroundColor: 'action.active',
-        zIndex: 40,
+        zIndex: (theme) => theme.zIndex.menuBackdrop,
       }}
       onClick={onClose}
     >

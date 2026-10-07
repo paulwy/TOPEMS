@@ -137,7 +137,7 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
             left: 0,
             bottom: 0,
             display: 'flex',
-            zIndex: 0,
+            zIndex: (theme) => theme.zIndex.base,
           }}
         >
           {leftActions.map((action) => (
@@ -182,7 +182,7 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
             right: 0,
             bottom: 0,
             display: 'flex',
-            zIndex: 0,
+            zIndex: (theme) => theme.zIndex.base,
           }}
         >
           {rightActions.map((action) => (
@@ -224,7 +224,7 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
           transform: `translateX(${translateX}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           position: 'relative',
-          zIndex: 1,
+          zIndex: (theme) => theme.zIndex.raised,
           backgroundColor: 'background.paper',
         }}
       >

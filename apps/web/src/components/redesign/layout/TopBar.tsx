@@ -17,6 +17,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useNavigate } from 'react-router-dom';
 import { AUTH_PATHS } from '@/routes/auth';
 import i18n from '@/i18n';
+import { designTokens } from '@topems/tokens';
 
 export interface TopBarProps {
   onMenuToggle?: () => void;
@@ -202,7 +203,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                 border: '1px solid var(--border-default)',
                 borderRadius: 'var(--radius-md)',
                 boxShadow: 'var(--shadow-topbar)',
-                zIndex: 1000,
+                zIndex: designTokens.zIndex.mobileStepper,
                 overflow: 'hidden',
               }}
             >

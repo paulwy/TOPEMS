@@ -76,7 +76,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 50,
+        zIndex: designTokens.zIndex.overlay,
         backgroundColor: 'common.white',
       }}
     >

@@ -246,7 +246,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           position: 'absolute',
           left: '-9999px',
           top: 0,
-          zIndex: 10000,
+          zIndex: (theme) => theme.zIndex.devToolsPanel,
           p: 2,
           bgcolor: 'primary.main',
           color: 'common.white',

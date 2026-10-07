@@ -327,7 +327,7 @@ const ColorPaletteGrid: Story = {
                     transition: 'transform 0.15s',
                     '&:hover': {
                       transform: 'scaleY(1.15)',
-                      zIndex: 1,
+                      zIndex: (theme) => theme.zIndex.raised,
                     },
                   }}
                 >

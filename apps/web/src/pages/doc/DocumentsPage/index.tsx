@@ -502,7 +502,7 @@ const DocumentsPage: React.FC = () => {
           borderColor: 'divider',
           position: 'sticky',
           top: 0,
-          zIndex: 10,
+          zIndex: (theme) => theme.zIndex.contentLayer,
         }}
       >
         <Box sx={{ maxWidth: 1400, mx: 'auto', px: 3 }}>

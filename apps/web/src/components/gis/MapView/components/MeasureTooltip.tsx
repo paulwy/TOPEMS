@@ -17,7 +17,7 @@ const MeasureTooltip: React.FC<{
         borderRadius: 1,
         boxShadow: designTokens.shadows.lg,
         pointerEvents: 'none',
-        zIndex: 50,
+        zIndex: (theme) => theme.zIndex.overlay,
         left: position[1] + 10,
         top: position[0] - 20,
         transform: 'translateX(-50%)',

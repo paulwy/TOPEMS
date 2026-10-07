@@ -219,7 +219,7 @@ export const Timeline: React.FC<TimelineProps> = ({
                 variant === 'outlined'
                   ? `2px solid ${statusColor[item.status || 'pending']}`
                   : 'none',
-              zIndex: 1,
+              zIndex: (theme) => theme.zIndex.raised,
               cursor: onItemClick ? 'pointer' : 'default',
               '&:hover': onItemClick
                 ? { transform: 'scale(1.1)', transition: 'transform 0.2s' }

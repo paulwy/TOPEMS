@@ -46,7 +46,7 @@ export const HeroSection: React.FC = () => {
           }}
         />
 
-        <Box sx={{ position: 'relative', zIndex: 10 }}>
+        <Box sx={{ position: 'relative', zIndex: (theme) => theme.zIndex.contentLayer }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
             <Box
               sx={{

@@ -151,7 +151,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 boxShadow: designTokens.shadows['2xl'],
                 border: '1px solid grey.200',
                 padding: 4,
-                zIndex: 10,
+                zIndex: designTokens.zIndex.contentLayer,
               }}
             >
               <button

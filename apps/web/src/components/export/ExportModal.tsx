@@ -185,7 +185,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 50,
+        zIndex: (theme) => theme.zIndex.overlay,
         padding: 2,
       }}
     >

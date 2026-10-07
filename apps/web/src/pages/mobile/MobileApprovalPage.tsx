@@ -574,7 +574,7 @@ const MobileApprovalPage: React.FC = () => {
                               : 'grey.300',
                         color: 'common.white',
                         flexShrink: 0,
-                        zIndex: 1,
+                        zIndex: (theme) => theme.zIndex.raised,
                       }}
                     >
                       {step.status === 'completed' ? (

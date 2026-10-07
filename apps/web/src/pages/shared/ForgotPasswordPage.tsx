@@ -199,7 +199,7 @@ const ForgotPasswordPage: React.FC = () => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          zIndex: 10,
+          zIndex: (theme) => theme.zIndex.contentLayer,
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

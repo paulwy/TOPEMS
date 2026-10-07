@@ -185,7 +185,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 50,
+        zIndex: designTokens.zIndex.overlay,
         padding: 4,
       }}
     >
@@ -261,7 +261,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: 'common.white',
-                zIndex: 10,
+                zIndex: designTokens.zIndex.contentLayer,
               }}
             >
               <Loader2
@@ -289,7 +289,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 backgroundColor: 'common.white',
-                zIndex: 10,
+                zIndex: designTokens.zIndex.contentLayer,
               }}
             >
               <AlertCircle

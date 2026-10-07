@@ -202,7 +202,13 @@ export function TableSection<T>({
         {selectable && (
           <TableCell
             padding='checkbox'
-            sx={{ width: 48, position: 'sticky', left: 0, zIndex: 2, bgcolor: stickyBg }}
+            sx={{
+              width: 48,
+              position: 'sticky',
+              left: 0,
+              zIndex: (theme) => theme.zIndex.stickyHeader,
+              bgcolor: stickyBg,
+            }}
           >
             <Checkbox
               indeterminate={
@@ -216,7 +222,13 @@ export function TableSection<T>({
         {isBatchSelectionEnabled && !selectable && (
           <TableCell
             padding='checkbox'
-            sx={{ width: 48, position: 'sticky', left: 0, zIndex: 2, bgcolor: stickyBg }}
+            sx={{
+              width: 48,
+              position: 'sticky',
+              left: 0,
+              zIndex: (theme) => theme.zIndex.stickyHeader,
+              bgcolor: stickyBg,
+            }}
           >
             <Checkbox
               indeterminate={selectedIds.size > 0 && selectedIds.size < data.length}
@@ -231,7 +243,7 @@ export function TableSection<T>({
               width: 60,
               position: selectable ? 'sticky' : 'relative',
               left: selectable ? 48 : 0,
-              zIndex: 2,
+              zIndex: (theme) => theme.zIndex.stickyHeader,
               bgcolor: stickyBg,
             }}
           >
@@ -316,7 +328,7 @@ export function TableSection<T>({
                     transition: (theme) =>
                       theme.transitions.create(['background-color'], { duration: 200 }),
                     '&:hover': { bgcolor: 'primary.main' },
-                    zIndex: 3,
+                    zIndex: (theme) => theme.zIndex.dragHandle,
                   }}
                   title={t('components.components.tablesection.key_3eb3c2')}
                 />
@@ -414,7 +426,12 @@ export function TableSection<T>({
             {selectable && (
               <TableCell
                 padding='checkbox'
-                sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }}
+                sx={{
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: (theme) => theme.zIndex.raised,
+                  bgcolor: 'inherit',
+                }}
               >
                 <Checkbox
                   checked={isSelected}
@@ -428,7 +445,12 @@ export function TableSection<T>({
             {isBatchSelectionEnabled && !selectable && (
               <TableCell
                 padding='checkbox'
-                sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }}
+                sx={{
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: (theme) => theme.zIndex.raised,
+                  bgcolor: 'inherit',
+                }}
               >
                 <Checkbox
                   checked={selectedIds.has(rowId)}
@@ -444,7 +466,7 @@ export function TableSection<T>({
                 sx={{
                   position: selectable ? 'sticky' : 'relative',
                   left: selectable ? 48 : 0,
-                  zIndex: 1,
+                  zIndex: (theme) => theme.zIndex.raised,
                   bgcolor: 'inherit',
                 }}
               >
@@ -481,7 +503,7 @@ export function TableSection<T>({
                   width: 48,
                   position: 'sticky',
                   left: selectable || isBatchSelectionEnabled ? 48 : 0,
-                  zIndex: 1,
+                  zIndex: (theme) => theme.zIndex.raised,
                   bgcolor: 'inherit',
                 }}
               >
@@ -652,13 +674,23 @@ export function TableSection<T>({
         {selectable && (
           <TableCell
             padding='checkbox'
-            sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }}
+            sx={{
+              position: 'sticky',
+              left: 0,
+              zIndex: (theme) => theme.zIndex.raised,
+              bgcolor: 'inherit',
+            }}
           />
         )}
         {isBatchSelectionEnabled && !selectable && (
           <TableCell
             padding='checkbox'
-            sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }}
+            sx={{
+              position: 'sticky',
+              left: 0,
+              zIndex: (theme) => theme.zIndex.raised,
+              bgcolor: 'inherit',
+            }}
           />
         )}
         {showRowNumber && (
@@ -666,7 +698,7 @@ export function TableSection<T>({
             sx={{
               position: selectable ? 'sticky' : 'relative',
               left: selectable ? 48 : 0,
-              zIndex: 1,
+              zIndex: (theme) => theme.zIndex.raised,
               bgcolor: 'inherit',
             }}
           >

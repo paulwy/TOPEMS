@@ -81,7 +81,7 @@ export function DrillDownPanel({
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 50,
+        zIndex: designTokens.zIndex.overlay,
         display: 'flex',
         justifyContent: 'flex-end',
       }}

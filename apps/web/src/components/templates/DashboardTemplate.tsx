@@ -526,7 +526,7 @@ const PlaceholderChart: React.FC<{ config: ChartConfig; isMain?: boolean }> = ({
                 py: 0.5,
                 borderRadius: 1,
                 fontSize: 12,
-                zIndex: 10,
+                zIndex: (theme) => theme.zIndex.contentLayer,
               }}
             >
               {String(data[hovered][xField])}: {String(data[hovered][yFieldKey])}

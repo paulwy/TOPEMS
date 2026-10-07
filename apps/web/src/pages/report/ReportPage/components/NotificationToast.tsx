@@ -14,7 +14,7 @@ const NotificationToast: React.FC<NotificationToastProps> = ({ type, message }) 
         position: 'fixed',
         top: 80,
         right: 16,
-        zIndex: 50,
+        zIndex: (theme) => theme.zIndex.overlay,
         p: 2,
         borderRadius: 3,
         boxShadow: 2,

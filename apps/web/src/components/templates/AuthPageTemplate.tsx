@@ -65,7 +65,7 @@ export const AuthPageTemplate: React.FC<AuthPageTemplateProps> = ({
           width: '100%',
           maxWidth,
           position: 'relative',
-          zIndex: 1,
+          zIndex: (theme) => theme.zIndex.raised,
           display: 'flex',
           flexDirection: 'column',
           alignItems: centerContent ? 'center' : 'stretch',

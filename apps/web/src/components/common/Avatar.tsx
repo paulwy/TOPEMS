@@ -192,7 +192,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
           sx={{
             marginLeft: gap,
             position: 'relative',
-            zIndex: 0,
+            zIndex: (theme) => theme.zIndex.base,
           }}
         >
           <Avatar

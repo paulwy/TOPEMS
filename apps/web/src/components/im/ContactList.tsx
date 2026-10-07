@@ -468,7 +468,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
                         boxShadow: designTokens.shadows.lg,
                         border: '1px solid grey.200',
                         padding: 4,
-                        zIndex: 10,
+                        zIndex: designTokens.zIndex.contentLayer,
                         minWidth: 120,
                       }}
                     >
@@ -638,7 +638,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 50,
+            zIndex: designTokens.zIndex.overlay,
           }}
         >
           <div

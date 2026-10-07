@@ -59,7 +59,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
         borderColor: 'divider',
         position: 'sticky',
         top: 0,
-        zIndex: 50,
+        zIndex: (theme) => theme.zIndex.overlay,
       }}
     >
       <Box

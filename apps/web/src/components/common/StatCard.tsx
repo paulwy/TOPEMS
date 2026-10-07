@@ -512,7 +512,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
         }}
       />
 
-      <Box sx={{ position: 'relative', zIndex: 10 }}>
+      <Box sx={{ position: 'relative', zIndex: (theme) => theme.zIndex.contentLayer }}>
         {/* 标题和图标行 */}
         <Box
           sx={{

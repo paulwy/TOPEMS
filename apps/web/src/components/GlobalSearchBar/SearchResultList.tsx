@@ -188,7 +188,7 @@ export const SearchResultList: React.FC<SearchResultListProps> = ({
       sx={{ maxHeight, overflowY: 'auto' }}
     >
       {loading && (
-        <Box sx={{ position: 'sticky', top: 0, zIndex: 1 }}>
+        <Box sx={{ position: 'sticky', top: 0, zIndex: (theme) => theme.zIndex.raised }}>
           <LinearProgress sx={{ height: 2 }} />
         </Box>
       )}

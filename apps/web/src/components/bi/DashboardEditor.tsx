@@ -39,6 +39,7 @@ import { alpha } from '@mui/material/styles';
 import type { ChartType, ChartDataPoint } from './ChartLibrary';
 import ChartComponent from './ChartLibrary';
 import PivotTable from './PivotTable';
+import { designTokens } from '@topems/tokens';
 
 export interface DashboardWidget {
   id: string;
@@ -390,7 +391,7 @@ export const DashboardEditor: React.FC<{
         cursor: `${position}-resize`,
         backgroundColor: theme.palette.primary.light,
         borderRadius: '50%',
-        zIndex: 10,
+        zIndex: designTokens.zIndex.contentLayer,
         [position]: -6,
       }}
       onMouseDown={(e) =>

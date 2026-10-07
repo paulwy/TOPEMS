@@ -141,7 +141,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         borderRadius: 8,
         boxShadow: designTokens.shadows['2xl'],
         border: '1px solid grey.200',
-        zIndex: 50,
+        zIndex: designTokens.zIndex.overlay,
       }}
     >
       <div

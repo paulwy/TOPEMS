@@ -104,7 +104,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
             borderColor: 'divider',
             position: 'sticky',
             top: 0,
-            zIndex: 10,
+            zIndex: (theme) => theme.zIndex.contentLayer,
           }}
           className='desktop-only'
         >

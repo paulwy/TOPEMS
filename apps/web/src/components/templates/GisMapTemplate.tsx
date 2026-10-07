@@ -197,7 +197,7 @@ function MapControl({
         display: 'flex',
         flexDirection: 'column',
         gap: 1,
-        zIndex: 1000,
+        zIndex: (theme) => theme.zIndex.mobileStepper,
       }}
     >
       <Tooltip title={i18n.t('components.gis_map_template.k6')}>
@@ -416,7 +416,7 @@ function DrawControl({ onDraw, onClear, drawMode }: DrawControlProps) {
         display: 'flex',
         flexDirection: 'column',
         gap: 1,
-        zIndex: 1000,
+        zIndex: (theme) => theme.zIndex.mobileStepper,
         bgcolor: 'background.paper',
         borderRadius: 1,
         padding: 1,
@@ -798,7 +798,7 @@ export function GisMapTemplate({
           display: 'flex',
           flexDirection: 'column',
           gap: 1,
-          zIndex: 1000,
+          zIndex: (theme) => theme.zIndex.mobileStepper,
         }}
       >
         {searchable && (
