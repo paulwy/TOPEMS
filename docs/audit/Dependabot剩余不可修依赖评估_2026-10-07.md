@@ -49,3 +49,28 @@
 - `57c8ebde6` fix(desktop)：DesktopError 错误形态统一
 - `2e8ad5a29` docs(security)：审计报告 Dependabot 处理闭环记录
 - `64927930b` test(desktop)：DesktopError 断言适配
+
+- `5738d8d25` chore(deps)：移除 12 个 svc 孤立 Cargo.lock（jsonwebtoken 误报源）
+- `6e5b5bf65` fix(deps)：vitest ^4.1.11 + desktop rustls 0.23.45
+- `0d402e692` docs(security)：审计报告第五次处理轮（Dependabot 清零）
+
+---
+
+## 五、rsa@0.9.10 专项评估（本地 cargo audit 唯一剩余项）
+
+**漏洞**：RUSTSEC-2023-0071 — **Marvin Attack**（Marvin 攻击）：非恒定时间实现导致私钥信息通过网络可观测的时序侧信道泄漏，理论上可恢复私钥。CVSS 3.1 = **5.9（Medium）**，利用条件为 `AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N`（网络可达但**攻击复杂度高**）。
+
+**修复状态**：**无修复版**。上游 RustCrypto/RSA 自 2023-11 公告至今未修复（crypto-bigint 迁移 PR #394 未关闭该问题，长期跟踪中）；rsa 0.9.10 即当前最高版本。
+
+**影响面（Cargo.lock 反查）**：
+| 依赖方 | 用途 | 实际受影响程度 |
+|---|---|---|
+| jsonwebtoken 10.4.0 | JWT RSA 签名/验签（RS256 等） | 若服务端用 RSA 私钥签发且攻击者可精确网络计时——理论上可测时攻击；现实门槛高（AC:H + 需大量采样） |
+| sqlx-mysql 0.8.6 | MySQL caching_sha2_password 认证 | 仅用服务器公钥做客户端 RSA 加密，**不涉及私钥时序**——不受 Marvin 影响 |
+
+**现实风险评估**：TOPEMS 为内部业务系统，服务处于 TLS 加密通道内，攻击者实施精确网络时序测量需先具备中间人/同网段条件；叠加 AC:H 高复杂度，实际可利用性显著低于理论值。JWT 若使用对称 HS256 或 ECDSA ES256 则完全不受影响（需按部署密钥类型确认）。
+
+**处置建议**：**维持接受（无修复版）**，记录监控条件：
+1. 跟踪 RustCrypto/RSA 上游进展（PR #394 / 新发布）；
+2. 中期 JWT 密钥改造时优先评估 **ES256（ECDSA）** 或常数时间 RSA 实现（ring/aws-lc-rs）替换；
+3. 若服务部署为公网直接暴露且使用 RS256 私钥签发，重新评估为高风险并升级处理优先级。
