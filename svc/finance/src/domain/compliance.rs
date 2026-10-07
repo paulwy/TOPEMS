@@ -417,4 +417,131 @@ mod tests {
             summary,
         });
     }
+
+    // ─── P0 补测：ComplianceChecker 合规检查逻辑（2026-10-07，盲区 compliance.rs 0/115）───
+    // 用内存 AuditLogService 注入，覆盖职责分离/审计完整性/数据保留/汇总报告。
+
+    use crate::domain::audit_log::{AuditAction, AuditLogService, AuditLogQuery};
+    use crate::domain::event_store::InMemoryEventStore;
+    use std::sync::Arc;
+
+    fn checker(audit_log: Arc<AuditLogService>) -> ComplianceChecker<InMemoryEventStore> {
+        ComplianceChecker::new(audit_log)
+    }
+
+    fn log_voucher(
+        audit_log: &AuditLogService,
+        action: AuditAction,
+        actor: &str,
+        voucher_id: &str,
+    ) {
+        audit_log.log_action(action, actor, "Voucher", voucher_id, None);
+    }
+
+    #[test]
+    fn severity_as_str_maps_variants() {
+        assert_eq!(ComplianceSeverity::Critical.as_str(), "Critical");
+        assert_eq!(ComplianceSeverity::High.as_str(), "High");
+        assert_eq!(ComplianceSeverity::Medium.as_str(), "Medium");
+        assert_eq!(ComplianceSeverity::Low.as_str(), "Low");
+        assert_eq!(ComplianceSeverity::Info.as_str(), "Info");
+    }
+
+    #[test]
+    fn segregation_of_duties_no_violation_when_actors_differ() {
+        let audit_log = Arc::new(AuditLogService::new());
+        log_voucher(&audit_log, AuditAction::Create, "alice", "v-1");
+        log_voucher(&audit_log, AuditAction::Post, "bob", "v-1");
+        let checker = checker(audit_log);
+
+        let issues = checker.check_segregation_of_duties(
+            chrono::Utc::now() - chrono::Duration::days(1),
+            chrono::Utc::now() + chrono::Duration::days(1),
+        );
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn segregation_of_duties_detects_same_actor_create_and_post() {
+        let audit_log = Arc::new(AuditLogService::new());
+        log_voucher(&audit_log, AuditAction::Create, "alice", "v-1");
+        log_voucher(&audit_log, AuditAction::Post, "alice", "v-1");
+        let checker = checker(audit_log);
+
+        let issues = checker.check_segregation_of_duties(
+            chrono::Utc::now() - chrono::Duration::days(1),
+            chrono::Utc::now() + chrono::Duration::days(1),
+        );
+        assert_eq!(issues.len(), 1);
+        assert!(matches!(issues[0].severity, ComplianceSeverity::High));
+        assert_eq!(issues[0].category, "SegregationOfDuties");
+        let evidence = issues[0].evidence.clone();
+        assert_eq!(evidence["actor"], "alice");
+        assert!(evidence["violating_voucher_ids"].as_array().is_some());
+    }
+
+    #[test]
+    fn audit_trail_completeness_reports_missing_critical_fields() {
+        let audit_log = Arc::new(AuditLogService::new());
+        audit_log.log_action(AuditAction::Create, "", "Voucher", "v-1", None);
+        let checker = checker(audit_log);
+
+        let issues = checker.check_audit_trail_completeness(
+            chrono::Utc::now() - chrono::Duration::days(1),
+            chrono::Utc::now() + chrono::Duration::days(1),
+        );
+        assert_eq!(issues.len(), 1);
+        assert!(matches!(issues[0].severity, ComplianceSeverity::Medium));
+        assert_eq!(issues[0].category, "AuditTrailCompleteness");
+        assert_eq!(issues[0].evidence["incomplete_log_count"], 1);
+    }
+
+    #[test]
+    fn audit_trail_completeness_ok_when_fields_present() {
+        let audit_log = Arc::new(AuditLogService::new());
+        log_voucher(&audit_log, AuditAction::Create, "alice", "v-1");
+        let checker = checker(audit_log);
+
+        let issues = checker.check_audit_trail_completeness(
+            chrono::Utc::now() - chrono::Duration::days(1),
+            chrono::Utc::now() + chrono::Duration::days(1),
+        );
+        assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn data_retention_reports_expired_logs() {
+        let audit_log = Arc::new(AuditLogService::new());
+        log_voucher(&audit_log, AuditAction::Create, "alice", "v-1");
+        let checker = ComplianceChecker::<InMemoryEventStore>::new(audit_log)
+            .with_retention_days(0);
+
+        let issues = checker.check_data_retention(
+            chrono::Utc::now() - chrono::Duration::days(1),
+            chrono::Utc::now() + chrono::Duration::days(1),
+        );
+        assert_eq!(issues.len(), 1);
+        assert!(matches!(issues[0].severity, ComplianceSeverity::Low));
+        assert_eq!(issues[0].category, "DataRetention");
+        assert_eq!(issues[0].evidence["expired_log_count"], 1);
+    }
+
+    #[test]
+    fn generate_report_aggregates_issues_and_summary() {
+        let audit_log = Arc::new(AuditLogService::new());
+        log_voucher(&audit_log, AuditAction::Create, "alice", "v-1");
+        log_voucher(&audit_log, AuditAction::Post, "alice", "v-1");
+        let checker = checker(audit_log);
+
+        let report = checker.generate_compliance_report(
+            chrono::Utc::now() - chrono::Duration::days(1),
+            chrono::Utc::now() + chrono::Duration::days(1),
+        );
+        // segregation 1 条（create+post 同人）；completeness 0（字段完整）；
+        // retention 0（默认 365 天 cutoff 在一年前，日志不过期）
+        assert_eq!(report.issues.len(), 1);
+        assert_eq!(report.summary.total_issues, 1);
+        assert_eq!(report.summary.high_count, 1);
+        assert!(!report.summary.overall_compliant);
+    }
 }
