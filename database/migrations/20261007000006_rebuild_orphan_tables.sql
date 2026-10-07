@@ -517,14 +517,6 @@ CREATE TABLE IF NOT EXISTS flow.approvals (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS iam._sqlx_migrations (
-    version bigint NOT NULL,
-    description text NOT NULL,
-    installed_on timestamp with time zone DEFAULT now() NOT NULL,
-    success boolean NOT NULL,
-    checksum bytea NOT NULL,
-    execution_time bigint NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS iam.core_billing_invoices (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -1431,14 +1423,6 @@ CREATE TABLE IF NOT EXISTS master_data.core_mdm_reconciliation_log (
     deleted_at timestamp with time zone
 );
 
-CREATE TABLE IF NOT EXISTS mes._sqlx_migrations (
-    version bigint NOT NULL,
-    description text NOT NULL,
-    installed_on timestamp with time zone DEFAULT now() NOT NULL,
-    success boolean NOT NULL,
-    checksum bytea NOT NULL,
-    execution_time bigint NOT NULL
-);
 
 CREATE TABLE IF NOT EXISTS mes.bom_items (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
@@ -4497,12 +4481,6 @@ BEGIN
 END $$;
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."_sqlx_migrations"')) THEN
-        ALTER TABLE "iam"."_sqlx_migrations" ADD CONSTRAINT "_sqlx_migrations_pkey" PRIMARY KEY (version);
-    END IF;
-END $$;
-DO $$
-BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'iam') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_billing_invoices_pkey' AND n.nspname = 'iam' AND con.conrelid = to_regclass('"iam"."core_billing_invoices"')) THEN
         ALTER TABLE "iam"."core_billing_invoices" ADD CONSTRAINT "core_billing_invoices_pkey" PRIMARY KEY (id);
     END IF;
@@ -5093,12 +5071,6 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mdm_reconciliation_log_pkey' AND n.nspname = 'master_data') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = 'core_mdm_reconciliation_log_pkey' AND n.nspname = 'master_data' AND con.conrelid = to_regclass('"master_data"."core_mdm_reconciliation_log"')) THEN
         ALTER TABLE "master_data"."core_mdm_reconciliation_log" ADD CONSTRAINT "core_mdm_reconciliation_log_pkey" PRIMARY KEY (id);
-    END IF;
-END $$;
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'mes') AND NOT EXISTS (SELECT 1 FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE con.conname = '_sqlx_migrations_pkey' AND n.nspname = 'mes' AND con.conrelid = to_regclass('"mes"."_sqlx_migrations"')) THEN
-        ALTER TABLE "mes"."_sqlx_migrations" ADD CONSTRAINT "_sqlx_migrations_pkey" PRIMARY KEY (version);
     END IF;
 END $$;
 DO $$

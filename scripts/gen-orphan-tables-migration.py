@@ -18,6 +18,9 @@ import sys
 def main():
     schema_sql, only_json, out = sys.argv[1], sys.argv[2], sys.argv[3]
     tables = [tuple(x) for x in json.load(open(only_json))]
+    # 排除 sqlx 迁移账本表（_sqlx_migrations 是迁移框架内部表，非业务独有表；
+    # 重建库由 sqlx 自建 public 版，iam/mes 伪账本属历史 search_path 污染，不应复制进迁移链）
+    tables = [t for t in tables if t[1] != "_sqlx_migrations"]
     tset = set(tables)
     lines = open(schema_sql).read().split("\n")
 
