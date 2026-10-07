@@ -632,3 +632,16 @@
 - **ledger GC**：服务下线后台账行残留（一行/服务）——设计 §7 声明不做
 - **全服务灰度**：其余 27 服务零代码改动发版自动生效，建议发版后抽查 unified-core / ehs
 - **台账落 schema**：search_path 差异使台账落各服务自身 schema（wms./gis.）——天然多 schema 隔离，跨库审计需逐 schema 查
+
+## 2026-10-07 BE-08 孤儿候选分批业务确认辅助取证（已完成，报告 `artifacts/audit/orphan-review/孤儿候选分批确认清单.md`）
+
+### ✅ 完成
+- **1891 条 f 类路由四维增强取证**（5 片并行：① handler 完整度 ② 全仓引用 ③ 文件活跃度 ④ 挂载机制），合并校验：总和=1891= triage f 类、重复键 0、11 列一致
+- **分级**：A 强下线候选 **141**（ehs 119 / analytics 17 / wms 5）/ B 需人工确认 **1483** / C 建议保留 **267**；handler 质量 real 1710 / placeholder 176 / unknown 5
+- **关键发现**：① ehs 大面积脚手架 mock（safety/environment/accident 等模块 no-op stub：硬编码 mock 对象/假成功/空 Vec 无 DB）② 活跃度维度全仓无 >3 个月未动文件（2026-07-16 后均被批量重构过），A 级仅靠占位+零引用两条证据 ③ C 级消费方类型：OpenAPI utoipa 文档化（portal 230）/集成测试（unified-core 12 + ai 14 + lims 2）/同进程委托（ehs 2）/scheduler（analytics 1）/GraphQL 变更（monitor 2）④ wms 5 条 A 级为 transfer.rs 已删路由残留（BE-03 死模块清理后 inventory 未刷新，实际已下线）⑤ triage 误判残余修正：mobile push/config 模块注释标前端消费、shared-core 4 条测试桩路由误捕、server 15 条为 /api/communication nest 前缀丢失
+- **产出**：5 片 CSV（artifacts/audit/orphan-review/0[1-5]_*.csv）+ 汇总报告（A 级 141 条全清单 + 每 crate B/C 说明 + 分批确认流程建议：批 0 A 级直接评审 → 批 1-3 B 级按 crate 由大到小，确认模板三选一保留/下线/重构）
+
+### 📋 后续
+- **业务确认**：按报告第六节分批拍板（A 级 141 条优先，ehs/analytics 面最大）；确认"无外部网关/nginx/客户直连"后再走下线（静态口径外）；wms 5 条可直接标记已下线
+- **下线执行**：随模块删除或单条删 route+handler 并同步 OpenAPI；portal C 级 230 条视为"已发布 API"不按孤儿处理
+- 全程只读：无源码改动、无路由删除、未修改任何 inventory/triage/前端 CSV
