@@ -43,8 +43,10 @@ metadata:
 type: Opaque
 stringData:
   POSTGRES_USER: "topems"
-  POSTGRES_PASSWORD: "topems_secret"
-  DATABASE_URL: "postgres://topems_app:topems_app_secret@postgres-service:5432/topems"
+  # ⚠️ 部署前必须替换为真实强密码（kubectl create secret generic topems-db --from-literal=POSTGRES_PASSWORD=<强密码>，
+  #    并同步更新下方 DATABASE_URL 与 deployment 注入）；示例值会导致数据库口令公开，禁止直接部署
+  POSTGRES_PASSWORD: "CHANGE_ME_DEPLOY_SECRET"
+  DATABASE_URL: "postgres://topems_app:CHANGE_ME_DEPLOY_SECRET@postgres-service:5432/topems"
   REDIS_URL: "redis://redis-service:6379"
   # V13.0 Plugin Registration Token (CHANGE IN PRODUCTION!)
   # Generate with: openssl rand -hex 32

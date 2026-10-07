@@ -59,7 +59,8 @@ docker compose -f docker-compose.yml down -v
 复制 `.env.example` 为 `.env` 后按需修改（关键项）：
 
 - `POSTGRES_USER`：数据库用户名（默认 topems）
-- `POSTGRES_PASSWORD`：数据库密码（默认 topems_secret）
+- `POSTGRES_PASSWORD`：数据库密码（**自 2026-10-07 起无默认值**：`topems-docker.sh` 自动生成随机密码，或通过环境变量注入；docker-compose 强制要求提供，缺失即启动失败）
+  > ⚠️ 安全要求：禁止在生产使用示例/默认密码；务必为 PostgreSQL/Redis/RabbitMQ 设置独立强随机密码
 - `POSTGRES_DB`：数据库名（默认 topems）
 - `POSTGRES_PORT`：PostgreSQL 宿主机端口（默认 5432）
 - `REDIS_PORT`：Redis 宿主机端口（默认 6379）

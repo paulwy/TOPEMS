@@ -71,10 +71,10 @@ create_env_file() {
     cat > "$PROJECT_ROOT/docker/.env" << EOF
 # TOPEMS Docker Configuration
 POSTGRES_USER=topems
-POSTGRES_PASSWORD=topems_secret
+POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-$(openssl rand -hex 16)}"  # 默认随机；生产可用环境变量覆盖
 POSTGRES_DB=topems
 POSTGRES_PORT=5432
-REDIS_PASSWORD=topems_redis_secret
+REDIS_PASSWORD="${REDIS_PASSWORD:-$(openssl rand -hex 16)}"  # 默认随机；生产可用环境变量覆盖
 REDIS_PORT=6379
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
 JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:-$(openssl rand -hex 32)}"
