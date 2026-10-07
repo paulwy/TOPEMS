@@ -339,6 +339,7 @@ export const DashboardPage: React.FC = () => {
 
       <DashboardTemplate
         title=''
+        emptyState={{ show: !loading && !stats }}
         subtitle=''
         breadcrumbs={[
           { label: t('crm.common.home'), href: '/dashboard' },

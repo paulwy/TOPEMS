@@ -246,6 +246,7 @@ const CrmDashboardPage: React.FC = () => {
     >
       <DashboardTemplate
         title=''
+        emptyState={{ show: !loading && !serverData }}
         statCards={statCards}
         charts={charts as unknown as ChartCard[]}
         chartCols={3}

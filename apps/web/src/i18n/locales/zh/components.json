@@ -3317,5 +3317,7 @@
   "components.tier.advanced.search.features.1": "语义搜索",
   "components.command_palette.current_domain": "当前域",
   "components.top_bar.settings": "系统设置",
-  "components.top_bar.notifications": "通知"
+  "components.top_bar.notifications": "通知",
+  "components.dashboard_template.k8": "暂无数据",
+  "components.dashboard_template.k9": "暂无仪表盘数据，请稍后刷新或检查数据源"
 }

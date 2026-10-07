@@ -6659,5 +6659,7 @@
     }
   },
   "components.top_bar.settings": "Settings",
-  "components.top_bar.notifications": "Notifications"
+  "components.top_bar.notifications": "Notifications",
+  "components.dashboard_template.k8": "No data",
+  "components.dashboard_template.k9": "No dashboard data yet. Refresh or check the data source."
 }

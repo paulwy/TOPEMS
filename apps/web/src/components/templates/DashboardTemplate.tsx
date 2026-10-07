@@ -21,6 +21,7 @@ import {
   useTheme,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { EmptyState } from '@topems/shared-components';
 import {
   TrendingUp as TrendingUpIcon,
   TrendingDown as TrendingDownIcon,
@@ -666,6 +667,13 @@ export interface DashboardTemplateProps {
   quickActions?: QuickAction[];
   quickActionsTitle?: string;
   loading?: boolean;
+  /** 空态（无数据时显示，show=true 时替代仪表盘内容区） */
+  emptyState?: {
+    show?: boolean;
+    emoji?: string;
+    title?: string;
+    description?: string;
+  };
   onRefresh?: () => void;
   children?: React.ReactNode;
   statCards?: StatCardConfig[];
@@ -714,6 +722,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
   children,
   actions,
   onRefresh,
+  emptyState,
 }) => {
   const resolvedStatCards = useMemo<StatCardConfig[] | undefined>(() => {
     if (statCardsProp && statCardsProp.length > 0) return statCardsProp;
@@ -772,59 +781,71 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
       }}
       actions={headerActions}
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* StatCard 区域 */}
-        {resolvedStatCards && resolvedStatCards.length > 0 && (
-          <Grid
-            container
-            spacing={2}
-          >
-            {resolvedStatCards.map((card, i) => (
-              <Grid
-                key={i}
-                size={{ xs: 12, sm: 6, md: Math.floor(24 / Math.min(resolvedStatCards.length, 4)) }}
-              >
-                <StatCard {...card} />
-              </Grid>
-            ))}
-          </Grid>
-        )}
+      {emptyState?.show ? (
+        <EmptyState
+          emoji={emptyState.emoji || '📊'}
+          title={emptyState.title || i18n.t('components.dashboard_template.k8')}
+          description={emptyState.description || i18n.t('components.dashboard_template.k9')}
+        />
+      ) : (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* StatCard 区域 */}
+          {resolvedStatCards && resolvedStatCards.length > 0 && (
+            <Grid
+              container
+              spacing={2}
+            >
+              {resolvedStatCards.map((card, i) => (
+                <Grid
+                  key={i}
+                  size={{
+                    xs: 12,
+                    sm: 6,
+                    md: Math.floor(24 / Math.min(resolvedStatCards.length, 4)),
+                  }}
+                >
+                  <StatCard {...card} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
 
-        {/* 大图表区域 */}
-        {mainChart && (
-          <PlaceholderChart
-            config={mainChart}
-            isMain
-          />
-        )}
+          {/* 大图表区域 */}
+          {mainChart && (
+            <PlaceholderChart
+              config={mainChart}
+              isMain
+            />
+          )}
 
-        {/* 图表网格 */}
-        {resolvedCharts && resolvedCharts.length > 0 && (
-          <Grid
-            container
-            spacing={2}
-          >
-            {resolvedCharts.map((chart, i) => (
-              <Grid
-                key={i}
-                size={{
-                  xs: 12,
-                  md: 12 / maxCols,
-                  lg: 12 / maxCols,
-                }}
-              >
-                <PlaceholderChart config={chart} />
-              </Grid>
-            ))}
-          </Grid>
-        )}
+          {/* 图表网格 */}
+          {resolvedCharts && resolvedCharts.length > 0 && (
+            <Grid
+              container
+              spacing={2}
+            >
+              {resolvedCharts.map((chart, i) => (
+                <Grid
+                  key={i}
+                  size={{
+                    xs: 12,
+                    md: 12 / maxCols,
+                    lg: 12 / maxCols,
+                  }}
+                >
+                  <PlaceholderChart config={chart} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
 
-        {/* 数据表格 */}
-        {table && <DataTable table={table} />}
+          {/* 数据表格 */}
+          {table && <DataTable table={table} />}
 
-        {/* 子组件 */}
-        {children}
-      </Box>
+          {/* 子组件 */}
+          {children}
+        </Box>
+      )}
     </PageContainer>
   );
 };
