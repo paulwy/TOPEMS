@@ -5,11 +5,15 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
-use axum::extract::{Query, State};
+use axum::extract::{Path, Query, State};
 use axum::Extension;
 use app_state::{super_claims, test_app_state};
-use topems_unified_core::modules::audit::handlers::list_operation_logs;
-use topems_unified_core::modules::audit::models::{OperationLogListResponse, OperationLogQuery};
+use topems_unified_core::modules::audit::handlers::{
+    get_operation_log, get_operation_log_stats, list_operation_logs,
+};
+use topems_unified_core::modules::audit::models::{
+    OperationLog, OperationLogListResponse, OperationLogQuery, OperationLogStatsResponse,
+};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query(
@@ -53,7 +57,13 @@ fn empty_query() -> OperationLogQuery {
     }
 }
 
-async fn insert_log(pool: &sqlx::PgPool, user_name: &str, module: &str, response_status: i32) {
+async fn insert_log(
+    pool: &sqlx::PgPool,
+    user_name: &str,
+    module: &str,
+    response_status: i32,
+) -> uuid::Uuid {
+    let id = uuid::Uuid::new_v4();
     sqlx::query(
         r#"INSERT INTO public.core_operation_logs
            (id, tenant_id, user_id, user_name, module, operation,
@@ -61,7 +71,7 @@ async fn insert_log(pool: &sqlx::PgPool, user_name: &str, module: &str, response
             response_status, ip_address, user_agent, trace_id)
            VALUES ($1, $5, NULL, $2, $3, 'read', 'Voucher', NULL, 'test', '{}', $4, '127.0.0.1', 'test-agent', NULL)"#,
     )
-    .bind(uuid::Uuid::new_v4())
+    .bind(id)
     .bind(user_name)
     .bind(module)
     .bind(response_status)
@@ -69,6 +79,7 @@ async fn insert_log(pool: &sqlx::PgPool, user_name: &str, module: &str, response
     .execute(pool)
     .await
     .unwrap();
+    id
 }
 
 async fn call_list(pool: sqlx::PgPool, query: OperationLogQuery) -> OperationLogListResponse {
@@ -139,4 +150,54 @@ async fn list_respects_pagination(pool: sqlx::PgPool) {
     assert_eq!(body.total, 3);
     assert_eq!(body.items.len(), 1);
     assert_eq!(body.page, 2);
+}
+
+#[sqlx::test(migrations = false)]
+async fn get_operation_log_returns_log(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let id = insert_log(&pool, "alice", "finance", 200).await;
+
+    let state = test_app_state(pool);
+    let claims = super_claims();
+    let resp = get_operation_log(State(state), Extension(claims), Path(id)).await;
+    let log: OperationLog = resp.0.data.unwrap();
+    assert_eq!(log.id, id);
+    assert_eq!(log.user_name, "alice");
+    assert_eq!(log.module, "finance");
+}
+
+#[sqlx::test(migrations = false)]
+async fn get_operation_log_not_found_returns_none(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+
+    let state = test_app_state(pool);
+    let claims = super_claims();
+    let resp =
+        get_operation_log(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
+    assert!(resp.0.data.is_none());
+}
+
+#[sqlx::test(migrations = false)]
+async fn stats_empty_returns_zero(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+
+    let state = test_app_state(pool);
+    let claims = super_claims();
+    let resp = get_operation_log_stats(State(state), Extension(claims)).await;
+    let body: OperationLogStatsResponse = resp.0.data.unwrap();
+    assert_eq!(body.total, 0);
+}
+
+#[sqlx::test(migrations = false)]
+async fn stats_counts_inserted_rows(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    insert_log(&pool, "alice", "finance", 200).await;
+    insert_log(&pool, "bob", "wms", 200).await;
+    insert_log(&pool, "carol", "finance", 500).await;
+
+    let state = test_app_state(pool);
+    let claims = super_claims();
+    let resp = get_operation_log_stats(State(state), Extension(claims)).await;
+    let body: OperationLogStatsResponse = resp.0.data.unwrap();
+    assert_eq!(body.total, 3);
 }
