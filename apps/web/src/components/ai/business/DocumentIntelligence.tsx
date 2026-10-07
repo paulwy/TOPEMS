@@ -73,15 +73,16 @@ export const DocumentIntelligence: React.FC<DocumentIntelligenceProps> = ({
   };
 
   const getStatusColor = (status: string): string => {
+    const { success, warning, error, grey } = theme.palette;
     switch (status) {
       case 'completed':
-        return '#2e7d32';
+        return success.dark;
       case 'processing':
-        return '#f57c00';
+        return warning.main;
       case 'failed':
-        return '#c62828';
+        return error.dark;
       default:
-        return '#757575';
+        return grey[600];
     }
   };
 

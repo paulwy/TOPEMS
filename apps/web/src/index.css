@@ -422,7 +422,7 @@ button:disabled {
   background:
     radial-gradient(
       ellipse at 10% 0%,
-      color-mix(in srgb, var(--color-primary, #3b82f6) 6%, transparent) 0%,
+      color-mix(in srgb, var(--color-primary, #365ae3) 6%, transparent) 0%,
       transparent 50%
     ),
     radial-gradient(
@@ -437,14 +437,14 @@ button:disabled {
 .selected-glow {
   box-shadow:
     0 0 0 1px var(--color-primary-200, #c7daff),
-    0 0 20px color-mix(in srgb, var(--color-primary, #3b82f6) 15%, transparent),
+    0 0 20px color-mix(in srgb, var(--color-primary, #365ae3) 15%, transparent),
     var(--shadow-md, 0 4px 6px -1px rgba(2, 6, 23, 0.04));
 }
 .dark .selected-glow,
 html[class~='dark'] .selected-glow {
   box-shadow:
     0 0 0 1px var(--color-primary-700, #2a46c2),
-    0 0 24px color-mix(in srgb, var(--color-primary, #3b82f6) 25%, transparent),
+    0 0 24px color-mix(in srgb, var(--color-primary, #365ae3) 25%, transparent),
     var(--shadow-md, 0 4px 6px -1px rgba(2, 6, 23, 0.04));
 }
 

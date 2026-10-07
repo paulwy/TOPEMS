@@ -78,29 +78,6 @@ interface GovernanceDashboardProps {
   compact?: boolean;
 }
 
-const getScoreColor = (score: number): string => {
-  if (score >= 90) return '#2e7d32';
-  if (score >= 75) return '#558b2f';
-  if (score >= 60) return '#f9a825';
-  if (score >= 40) return '#ef6c00';
-  return '#c62828';
-};
-
-const getRiskColor = (level: string): string => {
-  switch (level) {
-    case 'low':
-      return '#2e7d32';
-    case 'medium':
-      return '#f9a825';
-    case 'high':
-      return '#ef6c00';
-    case 'critical':
-      return '#c62828';
-    default:
-      return '#757575';
-  }
-};
-
 const formatNumber = (num: number): string => {
   if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
   if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -113,6 +90,31 @@ export const GovernanceDashboard: React.FC<GovernanceDashboardProps> = ({
 }) => {
   const theme = useTheme();
   const { t } = useTranslation();
+
+  const getScoreColor = (score: number): string => {
+    const { success, warning, error } = theme.palette;
+    if (score >= 90) return success.dark;
+    if (score >= 75) return success.main;
+    if (score >= 60) return warning.main;
+    if (score >= 40) return warning.dark;
+    return error.main;
+  };
+
+  const getRiskColor = (level: string): string => {
+    const { success, warning, error, grey } = theme.palette;
+    switch (level) {
+      case 'low':
+        return success.main;
+      case 'medium':
+        return warning.main;
+      case 'high':
+        return warning.dark;
+      case 'critical':
+        return error.main;
+      default:
+        return grey[600];
+    }
+  };
 
   const MetricCard: React.FC<{
     title: string;

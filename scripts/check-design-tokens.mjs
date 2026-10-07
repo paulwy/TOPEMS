@@ -101,10 +101,24 @@ function collectFindings(filePath) {
       return;
     }
 
+    // CSS var(--token, fallback) 兜底：已引用 token，fallback 仅为变量未定义时兜底，
+    // 其中出现的颜色/阴影不算硬编码（真实值维护在 generated-tokens.css）
+    const varFallbackRanges = [];
+    const varRe = /var\(\s*--[\w-]+\s*,/g;
+    let varMatch;
+    while ((varMatch = varRe.exec(trimmed)) !== null) {
+      const start = varRe.lastIndex;
+      const end = trimmed.indexOf(')', start);
+      if (end !== -1) varFallbackRanges.push([start, end]);
+    }
+    const inVarFallback = (pos) =>
+      varFallbackRanges.some(([s, e]) => pos >= s && pos < e);
+
     for (const pattern of patterns) {
       pattern.regex.lastIndex = 0;
       const matches = [...trimmed.matchAll(pattern.regex)];
       matches.forEach((match) => {
+        if (pattern.id !== 'fixed-px-spacing' && inVarFallback(match.index)) return;
         findings.push({
           file: relativePath,
           line: index + 1,

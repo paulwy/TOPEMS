@@ -107,6 +107,22 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
             selectedFields.map((field, index) => (
               <Box
                 key={field.fieldId}
+                draggable
+                onDragStart={(e) => {
+                  e.dataTransfer.setData('text/plain', String(index));
+                  e.dataTransfer.effectAllowed = 'move';
+                }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const sourceIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+                  if (!Number.isNaN(sourceIndex) && sourceIndex !== index) {
+                    handleReorderFields(sourceIndex, index);
+                  }
+                }}
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
@@ -115,26 +131,14 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
                   borderRadius: 1,
                   mb: 0.5,
                   bgcolor: 'grey.50',
+                  cursor: 'grab',
+                  '&:active': { cursor: 'grabbing' },
                 }}
               >
                 <IconButton
                   size='small'
                   aria-label={i18n.t('templates.field_selector.k1')}
                   sx={{ p: 0.5, cursor: 'move', opacity: 0.5 }}
-                  onMouseDown={() => {
-                    const handleDragOver = (e: DragEvent) => {
-                      e.preventDefault();
-                    };
-                    const handleDrop = (e: DragEvent) => {
-                      e.preventDefault();
-                      if (e.dataTransfer) {
-                        const targetIndex = parseInt(e.dataTransfer.getData('index'));
-                        handleReorderFields(index, targetIndex);
-                      }
-                    };
-                    document.addEventListener('dragover', handleDragOver);
-                    document.addEventListener('drop', handleDrop);
-                  }}
                 >
                   <MoveVertical sx={{ width: 14, height: 14 }} />
                 </IconButton>
