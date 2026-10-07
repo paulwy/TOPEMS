@@ -4,6 +4,7 @@ import axios, {
   CancelTokenSource,
   InternalAxiosRequestConfig,
 } from 'axios';
+import { createApiClient as createSharedApiClient } from '@topems/api-client';
 import { storage } from '@/utils/storage';
 import { getMobileApiUrl } from '@/utils/api-url';
 import { NetworkService } from '@/services/networkService';
@@ -118,13 +119,14 @@ const cancelPendingRequest = (config: AxiosRequestConfig): void => {
   }
 };
 
-const createApiClient = (): AxiosInstance => {
-  const client = axios.create({
+const buildClient = (): AxiosInstance => {
+  // 共享工厂：baseURL/timeout/JSON 头/paramsSerializer（见 @topems/api-client）。
+  // token 来自异步 AsyncStorage（await storage.getToken()），工厂 getToken 为 sync
+  // 不适用，故不在此处传 getToken，而在下方端内请求拦截器里异步注入；401 登出清理
+  // 同样保留在端内响应错误拦截器（工厂只做 401 回调，未传 onUnauthorized）。
+  const client = createSharedApiClient({
     baseURL: BASE_URL,
     timeout: 15000,
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
 
   client.interceptors.request.use(
@@ -309,7 +311,7 @@ const createApiClient = (): AxiosInstance => {
   return client;
 };
 
-export const apiClient = createApiClient();
+export const apiClient = buildClient();
 
 export const clearCache = (): void => {
   cache.clear();
