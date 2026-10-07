@@ -714,13 +714,14 @@ pub async fn detailed_health(
 pub async fn reports_center_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    // Dashboard summary stats — try live counts when DB is reachable,
-    // fall back to zero placeholders so the UI never errors on 404.
-    // NOTE: company/department/employee counts are intentionally NOT live. The analytics
-    // service (schema=bi) is not authorized to read hrm.* tables under the schema-boundary
-    // gate (scripts/check_schema_boundary.py); bi has no org view either. Live org headcounts
-    // would require a bi-side materialized view or an allowlisted integration — tracked as a
-    // follow-up. Keep the existing .max() display placeholders instead of a cross-schema read.
+    // Dashboard summary stats — live counts from the real IAM/BI tables via the
+    // service search_path (bi, public): core_users / core_roles / core_permissions
+    // (public schema). The previously referenced iam_* / org_* tables do not exist
+    // in this database. Company/department/employee counts are intentionally NOT
+    // live: the analytics service (schema=bi) is not authorized to read hrm.* under
+    // the schema-boundary gate and bi has no org view, so they surface as an explicit
+    // "not-connected" orgStatsStatus below (BE-02, plan C). Kept in sync with the
+    // standalone-deploy copy in main.rs.
     let (total_users, active_users, total_roles, total_permissions, recent_activities) = sqlx::query_as::<_, (
         i64, i64, i64, i64, i64,
     )>(r#"
@@ -735,11 +736,6 @@ pub async fn reports_center_stats(
                AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS recent_activities
     "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
 
-    // Degraded org counts (see note above) — surfaced through the existing .max() placeholders.
-    let total_companies: i64 = 0;
-    let total_departments: i64 = 0;
-    let total_employees: i64 = 0;
-
     // Last 6 months user growth
     let months = [
         "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08",
@@ -752,11 +748,12 @@ pub async fn reports_center_stats(
         })
     }).collect();
 
-    // Role distribution (static placeholder split)
+    // Role distribution (static placeholder split; 普通用户 uses the real user count,
+    // no more total_users.max(80) fabricated floor).
     let role_distribution = vec![
         serde_json::json!({ "name": "系统管理员", "value": 3i64 }),
         serde_json::json!({ "name": "部门经理",   "value": 12i64 }),
-        serde_json::json!({ "name": "普通用户",   "value": total_users.max(80) - 20 }),
+        serde_json::json!({ "name": "普通用户",   "value": total_users }),
         serde_json::json!({ "name": "访客用户",   "value": 8i64 }),
     ];
 
@@ -771,14 +768,17 @@ pub async fn reports_center_stats(
 
     let stats = serde_json::json!({
         "dashboard": {
-            "totalUsers": total_users.max(156),
-            "activeUsers": active_users.max(98),
-            "totalRoles": total_roles.max(12),
-            "totalPermissions": total_permissions.max(87),
-            "totalCompanies": total_companies.max(5),
-            "totalDepartments": total_departments.max(23),
-            "totalEmployees": total_employees.max(210),
-            "recentActivities": recent_activities.max(621),
+            "totalUsers": total_users,
+            "activeUsers": active_users,
+            "totalRoles": total_roles,
+            "totalPermissions": total_permissions,
+            // Org headcounts: not connected to a live source yet. Explicit null +
+            // "not-connected" status instead of fabricated .max(5/23/210) numbers.
+            "totalCompanies": serde_json::Value::Null,
+            "totalDepartments": serde_json::Value::Null,
+            "totalEmployees": serde_json::Value::Null,
+            "orgStatsStatus": "not-connected",
+            "recentActivities": recent_activities,
         },
         "userGrowth": user_growth,
         "roleDistribution": role_distribution,

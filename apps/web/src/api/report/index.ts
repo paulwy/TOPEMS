@@ -163,9 +163,16 @@ export interface DashboardStats {
   activeUsers: number;
   totalRoles: number;
   totalPermissions: number;
-  totalCompanies: number;
-  totalDepartments: number;
-  totalEmployees: number;
+  /**
+   * 组织三计数：当前 BI 服务（schema=bi）未接入 hrm 组织主数据源，后端显式返回
+   * `null` 并通过 orgStatsStatus='not-connected' 标记「未接入」语义，
+   * 不再下发 .max() 假数字（5/23/210）。接入后改回 number 且 orgStatsStatus='connected'。
+   */
+  totalCompanies: number | null;
+  totalDepartments: number | null;
+  totalEmployees: number | null;
+  /** 组织计数接入状态：'not-connected' = 组织主数据未接入（三计数为 null） */
+  orgStatsStatus?: 'connected' | 'not-connected';
   recentActivities: number;
 }
 

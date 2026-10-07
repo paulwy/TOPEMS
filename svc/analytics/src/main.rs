@@ -854,24 +854,28 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
 async fn reports_center_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    // Dashboard summary stats — try live counts when DB is reachable,
-    // fall back to zero placeholders so the UI never errors on 404.
-    let (total_users, active_users, total_roles, total_permissions, total_companies,
-         total_departments, total_employees, recent_activities) = sqlx::query_as::<_, (
-        i64, i64, i64, i64, i64, i64, i64, i64,
+    // Dashboard summary stats — live counts from the real IAM/BI tables via the
+    // service search_path (bi, public): core_users / core_roles / core_permissions
+    // (public schema). The previously referenced iam_* / org_* tables do not exist
+    // in this database, which made every count fall into unwrap_or(0) and then get
+    // padded into fake numbers by the .max() floor below.
+    // NOTE: company/department/employee counts are intentionally NOT live. The
+    // analytics service (schema=bi) is not authorized to read hrm.* under the
+    // schema-boundary gate, and bi has no org view either — see the degraded
+    // "not-connected" orgStatsStatus below (BE-02, plan C).
+    let (total_users, active_users, total_roles, total_permissions, recent_activities) = sqlx::query_as::<_, (
+        i64, i64, i64, i64, i64,
     )>(r#"
         SELECT
-            (SELECT COUNT(*) FROM iam_users WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_users,
-            (SELECT COUNT(*) FROM iam_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
+            (SELECT COUNT(*) FROM core_users WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_users,
+            (SELECT COUNT(*) FROM core_users WHERE last_login_at >= NOW() - INTERVAL '30 days'
                AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS active_users,
-            (SELECT COUNT(*) FROM iam_roles WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_roles,
-            (SELECT COUNT(*) FROM iam_permissions WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_permissions,
-            (SELECT COUNT(*) FROM org_companies WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_companies,
-            (SELECT COUNT(*) FROM org_departments WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_departments,
-            (SELECT COUNT(*) FROM org_employees WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_employees,
+            (SELECT COUNT(*) FROM core_roles WHERE tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '') AS total_roles,
+            -- core_permissions is a shared global table (public.core_permissions has NO tenant_id column)
+            (SELECT COUNT(*) FROM core_permissions) AS total_permissions,
             (SELECT COUNT(*) FROM public.audit_logs WHERE created_at >= NOW() - INTERVAL '7 days'
                AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS recent_activities
-    "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0, 0, 0, 0));
+    "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
 
     // Last 6 months user growth
     let months = [
@@ -885,11 +889,12 @@ async fn reports_center_stats(
         })
     }).collect();
 
-    // Role distribution (static placeholder split)
+    // Role distribution (static placeholder split; 普通用户 uses the real user count,
+    // no more total_users.max(80) fabricated floor).
     let role_distribution = vec![
         serde_json::json!({ "name": "系统管理员", "value": 3i64 }),
         serde_json::json!({ "name": "部门经理",   "value": 12i64 }),
-        serde_json::json!({ "name": "普通用户",   "value": total_users.max(80) - 20 }),
+        serde_json::json!({ "name": "普通用户",   "value": total_users }),
         serde_json::json!({ "name": "访客用户",   "value": 8i64 }),
     ];
 
@@ -904,14 +909,17 @@ async fn reports_center_stats(
 
     let stats = serde_json::json!({
         "dashboard": {
-            "totalUsers": total_users.max(156),
-            "activeUsers": active_users.max(98),
-            "totalRoles": total_roles.max(12),
-            "totalPermissions": total_permissions.max(87),
-            "totalCompanies": total_companies.max(5),
-            "totalDepartments": total_departments.max(23),
-            "totalEmployees": total_employees.max(210),
-            "recentActivities": recent_activities.max(621),
+            "totalUsers": total_users,
+            "activeUsers": active_users,
+            "totalRoles": total_roles,
+            "totalPermissions": total_permissions,
+            // Org headcounts: not connected to a live source yet. Surface an explicit
+            // null + "not-connected" status instead of fabricated .max(5/23/210) numbers.
+            "totalCompanies": serde_json::Value::Null,
+            "totalDepartments": serde_json::Value::Null,
+            "totalEmployees": serde_json::Value::Null,
+            "orgStatsStatus": "not-connected",
+            "recentActivities": recent_activities,
         },
         "userGrowth": user_growth,
         "roleDistribution": role_distribution,
