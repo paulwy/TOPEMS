@@ -295,6 +295,11 @@ interface CreateAxiosClientOptions {
   timeout?: number;
   withCsrf?: boolean;
   returnData?: boolean;
+  /**
+   * FE-18：query 键名 camelCase→snake_case 转换（pageSize→page_size）。
+   * 默认 false=原样透传。按服务显式开启做灰度（当前仅 wms）。
+   */
+  snakeCaseParams?: boolean;
 }
 
 export const createAxiosClient = ({
@@ -302,6 +307,7 @@ export const createAxiosClient = ({
   timeout = config.api.timeout,
   withCsrf = true,
   returnData = true,
+  snakeCaseParams = false,
 }: CreateAxiosClientOptions): AxiosInstance => {
   const client = axios.create({
     baseURL,
@@ -311,7 +317,7 @@ export const createAxiosClient = ({
       Accept: 'application/json',
     },
     paramsSerializer: {
-      serialize: (params: Record<string, unknown>) => serializeParams(params),
+      serialize: (params: Record<string, unknown>) => serializeParams(params, { snakeCaseParams }),
     },
   });
 
@@ -679,9 +685,18 @@ class ApiClient {
   constructor() {
     initCsrfProtection();
 
+    // FE-18 灰度：仅 wms 服务开启 query 键名 camelCase→snake_case 转换（pageSize→page_size）。
+    // 回滚方式：把 'wms' 从该集合移除即可（逐服务开关，无需改其他端）。
+    // 全量启用其它服务不在本批，登记遗留。
+    const SNAKE_CASE_SERVICES = new Set(['wms']);
+
     Object.entries(config.services).forEach(([name, baseURL]) => {
       const timeout = name === 'ai' ? API_TIMEOUT.AI : config.api.timeout;
-      const client = createAxiosClient({ baseURL, timeout }) as unknown as TypedAxiosInstance;
+      const client = createAxiosClient({
+        baseURL,
+        timeout,
+        snakeCaseParams: SNAKE_CASE_SERVICES.has(name),
+      }) as unknown as TypedAxiosInstance;
       this.clients[name] = client;
     });
   }

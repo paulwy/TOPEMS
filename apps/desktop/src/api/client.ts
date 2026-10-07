@@ -11,9 +11,27 @@ declare global {
 }
 
 // 共享工厂：baseURL/timeout/JSON 头/token 注入/401 回调（见 packages/api-client）
+// 401 处理（FE-17 修复 desktop 401 静默缺陷）：清本地登录态 + 跳登录页。
+// 不直接 import authStore（client.ts ← authStore ← api/index ← client.ts 循环依赖），
+// 改为直接清 zustand persist 的 localStorage key + 刷新跳 /login（ProtectedRoute 据空态再守卫）。
+const handleUnauthorized = () => {
+  try {
+    // 工厂 getToken 读取的 key
+    localStorage.removeItem('token');
+    // zustand persist 持久化 key（store/authStore.ts 配置 name: 'topems-auth'）
+    localStorage.removeItem('topems-auth');
+  } catch {
+    // localStorage 不可用时忽略
+  }
+  if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+    window.location.assign('/login');
+  }
+};
+
 const apiClient = createApiClient({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
   getToken: () => localStorage.getItem('token'),
+  onUnauthorized: handleUnauthorized,
 });
 
 // desktop 独有：GET 离线缓存 + 503 降级（保留在端内）
