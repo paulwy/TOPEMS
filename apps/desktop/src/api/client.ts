@@ -29,7 +29,9 @@ const handleUnauthorized = () => {
 };
 
 const apiClient = createApiClient({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+// FE-21 默认值对齐：指向 unified-core 独立进程端口 8000（apps/web/src/config/ports.ts 的
+// BACKEND_PORTS.core）；原 8080 在端口表中不存在。模块化单体（8099）请用 VITE_API_URL 覆盖。
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
   getToken: () => localStorage.getItem('token'),
   onUnauthorized: handleUnauthorized,
 });

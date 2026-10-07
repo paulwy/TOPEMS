@@ -7,7 +7,10 @@ const getApiBaseUrl = (): string => {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
 
   if (!envUrl) {
-    return 'http://localhost:8070';
+    // FE-21 对齐：默认指向 unified-core 独立进程端口 8000（与 apps/web/src/config/ports.ts
+    // 的 BACKEND_PORTS.core 单一信源一致；原 8070 在端口表中不存在，属陈旧默认值）。
+    // 模块化单体模式（topems-server:8099）请显式设置 EXPO_PUBLIC_API_URL。
+    return 'http://localhost:8000';
   }
 
   const url = new URL(envUrl);
