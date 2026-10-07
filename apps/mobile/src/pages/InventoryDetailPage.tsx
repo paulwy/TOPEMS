@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -132,7 +133,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator animating size="large" color="#3b82f6" />
+        <ActivityIndicator animating size="large" color={designTokens.colors.blue[500]} />
       </View>
     );
   }
@@ -142,7 +143,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
       <View style={styles.container}>
         <View style={styles.header}>
           <IconButton
-            icon={() => <ArrowLeft size={24} color="#fff" />}
+            icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
             onPress={() => navigation.goBack()}
           />
           <Title style={styles.headerTitle}>库存详情</Title>
@@ -163,7 +164,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
     >
       <View style={styles.header}>
         <IconButton
-          icon={() => <ArrowLeft size={24} color="#fff" />}
+          icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
           onPress={() => navigation.goBack()}
         />
         <Title style={styles.headerTitle}>库存详情</Title>
@@ -175,7 +176,12 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
           <Card.Content>
             <View style={styles.cardHeader}>
               <View style={styles.iconContainer}>
-                <Package size={32} color={isLowStock ? '#ef4444' : '#3b82f6'} />
+                <Package
+                  size={32}
+                  color={
+                    isLowStock ? designTokens.colors.error[500] : designTokens.colors.blue[500]
+                  }
+                />
               </View>
               <View style={styles.titleSection}>
                 <Title style={styles.itemName}>{item.name}</Title>
@@ -190,7 +196,9 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
               >
                 <Text
                   style={{
-                    color: isLowStock ? '#ef4444' : '#16a34a',
+                    color: isLowStock
+                      ? designTokens.colors.error[500]
+                      : designTokens.colors.success[600],
                     fontSize: 11,
                     fontWeight: '600',
                   }}
@@ -202,7 +210,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
 
             {isLowStock && (
               <View style={styles.warningBanner}>
-                <AlertTriangle size={16} color="#ef4444" />
+                <AlertTriangle size={16} color={designTokens.colors.error[500]} />
                 <Text style={styles.warningText}>当前库存低于安全阈值，请及时补货</Text>
               </View>
             )}
@@ -229,7 +237,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
                 onPress={() => handleQuantityChange(1)}
                 style={styles.quantityButton}
               >
-                <Plus size={20} color="#3b82f6" />
+                <Plus size={20} color={designTokens.colors.blue[500]} />
               </TouchableOpacity>
             </View>
           </Card.Content>
@@ -240,12 +248,12 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
             <Title style={styles.sectionTitle}>详细信息</Title>
             <View style={styles.infoGrid}>
               <View style={styles.infoRow}>
-                <MapPin size={16} color="#3b82f6" />
+                <MapPin size={16} color={designTokens.colors.blue[500]} />
                 <Text style={styles.infoLabel}>存放位置</Text>
                 <Text style={styles.infoValue}>{item.location}</Text>
               </View>
               <View style={styles.infoRow}>
-                <Package size={16} color="#3b82f6" />
+                <Package size={16} color={designTokens.colors.blue[500]} />
                 <Text style={styles.infoLabel}>分类</Text>
                 <Text style={styles.infoValue}>{item.category}</Text>
               </View>
@@ -305,12 +313,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: '#3b82f6',
+    backgroundColor: designTokens.colors.blue[500],
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: designTokens.colors.common.white,
   },
   headerPlaceholder: {
     width: 48,
@@ -324,7 +332,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   lowStockCard: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: designTokens.colors.error[50],
   },
   cardHeader: {
     flexDirection: 'row',
@@ -358,12 +366,12 @@ const styles = StyleSheet.create({
     gap: 8,
     marginTop: 12,
     padding: 12,
-    backgroundColor: '#fef2f2',
+    backgroundColor: designTokens.colors.error[50],
     borderRadius: 8,
   },
   warningText: {
     fontSize: 13,
-    color: '#ef4444',
+    color: designTokens.colors.error[500],
     fontWeight: '500',
   },
   infoCard: {
@@ -400,7 +408,7 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   lowStockNumber: {
-    color: '#ef4444',
+    color: designTokens.colors.error[500],
   },
   quantityUnit: {
     fontSize: 14,
@@ -440,7 +448,7 @@ const styles = StyleSheet.create({
     height: 48,
   },
   deleteButton: {
-    backgroundColor: '#dc2626',
+    backgroundColor: designTokens.colors.error[600],
   },
   emptyContainer: {
     alignItems: 'center',

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import {
@@ -37,11 +38,11 @@ const DashboardPage: React.FC = () => {
     switch (priority) {
       case 'high':
       case 'critical':
-        return '#dc2626';
+        return designTokens.colors.error[600];
       case 'medium':
-        return '#d97706';
+        return designTokens.colors.warning[600];
       case 'low':
-        return '#16a34a';
+        return designTokens.colors.success[600];
       default:
         return '#6b7280';
     }
@@ -91,7 +92,7 @@ const DashboardPage: React.FC = () => {
         <Card style={styles.statCard}>
           <Card.Content>
             <View style={styles.statIcon}>
-              <ClipboardCheck size={24} color="#3b82f6" />
+              <ClipboardCheck size={24} color={designTokens.colors.blue[500]} />
             </View>
             <Text style={styles.statValue}>{stats.pendingTasks}</Text>
             <Text style={styles.statLabel}>待处理任务</Text>
@@ -111,7 +112,7 @@ const DashboardPage: React.FC = () => {
         <Card style={styles.statCard}>
           <Card.Content>
             <View style={styles.statIcon}>
-              <ScanLine size={24} color="#f59e0b" />
+              <ScanLine size={24} color={designTokens.colors.warning[500]} />
             </View>
             <Text style={styles.statValue}>{stats.todayScans}</Text>
             <Text style={styles.statLabel}>今日扫码</Text>
@@ -121,7 +122,7 @@ const DashboardPage: React.FC = () => {
         <Card style={styles.statCard}>
           <Card.Content>
             <View style={styles.statIcon}>
-              <Square size={24} color="#8b5cf6" />
+              <Square size={24} color={designTokens.colors.purple[500]} />
             </View>
             <Text style={styles.statValue}>{stats.todayPatrols}</Text>
             <Text style={styles.statLabel}>今日巡检</Text>
@@ -171,7 +172,7 @@ const DashboardPage: React.FC = () => {
               events.map((event) => (
                 <View key={event.id} style={styles.eventItem}>
                   <View style={styles.eventIcon}>
-                    <Calendar size={20} color="#3b82f6" />
+                    <Calendar size={20} color={designTokens.colors.blue[500]} />
                   </View>
                   <View style={styles.eventInfo}>
                     <Text style={styles.eventTitle}>{event.title}</Text>
@@ -192,7 +193,7 @@ const DashboardPage: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: designTokens.colors.surface[100],
   },
   loadingContainer: {
     flex: 1,
@@ -200,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: '#1e3a8a',
+    backgroundColor: designTokens.colors.blue[900],
     padding: 20,
     paddingTop: 40,
     flexDirection: 'row',
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   eventIcon: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: designTokens.colors.blue[100],
     borderRadius: 8,
     padding: 8,
     width: 40,

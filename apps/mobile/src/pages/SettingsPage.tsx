@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Alert, TextInput } from 'react-native';
 import { Text, Card, List, Switch, Divider, Button } from 'react-native-paper';
@@ -129,7 +130,7 @@ const SettingsPage: React.FC = () => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Settings size={24} color="#3b82f6" />
+        <Settings size={24} color={designTokens.colors.blue[500]} />
         <Text style={styles.headerTitle}>设置</Text>
       </View>
       <Divider />
@@ -147,7 +148,11 @@ const SettingsPage: React.FC = () => {
                 <Text style={styles.infoValue}>{user?.name || '-'}</Text>
               )}
               {!isEditing && (
-                <Button mode="text" onPress={() => setIsEditing(true)} textColor="#3b82f6">
+                <Button
+                  mode="text"
+                  onPress={() => setIsEditing(true)}
+                  textColor={designTokens.colors.blue[500]}
+                >
                   编辑
                 </Button>
               )}
@@ -254,9 +259,9 @@ const SettingsPage: React.FC = () => {
           <View style={styles.offlineStatusRow}>
             <View style={styles.offlineIconContainer}>
               {isOffline ? (
-                <CloudOff size={24} color="#dc2626" />
+                <CloudOff size={24} color={designTokens.colors.error[600]} />
               ) : (
-                <Upload size={24} color="#16a34a" />
+                <Upload size={24} color={designTokens.colors.success[600]} />
               )}
             </View>
             <View style={styles.offlineStatusContent}>
@@ -325,8 +330,8 @@ const SettingsPage: React.FC = () => {
         mode="outlined"
         onPress={logout}
         style={styles.logoutButton}
-        textColor="#dc2626"
-        icon={() => <RefreshCw size={18} color="#dc2626" />}
+        textColor={designTokens.colors.error[600]}
+        icon={() => <RefreshCw size={18} color={designTokens.colors.error[600]} />}
       >
         退出登录
       </Button>
@@ -343,7 +348,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
     gap: 8,
   },
   headerTitle: {
@@ -400,7 +405,7 @@ const styles = StyleSheet.create({
   logoutButton: {
     margin: 16,
     borderRadius: 12,
-    borderColor: '#dc2626',
+    borderColor: designTokens.colors.error[600],
   },
   offlineStatusRow: {
     flexDirection: 'row',
@@ -448,7 +453,7 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   statValueWarning: {
-    color: '#f59e0b',
+    color: designTokens.colors.warning[500],
   },
   syncButton: {
     marginTop: 8,

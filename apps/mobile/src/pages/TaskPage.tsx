@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import {
@@ -55,11 +56,11 @@ const TaskPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return '#16a34a';
+        return designTokens.colors.success[600];
       case 'in_progress':
-        return '#2563eb';
+        return designTokens.colors.blue[600];
       case 'pending':
-        return '#d97706';
+        return designTokens.colors.warning[600];
       case 'cancelled':
         return '#6b7280';
       default:
@@ -85,13 +86,13 @@ const TaskPage: React.FC = () => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return '#dc2626';
+        return designTokens.colors.error[600];
       case 'high':
-        return '#ea580c';
+        return designTokens.colors.orange[600];
       case 'medium':
-        return '#d97706';
+        return designTokens.colors.warning[600];
       case 'low':
-        return '#16a34a';
+        return designTokens.colors.success[600];
       default:
         return '#6b7280';
     }
@@ -117,7 +118,7 @@ const TaskPage: React.FC = () => {
       <Card.Content>
         <View style={styles.cardHeader}>
           <View style={styles.titleContainer}>
-            <Square size={18} color="#2563eb" style={styles.titleIcon} />
+            <Square size={18} color={designTokens.colors.blue[600]} style={styles.titleIcon} />
             <Title style={styles.cardTitle}>{item.title}</Title>
           </View>
           <Chip
@@ -155,7 +156,7 @@ const TaskPage: React.FC = () => {
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator animating size="large" color="#2563eb" />
+        <ActivityIndicator animating size="large" color={designTokens.colors.blue[600]} />
       </View>
     );
   }
@@ -249,14 +250,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
     marginRight: 8,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   filterButtonActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: designTokens.colors.blue[600],
+    borderColor: designTokens.colors.blue[600],
   },
   filterButtonText: {
     fontSize: 13,
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '600',
   },
   listContainer: {

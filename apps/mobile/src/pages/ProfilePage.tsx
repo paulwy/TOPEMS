@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { Card, Title, List, Avatar, Text, Button, Divider } from 'react-native-paper';
@@ -19,8 +20,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ navigation }) => {
         <Card.Content style={styles.profileHeader}>
           <Avatar.Icon
             size={64}
-            icon={() => <User size={32} color="#fff" />}
-            style={{ backgroundColor: '#2563eb' }}
+            icon={() => <User size={32} color={designTokens.colors.common.white} />}
+            style={{ backgroundColor: designTokens.colors.blue[600] }}
           />
           <View style={styles.profileInfo}>
             <Title style={styles.profileName}>{user?.name || user?.full_name || '用户'}</Title>
@@ -85,8 +86,8 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ navigation }) => {
         mode="outlined"
         onPress={logout}
         style={styles.logoutButton}
-        textColor="#dc2626"
-        icon={() => <LogOut size={18} color="#dc2626" />}
+        textColor={designTokens.colors.error[600]}
+        icon={() => <LogOut size={18} color={designTokens.colors.error[600]} />}
       >
         退出登录
       </Button>
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#2563eb',
+    color: designTokens.colors.blue[600],
   },
   statLabel: {
     fontSize: 12,
@@ -164,7 +165,7 @@ const styles = StyleSheet.create({
   logoutButton: {
     margin: 16,
     borderRadius: 12,
-    borderColor: '#dc2626',
+    borderColor: designTokens.colors.error[600],
   },
 });
 

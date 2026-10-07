@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import {
@@ -94,7 +95,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
   };
 
   const getStatusColor = (status: string) => {
-    return status === 'active' ? '#16a34a' : '#6b7280';
+    return status === 'active' ? designTokens.colors.success[600] : '#6b7280';
   };
 
   const getStatusLabel = (status: string) => {
@@ -104,7 +105,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator animating size="large" color="#3b82f6" />
+        <ActivityIndicator animating size="large" color={designTokens.colors.blue[500]} />
       </View>
     );
   }
@@ -114,7 +115,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
       <View style={styles.container}>
         <View style={styles.header}>
           <IconButton
-            icon={() => <ArrowLeft size={24} color="#fff" />}
+            icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
             onPress={() => navigation.goBack()}
           />
           <Title style={styles.headerTitle}>客户详情</Title>
@@ -135,7 +136,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
     >
       <View style={styles.header}>
         <IconButton
-          icon={() => <ArrowLeft size={24} color="#fff" />}
+          icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
           onPress={() => navigation.goBack()}
         />
         <Title style={styles.headerTitle}>客户详情</Title>
@@ -147,7 +148,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
           <Card.Content>
             <View style={styles.cardHeader}>
               <View style={styles.iconContainer}>
-                <Users size={32} color="#3b82f6" />
+                <Users size={32} color={designTokens.colors.blue[500]} />
               </View>
               <View style={styles.titleSection}>
                 <Title style={styles.customerName}>{customer.name}</Title>
@@ -180,21 +181,21 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
             <View style={styles.infoGrid}>
               {customer.contactName && (
                 <View style={styles.infoRow}>
-                  <Users size={16} color="#3b82f6" />
+                  <Users size={16} color={designTokens.colors.blue[500]} />
                   <Text style={styles.infoLabel}>联系人</Text>
                   <Text style={styles.infoValue}>{customer.contactName}</Text>
                 </View>
               )}
               {customer.contactPhone && (
                 <View style={styles.infoRow}>
-                  <Phone size={16} color="#3b82f6" />
+                  <Phone size={16} color={designTokens.colors.blue[500]} />
                   <Text style={styles.infoLabel}>联系电话</Text>
                   <Text style={styles.infoValue}>{customer.contactPhone}</Text>
                 </View>
               )}
               {customer.contactEmail && (
                 <View style={styles.infoRow}>
-                  <Mail size={16} color="#3b82f6" />
+                  <Mail size={16} color={designTokens.colors.blue[500]} />
                   <Text style={styles.infoLabel}>邮箱</Text>
                   <Text style={styles.infoValue}>{customer.contactEmail}</Text>
                 </View>
@@ -209,28 +210,28 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
             <View style={styles.infoGrid}>
               {customer.province && (
                 <View style={styles.infoRow}>
-                  <MapPin size={16} color="#3b82f6" />
+                  <MapPin size={16} color={designTokens.colors.blue[500]} />
                   <Text style={styles.infoLabel}>省份</Text>
                   <Text style={styles.infoValue}>{customer.province}</Text>
                 </View>
               )}
               {customer.city && (
                 <View style={styles.infoRow}>
-                  <MapPin size={16} color="#3b82f6" />
+                  <MapPin size={16} color={designTokens.colors.blue[500]} />
                   <Text style={styles.infoLabel}>城市</Text>
                   <Text style={styles.infoValue}>{customer.city}</Text>
                 </View>
               )}
               {customer.address && (
                 <View style={styles.infoRow}>
-                  <MapPin size={16} color="#3b82f6" />
+                  <MapPin size={16} color={designTokens.colors.blue[500]} />
                   <Text style={styles.infoLabel}>详细地址</Text>
                   <Text style={styles.infoValue}>{customer.address}</Text>
                 </View>
               )}
               {customer.postalCode && (
                 <View style={styles.infoRow}>
-                  <MapPin size={16} color="#3b82f6" />
+                  <MapPin size={16} color={designTokens.colors.blue[500]} />
                   <Text style={styles.infoLabel}>邮编</Text>
                   <Text style={styles.infoValue}>{customer.postalCode}</Text>
                 </View>
@@ -245,7 +246,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
             <View style={styles.infoGrid}>
               {customer.industry && (
                 <View style={styles.infoRow}>
-                  <Building2 size={16} color="#3b82f6" />
+                  <Building2 size={16} color={designTokens.colors.blue[500]} />
                   <Text style={styles.infoLabel}>所属行业</Text>
                   <Text style={styles.infoValue}>{customer.industry}</Text>
                 </View>
@@ -306,12 +307,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: '#3b82f6',
+    backgroundColor: designTokens.colors.blue[500],
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: designTokens.colors.common.white,
   },
   headerPlaceholder: {
     width: 48,
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
     height: 48,
   },
   deleteButton: {
-    backgroundColor: '#dc2626',
+    backgroundColor: designTokens.colors.error[600],
   },
   emptyContainer: {
     alignItems: 'center',

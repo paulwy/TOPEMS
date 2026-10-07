@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text, Card, Title } from 'react-native-paper';
@@ -75,7 +76,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: designTokens.colors.surface[100],
   },
   card: {
     elevation: 4,
@@ -85,7 +86,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#1e3a8a',
+    color: designTokens.colors.blue[900],
   },
   subtitle: {
     fontSize: 16,
@@ -101,13 +102,13 @@ const styles = StyleSheet.create({
     height: 50,
   },
   errorContainer: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: designTokens.colors.error[100],
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
   },
   errorText: {
-    color: '#dc2626',
+    color: designTokens.colors.error[600],
     fontSize: 14,
   },
 });

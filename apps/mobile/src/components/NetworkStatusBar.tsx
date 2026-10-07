@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { Text } from 'react-native-paper';
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   offlineContent: {
-    backgroundColor: '#dc2626',
+    backgroundColor: designTokens.colors.error[600],
     paddingVertical: 12,
     paddingHorizontal: 16,
     flexDirection: 'row',
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   onlineContent: {
-    backgroundColor: '#16a34a',
+    backgroundColor: designTokens.colors.success[600],
     paddingVertical: 8,
     paddingHorizontal: 16,
     flexDirection: 'row',

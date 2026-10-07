@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { Text, Card, IconButton, Divider, Badge } from 'react-native-paper';
@@ -52,11 +53,11 @@ const NotificationPage: React.FC = () => {
       case 'success':
         return <CheckCircle size={20} color="#10b981" />;
       case 'warning':
-        return <AlertCircle size={20} color="#f59e0b" />;
+        return <AlertCircle size={20} color={designTokens.colors.warning[500]} />;
       case 'error':
-        return <XCircle size={20} color="#ef4444" />;
+        return <XCircle size={20} color={designTokens.colors.error[500]} />;
       default:
-        return <Info size={20} color="#3b82f6" />;
+        return <Info size={20} color={designTokens.colors.blue[500]} />;
     }
   };
 
@@ -94,7 +95,7 @@ const NotificationPage: React.FC = () => {
         </View>
         {!item.isRead && (
           <TouchableOpacity onPress={() => handleMarkAsRead(item.id)} style={styles.markReadButton}>
-            <IconButton icon="check" size={18} iconColor="#3b82f6" />
+            <IconButton icon="check" size={18} iconColor={designTokens.colors.blue[500]} />
           </TouchableOpacity>
         )}
       </Card.Content>
@@ -107,7 +108,7 @@ const NotificationPage: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Bell size={24} color="#3b82f6" />
+          <Bell size={24} color={designTokens.colors.blue[500]} />
           <Text style={styles.headerTitle}>消息通知</Text>
         </View>
         {unreadCount > 0 && (
@@ -150,7 +151,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
   },
   markAllText: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: designTokens.colors.blue[500],
     fontWeight: '500',
   },
   loadingContainer: {
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   unreadNotification: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: designTokens.colors.blue[50],
   },
   notificationContent: {
     flexDirection: 'row',

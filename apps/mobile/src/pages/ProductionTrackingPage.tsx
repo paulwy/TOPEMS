@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import { Card, Title, ActivityIndicator, Chip, Text, Button, Searchbar } from 'react-native-paper';
@@ -48,11 +49,11 @@ const ProductionTrackingPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return '#16a34a';
+        return designTokens.colors.success[600];
       case 'in_progress':
-        return '#2563eb';
+        return designTokens.colors.blue[600];
       case 'pending':
-        return '#d97706';
+        return designTokens.colors.warning[600];
       case 'cancelled':
         return '#6b7280';
       default:
@@ -78,11 +79,11 @@ const ProductionTrackingPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle size={16} color="#16a34a" />;
+        return <CheckCircle size={16} color={designTokens.colors.success[600]} />;
       case 'in_progress':
-        return <Play size={16} color="#2563eb" />;
+        return <Play size={16} color={designTokens.colors.blue[600]} />;
       case 'pending':
-        return <Clock size={16} color="#d97706" />;
+        return <Clock size={16} color={designTokens.colors.warning[600]} />;
       case 'cancelled':
         return <XCircle size={16} color="#6b7280" />;
       default:
@@ -141,7 +142,7 @@ const ProductionTrackingPage: React.FC = () => {
       <Card.Content>
         <View style={styles.cardHeader}>
           <View style={styles.typeContainer}>
-            <Factory size={18} color="#2563eb" />
+            <Factory size={18} color={designTokens.colors.blue[600]} />
             <Text style={styles.orderCode}>{item.code}</Text>
           </View>
           <Chip
@@ -181,7 +182,7 @@ const ProductionTrackingPage: React.FC = () => {
               <Button
                 mode="contained"
                 style={styles.actionButton}
-                icon={() => <Play size={14} color="#fff" />}
+                icon={() => <Play size={14} color={designTokens.colors.common.white} />}
                 onPress={() => handleStartOrder(item)}
               >
                 开始
@@ -190,8 +191,8 @@ const ProductionTrackingPage: React.FC = () => {
             {item.status === 'in_progress' && (
               <Button
                 mode="contained"
-                style={[styles.actionButton, { backgroundColor: '#16a34a' }]}
-                icon={() => <CheckCircle size={14} color="#fff" />}
+                style={[styles.actionButton, { backgroundColor: designTokens.colors.success[600] }]}
+                icon={() => <CheckCircle size={14} color={designTokens.colors.common.white} />}
                 onPress={() => handleCompleteOrder(item)}
               >
                 完成
@@ -206,7 +207,7 @@ const ProductionTrackingPage: React.FC = () => {
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator animating size="large" color="#2563eb" />
+        <ActivityIndicator animating size="large" color={designTokens.colors.blue[600]} />
       </View>
     );
   }
@@ -301,14 +302,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
     marginRight: 8,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   filterButtonActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: designTokens.colors.blue[600],
+    borderColor: designTokens.colors.blue[600],
   },
   filterButtonText: {
     fontSize: 13,
@@ -316,7 +317,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '600',
   },
   listContainer: {
@@ -338,7 +339,7 @@ const styles = StyleSheet.create({
   },
   orderCode: {
     fontSize: 12,
-    color: '#2563eb',
+    color: designTokens.colors.blue[600],
     fontWeight: '600',
     marginLeft: 6,
   },

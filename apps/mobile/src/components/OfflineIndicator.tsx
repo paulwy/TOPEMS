@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { Text } from 'react-native-paper';
@@ -60,9 +61,12 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ inline = false, onS
       <View style={styles.content}>
         <View style={styles.iconWrapper}>
           {isSyncing ? (
-            <RefreshCw size={16} color="#f59e0b" />
+            <RefreshCw size={16} color={designTokens.colors.warning[500]} />
           ) : (
-            <WifiOff size={16} color={isOffline ? '#dc2626' : '#f59e0b'} />
+            <WifiOff
+              size={16}
+              color={isOffline ? designTokens.colors.error[600] : designTokens.colors.warning[500]}
+            />
           )}
         </View>
         <Text style={styles.message}>
@@ -84,19 +88,19 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ inline = false, onS
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: designTokens.colors.warning[100],
     padding: 12,
     margin: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#fcd34d',
+    borderColor: designTokens.colors.warning[300],
   },
   inlineContainer: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: designTokens.colors.warning[100],
     padding: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#fcd34d',
+    borderColor: designTokens.colors.warning[300],
   },
   content: {
     flexDirection: 'row',
@@ -115,11 +119,11 @@ const styles = StyleSheet.create({
   message: {
     flex: 1,
     fontSize: 14,
-    color: '#92400e',
+    color: designTokens.colors.warning[800],
   },
   syncButton: {
     fontSize: 14,
-    color: '#d97706',
+    color: designTokens.colors.warning[600],
     fontWeight: '500',
   },
 });

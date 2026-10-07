@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -88,7 +89,10 @@ const InventoryPage: React.FC = () => {
       <Card style={[styles.itemCard, lowStock && styles.lowStockCard]} mode="elevated">
         <Card.Content style={styles.itemContent}>
           <View style={styles.itemIcon}>
-            <Package size={28} color={lowStock ? '#ef4444' : '#3b82f6'} />
+            <Package
+              size={28}
+              color={lowStock ? designTokens.colors.error[500] : designTokens.colors.blue[500]}
+            />
           </View>
           <View style={styles.itemBody}>
             <View style={styles.itemHeader}>
@@ -116,12 +120,12 @@ const InventoryPage: React.FC = () => {
                 onPress={() => handleQuantityChange(item.id, 1)}
                 style={styles.quantityButton}
               >
-                <Plus size={16} color="#3b82f6" />
+                <Plus size={16} color={designTokens.colors.blue[500]} />
               </TouchableOpacity>
             </View>
             {lowStock && (
               <View style={styles.lowStockWarning}>
-                <AlertTriangle size={14} color="#ef4444" />
+                <AlertTriangle size={14} color={designTokens.colors.error[500]} />
                 <Text style={styles.lowStockText}>库存不足</Text>
               </View>
             )}
@@ -135,7 +139,7 @@ const InventoryPage: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Package size={24} color="#3b82f6" />
+          <Package size={24} color={designTokens.colors.blue[500]} />
           <Text style={styles.headerTitle}>库存管理</Text>
         </View>
         <Badge style={styles.lowStockBadge}>
@@ -191,7 +195,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -203,14 +207,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   lowStockBadge: {
-    backgroundColor: '#ef4444',
+    backgroundColor: designTokens.colors.error[500],
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
@@ -233,7 +237,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   lowStockCard: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: designTokens.colors.error[50],
   },
   itemContent: {
     flexDirection: 'row',
@@ -301,7 +305,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   lowStockText: {
-    color: '#ef4444',
+    color: designTokens.colors.error[500],
     fontSize: 12,
   },
   lowStockWarning: {
@@ -324,7 +328,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 16,
     bottom: 16,
-    backgroundColor: '#3b82f6',
+    backgroundColor: designTokens.colors.blue[500],
   },
 });
 

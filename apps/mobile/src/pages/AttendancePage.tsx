@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -174,13 +175,13 @@ const AttendancePage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'normal':
-        return '#16a34a';
+        return designTokens.colors.success[600];
       case 'late':
-        return '#d97706';
+        return designTokens.colors.warning[600];
       case 'early_leave':
-        return '#ea580c';
+        return designTokens.colors.orange[600];
       case 'absent':
-        return '#dc2626';
+        return designTokens.colors.error[600];
       default:
         return '#6b7280';
     }
@@ -204,7 +205,7 @@ const AttendancePage: React.FC = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator animating size="large" color="#2563eb" />
+        <ActivityIndicator animating size="large" color={designTokens.colors.blue[600]} />
       </View>
     );
   }
@@ -222,12 +223,12 @@ const AttendancePage: React.FC = () => {
       <Card style={styles.checkInCard} mode="elevated">
         <Card.Content>
           <View style={styles.locationRow}>
-            <MapPin size={14} color="#2563eb" />
+            <MapPin size={14} color={designTokens.colors.blue[600]} />
             <Text style={styles.locationText}>当前位置：已定位</Text>
           </View>
 
           <View style={styles.timeDisplay}>
-            <Clock size={48} color="#2563eb" />
+            <Clock size={48} color={designTokens.colors.blue[600]} />
             <Text style={styles.currentTime}>
               {new Date().toLocaleTimeString('zh-CN', {
                 hour: '2-digit',
@@ -245,7 +246,7 @@ const AttendancePage: React.FC = () => {
                 disabled={checkInLoading || !!todayRecord?.checkInTime}
                 style={[styles.checkButton, styles.checkInButton]}
                 contentStyle={styles.checkButtonContent}
-                icon={() => <LogIn size={18} color="#fff" />}
+                icon={() => <LogIn size={18} color={designTokens.colors.common.white} />}
               >
                 {todayRecord?.checkInTime
                   ? `签到 ${new Date(todayRecord.checkInTime).toLocaleTimeString('zh-CN', {
@@ -269,7 +270,7 @@ const AttendancePage: React.FC = () => {
                   !todayRecord?.checkInTime && { opacity: 0.5 },
                 ]}
                 contentStyle={styles.checkButtonContent}
-                icon={() => <LogOut size={18} color="#fff" />}
+                icon={() => <LogOut size={18} color={designTokens.colors.common.white} />}
               >
                 {todayRecord?.checkOutTime
                   ? `签退 ${new Date(todayRecord.checkOutTime).toLocaleTimeString('zh-CN', {
@@ -288,14 +289,14 @@ const AttendancePage: React.FC = () => {
               disabled={scanLoading}
               style={styles.scanButton}
             >
-              <QrCode size={20} color="#2563eb" />
+              <QrCode size={20} color={designTokens.colors.blue[600]} />
               <Text style={styles.scanButtonText}>扫码签到</Text>
             </TouchableOpacity>
           </View>
 
           {todayRecord && todayRecord.status !== 'normal' && (
             <View style={styles.warningRow}>
-              <AlertTriangle size={14} color="#d97706" />
+              <AlertTriangle size={14} color={designTokens.colors.warning[600]} />
               <Text style={styles.warningText}>
                 {todayRecord.status === 'late'
                   ? '今日迟到，请合理安排时间'
@@ -311,7 +312,7 @@ const AttendancePage: React.FC = () => {
       <Card style={styles.statsCard} mode="elevated">
         <Card.Content>
           <View style={styles.cardTitleRow}>
-            <TrendingUp size={18} color="#2563eb" />
+            <TrendingUp size={18} color={designTokens.colors.blue[600]} />
             <Title style={styles.cardTitle}>本月统计</Title>
           </View>
 
@@ -321,17 +322,19 @@ const AttendancePage: React.FC = () => {
               <Text style={styles.statLabel}>出勤天数</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: '#d97706' }]}>{stats?.lateCount || 0}</Text>
+              <Text style={[styles.statNumber, { color: designTokens.colors.warning[600] }]}>
+                {stats?.lateCount || 0}
+              </Text>
               <Text style={styles.statLabel}>迟到</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: '#ea580c' }]}>
+              <Text style={[styles.statNumber, { color: designTokens.colors.orange[600] }]}>
                 {stats?.earlyLeaveCount || 0}
               </Text>
               <Text style={styles.statLabel}>早退</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statNumber, { color: '#dc2626' }]}>
+              <Text style={[styles.statNumber, { color: designTokens.colors.error[600] }]}>
                 {stats?.absentCount || 0}
               </Text>
               <Text style={styles.statLabel}>缺勤</Text>
@@ -343,7 +346,7 @@ const AttendancePage: React.FC = () => {
       <Card style={styles.recordsCard} mode="elevated">
         <Card.Content>
           <View style={styles.cardTitleRow}>
-            <Calendar size={18} color="#2563eb" />
+            <Calendar size={18} color={designTokens.colors.blue[600]} />
             <Title style={styles.cardTitle}>近期记录</Title>
           </View>
 
@@ -468,10 +471,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkInButton: {
-    backgroundColor: '#16a34a',
+    backgroundColor: designTokens.colors.success[600],
   },
   checkOutButton: {
-    backgroundColor: '#2563eb',
+    backgroundColor: designTokens.colors.blue[600],
   },
   checkButtonContent: {
     height: 48,
@@ -490,14 +493,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#eff6ff',
+    backgroundColor: designTokens.colors.blue[50],
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: designTokens.colors.blue[200],
   },
   scanButtonText: {
     fontSize: 14,
-    color: '#2563eb',
+    color: designTokens.colors.blue[600],
     fontWeight: '500',
     marginLeft: 8,
   },
@@ -512,7 +515,7 @@ const styles = StyleSheet.create({
   },
   warningText: {
     fontSize: 12,
-    color: '#d97706',
+    color: designTokens.colors.warning[600],
     marginLeft: 6,
   },
   statsCard: {
@@ -540,7 +543,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#16a34a',
+    color: designTokens.colors.success[600],
   },
   statLabel: {
     fontSize: 12,

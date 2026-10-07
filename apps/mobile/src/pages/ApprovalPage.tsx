@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import {
@@ -91,11 +92,11 @@ const ApprovalPage: React.FC = () => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return '#d97706';
+        return designTokens.colors.warning[600];
       case 'approved':
-        return '#16a34a';
+        return designTokens.colors.success[600];
       case 'rejected':
-        return '#dc2626';
+        return designTokens.colors.error[600];
       default:
         return '#6b7280';
     }
@@ -120,7 +121,7 @@ const ApprovalPage: React.FC = () => {
         <Card.Content>
           <View style={styles.cardHeader}>
             <View style={styles.typeContainer}>
-              <FileText size={16} color="#2563eb" />
+              <FileText size={16} color={designTokens.colors.blue[600]} />
               <Text style={styles.typeText}>{item.type || '审批申请'}</Text>
             </View>
             <Chip
@@ -141,8 +142,8 @@ const ApprovalPage: React.FC = () => {
             <View style={styles.userInfo}>
               <Avatar.Icon
                 size={28}
-                icon={() => <User size={14} color="#fff" />}
-                style={{ backgroundColor: '#2563eb' }}
+                icon={() => <User size={14} color={designTokens.colors.common.white} />}
+                style={{ backgroundColor: designTokens.colors.blue[600] }}
               />
               <Text style={styles.userName}>{item.applicantName || '申请人'}</Text>
             </View>
@@ -163,8 +164,8 @@ const ApprovalPage: React.FC = () => {
                   showDetail(item);
                 }}
                 style={styles.actionButton}
-                textColor="#dc2626"
-                icon={() => <XCircle size={16} color="#dc2626" />}
+                textColor={designTokens.colors.error[600]}
+                icon={() => <XCircle size={16} color={designTokens.colors.error[600]} />}
               >
                 拒绝
               </Button>
@@ -176,8 +177,8 @@ const ApprovalPage: React.FC = () => {
                   setComment('');
                   setVisible(true);
                 }}
-                style={[styles.actionButton, { backgroundColor: '#16a34a' }]}
-                icon={() => <CheckCircle size={16} color="#fff" />}
+                style={[styles.actionButton, { backgroundColor: designTokens.colors.success[600] }]}
+                icon={() => <CheckCircle size={16} color={designTokens.colors.common.white} />}
               >
                 通过
               </Button>
@@ -191,7 +192,7 @@ const ApprovalPage: React.FC = () => {
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator animating size="large" color="#2563eb" />
+        <ActivityIndicator animating size="large" color={designTokens.colors.blue[600]} />
       </View>
     );
   }
@@ -269,17 +270,17 @@ const ApprovalPage: React.FC = () => {
             </Button>
             <Button
               onPress={handleReject}
-              textColor="#dc2626"
+              textColor={designTokens.colors.error[600]}
               disabled={actionLoading}
-              icon={() => <XCircle size={16} color="#dc2626" />}
+              icon={() => <XCircle size={16} color={designTokens.colors.error[600]} />}
             >
               拒绝
             </Button>
             <Button
               onPress={handleApprove}
-              textColor="#16a34a"
+              textColor={designTokens.colors.success[600]}
               disabled={actionLoading}
-              icon={() => <CheckCircle size={16} color="#16a34a" />}
+              icon={() => <CheckCircle size={16} color={designTokens.colors.success[600]} />}
             >
               通过
             </Button>
@@ -309,14 +310,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
     marginRight: 8,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   filterButtonActive: {
-    backgroundColor: '#2563eb',
-    borderColor: '#2563eb',
+    backgroundColor: designTokens.colors.blue[600],
+    borderColor: designTokens.colors.blue[600],
   },
   filterButtonText: {
     fontSize: 13,
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   filterButtonTextActive: {
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '600',
   },
   listContainer: {
@@ -346,7 +347,7 @@ const styles = StyleSheet.create({
   },
   typeText: {
     fontSize: 12,
-    color: '#2563eb',
+    color: designTokens.colors.blue[600],
     fontWeight: '600',
     marginLeft: 6,
   },

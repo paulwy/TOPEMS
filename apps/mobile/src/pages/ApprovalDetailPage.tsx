@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import {
@@ -116,11 +117,11 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return '#d97706';
+        return designTokens.colors.warning[600];
       case 'approved':
-        return '#16a34a';
+        return designTokens.colors.success[600];
       case 'rejected':
-        return '#dc2626';
+        return designTokens.colors.error[600];
       default:
         return '#6b7280';
     }
@@ -143,11 +144,11 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
     switch (priority) {
       case 'critical':
       case 'high':
-        return '#dc2626';
+        return designTokens.colors.error[600];
       case 'medium':
-        return '#d97706';
+        return designTokens.colors.warning[600];
       case 'low':
-        return '#16a34a';
+        return designTokens.colors.success[600];
       default:
         return '#6b7280';
     }
@@ -171,7 +172,7 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
   if (loading && !refreshing) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator animating size="large" color="#2563eb" />
+        <ActivityIndicator animating size="large" color={designTokens.colors.blue[600]} />
       </View>
     );
   }
@@ -181,7 +182,7 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
       <View style={styles.container}>
         <View style={styles.header}>
           <IconButton
-            icon={() => <ArrowLeft size={24} color="#fff" />}
+            icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
             onPress={() => navigation.goBack()}
           />
           <Title style={styles.headerTitle}>审批详情</Title>
@@ -202,7 +203,7 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
     >
       <View style={styles.header}>
         <IconButton
-          icon={() => <ArrowLeft size={24} color="#fff" />}
+          icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
           onPress={() => navigation.goBack()}
         />
         <Title style={styles.headerTitle}>审批详情</Title>
@@ -214,7 +215,7 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
           <Card.Content>
             <View style={styles.cardHeader}>
               <View style={styles.typeContainer}>
-                <FileText size={20} color="#2563eb" />
+                <FileText size={20} color={designTokens.colors.blue[600]} />
                 <Text style={styles.typeText}>{approval.type || '审批申请'}</Text>
               </View>
               <Chip
@@ -256,12 +257,12 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
             <Title style={styles.sectionTitle}>基本信息</Title>
             <View style={styles.infoGrid}>
               <View style={styles.infoRow}>
-                <User size={16} color="#2563eb" />
+                <User size={16} color={designTokens.colors.blue[600]} />
                 <Text style={styles.infoLabel}>申请人</Text>
                 <Text style={styles.infoValue}>{approval.applicantName || '-'}</Text>
               </View>
               <View style={styles.infoRow}>
-                <User size={16} color="#2563eb" />
+                <User size={16} color={designTokens.colors.blue[600]} />
                 <Text style={styles.infoLabel}>审批人</Text>
                 <Text style={styles.infoValue}>{approval.assigneeName || '-'}</Text>
               </View>
@@ -278,9 +279,9 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
               </View>
               {approval.dueDate && (
                 <View style={styles.infoRow}>
-                  <Clock size={16} color="#d97706" />
+                  <Clock size={16} color={designTokens.colors.warning[600]} />
                   <Text style={styles.infoLabel}>截止日期</Text>
-                  <Text style={[styles.infoValue, { color: '#d97706' }]}>
+                  <Text style={[styles.infoValue, { color: designTokens.colors.warning[600] }]}>
                     {formatDate(approval.dueDate)}
                   </Text>
                 </View>
@@ -310,17 +311,17 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
                 <Button
                   mode="outlined"
                   style={[styles.actionButton, styles.rejectButton]}
-                  icon={() => <XCircle size={16} color="#dc2626" />}
+                  icon={() => <XCircle size={16} color={designTokens.colors.error[600]} />}
                   onPress={handleReject}
                   disabled={actionLoading}
-                  textColor="#dc2626"
+                  textColor={designTokens.colors.error[600]}
                 >
                   拒绝
                 </Button>
                 <Button
                   mode="contained"
                   style={[styles.actionButton, styles.approveButton]}
-                  icon={() => <CheckCircle size={16} color="#fff" />}
+                  icon={() => <CheckCircle size={16} color={designTokens.colors.common.white} />}
                   onPress={handleApprove}
                   disabled={actionLoading}
                 >
@@ -336,9 +337,9 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
             <Card.Content>
               <View style={styles.statusInfo}>
                 {approval.status === 'approved' ? (
-                  <CheckCircle size={40} color="#16a34a" />
+                  <CheckCircle size={40} color={designTokens.colors.success[600]} />
                 ) : (
-                  <XCircle size={40} color="#dc2626" />
+                  <XCircle size={40} color={designTokens.colors.error[600]} />
                 )}
                 <View style={styles.statusTextSection}>
                   <Text style={[styles.statusResult, { color: getStatusColor(approval.status) }]}>
@@ -373,12 +374,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: '#2563eb',
+    backgroundColor: designTokens.colors.blue[600],
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: designTokens.colors.common.white,
   },
   headerPlaceholder: {
     width: 48,
@@ -404,7 +405,7 @@ const styles = StyleSheet.create({
   },
   typeText: {
     fontSize: 12,
-    color: '#2563eb',
+    color: designTokens.colors.blue[600],
     fontWeight: '600',
   },
   statusChip: {
@@ -465,7 +466,7 @@ const styles = StyleSheet.create({
   actionCard: {
     borderRadius: 16,
     marginBottom: 12,
-    backgroundColor: '#fffbeb',
+    backgroundColor: designTokens.colors.warning[50],
   },
   commentSection: {
     flexDirection: 'row',
@@ -491,10 +492,10 @@ const styles = StyleSheet.create({
     height: 48,
   },
   approveButton: {
-    backgroundColor: '#16a34a',
+    backgroundColor: designTokens.colors.success[600],
   },
   rejectButton: {
-    borderColor: '#dc2626',
+    borderColor: designTokens.colors.error[600],
   },
   statusCard: {
     borderRadius: 16,

@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -53,7 +54,7 @@ const ProfileStackScreen: React.FC = () => {
   return (
     <ProfileStack.Navigator
       screenOptions={{
-        headerStyle: { backgroundColor: '#fff' },
+        headerStyle: { backgroundColor: designTokens.colors.common.white },
         headerTitleStyle: { fontWeight: '600' },
       }}
     >
@@ -89,7 +90,7 @@ const MainTabs: React.FC = () => {
               return <Home size={size} color={color} />;
           }
         },
-        tabBarActiveTintColor: '#2563eb',
+        tabBarActiveTintColor: designTokens.colors.blue[600],
         tabBarInactiveTintColor: '#9ca3af',
         tabBarStyle: {
           paddingTop: 4,
@@ -100,7 +101,7 @@ const MainTabs: React.FC = () => {
           fontSize: 12,
         },
         headerStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: designTokens.colors.common.white,
         },
         headerTitleStyle: {
           fontWeight: '600',
@@ -143,7 +144,7 @@ const AppNavigator: React.FC = () => {
         initialRouteName={isAuthenticated ? 'MainTabs' : 'Login'}
         screenOptions={{
           headerStyle: {
-            backgroundColor: '#fff',
+            backgroundColor: designTokens.colors.common.white,
           },
           headerTitleStyle: {
             fontWeight: '600',

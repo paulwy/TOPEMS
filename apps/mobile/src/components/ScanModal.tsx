@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -276,21 +277,26 @@ const ScanModal: React.FC<ScanModalProps> = ({
         <View style={styles.scannerContainer}>
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color="#fff" />
+              <X size={24} color={designTokens.colors.common.white} />
             </TouchableOpacity>
             <Text style={styles.title}>扫码</Text>
             <TouchableOpacity onPress={handleToggleTorch} style={styles.torchButton}>
-              <Zap size={24} color={torchOn ? '#fbbf24' : '#fff'} />
+              <Zap
+                size={24}
+                color={
+                  torchOn ? designTokens.colors.warning[400] : designTokens.colors.common.white
+                }
+              />
             </TouchableOpacity>
           </View>
 
           {error ? (
             <View style={styles.errorContainer}>
-              <Camera size={48} color="#ef4444" />
+              <Camera size={48} color={designTokens.colors.error[500]} />
               <Text style={styles.errorText}>{error}</Text>
               <View style={styles.errorActions}>
                 <TouchableOpacity onPress={handleRetry} style={styles.retryButton}>
-                  <RefreshCw size={18} color="#fff" />
+                  <RefreshCw size={18} color={designTokens.colors.common.white} />
                   <Text style={styles.retryButtonText}>重新获取权限</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleOpenSettings} style={styles.settingsButton}>
@@ -307,9 +313,9 @@ const ScanModal: React.FC<ScanModalProps> = ({
               <View style={styles.resultCard}>
                 <View style={styles.resultIcon}>
                   {ScanService.isQRCode(scanResult.type) ? (
-                    <Hash size={32} color="#2563eb" />
+                    <Hash size={32} color={designTokens.colors.blue[600]} />
                   ) : (
-                    <Package size={32} color="#22c55e" />
+                    <Package size={32} color={designTokens.colors.success[500]} />
                   )}
                 </View>
                 <Text style={styles.resultType}>{scanResult.type}</Text>
@@ -318,10 +324,14 @@ const ScanModal: React.FC<ScanModalProps> = ({
                   <View style={styles.recognizedContainer}>
                     <View style={styles.recognizedIcon}>
                       {recognizedResult?.type === 'inventory' && (
-                        <Package size={16} color="#22c55e" />
+                        <Package size={16} color={designTokens.colors.success[500]} />
                       )}
-                      {recognizedResult?.type === 'asset' && <Box size={16} color="#3b82f6" />}
-                      {recognizedResult?.type === 'order' && <FileText size={16} color="#f59e0b" />}
+                      {recognizedResult?.type === 'asset' && (
+                        <Box size={16} color={designTokens.colors.blue[500]} />
+                      )}
+                      {recognizedResult?.type === 'order' && (
+                        <FileText size={16} color={designTokens.colors.warning[500]} />
+                      )}
                       {recognizedResult?.type === 'unknown' && <Hash size={16} color="#6b7280" />}
                     </View>
                     <Text
@@ -338,11 +348,11 @@ const ScanModal: React.FC<ScanModalProps> = ({
                 )}
                 <View style={styles.resultActions}>
                   <TouchableOpacity onPress={handleContinueScan} style={styles.continueButton}>
-                    <RotateCcw size={18} color="#fff" />
+                    <RotateCcw size={18} color={designTokens.colors.common.white} />
                     <Text style={styles.continueButtonText}>继续扫描</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={onClose} style={styles.confirmButton}>
-                    <Check size={18} color="#fff" />
+                    <Check size={18} color={designTokens.colors.common.white} />
                     <Text style={styles.confirmButtonText}>确认</Text>
                   </TouchableOpacity>
                 </View>
@@ -391,7 +401,7 @@ const ScanModal: React.FC<ScanModalProps> = ({
                 onPress={() => setShowHistory(!showHistory)}
                 style={styles.historyToggleButton}
               >
-                <History size={18} color="#fff" />
+                <History size={18} color={designTokens.colors.common.white} />
                 <Text style={styles.historyToggleText}>
                   {showHistory ? '隐藏' : '显示'}扫描历史
                 </Text>
@@ -469,7 +479,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#fff',
+    color: designTokens.colors.common.white,
   },
   torchButton: {
     width: 40,
@@ -499,8 +509,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2,
-    backgroundColor: '#2563eb',
-    shadowColor: '#2563eb',
+    backgroundColor: designTokens.colors.blue[600],
+    shadowColor: designTokens.colors.blue[600],
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 4,
@@ -513,7 +523,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderTopWidth: 3,
     borderLeftWidth: 3,
-    borderColor: '#2563eb',
+    borderColor: designTokens.colors.blue[600],
     borderRadius: 4,
   },
   cornerTopRight: {
@@ -524,7 +534,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderTopWidth: 3,
     borderRightWidth: 3,
-    borderColor: '#2563eb',
+    borderColor: designTokens.colors.blue[600],
     borderRadius: 4,
   },
   cornerBottomLeft: {
@@ -535,7 +545,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderBottomWidth: 3,
     borderLeftWidth: 3,
-    borderColor: '#2563eb',
+    borderColor: designTokens.colors.blue[600],
     borderRadius: 4,
   },
   cornerBottomRight: {
@@ -546,7 +556,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderBottomWidth: 3,
     borderRightWidth: 3,
-    borderColor: '#2563eb',
+    borderColor: designTokens.colors.blue[600],
     borderRadius: 4,
   },
   hintContainer: {
@@ -558,7 +568,7 @@ const styles = StyleSheet.create({
   },
   hintText: {
     fontSize: 16,
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '500',
   },
   hintSubText: {
@@ -581,7 +591,7 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '500',
   },
   errorContainer: {
@@ -592,7 +602,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#ef4444',
+    color: designTokens.colors.error[500],
     marginTop: 16,
     textAlign: 'center',
   },
@@ -602,12 +612,12 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: '#2563eb',
+    backgroundColor: designTokens.colors.blue[600],
     borderRadius: 24,
   },
   retryButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '500',
     marginLeft: 8,
   },
@@ -618,7 +628,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 16,
-    color: '#fff',
+    color: designTokens.colors.common.white,
   },
   resultContainer: {
     flex: 1,
@@ -628,7 +638,7 @@ const styles = StyleSheet.create({
   },
   resultCard: {
     width: '100%',
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -637,7 +647,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#eff6ff',
+    backgroundColor: designTokens.colors.blue[50],
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -664,12 +674,12 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   inventorySuccess: {
-    color: '#22c55e',
+    color: designTokens.colors.success[500],
     backgroundColor: '#ecfdf5',
   },
   inventoryError: {
-    color: '#ef4444',
-    backgroundColor: '#fef2f2',
+    color: designTokens.colors.error[500],
+    backgroundColor: designTokens.colors.error[50],
   },
   resultActions: {
     flexDirection: 'row',
@@ -687,7 +697,7 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '500',
     marginLeft: 8,
   },
@@ -697,12 +707,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    backgroundColor: '#2563eb',
+    backgroundColor: designTokens.colors.blue[600],
     borderRadius: 12,
   },
   confirmButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '500',
     marginLeft: 8,
   },
@@ -736,7 +746,7 @@ const styles = StyleSheet.create({
   },
   historyData: {
     fontSize: 14,
-    color: '#fff',
+    color: designTokens.colors.common.white,
     flex: 1,
   },
   historyTime: {
@@ -757,7 +767,7 @@ const styles = StyleSheet.create({
   },
   settingsButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: designTokens.colors.common.white,
     fontWeight: '500',
   },
   recognizedContainer: {
@@ -777,7 +787,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   recognizedSuccess: {
-    color: '#22c55e',
+    color: designTokens.colors.success[500],
     backgroundColor: '#ecfdf5',
   },
   recognizedUnknown: {
@@ -798,7 +808,7 @@ const styles = StyleSheet.create({
   },
   historyToggleText: {
     fontSize: 14,
-    color: '#fff',
+    color: designTokens.colors.common.white,
     marginLeft: 8,
   },
   historyItemContent: {

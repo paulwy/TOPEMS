@@ -1,3 +1,4 @@
+import { designTokens } from '@topems/tokens';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -73,7 +74,7 @@ const DocumentPage: React.FC = () => {
     <Card style={styles.documentCard} mode="elevated">
       <Card.Content style={styles.documentContent}>
         <View style={styles.documentIcon}>
-          <FileText size={32} color="#3b82f6" />
+          <FileText size={32} color={designTokens.colors.blue[500]} />
         </View>
         <View style={styles.documentBody}>
           <View style={styles.documentHeader}>
@@ -97,11 +98,11 @@ const DocumentPage: React.FC = () => {
       </Card.Content>
       <Card.Actions style={styles.documentActions}>
         <TouchableOpacity style={styles.actionItem}>
-          <Download size={18} color="#3b82f6" />
+          <Download size={18} color={designTokens.colors.blue[500]} />
           <Text style={styles.actionText}>下载</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
-          <FolderOpen size={18} color="#3b82f6" />
+          <FolderOpen size={18} color={designTokens.colors.blue[500]} />
           <Text style={styles.actionText}>预览</Text>
         </TouchableOpacity>
       </Card.Actions>
@@ -112,7 +113,7 @@ const DocumentPage: React.FC = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <FileText size={24} color="#3b82f6" />
+          <FileText size={24} color={designTokens.colors.blue[500]} />
           <Text style={styles.headerTitle}>文档中心</Text>
         </View>
       </View>
@@ -160,7 +161,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -176,7 +177,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: designTokens.colors.common.white,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
@@ -244,8 +245,8 @@ const styles = StyleSheet.create({
     color: '#059669',
   },
   draftBadge: {
-    backgroundColor: '#fef3c7',
-    color: '#d97706',
+    backgroundColor: designTokens.colors.warning[100],
+    color: designTokens.colors.warning[600],
   },
   archivedBadge: {
     backgroundColor: '#e5e7eb',
@@ -266,7 +267,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 13,
-    color: '#3b82f6',
+    color: designTokens.colors.blue[500],
   },
   emptyContainer: {
     flex: 1,
