@@ -99,8 +99,14 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
                     break;
                 }
                 Err(e) => {
-                    let backoff_ms =
-                        DB_CONNECT_BACKOFF_MS[((attempt - 1) as usize).min(DB_CONNECT_BACKOFF_MS.len() - 1)];
+                    let backoff_idx = usize::try_from(attempt)
+                        .unwrap_or(usize::MAX)
+                        .saturating_sub(1)
+                        .min(DB_CONNECT_BACKOFF_MS.len() - 1);
+                    let backoff_ms = DB_CONNECT_BACKOFF_MS
+                        .get(backoff_idx)
+                        .copied()
+                        .unwrap_or_else(|| *DB_CONNECT_BACKOFF_MS.last().unwrap_or(&0));
                     if attempt < DB_CONNECT_MAX_ATTEMPTS {
                         tracing::warn!(
                             "数据库连接池第 {}/{} 次尝试失败: {e} — {}ms 后重试",
@@ -124,7 +130,15 @@ pub async fn create_database_pool(config: &DatabaseConfig) -> Result<PgPool> {
         match ready {
             Some(p) => p,
             None => {
-                let last = last_err.expect("循环仅在所有尝试失败后落到此处，last_err 必为 Some");
+                let last = match last_err {
+                    Some(e) => e,
+                    None => {
+                        return Err(TopemsError::Database(format!(
+                            "Failed to create database pool after {DB_CONNECT_MAX_ATTEMPTS} attempts (no underlying error recorded)"
+                        ))
+                        .into());
+                    }
+                };
                 return Err(TopemsError::Database(format!(
                     "Failed to create database pool after {DB_CONNECT_MAX_ATTEMPTS} attempts: {last}"
                 ))

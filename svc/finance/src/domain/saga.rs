@@ -964,11 +964,10 @@ mod tests {
         let status = coord.execute_saga(&saga_id).await.unwrap();
         assert_eq!(status, SagaStatus::Completed);
         let inst = coord.get_saga(&saga_id).await.unwrap();
-        assert!(
-            inst.steps
-                .iter()
-                .all(|s| s.status == SagaStepStatus::Completed)
-        );
+        assert!(inst
+            .steps
+            .iter()
+            .all(|s| s.status == SagaStepStatus::Completed));
         assert_eq!(inst.current_step, 2);
         let result = inst.result.unwrap();
         assert_eq!(result["ok"], true);

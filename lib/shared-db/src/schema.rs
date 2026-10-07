@@ -140,8 +140,8 @@ pub fn portal_table(table_name: &str) -> String {
 //                   warn 跳过 vs panic（CI 门禁）
 // ============================================================================
 
-use sqlx::PgPool;
 use sha2::{Digest, Sha256};
+use sqlx::PgPool;
 
 // ============================================================================
 // AR-03: Schema 防御 DDL 版本门控（Phase 1）
@@ -162,7 +162,9 @@ use sha2::{Digest, Sha256};
 /// AR-03：读取 SCHEMA_DEFENSE_GATE_ENABLED。默认 true；`0/false/no/off`（大小写不敏感）→ false。
 pub fn schema_defense_gate_enabled() -> bool {
     schema_defense_gate_enabled_from(
-        std::env::var("SCHEMA_DEFENSE_GATE_ENABLED").unwrap_or_default().as_str(),
+        std::env::var("SCHEMA_DEFENSE_GATE_ENABLED")
+            .unwrap_or_default()
+            .as_str(),
     )
 }
 
@@ -176,8 +178,11 @@ pub fn schema_defense_gate_enabled_from(env_value: &str) -> bool {
 
 /// AR-03：读取 SCHEMA_DEFENSE_FORCE_REAPPLY。默认 false；`1/true/yes/on` → true。
 pub fn schema_defense_force_reapply() -> bool {
-    is_verify_strict_from( // 与严格开关同语义的真值解析
-        std::env::var("SCHEMA_DEFENSE_FORCE_REAPPLY").unwrap_or_default().as_str(),
+    is_verify_strict_from(
+        // 与严格开关同语义的真值解析
+        std::env::var("SCHEMA_DEFENSE_FORCE_REAPPLY")
+            .unwrap_or_default()
+            .as_str(),
     )
 }
 
@@ -239,7 +244,10 @@ pub fn normalize_ddl_fragment(ddl: &str) -> String {
                 let mut run = String::from(c);
                 while let Some(nc) = chars.peek() {
                     if nc.is_ascii_alphabetic() {
-                        run.push(chars.next().expect("just peeked"));
+                        match chars.next() {
+                            Some(nc) => run.push(nc),
+                            None => break,
+                        }
                     } else {
                         break;
                     }
@@ -323,8 +331,8 @@ pub async fn upsert_ledger(
     )
     .bind(schema)
     .bind(schema_hash)
-    .bind(tables_count as i32)
-    .bind(cols_count as i32)
+    .bind(i32::try_from(tables_count).unwrap_or(i32::MAX))
+    .bind(i32::try_from(cols_count).unwrap_or(i32::MAX))
     .bind(last_skipped_ensure)
     .execute(pool)
     .await;
@@ -638,7 +646,15 @@ pub async fn run_schema_defense(
     // AR-03：upsert 台账（GATE_ENABLED=false 时完全不碰台账）
     // --------------------------------------------------------------------
     if gate_on {
-        upsert_ledger(pool, schema, &current_hash, total_tables, total_cols, skip_ensure).await;
+        upsert_ledger(
+            pool,
+            schema,
+            &current_hash,
+            total_tables,
+            total_cols,
+            skip_ensure,
+        )
+        .await;
     }
 
     Ok((tables_done, cols_added, verified))
@@ -794,8 +810,16 @@ mod tests {
         assert!(schema_defense_gate_enabled_from(""));
         // 真值写法 → true
         for v in ["1", "true", "TRUE", "on", "yes", "anything", " false "] {
-            let expected = !matches!(v.trim().to_ascii_lowercase().as_str(), "0" | "false" | "no" | "off");
-            assert_eq!(schema_defense_gate_enabled_from(v), expected, "gate env = {:?}", v);
+            let expected = !matches!(
+                v.trim().to_ascii_lowercase().as_str(),
+                "0" | "false" | "no" | "off"
+            );
+            assert_eq!(
+                schema_defense_gate_enabled_from(v),
+                expected,
+                "gate env = {:?}",
+                v
+            );
         }
         // 假值写法 → false
         for v in ["0", "false", "False", "NO", "off", " off "] {
@@ -864,11 +888,23 @@ mod tests {
     fn test_hash_ignores_column_order() {
         let a = compute_schema_hash(
             "wms",
-            &[("orders", &[("status", "VARCHAR(32) NOT NULL"), ("total", "NUMERIC(12,2)")])],
+            &[(
+                "orders",
+                &[
+                    ("status", "VARCHAR(32) NOT NULL"),
+                    ("total", "NUMERIC(12,2)"),
+                ],
+            )],
         );
         let b = compute_schema_hash(
             "wms",
-            &[("orders", &[("total", "NUMERIC(12,2)"), ("status", "VARCHAR(32) NOT NULL")])],
+            &[(
+                "orders",
+                &[
+                    ("total", "NUMERIC(12,2)"),
+                    ("status", "VARCHAR(32) NOT NULL"),
+                ],
+            )],
         );
         assert_eq!(a, b);
     }
@@ -883,7 +919,10 @@ mod tests {
             ("lines", &[("qty", "INT")]),
             ("orders", &[("status", "VARCHAR(32) NOT NULL")]),
         ];
-        assert_eq!(compute_schema_hash("wms", defs1), compute_schema_hash("wms", defs2));
+        assert_eq!(
+            compute_schema_hash("wms", defs1),
+            compute_schema_hash("wms", defs2)
+        );
     }
 
     #[test]
@@ -940,13 +979,17 @@ mod tests {
 
     #[test]
     fn test_hash_excludes_id_column() {
-        let without_id = compute_schema_hash(
-            "wms",
-            &[("orders", &[("status", "VARCHAR(32) NOT NULL")])],
-        );
+        let without_id =
+            compute_schema_hash("wms", &[("orders", &[("status", "VARCHAR(32) NOT NULL")])]);
         let with_id = compute_schema_hash(
             "wms",
-            &[("orders", &[("id", "UUID PRIMARY KEY"), ("status", "VARCHAR(32) NOT NULL")])],
+            &[(
+                "orders",
+                &[
+                    ("id", "UUID PRIMARY KEY"),
+                    ("status", "VARCHAR(32) NOT NULL"),
+                ],
+            )],
         );
         assert_eq!(without_id, with_id);
     }

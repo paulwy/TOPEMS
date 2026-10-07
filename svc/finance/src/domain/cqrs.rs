@@ -344,7 +344,10 @@ mod tests {
         assert_eq!(events.len(), 1);
         assert_eq!(events[0].version, 1);
         assert_eq!(events[0].aggregate_type, "Voucher");
-        assert!(matches!(events[0].payload, FinanceDomainEvent::VoucherCreated(_)));
+        assert!(matches!(
+            events[0].payload,
+            FinanceDomainEvent::VoucherCreated(_)
+        ));
     }
 
     #[tokio::test]
@@ -379,13 +382,19 @@ mod tests {
             voucher_no: Some("VN-002".into()),
             posted_by: "u2".into(),
         };
-        let result = handler.handle_post_voucher("v-002", post, None).await.unwrap();
+        let result = handler
+            .handle_post_voucher("v-002", post, None)
+            .await
+            .unwrap();
         assert_eq!(result.version, 2);
         assert_eq!(result.events_count, 1);
 
         let events = store.read_events("v-002", 0, None).await.unwrap();
         assert_eq!(events.len(), 2);
-        assert!(matches!(events[1].payload, FinanceDomainEvent::VoucherPosted(_)));
+        assert!(matches!(
+            events[1].payload,
+            FinanceDomainEvent::VoucherPosted(_)
+        ));
         assert_eq!(events[1].version, 2);
     }
 
@@ -407,7 +416,10 @@ mod tests {
             reversed_by: "u3".into(),
             reason: "test".into(),
         };
-        let result = handler.handle_reverse_voucher("v-003", rev, None).await.unwrap();
+        let result = handler
+            .handle_reverse_voucher("v-003", rev, None)
+            .await
+            .unwrap();
         assert_eq!(result.version, 2);
 
         let events = store.read_events("v-003", 0, None).await.unwrap();

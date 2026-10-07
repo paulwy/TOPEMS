@@ -4,20 +4,30 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::sync_records::{list_sync_records, ListSyncParams};
-use api_state::{api_state, super_claims};
 
 fn empty_params() -> ListSyncParams {
-    ListSyncParams { source_system: None, target_system: None, sync_type: None, status: None, page: None, page_size: None }
+    ListSyncParams {
+        source_system: None,
+        target_system: None,
+        sync_type: None,
+        status: None,
+        page: None,
+        page_size: None,
+    }
 }
 
 async fn setup_schema(pool: &sqlx::PgPool) {
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS wms").execute(pool).await.unwrap();
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
+        .execute(pool)
+        .await
+        .unwrap();
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS wms.sync_records (
             id UUID PRIMARY KEY,
@@ -40,7 +50,9 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             created_at TIMESTAMPTZ DEFAULT NOW()
         )"#,
     )
-    .execute(pool).await.unwrap();
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
@@ -50,8 +62,17 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
     let claims = super_claims();
     let mut params = empty_params();
     params.status = status;
-    let resp = list_sync_records(State(state), Extension(claims), Extension(txn_arc), Query(params)).await;
-    resp.0.data.clone().unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
+    let resp = list_sync_records(
+        State(state),
+        Extension(claims),
+        Extension(txn_arc),
+        Query(params),
+    )
+    .await;
+    resp.0
+        .data
+        .clone()
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
 }
 
 async fn insert_record(pool: &sqlx::PgPool, source_system: &str, status: &str) {

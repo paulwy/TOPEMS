@@ -4,9 +4,9 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::{super_claims, test_app_state};
 use axum::extract::{Json, Path, Query, State};
 use axum::Extension;
-use app_state::{super_claims, test_app_state};
 use topems_unified_core::modules::automation::{
     create_variable, delete_variable, get_variable, list_variables, update_variable,
     AutomationVariable, CreateVariableRequest, UpdateVariableRequest, VariableQueryParams,
@@ -71,7 +71,12 @@ async fn create_returns_variable(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp = create_variable(State(state), Extension(claims), Json(create_req("api_key", "v1"))).await;
+    let resp = create_variable(
+        State(state),
+        Extension(claims),
+        Json(create_req("api_key", "v1")),
+    )
+    .await;
     let var: AutomationVariable = resp.0.data.unwrap();
     assert_eq!(var.key, "api_key");
     assert_eq!(var.value.as_deref(), Some("v1"));
@@ -83,7 +88,12 @@ async fn get_roundtrip(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool.clone());
     let claims = super_claims();
-    let resp = create_variable(State(state), Extension(claims), Json(create_req("db_host", "localhost"))).await;
+    let resp = create_variable(
+        State(state),
+        Extension(claims),
+        Json(create_req("db_host", "localhost")),
+    )
+    .await;
     let var: AutomationVariable = resp.0.data.unwrap();
 
     let state = test_app_state(pool);
@@ -98,7 +108,12 @@ async fn update_changes_value(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool.clone());
     let claims = super_claims();
-    let resp = create_variable(State(state), Extension(claims), Json(create_req("timeout", "30"))).await;
+    let resp = create_variable(
+        State(state),
+        Extension(claims),
+        Json(create_req("timeout", "30")),
+    )
+    .await;
     let var: AutomationVariable = resp.0.data.unwrap();
 
     let req = UpdateVariableRequest {
@@ -119,7 +134,12 @@ async fn delete_removes_variable(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool.clone());
     let claims = super_claims();
-    let resp = create_variable(State(state), Extension(claims), Json(create_req("temp", "x"))).await;
+    let resp = create_variable(
+        State(state),
+        Extension(claims),
+        Json(create_req("temp", "x")),
+    )
+    .await;
     let var: AutomationVariable = resp.0.data.unwrap();
 
     let state = test_app_state(pool.clone());

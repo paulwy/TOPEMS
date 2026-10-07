@@ -4,14 +4,14 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use topems_wms::modules::transfer_order::list_transfers;
 use topems_wms::models::transfer_order::TransferOrderQueryParams;
-use api_state::{api_state, super_claims};
+use topems_wms::modules::transfer_order::list_transfers;
 
 fn empty_params() -> TransferOrderQueryParams {
     TransferOrderQueryParams {
@@ -54,7 +54,13 @@ async fn body_of(pool: sqlx::PgPool, params: TransferOrderQueryParams) -> Value 
     let txn_arc = Arc::new(Mutex::new(Some(txn)));
     let state = api_state(pool);
     let claims = super_claims();
-    let resp = list_transfers(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
+    let resp = list_transfers(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
     resp.0
         .data
         .clone()

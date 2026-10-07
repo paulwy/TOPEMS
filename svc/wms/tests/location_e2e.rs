@@ -3,20 +3,33 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::location::{list_locations, LocationPaginationParams};
-use api_state::{api_state, super_claims};
 
 fn empty_params() -> LocationPaginationParams {
-    LocationPaginationParams { page: None, page_size: None, search: None, status: None, warehouse_id: None, zone_id: None, location_type: None, storage_type: None, isactive: None }
+    LocationPaginationParams {
+        page: None,
+        page_size: None,
+        search: None,
+        status: None,
+        warehouse_id: None,
+        zone_id: None,
+        location_type: None,
+        storage_type: None,
+        isactive: None,
+    }
 }
 
 async fn setup_schema(pool: &sqlx::PgPool) {
-    sqlx::query("CREATE SCHEMA IF NOT EXISTS wms").execute(pool).await.unwrap();
+    sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
+        .execute(pool)
+        .await
+        .unwrap();
     sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS wms.locations (
             id UUID PRIMARY KEY,
@@ -33,7 +46,9 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             deleted_at TIMESTAMPTZ
         )"#,
     )
-    .execute(pool).await.unwrap();
+    .execute(pool)
+    .await
+    .unwrap();
 }
 
 async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
@@ -43,8 +58,17 @@ async fn body_of(pool: sqlx::PgPool, status: Option<String>) -> Value {
     let claims = super_claims();
     let mut params = empty_params();
     params.status = status;
-    let resp = list_locations(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
-    resp.0.data.clone().unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
+    let resp = list_locations(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
+    resp.0
+        .data
+        .clone()
+        .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
 }
 
 async fn insert_location(pool: &sqlx::PgPool, code: &str, status: &str) {

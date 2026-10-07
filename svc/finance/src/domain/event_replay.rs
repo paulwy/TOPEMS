@@ -375,7 +375,8 @@ mod tests {
                 reason: "test".into(),
                 occurred_at: chrono::Utc::now(),
             }),
-        ]).await;
+        ])
+        .await;
         let replayer = EventReplayer::new(store);
         let result = replayer.replay_full("v-agg", "Voucher").await.unwrap();
         assert_eq!(result.events_count, 3);
@@ -389,9 +390,13 @@ mod tests {
         let store = store_with_events(vec![
             created_event("v-agg", "VN-3"),
             posted_event("v-agg", "VN-3"),
-        ]).await;
+        ])
+        .await;
         let replayer = EventReplayer::new(store);
-        let result = replayer.replay_to_version("v-agg", "Voucher", 1).await.unwrap();
+        let result = replayer
+            .replay_to_version("v-agg", "Voucher", 1)
+            .await
+            .unwrap();
         assert_eq!(result.events_count, 1);
         assert_eq!(result.version, 1);
         assert_eq!(result.final_state["status"], "Created");

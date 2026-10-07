@@ -10,8 +10,8 @@ use topems_shared_boundary::only_own_schema_query;
 fn escape_sql_identifier(identifier: &str) -> String {
     format!("\"{}\"", identifier.replace('"', "\"\""))
 }
-use crate::models::{ColumnInfo, DbChange, TableInfo};
 use crate::models::migration::DbColumnDefinition;
+use crate::models::{ColumnInfo, DbChange, TableInfo};
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
@@ -27,7 +27,11 @@ fn build_add_column_suggestion(table_name: &str, column: &DbColumnDefinition) ->
         column.numeric_precision,
         column.numeric_scale,
     );
-    let null_clause = if column.is_nullable { "NULL" } else { "NOT NULL" };
+    let null_clause = if column.is_nullable {
+        "NULL"
+    } else {
+        "NOT NULL"
+    };
     let default_clause = match &column.default_value {
         Some(default) => format!("DEFAULT {}", default),
         None => String::new(),

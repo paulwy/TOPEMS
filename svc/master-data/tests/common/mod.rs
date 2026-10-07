@@ -107,15 +107,9 @@ impl TestContext {
             req = req.json(&b);
         }
 
-        let resp = req
-            .send()
-            .await
-            .map_err(|e| {
-                TopemsError::ValidationFailed(format!(
-                    "request {} {} failed: {}",
-                    method_str, url, e
-                ))
-            })?;
+        let resp = req.send().await.map_err(|e| {
+            TopemsError::ValidationFailed(format!("request {} {} failed: {}", method_str, url, e))
+        })?;
 
         let status = resp.status().as_u16();
         let parsed: Value = resp

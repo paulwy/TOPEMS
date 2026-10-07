@@ -5,13 +5,13 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::inventory_alert::{list_alerts, AlertQueryParams};
-use api_state::{api_state, super_claims};
 
 fn empty_params() -> AlertQueryParams {
     AlertQueryParams {
@@ -90,14 +90,25 @@ async fn body_of(pool: sqlx::PgPool, alert_type: Option<String>) -> Value {
     let claims = super_claims();
     let mut params = empty_params();
     params.alert_type = alert_type;
-    let resp = list_alerts(State(state), Extension(claims), Query(params), Extension(txn_arc)).await;
+    let resp = list_alerts(
+        State(state),
+        Extension(claims),
+        Query(params),
+        Extension(txn_arc),
+    )
+    .await;
     resp.0
         .data
         .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message))
 }
 
-async fn insert_inventory(pool: &sqlx::PgPool, material_code: &str, quantity: f64, min_qty: Option<f64>) {
+async fn insert_inventory(
+    pool: &sqlx::PgPool,
+    material_code: &str,
+    quantity: f64,
+    min_qty: Option<f64>,
+) {
     sqlx::query(
         "INSERT INTO wms.inventory (id, material_code, material_name, quantity, quality_status, min_quantity, warehouse_id) VALUES ($1, $2, $3, $4, 'qualified', $5, $6)",
     )

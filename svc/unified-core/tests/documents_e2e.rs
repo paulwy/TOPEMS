@@ -5,9 +5,9 @@
 #[path = "common/app_state.rs"]
 mod app_state;
 
+use app_state::{super_claims, tenant_claims, test_app_state};
 use axum::extract::{Json, Path, State};
 use axum::Extension;
-use app_state::{super_claims, tenant_claims, test_app_state};
 use topems_unified_core::modules::doc::handlers::{
     create_document, delete_document, get_document, list_documents, update_document,
 };
@@ -51,11 +51,7 @@ async fn setup_schema(pool: &sqlx::PgPool) {
 const TENANT_A: &str = "00000000-0000-0000-0000-000000000009";
 const TENANT_B: &str = "00000000-0000-0000-0000-00000000000b";
 
-async fn insert_doc(
-    pool: &sqlx::PgPool,
-    tenant: &str,
-    title: &str,
-) -> uuid::Uuid {
+async fn insert_doc(pool: &sqlx::PgPool, tenant: &str, title: &str) -> uuid::Uuid {
     let id = uuid::Uuid::new_v4();
     sqlx::query(
         "INSERT INTO core_doc_documents (id, tenant_id, title, created_by) VALUES ($1, $2, $3, 'test')",
@@ -151,8 +147,7 @@ async fn get_missing_returns_none(pool: sqlx::PgPool) {
 
     let state = test_app_state(pool);
     let claims = super_claims();
-    let resp =
-        get_document(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
+    let resp = get_document(State(state), Extension(claims), Path(uuid::Uuid::new_v4())).await;
     let doc: Option<Document> = resp.0.data.unwrap();
     assert!(doc.is_none());
 }

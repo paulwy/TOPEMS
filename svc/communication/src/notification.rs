@@ -2446,11 +2446,13 @@ pub async fn delete_channel(
         .tenant_id
         .clone()
         .unwrap_or_else(|| "default".to_string());
-    match sqlx::query("DELETE FROM notification_channels WHERE id = $1::uuid AND tenant_id = $2::uuid")
-        .bind(id)
-        .bind(&tenant_id)
-        .execute(&pool)
-        .await
+    match sqlx::query(
+        "DELETE FROM notification_channels WHERE id = $1::uuid AND tenant_id = $2::uuid",
+    )
+    .bind(id)
+    .bind(&tenant_id)
+    .execute(&pool)
+    .await
     {
         Ok(result) => {
             if result.rows_affected() > 0 {

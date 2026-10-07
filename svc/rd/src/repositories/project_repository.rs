@@ -282,8 +282,11 @@ mod tests {
         std::sync::LazyLock::new(|| tokio::sync::Mutex::new(()));
 
     async fn setup_test_db() -> PgPool {
-        let database_url = "postgres://topems:topems_secret@localhost:5432/topems";
-        let pool = PgPool::connect(database_url)
+        // 支持 TEST_DATABASE_URL 环境变量覆盖（默认与项目约定一致），
+        // 便于本机/CI 使用各自实际凭据运行门禁。
+        let database_url = std::env::var("TEST_DATABASE_URL")
+            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_owned());
+        let pool = PgPool::connect(&database_url)
             .await
             .expect("Failed to connect to test database");
 

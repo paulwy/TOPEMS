@@ -53,11 +53,14 @@ pub fn test_app_state(pool: sqlx::PgPool) -> AppState {
         http_client: ReqwestClient::new(),
         rate_limit_middleware: Arc::new(RateLimitMiddleware::new(RateLimitConfig::default())),
         versioning_middleware: Arc::new(VersionMiddleware::new(VersionConfig::default())),
-        security_headers_layer: Arc::new(SecurityHeadersLayer::new(SecurityHeadersConfig::default())),
+        security_headers_layer: Arc::new(SecurityHeadersLayer::new(
+            SecurityHeadersConfig::default(),
+        )),
         compression_middleware: Arc::new(CompressionMiddleware::new(CompressionConfig::default())),
         body_limit_middleware: Arc::new(BodyLimitMiddleware::new(BodyLimitConfig::default())),
         audit_logger_middleware: Arc::new(AuditLoggerMiddleware::new(
-            AuditLoggerConfig::default(), pool.clone(),
+            AuditLoggerConfig::default(),
+            pool.clone(),
         )),
         input_validation_config: InputValidationConfig::new(),
         metrics: Arc::new(SystemMetrics::new()),

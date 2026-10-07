@@ -421,7 +421,7 @@ mod tests {
     // ─── P0 补测：ComplianceChecker 合规检查逻辑（2026-10-07，盲区 compliance.rs 0/115）───
     // 用内存 AuditLogService 注入，覆盖职责分离/审计完整性/数据保留/汇总报告。
 
-    use crate::domain::audit_log::{AuditAction, AuditLogService, AuditLogQuery};
+    use crate::domain::audit_log::{AuditAction, AuditLogQuery, AuditLogService};
     use crate::domain::event_store::InMemoryEventStore;
     use std::sync::Arc;
 
@@ -513,8 +513,8 @@ mod tests {
     fn data_retention_reports_expired_logs() {
         let audit_log = Arc::new(AuditLogService::new());
         log_voucher(&audit_log, AuditAction::Create, "alice", "v-1");
-        let checker = ComplianceChecker::<InMemoryEventStore>::new(audit_log)
-            .with_retention_days(0);
+        let checker =
+            ComplianceChecker::<InMemoryEventStore>::new(audit_log).with_retention_days(0);
 
         let issues = checker.check_data_retention(
             chrono::Utc::now() - chrono::Duration::days(1),

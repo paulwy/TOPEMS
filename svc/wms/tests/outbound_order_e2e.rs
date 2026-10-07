@@ -5,13 +5,13 @@
 #[path = "common/api_state.rs"]
 mod api_state;
 
+use api_state::{api_state, empty_params, super_claims};
 use axum::extract::{Query, State};
 use axum::Extension;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use topems_wms::modules::outbound_order::list_outbound_orders;
-use api_state::{api_state, empty_params, super_claims};
 
 async fn setup_schema(pool: &sqlx::PgPool) {
     sqlx::query("CREATE SCHEMA IF NOT EXISTS wms")
@@ -67,7 +67,8 @@ async fn list_empty_returns_zero(pool: sqlx::PgPool) {
         Extension(txn_arc),
     )
     .await;
-    let body: Value = resp.0
+    let body: Value = resp
+        .0
         .data
         .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
@@ -98,7 +99,8 @@ async fn list_returns_inserted_row(pool: sqlx::PgPool) {
         Extension(txn_arc),
     )
     .await;
-    let body: Value = resp.0
+    let body: Value = resp
+        .0
         .data
         .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
@@ -135,7 +137,8 @@ async fn list_filters_by_status(pool: sqlx::PgPool) {
         Extension(txn_arc),
     )
     .await;
-    let body: Value = resp.0
+    let body: Value = resp
+        .0
         .data
         .clone()
         .unwrap_or_else(|| panic!("handler error: {:?}", resp.0.message));
