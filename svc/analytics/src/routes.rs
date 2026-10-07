@@ -235,6 +235,18 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
             post(modules::bi::visualization::generate_gauge_chart),
         )
         .route(
+            "/dashboards/{dashboard_id}/links",
+            get(modules::bi::visualization::get_chart_link_config),
+        )
+        .route(
+            "/dashboards/{dashboard_id}/links",
+            put(modules::bi::visualization::update_chart_link_config),
+        )
+        .route(
+            "/annotations/{annotation_id}",
+            delete(modules::bi::visualization::delete_chart_annotation),
+        )
+        .route(
             "/widgets/{widget_id}/export",
             post(modules::bi::visualization::export_chart),
         )

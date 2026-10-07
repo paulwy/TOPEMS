@@ -91,6 +91,8 @@ use utoipa::OpenApi;
         modules::bi::sync_records::update_sync_record,
         modules::bi::sync_records::delete_sync_record,
         modules::bi::sync_records::retry_sync,
+        modules::bi::visualization::update_chart_link_config,
+        modules::bi::visualization::delete_chart_annotation,
         modules::bi::dashboard::crud::get_public_dashboards,
         modules::bi::dashboard::crud::get_user_dashboards,
         modules::bi::dashboard::crud::clone_dashboard,

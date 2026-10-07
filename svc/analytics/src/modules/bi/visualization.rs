@@ -111,22 +111,6 @@ pub async fn create_visualization(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:viz:read"])),
-    path = "/visualization/{id}",
-    tag = "Visualization",
-    operation_id = "get_visualization",
-    responses((status = 200, description = "OK")),
-)]
-pub async fn get_visualization(State(_state): State<AppState>) -> Json<serde_json::Value> {
-    info!("Getting visualization");
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Get visualization"
-    }))
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["analytics:viz:read"])),
     path = "/visualization/chart-types",
     tag = "Visualization",
     operation_id = "get_chart_types",
@@ -281,74 +265,6 @@ pub async fn generate_gauge_chart(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["analytics:viz:read"])),
-    path = "/api/bi/widgets/{widget_id}/drilldown",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
-)]
-pub async fn get_drilldown_config(
-    State(_state): State<AppState>,
-    Path(widget_id): Path<String>,
-) -> Json<serde_json::Value> {
-    info!("Getting drilldown config for widget: {}", widget_id);
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Get drilldown config",
-        "data": {
-            "widgetId": widget_id,
-            "levels": [],
-            "defaultLevel": 0
-        }
-    }))
-}
-
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["analytics:viz:write"])),
-    path = "/widgets/{widget_id}/drilldown",
-    tag = "Drilldown",
-    operation_id = "update_drilldown_config",
-    responses((status = 200, description = "OK")),
-)]
-pub async fn update_drilldown_config(
-    State(_state): State<AppState>,
-    Path(widget_id): Path<String>,
-    Json(_config): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
-    info!("Updating drilldown config for widget: {}", widget_id);
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Update drilldown config"
-    }))
-}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["analytics:viz:write"])),
-    path = "/api/bi/widgets/{widget_id}/drilldown/execute",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
-)]
-pub async fn execute_drilldown(
-    State(_state): State<AppState>,
-    Path(widget_id): Path<String>,
-    Json(req): Json<DrilldownRequest>,
-) -> Json<serde_json::Value> {
-    info!("Executing drilldown for widget: {}", widget_id);
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Execute drilldown",
-        "data": {
-            "widgetId": widget_id,
-            "level": req.level,
-            "filters": req.filters,
-            "result": []
-        }
-    }))
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["analytics:viz:read"])),
     path = "/dashboards/{dashboard_id}/links",
     tag = "Visualization",
     operation_id = "get_chart_link_config",
@@ -385,53 +301,6 @@ pub async fn update_chart_link_config(
     Json(serde_json::json!({
         "success": true,
         "message": "Update chart link config"
-    }))
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["analytics:viz:read"])),
-    path = "/widgets/{widget_id}/annotations",
-    tag = "Visualization",
-    operation_id = "get_chart_annotations",
-    responses((status = 200, description = "OK")),
-)]
-pub async fn get_chart_annotations(
-    State(_state): State<AppState>,
-    Path(widget_id): Path<String>,
-) -> Json<serde_json::Value> {
-    info!("Getting annotations for widget: {}", widget_id);
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Get chart annotations",
-        "data": []
-    }))
-}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["analytics:report:write"])),
-    path = "/api/bi/widgets/{widget_id}/annotations",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
-)]
-pub async fn create_chart_annotation(
-    State(_state): State<AppState>,
-    Path(widget_id): Path<String>,
-    Json(req): Json<AnnotationRequest>,
-) -> Json<serde_json::Value> {
-    info!("Creating annotation for widget: {}", widget_id);
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Create chart annotation",
-        "data": {
-            "id": Uuid::new_v4(),
-            "widgetId": widget_id,
-            "type": req.r#type,
-            "position": req.position,
-            "content": req.content,
-            "color": req.color
-        }
     }))
 }
 
@@ -476,28 +345,6 @@ pub async fn export_chart(
             "widgetId": widget_id,
             "format": req.format,
             "url": "/download/placeholder"
-        }
-    }))
-}
-
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["analytics:viz:read"])),
-    path = "/api/bi/widgets/{widget_id}/fullscreen",
-    tag = "BI",
-    responses((status = 200, description = "OK", body = serde_json::Value))
-)]
-pub async fn get_fullscreen_chart(
-    State(_state): State<AppState>,
-    Path(widget_id): Path<String>,
-) -> Json<serde_json::Value> {
-    info!("Getting fullscreen chart for widget: {}", widget_id);
-    Json(serde_json::json!({
-        "success": true,
-        "message": "Get fullscreen chart",
-        "data": {
-            "widgetId": widget_id,
-            "config": {}
         }
     }))
 }
