@@ -68,37 +68,13 @@ impl ConfigStore {
         }
     }
 
-    /// Initialize the configuration store tables
+    /// Initialize the configuration store
+    ///
+    /// DB-06: system_configs 建表代码已移除。
+    /// 证据：shared/mod.rs 仅声明 `pub mod config_store_simple;`，本文件
+    ///   (config_store.rs) 未被声明为模块，不在编译树中；AppState 使用的是
+    ///   config_store_simple::ConfigStoreService。属历史残留死路径。
     pub async fn init(&self) -> Result<(), sqlx::Error> {
-        // Create config table if it doesn't exist
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS system_configs (
-                id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                key TEXT NOT NULL,
-                value TEXT NOT NULL,
-                tenant_id UUID NOT NULL DEFAULT gen_random_uuid(),
-                active BOOLEAN NOT NULL DEFAULT true,
-                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                UNIQUE(key, tenant_id)
-            )
-            "#,
-        )
-        .execute(&self.pool)
-        .await?;
-
-        // Create indexes for better performance
-        sqlx::query(
-            r#"
-            CREATE INDEX IF NOT EXISTS idx_system_configs_key ON system_configs(key);
-            CREATE INDEX IF NOT EXISTS idx_system_configs_tenant_id ON system_configs(tenant_id);
-            CREATE INDEX IF NOT EXISTS idx_system_configs_active ON system_configs(active);
-            "#,
-        )
-        .execute(&self.pool)
-        .await?;
-
         info!("Configuration store initialized successfully");
         Ok(())
     }
