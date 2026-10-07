@@ -107,8 +107,8 @@ export type { Department } from './DepartmentSelect';
 // Grid - Grid2 兼容组件
 export { Grid } from './Grid';
 
-// BackButton - 顶部导航返回/首页/关闭按钮
-export { BackButton } from './BackButton';
+// BackButton - 统一走 @topems/shared-components（router 感知 + href 支持；本地增强版已删除）
+export { BackButton, type BackButtonProps } from '@topems/shared-components';
 
 // ===== 统一表单组件 =====
 // [shared] FormField - 已提升到 @topems/shared-components
