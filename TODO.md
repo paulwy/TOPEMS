@@ -590,3 +590,18 @@
 - **FE-17-2 后续**：mobile token/401 的 AsyncStorage 异步与工厂同步签名差异——若工厂未来支持异步 getToken 可进一步收敛；401 现仍静默清凭据（未改跳登录）
 - **BE-07 后续修正项**：settlement_v55 422 映射、ai dsh 自建 ErrorCode→HTTP 映射、api-error-codes.md 手册 422/COMMON_010 条目、enhanced.rs 测试 422 示例——均属代码/文档修正，未在本批动（纯文档批次）
 - **AR-03 实施窗口**：核心两文件无并发冲突，Phase 1（台账 + hash + 单测）可在任何窗口启动；加依赖建议标准库 sha2 以避开 Cargo.* 用户占用
+
+## 2026-10-07 AR-03 Phase 1 实施（已完成，摘要 `artifacts/tier2-fixes/AR-03-Phase1-实施摘要.md`）
+
+### ✅ 已实施并提交（commit `c4239ae5f`，2 文件 +475/-19）
+- **schema.rs 版本门控**：`ensure_ledger_table`（运行时 CREATE IF NOT EXISTS schema_defense_ledger，不在迁移链）/ `compute_schema_hash`（表/列排序、id 剔除、去行注释/压缩空白/关键字大写 → SHA-256 hex）/ `upsert_ledger`（ON CONFLICT DO UPDATE，失败仅 warn）/ run_schema_defense 门控三分支（无记录→全量；hash 匹配→跳过 ensure 仅 verify，last_skipped_ensure=true；不匹配→全量重放）——**函数签名完全不变，服务侧零改动**
+- **开关**：`SCHEMA_DEFENSE_GATE_ENABLED`（默认 true；false 时行为与现状逐字节一致）+ `SCHEMA_DEFENSE_FORCE_REAPPLY`（默认 false）；优先级 GATE_ENABLED=false > FORCE_REAPPLY=true；日志含 hash 前 12 位/表数/列数
+- **零新依赖**：复用既有 sha2 0.10 / hex 0.4（Cargo.* 用户占用未碰）
+- **单测**：13 个 hash 规范化用例（列序/空白/注释/大小写变→同；列加减/类型变→变；表序变→同；id 剔除）——`cargo test -p topems-shared-db` **163 passed**
+- **真机实测**：wms 三次冷启动（33表/900列 hash=3ddac5cb…：全量重放→跳过→仍跳过）+ FORCE_REAPPLY=1（恢复全量、last_skipped 回 f）+ GATE_ENABLED=false（无门控日志、台账不动）；gis 两次冷启动（20表/224列 hash=a66eb225…→跳过）；psql 台账翻转正确；测试进程清理、端口释放、用户 8041 旧 wms 未触碰
+- **bootstrap**：仅补门控行为说明注释，逻辑零改动
+
+### 📋 遗留
+- **ledger GC**：服务下线后台账行残留（一行/服务）——设计 §7 声明不做
+- **全服务灰度**：其余 27 服务零代码改动发版自动生效，建议发版后抽查 unified-core / ehs
+- **台账落 schema**：search_path 差异使台账落各服务自身 schema（wms./gis.）——天然多 schema 隔离，跨库审计需逐 schema 查
