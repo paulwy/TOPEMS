@@ -84,18 +84,6 @@ export const authModuleApi = {
     return apiClient.iam.get('/auth/password-policy');
   },
 
-  updatePasswordPolicy: async (data: {
-    min_length?: number;
-    require_uppercase?: boolean;
-    require_lowercase?: boolean;
-    require_numbers?: boolean;
-    require_special?: boolean;
-    max_age_days?: number;
-    prevent_reuse?: number;
-  }): Promise<ApiResponse<{ updated: boolean }>> => {
-    return apiClient.iam.put<{ updated: boolean }>('/auth/password-policy', data);
-  },
-
   getActiveSessions: async (): Promise<
     ApiResponse<{
       sessions: Array<{
@@ -129,15 +117,6 @@ export const authModuleApi = {
     }>
   > => {
     return apiClient.iam.get('/auth/security-settings');
-  },
-
-  updateSecuritySettings: async (data: {
-    mfa_enabled?: boolean;
-    login_alerts?: boolean;
-    ip_whitelist?: string[];
-    session_timeout_minutes?: number;
-  }): Promise<ApiResponse<{ updated: boolean }>> => {
-    return apiClient.iam.put<{ updated: boolean }>('/auth/security-settings', data);
   },
 };
 

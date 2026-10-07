@@ -61,13 +61,11 @@ export const authApi = {
   checkEmailAvailability: userApi.checkEmailAvailability,
   checkUsernameAvailability: userApi.checkUsernameAvailability,
   getPasswordPolicy: authModuleApi.getPasswordPolicy,
-  updatePasswordPolicy: authModuleApi.updatePasswordPolicy,
   getLoginHistory: userApi.getLoginHistory,
   getActiveSessions: authModuleApi.getActiveSessions,
   revokeSession: authModuleApi.revokeSession,
   revokeAllOtherSessions: authModuleApi.revokeAllOtherSessions,
   getSecuritySettings: authModuleApi.getSecuritySettings,
-  updateSecuritySettings: authModuleApi.updateSecuritySettings,
 };
 
 export const iamApi = authApi;

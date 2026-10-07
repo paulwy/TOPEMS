@@ -352,3 +352,36 @@
 - [ ] rollback.sh 生产实跑一次通过（需 root/systemd 环境）
 - [ ] 数据库回滚策略：结构演进走 DDL 运维（不依赖 sqlx 回滚），破坏性变更前拍板文档化
 - [ ] 服务回滚顺序：业务服务 → 平台层（portal/unified-core）→ 数据库不动（数据优先保留）
+
+## 2026-10-07 全面审计 + 第一梯队修复（均已完成）
+
+### ✅ 全面审计完成（五维并行 + P1 逐条复核）
+- 覆盖：数据库字段链 / 后端 API / 前端 API / 项目架构 / 目录设置
+- 结论：**迁移链收敛态独立实证成立**（未入链且真实落库 DDL=0、空库 315/315 重建、断链 FK 0、依赖环 0）
+- 缺陷：**59 项（P0=0 · P1=8 · P2=29 · P3=22）**，全附 文件:行号 / SQL / 路由串 证据
+- 报告：`artifacts/audit/TOPEMS审计报告.md`（+ HTML 可视化版 + 3 张全量附表：4491 后端路由 / 4509 前端调用点 / SQL 漂移候选）
+
+### ✅ 第一梯队修复完成（2026-10-07，摘要 `artifacts/tier1-fixes/TOPEMS第一梯队修复摘要.md`）
+- **后端 P1×4**：
+  - BE-01 事件处理器 4 张缺失表（hrm_cache_invalidation_logs / gis_map_markers / integration_sync_logs / lims_inspection_records）判定全部业务必需 → 补建表迁移 `20261007000018~21`（含 tenant_id/RLS，幂等），cargo check 通过（commit `451182683`）
+  - BE-02 analytics 仪表盘查询：验证发现原查询 `core_permissions.tenant_id` 列不存在（必然跑不通）+ 跨 schema 引 hrm 被 boundary-gate 拒绝 → 降级修正（组织计数置 0 + 坏列修正），门禁 PASS、5432 实跑返回数值；**live 组织计数登记 follow-up**（需 bi 物化视图或 allowlist 评审，commit `095572cb1`）
+  - BE-03 孤儿 `transfer.rs` 确认零引用且与 transfer_order.rs 重复 → 删除（-969 行，commit `b7ca075ca`）
+  - BE-04 物化视图按 **CQRS 投影汇总表**建（原生 MV 只读与代码 INSERT/UPDATE 冲突），含刷新策略登记（commit `583b7179a`）
+- **前端 P1×3**：permission 补 POST stub、密码策略/安全设置写函数确认死路径已移除、通讯录补 4 条 stub；typecheck/eslint/cargo 全过，无遗留 405/404
+- **索引治理（DB-01/02，commit `4bae24506`）**：基准 81 缺索引 / 175 组冗余 / 4 个 `_key1` 全部复现 → 迁移 81 CREATE + 176 DROP INDEX + 4 DROP CONSTRAINT（逐条核实非约束/FK 支撑）→ 复扫 **81→0、175→0、_key1→0**
+- **迁移链卫生（commit `37b771972`）**：发现 32 个审计既有未应用 WIP 迁移（RLS 加固批次，属二/三梯队）→ 按"只登记不动"隔离至 `database/migrations-wip/` 并登记清单；双库账本 **315→322 完全一致**、5433 空库守卫 322/322 一次重放、schema-drift 复扫 **0**、checksums 重新生成
+- **git 噪音 + README（commit `d8d577cec`）**：`.cargo/env`、`.superpowers/`（含 server.pid）、`.trae/`、`.workbuddy/` 移出索引保留本地；package.json 失效脚本修正；README 项目结构按实测重写
+- **遗留（已登记）**：FE-02 前端 2 文件（iam/auth.ts、iam/index.ts，删 2 个死写函数）已暂存，两次提交被 `web-contract-smoke` 门拒绝——失败明细 1475/4137 全为 ai/workflow/ticket/wms 模块 route_missing/500（BFF 二进制未更新 + 二/三梯队路由缺口未修，门禁对 api 目录提交系统性变红，与改动无关），未绕过门禁，待路由缺口梯队修复后显式提交或由下一批 web 提交自然带走；部分提交哈希曾被并发 UI 批次 rebase 重写，最终哈希以上述为准（内容已逐项核实）
+- **边界**：第二/三梯队（RLS 加固批次 32 文件取回、FE-04~16、bi 组织计数、自助 DDL 入链、timestamptz 统一、优雅停机、前端 client 收敛、TABLE_DEFS 单一事实源、OpenAPI 门禁、迁移目录治理）仅登记未动
+
+## 🧪 测试覆盖率评估（2026-10-07，三域基线）
+
+- **基线**：unified-core + finance + wms `--lib` 覆盖率 **13.53%**（5594/41342 行；测试 552/1106/551 全跑全绿，非测试未执行）
+- **盲区定性**：测试集中在少数模块（finance settlement_v55 465/564、report_center 310/341、erp_e2e 144/145；unified-core subscription 345/354；wms fsm 42/42、util 55/55），**业务/领域层大面积 0 覆盖**（364 个模块 0/xx）
+- **P0 盲区（财务正确性 + 业务编排核心）**：
+  - finance domain/event 层：aggregate_repository 0/221、saga 0/181、event_replay 0/157、pg_materialized_views 0/199、cqrs 0/115、compliance_v51 0/223
+  - unified-core automation/mod.rs 0/618（自动化编排——R2 未覆盖）
+- **P1 盲区（业务模块）**：
+  - wms：inventory_movement 0/192、outbound_order 0/67、stock_take 0/62、slotting 0/52、transfer_order 0/47、smart_replenishment 全家 0/125
+  - unified-core：doc/handlers 0/508、audit/handlers 0/381、login_log_handlers 0/182、ws 0/235 + ws_event_bridge 0/146
+- **建议**：P0 补测优先（财务 domain 事件流正确性 > 自动化编排）；报告产物 target/tarpaulin/（html）
