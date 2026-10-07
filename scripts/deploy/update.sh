@@ -131,6 +131,15 @@ fi
 # Update binaries
 echo -e "${YELLOW}Updating service binaries...${NC}"
 
+# 回滚预案：更新前保留上一版本二进制快照（TODO 2.4；保留最近一份，与前端 web.backup.* 同理）
+if [[ "$DRY_RUN" != "true" && -d "${PREFIX}/bin" ]] && find "${PREFIX}/bin" -mindepth 1 -maxdepth 1 -print -quit | grep -q .; then
+    for old in "${PREFIX}"/bin.backup.*; do
+        [[ -d "$old" ]] && run rm -rf "$old"
+    done
+    run cp -a "${PREFIX}/bin" "${PREFIX}/bin.backup.$(date +%Y%m%d%H%M%S)"
+    echo -e "${GREEN}✓ 上一版本二进制已快照至 bin.backup.*（回滚时恢复）${NC}"
+fi
+
 for svc in "${UPDATE_SERVICES[@]}"; do
     if [[ -f "target/release/${svc}" ]]; then
         run systemctl stop "topems-${svc}.service" 2>/dev/null || true

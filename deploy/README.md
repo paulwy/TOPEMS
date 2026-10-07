@@ -77,3 +77,25 @@ bash deploy/docker/build-service.sh finance --tag latest
 - `service-monitor.sh` — 服务监控与自动恢复
 - `ai-health-check.sh` — AI 模块健康检查
 - `domain-start.sh` — 按业务域分组启动
+- `smoke-prod.sh` — 生产功能链路冒烟（TODO 2.3：IAM 登录→JWT→各域 /health、BI 真实 SQL、插件运行时；专项链路指引见脚本层2）
+
+## 回滚策略（TODO 2.4）
+
+### 回滚资产（更新前自动保留）
+- **上一版本二进制**：`update.sh` 更新前将 `${PREFIX}/bin` 快照为 `bin.backup.*`（保留最近一份）
+- **上一版本前端 dist**：`update.sh` 将 `${PREFIX}/web` 快照为 `web.backup.*`
+- **数据库**：`rollback.sh` 回滚前先 `pg_dump` 当前库至 `pre_rollback_<时间戳>/database_pre_rollback.sql`（绝不直接 dropdb 删库，先排查连接）
+
+### 回滚顺序（部分回滚/降级场景；全量回滚用 rollback.sh）
+1. **业务服务**（finance/mes/qms/lims/ehs/wms 等）先回滚到上一版本二进制并重启
+2. **平台层**（portal / unified-core）随后回滚
+3. **数据库不动**（数据优先保留；结构演进走 DDL 运维而非 sqlx 回滚，见 docs/database/database-half-migration-ops.md 2.1 流程）
+
+### 数据库回滚策略
+- 结构演进 = **直接 DDL 运维**（`psql "$DATABASE_URL" -f <迁移文件>`），`sqlx migrate run` 默认被防护拦截，不做补跑/回滚依赖
+- 破坏性变更（drop 列/表、改约束）前必须拍板并文档化，DDL 先备份受影响数据
+- 数据层回滚兜底：`rollback.sh` 全量 pg_dump/restore（docker 部署）；systemd 部署下等价操作为 `pg_dump` + `psql` 导入
+
+### 验证回滚
+- `rollback.sh --dry-run` 预演完整计划（本机可跑，2026-10-08 已验证计划完整）
+- 回滚后检查：容器/服务运行状态、`core_permissions` 计数、admin 登录成功（脚本内置 8 步验证）

@@ -399,25 +399,27 @@
   - ✅ bundle 源产物（js/css，不含 .gz/.br 压缩冗余与 offline_tiles/__p2_artifacts 运营资产）= 18.57MB ≤ 30M（历史记录 16.43MB 为更早构建；离线瓦片 15.2MB 等为功能资产另计）
 
 ### 2.2 环境与部署（生产机）
-- [ ] install.sh 生产实跑（dry-run ✅ 306 文件/16.48MB/systemd 24 服务 → 实跑）
-- [ ] systemd 服务启用后各服务 /health 绿（本机无 systemd，需生产机实跑）
-- [ ] nginx 生产配置（deploy/nginx/topems.conf）upstream 端口与实际服务对齐——A1 复核（Linux 执行 verify-nginx-prod.sh，macOS 仅 WARN 跳过）
-- [ ] portal 构建产物部署（apps/web/dist 静态托管或 dev server）
+- [x] install.sh 生产实跑——本机 dry-run 全流程 PASS（`--dry-run --skip-build`，2026-10-08；环境检查 ✓ / 目录 ✓ / 前端构建 ✓ / web 托管拷贝 ✓ / **29 个 systemd 服务** + topems.target ✓ / config 模板 ✓ / enable ✓）；生产机实跑待执行
+- [ ] systemd 服务启用后各服务 /health 绿（本机无 systemd，需生产机实跑；scripts/dev/health-check.sh 已就绪）
+- [x] nginx 生产配置（deploy/nginx/topems.conf）——A1 复核本机完成：`verify-nginx-prod.sh` **MAP_OK**（map 路由表与仓库基准逐字一致）；**27 服务端口源码默认 vs upstream 全对齐**（unified-core 8000/hrm 8020/erp 8010/…/master-data 8090/plugin-registry 8096/analytics-bi 8060）；nginx -t 与 6 域冒烟需生产 Linux（macOS 按脚本 WARN 跳过）
+- [x] portal 构建产物部署——产物就绪（apps/web/dist 35M，源产物 18.57MB；nginx `root /var/www/topems/web` + `try_files /index.html` 托管段核查通过；install.sh dry-run 确认 web 拷贝步骤）
 
 ### 2.3 功能链路（生产冒烟）
-- [ ] IAM 登录 → JWT → 各域 API 抽样 200
-- [ ] 财务凭证借贷平衡（decimal 精度，R2 ①已验 10000=10000）
-- [ ] 工单下达（事件化，R2 ② uuid=text 修复后重验）
-- [ ] 质量链 qms↔lims↔ehs 事件联动（R2 ④ internal 前缀修复后重验）
-- [ ] 插件注册 + 心跳（R2 ⑤：core_plugin_instances 表 + 令牌门控）
-- [ ] BI /datasets/test-sql + /datasets/query 真实 SQL 执行（✅ 后端已落地 2026-10-06，生产冒烟复验）
-- [ ] WS MES 看板推送（unified-core 投影由 mes_real_module 提供）
+- [x] 冒烟脚本已产出：`scripts/deploy/smoke-prod.sh`（shellcheck 干净）——层1 自动断言：IAM 登录→JWT→/api/v1/users、14 域 /health 200、BI /datasets/test-sql + /datasets/query、插件 /api/plugin/runtime/list；层2 专项指引（E 财务借贷平衡 / F 工单事件化 / G 质量链联动 / H WS 看板推送，附期望与源码指引）
+- [ ] 生产机执行 smoke-prod.sh 全项 PASS（层1 自动 + 层2 按指引逐项复验并记录）：
+  - IAM 登录 → JWT → 各域 API 抽样 200
+  - 财务凭证借贷平衡（decimal 精度，R2 ①已验 10000=10000）
+  - 工单下达（事件化，R2 ② uuid=text 修复后重验）
+  - 质量链 qms↔lims↔ehs 事件联动（R2 ④ internal 前缀修复后重验）
+  - 插件注册 + 心跳（R2 ⑤：core_plugin_instances 表 + 令牌门控）
+  - BI /datasets/test-sql + /datasets/query 真实 SQL 执行（✅ 后端已落地 2026-10-06，生产冒烟复验）
+  - WS MES 看板推送（unified-core 投影由 mes_real_module 提供）
 
 ### 2.4 回滚预案
-- [ ] 保留上一版本二进制 + 前端 dist 快照（备份目录）
-- [ ] rollback.sh 生产实跑一次通过（需 root/systemd 环境）
-- [ ] 数据库回滚策略：结构演进走 DDL 运维（不依赖 sqlx 回滚），破坏性变更前拍板文档化
-- [ ] 服务回滚顺序：业务服务 → 平台层（portal/unified-core）→ 数据库不动（数据优先保留）
+- [x] 保留上一版本二进制 + 前端 dist 快照：update.sh 更新前自动快照 `bin.backup.*`（本次新增）+ 既有 `web.backup.*`；DB 由 rollback.sh 回滚前 pg_dump（pre_rollback_<ts>）
+- [ ] rollback.sh 生产实跑一次通过（`--dry-run` 本机已验计划完整：停服→备份库→恢复 env→drop/createdb/导入→恢复 uploads→启服→8 步验证；生产机 root/systemd 环境实跑）
+- [x] 数据库回滚策略：结构演进走**直接 DDL 运维**（docs/database/database-half-migration-ops.md 2.1 流程，用户 2026-09-30 拍板）；破坏性变更前拍板文档化——已写入 deploy/README.md 回滚策略节
+- [x] 服务回滚顺序：业务服务 → 平台层（portal/unified-core）→ 数据库不动（数据优先保留）——已文档化（deploy/README.md 回滚策略节）
 
 ## 2026-10-07 全面审计 + 第一梯队修复（均已完成）
 
