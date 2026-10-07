@@ -639,10 +639,10 @@
 - **AR-03 DDL 版本门控设计**（只设计未实施，`ar03-version-gate-design.md`）：推荐 `schema_defense_ledger` 台账表 + 规范化 TABLE_DEFS→SHA-256（列结构规范化、非文本字节），hash 匹配跳过 ensure 全量 ALTER 仅保留 verify；服务侧零改动；核心改动文件（lib/shared-db/src/schema.rs + shared-bootstrap）**不在用户并发列表** → Phase 1 现在可做；重叠面 11 个 svc 的 schema_defense.rs 为同 crate 编译级 🟡 风险（避开即可）
 - **FE-17-2 mobile client 收敛**（commit `d0cc21661`，1 文件 +13/-19）：**现状修正**——mobile client.ts 实为 343 行、FE-17 先前已接入共享工厂（baseURL/timeout/headers/paramsSerializer）；本次仅 retry 迁工厂 `{maxRetries:3}`（baseDelay 1000ms/retryOn 429,5xx 与端内旧 1s/2s/3s 线性退避逐项等价）；token/401/缓存/离线队列保留端内（AsyncStorage 异步 vs 工厂同步签名、工厂文档约定各端自留，已注释说明）；17 api 服务 + syncService 零 per-request 开关（grep 证实）行为不变
 - **FE-17-3 裸 fetch 清扫**（commit `10824ccd7`，5 文件 +36/-34）：**实查 36 处**（非预估 41，差额为 refetch() 误匹配）——迁移 4 处（ChatRoomItem 在线状态改 imApi 并**修正旧路径 bug** `/im/api/users/...`→真实路由 `/api/communication/im/online-status/{id}` 原 404；useFeatureFlag 改 apiClient；DashboardPage 健康/MES 直查改 apiClient，token 改拦截器注入）；豁免登记 27 处（SW/第三方外部/SSE/可观测/微前端远程/edge/GIS 瓦片/健康探测）+ 2 处登记后续（BFF graphql 手动 token/tenant）→ `artifacts/audit/fetch-cleanup-register.md`；行为变化：401 触发清理（原静默）、5xx 重试 2 次、trace/CSRF 头；**门禁插曲**：DashboardPage 既有 2 处硬编码中文（'AI智能'/'AI辅助分析平台'）被 hardcoded-precise strict 拦截 → 转 i18n（zh/en dash_ai_* key）后 0 违规、typecheck/eslint 绿
+- **FE-17-3 后续完成**（commit `379eb0c6c`，2 文件 +25/-28）：BFF `/api/portal/graphql` 两处手动 token/tenant 接入统一拦截器——client.ts 请求拦截器统一注入 `x-tenant-id`（`current_tenant_id` 优先、回落 `deploymentConfig.defaultTenantId`，`??=` 不覆盖调用方显式值）；bff/index.ts `executeGraphQL` mock/正常两分支 `fetch` 改走 `apiClient.portal.post('/graphql')`，删除手动 `Authorization`/`x-tenant-id`；token/租户/trace/CSRF 全部由拦截器统一处理，APQ 与 GraphQL errors 抛出协议不变；typecheck/eslint 绿 + api-crud-flow 8 测试绿
 
 ### 📋 剩余登记
 - **BE-08 后续**：1891 条孤儿候选按 crate 分批（portal/erp/unified-core 优先）与业务确认开放 API 清单，确认无人调用再走下线流程（本批只读不删）；barcode 契约错位（mobile GET 调用 vs 后端仅 DELETE）建议补后端 GET 或收敛前端
-- **FE-17-3 后续**：BFF `/api/portal/graphql` 两处（手动 token/tenant、依赖 dev 静默 fallback）登记待接入统一拦截器
 - **FE-17-2 后续**：mobile token/401 的 AsyncStorage 异步与工厂同步签名差异——若工厂未来支持异步 getToken 可进一步收敛；401 现仍静默清凭据（未改跳登录）
 - **BE-07 后续修正项**：settlement_v55 422 映射、ai dsh 自建 ErrorCode→HTTP 映射、api-error-codes.md 手册 422/COMMON_010 条目、enhanced.rs 测试 422 示例——均属代码/文档修正，未在本批动（纯文档批次）
 - **AR-03 实施窗口**：核心两文件无并发冲突，Phase 1（台账 + hash + 单测）可在任何窗口启动；加依赖建议标准库 sha2 以避开 Cargo.* 用户占用
