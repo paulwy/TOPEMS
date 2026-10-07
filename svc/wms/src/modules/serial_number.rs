@@ -78,7 +78,7 @@ pub async fn list_serial_numbers(
 
     let result = sqlx::query_as::<_, SerialNumber>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers
+        SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price::float8, remark, created_at, updated_at FROM wms.serial_numbers
         WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR warehouse_id = $1)
           AND ($2::text IS NULL OR sku ILIKE $2)
           AND ($3::text IS NULL OR serial_no ILIKE $3)
@@ -338,7 +338,7 @@ pub async fn get_serial_number(
     };
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price::float8, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(serial_id)
     .fetch_optional(&mut **txn)
@@ -384,7 +384,7 @@ pub async fn get_by_serial_no(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price::float8, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND serial_no = $1"),
     )
     .bind(serial_no)
     .fetch_optional(&mut **txn)
@@ -430,7 +430,7 @@ pub async fn get_by_batch(
     }
 
     let result = sqlx::query_as::<_, SerialNumber>(
-        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC"),
+        only_own_schema_query!("wms", "SELECT id, tenant_id, serial_no, sku, material_name, specification, unit, warehouse_id, warehouse_name, location_id, location_code, supplier_id, supplier_name, batch_no, production_date, expiry_date, quality_status, status, warranty_start_date, warranty_end_date, inbound_order_no, outbound_order_no, current_owner, unit_price::float8, remark, created_at, updated_at FROM wms.serial_numbers WHERE deleted_at IS NULL AND batch_no = $1 ORDER BY created_at DESC"),
     )
     .bind(batch_no)
     .fetch_all(&mut **txn)

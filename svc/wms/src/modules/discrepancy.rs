@@ -90,7 +90,7 @@ pub async fn list_discrepancies(
     let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
+        SELECT id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
                adjustment_date, reason, notes, created_at, updated_at
@@ -207,7 +207,7 @@ pub async fn get_discrepancy(
     let result = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
+        SELECT id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
                adjustment_date, reason, notes, created_at, updated_at
@@ -312,7 +312,7 @@ pub async fn create_discrepancy(
             tenant_id, organization_id
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'pending', $12, $13, $14, $15, $16, '00000000-0000-0000-0000-000000000001')
-        RETURNING id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
+        RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
                   adjustment_date, reason, notes, created_at, updated_at
@@ -427,7 +427,7 @@ pub async fn approve_discrepancy(
         UPDATE wms.discrepancy_records SET
             adjustment_status = $2, approved_by = $3, approval_date = $4, notes = COALESCE($5, notes), updated_at = $6
         WHERE id = $1 AND adjustment_status = 'pending'
-        RETURNING id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
+        RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
                   adjustment_date, reason, notes, created_at, updated_at
@@ -538,7 +538,7 @@ pub async fn adjust_inventory(
     let record = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
         "wms",
         r#"
-        SELECT id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
+        SELECT id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                adjustment_quantity, adjustment_status, approved_by, approval_date,
                adjustment_date, reason, notes, created_at, updated_at
@@ -600,7 +600,7 @@ pub async fn adjust_inventory(
         UPDATE wms.discrepancy_records SET
             adjustment_status = 'completed', adjustment_date = $2, updated_at = $2
         WHERE id = $1
-        RETURNING id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
+        RETURNING id, tenant_id, stock_take_id, stock_take_item_id, inventory_id, material_code, material_name,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   adjustment_quantity, adjustment_status, approved_by, approval_date,
                   adjustment_date, reason, notes, created_at, updated_at
