@@ -286,7 +286,10 @@
 - ✅ **P1-3 跨包双轨收敛**：BackButton 双轨合一——删除 web 本地增强版（129 行，4 variant，home/close 经查零调用），common/index.ts re-export @topems/shared-components（router 感知 + href + RouterBoundary），10 调用方零改动；测试 10/10。提交 19f5eb677（+2/−235）已推送。**评估结论**：FileUpload 双轨保留（common 530 行受控表单版 value/onChange vs shared 294 行非受控版 onUpload，API 形态不同，合并需 shared 大改，留待共享包统一规划）；页面私有 ConfirmDialogs×2 为 shared ConfirmDialog 业务组合器（非重复实现）保留；Pagination/ConfirmDialog/LoadingSpinner 已由 shared 提供
 - ✅ **模板瘦身：ListPageTemplate 拆分（第一批）**：行内编辑状态机 → list/useInlineEdit.ts、内联编辑单元格 → list/InlineEditCell.tsx，主文件 4153→4001 行（727fbf4b3 已推送）
   - 第二批候选（CRUD 表单状态区 806-1100 耦合度高，暂缓）：表单状态/校验/自动渲染与 FormDialog 深度交织，硬拆风险大于收益，待模板整体收敛后再评估
-- ⏳ **页面三态补齐**：加载 53%/空态 16%/错误 39% → 模板默认注入 + 按模块分批
+- 🚧 **页面三态补齐（进行中，已 4 批）**：加载 53%/空态 16%/错误 39% → 模板层加空态能力 + 页面分批接线
+  - ✅ 模板：DetailPageTemplate / DashboardTemplate 新增 emptyState prop（默认关闭，向后兼容，含 i18n k 文案 zh/en）
+  - ✅ 已接线 15 页：crm（Customer/Contact/Opportunity/Return Detail + Dashboard×2）hrm（Employee/Contract Detail）erp（Dashboard）pm（Contract/Project Detail）lims（Sample/Task/Instrument Detail）
+  - ⏳ 剩余 ~30 页：wms 7 Detail + qms 7 Detail + tms 6 Detail + aps 6 Detail + ehs/mes/finance/im Detail；Dashboard 页多查询无单一数据变量（HrmDashboard/hrm Dashboard/pm Dashboard/wms Dashboard 等）待逐页评估
 
 ### P2（加固）
 - ✅ **死代码与目录清理（第一批）**：components/ui/Loading.tsx 零引用已删；Tabs/CommandPalette 有引用保留；待续：_archive-microfrontend、tmp、schema/schemas 双目录合并
@@ -294,3 +297,36 @@
 - ⏳ **i18n hash key 语义化 + z-index 语义化**：1006 个 text_xxxxxx key；z-index 魔数 100+ 处统一 theme.zIndex
 
 > 全量审计报告：`docs/quality/前端UI审计报告-2026-10-07.md`（六维结论 + 违规清单 + 验证记录）
+
+## 🚀 部署时执行（生产环境，待环境）
+
+> 权威检查单：`docs/architecture/go-live-checklist-and-rollback-2026-10-06.md`（R4 演练收尾产出，2026-10-06）
+> 生产前置三项：**Linux systemd 实跑 install/update/rollback**、**A2 docker 回归（5433）**、**A1 生产 nginx 验证**（Runbook：`docs/deploy/nginx-prod-first-deploy-runbook.md` + `scripts/verify-nginx-prod.sh`）
+> 迁移账本口径：280/298（半迁移既成债，未来结构演进走"直接 DDL 运维"约定，见 `docs/database/database-half-migration-ops.md`）
+
+### 2.1 代码与构建门禁（CI 层）
+- [ ] pre-push 五门禁全绿：cargo check / clippy / fmt / test（550+ tests）/ shellcheck
+- [ ] schema-boundary 双门禁（PY 28 服务 / NODE 29 服务）exit 0
+- [ ] sqlx Gate S（离线缓存与 .sqlx/ 一致）
+- [ ] 前端 tsc + vite build + vitest 全绿；bundle TOTAL ≤ 30M（当前 16.43MB）
+
+### 2.2 环境与部署（生产机）
+- [ ] install.sh 生产实跑（dry-run ✅ 306 文件/16.48MB/systemd 24 服务 → 实跑）
+- [ ] systemd 服务启用后各服务 /health 绿（本机无 systemd，需生产机实跑）
+- [ ] nginx 生产配置（deploy/nginx/topems.conf）upstream 端口与实际服务对齐——A1 复核（Linux 执行 verify-nginx-prod.sh，macOS 仅 WARN 跳过）
+- [ ] portal 构建产物部署（apps/web/dist 静态托管或 dev server）
+
+### 2.3 功能链路（生产冒烟）
+- [ ] IAM 登录 → JWT → 各域 API 抽样 200
+- [ ] 财务凭证借贷平衡（decimal 精度，R2 ①已验 10000=10000）
+- [ ] 工单下达（事件化，R2 ② uuid=text 修复后重验）
+- [ ] 质量链 qms↔lims↔ehs 事件联动（R2 ④ internal 前缀修复后重验）
+- [ ] 插件注册 + 心跳（R2 ⑤：core_plugin_instances 表 + 令牌门控）
+- [ ] BI /datasets/test-sql + /datasets/query 真实 SQL 执行（✅ 后端已落地 2026-10-06，生产冒烟复验）
+- [ ] WS MES 看板推送（unified-core 投影由 mes_real_module 提供）
+
+### 2.4 回滚预案
+- [ ] 保留上一版本二进制 + 前端 dist 快照（备份目录）
+- [ ] rollback.sh 生产实跑一次通过（需 root/systemd 环境）
+- [ ] 数据库回滚策略：结构演进走 DDL 运维（不依赖 sqlx 回滚），破坏性变更前拍板文档化
+- [ ] 服务回滚顺序：业务服务 → 平台层（portal/unified-core）→ 数据库不动（数据优先保留）
