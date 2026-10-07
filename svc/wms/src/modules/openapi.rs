@@ -223,7 +223,6 @@ pub struct OutboundOrder {
         (name = "discrepancy", description = "discrepancy API"),
         (name = "labor", description = "labor API"),
         (name = "picking", description = "picking API"),
-        (name = "transfer", description = "transfer API"),
         (name = "wms_plugin", description = "wms_plugin API"),
     ),
     info(
