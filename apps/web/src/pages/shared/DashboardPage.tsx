@@ -214,7 +214,7 @@ const DashboardPage: React.FC = () => {
   const healthQuery = useQuery({
     queryKey: [...QUERY_KEY, 'infra-health'],
     queryFn: async () => {
-      // 走统一 axios 拦截器：token 自动注入 / 401 / trace；保留默认租户头
+      // 走统一 axios 拦截器：token / x-tenant-id / 401 / trace 统一处理
       const res = await apiClient.monitor.get<
         Array<{
           component: string;
@@ -222,9 +222,7 @@ const DashboardPage: React.FC = () => {
           value: string;
           detail: string;
         }>
-      >('/infrastructure', {
-        headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' },
-      });
+      >('/infrastructure');
       return res.data ?? [];
     },
     staleTime: 60 * 1000,
@@ -240,13 +238,12 @@ const DashboardPage: React.FC = () => {
   const ordersQuery = useQuery({
     queryKey: [...QUERY_KEY, 'orders'],
     queryFn: async () => {
-      // 走统一 axios 拦截器：token 自动注入 / 401 / snake_case 分页参数；保留默认租户头
+      // 走统一 axios 拦截器：token / x-tenant-id / 401 / snake_case 分页参数统一处理
       const res = await apiClient.mes.get<{
         total?: number;
         orders?: Array<Record<string, unknown>>;
       }>('/orders', {
         params: { page: 1, page_size: 1000 },
-        headers: { 'x-tenant-id': '00000000-0000-0000-0000-000000000001' },
       });
       return { total: Number(res.data?.total ?? 0), orders: res.data?.orders ?? [] };
     },
