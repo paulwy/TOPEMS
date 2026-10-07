@@ -83,7 +83,7 @@ export default function HrmContractPage() {
 
   const customRowActions: RowAction[] = [
     {
-      label: t('hrm.hrm_contract_page.text_b53270'),
+      label: t('hrm.hrm_contract_page.renew'),
       icon: <RefreshCw size={16} />,
       color: 'success',
       show: (row) => row.status === 'active',
@@ -120,7 +120,7 @@ export default function HrmContractPage() {
       <Dialog
         open={renewModalVisible}
         onClose={() => setRenewModalVisible(false)}
-        title={t('hrm.hrm_contract_page.text_58f371')}
+        title={t('hrm.hrm_contract_page.contract_renewal_application')}
         maxWidth='sm'
         fullWidth
         cancelButton={{ label: t('hrm.hrm_contract_page.cancel') }}
@@ -171,7 +171,7 @@ export default function HrmContractPage() {
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setRenewFormState((s) => ({ ...s, new_end_date: e.target.value }))
               }
-              placeholder={t('hrm.hrm_contract_page.text_974da9')}
+              placeholder={t('hrm.hrm_contract_page.indefinite_term')}
               fullWidth
               slotProps={{ inputLabel: { shrink: true } } as const}
             />
@@ -179,19 +179,19 @@ export default function HrmContractPage() {
 
           <FormField
             name='new_salary'
-            label={t('hrm.hrm_contract_page.text_d0eef5')}
+            label={t('hrm.hrm_contract_page.new_salary_val')}
             type='number'
             value={renewFormState.new_salary}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setRenewFormState((s) => ({ ...s, new_salary: e.target.value }))
             }
-            placeholder={t('hrm.hrm_contract_page.text_67e9f7')}
+            placeholder={t('hrm.hrm_contract_page.leave_blank_if_no_change')}
             fullWidth
           />
 
           <FormField
             name='renewal_reason'
-            label={t('hrm.hrm_contract_page.text_0e623f')}
+            label={t('hrm.hrm_contract_page.renewal_reason')}
             value={renewFormState.renewal_reason}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setRenewFormState((s) => ({ ...s, renewal_reason: e.target.value }))

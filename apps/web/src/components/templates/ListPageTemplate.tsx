@@ -2368,7 +2368,7 @@ export function ListPageTemplate<
               width: 48,
               position: 'sticky',
               left: 0,
-              zIndex: 2,
+              zIndex: (theme) => theme.zIndex.stickyHeader,
               bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
             }}
           >
@@ -2388,7 +2388,7 @@ export function ListPageTemplate<
               width: 48,
               position: 'sticky',
               left: 0,
-              zIndex: 2,
+              zIndex: (theme) => theme.zIndex.stickyHeader,
               bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
             }}
           >
@@ -2405,7 +2405,7 @@ export function ListPageTemplate<
               width: 60,
               position: selectable ? 'sticky' : 'relative',
               left: selectable ? 48 : 0,
-              zIndex: 2,
+              zIndex: (theme) => theme.zIndex.stickyHeader,
               bgcolor: theme.palette.mode === 'dark' ? 'glass.bgLight' : 'grey.50',
             }}
           >
@@ -2490,7 +2490,7 @@ export function ListPageTemplate<
                     '&:hover': {
                       bgcolor: 'primary.main',
                     },
-                    zIndex: 3,
+                    zIndex: (theme) => theme.zIndex.dragHandle,
                   }}
                   title={i18n.t('templates.list_page_template.k18')}
                 />
@@ -2669,7 +2669,7 @@ export function ListPageTemplate<
                 sx={{
                   position: 'sticky',
                   left: 0,
-                  zIndex: 1,
+                  zIndex: (theme) => theme.zIndex.raised,
                   bgcolor: 'inherit',
                 }}
               >
@@ -2688,7 +2688,7 @@ export function ListPageTemplate<
                 sx={{
                   position: 'sticky',
                   left: 0,
-                  zIndex: 1,
+                  zIndex: (theme) => theme.zIndex.raised,
                   bgcolor: 'inherit',
                 }}
               >
@@ -2706,7 +2706,7 @@ export function ListPageTemplate<
                 sx={{
                   position: selectable ? 'sticky' : 'relative',
                   left: selectable ? 48 : 0,
-                  zIndex: 1,
+                  zIndex: (theme) => theme.zIndex.raised,
                   bgcolor: 'inherit',
                 }}
               >
@@ -2747,7 +2747,7 @@ export function ListPageTemplate<
                   width: 48,
                   position: 'sticky',
                   left: selectable || isBatchSelectionEnabled ? 48 : 0,
-                  zIndex: 1,
+                  zIndex: (theme) => theme.zIndex.raised,
                   bgcolor: 'inherit',
                 }}
               >
@@ -2942,13 +2942,23 @@ export function ListPageTemplate<
         {selectable && (
           <TableCell
             padding='checkbox'
-            sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }}
+            sx={{
+              position: 'sticky',
+              left: 0,
+              zIndex: (theme) => theme.zIndex.raised,
+              bgcolor: 'inherit',
+            }}
           />
         )}
         {isBatchSelectionEnabled && !selectable && (
           <TableCell
             padding='checkbox'
-            sx={{ position: 'sticky', left: 0, zIndex: 1, bgcolor: 'inherit' }}
+            sx={{
+              position: 'sticky',
+              left: 0,
+              zIndex: (theme) => theme.zIndex.raised,
+              bgcolor: 'inherit',
+            }}
           />
         )}
         {showRowNumber && (
@@ -2956,7 +2966,7 @@ export function ListPageTemplate<
             sx={{
               position: selectable ? 'sticky' : 'relative',
               left: selectable ? 48 : 0,
-              zIndex: 1,
+              zIndex: (theme) => theme.zIndex.raised,
               bgcolor: 'inherit',
             }}
           >

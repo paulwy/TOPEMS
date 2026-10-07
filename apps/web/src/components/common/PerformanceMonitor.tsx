@@ -107,7 +107,14 @@ export const PerformanceMonitor: React.FC = () => {
   };
 
   return (
-    <Box sx={{ position: 'fixed', bottom: 20, right: 20, zIndex: 1000 }}>
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 20,
+        right: 20,
+        zIndex: (theme) => theme.zIndex.mobileStepper,
+      }}
+    >
       <Paper
         elevation={3}
         sx={{

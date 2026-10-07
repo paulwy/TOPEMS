@@ -173,7 +173,7 @@ const DictionaryTypeModal: React.FC<DictionaryTypeModalProps> = ({
             variant='outlined'
             onClick={onClose}
           >
-            {i18n.t('admin.dictionary_management_page.text_625fb2')}
+            {i18n.t('admin.dictionary_management_page.cancel')}
           </Button>
           <Button
             type='submit'

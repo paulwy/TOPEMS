@@ -256,8 +256,8 @@ export default function OpeningBalancePage() {
             color='text.secondary'
           >
             {row.haschildren
-              ? t('finance.opening_balance_page.text_7586c1')
-              : t('finance.opening_balance_page.text_f82e51')}
+              ? t('finance.opening_balance_page.expand')
+              : t('finance.opening_balance_page.collapse')}
           </Typography>
         ),
       },
@@ -293,7 +293,7 @@ export default function OpeningBalancePage() {
                   sx={{ width: 100 }}
                   value={editDebitBalance}
                   onChange={(e) => setEditDebitBalance(parseFloat(e.target.value) || 0)}
-                  placeholder={t('finance.opening_balance_page.text_63e2bc')}
+                  placeholder={t('finance.opening_balance_page.placeholder_debit')}
                 />
                 <Typography
                   variant='body2'
@@ -307,7 +307,7 @@ export default function OpeningBalancePage() {
                   sx={{ width: 100 }}
                   value={editCreditBalance}
                   onChange={(e) => setEditCreditBalance(parseFloat(e.target.value) || 0)}
-                  placeholder={t('finance.opening_balance_page.text_9ff9a6')}
+                  placeholder={t('finance.opening_balance_page.placeholder_credit')}
                 />
                 <Button
                   size='small'
@@ -378,7 +378,7 @@ export default function OpeningBalancePage() {
   const actions = useMemo(
     () => [
       {
-        label: t('finance.opening_balance_page.text_571e80'),
+        label: t('finance.opening_balance_page.action_carry_forward'),
         icon: <Calendar size={16} />,
         onClick: () => setShowCarryForwardModal(true),
         variant: 'outlined' as const,
@@ -402,8 +402,8 @@ export default function OpeningBalancePage() {
   return (
     <>
       <ListPageTemplate<Account>
-        title={t('finance.opening_balance_page.text_a9c974')}
-        subtitle={t('finance.opening_balance_page.text_8987a5')}
+        title={t('finance.opening_balance_page.page_title')}
+        subtitle={t('finance.opening_balance_page.page_subtitle')}
         columns={columns}
         data={filteredAccounts}
         loading={isLoading}
@@ -424,7 +424,7 @@ export default function OpeningBalancePage() {
                   }}
                 >
                   <TextField
-                    label={t('finance.opening_balance_page.text_6cde16')}
+                    label={t('finance.opening_balance_page.filter_period')}
                     type='month'
                     size='small'
                     value={period}
@@ -438,7 +438,7 @@ export default function OpeningBalancePage() {
                     <InputLabel>{t('finance.opening_balance_page.k8')}</InputLabel>
                     <Select
                       value={selectedCategory}
-                      label={t('finance.opening_balance_page.text_f31b4e')}
+                      label={t('finance.opening_balance_page.filter_category')}
                       onChange={(e) => setSelectedCategory(e.target.value as AccountCategory)}
                     >
                       <MenuItem value=''>{t('finance.opening_balance_page.k9')}</MenuItem>
@@ -472,7 +472,7 @@ export default function OpeningBalancePage() {
               loading={isLoading}
               stats={[
                 {
-                  title: t('finance.opening_balance_page.text_10afa4'),
+                  title: t('finance.opening_balance_page.stat_total_debit'),
                   value: totals.totalDebit.toLocaleString('zh-CN', {
                     minimumFractionDigits: 2,
                   }),
@@ -482,7 +482,7 @@ export default function OpeningBalancePage() {
                   gradient: true,
                 },
                 {
-                  title: t('finance.opening_balance_page.text_17daaa'),
+                  title: t('finance.opening_balance_page.stat_total_credit'),
                   value: totals.totalCredit.toLocaleString('zh-CN', {
                     minimumFractionDigits: 2,
                   }),
@@ -492,7 +492,7 @@ export default function OpeningBalancePage() {
                   gradient: true,
                 },
                 {
-                  title: t('finance.opening_balance_page.text_7daffe'),
+                  title: t('finance.opening_balance_page.stat_balance_diff'),
                   value: Math.abs(totals.totalDebit - totals.totalCredit).toLocaleString('zh-CN', {
                     minimumFractionDigits: 2,
                   }),
@@ -522,7 +522,7 @@ export default function OpeningBalancePage() {
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <TextField
-              label={t('finance.opening_balance_page.text_0f84c0')}
+              label={t('finance.opening_balance_page.dialog_period_from')}
               type='month'
               size='small'
               value={carryForwardFrom}
@@ -530,7 +530,7 @@ export default function OpeningBalancePage() {
               slotProps={{ inputLabel: { shrink: true } } as const}
             />
             <TextField
-              label={t('finance.opening_balance_page.text_1d4106')}
+              label={t('finance.opening_balance_page.dialog_period_to')}
               type='month'
               size='small'
               value={carryForwardTo}

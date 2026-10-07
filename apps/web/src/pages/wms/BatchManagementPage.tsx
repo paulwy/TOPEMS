@@ -23,10 +23,10 @@ const BatchManagementPage: React.FC = () => {
     string,
     { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
   > = {
-    in_stock: { label: t('wms.batch_management_page.text_a230ce'), color: 'success' },
+    in_stock: { label: t('wms.batch_management_page.in_stock'), color: 'success' },
     out_stock: { label: t('wms.batch_management_page.outbound'), color: 'default' },
-    reserved: { label: t('wms.batch_management_page.text_ba07b1'), color: 'warning' },
-    frozen: { label: t('wms.batch_management_page.text_28a286'), color: 'error' },
+    reserved: { label: t('wms.batch_management_page.reserved'), color: 'warning' },
+    frozen: { label: t('wms.batch_management_page.frozen'), color: 'error' },
     scrapped: { label: t('wms.batch_management_page.scrap'), color: 'default' },
   };
 
@@ -68,7 +68,7 @@ const BatchManagementPage: React.FC = () => {
             {isExpiringSoon(batch) && !isExpired(batch) && (
               <Chip
                 size='small'
-                label={t('wms.batch_management_page.text_2cae05')}
+                label={t('wms.batch_management_page.expiring_soon')}
                 color='warning'
                 sx={{
                   ml: 1,
@@ -204,7 +204,7 @@ const BatchManagementPage: React.FC = () => {
         > = {
           qualified: { label: t('wms.batch_management_page.qualified'), color: 'success' },
           unqualified: { label: t('wms.batch_management_page.unqualified'), color: 'error' },
-          pending: { label: t('wms.batch_management_page.text_5930e6'), color: 'warning' },
+          pending: { label: t('wms.batch_management_page.pending_inbound'), color: 'warning' },
           inspecting: { label: t('wms.batch_management_page.inspection'), color: 'primary' },
         };
         const config = qualityStatusConfig[batch.quality_status] || qualityStatusConfig.pending;

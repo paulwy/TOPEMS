@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { designTokens } from '@topems/tokens';
 
 interface WindowConfig {
   id: string;
@@ -41,7 +42,7 @@ export function useWindowManager(initialWindows: WindowConfig[] = []) {
       isClosable: config.isClosable !== false,
       isMinimized: false,
       isMaximized: false,
-      zIndex: 100 + index,
+      zIndex: designTokens.zIndex.dropdown + index,
     })),
     activeWindowId: null,
   });

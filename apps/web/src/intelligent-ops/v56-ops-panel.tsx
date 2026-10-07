@@ -215,7 +215,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         right: 0,
         bottom: 0,
         bgcolor: 'action.active',
-        zIndex: 10000,
+        zIndex: (theme) => theme.zIndex.devToolsPanel,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',

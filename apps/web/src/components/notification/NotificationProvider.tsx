@@ -177,7 +177,7 @@ function Toaster() {
         position: 'fixed',
         top: `${designTokens.spacing.md}px`,
         right: `${designTokens.spacing.md}px`,
-        zIndex: 9999,
+        zIndex: (theme) => theme.zIndex.topmost,
         display: 'flex',
         flexDirection: 'column',
         gap: 1,

@@ -25,7 +25,7 @@ const HrmLeavePage: React.FC = () => {
           addNotification({
             type: 'success',
             title: t('common.success'),
-            message: t('hrm.hrm_leave_page.text_337737'),
+            message: t('hrm.hrm_leave_page.approved_val'),
           });
         }
       } catch {
@@ -43,12 +43,12 @@ const HrmLeavePage: React.FC = () => {
     async (row: Record<string, unknown>) => {
       const id = row.id as string;
       try {
-        const response = await leaveApi.reject(id, 'admin', t('hrm.hrm_leave_page.text_81233d'));
+        const response = await leaveApi.reject(id, 'admin', t('hrm.hrm_leave_page.rejected'));
         if (response.code === 200) {
           addNotification({
             type: 'success',
             title: t('common.success'),
-            message: t('hrm.hrm_leave_page.text_81233d'),
+            message: t('hrm.hrm_leave_page.rejected'),
           });
         }
       } catch {
@@ -64,14 +64,14 @@ const HrmLeavePage: React.FC = () => {
 
   const customRowActions: RowAction[] = [
     {
-      label: t('hrm.hrm_leave_page.text_7a712b'),
+      label: t('hrm.hrm_leave_page.approve'),
       icon: <Check size={16} />,
       onClick: handleApprove,
       color: 'success',
       show: (row: Record<string, unknown>) => row.status === 'pending',
     },
     {
-      label: t('hrm.hrm_leave_page.text_7173f8'),
+      label: t('hrm.hrm_leave_page.reject'),
       icon: <X size={16} />,
       onClick: handleReject,
       color: 'error',
@@ -103,25 +103,25 @@ const HrmLeavePage: React.FC = () => {
                 <StatCardGroup
                   stats={[
                     {
-                      title: t('hrm.hrm_leave_page.text_88ce9c'),
+                      title: t('hrm.hrm_leave_page.total_applications'),
                       value: total,
                       icon: <FileText size={20} />,
                       color: 'primary' as const,
                     },
                     {
-                      title: t('hrm.hrm_leave_page.text_b0bf01'),
+                      title: t('hrm.hrm_leave_page.pending_approval'),
                       value: pending,
                       icon: <Clock size={20} />,
                       color: 'warning' as const,
                     },
                     {
-                      title: t('hrm.hrm_leave_page.text_337737'),
+                      title: t('hrm.hrm_leave_page.approved_val'),
                       value: approved,
                       icon: <CheckCircle size={20} />,
                       color: 'success' as const,
                     },
                     {
-                      title: t('hrm.hrm_leave_page.text_81233d'),
+                      title: t('hrm.hrm_leave_page.rejected'),
                       value: rejected,
                       icon: <XCircle size={20} />,
                       color: 'error' as const,

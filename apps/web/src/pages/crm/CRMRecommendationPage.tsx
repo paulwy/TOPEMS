@@ -297,7 +297,7 @@ const CRMRecommendationPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            {t('crm.recommendation.text_confidence')}
+                            {t('crm.recommendation.confidence_label')}
                           </Typography>
                         </Box>
                       </Box>

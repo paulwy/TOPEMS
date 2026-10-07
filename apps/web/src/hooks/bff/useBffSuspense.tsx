@@ -346,7 +346,7 @@ export const BffLoadingFallback: React.FC<BffLoadingFallbackProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: 'background.paper',
-          zIndex: 1300,
+          zIndex: (theme) => theme.zIndex.appBar,
         }}
       >
         {content}

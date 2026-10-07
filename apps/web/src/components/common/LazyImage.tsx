@@ -132,7 +132,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
             left: 0,
             width: '100%',
             height: '100%',
-            zIndex: 1,
+            zIndex: designTokens.zIndex.raised,
           }}
         >
           {placeholder}

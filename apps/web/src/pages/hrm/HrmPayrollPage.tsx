@@ -194,7 +194,7 @@ const HrmPayrollPage: React.FC = () => {
     () => [
       {
         key: 'calculate',
-        label: i18n.t('hrm.hrm_payroll_page.text_ed8d89'),
+        label: i18n.t('hrm.hrm_payroll_page.calculate_salary'),
         icon: <Calculator size={16} />,
         color: 'success',
         show: (row: Record<string, unknown>) => row.status === 'draft',
@@ -202,7 +202,7 @@ const HrmPayrollPage: React.FC = () => {
       },
       {
         key: 'pay',
-        label: i18n.t('hrm.hrm_payroll_page.text_df6e5e'),
+        label: i18n.t('hrm.hrm_payroll_page.execute_disbursement'),
         icon: <CreditCard size={16} />,
         color: 'success',
         show: (row: Record<string, unknown>) => row.status === 'calculated',
@@ -225,44 +225,44 @@ const HrmPayrollPage: React.FC = () => {
 
     const statCards = [
       {
-        title: t('hrm.hrm_payroll_page.text_5adbd7'),
+        title: t('hrm.hrm_payroll_page.payment_headcount'),
         value: totalEmployees,
-        unit: t('hrm.hrm_payroll_page.text_465afe'),
+        unit: t('hrm.hrm_payroll_page.people_unit'),
         icon: <Users sx={{ width: 20, height: 20 }} />,
         color: 'primary' as const,
       },
       {
-        title: t('hrm.hrm_payroll_page.text_c82ad3'),
+        title: t('hrm.hrm_payroll_page.base_salary_total'),
         value: formatCurrency(totalAmount * 0.6),
         icon: <DollarSign sx={{ width: 20, height: 20 }} />,
         color: 'success' as const,
       },
       {
-        title: t('hrm.hrm_payroll_page.text_a3ad89'),
+        title: t('hrm.hrm_payroll_page.bonus_total'),
         value: formatCurrency(totalAmount * 0.2),
         icon: <TrendingUp sx={{ width: 20, height: 20 }} />,
         color: 'secondary' as const,
       },
       {
-        title: t('hrm.hrm_payroll_page.text_48e9fd'),
+        title: t('hrm.hrm_payroll_page.net_salary_total'),
         value: formatCurrency(totalAmount * 0.9),
         icon: <CreditCard sx={{ width: 20, height: 20 }} />,
         color: 'primary' as const,
       },
       {
-        title: t('hrm.hrm_payroll_page.text_f0f769'),
+        title: t('hrm.hrm_payroll_page.avg_wage'),
         value: formatCurrency(avgSalary),
         icon: <Receipt sx={{ width: 20, height: 20 }} />,
         color: 'info' as const,
       },
       {
-        title: t('hrm.hrm_payroll_page.text_480381'),
+        title: t('hrm.hrm_payroll_page.pending_calc_batches'),
         value: pendingRuns,
         icon: <Clock sx={{ width: 20, height: 20 }} />,
         color: 'warning' as const,
       },
       {
-        title: t('hrm.hrm_payroll_page.text_b0fa63'),
+        title: t('hrm.hrm_payroll_page.distributed_batch'),
         value: paidRuns,
         icon: <CheckCircle sx={{ width: 20, height: 20 }} />,
         color: 'success' as const,
@@ -270,26 +270,26 @@ const HrmPayrollPage: React.FC = () => {
     ];
 
     const salaryCompositionData = [
-      { name: t('hrm.hrm_payroll_page.text_d0e803'), value: 60, color: 'primary.main' },
-      { name: t('hrm.hrm_payroll_page.text_f41af7'), value: 15, color: 'success.dark' },
-      { name: t('hrm.hrm_payroll_page.text_805400'), value: 10, color: 'warning.main' },
-      { name: t('hrm.hrm_payroll_page.text_3d6bd6'), value: 8, color: 'error.main' },
-      { name: t('hrm.hrm_payroll_page.text_b7432c'), value: 7, color: 'secondary.main' },
+      { name: t('hrm.hrm_payroll_page.base_salary'), value: 60, color: 'primary.main' },
+      { name: t('hrm.hrm_payroll_page.bonus'), value: 15, color: 'success.dark' },
+      { name: t('hrm.hrm_payroll_page.allowance'), value: 10, color: 'warning.main' },
+      { name: t('hrm.hrm_payroll_page.social_insurance_fund'), value: 8, color: 'error.main' },
+      { name: t('hrm.hrm_payroll_page.individual_income_tax'), value: 7, color: 'secondary.main' },
     ];
 
     const payrollStatusData = [
       {
-        name: t('hrm.hrm_payroll_page.text_714999'),
+        name: t('hrm.hrm_payroll_page.pending_calculation'),
         value: rows.filter((r) => r.status === 'draft').length,
         color: 'warning.main',
       },
       {
-        name: t('hrm.hrm_payroll_page.text_9cf9bc'),
+        name: t('hrm.hrm_payroll_page.calculated'),
         value: rows.filter((r) => r.status === 'calculated').length,
         color: 'primary.main',
       },
       {
-        name: t('hrm.hrm_payroll_page.text_43d640'),
+        name: t('hrm.hrm_payroll_page.distributed'),
         value: rows.filter((r) => r.status === 'paid').length,
         color: 'success.dark',
       },
@@ -548,13 +548,13 @@ const HrmPayrollPage: React.FC = () => {
         tabs={[
           {
             id: 'payroll',
-            label: t('hrm.hrm_payroll_page.text_bf8ab5'),
+            label: t('hrm.hrm_payroll_page.payroll_management'),
             icon: <FileText sx={{ width: 20, height: 20 }} />,
             content: null,
           },
           {
             id: 'adjustments',
-            label: t('hrm.hrm_payroll_page.text_34714b'),
+            label: t('hrm.hrm_payroll_page.promotion_adjust'),
             icon: <TrendingUp sx={{ width: 20, height: 20 }} />,
             content: adjustmentsContent,
           },

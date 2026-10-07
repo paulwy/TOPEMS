@@ -96,18 +96,22 @@ const HrmReportsPage: React.FC = () => {
 
   const tabs = [
     {
-      label: t('hrm.hrm_reports_page.text_863853'),
+      label: t('hrm.hrm_reports_page.overview'),
       value: 'overview',
       icon: <BarChart3 size={18} />,
     },
-    { label: t('hrm.hrm_reports_page.text_e23edf'), value: 'employee', icon: <Users size={18} /> },
     {
-      label: t('hrm.hrm_reports_page.text_33a1b3'),
+      label: t('hrm.hrm_reports_page.employee_analysis'),
+      value: 'employee',
+      icon: <Users size={18} />,
+    },
+    {
+      label: t('hrm.hrm_reports_page.training_analysis'),
       value: 'training',
       icon: <BookOpen size={18} />,
     },
     {
-      label: t('hrm.hrm_reports_page.text_e92026'),
+      label: t('hrm.hrm_reports_page.salary_analysis'),
       value: 'payroll',
       icon: <DollarSign size={18} />,
     },
@@ -119,14 +123,14 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'total-employees',
-            title: i18n.t('hrm.hrm_reports_page.text_cf4555'),
+            title: i18n.t('hrm.hrm_reports_page.total_employees_val'),
             value: formatNumber(employeeSummary?.total_employees || 0),
             icon: <Users size={24} />,
             color: 'primary' as const,
           },
           {
             id: 'active-employees',
-            title: i18n.t('hrm.hrm_reports_page.text_4d9eda'),
+            title: i18n.t('hrm.hrm_reports_page.active_employee'),
             value: formatNumber(employeeSummary?.active_employees || 0),
             icon: <Briefcase size={24} />,
             color: 'success' as const,
@@ -154,7 +158,7 @@ const HrmReportsPage: React.FC = () => {
           },
           {
             id: 'attendance-rate',
-            title: i18n.t('hrm.hrm_reports_page.text_7cdb55'),
+            title: i18n.t('hrm.hrm_reports_page.attendance_rate_val'),
             value: `${attendanceSummary?.attendance_rate || 0}%`,
             icon: <Clock size={24} />,
             color: 'info' as const,
@@ -164,28 +168,28 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'total-employees-e',
-            title: t('hrm.hrm_reports_page.text_cf4555'),
+            title: t('hrm.hrm_reports_page.total_employees_val'),
             value: formatNumber(employeeSummary?.total_employees || 0),
             icon: <Users size={24} />,
             color: 'primary' as const,
           },
           {
             id: 'active-employees-e',
-            title: t('hrm.hrm_reports_page.text_4d9eda'),
+            title: t('hrm.hrm_reports_page.active_employee'),
             value: formatNumber(employeeSummary?.active_employees || 0),
             icon: <Briefcase size={24} />,
             color: 'success' as const,
           },
           {
             id: 'inactive-employees',
-            title: t('hrm.hrm_reports_page.text_683919'),
+            title: t('hrm.hrm_reports_page.resigned_employees'),
             value: formatNumber(employeeSummary?.inactive_employees || 0),
             icon: <TrendingUp size={24} />,
             color: 'error' as const,
           },
           {
             id: 'avg-tenure',
-            title: t('hrm.hrm_reports_page.text_8c3336'),
+            title: t('hrm.hrm_reports_page.avg_tenure_days'),
             value: formatNumber(employeeSummary?.avg_tenure_days || 0),
             icon: <Clock size={24} />,
             color: 'info' as const,
@@ -209,7 +213,7 @@ const HrmReportsPage: React.FC = () => {
           },
           {
             id: 'total-courses',
-            title: t('hrm.hrm_reports_page.text_07cb67'),
+            title: t('hrm.hrm_reports_page.training_course'),
             value: formatNumber(trainingSummary?.total_courses || 0),
             icon: <FileText size={24} />,
             color: 'warning' as const,
@@ -226,28 +230,28 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'total-payroll',
-            title: t('hrm.hrm_reports_page.text_2a0448'),
+            title: t('hrm.hrm_reports_page.total_salary'),
             value: formatCurrency(payrollSummary?.total_payroll || 0),
             icon: <DollarSign size={24} />,
             color: 'primary' as const,
           },
           {
             id: 'avg-salary',
-            title: t('hrm.hrm_reports_page.text_6833de'),
+            title: t('hrm.hrm_reports_page.avg_salary'),
             value: formatCurrency(payrollSummary?.avg_salary || 0),
             icon: <Briefcase size={24} />,
             color: 'success' as const,
           },
           {
             id: 'max-salary',
-            title: t('hrm.hrm_reports_page.text_d8c7a1'),
+            title: t('hrm.hrm_reports_page.max_salary_val'),
             value: formatCurrency(payrollSummary?.max_salary || 0),
             icon: <TrendingUp size={24} />,
             color: 'warning' as const,
           },
           {
             id: 'min-salary',
-            title: t('hrm.hrm_reports_page.text_ac4667'),
+            title: t('hrm.hrm_reports_page.min_salary_val'),
             value: formatCurrency(payrollSummary?.min_salary || 0),
             icon: <Clock size={24} />,
             color: 'info' as const,
@@ -284,28 +288,28 @@ const HrmReportsPage: React.FC = () => {
           },
           {
             id: 'attendance-stats',
-            title: i18n.t('hrm.hrm_reports_page.text_d88c02'),
+            title: i18n.t('hrm.hrm_reports_page.attendance_stats'),
             type: 'pie' as const,
             dataKey: 'value',
             nameKey: 'name',
             data: [
               {
-                name: i18n.t('hrm.hrm_reports_page.text_27ff5f'),
+                name: i18n.t('hrm.hrm_reports_page.on_time'),
                 value: attendanceSummary?.on_time_count || 0,
                 color: 'success.main',
               },
               {
-                name: i18n.t('hrm.hrm_reports_page.text_0a4fd7'),
+                name: i18n.t('hrm.hrm_reports_page.late'),
                 value: attendanceSummary?.late_count || 0,
                 color: ct.yellow[600],
               },
               {
-                name: i18n.t('hrm.hrm_reports_page.text_10399d'),
+                name: i18n.t('hrm.hrm_reports_page.absent'),
                 value: attendanceSummary?.absent_count || 0,
                 color: 'error.main',
               },
               {
-                name: i18n.t('hrm.hrm_reports_page.text_11bc8a'),
+                name: i18n.t('hrm.hrm_reports_page.leave_request'),
                 value: attendanceSummary?.leave_count || 0,
                 color: 'primary.main',
               },
@@ -313,7 +317,7 @@ const HrmReportsPage: React.FC = () => {
           },
           {
             id: 'contract-expiry',
-            title: i18n.t('hrm.hrm_reports_page.text_0be4f0'),
+            title: i18n.t('hrm.hrm_reports_page.contract_expiry_stats'),
             type: 'bar' as const,
             dataKey: 'value',
             nameKey: 'name',
@@ -323,11 +327,11 @@ const HrmReportsPage: React.FC = () => {
                 value: contractSummary?.expiring_this_month || 0,
               },
               {
-                name: t('hrm.hrm_reports_page.text_e69f1a'),
+                name: t('hrm.hrm_reports_page.expires_next_month'),
                 value: contractSummary?.expiring_next_month || 0,
               },
               {
-                name: t('hrm.hrm_reports_page.text_e5b59f'),
+                name: t('hrm.hrm_reports_page.expired'),
                 value: contractSummary?.expired_contracts || 0,
               },
               {
@@ -338,18 +342,18 @@ const HrmReportsPage: React.FC = () => {
           },
           {
             id: 'training-stats',
-            title: t('hrm.hrm_reports_page.text_0eddf1'),
+            title: t('hrm.hrm_reports_page.training_stats'),
             type: 'pie' as const,
             dataKey: 'value',
             nameKey: 'name',
             data: [
               { name: t('hrm.hrm_reports_page.plan'), value: trainingSummary?.total_plans || 0 },
               {
-                name: t('hrm.hrm_reports_page.text_07cb67'),
+                name: t('hrm.hrm_reports_page.training_course'),
                 value: trainingSummary?.total_courses || 0,
               },
               {
-                name: t('hrm.hrm_reports_page.text_6a18d7'),
+                name: t('hrm.hrm_reports_page.training_record'),
                 value: trainingSummary?.total_records || 0,
               },
             ].filter((d) => d.value > 0),
@@ -359,18 +363,18 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'gender-distribution',
-            title: t('hrm.hrm_reports_page.text_aaf1df'),
+            title: t('hrm.hrm_reports_page.gender_distribution'),
             type: 'pie' as const,
             dataKey: 'value',
             nameKey: 'name',
             data: [
               {
-                name: t('hrm.hrm_reports_page.text_36a490'),
+                name: t('hrm.hrm_reports_page.male'),
                 value: employeeSummary?.male_count || 0,
                 color: 'primary.main',
               },
               {
-                name: t('hrm.hrm_reports_page.text_87c835'),
+                name: t('hrm.hrm_reports_page.female'),
                 value: employeeSummary?.female_count || 0,
                 color: ct.secondary[500],
               },
@@ -384,11 +388,11 @@ const HrmReportsPage: React.FC = () => {
             nameKey: 'name',
             data: [
               {
-                name: t('hrm.hrm_reports_page.text_798ac1'),
+                name: t('hrm.hrm_reports_page.new_hire'),
                 value: employeeSummary?.new_hires_this_month || 0,
               },
               {
-                name: t('hrm.hrm_reports_page.text_583e79'),
+                name: t('hrm.hrm_reports_page.resigned'),
                 value: employeeSummary?.terminations_this_month || 0,
               },
             ],
@@ -403,13 +407,13 @@ const HrmReportsPage: React.FC = () => {
             dataKey: 'value',
             nameKey: 'name',
             data: [
-              { name: t('hrm.hrm_reports_page.text_fccc2b'), value: 65 },
-              { name: t('hrm.hrm_reports_page.text_c1d13f'), value: 72 },
-              { name: t('hrm.hrm_reports_page.text_c4767b'), value: 68 },
-              { name: t('hrm.hrm_reports_page.text_3eaf4b'), value: 78 },
-              { name: t('hrm.hrm_reports_page.text_0545f1'), value: 82 },
+              { name: t('hrm.hrm_reports_page.january'), value: 65 },
+              { name: t('hrm.hrm_reports_page.february'), value: 72 },
+              { name: t('hrm.hrm_reports_page.march'), value: 68 },
+              { name: t('hrm.hrm_reports_page.april'), value: 78 },
+              { name: t('hrm.hrm_reports_page.may'), value: 82 },
               {
-                name: t('hrm.hrm_reports_page.text_f2422a'),
+                name: t('hrm.hrm_reports_page.june'),
                 value: trainingSummary?.avg_completion_rate || 75,
               },
             ],
@@ -422,7 +426,7 @@ const HrmReportsPage: React.FC = () => {
             nameKey: 'name',
             data: [
               {
-                name: t('hrm.hrm_reports_page.text_3c1218'),
+                name: t('hrm.hrm_reports_page.total_courses'),
                 value: trainingSummary?.total_courses || 0,
               },
               {
@@ -430,7 +434,7 @@ const HrmReportsPage: React.FC = () => {
                 value: trainingSummary?.completed_courses || 0,
               },
               {
-                name: t('hrm.hrm_reports_page.text_03aaf2'),
+                name: t('hrm.hrm_reports_page.total_records'),
                 value: trainingSummary?.total_records || 0,
               },
               {
@@ -444,40 +448,40 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'payroll-structure',
-            title: t('hrm.hrm_reports_page.text_ecd515'),
+            title: t('hrm.hrm_reports_page.salary_structure_analysis'),
             type: 'pie' as const,
             dataKey: 'value',
             nameKey: 'name',
             data: [
               {
-                name: t('hrm.hrm_reports_page.text_d0e803'),
+                name: t('hrm.hrm_reports_page.base_salary'),
                 value: (payrollSummary?.total_payroll || 0) * 0.6,
               },
               {
-                name: t('hrm.hrm_reports_page.text_0466ec'),
+                name: t('hrm.hrm_reports_page.performance_bonus'),
                 value: (payrollSummary?.total_payroll || 0) * 0.25,
               },
               {
-                name: t('hrm.hrm_reports_page.text_5e14f3'),
+                name: t('hrm.hrm_reports_page.welfare_subsidy'),
                 value: (payrollSummary?.total_payroll || 0) * 0.15,
               },
             ],
           },
           {
             id: 'salary-range',
-            title: t('hrm.hrm_reports_page.text_08acc3'),
+            title: t('hrm.hrm_reports_page.salary_range_dist'),
             type: 'bar' as const,
             dataKey: 'value',
             nameKey: 'name',
             data: [
               {
-                name: t('hrm.hrm_reports_page.text_00618d'),
+                name: t('hrm.hrm_reports_page.salary_below_5k'),
                 value: Math.floor((payrollSummary?.employee_count || 0) * 0.1),
               },
               { name: '5k-10k', value: Math.floor((payrollSummary?.employee_count || 0) * 0.4) },
               { name: '10k-15k', value: Math.floor((payrollSummary?.employee_count || 0) * 0.3) },
               {
-                name: t('hrm.hrm_reports_page.text_0b05c2'),
+                name: t('hrm.hrm_reports_page.salary_15k_plus'),
                 value: Math.floor((payrollSummary?.employee_count || 0) * 0.2),
               },
             ],
@@ -512,15 +516,19 @@ const HrmReportsPage: React.FC = () => {
               },
               {
                 id: 'employee_count',
-                label: i18n.t('hrm.hrm_reports_page.text_c9088f'),
+                label: i18n.t('hrm.hrm_reports_page.total_headcount'),
                 field: 'employee_count',
               },
               {
                 id: 'active_count',
-                label: i18n.t('hrm.hrm_reports_page.text_518449'),
+                label: i18n.t('hrm.hrm_reports_page.active_headcount'),
                 field: 'active_count',
               },
-              { id: 'rate', label: i18n.t('hrm.hrm_reports_page.text_72dbeb'), field: 'rate' },
+              {
+                id: 'rate',
+                label: i18n.t('hrm.hrm_reports_page.retention_rate_pct'),
+                field: 'rate',
+              },
             ],
             data: departmentSummary.map((d) => ({
               ...d,
@@ -536,12 +544,12 @@ const HrmReportsPage: React.FC = () => {
             title: i18n.t('hrm.hrm_reports_page.status'),
             columns: [
               { id: 'status', label: i18n.t('hrm.hrm_reports_page.status_1'), field: 'status' },
-              { id: 'count', label: i18n.t('hrm.hrm_reports_page.text_3640d2'), field: 'count' },
-              { id: 'rate', label: i18n.t('hrm.hrm_reports_page.text_6eada8'), field: 'rate' },
+              { id: 'count', label: i18n.t('hrm.hrm_reports_page.headcount'), field: 'count' },
+              { id: 'rate', label: i18n.t('hrm.hrm_reports_page.proportion_pct'), field: 'rate' },
             ],
             data: [
               {
-                status: i18n.t('hrm.hrm_reports_page.text_b5509b'),
+                status: i18n.t('hrm.hrm_reports_page.employed'),
                 count: employeeSummary?.active_employees || 0,
                 rate: employeeSummary?.total_employees
                   ? Math.round(
@@ -550,7 +558,7 @@ const HrmReportsPage: React.FC = () => {
                   : 0,
               },
               {
-                status: t('hrm.hrm_reports_page.text_583e79'),
+                status: t('hrm.hrm_reports_page.resigned'),
                 count: employeeSummary?.inactive_employees || 0,
                 rate: employeeSummary?.total_employees
                   ? Math.round(
@@ -562,22 +570,22 @@ const HrmReportsPage: React.FC = () => {
           },
           {
             id: 'employee-gender',
-            title: t('hrm.hrm_reports_page.text_aaf1df'),
+            title: t('hrm.hrm_reports_page.gender_distribution'),
             columns: [
-              { id: 'gender', label: t('hrm.hrm_reports_page.text_787b56'), field: 'gender' },
-              { id: 'count', label: t('hrm.hrm_reports_page.text_3640d2'), field: 'count' },
-              { id: 'rate', label: t('hrm.hrm_reports_page.text_6eada8'), field: 'rate' },
+              { id: 'gender', label: t('hrm.hrm_reports_page.gender'), field: 'gender' },
+              { id: 'count', label: t('hrm.hrm_reports_page.headcount'), field: 'count' },
+              { id: 'rate', label: t('hrm.hrm_reports_page.proportion_pct'), field: 'rate' },
             ],
             data: [
               {
-                gender: t('hrm.hrm_reports_page.text_36a490'),
+                gender: t('hrm.hrm_reports_page.male'),
                 count: employeeSummary?.male_count || 0,
                 rate: employeeSummary?.total_employees
                   ? Math.round((employeeSummary.male_count / employeeSummary.total_employees) * 100)
                   : 0,
               },
               {
-                gender: t('hrm.hrm_reports_page.text_87c835'),
+                gender: t('hrm.hrm_reports_page.female'),
                 count: employeeSummary?.female_count || 0,
                 rate: employeeSummary?.total_employees
                   ? Math.round(
@@ -595,7 +603,7 @@ const HrmReportsPage: React.FC = () => {
             title: t('hrm.hrm_reports_page.plan_1'),
             columns: [
               { id: 'type', label: t('hrm.hrm_reports_page.type'), field: 'type' },
-              { id: 'total', label: t('hrm.hrm_reports_page.text_9ed7d3'), field: 'total' },
+              { id: 'total', label: t('hrm.hrm_reports_page.total_count'), field: 'total' },
               { id: 'completed', label: t('hrm.hrm_reports_page.completed_3'), field: 'completed' },
               { id: 'rate', label: t('hrm.hrm_reports_page.completed_5'), field: 'rate' },
             ],
@@ -614,7 +622,7 @@ const HrmReportsPage: React.FC = () => {
                   : 0,
               },
               {
-                type: t('hrm.hrm_reports_page.text_07cb67'),
+                type: t('hrm.hrm_reports_page.training_course'),
                 total: trainingSummary?.total_courses || 0,
                 completed: trainingSummary?.completed_courses || 0,
                 rate: trainingSummary?.total_courses
@@ -624,7 +632,7 @@ const HrmReportsPage: React.FC = () => {
                   : 0,
               },
               {
-                type: t('hrm.hrm_reports_page.text_6a18d7'),
+                type: t('hrm.hrm_reports_page.training_record'),
                 total: trainingSummary?.total_records || 0,
                 completed: trainingSummary?.completed_records || 0,
                 rate: trainingSummary?.total_records
@@ -640,25 +648,25 @@ const HrmReportsPage: React.FC = () => {
         return [
           {
             id: 'payroll-details',
-            title: t('hrm.hrm_reports_page.text_f39721'),
+            title: t('hrm.hrm_reports_page.salary_details'),
             columns: [
-              { id: 'item', label: t('hrm.hrm_reports_page.text_31ecc0'), field: 'item' },
+              { id: 'item', label: t('hrm.hrm_reports_page.project'), field: 'item' },
               { id: 'amount', label: t('hrm.hrm_reports_page.amount'), field: 'amount' },
-              { id: 'count', label: t('hrm.hrm_reports_page.text_3640d2'), field: 'count' },
+              { id: 'count', label: t('hrm.hrm_reports_page.headcount'), field: 'count' },
             ],
             data: [
               {
-                item: t('hrm.hrm_reports_page.text_2a0448'),
+                item: t('hrm.hrm_reports_page.total_salary'),
                 amount: formatCurrency(payrollSummary?.total_payroll || 0),
                 count: payrollSummary?.employee_count || 0,
               },
               {
-                item: t('hrm.hrm_reports_page.text_6833de'),
+                item: t('hrm.hrm_reports_page.avg_salary'),
                 amount: formatCurrency(payrollSummary?.avg_salary || 0),
                 count: '-',
               },
               {
-                item: t('hrm.hrm_reports_page.text_97a337'),
+                item: t('hrm.hrm_reports_page.total_bonus'),
                 amount: formatCurrency(payrollSummary?.bonus_total || 0),
                 count: '-',
               },
@@ -673,7 +681,7 @@ const HrmReportsPage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       <StatsPageTemplate
-        title={t('hrm.hrm_reports_page.text_1d67f5')}
+        title={t('hrm.hrm_reports_page.hr_data_report')}
         subtitle={t('hrm.hrm_reports_page.view')}
         statCards={statCards}
         statColumns={6}
@@ -684,7 +692,7 @@ const HrmReportsPage: React.FC = () => {
         timeRangeOptions={[
           { label: t('hrm.hrm_reports_page.this_week'), value: 'week' },
           { label: t('hrm.hrm_reports_page.this_month_2'), value: 'month' },
-          { label: t('hrm.hrm_reports_page.text_0477ce'), value: 'quarter' },
+          { label: t('hrm.hrm_reports_page.this_quarter'), value: 'quarter' },
           { label: t('hrm.hrm_reports_page.this_year'), value: 'year' },
         ]}
         timeRange={timeRange}

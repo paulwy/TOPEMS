@@ -38,7 +38,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
           <MetricCard
-            title={i18n.t('bi.gis_page_components__stats_section.text_09a0d3')}
+            title={i18n.t('bi.gis_page_components__stats_section.pipeline_mgmt_card')}
             value={statistics?.pipelines || 0}
             icon={<ArrowRight size={24} />}
             gradient={[ct.secondary[400], ct.secondary[600]]}
@@ -47,7 +47,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
           <MetricCard
-            title={i18n.t('bi.gis_page_components__stats_section.text_423a98')}
+            title={i18n.t('bi.gis_page_components__stats_section.pipeline_mgmt_title')}
             value={statistics?.storage_locations || 0}
             icon={<Warehouse size={24} />}
             gradient={['warning.main', ct.warning.dark]}
@@ -55,7 +55,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
           <MetricCard
-            title={i18n.t('bi.gis_page_components__stats_section.text_3548b7')}
+            title={i18n.t('bi.gis_page_components__stats_section.storage_location_card')}
             value={statistics?.evidence_records || 0}
             icon={<Camera size={24} />}
             gradient={[ct.pink[500], ct.pink.dark]}
@@ -63,7 +63,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
           <MetricCard
-            title={i18n.t('bi.gis_page_components__stats_section.text_0ab201')}
+            title={i18n.t('bi.gis_page_components__stats_section.plant_map_card')}
             value={statistics?.factory_maps || 0}
             icon={<Map size={24} />}
             gradient={[ct.secondary.main, ct.secondary.dark]}
@@ -71,7 +71,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
           <MetricCard
-            title={i18n.t('bi.gis_page_components__stats_section.text_71c01c')}
+            title={i18n.t('bi.gis_page_components__stats_section.business_location_card')}
             value={statistics?.business_locations || 0}
             icon={<Building2 size={24} />}
             gradient={[ct.teal.main, ct.teal.dark]}
@@ -94,22 +94,22 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
                 color: ct.success.main,
               },
               {
-                name: i18n.t('bi.gis_page_components__stats_section.text_87c037'),
+                name: i18n.t('bi.gis_page_components__stats_section.pipeline_label'),
                 value: statistics?.pipelines || 0,
                 color: ct.secondary[400],
               },
               {
-                name: i18n.t('bi.gis_page_components__stats_section.text_423a98'),
+                name: i18n.t('bi.gis_page_components__stats_section.pipeline_mgmt_title'),
                 value: statistics?.storage_locations || 0,
                 color: 'warning.main',
               },
               {
-                name: i18n.t('bi.gis_page_components__stats_section.text_0ab201'),
+                name: i18n.t('bi.gis_page_components__stats_section.plant_map_card'),
                 value: statistics?.factory_maps || 0,
                 color: 'secondary.main',
               },
               {
-                name: i18n.t('bi.gis_page_components__stats_section.text_71c01c'),
+                name: i18n.t('bi.gis_page_components__stats_section.business_location_card'),
                 value: statistics?.business_locations || 0,
                 color: ct.teal.main,
               },
@@ -129,7 +129,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
                 [i18n.t('pages.stats_section.k1')]: statistics?.device_points || 0,
               },
               {
-                name: i18n.t('bi.gis_page_components__stats_section.text_87c037'),
+                name: i18n.t('bi.gis_page_components__stats_section.pipeline_label'),
                 [i18n.t('pages.stats_section.k2')]: statistics?.active_pipelines || 0,
                 [i18n.t('pages.stats_section.k3')]: statistics?.pipelines || 0,
               },
@@ -137,7 +137,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({ statistics }) => {
             dataKey='name'
             yKeys={[
               i18n.t('bi.gis_page_components__stats_section.active_2'),
-              i18n.t('bi.gis_page_components__stats_section.text_9ed7d3'),
+              i18n.t('bi.gis_page_components__stats_section.disabled_status'),
             ]}
             colors={[ct.success.main, ct.secondary[400]]}
           />

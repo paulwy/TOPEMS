@@ -475,7 +475,16 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         )}
       </Paper>
 
-      <Box sx={{ position: 'fixed', bottom: 20, right: 20, display: 'flex', gap: 2, zIndex: 100 }}>
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: 20,
+          right: 20,
+          display: 'flex',
+          gap: 2,
+          zIndex: (theme) => theme.zIndex.dropdown,
+        }}
+      >
         <Button
           variant='outlined'
           startIcon={<Eye sx={{ width: 16, height: 16 }} />}

@@ -60,7 +60,7 @@ const HealthManagementPage: React.FC = () => {
                     fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   }}
                 >
-                  {t('ehs.health_management_page.text_d09fb9')}
+                  {t('ehs.health_management_page.total_records')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -132,7 +132,7 @@ const HealthManagementPage: React.FC = () => {
                     fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                   }}
                 >
-                  {t('ehs.health_management_page.text_8d63ef')}
+                  {t('ehs.health_management_page.disabled')}
                 </Typography>
                 <Typography
                   variant='h5'
@@ -156,8 +156,8 @@ const HealthManagementPage: React.FC = () => {
     };
     const statusLabels: Record<string, string> = {
       active: t('ehs.health_management_page.normal'),
-      inactive: t('ehs.health_management_page.text_1abbb1'),
-      suspended: t('ehs.health_management_page.text_8d63ef'),
+      inactive: t('ehs.health_management_page.off_duty'),
+      suspended: t('ehs.health_management_page.disabled'),
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     const label = statusLabels[status] || status;
@@ -178,9 +178,9 @@ const HealthManagementPage: React.FC = () => {
     const record = row as Partial<HealthRecord>;
     const genderLabel =
       record.gender === 'male'
-        ? t('ehs.health_management_page.text_36a490')
+        ? t('ehs.health_management_page.male')
         : record.gender === 'female'
-          ? t('ehs.health_management_page.text_87c835')
+          ? t('ehs.health_management_page.female')
           : '-';
 
     const fieldValue = (label: string, value: React.ReactNode) => (
@@ -207,25 +207,37 @@ const HealthManagementPage: React.FC = () => {
           gap: 2,
         }}
       >
-        {fieldValue(t('ehs.health_management_page.text_d09fb9'), record.record_no || '-')}
-        {fieldValue(t('ehs.health_management_page.text_50df90'), record.employee_name)}
-        {fieldValue(t('ehs.health_management_page.text_787b56'), genderLabel)}
+        {fieldValue(t('ehs.health_management_page.total_records'), record.record_no || '-')}
+        {fieldValue(t('ehs.health_management_page.name'), record.employee_name)}
+        {fieldValue(t('ehs.health_management_page.gender'), genderLabel)}
         {fieldValue(t('ehs.health_management_page.date'), record.birthday || '-')}
-        {fieldValue(t('ehs.health_management_page.text_1e1459'), record.department || '-')}
-        {fieldValue(t('ehs.health_management_page.text_8402fc'), record.position || '-')}
-        {fieldValue(t('ehs.health_management_page.text_e23e4a'), record.workplace || '-')}
-        {fieldValue(t('ehs.health_management_page.text_6eb003'), record.blood_type || '-')}
-        {fieldValue(t('ehs.health_management_page.text_b58943'), record.contact_info || '-')}
+        {fieldValue(t('ehs.health_management_page.department'), record.department || '-')}
+        {fieldValue(t('ehs.health_management_page.job_title'), record.position || '-')}
+        {fieldValue(t('ehs.health_management_page.workplace'), record.workplace || '-')}
+        {fieldValue(t('ehs.health_management_page.blood_type'), record.blood_type || '-')}
+        {fieldValue(
+          t('ehs.health_management_page.contact_information'),
+          record.contact_info || '-'
+        )}
         {fieldValue(t('ehs.health_management_page.status'), getStatusBadge(record.status || ''))}
         <Box sx={{ gridColumn: '1 / -1' }}>
-          {fieldValue(t('ehs.health_management_page.text_2ac7fd'), record.allergy_history || '-')}
-        </Box>
-        <Box sx={{ gridColumn: '1 / -1' }}>
-          {fieldValue(t('ehs.health_management_page.text_044dcd'), record.medical_history || '-')}
+          {fieldValue(
+            t('ehs.health_management_page.allergy_history'),
+            record.allergy_history || '-'
+          )}
         </Box>
         <Box sx={{ gridColumn: '1 / -1' }}>
           {fieldValue(
-            t('ehs.health_management_page.text_9c1b2a', i18n.t('pages.health_management_page.k0')),
+            t('ehs.health_management_page.medical_history'),
+            record.medical_history || '-'
+          )}
+        </Box>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          {fieldValue(
+            t(
+              'ehs.health_management_page.occupational_hazards',
+              i18n.t('pages.health_management_page.k0')
+            ),
             Array.isArray(record.hazard_factors) ? record.hazard_factors.join(', ') : '-'
           )}
         </Box>

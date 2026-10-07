@@ -250,7 +250,7 @@ const TrainingPage: React.FC = () => {
                   fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 }}
               >
-                {t('ehs.training_page.text_c6cc39f')}
+                {t('ehs.training_page.k0')}
               </Typography>
               <Typography
                 variant='h5'
@@ -286,12 +286,12 @@ const TrainingPage: React.FC = () => {
           },
           {
             id: 'records',
-            label: t('ehs.training_page.text_6a18d7'),
+            label: t('ehs.training_page.training_records'),
             content: <RecordList />,
           },
           {
             id: 'certificates',
-            label: t('ehs.training_page.text_400100'),
+            label: t('ehs.training_page.training_certificates'),
             content: <CertificateList />,
           },
         ]}

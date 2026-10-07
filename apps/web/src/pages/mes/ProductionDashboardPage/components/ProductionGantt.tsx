@@ -186,7 +186,7 @@ const ProductionGantt: React.FC<{
                   bottom: -4,
                   width: 2,
                   backgroundColor: 'error.main',
-                  zIndex: 1,
+                  zIndex: (theme) => theme.zIndex.raised,
                 }}
               >
                 <Box

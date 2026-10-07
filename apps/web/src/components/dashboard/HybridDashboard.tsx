@@ -249,7 +249,7 @@ const CompactHero: React.FC = () => {
       />
 
       {/* Content */}
-      <Box sx={{ position: 'relative', zIndex: 1 }}>
+      <Box sx={{ position: 'relative', zIndex: (theme) => theme.zIndex.raised }}>
         <Typography
           variant='subtitle1'
           sx={{ fontWeight: 700, mb: 0.5 }}

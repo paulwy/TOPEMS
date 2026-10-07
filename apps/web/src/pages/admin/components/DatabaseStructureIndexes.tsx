@@ -59,7 +59,7 @@ export const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> =
             color='text.secondary'
             sx={{ mt: 2 }}
           >
-            {i18n.t('admin.database_structure_page.text_98d867')}
+            {i18n.t('admin.database_structure_page.no_change_history')}
           </Typography>
         </Box>
       ) : (
@@ -75,7 +75,7 @@ export const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> =
                     textTransform: 'uppercase',
                   }}
                 >
-                  {i18n.t('admin.database_structure_page.text_19fcb9')}
+                  {i18n.t('admin.database_structure_page.time')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -85,7 +85,7 @@ export const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> =
                     textTransform: 'uppercase',
                   }}
                 >
-                  {i18n.t('admin.database_structure_page.text_226b09')}
+                  {i18n.t('admin.database_structure_page.type_select')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -95,7 +95,7 @@ export const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> =
                     textTransform: 'uppercase',
                   }}
                 >
-                  {i18n.t('admin.database_structure_page.text_7ecd01')}
+                  {i18n.t('admin.database_structure_page.table_name')}
                 </TableCell>
                 <TableCell
                   sx={{
@@ -105,7 +105,7 @@ export const DatabaseStructureIndexes: React.FC<DatabaseStructureIndexesProps> =
                     textTransform: 'uppercase',
                   }}
                 >
-                  {i18n.t('admin.database_structure_page.text_9caecd')}
+                  {i18n.t('admin.database_structure_page.field')}
                 </TableCell>
                 <TableCell
                   sx={{

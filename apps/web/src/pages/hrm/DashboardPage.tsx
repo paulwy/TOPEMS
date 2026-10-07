@@ -151,22 +151,22 @@ export const DashboardPage: React.FC = () => {
     const statusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
       name:
         name === 'active'
-          ? t('hrm.dashboard_page.text_3c07bb')
+          ? t('hrm.dashboard_page.regular')
           : name === 'probation'
-            ? t('hrm.dashboard_page.text_9a3256')
+            ? t('hrm.dashboard_page.probation_period')
             : name === 'intern'
-              ? t('hrm.dashboard_page.text_727190')
+              ? t('hrm.dashboard_page.internship')
               : name,
       value,
     }));
 
     const months = [
-      t('hrm.dashboard_page.text_fccc2b'),
-      t('hrm.dashboard_page.text_c1d13f'),
-      t('hrm.dashboard_page.text_c4767b'),
-      t('hrm.dashboard_page.text_3eaf4b'),
-      t('hrm.dashboard_page.text_0545f1'),
-      t('hrm.dashboard_page.text_f2422a'),
+      t('hrm.dashboard_page.january'),
+      t('hrm.dashboard_page.february'),
+      t('hrm.dashboard_page.march'),
+      t('hrm.dashboard_page.april'),
+      t('hrm.dashboard_page.may'),
+      t('hrm.dashboard_page.june'),
     ];
     const monthlyTrend = months.map((name, i) => ({
       name,
@@ -178,21 +178,21 @@ export const DashboardPage: React.FC = () => {
         departmentDistribution.length > 0
           ? departmentDistribution
           : [
-              { name: t('hrm.dashboard_page.text_c6a757'), value: 85 },
+              { name: t('hrm.dashboard_page.tech_dept'), value: 85 },
               { name: t('hrm.dashboard_page.product'), value: 45 },
-              { name: t('hrm.dashboard_page.text_73b111'), value: 52 },
-              { name: t('hrm.dashboard_page.text_b159e5'), value: 28 },
-              { name: t('hrm.dashboard_page.text_f802d1'), value: 18 },
-              { name: t('hrm.dashboard_page.text_b890b3'), value: 28 },
+              { name: t('hrm.dashboard_page.marketing_dept'), value: 52 },
+              { name: t('hrm.dashboard_page.finance_dept'), value: 28 },
+              { name: t('hrm.dashboard_page.hr_department'), value: 18 },
+              { name: t('hrm.dashboard_page.operations_dept'), value: 28 },
             ],
       monthlyTrend,
       statusDistribution:
         statusDistribution.length > 0
           ? statusDistribution
           : [
-              { name: t('hrm.dashboard_page.text_9a3256'), value: 15 },
-              { name: t('hrm.dashboard_page.text_3c07bb'), value: 75 },
-              { name: t('hrm.dashboard_page.text_727190'), value: 10 },
+              { name: t('hrm.dashboard_page.probation_period'), value: 15 },
+              { name: t('hrm.dashboard_page.regular'), value: 75 },
+              { name: t('hrm.dashboard_page.internship'), value: 10 },
             ],
     };
   }, [departmentsQuery.data, employeesQuery.data, t]);
@@ -201,7 +201,7 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'total-employees',
-        title: i18n.t('hrm.dashboard_page.text_97e957'),
+        title: i18n.t('hrm.dashboard_page.total_employees'),
         value: String(statsData.totalEmployees),
         icon: <Users size={24} />,
         change: 12,
@@ -219,7 +219,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'training',
-        title: i18n.t('hrm.dashboard_page.text_07cb67'),
+        title: i18n.t('hrm.dashboard_page.training_course'),
         value: String(statsData.trainingCourses),
         icon: <GraduationCap size={24} />,
         change: 5,
@@ -228,7 +228,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'performance',
-        title: i18n.t('hrm.dashboard_page.text_5ad4ab'),
+        title: i18n.t('hrm.dashboard_page.performance_review'),
         value: String(statsData.performanceReviews),
         icon: <Award size={24} />,
         change: 45,
@@ -243,7 +243,7 @@ export const DashboardPage: React.FC = () => {
     () => [
       {
         id: 'overview',
-        title: i18n.t('hrm.dashboard_page.text_699d70'),
+        title: i18n.t('hrm.dashboard_page.department_distribution'),
         chart: (
           <LazyChart
             type='bar'
@@ -257,7 +257,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'trend',
-        title: i18n.t('hrm.dashboard_page.text_b3b5dc'),
+        title: i18n.t('hrm.dashboard_page.onboarding_trend'),
         chart: (
           <LazyChart
             type='line'
@@ -295,7 +295,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'recruitment',
-        label: i18n.t('hrm.dashboard_page.text_b4f20d'),
+        label: i18n.t('hrm.dashboard_page.recruitment_management'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.recruitment),
       },
@@ -307,7 +307,7 @@ export const DashboardPage: React.FC = () => {
       },
       {
         id: 'performance-review',
-        label: i18n.t('hrm.dashboard_page.text_5ad4ab'),
+        label: i18n.t('hrm.dashboard_page.performance_review'),
         icon: <ArrowRight size={18} />,
         onClick: () => navigate(HRM_PATHS.performance),
       },
@@ -317,7 +317,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title={t('hrm.dashboard_page.text_695be5')}
+      title={t('hrm.dashboard_page.hr_dashboard')}
       subtitle={t('hrm.dashboard_page.e1')}
       padding={false}
       maxWidth={false}

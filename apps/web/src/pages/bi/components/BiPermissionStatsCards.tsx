@@ -56,7 +56,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {i18n.t('bi.bi_permission_page.text_ae1917')}
+                  {i18n.t('bi.bi_permission_page.row_level_rules_card')}
                 </Typography>
               </Box>
             </Box>
@@ -94,7 +94,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {i18n.t('bi.bi_permission_page.text_9f56c8')}
+                  {i18n.t('bi.bi_permission_page.data_permission_rules_card')}
                 </Typography>
               </Box>
             </Box>
@@ -132,7 +132,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {i18n.t('bi.bi_permission_page.text_2f54ee')}
+                  {i18n.t('bi.bi_permission_page.enabled_rules_card')}
                 </Typography>
               </Box>
             </Box>
@@ -170,7 +170,7 @@ const BiPermissionStatsCards: React.FC<BiPermissionStatsCardsProps> = ({
                   variant='body2'
                   color='text.secondary'
                 >
-                  {i18n.t('bi.bi_permission_page.text_c23dd1')}
+                  {i18n.t('bi.bi_permission_page.linked_roles_count_card')}
                 </Typography>
               </Box>
             </Box>

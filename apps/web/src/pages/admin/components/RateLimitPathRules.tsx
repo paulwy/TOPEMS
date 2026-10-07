@@ -52,7 +52,7 @@ const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
             variant='subtitle1'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {i18n.t('admin.rate_limit_config_page.text_d6bf27')}
+            {i18n.t('admin.rate_limit_config_page.path_custom_rule')}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
             <TextField
@@ -82,7 +82,7 @@ const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
               startIcon={<Plus size={16} />}
               onClick={onAddPath}
             >
-              {i18n.t('admin.rate_limit_config_page.text_49818f')}
+              {i18n.t('admin.rate_limit_config_page.add_rule_btn')}
             </Button>
           </Box>
           <TableContainer
@@ -110,7 +110,7 @@ const RateLimitPathRules: React.FC<RateLimitPathRulesProps> = ({
                         color='text.secondary'
                         sx={{ py: 2 }}
                       >
-                        {i18n.t('admin.rate_limit_config_page.text_4cb561')}
+                        {i18n.t('admin.rate_limit_config_page.no_custom_rule')}
                       </Typography>
                     </TableCell>
                   </TableRow>

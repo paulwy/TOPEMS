@@ -38,7 +38,7 @@ const EhsHazardAssessmentsSection: React.FC<EhsHazardAssessmentsSectionProps> = 
       },
       {
         accessorKey: 'assessor',
-        header: t('ehs.ehs_hazard_detail_page.text_ab3d92'),
+        header: t('ehs.ehs_hazard_detail_page.evaluator'),
         cell: ({ row }) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Box
@@ -51,7 +51,7 @@ const EhsHazardAssessmentsSection: React.FC<EhsHazardAssessmentsSectionProps> = 
       },
       {
         accessorKey: 'risklevel',
-        header: t('ehs.ehs_hazard_detail_page.text_25eb6b'),
+        header: t('ehs.ehs_hazard_detail_page.risk_level'),
         cell: ({ row }) => {
           const riskResult = calculateRiskLevel(
             row.original.severity || 'medium',
@@ -77,7 +77,10 @@ const EhsHazardAssessmentsSection: React.FC<EhsHazardAssessmentsSectionProps> = 
           );
         },
       },
-      { accessorKey: 'recommendations', header: t('ehs.ehs_hazard_detail_page.text_6dca6f') },
+      {
+        accessorKey: 'recommendations',
+        header: t('ehs.ehs_hazard_detail_page.rectification_suggestions'),
+      },
     ],
     [t]
   );
@@ -89,7 +92,7 @@ const EhsHazardAssessmentsSection: React.FC<EhsHazardAssessmentsSectionProps> = 
           variant='subtitle1'
           sx={{ fontWeight: 600 }}
         >
-          {t('ehs.ehshazarddetailpage.text_48752c')}
+          {t('ehs.ehshazarddetailpage.risk_assessment')}
         </Typography>
         <Typography
           variant='body2'
@@ -110,7 +113,7 @@ const EhsHazardAssessmentsSection: React.FC<EhsHazardAssessmentsSectionProps> = 
             component={AlertTriangle}
             sx={{ fontSize: 64, color: 'grey.400', mx: 'auto', mb: 2 }}
           />
-          <Typography>{t('ehs.ehshazarddetailpage.text_df834d')}</Typography>
+          <Typography>{t('ehs.ehshazarddetailpage.no_assessment_records')}</Typography>
         </Box>
       )}
     </Box>

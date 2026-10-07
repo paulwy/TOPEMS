@@ -76,7 +76,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
           <FormField
             name='voucher_number'
             label={i18n.t(
-              'finance.finance_voucher_page_components__voucher_form_modal.text_7c0ad7'
+              'finance.finance_voucher_page_components__voucher_form_modal.field_voucher_number'
             )}
             value={newVoucher.voucher_number}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -103,7 +103,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
           />
           <FormField
             name='period'
-            label={t('finance.finance_voucher_page_components__voucher_form_modal.text_9d3080')}
+            label={t('finance.finance_voucher_page_components__voucher_form_modal.field_period')}
             value={newVoucher.period}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setNewVoucher((prev) => ({
@@ -112,7 +112,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
               }))
             }
             placeholder={t(
-              'finance.finance_voucher_page_components__voucher_form_modal.text_4c1005'
+              'finance.finance_voucher_page_components__voucher_form_modal.placeholder_select_period'
             )}
           />
         </Box>
@@ -152,7 +152,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
         </Box>
         <FormField
           name='summary'
-          label={t('finance.finance_voucher_page_components__voucher_form_modal.text_3ae146')}
+          label={t('finance.finance_voucher_page_components__voucher_form_modal.field_summary')}
           multiline
           rows={2}
           value={newVoucher.summary}
@@ -162,7 +162,9 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
               summary: e.target.value,
             }))
           }
-          placeholder={t('finance.finance_voucher_page_components__voucher_form_modal.text_95392b')}
+          placeholder={t(
+            'finance.finance_voucher_page_components__voucher_form_modal.placeholder_summary'
+          )}
         />
 
         <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
@@ -181,7 +183,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
               {t('finance.finance_voucher_page_components_voucher_detail_modal.e8')}
             </Typography>
             <ActionButton
-              label={t('finance.finance_voucher_page_components__voucher_form_modal.text_8f114f')}
+              label={t('finance.finance_voucher_page_components__voucher_form_modal.btn_add_item')}
               icon={<Plus size={16} />}
               variant='secondary'
               size='small'
@@ -222,7 +224,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                 <FormSelect
                   name={`subject_code_${index}`}
                   label={t(
-                    'finance.finance_voucher_page_components__voucher_form_modal.text_3a5553'
+                    'finance.finance_voucher_page_components__voucher_form_modal.field_subject'
                   )}
                   value={item.subject_code}
                   onChange={(value: string | number | string[]) =>
@@ -250,7 +252,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   value={item.debit_amount || 0}
                   onChange={(val: number) => updateVoucherItem(index, 'debit_amount', val)}
                   placeholder={t(
-                    'finance.finance_voucher_page_components__voucher_form_modal.text_63e2bc'
+                    'finance.finance_voucher_page_components__voucher_form_modal.placeholder_debit_amount'
                   )}
                 />
                 <CurrencyField
@@ -260,7 +262,7 @@ const VoucherFormModal: React.FC<VoucherFormModalProps> = ({
                   value={item.credit_amount || 0}
                   onChange={(val: number) => updateVoucherItem(index, 'credit_amount', val)}
                   placeholder={t(
-                    'finance.finance_voucher_page_components__voucher_form_modal.text_9ff9a6'
+                    'finance.finance_voucher_page_components__voucher_form_modal.placeholder_credit_amount'
                   )}
                 />
                 <ActionButton

@@ -3,6 +3,7 @@ import i18n from '@/i18n';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, Factory, MessageSquare, User } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { designTokens } from '@topems/tokens';
 
 /**
  * MobileLayoutV3 — Industrial OS 移动端布局
@@ -88,7 +89,7 @@ export const MobileLayoutV3: React.FC<MobileLayoutV3Props> = ({ children }) => {
           justifyContent: 'space-around',
           alignItems: 'center',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          zIndex: 1000,
+          zIndex: designTokens.zIndex.mobileStepper,
         }}
       >
         {mobileTabs.map((tab) => {

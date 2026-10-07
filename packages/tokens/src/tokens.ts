@@ -657,6 +657,20 @@ export const designTokens = {
     tooltipLayer: 500,
     modalLayer: 600,
     toastLayer: 700,
+    // 上下文内微层级：表格吸顶单元格、内容层、图表标注等
+    raised: 1,
+    stickyHeader: 2,
+    dragHandle: 3,
+    contentLayer: 10,
+    annotationPopover: 20,
+    annotationCard: 30,
+    menuBackdrop: 40,
+    overlay: 50,
+    // 调试/开发工具与全局最高层（loading、toast、debug 浮窗）
+    devToolsBar: 9998,
+    topmost: 9999,
+    devToolsPanel: 10000,
+    devToolsModal: 10001,
   },
 
   transitions: {

@@ -101,7 +101,7 @@ export const ContextHelpButton: React.FC<ContextHelpButtonProps> = ({
       }
     : {
         position: 'fixed',
-        zIndex: 1000,
+        zIndex: (theme) => theme.zIndex.mobileStepper,
         ...(positionStyles[position] as object),
         display: showOnMobile ? 'flex' : { xs: 'none', md: 'flex' },
         boxShadow: 3,

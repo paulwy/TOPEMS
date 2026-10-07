@@ -59,7 +59,9 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             <InputLabel>{t('hrm.hrm_employee_page_components_employee_form_dialog.r1')}</InputLabel>
             <Select
               value={(formData as { org_id?: string })?.org_id || ''}
-              label={i18n.t('hrm.hrm_employee_page_components__employee_form_dialog.text_c3846b')}
+              label={i18n.t(
+                'hrm.hrm_employee_page_components__employee_form_dialog.company_required'
+              )}
               onChange={(e) => onChange('org_id', e.target.value)}
               required
             >
@@ -99,7 +101,9 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
 
           <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
             <TextField
-              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_88eff5')}
+              label={t(
+                'hrm.hrm_employee_page_components__employee_form_dialog.employee_name_required'
+              )}
               size='small'
               value={(formData as { name?: string })?.name || ''}
               onChange={(e) => onChange('name', e.target.value)}
@@ -107,7 +111,9 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             />
             <Box sx={{ position: 'relative' }}>
               <TextField
-                label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_752d38')}
+                label={t(
+                  'hrm.hrm_employee_page_components__employee_form_dialog.employee_no_short'
+                )}
                 size='small'
                 value={(formData as { employee_no?: string })?.employee_no || ''}
                 onChange={(e) => onChange('employee_no', e.target.value)}
@@ -139,7 +145,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
             <InputLabel>{t('hrm.employee_form_dialog.k0')}</InputLabel>
             <Select
               value={(formData as { department_id?: string })?.department_id || ''}
-              label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_68923b')}
+              label={t('hrm.hrm_employee_page_components__employee_form_dialog.department_owned')}
               onChange={(e) => onChange('department_id', e.target.value)}
             >
               <MenuItem value=''>
@@ -157,7 +163,7 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
           </FormControl>
 
           <TextField
-            label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_b652de')}
+            label={t('hrm.hrm_employee_page_components__employee_form_dialog.position_title')}
             size='small'
             value={(formData as { position?: string })?.position || ''}
             onChange={(e) => onChange('position', e.target.value)}
@@ -193,19 +199,21 @@ const EmployeeFormDialog: React.FC<EmployeeFormDialogProps> = ({
                 type='generate'
                 onClick={() => onOpenAICodeGenerator(mode)}
                 size='small'
-                label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_0dd441')}
+                label={t(
+                  'hrm.hrm_employee_page_components__employee_form_dialog.generate_employee_no'
+                )}
               />
               <AIHelperButton
                 type='complete'
                 onClick={onOpenAIDataCompleter}
                 size='small'
-                label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_e93748')}
+                label={t('hrm.hrm_employee_page_components__employee_form_dialog.smart_autofill')}
               />
               <AIHelperButton
                 type='validate'
                 onClick={onOpenAIFormValidator}
                 size='small'
-                label={t('hrm.hrm_employee_page_components__employee_form_dialog.text_6bc019')}
+                label={t('hrm.hrm_employee_page_components__employee_form_dialog.ai_validation')}
               />
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>

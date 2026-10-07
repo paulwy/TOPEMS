@@ -39,7 +39,10 @@ const BIDataSourcePage: React.FC = () => {
   );
   const customRowActions = [
     {
-      label: i18n.t('bi.bi_data_source_page.text_6a620e', i18n.t('pages.bi_data_source_page.k0')),
+      label: i18n.t(
+        'bi.bi_data_source_page.refresh_button',
+        i18n.t('pages.bi_data_source_page.k0')
+      ),
       icon: <RefreshCw size={16} />,
       onClick: (row: Record<string, unknown>) => {
         refreshMutation.mutate(String(row.id));
@@ -55,9 +58,12 @@ const BIDataSourcePage: React.FC = () => {
   ];
   return (
     <PageContainer
-      title={i18n.t('bi.bi_data_source_page.text_4feab2', i18n.t('pages.bi_data_source_page.bi_2'))}
+      title={i18n.t(
+        'bi.bi_data_source_page.data_source_heading',
+        i18n.t('pages.bi_data_source_page.bi_2')
+      )}
       subtitle={i18n.t(
-        'bi.bi_data_source_page.text_b72c3a',
+        'bi.bi_data_source_page.manage_connections_subtitle',
         i18n.t('pages.bi_data_source_page.bi_3')
       )}
     >

@@ -29,7 +29,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
     enabled: !!id,
     queryFn: async () => {
       if (!id) {
-        throw new Error(t('hrm.hrm_employee_detail_page.text_8ce1a3'));
+        throw new Error(t('hrm.hrm_employee_detail_page.employee_id_empty'));
       }
       const res = await hrmApi.employees.get(id);
       if (!res.success || !res.data) {
@@ -55,12 +55,12 @@ const HrmEmployeeDetailPage: React.FC = () => {
         string,
         { color: 'success' | 'error' | 'default' | 'warning'; label: string }
       > = {
-        active: { color: 'success', label: t('hrm.hrm_employee_detail_page.text_b5509b') },
-        probation: { color: 'warning', label: t('hrm.hrm_employee_detail_page.text_9a3256') },
-        leave: { color: 'default', label: t('hrm.hrm_employee_detail_page.text_62a8cf') },
-        resigned: { color: 'error', label: t('hrm.hrm_employee_detail_page.text_370e61') },
-        terminated: { color: 'error', label: t('hrm.hrm_employee_detail_page.text_43e92e') },
-        retired: { color: 'default', label: t('hrm.hrm_employee_detail_page.text_399695') },
+        active: { color: 'success', label: t('hrm.hrm_employee_detail_page.employed') },
+        probation: { color: 'warning', label: t('hrm.hrm_employee_detail_page.probation_period') },
+        leave: { color: 'default', label: t('hrm.hrm_employee_detail_page.leave') },
+        resigned: { color: 'error', label: t('hrm.hrm_employee_detail_page.resigned_status') },
+        terminated: { color: 'error', label: t('hrm.hrm_employee_detail_page.terminated') },
+        retired: { color: 'default', label: t('hrm.hrm_employee_detail_page.retired') },
       };
       return config[status] || config.active;
     },
@@ -70,9 +70,9 @@ const HrmEmployeeDetailPage: React.FC = () => {
   const getGenderLabel = useCallback(
     (gender: string) => {
       return gender === 'male'
-        ? t('hrm.hrm_employee_detail_page.text_36a490')
+        ? t('hrm.hrm_employee_detail_page.male')
         : gender === 'female'
-          ? t('hrm.hrm_employee_detail_page.text_87c835')
+          ? t('hrm.hrm_employee_detail_page.female')
           : '-';
     },
     [t]
@@ -81,13 +81,13 @@ const HrmEmployeeDetailPage: React.FC = () => {
   const getEducationLabel = useCallback(
     (education: string) => {
       const labels: Record<string, string> = {
-        primary: t('hrm.hrm_employee_detail_page.text_79898d'),
-        junior: t('hrm.hrm_employee_detail_page.text_b21914'),
-        senior: t('hrm.hrm_employee_detail_page.text_8d9a85'),
-        college: t('hrm.hrm_employee_detail_page.text_2aa9f5'),
-        bachelor: t('hrm.hrm_employee_detail_page.text_40b14f'),
-        master: t('hrm.hrm_employee_detail_page.text_e6de69'),
-        doctor: t('hrm.hrm_employee_detail_page.text_7d27be'),
+        primary: t('hrm.hrm_employee_detail_page.primary_school'),
+        junior: t('hrm.hrm_employee_detail_page.middle_school'),
+        senior: t('hrm.hrm_employee_detail_page.high_school_technical'),
+        college: t('hrm.hrm_employee_detail_page.associate_degree'),
+        bachelor: t('hrm.hrm_employee_detail_page.bachelor_degree'),
+        master: t('hrm.hrm_employee_detail_page.masters_degree'),
+        doctor: t('hrm.hrm_employee_detail_page.doctorate'),
       };
       return labels[education] || education;
     },
@@ -264,8 +264,8 @@ const HrmEmployeeDetailPage: React.FC = () => {
           </InputLabel>
           <Typography sx={{ mt: 0.5 }}>
             {employee.employee_type === 'full_time'
-              ? i18n.t('hrm.hrm_employee_detail_page.text_63f85b')
-              : i18n.t('hrm.hrm_employee_detail_page.text_7c4f46')}
+              ? i18n.t('hrm.hrm_employee_detail_page.fulltime')
+              : i18n.t('hrm.hrm_employee_detail_page.parttime')}
           </Typography>
         </Box>
       </Box>
@@ -356,7 +356,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
       tags: [employee?.department_name || ''],
       stats: [
         {
-          label: i18n.t('hrm.hrm_employee_detail_page.text_b652de'),
+          label: i18n.t('hrm.hrm_employee_detail_page.position_title'),
           value: employee?.position || '-',
         },
         {
@@ -391,7 +391,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: t('hrm.hrm_employee_detail_page.text_94ddaa'),
+            label: t('hrm.hrm_employee_detail_page.transfer'),
             icon: <Briefcase style={{ width: 18, height: 18 }} />,
             onClick: () => setShowTransferDialog(true),
           },

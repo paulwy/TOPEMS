@@ -57,7 +57,7 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
   },
   {
     accessorKey: 'assessor',
-    header: i18n.t('ehs.ehs_hazard_detail_page.text_ab3d92'),
+    header: i18n.t('ehs.ehs_hazard_detail_page.evaluator'),
     cell: ({ row }) => (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <Box
@@ -70,7 +70,7 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
   },
   {
     accessorKey: 'risklevel',
-    header: i18n.t('ehs.ehs_hazard_detail_page.text_25eb6b'),
+    header: i18n.t('ehs.ehs_hazard_detail_page.risk_level'),
     cell: ({ row }) => {
       const riskResult = calculateRiskLevel(
         row.original.severity || 'medium',
@@ -99,7 +99,10 @@ const assessmentColumns: ColumnDef<RiskAssessment>[] = [
       );
     },
   },
-  { accessorKey: 'recommendations', header: i18n.t('ehs.ehs_hazard_detail_page.text_6dca6f') },
+  {
+    accessorKey: 'recommendations',
+    header: i18n.t('ehs.ehs_hazard_detail_page.rectification_suggestions'),
+  },
 ];
 
 const EhsHazardDetailPage: React.FC = () => {
@@ -146,11 +149,11 @@ const EhsHazardDetailPage: React.FC = () => {
           description: safetyHazard.description,
           category: safetyHazard.category,
           location: safetyHazard.location,
-          severity: safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_4296d7'))
+          severity: safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.hazard_details'))
             ? 'high'
-            : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_5a558d'))
+            : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.hazard_details_2'))
               ? 'high'
-              : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_aed1df'))
+              : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.hazard_details_3'))
                 ? 'medium'
                 : 'low',
           exposure: 'medium',
@@ -266,10 +269,10 @@ const EhsHazardDetailPage: React.FC = () => {
         location: formData.location,
         level:
           formData.severity === 'high'
-            ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+            ? t('ehs.ehs_hazard_detail_page.hazard_details')
             : formData.severity === 'medium'
-              ? t('ehs.ehs_hazard_detail_page.text_aed1df')
-              : t('ehs.ehs_hazard_detail_page.text_19ac67'),
+              ? t('ehs.ehs_hazard_detail_page.hazard_details_3')
+              : t('ehs.ehs_hazard_detail_page.low'),
         status: formData.status,
       },
     });
@@ -489,10 +492,10 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'error.darker', mt: 0.5 }}>
               {hazard.severity === 'high'
-                ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+                ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.severity === 'medium'
-                  ? t('ehs.ehs_hazard_detail_page.text_aed1df')
-                  : t('ehs.ehs_hazard_detail_page.text_19ac67')}
+                  ? t('ehs.ehs_hazard_detail_page.hazard_details_3')
+                  : t('ehs.ehs_hazard_detail_page.low')}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'warning.lighter', borderRadius: 1 }}>
@@ -501,10 +504,10 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
             <Typography sx={{ fontWeight: 500, color: ct.yellow[700], mt: 0.5 }}>
               {hazard.exposure === 'high'
-                ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+                ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.exposure === 'medium'
-                  ? t('ehs.ehs_hazard_detail_page.text_aed1df')
-                  : t('ehs.ehs_hazard_detail_page.text_19ac67')}
+                  ? t('ehs.ehs_hazard_detail_page.hazard_details_3')
+                  : t('ehs.ehs_hazard_detail_page.low')}
             </Typography>
           </Box>
           <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'primary.light', borderRadius: 1 }}>
@@ -513,10 +516,10 @@ const EhsHazardDetailPage: React.FC = () => {
             </Typography>
             <Typography sx={{ fontWeight: 500, color: 'primary.dark', mt: 0.5 }}>
               {hazard.likelihood === 'high'
-                ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+                ? t('ehs.ehs_hazard_detail_page.hazard_details')
                 : hazard.likelihood === 'medium'
-                  ? t('ehs.ehs_hazard_detail_page.text_aed1df')
-                  : t('ehs.ehs_hazard_detail_page.text_19ac67')}
+                  ? t('ehs.ehs_hazard_detail_page.hazard_details_3')
+                  : t('ehs.ehs_hazard_detail_page.low')}
             </Typography>
           </Box>
         </Box>
@@ -630,12 +633,12 @@ const EhsHazardDetailPage: React.FC = () => {
       },
       {
         id: 'assessments',
-        label: t('ehs.ehs_hazard_detail_page.text_d0a11d'),
+        label: t('ehs.ehs_hazard_detail_page.risk_assessment'),
         content: assessmentsContent,
       },
       {
         id: 'controls',
-        label: t('ehs.ehs_hazard_detail_page.text_e61c61'),
+        label: t('ehs.ehs_hazard_detail_page.control_measures'),
         content: controlsContent,
       },
     ],
@@ -657,16 +660,16 @@ const EhsHazardDetailPage: React.FC = () => {
       tags: [hazard.category || ''],
       stats: [
         {
-          label: t('ehs.ehs_hazard_detail_page.text_08fe50'),
+          label: t('ehs.ehs_hazard_detail_page.severity'),
           value:
             hazard.severity === 'high'
-              ? t('ehs.ehs_hazard_detail_page.text_4296d7')
+              ? t('ehs.ehs_hazard_detail_page.hazard_details')
               : hazard.severity === 'medium'
-                ? t('ehs.ehs_hazard_detail_page.text_aed1df')
-                : t('ehs.ehs_hazard_detail_page.text_19ac67'),
+                ? t('ehs.ehs_hazard_detail_page.hazard_details_3')
+                : t('ehs.ehs_hazard_detail_page.low'),
         },
         {
-          label: t('ehs.ehs_hazard_detail_page.text_25eb6b'),
+          label: t('ehs.ehs_hazard_detail_page.risk_level'),
           value: `${riskInfo.level}${i18n.t('pages.ehs_hazard_detail_page.k2')}`,
         },
       ],
@@ -694,7 +697,7 @@ const EhsHazardDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: t('ehs.ehs_hazard_detail_page.text_59b356'),
+            label: t('ehs.ehs_hazard_detail_page.add_control_measure'),
             icon: <Plus style={{ width: 18, height: 18 }} />,
             variant: 'outlined',
             onClick: () => setShowControlModal(true),
@@ -779,7 +782,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   <InputLabel>{t('ehs.ehs_hazard_detail_page.k11')}</InputLabel>
                   <Select
                     value={formData.severity}
-                    label={t('ehs.ehs_hazard_detail_page.text_08fe50')}
+                    label={t('ehs.ehs_hazard_detail_page.severity')}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -807,7 +810,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   <InputLabel>{t('ehs.ehs_hazard_detail_page.k12')}</InputLabel>
                   <Select
                     value={formData.exposure}
-                    label={t('ehs.ehs_hazard_detail_page.text_f83966')}
+                    label={t('ehs.ehs_hazard_detail_page.exposure')}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,
@@ -835,7 +838,7 @@ const EhsHazardDetailPage: React.FC = () => {
                   <InputLabel>{t('ehs.ehs_hazard_detail_page.k13')}</InputLabel>
                   <Select
                     value={formData.likelihood}
-                    label={t('ehs.ehs_hazard_detail_page.text_d7fbe9')}
+                    label={t('ehs.ehs_hazard_detail_page.likelihood')}
                     onChange={(e) =>
                       setFormData((prev) => ({
                         ...prev,

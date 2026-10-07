@@ -50,7 +50,7 @@ const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
               variant='subtitle1'
               sx={{ fontWeight: 600 }}
             >
-              {i18n.t('admin.rate_limit_config_page.text_209207')}
+              {i18n.t('admin.rate_limit_config_page.anti_replay_config')}
             </Typography>
             <Box sx={{ flex: 1 }} />
             <Switch
@@ -126,7 +126,7 @@ const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
                 variant='body2'
                 sx={{ mb: 1, fontWeight: 500 }}
               >
-                {i18n.t('admin.rate_limit_config_page.text_778582')}
+                {i18n.t('admin.rate_limit_config_page.force_enable_path')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mb: 1 }}>
                 <TextField
@@ -140,7 +140,7 @@ const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
                   variant='outlined'
                   onClick={onAddEnforcePath}
                 >
-                  {i18n.t('admin.rate_limit_config_page.text_b58c75')}
+                  {i18n.t('admin.rate_limit_config_page.add_btn')}
                 </Button>
               </Box>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -161,7 +161,7 @@ const AntiReplayConfigPanel: React.FC<AntiReplayConfigPanelProps> = ({
                 onClick={onSave}
                 disabled={isSaving}
               >
-                {i18n.t('admin.rate_limit_config_page.text_f699f0')}
+                {i18n.t('admin.rate_limit_config_page.save_configuration')}
               </Button>
             </Grid>
           </Grid>

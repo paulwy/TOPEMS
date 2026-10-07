@@ -198,7 +198,7 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
           variant='body2'
           color='text.secondary'
         >
-          {i18n.t('admin.operation_audit_log_page.text_cd649f')}
+          {i18n.t('admin.operation_audit_log_page.time_range')}
         </Typography>
       </Box>
       <TextField
@@ -238,7 +238,7 @@ const OperationAuditLogFilter: React.FC<OperationAuditLogFilterProps> = ({
           onClick={clearFilters}
           startIcon={<X size={14} />}
         >
-          {i18n.t('admin.operation_audit_log_page.text_a95500')}
+          {i18n.t('admin.operation_audit_log_page.clear_filters')}
         </Button>
       )}
     </Box>

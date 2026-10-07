@@ -237,19 +237,19 @@ const BudgetManagementPage: React.FC = () => {
 
       const statCards = [
         {
-          title: t('finance.budget_management_page.text_b91eb1'),
+          title: t('finance.budget_management_page.stat_total_budget'),
           value: `¥${totalBudget.toLocaleString()}`,
           icon: <DollarSign size={24} />,
           color: 'primary' as const,
         },
         {
-          title: t('finance.budget_management_page.text_b59b00'),
+          title: t('finance.budget_management_page.stat_used_amount'),
           value: `¥${totalUsed.toLocaleString()}`,
           icon: <TrendingUp size={24} />,
           color: 'success' as const,
         },
         {
-          title: t('finance.budget_management_page.text_bf99c1'),
+          title: t('finance.budget_management_page.stat_avg_usage_rate'),
           value: `${avgUsageRate.toFixed(1)}%`,
           icon: <Calendar size={24} />,
           color: avgUsageRate > 80 ? ('error' as const) : ('warning' as const),

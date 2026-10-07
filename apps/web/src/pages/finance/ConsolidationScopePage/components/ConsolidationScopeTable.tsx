@@ -72,7 +72,7 @@ export function ConsolidationScopeTable({
       color: 'bg-gray-100 text-gray-800',
     },
     draft: {
-      label: t('finance.consolidation_scope_page.text_22b433'),
+      label: t('finance.consolidation_scope_page.status_draft'),
       color: 'bg-yellow-100 text-yellow-800',
     },
   };
@@ -80,15 +80,15 @@ export function ConsolidationScopeTable({
   // Consolidation method configuration
   const METHOD_CONFIG = {
     full: {
-      label: t('finance.consolidation_scope_page.text_a8d219'),
+      label: t('finance.consolidation_scope_page.method_full'),
       color: 'bg-blue-100 text-blue-800',
     },
     equity: {
-      label: t('finance.consolidation_scope_page.text_08dfd4'),
+      label: t('finance.consolidation_scope_page.method_equity'),
       color: 'bg-purple-100 text-purple-800',
     },
     proportional: {
-      label: t('finance.consolidation_scope_page.text_ad6e8a'),
+      label: t('finance.consolidation_scope_page.method_proportional'),
       color: 'bg-teal-100 text-teal-800',
     },
   };
@@ -113,7 +113,7 @@ export function ConsolidationScopeTable({
     },
     {
       id: 'consolidation_method',
-      header: t('finance.consolidation_scope_page.text_e15d05'),
+      header: t('finance.consolidation_scope_page.col_consolidation_method'),
       accessorKey: 'consolidation_method',
       cell: ({ row }) => {
         const method = row.getValue<string>('consolidation_method');
@@ -234,15 +234,15 @@ export function ConsolidationCompanyTable({
   // Control type configuration
   const CONTROL_TYPE_CONFIG = {
     full_control: {
-      label: t('finance.consolidation_scope_page.text_918de9'),
+      label: t('finance.consolidation_scope_page.control_full'),
       color: 'bg-blue-100 text-blue-800',
     },
     joint_venture: {
-      label: t('finance.consolidation_scope_page.text_393113'),
+      label: t('finance.consolidation_scope_page.control_joint_venture'),
       color: 'bg-purple-100 text-purple-800',
     },
     associate: {
-      label: t('finance.consolidation_scope_page.text_34ed98'),
+      label: t('finance.consolidation_scope_page.control_associate'),
       color: 'bg-orange-100 text-orange-800',
     },
   };
@@ -272,7 +272,7 @@ export function ConsolidationCompanyTable({
             <Chip
               size='small'
               sx={{ backgroundColor: 'primary.100', color: 'primary.800' }}
-              label={t('finance.consolidation_scope_page.text_0d1ada')}
+              label={t('finance.consolidation_scope_page.chip_parent_company')}
             />
           )}
         </div>
@@ -299,7 +299,7 @@ export function ConsolidationCompanyTable({
     },
     {
       id: 'ownership_percentage',
-      header: t('finance.consolidation_scope_page.text_745ed7'),
+      header: t('finance.consolidation_scope_page.col_ownership_percentage'),
       accessorKey: 'ownership_percentage',
       cell: ({ row }) => (
         <span style={{ fontFamily: 'monospace' }}>{row.getValue('ownership_percentage')}%</span>
@@ -307,7 +307,7 @@ export function ConsolidationCompanyTable({
     },
     {
       id: 'consolidation_percentage',
-      header: t('finance.consolidation_scope_page.text_e40b32'),
+      header: t('finance.consolidation_scope_page.col_consolidation_percentage'),
       accessorKey: 'consolidation_percentage',
       cell: ({ row }) => (
         <span style={{ fontFamily: 'monospace' }}>{row.getValue('consolidation_percentage')}%</span>
@@ -315,7 +315,7 @@ export function ConsolidationCompanyTable({
     },
     {
       id: 'minority_interest',
-      header: t('finance.consolidation_scope_page.text_4d013f'),
+      header: t('finance.consolidation_scope_page.col_minority_interest'),
       accessorKey: 'minority_interest',
       cell: ({ row }) => (
         <span style={{ fontFamily: 'monospace', textAlign: 'right' }}>

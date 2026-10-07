@@ -58,7 +58,7 @@ export function DebugOverlay() {
         position: 'fixed',
         bottom: 8,
         right: 8,
-        zIndex: 9999,
+        zIndex: (theme) => theme.zIndex.topmost,
         bgcolor: 'alpha(common.black, 0.8)',
         color: 'common.white',
         p: 1.5,

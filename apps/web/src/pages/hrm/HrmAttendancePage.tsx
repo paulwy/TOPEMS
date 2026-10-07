@@ -57,8 +57,8 @@ const HrmAttendancePage: React.FC = () => {
         title: t('hrm.hrm_attendance_page.success'),
         message:
           variables.action === 'approve'
-            ? t('hrm.hrm_attendance_page.text_337737')
-            : t('hrm.hrm_attendance_page.text_81233d'),
+            ? t('hrm.hrm_attendance_page.approved_val')
+            : t('hrm.hrm_attendance_page.rejected'),
         type: 'success',
       });
       queryClient.invalidateQueries({
@@ -103,7 +103,7 @@ const HrmAttendancePage: React.FC = () => {
     () => [
       {
         key: 'approve',
-        label: i18n.t('hrm.hrm_attendance_page.text_7a712b'),
+        label: i18n.t('hrm.hrm_attendance_page.approve'),
         icon: <Check size={16} />,
         color: 'success',
         show: (row: Record<string, unknown>) => (row.status as string) === 'pending',
@@ -111,7 +111,7 @@ const HrmAttendancePage: React.FC = () => {
       },
       {
         key: 'reject',
-        label: i18n.t('hrm.hrm_attendance_page.text_7173f8'),
+        label: i18n.t('hrm.hrm_attendance_page.reject'),
         icon: <X size={16} />,
         color: 'error',
         divider: true,
@@ -139,7 +139,7 @@ const HrmAttendancePage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title={t('hrm.hrm_attendance_page.text_2a2338')}
+      title={t('hrm.hrm_attendance_page.attendance_management')}
       subtitle={t('hrm.hrm_attendance_page.view')}
       autoTitle
       autoBreadcrumbs
@@ -264,7 +264,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
           variant='body2'
           sx={{ fontWeight: 500 }}
         >
-          {t('hrm.hrm_attendance_page.text_675ff6')}: {stats.present}
+          {t('hrm.hrm_attendance_page.attendance_count')}: {stats.present}
         </Typography>
       </Box>
       <Box
@@ -286,7 +286,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
           variant='body2'
           sx={{ fontWeight: 500 }}
         >
-          {t('hrm.hrm_attendance_page.text_7344c8')}: {stats.late}
+          {t('hrm.hrm_attendance_page.late_count')}: {stats.late}
         </Typography>
       </Box>
       <Box
@@ -308,7 +308,7 @@ const StatisticsChips: React.FC<{ selectedDate: string }> = ({ selectedDate }) =
           variant='body2'
           sx={{ fontWeight: 500 }}
         >
-          {t('hrm.hrm_attendance_page.text_7dddee')}: {stats.absent}
+          {t('hrm.hrm_attendance_page.absence_count')}: {stats.absent}
         </Typography>
       </Box>
     </Box>
@@ -370,49 +370,49 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
   const statCards = [
     {
       id: 'totalEmployees',
-      title: t('hrm.hrm_attendance_page.text_cf4555'),
+      title: t('hrm.hrm_attendance_page.total_employees_val'),
       value: stats.totalEmployees,
       icon: <Users size={20} />,
       color: 'primary' as const,
     },
     {
       id: 'totalPresent',
-      title: t('hrm.hrm_attendance_page.text_675ff6'),
+      title: t('hrm.hrm_attendance_page.attendance_count'),
       value: stats.totalPresent,
       icon: <CheckCircle size={20} />,
       color: 'success' as const,
     },
     {
       id: 'presentRate',
-      title: t('hrm.hrm_attendance_page.text_91d77e'),
+      title: t('hrm.hrm_attendance_page.attendance_rate'),
       value: `${stats.presentRate}%`,
       icon: <BarChart3 size={20} />,
       color: 'primary' as const,
     },
     {
       id: 'avgWorkHours',
-      title: t('hrm.hrm_attendance_page.text_7e3b68'),
+      title: t('hrm.hrm_attendance_page.avg_work_hours'),
       value: `${stats.avgWorkHours}h`,
       icon: <Clock size={20} />,
       color: 'warning' as const,
     },
     {
       id: 'totalLate',
-      title: t('hrm.hrm_attendance_page.text_7344c8'),
+      title: t('hrm.hrm_attendance_page.late_count'),
       value: stats.totalLate,
       icon: <AlertCircle size={20} />,
       color: 'warning' as const,
     },
     {
       id: 'totalAbsent',
-      title: t('hrm.hrm_attendance_page.text_7dddee'),
+      title: t('hrm.hrm_attendance_page.absence_count'),
       value: stats.totalAbsent,
       icon: <XCircle size={20} />,
       color: 'error' as const,
     },
     {
       id: 'pendingLeaves',
-      title: t('hrm.hrm_attendance_page.text_7c3c05'),
+      title: t('hrm.hrm_attendance_page.pending_leave'),
       value: stats.pendingLeaves,
       icon: <Clock size={20} />,
       color: 'info' as const,
@@ -498,7 +498,7 @@ const StatisticsContent: React.FC<{ selectedDate: string }> = ({ selectedDate })
           variant='h6'
           sx={{ mb: 2 }}
         >
-          {t('hrm.hrm_attendance_page.text_d88c02')}
+          {t('hrm.hrm_attendance_page.attendance_stats')}
         </Typography>
         <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Typography color='text.secondary'>{t('hrm.hrm_attendance_page.view_1')}</Typography>

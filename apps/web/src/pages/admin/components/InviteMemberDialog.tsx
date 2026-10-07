@@ -67,7 +67,7 @@ const InviteMemberDialog: React.FC<InviteMemberDialogProps> = ({
           variant='contained'
           onClick={onSubmit}
         >
-          {i18n.t('admin.tenant_detail_page.text_8965f3')}
+          {i18n.t('admin.tenant_detail_page.send_invitation')}
         </Button>
       </DialogActions>
     </Dialog>

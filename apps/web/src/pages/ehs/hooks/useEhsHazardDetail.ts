@@ -117,11 +117,11 @@ export const useEhsHazardDetail = (id: string | undefined): UseEhsHazardDetailRe
           description: safetyHazard.description,
           category: safetyHazard.category,
           location: safetyHazard.location,
-          severity: safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_4296d7'))
+          severity: safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.hazard_details'))
             ? 'high'
-            : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_5a558d'))
+            : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.hazard_details_2'))
               ? 'high'
-              : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.text_aed1df'))
+              : safetyHazard.level?.includes(t('ehs.ehs_hazard_detail_page.hazard_details_3'))
                 ? 'medium'
                 : 'low',
           exposure: 'medium',

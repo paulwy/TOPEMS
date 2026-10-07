@@ -40,7 +40,7 @@ const PmReportCustomToolbar: React.FC<PmReportCustomToolbarProps> = ({
               variant='outlined'
               onClick={() => navigate(PM_PATHS.reports)}
             >
-              {i18n.t('pm.pm_report_page.text_2e5b6d')}
+              {i18n.t('pm.pm_report_page.back_to_reports')}
             </Button>
           </CardContent>
         </Card>
@@ -49,7 +49,7 @@ const PmReportCustomToolbar: React.FC<PmReportCustomToolbarProps> = ({
         variant='h6'
         sx={{ fontWeight: 600, mb: 2 }}
       >
-        {i18n.t('pm.pm_report_page.text_a734d9')}
+        {i18n.t('pm.pm_report_page.data_charts')}
       </Typography>
       <Box
         sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '2fr 1fr' }, gap: 3, mb: 3 }}

@@ -207,9 +207,9 @@ const BIVisualizationPage = () => {
     const componentType = e.dataTransfer.getData('componentType');
     if (componentType) {
       const newComponentData: Partial<Widget> = {
-        name: i18n.t('bi.bi_visualization_page.text_e798a0'),
+        name: i18n.t('bi.bi_visualization_page.new_component'),
         widget_type: componentType,
-        config: { title: i18n.t('bi.bi_visualization_page.text_e798a0') },
+        config: { title: i18n.t('bi.bi_visualization_page.new_component') },
         position: {
           x: 50,
           y: 50,
@@ -235,7 +235,7 @@ const BIVisualizationPage = () => {
   const statsCards: StatCard[] = [
     {
       id: 'total-components',
-      title: i18n.t('bi.bi_visualization_page.text_c95a1a'),
+      title: i18n.t('bi.bi_visualization_page.total_components'),
       value: canvasComponents.length,
       icon: <BoxIcon size={24} />,
       color: 'primary',
@@ -327,7 +327,7 @@ const BIVisualizationPage = () => {
               avatar={<Settings size={20} />}
               action={
                 <Box sx={{ display: 'flex', gap: 0.5, pr: 1 }}>
-                  <Tooltip title={i18n.t('bi.bi_visualization_page.text_90581a')}>
+                  <Tooltip title={i18n.t('bi.bi_visualization_page.preview_tooltip')}>
                     <IconButton
                       size='small'
                       onClick={() => setViewMode('grid')}
@@ -460,7 +460,7 @@ const BIVisualizationPage = () => {
           </Card>
           <Card sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
             <CardHeader
-              title={i18n.t('bi.bi_visualization_page.text_6cfd0e')}
+              title={i18n.t('bi.bi_visualization_page.edit_component_title')}
               subheader={i18n.t('bi.bi_visualization_page.edit_2')}
               action={
                 <Box sx={{ display: 'flex', gap: 1, pr: 2 }}>
@@ -583,13 +583,17 @@ const BIVisualizationPage = () => {
                           variant='caption'
                           color='text.secondary'
                         >
-                          {comp.type === 'bar' && i18n.t('bi.bi_visualization_page.text_7c8ee6')}
-                          {comp.type === 'line' && i18n.t('bi.bi_visualization_page.text_c9c9bd')}
-                          {comp.type === 'pie' && i18n.t('bi.bi_visualization_page.text_d5e33d')}
-                          {comp.type === 'gauge' && i18n.t('bi.bi_visualization_page.text_3fa8b3')}
-                          {comp.type === 'table' && i18n.t('bi.bi_visualization_page.text_01c85e')}
+                          {comp.type === 'bar' && i18n.t('bi.bi_visualization_page.chart_type_bar')}
+                          {comp.type === 'line' &&
+                            i18n.t('bi.bi_visualization_page.chart_type_line')}
+                          {comp.type === 'pie' && i18n.t('bi.bi_visualization_page.chart_type_pie')}
+                          {comp.type === 'gauge' &&
+                            i18n.t('bi.bi_visualization_page.chart_type_dashboard')}
+                          {comp.type === 'table' &&
+                            i18n.t('bi.bi_visualization_page.chart_type_table')}
                           {comp.type === 'text' && i18n.t('bi.bi_visualization_page.content')}
-                          {comp.type === 'image' && i18n.t('bi.bi_visualization_page.text_20def7')}
+                          {comp.type === 'image' &&
+                            i18n.t('bi.bi_visualization_page.chart_type_image')}
                           {comp.type === 'metric' &&
                             `${i18n.t('pages.bi_visualization_page.k0')}${comp.config.value || 0}`}
                         </Typography>
@@ -601,7 +605,7 @@ const BIVisualizationPage = () => {
             </CardContent>
           </Card>
           <Card sx={{ width: 300, display: 'flex', flexDirection: 'column' }}>
-            <CardHeader title={i18n.t('bi.bi_visualization_page.text_6aab38')} />
+            <CardHeader title={i18n.t('bi.bi_visualization_page.component_props_panel')} />
             <CardContent sx={{ flex: 1, overflow: 'auto' }}>
               {selectedComponent ? (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -692,7 +696,7 @@ const BIVisualizationPage = () => {
                               }}
                             />
                             <TextField
-                              label={i18n.t('bi.bi_visualization_page.text_c28479')}
+                              label={i18n.t('bi.bi_visualization_page.width_label')}
                               size='small'
                               type='number'
                               value={comp.width}
@@ -707,7 +711,7 @@ const BIVisualizationPage = () => {
                               }}
                             />
                             <TextField
-                              label={i18n.t('bi.bi_visualization_page.text_c1df04')}
+                              label={i18n.t('bi.bi_visualization_page.height_label')}
                               size='small'
                               type='number'
                               value={comp.height}

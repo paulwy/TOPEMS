@@ -241,8 +241,8 @@ export function useDictionaryManagement() {
             : i18n.t('admin.dictionary_management.partial_success'),
         message:
           successCount === items.length
-            ? i18n.t('admin.dictionary_management_page.text_7b7935', { successCount })
-            : i18n.t('admin.dictionary_management_page.text_6fe2d1', {
+            ? i18n.t('admin.dictionary_management_page.import_success', { successCount })
+            : i18n.t('admin.dictionary_management_page.import_result', {
                 var0: successCount,
                 var1: items.length - successCount,
               }),

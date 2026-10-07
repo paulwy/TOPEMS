@@ -126,16 +126,16 @@ const FinanceAssetPage: React.FC = () => {
             {
               account_id: '1602',
               subject_code: '1602',
-              subject_name: t('finance.finance_asset_page.text_d32915'),
+              subject_name: t('finance.finance_asset_page.depreciation_subject_name'),
               debit_amount: 1000,
-              summary: t('finance.finance_asset_page.text_bca84a'),
+              summary: t('finance.finance_asset_page.action_depreciate'),
             },
             {
               account_id: asset.id,
               subject_code: asset.code || '',
               subject_name: asset.name || '',
               credit_amount: 1000,
-              summary: t('finance.finance_asset_page.text_d32915'),
+              summary: t('finance.finance_asset_page.depreciation_subject_name'),
             },
           ],
         });
@@ -196,7 +196,7 @@ const FinanceAssetPage: React.FC = () => {
   const customRowActions: RowAction[] = useMemo(
     () => [
       {
-        label: i18n.t('finance.finance_asset_page.text_bca84a'),
+        label: i18n.t('finance.finance_asset_page.action_depreciate'),
         icon: <Calculator sx={{ width: 16, height: 16 }} />,
         color: 'success',
         onClick: (row) => setDepreciationTarget(row as unknown as Account),
@@ -222,7 +222,7 @@ const FinanceAssetPage: React.FC = () => {
 
       const statCards = [
         {
-          title: t('finance.finance_asset_page.text_2d49ee'),
+          title: t('finance.finance_asset_page.stat_asset_account_count'),
           value: totalCount,
           icon: <Package size={24} />,
           color: 'primary' as const,
@@ -240,19 +240,19 @@ const FinanceAssetPage: React.FC = () => {
           color: 'error' as const,
         },
         {
-          title: t('finance.finance_asset_page.text_e18d32'),
+          title: t('finance.finance_asset_page.stat_has_children_count'),
           value: hasChildrenCount,
           icon: <PauseCircle size={24} />,
           color: 'warning' as const,
         },
         {
-          title: t('finance.finance_asset_page.text_7586c1'),
+          title: t('finance.finance_asset_page.stat_leaf_count'),
           value: leafCount,
           icon: <DollarSign size={24} />,
           color: 'secondary' as const,
         },
         {
-          title: t('finance.finance_asset_page.text_b1e385'),
+          title: t('finance.finance_asset_page.stat_max_level'),
           value: maxLevel,
           icon: <DollarSign size={24} />,
           color: 'info' as const,

@@ -32,7 +32,7 @@ const DictionaryExportModal: React.FC<DictionaryExportModalProps> = ({
           variant='body2'
           color='text.secondary'
         >
-          {i18n.t('admin.dictionary_management_page.text_bbe5e7')}
+          {i18n.t('admin.dictionary_management_page.export_tip')}
         </Typography>
       </DialogContent>
       <DialogActions>
@@ -40,13 +40,13 @@ const DictionaryExportModal: React.FC<DictionaryExportModalProps> = ({
           variant='outlined'
           onClick={onClose}
         >
-          {i18n.t('admin.dictionary_management_page.text_625fb2')}
+          {i18n.t('admin.dictionary_management_page.cancel')}
         </Button>
         <Button
           variant='contained'
           onClick={onExport}
         >
-          {i18n.t('admin.dictionary_management_page.text_3ca522')}
+          {i18n.t('admin.dictionary_management_page.export')}
         </Button>
       </DialogActions>
     </Dialog>

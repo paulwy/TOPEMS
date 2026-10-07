@@ -42,7 +42,7 @@ const TenantMembersTab: React.FC<TenantMembersTabProps> = ({ users, tenantId, on
             startIcon={<UserPlus size={18} />}
             onClick={onInviteClick}
           >
-            {i18n.t('admin.tenant_detail_page.text_e39cf1')}
+            {i18n.t('admin.tenant_detail_page.member')}
           </Button>
         </Box>
       }

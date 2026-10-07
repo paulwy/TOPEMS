@@ -37,7 +37,7 @@ const FileCard: React.FC<FileCardProps> = ({
       onClick={() => onClick?.(file)}
     >
       {onSelect && (
-        <Box sx={{ position: 'absolute', top: 1, left: 1, zIndex: 1 }}>
+        <Box sx={{ position: 'absolute', top: 1, left: 1, zIndex: (theme) => theme.zIndex.raised }}>
           <Box
             onClick={(e) => {
               e.stopPropagation();

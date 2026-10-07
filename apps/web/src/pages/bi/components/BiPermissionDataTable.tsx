@@ -45,7 +45,9 @@ const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
         }}
       >
         <Database sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-        <Typography variant='h6'>{i18n.t('bi.bi_permission_page.text_10510a')}</Typography>
+        <Typography variant='h6'>
+          {i18n.t('bi.bi_permission_page.empty_data_permission')}
+        </Typography>
       </Box>
     );
   }
@@ -55,25 +57,25 @@ const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
         <TableHead>
           <TableRow>
             <TableCell sx={{ fontWeight: 600 }}>
-              {i18n.t('bi.bi_permission_page.text_870802')}
+              {i18n.t('bi.bi_permission_page.rule_name_header')}
             </TableCell>
             <TableCell sx={{ fontWeight: 600 }}>
-              {i18n.t('bi.bi_permission_page.text_14871a')}
+              {i18n.t('bi.bi_permission_page.resource_type_col')}
             </TableCell>
             <TableCell sx={{ fontWeight: 600 }}>
-              {i18n.t('bi.bi_permission_page.text_1463e1')}
+              {i18n.t('bi.bi_permission_page.permission_type_col')}
             </TableCell>
             <TableCell sx={{ fontWeight: 600 }}>
-              {i18n.t('bi.bi_permission_page.text_464f3d')}
+              {i18n.t('bi.bi_permission_page.role_col')}
             </TableCell>
             <TableCell sx={{ fontWeight: 600 }}>
-              {i18n.t('bi.bi_permission_page.text_1fd02a')}
+              {i18n.t('bi.bi_permission_page.user_col')}
             </TableCell>
             <TableCell sx={{ fontWeight: 600 }}>
-              {i18n.t('bi.bi_permission_page.text_eca37c')}
+              {i18n.t('bi.bi_permission_page.created_at_col')}
             </TableCell>
             <TableCell sx={{ fontWeight: 600 }}>
-              {i18n.t('bi.bi_permission_page.text_2b6bc0')}
+              {i18n.t('bi.bi_permission_page.actions_col')}
             </TableCell>
           </TableRow>
         </TableHead>
@@ -136,7 +138,7 @@ const BiPermissionDataTable: React.FC<BiPermissionDataTableProps> = ({
               </TableCell>
               <TableCell>
                 {perm.user_ids.length > 0 ? (
-                  i18n.t('bi.bi_permission_page.text_54dd4b', { count: perm.user_ids.length })
+                  i18n.t('bi.bi_permission_page.count_label', { count: perm.user_ids.length })
                 ) : (
                   <Typography
                     variant='caption'

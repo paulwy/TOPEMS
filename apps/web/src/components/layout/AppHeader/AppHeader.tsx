@@ -54,7 +54,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         borderColor: 'divider',
         position: 'sticky',
         top: 0,
-        zIndex: 1100,
+        zIndex: theme.zIndex.snackbar,
         boxShadow: `0 1px 2px 0 ${alpha(headerTheme.palette.common.black, 0.03)}`,
       })}
     >

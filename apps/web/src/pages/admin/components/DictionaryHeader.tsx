@@ -40,14 +40,14 @@ const DictionaryHeader: React.FC<DictionaryHeaderProps> = ({ onCreateClick }) =>
                   size={28}
                   style={{ marginRight: 12 }}
                 />
-                {i18n.t('admin.dictionary_management_page.text_e1e56b')}
+                {i18n.t('admin.dictionary_management_page.page_title')}
               </Typography>
               <Typography
                 variant='body2'
                 color='text.secondary'
                 sx={{ mt: 0.5 }}
               >
-                {i18n.t('admin.dictionary_management_page.text_4e16c7')}
+                {i18n.t('admin.dictionary_management_page.page_description')}
               </Typography>
             </Box>
           </Box>
@@ -56,7 +56,7 @@ const DictionaryHeader: React.FC<DictionaryHeaderProps> = ({ onCreateClick }) =>
             startIcon={<Plus size={20} />}
             onClick={onCreateClick}
           >
-            {i18n.t('admin.dictionary_management_page.text_2c293b')}
+            {i18n.t('admin.dictionary_management_page.create_dict')}
           </Button>
         </Box>
       </Box>

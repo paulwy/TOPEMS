@@ -116,7 +116,7 @@ export const BffLoadingFallback: React.FC<BffLoadingFallbackProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: 'background.paper',
-          zIndex: 1300,
+          zIndex: (theme) => theme.zIndex.appBar,
         }}
       >
         {content}
@@ -239,7 +239,10 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
             variant='caption'
             color='text.secondary'
           >
-            {i18n.t('components.bff_fallback.retry_count', { current: retryCount, max: maxRetries })}
+            {i18n.t('components.bff_fallback.retry_count', {
+              current: retryCount,
+              max: maxRetries,
+            })}
           </Typography>
         )}
 
@@ -268,7 +271,7 @@ export const BffErrorFallback: React.FC<BffErrorFallbackProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: 'background.paper',
-          zIndex: 1300,
+          zIndex: (theme) => theme.zIndex.appBar,
           p: 3,
         }}
       >
@@ -361,7 +364,9 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
             icon={<History size={18} />}
             sx={{ py: 0.5 }}
           >
-            <AlertTitle sx={{ mb: 0 }}>{i18n.t('components.bff_fallback.local_data_title')}</AlertTitle>
+            <AlertTitle sx={{ mb: 0 }}>
+              {i18n.t('components.bff_fallback.local_data_title')}
+            </AlertTitle>
             {i18n.t('components.bff_fallback.local_data_body')}
           </Alert>
         )}
@@ -406,7 +411,7 @@ export const BffOfflineFallback: React.FC<BffOfflineFallbackProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           bgcolor: 'background.paper',
-          zIndex: 1300,
+          zIndex: (theme) => theme.zIndex.appBar,
           p: 3,
         }}
       >

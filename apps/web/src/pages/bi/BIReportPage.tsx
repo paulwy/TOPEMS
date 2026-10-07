@@ -14,7 +14,7 @@ const BIReportPage: React.FC = () => {
   );
   const customRowActions = [
     {
-      label: i18n.t('bi.bi_report_page.text_645dbc', i18n.t('pages.bi_report_page.k0')),
+      label: i18n.t('bi.bi_report_page.report_type_filter', i18n.t('pages.bi_report_page.k0')),
       icon: <Eye size={16} />,
       onClick: (row: Record<string, unknown>) => {
         logger.info('View:', row.id);
@@ -30,7 +30,7 @@ const BIReportPage: React.FC = () => {
   ];
   return (
     <PageContainer
-      title={i18n.t('bi.bi_report_page.text_256969', i18n.t('pages.bi_report_page.bi_2'))}
+      title={i18n.t('bi.bi_report_page.report_center_heading', i18n.t('pages.bi_report_page.bi_2'))}
       subtitle={i18n.t('bi.bi_report_page.create', i18n.t('pages.bi_report_page.bi_3'))}
     >
       <CrudPage

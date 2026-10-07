@@ -68,7 +68,7 @@ const DepreciationPage: React.FC = () => {
       addNotification({
         type: 'error',
         title: t('asset.depreciation_page.fail_1'),
-        message: t('asset.depreciation_page.text_e69527'),
+        message: t('asset.depreciation_page.depreciate_failed'),
       });
     },
   });
@@ -155,7 +155,7 @@ const DepreciationPage: React.FC = () => {
       },
       {
         key: 'depreciate',
-        label: t('asset.depreciation_page.text_943ca0'),
+        label: t('asset.depreciation_page.depreciate'),
         icon: <Calculator size={16} />,
         onClick: handleSingleDepreciate,
       },
@@ -283,8 +283,8 @@ const DepreciationPage: React.FC = () => {
     >
       <DialogTitle>
         {selectedIds.length > 0
-          ? t('asset.depreciation_page.text_b33d6b')
-          : t('asset.depreciation_page.text_943ca0')}
+          ? t('asset.depreciation_page.batch_depreciate')
+          : t('asset.depreciation_page.depreciate')}
       </DialogTitle>
       <DialogContent>
         <Box
@@ -322,8 +322,8 @@ const DepreciationPage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             {selectedIds.length > 0
-              ? t('asset.depreciation_page.text_a67937')
-              : t('asset.depreciation_page.text_1162f9')}
+              ? t('asset.depreciation_page.confirm_depreciate_selected')
+              : t('asset.depreciation_page.confirm_depreciate_one')}
           </Typography>
         </Box>
       </DialogContent>
@@ -349,7 +349,7 @@ const DepreciationPage: React.FC = () => {
           }
         >
           {depreciateMutation.isPending
-            ? t('asset.depreciation_page.text_3afd7f')
+            ? t('asset.depreciation_page.depreciating')
             : t('asset.depreciation_page.confirm_2')}
         </Button>
       </DialogActions>
@@ -358,7 +358,7 @@ const DepreciationPage: React.FC = () => {
 
   return (
     <PageContainer
-      title={t('asset.depreciation_page.text_2eef93')}
+      title={t('asset.depreciation_page.depreciation_management')}
       subtitle={t('asset.depreciation_page.info')}
     >
       <CrudPage
@@ -369,7 +369,7 @@ const DepreciationPage: React.FC = () => {
         breadcrumbs={[
           { label: t('asset.depreciation_page.breadcrumb_home'), href: '/dashboard' },
           { label: t('asset.depreciation_page.breadcrumb_module'), href: '/erp' },
-          { label: t('asset.depreciation_page.text_2eef93') },
+          { label: t('asset.depreciation_page.depreciation_management') },
         ]}
       />
 

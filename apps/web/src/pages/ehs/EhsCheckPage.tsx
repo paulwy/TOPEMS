@@ -216,7 +216,7 @@ const EhsCheckPage: React.FC = () => {
           },
           {
             id: 'records',
-            label: t('ehs.ehs_check_page.text_9b9efd') || i18n.t('pages.ehs_check_page.k4'),
+            label: t('ehs.ehs_check_page.inspection_records') || i18n.t('pages.ehs_check_page.k4'),
             content: <RecordList />,
           },
         ]}

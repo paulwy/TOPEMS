@@ -84,8 +84,12 @@ describe('DictionaryContent', () => {
     );
 
     expect(screen.getByTestId('book-icon')).toBeInTheDocument();
-    expect(screen.getByText('admin.dictionary_management_page.text_4b3a81')).toBeInTheDocument();
-    expect(screen.getByText('admin.dictionary_management_page.text_f0736f')).toBeInTheDocument();
+    expect(
+      screen.getByText('admin.dictionary_management_page.select_type_prompt')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('admin.dictionary_management_page.select_type_empty')
+    ).toBeInTheDocument();
   });
 
   it('renders selected type details and delegates header and row actions', () => {
@@ -113,16 +117,16 @@ describe('DictionaryContent', () => {
     props.customRowActions[0].onClick({ id: 'item-1', status: 'active' });
 
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_63bb91' })
+      screen.getByRole('button', { name: 'admin.dictionary_management_page.edit_type' })
     );
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_c0a407' })
+      screen.getByRole('button', { name: 'admin.dictionary_management_page.delete_type' })
     );
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_55405e' })
+      screen.getByRole('button', { name: 'admin.dictionary_management_page.export_action' })
     );
     fireEvent.click(
-      screen.getByRole('button', { name: 'admin.dictionary_management_page.text_8d9a07' })
+      screen.getByRole('button', { name: 'admin.dictionary_management_page.import_button' })
     );
 
     expect(screen.getByTestId('crud-page')).toBeInTheDocument();

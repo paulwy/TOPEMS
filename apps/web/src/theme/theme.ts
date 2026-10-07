@@ -50,6 +50,29 @@ declare module '@mui/material/styles' {
       readonly full?: 9999;
     };
   }
+  // 应用自定义 zIndex 层级（与 designTokens.zIndex 一一对应）
+  interface ZIndex {
+    base: number;
+    dropdown: number;
+    sticky: number;
+    fixed: number;
+    popoverLayer: number;
+    tooltipLayer: number;
+    modalLayer: number;
+    toastLayer: number;
+    raised: number;
+    stickyHeader: number;
+    dragHandle: number;
+    contentLayer: number;
+    annotationPopover: number;
+    annotationCard: number;
+    menuBackdrop: number;
+    overlay: number;
+    devToolsBar: number;
+    topmost: number;
+    devToolsPanel: number;
+    devToolsModal: number;
+  }
 }
 
 // 扩展 Palette 颜色，增加 cyberpunk 专属字段及设计令牌扩展色组

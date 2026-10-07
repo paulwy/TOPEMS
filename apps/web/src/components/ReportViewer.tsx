@@ -65,7 +65,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 50,
+        zIndex: designTokens.zIndex.overlay,
         padding: 4,
       }}
     >

@@ -80,7 +80,7 @@ const QualityInspectionPage: React.FC = () => {
           inspecting: i18n.t('mes.quality_inspection_page.status_in_progress'),
           passed: i18n.t('mes.quality_inspection_page.result_qualified'),
           failed: i18n.t('mes.quality_inspection_page.result_unqualified'),
-          rework: i18n.t('mes.quality_inspection_page.text_98e01c'),
+          rework: i18n.t('mes.quality_inspection_page.rework'),
           scrapped: i18n.t('mes.quality_inspection_page.scrap'),
         };
         const exportData = rows.map((item) => ({

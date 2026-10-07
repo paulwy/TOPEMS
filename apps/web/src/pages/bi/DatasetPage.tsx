@@ -253,9 +253,9 @@ const DatasetPage = () => {
   }, []);
   const getStatusChip = (status: string) => {
     const configs: Record<string, { color: 'success' | 'warning' | 'primary'; label: string }> = {
-      published: { color: 'success', label: i18n.t('bi.dataset_page.text_dca0c1') },
-      draft: { color: 'warning', label: i18n.t('bi.dataset_page.text_22b433') },
-      archived: { color: 'primary', label: i18n.t('bi.dataset_page.text_c3ba16') },
+      published: { color: 'success', label: i18n.t('bi.dataset_page.status_published') },
+      draft: { color: 'warning', label: i18n.t('bi.dataset_page.status_draft') },
+      archived: { color: 'primary', label: i18n.t('bi.dataset_page.status_archived') },
     };
     const config = configs[status] || configs.draft;
     return (
@@ -441,11 +441,11 @@ const DatasetPage = () => {
                       </IconButton>
                     </Tooltip>
                     {dataset.status === 'draft' && (
-                      <Tooltip title={i18n.t('bi.dataset_page.text_83611a')}>
+                      <Tooltip title={i18n.t('bi.dataset_page.publish_tooltip')}>
                         <IconButton
                           size='small'
                           onClick={() => handlePublish(dataset.id)}
-                          aria-label={i18n.t('bi.dataset_page.text_490e76')}
+                          aria-label={i18n.t('bi.dataset_page.publish_action')}
                         >
                           <FileText size={16} />
                         </IconButton>
@@ -531,7 +531,7 @@ const DatasetPage = () => {
             sx={{ mb: 3 }}
           >
             <Tab label={i18n.t('bi.dataset_page.info')} />
-            <Tab label={i18n.t('bi.dataset_page.text_5656f1')} />
+            <Tab label={i18n.t('bi.dataset_page.fields_tab')} />
             <Tab label={i18n.t('bi.dataset_page.search_1')} />
           </Tabs>
           {editorTab === 0 && (
@@ -559,7 +559,7 @@ const DatasetPage = () => {
                 <InputLabel>{i18n.t('bi.dataset_page.k8')}</InputLabel>
                 <Select
                   value={formData.data_source_id || ''}
-                  label={i18n.t('bi.dataset_page.text_c11322')}
+                  label={i18n.t('bi.dataset_page.datasource_tab')}
                   onChange={(e) => setFormData({ ...formData, data_source_id: e.target.value })}
                   disabled={dataSourcesLoading}
                 >
@@ -796,8 +796,8 @@ const DatasetPage = () => {
   );
   return (
     <PageContainer
-      title={i18n.t('bi.dataset_page.text_db302a')}
-      subtitle={i18n.t('bi.dataset_page.text_3392ac')}
+      title={i18n.t('bi.dataset_page.page_title')}
+      subtitle={i18n.t('bi.dataset_page.page_subtitle')}
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
         pageGradient: `linear-gradient(135deg, ${ct.success.main} 0%, ${ct.success.dark} 100%)`,
@@ -811,7 +811,7 @@ const DatasetPage = () => {
         breadcrumbs={[
           { label: i18n.t('bi.dataset_page.home'), href: '/dashboard' },
           { label: 'BI' },
-          { label: i18n.t('bi.dataset_page.text_e20804') },
+          { label: i18n.t('bi.dataset_page.dataset_tab') },
         ]}
       >
         {viewMode === 'list' ? renderListView() : renderEditorView()}

@@ -141,11 +141,11 @@ const VoucherDetailPage: React.FC = () => {
         color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
       }
     > = {
-      draft: { label: t('finance.voucher_detail_page.text_22b433'), color: 'default' },
+      draft: { label: t('finance.voucher_detail_page.status_draft'), color: 'default' },
       submitted: { label: t('finance.voucher_detail_page.pending_review'), color: 'warning' },
       approved: { label: t('finance.voucher_detail_page.approved'), color: 'info' },
-      posted: { label: t('finance.voucher_detail_page.text_4ab08f'), color: 'success' },
-      reversed: { label: t('finance.voucher_detail_page.text_247201'), color: 'secondary' },
+      posted: { label: t('finance.voucher_detail_page.status_posted'), color: 'success' },
+      reversed: { label: t('finance.voucher_detail_page.status_reversed'), color: 'secondary' },
       imported: { label: t('finance.voucher_detail_page.import'), color: 'secondary' },
     };
     const config = statusConfig[status] || { label: status, color: 'default' };
@@ -214,11 +214,11 @@ const VoucherDetailPage: React.FC = () => {
     tags: [getStatusBadge(voucher.status)] as unknown as string[],
     stats: [
       {
-        label: t('finance.voucher_detail_page.text_10afa4'),
+        label: t('finance.voucher_detail_page.stat_total_debit'),
         value: formatCurrency(voucher.total_debit),
       },
       {
-        label: t('finance.voucher_detail_page.text_17daaa'),
+        label: t('finance.voucher_detail_page.stat_total_credit'),
         value: formatCurrency(voucher.total_credit),
       },
     ],
@@ -610,7 +610,7 @@ const VoucherDetailPage: React.FC = () => {
                 variant='caption'
                 color='text.secondary'
               >
-                {voucher.maker_name || t('finance.voucher_detail_page.text_8a8b89')} -{' '}
+                {voucher.maker_name || t('finance.voucher_detail_page.fallback_maker_name')} -{' '}
                 {formatDate(voucher.created_at)}
               </Typography>
             </Box>
@@ -706,7 +706,7 @@ const VoucherDetailPage: React.FC = () => {
     { id: 'basic', label: t('finance.voucher_detail_page.info'), content: basicInfoTab },
     {
       id: 'items',
-      label: t('finance.voucher_detail_page.text_5f3e09'),
+      label: t('finance.voucher_detail_page.tab_items'),
       badge: voucherItems.length,
       content: voucherItemsTab,
     },
@@ -725,8 +725,11 @@ const VoucherDetailPage: React.FC = () => {
       }
       breadcrumbs={[
         { label: t('finance.voucher_detail_page.home'), href: '/dashboard' },
-        { label: t('finance.voucher_detail_page.text_b8fe8d'), href: '/finance' },
-        { label: t('finance.voucher_detail_page.text_161d77'), href: FINANCE_PATHS.vouchers },
+        { label: t('finance.voucher_detail_page.breadcrumb_finance'), href: '/finance' },
+        {
+          label: t('finance.voucher_detail_page.breadcrumb_vouchers'),
+          href: FINANCE_PATHS.vouchers,
+        },
         { label: voucherNumber },
       ]}
       backHref={FINANCE_PATHS.vouchers}

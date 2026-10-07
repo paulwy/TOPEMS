@@ -74,7 +74,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
     enabled: !!id,
     queryFn: async () => {
       if (!id) {
-        throw new Error(t('finance.finance_budget_detail_page.text_dba109'));
+        throw new Error(t('finance.finance_budget_detail_page.error_no_id'));
       }
 
       const [budgetRes, periodRes] = await Promise.all([
@@ -155,12 +155,12 @@ const FinanceBudgetDetailPage: React.FC = () => {
 
   const getCategoryLabel = (category?: string) => {
     const labels: Record<string, string> = {
-      asset: t('finance.finance_budget_detail_page.text_8b786a'),
-      liability: t('finance.finance_budget_detail_page.text_299422'),
-      equity: t('finance.finance_budget_detail_page.text_17a475'),
-      cost: t('finance.finance_budget_detail_page.text_5a2da5'),
-      expense: t('finance.finance_budget_detail_page.text_239f3a'),
-      income: t('finance.finance_budget_detail_page.text_ef2827'),
+      asset: t('finance.finance_budget_detail_page.category_asset'),
+      liability: t('finance.finance_budget_detail_page.category_liability'),
+      equity: t('finance.finance_budget_detail_page.category_equity'),
+      cost: t('finance.finance_budget_detail_page.category_cost'),
+      expense: t('finance.finance_budget_detail_page.category_expense'),
+      income: t('finance.finance_budget_detail_page.category_income'),
     };
     return labels[category || ''] || t('finance.finance_budget_detail_page.other');
   };
@@ -168,15 +168,15 @@ const FinanceBudgetDetailPage: React.FC = () => {
   const getBudgetTypeName = useCallback(
     (type: string) => {
       const labels: Record<string, string> = {
-        operating: t('finance.finance_budget_detail_page.text_e9e771'),
-        capital: t('finance.finance_budget_detail_page.text_2fc835'),
-        project: t('finance.finance_budget_detail_page.text_fa2986'),
-        marketing: t('finance.finance_budget_detail_page.text_fb0bc4'),
-        personnel: t('finance.finance_budget_detail_page.text_859388'),
-        office: t('finance.finance_budget_detail_page.text_976cad'),
-        development: t('finance.finance_budget_detail_page.text_6d566d'),
-        travel: t('finance.finance_budget_detail_page.text_2038cb'),
-        training: t('finance.finance_budget_detail_page.text_b11633'),
+        operating: t('finance.finance_budget_detail_page.type_operating'),
+        capital: t('finance.finance_budget_detail_page.type_capital'),
+        project: t('finance.finance_budget_detail_page.type_project'),
+        marketing: t('finance.finance_budget_detail_page.type_marketing'),
+        personnel: t('finance.finance_budget_detail_page.type_personnel'),
+        office: t('finance.finance_budget_detail_page.type_office'),
+        development: t('finance.finance_budget_detail_page.type_development'),
+        travel: t('finance.finance_budget_detail_page.type_travel_expense'),
+        training: t('finance.finance_budget_detail_page.type_training'),
         other: t('finance.finance_budget_detail_page.other'),
       };
       return labels[type] || type;
@@ -193,10 +193,10 @@ const FinanceBudgetDetailPage: React.FC = () => {
         string,
         { color: 'success' | 'error' | 'default' | 'warning'; label: string }
       > = {
-        active: { color: 'success', label: t('finance.finance_budget_detail_page.text_46e386') },
+        active: { color: 'success', label: t('finance.finance_budget_detail_page.status_active') },
         completed: { color: 'warning', label: t('finance.finance_budget_detail_page.completed') },
-        frozen: { color: 'default', label: t('finance.finance_budget_detail_page.text_92cff4') },
-        expired: { color: 'error', label: t('finance.finance_budget_detail_page.text_4d5ccd') },
+        frozen: { color: 'default', label: t('finance.finance_budget_detail_page.status_frozen') },
+        expired: { color: 'error', label: t('finance.finance_budget_detail_page.status_expired') },
       };
       return config[status] || config.active;
     },
@@ -435,7 +435,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                   <TableCell>
                     {item.usageRate >= 80 ? (
                       <Chip
-                        label={t('finance.finance_budget_detail_page.text_a9d127')}
+                        label={t('finance.finance_budget_detail_page.chip_overwarning')}
                         size='small'
                         color='error'
                       />
@@ -447,7 +447,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
                       />
                     ) : (
                       <Chip
-                        label={t('finance.finance_budget_detail_page.text_69bb0e')}
+                        label={t('finance.finance_budget_detail_page.chip_normal')}
                         size='small'
                         color='warning'
                       />
@@ -523,7 +523,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             sx={{ mt: 1, display: 'block' }}
           >
             {budget.usageRate > 80
-              ? t('finance.finance_budget_detail_page.text_88bb52')
+              ? t('finance.finance_budget_detail_page.overrun_message')
               : t('finance.finance_budget_detail_page.normal_1')}
           </Typography>
         </Box>
@@ -568,12 +568,12 @@ const FinanceBudgetDetailPage: React.FC = () => {
       },
       {
         id: 'items',
-        label: t('finance.finance_budget_detail_page.text_ffaebd'),
+        label: t('finance.finance_budget_detail_page.tab_items'),
         content: itemsContent || <></>,
       },
       {
         id: 'analysis',
-        label: t('finance.finance_budget_detail_page.text_986695'),
+        label: t('finance.finance_budget_detail_page.analysis'),
         content: analysisContent || <></>,
       },
     ],
@@ -593,15 +593,15 @@ const FinanceBudgetDetailPage: React.FC = () => {
       tags: [budget?.fiscalYear ? t('finance.finance_budget_detail_page.e12') : ''],
       stats: [
         {
-          label: i18n.t('finance.finance_budget_detail_page.text_b91eb1'),
+          label: i18n.t('finance.finance_budget_detail_page.stat_label_total_budget'),
           value: budget ? formatCurrency(budget.totalBudget) : '-',
         },
         {
-          label: i18n.t('finance.finance_budget_detail_page.text_b59b00'),
+          label: i18n.t('finance.finance_budget_detail_page.stat_label_used_amount'),
           value: budget ? formatCurrency(budget.usedAmount) : '-',
         },
         {
-          label: i18n.t('finance.finance_budget_detail_page.text_41d8b2'),
+          label: i18n.t('finance.finance_budget_detail_page.stat_label_usage_rate'),
           value: budget ? `${budget.usageRate}%` : '-',
         },
       ],
@@ -629,7 +629,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
         tabs={tabs}
         actions={[
           {
-            label: t('finance.finance_budget_detail_page.text_986695'),
+            label: t('finance.finance_budget_detail_page.analysis'),
             icon: <PieChart style={{ width: 18, height: 18 }} />,
             variant: 'outlined',
             onClick: () => setShowAnalysis(true),
@@ -670,7 +670,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               >
                 {t('finance.finance_budget_detail_page.e15')}
                 {budget?.usageRate && budget.usageRate >= 80
-                  ? t('finance.finance_budget_detail_page.text_6233c5')
+                  ? t('finance.finance_budget_detail_page.usage_over_80')
                   : t('finance.finance_budget_detail_page.normal')}
                 {t('finance.finance_budget_detail_page.e1')}
               </Typography>

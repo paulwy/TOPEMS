@@ -236,7 +236,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
           borderRadius: 1,
           bgcolor: designTokens.colors.common.white,
           boxShadow: 1,
-          zIndex: 10,
+          zIndex: (theme) => theme.zIndex.contentLayer,
         }}
       >
         <Tooltip title={t('automation.automation_designer_page_components_designer_canvas.r1')}>

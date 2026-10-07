@@ -91,7 +91,7 @@ const PluginMarketplaceList: React.FC<PluginMarketplaceListProps> = ({
                     startIcon={<Download size={14} />}
                     onClick={() => onSelectPlugin(plugin)}
                   >
-                    {i18n.t('admin.plugin_management_page.text_e655a4')}
+                    {i18n.t('admin.plugin_management_page.install')}
                   </Button>
                 )
               }

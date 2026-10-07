@@ -30,7 +30,7 @@ const TenantBillingTab: React.FC<TenantBillingTabProps> = ({ tenant, invoices })
               variant='h6'
               sx={{ fontWeight: 600 }}
             >
-              {i18n.t('admin.tenant_detail_page.text_5b6572')}
+              {i18n.t('admin.tenant_detail_page.current_subscription')}
             </Typography>
           </Box>
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
@@ -39,7 +39,7 @@ const TenantBillingTab: React.FC<TenantBillingTabProps> = ({ tenant, invoices })
                 variant='body2'
                 color='text.secondary'
               >
-                {i18n.t('admin.tenant_detail_page.text_66b579')}
+                {i18n.t('admin.tenant_detail_page.plan')}
               </Typography>
               <Typography
                 variant='h6'
@@ -53,7 +53,7 @@ const TenantBillingTab: React.FC<TenantBillingTabProps> = ({ tenant, invoices })
                 variant='body2'
                 color='text.secondary'
               >
-                {i18n.t('admin.tenant_detail_page.text_9e72dd')}
+                {i18n.t('admin.tenant_detail_page.next_billing')}
               </Typography>
               <Typography
                 variant='h6'
@@ -67,7 +67,7 @@ const TenantBillingTab: React.FC<TenantBillingTabProps> = ({ tenant, invoices })
                 variant='body2'
                 color='text.secondary'
               >
-                {i18n.t('admin.tenant_detail_page.text_3fea7c')}
+                {i18n.t('admin.tenant_detail_page.status')}
               </Typography>
               <Chip
                 label={i18n.t('admin.tenant_detail.normal')}

@@ -1244,7 +1244,7 @@ const ObservabilityDashboard: React.FC<DashboardProps> = ({ onClose, refreshInte
         right: 0,
         bottom: 0,
         bgcolor: 'background.default',
-        zIndex: 10000,
+        zIndex: (theme) => theme.zIndex.devToolsPanel,
         display: 'flex',
         flexDirection: 'column',
         fontFamily: 'system-ui, -apple-system, sans-serif',

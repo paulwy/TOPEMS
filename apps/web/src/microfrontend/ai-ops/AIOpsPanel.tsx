@@ -2343,7 +2343,7 @@ const AIOpsPanel: React.FC<AIOpsPanelProps> = ({ onClose, refreshInterval = 3000
         right: 0,
         bottom: 0,
         bgcolor: 'background.default',
-        zIndex: 10000,
+        zIndex: (theme) => theme.zIndex.devToolsPanel,
         display: 'flex',
         flexDirection: 'column',
         fontFamily: 'system-ui, -apple-system, sans-serif',

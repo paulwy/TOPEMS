@@ -120,25 +120,25 @@ const HrmEmployeeCreatePage: React.FC = () => {
       fields: [
         {
           name: 'name',
-          label: t('hrm.hrm_employee_create_page.text_60d045'),
+          label: t('hrm.hrm_employee_create_page.name_label'),
           type: 'text',
           required: true,
           placeholder: t('hrm.hrm_employee_create_page.please_input_1'),
         },
         {
           name: 'employee_no',
-          label: t('hrm.hrm_employee_create_page.text_752d38'),
+          label: t('hrm.hrm_employee_create_page.employee_no_short'),
           type: 'text',
           required: true,
           placeholder: t('hrm.hrm_employee_create_page.please_input_2'),
         },
         {
           name: 'gender',
-          label: t('hrm.hrm_employee_create_page.text_787b56'),
+          label: t('hrm.hrm_employee_create_page.gender'),
           type: 'select',
           options: [
-            { label: t('hrm.hrm_employee_create_page.text_36a490'), value: 'male' },
-            { label: t('hrm.hrm_employee_create_page.text_87c835'), value: 'female' },
+            { label: t('hrm.hrm_employee_create_page.male'), value: 'male' },
+            { label: t('hrm.hrm_employee_create_page.female'), value: 'female' },
           ],
           defaultValue: 'male',
         },
@@ -152,7 +152,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
     },
     {
       id: 'contact',
-      title: t('hrm.hrm_employee_create_page.text_b58943'),
+      title: t('hrm.hrm_employee_create_page.contact_info'),
       description: t('hrm.hrm_employee_create_page.info_2'),
       icon: <Mail style={{ width: 18, height: 18 }} />,
       collapsible: false,
@@ -165,7 +165,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
         },
         {
           name: 'phone',
-          label: t('hrm.hrm_employee_create_page.text_8098e2'),
+          label: t('hrm.hrm_employee_create_page.mobile_no'),
           type: 'text',
           placeholder: t('hrm.hrm_employee_create_page.please_input_4'),
         },
@@ -187,7 +187,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
       fields: [
         {
           name: 'department_id',
-          label: t('hrm.hrm_employee_create_page.text_1e1459'),
+          label: t('hrm.hrm_employee_create_page.department'),
           type: 'select',
           options: departments.map((dept) => ({
             label: dept.name,
@@ -197,7 +197,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
         },
         {
           name: 'position_id',
-          label: t('hrm.hrm_employee_create_page.text_8402fc'),
+          label: t('hrm.hrm_employee_create_page.position'),
           type: 'select',
           options: positions.map((pos) => ({
             label: pos.name,
@@ -216,9 +216,9 @@ const HrmEmployeeCreatePage: React.FC = () => {
           label: t('hrm.hrm_employee_create_page.status'),
           type: 'select',
           options: [
-            { label: t('hrm.hrm_employee_create_page.text_b5509b'), value: 'active' },
-            { label: t('hrm.hrm_employee_create_page.text_9a3256'), value: 'probation' },
-            { label: t('hrm.hrm_employee_create_page.text_583e79'), value: 'resigned' },
+            { label: t('hrm.hrm_employee_create_page.employed'), value: 'active' },
+            { label: t('hrm.hrm_employee_create_page.probation_period'), value: 'probation' },
+            { label: t('hrm.hrm_employee_create_page.resigned'), value: 'resigned' },
           ],
           defaultValue: 'active',
         },
@@ -249,7 +249,7 @@ const HrmEmployeeCreatePage: React.FC = () => {
 
   return (
     <PageContainer
-      title={t('hrm.hrm_employee_create_page.text_f6e64d')}
+      title={t('hrm.hrm_employee_create_page.create_employee')}
       subtitle={t('hrm.hrm_employee_create_page.create_3')}
     >
       <FormPageTemplate
@@ -258,9 +258,9 @@ const HrmEmployeeCreatePage: React.FC = () => {
         backHref={HRM_PATHS.employees}
         breadcrumbs={[
           { label: t('hrm.hrm_employee_create_page.home'), href: '/dashboard' },
-          { label: t('hrm.hrm_employee_create_page.text_40fb54'), href: '/hrm' },
-          { label: t('hrm.hrm_employee_create_page.text_b33603'), href: '/hrm/employees' },
-          { label: t('hrm.hrm_employee_create_page.text_f6e64d') },
+          { label: t('hrm.hrm_employee_create_page.human_resources'), href: '/hrm' },
+          { label: t('hrm.hrm_employee_create_page.employee_management'), href: '/hrm/employees' },
+          { label: t('hrm.hrm_employee_create_page.create_employee') },
         ]}
         sections={sections}
         schema={employeeSchema}

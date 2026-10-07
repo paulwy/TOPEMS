@@ -105,13 +105,13 @@ export default function FinanceReceivablePayablePage() {
   const statCards = useMemo(
     () => [
       {
-        title: i18n.t('finance.finance_receivable_payable_page.text_9ef10c'),
+        title: i18n.t('finance.finance_receivable_payable_page.stat_total_receivable'),
         value: formatCurrency(totalReceivable),
         icon: <ArrowUpRight size={24} />,
         color: 'primary' as const,
       },
       {
-        title: i18n.t('finance.finance_receivable_payable_page.text_1a8469'),
+        title: i18n.t('finance.finance_receivable_payable_page.stat_total_payable'),
         value: formatCurrency(totalPayable),
         icon: <ArrowDownRight size={24} />,
         color: 'success' as const,
@@ -136,8 +136,8 @@ export default function FinanceReceivablePayablePage() {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title={t('finance.finance_receivable_payable_page.text_4dd1f8')}
-      subtitle={t('finance.finance_receivable_payable_page.text_551864')}
+      title={t('finance.finance_receivable_payable_page.page_title')}
+      subtitle={t('finance.finance_receivable_payable_page.page_subtitle')}
       autoTitle
       autoBreadcrumbs
     >

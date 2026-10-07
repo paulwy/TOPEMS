@@ -95,7 +95,7 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
             variant='h6'
             sx={{ fontWeight: 600, mb: 2 }}
           >
-            {i18n.t('admin.tenant_detail_page.text_207914')}
+            {i18n.t('admin.tenant_detail_page.plan_quota')}
           </Typography>
           <List disablePadding>
             <ListItem sx={{ px: 0 }}>
@@ -106,7 +106,7 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
               </ListItemAvatar>
               <ListItemText
                 primary={i18n.t('admin.tenant_detail.user_quota')}
-                secondary={i18n.t('admin.tenant_detail_page.text_82d3a8', {
+                secondary={i18n.t('admin.tenant_detail_page.current_users_label', {
                   var0: stats.total_users,
                   var1: tenant.settings.max_users,
                 })}
@@ -129,7 +129,7 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
               </ListItemAvatar>
               <ListItemText
                 primary={i18n.t('admin.tenant_detail.storage_space')}
-                secondary={i18n.t('admin.tenant_detail_page.text_e7bb98', {
+                secondary={i18n.t('admin.tenant_detail_page.used_storage_label', {
                   var0: stats.storage_used_gb,
                   var1: tenant.settings.max_storage_gb,
                 })}
@@ -152,7 +152,7 @@ const TenantOverviewTab: React.FC<TenantOverviewTabProps> = ({ tenant, stats }) 
               </ListItemAvatar>
               <ListItemText
                 primary={i18n.t('admin.tenant_detail_page.attr_66e1a1')}
-                secondary={i18n.t('admin.tenant_detail_page.text_bbac12', {
+                secondary={i18n.t('admin.tenant_detail_page.today_api_label', {
                   var0: stats.api_requests_today.toLocaleString(),
                   var1: tenant.settings.max_api_requests_per_day.toLocaleString(),
                 })}

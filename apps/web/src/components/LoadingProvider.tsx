@@ -312,7 +312,7 @@ const FullscreenLoader: React.FC<{
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 9999,
+        zIndex: (theme) => theme.zIndex.topmost,
         backdropFilter: 'blur(4px)',
       }}
     >
@@ -390,7 +390,7 @@ const OverlayLoader: React.FC<{
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 10,
+        zIndex: (theme) => theme.zIndex.contentLayer,
         borderRadius: 'inherit',
       }}
     >
