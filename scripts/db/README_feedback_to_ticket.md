@@ -7,7 +7,7 @@ feedback 作为 ticket 的一种类型（`ticket_type = 'customer_feedback'`）�
 
 ## 迁移文件
 
-- `migrate_feedback_to_ticket.sql` — 主迁移脚本
+- `migrate_feedback_to_ticket.sql` — 主迁移脚本（本 README 同目录；2026-10-07 自 `deploy/migrations/` 归位至此，与其他 DB 运维脚本并列）
 
 ## 执行步骤
 
@@ -24,7 +24,8 @@ pg_dump -d <database> -t core_feedbacks -f core_feedbacks_backup.sql
 ### 2. 执行迁移
 
 ```bash
-psql -d <database> -f migrate_feedback_to_ticket.sql
+# 从仓库根目录执行（脚本 2026-10-07 起位于 scripts/db/）
+psql -d <database> -f scripts/db/migrate_feedback_to_ticket.sql
 ```
 
 脚本会输出迁移进度和验证结果，例如：

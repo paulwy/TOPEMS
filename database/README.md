@@ -8,8 +8,8 @@ database/
 ├── checksums.txt             # 迁移校验和
 ├── migrations/               # 增量迁移（生产环境升级）
 │   ├── 000_create_schemas.sql ~ 013_login-log.sql  # 早期序号制迁移（14个）
-│   ├── 20260716000001_*.sql ~ 20260926120000_*.sql  # 时间戳制迁移（持续新增；原文记 264个/合计278——⚠️ 2026-10-02 实测 migrations/ 下共 283 个 .sql，口径已过时，F-65/XCUT-11）
-│   └── .snippets/            # 迁移代码片段模板
+│   ├── 20260716000001_*.sql ~ 20261007000030_*.sql  # 时间戳制迁移（持续新增）
+│   └── README.md             # 迁移目录治理说明（前缀由来/命名新规/历史遗留注释）
 ├── init/                     # 全新环境一键初始化（开发环境）
 │   ├── 01_rebuild_database.sql
 │   ├── 02_create_plugin_tables.sql
