@@ -480,6 +480,18 @@
 - **覆盖分布**：audit/handlers.rs + audit_query.rs（200+ 展开行）+ automation/mod.rs 全 handler（~200）+ doc/handlers.rs + doc/services（~150）+ shared 基建（AppState/中间件/服务发现）——三盲区从 0 到实际执行覆盖
 - **lib 三域 14.39%**（本轮仅新增 tests/ 未改 src/，数字保持）——lib 与集成测试是互补口径
 
+### ✅ 交叉核验并行线 P1 批次（2026-10-07）
+
+- **第三梯队 7 提交已入库**（c943a02e5 等）：AR-09 TABLE_DEFS 对拍止血（0 漂移 575 表）、BE-05 OpenAPI 门禁（4843 路由 diff=0 + 基线）、DIR 迁移目录低风险四项（validate EXIT 0）、FE-17 snakeCase 29 服务灰度（typecheck exit0）、FE-18 分页键名、门禁接线（SD drift/MIG validate/names/sql 体积）
+- **无冲突**：与 wms 测试线 rebase 合入干净；工作区仅 Cargo.lock/Cargo.toml 未提交（并行线中途态，不触碰）
+- 核验通过 ✓
+
+### ✅ wms e2e 覆盖率验证（2026-10-07，tarpaulin）
+
+- **`cargo tarpaulin -p topems-wms --test 6 个 e2e 文件 --engine llvm`** → **309 行覆盖（1.24% 总口径）**，wms crate 274/12334（2.22% e2e 口径）
+- **覆盖分布**：stock_take.rs 73、outbound_order.rs 56、transfer_order.rs 49、slotting.rs 40、smart_replenishment/orders.rs 34、inventory_movement.rs 14、shared/permission.rs 8——**6 个 handler 文件 + 权限逻辑从 0 到实际执行覆盖**
+- 完整报告：`/tmp/tarpaulin-wms-e2e/tarpaulin-report.json`
+
 ### ✅ 集成测试扩展（2026-10-07，commit f03e87b8e/94b931a0a）
 
 - **doc templates/folders**（doc_meta_e2e 5 用例全绿）：list_templates 空 / create_template（name+category）/ get_template roundtrip（Option）/ list_folders 空 / create_folder
