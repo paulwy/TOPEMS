@@ -33,7 +33,7 @@ pub async fn list_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -74,7 +74,7 @@ pub async fn get_mapping(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at FROM erp_mappings WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
+         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
     ))
     .bind(id)
     .bind(tid)
@@ -112,7 +112,7 @@ pub async fn create_mapping(
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,TRUE,$11,$12,NOW(),NOW()) \
          RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
+         created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(id)
     .bind(&tid)
@@ -170,7 +170,7 @@ pub async fn update_mapping(
          WHERE id = $11 AND tenant_id = $12 \
          RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AT TIME ZONE 'UTC' AS created_at, updated_at AT TIME ZONE 'UTC' AS updated_at"
+         created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(req.connection_id)
     .bind(req.local_id)

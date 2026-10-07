@@ -229,7 +229,10 @@ pub async fn build_service_clients(
                 "⚠️ MES API服务客户端初始化失败（不阻塞启动）, 使用默认地址: {}",
                 e
             );
-            TypedServiceClient::new(MesApi, "http://localhost:8030")
+            TypedServiceClient::new(
+                MesApi,
+                &std::env::var("MES_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8030".to_string()),
+            )
                 .and_then(|c| c.with_service_token(jwt_secret, "mobile-service", &["mes:admin"]))
                 .expect("hardcoded fallback URL is valid")
         }

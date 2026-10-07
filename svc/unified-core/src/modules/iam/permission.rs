@@ -13,7 +13,7 @@ struct PermissionRow {
     resource: Option<String>,
     action: Option<String>,
     // DB 列为 TIMESTAMP（无时区），与 iam/mod.rs DDL 对齐；用 NaiveDateTime 避免 sqlx 解码 500。
-    created_at: Option<chrono::NaiveDateTime>,
+    created_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize)]

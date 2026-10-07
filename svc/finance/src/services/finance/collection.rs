@@ -150,7 +150,7 @@ impl FinanceService {
         .bind(collection_no)
         .bind(customer_name)
         .bind(amount)
-        .bind(created_by)
+        .bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))
         .fetch_one(&self.db_pool)
         .await?;
 

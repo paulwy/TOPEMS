@@ -970,7 +970,7 @@ pub async fn update_maintenance(
         Err(_) => return Json(ApiResponse::error(400, "无效的维护记录ID")),
     };
     let row = sqlx::query(
-        "UPDATE lims.maintenance_records SET maintenance_type = COALESCE($3, maintenance_type), description = COALESCE($4, description), performed_by = COALESCE($5, performed_by), performed_at = COALESCE($6::TIMESTAMPTZ, performed_at), next_maintenance_date = COALESCE($7::TIMESTAMPTZ, next_maintenance_date), cost = COALESCE($8, cost), notes = COALESCE($9, notes) WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost::float8 AS cost, notes, created_at",
+        "UPDATE lims.maintenance_records SET maintenance_type = COALESCE($3, maintenance_type), description = COALESCE($4, description), performed_by = COALESCE($5::uuid, performed_by), performed_at = COALESCE($6::TIMESTAMPTZ, performed_at), next_maintenance_date = COALESCE($7::TIMESTAMPTZ, next_maintenance_date), cost = COALESCE($8, cost), notes = COALESCE($9, notes) WHERE tenant_id = $1 AND id = $2 AND deleted_at IS NULL RETURNING id::TEXT, instrument_id::TEXT, maintenance_type, description, performed_by, performed_at, next_maintenance_date, cost::float8 AS cost, notes, created_at",
     )
     .bind(ctx.tenant_id)
     .bind(record_id)

@@ -76,7 +76,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
                 "report_type": r.get::<String, _>("report_type"),
                 "status": r.get::<String, _>("status"),
                 "template_id": r.get::<Option<Uuid>, _>("template_id"),
-                "created_by": r.get::<String, _>("created_by"),
+                "created_by": r.get::<Option<String>, _>("created_by"),
                 "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
             })
         })
@@ -251,14 +251,14 @@ pub async fn get_report(
 ) -> Json<serde_json::Value> {
     info!("Getting report: {}", id);
 
-    let report = sqlx::query!(
+    let report = sqlx::query(
         r#"
         SELECT id, name, description, report_type, config, template_id, created_by, status, last_run_at, created_at, updated_at
         FROM reports
         WHERE id = $1
         "#,
-        id
     )
+    .bind(id)
     .fetch_optional(&state.pool)
     .await;
 
@@ -266,17 +266,17 @@ pub async fn get_report(
         Ok(Some(r)) => Json(serde_json::json!({
             "success": true,
             "data": {
-                "id": r.id,
-                "name": r.name,
-                "description": r.description,
-                "report_type": r.report_type,
-                "config": r.config,
-                "template_id": r.template_id,
-                "created_by": r.created_by,
-                "status": r.status,
-                "last_run_at": r.last_run_at,
-                "created_at": r.created_at,
-                "updated_at": r.updated_at,
+                "id": r.get::<Uuid, _>("id"),
+                "name": r.get::<String, _>("name"),
+                "description": r.get::<Option<String>, _>("description"),
+                "report_type": r.get::<String, _>("report_type"),
+                "config": r.get::<serde_json::Value, _>("config"),
+                "template_id": r.get::<Option<Uuid>, _>("template_id"),
+                "created_by": r.get::<Option<String>, _>("created_by"),
+                "status": r.get::<Option<String>, _>("status"),
+                "last_run_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("last_run_at"),
+                "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                "updated_at": r.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
             }
         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -315,7 +315,7 @@ pub async fn update_report(
         UPDATE reports
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
-            status = COALESCE($3::report_status, status),
+            status = COALESCE($3, status),
             config = COALESCE($4, config),
             updated_at = $5
         WHERE id = $6

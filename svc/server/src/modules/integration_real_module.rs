@@ -24,6 +24,10 @@ pub struct IntegrationRealModule {
 impl IntegrationRealModule {
     /// 异步构建真实 Integration 模块
     pub async fn build() -> Result<Self> {
+        // 与独立 integration 服务一致：search_path 优先 integration schema。
+        // 全局 SEARCH_PATH=flow,mobile,rs,erp,public,iam,shared 不含 integration，
+        // 无前缀 SQL（FROM erp_connections / erp_mappings / external_erp_sync_logs）会解析失败。
+        std::env::set_var("SEARCH_PATH", "integration, public");
         let config = ServiceConfig {
             name: "topems-integration",
             port: 8094,

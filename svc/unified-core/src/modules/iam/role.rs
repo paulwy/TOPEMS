@@ -16,8 +16,8 @@ struct RoleRow {
     description: Option<String>,
     tenant_id: Option<uuid::Uuid>,
     // DB 列为 TIMESTAMP（无时区），与 iam/mod.rs DDL 对齐；用 NaiveDateTime 避免 sqlx 解码 500。
-    created_at: Option<chrono::NaiveDateTime>,
-    updated_at: Option<chrono::NaiveDateTime>,
+    created_at: Option<chrono::DateTime<chrono::Utc>>,
+    updated_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize)]

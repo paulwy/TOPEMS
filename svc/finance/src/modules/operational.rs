@@ -542,7 +542,7 @@ pub async fn update_budget(
     .bind(
         req.get("fiscal_year")
             .and_then(|v| v.as_str())
-            .unwrap_or(""),
+            .and_then(|s| s.parse::<i32>().ok()),
     )
     .bind(total_budget)
     .bind(used_amount)

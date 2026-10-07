@@ -92,7 +92,7 @@ impl FinanceService {
         .bind(req.approval_levels.unwrap_or(1))
         .bind(req.priority.unwrap_or(0))
         .bind(req.is_active.unwrap_or(true))
-        .bind(created_by)
+        .bind(Uuid::parse_str(created_by).unwrap_or_else(|_| Uuid::nil()))
         .fetch_one(&mut *tx)
         .await?;
 

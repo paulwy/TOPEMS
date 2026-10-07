@@ -334,7 +334,7 @@ pub async fn get_permission_change(
             ) AS details,
             created_at
         FROM iam.permission_audit_logs
-        WHERE id = $1
+        WHERE id::text = $1::text
         "#,
     )
     .bind(id)
