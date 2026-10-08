@@ -273,12 +273,12 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 **问题**：V284 在 services.yaml 补全 tms=8073/aps=8074（因 srm 已占 8042），但 plugin.yaml/main.rs 仍是 8042/8043，三端不一致。
 
 **修复**（6 文件）：
-- [svc/tms/plugin.yaml:11](file:///Users/air/TOPEMS/svc/tms/plugin.yaml#L11) `port: 8042` → `8073`
-- [svc/aps/plugin.yaml:11](file:///Users/air/TOPEMS/svc/aps/plugin.yaml#L11) `port: 8043` → `8074`
-- [svc/tms/src/main.rs:27](file:///Users/air/TOPEMS/svc/tms/src/main.rs#L27) `port: 8042` → `8073`
-- [svc/aps/src/main.rs:27](file:///Users/air/TOPEMS/svc/aps/src/main.rs#L27) `port: 8043` → `8074`
-- [config/ports.env](file:///Users/air/TOPEMS/config/ports.env#L30-L32) 新增 Logistics 分组 `TMS_PORT=8073` / `APS_PORT=8074`
-- [lib/shared-core/src/service_port.rs](file:///Users/air/TOPEMS/lib/shared-core/src/service_port.rs#L45-L46) 新增 `TMS_PORT=8073` / `APS_PORT=8074` 常量 + GROUP2_SERVICES 添加 `("tms", TMS_PORT)` / `("aps", APS_PORT)` + 长度断言 29→31
+- [svc/tms/plugin.yaml:11](../../svc/tms/plugin.yaml#L11) `port: 8042` → `8073`
+- [svc/aps/plugin.yaml:11](../../svc/aps/plugin.yaml#L11) `port: 8043` → `8074`
+- [svc/tms/src/main.rs:27](../../svc/tms/src/main.rs#L27) `port: 8042` → `8073`
+- [svc/aps/src/main.rs:27](../../svc/aps/src/main.rs#L27) `port: 8043` → `8074`
+- [config/ports.env](../../config/ports.env#L30-L32) 新增 Logistics 分组 `TMS_PORT=8073` / `APS_PORT=8074`
+- [lib/shared-core/src/service_port.rs](../../lib/shared-core/src/service_port.rs#L45-L46) 新增 `TMS_PORT=8073` / `APS_PORT=8074` 常量 + GROUP2_SERVICES 添加 `("tms", TMS_PORT)` / `("aps", APS_PORT)` + 长度断言 29→31
 
 **验收**：`cargo test -p topems-shared-core --lib service_port` 12/12 passed（含 t10 长度保护断言 31）
 
@@ -298,8 +298,8 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 
 | 评估项 | 结论 | 依据 |
 |--------|------|------|
-| ERP 审批审计日志本地化 | ✅ 已实现，无需改动 | [call_finance_core_approval](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L11-L56) 内部已调用 `AuditLogService::log_operation`，ERP 依赖 topems-shared-db 直接写本地 audit_logs |
-| unified-core INSERT 下沉 | ✅ 已实现，无需改动 | [ReconciliationLogService](file:///Users/air/TOPEMS/lib/shared-db/src/reconciliation_log.rs#L51-L70) 已创建，`insert_from_master_data_refs` 封装 INSERT...SELECT，handlers.rs 已调用 `recon_service.insert_from_master_data_refs` |
+| ERP 审批审计日志本地化 | ✅ 已实现，无需改动 | [call_finance_core_approval](../../svc/erp/src/modules/consolidation/common.rs#L11-L56) 内部已调用 `AuditLogService::log_operation`，ERP 依赖 topems-shared-db 直接写本地 audit_logs |
+| unified-core INSERT 下沉 | ✅ 已实现，无需改动 | [ReconciliationLogService](../../lib/shared-db/src/reconciliation_log.rs#L51-L70) 已创建，`insert_from_master_data_refs` 封装 INSERT...SELECT，handlers.rs 已调用 `recon_service.insert_from_master_data_refs` |
 | DocumentsPage 模板评估 | ✅ V284 已评估维持 children | 800+ 行复杂双栏（文件夹树 + 文件列表 + 预览 + 上传），强行声明式会降级 |
 | Finance utoipa::path 补全 | 留 V286+ | settlement_center 4 个非 handler 文件未覆盖，handlers.rs 已 18 注解，评估优先级低 |
 
@@ -324,16 +324,16 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 
 | 子任务 | 交付结果 | 状态 |
 |--------|---------|------|
-| A轨: ERP 审批间接集成评估 | ERP 已通过 [call_finance_core_approval](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L10-L52) 调用 finance submit/approve/reject/cancel 端点；V283 让 finance 端点集成 shared-db approval 审计日志后，ERP 间接受益已成立 — **评估结论：无需新代码改动** | ✅ |
+| A轨: ERP 审批间接集成评估 | ERP 已通过 [call_finance_core_approval](../../svc/erp/src/modules/consolidation/common.rs#L10-L52) 调用 finance submit/approve/reject/cancel 端点；V283 让 finance 端点集成 shared-db approval 审计日志后，ERP 间接受益已成立 — **评估结论：无需新代码改动** | ✅ |
 | B轨: 3 模板页声明式评估 | NotificationCenter 用 ListPageTemplate headerContent/footerContent 插槽（已声明式）/ MailPage 用 MasterDetailPageTemplate renderDetail 回调（已声明式）/ DocumentsPage 用 CardListTemplate children 透传（800+ 行复杂双栏逻辑，维持 children 最合理）— **评估结论：3 页均维持现状** | ✅ |
-| C轨: 预存在 clippy + doctest 修复 | [shared-bootstrap lib.rs:2488](file:///Users/air/TOPEMS/lib/shared-bootstrap/src/lib.rs#L2488) needless_borrows_for_generic_args 修复（`.bind(&format!(...))` → `.bind(format!(...))`）；[service_port.rs](file:///Users/air/TOPEMS/lib/shared-core/src/service_port.rs#L8-L13) 3 个 doctest 修复（模块级 `topems_lib` → `topems_shared_core` + 2 处缺 `use` 导入） | ✅ |
+| C轨: 预存在 clippy + doctest 修复 | [shared-bootstrap lib.rs:2488](../../lib/shared-bootstrap/src/lib.rs#L2488) needless_borrows_for_generic_args 修复（`.bind(&format!(...))` → `.bind(format!(...))`）；[service_port.rs](../../lib/shared-core/src/service_port.rs#L8-L13) 3 个 doctest 修复（模块级 `topems_lib` → `topems_shared_core` + 2 处缺 `use` 导入） | ✅ |
 | D轨: 测试增强 + 格式化收尾 | shared-bootstrap +239 行 default_init_db 单测（分支 A/A'/B/B' + DB skip 守卫）/ shared-core +306 行 extract_openapi_spec_to_file 单测（MinApiDoc/FullApiDoc + 幂等性）/ shared-db approval rustfmt / 4 svc import 排序（master-data/pdm/qms） | ✅ |
 
 #### A轨详情：ERP 审批间接集成评估
 
 **背景**：V283 后续扩展提到 "ERP 通过 FinanceApi 调用 finance 审批端点，间接受益于 finance 的审计日志增强"。需验证 ERP 是否已接入 finance 审批端点。
 
-**盘点结果**：ERP 已有完整集成 — [svc/erp/src/modules/consolidation/common.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/common.rs#L10-L52) 定义 `call_finance_core_approval(finance_client, doc_type, doc_id, doc_no, action, ...)`，通过 `TypedServiceClient<FinanceApi>` 调用 finance 的 `submit_approval` / `approve_approval` / `reject_approval` / `cancel_approval` 4 个端点。[reports.rs](file:///Users/air/TOPEMS/svc/erp/src/modules/consolidation/reports.rs#L347-L387) 在合并报表提交/审批通过/驳回流程中实际调用该函数。
+**盘点结果**：ERP 已有完整集成 — [svc/erp/src/modules/consolidation/common.rs](../../svc/erp/src/modules/consolidation/common.rs#L10-L52) 定义 `call_finance_core_approval(finance_client, doc_type, doc_id, doc_no, action, ...)`，通过 `TypedServiceClient<FinanceApi>` 调用 finance 的 `submit_approval` / `approve_approval` / `reject_approval` / `cancel_approval` 4 个端点。[reports.rs](../../svc/erp/src/modules/consolidation/reports.rs#L347-L387) 在合并报表提交/审批通过/驳回流程中实际调用该函数。
 
 **结论**：V283 让 finance 端点集成 `topems_shared_db::approval` 审计日志后，ERP 通过 HTTP 调 finance 端点 → finance 写 audit_logs → ERP 间接受益已成立。**无需新代码改动**，TODO 项直接勾选 ✅。
 

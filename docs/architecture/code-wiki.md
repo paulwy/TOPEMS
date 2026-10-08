@@ -453,11 +453,11 @@ baseURL:  baseURL:   baseURL:    baseURL:     baseURL:
 /api/iam  /api/ai   /api/erp    /api/mes     /api/wms
 ```
 
-**[apps/web/src/lib/apiClient.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/apiClient.ts)** 核心类型：
+**[apps/web/src/lib/apiClient.ts](../../apps/web/src/lib/apiClient.ts)** 核心类型：
 - `ServiceName` 联合类型：覆盖 32 个微服务名（iam/doc/ai/...）
 - `getServiceClient(name: ServiceName)`：返回 typed Axios 实例
 
-**[apps/web/src/api/client.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/client.ts)** 重试策略：
+**[apps/web/src/api/client.ts](../../apps/web/src/api/client.ts)** 重试策略：
 - 超时错误 (ECONNABORTED/timeout)、网络错误 (ERR_NETWORK)、5xx 错误 → 指数退避重试
 - 最大重试 2 次，基础延迟 500ms，最大总等待 10s
 - 503 服务不可用 → **不重试**
@@ -484,7 +484,7 @@ const mutation = useMutation({
 
 ### 4.5 状态管理架构 (Zustand)
 
-按层级分层（见 [apps/web/src/store/ARCHITECTURE.md](file:///Users/xingzhai/TOPEMS/apps/web/src/store/ARCHITECTURE.md)）：
+按层级分层（见 [apps/web/src/store/ARCHITECTURE.md](../../apps/web/src/store/ARCHITECTURE.md)）：
 
 | Store 层级 | 路径 | 职责 | 示例 |
 |-----------|------|------|------|
@@ -495,7 +495,7 @@ const mutation = useMutation({
 
 ### 4.6 Module Federation 微前端
 
-配置见 [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) + [apps/web/src/config/ports.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/config/ports.ts)
+配置见 [apps/web/vite.config.ts](../../apps/web/vite.config.ts) + [apps/web/src/config/ports.ts](../../apps/web/src/config/ports.ts)
 
 三种部署模式（由 `VITE_DEPLOYMENT_MODE` 控制）：
 - **static (默认)**: 所有模块本地打包，不加载任何 remote（单体部署）
@@ -509,7 +509,7 @@ const mutation = useMutation({
 
 ### 4.7 前端端口（单一信源）
 
-权威来源：[config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env) → 同步到 [apps/web/src/config/ports.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/config/ports.ts)
+权威来源：[config/ports.env](../../config/ports.env) → 同步到 [apps/web/src/config/ports.ts](../../apps/web/src/config/ports.ts)
 
 - **BACKEND_PORTS**: 后端服务端口（80xx）
   - 核心虚拟服务：core/iam/doc/file/flow/monitor → 8000
@@ -553,7 +553,7 @@ const mutation = useMutation({
 
 ### 5.2 数据库访问层 (shared-db)
 
-关键能力位于 [lib/shared-db/src/](file:///Users/xingzhai/TOPEMS/lib/shared-db/src/)：
+关键能力位于 [lib/shared-db/src/](../../lib/shared-db/src/)：
 
 | 模块 | 文件 | 功能 |
 |------|------|------|
@@ -568,9 +568,9 @@ const mutation = useMutation({
 
 ### 5.3 数据库配置文件
 
-- [config/database.toml](file:///Users/xingzhai/TOPEMS/config/database.toml)：数据库连接配置（用户/密码/连接数）
-- [config/schema.json](file:///Users/xingzhai/TOPEMS/config/schema.json)：Schema 定义元数据
-- [config/deployment.yaml](file:///Users/xingzhai/TOPEMS/config/deployment.yaml)：部署拓扑配置
+- [config/database.toml](../../config/database.toml)：数据库连接配置（用户/密码/连接数）
+- [config/schema.json](../../config/schema.json)：Schema 定义元数据
+- [config/deployment.yaml](../../config/deployment.yaml)：部署拓扑配置
 
 ---
 
@@ -799,7 +799,7 @@ type AuthState = {
 
 ### 7.3 Python CLI 工具
 
-位置: [cli/](file:///Users/xingzhai/TOPEMS/cli/) · 入口: `cli/bin/topems`
+位置: [cli/](../../cli/) · 入口: `cli/bin/topems`
 
 | 命令组 | 子命令 | 功能 |
 |--------|--------|------|
@@ -938,7 +938,7 @@ pnpm --filter topems-portal dev              # Host Shell:3000
 
 ### 9.4 统一管理脚本
 
-**位置**: [scripts/topems.sh](file:///Users/xingzhai/TOPEMS/scripts/topems.sh)
+**位置**: [scripts/topems.sh](../../scripts/topems.sh)
 
 主要命令速查：
 | 命令 | 说明 |
@@ -959,7 +959,7 @@ pnpm --filter topems-portal dev              # Host Shell:3000
 
 ### 9.5 端口配置单一信源
 
-权威来源：[config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env)
+权威来源：[config/ports.env](../../config/ports.env)
 同步脚本：`scripts/sync-ports.sh`（自动广播到 services.conf / docker/.env）
 
 ---
@@ -979,7 +979,7 @@ pnpm --filter topems-portal dev              # Host Shell:3000
 | 无障碍(A11Y) | `scripts/ci/check-a11y.cjs` · eslint-plugin-jsx-a11y | CI |
 | 提交信息规范 | commitlint + husky | git commit |
 
-**Git 提交规范** ([.trae/rules/git-commit-message.md](file:///Users/xingzhai/TOPEMS/.trae/rules/git-commit-message.md))：
+**Git 提交规范** ([.trae/rules/git-commit-message.md](../../.trae/rules/git-commit-message.md))：
 ```
 <type>(<scope>): <subject>
 <body>
@@ -1151,7 +1151,7 @@ bash scripts/ci/coverage-baseline.sh
   - **P6-P7**：Mobile 组件两批 41 用例（MobileProductionAndApproval + MobileApprovalQualityLists + ApprovalCard HTML 嵌套修复）
   - **总覆盖率提升**：共享包 100% 测试 · Host Shell 核心模块组件渲染 >230 用例 · typecheck/prettier/pre-commit 全部通过
 
-**TODO.md 版本**: V203（[docs/project/TODO.md](file:///Users/xingzhai/TOPEMS/docs/project/TODO.md)，根 TODO.md 仅为快捷入口）
+**TODO.md 版本**: V203（[docs/project/TODO.md](../../docs/project/TODO.md)，根 TODO.md 仅为快捷入口）
 **项目版本**: v5.15.0（`package.json` + `CHANGELOG.md` 已同步）
 
 ### 12.2 V204 阶段：推荐下一步优先级
@@ -1307,20 +1307,20 @@ Day 5  上午: V82-2 + V83-1 + V83-2 回归验证（全量 typecheck/test/pre-co
 
 | 文件 | 说明 |
 |------|------|
-| [README.md](file:///Users/xingzhai/TOPEMS/README.md) | 项目总览 + 快速开始 |
-| [TODO.md](file:///Users/xingzhai/TOPEMS/docs/project/TODO.md) | 任务路线图真相源（V182） |
-| [Cargo.toml](file:///Users/xingzhai/TOPEMS/Cargo.toml) | Rust Workspace + 共享依赖版本 |
-| [package.json](file:///Users/xingzhai/TOPEMS/package.json) | pnpm Monorepo 脚本入口 |
-| [config/ports.env](file:///Users/xingzhai/TOPEMS/config/ports.env) | 端口单一信源（后端；与 services.yaml 派生同步） |
-| [config/services.yaml](file:///Users/xingzhai/TOPEMS/config/services.yaml) | 服务配置（bootstrap_mode/依赖/分组）——服务/端口唯一权威源（D5） |
-| [scripts/topems.sh](file:///Users/xingzhai/TOPEMS/scripts/topems.sh) | 统一服务管理脚本 |
-| [apps/web/vite.config.ts](file:///Users/xingzhai/TOPEMS/apps/web/vite.config.ts) | 前端构建 + 代理（MF 插件为预留扩展点，static 默认跳过——D4） |
-| [apps/web/src/config/ports.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/config/ports.ts) | 前端端口 TS 类型（与 ports.env 同步） |
-| [apps/web/src/lib/apiClient.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/lib/apiClient.ts) | 统一 API 客户端导出层 |
-| [apps/web/src/api/client.ts](file:///Users/xingzhai/TOPEMS/apps/web/src/api/client.ts) | 多服务 Axios 工厂 + 重试 |
-| [lib/src/lib.rs](file:///Users/xingzhai/TOPEMS/lib/src/lib.rs) | topems-shared 门面 re-export（≤30 条） |
-| [docs/architecture/overview.md](file:///Users/xingzhai/TOPEMS/docs/architecture/overview.md) | 架构总览（补充阅读） |
-| [docs/api/openapi.yaml](file:///Users/xingzhai/TOPEMS/docs/api/openapi.yaml) | 完整 OpenAPI 规范 |
+| [README.md](../../README.md) | 项目总览 + 快速开始 |
+| [TODO.md](../../docs/project/TODO.md) | 任务路线图真相源（V182） |
+| [Cargo.toml](../../Cargo.toml) | Rust Workspace + 共享依赖版本 |
+| [package.json](../../package.json) | pnpm Monorepo 脚本入口 |
+| [config/ports.env](../../config/ports.env) | 端口单一信源（后端；与 services.yaml 派生同步） |
+| [config/services.yaml](../../config/services.yaml) | 服务配置（bootstrap_mode/依赖/分组）——服务/端口唯一权威源（D5） |
+| [scripts/topems.sh](../../scripts/topems.sh) | 统一服务管理脚本 |
+| [apps/web/vite.config.ts](../../apps/web/vite.config.ts) | 前端构建 + 代理（MF 插件为预留扩展点，static 默认跳过——D4） |
+| [apps/web/src/config/ports.ts](../../apps/web/src/config/ports.ts) | 前端端口 TS 类型（与 ports.env 同步） |
+| [apps/web/src/lib/apiClient.ts](../../apps/web/src/lib/apiClient.ts) | 统一 API 客户端导出层 |
+| [apps/web/src/api/client.ts](../../apps/web/src/api/client.ts) | 多服务 Axios 工厂 + 重试 |
+| [lib/src/lib.rs](../../lib/src/lib.rs) | topems-shared 门面 re-export（≤30 条） |
+| [docs/architecture/overview.md](../../docs/architecture/overview.md) | 架构总览（补充阅读） |
+| [docs/api/openapi.yaml](../../docs/api/openapi.yaml) | 完整 OpenAPI 规范 |
 
 ---
 
