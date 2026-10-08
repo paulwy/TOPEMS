@@ -7,7 +7,7 @@
 > `.github/workflows/ci.yml`（Gate T）、`lefthook.yml`（pre-commit 报告模式）、`package.json`（脚本入口）
 > `scripts/migrations/migrate_error_leaks.py`（存量迁移 codemod，自带 `--self-test`）
 > `svc/gis/src/**`（首个服务迁移样板，见 §4.1）、`svc/integration/src/**`（第二个服务，见 §6.4）
-> 关联：[shortcomings-analysis](../plans/shortcomings-analysis.md)、V184 `ErrorPayload`（`lib/shared-core/src/response.rs`）
+> 关联：[shortcomings-analysis](../archive/misc/shortcomings-analysis.md)、V184 `ErrorPayload`（`lib/shared-core/src/response.rs`）
 
 ---
 

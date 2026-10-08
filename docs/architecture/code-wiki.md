@@ -979,7 +979,7 @@ pnpm --filter topems-portal dev              # Host Shell:3000
 | 无障碍(A11Y) | `scripts/ci/check-a11y.cjs` · eslint-plugin-jsx-a11y | CI |
 | 提交信息规范 | commitlint + husky | git commit |
 
-**Git 提交规范** ([.trae/rules/git-commit-message.md](../../.trae/rules/git-commit-message.md))：
+**Git 提交规范** ([.trae/rules/git-commit-message.md（`../../.trae/rules/git-commit-message.md` 已不可达）)：
 ```
 <type>(<scope>): <subject>
 <body>

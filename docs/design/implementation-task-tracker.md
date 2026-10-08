@@ -3,7 +3,7 @@
 > 版本：V1.0  
 > 状态：执行中  
 > 生成时间：2026-08-21  
-> 关联文档：[`design-system-implementation-plan.md`](./design-system-implementation-plan.md)
+> 关联文档：[`design-system-implementation-plan.md`](../archive/misc/design-system-implementation-plan.md)
 
 ---
 

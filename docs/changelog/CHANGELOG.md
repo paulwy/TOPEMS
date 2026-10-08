@@ -264,7 +264,7 @@
 
 ### 📚 文档
 - 新增 OpenTelemetry 分布式追踪指南 - 完整记录配置说明、宏代码使用、关键优化点和排查步骤（已归档）
-- 更新 [TODO.md](../roadmap/TODO.md) - 标记分布式追踪任务为已完成
+- 更新 [TODO.md](../project/TODO.md) - 标记分布式追踪任务为已完成
 - 更新 运维手册 README - 添加分布式追踪指南入口（已归档）
 
 ---
@@ -291,7 +291,7 @@
 - **请求重试** - 429/500/502/503/504 错误自动重试（最多 3 次），指数退避延迟
 
 ### 📚 文档
-- 更新 [TODO.md](../roadmap/TODO.md) - Phase 4 多端支持统一已完成
+- 更新 [TODO.md](../project/TODO.md) - Phase 4 多端支持统一已完成
 - 更新 [API_MOBILE.md](../api/API_MOBILE.md) - 添加新的 API 模块文档
 
 ---
@@ -314,7 +314,7 @@
 - 更新 Vite 代理配置规范 - 添加完整的 WebSocket 代理配置规范章节（已归档）
 - 更新 Vite 代理验证报告 - 反映 WebSocket 路由统一规范（已归档）
 - 更新 [通知系统 API](../api/API_NOTIFICATION.md) - 修正 WebSocket 连接地址为统一规范
-- 新增 [WebSocket 路径映射规范](../architecture/websocket-path-mapping.md) - 详细说明新的路径映射规则、前端实现、后端路由和代理配置
+- 新增 [WebSocket 路径映射规范](../developer/standards/websocket-path-mapping.md) - 详细说明新的路径映射规则、前端实现、后端路由和代理配置
 - 更新 [README.md](../README.md) - 添加 WebSocket 路径映射章节和文档链接
 - 更新 开发者指南 - 添加 WebSocket 开发指南章节（已归档）
 
@@ -355,7 +355,7 @@
 - 更新 脚本工具说明 - 添加插件自动注册功能说明（已归档）
 - 更新 [快速入门指南](../getting-started/quickstart.md) - 反映新的启动和注册流程
 - 更新 [本地部署指南](../getting-started/local-deployment.md) - 添加服务注册机制说明
-- 更新 [故障排查手册](../deployment/troubleshooting.md) - 添加常见问题解决方案
+- 更新 [故障排查手册](../admin/troubleshooting.md) - 添加常见问题解决方案
 
 ---
 
@@ -374,7 +374,7 @@
 
 ### 📚 文档
 - 完善 权限系统设计 - 系统设置页面权限检查（已归档）
-- 完善 [组件迁移指南](../development/frontend/component-migration-guide.md) - 更新 WIP 项状态
+- 完善 [组件迁移指南](../developer/frontend/component-migration-guide.md) - 更新 WIP 项状态
 - 新增 [BI模块用户指南](../user-guide/modules/bi.md)
 - 新增 [SCM模块用户指南](../user-guide/modules/scm.md)
 - 完善 [MES模块用户指南](../user-guide/modules/mes.md)
@@ -423,7 +423,7 @@
 ### 📚 文档
 - 完善 [架构设计](../architecture/overview.md)
 - 完善 [API 文档](../api/README.md)
-- 完善 [部署指南](../deployment/deployment-guide-overview.md)
+- 完善 [部署指南](../admin/deployment-guide-overview.md)
 - 完善 [环境配置](../getting-started/environment-config.md)
 - 新增 [端口分配规则](../architecture/ports.md)
 - 新增各模块文档（14个）
@@ -480,4 +480,4 @@
 
 ## 后续规划
 
-详见 [TODO.md](../roadmap/TODO.md)
+详见 [TODO.md](../project/TODO.md)

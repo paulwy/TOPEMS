@@ -729,8 +729,8 @@ println!("健康服务数: {}", all_health.values().filter(|h| **h).count());
 
 ### B. 相关文档
 
-- [TOPEMS 架构改进计划](../TOPEMS_Architecture_Improvement_Plan.md)
-- [TOPEMS MCP 架构修订计划](../TOPEMS_MCP_Architecture_Amendment_Plan.md)
+- [TOPEMS 架构改进计划](../archive/misc/TOPEMS_Architecture_Improvement_Plan.md)
+- [TOPEMS MCP 架构修订计划](../archive/misc/TOPEMS_MCP_Architecture_Amendment_Plan.md)
 - [统一核心服务代码](../../svc/unified-core/src/)
 
 ### C. 联系方式

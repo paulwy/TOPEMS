@@ -610,10 +610,10 @@ netstat -tlnp
 
 ### 10.2 相关文档
 
-- [部署指南](../deployment/deployment-guide.md)
+- [部署指南（`../deployment/deployment-guide.md` 已不可达）
 - [服务稳定性最佳实践](./service-stability-best-practices.md)
 - [性能测试最佳实践](../performance/performance-testing-best-practices.md)
-- [AI 服务告警 Runbook](../runbooks/ai-alerts-runbook.md)
+- [AI 服务告警 Runbook](ai-alerts-runbook.md)
 - [项目验收清单](../project/project-acceptance-checklist.md)
 - [上线检查清单](../project/go-live-checklist.md)
 

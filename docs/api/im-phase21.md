@@ -1276,4 +1276,4 @@ async function dailyProductivityRoutine() {
 - [IM 模块总览](./README.md)
 - IM Phase 19 文档 (会议通话增强与屏幕共享)（已归档）
 - IM Phase 20 文档 (语音通话与 AI 智能助手)（已归档）
-- [API 接口规范](../development/backend/api-design.md)
+- [API 接口规范](../developer/backend/api-design.md)

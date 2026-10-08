@@ -482,8 +482,8 @@ registry.register(
 
 ## 8. 参考资源
 
-- [API 文档](./DSH_AI_API.md)
-- [架构设计文档](./DSH_AI_ARCHITECTURE.md)
+- [API 文档（`./DSH_AI_API.md` 已不可达）
+- [架构设计文档（`./DSH_AI_ARCHITECTURE.md` 已不可达）
 - [MCP 协议规范](https://modelcontextprotocol.io/)
 - [ReAct 论文](https://arxiv.org/abs/2210.03629)
 - [Axum 框架文档](https://docs.rs/axum)

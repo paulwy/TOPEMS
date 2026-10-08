@@ -1,6 +1,6 @@
 # unified-core 继续瘦身决策（P0-2）
 
-> 状态：✅ 决策已出（2026-09-17）· 关联：[架构演进与待办清单](./architecture-evolution-and-todo.md)、[物理库拆分预案](./database-split-plan.md)、[模块化单体设计](./modular-monolith-design.md)
+> 状态：✅ 决策已出（2026-09-17）· 关联：[架构演进与待办清单](../archive/misc/architecture-evolution-and-todo.md)、[物理库拆分预案](../database/database-split-plan.md)、[模块化单体设计](./modular-monolith-design.md)
 
 ## 1. 背景与决策问题
 

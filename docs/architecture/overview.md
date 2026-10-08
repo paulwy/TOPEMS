@@ -633,17 +633,17 @@ cp .env.example .env
 
 ## 相关文档
 
-- [架构规范标准](./standards.md) - 架构与命名规范
+- [架构规范标准（`./standards.md` 已不可达） - 架构与命名规范
 - [Code Wiki 项目百科](./code-wiki.md) - **核心文档** — 全面的项目百科
 - [数据库设计](./database.md) - 数据库 Schema 设计
 - [标准端口分配（唯一真相源）](./ports.md) - 28 服务端口配置说明
-- [API 路径标准化](./api-path-standardization.md) - 统一 API 路径前缀规范
+- [API 路径标准化](../developer/standards/api-path-standardization.md) - 统一 API 路径前缀规范
 - [事件驱动架构](./event-driven.md) - 事件总线与发布订阅机制
-- [部署运维文档索引](../deployment/README.md) - 部署文档总入口
-- [部署指南总览](../deployment/deployment-guide-overview.md) - 部署方式选型对比
+- [部署运维文档索引](../archive/README.md) - 部署文档总入口
+- [部署指南总览](../admin/deployment-guide-overview.md) - 部署方式选型对比
 - [API 文档总入口](../api/README.md) - RESTful API 接口文档
-- [前端导航架构设计](../development/frontend/ui-navigation-design.md) - 四层导航模型设计
-- [微前端架构](../development/frontend/module-federation-architecture.md) - Module Federation 架构设计
+- [前端导航架构设计（`../development/frontend/ui-navigation-design.md` 已不可达） - 四层导航模型设计
+- [微前端架构](../developer/frontend/module-federation-architecture.md) - Module Federation 架构设计
 
 ---
 > **版本**: V71 | **最后更新**: 2026-08-11 | **服务总数**: 28/28 (100%) | **已实现**: 28 个 (1 unified-core + 27 业务服务) | **Shared Bootstrap V2**: 28/28 | **Plugin 自动注册**: 28/28 | **V68 质量门禁**: 全通过

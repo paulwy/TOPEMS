@@ -216,7 +216,7 @@ SEARCH_PATH=flow, mobile, rs, erp, public, iam, shared
 
 ## 相关文档
 
-- [开发环境搭建](./setup.md)
-- [数据库设计](../../database/schema.md)
-- [API 设计](../../api/design.md)
-- [部署指南](../../deployment/README.md)
+- [开发环境搭建（`./setup.md` 已不可达）
+- [数据库设计（`../../database/schema.md` 已不可达）
+- [API 设计（`../../api/design.md` 已不可达）
+- [部署指南](../archive/README.md)

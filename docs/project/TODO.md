@@ -400,8 +400,8 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 - [x] **前端 Finance/Hrm TS 26 错误清零**：V285 已清零 — openapi.d.ts 568 schemas（+126），typecheck 9→0 errors
 - [x] **CI gate 脚本合并**：✅ V285/V286/V519 已完成（i18n 双脚本 + check-api 三合一 + api-gate 钩子接线）——本旧条目清理标记
 
----| 📦 [TODO-archived-V284-V393.md](archive/TODO-archived-V284-V393.md) | V284~V393 已完成章节 | 架构冗余治理 / 未使用项清理 1-41 批 / TS6133 清零 / B1 API 迁移（V284~V393） |
-| 📦 [TODO-archived-V394-V513.md](archive/TODO-archived-V394-V513.md) | V394~V513 已完成章节 | 未使用项清理 42-72 批 / B1 API 迁移 / MCP 工具链 / 四轨并行实施方案 / V480-V482 |
+---| 📦 [TODO-archived-V284-V393.md](../archive/roadmap-history/TODO-archived-V284-V393.md) | V284~V393 已完成章节 | 架构冗余治理 / 未使用项清理 1-41 批 / TS6133 清零 / B1 API 迁移（V284~V393） |
+| 📦 [TODO-archived-V394-V513.md](../archive/roadmap-history/TODO-archived-V394-V513.md) | V394~V513 已完成章节 | 未使用项清理 42-72 批 / B1 API 迁移 / MCP 工具链 / 四轨并行实施方案 / V480-V482 |
 
 
 ## 📚 归档索引
@@ -410,12 +410,12 @@ OrganizerAgent 6 组并行推进所有剩余真实缺口的前后端补齐，详
 
 | 归档文件 | 版本范围 | 核心产物覆盖 |
 |---------|---------|-------------|
-| 📘 [V67-V99-foundation.md](archive/V67-V99-foundation.md) | V67.2 ~ V99 | 数据层 P0 修复 / 导航统一 / Schema 防御 / OpenAPI 契约 |
-| 📗 [V178-V210-modules.md](archive/V178-V210-modules.md) | V178 ~ V210 | MES/QMS/WMS/TMS/APS 6 大模块 / 导航三联校验 / utoipa 注解 |
-| 📙 [V211-V230-quality.md](archive/V211-V230-quality.md) | V210.5 ~ V230 | 覆盖率冲刺 / Design Token 2845→169 / i18n 清零 R5→R13 |
-| 📕 [V231-V258-closure.md](archive/V231-V258-closure.md) | V231 ~ V258 | 架构冗余收修 / R5 security 清零 / Tauri Stronghold+IPC / 前端泛型 / 死代码 2814 条 |
-| 📒 [V259-V264-backlog-closure.md](archive/V259-V264-backlog-closure.md) | V259 ~ V264+ | V252 CRUD 审计 Phase 1-6 / V232 Strict-Zero P0-P4 / Backlog 5 主题 16 条全完成 / L1-VALUE 96 dead exports / Tauri 生态 5/5 / CI 双开关 blocking |
-| 🔧 [V266-P0-hook-unification.md](archive/V266-P0-hook-unification.md) | V266-P0 | husky/lefthook/pre-commit 三套 Hook 统一 / 4 Gate 迁移 / husky 180 行 shell 删除 / validate All good |
+| 📘 [V67-V99-foundation.md](../archive/roadmap-history/V67-V99-foundation.md) | V67.2 ~ V99 | 数据层 P0 修复 / 导航统一 / Schema 防御 / OpenAPI 契约 |
+| 📗 [V178-V210-modules.md](../archive/roadmap-history/V178-V210-modules.md) | V178 ~ V210 | MES/QMS/WMS/TMS/APS 6 大模块 / 导航三联校验 / utoipa 注解 |
+| 📙 [V211-V230-quality.md](../archive/roadmap-history/V211-V230-quality.md) | V210.5 ~ V230 | 覆盖率冲刺 / Design Token 2845→169 / i18n 清零 R5→R13 |
+| 📕 [V231-V258-closure.md](../archive/roadmap-history/V231-V258-closure.md) | V231 ~ V258 | 架构冗余收修 / R5 security 清零 / Tauri Stronghold+IPC / 前端泛型 / 死代码 2814 条 |
+| 📒 [V259-V264-backlog-closure.md](../archive/roadmap-history/V259-V264-backlog-closure.md) | V259 ~ V264+ | V252 CRUD 审计 Phase 1-6 / V232 Strict-Zero P0-P4 / Backlog 5 主题 16 条全完成 / L1-VALUE 96 dead exports / Tauri 生态 5/5 / CI 双开关 blocking |
+| 🔧 [V266-P0-hook-unification.md](../archive/roadmap-history/V266-P0-hook-unification.md) | V266-P0 | husky/lefthook/pre-commit 三套 Hook 统一 / 4 Gate 迁移 / husky 180 行 shell 删除 / validate All good |
 
 **快速跳转**：
 - 最早的设计决策 → V67-V99

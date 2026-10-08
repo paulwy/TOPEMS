@@ -853,8 +853,8 @@ Content-Type: application/json
 
 ### A. 相关文档
 
-- [TOPEMS 架构改进计划](../TOPEMS_Architecture_Improvement_Plan.md)
-- [TOPEMS MCP 架构修订计划](../TOPEMS_MCP_Architecture_Amendment_Plan.md)
+- [TOPEMS 架构改进计划](../archive/misc/TOPEMS_Architecture_Improvement_Plan.md)
+- [TOPEMS MCP 架构修订计划](../archive/misc/TOPEMS_MCP_Architecture_Amendment_Plan.md)
 - [业务工具使用指南](business-tools-usage-guide.md)
 - [权限控制模块代码](../../svc/unified-core/src/routes/business_tools/)
 

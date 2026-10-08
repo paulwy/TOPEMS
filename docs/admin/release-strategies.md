@@ -423,5 +423,5 @@ service.update_state("problematic_feature", FeatureState::Disabled);
 
 - [Traefik 路由配置](../../deploy/k8s/base/ingress.yaml)
 - [监控配置](../../deploy/docker/prometheus/prometheus.yml)
-- [数据库开发指南](../development/backend/database-development.md)
+- [数据库开发指南](../developer/backend/database-development.md)
 - [API 文档](../api/README.md)

@@ -1,4 +1,4 @@
-> 🚨 路由版本过渡中：本文档描述路径含 /v1 为旧格式，新生产路径去掉 /v1。详见 [API 路径规范与渐进式统一方案](../architecture/api-path-standardization.md)
+> 🚨 路由版本过渡中：本文档描述路径含 /v1 为旧格式，新生产路径去掉 /v1。详见 [API 路径规范与渐进式统一方案](../developer/standards/api-path-standardization.md)
 
 # TOPEMS Mobile Service API Documentation
 

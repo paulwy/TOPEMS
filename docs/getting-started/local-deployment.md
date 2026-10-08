@@ -479,7 +479,7 @@ pnpm dev -- --inspect
 - [快速入门指南](./quickstart.md)
 - [API 文档](../api/README.md)
 - [架构设计](../architecture/overview.md)
-- [故障排查](../deployment/troubleshooting.md)
+- [故障排查](../admin/troubleshooting.md)
 - [变更日志](../changelog/CHANGELOG.md)
 
 ---

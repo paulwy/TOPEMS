@@ -350,5 +350,5 @@ async function getEmployees(token) {
 - [Core 组模块 API](./API_CORE.md) - Core 组 7 个模块的 API 文档（unified-core, monitor, plugin-registry, search, communication, integration, mobile）
 - [API 快速参考](./api-quick-reference.md) - API 快速参考
 - [数据库设计](../architecture/database.md) - 数据库 Schema 设计
-- [部署指南](../deployment/deployment-guide-overview.md) - 系统部署说明
+- [部署指南](../admin/deployment-guide-overview.md) - 系统部署说明
 - [端口分配规则](../architecture/ports.md) - 端口配置说明

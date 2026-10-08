@@ -359,10 +359,10 @@ const scenarios = {
 
 ### 相关文档
 
-- [服务稳定性最佳实践](../operations/service-stability-best-practices.md)
-- [AI 服务告警 Runbook](../runbooks/ai-alerts-runbook.md)
-- [部署指南](../deployment/deployment-guide.md)
-- [监控配置指南](../operations/monitoring-guide.md)
+- [服务稳定性最佳实践](../admin/service-stability-best-practices.md)
+- [AI 服务告警 Runbook](../admin/ai-alerts-runbook.md)
+- [部署指南（`../deployment/deployment-guide.md` 已不可达）
+- [监控配置指南（`../operations/monitoring-guide.md` 已不可达）
 
 ### 参考资源
 

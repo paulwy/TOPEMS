@@ -508,5 +508,5 @@ docker-compose exec -T postgres psql -U topems topems < backup_before_upgrade.sq
 - [健康检查脚本](../scripts/deploy/ai-health-check.sh)
 - [Docker Compose 配置](../deploy/docker/docker-compose.yml)
 - [Nginx 配置](../deploy/nginx/topems.conf)
-- [性能测试指南](./AI_BUSINESS_INTELLIGENCE_PERFORMANCE_GUIDE.md)
-- [联调测试计划](./AI_BUSINESS_INTEGRATION_TEST_PLAN.md)
+- [性能测试指南](../testing/AI_BUSINESS_INTELLIGENCE_PERFORMANCE_GUIDE.md)
+- [联调测试计划](../testing/AI_BUSINESS_INTEGRATION_TEST_PLAN.md)

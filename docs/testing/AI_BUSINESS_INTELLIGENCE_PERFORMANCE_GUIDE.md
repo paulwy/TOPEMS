@@ -335,5 +335,5 @@ k6-reporter results.json > report.html
 
 - [联调测试计划](../testing/AI_BUSINESS_INTEGRATION_TEST_PLAN.md)
 - [端到端测试指南](../testing/AI_BUSINESS_INTELLIGENCE_E2E_GUIDE.md)
-- [API 文档](../DSH_BUSINESS_INTELLIGENCE_API.md)
+- [API 文档（`../DSH_BUSINESS_INTELLIGENCE_API.md` 已不可达）
 - [k6 官方文档](https://k6.io/docs/)

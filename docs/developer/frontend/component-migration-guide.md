@@ -325,6 +325,6 @@ await pluginLifecycleManager.loadPlugin('my-plugin', {
 
 ## 相关文档
 
-- [UI 设计规范](./ui-design-spec.md)
-- [导航设计文档](./ui-navigation-design.md)
+- [UI 设计规范（`./ui-design-spec.md` 已不可达）
+- [导航设计文档（`./ui-navigation-design.md` 已不可达）
 - [TODO.md](../../../TODO.md)

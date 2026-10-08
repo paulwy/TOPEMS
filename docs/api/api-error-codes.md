@@ -489,7 +489,7 @@ curl -X POST http://localhost:8000/api/core/auth/v1/refresh \
 4. **联系支持**：
    - 提交 [GitHub Issue](../../issues/new/choose)
    - 发送邮件到 [support@topems.example.com](mailto:support@topems.example.com)
-   - 查看 [常见问题 FAQ](FAQ.md)
+   - 查看 [常见问题 FAQ（`FAQ.md` 已不可达）
 
 ---
 

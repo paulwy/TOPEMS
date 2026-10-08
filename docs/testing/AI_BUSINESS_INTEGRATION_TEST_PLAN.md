@@ -576,8 +576,8 @@
 ### A. 相关文档
 
 - [API 规范](../api/ai-business-intelligence-openapi.yaml)
-- [API 文档](../DSH_BUSINESS_INTELLIGENCE_API.md)
-- [工程化指南](../engineering/AI_ENGINEERING_GUIDE.md)
+- [API 文档（`../DSH_BUSINESS_INTELLIGENCE_API.md` 已不可达）
+- [工程化指南](../archive/misc/AI_ENGINEERING_GUIDE.md)
 
 ### B. 测试工具链接
 

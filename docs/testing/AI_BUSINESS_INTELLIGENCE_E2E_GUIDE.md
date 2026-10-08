@@ -259,6 +259,6 @@ pnpm exec playwright test --last-failed
 ## 相关文档
 
 - [联调测试计划](./AI_BUSINESS_INTEGRATION_TEST_PLAN.md)
-- [API 文档](../DSH_BUSINESS_INTELLIGENCE_API.md)
-- [工程化指南](../engineering/AI_ENGINEERING_GUIDE.md)
+- [API 文档（`../DSH_BUSINESS_INTELLIGENCE_API.md` 已不可达）
+- [工程化指南](../archive/misc/AI_ENGINEERING_GUIDE.md)
 - [Playwright 官方文档](https://playwright.dev/docs/intro)

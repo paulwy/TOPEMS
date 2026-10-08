@@ -78,7 +78,7 @@ user-guide/
 ## 相关文档
 
 - [API 文档](../api/README.md) - 开发者接口文档
-- [部署指南](../deployment/README.md) - 系统部署说明
+- [部署指南](../archive/README.md) - 系统部署说明
 - [架构设计](../architecture/overview.md) - 技术架构说明
 
 ---

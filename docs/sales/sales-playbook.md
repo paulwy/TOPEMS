@@ -698,7 +698,7 @@
 
 - [产品架构](../architecture/overview.md)
 - [API 文档](../api/README.md)
-- [部署指南](../deployment/deployment-guide-overview.md)
+- [部署指南](../admin/deployment-guide-overview.md)
 - [用户指南](../user-guide/README.md)
 
 ---

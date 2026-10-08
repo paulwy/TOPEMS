@@ -234,5 +234,5 @@ export LOG_LEVEL=debug
 
 - [API 文档](../api/README.md)
 - [Core 组模块 API](../api/API_CORE.md)
-- [架构路线图](../architecture/TOPEMS_Architecture_Roadmap_v2.md)
-- [项目总结报告](../../PROJECT_COMPLETION_REPORT.md)
+- [架构路线图](../archive/misc/TOPEMS_Architecture_Roadmap_v2.md)
+- [项目总结报告](../archive/misc/PROJECT_COMPLETION_REPORT.md)
