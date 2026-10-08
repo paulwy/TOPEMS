@@ -1,4 +1,5 @@
 import * as BarcodeScanner from 'expo-barcode-scanner';
+import { zh } from '../i18n/zh';
 
 export interface ScanResult {
   type: string;
@@ -53,7 +54,7 @@ export class ScanService {
 
   static getScanTypeName(type: string): string {
     const typeMap: Record<string, string> = {
-      [BarcodeScanner.Constants.BarCodeType.qr]: '二维码',
+      [BarcodeScanner.Constants.BarCodeType.qr]: zh['scan.qrTypeName'],
       [BarcodeScanner.Constants.BarCodeType.code128]: 'Code 128',
       [BarcodeScanner.Constants.BarCodeType.code39]: 'Code 39',
       [BarcodeScanner.Constants.BarCodeType.code93]: 'Code 93',
@@ -65,10 +66,10 @@ export class ScanService {
       [BarcodeScanner.Constants.BarCodeType.pdf417]: 'PDF417',
       [BarcodeScanner.Constants.BarCodeType.aztec]: 'Aztec',
       [BarcodeScanner.Constants.BarCodeType.datamatrix]: 'Data Matrix',
-      [BarcodeScanner.Constants.BarCodeType.interleaved2of5]: '交叉25码',
+      [BarcodeScanner.Constants.BarCodeType.interleaved2of5]: zh['scan.interleaved25Name'],
       [BarcodeScanner.Constants.BarCodeType.codabar]: 'Codabar',
     };
-    return typeMap[type] || '未知';
+    return typeMap[type] || zh['scan.unknownTypeName'];
   }
 
   static getSupportedTypes(): string[] {

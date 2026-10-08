@@ -4,6 +4,7 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { Card, Title, List, Avatar, Text, Button, Divider } from 'react-native-paper';
 import { useAuthStore } from '@/store/authStore';
 import { User, Bell, Settings, HelpCircle, Info, LogOut } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 interface ProfilePageProps {
   navigation: {
@@ -24,8 +25,10 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ navigation }) => {
             style={{ backgroundColor: designTokens.colors.blue[600] }}
           />
           <View style={styles.profileInfo}>
-            <Title style={styles.profileName}>{user?.name || user?.full_name || '用户'}</Title>
-            <Text style={styles.profileRole}>{user?.roles?.[0] || '员工'}</Text>
+            <Title style={styles.profileName}>
+              {user?.name || user?.full_name || zh['profile.fallbackName']}
+            </Title>
+            <Text style={styles.profileRole}>{user?.roles?.[0] || zh['profile.fallbackRole']}</Text>
             {user?.email && <Text style={styles.profileEmail}>{user.email}</Text>}
           </View>
         </Card.Content>
@@ -34,27 +37,27 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ navigation }) => {
       <Card style={styles.menuCard} mode="elevated">
         <Card.Content>
           <List.Item
-            title="消息通知"
+            title={zh['common.notifications']}
             left={() => <Bell size={20} color="#6b7280" />}
             right={() => <List.Icon icon="chevron-right" color="#9ca3af" />}
             onPress={() => navigation.navigate('Notification')}
           />
           <Divider />
           <List.Item
-            title="设置"
+            title={zh['common.settings']}
             left={() => <Settings size={20} color="#6b7280" />}
             right={() => <List.Icon icon="chevron-right" color="#9ca3af" />}
             onPress={() => navigation.navigate('Settings')}
           />
           <Divider />
           <List.Item
-            title="帮助中心"
+            title={zh['common.helpCenter']}
             left={() => <HelpCircle size={20} color="#6b7280" />}
             right={() => <List.Icon icon="chevron-right" color="#9ca3af" />}
           />
           <Divider />
           <List.Item
-            title="关于我们"
+            title={zh['common.aboutUs']}
             left={() => <Info size={20} color="#6b7280" />}
             right={() => <List.Icon icon="chevron-right" color="#9ca3af" />}
           />
@@ -63,20 +66,20 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ navigation }) => {
 
       <Card style={styles.statsCard} mode="elevated">
         <Card.Content>
-          <Text style={styles.statsTitle}>快捷统计</Text>
+          <Text style={styles.statsTitle}>{zh['profile.quickStats']}</Text>
           <Divider style={styles.sectionDivider} />
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>待审批</Text>
+              <Text style={styles.statLabel}>{zh['approval.statusPending']}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>进行中任务</Text>
+              <Text style={styles.statLabel}>{zh['profile.inProgressTasks']}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>未读消息</Text>
+              <Text style={styles.statLabel}>{zh['profile.unreadMessages']}</Text>
             </View>
           </View>
         </Card.Content>
@@ -89,7 +92,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ navigation }) => {
         textColor={designTokens.colors.error[600]}
         icon={() => <LogOut size={18} color={designTokens.colors.error[600]} />}
       >
-        退出登录
+        {zh['common.logout']}
       </Button>
     </ScrollView>
   );

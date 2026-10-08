@@ -12,6 +12,7 @@ import { Text, Card, IconButton, Divider, Badge } from 'react-native-paper';
 import { documentApi } from '@/api/document';
 import type { Document } from '@/types';
 import { FileText, Search, Download, FolderOpen } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 const DocumentPage: React.FC = () => {
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -60,11 +61,21 @@ const DocumentPage: React.FC = () => {
   const getStatusBadge = (status: Document['status']) => {
     switch (status) {
       case 'published':
-        return <Badge style={[styles.statusBadge, styles.publishedBadge]}>已发布</Badge>;
+        return (
+          <Badge style={[styles.statusBadge, styles.publishedBadge]}>
+            {zh['doc.statusPublished']}
+          </Badge>
+        );
       case 'draft':
-        return <Badge style={[styles.statusBadge, styles.draftBadge]}>草稿</Badge>;
+        return (
+          <Badge style={[styles.statusBadge, styles.draftBadge]}>{zh['doc.statusDraft']}</Badge>
+        );
       case 'archived':
-        return <Badge style={[styles.statusBadge, styles.archivedBadge]}>已归档</Badge>;
+        return (
+          <Badge style={[styles.statusBadge, styles.archivedBadge]}>
+            {zh['doc.statusArchived']}
+          </Badge>
+        );
       default:
         return null;
     }
@@ -99,11 +110,11 @@ const DocumentPage: React.FC = () => {
       <Card.Actions style={styles.documentActions}>
         <TouchableOpacity style={styles.actionItem}>
           <Download size={18} color={designTokens.colors.blue[500]} />
-          <Text style={styles.actionText}>下载</Text>
+          <Text style={styles.actionText}>{zh['doc.download']}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionItem}>
           <FolderOpen size={18} color={designTokens.colors.blue[500]} />
-          <Text style={styles.actionText}>预览</Text>
+          <Text style={styles.actionText}>{zh['doc.preview']}</Text>
         </TouchableOpacity>
       </Card.Actions>
     </Card>
@@ -114,7 +125,7 @@ const DocumentPage: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <FileText size={24} color={designTokens.colors.blue[500]} />
-          <Text style={styles.headerTitle}>文档中心</Text>
+          <Text style={styles.headerTitle}>{zh['doc.title']}</Text>
         </View>
       </View>
       <Divider />
@@ -122,7 +133,7 @@ const DocumentPage: React.FC = () => {
         <Search size={20} color="#9ca3af" />
         <TextInput
           style={styles.searchInput}
-          placeholder="搜索文档"
+          placeholder={zh['doc.searchPlaceholder']}
           value={searchQuery}
           onChangeText={setSearchQuery}
           onSubmitEditing={handleSearch}
@@ -130,7 +141,7 @@ const DocumentPage: React.FC = () => {
       </View>
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <Text>加载中...</Text>
+          <Text>{zh['common.loading']}</Text>
         </View>
       ) : (
         <FlatList
@@ -142,7 +153,7 @@ const DocumentPage: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <FileText size={48} color="#9ca3af" />
-              <Text style={styles.emptyText}>暂无文档</Text>
+              <Text style={styles.emptyText}>{zh['doc.empty']}</Text>
             </View>
           }
         />

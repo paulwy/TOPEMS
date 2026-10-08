@@ -21,6 +21,7 @@ import {
   Upload,
   Database,
 } from 'lucide-react-native';
+import { zh, syncSuccessMessage } from '../i18n/zh';
 
 const SettingsPage: React.FC = () => {
   const { user, logout } = useAuthStore();
@@ -64,7 +65,7 @@ const SettingsPage: React.FC = () => {
 
   const handleSyncNow = async () => {
     if (isOffline) {
-      Alert.alert('提示', '当前处于离线状态，请连接网络后再尝试同步');
+      Alert.alert(zh['common.alertHint'], zh['settings.offlineCannotSync']);
       return;
     }
 
@@ -72,27 +73,27 @@ const SettingsPage: React.FC = () => {
     try {
       const result = await offlineApi.syncAll();
       if (result.success) {
-        Alert.alert('同步成功', `成功同步 ${result.data?.success} 条记录`);
+        Alert.alert(zh['settings.syncSuccess'], syncSuccessMessage(result.data?.success));
         await loadOfflineStats();
       } else {
-        Alert.alert('同步结果', result.message || '同步完成');
+        Alert.alert(zh['settings.syncResult'], result.message || zh['settings.syncComplete']);
       }
     } catch {
-      Alert.alert('同步失败', '同步过程中出现错误');
+      Alert.alert(zh['settings.syncFailed'], zh['settings.syncError']);
     } finally {
       setIsSyncing(false);
     }
   };
 
   const handleClearOfflineData = async () => {
-    Alert.alert('确认清除', '确定要清除所有离线数据吗？未同步的数据将丢失。', [
-      { text: '取消', style: 'cancel' },
+    Alert.alert(zh['settings.confirmClearOffline'], zh['settings.clearOfflineConfirmMsg'], [
+      { text: zh['common.cancel'], style: 'cancel' },
       {
-        text: '确定',
+        text: zh['common.confirm'],
         onPress: async () => {
           await offlineApi.clearAll();
           await loadOfflineStats();
-          Alert.alert('成功', '离线数据已清除');
+          Alert.alert(zh['common.success'], zh['settings.offlineDataCleared']);
         },
       },
     ]);
@@ -102,45 +103,53 @@ const SettingsPage: React.FC = () => {
     setIsSaving(true);
     try {
       await userApi.updateProfile({ name: editName, phone: editPhone });
-      Alert.alert('成功', '个人信息已更新');
+      Alert.alert(zh['common.success'], zh['settings.profileUpdated']);
       setIsEditing(false);
     } catch {
-      Alert.alert('错误', '更新失败，请重试');
+      Alert.alert(zh['common.error'], zh['settings.updateFailedRetry']);
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleChangePassword = async () => {
-    Alert.prompt('修改密码', '请输入旧密码', async (oldPassword) => {
-      if (!oldPassword) return;
-      Alert.prompt('修改密码', '请输入新密码', async (newPassword) => {
-        if (!newPassword) return;
-        try {
-          await userApi.changePassword({ oldPassword, newPassword });
-          Alert.alert('成功', '密码修改成功，请重新登录');
-          logout();
-        } catch {
-          Alert.alert('错误', '密码修改失败');
-        }
-      });
-    });
+    Alert.prompt(
+      zh['settings.changePassword'],
+      zh['settings.enterOldPassword'],
+      async (oldPassword) => {
+        if (!oldPassword) return;
+        Alert.prompt(
+          zh['settings.changePassword'],
+          zh['settings.enterNewPassword'],
+          async (newPassword) => {
+            if (!newPassword) return;
+            try {
+              await userApi.changePassword({ oldPassword, newPassword });
+              Alert.alert(zh['common.success'], zh['settings.passwordChanged']);
+              logout();
+            } catch {
+              Alert.alert(zh['common.error'], zh['settings.passwordChangeFailed']);
+            }
+          },
+        );
+      },
+    );
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
         <Settings size={24} color={designTokens.colors.blue[500]} />
-        <Text style={styles.headerTitle}>设置</Text>
+        <Text style={styles.headerTitle}>{zh['common.settings']}</Text>
       </View>
       <Divider />
 
       <Card style={styles.sectionCard} mode="elevated">
         <Card.Content>
-          <Text style={styles.sectionTitle}>个人信息</Text>
+          <Text style={styles.sectionTitle}>{zh['settings.personalInfo']}</Text>
           <Divider style={styles.sectionDivider} />
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>姓名</Text>
+            <Text style={styles.infoLabel}>{zh['settings.name']}</Text>
             <View style={styles.infoValueContainer}>
               {isEditing ? (
                 <TextInput style={styles.infoValue} onChangeText={setEditName} value={editName} />
@@ -153,7 +162,7 @@ const SettingsPage: React.FC = () => {
                   onPress={() => setIsEditing(true)}
                   textColor={designTokens.colors.blue[500]}
                 >
-                  编辑
+                  {zh['common.edit']}
                 </Button>
               )}
               {isEditing && (
@@ -167,14 +176,14 @@ const SettingsPage: React.FC = () => {
                     <Save size={16} />
                   </Button>
                   <Button mode="text" onPress={() => setIsEditing(false)} textColor="#6b7280">
-                    取消
+                    {zh['common.cancel']}
                   </Button>
                 </View>
               )}
             </View>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>手机号</Text>
+            <Text style={styles.infoLabel}>{zh['settings.phone']}</Text>
             <Text style={styles.infoValue}>
               {isEditing ? (
                 <TextInput style={styles.infoValue} onChangeText={setEditPhone} value={editPhone} />
@@ -184,16 +193,16 @@ const SettingsPage: React.FC = () => {
             </Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>邮箱</Text>
+            <Text style={styles.infoLabel}>{zh['common.email']}</Text>
             <Text style={styles.infoValue}>{user?.email || '-'}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>角色</Text>
+            <Text style={styles.infoLabel}>{zh['settings.role']}</Text>
             <Text style={styles.infoValue}>{user?.roles?.[0] || '-'}</Text>
           </View>
           <Divider style={styles.sectionDivider} />
           <List.Item
-            title="修改密码"
+            title={zh['settings.changePassword']}
             left={() => <Shield size={20} color="#6b7280" />}
             right={() => <ChevronRight size={20} color="#9ca3af" />}
             onPress={handleChangePassword}
@@ -203,22 +212,22 @@ const SettingsPage: React.FC = () => {
 
       <Card style={styles.sectionCard} mode="elevated">
         <Card.Content>
-          <Text style={styles.sectionTitle}>通知设置</Text>
+          <Text style={styles.sectionTitle}>{zh['settings.notificationSettings']}</Text>
           <Divider style={styles.sectionDivider} />
           <List.Item
-            title="推送通知"
+            title={zh['settings.pushNotification']}
             left={() => <Bell size={20} color="#6b7280" />}
             right={() => (
               <Switch value={notificationsEnabled} onValueChange={setNotificationsEnabled} />
             )}
           />
           <List.Item
-            title="通知声音"
+            title={zh['settings.notificationSound']}
             left={() => <Bell size={20} color="#6b7280" />}
             right={() => <Switch value={soundEnabled} onValueChange={setSoundEnabled} />}
           />
           <List.Item
-            title="震动反馈"
+            title={zh['settings.vibrationFeedback']}
             left={() => <RefreshCw size={20} color="#6b7280" />}
             right={() => <Switch value={vibrationEnabled} onValueChange={setVibrationEnabled} />}
           />
@@ -227,24 +236,24 @@ const SettingsPage: React.FC = () => {
 
       <Card style={styles.sectionCard} mode="elevated">
         <Card.Content>
-          <Text style={styles.sectionTitle}>应用设置</Text>
+          <Text style={styles.sectionTitle}>{zh['settings.appSettings']}</Text>
           <Divider style={styles.sectionDivider} />
           <List.Item
-            title="语言"
+            title={zh['settings.language']}
             left={() => <Globe size={20} color="#6b7280" />}
             right={() => (
               <View style={styles.rightTextContainer}>
-                <Text style={styles.rightText}>中文</Text>
+                <Text style={styles.rightText}>{zh['settings.languageChinese']}</Text>
                 <ChevronRight size={20} color="#9ca3af" />
               </View>
             )}
           />
           <List.Item
-            title="主题"
+            title={zh['settings.theme']}
             left={() => <Palette size={20} color="#6b7280" />}
             right={() => (
               <View style={styles.rightTextContainer}>
-                <Text style={styles.rightText}>浅色</Text>
+                <Text style={styles.rightText}>{zh['settings.themeLight']}</Text>
                 <ChevronRight size={20} color="#9ca3af" />
               </View>
             )}
@@ -254,7 +263,7 @@ const SettingsPage: React.FC = () => {
 
       <Card style={styles.sectionCard} mode="elevated">
         <Card.Content>
-          <Text style={styles.sectionTitle}>离线数据管理</Text>
+          <Text style={styles.sectionTitle}>{zh['settings.offlineDataManagement']}</Text>
           <Divider style={styles.sectionDivider} />
           <View style={styles.offlineStatusRow}>
             <View style={styles.offlineIconContainer}>
@@ -266,10 +275,10 @@ const SettingsPage: React.FC = () => {
             </View>
             <View style={styles.offlineStatusContent}>
               <Text style={styles.offlineStatusText}>
-                {isOffline ? '当前处于离线模式' : '当前处于在线模式'}
+                {isOffline ? zh['settings.offlineMode'] : zh['settings.onlineMode']}
               </Text>
               <Text style={styles.offlineStatusHint}>
-                {isOffline ? '操作将保存到本地，网络恢复后自动同步' : '数据实时同步到云端'}
+                {isOffline ? zh['settings.offlineHint'] : zh['settings.onlineHint']}
               </Text>
             </View>
           </View>
@@ -277,14 +286,14 @@ const SettingsPage: React.FC = () => {
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Database size={16} color="#6b7280" />
-              <Text style={styles.statLabel}>待同步</Text>
+              <Text style={styles.statLabel}>{zh['settings.pendingSync']}</Text>
               <Text style={[styles.statValue, pendingCount > 0 ? styles.statValueWarning : {}]}>
                 {pendingCount}
               </Text>
             </View>
             <View style={styles.statItem}>
               <Database size={16} color="#6b7280" />
-              <Text style={styles.statLabel}>缓存数据</Text>
+              <Text style={styles.statLabel}>{zh['settings.cachedData']}</Text>
               <Text style={styles.statValue}>{syncStats.cachedEntries}</Text>
             </View>
           </View>
@@ -297,7 +306,11 @@ const SettingsPage: React.FC = () => {
             style={styles.syncButton}
             icon={() => <Upload size={18} />}
           >
-            {isSyncing ? '同步中...' : pendingCount === 0 ? '暂无待同步数据' : '立即同步'}
+            {isSyncing
+              ? zh['settings.syncing']
+              : pendingCount === 0
+                ? zh['settings.noPendingData']
+                : zh['common.syncNow']}
           </Button>
           <Button
             mode="text"
@@ -305,7 +318,7 @@ const SettingsPage: React.FC = () => {
             textColor="#9ca3af"
             style={styles.clearButton}
           >
-            清除离线数据
+            {zh['settings.clearOfflineData']}
           </Button>
         </Card.Content>
       </Card>
@@ -313,13 +326,13 @@ const SettingsPage: React.FC = () => {
       <Card style={styles.sectionCard} mode="elevated">
         <Card.Content>
           <List.Item
-            title="帮助中心"
+            title={zh['common.helpCenter']}
             left={() => <HelpCircle size={20} color="#6b7280" />}
             right={() => <ChevronRight size={20} color="#9ca3af" />}
           />
           <Divider />
           <List.Item
-            title="关于我们"
+            title={zh['common.aboutUs']}
             left={() => <Info size={20} color="#6b7280" />}
             right={() => <ChevronRight size={20} color="#9ca3af" />}
           />
@@ -333,7 +346,7 @@ const SettingsPage: React.FC = () => {
         textColor={designTokens.colors.error[600]}
         icon={() => <RefreshCw size={18} color={designTokens.colors.error[600]} />}
       >
-        退出登录
+        {zh['common.logout']}
       </Button>
     </ScrollView>
   );

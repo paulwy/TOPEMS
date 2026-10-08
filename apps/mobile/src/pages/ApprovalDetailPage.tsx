@@ -26,6 +26,7 @@ import {
   AlertCircle,
   MessageSquare,
 } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 type ApprovalDetailPageProps = {
   route: {
@@ -75,12 +76,12 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
     setActionLoading(true);
     try {
       await approvalApi.approveApproval(id, { comment });
-      Alert.alert('成功', '审批已通过');
+      Alert.alert(zh['common.success'], zh['approval.approvedMsg']);
       fetchApproval();
       setComment('');
     } catch (error) {
       console.error('Failed to approve:', error);
-      Alert.alert('错误', '审批操作失败');
+      Alert.alert(zh['common.error'], zh['approval.operateFailed']);
     } finally {
       setActionLoading(false);
     }
@@ -91,12 +92,12 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
     setActionLoading(true);
     try {
       await approvalApi.rejectApproval(id, { comment });
-      Alert.alert('成功', '审批已拒绝');
+      Alert.alert(zh['common.success'], zh['approval.rejectedMsg']);
       fetchApproval();
       setComment('');
     } catch (error) {
       console.error('Failed to reject:', error);
-      Alert.alert('错误', '审批操作失败');
+      Alert.alert(zh['common.error'], zh['approval.operateFailed']);
     } finally {
       setActionLoading(false);
     }
@@ -130,11 +131,11 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending':
-        return '待审批';
+        return zh['approval.statusPending'];
       case 'approved':
-        return '已通过';
+        return zh['approval.statusApproved'];
       case 'rejected':
-        return '已拒绝';
+        return zh['approval.statusRejected'];
       default:
         return status;
     }
@@ -157,13 +158,13 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return '紧急';
+        return zh['common.priorityUrgent'];
       case 'high':
-        return '高';
+        return zh['common.priorityHigh'];
       case 'medium':
-        return '中';
+        return zh['common.priorityMedium'];
       case 'low':
-        return '低';
+        return zh['common.priorityLow'];
       default:
         return priority;
     }
@@ -185,12 +186,12 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
             icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
             onPress={() => navigation.goBack()}
           />
-          <Title style={styles.headerTitle}>审批详情</Title>
+          <Title style={styles.headerTitle}>{zh['approval.detailTitle']}</Title>
           <View style={styles.headerPlaceholder} />
         </View>
         <View style={styles.emptyContainer}>
           <ClipboardCheck size={48} color="#d1d5db" />
-          <Text style={styles.emptyText}>审批记录不存在</Text>
+          <Text style={styles.emptyText}>{zh['approval.notFound']}</Text>
         </View>
       </View>
     );
@@ -206,7 +207,7 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
           icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
           onPress={() => navigation.goBack()}
         />
-        <Title style={styles.headerTitle}>审批详情</Title>
+        <Title style={styles.headerTitle}>{zh['approval.detailTitle']}</Title>
         <View style={styles.headerPlaceholder} />
       </View>
 
@@ -216,7 +217,9 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
             <View style={styles.cardHeader}>
               <View style={styles.typeContainer}>
                 <FileText size={20} color={designTokens.colors.blue[600]} />
-                <Text style={styles.typeText}>{approval.type || '审批申请'}</Text>
+                <Text style={styles.typeText}>
+                  {approval.type || zh['common.approvalApplication']}
+                </Text>
               </View>
               <Chip
                 textStyle={{ fontSize: 11, fontWeight: '600' }}
@@ -246,7 +249,8 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
             <View style={styles.priorityRow}>
               <AlertCircle size={16} color={getPriorityColor(approval.priority)} />
               <Text style={[styles.priorityText, { color: getPriorityColor(approval.priority) }]}>
-                {getPriorityLabel(approval.priority)}优先级
+                {getPriorityLabel(approval.priority)}
+                {zh['common.prioritySuffix']}
               </Text>
             </View>
           </Card.Content>
@@ -254,33 +258,33 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
 
         <Card style={styles.infoCard} mode="elevated">
           <Card.Content>
-            <Title style={styles.sectionTitle}>基本信息</Title>
+            <Title style={styles.sectionTitle}>{zh['approval.basicInfo']}</Title>
             <View style={styles.infoGrid}>
               <View style={styles.infoRow}>
                 <User size={16} color={designTokens.colors.blue[600]} />
-                <Text style={styles.infoLabel}>申请人</Text>
+                <Text style={styles.infoLabel}>{zh['common.applicant']}</Text>
                 <Text style={styles.infoValue}>{approval.applicantName || '-'}</Text>
               </View>
               <View style={styles.infoRow}>
                 <User size={16} color={designTokens.colors.blue[600]} />
-                <Text style={styles.infoLabel}>审批人</Text>
+                <Text style={styles.infoLabel}>{zh['approval.approver']}</Text>
                 <Text style={styles.infoValue}>{approval.assigneeName || '-'}</Text>
               </View>
               <Divider style={styles.divider} />
               <View style={styles.infoRow}>
                 <Clock size={16} color="#9ca3af" />
-                <Text style={styles.infoLabel}>创建时间</Text>
+                <Text style={styles.infoLabel}>{zh['common.createdAt']}</Text>
                 <Text style={styles.infoValue}>{formatDate(approval.createdAt)}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Clock size={16} color="#9ca3af" />
-                <Text style={styles.infoLabel}>更新时间</Text>
+                <Text style={styles.infoLabel}>{zh['common.updatedAt']}</Text>
                 <Text style={styles.infoValue}>{formatDate(approval.updatedAt)}</Text>
               </View>
               {approval.dueDate && (
                 <View style={styles.infoRow}>
                   <Clock size={16} color={designTokens.colors.warning[600]} />
-                  <Text style={styles.infoLabel}>截止日期</Text>
+                  <Text style={styles.infoLabel}>{zh['approval.dueDate']}</Text>
                   <Text style={[styles.infoValue, { color: designTokens.colors.warning[600] }]}>
                     {formatDate(approval.dueDate)}
                   </Text>
@@ -293,16 +297,16 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
         {approval.status === 'pending' && (
           <Card style={styles.actionCard} mode="elevated">
             <Card.Content>
-              <Title style={styles.sectionTitle}>审批操作</Title>
+              <Title style={styles.sectionTitle}>{zh['approval.actions']}</Title>
               <View style={styles.commentSection}>
                 <MessageSquare size={16} color="#6b7280" />
-                <Text style={styles.commentLabel}>审批意见（可选）</Text>
+                <Text style={styles.commentLabel}>{zh['common.approvalCommentOptional']}</Text>
               </View>
               <TextInput
                 mode="outlined"
                 value={comment}
                 onChangeText={setComment}
-                placeholder="请输入审批意见..."
+                placeholder={zh['common.approvalCommentPlaceholder']}
                 multiline
                 numberOfLines={4}
                 style={styles.commentInput}
@@ -316,7 +320,7 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
                   disabled={actionLoading}
                   textColor={designTokens.colors.error[600]}
                 >
-                  拒绝
+                  {zh['common.reject']}
                 </Button>
                 <Button
                   mode="contained"
@@ -325,7 +329,7 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
                   onPress={handleApprove}
                   disabled={actionLoading}
                 >
-                  通过
+                  {zh['common.approve']}
                 </Button>
               </View>
             </Card.Content>
@@ -345,7 +349,7 @@ const ApprovalDetailPage: React.FC<ApprovalDetailPageProps> = ({ route, navigati
                   <Text style={[styles.statusResult, { color: getStatusColor(approval.status) }]}>
                     {getStatusLabel(approval.status)}
                   </Text>
-                  <Text style={styles.statusSubtext}>审批流程已结束</Text>
+                  <Text style={styles.statusSubtext}>{zh['approval.flowEnded']}</Text>
                 </View>
               </View>
             </Card.Content>

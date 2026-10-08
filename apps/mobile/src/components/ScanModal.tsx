@@ -30,6 +30,7 @@ import { inventoryApi } from '@/api/inventory';
 import { productionApi } from '@/api/production';
 import { deviceApi } from '@/api/device';
 import { storage } from '@/utils/storage';
+import { zh, scanTypeNames } from '../i18n/zh';
 
 interface ScanModalProps {
   visible: boolean;
@@ -115,13 +116,13 @@ const ScanModal: React.FC<ScanModalProps> = ({
       setScanning(true);
       setError(null);
     } else {
-      setError('需要相机权限才能使用扫码功能');
+      setError(zh['scan.cameraPermissionRequired']);
     }
   };
 
   const handleOpenSettings = () => {
     Linking.openSettings().catch(() => {
-      Alert.alert('提示', '无法打开设置，请手动前往系统设置开启相机权限');
+      Alert.alert(zh['common.alertHint'], zh['scan.openSettingsFailed']);
     });
   };
 
@@ -215,15 +216,16 @@ const ScanModal: React.FC<ScanModalProps> = ({
       setRecognizedText(null);
 
       if (mode === 'auto' || mode === 'inventory' || mode === 'asset' || mode === 'order') {
-        setRecognizedText('正在识别...');
+        setRecognizedText(zh['scan.recognizing']);
         const recognition = await handleAutoRecognition(data);
         setRecognizedResult(recognition);
 
         if (recognition.type === 'unknown') {
-          setRecognizedText('未识别到相关信息');
+          setRecognizedText(zh['scan.unknownRecognition']);
         } else {
-          const typeNames = { inventory: '库存', asset: '资产', order: '订单' };
-          setRecognizedText(`识别为${typeNames[recognition.type]}: ${recognition.name}`);
+          setRecognizedText(
+            `${zh['scan.recognizedPrefix']}${scanTypeNames[recognition.type]}: ${recognition.name}`,
+          );
         }
       }
 
@@ -279,7 +281,7 @@ const ScanModal: React.FC<ScanModalProps> = ({
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <X size={24} color={designTokens.colors.common.white} />
             </TouchableOpacity>
-            <Text style={styles.title}>扫码</Text>
+            <Text style={styles.title}>{zh['scan.title']}</Text>
             <TouchableOpacity onPress={handleToggleTorch} style={styles.torchButton}>
               <Zap
                 size={24}
@@ -297,16 +299,16 @@ const ScanModal: React.FC<ScanModalProps> = ({
               <View style={styles.errorActions}>
                 <TouchableOpacity onPress={handleRetry} style={styles.retryButton}>
                   <RefreshCw size={18} color={designTokens.colors.common.white} />
-                  <Text style={styles.retryButtonText}>重新获取权限</Text>
+                  <Text style={styles.retryButtonText}>{zh['scan.retryPermission']}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleOpenSettings} style={styles.settingsButton}>
-                  <Text style={styles.settingsButtonText}>前往设置</Text>
+                  <Text style={styles.settingsButtonText}>{zh['scan.goSettings']}</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ) : !hasPermission ? (
             <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>正在请求相机权限...</Text>
+              <Text style={styles.loadingText}>{zh['scan.requestingPermission']}</Text>
             </View>
           ) : scanResult ? (
             <View style={styles.resultContainer}>
@@ -349,11 +351,11 @@ const ScanModal: React.FC<ScanModalProps> = ({
                 <View style={styles.resultActions}>
                   <TouchableOpacity onPress={handleContinueScan} style={styles.continueButton}>
                     <RotateCcw size={18} color={designTokens.colors.common.white} />
-                    <Text style={styles.continueButtonText}>继续扫描</Text>
+                    <Text style={styles.continueButtonText}>{zh['scan.continue']}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={onClose} style={styles.confirmButton}>
                     <Check size={18} color={designTokens.colors.common.white} />
-                    <Text style={styles.confirmButtonText}>确认</Text>
+                    <Text style={styles.confirmButtonText}>{zh['scan.confirm']}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -387,14 +389,20 @@ const ScanModal: React.FC<ScanModalProps> = ({
               </View>
 
               <View style={styles.hintContainer}>
-                <Text style={styles.hintText}>将条码对准扫描框</Text>
-                {scanType === 'qr' && <Text style={styles.hintSubText}>仅识别二维码</Text>}
-                {scanType === 'barcode' && <Text style={styles.hintSubText}>仅识别条形码</Text>}
-                {mode === 'continuous' && <Text style={styles.hintSubText}>连续扫描模式</Text>}
-                {mode === 'inventory' && <Text style={styles.hintSubText}>库存扫码入库模式</Text>}
-                {mode === 'asset' && <Text style={styles.hintSubText}>资产识别模式</Text>}
-                {mode === 'order' && <Text style={styles.hintSubText}>订单识别模式</Text>}
-                {mode === 'auto' && <Text style={styles.hintSubText}>自动识别模式</Text>}
+                <Text style={styles.hintText}>{zh['scan.alignHint']}</Text>
+                {scanType === 'qr' && <Text style={styles.hintSubText}>{zh['scan.onlyQr']}</Text>}
+                {scanType === 'barcode' && (
+                  <Text style={styles.hintSubText}>{zh['scan.onlyBarcode']}</Text>
+                )}
+                {mode === 'continuous' && (
+                  <Text style={styles.hintSubText}>{zh['scan.modeContinuous']}</Text>
+                )}
+                {mode === 'inventory' && (
+                  <Text style={styles.hintSubText}>{zh['scan.modeInventory']}</Text>
+                )}
+                {mode === 'asset' && <Text style={styles.hintSubText}>{zh['scan.modeAsset']}</Text>}
+                {mode === 'order' && <Text style={styles.hintSubText}>{zh['scan.modeOrder']}</Text>}
+                {mode === 'auto' && <Text style={styles.hintSubText}>{zh['scan.modeAuto']}</Text>}
               </View>
 
               <TouchableOpacity
@@ -403,13 +411,14 @@ const ScanModal: React.FC<ScanModalProps> = ({
               >
                 <History size={18} color={designTokens.colors.common.white} />
                 <Text style={styles.historyToggleText}>
-                  {showHistory ? '隐藏' : '显示'}扫描历史
+                  {showHistory ? zh['scan.hideHistory'] : zh['scan.showHistory']}
+                  {zh['scan.historyLabel']}
                 </Text>
               </TouchableOpacity>
 
               {showHistory && scanHistory.length > 0 && (
                 <View style={styles.historyContainer}>
-                  <Text style={styles.historyTitle}>最近扫描记录</Text>
+                  <Text style={styles.historyTitle}>{zh['scan.recentHistory']}</Text>
                   <View style={styles.historyList}>
                     {scanHistory.slice(0, 10).map((item, index) => (
                       <View
@@ -436,7 +445,7 @@ const ScanModal: React.FC<ScanModalProps> = ({
 
           <View style={styles.footer}>
             <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
-              <Text style={styles.cancelButtonText}>取消</Text>
+              <Text style={styles.cancelButtonText}>{zh['common.cancel']}</Text>
             </TouchableOpacity>
           </View>
         </View>

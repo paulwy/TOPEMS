@@ -5,6 +5,7 @@ import { Text } from 'react-native-paper';
 import { Wifi, WifiOff, Cloud } from 'lucide-react-native';
 import { NetworkService, type NetworkState } from '@/services/networkService';
 import { OfflineService } from '@/services/offlineService';
+import { zh } from '../i18n/zh';
 
 interface NetworkStatusBarProps {
   showPendingCount?: boolean;
@@ -65,14 +66,18 @@ const NetworkStatusBar: React.FC<NetworkStatusBarProps> = ({ showPendingCount = 
           )}
         </View>
         <Text style={styles.statusText}>
-          {isOffline ? '离线模式' : networkState.details?.isWifi ? 'Wi-Fi' : '蜂窝网络'}
+          {isOffline
+            ? zh['netstatus.offlineMode']
+            : networkState.details?.isWifi
+              ? 'Wi-Fi'
+              : zh['netstatus.cellular']}
         </Text>
         {isOffline && showPendingCount && pendingCount > 0 && (
           <View style={styles.pendingBadge}>
             <Text style={styles.pendingText}>{pendingCount}</Text>
           </View>
         )}
-        {!isOffline && <Text style={styles.onlineHint}>数据将自动同步</Text>}
+        {!isOffline && <Text style={styles.onlineHint}>{zh['netstatus.autoSync']}</Text>}
       </View>
     </Animated.View>
   );

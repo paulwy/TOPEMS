@@ -4,6 +4,7 @@ import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text, Card, Title } from 'react-native-paper';
 import { useAuthStore } from '@/store/authStore';
 import type { LoginCredentials } from '@/types';
+import { zh } from '../i18n/zh';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -12,7 +13,7 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async () => {
     if (!username.trim() || !password.trim()) {
-      Alert.alert('提示', '请输入用户名和密码');
+      Alert.alert(zh['common.alertHint'], zh['login.enterCredentials']);
       return;
     }
 
@@ -29,7 +30,7 @@ const LoginPage: React.FC = () => {
       <Card style={styles.card}>
         <Card.Content>
           <Title style={styles.title}>TOPEMS Mobile</Title>
-          <Text style={styles.subtitle}>欢迎登录</Text>
+          <Text style={styles.subtitle}>{zh['login.welcome']}</Text>
 
           {error && (
             <View style={styles.errorContainer}>
@@ -38,7 +39,7 @@ const LoginPage: React.FC = () => {
           )}
 
           <TextInput
-            label="用户名"
+            label={zh['login.username']}
             value={username}
             onChangeText={setUsername}
             style={styles.input}
@@ -47,7 +48,7 @@ const LoginPage: React.FC = () => {
           />
 
           <TextInput
-            label="密码"
+            label={zh['login.password']}
             value={password}
             onChangeText={setPassword}
             style={styles.input}
@@ -63,7 +64,7 @@ const LoginPage: React.FC = () => {
             loading={isLoading}
             disabled={isLoading}
           >
-            {isLoading ? '登录中...' : '登录'}
+            {isLoading ? zh['login.loading'] : zh['login.submit']}
           </Button>
         </Card.Content>
       </Card>

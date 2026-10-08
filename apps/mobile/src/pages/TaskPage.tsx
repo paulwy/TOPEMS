@@ -13,6 +13,7 @@ import {
 import { taskApi } from '@/api/task';
 import type { Task } from '@/types';
 import { Square, CheckCircle, Clock, AlertCircle } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 const TaskPage: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -71,13 +72,13 @@ const TaskPage: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'completed':
-        return '已完成';
+        return zh['common.completed'];
       case 'in_progress':
-        return '进行中';
+        return zh['common.inProgress'];
       case 'pending':
-        return '待处理';
+        return zh['common.pending'];
       case 'cancelled':
-        return '已取消';
+        return zh['common.cancelled'];
       default:
         return status;
     }
@@ -101,13 +102,13 @@ const TaskPage: React.FC = () => {
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case 'critical':
-        return '紧急';
+        return zh['common.priorityUrgent'];
       case 'high':
-        return '高';
+        return zh['common.priorityHigh'];
       case 'medium':
-        return '中';
+        return zh['common.priorityMedium'];
       case 'low':
-        return '低';
+        return zh['common.priorityLow'];
       default:
         return priority;
     }
@@ -140,12 +141,13 @@ const TaskPage: React.FC = () => {
         <View style={styles.cardFooter}>
           <View style={styles.metaItem}>
             <Clock size={14} color="#9ca3af" />
-            <Text style={styles.metaText}>{item.dueDate || '无截止日期'}</Text>
+            <Text style={styles.metaText}>{item.dueDate || zh['task.noDueDate']}</Text>
           </View>
           <View style={styles.metaItem}>
             <AlertCircle size={14} color={getPriorityColor(item.priority)} />
             <Text style={[styles.metaText, { color: getPriorityColor(item.priority) }]}>
-              {getPriorityLabel(item.priority)}优先级
+              {getPriorityLabel(item.priority)}
+              {zh['common.prioritySuffix']}
             </Text>
           </View>
         </View>
@@ -164,7 +166,7 @@ const TaskPage: React.FC = () => {
   return (
     <View style={styles.container}>
       <Searchbar
-        placeholder="搜索任务..."
+        placeholder={zh['task.searchPlaceholder']}
         onChangeText={setSearchQuery}
         value={searchQuery}
         style={styles.searchBar}
@@ -173,10 +175,10 @@ const TaskPage: React.FC = () => {
       <View style={styles.filterContainer}>
         <ScrollableFilter
           options={[
-            { key: 'all', label: '全部' },
-            { key: 'pending', label: '待处理' },
-            { key: 'in_progress', label: '进行中' },
-            { key: 'completed', label: '已完成' },
+            { key: 'all', label: zh['common.all'] },
+            { key: 'pending', label: zh['common.pending'] },
+            { key: 'in_progress', label: zh['common.inProgress'] },
+            { key: 'completed', label: zh['common.completed'] },
           ]}
           active={statusFilter}
           onPress={setStatusFilter}
@@ -192,7 +194,7 @@ const TaskPage: React.FC = () => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <CheckCircle size={48} color="#d1d5db" />
-            <Text style={styles.emptyText}>暂无任务</Text>
+            <Text style={styles.emptyText}>{zh['common.emptyTasks']}</Text>
           </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}

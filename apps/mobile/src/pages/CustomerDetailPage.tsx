@@ -24,6 +24,7 @@ import {
   Edit,
   Trash2,
 } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 type CustomerDetailPageProps = {
   route: {
@@ -67,10 +68,10 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
   };
 
   const handleDelete = () => {
-    Alert.alert('确认删除', '确定要删除此客户吗？', [
-      { text: '取消', style: 'cancel' },
+    Alert.alert(zh['common.confirmDelete'], zh['customer.deleteConfirmMsg'], [
+      { text: zh['common.cancel'], style: 'cancel' },
       {
-        text: '确定',
+        text: zh['common.confirm'],
         style: 'destructive',
         onPress: async () => {
           try {
@@ -78,7 +79,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
             navigation.goBack();
           } catch (error) {
             console.error('Failed to delete customer:', error);
-            Alert.alert('错误', '删除失败');
+            Alert.alert(zh['common.error'], zh['common.deleteFailed']);
           }
         },
       },
@@ -99,7 +100,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
   };
 
   const getStatusLabel = (status: string) => {
-    return status === 'active' ? '正常' : '停用';
+    return status === 'active' ? zh['common.statusNormal'] : zh['customer.statusDisabled'];
   };
 
   if (loading && !refreshing) {
@@ -118,12 +119,12 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
             icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
             onPress={() => navigation.goBack()}
           />
-          <Title style={styles.headerTitle}>客户详情</Title>
+          <Title style={styles.headerTitle}>{zh['customer.detailTitle']}</Title>
           <View style={styles.headerPlaceholder} />
         </View>
         <View style={styles.emptyContainer}>
           <Users size={48} color="#d1d5db" />
-          <Text style={styles.emptyText}>客户不存在</Text>
+          <Text style={styles.emptyText}>{zh['customer.notFound']}</Text>
         </View>
       </View>
     );
@@ -139,7 +140,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
           icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
           onPress={() => navigation.goBack()}
         />
-        <Title style={styles.headerTitle}>客户详情</Title>
+        <Title style={styles.headerTitle}>{zh['customer.detailTitle']}</Title>
         <View style={styles.headerPlaceholder} />
       </View>
 
@@ -152,7 +153,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
               </View>
               <View style={styles.titleSection}>
                 <Title style={styles.customerName}>{customer.name}</Title>
-                <Text style={styles.customerCode}>{customer.code || '未设置编码'}</Text>
+                <Text style={styles.customerCode}>{customer.code || zh['customer.noCode']}</Text>
               </View>
               <Chip
                 textStyle={{ fontSize: 11, fontWeight: '600' }}
@@ -177,26 +178,26 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
 
         <Card style={styles.infoCard} mode="elevated">
           <Card.Content>
-            <Title style={styles.sectionTitle}>联系信息</Title>
+            <Title style={styles.sectionTitle}>{zh['customer.contactInfo']}</Title>
             <View style={styles.infoGrid}>
               {customer.contactName && (
                 <View style={styles.infoRow}>
                   <Users size={16} color={designTokens.colors.blue[500]} />
-                  <Text style={styles.infoLabel}>联系人</Text>
+                  <Text style={styles.infoLabel}>{zh['customer.contactName']}</Text>
                   <Text style={styles.infoValue}>{customer.contactName}</Text>
                 </View>
               )}
               {customer.contactPhone && (
                 <View style={styles.infoRow}>
                   <Phone size={16} color={designTokens.colors.blue[500]} />
-                  <Text style={styles.infoLabel}>联系电话</Text>
+                  <Text style={styles.infoLabel}>{zh['customer.contactPhone']}</Text>
                   <Text style={styles.infoValue}>{customer.contactPhone}</Text>
                 </View>
               )}
               {customer.contactEmail && (
                 <View style={styles.infoRow}>
                   <Mail size={16} color={designTokens.colors.blue[500]} />
-                  <Text style={styles.infoLabel}>邮箱</Text>
+                  <Text style={styles.infoLabel}>{zh['common.email']}</Text>
                   <Text style={styles.infoValue}>{customer.contactEmail}</Text>
                 </View>
               )}
@@ -206,33 +207,33 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
 
         <Card style={styles.infoCard} mode="elevated">
           <Card.Content>
-            <Title style={styles.sectionTitle}>地址信息</Title>
+            <Title style={styles.sectionTitle}>{zh['customer.addressInfo']}</Title>
             <View style={styles.infoGrid}>
               {customer.province && (
                 <View style={styles.infoRow}>
                   <MapPin size={16} color={designTokens.colors.blue[500]} />
-                  <Text style={styles.infoLabel}>省份</Text>
+                  <Text style={styles.infoLabel}>{zh['customer.province']}</Text>
                   <Text style={styles.infoValue}>{customer.province}</Text>
                 </View>
               )}
               {customer.city && (
                 <View style={styles.infoRow}>
                   <MapPin size={16} color={designTokens.colors.blue[500]} />
-                  <Text style={styles.infoLabel}>城市</Text>
+                  <Text style={styles.infoLabel}>{zh['customer.city']}</Text>
                   <Text style={styles.infoValue}>{customer.city}</Text>
                 </View>
               )}
               {customer.address && (
                 <View style={styles.infoRow}>
                   <MapPin size={16} color={designTokens.colors.blue[500]} />
-                  <Text style={styles.infoLabel}>详细地址</Text>
+                  <Text style={styles.infoLabel}>{zh['customer.address']}</Text>
                   <Text style={styles.infoValue}>{customer.address}</Text>
                 </View>
               )}
               {customer.postalCode && (
                 <View style={styles.infoRow}>
                   <MapPin size={16} color={designTokens.colors.blue[500]} />
-                  <Text style={styles.infoLabel}>邮编</Text>
+                  <Text style={styles.infoLabel}>{zh['customer.postalCode']}</Text>
                   <Text style={styles.infoValue}>{customer.postalCode}</Text>
                 </View>
               )}
@@ -242,24 +243,24 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
 
         <Card style={styles.infoCard} mode="elevated">
           <Card.Content>
-            <Title style={styles.sectionTitle}>其他信息</Title>
+            <Title style={styles.sectionTitle}>{zh['customer.otherInfo']}</Title>
             <View style={styles.infoGrid}>
               {customer.industry && (
                 <View style={styles.infoRow}>
                   <Building2 size={16} color={designTokens.colors.blue[500]} />
-                  <Text style={styles.infoLabel}>所属行业</Text>
+                  <Text style={styles.infoLabel}>{zh['customer.industry']}</Text>
                   <Text style={styles.infoValue}>{customer.industry}</Text>
                 </View>
               )}
               <Divider style={styles.divider} />
               <View style={styles.infoRow}>
                 <Calendar size={16} color="#9ca3af" />
-                <Text style={styles.infoLabel}>创建时间</Text>
+                <Text style={styles.infoLabel}>{zh['common.createdAt']}</Text>
                 <Text style={styles.infoValue}>{formatDate(customer.createdAt)}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Calendar size={16} color="#9ca3af" />
-                <Text style={styles.infoLabel}>更新时间</Text>
+                <Text style={styles.infoLabel}>{zh['common.updatedAt']}</Text>
                 <Text style={styles.infoValue}>{formatDate(customer.updatedAt)}</Text>
               </View>
             </View>
@@ -271,9 +272,9 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
             mode="outlined"
             style={styles.actionButton}
             icon={() => <Edit size={16} />}
-            onPress={() => Alert.alert('提示', '编辑功能开发中')}
+            onPress={() => Alert.alert(zh['common.alertHint'], zh['common.editInDevelopment'])}
           >
-            编辑
+            {zh['common.edit']}
           </Button>
           <Button
             mode="contained"
@@ -281,7 +282,7 @@ const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ route, navigati
             icon={() => <Trash2 size={16} />}
             onPress={handleDelete}
           >
-            删除
+            {zh['common.delete']}
           </Button>
         </View>
       </View>

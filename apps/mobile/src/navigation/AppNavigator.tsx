@@ -24,6 +24,7 @@ import {
   FileText,
   Package,
 } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 export type RootStackParamList = {
   Login: undefined;
@@ -58,8 +59,16 @@ const ProfileStackScreen: React.FC = () => {
         headerTitleStyle: { fontWeight: '600' },
       }}
     >
-      <ProfileStack.Screen name="Profile" component={ProfilePage} options={{ title: '我的' }} />
-      <ProfileStack.Screen name="Settings" component={SettingsPage} options={{ title: '设置' }} />
+      <ProfileStack.Screen
+        name="Profile"
+        component={ProfilePage}
+        options={{ title: zh['common.mine'] }}
+      />
+      <ProfileStack.Screen
+        name="Settings"
+        component={SettingsPage}
+        options={{ title: zh['common.settings'] }}
+      />
     </ProfileStack.Navigator>
   );
 };
@@ -108,14 +117,38 @@ const MainTabs: React.FC = () => {
         },
       })}
     >
-      <Tab.Screen name="Home" component={DashboardPage} options={{ title: '首页' }} />
-      <Tab.Screen name="Task" component={TaskPage} options={{ title: '任务' }} />
-      <Tab.Screen name="Approval" component={ApprovalPage} options={{ title: '审批' }} />
-      <Tab.Screen name="Attendance" component={AttendancePage} options={{ title: '考勤' }} />
-      <Tab.Screen name="Notification" component={NotificationPage} options={{ title: '通知' }} />
-      <Tab.Screen name="Document" component={DocumentPage} options={{ title: '文档' }} />
-      <Tab.Screen name="Inventory" component={InventoryPage} options={{ title: '库存' }} />
-      <Tab.Screen name="Profile" component={ProfileStackScreen} options={{ title: '我的' }} />
+      <Tab.Screen name="Home" component={DashboardPage} options={{ title: zh['nav.home'] }} />
+      <Tab.Screen name="Task" component={TaskPage} options={{ title: zh['nav.task'] }} />
+      <Tab.Screen
+        name="Approval"
+        component={ApprovalPage}
+        options={{ title: zh['nav.approval'] }}
+      />
+      <Tab.Screen
+        name="Attendance"
+        component={AttendancePage}
+        options={{ title: zh['nav.attendance'] }}
+      />
+      <Tab.Screen
+        name="Notification"
+        component={NotificationPage}
+        options={{ title: zh['nav.notification'] }}
+      />
+      <Tab.Screen
+        name="Document"
+        component={DocumentPage}
+        options={{ title: zh['nav.document'] }}
+      />
+      <Tab.Screen
+        name="Inventory"
+        component={InventoryPage}
+        options={{ title: zh['nav.inventory'] }}
+      />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileStackScreen}
+        options={{ title: zh['common.mine'] }}
+      />
     </Tab.Navigator>
   );
 };

@@ -17,6 +17,7 @@ import {
 import { approvalApi } from '@/api/approval';
 import type { Approval } from '@/types';
 import { ClipboardCheck, User, Clock, CheckCircle, XCircle, FileText } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 const ApprovalPage: React.FC = () => {
   const [approvals, setApprovals] = useState<Approval[]>([]);
@@ -105,11 +106,11 @@ const ApprovalPage: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'pending':
-        return '待审批';
+        return zh['approval.statusPending'];
       case 'approved':
-        return '已通过';
+        return zh['approval.statusApproved'];
       case 'rejected':
-        return '已拒绝';
+        return zh['approval.statusRejected'];
       default:
         return status;
     }
@@ -122,7 +123,7 @@ const ApprovalPage: React.FC = () => {
           <View style={styles.cardHeader}>
             <View style={styles.typeContainer}>
               <FileText size={16} color={designTokens.colors.blue[600]} />
-              <Text style={styles.typeText}>{item.type || '审批申请'}</Text>
+              <Text style={styles.typeText}>{item.type || zh['common.approvalApplication']}</Text>
             </View>
             <Chip
               style={[styles.statusChip, { backgroundColor: getStatusColor(item.status) + '20' }]}
@@ -135,7 +136,7 @@ const ApprovalPage: React.FC = () => {
 
           <Title style={styles.title}>{item.title}</Title>
           <Paragraph style={styles.description} numberOfLines={2}>
-            {item.description || '暂无描述'}
+            {item.description || zh['common.emptyDescription']}
           </Paragraph>
 
           <View style={styles.cardFooter}>
@@ -145,7 +146,7 @@ const ApprovalPage: React.FC = () => {
                 icon={() => <User size={14} color={designTokens.colors.common.white} />}
                 style={{ backgroundColor: designTokens.colors.blue[600] }}
               />
-              <Text style={styles.userName}>{item.applicantName || '申请人'}</Text>
+              <Text style={styles.userName}>{item.applicantName || zh['common.applicant']}</Text>
             </View>
             <View style={styles.timeInfo}>
               <Clock size={12} color="#9ca3af" />
@@ -167,7 +168,7 @@ const ApprovalPage: React.FC = () => {
                 textColor={designTokens.colors.error[600]}
                 icon={() => <XCircle size={16} color={designTokens.colors.error[600]} />}
               >
-                拒绝
+                {zh['common.reject']}
               </Button>
               <Button
                 mode="contained"
@@ -180,7 +181,7 @@ const ApprovalPage: React.FC = () => {
                 style={[styles.actionButton, { backgroundColor: designTokens.colors.success[600] }]}
                 icon={() => <CheckCircle size={16} color={designTokens.colors.common.white} />}
               >
-                通过
+                {zh['common.approve']}
               </Button>
             </View>
           )}
@@ -204,10 +205,10 @@ const ApprovalPage: React.FC = () => {
           horizontal
           showsHorizontalScrollIndicator={false}
           data={[
-            { key: 'pending', label: '待审批' },
-            { key: 'approved', label: '已通过' },
-            { key: 'rejected', label: '已拒绝' },
-            { key: 'all', label: '全部' },
+            { key: 'pending', label: zh['approval.statusPending'] },
+            { key: 'approved', label: zh['approval.statusApproved'] },
+            { key: 'rejected', label: zh['approval.statusRejected'] },
+            { key: 'all', label: zh['common.all'] },
           ]}
           keyExtractor={(item) => item.key}
           renderItem={({ item }) => (
@@ -237,7 +238,7 @@ const ApprovalPage: React.FC = () => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <ClipboardCheck size={48} color="#d1d5db" />
-            <Text style={styles.emptyText}>暂无审批</Text>
+            <Text style={styles.emptyText}>{zh['approval.empty']}</Text>
           </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
@@ -245,20 +246,24 @@ const ApprovalPage: React.FC = () => {
 
       <Portal>
         <Dialog visible={visible} onDismiss={() => setVisible(false)}>
-          <Dialog.Title>{selectedApproval?.title || '审批详情'}</Dialog.Title>
+          <Dialog.Title>{selectedApproval?.title || zh['approval.detailTitle']}</Dialog.Title>
           <Dialog.Content>
-            <Text style={styles.dialogLabel}>审批类型</Text>
-            <Text style={styles.dialogValue}>{selectedApproval?.type || '审批申请'}</Text>
-            <Text style={styles.dialogLabel}>申请人</Text>
+            <Text style={styles.dialogLabel}>{zh['approval.type']}</Text>
+            <Text style={styles.dialogValue}>
+              {selectedApproval?.type || zh['common.approvalApplication']}
+            </Text>
+            <Text style={styles.dialogLabel}>{zh['common.applicant']}</Text>
             <Text style={styles.dialogValue}>{selectedApproval?.applicantName || '-'}</Text>
-            <Text style={styles.dialogLabel}>审批说明</Text>
-            <Text style={styles.dialogValue}>{selectedApproval?.description || '暂无描述'}</Text>
-            <Text style={styles.dialogLabel}>审批意见（可选）</Text>
+            <Text style={styles.dialogLabel}>{zh['approval.description']}</Text>
+            <Text style={styles.dialogValue}>
+              {selectedApproval?.description || zh['common.emptyDescription']}
+            </Text>
+            <Text style={styles.dialogLabel}>{zh['common.approvalCommentOptional']}</Text>
             <TextInput
               mode="outlined"
               value={comment}
               onChangeText={setComment}
-              placeholder="请输入审批意见..."
+              placeholder={zh['common.approvalCommentPlaceholder']}
               multiline
               numberOfLines={3}
               style={styles.commentInput}
@@ -266,7 +271,7 @@ const ApprovalPage: React.FC = () => {
           </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setVisible(false)} disabled={actionLoading}>
-              取消
+              {zh['common.cancel']}
             </Button>
             <Button
               onPress={handleReject}
@@ -274,7 +279,7 @@ const ApprovalPage: React.FC = () => {
               disabled={actionLoading}
               icon={() => <XCircle size={16} color={designTokens.colors.error[600]} />}
             >
-              拒绝
+              {zh['common.reject']}
             </Button>
             <Button
               onPress={handleApprove}
@@ -282,7 +287,7 @@ const ApprovalPage: React.FC = () => {
               disabled={actionLoading}
               icon={() => <CheckCircle size={16} color={designTokens.colors.success[600]} />}
             >
-              通过
+              {zh['common.approve']}
             </Button>
           </Dialog.Actions>
         </Dialog>

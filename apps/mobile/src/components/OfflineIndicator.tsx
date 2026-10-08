@@ -6,6 +6,7 @@ import { WifiOff, RefreshCw } from 'lucide-react-native';
 import { NetworkService, type NetworkState } from '@/services/networkService';
 import { OfflineService } from '@/services/offlineService';
 import { SyncService } from '@/services/syncService';
+import { zh, offlinePendingSyncMessage, pendingSyncMessage } from '../i18n/zh';
 
 interface OfflineIndicatorProps {
   inline?: boolean;
@@ -71,14 +72,14 @@ const OfflineIndicator: React.FC<OfflineIndicatorProps> = ({ inline = false, onS
         </View>
         <Text style={styles.message}>
           {isSyncing
-            ? '正在同步数据...'
+            ? zh['offline.syncingData']
             : isOffline
-              ? `离线模式，${pendingCount} 条数据待同步`
-              : `${pendingCount} 条数据待同步`}
+              ? offlinePendingSyncMessage(pendingCount)
+              : pendingSyncMessage(pendingCount)}
         </Text>
         {!isOffline && !isSyncing && pendingCount > 0 && (
           <Text style={styles.syncButton} onPress={handleSync}>
-            立即同步
+            {zh['common.syncNow']}
           </Text>
         )}
       </View>

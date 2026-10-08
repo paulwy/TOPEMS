@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { User, LoginCredentials } from '@/types';
 import { authApi } from '@/api/auth';
 import { storage } from '@/utils/storage';
+import { zh } from '../i18n/zh';
 
 interface AuthStore {
   user: User | null;
@@ -40,13 +41,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
             isLoading: false,
           });
         } else {
-          set({ error: '登录失败：未获取到令牌', isLoading: false });
+          set({ error: zh['auth.noTokenError'], isLoading: false });
         }
       } else {
-        set({ error: response.message || '登录失败', isLoading: false });
+        set({ error: response.message || zh['auth.loginFailed'], isLoading: false });
       }
     } catch {
-      set({ error: '登录失败，请检查网络连接', isLoading: false });
+      set({ error: zh['auth.networkError'], isLoading: false });
     }
   },
 

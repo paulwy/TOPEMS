@@ -13,6 +13,7 @@ import { Text, Card, Divider, Badge, FAB } from 'react-native-paper';
 import { inventoryApi } from '@/api/inventory';
 import type { InventoryItem } from '@/types';
 import { Package, Search, AlertTriangle, Plus, Minus } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 const InventoryPage: React.FC = () => {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -57,7 +58,7 @@ const InventoryPage: React.FC = () => {
 
     const newQuantity = item.quantity + delta;
     if (newQuantity < 0) {
-      Alert.alert('提示', '库存数量不能为负数');
+      Alert.alert(zh['common.alertHint'], zh['common.negativeQty']);
       return;
     }
 
@@ -69,7 +70,7 @@ const InventoryPage: React.FC = () => {
       }
     } catch (error) {
       console.error('Failed to update quantity:', error);
-      Alert.alert('错误', '更新库存失败');
+      Alert.alert(zh['common.error'], zh['common.updateInventoryFailed']);
     }
   };
 
@@ -126,7 +127,7 @@ const InventoryPage: React.FC = () => {
             {lowStock && (
               <View style={styles.lowStockWarning}>
                 <AlertTriangle size={14} color={designTokens.colors.error[500]} />
-                <Text style={styles.lowStockText}>库存不足</Text>
+                <Text style={styles.lowStockText}>{zh['common.lowStock']}</Text>
               </View>
             )}
           </View>
@@ -140,7 +141,7 @@ const InventoryPage: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Package size={24} color={designTokens.colors.blue[500]} />
-          <Text style={styles.headerTitle}>库存管理</Text>
+          <Text style={styles.headerTitle}>{zh['inventory.managementTitle']}</Text>
         </View>
         <Badge style={styles.lowStockBadge}>
           {lowStockItems.length > 0 ? lowStockItems.length : 0}
@@ -151,7 +152,7 @@ const InventoryPage: React.FC = () => {
         <Search size={20} color="#9ca3af" />
         <TextInput
           style={styles.searchInput}
-          placeholder="搜索物料编码或名称"
+          placeholder={zh['inventory.searchPlaceholder']}
           value={searchQuery}
           onChangeText={setSearchQuery}
           onSubmitEditing={handleSearch}
@@ -159,7 +160,7 @@ const InventoryPage: React.FC = () => {
       </View>
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <Text>加载中...</Text>
+          <Text>{zh['common.loading']}</Text>
         </View>
       ) : (
         <FlatList
@@ -171,7 +172,7 @@ const InventoryPage: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Package size={48} color="#9ca3af" />
-              <Text style={styles.emptyText}>暂无库存数据</Text>
+              <Text style={styles.emptyText}>{zh['inventory.empty']}</Text>
             </View>
           }
         />
@@ -179,7 +180,7 @@ const InventoryPage: React.FC = () => {
       <FAB
         style={styles.fab}
         icon="plus"
-        onPress={() => Alert.alert('提示', '新建库存功能开发中')}
+        onPress={() => Alert.alert(zh['common.alertHint'], zh['inventory.createInDevelopment'])}
       />
     </View>
   );

@@ -22,6 +22,7 @@ import {
   ScanLine,
   ClipboardCheck,
 } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 const DashboardPage: React.FC = () => {
   const { stats, tasks, events, fetchStats, fetchTasks, fetchEvents, isLoading } =
@@ -51,13 +52,13 @@ const DashboardPage: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'completed':
-        return '已完成';
+        return zh['common.completed'];
       case 'in_progress':
-        return '进行中';
+        return zh['common.inProgress'];
       case 'pending':
-        return '待处理';
+        return zh['common.pending'];
       case 'cancelled':
-        return '已取消';
+        return zh['common.cancelled'];
       default:
         return status;
     }
@@ -77,12 +78,14 @@ const DashboardPage: React.FC = () => {
         <View style={styles.userInfo}>
           <Avatar.Text size={48} label={user?.name?.charAt(0) || 'U'} />
           <View>
-            <Title style={styles.greeting}>您好, {user?.name}</Title>
+            <Title style={styles.greeting}>
+              {zh['dashboard.greeting']}, {user?.name}
+            </Title>
             <Paragraph style={styles.role}>{user?.roles?.[0]}</Paragraph>
           </View>
         </View>
         <Button icon={LogOut} mode="outlined" onPress={logout} style={styles.logoutButton}>
-          退出
+          {zh['dashboard.logout']}
         </Button>
       </View>
 
@@ -95,7 +98,7 @@ const DashboardPage: React.FC = () => {
               <ClipboardCheck size={24} color={designTokens.colors.blue[500]} />
             </View>
             <Text style={styles.statValue}>{stats.pendingTasks}</Text>
-            <Text style={styles.statLabel}>待处理任务</Text>
+            <Text style={styles.statLabel}>{zh['dashboard.pendingTasks']}</Text>
           </Card.Content>
         </Card>
 
@@ -105,7 +108,7 @@ const DashboardPage: React.FC = () => {
               <CheckCircle size={24} color="#10b981" />
             </View>
             <Text style={styles.statValue}>{stats.completedTasks}</Text>
-            <Text style={styles.statLabel}>已完成任务</Text>
+            <Text style={styles.statLabel}>{zh['dashboard.completedTasks']}</Text>
           </Card.Content>
         </Card>
 
@@ -115,7 +118,7 @@ const DashboardPage: React.FC = () => {
               <ScanLine size={24} color={designTokens.colors.warning[500]} />
             </View>
             <Text style={styles.statValue}>{stats.todayScans}</Text>
-            <Text style={styles.statLabel}>今日扫码</Text>
+            <Text style={styles.statLabel}>{zh['dashboard.todayScans']}</Text>
           </Card.Content>
         </Card>
 
@@ -125,21 +128,23 @@ const DashboardPage: React.FC = () => {
               <Square size={24} color={designTokens.colors.purple[500]} />
             </View>
             <Text style={styles.statValue}>{stats.todayPatrols}</Text>
-            <Text style={styles.statLabel}>今日巡检</Text>
+            <Text style={styles.statLabel}>{zh['dashboard.todayPatrols']}</Text>
           </Card.Content>
         </Card>
       </View>
 
       <Card style={styles.sectionCard}>
         <Card.Content>
-          <Title style={styles.sectionTitle}>近期任务</Title>
+          <Title style={styles.sectionTitle}>{zh['dashboard.recentTasks']}</Title>
           <View style={styles.tasksList}>
             {tasks.length > 0 ? (
               tasks.map((task) => (
                 <View key={task.id} style={styles.taskItem}>
                   <View style={styles.taskInfo}>
                     <Text style={styles.taskTitle}>{task.title}</Text>
-                    <Text style={styles.taskDescription}>{task.description || '暂无描述'}</Text>
+                    <Text style={styles.taskDescription}>
+                      {task.description || zh['common.emptyDescription']}
+                    </Text>
                     <View style={styles.taskMeta}>
                       <Chip
                         mode="outlined"
@@ -147,10 +152,10 @@ const DashboardPage: React.FC = () => {
                         textStyle={{ color: getPriorityColor(task.priority) }}
                       >
                         {task.priority === 'high' || task.priority === 'critical'
-                          ? '高'
+                          ? zh['common.priorityHigh']
                           : task.priority === 'medium'
-                            ? '中'
-                            : '低'}
+                            ? zh['common.priorityMedium']
+                            : zh['common.priorityLow']}
                       </Chip>
                       <Chip mode="outlined">{getStatusLabel(task.status)}</Chip>
                     </View>
@@ -158,7 +163,7 @@ const DashboardPage: React.FC = () => {
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>暂无任务</Text>
+              <Text style={styles.emptyText}>{zh['common.emptyTasks']}</Text>
             )}
           </View>
         </Card.Content>
@@ -166,7 +171,7 @@ const DashboardPage: React.FC = () => {
 
       <Card style={styles.sectionCard}>
         <Card.Content>
-          <Title style={styles.sectionTitle}>近期活动</Title>
+          <Title style={styles.sectionTitle}>{zh['dashboard.recentEvents']}</Title>
           <View style={styles.eventsList}>
             {events.length > 0 ? (
               events.map((event) => (
@@ -181,7 +186,7 @@ const DashboardPage: React.FC = () => {
                 </View>
               ))
             ) : (
-              <Text style={styles.emptyText}>暂无活动</Text>
+              <Text style={styles.emptyText}>{zh['dashboard.emptyEvents']}</Text>
             )}
           </View>
         </Card.Content>

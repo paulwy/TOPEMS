@@ -5,6 +5,7 @@ import { Card, Title, ActivityIndicator, Chip, Text, Button, Searchbar } from 'r
 import { productionApi } from '@/api/production';
 import type { ProductionOrder } from '@/types';
 import { Factory, Play, CheckCircle, XCircle, Clock, Package } from 'lucide-react-native';
+import { zh, startOrderConfirmMessage, completeOrderConfirmMessage } from '../i18n/zh';
 
 const ProductionTrackingPage: React.FC = () => {
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
@@ -64,13 +65,13 @@ const ProductionTrackingPage: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'completed':
-        return '已完成';
+        return zh['common.completed'];
       case 'in_progress':
-        return '生产中';
+        return zh['production.inProgress'];
       case 'pending':
-        return '待生产';
+        return zh['production.pending'];
       case 'cancelled':
-        return '已取消';
+        return zh['common.cancelled'];
       default:
         return status;
     }
@@ -98,10 +99,10 @@ const ProductionTrackingPage: React.FC = () => {
   };
 
   const handleStartOrder = async (order: ProductionOrder) => {
-    Alert.alert('确认开始', `确定要开始生产订单 ${order.code} 吗？`, [
-      { text: '取消', style: 'cancel' },
+    Alert.alert(zh['production.confirmStart'], startOrderConfirmMessage(order.code), [
+      { text: zh['common.cancel'], style: 'cancel' },
       {
-        text: '确定',
+        text: zh['common.confirm'],
         onPress: async () => {
           try {
             const response = await productionApi.startOrder(order.id);
@@ -110,7 +111,7 @@ const ProductionTrackingPage: React.FC = () => {
             }
           } catch (error) {
             console.error('Failed to start order:', error);
-            Alert.alert('错误', '启动生产失败');
+            Alert.alert(zh['common.error'], zh['production.startFailed']);
           }
         },
       },
@@ -118,10 +119,10 @@ const ProductionTrackingPage: React.FC = () => {
   };
 
   const handleCompleteOrder = async (order: ProductionOrder) => {
-    Alert.alert('确认完成', `确定要完成生产订单 ${order.code} 吗？`, [
-      { text: '取消', style: 'cancel' },
+    Alert.alert(zh['production.confirmComplete'], completeOrderConfirmMessage(order.code), [
+      { text: zh['common.cancel'], style: 'cancel' },
       {
-        text: '确定',
+        text: zh['common.confirm'],
         onPress: async () => {
           try {
             const response = await productionApi.completeOrder(order.id);
@@ -130,7 +131,7 @@ const ProductionTrackingPage: React.FC = () => {
             }
           } catch (error) {
             console.error('Failed to complete order:', error);
-            Alert.alert('错误', '完成生产失败');
+            Alert.alert(zh['common.error'], zh['production.completeFailed']);
           }
         },
       },
@@ -161,7 +162,8 @@ const ProductionTrackingPage: React.FC = () => {
           <View style={styles.quantitySection}>
             <Package size={16} color="#6b7280" />
             <Text style={styles.quantityText}>
-              计划产量: <Text style={styles.quantityValue}>{item.quantity}</Text>
+              {zh['production.plannedQty']}{' '}
+              <Text style={styles.quantityValue}>{item.quantity}</Text>
             </Text>
           </View>
           <View style={styles.dateSection}>
@@ -185,7 +187,7 @@ const ProductionTrackingPage: React.FC = () => {
                 icon={() => <Play size={14} color={designTokens.colors.common.white} />}
                 onPress={() => handleStartOrder(item)}
               >
-                开始
+                {zh['production.start']}
               </Button>
             )}
             {item.status === 'in_progress' && (
@@ -195,7 +197,7 @@ const ProductionTrackingPage: React.FC = () => {
                 icon={() => <CheckCircle size={14} color={designTokens.colors.common.white} />}
                 onPress={() => handleCompleteOrder(item)}
               >
-                完成
+                {zh['production.complete']}
               </Button>
             )}
           </View>
@@ -215,7 +217,7 @@ const ProductionTrackingPage: React.FC = () => {
   return (
     <View style={styles.container}>
       <Searchbar
-        placeholder="搜索产品名称..."
+        placeholder={zh['production.searchPlaceholder']}
         onChangeText={setSearchQuery}
         value={searchQuery}
         onSubmitEditing={handleSearch}
@@ -225,10 +227,10 @@ const ProductionTrackingPage: React.FC = () => {
       <View style={styles.filterContainer}>
         <ScrollableFilter
           options={[
-            { key: 'all', label: '全部' },
-            { key: 'pending', label: '待生产' },
-            { key: 'in_progress', label: '生产中' },
-            { key: 'completed', label: '已完成' },
+            { key: 'all', label: zh['common.all'] },
+            { key: 'pending', label: zh['production.pending'] },
+            { key: 'in_progress', label: zh['production.inProgress'] },
+            { key: 'completed', label: zh['common.completed'] },
           ]}
           active={statusFilter}
           onPress={setStatusFilter}
@@ -244,7 +246,7 @@ const ProductionTrackingPage: React.FC = () => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Factory size={48} color="#d1d5db" />
-            <Text style={styles.emptyText}>暂无生产订单</Text>
+            <Text style={styles.emptyText}>{zh['production.empty']}</Text>
           </View>
         }
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}

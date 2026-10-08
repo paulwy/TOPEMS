@@ -5,6 +5,7 @@ import { Text, Card, IconButton, Divider, Badge } from 'react-native-paper';
 import { notificationApi } from '@/api/notification';
 import type { Notification } from '@/types';
 import { Bell, CheckCircle, AlertCircle, Info, XCircle } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 const NotificationPage: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -67,11 +68,11 @@ const NotificationPage: React.FC = () => {
     const diff = now.getTime() - date.getTime();
     const hours = Math.floor(diff / (1000 * 60 * 60));
 
-    if (hours < 1) return '刚刚';
-    if (hours < 24) return `${hours}小时前`;
+    if (hours < 1) return zh['notification.justNow'];
+    if (hours < 24) return `${hours}${zh['notification.hoursAgo']}`;
 
     const days = Math.floor(hours / 24);
-    return `${days}天前`;
+    return `${days}${zh['notification.daysAgo']}`;
   };
 
   const renderItem = ({ item }: { item: Notification }) => (
@@ -109,18 +110,18 @@ const NotificationPage: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Bell size={24} color={designTokens.colors.blue[500]} />
-          <Text style={styles.headerTitle}>消息通知</Text>
+          <Text style={styles.headerTitle}>{zh['common.notifications']}</Text>
         </View>
         {unreadCount > 0 && (
           <TouchableOpacity onPress={handleMarkAllAsRead} style={styles.markAllButton}>
-            <Text style={styles.markAllText}>全部已读</Text>
+            <Text style={styles.markAllText}>{zh['notification.markAllRead']}</Text>
           </TouchableOpacity>
         )}
       </View>
       <Divider />
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <Text>加载中...</Text>
+          <Text>{zh['common.loading']}</Text>
         </View>
       ) : (
         <FlatList
@@ -132,7 +133,7 @@ const NotificationPage: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Bell size={48} color="#9ca3af" />
-              <Text style={styles.emptyText}>暂无通知</Text>
+              <Text style={styles.emptyText}>{zh['notification.empty']}</Text>
             </View>
           }
         />

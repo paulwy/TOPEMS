@@ -33,6 +33,7 @@ import {
   TrendingUp,
   QrCode,
 } from 'lucide-react-native';
+import { zh, scanRecognizedContent, scanAllDoneMessage } from '../i18n/zh';
 
 const AttendancePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -140,19 +141,22 @@ const AttendancePage: React.FC = () => {
       if (response.success) {
         if (!todayRecord?.checkInTime) {
           await handleCheckIn();
-          Alert.alert('扫码签到成功', `识别内容: ${data}`);
+          Alert.alert(zh['attendance.checkInScanSuccess'], scanRecognizedContent(data));
         } else if (!todayRecord?.checkOutTime) {
           await handleCheckOut();
-          Alert.alert('扫码签退成功', `识别内容: ${data}`);
+          Alert.alert(zh['attendance.checkOutScanSuccess'], scanRecognizedContent(data));
         } else {
-          Alert.alert('扫码成功', `识别内容: ${data}\n今日考勤已完成`);
+          Alert.alert(zh['attendance.scanSuccess'], scanAllDoneMessage(data));
         }
       } else {
-        Alert.alert('扫码失败', response.message || '扫码服务异常');
+        Alert.alert(
+          zh['attendance.scanFailed'],
+          response.message || zh['attendance.scanServiceError'],
+        );
       }
     } catch (error) {
       console.error('Scan failed:', error);
-      Alert.alert('扫码失败', '无法连接到服务器');
+      Alert.alert(zh['attendance.scanFailed'], zh['attendance.serverUnreachable']);
     } finally {
       setScanLoading(false);
     }
@@ -190,13 +194,13 @@ const AttendancePage: React.FC = () => {
   const getStatusLabel = (status: string) => {
     switch (status) {
       case 'normal':
-        return '正常';
+        return zh['common.statusNormal'];
       case 'late':
-        return '迟到';
+        return zh['attendance.late'];
       case 'early_leave':
-        return '早退';
+        return zh['attendance.earlyLeave'];
       case 'absent':
-        return '缺勤';
+        return zh['attendance.absent'];
       default:
         return status;
     }
@@ -217,14 +221,14 @@ const AttendancePage: React.FC = () => {
     >
       <View style={styles.header}>
         <Text style={styles.dateText}>{getToday()}</Text>
-        <Text style={styles.greetingText}>今日考勤</Text>
+        <Text style={styles.greetingText}>{zh['attendance.todayAttendance']}</Text>
       </View>
 
       <Card style={styles.checkInCard} mode="elevated">
         <Card.Content>
           <View style={styles.locationRow}>
             <MapPin size={14} color={designTokens.colors.blue[600]} />
-            <Text style={styles.locationText}>当前位置：已定位</Text>
+            <Text style={styles.locationText}>{zh['attendance.locationLocated']}</Text>
           </View>
 
           <View style={styles.timeDisplay}>
@@ -249,13 +253,15 @@ const AttendancePage: React.FC = () => {
                 icon={() => <LogIn size={18} color={designTokens.colors.common.white} />}
               >
                 {todayRecord?.checkInTime
-                  ? `签到 ${new Date(todayRecord.checkInTime).toLocaleTimeString('zh-CN', {
+                  ? `${zh['attendance.checkInTimePrefix']}${new Date(
+                      todayRecord.checkInTime,
+                    ).toLocaleTimeString('zh-CN', {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}`
-                  : '上班签到'}
+                  : zh['attendance.checkIn']}
               </Button>
-              <Text style={styles.checkButtonLabel}>上班打卡</Text>
+              <Text style={styles.checkButtonLabel}>{zh['attendance.checkInButton']}</Text>
             </View>
 
             <View style={styles.checkButtonContainer}>
@@ -273,13 +279,15 @@ const AttendancePage: React.FC = () => {
                 icon={() => <LogOut size={18} color={designTokens.colors.common.white} />}
               >
                 {todayRecord?.checkOutTime
-                  ? `签退 ${new Date(todayRecord.checkOutTime).toLocaleTimeString('zh-CN', {
+                  ? `${zh['attendance.checkOutTimePrefix']}${new Date(
+                      todayRecord.checkOutTime,
+                    ).toLocaleTimeString('zh-CN', {
                       hour: '2-digit',
                       minute: '2-digit',
                     })}`
-                  : '下班签退'}
+                  : zh['attendance.checkOut']}
               </Button>
-              <Text style={styles.checkButtonLabel}>下班打卡</Text>
+              <Text style={styles.checkButtonLabel}>{zh['attendance.checkOutButton']}</Text>
             </View>
           </View>
 
@@ -290,7 +298,7 @@ const AttendancePage: React.FC = () => {
               style={styles.scanButton}
             >
               <QrCode size={20} color={designTokens.colors.blue[600]} />
-              <Text style={styles.scanButtonText}>扫码签到</Text>
+              <Text style={styles.scanButtonText}>{zh['attendance.scanCheckIn']}</Text>
             </TouchableOpacity>
           </View>
 
@@ -299,9 +307,9 @@ const AttendancePage: React.FC = () => {
               <AlertTriangle size={14} color={designTokens.colors.warning[600]} />
               <Text style={styles.warningText}>
                 {todayRecord.status === 'late'
-                  ? '今日迟到，请合理安排时间'
+                  ? zh['attendance.lateWarning']
                   : todayRecord.status === 'early_leave'
-                    ? '今日早退，请确认工作完成'
+                    ? zh['attendance.earlyLeaveWarning']
                     : ''}
               </Text>
             </View>
@@ -313,31 +321,31 @@ const AttendancePage: React.FC = () => {
         <Card.Content>
           <View style={styles.cardTitleRow}>
             <TrendingUp size={18} color={designTokens.colors.blue[600]} />
-            <Title style={styles.cardTitle}>本月统计</Title>
+            <Title style={styles.cardTitle}>{zh['attendance.monthlyStats']}</Title>
           </View>
 
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
               <Text style={styles.statNumber}>{stats?.attendanceDays || 0}</Text>
-              <Text style={styles.statLabel}>出勤天数</Text>
+              <Text style={styles.statLabel}>{zh['attendance.attendanceDays']}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { color: designTokens.colors.warning[600] }]}>
                 {stats?.lateCount || 0}
               </Text>
-              <Text style={styles.statLabel}>迟到</Text>
+              <Text style={styles.statLabel}>{zh['attendance.late']}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { color: designTokens.colors.orange[600] }]}>
                 {stats?.earlyLeaveCount || 0}
               </Text>
-              <Text style={styles.statLabel}>早退</Text>
+              <Text style={styles.statLabel}>{zh['attendance.earlyLeave']}</Text>
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statNumber, { color: designTokens.colors.error[600] }]}>
                 {stats?.absentCount || 0}
               </Text>
-              <Text style={styles.statLabel}>缺勤</Text>
+              <Text style={styles.statLabel}>{zh['attendance.absent']}</Text>
             </View>
           </View>
         </Card.Content>
@@ -347,7 +355,7 @@ const AttendancePage: React.FC = () => {
         <Card.Content>
           <View style={styles.cardTitleRow}>
             <Calendar size={18} color={designTokens.colors.blue[600]} />
-            <Title style={styles.cardTitle}>近期记录</Title>
+            <Title style={styles.cardTitle}>{zh['attendance.recentRecords']}</Title>
           </View>
 
           <List.Section style={{ paddingHorizontal: 0, paddingTop: 0 }}>
@@ -357,18 +365,22 @@ const AttendancePage: React.FC = () => {
                   title={record.date}
                   description={
                     record.checkInTime
-                      ? `上班 ${new Date(record.checkInTime).toLocaleTimeString('zh-CN', {
+                      ? `${zh['attendance.recordCheckInPrefix']}${new Date(
+                          record.checkInTime,
+                        ).toLocaleTimeString('zh-CN', {
                           hour: '2-digit',
                           minute: '2-digit',
                         })} ${
                           record.checkOutTime
-                            ? `| 下班 ${new Date(record.checkOutTime).toLocaleTimeString('zh-CN', {
+                            ? `${zh['attendance.recordCheckOutPrefix']}${new Date(
+                                record.checkOutTime,
+                              ).toLocaleTimeString('zh-CN', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}`
                             : ''
                         }`
-                      : '未打卡'
+                      : zh['attendance.noCheckIn']
                   }
                   right={() => (
                     <Chip

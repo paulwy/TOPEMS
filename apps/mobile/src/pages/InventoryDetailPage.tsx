@@ -31,6 +31,7 @@ import {
   Plus,
   Minus,
 } from 'lucide-react-native';
+import { zh } from '../i18n/zh';
 
 type InventoryDetailPageProps = {
   route: {
@@ -86,7 +87,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
 
     const newQuantity = item.quantity + delta;
     if (newQuantity < 0) {
-      Alert.alert('提示', '库存数量不能为负数');
+      Alert.alert(zh['common.alertHint'], zh['common.negativeQty']);
       return;
     }
 
@@ -98,15 +99,15 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
       }
     } catch (error) {
       console.error('Failed to update quantity:', error);
-      Alert.alert('错误', '更新库存失败');
+      Alert.alert(zh['common.error'], zh['common.updateInventoryFailed']);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert('确认删除', '确定要删除此库存记录吗？', [
-      { text: '取消', style: 'cancel' },
+    Alert.alert(zh['common.confirmDelete'], zh['inventory.deleteConfirmMsg'], [
+      { text: zh['common.cancel'], style: 'cancel' },
       {
-        text: '确定',
+        text: zh['common.confirm'],
         style: 'destructive',
         onPress: async () => {
           try {
@@ -114,7 +115,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
             navigation.goBack();
           } catch (error) {
             console.error('Failed to delete inventory:', error);
-            Alert.alert('错误', '删除失败');
+            Alert.alert(zh['common.error'], zh['common.deleteFailed']);
           }
         },
       },
@@ -146,12 +147,12 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
             icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
             onPress={() => navigation.goBack()}
           />
-          <Title style={styles.headerTitle}>库存详情</Title>
+          <Title style={styles.headerTitle}>{zh['inventory.detailTitle']}</Title>
           <View style={styles.headerPlaceholder} />
         </View>
         <View style={styles.emptyContainer}>
           <Package size={48} color="#d1d5db" />
-          <Text style={styles.emptyText}>库存记录不存在</Text>
+          <Text style={styles.emptyText}>{zh['inventory.notFound']}</Text>
         </View>
       </View>
     );
@@ -167,7 +168,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
           icon={() => <ArrowLeft size={24} color={designTokens.colors.common.white} />}
           onPress={() => navigation.goBack()}
         />
-        <Title style={styles.headerTitle}>库存详情</Title>
+        <Title style={styles.headerTitle}>{zh['inventory.detailTitle']}</Title>
         <View style={styles.headerPlaceholder} />
       </View>
 
@@ -203,7 +204,11 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
                     fontWeight: '600',
                   }}
                 >
-                  {isLowStock ? '库存不足' : item.status === 'active' ? '正常' : item.status}
+                  {isLowStock
+                    ? zh['common.lowStock']
+                    : item.status === 'active'
+                      ? zh['common.statusNormal']
+                      : item.status}
                 </Text>
               </Chip>
             </View>
@@ -211,7 +216,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
             {isLowStock && (
               <View style={styles.warningBanner}>
                 <AlertTriangle size={16} color={designTokens.colors.error[500]} />
-                <Text style={styles.warningText}>当前库存低于安全阈值，请及时补货</Text>
+                <Text style={styles.warningText}>{zh['inventory.lowStockWarning']}</Text>
               </View>
             )}
           </Card.Content>
@@ -219,7 +224,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
 
         <Card style={styles.infoCard} mode="elevated">
           <Card.Content>
-            <Title style={styles.sectionTitle}>库存数量</Title>
+            <Title style={styles.sectionTitle}>{zh['inventory.quantity']}</Title>
             <View style={styles.quantitySection}>
               <TouchableOpacity
                 onPress={() => handleQuantityChange(-1)}
@@ -245,27 +250,27 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
 
         <Card style={styles.infoCard} mode="elevated">
           <Card.Content>
-            <Title style={styles.sectionTitle}>详细信息</Title>
+            <Title style={styles.sectionTitle}>{zh['inventory.detailInfo']}</Title>
             <View style={styles.infoGrid}>
               <View style={styles.infoRow}>
                 <MapPin size={16} color={designTokens.colors.blue[500]} />
-                <Text style={styles.infoLabel}>存放位置</Text>
+                <Text style={styles.infoLabel}>{zh['inventory.location']}</Text>
                 <Text style={styles.infoValue}>{item.location}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Package size={16} color={designTokens.colors.blue[500]} />
-                <Text style={styles.infoLabel}>分类</Text>
+                <Text style={styles.infoLabel}>{zh['inventory.category']}</Text>
                 <Text style={styles.infoValue}>{item.category}</Text>
               </View>
               <Divider style={styles.divider} />
               <View style={styles.infoRow}>
                 <Calendar size={16} color="#9ca3af" />
-                <Text style={styles.infoLabel}>创建时间</Text>
+                <Text style={styles.infoLabel}>{zh['common.createdAt']}</Text>
                 <Text style={styles.infoValue}>{formatDate(item.createdAt)}</Text>
               </View>
               <View style={styles.infoRow}>
                 <Calendar size={16} color="#9ca3af" />
-                <Text style={styles.infoLabel}>更新时间</Text>
+                <Text style={styles.infoLabel}>{zh['common.updatedAt']}</Text>
                 <Text style={styles.infoValue}>{formatDate(item.updatedAt)}</Text>
               </View>
             </View>
@@ -277,9 +282,9 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
             mode="outlined"
             style={styles.actionButton}
             icon={() => <Edit size={16} />}
-            onPress={() => Alert.alert('提示', '编辑功能开发中')}
+            onPress={() => Alert.alert(zh['common.alertHint'], zh['common.editInDevelopment'])}
           >
-            编辑
+            {zh['common.edit']}
           </Button>
           <Button
             mode="contained"
@@ -287,7 +292,7 @@ const InventoryDetailPage: React.FC<InventoryDetailPageProps> = ({ route, naviga
             icon={() => <Trash2 size={16} />}
             onPress={handleDelete}
           >
-            删除
+            {zh['common.delete']}
           </Button>
         </View>
       </View>
