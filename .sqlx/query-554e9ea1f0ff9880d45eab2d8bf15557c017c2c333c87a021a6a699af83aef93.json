@@ -96,16 +96,11 @@
       {
         "ordinal": 18,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 19,
         "name": "updated_at",
-        "type_info": "Timestamp"
-      },
-      {
-        "ordinal": 20,
-        "name": "deleted_at",
         "type_info": "Timestamptz"
       }
     ],
@@ -129,7 +124,6 @@
       true,
       true,
       false,
-      true,
       true,
       true,
       true,

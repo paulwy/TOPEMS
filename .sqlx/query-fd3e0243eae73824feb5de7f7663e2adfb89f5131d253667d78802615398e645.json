@@ -66,12 +66,12 @@
       {
         "ordinal": 12,
         "name": "start_time",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 13,
         "name": "last_transfer_time",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 14,
@@ -86,12 +86,12 @@
       {
         "ordinal": 16,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 17,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 18,
@@ -129,7 +129,7 @@
       true,
       true,
       false,
-      false
+      true
     ]
   },
   "hash": "fd3e0243eae73824feb5de7f7663e2adfb89f5131d253667d78802615398e645"

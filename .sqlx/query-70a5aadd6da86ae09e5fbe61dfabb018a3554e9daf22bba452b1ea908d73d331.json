@@ -16,7 +16,7 @@
       {
         "ordinal": 2,
         "name": "standard_time",
-        "type_info": "Float8"
+        "type_info": "Int4"
       },
       {
         "ordinal": 3,

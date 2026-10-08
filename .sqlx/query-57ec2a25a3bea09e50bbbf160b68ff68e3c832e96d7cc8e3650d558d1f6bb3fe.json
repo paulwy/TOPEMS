@@ -72,7 +72,7 @@
         "Varchar",
         "Varchar",
         "Varchar",
-        "Int4",
+        "Varchar",
         "Varchar",
         "Text",
         "Uuid"

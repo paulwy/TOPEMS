@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "transfer_time",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 9,
@@ -73,7 +73,7 @@
         "Uuid",
         "Uuid",
         "Numeric",
-        "Timestamp",
+        "Timestamptz",
         "Varchar",
         "Varchar",
         "Text"
