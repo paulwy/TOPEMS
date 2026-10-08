@@ -68,6 +68,16 @@
 
 > 备份统一存放于仓库 `backups/`（已 gitignore，不入库）；清理策略见 §标准恢复流程。
 
+### 备份有效性验证（2026-10-08）
+
+| 备份 | 格式 | 对象数 | 恢复方式 | 状态 |
+|---|---|---|---|---|
+| `topems_container_clean_20261008.sql` | custom（-Fc） | 1275 表数据对象 | `pg_restore --list` ✓ / `pg_restore -d` | ✅ 有效 |
+| `topems_pre_clean_20261008.sql` | custom（-Fc） | 1294 表数据对象 | `pg_restore --list` ✓ / `pg_restore -d` | ✅ 有效 |
+| `topems_migration_backup_20261008_080512.sql` | plain SQL | 68208 行 | `psql -f` 直读 | ✅ 有效 |
+
+> 建议：备份后立即用 `pg_restore --list`（custom）或 `wc -l`/抽样（plain）验证可读性；重要变更前重做备份。
+
 ## 标准恢复/迁移流程（规范，2026-10-08 固化）
 
 > 本次合流缺陷的根因教训：恢复目标非空 + 无 `ON_ERROR_STOP` → 数据静默合流。
