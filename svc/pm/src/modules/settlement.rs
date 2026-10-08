@@ -13,7 +13,7 @@ use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_event::event::{
-    EventPublisher, EventType, SettlementApprovedPayload, SettlementCreatedPayload,
+    commit_retry, EventPublisher, EventType, SettlementApprovedPayload, SettlementCreatedPayload,
 };
 use uuid::Uuid;
 
@@ -191,11 +191,10 @@ async fn create_settlement(
                     created_by: s.created_by.clone(),
                     created_at: now,
                 };
-                if let Err(e) = publisher
-                    .publish_event(EventType::SettlementCreated, payload)
-                    .await
-                {
-                    tracing::warn!("[PM Settlement] 发布 SettlementCreated 事件失败: {}", e);
+                let et = EventType::SettlementCreated;
+                if let Err(e) = publisher.publish_event(et, &payload).await {
+                    tracing::warn!("[PM Settlement] 发布 SettlementCreated 失败: {}，入重试队列", e);
+                    commit_retry::push_retry_typed("pm", et, &payload).await;
                 }
             }
             Json(ApiResponse::success(s, "创建决算成功"))
@@ -290,11 +289,10 @@ async fn approve_settlement(
                     approved_by: "system".to_string(),
                     approved_at: now,
                 };
-                if let Err(e) = publisher
-                    .publish_event(EventType::SettlementApproved, payload)
-                    .await
-                {
-                    tracing::warn!("[PM Settlement] 发布 SettlementApproved 事件失败: {}", e);
+                let et = EventType::SettlementApproved;
+                if let Err(e) = publisher.publish_event(et, &payload).await {
+                    tracing::warn!("[PM Settlement] 发布 SettlementApproved 失败: {}，入重试队列", e);
+                    commit_retry::push_retry_typed("pm", et, &payload).await;
                 }
             }
             Json(ApiResponse::success(s, "决算审批通过"))

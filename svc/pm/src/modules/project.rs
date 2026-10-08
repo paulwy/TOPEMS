@@ -12,7 +12,7 @@ use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_event::event::{EventPublisher, EventType, PmProjectCreatedPayload};
+use topems_shared_event::event::{commit_retry, EventPublisher, EventType, PmProjectCreatedPayload};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -324,19 +324,19 @@ async fn create_project(
                         project_name,
                         owner_id,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::PmProjectCreated, payload)
-                        .await
-                    {
-                        tracing::warn!(
-                            "[pm] PmProjectCreated 事件发布失败（graceful fallback）: {}",
-                            e
-                        );
-                    } else {
-                        tracing::info!(
+                    let et = EventType::PmProjectCreated;
+                    match publisher.publish_event(et, &payload).await {
+                        Ok(_) => tracing::info!(
                             "[pm] PmProjectCreated 事件发布成功 - project_id={}",
                             project_id
-                        );
+                        ),
+                        Err(e) => {
+                            tracing::warn!(
+                                "[pm] PmProjectCreated 事件发布失败: {}，入重试队列",
+                                e
+                            );
+                            commit_retry::push_retry_typed("pm", et, &payload).await;
+                        }
                     }
                 });
             }
