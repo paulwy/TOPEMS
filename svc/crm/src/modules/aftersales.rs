@@ -21,7 +21,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_event::event::{EventType, ReturnCompletedPayload, ReturnProcessedPayload};
+use topems_shared_event::event::{commit_retry, EventType, ReturnCompletedPayload, ReturnProcessedPayload};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReturnStage {
@@ -1290,8 +1290,24 @@ pub async fn complete_return(
                 req.comment
             );
 
-            if let Some(ref publisher) = state.event_publisher {
-                let publisher = publisher.clone();
+            // 财务对账：退换货完成时同步到 erp.fin_reconciliations（仍在事务内）
+            if let Err(e) =
+                sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await
+            {
+                tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
+            }
+
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
+                }
+            }
+
+            // D6：commit 成功后再 emit（commit 失败不发，消除孤儿事件）；发布失败入 ZSET 重试。
+            if let Some(publisher) = state.event_publisher.clone() {
                 let return_id = return_record.id;
                 let return_no = return_record.return_no.clone();
                 let order_id = return_record.order_id;
@@ -1309,27 +1325,26 @@ pub async fn complete_return(
                         status,
                         processed_by: None,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::ReturnProcessed, payload)
-                        .await
-                    {
-                        tracing::warn!(
-                            "[crm] ReturnProcessed 事件发布失败（graceful fallback）: {}",
-                            e
-                        );
-                    } else {
-                        tracing::info!(
+                    let et = EventType::ReturnProcessed;
+                    match publisher.publish_event(et, &payload).await {
+                        Ok(_) => tracing::info!(
                             "[crm] ReturnProcessed 事件发布成功 - return_no={}",
                             return_no_log
-                        );
+                        ),
+                        Err(e) => {
+                            tracing::warn!(
+                                "[crm] ReturnProcessed 事件发布失败: {}，入重试队列",
+                                e
+                            );
+                            commit_retry::push_retry_typed("crm", et, &payload).await;
+                        }
                     }
                 });
             }
 
             // 发布 ReturnCompleted 业务事件，ERP 订阅后生成退款凭证
             // 解决 StockOutbound 与退款语义不匹配问题：退款应在退货完成时触发
-            if let Some(ref publisher) = state.event_publisher {
-                let publisher = publisher.clone();
+            if let Some(publisher) = state.event_publisher.clone() {
                 let return_id = return_record.id;
                 let return_no = return_record.return_no.clone();
                 let customer_id = return_record.customer_id;
@@ -1357,38 +1372,23 @@ pub async fn complete_return(
                         completed_at,
                         tenant_id: tenant_id_pub,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::ReturnCompleted, payload)
-                        .await
-                    {
-                        tracing::warn!(
-                            "[crm] ReturnCompleted 事件发布失败（graceful fallback）: {}",
-                            e
-                        );
-                    } else {
-                        tracing::info!(
+                    let et = EventType::ReturnCompleted;
+                    match publisher.publish_event(et, &payload).await {
+                        Ok(_) => tracing::info!(
                             "[crm] ReturnCompleted 事件发布成功 - return_no={}",
                             return_no_log
-                        );
+                        ),
+                        Err(e) => {
+                            tracing::warn!(
+                                "[crm] ReturnCompleted 事件发布失败: {}，入重试队列",
+                                e
+                            );
+                            commit_retry::push_retry_typed("crm", et, &payload).await;
+                        }
                     }
                 });
             }
 
-            // 财务对账：退换货完成时同步到 erp.fin_reconciliations
-            if let Err(e) =
-                sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await
-            {
-                tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
-            }
-
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
-                }
-            }
             Json(ApiResponse::success(return_record, "退换货已完成"))
         }
         Err(e) => {
@@ -2697,8 +2697,26 @@ pub async fn confirm_return(
     match result {
         Ok(return_record) => {
             if matches!(target, ReturnStage::Done) {
-                if let Some(ref publisher) = state.event_publisher {
-                    let publisher = publisher.clone();
+                // 财务对账仍在事务内
+                if let Err(e) =
+                    sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await
+                {
+                    tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
+                }
+            }
+
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("提交事务失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
+                }
+            }
+
+            // D6：commit 成功后再 emit ReturnCompleted；发布失败入 ZSET 重试。
+            if matches!(target, ReturnStage::Done) {
+                if let Some(publisher) = state.event_publisher.clone() {
                     let return_id = return_record.id;
                     let return_no = return_record.return_no.clone();
                     let customer_id = return_record.customer_id;
@@ -2726,32 +2744,21 @@ pub async fn confirm_return(
                             completed_at,
                             tenant_id: tenant_id_pub,
                         };
-                        if let Err(e) = publisher
-                            .publish_event(EventType::ReturnCompleted, payload)
-                            .await
-                        {
-                            tracing::warn!("[crm] ReturnCompleted 事件发布失败: {}", e);
-                        } else {
-                            tracing::info!(
+                        let et = EventType::ReturnCompleted;
+                        match publisher.publish_event(et, &payload).await {
+                            Ok(_) => tracing::info!(
                                 "[crm] ReturnCompleted 事件发布成功 - return_no={}",
                                 return_no_log
-                            );
+                            ),
+                            Err(e) => {
+                                tracing::warn!(
+                                    "[crm] ReturnCompleted 事件发布失败: {}，入重试队列",
+                                    e
+                                );
+                                commit_retry::push_retry_typed("crm", et, &payload).await;
+                            }
                         }
                     });
-                }
-                if let Err(e) =
-                    sync_return_to_finance(&state, txn, return_record.id, tenant_id, &locale).await
-                {
-                    tracing::warn!("退换货 {} 财务对账失败: {}", return_record.return_no, e);
-                }
-            }
-
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("提交事务失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
                 }
             }
             let msg = match target {
