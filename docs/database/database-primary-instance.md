@@ -9,7 +9,7 @@
 | 实例 | 端口 | 运行方式 | 角色 | 连接凭据来源 | 用途 |
 |---|---|---|---|---|---|
 | **开发主库（brew）** | `5432` | Homebrew postgres（宿主机） | **本地开发/验证主库** | `.env` 的 `DATABASE_URL` / `MIGRATE_URL` | 日常开发、单测、租户隔离/RLS 验证、数据手工排查 |
-| **部署库（docker）** | `5433`（容器内 `5432`） | `docker compose up`（topems-postgres） | **部署运行库** | `deploy/docker/.env` 的 `POSTGRES_PORT`；服务容器内一律用 `postgres:5432` | docker-compose 部署、CI/预发布环境 |
+| **部署库（docker）** | `5433`（容器内 `5432`） | `docker compose up`（topems-postgres） | **部署运行库**（历史，2026-10-08 已弃，见 §7） | `deploy/docker/.env` 的 `POSTGRES_PORT`；服务容器内一律用 `postgres:5432` | docker-compose 部署、CI/预发布环境（历史） |
 
 **一句话口径**：本地开发与验证一律走 `5432`（.env 指向）；`5433` 是 docker 部署形态的宿主映射端口，
 服务容器内连接字符串仍是 `postgres:5432`，**不要把 5433 当作"第二版本数据库"**。
@@ -111,3 +111,45 @@ bash scripts/db/check-consistency.sh
 - `database/README.md` — 空库建库标准流程（B14 固化）
 - `docs/database/database-half-migration-ops.md` — 生产主库半迁移运维模式
 - `scripts/ensure-empty-db-prereqs.sh` / `scripts/migrate-verify-empty.sh` / `scripts/migration/validate.sh` / `scripts/db/check-consistency.sh`
+
+---
+
+## 7. 生产库独立化与纯净分离（2026-10-08 定案）
+
+> 用户定案：生产库脱离 Docker——5433 数据迁移至 5432，并**纯净分离**为生产/开发双库。
+> 本节是**当前唯一权威口径**，取代 §1 中"部署库（docker）5433"与 §6 中"5433 部署数据"的历史描述。
+
+### 7.1 双库方案（唯一权威）
+
+| 库 | 端口 | 运行方式 | 角色 | 数据基线 |
+|---|---|---|---|---|
+| **生产库 `topems`** | `5432` | Homebrew PostgreSQL **18.4**（`/opt/homebrew/opt/postgresql@18`，`/opt/homebrew/var/postgresql@18`） | **生产权威库** | **纯净**：231 表 / 850 权限 / 1 用户（= 5433 原数据全量一致） |
+| **开发库 `topems_dev`** | `5432` | 同实例 | 开发/验证基线 | 235 表 / 955 权限（含 4 个开发独有 public 表 + 19 个模块表 + 开发数据） |
+| **验证库 `topems`（5433）** | `5433` | Homebrew PostgreSQL 18.4（`/opt/homebrew/var/postgres5433`） | 迁移链重放 / 双库账本核对（§6） | 与生产一致（数据已复制） |
+
+### 7.2 迁移过程与纯净分离
+
+1. **迁移**：5433 全量 `pg_dump` → 恢复至 5432（目标库 `topems` 已存在——开发主库）
+2. **合流缺陷（已修复）**：恢复时目标库非空 + psql/pg_restore 未核验目标库空态 → 18 表数据合并（core_permissions 850→955 等）+ 部分表定义以开发库为准（如 `ai_settings.default_model` text vs varchar）
+3. **纯净分离（本定案）**：
+   - 备份合并库 → `DROP DATABASE topems` → 重建 → 从 5433 纯净 dump 恢复 → **生产库纯净**
+   - 合并库备份恢复至新建 `topems_dev` → **开发基线完整保留**
+4. **验证**：生产 231/850/1 与 5433 一致；开发 235/955 含全部开发结构
+
+### 7.3 连接口径（应用/脚本）
+
+- **生产/部署**：`postgres://topems:topems@localhost:5432/topems`（脚本默认 PGPORT=5432 已对齐）
+- **开发**：`postgres://topems:topems@localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权）
+- **5433 验证库**：仅迁移链重放/账本核对（§6 命令），不承载应用
+
+### 7.4 备份资产（2026-10-08）
+
+- `/Users/xingzhai/topems_migration_backup_20261008_080512.sql`（5433 原全量，迁移时）
+- `/Users/xingzhai/topems_container_clean_20261008.sql`（5433 纯净，分离时）
+- `/Users/xingzhai/topems_pre_clean_20261008.sql`（合并库全量 = 开发基线来源）
+
+### 7.5 Docker 容器处置
+
+- `topems-postgres` 容器**已弃**（数据已原生化，5433 由 Homebrew 实例承载）
+- Docker daemon 僵死无法操作容器；待恢复后清理模拟容器（`topems-prod-sim` / `topems-sim:systemd`）
+- 容器策略详见 `docs/deploy/container-strategy.md`
