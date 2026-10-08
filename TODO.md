@@ -872,3 +872,12 @@
 - **三态复跑（新二进制 pid 90552）**：create→源表落库(修复后客户2) + 投影落库；update→源/投影同收敛(13900009999/inactive)；delete→源软删(active=0) + 投影归 0。测试数据已清理归零。
 - **门禁/测试**：clippy 0 warning；双门禁 py/cjs PASS；erp 902 测试绿；lefthook 全 hook 通过。
 - **残留（生产部署注意）**：单行写 handler 现已补齐 commit；emit 在事务内发布，若 commit 失败仍有孤儿事件（与 delete_customer 既有取舍一致，未用 outbox）；sales_order 状态流转 commit 失败仅 log 不返回 500。
+
+## 2026-10-08 D6 outbox 事件一致性评估（决策文档已出，待实施）
+
+> B1 + 事务专项核查（c843ad423）暴露"事务内 emit"窗口：孤儿事件（commit 失败已发）+ 丢失事件（XADD 失败源表有行投影缺）。产出 `docs/architecture/decision-d6-outbox-event-consistency.md`，**本项只出文档，未改业务代码、未落迁移**。
+
+- **现状盘点**：erp 核心发布面 = customer/sales_order/purchase_order（`searchable_projection.rs:151` + typed helper）；其他服务同型——finance 21 / wms 19 / hrm 21 / scm 20 / crm 9 / mes 8 / pm 3 发布点。消费侧 search 投影 UPSERT 天然幂等（`projection.rs:87` ON CONFLICT）。
+- **推荐**：**选项 B（commit 后 emit + 重试队列）**——最小侵入，免迁移，直击孤儿/丢失两类不一致；完整 outbox（A）/ CDC（C）登记为演进路线，当前规模不过度工程。
+- **待用户确认实施范围**：① 仅 erp 三模块 vs 推广全部发布服务；② 重试载体 Redis ZSET（免迁移）vs 0013 落表；③ 后台任务内嵌 erp vs 独立进程；④ 0013 落库时点；⑤ 是否本次一并做完整 outbox。
+- **状态**：📋 文档待批，实施另行派发。
