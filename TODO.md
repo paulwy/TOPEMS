@@ -756,3 +756,67 @@
 - B8/B9 任务前提基于旧快照（dev:core/DTS 与 GIS mock 已由并行线 10-06 提前落地并 push），本批以"复现+实测确认"收口，未制造空提交
 - B5/A5 双库口径重要更新：**权威账本=public._sqlx_migrations**（5432 mes=292 为 10-07 对账前陈旧碎片）；收敛终态 329=329=329
 - 全部提交未 push；未动已应用迁移文件、未动 TODO.md 既有条目、未 `git add -A`
+
+## ✅ 执行进度：批 3 全部定案一步到位完成态（2026-10-08）
+
+> 依据《下一步工作规划》批 3 条目。用户已拍板全部定案（无二选一残留）：B1 走事件投影（非 API 化）；B15 出站埋点；0011 平台表 permissive；3b/0012 FORCE 空转分类处置；B14 维持脚本层 + A2 弃 docker 口径（文档固化）。五项并行（3a 三项 + 3b + 文档随批），提交均为本地、未 push。
+
+### B1 search→erp 事件投影（CQRS 本地读模型） — ✅ 完成
+
+- **前提修正（地面真相）**：开工前 search→erp 白名单已由并行线 `fd935863f`（API 化）撤销——search 3 处直读（handlers.rs:113/167/197）已改为 erp HTTP API（`erp_api.rs`），`schema_boundary.json` search 条目已无 allow、`temporary_entries=[]`、双门禁已绿
+- **定案（一步到位性能最优）**：按用户"一步到位"指令继续收敛为 **CQRS 本地读模型**——erp 异步发事件 → search 订阅维护自有投影表 → 查询纯本地 SQL、零跨服务 fan-out（取代刚落地的 HTTP fan-out 查询路径）
+- **事件契约**：新增 `EventType::SearchableEntityChanged` + `SearchableEntityChangedPayload{op=upsert|delete}`；幂等键=`(tenant_id, entity_type, entity_id)`（UPSERT/DELETE 天然幂等）；版本登记 `docs/architecture/event-driven.md §9.3`（只追加）
+- **erp 发布**：`modules/searchable_projection::emit_searchable_change` **单一发布辅助**（从写事务读最新行发布），插全部写路径成功分支——customer（create/update/delete/change_status + batch create/update/delete/status）、sales_order（create/update/delete/approve/ship/complete/cancel 经 update_sales_order_status 中央入口 + batch create/status 经 batch_update_status 单点）、purchase_order（create/update/delete/approve/cancel）；batch_change_category 仅改分类/行业（非投影列）跳过
+- **search 消费**：`enable_events=true`；启动自举 `public.search_entity_projections`（对齐 unified-core audit_logs 运行时建表先例，**不占 migrations**）；`subscribe_handler` 写投影（失败走重试/DLQ）；客户/订单搜索改读本地投影；删除 `erp_api.rs` HTTP fan-out
+- **覆盖验证**：erp 三表当前均 **0 行** → 投影计数 0、逐实体差=0（无存量需补拉）；SQL 链路抽验（实连 5432）：建表→upsert→**幂等重放仍 1 行**→租户过滤 ILIKE 查询命中→delete op 移除→清理归 0
+- **门禁/验证**：双门禁 exit 0（py：search PASS；cjs：1468 files）；`cargo check --workspace` 0 错、clippy 0 warning；测试 shared-event 绿 / search **105** / erp **902** 全绿
+- **commit**：`1bbd1ac1a`（14 文件，pathspec 提交，未纳入并行线暂存文件）
+- **残留**：① 未跑活 Redis Stream→search 消费者全链路 E2E（需重启 erp/search 进程加载新二进制；SQL 语义已验、订阅代码与既有 subscribe_handler/DLQ 同构）；② 存量行 backfill 未实现（当前三表空故 moot，建议后续加启动时差距对账）；③ search `reqwest` 依赖随 erp_api.rs 删除而闲置（未移除，避免牵连）
+
+### B15 出站调用埋点（runtime 矩阵重采路径·出站侧） — ✅ 完成
+
+- **位置定案**：出站统一入口=`lib/shared-service-client/src/service_client/base_client.rs` 的 execute_request / get_without_response_inner / get_raw_response 三处（Generic/TypedServiceClient 均经此）；`record_service_call(caller, target_path)` 已由前序 `459a0dba1` 落地
+- **本次补齐缺口**：caller label 原从 `TOPEMS_SERVICE_NAME` env 读但**全仓无任何位置设置该 env**（grep .env/deploy/scripts/源码=0，原恒为 unknown-service）→ `lib/shared-bootstrap/src/lib.rs` `bootstrap_service()`（27 服务统一起点）+12 行：`config.name` 归一化（topems-crm→crm-service，与入站 token username 同构）注入 env（已设不覆盖）+ `pre_register_service_metrics()` 预注册
+- **指标**：`topems_service_to_service_calls_total{service=caller, target=callee}` CounterVec；target 由请求路径 `/api/{svc}/...` 推导为 `{svc}-service`；暴露=prometheus_metrics_handler 合并 gather()
+- **/metrics 实证**：集成测试 `lib/shared-service-client/tests/outbound_metric.rs`（mock HTTP 后端）——调用前 N → 一次 `get("/api/v1/erp/orders")` 后 N+1，TextEncoder 输出含 `{service="test-caller-service",target="erp-service"}`；**1 passed**
+- **验证**：check（shared-bootstrap/service-client/shared-auth）0 错、clippy 0 warning、bootstrap 120/120、client 测试全绿、pre-commit 6 门禁
+- **文档**：`runtime-matrix-decision-2026-10-03.md §5.1` 追加"出站侧已就位、入站侧 459a0dba1 已落地、残留=生产流量窗口+--collect 重跑"
+- **commit**：`9df82e1bb`（4 文件 +136）
+- **残留**：生产流量窗口（真实业务流量 ≥1 周期后采样）+ `--collect` 重跑（脚本已就绪）
+
+### 0011 平台表 permissive 策略 — ✅ 完成
+
+- **复核清单**（重跑 A5 审计脚本只读）：RLS=ON 零 policy 无 tenant_id 平台表 **5432=30 / 5433=31**（与 A5 完全一致无新增；5433 多 `finance.finance_voucher_generation_rules` 为既有漂移）；全部实测 rls_on=t/rls_force=t（FORCE 已开，迁移未动 RLS 开关）；含 tenant_id 表 with_tenant_id=0（A5 已补净）
+- **新迁移** `20261003000011_b3a_platform_tables_permissive.sql`（+80 行幂等 DO 块）：动态扫描「基表+RLS=ON+零 policy+无 tenant_id 列」→ `CREATE POLICY <schema>_allow_all_<table> AS PERMISSIVE FOR ALL USING(true) WITH CHECK(true)`（命名对齐 gis_allow_all_* 风格）；不改表结构、不 ENABLE/FORCE
+- **双库账本**：落账 checksum=文件原始字节 **SHA-384**（与 0009/0010 对拍逐字节一致，sqlx-core 0.8.6 算法）；**磁盘 331 = 5432 public 331 = 5433 public 331**（0011 后 330、并行 0012 落库后收敛 331）；复扫「零 policy 无 tenant_id」=0/0；checksums.txt 登记、validate.sh Checksum errors=0；双向独有 15/14=14 个序号制遗留迁移记法差（磁盘 `000_*.sql` ↔ 台账 `version=0..13`），**零真实漂移**
+- **NOSUPERUSER 验证**（topems_app 靶 `public.todos`）：INSERT/SELECT/DELETE 全过（迁移前 RLS default-deny 会拒；**脚枪消除**）；superuser(topems) 零变化（恒无视 RLS）；幂等重跑双库 **0 NOTICE**
+- **commit**：`7b0d0a07e`（迁移+checksums.txt，仅 2 文件；`sqlx-cache-freshness` 钩子因并行线未提交 Rust WIP 全量编译失败跑 13min 与本项无关，按授权 `--no-verify` 并注明；未裹挟并行线暂存的 0012/b3b 文件）
+- **残留**：并行 3b 的 0012 当时仍在并行线暂存区（未裹挟），checksums.txt 中 0012 行系自动生成随附、待 3b 提交即自洽
+
+### 3b FORCE 空转表 173/192 分类处置（0012） — ✅ 完成
+
+- **分类清单**（动态守卫 `relforcerowsecurity=TRUE AND relrowsecurity=FALSE`，判据：tenant_id(uuid) 列 + 0908/0909 FORCE 清单归属 + 行数 + 代码引用 + 迁移链）：
+  - **租户业务表**（含 tenant_id uuid）：5432=118（15 非空）/ 5433=137（3 非空）——设计为租户隔离，U5-C 先例
+  - **全局平台表**（无 tenant_id）：5432=55（1 非空 core_plugins）/ 5433=55（全空）——iam.roles/portal.*/ehs.*/qms.*/doc_service.* 等
+  - **死表/影子表**（public.*/qa_lab）：**0/0**（历史已由 U3b `20261003000002` 及系列 drop-shadow 清理完毕）
+- **成因定位**：`20260908000018_rls_force.sql`(331 表)/`20260909000004_rls_force_all.sql`(226 表) 按"已启用 RLS"前提批量打 FORCE，但这批表 RLS 从未 ENABLE → **FORCE 孤儿标志（空转）**；仓库无任何 DISABLE RLS 迁移
+- **处置**（全部收敛到有策略 RLS 态，未 DROP 任何表）：租户业务表→ENABLE+FORCE + `rls_tenant_isolation`（表达式逐字对齐 U5/A5：GUC 未设/空/nil/tenant_id IS NULL 放行）；全局平台表→ENABLE+FORCE + `<schema>_allow_all_<table>` permissive（与 0011 同构，受限角色访问等价现状）
+- **新迁移** `20261003000012_b3b_force_rls_classify.sql`（151 行幂等 DO 循环）：动态扫描、外层即"FORCE 空转"选择条件（二次重放零命中）；与 B3a(0011)/A5(0009) **靠 relrowsecurity 标志天然互斥**（不碰 0011 的 RLS=ON 零 policy 表）
+- **漂移处理**：5432 的 173 张是 5433（192）的子集、5433 多 19 张（production_orders/warehouses 等，5432 已脱离空转态）——动态扫描天然吸收，无硬编码表名
+- **双库账本**：**磁盘 331 = 5432 public 331 = 5433 public 331**、checksum 0、validate.sh 0 error；checksums.txt 已登记
+- **RLS 状态复查**：FORCE 空转 **5432: 173→0 / 5433: 192→0**；样例 erp.audit_logs→RLS=ON/FORCE=ON/1 策略（261 行 tenant_id 全 NULL 走放行分支）；**superuser 零变化**（topems 双库 rolsuper=t 读全 261 行）
+- **commit**：`1efda6d92`（迁移+分类审计脚本，仅 2 文件；pre-commit 钩子因并行线半成品 svc/erp、lib/shared-event 代码批量失败与纯 SQL 无关，按授权 `--no-verify` 并注明；长钩子窗口期并行线连续提交，重提交干净落地）
+- **残留**：无未处置空转表；受限角色 topems_app 切换时这批表即按策略生效（租户表隔离/平台表全放行），建议纳入 B6 后置六链路回归；5432 mes/iam 台账碎片仍为既有债
+
+### 文档随批：B14 空库守卫固化 + A2 弃 docker 口径 — ✅ 完成
+
+- **B14（维持脚本层定案）**：`database/README.md` 新增节「空库建库标准流程（B14 固化）」=①`MIGRATE_URL=... bash scripts/ensure-empty-db-prereqs.sh` 守卫（探活→sqlx migrate run→断言账本=文件数）→ ②守卫内部已执行迁移 → ③`bash scripts/migration/validate.sh` 三方核对（磁盘↔checksums.txt↔台账）；附 `scripts/migrate-verify-empty.sh` 强验证说明；CI 挂载为"建议登记"（接线属 CI 变更另批）；评估点登记「未来一次性迁移基线重建窗口（大版本重构）再评估守卫脚本层 vs 重构迁移链」
+- **A2（弃 docker 口径定案）**：`docs/database/database-primary-instance.md §6`（+68 行，未重写历史 §1）：5433 Homebrew 官方双库验证实例条目（PG18.4 postgresql@18、`/opt/homebrew/var/postgres5433`、端口 5433、pg_ctl 启停、pg_hba trust 仅回环、topems/topems_secret、库 topems、MIGRATE_URL、保留运行；实测 `_sqlx_migrations`=331 与磁盘/5432 三账一致）；与 docker 口径关系=Docker Desktop 特权 helper 阻塞不可用→Homebrew 为等价替代、**迁移链重放结果与 docker 口径无关**；未来边界=部署目标明确 docker 时再在目标环境验证；脚本引用表（ensure-empty-db-prereqs.sh / migrate-verify-empty.sh / validate.sh / check-consistency.sh，全部 ls 命中）
+- **commit**：`d285980dc`（2 文件 +109；pre-commit 24 钩子全绿未被夹带）
+- **残留**：CI 挂载空库守卫为建议未接线（`.github/workflows/` 不在本批边界）；任务口述的 `checksums-verify.sh` 实测不存在，三方核对实由 `scripts/migration/validate.sh` 承担（文档按真实路径引用）
+
+### 批 3 双库账本终态（最终实测核对）
+
+- **磁盘 331 = 5432 public 331 = 5433 public 331**，checksum 不一致 0、双向独有 0（仅序号制遗留记法差）
+- 迁移时间戳占用（截至批 3）：0000–0012（0010=u4 / 0011=b3a / 0012=b3b）
+- 全部提交未 push；未动已应用迁移文件、未 `git add -A`
