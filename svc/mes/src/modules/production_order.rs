@@ -17,7 +17,7 @@ use sqlx::{
 use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
-use topems_shared_event::event::{EventType, ProductionOrderCreatedPayload};
+use topems_shared_event::event::{commit_retry, EventType, ProductionOrderCreatedPayload};
 use utoipa::ToSchema;
 
 use crate::modules::approval_common::{
@@ -535,19 +535,19 @@ req.planned_end_date.map(|d| d.date_naive()),
                 planned_start_date: psd,
                 created_by: cby,
             };
-            if let Err(e) = publisher
-                .publish_event(EventType::ProductionOrderCreated, payload)
-                .await
-            {
-                tracing::warn!(
-                    "[mes] ProductionOrderCreated 事件发布失败（graceful fallback）: {}",
-                    e
-                );
-            } else {
-                tracing::info!(
+            let et = EventType::ProductionOrderCreated;
+            match publisher.publish_event(et, &payload).await {
+                Ok(_) => tracing::info!(
                     "[mes] ProductionOrderCreated 事件发布成功 - order_id={}",
                     oid
-                );
+                ),
+                Err(e) => {
+                    tracing::warn!(
+                        "[mes] ProductionOrderCreated 事件发布失败: {}，入重试队列",
+                        e
+                    );
+                    commit_retry::push_retry_typed("mes", et, &payload).await;
+                }
             }
         });
     }
