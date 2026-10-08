@@ -30,13 +30,14 @@ import {
   RESOURCE_TYPES,
   type ExportResult,
 } from '../api/audit';
+import { zh } from '../i18n/zh';
 
 interface ExportWizardProps {
   open: boolean;
   onClose: () => void;
 }
 
-const STEPS = ['选择资源', '选择格式', '配置筛选'];
+const STEPS = [zh['exportWizard.stepSelectResource'], zh['exportWizard.stepSelectFormat'], zh['exportWizard.stepConfigFilters']];
 
 const FORMAT_ICONS: Record<string, string> = {
   csv: 'CSV',
@@ -79,13 +80,13 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
     try {
       const parsed = JSON.parse(trimmed);
       if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-        setFiltersError('筛选条件必须是 JSON 对象');
+        setFiltersError(zh['exportWizard.filtersMustBeJsonObject']);
         return null;
       }
       setFiltersError(null);
       return parsed as Record<string, unknown>;
     } catch {
-      setFiltersError('JSON 格式错误，请检查输入');
+      setFiltersError(zh['exportWizard.filtersJsonError']);
       return null;
     }
   };
@@ -117,7 +118,7 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
       });
       setExportResult(result);
     } catch (err) {
-      const message = err instanceof Error ? err.message : '数据导出失败';
+      const message = err instanceof Error ? err.message : zh['exportWizard.exportFailed'];
       setExportError(message);
     } finally {
       setExporting(false);
@@ -130,19 +131,19 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Download size={20} />
-        数据导出向导
+        {zh['exportWizard.title']}
       </DialogTitle>
       <DialogContent>
         {isComplete ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <CheckCircle size={56} color={designTokens.colors.success.main} />
             <Typography variant="h6" sx={{ mt: 2 }}>
-              导出成功
+              {zh['exportWizard.exportSuccess']}
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              资源类型: {RESOURCE_TYPES.find((r) => r.value === resourceType)?.label}
+              {zh['exportWizard.resourceTypeLabel']}{RESOURCE_TYPES.find((r) => r.value === resourceType)?.label}
               {'  |  '}
-              格式: {FORMAT_ICONS[format] ?? format}
+              {zh['exportWizard.formatLabel']}{FORMAT_ICONS[format] ?? format}
             </Typography>
             {exportResult && (
               <Paper variant="outlined" sx={{ p: 2, mt: 2, textAlign: 'left' }}>
@@ -165,13 +166,13 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
             {activeStep === 0 && (
               <Box sx={{ minHeight: '200px' }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  选择要导出的资源类型
+                  {zh['exportWizard.selectResourceType']}
                 </Typography>
                 <FormControl fullWidth>
-                  <InputLabel>资源类型</InputLabel>
+                  <InputLabel>{zh['exportWizard.resourceType']}</InputLabel>
                   <Select
                     value={resourceType}
-                    label="资源类型"
+                    label={zh['exportWizard.resourceType']}
                     onChange={(e) => setResourceType(e.target.value)}
                   >
                     {RESOURCE_TYPES.map((r) => (
@@ -187,7 +188,7 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
             {activeStep === 1 && (
               <Box sx={{ minHeight: '200px' }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  选择导出格式
+                  {zh['exportWizard.selectFormat']}
                 </Typography>
                 <RadioGroup
                   value={format}
@@ -215,18 +216,18 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
             {activeStep === 2 && (
               <Box sx={{ minHeight: '200px' }}>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  可选: 添加筛选条件 (JSON 格式)
+                  {zh['exportWizard.optionalFilters']}
                 </Typography>
                 <TextField
                   fullWidth
                   multiline
                   rows={6}
-                  label="筛选条件 (JSON)"
+                  label={zh['exportWizard.filtersLabel']}
                   placeholder={'{\n  "from": "2024-01-01",\n  "to": "2024-12-31",\n  "user_id": "user-001"\n}'}
                   value={filtersText}
                   onChange={(e) => setFiltersText(e.target.value)}
                   error={!!filtersError}
-                  helperText={filtersError ?? '留空则导出全部数据'}
+                  helperText={filtersError ?? zh['exportWizard.filtersHelper']}
                   sx={{ '& .MuiInputBase-input': { fontFamily: 'monospace', fontSize: '13px' } }}
                 />
               </Box>
@@ -242,7 +243,7 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
                 <CircularProgress size={20} />
                 <Typography variant="body2" color="text.secondary">
-                  正在导出数据...
+                  {zh['exportWizard.exporting']}
                 </Typography>
               </Box>
             )}
@@ -252,12 +253,12 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
       <DialogActions sx={{ p: 2 }}>
         {isComplete ? (
           <Button onClick={handleClose} variant="contained">
-            完成
+            {zh['exportWizard.done']}
           </Button>
         ) : (
           <>
             <Button onClick={handleClose} disabled={exporting}>
-              取消
+              {zh['exportWizard.cancel']}
             </Button>
             <Box sx={{ flex: 1 }} />
             {activeStep > 0 && (
@@ -266,7 +267,7 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
                 onClick={handleBack}
                 disabled={exporting}
               >
-                上一步
+                {zh['exportWizard.back']}
               </Button>
             )}
             {activeStep < STEPS.length - 1 ? (
@@ -276,7 +277,7 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
                 onClick={handleNext}
                 disabled={exporting}
               >
-                下一步
+                {zh['exportWizard.next']}
               </Button>
             ) : (
               <Button
@@ -285,7 +286,7 @@ const ExportWizard = ({ open, onClose }: ExportWizardProps) => {
                 onClick={handleExport}
                 disabled={exporting}
               >
-                {exporting ? '导出中...' : '开始导出'}
+                {exporting ? zh['exportWizard.exportingCta'] : zh['exportWizard.startExport']}
               </Button>
             )}
           </>

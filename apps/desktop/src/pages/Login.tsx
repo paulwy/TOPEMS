@@ -12,6 +12,7 @@ import {
   FormControlLabel,
   Alert,
 } from '@mui/material';
+import { zh } from '../i18n/zh';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -30,7 +31,7 @@ const Login = () => {
       const redirectTo = (location.state as { from?: string })?.from || '/dashboard';
       navigate(redirectTo);
     } catch {
-      setError('登录失败，请检查用户名和密码');
+      setError(zh['login.loginFailed']);
     }
   };
 
@@ -49,7 +50,7 @@ const Login = () => {
           TOPEMS
         </Typography>
         <Typography component="h2" variant="h5" sx={{ mt: 2 }}>
-          欢迎回来
+          {zh['login.welcomeBack']}
         </Typography>
         {error && (
           <Alert severity="error" sx={{ width: '100%', mt: 2 }}>
@@ -62,7 +63,7 @@ const Login = () => {
             required
             fullWidth
             id="username"
-            label="用户名"
+            label={zh['login.username']}
             name="username"
             autoComplete="username"
             autoFocus
@@ -75,7 +76,7 @@ const Login = () => {
             required
             fullWidth
             name="password"
-            label="密码"
+            label={zh['login.password']}
             type="password"
             id="password"
             autoComplete="current-password"
@@ -92,7 +93,7 @@ const Login = () => {
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
             }
-            label="记住我"
+            label={zh['login.rememberMe']}
           />
           <Button
             type="submit"
@@ -101,7 +102,7 @@ const Login = () => {
             sx={{ mt: 3, mb: 2 }}
             disabled={isLoading}
           >
-            {isLoading ? '登录中...' : '登录'}
+            {isLoading ? zh['login.loggingIn'] : zh['login.login']}
           </Button>
         </Box>
       </Box>

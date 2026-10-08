@@ -13,6 +13,7 @@ import {
   Chip,
 } from '@mui/material';
 import { Plus, Edit, Delete, Eye, TrendingUp, TrendingDown } from 'lucide-react';
+import { zh } from '../i18n/zh';
 
 interface Customer {
   id: string;
@@ -27,11 +28,11 @@ interface Customer {
 }
 
 const mockCustomers: Customer[] = [
-  { id: '1', name: '华为技术有限公司', contact: '李经理', phone: '13900139001', email: 'li@huawei.com', industry: '通信', status: 'active', value: '¥5,000,000', lastContact: '2024-01-15' },
-  { id: '2', name: '阿里巴巴集团', contact: '张总监', phone: '13900139002', email: 'zhang@alibaba.com', industry: '互联网', status: 'active', value: '¥8,000,000', lastContact: '2024-01-12' },
-  { id: '3', name: '腾讯控股', contact: '王经理', phone: '13900139003', email: 'wang@tencent.com', industry: '互联网', status: 'potential', value: '¥3,500,000', lastContact: '2024-01-10' },
-  { id: '4', name: '比亚迪', contact: '赵总', phone: '13900139004', email: 'zhao@byd.com', industry: '汽车', status: 'active', value: '¥6,200,000', lastContact: '2024-01-08' },
-  { id: '5', name: '小米科技', contact: '孙经理', phone: '13900139005', email: 'sun@xiaomi.com', industry: '电子', status: 'inactive', value: '¥2,000,000', lastContact: '2023-12-20' },
+  { id: '1', name: zh['crm.custHuawei'], contact: zh['crm.contactLi'], phone: '13900139001', email: 'li@huawei.com', industry: zh['crm.industryTelecom'], status: 'active', value: '¥5,000,000', lastContact: '2024-01-15' },
+  { id: '2', name: zh['crm.custAlibaba'], contact: zh['crm.contactZhang'], phone: '13900139002', email: 'zhang@alibaba.com', industry: zh['crm.industryInternet'], status: 'active', value: '¥8,000,000', lastContact: '2024-01-12' },
+  { id: '3', name: zh['crm.custTencent'], contact: zh['crm.contactWang'], phone: '13900139003', email: 'wang@tencent.com', industry: zh['crm.industryInternet'], status: 'potential', value: '¥3,500,000', lastContact: '2024-01-10' },
+  { id: '4', name: zh['crm.custByd'], contact: zh['crm.contactZhao'], phone: '13900139004', email: 'zhao@byd.com', industry: zh['crm.industryAuto'], status: 'active', value: '¥6,200,000', lastContact: '2024-01-08' },
+  { id: '5', name: zh['crm.custXiaomi'], contact: zh['crm.contactSun'], phone: '13900139005', email: 'sun@xiaomi.com', industry: zh['crm.industryElectronics'], status: 'inactive', value: '¥2,000,000', lastContact: '2023-12-20' },
 ];
 
 const CRM = () => {
@@ -48,9 +49,9 @@ const CRM = () => {
 
   const getStatusLabel = (status: Customer['status']) => {
     switch (status) {
-      case 'active': return '活跃';
-      case 'potential': return '潜在';
-      case 'inactive': return '休眠';
+      case 'active': return zh['crm.statusActive'];
+      case 'potential': return zh['crm.statusPotential'];
+      case 'inactive': return zh['crm.statusInactive'];
       default: return status;
     }
   };
@@ -59,10 +60,10 @@ const CRM = () => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
-          客户关系管理
+          {zh['crm.title']}
         </Typography>
         <Button variant="contained" startIcon={<Plus size={18} />}>
-          添加客户
+          {zh['crm.addCustomer']}
         </Button>
       </Box>
 
@@ -71,7 +72,7 @@ const CRM = () => {
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography variant="body2" color="text.secondary">客户总数</Typography>
+                <Typography variant="body2" color="text.secondary">{zh['crm.statTotalCustomers']}</Typography>
                 <Typography variant="h4">{customers.length}</Typography>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', color: '#4caf50' }}>
@@ -85,7 +86,7 @@ const CRM = () => {
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography variant="body2" color="text.secondary">活跃客户</Typography>
+                <Typography variant="body2" color="text.secondary">{zh['crm.statActiveCustomers']}</Typography>
                 <Typography variant="h4">{customers.filter(c => c.status === 'active').length}</Typography>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', color: '#4caf50' }}>
@@ -99,7 +100,7 @@ const CRM = () => {
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography variant="body2" color="text.secondary">潜在客户</Typography>
+                <Typography variant="body2" color="text.secondary">{zh['crm.statPotentialCustomers']}</Typography>
                 <Typography variant="h4">{customers.filter(c => c.status === 'potential').length}</Typography>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', color: '#ff9800' }}>
@@ -113,7 +114,7 @@ const CRM = () => {
           <Paper sx={{ p: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography variant="body2" color="text.secondary">客户总价值</Typography>
+                <Typography variant="body2" color="text.secondary">{zh['crm.statTotalValue']}</Typography>
                 <Typography variant="h4">¥24.7M</Typography>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', color: '#f44336' }}>
@@ -130,13 +131,13 @@ const CRM = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>客户名称</TableCell>
-                <TableCell>联系人</TableCell>
-                <TableCell>行业</TableCell>
-                <TableCell>价值</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>最近联系</TableCell>
-                <TableCell>操作</TableCell>
+                <TableCell>{zh['crm.colCustomerName']}</TableCell>
+                <TableCell>{zh['crm.colContact']}</TableCell>
+                <TableCell>{zh['crm.colIndustry']}</TableCell>
+                <TableCell>{zh['crm.colValue']}</TableCell>
+                <TableCell>{zh['crm.colStatus']}</TableCell>
+                <TableCell>{zh['crm.colLastContact']}</TableCell>
+                <TableCell>{zh['crm.colActions']}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

@@ -6,6 +6,7 @@ import { useNotificationStore } from '../../store/notificationStore';
 import { hideWindow, quitApp, restartApp, showLogs } from '../../utils/tray';
 import { windowApi } from '../../utils/tauri';
 import WindowList from '../WindowList';
+import { zh } from '../../i18n/zh';
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -41,7 +42,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
           <Menu size={20} />
         </IconButton>
         <Typography variant="h6" component="h1">
-          {user ? `欢迎, ${user.name}` : '欢迎使用 TOPEMS'}
+          {user ? `${zh['header.welcomeUser']}${user.name}` : zh['header.welcomeGuest']}
         </Typography>
       </Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -49,7 +50,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
           <Search size={16} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#999' }} />
           <input
             type="text"
-            placeholder="搜索..."
+            placeholder={zh['header.searchPlaceholder']}
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             style={{
@@ -61,7 +62,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             }}
           />
         </Box>
-        <IconButton onClick={handleWindowListOpen} title="窗口列表">
+        <IconButton onClick={handleWindowListOpen} title={zh['header.windowList']}>
           <Monitor size={20} />
         </IconButton>
         <WindowList anchorEl={windowListAnchor} onClose={handleWindowListClose} />
@@ -100,23 +101,23 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         >
           <MenuItem onClick={() => { hideWindow(); handleUserMenuClose(); }}>
             <X size={16} style={{ marginRight: 8 }} />
-            最小化到托盘
+            {zh['header.minimizeToTray']}
           </MenuItem>
           <MenuItem onClick={() => { restartApp(); handleUserMenuClose(); }}>
             <Monitor size={16} style={{ marginRight: 8 }} />
-            重启应用
+            {zh['header.restartApp']}
           </MenuItem>
           <MenuItem onClick={() => { showLogs(); handleUserMenuClose(); }}>
             <HelpCircle size={16} style={{ marginRight: 8 }} />
-            查看日志
+            {zh['header.viewLogs']}
           </MenuItem>
           <MenuItem onClick={() => { quitApp(); handleUserMenuClose(); }}>
             <X size={16} style={{ marginRight: 8 }} />
-            退出
+            {zh['header.quit']}
           </MenuItem>
           <MenuItem onClick={() => { logout(); handleUserMenuClose(); }}>
             <X size={16} style={{ marginRight: 8 }} />
-            退出登录
+            {zh['header.logout']}
           </MenuItem>
         </MenuMUI>
         <Box sx={{ borderLeft: '1px solid #e0e0e0', ml: 1, pl: 1, display: 'flex', gap: 0 }}>

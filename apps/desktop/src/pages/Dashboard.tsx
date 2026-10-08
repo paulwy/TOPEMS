@@ -21,29 +21,30 @@ import {
   Clock,
 } from 'lucide-react';
 import { designTokens } from '@topems/tokens';
+import { zh } from '../i18n/zh';
 
 const Dashboard = () => {
   const { notifications, unreadCount } = useNotificationStore();
   const recentNotifications = notifications.slice(0, 5);
 
   const stats = [
-    { title: '总收入', value: '¥12,845,678', change: '+12.5%', icon: DollarSign },
-    { title: '活跃用户', value: '2,847', change: '+8.3%', icon: Users },
-    { title: '订单数量', value: '1,245', change: '-2.1%', icon: ShoppingCart },
-    { title: '增长率', value: '15.8%', change: '+5.2%', icon: TrendingUp },
+    { title: zh['dashboard.statTotalRevenue'], value: '¥12,845,678', change: '+12.5%', icon: DollarSign },
+    { title: zh['dashboard.statActiveUsers'], value: '2,847', change: '+8.3%', icon: Users },
+    { title: zh['dashboard.statOrderCount'], value: '1,245', change: '-2.1%', icon: ShoppingCart },
+    { title: zh['dashboard.statGrowthRate'], value: '15.8%', change: '+5.2%', icon: TrendingUp },
   ];
 
   const shortcuts = [
-    { name: '新建订单', icon: ShoppingCart },
-    { name: '添加客户', icon: Users },
-    { name: '审批任务', icon: AlertCircle },
-    { name: '查看报表', icon: TrendingUp },
+    { name: zh['dashboard.shortcutNewOrder'], icon: ShoppingCart },
+    { name: zh['dashboard.shortcutAddCustomer'], icon: Users },
+    { name: zh['dashboard.shortcutApprovalTask'], icon: AlertCircle },
+    { name: zh['dashboard.shortcutViewReports'], icon: TrendingUp },
   ];
 
   return (
     <Box sx={{ flex: 1, p: 3 }}>
       <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
-        仪表盘
+        {zh['dashboard.title']}
       </Typography>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, mb: 4 }}>
@@ -78,7 +79,7 @@ const Dashboard = () => {
         <Box sx={{ flex: '1 1 500px', minWidth: '300px' }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" component="h2" sx={{ mb: 3 }}>
-              快捷操作
+              {zh['dashboard.shortcuts']}
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               {shortcuts.map((shortcut) => (
@@ -105,11 +106,11 @@ const Dashboard = () => {
         <Box sx={{ flex: '1 1 300px', minWidth: '300px' }}>
           <Paper sx={{ p: 3 }}>
             <Typography variant="h6" component="h2" sx={{ mb: 3 }}>
-              最近通知 {unreadCount > 0 && `(${unreadCount})`}
+              {zh['dashboard.recentNotifications']} {unreadCount > 0 && `(${unreadCount})`}
             </Typography>
             {recentNotifications.length === 0 ? (
               <Typography variant="body2" color="text.secondary">
-                暂无通知
+                {zh['dashboard.noNotifications']}
               </Typography>
             ) : (
               <List>

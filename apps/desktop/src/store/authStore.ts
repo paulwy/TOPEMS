@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { UserInfo } from '../api/iam';
 import { iamApi, apiClient } from '../api';
+import { zh } from '../i18n/zh';
 
 interface AuthState {
   token: string | null;
@@ -18,7 +19,7 @@ const mockUser: UserInfo = {
   id: '1',
   username: 'admin',
   email: 'admin@topems.com',
-  name: '管理员',
+  name: zh['authStore.adminName'],
   role: 'admin',
 };
 
@@ -44,7 +45,7 @@ export const useAuthStore = create<AuthState>()(
             await get().fetchUserInfo();
           }
         } catch {
-          throw new Error('登录失败，请检查用户名和密码');
+          throw new Error(zh['authStore.loginFailed']);
         } finally {
           set({ isLoading: false });
         }
