@@ -116,8 +116,10 @@ bash scripts/verify-nginx-prod.sh \
 ```nginx
     map $request_uri $api_upstream {
         default "";
-        # unified-core 虚拟服务（含 doc/monitor 已合并模块）
-        ~^/api/(core|doc|monitor)/          unified_core_service;
+        # unified-core 虚拟服务（含 doc 已合并模块；monitor 已拆分至独立进程 8095）
+        ~^/api/(core|doc)/                  unified_core_service;
+        # [V68.1 A2.1] monitor 独立服务（8095；与 vite dev 代理 apiPrefix /api/monitor 对齐）
+        ~^/api/monitor/                     monitor_service;
         # bi 服务（含 analytics/report 别名）
         ~^/api/(bi|analytics|report)/       bi_service;
         # 独立业务服务

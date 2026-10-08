@@ -2111,8 +2111,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Run schema boundary check
+      - name: Run schema boundary check (Python · per-service ownership lint)
         run: python3 scripts/check_schema_boundary.py
+
+      - name: Run schema boundary check (Node · bare sqlx cross-schema lint)
+        run: node scripts/ci/check-schema-boundary.cjs
 
       - name: Summarize gate
         run: |
@@ -2120,8 +2123,13 @@ jobs:
           {
             echo "## Schema Boundary Static Gate"
             echo ""
+            echo "**Python gate** (per-service schema ownership):"
             echo '```'
             python3 scripts/check_schema_boundary.py
+            echo '```'
+            echo "**Node gate** (bare sqlx call-site cross-schema lint):"
+            echo '```'
+            node scripts/ci/check-schema-boundary.cjs
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
