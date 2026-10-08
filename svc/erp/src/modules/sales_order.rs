@@ -309,13 +309,6 @@ pub async fn create_sales_order(
                     ),
                 }
             }
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "sales_order",
-                sales_order.id,
-            )
-            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -324,6 +317,13 @@ pub async fn create_sales_order(
                     )));
                 }
             }
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.db,
+                &state.event_publisher,
+                "sales_order",
+                sales_order.id,
+            )
+            .await;
             Json(ApiResponse::success(sales_order, "创建销售订单成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
@@ -387,13 +387,6 @@ pub async fn update_sales_order(
 
     match result {
         Ok(Some(sales_order)) => {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "sales_order",
-                sales_order.id,
-            )
-            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -402,6 +395,13 @@ pub async fn update_sales_order(
                     )));
                 }
             }
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.db,
+                &state.event_publisher,
+                "sales_order",
+                sales_order.id,
+            )
+            .await;
             Json(ApiResponse::success(sales_order, "更新销售订单成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -456,13 +456,6 @@ pub async fn delete_sales_order(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "sales_order",
-                id,
-            )
-            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -471,6 +464,13 @@ pub async fn delete_sales_order(
                     )));
                 }
             }
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.db,
+                &state.event_publisher,
+                "sales_order",
+                id,
+            )
+            .await;
             Json(ApiResponse::success(
                 "删除成功".to_string(),
                 "删除销售订单成功",
@@ -544,13 +544,6 @@ async fn update_sales_order_status(
                     }
                 }
             }
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "sales_order",
-                sales_order.id,
-            )
-            .await;
             Json(ApiResponse::success(sales_order, success_message))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -587,6 +580,8 @@ pub async fn approve_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    let db = state.db.clone();
+    let publisher = state.event_publisher.clone();
     let resp = update_sales_order_status(
         state,
         claims,
@@ -602,6 +597,13 @@ pub async fn approve_sales_order(
             tracing::error!("事务提交失败: {}", e);
         }
     }
+    crate::modules::searchable_projection::emit_after_commit(
+        &db,
+        &publisher,
+        "sales_order",
+        id,
+    )
+    .await;
     resp
 }
 
@@ -626,6 +628,8 @@ pub async fn ship_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    let db = state.db.clone();
+    let publisher = state.event_publisher.clone();
     let resp = update_sales_order_status(
         state,
         claims,
@@ -641,6 +645,13 @@ pub async fn ship_sales_order(
             tracing::error!("事务提交失败: {}", e);
         }
     }
+    crate::modules::searchable_projection::emit_after_commit(
+        &db,
+        &publisher,
+        "sales_order",
+        id,
+    )
+    .await;
     resp
 }
 
@@ -665,6 +676,8 @@ pub async fn complete_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    let db = state.db.clone();
+    let publisher = state.event_publisher.clone();
     let resp = update_sales_order_status(
         state,
         claims,
@@ -680,6 +693,13 @@ pub async fn complete_sales_order(
             tracing::error!("事务提交失败: {}", e);
         }
     }
+    crate::modules::searchable_projection::emit_after_commit(
+        &db,
+        &publisher,
+        "sales_order",
+        id,
+    )
+    .await;
     resp
 }
 
@@ -704,6 +724,8 @@ pub async fn cancel_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
+    let db = state.db.clone();
+    let publisher = state.event_publisher.clone();
     let resp = update_sales_order_status(
         state,
         claims,
@@ -719,6 +741,13 @@ pub async fn cancel_sales_order(
             tracing::error!("事务提交失败: {}", e);
         }
     }
+    crate::modules::searchable_projection::emit_after_commit(
+        &db,
+        &publisher,
+        "sales_order",
+        id,
+    )
+    .await;
     resp
 }
 
@@ -827,13 +856,6 @@ async fn batch_create_sales_orders(
         .bind(default_sales_order_status(req.status.clone())).bind(&req.remark)
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(o)) = result {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "sales_order",
-                o.id,
-            )
-            .await;
             created.push(o);
         }
     }
@@ -844,6 +866,15 @@ async fn batch_create_sales_orders(
                 "事务提交失败".to_string(),
             )));
         }
+    }
+    for o in &created {
+        crate::modules::searchable_projection::emit_after_commit(
+            &state.db,
+            &state.event_publisher,
+            "sales_order",
+            o.id,
+        )
+        .await;
     }
     Json(ApiResponse::success(created, "批量创建销售订单成功"))
 }
@@ -886,11 +917,20 @@ async fn batch_update_sales_orders(
             )));
         }
     }
+    for o in &updated {
+        crate::modules::searchable_projection::emit_after_commit(
+            &state.db,
+            &state.event_publisher,
+            "sales_order",
+            o.id,
+        )
+        .await;
+    }
     Json(ApiResponse::success(updated, "批量更新销售订单成功"))
 }
 
 async fn batch_update_status(
-    state: &ApiState,
+    _state: &ApiState,
     _claims: &Claims,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ids: &[Uuid],
@@ -914,15 +954,6 @@ async fn batch_update_status(
         .fetch_all(&mut **txn)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(e.to_string()))?;
-    for o in &orders {
-        crate::modules::searchable_projection::emit_searchable_change(
-            &mut **txn,
-            &state.event_publisher,
-            "sales_order",
-            o.id,
-        )
-        .await;
-    }
     Ok(orders)
 }
 #[utoipa::path(
@@ -955,6 +986,15 @@ pub async fn batch_approve_sales_orders(
         Ok(orders) => {
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
+            }
+            for o in &orders {
+                crate::modules::searchable_projection::emit_after_commit(
+                    &state.db,
+                    &state.event_publisher,
+                    "sales_order",
+                    o.id,
+                )
+                .await;
             }
             Json(ApiResponse::success(orders, "批量审批成功"))
         }
@@ -997,6 +1037,15 @@ pub async fn batch_ship_sales_orders(
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
             }
+            for o in &orders {
+                crate::modules::searchable_projection::emit_after_commit(
+                    &state.db,
+                    &state.event_publisher,
+                    "sales_order",
+                    o.id,
+                )
+                .await;
+            }
             Json(ApiResponse::success(orders, "批量发货成功"))
         }
         Err(e) => {
@@ -1038,6 +1087,15 @@ pub async fn batch_complete_sales_orders(
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
             }
+            for o in &orders {
+                crate::modules::searchable_projection::emit_after_commit(
+                    &state.db,
+                    &state.event_publisher,
+                    "sales_order",
+                    o.id,
+                )
+                .await;
+            }
             Json(ApiResponse::success(orders, "批量完成成功"))
         }
         Err(e) => {
@@ -1078,6 +1136,15 @@ pub async fn batch_cancel_sales_orders(
         Ok(orders) => {
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
+            }
+            for o in &orders {
+                crate::modules::searchable_projection::emit_after_commit(
+                    &state.db,
+                    &state.event_publisher,
+                    "sales_order",
+                    o.id,
+                )
+                .await;
             }
             Json(ApiResponse::success(orders, "批量取消成功"))
         }

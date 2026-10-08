@@ -255,6 +255,19 @@ async fn main() -> Result<()> {
         modules::erp_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
+    // D6：事件发布重试后台任务——周期扫描 Redis ZSET 到期项重发，成功 ZREM。
+    {
+        let pool = ctx.db.clone();
+        let publisher = ctx.event_publisher.clone();
+        tokio::spawn(async move {
+            let mut tick = tokio::time::interval(std::time::Duration::from_secs(15));
+            loop {
+                tick.tick().await;
+                modules::searchable_projection::retry_due_events(&pool, &publisher).await;
+            }
+        });
+    }
+
     run(app).await
 }
 

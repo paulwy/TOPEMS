@@ -13,10 +13,23 @@
 //! 重复投递/乱序收敛由投影表自身处理。发布为最佳努力：失败仅告警，不阻断业务写。
 
 use chrono::{DateTime, Utc};
-use sqlx::{PgConnection, Row};
+use sqlx::{PgConnection, PgPool, Row};
 use std::sync::Arc;
 use topems_shared_event::event::{EventPublisher, EventType, SearchableEntityChangedPayload};
 use uuid::Uuid;
+
+// ── D6：commit 后 emit + Redis ZSET 重试队列 ──────────────────────────────
+//
+// 原 emit_searchable_change 在写事务内发布——commit 失败则事件孤儿。
+// 改造：写事务 commit 成功之后再发布（孤儿事件机制消除）；发布失败则把
+// {entity_type, entity_id} 写入 Redis ZSET（score=下次重试时间戳），
+// erp 内嵌 tokio 任务周期扫描到期项重发，成功即 ZREM。
+// 消费侧 search 投影 UPSERT ON CONFLICT 天然幂等（projection.rs:87），
+// at-least-once 重复投递无副作用。不落 DB 表（0013 不落库）。
+
+const RETRY_ZSET: &str = "topems:event_retry:erp";
+const RETRY_INTERVAL_SEC: i64 = 30; // 退避步长（指数 = attempts * 30s）
+const MAX_ATTEMPTS: u32 = 8;
 
 /// 实体可搜索快照（仅保留投影所需列）
 struct Snapshot {
@@ -30,106 +43,105 @@ struct Snapshot {
     updated_at: Option<DateTime<Utc>>,
 }
 
-/// 从连接读取实体最新快照；行已软删（deleted_at 非空）或不存在时返回 None（→ delete op）。
-async fn fetch_snapshot(
+/// 从连接（连接池或事务）读取实体最新快照 + tenant_id；软删/不存在 → (None, tenant_id)。
+async fn fetch_snapshot_with_tenant(
     conn: &mut PgConnection,
     entity_type: &str,
     entity_id: Uuid,
-) -> Option<Snapshot> {
+) -> (Option<Snapshot>, Option<Uuid>) {
     match entity_type {
         "customer" => {
             let row = sqlx::query(
-                "SELECT name, contact_person, contact_phone, email, address, status, updated_at
+                "SELECT id, tenant_id, name, contact_person, contact_phone, email, address, status, updated_at
                  FROM erp.customers WHERE id = $1 AND deleted_at IS NULL",
             )
             .bind(entity_id)
             .fetch_optional(&mut *conn)
             .await
-            .ok()??;
-            Some(Snapshot {
-                name: row.try_get::<String, _>("name").ok(),
-                contact_person: row.try_get::<String, _>("contact_person").ok(),
-                contact_phone: row.try_get::<String, _>("contact_phone").ok(),
-                email: row.try_get::<String, _>("email").ok(),
-                address: row.try_get::<String, _>("address").ok(),
-                status: row.try_get::<String, _>("status").ok(),
-                remark: None,
-                updated_at: row.try_get::<DateTime<Utc>, _>("updated_at").ok(),
-            })
+            .ok()
+            .flatten();
+            match row {
+                Some(r) => {
+                    let snap = Snapshot {
+                        name: r.try_get::<String, _>("name").ok(),
+                        contact_person: r.try_get::<String, _>("contact_person").ok(),
+                        contact_phone: r.try_get::<String, _>("contact_phone").ok(),
+                        email: r.try_get::<String, _>("email").ok(),
+                        address: r.try_get::<String, _>("address").ok(),
+                        status: r.try_get::<String, _>("status").ok(),
+                        remark: None,
+                        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
+                    };
+                    (Some(snap), r.try_get::<Uuid, _>("tenant_id").ok())
+                }
+                None => (None, None),
+            }
         }
         "sales_order" | "purchase_order" => {
-            // 两类订单列结构一致（order_no/status/remark），按表名区分
             let table = if entity_type == "sales_order" {
                 "erp.sales_orders"
             } else {
                 "erp.purchase_orders"
             };
-            // query! 不支持动态表名拼接，用 query_as 原始映射
             let sql = format!(
-                "SELECT order_no, status, remark, updated_at FROM {} WHERE id = $1 AND deleted_at IS NULL",
+                "SELECT id, tenant_id, order_no, status, remark, updated_at FROM {} WHERE id = $1 AND deleted_at IS NULL",
                 table
             );
             let row = sqlx::query(&sql)
                 .bind(entity_id)
                 .fetch_optional(&mut *conn)
                 .await
-                .ok()?;
-            row.map(|r| Snapshot {
-                name: r.try_get::<String, _>("order_no").ok(),
-                contact_person: None,
-                contact_phone: None,
-                email: None,
-                address: None,
-                status: r.try_get::<String, _>("status").ok(),
-                remark: r.try_get::<String, _>("remark").ok(),
-                updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
-            })
+                .ok()
+                .flatten();
+            match row {
+                Some(r) => {
+                    let snap = Snapshot {
+                        name: r.try_get::<String, _>("order_no").ok(),
+                        contact_person: None,
+                        contact_phone: None,
+                        email: None,
+                        address: None,
+                        status: r.try_get::<String, _>("status").ok(),
+                        remark: r.try_get::<String, _>("remark").ok(),
+                        updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
+                    };
+                    (Some(snap), r.try_get::<Uuid, _>("tenant_id").ok())
+                }
+                None => (None, None),
+            }
         }
         other => {
             tracing::warn!(
-                "[erp] emit_searchable_change 未知 entity_type={}，忽略",
+                "[erp] emit 未知 entity_type={}，忽略",
                 other
             );
-            None
+            (None, None)
         }
     }
 }
 
-/// 在写事务内发布实体快照变更事件（upsert 或 delete）。
-///
-/// `conn` 为当前写事务连接（须能看到未提交写入）；`publisher` 来自 ApiState.event_publisher。
-/// 永不 panic、不返回错误——投影新鲜度为最终一致，业务写不被它拖垮。
-pub async fn emit_searchable_change(
-    conn: &mut PgConnection,
-    publisher: &Option<Arc<EventPublisher>>,
+/// 构造 payload（upsert/delete），从已提交行读快照与 tenant_id。
+async fn build_payload_from_pool(
+    db: &PgPool,
     entity_type: &str,
     entity_id: Uuid,
-) {
-    let Some(publisher) = publisher else {
-        return;
-    };
-
-    let tenant_id: Option<Uuid> =
-        sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
-            .fetch_optional(&mut *conn)
-            .await
-            .ok()
-            .flatten();
-
-    let payload = match fetch_snapshot(conn, entity_type, entity_id).await {
-        Some(snap) => SearchableEntityChangedPayload {
+) -> Option<SearchableEntityChangedPayload> {
+    let mut conn = db.acquire().await.ok()?;
+    let (snap, tenant_id) = fetch_snapshot_with_tenant(&mut conn, entity_type, entity_id).await;
+    Some(match snap {
+        Some(s) => SearchableEntityChangedPayload {
             entity_type: entity_type.to_string(),
             entity_id,
             tenant_id,
             op: "upsert".to_string(),
-            name: snap.name,
-            contact_person: snap.contact_person,
-            contact_phone: snap.contact_phone,
-            email: snap.email,
-            address: snap.address,
-            status: snap.status,
-            remark: snap.remark,
-            source_updated_at: snap.updated_at,
+            name: s.name,
+            contact_person: s.contact_person,
+            contact_phone: s.contact_phone,
+            email: s.email,
+            address: s.address,
+            status: s.status,
+            remark: s.remark,
+            source_updated_at: s.updated_at,
         },
         None => SearchableEntityChangedPayload {
             entity_type: entity_type.to_string(),
@@ -145,20 +157,129 @@ pub async fn emit_searchable_change(
             remark: None,
             source_updated_at: None,
         },
-    };
+    })
+}
 
+fn redis_client() -> Option<redis::Client> {
+    let url = std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+    redis::Client::open(url).ok()
+}
+
+/// 把失败发布推入 ZSET 重试队列（member = JSON {entity_type,entity_id,attempts}）。
+async fn push_retry(entity_type: &str, entity_id: Uuid, attempts: u32) {
+    let Some(client) = redis_client() else { return };
+    let Ok(mut con) = client.get_multiplexed_async_connection().await else {
+        tracing::error!("[erp] 重试队列：无法连接 Redis，丢弃失败事件 {} {}", entity_type, entity_id);
+        return;
+    };
+    let member = serde_json::json!({
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "attempts": attempts,
+    })
+    .to_string();
+    let delay = (i64::from(attempts) + 1) * RETRY_INTERVAL_SEC;
+    let score = Utc::now().timestamp() + delay;
+    let _: () = redis::cmd("ZADD")
+        .arg(RETRY_ZSET)
+        .arg(score)
+        .arg(&member)
+        .query_async(&mut con)
+        .await
+        .unwrap_or_else(|e| {
+            tracing::error!("[erp] 重试队列 ZADD 失败: {}", e);
+        });
+}
+
+/// 写事务 commit 成功之后调用：读已提交快照 → 发布；失败入 ZSET 重试。
+/// 永不 panic、不阻断业务写（commit 已成功）。
+pub async fn emit_after_commit(
+    db: &PgPool,
+    publisher: &Option<Arc<EventPublisher>>,
+    entity_type: &str,
+    entity_id: Uuid,
+) {
+    let Some(publisher) = publisher else { return };
+    let Some(payload) = build_payload_from_pool(db, entity_type, entity_id).await else {
+        return;
+    };
     if let Err(e) = publisher
         .publish_event(EventType::SearchableEntityChanged, &payload)
         .await
     {
         tracing::warn!(
-            "[erp] 发布 SearchableEntityChanged 失败 {} id={}: {}（search 投影将滞后至下次写/补拉）",
+            "[erp] commit 后发布 SearchableEntityChanged 失败 {} id={}: {}，入重试队列",
             entity_type,
             entity_id,
             e
         );
+        push_retry(entity_type, entity_id, 0).await;
     }
 }
+
+/// erp 内嵌后台任务：周期扫描 ZSET 到期项重发，成功 ZREM；超限 error! 告警。
+pub async fn retry_due_events(db: &PgPool, publisher: &Option<Arc<EventPublisher>>) {
+    let Some(publisher) = publisher else { return };
+    let Some(client) = redis_client() else { return };
+    let Ok(mut con) = client.get_multiplexed_async_connection().await else { return };
+    let now = Utc::now().timestamp();
+    let due: Vec<(String, i64)> = redis::cmd("ZRANGEBYSCORE")
+        .arg(RETRY_ZSET)
+        .arg("-inf")
+        .arg(now)
+        .arg("WITHSCORES")
+        .query_async(&mut con)
+        .await
+        .unwrap_or_default();
+    for (member, _score) in due {
+        let Ok(v) = serde_json::from_str::<serde_json::Value>(&member) else { continue };
+        let Some(entity_type) = v.get("entity_type").and_then(|x| x.as_str()) else { continue };
+        let Some(entity_id) = v.get("entity_id").and_then(|x| x.as_str()).and_then(|s| Uuid::parse_str(s).ok()) else { continue };
+        let attempts: u32 = v
+            .get("attempts")
+            .and_then(|x| x.as_u64())
+            .and_then(|n| u32::try_from(n).ok())
+            .unwrap_or(0);
+
+        let published = match build_payload_from_pool(db, entity_type, entity_id).await {
+            Some(payload) => publisher
+                .publish_event(EventType::SearchableEntityChanged, &payload)
+                .await
+                .is_ok(),
+            None => false,
+        };
+        if published {
+            let _: i64 = redis::cmd("ZREM")
+                .arg(RETRY_ZSET)
+                .arg(&member)
+                .query_async(&mut con)
+                .await
+                .unwrap_or(0);
+            tracing::info!("[erp] 重试发布成功 {} id={}", entity_type, entity_id);
+        } else if attempts + 1 >= MAX_ATTEMPTS {
+            let _: i64 = redis::cmd("ZREM")
+                .arg(RETRY_ZSET)
+                .arg(&member)
+                .query_async(&mut con)
+                .await
+                .unwrap_or(0);
+            tracing::error!(
+                "[erp] 事件重试超上限（{} 次），放弃 {} id={}——search 投影需 backfill 补拉",
+                MAX_ATTEMPTS, entity_type, entity_id
+            );
+        } else {
+            // 重排：attempts+1，score 后移
+            let _: i64 = redis::cmd("ZREM")
+                .arg(RETRY_ZSET)
+                .arg(&member)
+                .query_async(&mut con)
+                .await
+                .unwrap_or(0);
+            push_retry(entity_type, entity_id, attempts + 1).await;
+        }
+    }
+}
+
 
 // ── B1 启动时差距对账：erp 快照端点（search backfill 拉取）──────────────────────
 //

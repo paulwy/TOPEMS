@@ -305,13 +305,6 @@ pub async fn create_customer(
 
     match result {
         Ok(Some(customer)) => {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "customer",
-                customer.id,
-            )
-            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -320,6 +313,13 @@ pub async fn create_customer(
                     )));
                 }
             }
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.db,
+                &state.event_publisher,
+                "customer",
+                customer.id,
+            )
+            .await;
             Json(ApiResponse::success(customer, "创建客户成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
@@ -392,13 +392,6 @@ pub async fn update_customer(
 
     match result {
         Ok(Some(customer)) => {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "customer",
-                customer.id,
-            )
-            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -407,6 +400,13 @@ pub async fn update_customer(
                     )));
                 }
             }
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.db,
+                &state.event_publisher,
+                "customer",
+                customer.id,
+            )
+            .await;
             Json(ApiResponse::success(customer, "更新客户成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -461,19 +461,19 @@ pub async fn delete_customer(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "customer",
-                id,
-            )
-            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
                     return Json(ApiResponse::error(500, "事务提交失败"));
                 }
             }
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.db,
+                &state.event_publisher,
+                "customer",
+                id,
+            )
+            .await;
             Json(ApiResponse::success("删除成功".to_string(), "删除客户成功"))
         }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -668,13 +668,6 @@ pub async fn batch_create_customers(
         .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(c)) = result {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "customer",
-                c.id,
-            )
-            .await;
             created.push(c);
         }
     }
@@ -685,6 +678,15 @@ pub async fn batch_create_customers(
                 "事务提交失败".to_string(),
             )));
         }
+    }
+    for c in &created {
+        crate::modules::searchable_projection::emit_after_commit(
+            &state.db,
+            &state.event_publisher,
+            "customer",
+            c.id,
+        )
+        .await;
     }
     Json(ApiResponse::success(created, "批量创建成功"))
 }
@@ -719,13 +721,6 @@ async fn batch_update_customers(
         .bind(item.payload.credit_limit).bind(&item.payload.status).bind(item.id)
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(c)) = result {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
-                &state.event_publisher,
-                "customer",
-                c.id,
-            )
-            .await;
             updated.push(c);
         }
     }
@@ -736,6 +731,15 @@ async fn batch_update_customers(
                 "事务提交失败".to_string(),
             )));
         }
+    }
+    for c in &updated {
+        crate::modules::searchable_projection::emit_after_commit(
+            &state.db,
+            &state.event_publisher,
+            "customer",
+            c.id,
+        )
+        .await;
     }
     Json(ApiResponse::success(updated, "批量更新成功"))
 }
@@ -770,15 +774,6 @@ async fn batch_delete_customers(
     }
     match query.execute(&mut **txn).await {
         Ok(r) => {
-            for id in &body.ids {
-                crate::modules::searchable_projection::emit_searchable_change(
-                    &mut **txn,
-                    &state.event_publisher,
-                    "customer",
-                    *id,
-                )
-                .await;
-            }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -786,6 +781,15 @@ async fn batch_delete_customers(
                         "事务提交失败".to_string(),
                     )));
                 }
+            }
+            for id in &body.ids {
+                crate::modules::searchable_projection::emit_after_commit(
+                    &state.db,
+                    &state.event_publisher,
+                    "customer",
+                    *id,
+                )
+                .await;
             }
             Json(ApiResponse::success(
                 format!("已删除 {} 条客户记录", r.rows_affected()),
@@ -838,16 +842,16 @@ pub async fn change_customer_status(
     .bind(&body.status).bind(id).bind(Locale::from_headers(&headers).as_sql()).fetch_optional(&mut **txn).await;
     match result {
         Ok(Some(customer)) => {
-            crate::modules::searchable_projection::emit_searchable_change(
-                &mut **txn,
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
+            crate::modules::searchable_projection::emit_after_commit(
+                &state.db,
                 &state.event_publisher,
                 "customer",
                 customer.id,
             )
             .await;
-            if let Some(t) = guard.take() {
-                let _ = t.commit().await;
-            }
             Json(ApiResponse::success(customer, "客户状态更新成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -905,17 +909,17 @@ pub async fn batch_change_status(
     }
     match query.fetch_all(&mut **txn).await {
         Ok(customers) => {
+            if let Some(t) = guard.take() {
+                let _ = t.commit().await;
+            }
             for c in &customers {
-                crate::modules::searchable_projection::emit_searchable_change(
-                    &mut **txn,
+                crate::modules::searchable_projection::emit_after_commit(
+                    &state.db,
                     &state.event_publisher,
                     "customer",
                     c.id,
                 )
                 .await;
-            }
-            if let Some(t) = guard.take() {
-                let _ = t.commit().await;
             }
             Json(ApiResponse::success(customers, "批量状态更新成功"))
         }
