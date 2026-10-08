@@ -332,6 +332,34 @@
 - **B7 全形态清零收官**（累计：静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 业务层 Result<_, String> 7
   + svc tests 48 + desktop 98）
 
+## 2026-10-08 B7 实测复核（hint 旧口径 1313 处已被消化）+ 门禁剩余登记债实测
+
+> 承接「继续」推进 B7 剩余主项。实测复核结论：**hint 口径「静态 Err("...")/Result<_, String> 1313 处」已由批次 5-18 全部消化**（与并行线推进一致），
+> 本会话按「以实测为准」原则同步：业务层静态 `Err("...")` = 0（仅剩 lib 测试内 8 处 `&str` 错误类型向量，批次 8 已注明保留）、
+> `Result<_, String>` = 0、`Err(format!)` = 0、`map_err(format!)` = 0（grep 全仓实测）。
+
+### 门禁 V517.4 剩余登记债（scripts/ci/check-error-handling.cjs 全量报告，未漂移、CI 仅拦新增）
+- **泄露面 259** = leak-internal-error 63 + raw-error-to-string 196；按服务：portal 168 / finance 39 / master-data 21 / communication 8 / pm 6 / wms 5 / server 3 / mes 2 / analytics 2 / ai 2 / tms 1 / scm 1 / crm 1
+- **业务层 anyhow 57** = lib/shared-core 12（error/enhanced.rs ×3 为 From<anyhow::Error> 桥接必需 + config/enhanced.rs ×9）+ lib/shared-ai 24 + svc/integration src 根 6 文件 21（门禁 V517.4 起补覆盖口径）
+- finance 39 = 36 L（format! 固定文案，有上下文可直接迁移）+ 3 R（event_routes.rs ×2 + shared/mod.rs ×1，无上下文文案，需定策略）
+- 泄露面较 V517.4 基线 626 已降 367（gis/integration/ticket/erp 等前批 + 并行线推进）；ADR §4.4 的 finance「386 不能先做」为旧快照，实测已降至 39
+
+### ✅ 本会话已完成（2026-10-08，4 提交 120ef1403/32049660d/9999b2274/fee592c4e，均未 push）
+
+- **泄漏面迁移 220 处清零**（commit 120ef1403 + 32049660d，32 文件）：portal 168（16 文件 raw 形态）+ 11 小服务 52（L 27 + R 25，含 7 个 plugin 503 → ServiceUnavailable 文案逐字保留）
+  - 改写模式：变体 classify 码 == 手写码 → `ApiResponse::from(e)`；码不一致/死臂/混合臂 → 保留手写码 `error(<码>, &e.classify().1)`；L 500 → `TopemsError::internal(固定文案, e)`
+  - 客户端文案：4xx 回显 classify 安全文案（剥 thiserror 前缀，与 gis/ticket/erp 样板一致）；5xx 内部类收「内部服务器错误」
+  - 验证：workspace clippy --all-targets -D clippy::correctness **0 error**；fmt 0 diff；单测 portal 608 + 10 小服务全绿
+- **anyhow 业务层清零 57→0**（commit 9999b2274，12 文件）：shared-ai 24 + integration 21 转 TopemsError（NetworkRequest/ValidationFailed/FileOperation 语义映射）+ lib/examples example 消费适配；消费方 format! 透明零适配
+  - 保留登记（commit fee592c4e，门禁 ANYHOW_EXEMPT 追加）：error/enhanced.rs From<anyhow::Error> 桥接 ×3 + config/enhanced.rs 进程边界相邻 ×9（消费方仅 main.rs/shared-bootstrap，grep 实证）
+  - 单测：shared-ai 71 / integration 182 / shared-core 835 / ai 1190 全绿
+- **门禁基线校准 V517.5**（commit fee592c4e）：泄露面 626→**39**（= 基线，剩余全在 finance）；业务层 anyhow 57→**0**（= 基线）；`--changed-only` 未发现命中 exit 0
+- **finance 39 处未迁移**（按 hint 不擅自拍板，策略见下）
+
+### finance 39 处迁移策略建议（待用户拍板）
+- 实测形态：**36 L 全部带固定文案**（financial_reports 20「持久化/生成/查询/提交/审批/驳回/锁定/解锁失败」+ mod.rs 11「参数错误/文件编码错误/JSON 解析失败」+ voucher_template 5「文件编码错误/JSON 解析失败/冲销凭证创建失败/新凭证创建失败」）——ADR §4.4「386 无上下文文案不能先做」的旧担忧已不存在（并行线已消化 347 处），**可直接按 Form 1/2 机械迁移**；仅 **3 R 无上下文**（event_routes ×2 + shared/mod.rs ×1 的 500+to_string）需按 handler 操作推断上下文
+- 建议：下一轮直接按本轮同一规则迁移 finance 39（36 机械 + 3 人工），无需另立试点；或按原 ADR 等待用户拍板
+
 ---
 
 ## 🔧 前端 UI 审计批次（2026-10-07）
