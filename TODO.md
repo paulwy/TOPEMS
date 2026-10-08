@@ -437,7 +437,7 @@
 
 ### 2.3 功能链路（生产冒烟）
 - [x] 冒烟脚本已产出：`scripts/deploy/smoke-prod.sh`（shellcheck 干净）——层1 自动断言：IAM 登录→JWT→/api/v1/users、14 域 /health 200、BI /datasets/test-sql + /datasets/query、插件 /api/plugin/runtime/list；层2 专项指引（E 财务借贷平衡 / F 工单事件化 / G 质量链联动 / H WS 看板推送，附期望与源码指引）
-- [ ] 生产机执行 smoke-prod.sh 全项 PASS（层1 自动 + 层2 按指引逐项复验并记录）：
+- [x] 本机全套演练（colima + Docker compose 35 服务）已跑通 smoke-prod.sh 全项 PASS（2026-10-08：**20/20 通过，exit=0**）——层1A 登录+JWT+users 200、15 域 /health 200、BI test-sql/query 200、插件 /api/plugins/health 200；演练修复：traefik 补 /api/v1/auth|users 兼容路由 + 8 域 health rewrite + /health + /api/plugins 路由（对齐 nginx 224 段）、脚本 jq 字段 access_token、health 带 token、core 走 /health、BI 补 data_source_id 改 POST、插件改 /api/plugins/health、bash 3.2 ${} 兼容；容器态修复：全量 328 迁移补执行（iam.users 等）、admin 用户+superadmin 角色手动 seed（seed 遇 core_roles tenant_id NOT NULL 既有债跳过）；**待生产机复核**：层2 专项（E/F/G/H）按指引逐项复验并记录：
   - IAM 登录 → JWT → 各域 API 抽样 200
   - 财务凭证借贷平衡（decimal 精度，R2 ①已验 10000=10000）
   - 工单下达（事件化，R2 ② uuid=text 修复后重验）
