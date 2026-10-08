@@ -174,9 +174,16 @@ function isBusinessLayer(file) {
 // 接口/trait 绑定型 anyhow 显式豁免（B7 第三批登记，非漂移）：
 // analytics report scheduler 实现第三方 JobScheduler<'_> trait，关联类型绑定 anyhow::Error，
 // 签名由 trait 规定、无法改 TopemsError；内部错误已收敛为日志/事件路径，不构成 API 泄露。
+// 2026-10-08 追加（B7 anyhow 清退批登记，非漂移）：
+//  - error/enhanced.rs：`impl From<anyhow::Error> for TopemsError` 桥接，anyhow 是清退的必需依赖
+//    （B7 第三批主动加入；全仓 anyhow→TopemsError 的 `?` 传播都经此桥接）。
+//  - config/enhanced.rs：进程边界相邻——消费方仅 main.rs / shared-bootstrap（grep 实证），
+//    配置校验错误在启动期即终止，无客户端出口。
 const ANYHOW_EXEMPT = new Set([
   'svc/analytics/src/modules/report/schedule.rs',
   'svc/analytics/src/modules/report/scheduler.rs',
+  'lib/shared-core/src/error/enhanced.rs',
+  'lib/shared-core/src/config/enhanced.rs',
 ]);
 // 整目录豁免（2026-10-07）：bootstrap 进程边界——anyhow 仅允许 main.rs / bootstrap 边界。
 const ANYHOW_EXEMPT_DIRS = ['lib/shared-bootstrap'];
