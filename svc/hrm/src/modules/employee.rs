@@ -407,10 +407,7 @@ pub async fn create_employee(
                         .publish_event(EventType::HrmEmployeeCreated, payload.clone())
                         .await
                     {
-                        tracing::warn!(
-                            "[hrm] HrmEmployeeCreated 事件发布失败: {}，入重试队列",
-                            e
-                        );
+                        tracing::warn!("[hrm] HrmEmployeeCreated 事件发布失败: {}，入重试队列", e);
                         commit_retry::push_retry_typed(
                             "hrm",
                             EventType::HrmEmployeeCreated,
@@ -559,12 +556,8 @@ pub async fn update_employee(
                         reason: Some("employee_updated".to_string()),
                         invalidated_at: chrono::Utc::now(),
                     };
-                    commit_retry::push_retry_typed(
-                        "hrm",
-                        EventType::CacheInvalidated,
-                        &payload,
-                    )
-                    .await;
+                    commit_retry::push_retry_typed("hrm", EventType::CacheInvalidated, &payload)
+                        .await;
                 }
             });
         }
@@ -713,12 +706,8 @@ pub async fn delete_employee(
                         reason: Some("employee_deleted".to_string()),
                         invalidated_at: chrono::Utc::now(),
                     };
-                    commit_retry::push_retry_typed(
-                        "hrm",
-                        EventType::CacheInvalidated,
-                        &payload,
-                    )
-                    .await;
+                    commit_retry::push_retry_typed("hrm", EventType::CacheInvalidated, &payload)
+                        .await;
                 }
             });
         }

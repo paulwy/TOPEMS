@@ -11,12 +11,12 @@ use uuid::Uuid;
 use crate::models::{CreateWarehouseRequest, UpdateWarehouseRequest, Warehouse};
 use crate::modules::audit::log_audit_event;
 use crate::modules::ApiState;
+use std::sync::Arc;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
-use std::sync::Arc;
 use topems_shared_event::event::{
     commit_retry, CacheInvalidatedPayload, EventPublisher, EventType,
 };

@@ -288,14 +288,13 @@ pub async fn create_sales_order(
             }
             // D6：commit 成功后发布 typed 事件；失败入重试队列。
             if let Some(ref publisher) = state.event_publisher {
-                let tenant_id: Option<Uuid> = sqlx::query_scalar(
-                    "SELECT tenant_id FROM erp.sales_orders WHERE id = $1",
-                )
-                .bind(sales_order.id)
-                .fetch_optional(&state.db)
-                .await
-                .ok()
-                .flatten();
+                let tenant_id: Option<Uuid> =
+                    sqlx::query_scalar("SELECT tenant_id FROM erp.sales_orders WHERE id = $1")
+                        .bind(sales_order.id)
+                        .fetch_optional(&state.db)
+                        .await
+                        .ok()
+                        .flatten();
                 let payload = SalesOrderCreatedPayload {
                     order_id: sales_order.id,
                     order_no: sales_order.order_no.clone(),
@@ -516,9 +515,7 @@ async fn update_sales_order_status(
     .await;
 
     match result {
-        Ok(Some(sales_order)) => {
-            Json(ApiResponse::success(sales_order, success_message))
-        }
+        Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, success_message)),
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "销售订单不存在".to_string(),
         ))),
@@ -571,13 +568,8 @@ pub async fn approve_sales_order(
             tracing::error!("事务提交失败: {}", e);
         }
     }
-    crate::modules::searchable_projection::emit_after_commit(
-        &db,
-        &publisher,
-        "sales_order",
-        id,
-    )
-    .await;
+    crate::modules::searchable_projection::emit_after_commit(&db, &publisher, "sales_order", id)
+        .await;
     // D6：commit 成功后发布 SalesOrderApproved；失败入重试队列。
     if let Some(ref publisher) = publisher {
         if let Ok(Some(row)) = sqlx::query(
@@ -653,13 +645,8 @@ pub async fn ship_sales_order(
             tracing::error!("事务提交失败: {}", e);
         }
     }
-    crate::modules::searchable_projection::emit_after_commit(
-        &db,
-        &publisher,
-        "sales_order",
-        id,
-    )
-    .await;
+    crate::modules::searchable_projection::emit_after_commit(&db, &publisher, "sales_order", id)
+        .await;
     resp
 }
 
@@ -701,13 +688,8 @@ pub async fn complete_sales_order(
             tracing::error!("事务提交失败: {}", e);
         }
     }
-    crate::modules::searchable_projection::emit_after_commit(
-        &db,
-        &publisher,
-        "sales_order",
-        id,
-    )
-    .await;
+    crate::modules::searchable_projection::emit_after_commit(&db, &publisher, "sales_order", id)
+        .await;
     resp
 }
 
@@ -749,13 +731,8 @@ pub async fn cancel_sales_order(
             tracing::error!("事务提交失败: {}", e);
         }
     }
-    crate::modules::searchable_projection::emit_after_commit(
-        &db,
-        &publisher,
-        "sales_order",
-        id,
-    )
-    .await;
+    crate::modules::searchable_projection::emit_after_commit(&db, &publisher, "sales_order", id)
+        .await;
     resp
 }
 

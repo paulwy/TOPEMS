@@ -114,6 +114,7 @@ impl WebSocketManager {
         }
     }
 
+    #[allow(clippy::result_unit_err)] // 内部连接注册表：仅表达"已满/成功"，无外部错误契约
     pub async fn register_connection(
         &self,
         conn_id: ConnectionId,

@@ -52,10 +52,8 @@ async fn outbound_call_emits_service_to_service_metric() {
     topems_shared_auth::service::pre_register_service_metrics();
 
     // 调用前计数（target 由 /api/v1/erp/orders 路径推导为 erp-service）
-    let before = topems_shared_auth::service::service_call_count(
-        "test-caller-service",
-        "erp-service",
-    );
+    let before =
+        topems_shared_auth::service::service_call_count("test-caller-service", "erp-service");
 
     // 发起一次出站调用（走 BaseServiceClient.execute_request → record_service_call）
     let client =
@@ -64,10 +62,8 @@ async fn outbound_call_emits_service_to_service_metric() {
     let _: Result<serde_json::Value, _> = client.get("/api/v1/erp/orders").await;
 
     // 调用后计数
-    let after = topems_shared_auth::service::service_call_count(
-        "test-caller-service",
-        "erp-service",
-    );
+    let after =
+        topems_shared_auth::service::service_call_count("test-caller-service", "erp-service");
 
     assert_eq!(
         after - before,

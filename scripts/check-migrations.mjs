@@ -18,6 +18,9 @@ function scanFiles(dir) {
   for (const e of entries) {
     if (e.isDirectory()) continue;
     const name = e.name;
+    // 治理文档（README/*.md）为有意保留的说明文件，非迁移产物，不计入非 .sql 错误。
+    // 见 commit 89f703a04「迁移目录治理收尾（READMEs + checksums 自举）」。
+    if (/^README(\..*)?$/i.test(name) || extname(name) === '.md') continue;
     if (extname(name) !== '.sql') {
       nonSql.push(name);
     } else {

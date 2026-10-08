@@ -1017,10 +1017,7 @@ pub async fn generate_payroll_voucher(
                 )
                 .await
             {
-                tracing::error!(
-                    "[hrm] HrmPayrollPosted 事件发布失败: {}，入重试队列",
-                    e
-                );
+                tracing::error!("[hrm] HrmPayrollPosted 事件发布失败: {}，入重试队列", e);
                 topems_shared_event::event::commit_retry::push_retry_typed(
                     "hrm",
                     topems_shared_event::event::EventType::HrmPayrollPosted,

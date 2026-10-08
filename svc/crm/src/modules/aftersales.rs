@@ -21,7 +21,9 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_event::event::{commit_retry, EventType, ReturnCompletedPayload, ReturnProcessedPayload};
+use topems_shared_event::event::{
+    commit_retry, EventType, ReturnCompletedPayload, ReturnProcessedPayload,
+};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ReturnStage {
@@ -1332,10 +1334,7 @@ pub async fn complete_return(
                             return_no_log
                         ),
                         Err(e) => {
-                            tracing::warn!(
-                                "[crm] ReturnProcessed 事件发布失败: {}，入重试队列",
-                                e
-                            );
+                            tracing::warn!("[crm] ReturnProcessed 事件发布失败: {}，入重试队列", e);
                             commit_retry::push_retry_typed("crm", et, &payload).await;
                         }
                     }
@@ -1379,10 +1378,7 @@ pub async fn complete_return(
                             return_no_log
                         ),
                         Err(e) => {
-                            tracing::warn!(
-                                "[crm] ReturnCompleted 事件发布失败: {}，入重试队列",
-                                e
-                            );
+                            tracing::warn!("[crm] ReturnCompleted 事件发布失败: {}，入重试队列", e);
                             commit_retry::push_retry_typed("crm", et, &payload).await;
                         }
                     }

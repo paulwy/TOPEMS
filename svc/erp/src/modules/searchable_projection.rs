@@ -101,10 +101,7 @@ async fn fetch_snapshot_with_tenant(
             }
         }
         other => {
-            tracing::warn!(
-                "[erp] emit 未知 entity_type={}，忽略",
-                other
-            );
+            tracing::warn!("[erp] emit 未知 entity_type={}，忽略", other);
             (None, None)
         }
     }
@@ -196,7 +193,6 @@ pub async fn retry_due_events(db: &PgPool, publisher: &Option<Arc<EventPublisher
     })
     .await;
 }
-
 
 // ── B1 启动时差距对账：erp 快照端点（search backfill 拉取）──────────────────────
 //
@@ -295,6 +291,9 @@ pub async fn searchable_snapshot(
         }
     }
 
-    tracing::info!("[erp] searchable-snapshot 返回 {} 条实体供 search backfill", out.len());
+    tracing::info!(
+        "[erp] searchable-snapshot 返回 {} 条实体供 search backfill",
+        out.len()
+    );
     Json(ApiResponse::success(out, "快照"))
 }

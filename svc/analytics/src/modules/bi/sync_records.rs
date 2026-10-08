@@ -510,7 +510,7 @@ pub async fn retry_sync(
     let retry_no = format!(
         "RETRY-{}-{}",
         chrono::Utc::now().format("%Y%m%d%H%M%S"),
-        &Uuid::new_v4().to_string()[..8].to_uppercase()
+        Uuid::new_v4().to_string()[..8].to_uppercase()
     );
 
     let note = req.and_then(|Json(r)| r.note).filter(|s| !s.is_empty());

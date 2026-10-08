@@ -14,9 +14,7 @@ use crate::models::OutboundOrder;
 use crate::modules::ApiState;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
-use topems_shared_event::event::{
-    commit_retry, EventType, ShippingOrderRequestedPayload,
-};
+use topems_shared_event::event::{commit_retry, EventType, ShippingOrderRequestedPayload};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OutboundToShippingRequest {
@@ -135,7 +133,8 @@ pub async fn create_shipping_from_outbound(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
-    let (_resp, opt_payload) = create_shipping_from_outbound_internal(&state, id, None, None, &mut *txn).await;
+    let (_resp, opt_payload) =
+        create_shipping_from_outbound_internal(&state, id, None, None, &mut *txn).await;
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
@@ -152,7 +151,10 @@ pub async fn create_shipping_from_outbound_internal(
     customer_id: Option<Uuid>,
     _remarks: Option<String>,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-) -> (Json<ApiResponse<serde_json::Value>>, Option<ShippingOrderRequestedPayload>) {
+) -> (
+    Json<ApiResponse<serde_json::Value>>,
+    Option<ShippingOrderRequestedPayload>,
+) {
     let outbound_order = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
@@ -170,16 +172,19 @@ pub async fn create_shipping_from_outbound_internal(
     let outbound_order = match outbound_order {
         Ok(Some(oo)) => oo,
         Ok(None) => {
-            return (Json(ApiResponse::success(
-                serde_json::json!({
-                    "success": false,
-                    "message": "出库单不存在或状态不是已确认".to_string(),
-                    "outbound_order_id": outbound_order_id,
-                    "shipping_order_id": null,
-                    "shipping_order_number": null,
-                }),
-                "出库单不存在或状态不是已确认",
-            )), None);
+            return (
+                Json(ApiResponse::success(
+                    serde_json::json!({
+                        "success": false,
+                        "message": "出库单不存在或状态不是已确认".to_string(),
+                        "outbound_order_id": outbound_order_id,
+                        "shipping_order_id": null,
+                        "shipping_order_number": null,
+                    }),
+                    "出库单不存在或状态不是已确认",
+                )),
+                None,
+            );
         }
         Err(e) => {
             tracing::error!("查询出库单失败: {}", e);
@@ -193,16 +198,19 @@ pub async fn create_shipping_from_outbound_internal(
     };
 
     if outbound_order.sales_order_id.is_some() {
-        return (Json(ApiResponse::success(
-            serde_json::json!({
-                "success": false,
-                "message": "该出库单已创建销售订单".to_string(),
-                "outbound_order_id": outbound_order_id,
-                "shipping_order_id": outbound_order.sales_order_id,
-                "shipping_order_number": outbound_order.sales_order_number,
-            }),
-            "该出库单已创建销售订单",
-        )), None);
+        return (
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "success": false,
+                    "message": "该出库单已创建销售订单".to_string(),
+                    "outbound_order_id": outbound_order_id,
+                    "shipping_order_id": outbound_order.sales_order_id,
+                    "shipping_order_number": outbound_order.sales_order_number,
+                }),
+                "该出库单已创建销售订单",
+            )),
+            None,
+        );
     }
 
     let shipping_id = Uuid::new_v4();
@@ -289,22 +297,18 @@ async fn publish_shipping_requested_after_commit(
 ) {
     let Some(payload) = opt_payload else { return };
     if let Some(publisher) = &state.event_publisher {
-        match publisher.publish_shipping_order_requested(payload.clone()).await {
+        match publisher
+            .publish_shipping_order_requested(payload.clone())
+            .await
+        {
             Ok(_) => tracing::info!(
                 "[wms] 发布 ShippingOrderRequested 成功 outbound_order_id={}",
                 outbound_order_id
             ),
             Err(e) => {
-                tracing::warn!(
-                    "[wms] 发布 ShippingOrderRequested 失败: {}，入重试队列",
-                    e
-                );
-                commit_retry::push_retry_typed(
-                    "wms",
-                    EventType::ShippingOrderRequested,
-                    &payload,
-                )
-                .await;
+                tracing::warn!("[wms] 发布 ShippingOrderRequested 失败: {}，入重试队列", e);
+                commit_retry::push_retry_typed("wms", EventType::ShippingOrderRequested, &payload)
+                    .await;
             }
         }
     }

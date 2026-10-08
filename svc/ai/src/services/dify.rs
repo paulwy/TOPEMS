@@ -507,7 +507,7 @@ mod tests {
     #[test]
     fn test_dify_error_from_reqwest_error() {
         // 构造一个 reqwest::Error 比较麻烦，这里仅测试 From 的存在性
-        fn assert_from<E: for<'a> From<reqwest::Error>>() {}
+        fn assert_from<E: From<reqwest::Error>>() {}
         assert_from::<DifyError>();
     }
 

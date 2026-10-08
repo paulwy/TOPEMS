@@ -1000,7 +1000,7 @@ pub async fn simulate_aps_schedule(
 
             // 归一化利用率
             let total_hours = result.total_makespan_hours.max(1.0);
-            for (_, hours) in resource_utilization.iter_mut() {
+            for hours in resource_utilization.values_mut() {
                 *hours = (*hours / total_hours * 100.0).min(100.0);
             }
 

@@ -56,13 +56,13 @@ async fn zadd(service_name: &str, member: &str, attempts: u32) {
 }
 
 /// typed 通道入队：存完整 payload，重试时反序列化重发。
-pub async fn push_retry_typed(
-    service_name: &str,
-    event_type: EventType,
-    payload: &impl Serialize,
-) {
-    let Ok(p) = serde_json::to_value(payload) else { return };
-    let Ok(et) = serde_json::to_value(event_type) else { return };
+pub async fn push_retry_typed(service_name: &str, event_type: EventType, payload: &impl Serialize) {
+    let Ok(p) = serde_json::to_value(payload) else {
+        return;
+    };
+    let Ok(et) = serde_json::to_value(event_type) else {
+        return;
+    };
     let member = serde_json::json!({
         "channel": "typed",
         "event_type": et,
@@ -74,7 +74,12 @@ pub async fn push_retry_typed(
 }
 
 /// searchable 通道入队：仅存 entity_type/id，重试时由服务方回调从 DB 重建 payload。
-pub async fn push_retry_searchable(service_name: &str, entity_type: &str, entity_id: Uuid, attempts: u32) {
+pub async fn push_retry_searchable(
+    service_name: &str,
+    entity_type: &str,
+    entity_id: Uuid,
+    attempts: u32,
+) {
     let member = serde_json::json!({
         "channel": "searchable",
         "entity_type": entity_type,
@@ -98,7 +103,9 @@ pub async fn run_relay<F, Fut>(
     Fut: Future<Output = Option<serde_json::Value>> + Send,
 {
     let Some(client) = redis_client() else { return };
-    let Ok(mut con) = client.get_multiplexed_async_connection().await else { return };
+    let Ok(mut con) = client.get_multiplexed_async_connection().await else {
+        return;
+    };
     let now = Utc::now().timestamp();
     let due: Vec<(String, i64)> = redis::cmd("ZRANGEBYSCORE")
         .arg(retry_zset_key(service_name))
@@ -109,26 +116,45 @@ pub async fn run_relay<F, Fut>(
         .await
         .unwrap_or_default();
     for (member, _score) in due {
-        let Ok(mut v) = serde_json::from_str::<serde_json::Value>(&member) else { continue };
+        let Ok(mut v) = serde_json::from_str::<serde_json::Value>(&member) else {
+            continue;
+        };
         let attempts: u32 = v
             .get("attempts")
             .and_then(|x| x.as_u64())
             .and_then(|n| u32::try_from(n).ok())
             .unwrap_or(0);
-        let channel = v.get("channel").and_then(|x| x.as_str()).unwrap_or("searchable");
+        let channel = v
+            .get("channel")
+            .and_then(|x| x.as_str())
+            .unwrap_or("searchable");
 
         let (published, label) = match channel {
             "typed" => {
-                let et: Option<EventType> = v.get("event_type").cloned().and_then(|e| serde_json::from_value(e).ok());
+                let et: Option<EventType> = v
+                    .get("event_type")
+                    .cloned()
+                    .and_then(|e| serde_json::from_value(e).ok());
                 let payload = v.get("payload").cloned().unwrap_or(serde_json::Value::Null);
                 match et {
-                    Some(et) => (publisher.publish_event(et, &payload).await.is_ok(), "typed".to_string()),
+                    Some(et) => (
+                        publisher.publish_event(et, &payload).await.is_ok(),
+                        "typed".to_string(),
+                    ),
                     None => (false, "typed:bad-et".to_string()),
                 }
             }
             _ => {
-                let Some(et) = v.get("entity_type").and_then(|x| x.as_str()) else { continue };
-                let Some(eid) = v.get("entity_id").and_then(|x| x.as_str()).and_then(|s| Uuid::parse_str(s).ok()) else { continue };
+                let Some(et) = v.get("entity_type").and_then(|x| x.as_str()) else {
+                    continue;
+                };
+                let Some(eid) = v
+                    .get("entity_id")
+                    .and_then(|x| x.as_str())
+                    .and_then(|s| Uuid::parse_str(s).ok())
+                else {
+                    continue;
+                };
                 match rebuild_searchable(et, eid).await {
                     Some(payload) => (
                         publisher

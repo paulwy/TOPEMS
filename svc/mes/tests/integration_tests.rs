@@ -1282,7 +1282,7 @@ mod tests {
         let eq_id = Uuid::new_v4();
 
         // 先创建关联的 equipment 记录（外键约束）
-        sqlx::query("INSERT INTO mes.equipment (id, organization_id, equipment_code, equipment_name, created_at, updated_at) VALUES ($1, $2, 'OEE-EQ-TEST', 'OEE测试设备', NOW(), NOW())")
+        sqlx::query("INSERT INTO mes.equipment (id, organization_id, equipment_code, equipment_name, description, created_at, updated_at) VALUES ($1, $2, 'OEE-EQ-TEST', 'OEE测试设备', '测试设备描述', NOW(), NOW())")
             .bind(eq_id).bind(Uuid::new_v4()).execute(&pool).await.unwrap();
 
         let create = sqlx::query(
@@ -1630,7 +1630,7 @@ mod tests {
         let eq_id = Uuid::new_v4();
 
         // 先创建关联的 equipment
-        sqlx::query("INSERT INTO mes.equipment (id, organization_id, equipment_code, equipment_name, created_at, updated_at) VALUES ($1, $2, 'EI-EQ-TEST', '点检测试设备', NOW(), NOW())")
+        sqlx::query("INSERT INTO mes.equipment (id, organization_id, equipment_code, equipment_name, description, created_at, updated_at) VALUES ($1, $2, 'EI-EQ-TEST', '点检测试设备', '测试设备描述', NOW(), NOW())")
             .bind(eq_id).bind(Uuid::new_v4()).execute(&pool).await.unwrap();
 
         let create = sqlx::query(
@@ -1714,7 +1714,7 @@ mod tests {
         let org_id = Uuid::new_v4();
 
         // 先创建关联的 equipment
-        sqlx::query("INSERT INTO mes.equipment (id, organization_id, equipment_code, equipment_name, created_at, updated_at) VALUES ($1, $2, 'EM-EQ-TEST', '维护测试设备', NOW(), NOW())")
+        sqlx::query("INSERT INTO mes.equipment (id, organization_id, equipment_code, equipment_name, description, created_at, updated_at) VALUES ($1, $2, 'EM-EQ-TEST', '维护测试设备', '测试设备描述', NOW(), NOW())")
             .bind(eq_id).bind(org_id).execute(&pool).await.unwrap();
 
         let create = sqlx::query(
@@ -1921,7 +1921,7 @@ mod tests {
         let org_id = Uuid::new_v4();
 
         // 先创建关联的 equipment
-        sqlx::query("INSERT INTO mes.equipment (id, organization_id, equipment_code, equipment_name, created_at, updated_at) VALUES ($1, $2, 'EIR-EQ-TEST', '点检记录测试设备', NOW(), NOW())")
+        sqlx::query("INSERT INTO mes.equipment (id, organization_id, equipment_code, equipment_name, description, created_at, updated_at) VALUES ($1, $2, 'EIR-EQ-TEST', '点检记录测试设备', '测试设备描述', NOW(), NOW())")
             .bind(eq_id).bind(org_id).execute(&pool).await.unwrap();
 
         let create = sqlx::query(

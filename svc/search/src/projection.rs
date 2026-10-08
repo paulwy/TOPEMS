@@ -152,8 +152,7 @@ pub async fn start_projection_subscriber(pool: PgPool) -> Result<(), String> {
 /// 快照（不直读 erp schema，守住 schema 边界）；best-effort——erp 不可达仅告警，
 /// 不阻塞 search 启动，后续增量仍由事件流收敛。
 pub async fn backfill_projections(pool: &PgPool) {
-    let erp_base = std::env::var("ERP_URL")
-        .unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let erp_base = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
     let url = format!("{}/api/erp/internal/searchable-snapshot", erp_base);
 
     // backfill 前差距：投影已有行数
@@ -218,7 +217,10 @@ pub async fn backfill_projections(pool: &PgPool) {
             }
         },
         Err(e) => {
-            tracing::warn!("[search] backfill 拉取 erp 快照失败: {}（erp 未起则跳过，不阻塞）", e);
+            tracing::warn!(
+                "[search] backfill 拉取 erp 快照失败: {}（erp 未起则跳过，不阻塞）",
+                e
+            );
         }
     }
 }

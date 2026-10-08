@@ -194,7 +194,10 @@ pub async fn create_inbound_from_purchase(
 
 /// D6：commit 成功之后发布 InboundOrderRequested；发布失败入 Redis ZSET 重试队列。
 /// 消费契约不变（at-least-once，消费侧幂等）。
-async fn emit_inbound_after_commit(state: &ApiState, to_emit: Option<InboundOrderRequestedPayload>) {
+async fn emit_inbound_after_commit(
+    state: &ApiState,
+    to_emit: Option<InboundOrderRequestedPayload>,
+) {
     let (Some(payload), Some(publisher)) = (to_emit, state.event_publisher.clone()) else {
         return;
     };
@@ -205,7 +208,10 @@ async fn emit_inbound_after_commit(state: &ApiState, to_emit: Option<InboundOrde
             payload.inbound_order_id
         ),
         Err(e) => {
-            tracing::warn!("[SCM] commit 后发布 InboundOrderRequested 失败: {}，入重试队列", e);
+            tracing::warn!(
+                "[SCM] commit 后发布 InboundOrderRequested 失败: {}，入重试队列",
+                e
+            );
             commit_retry::push_retry_typed("scm", et, &payload).await;
         }
     }
@@ -221,7 +227,10 @@ pub async fn create_inbound_from_purchase_internal(
     _remarks: Option<String>,
     tenant_bind: Uuid,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-) -> (Json<ApiResponse<serde_json::Value>>, Option<InboundOrderRequestedPayload>) {
+) -> (
+    Json<ApiResponse<serde_json::Value>>,
+    Option<InboundOrderRequestedPayload>,
+) {
     let purchase_order = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount::float8 AS total_amount, status, remarks, created_at, updated_at
@@ -254,16 +263,19 @@ pub async fn create_inbound_from_purchase_internal(
                 tenant_bind,
             )
             .await;
-            return (Json(ApiResponse::success(
-                serde_json::json!({
-                    "success": false,
-                    "message": "采购订单不存在或状态不是已批准".to_string(),
-                    "purchase_order_id": purchase_order_id,
-                    "inbound_order_id": null,
-                    "inbound_order_number": null,
-                }),
-                "采购订单不存在或状态不是已批准",
-            )), None);
+            return (
+                Json(ApiResponse::success(
+                    serde_json::json!({
+                        "success": false,
+                        "message": "采购订单不存在或状态不是已批准".to_string(),
+                        "purchase_order_id": purchase_order_id,
+                        "inbound_order_id": null,
+                        "inbound_order_number": null,
+                    }),
+                    "采购订单不存在或状态不是已批准",
+                )),
+                None,
+            );
         }
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
@@ -284,9 +296,12 @@ pub async fn create_inbound_from_purchase_internal(
                 tenant_bind,
             )
             .await;
-            return (Json(ApiResponse::from(TopemsError::Internal(
-                "查询采购订单失败".to_string(),
-            ))), None);
+            return (
+                Json(ApiResponse::from(TopemsError::Internal(
+                    "查询采购订单失败".to_string(),
+                ))),
+                None,
+            );
         }
     };
 
@@ -320,16 +335,19 @@ pub async fn create_inbound_from_purchase_internal(
             tenant_bind,
         )
         .await;
-        return (Json(ApiResponse::success(
-            serde_json::json!({
-                "success": false,
-                "message": "该采购订单已创建入库单".to_string(),
-                "purchase_order_id": purchase_order_id,
-                "inbound_order_id": null,
-                "inbound_order_number": null,
-            }),
-            "该采购订单已创建入库单",
-        )), None);
+        return (
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "success": false,
+                    "message": "该采购订单已创建入库单".to_string(),
+                    "purchase_order_id": purchase_order_id,
+                    "inbound_order_id": null,
+                    "inbound_order_number": null,
+                }),
+                "该采购订单已创建入库单",
+            )),
+            None,
+        );
     }
 
     let inbound_id = Uuid::new_v4();
@@ -416,16 +434,19 @@ pub async fn create_inbound_from_purchase_internal(
             )
             .await;
 
-            (Json(ApiResponse::success(
-                serde_json::json!({
-                    "success": true,
-                    "message": "入库单创建成功".to_string(),
-                    "purchase_order_id": purchase_order_id,
-                    "inbound_order_id": inbound_id,
-                    "inbound_order_number": inbound_order_number,
-                }),
-                "采购订单转入库单成功",
-            )), to_emit)
+            (
+                Json(ApiResponse::success(
+                    serde_json::json!({
+                        "success": true,
+                        "message": "入库单创建成功".to_string(),
+                        "purchase_order_id": purchase_order_id,
+                        "inbound_order_id": inbound_id,
+                        "inbound_order_number": inbound_order_number,
+                    }),
+                    "采购订单转入库单成功",
+                )),
+                to_emit,
+            )
         }
         Err(e) => {
             tracing::error!("创建入库单失败: {}", e);
@@ -483,22 +504,28 @@ pub async fn create_inbound_from_purchase_internal(
             .await;
 
             if new_retry_count < max_retries {
-                (Json(ApiResponse::success(
-                    serde_json::json!({
-                        "success": false,
-                        "message": format!("创建入库单失败，将在 {} 秒后重试 (第 {} 次)", new_retry_count * 120, new_retry_count),
-                        "purchase_order_id": purchase_order_id,
-                        "inbound_order_id": null,
-                        "inbound_order_number": null,
-                        "retry_count": new_retry_count,
-                        "next_retry_at": next_retry_at,
-                    }),
-                    "创建入库单失败，将重试",
-                )), None)
+                (
+                    Json(ApiResponse::success(
+                        serde_json::json!({
+                            "success": false,
+                            "message": format!("创建入库单失败，将在 {} 秒后重试 (第 {} 次)", new_retry_count * 120, new_retry_count),
+                            "purchase_order_id": purchase_order_id,
+                            "inbound_order_id": null,
+                            "inbound_order_number": null,
+                            "retry_count": new_retry_count,
+                            "next_retry_at": next_retry_at,
+                        }),
+                        "创建入库单失败，将重试",
+                    )),
+                    None,
+                )
             } else {
-                (Json(ApiResponse::from(TopemsError::Internal(
-                    "创建入库单失败，已达到最大重试次数".to_string(),
-                ))), None)
+                (
+                    Json(ApiResponse::from(TopemsError::Internal(
+                        "创建入库单失败，已达到最大重试次数".to_string(),
+                    ))),
+                    None,
+                )
             }
         }
     }

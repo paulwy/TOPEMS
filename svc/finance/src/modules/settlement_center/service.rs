@@ -178,12 +178,8 @@ pub async fn create_reconciliation(
                 "[SettlementCenter] 发布 ReconciliationCreated 失败: {}，入重试队列",
                 e
             );
-            commit_retry::push_retry_typed(
-                "finance",
-                EventType::ReconciliationCreated,
-                &payload,
-            )
-            .await;
+            commit_retry::push_retry_typed("finance", EventType::ReconciliationCreated, &payload)
+                .await;
         }
     }
 
@@ -280,12 +276,8 @@ pub async fn manual_reconcile(
                 "[SettlementCenter] 发布 ReconciliationUpdated 失败: {}，入重试队列",
                 e
             );
-            commit_retry::push_retry_typed(
-                "finance",
-                EventType::ReconciliationUpdated,
-                &payload,
-            )
-            .await;
+            commit_retry::push_retry_typed("finance", EventType::ReconciliationUpdated, &payload)
+                .await;
         }
     }
 
@@ -561,12 +553,7 @@ pub async fn create_settlement(
                 "[SettlementCenter] 发布 SettlementCreated 失败: {}，入重试队列",
                 e
             );
-            commit_retry::push_retry_typed(
-                "finance",
-                EventType::SettlementCreated,
-                &payload,
-            )
-            .await;
+            commit_retry::push_retry_typed("finance", EventType::SettlementCreated, &payload).await;
         }
     }
 
@@ -733,12 +720,8 @@ pub async fn approve_settlement(
                     "[SettlementCenter] 发布 SettlementApproved 失败: {}，入重试队列",
                     e
                 );
-                commit_retry::push_retry_typed(
-                    "finance",
-                    EventType::SettlementApproved,
-                    &payload,
-                )
-                .await;
+                commit_retry::push_retry_typed("finance", EventType::SettlementApproved, &payload)
+                    .await;
             }
         }
     }

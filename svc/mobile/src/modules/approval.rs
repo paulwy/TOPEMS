@@ -233,9 +233,7 @@ pub async fn approve_approval_task(
         Err(_) => return unauthorized(),
     };
 
-    let comment =
-        body.and_then(|Json(b)| b.comment)
-            .and_then(|c| if c.is_empty() { None } else { Some(c) });
+    let comment = body.and_then(|Json(b)| b.comment).filter(|c| !c.is_empty());
 
     let bearer = extract_bearer_token(&headers);
     let mut client = workflow_client.clone();
@@ -299,9 +297,7 @@ pub async fn reject_approval_task(
         Err(_) => return unauthorized(),
     };
 
-    let comment =
-        body.and_then(|Json(b)| b.comment)
-            .and_then(|c| if c.is_empty() { None } else { Some(c) });
+    let comment = body.and_then(|Json(b)| b.comment).filter(|c| !c.is_empty());
 
     let bearer = extract_bearer_token(&headers);
     let mut client = workflow_client.clone();
@@ -375,9 +371,7 @@ pub async fn delegate_approval_task(
         }
     };
 
-    let reason = payload
-        .reason
-        .and_then(|r| if r.is_empty() { None } else { Some(r) });
+    let reason = payload.reason.filter(|r| !r.is_empty());
 
     let bearer = extract_bearer_token(&headers);
     let mut client = workflow_client.clone();

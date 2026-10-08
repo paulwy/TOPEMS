@@ -343,13 +343,13 @@ pub async fn emit_low_stock_alerts(
         };
 
         let publisher_clone = publisher.clone();
-        match publisher_clone.publish_inventory_low_stock(payload.clone()).await {
+        match publisher_clone
+            .publish_inventory_low_stock(payload.clone())
+            .await
+        {
             Ok(_) => count += 1,
             Err(e) => {
-                tracing::warn!(
-                    "[wms] WmsInventoryLowStock 事件发布失败: {}，入重试队列",
-                    e
-                );
+                tracing::warn!("[wms] WmsInventoryLowStock 事件发布失败: {}，入重试队列", e);
                 commit_retry::push_retry_typed("wms", EventType::WmsInventoryLowStock, &payload)
                     .await;
             }

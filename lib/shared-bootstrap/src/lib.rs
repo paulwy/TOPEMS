@@ -707,13 +707,13 @@ pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext>
     // username 同构），确保边指标 caller/callee 双侧 label 一致可关联。
     // 已显式设置 TOPEMS_SERVICE_NAME 的环境不覆盖（允许部署期显式指定）。
     if env::var("TOPEMS_SERVICE_NAME").is_err() {
-        let normalized = config
-            .name
-            .strip_prefix("topems-")
-            .unwrap_or(config.name);
+        let normalized = config.name.strip_prefix("topems-").unwrap_or(config.name);
         let caller = format!("{}-service", normalized);
         env::set_var("TOPEMS_SERVICE_NAME", &caller);
-        tracing::info!("TOPEMS_SERVICE_NAME={}（出站调用边指标 caller label）", caller);
+        tracing::info!(
+            "TOPEMS_SERVICE_NAME={}（出站调用边指标 caller label）",
+            caller
+        );
     }
     // 预注册服务间调用计数器：无流量时 /metrics 也能看到指标族（区分「0 调用」与「未埋点」）。
     pre_register_service_metrics();

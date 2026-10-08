@@ -62,7 +62,7 @@ impl PdfParser {
 
         // 获取所有页面并提取文本
         let pages = doc.get_pages();
-        for (_, page_id) in pages.iter() {
+        for page_id in pages.values() {
             let page_num = page_id.0;
             if let Ok(content) = doc.extract_text(&[page_num]) {
                 if !content.trim().is_empty() {

@@ -395,7 +395,7 @@ impl MDMWorkflowEngine {
         workflow.status = WorkflowStatus::Running;
         workflow.updated_at = chrono::Utc::now().to_rfc3339();
 
-        if let Some(first_step) = workflow.steps.iter_mut().next() {
+        if let Some(first_step) = workflow.steps.first_mut() {
             first_step.status = WorkflowStepStatus::InProgress;
             first_step.started_at = Some(chrono::Utc::now().to_rfc3339());
         }

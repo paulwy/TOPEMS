@@ -12,7 +12,9 @@ use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
-use topems_shared_event::event::{commit_retry, EventPublisher, EventType, PmProjectCreatedPayload};
+use topems_shared_event::event::{
+    commit_retry, EventPublisher, EventType, PmProjectCreatedPayload,
+};
 use utoipa::{IntoParams, ToSchema};
 use uuid::Uuid;
 
@@ -331,10 +333,7 @@ async fn create_project(
                             project_id
                         ),
                         Err(e) => {
-                            tracing::warn!(
-                                "[pm] PmProjectCreated 事件发布失败: {}，入重试队列",
-                                e
-                            );
+                            tracing::warn!("[pm] PmProjectCreated 事件发布失败: {}，入重试队列", e);
                             commit_retry::push_retry_typed("pm", et, &payload).await;
                         }
                     }

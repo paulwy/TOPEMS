@@ -232,8 +232,10 @@ impl VectorStore for RedisVectorStore {
             Some((vector_bytes, metadata_json)) => {
                 // 反序列化向量
                 let vector: Vec<f32> = vector_bytes
-                    .chunks_exact(4)
-                    .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+                    .as_chunks::<4>()
+                    .0
+                    .iter()
+                    .map(|chunk| f32::from_le_bytes(*chunk))
                     .collect();
 
                 let metadata: VectorMetadata = serde_json::from_str(&metadata_json)?;

@@ -268,14 +268,13 @@ pub async fn create_purchase_order(
     }
     // D6：commit 成功后发布 PurchaseOrderCreated；失败入重试队列。
     if let Some(ref publisher) = state.event_publisher {
-        let tenant_id: Option<Uuid> = sqlx::query_scalar(
-            "SELECT tenant_id FROM erp.purchase_orders WHERE id = $1"
-        )
-        .bind(purchase_order.id)
-        .fetch_optional(&state.db)
-        .await
-        .ok()
-        .flatten();
+        let tenant_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT tenant_id FROM erp.purchase_orders WHERE id = $1")
+                .bind(purchase_order.id)
+                .fetch_optional(&state.db)
+                .await
+                .ok()
+                .flatten();
         let payload = PurchaseOrderCreatedPayload {
             order_id: purchase_order.id,
             order_no: purchase_order.order_no.clone(),
@@ -290,7 +289,10 @@ pub async fn create_purchase_order(
             created_by: Some(claims.sub.clone()),
             tenant_id,
         };
-        match publisher.publish_purchase_order_created(payload.clone()).await {
+        match publisher
+            .publish_purchase_order_created(payload.clone())
+            .await
+        {
             Ok(_) => tracing::info!(
                 "[erp] 发布 PurchaseOrderCreated 事件成功 - order_id={}",
                 purchase_order.id
@@ -544,7 +546,10 @@ pub async fn approve_purchase_order(
                     approved_at: Some(Utc::now()),
                     tenant_id,
                 };
-                match publisher.publish_purchase_order_approved(payload.clone()).await {
+                match publisher
+                    .publish_purchase_order_approved(payload.clone())
+                    .await
+                {
                     Ok(_) => tracing::info!(
                         "[erp] 发布 PurchaseOrderApproved 事件成功 - order_id={}",
                         order.id

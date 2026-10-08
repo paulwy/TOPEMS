@@ -193,7 +193,10 @@ async fn create_settlement(
                 };
                 let et = EventType::SettlementCreated;
                 if let Err(e) = publisher.publish_event(et, &payload).await {
-                    tracing::warn!("[PM Settlement] 发布 SettlementCreated 失败: {}，入重试队列", e);
+                    tracing::warn!(
+                        "[PM Settlement] 发布 SettlementCreated 失败: {}，入重试队列",
+                        e
+                    );
                     commit_retry::push_retry_typed("pm", et, &payload).await;
                 }
             }
@@ -291,7 +294,10 @@ async fn approve_settlement(
                 };
                 let et = EventType::SettlementApproved;
                 if let Err(e) = publisher.publish_event(et, &payload).await {
-                    tracing::warn!("[PM Settlement] 发布 SettlementApproved 失败: {}，入重试队列", e);
+                    tracing::warn!(
+                        "[PM Settlement] 发布 SettlementApproved 失败: {}，入重试队列",
+                        e
+                    );
                     commit_retry::push_retry_typed("pm", et, &payload).await;
                 }
             }

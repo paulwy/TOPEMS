@@ -49,7 +49,9 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_event::event::{commit_retry, EventType, PaymentMadePayload, PaymentReceivedPayload};
+use topems_shared_event::event::{
+    commit_retry, EventType, PaymentMadePayload, PaymentReceivedPayload,
+};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AccountQueryParams {
@@ -843,16 +845,9 @@ pub async fn create_payment_handler(
                         .publish_event(EventType::PaymentMade, payload.clone())
                         .await
                     {
-                        tracing::warn!(
-                            "[finance] PaymentMade 事件发布失败: {}，入重试队列",
-                            e
-                        );
-                        commit_retry::push_retry_typed(
-                            "finance",
-                            EventType::PaymentMade,
-                            &payload,
-                        )
-                        .await;
+                        tracing::warn!("[finance] PaymentMade 事件发布失败: {}，入重试队列", e);
+                        commit_retry::push_retry_typed("finance", EventType::PaymentMade, &payload)
+                            .await;
                     } else {
                         tracing::info!(
                             "[finance] PaymentMade 事件发布成功 - payment_id={}",
@@ -2996,10 +2991,7 @@ pub async fn create_collection_handler(
                         .publish_event(EventType::PaymentReceived, payload.clone())
                         .await
                     {
-                        tracing::warn!(
-                            "[finance] PaymentReceived 事件发布失败: {}，入重试队列",
-                            e
-                        );
+                        tracing::warn!("[finance] PaymentReceived 事件发布失败: {}，入重试队列", e);
                         commit_retry::push_retry_typed(
                             "finance",
                             EventType::PaymentReceived,

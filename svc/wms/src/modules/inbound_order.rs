@@ -19,7 +19,9 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
 use topems_shared_db::tenant::get_tenant_id_or_new;
-use topems_shared_event::event::{commit_retry, EventType, StockInboundPayload, WmsInventoryItemReceivedPayload};
+use topems_shared_event::event::{
+    commit_retry, EventType, StockInboundPayload, WmsInventoryItemReceivedPayload,
+};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InboundOrderItemRequest {
@@ -335,16 +337,9 @@ pub async fn create_inbound_order(
                         .publish_event(EventType::StockInbound, payload.clone())
                         .await
                     {
-                        tracing::warn!(
-                            "[wms] StockInbound 事件发布失败: {}，入重试队列",
-                            e
-                        );
-                        commit_retry::push_retry_typed(
-                            "wms",
-                            EventType::StockInbound,
-                            &payload,
-                        )
-                        .await;
+                        tracing::warn!("[wms] StockInbound 事件发布失败: {}，入重试队列", e);
+                        commit_retry::push_retry_typed("wms", EventType::StockInbound, &payload)
+                            .await;
                     } else {
                         tracing::info!("[wms] StockInbound 事件发布成功 - inbound_id={}", oid);
                     }
