@@ -2,10 +2,10 @@
 //!
 //! 提供基于 Ollama 的嵌入和聊天功能
 
-use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use topems_shared_core::error::{Result, TopemsError};
 
 use crate::embedding::{EmbeddingResult, EmbeddingService, EmbeddingUsage};
 
@@ -118,7 +118,10 @@ impl OllamaClient {
         if !response.status().is_success() {
             let status = response.status();
             let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("Ollama embed error: {} - {}", status, body);
+            return Err(TopemsError::NetworkRequest(format!(
+                "Ollama embed error: {} - {}",
+                status, body
+            )));
         }
 
         let embed_response: EmbedResponse = response.json().await?;
@@ -149,7 +152,10 @@ impl OllamaClient {
         if !response.status().is_success() {
             let status = response.status();
             let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("Ollama chat error: {} - {}", status, body);
+            return Err(TopemsError::NetworkRequest(format!(
+                "Ollama chat error: {} - {}",
+                status, body
+            )));
         }
 
         let chat_response: ChatResponse = response.json().await?;

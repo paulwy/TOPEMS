@@ -1,10 +1,10 @@
 //! AI 客户端接口定义
 
-use anyhow::Result;
 use async_trait::async_trait;
 use futures::StreamExt;
 use reqwest::Client;
 use std::pin::Pin;
+use std::result::Result;
 use std::sync::Arc;
 
 use super::config::AIModelConfig;

@@ -2,10 +2,10 @@
 //!
 //! 支持 OpenAI API、本地 BGE 模型和 Ollama
 
-use anyhow::Result;
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use topems_shared_core::error::{Result, TopemsError};
 
 /// 嵌入配置
 #[derive(Debug, Clone, Deserialize)]
@@ -133,7 +133,10 @@ impl EmbeddingService for OpenAIEmbedding {
         if !response.status().is_success() {
             let status = response.status();
             let body = response.text().await.unwrap_or_default();
-            anyhow::bail!("OpenAI API error: {} - {}", status, body);
+            return Err(TopemsError::NetworkRequest(format!(
+                "OpenAI API error: {} - {}",
+                status, body
+            )));
         }
 
         let openai_response: OpenAIResponse = response.json().await?;
@@ -205,7 +208,10 @@ impl EmbeddingService for LocalEmbedding {
             .await?;
 
         if !response.status().is_success() {
-            anyhow::bail!("Local embedding error: {}", response.status());
+            return Err(TopemsError::NetworkRequest(format!(
+                "Local embedding error: {}",
+                response.status()
+            )));
         }
 
         let local_response: LocalResponse = response.json().await?;
@@ -320,7 +326,9 @@ pub fn create_embedding_service(config: &EmbeddingConfig) -> Result<Arc<dyn Embe
         }
         "openai" => {
             let api_key = std::env::var(config.api_key_env.as_deref().unwrap_or("OPENAI_API_KEY"))
-                .map_err(|_| anyhow::anyhow!("OpenAI API key not found"))?;
+                .map_err(|_| {
+                    TopemsError::ConfigValidation("OpenAI API key not found".to_string())
+                })?;
 
             Ok(Arc::new(OpenAIEmbedding::new(
                 api_key,
@@ -337,7 +345,12 @@ pub fn create_embedding_service(config: &EmbeddingConfig) -> Result<Arc<dyn Embe
             Ok(Arc::new(LocalEmbedding::new(endpoint, config.dimension)))
         }
         "mock" => Ok(Arc::new(MockEmbedding::new(config.dimension))),
-        _ => anyhow::bail!("Unknown embedding provider: {}", config.provider),
+        _ => {
+            return Err(TopemsError::ValidationFailed(format!(
+                "Unknown embedding provider: {}",
+                config.provider
+            )))
+        }
     }
 }
 

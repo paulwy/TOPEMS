@@ -1095,7 +1095,7 @@ pub async fn handle_crm_opportunity_won(
     crm_url: &str,
     scm_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理CRM商机赢单事件 - 自动创建SCM采购订单");
 
     let opportunity_id = payload
@@ -1135,7 +1135,7 @@ pub async fn handle_scm_supplier_created(
     crm_url: &str,
     scm_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理SCM供应商创建事件 - 自动同步到CRM");
 
     let supplier_id = payload

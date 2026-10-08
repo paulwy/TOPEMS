@@ -3,6 +3,7 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use topems_shared_core::error::{Result, TopemsError};
 use topems_shared_core::response::ApiResponse;
 
 /// File 服务 HTTP 客户端
@@ -104,12 +105,12 @@ impl FileServiceClient {
         filename: &str,
         content: Vec<u8>,
         content_type: &str,
-    ) -> anyhow::Result<UploadResponse> {
+    ) -> Result<UploadResponse> {
         let content_length = content.len();
         let part = reqwest::multipart::Part::bytes(content)
             .file_name(filename.to_string())
             .mime_str(content_type)
-            .map_err(|e| anyhow::anyhow!("Invalid mime type: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("Invalid mime type: {}", e)))?;
 
         let form = reqwest::multipart::Form::new().part("file", part);
 
@@ -120,10 +121,10 @@ impl FileServiceClient {
 
         tracing::debug!("Sending request to file service...");
         let response = self.add_auth_header(request).send().await
-            .map_err(|e| anyhow::anyhow!(
+            .map_err(|e| TopemsError::NetworkRequest(format!(
                 "Failed to send request to {}: {}. This could be due to: (1) Connection refused (2) DNS resolution failure (3) Timeout (4) Proxy issues",
                 url, e
-            ))?;
+            )))?;
 
         // 获取原始响应文本用于调试
         let status = response.status();
@@ -131,18 +132,22 @@ impl FileServiceClient {
         let text = response.text().await?;
 
         if !status.is_success() {
-            return Err(anyhow::anyhow!(
+            return Err(TopemsError::FileOperation(format!(
                 "File service returned status {}: {}",
-                status,
-                text
-            ));
+                status, text
+            )));
         }
 
-        let api_response: ApiResponse<UploadResponse> = serde_json::from_str(&text)
-            .map_err(|e| anyhow::anyhow!("Failed to parse response: {}, raw: {}", e, text))?;
+        let api_response: ApiResponse<UploadResponse> =
+            serde_json::from_str(&text).map_err(|e| {
+                TopemsError::ValidationFailed(format!(
+                    "Failed to parse response: {}, raw: {}",
+                    e, text
+                ))
+            })?;
         api_response
             .data
-            .ok_or_else(|| anyhow::anyhow!("Empty response data"))
+            .ok_or_else(|| TopemsError::ValidationFailed("Empty response data".to_string()))
     }
 
     /// 上传文件（带 external_id）
@@ -152,11 +157,11 @@ impl FileServiceClient {
         content: Vec<u8>,
         content_type: &str,
         external_id: Uuid,
-    ) -> anyhow::Result<UploadResponse> {
+    ) -> Result<UploadResponse> {
         let part = reqwest::multipart::Part::bytes(content)
             .file_name(filename.to_string())
             .mime_str(content_type)
-            .map_err(|e| anyhow::anyhow!("Invalid mime type: {}", e))?;
+            .map_err(|e| TopemsError::ValidationFailed(format!("Invalid mime type: {}", e)))?;
 
         let form = reqwest::multipart::Form::new()
             .text("external_id", external_id.to_string())
@@ -172,11 +177,11 @@ impl FileServiceClient {
         let api_response: ApiResponse<UploadResponse> = response.json().await?;
         api_response
             .data
-            .ok_or_else(|| anyhow::anyhow!("Empty response data"))
+            .ok_or_else(|| TopemsError::ValidationFailed("Empty response data".to_string()))
     }
 
     /// 获取文件元数据
-    pub async fn get_file(&self, file_id: Uuid) -> anyhow::Result<FileMetadataResponse> {
+    pub async fn get_file(&self, file_id: Uuid) -> Result<FileMetadataResponse> {
         let request = self
             .client
             .get(format!("{}/api/core/file/files/{}", self.base_url, file_id));
@@ -186,11 +191,11 @@ impl FileServiceClient {
         let api_response: ApiResponse<FileMetadataResponse> = response.json().await?;
         api_response
             .data
-            .ok_or_else(|| anyhow::anyhow!("Empty response data"))
+            .ok_or_else(|| TopemsError::ValidationFailed("Empty response data".to_string()))
     }
 
     /// 下载文件
-    pub async fn download_file(&self, file_id: Uuid) -> anyhow::Result<Vec<u8>> {
+    pub async fn download_file(&self, file_id: Uuid) -> Result<Vec<u8>> {
         let request = self.client.get(format!(
             "{}/api/core/file/download/{}",
             self.base_url, file_id
@@ -203,7 +208,7 @@ impl FileServiceClient {
     }
 
     /// 删除文件
-    pub async fn delete_file(&self, file_id: Uuid) -> anyhow::Result<()> {
+    pub async fn delete_file(&self, file_id: Uuid) -> Result<()> {
         let request = self
             .client
             .delete(format!("{}/api/core/file/files/{}", self.base_url, file_id));
@@ -213,10 +218,10 @@ impl FileServiceClient {
         if response.status().is_success() {
             Ok(())
         } else {
-            Err(anyhow::anyhow!(
+            Err(TopemsError::FileOperation(format!(
                 "Delete failed with status: {}",
                 response.status()
-            ))
+            )))
         }
     }
 }

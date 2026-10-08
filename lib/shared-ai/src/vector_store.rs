@@ -2,11 +2,11 @@
 //!
 //! 支持 Redis 向量存储后端
 
-use anyhow::Result;
 use async_trait::async_trait;
 use redis::{aio::ConnectionManager, AsyncCommands, Client};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
+use topems_shared_core::error::Result;
 
 /// 向量元数据
 #[derive(Debug, Clone, Serialize, Deserialize)]

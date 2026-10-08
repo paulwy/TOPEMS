@@ -1217,7 +1217,7 @@ pub async fn handle_mes_production_completed(
     mes_url: &str,
     qms_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理MES生产完成事件 - 自动触发QMS质检");
 
     let record_id = payload
@@ -1251,7 +1251,7 @@ pub async fn handle_qms_inspection_completed(
     mes_url: &str,
     qms_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理QMS质检完成事件 - 自动回传MES");
 
     let inspection_id = payload

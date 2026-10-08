@@ -1113,7 +1113,7 @@ pub async fn handle_crm_customer_created(
     crm_url: &str,
     erp_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理CRM客户创建事件 - 自动同步到ERP");
 
     let customer_id = payload
@@ -1145,7 +1145,7 @@ pub async fn handle_erp_customer_created(
     crm_url: &str,
     erp_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理ERP客户创建事件 - 自动同步到CRM");
 
     let customer_id = payload
@@ -1177,7 +1177,7 @@ pub async fn handle_crm_opportunity_won(
     crm_url: &str,
     erp_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理CRM商机赢单事件 - 自动创建ERP订单");
 
     let opportunity_id = payload

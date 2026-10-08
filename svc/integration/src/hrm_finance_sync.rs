@@ -1165,7 +1165,7 @@ pub async fn handle_hrm_payroll_calculated(
     hrm_url: &str,
     finance_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理HRM薪资计算完成事件 - 自动同步到Finance");
 
     let payroll_id = payload
@@ -1201,7 +1201,7 @@ pub async fn handle_hrm_employee_created(
     hrm_url: &str,
     finance_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理HRM员工创建事件 - 自动同步到Finance");
 
     let employee_id = payload

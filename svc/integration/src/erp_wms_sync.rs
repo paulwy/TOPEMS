@@ -1012,7 +1012,7 @@ pub async fn handle_erp_order_confirmed(
     erp_url: &str,
     wms_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理ERP订单确认事件 - 自动同步到WMS");
 
     let order_id = payload
@@ -1048,7 +1048,7 @@ pub async fn handle_wms_stock_updated(
     erp_url: &str,
     wms_url: &str,
     payload: &serde_json::Value,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理WMS库存更新事件 - 自动同步到ERP");
 
     let product_id = payload

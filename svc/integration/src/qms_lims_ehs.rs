@@ -13,6 +13,7 @@
 
 use serde_json::Value;
 use sqlx::types::Uuid;
+use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
     EhsAccidentReportedPayload, EhsHazardReportedPayload, EventType,
     LimsInspectionAbnormalDetectedPayload, LimsReagentAlertPayload, LimsRecordCompletedPayload,
@@ -41,7 +42,7 @@ fn rand_suffix(n: usize) -> String {
         .collect()
 }
 
-async fn post_json(url: &str, body: &Value) -> anyhow::Result<()> {
+async fn post_json(url: &str, body: &Value) -> Result<(), TopemsError> {
     let client = reqwest::Client::new();
     let resp = client
         .post(url)
@@ -52,7 +53,10 @@ async fn post_json(url: &str, body: &Value) -> anyhow::Result<()> {
     if !resp.status().is_success() {
         let status = resp.status();
         let text = resp.text().await.unwrap_or_default();
-        anyhow::bail!("调用 {} 返回 {}: {}", url, status, text);
+        return Err(TopemsError::NetworkRequest(format!(
+            "调用 {} 返回 {}: {}",
+            url, status, text
+        )));
     }
     Ok(())
 }
@@ -60,7 +64,7 @@ async fn post_json(url: &str, body: &Value) -> anyhow::Result<()> {
 /// QMS 检验完成 → LIMS 登记样品 + 检验任务（顺序：先样品后任务，任务按 sample_no 关联样品）。
 pub async fn handle_qms_inspection_completed(
     payload: &QmsInspectionCompletedPayload,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!(
         "处理QMS检验完成事件 - 编排到LIMS样品/任务: {}",
         payload.inspection_no
@@ -100,7 +104,7 @@ pub async fn handle_qms_inspection_completed(
 /// QMS 质量问题创建 → EHS 隐患（隐患表归 ehs schema，原直写 qms.qa_ehs_hazards 为错写表）。
 pub async fn handle_qms_quality_issue_created(
     payload: &QmsQualityIssueCreatedPayload,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!(
         "处理QMS质量问题创建事件 - 编排到EHS隐患: {}",
         payload.issue_no
@@ -134,7 +138,9 @@ pub async fn handle_qms_quality_issue_created(
 }
 
 /// EHS 隐患上报 → QMS 纠正措施。
-pub async fn handle_ehs_hazard_reported(payload: &EhsHazardReportedPayload) -> anyhow::Result<()> {
+pub async fn handle_ehs_hazard_reported(
+    payload: &EhsHazardReportedPayload,
+) -> Result<(), TopemsError> {
     info!(
         "处理EHS隐患上报事件 - 编排到QMS纠正措施: {}",
         payload.hazard_no
@@ -180,7 +186,7 @@ pub async fn handle_ehs_hazard_reported(payload: &EhsHazardReportedPayload) -> a
 /// EHS 事故上报 → LIMS 检测样品 + 任务。
 pub async fn handle_ehs_accident_reported(
     payload: &EhsAccidentReportedPayload,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!(
         "处理EHS事故上报事件 - 编排到LIMS检测任务: {}",
         payload.accident_no
@@ -221,7 +227,7 @@ pub async fn handle_ehs_accident_reported(
 /// LIMS 检测异常 → EHS 隐患。
 pub async fn handle_lims_inspection_abnormal(
     payload: &LimsInspectionAbnormalDetectedPayload,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!("处理LIMS检测异常事件 - 编排到EHS: {}", payload.task_no);
 
     let hazard_title = format!("LIMS检测异常: {}", payload.test_item);
@@ -263,7 +269,7 @@ pub async fn handle_lims_inspection_abnormal(
 /// LIMS 检测记录完成 → QMS 质检结果回写（仅当携带 related_inspection_no）。
 pub async fn handle_lims_record_completed(
     payload: &LimsRecordCompletedPayload,
-) -> anyhow::Result<()> {
+) -> Result<(), TopemsError> {
     info!(
         "处理LIMS检测完成事件 - 编排回写QMS质检结果: {}",
         payload.record_no
@@ -299,7 +305,9 @@ pub async fn handle_lims_record_completed(
 }
 
 /// LIMS 试剂告警 → EHS 告警。
-pub async fn handle_lims_reagent_alert(payload: &LimsReagentAlertPayload) -> anyhow::Result<()> {
+pub async fn handle_lims_reagent_alert(
+    payload: &LimsReagentAlertPayload,
+) -> Result<(), TopemsError> {
     info!(
         "处理LIMS试剂告警事件 - 编排到EHS告警: {}",
         payload.reagent_no
@@ -332,7 +340,7 @@ pub async fn handle_lims_reagent_alert(payload: &LimsReagentAlertPayload) -> any
 }
 
 /// 业务事件分发（供 event_handlers 订阅 7 类业务事件后统一调用）。
-pub async fn dispatch(event_type: EventType, payload: &Value) -> anyhow::Result<()> {
+pub async fn dispatch(event_type: EventType, payload: &Value) -> Result<(), TopemsError> {
     match event_type {
         EventType::QmsInspectionCompleted => {
             let parsed = serde_json::from_value::<QmsInspectionCompletedPayload>(payload.clone())?;
