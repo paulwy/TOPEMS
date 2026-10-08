@@ -1890,6 +1890,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build shared API client (desktop type resolution prerequisite)
+        run: pnpm --filter @topems/api-client build
+
       - name: Build desktop app
         working-directory: apps/desktop
         run: pnpm run build
