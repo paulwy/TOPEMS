@@ -860,3 +860,15 @@
 - **B15 埋点**：B1 终态 search 查询只读本地投影、**零出站**（删 erp_api fan-out）；backfill 用裸 reqwest 不经过 TypedServiceClient，故 `/metrics` 无 search→erp 出站边可观测——符合"本链路无出站调用"预期。
 - **门禁/测试**：clippy 0 warning；双门禁 py/cjs PASS；erp 902 / search 179 测试绿。
 - **残留/说明**：erp `create_customer` 的 RLS 事务无显式 commit（既有现象，原版即如此），导致 HTTP create 源行回滚但事件已发——本次未改其写路径；生产 backfill 需配 `BACKFILL_TOKEN`（服务间认证），增量仍由事件流收敛。
+
+### ✅ 专项核查收口（commit c843ad423，未 push）
+
+> 上节残留的"create_customer 无 commit"专项核查：B1 E2E 暴露 HTTP 200 返回 id 但源表 0 行、投影却有幽灵行。
+
+- **根因**：RLS 租户中间件（`lib/shared-auth/src/middleware/tenant.rs`）只把 `Transaction` 塞进 request extensions 后 `next.run()` 直接返回，**绝不自动 commit**；事务存活契约 = handler 须 `guard.take()` 取出再 `.commit()`，不取则 Drop→sqlx 默认回滚。
+- **是否 B1 引入**：**既有缺陷，非 B1 引入**。`git show fd935863f` 对比确认 create_customer/update_customer 在 B1 前即无 commit；B1 仅把它暴露为"发了事件但源回滚"的幽灵投影。实测复现：POST 200 返回 id 982ac2bb 后源表仍 0 行。
+- **同类排查**：**批量 handler 全部正确 commit，单行 handler 普遍缺失**。purchase_order 全部单行 handler 均 commit（工作正常）；customer.rs 仅 create/update 缺（delete 及全部批量已 commit）；sales_order.rs 的 create/update/delete + approve/ship/complete/cancel（经 helper `update_sales_order_status(txn)`，调用方持 guard）全部缺 commit。
+- **修复**：对齐 purchase_order/批量既有模式，emit 之后、return 之前插 `guard.take().commit()`（commit 失败返回 500）。**未引入 outbox 表**（避免迁移 0013，最小侵入）；emit 在事务内读快照、commit 后置，与 delete_customer 既有取舍一致。
+- **三态复跑（新二进制 pid 90552）**：create→源表落库(修复后客户2) + 投影落库；update→源/投影同收敛(13900009999/inactive)；delete→源软删(active=0) + 投影归 0。测试数据已清理归零。
+- **门禁/测试**：clippy 0 warning；双门禁 py/cjs PASS；erp 902 测试绿；lefthook 全 hook 通过。
+- **残留（生产部署注意）**：单行写 handler 现已补齐 commit；emit 在事务内发布，若 commit 失败仍有孤儿事件（与 delete_customer 既有取舍一致，未用 outbox）；sales_order 状态流转 commit 失败仅 log 不返回 500。
