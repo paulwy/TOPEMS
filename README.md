@@ -94,14 +94,28 @@ API 路径按服务实际挂载前缀暴露，主流格式为 `/api/{service}`�
 
 ```
 topems/
-├── docs/                          # 文档
-│   ├── api/                      # API 文档
-│   ├── architecture/             # 架构设计
-│   ├── deployment/               # 部署指南
-│   ├── development/              # 开发指南
-│   ├── modules/                  # 业务模块文档
+├── docs/                          # 文档（总索引见 docs/README.md）
 │   ├── getting-started/          # 快速入门
-│   └── user-guide/               # 用户手册
+│   ├── developer/                # 开发指南（backend/frontend/standards）
+│   ├── architecture/             # 架构设计
+│   ├── database/                 # 数据库设计/迁移/运维
+│   ├── api/                      # API 文档（按模块 API_*.md）
+│   ├── modules/                  # 业务模块规格（core/business）
+│   ├── deploy/                   # 部署方案（容器策略/WSL2/runbook）
+│   ├── admin/                    # 运维指南（部署/监控/检查清单）
+│   ├── design/                   # 设计文档（导航/主题）
+│   ├── quality/                  # 质量与协作规范
+│   ├── audit/                    # 审计记录
+│   ├── security/                 # 安全
+│   ├── performance/              # 性能测试与优化
+│   ├── testing/                  # 测试计划与 E2E
+│   ├── user-guide/               # 用户手册（含模块指南）
+│   ├── project/                  # 项目路线图/交付清单
+│   ├── reports/                  # 报告（注册表/归档）
+│   ├── changelog/                # 变更日志
+│   ├── sales/                    # 销售资料
+│   ├── training/                 # 培训材料
+│   └── archive/                  # 历史归档（misc/reports/roadmap 等）
 ├── apps/                          # 前端应用目录
 │   ├── web/                      # Web 主应用 (端口 3000, 模块联邦宿主)
 │   │   ├── src/components/       # 可复用组件
@@ -711,156 +725,15 @@ python3 -m topems_cli db migrate
 
 ### 文档目录
 
-```
-docs/
-├── README.md                      # 文档中心索引（唯一入口）
-├── api/                           # API 文档
-│   ├── README.md                  # API 文档总览
-│   ├── openapi.yaml               # OpenAPI 规范文档
-│   ├── API_AUTH.md                # 认证 API
-│   ├── API_ERP.md                 # ERP API
-│   ├── API_FINANCE.md             # 财务 API
-│   ├── API_HRM.md                 # HRM API
-│   ├── API_CRM.md                 # CRM API
-│   ├── API_PM.md                  # PM API
-│   ├── API_MES.md                 # MES API
-│   ├── API_PDM.md                # PDM API
-│   ├── API_QMS.md                 # QMS API
-│   ├── API_LIMS.md                # LIMS API
-│   ├── API_EHS.md                 # EHS API
-│   ├── API_RD.md                  # RD 研发管理 API（原 API_RS.md）
-│   ├── API_SCM.md                 # SCM API
-│   ├── API_WMS.md                 # WMS API
-│   ├── API_SRM.md                 # SRM API
-│   ├── API_BI.md                  # BI API (API_ANALYTICS)
-│   ├── API_REPORT.md              # 报表 API
-│   ├── API_PORTAL.md              # 门户 API
-│   ├── API_MOBILE.md              # 移动 API
-│   ├── API_GIS.md                 # GIS API
-│   ├── API_INTEGRATION.md         # 集成 API
-│   ├── API_MONITOR.md             # 监控 API
-│   ├── API_NOTIFICATION.md        # 通知 API
-│   ├── API_WORKFLOW.md            # 工作流 API
-│   ├── API_DOC.md                 # 文档 API
-│   ├── API_VERSION_AND_SCHEMA_GUIDE.md # API 版本与 Schema 指南
-│   ├── services-openapi-status.md # 各服务 OpenAPI 生成状态
-│   └── plugins-api.md             # 插件 API
-├── architecture/                  # 架构设计（核心文档组）
-│   ├── overview.md                # 系统架构总览
-│   ├── code-wiki.md               # Code Wiki 项目百科（核心文档）
-│   ├── database.md                # 数据库设计规范与 Schema
-│   ├── ports.md                   # 28 服务标准端口分配（唯一真相源）
-│   ├── standards.md               # 架构与命名规范标准
-│   ├── event-driven.md            # 事件驱动架构
-│   ├── partitioning-strategy.md   # 数据库分区策略
-│   ├── api-path-standardization.md # API 路径统一化规范
-│   ├── websocket-path-mapping.md  # WebSocket 路径映射规范
-│   ├── microfrontend-architecture-decision.md # 微前端架构决策
-│   ├── inventory.md               # 架构清单
-│   ├── mes-schema-truth.md        # MES Schema 真相源
-│   ├── a2-build-cache.md          # 构建缓存优化
-│   └── code-wiki.md               # Code Wiki 百科
-├── modules/                       # 业务模块技术文档
-│   ├── core/                      # 核心服务模块
-│   │   ├── ai-module.md           # AI 智能服务
-│   │   └── bi-module.md           # BI 商业智能
-│   ├── business/                  # 业务服务模块
-│   │   ├── hrm-module.md          # HRM 人力资源
-│   │   ├── crm-module.md          # CRM 客户关系
-│   │   ├── pm-module.md           # PM 项目管理
-│   │   ├── mes-module.md          # MES 制造执行
-│   │   ├── pdm-module.md          # PDM 产品数据
-│   │   ├── qms-module.md          # QMS 质量管理
-│   │   ├── lims-module.md         # LIMS 实验室管理
-│   │   ├── ehs-module.md          # EHS 环境健康安全
-│   │   ├── rd-module.md           # RD 研发管理（原 rs-module.md）
-│   │   ├── scm-module.md          # SCM 供应链
-│   │   ├── wms-module.md          # WMS 仓储管理
-│   │   ├── srm-module.md          # SRM 供应商管理
-│   │   └── gis-module.md          # GIS 地理信息
-│   └── development/
-│       └── frontend/
-│           └── ui-navigation-standardization.md # 前端导航标准化
-├── development/                   # 开发指南
-│   ├── backend/                    # 后端开发
-│   │   ├── code-standards.md      # Rust 代码规范
-│   │   ├── backend-services.md    # 微服务开发指南
-│   │   ├── api-design.md          # REST API 设计规范
-│   │   ├── environment-setup.md   # 开发环境搭建
-│   │   ├── template-guidelines.md # 代码模板与脚手架
-│   │   ├── database-development.md # 数据库开发
-│   │   └── debugging.md           # 后端调试指南
-│   ├── frontend/                   # 前端开发
-│   │   ├── frontend-components.md # 前端组件规范
-│   │   ├── design-system.md       # Design Tokens 设计系统
-│   │   ├── ui-design-spec.md      # UI 视觉规范
-│   │   ├── ui-navigation-design.md # 导航设计方案
-│   │   ├── module-federation-architecture.md # 微前端架构
-│   │   ├── module-federation-workflow.md # 微前端工作流
-│   │   ├── component-migration-guide.md # 组件迁移指南
-│   │   ├── page-refactoring-guide.md # 页面重构指南
-│   │   ├── module-layout-guide.md # 模块页面布局规范
-│   │   ├── plugin-lifecycle-guide.md # 插件生命周期
-│   │   └── accessibility.md       # 无障碍设计指南
-│   ├── event-design-guide.md      # 事件设计指南
-│   ├── migration-inventory.md     # 迁移清单与校验报告
-│   └── migration-naming-convention.md # 迁移命名规范
-├── deployment/                    # 部署运维
-│   ├── README.md                  # 运维文档总入口
-│   ├── deployment-guide-overview.md # 部署指南总览与选型
-│   ├── troubleshooting.md         # 故障排查手册
-│   ├── release-strategies.md      # 发布策略（灰度/蓝绿/金丝雀）
-│   └── microfrontend-deployment.md # 微前端部署
-├── getting-started/               # 新手入门
-│   ├── quickstart.md              # 快速入门（5 分钟上手）
-│   ├── local-deployment.md        # 本地开发环境部署
-│   └── environment-config.md      # 环境变量与配置说明
-├── user-guide/                    # 最终用户操作手册
-│   ├── README.md                  # 用户文档索引
-│   ├── quick-start.md             # 用户快速入门
-│   ├── UserManual.md              # 完整用户操作手册
-│   ├── admin-guide.md             # 系统管理员手册
-│   ├── faq.md                     # 常见问题
-│   └── modules/                   # 分模块用户手册
-│       ├── hrm.md  erp.md  crm.md  pm.md  mes.md
-│       ├── pdm.md  qms.md  lims.md ehs.md  rd.md
-│       ├── scm.md  wms.md  srm.md  bi.md  finance.md
-├── plans/                         # 活跃方案与规划
-│   ├── shortcomings-analysis.md   # 短板分析报告
-│   ├── integration-implementation-plan.md # 整合实施方案
-│   ├── architecture-optimization.md # 架构优化报告
-│   └── v68.1-implementation-plan.md # V68.1 实施计划
-├── roadmap/                       # 路线图与任务
-│   ├── TODO.md                    # 【唯一真相源】当前任务规划与路线图
-│   └── roadmap.md                 # ⚠️ 已归档（V3.2~V5.6 历史快照）
-├── audit/                         # 审计与验证报告
-│   ├── README.md                  # 审计文档索引
-│   └── ...
-├── reports/                       # 技术债务与测试报告
-│   ├── phase21-test-report.md     # Phase21 整合测试报告
-│   └── debt-audit-2026-08-13.md   # 技术债务审计报告
-├── assessments/                   # 评估与审计报告（前后端映射/数据层/RLS/生命周期）
-│   └── README.md                  # 评估报告索引（含主报告 frontend-backend-mapping-assessment）
-├── benchmarks/                    # 性能基准报告
-│   ├── build-cache-v71.md
-│   ├── vite-build-v71.md
-│   └── vitest-coverage-v71.md
-├── changelog/                     # 版本变更日志
-│   ├── CHANGELOG.md               # 中文版本变更记录
-│   ├── RELEASE_NOTES_V5.14.0.md   # V5.14.0 发布说明
-│   └── CHANGELOG-cleanup-history.md # 清理历史归档
-├── sales/                         # 销售资料
-│   ├── product-brochure.md        # 产品手册
-│   ├── sales-playbook.md          # 销售话术
-│   ├── case-study-template.md     # 案例模板
-│   └── quick-start-guide.md       # 销售快速入门
-├── security/                      # 安全相关
-│   └── SECURITY.md                # 安全策略与漏洞处理
-├── superpowers/                   # 历史方案归档（旧方案保留）
-│   ├── plans/                     # 旧实施计划
-│   └── specs/                     # 旧技术规格
-└── assets/                        # 文档资源（logo 图片等）
-```
+> **权威文档索引见 [docs/README.md](./docs/README.md)**（按读者分层：入门 / 开发者 / 运维 / 最终用户 / 项目经理）。
+> 本文档不再维护详细目录树（避免与权威索引失步）；目录定位一句话如下：
+
+- **入门**：`docs/getting-started/`（快速上手）
+- **开发者**：`docs/developer/`（后端/前端/标准）· `docs/architecture/`（架构）· `docs/api/`（API 文档）· `docs/database/`（数据库）· `docs/modules/`（模块规格）
+- **运维**：`docs/deploy/`（部署方案）· `docs/admin/`（运维指南）· `docs/quality/`（质量协作）· `docs/audit/`（审计）· `docs/security/`（安全）· `docs/performance/`（性能）· `docs/testing/`（测试）
+- **用户**：`docs/user-guide/`（操作手册/FAQ）· `docs/training/`（培训）
+- **管理**：`docs/project/`（路线图/交付）· `docs/reports/`（报告/注册表）· `docs/changelog/`（变更日志）· `docs/sales/`（销售）· `docs/design/`（设计）
+- **历史**：`docs/archive/`（归档：misc / reports / roadmap-history / superpowers / ui-migration）
 
 ### 文档入口
 
