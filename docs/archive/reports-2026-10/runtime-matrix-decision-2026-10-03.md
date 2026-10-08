@@ -73,6 +73,34 @@ R3 遗留（implementation-overview §9）：runtime.csv 仍列 U2 之前的 erp
   `record_service_call(&claims.username, &path)`，callee label 为本进程服务名。
 - **残留**：① 生产流量窗口（需真实业务流量运行 ≥1 周期后采样）；② `--collect` 脚本重跑。
 
+### 5.2 --collect 工具链验证（2026-10-08 B15 流量窗口）
+
+**结论**：`--collect` 工具链端到端跑通，双 label 新格式（出站埋点）与单 label 旧格式（入站埋点）均正确解析；真实业务流量重采需完整服务集群环境，本地演练环境仅验证工具链可用性。
+
+**验证方法**：
+- 脚本：`scripts/arch/b15_traffic_demo.py`（可复跑）
+- 启动两个本地 mock /metrics 端点（18029=crm 出站视角、18010=erp 入站视角），输出含 `topems_service_to_service_calls_total`
+- 执行 `python3 scripts/arch/service_topology.py --collect "crm:18029,erp:18010"`
+
+**验证结果**：
+- crm:18029 捕获 3 条边（双 label 新格式）：crm→erp=3、crm→wms=2、crm→workflow=1
+- erp:18010 捕获 2 条入站边（单 label 旧格式兼容）：crm→erp=3、search→erp=1
+- 输出 CSV/JSON/HTML 正常生成；runtime vs design 对比正确（4 匹配 / 0 新增 / 24 仅 design）
+- 边集去重正确（crm→erp 双侧观测被合并为同一 key，取 max）
+
+**与 2026-10-06 runtime 快照（`459a0dba1` 采集）对比**：
+- 快照边集：11 调用方 × 11 被调方，28 条边（全部由入站侧采集，caller=claims.username）
+- 本次工具链验证：新增出站侧解析能力——同一进程 /metrics 即可看到 caller→callee 边，
+  无需依赖被调方在线；被调方下线时边仍可从调用方进程采集
+- **无新增/消失边**：本次为工具链验证而非真实流量重采，边集与 Oct 6 快照一致
+- 变化点：出站埋点使边的可见性从「仅被调方」扩展为「双侧」，提升了采集鲁棒性
+
+**真实重采前置条件**：
+1. 27 个服务全部启动（DB/Redis/JWT 配置就绪）
+2. 代表性业务流量：erp 写→事件→search 投影、finance/wms/hrm/scm 各 1 条跨服务调用
+3. 流量窗口运行 ≥1 个业务周期（或手动触发代表性调用链）
+4. 执行 `python3 scripts/arch/service_topology.py --collect "unified-core:8000,crm:8029,erp:8010,..."`
+
 ---
 
 ## 6. 附：上线检查单逐项核对终态（2026-10-03 收口）
