@@ -5,6 +5,7 @@ use axum::{
 };
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
@@ -277,11 +278,21 @@ pub async fn create_sales_order(
 
     match result {
         Ok(Some(sales_order)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
+                }
+            }
+            // D6：commit 成功后发布 typed 事件；失败入重试队列。
             if let Some(ref publisher) = state.event_publisher {
                 let tenant_id: Option<Uuid> = sqlx::query_scalar(
-                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+                    "SELECT tenant_id FROM erp.sales_orders WHERE id = $1",
                 )
-                .fetch_optional(&mut **txn)
+                .bind(sales_order.id)
+                .fetch_optional(&state.db)
                 .await
                 .ok()
                 .flatten();
@@ -292,29 +303,24 @@ pub async fn create_sales_order(
                     customer_name: Some(sales_order.customer_name.clone()),
                     total_amount: Some(sales_order.total_amount),
                     payable_amount: Some(sales_order.payable_amount),
-
                     status: Some(sales_order.status.clone()),
                     created_by: Some(claims.sub.clone()),
                     tenant_id,
                 };
-                match publisher.publish_sales_order_created(payload).await {
+                match publisher.publish_sales_order_created(payload.clone()).await {
                     Ok(_) => tracing::info!(
                         "[erp] 发布 SalesOrderCreated 事件成功 - order_id={}, payable_amount={}",
                         sales_order.id,
                         sales_order.payable_amount
                     ),
-                    Err(e) => tracing::warn!(
-                        "[erp] 发布 SalesOrderCreated 事件失败: {}，将由 Finance 定时补拉",
-                        e
-                    ),
-                }
-            }
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::from(TopemsError::Internal(
-                        "事务提交失败".to_string(),
-                    )));
+                    Err(e) => {
+                        tracing::warn!("[erp] 发布 SalesOrderCreated 失败: {}，入重试队列", e);
+                        crate::modules::searchable_projection::push_retry_typed(
+                            topems_shared_event::event::EventType::SalesOrderCreated,
+                            &payload,
+                        )
+                        .await;
+                    }
                 }
             }
             crate::modules::searchable_projection::emit_after_commit(
@@ -511,39 +517,6 @@ async fn update_sales_order_status(
 
     match result {
         Ok(Some(sales_order)) => {
-            if status == "approved" {
-                if let Some(ref publisher) = state.event_publisher {
-                    let tenant_id: Option<Uuid> = sqlx::query_scalar(
-                        "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
-                    )
-                    .fetch_optional(&mut **txn)
-                    .await
-                    .ok()
-                    .flatten();
-                    let payload = SalesOrderApprovedPayload {
-                        order_id: sales_order.id,
-                        order_no: sales_order.order_no.clone(),
-                        customer_id: Some(sales_order.customer_id),
-                        customer_name: Some(sales_order.customer_name.clone()),
-                        total_amount: Some(sales_order.total_amount),
-                        payable_amount: Some(sales_order.payable_amount),
-
-                        approved_by: Some(claims.sub.clone()),
-                        approved_at: Some(Utc::now()),
-                        tenant_id,
-                    };
-                    match publisher.publish_sales_order_approved(payload).await {
-                        Ok(_) => tracing::info!(
-                            "[erp] 发布 SalesOrderApproved 事件成功 - order_id={}, payable_amount={}",
-                            sales_order.id, sales_order.payable_amount
-                        ),
-                        Err(e) => tracing::warn!(
-                            "[erp] 发布 SalesOrderApproved 事件失败: {}，将由 Finance 定时补拉",
-                            e
-                        ),
-                    }
-                }
-            }
             Json(ApiResponse::success(sales_order, success_message))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -582,6 +555,7 @@ pub async fn approve_sales_order(
     };
     let db = state.db.clone();
     let publisher = state.event_publisher.clone();
+    let approved_by = claims.sub.clone();
     let resp = update_sales_order_status(
         state,
         claims,
@@ -604,6 +578,40 @@ pub async fn approve_sales_order(
         id,
     )
     .await;
+    // D6：commit 成功后发布 SalesOrderApproved；失败入重试队列。
+    if let Some(ref publisher) = publisher {
+        if let Ok(Some(row)) = sqlx::query(
+            "SELECT id, order_no, customer_id, customer_name, total_amount, payable_amount, tenant_id
+             FROM erp.sales_orders WHERE id = $1"
+        )
+        .bind(id)
+        .fetch_optional(&db)
+        .await
+        {
+            let payload = SalesOrderApprovedPayload {
+                order_id: row.try_get("id").unwrap_or(id),
+                order_no: row.try_get("order_no").unwrap_or_default(),
+                customer_id: row.try_get("customer_id").ok(),
+                customer_name: row.try_get("customer_name").ok(),
+                total_amount: row.try_get("total_amount").ok(),
+                payable_amount: row.try_get("payable_amount").ok(),
+                approved_by: Some(approved_by),
+                approved_at: Some(Utc::now()),
+                tenant_id: row.try_get("tenant_id").ok(),
+            };
+            match publisher.publish_sales_order_approved(payload.clone()).await {
+                Ok(_) => tracing::info!("[erp] 发布 SalesOrderApproved 成功 order_id={}", id),
+                Err(e) => {
+                    tracing::warn!("[erp] 发布 SalesOrderApproved 失败: {}，入重试队列", e);
+                    crate::modules::searchable_projection::push_retry_typed(
+                        topems_shared_event::event::EventType::SalesOrderApproved,
+                        &payload,
+                    )
+                    .await;
+                }
+            }
+        }
+    }
     resp
 }
 

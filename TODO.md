@@ -891,3 +891,8 @@
 - **故障注入 a**：结构性保证（emit 在 commit 成功分支后，commit Err 不发布）。
 - **门禁**：clippy 0；双门禁 py/cjs PASS；erp 902 测试绿。
 - **残留**：typed 事件（SalesOrderCreated/Approved 等）仍事务内发，依赖 finance 补拉；其他 7 服务同型改造另立批；重试参数 15s 扫描/30s 退避/8 次上限。
+
+### ✅ D6 typed 事件 2 组改造完成（2026-10-08，未 push）
+- SalesOrderCreated/SalesOrderApproved/PurchaseOrderCreated/PurchaseOrderApproved 4 个 typed 事件全部挪至 commit 成功后发布；ZSET 泛化双通道（searchable/typed），typed 重试存完整 payload 直重发。
+- 验证：活 Redis create/approve → stream 各 +1；typed 通道 ZADD 到期项 → 18s 内 ZREM 且 stream +1（重试成功）；erp 902 测试绿；clippy 0；双门禁 PASS。
+- **残留**：仅"其他 7 服务（finance/wms/hrm/scm/crm/mes/pm）同型事务内 emit 推广"一项待登记。

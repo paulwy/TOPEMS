@@ -165,30 +165,50 @@ fn redis_client() -> Option<redis::Client> {
     redis::Client::open(url).ok()
 }
 
-/// 把失败发布推入 ZSET 重试队列（member = JSON {entity_type,entity_id,attempts}）。
-async fn push_retry(entity_type: &str, entity_id: Uuid, attempts: u32) {
+/// 通用：把 member JSON 推入 ZSET，score = now + (attempts+1)*步长。
+async fn zadd_retry(member: &str, attempts: u32) {
     let Some(client) = redis_client() else { return };
     let Ok(mut con) = client.get_multiplexed_async_connection().await else {
-        tracing::error!("[erp] 重试队列：无法连接 Redis，丢弃失败事件 {} {}", entity_type, entity_id);
+        tracing::error!("[erp] 重试队列：无法连接 Redis，丢弃失败事件");
         return;
     };
-    let member = serde_json::json!({
-        "entity_type": entity_type,
-        "entity_id": entity_id,
-        "attempts": attempts,
-    })
-    .to_string();
     let delay = (i64::from(attempts) + 1) * RETRY_INTERVAL_SEC;
     let score = Utc::now().timestamp() + delay;
     let _: () = redis::cmd("ZADD")
         .arg(RETRY_ZSET)
         .arg(score)
-        .arg(&member)
+        .arg(member)
         .query_async(&mut con)
         .await
         .unwrap_or_else(|e| {
             tracing::error!("[erp] 重试队列 ZADD 失败: {}", e);
         });
+}
+
+/// searchable 通道：member = {channel:"searchable", entity_type, entity_id, attempts}。
+async fn push_retry(entity_type: &str, entity_id: Uuid, attempts: u32) {
+    let member = serde_json::json!({
+        "channel": "searchable",
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "attempts": attempts,
+    })
+    .to_string();
+    zadd_retry(&member, attempts).await;
+}
+
+/// typed 通道：member = {channel:"typed", event_type:<EventType json>, payload, attempts}；重试时反序列化重发。
+pub async fn push_retry_typed(event_type: EventType, payload: &impl serde::Serialize) {
+    let Ok(p) = serde_json::to_value(payload) else { return };
+    let Ok(et) = serde_json::to_value(event_type) else { return };
+    let member = serde_json::json!({
+        "channel": "typed",
+        "event_type": et,
+        "payload": p,
+        "attempts": 0u32,
+    })
+    .to_string();
+    zadd_retry(&member, 0).await;
 }
 
 /// 写事务 commit 成功之后调用：读已提交快照 → 发布；失败入 ZSET 重试。
@@ -232,22 +252,36 @@ pub async fn retry_due_events(db: &PgPool, publisher: &Option<Arc<EventPublisher
         .await
         .unwrap_or_default();
     for (member, _score) in due {
-        let Ok(v) = serde_json::from_str::<serde_json::Value>(&member) else { continue };
-        let Some(entity_type) = v.get("entity_type").and_then(|x| x.as_str()) else { continue };
-        let Some(entity_id) = v.get("entity_id").and_then(|x| x.as_str()).and_then(|s| Uuid::parse_str(s).ok()) else { continue };
+        let Ok(mut v) = serde_json::from_str::<serde_json::Value>(&member) else { continue };
         let attempts: u32 = v
             .get("attempts")
             .and_then(|x| x.as_u64())
             .and_then(|n| u32::try_from(n).ok())
             .unwrap_or(0);
+        let channel = v.get("channel").and_then(|x| x.as_str()).unwrap_or("searchable");
 
-        let published = match build_payload_from_pool(db, entity_type, entity_id).await {
-            Some(payload) => publisher
-                .publish_event(EventType::SearchableEntityChanged, &payload)
-                .await
-                .is_ok(),
-            None => false,
+        let (published, label) = match channel {
+            "typed" => {
+                let et: Option<EventType> = v.get("event_type").cloned().and_then(|e| serde_json::from_value(e).ok());
+                let payload = v.get("payload").cloned().unwrap_or(serde_json::Value::Null);
+                match et {
+                    Some(et) => (publisher.publish_event(et, &payload).await.is_ok(), "typed".to_string()),
+                    None => (false, "typed:bad-et".to_string()),
+                }
+            }
+            _ => {
+                let Some(entity_type) = v.get("entity_type").and_then(|x| x.as_str()) else { continue };
+                let Some(entity_id) = v.get("entity_id").and_then(|x| x.as_str()).and_then(|s| Uuid::parse_str(s).ok()) else { continue };
+                match build_payload_from_pool(db, entity_type, entity_id).await {
+                    Some(payload) => (
+                        publisher.publish_event(EventType::SearchableEntityChanged, &payload).await.is_ok(),
+                        format!("searchable:{}", entity_type),
+                    ),
+                    None => (false, format!("searchable:{}", entity_type)),
+                }
+            }
         };
+
         if published {
             let _: i64 = redis::cmd("ZREM")
                 .arg(RETRY_ZSET)
@@ -255,7 +289,7 @@ pub async fn retry_due_events(db: &PgPool, publisher: &Option<Arc<EventPublisher
                 .query_async(&mut con)
                 .await
                 .unwrap_or(0);
-            tracing::info!("[erp] 重试发布成功 {} id={}", entity_type, entity_id);
+            tracing::info!("[erp] 重试发布成功 {}", label);
         } else if attempts + 1 >= MAX_ATTEMPTS {
             let _: i64 = redis::cmd("ZREM")
                 .arg(RETRY_ZSET)
@@ -264,18 +298,22 @@ pub async fn retry_due_events(db: &PgPool, publisher: &Option<Arc<EventPublisher
                 .await
                 .unwrap_or(0);
             tracing::error!(
-                "[erp] 事件重试超上限（{} 次），放弃 {} id={}——search 投影需 backfill 补拉",
-                MAX_ATTEMPTS, entity_type, entity_id
+                "[erp] 事件重试超上限（{} 次），放弃 {}——需 backfill 补拉",
+                MAX_ATTEMPTS, label
             );
         } else {
-            // 重排：attempts+1，score 后移
             let _: i64 = redis::cmd("ZREM")
                 .arg(RETRY_ZSET)
                 .arg(&member)
                 .query_async(&mut con)
                 .await
                 .unwrap_or(0);
-            push_retry(entity_type, entity_id, attempts + 1).await;
+            // 重排：attempts+1（typed 与 searchable 共用重排）
+            if let Some(obj) = v.as_object_mut() {
+                obj.insert("attempts".to_string(), serde_json::json!(attempts + 1));
+                let new_member = serde_json::Value::Object(obj.clone()).to_string();
+                zadd_retry(&new_member, attempts + 1).await;
+            }
         }
     }
 }

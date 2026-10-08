@@ -258,13 +258,24 @@ pub async fn create_purchase_order(
         }
     };
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::from(TopemsError::Internal(
+                "事务提交失败".to_string(),
+            )));
+        }
+    }
+    // D6：commit 成功后发布 PurchaseOrderCreated；失败入重试队列。
     if let Some(ref publisher) = state.event_publisher {
-        let tenant_id: Option<Uuid> =
-            sqlx::query_scalar("SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid")
-                .fetch_optional(&mut **txn)
-                .await
-                .ok()
-                .flatten();
+        let tenant_id: Option<Uuid> = sqlx::query_scalar(
+            "SELECT tenant_id FROM erp.purchase_orders WHERE id = $1"
+        )
+        .bind(purchase_order.id)
+        .fetch_optional(&state.db)
+        .await
+        .ok()
+        .flatten();
         let payload = PurchaseOrderCreatedPayload {
             order_id: purchase_order.id,
             order_no: purchase_order.order_no.clone(),
@@ -279,25 +290,19 @@ pub async fn create_purchase_order(
             created_by: Some(claims.sub.clone()),
             tenant_id,
         };
-        match publisher.publish_purchase_order_created(payload).await {
+        match publisher.publish_purchase_order_created(payload.clone()).await {
             Ok(_) => tracing::info!(
-                "[erp] 发布 PurchaseOrderCreated 事件成功 - order_id={}, payable_amount={}",
-                purchase_order.id,
-                purchase_order.payable_amount
+                "[erp] 发布 PurchaseOrderCreated 事件成功 - order_id={}",
+                purchase_order.id
             ),
-            Err(e) => tracing::warn!(
-                "[erp] 发布 PurchaseOrderCreated 事件失败: {}，将由 Finance 定时补拉",
-                e
-            ),
-        }
-    }
-
-    if let Some(t) = guard.take() {
-        if let Err(e) = t.commit().await {
-            tracing::error!("事务提交失败: {}", e);
-            return Json(ApiResponse::from(TopemsError::Internal(
-                "事务提交失败".to_string(),
-            )));
+            Err(e) => {
+                tracing::warn!("[erp] 发布 PurchaseOrderCreated 失败: {}，入重试队列", e);
+                crate::modules::searchable_projection::push_retry_typed(
+                    topems_shared_event::event::EventType::PurchaseOrderCreated,
+                    &payload,
+                )
+                .await;
+            }
         }
     }
     crate::modules::searchable_projection::emit_after_commit(
@@ -539,15 +544,19 @@ pub async fn approve_purchase_order(
                     approved_at: Some(Utc::now()),
                     tenant_id,
                 };
-                match publisher.publish_purchase_order_approved(payload).await {
+                match publisher.publish_purchase_order_approved(payload.clone()).await {
                     Ok(_) => tracing::info!(
-                        "[erp] 发布 PurchaseOrderApproved 事件成功 - order_id={}, payable_amount={}",
-                        order.id, order.payable_amount
+                        "[erp] 发布 PurchaseOrderApproved 事件成功 - order_id={}",
+                        order.id
                     ),
-                    Err(e) => tracing::warn!(
-                        "[erp] 发布 PurchaseOrderApproved 事件失败: {}，将由 Finance 定时补拉",
-                        e
-                    ),
+                    Err(e) => {
+                        tracing::warn!("[erp] 发布 PurchaseOrderApproved 失败: {}，入重试队列", e);
+                        crate::modules::searchable_projection::push_retry_typed(
+                            topems_shared_event::event::EventType::PurchaseOrderApproved,
+                            &payload,
+                        )
+                        .await;
+                    }
                 }
             }
             Json(ApiResponse::success(order, "采购订单审批成功"))

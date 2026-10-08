@@ -176,3 +176,10 @@ B1 把 search 从"直读 erp 表"改造成"订阅 erp 实体事件 → 本地投
   - typed 事件（SalesOrderCreated/Approved、PurchaseOrderCreated/Approved）仍在事务内发布，依赖 finance 定时补拉兜底——本次未挪，后续批推广。
   - 其他 7 服务（finance/wms/hrm/scm/crm/mes/pm）同型"事务内 emit"未改造，另立批登记。
   - 重试队列运维参数：扫描周期 15s、退避步长 30s、最大重试 8 次。
+
+## 附录：typed 事件 2 组改造完成（2026-10-08）
+
+- SalesOrderCreated / SalesOrderApproved / PurchaseOrderCreated / PurchaseOrderApproved 4 个 typed 事件全部从事务内发布挪至 commit 成功后。
+- ZSET `topems:event_retry:erp` 泛化为双通道：`channel=searchable`（重试时从 DB 重建 payload）与 `channel=typed`（重试时反序列化存储 payload 直重发）。
+- 验证：活 Redis create/approve → stream 各 +1；typed 通道故障注入 ZADD 到期项 → 18s 内 ZREM 且 stream +1；erp 902 测试绿；clippy 0；双门禁 PASS。
+- 残留：仅"其他 7 服务（finance/wms/hrm/scm/crm/mes/pm）同型事务内 emit 推广"一项待登记。
