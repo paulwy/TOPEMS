@@ -881,3 +881,13 @@
 - **推荐**：**选项 B（commit 后 emit + 重试队列）**——最小侵入，免迁移，直击孤儿/丢失两类不一致；完整 outbox（A）/ CDC（C）登记为演进路线，当前规模不过度工程。
 - **待用户确认实施范围**：① 仅 erp 三模块 vs 推广全部发布服务；② 重试载体 Redis ZSET（免迁移）vs 0013 落表；③ 后台任务内嵌 erp vs 独立进程；④ 0013 落库时点；⑤ 是否本次一并做完整 outbox。
 - **状态**：📋 文档待批，实施另行派发。
+
+### ✅ D6 实施完成（commit cde039d56，未 push）
+
+> 按推荐方案 B 落地 erp 三模块：commit 后 emit + Redis ZSET 重试队列。
+- **改动面**：searchable_projection.rs（emit_after_commit + retry_due_events + push_retry）、customer/sales_order/purchase_order.rs（全部 emit 挪到 commit 后）、erp main.rs（内嵌 15s 重试任务）、Cargo.toml（redis dep）。
+- **三态 E2E**：create/update/delete 源表落库+投影一致。
+- **故障注入 b**：ZADD 到期项 → 20s 后台重发，ZSET 1→0，投影补拉成功（日志"重试发布成功"）。
+- **故障注入 a**：结构性保证（emit 在 commit 成功分支后，commit Err 不发布）。
+- **门禁**：clippy 0；双门禁 py/cjs PASS；erp 902 测试绿。
+- **残留**：typed 事件（SalesOrderCreated/Approved 等）仍事务内发，依赖 finance 补拉；其他 7 服务同型改造另立批；重试参数 15s 扫描/30s 退避/8 次上限。

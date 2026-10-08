@@ -158,3 +158,21 @@ B1 把 search 从"直读 erp 表"改造成"订阅 erp 实体事件 → 本地投
 3. **relay/后台任务形态**：erp 内嵌 tokio 任务（同进程）vs 独立进程？
 4. **0013 落库时点**：是否本次就落迁移，还是留待后续？
 5. **完整 outbox（选项 A）是否本次一并做**，还是仅登记为演进路线？
+
+---
+
+## 8. 实施完成（2026-10-08，commit cde039d56）
+
+> 按推荐方案 B 落地 erp 三模块；完整 outbox（A）/ CDC（C）仅登记演进路线，未实施。
+
+- **commit 后 emit**：三模块（customer/sales_order/purchase_order）所有 SearchableEntityChanged 发布点（单行+批量+状态流转）从事务内挪到 `guard.take().commit()` 成功之后；commit 失败返回 500 且不发布——孤儿事件机制消除。旧 `emit_searchable_change(txn)` 已删除。
+- **Redis ZSET 重试**：键 `topems:event_retry:erp`；member = `{entity_type,entity_id,attempts}` JSON；score = 下次重试时间戳；指数退避 30s×attempts，最大 8 次（超限 error! 告警，需 backfill 补拉）。erp main.rs 内嵌 tokio 任务每 15s 扫描到期项重发，成功 ZREM。
+- **幂等**：消费侧 search 投影 UPSERT `ON CONFLICT (tenant_id,entity_type,entity_id) DO UPDATE`（projection.rs:87）天然幂等，at-least-once 无副作用；未改消费方。
+- **验证**：
+  - 三态 E2E（活 Redis）：create→源落库+投影落库；update→源/投影同收敛；delete→源软删+投影归 0。
+  - 故障注入 b（emit 失败）：手工 ZADD 到期项 → 20s 内后台任务重发，ZSET 1→0，投影补拉"重试客户4"，日志"重试发布成功 customer id=…"。
+  - 故障注入 a（commit 失败）：结构性保证（emit 在 commit 成功分支后调用，commit Err 直接 return 不进 emit）。
+- **残留**：
+  - typed 事件（SalesOrderCreated/Approved、PurchaseOrderCreated/Approved）仍在事务内发布，依赖 finance 定时补拉兜底——本次未挪，后续批推广。
+  - 其他 7 服务（finance/wms/hrm/scm/crm/mes/pm）同型"事务内 emit"未改造，另立批登记。
+  - 重试队列运维参数：扫描周期 15s、退避步长 30s、最大重试 8 次。
