@@ -98,8 +98,49 @@ make sqlx-check
 make sqlx-offline-test
 ```
 
+## 空库建库标准流程（B14 固化，2026-10-08）
+
+> 用户定案（B14）：空库守卫**维持脚本层**，不重构迁移链。本节为新建空库（验证库/CI 空库/5433 双库验证实例）建库的标准三步流程，任何人在全新空库上验证迁移链时**必须按此顺序执行**。
+
+### 三步标准流程
+
+```bash
+# 0) 前置：准备一个全新空库（本例用官方 5433 Homebrew 验证实例，见
+#    docs/database/database-primary-instance.md §6；连接串按目标库替换）
+export MIGRATE_URL="postgres://topems:topems_secret@127.0.0.1:5433/topems"
+
+# 1) 空库守卫：纯链全量验证（探活 → sqlx migrate run → 断言账本记录数 = 迁移文件数）
+#    脚本已降级为"纯链验证"——不再补列兜底；失败即真实迁移链缺陷，须修迁移文件而非掩盖。
+MIGRATE_URL="$MIGRATE_URL" bash scripts/ensure-empty-db-prereqs.sh
+
+# 2) （守卫脚本内部已执行 sqlx migrate run；此处仅为显式说明，勿重复跑）
+#    sqlx migrate run --source database/migrations
+
+# 3) 三方核对：磁盘迁移文件 ↔ database/checksums.txt ↔ _sqlx_migrations 账本
+#    （即 checksums 核对；B4 修复的 validate.sh 根因：grep 无匹配在 set -euo pipefail 下崩溃）
+bash scripts/migration/validate.sh
+```
+
+| 步骤 | 脚本 | 作用 |
+|------|------|------|
+| ① 守卫 | `scripts/ensure-empty-db-prereqs.sh`（`MIGRATE_URL`） | 探活 + 全量应用 `database/migrations/` 顶层迁移链，断言 0 错误、`_sqlx_migrations` 全 success=true、记录数=迁移文件数 |
+| ② 迁移 | `sqlx migrate run`（由守卫内部执行） | 全新空库从零全量建链 |
+| ③ 三方核对 | `scripts/migration/validate.sh`（读 `database/checksums.txt`） | 文件名/顺序/幂等/down/**checksums** 校验；Checksum errors 须为 0 |
+
+> 关联脚本：`scripts/migrate-verify-empty.sh`（`DATABASE_URL`，DROP/CREATE 验证库后全量重放并清理）用于"全新空库防遗留依赖"的强验证，与守卫互补——守卫在指定空库上跑，verify 脚本自建自毁临时库。
+
+### CI 挂载建议（登记项）
+
+- 现有 CI `migration-test` job（`ci.yml`，migration 路径变更触发）已做 up-down-up 幂等测试；**建议后续将空库守卫 `scripts/ensure-empty-db-prereqs.sh` 挂为 CI 空库验证步骤**（起一个一次性 Postgres 服务容器 → `MIGRATE_URL=... bash scripts/ensure-empty-db-prereqs.sh` → `scripts/migration/validate.sh`），把本地 5433 空库守卫固化为 CI 门禁。当前为文档建议，未接线（接线属 CI 变更，另批评估）。
+
+### 评估点登记（未来窗口再评估）
+
+- **守卫脚本层 vs 重构迁移链**（B14 重构级评估）：用户定案**当前维持脚本层**（守卫脚本 + validate.sh 三方核对）。登记——**未来一次性迁移基线重建窗口（大版本重构/迁移链重写）再评估**是否将守卫逻辑内迁进迁移链本身，届时可一并裁决"脚本层守卫"是否仍为最佳形态。本窗口到来前不做重构。
+
 ## 相关文档
 
 - [init/README.md](init/README.md) — 数据库重建详细步骤
 - [config/services.yaml](../config/services.yaml) — 服务端口与 schema 配置
 - 根目录 `.env.example` — 数据库连接配置示例
+- [database-primary-instance.md](../docs/database/database-primary-instance.md) — 实例口径与 5433 官方双库验证实例（§6）
+- [database-half-migration-ops.md](../docs/database/database-half-migration-ops.md) — 生产主库半迁移运维模式
