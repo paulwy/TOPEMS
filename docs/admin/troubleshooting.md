@@ -149,7 +149,7 @@ sudo ufw status
 ```bash
 # 创建数据库
 sudo -u postgres psql << 'EOF'
-CREATE USER topems WITH PASSWORD 'topems_secret';
+CREATE USER topems WITH PASSWORD '<TOPEMS_PG_PASSWORD>';
 CREATE DATABASE topems OWNER topems;
 ALTER USER topems CREATEDB;
 EOF

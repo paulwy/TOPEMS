@@ -223,7 +223,7 @@ docker compose down -v
 
 ```bash
 # 本地开发
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 
 # Docker 环境
 DATABASE_URL=postgres://topems:topems@postgres:5432/topems

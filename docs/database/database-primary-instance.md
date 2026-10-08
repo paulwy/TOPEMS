@@ -32,8 +32,8 @@
 
 | 操作 | 命令 |
 |---|---|
-| 本地 psql（生产主库） | `PGPASSWORD=topems psql -h localhost -p 5432 -U topems -d topems` |
-| 验证库 psql（5433） | `PGPASSWORD=topems psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6） |
+| 本地 psql（生产主库） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems` |
+| 验证库 psql（5433） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6） |
 | 迁移执行（生产/开发） | `DATABASE_URL=postgres://topems:topems@localhost:5432/topems sqlx migrate run`（topems_dev 用同名 5432 库覆盖 DATABASE_URL） |
 | 一致性检查 | `bash scripts/db/check-consistency.sh` |
 
@@ -58,9 +58,9 @@
 | 监听端口 | `5433`（`postgresql.conf`：`port=5433`，`listen_addresses='localhost'`） |
 | 启停方式 | `pg_ctl`（**不**用 Docker / brew services）：见 6.3 |
 | 认证 | **trust**（`pg_hba.conf`：local / 127.0.0.1 / ::1 全部 trust；仅本机回环） |
-| 角色 | `topems` / 密码 `topems_secret` |
+| 角色 | `topems` / 密码 `<TOPEMS_PG_PASSWORD>` |
 | 数据库 | `topems` |
-| 连接串 | `MIGRATE_URL=postgres://topems:topems_secret@127.0.0.1:5433/topems` |
+| 连接串 | `MIGRATE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@127.0.0.1:5433/topems` |
 | 用途 | 双库验证（与 5432 配对）：空库守卫重放、`_sqlx_migrations` 双账本核对、RLS/租户隔离回归 |
 | 运行策略 | **保留运行**（常驻，供随批验证复用；不随验证结束销毁） |
 
@@ -81,14 +81,14 @@ pg_ctl -D /opt/homebrew/var/postgres5433 stop -m fast                           
 pg_ctl -D /opt/homebrew/var/postgres5433 status                                             # 状态
 
 # --- 连接 ---
-psql "postgres://topems:topems_secret@127.0.0.1:5433/topems"
+psql "postgres://topems:<TOPEMS_PG_PASSWORD>@127.0.0.1:5433/topems"
 
 # --- 空库守卫 + 全量重放（标准三步，详见 database/README.md「空库建库标准流程」）---
-MIGRATE_URL="postgres://topems:topems_secret@127.0.0.1:5433/topems" bash scripts/ensure-empty-db-prereqs.sh
+MIGRATE_URL="postgres://topems:<TOPEMS_PG_PASSWORD>@127.0.0.1:5433/topems" bash scripts/ensure-empty-db-prereqs.sh
 bash scripts/migration/validate.sh        # 三方核对（checksums）
 
 # --- 强验证（自建自毁临时库，防迁移链依赖线上遗留对象）---
-DATABASE_URL="postgres://topems:topems_secret@127.0.0.1:5433/topems_verify" bash scripts/migrate-verify-empty.sh
+DATABASE_URL="postgres://topems:<TOPEMS_PG_PASSWORD>@127.0.0.1:5433/topems_verify" bash scripts/migrate-verify-empty.sh
 
 # --- 双库账本一致性 ---
 bash scripts/db/check-consistency.sh

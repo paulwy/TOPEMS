@@ -730,7 +730,7 @@ impl Settings {
 
 ```bash
 # .env
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 REDIS_URL=redis://localhost:6379
 JWT_SECRET=your-secret-key
 SERVER_HOST=0.0.0.0

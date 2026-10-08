@@ -35,7 +35,7 @@ API_BASE_URL=http://localhost:8080/api
 
 # 测试账号
 TEST_USERNAME=admin
-TEST_PASSWORD=admin123
+TEST_PASSWORD=<TEST_PASSWORD>
 ```
 
 ## 运行测试

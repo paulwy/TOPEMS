@@ -77,7 +77,7 @@ sudo systemctl enable postgresql redis-server
 sudo systemctl start postgresql redis-server
 
 # 创建数据库
-sudo -u postgres psql -c "CREATE USER topems WITH PASSWORD 'topems_secret';"
+sudo -u postgres psql -c "CREATE USER topems WITH PASSWORD '<TOPEMS_PG_PASSWORD>';"
 sudo -u postgres psql -c "CREATE DATABASE topems OWNER topems;"
 ```
 
@@ -307,7 +307,7 @@ cat .env.example
 
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
-| `DATABASE_URL` | postgres://topems:topems_secret@localhost:5432/topems | PostgreSQL 连接 |
+| `DATABASE_URL` | postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems | PostgreSQL 连接 |
 | `REDIS_URL` | redis://localhost:6379 | Redis 连接 |
 | `JWT_SECRET` | (随机) | JWT 签名密钥 |
 | `JWT_REFRESH_SECRET` | (随机) | JWT 刷新密钥 |
@@ -430,7 +430,7 @@ cargo build -p topems-unified-core
       "args": [],
       "cwd": "${workspaceFolder}/svc/unified-core",
       "env": {
-        "DATABASE_URL": "postgres://topems:topems_secret@localhost:5432/topems",
+        "DATABASE_URL": "postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems",
         "RUST_LOG": "debug"
       }
     }

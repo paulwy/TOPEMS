@@ -117,7 +117,7 @@ TOPEMS MCP 权限继承：**无权限用户无法通过 MCP 调用受限工具**
 
 ```bash
 # 1. 启动数据库（如未运行）
-#    PostgreSQL 监听 5432，DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+#    PostgreSQL 监听 5432，DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 
 # 2. 启动模块化单体网关（提供真实业务 API）
 cd /path/to/TOPEMS && source .env && target/debug/topems-server &

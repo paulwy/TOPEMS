@@ -96,7 +96,7 @@ sudo systemctl enable postgresql redis-server
 sudo systemctl start postgresql redis-server
 
 # 创建用户和数据库
-sudo -u postgres psql -c "CREATE USER topems WITH PASSWORD 'topems_secret';"
+sudo -u postgres psql -c "CREATE USER topems WITH PASSWORD '<TOPEMS_PG_PASSWORD>';"
 sudo -u postgres psql -c "CREATE DATABASE topems OWNER topems;"
 ```
 

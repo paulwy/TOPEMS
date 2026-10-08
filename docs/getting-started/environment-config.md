@@ -33,11 +33,11 @@ JWT_SECRET=<至少32字符的随机密钥>
 JWT_REFRESH_SECRET=<至少32字符的随机密钥>
 
 # 数据库配置
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=topems
-DB_PASSWORD=topems_secret
+DB_PASSWORD=<TOPEMS_PG_PASSWORD>
 DB_NAME=topems
 
 # Redis 配置
@@ -175,11 +175,11 @@ REFRESH_TOKEN_EXPIRATION=86400
 JWT_EXPIRY_HOURS=24
 
 # === 数据库配置 ===
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=topems
-DB_PASSWORD=topems_secret
+DB_PASSWORD=<TOPEMS_PG_PASSWORD>
 DB_NAME=topems
 
 # === Redis 配置 ===
@@ -287,11 +287,11 @@ JWT_SECRET=your-test-jwt-secret-key-here-at-least-32-chars
 JWT_REFRESH_SECRET=your-test-refresh-secret-key-here-at-least-32-chars
 
 # === 数据库配置 (使用独立的测试数据库) ===
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems_test
+DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems_test
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=topems
-DB_PASSWORD=topems_secret
+DB_PASSWORD=<TOPEMS_PG_PASSWORD>
 DB_NAME=topems_test
 
 # === Redis 配置 (使用独立的测试数据库) ===
@@ -424,7 +424,7 @@ curl http://localhost:8013/health
 
 ```bash
 # 检查数据库连接
-psql postgres://topems:topems_secret@localhost:5432/topems
+psql postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 
 # 检查 Redis 连接
 redis-cli ping

@@ -223,7 +223,7 @@ export default defineConfig({
 
 ```bash
 # 直接连接
-psql postgres://topems:topems_secret@localhost:5432/topems
+psql postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 
 # 使用 psql 命令
 psql -h localhost -p 5432 -U topems -d topems
@@ -380,7 +380,7 @@ docker ps | grep postgres
 docker-compose restart postgres
 
 # 测试连接
-psql postgres://topems:topems_secret@localhost:5432/topems -c "SELECT 1;"
+psql postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems -c "SELECT 1;"
 
 # 查看数据库日志
 docker-compose logs postgres

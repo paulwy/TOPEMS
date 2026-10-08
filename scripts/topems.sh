@@ -1955,7 +1955,7 @@ ws_check() {
 
 # 解析 DATABASE_URL 获取数据库连接信息
 parse_database_url() {
-    local db_url=${DATABASE_URL:-"postgres://topems:topems_secret@localhost:5432/topems"}
+    local db_url=${DATABASE_URL:-"postgres://topems:topems_secret@localhost:5432/topems"}  # 本机开发默认；生产经 DATABASE_URL 环境变量注入
     # 格式: postgres://user:password@host:port/database
     DB_USER=$(echo "$db_url" | sed -n 's|postgres://\([^:]*\):.*|\1|p')
     DB_PASSWORD=$(echo "$db_url" | sed -n 's|postgres://[^:]*:\([^@]*\)@.*|\1|p')

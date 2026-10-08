@@ -80,10 +80,10 @@ sudo -u postgres psql -c "CREATE USER topems WITH PASSWORD 'topems' SUPERUSER;"
 sudo -u postgres psql -c "CREATE DATABASE topems OWNER topems;"
 
 # 3) 恢复（标准流程：ON_ERROR_STOP + 空态核验——见 docs/database/postgres-native-migration-20261008.md §标准恢复流程）
-PGPASSWORD=topems psql -h localhost -p 5432 -U topems -d topems -v ON_ERROR_STOP=1 -f /tmp/topems_backup.sql
+PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems -v ON_ERROR_STOP=1 -f /tmp/topems_backup.sql
 
 # 4) 验证
-PGPASSWORD=topems psql -h localhost -p 5432 -U topems -d topems -At -c "SELECT count(*) FROM core_permissions;"
+PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems -At -c "SELECT count(*) FROM core_permissions;"
 ```
 
 ## 6. 部署执行（现有脚本）

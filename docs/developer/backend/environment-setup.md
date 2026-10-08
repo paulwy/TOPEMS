@@ -107,7 +107,7 @@ docker-compose ps
 
 ```bash
 # 连接 PostgreSQL
-psql postgres://topems:topems_secret@localhost:5432/topems
+psql postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 
 # 在 psql 中执行
 CREATE DATABASE topems;
@@ -167,7 +167,7 @@ vim .env
 ```env
 # .env 文件关键配置
 JWT_SECRET=<至少32字符的随机密钥>
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 REDIS_URL=redis://localhost:6379
 ENVIRONMENT=development
 RUST_LOG=debug
@@ -333,7 +333,7 @@ docker ps
 docker-compose restart postgres
 
 # 验证连接
-psql postgres://topems:topems_secret@localhost:5432/topems
+psql postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 ```
 
 ### 依赖下载慢

@@ -33,10 +33,10 @@ Host: localhost
 Port: 5432
 Database: topems
 Username: topems
-Password: topems_secret
+Password: <TOPEMS_PG_PASSWORD>
 
 # 连接 URL 格式
-DATABASE_URL=postgres://topems:topems_secret@localhost:5432/topems
+DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 ```
 
 ### 必需扩展

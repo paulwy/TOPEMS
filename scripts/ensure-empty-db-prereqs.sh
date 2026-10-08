@@ -27,7 +27,7 @@
 # =============================================================================
 set -euo pipefail
 
-MIGRATE_URL="${MIGRATE_URL:?需要设置 MIGRATE_URL，例: postgres://topems:topems_secret@127.0.0.1:5433/topems}"
+MIGRATE_URL="${MIGRATE_URL:?需要设置 MIGRATE_URL，例: postgres://topems:<TOPEMS_PG_PASSWORD>@127.0.0.1:5433/topems}"
 
 # 解析 sqlx 可执行文件（CI 用 PATH 内 sqlx；本地默认 ~/.cargo/bin/sqlx）
 SQLX="$(command -v sqlx || echo "$HOME/.cargo/bin/sqlx")"

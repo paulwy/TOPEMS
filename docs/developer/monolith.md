@@ -112,7 +112,7 @@ VITE_MONOLITH=1 pnpm dev:web
 
 ```bash
 # 连接数据库
-psql postgres://topems:topems_secret@localhost:5432/topems
+psql postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 
 # 查看 RLS 策略
 SELECT * FROM pg_policies WHERE policyname = 'tenant_isolation';
@@ -179,7 +179,7 @@ services:
     ports:
       - "8099:8099"
     environment:
-      - DATABASE_URL=postgres://topems:topems_secret@postgres:5432/topems
+      - DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@postgres:5432/topems
       - REDIS_URL=redis://redis:6379
       - DB_MAX_CONNECTIONS=5
     depends_on:
