@@ -372,6 +372,8 @@ cargo run -- --check-config
 
 ```bash
 # 检查 PostgreSQL 是否运行
+> ⚠️ 2026-10-08 起 Docker 已卸载：PostgreSQL 调试请直连 `localhost:5432`（生产/开发）或 `5433`（验证库），见 docs/deploy/container-strategy.md。以下 docker 命令为历史方法。
+
 docker ps | grep postgres
 
 # 重启 PostgreSQL
