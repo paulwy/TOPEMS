@@ -50,7 +50,7 @@ TOPEMS（Total Operations & Production Enterprise Management System）是面向�
 
 | 目录 | 说明 | 关键文档 |
 |------|------|----------|
-| [user-guide/](./user-guide/) | 用户手册 | [UserManual.md](./user-guide/UserManual.md)（完整操作手册）、[faq.md](./user-guide/faq.md)、[quick-start.md](./user-guide/quick-start.md)、[admin-guide.md](./user-guide/admin-guide.md)、[system-feature-checklist.md](./user-guide/system-feature-checklist.md) |
+| [user-guide/](./user-guide/) | 用户手册 | [UserManual.md](./user-guide/UserManual.md)（完整操作手册）、[faq.md](./user-guide/faq.md)、[quick-start.md](./user-guide/quick-start.md)、[system-admin-manual.md](./user-guide/system-admin-manual.md)、[system-feature-checklist.md](./user-guide/system-feature-checklist.md) |
 
 ### 项目经理
 

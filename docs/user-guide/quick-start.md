@@ -121,14 +121,14 @@
 
 ## 5. 下一步
 
-- 查看 [系统管理手册](./admin-guide.md) 了解系统管理功能
+- 查看 [系统管理手册](./system-admin-manual.md) 了解系统管理功能
 - 查看 [模块使用手册](./modules/) 了解各模块详细用法
 - 查看 [常见问题](./faq.md) 解决常见问题
 
 ---
 
 **相关文档**
-- [系统管理手册](./admin-guide.md)
+- [系统管理手册](./system-admin-manual.md)
 - [HRM 模块](./modules/hrm.md)
 - [ERP 模块](./modules/erp.md)
 - [FAQ](./faq.md)

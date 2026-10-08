@@ -77,4 +77,4 @@ PDM 模块管理产品和物料清单 (BOM)。
 
 **相关文档**
 - [快速入门指南](../quick-start.md)
-- [系统管理手册](../admin-guide.md)
+- [系统管理手册](../system-admin-manual.md)

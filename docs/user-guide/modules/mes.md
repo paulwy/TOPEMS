@@ -239,6 +239,6 @@ OEE = 可用率 × 性能率 × 质量率
 
 **相关文档**
 - [快速入门指南](../quick-start.md)
-- [系统管理手册](../admin-guide.md)
+- [系统管理手册](../system-admin-manual.md)
 - [PDM模块用户指南](./pdm.md) - 产品数据管理
 - [QMS模块用户指南](./qms.md) - 质量管理

@@ -299,6 +299,6 @@ SCM 模块管理采购流程、供应商关系和供应链协同，实现端到�
 
 **相关文档**
 - [快速入门指南](../quick-start.md)
-- [系统管理手册](../admin-guide.md)
+- [系统管理手册](../system-admin-manual.md)
 - [WMS模块用户指南](./wms.md) - 仓库管理
 - [SRM模块用户指南](./srm.md) - 供应商关系管理

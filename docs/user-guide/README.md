@@ -10,7 +10,7 @@ TOPEMS 企业管理系统的用户手册，按功能模块组织，便于按需�
 user-guide/
 ├── README.md           # 本文件，文档索引
 ├── quick-start.md       # 快速入门指南
-├── admin-guide.md       # 系统管理手册
+├── system-admin-manual.md       # 系统管理手册
 ├── faq.md               # 常见问题解答
 └── modules/             # 模块使用手册
     ├── hrm.md           # 人力资源管理
@@ -42,7 +42,7 @@ user-guide/
 
 ### 系统管理员
 
-1. 阅读 [系统管理手册](./admin-guide.md)
+1. 阅读 [系统管理手册](./system-admin-manual.md)
 2. 了解用户、角色、权限配置
 3. 掌握系统设置和数据管理
 

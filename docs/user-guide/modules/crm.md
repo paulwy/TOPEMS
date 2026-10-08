@@ -112,4 +112,4 @@ CRM 模块管理客户信息、商机和销售流程。
 
 **相关文档**
 - [快速入门指南](../quick-start.md)
-- [系统管理手册](../admin-guide.md)
+- [系统管理手册](../system-admin-manual.md)

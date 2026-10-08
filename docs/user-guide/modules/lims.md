@@ -157,5 +157,5 @@ LIMS 模块管理样品信息、检验记录和实验数据，实现实验室数
 
 **相关文档**
 - [快速入门指南](../quick-start.md)
-- [系统管理手册](../admin-guide.md)
+- [系统管理手册](../system-admin-manual.md)
 - [RD 研发管理模块用户指南](./rd.md)
