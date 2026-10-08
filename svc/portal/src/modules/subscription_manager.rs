@@ -830,7 +830,7 @@ pub async fn subscribe_handler(
 
     match SubscriptionGateway::subscribe(req.client_id, channels).await {
         Ok(subscriber) => Json(ApiResponse::success(subscriber, "订阅成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -854,7 +854,7 @@ pub async fn unsubscribe_handler(
     match SubscriptionGateway::unsubscribe(&subscriber_id).await {
         Ok(true) => Json(ApiResponse::success(true, "取消订阅成功")),
         Ok(false) => Json(ApiResponse::error(404, "订阅者不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -913,7 +913,7 @@ pub async fn publish_handler(
 
     match SubscriptionGateway::publish(channel, req.payload).await {
         Ok(msg) => Json(ApiResponse::success(msg, "消息发布成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -943,7 +943,7 @@ pub async fn publish_to_queue_handler(
     .await
     {
         Ok(msg) => Json(ApiResponse::success(msg, "消息已发布到队列")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -994,7 +994,7 @@ pub async fn create_queue_handler(
 
     match MessageQueueBridge::create_queue(config).await {
         Ok(cfg) => Json(ApiResponse::success(cfg, "队列创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1014,7 +1014,7 @@ pub async fn purge_queue_handler(
 ) -> Json<ApiResponse<u64>> {
     match MessageQueueBridge::purge_queue(&req.queue_name).await {
         Ok(count) => Json(ApiResponse::success(count, "队列已清空")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1070,7 +1070,7 @@ pub async fn set_batch_window_handler(
 ) -> Json<ApiResponse<PushStats>> {
     match PushOptimizer::set_batch_window(req.batch_window_ms).await {
         Ok(stats) => Json(ApiResponse::success(stats, "批量窗口已更新")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 

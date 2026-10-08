@@ -1386,7 +1386,7 @@ pub async fn validate_token_handler(
                 ))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1407,7 +1407,7 @@ pub async fn authenticate_handler(
     match GatewaySecurityV2::check_authentication(&req.token, req.policy_id.as_deref()).await {
         Ok(true) => Json(ApiResponse::success(true, "认证通过")),
         Ok(false) => Json(ApiResponse::error(401, "认证失败")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1467,7 +1467,7 @@ pub async fn create_security_policy_handler(
 
     match GatewaySecurityV2::create_policy(policy).await {
         Ok(p) => Json(ApiResponse::success(p, "安全策略创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1534,7 +1534,7 @@ pub async fn update_security_policy_handler(
 
     match GatewaySecurityV2::update_policy(&id, updates).await {
         Ok(p) => Json(ApiResponse::success(p, "安全策略更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1574,7 +1574,7 @@ pub async fn write_audit_handler(
 
     match AuditTrailV2::write_audit(entry).await {
         Ok(e) => Json(ApiResponse::success(e, "审计条目写入成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1694,7 +1694,7 @@ pub async fn export_audit_handler(
 
     match AuditTrailV2::export_audit(filter, &format, req.created_by).await {
         Ok(export) => Json(ApiResponse::success(export, "审计导出任务创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1737,7 +1737,7 @@ pub async fn grant_access_handler(
 
     match AccessControlV2::grant_access(&req.actor_id, &req.role, permissions).await {
         Ok(p) => Json(ApiResponse::success(p, "授权成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 
@@ -1761,7 +1761,7 @@ pub async fn revoke_access_handler(
 ) -> Json<ApiResponse<UserPermissions>> {
     match AccessControlV2::revoke_access(&id, req.role.as_deref(), req.permissions).await {
         Ok(p) => Json(ApiResponse::success(p, "权限撤销成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 
@@ -1815,7 +1815,7 @@ pub async fn create_access_policy_handler(
 
     match AccessControlV2::create_policy(policy).await {
         Ok(p) => Json(ApiResponse::success(p, "访问策略创建成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 

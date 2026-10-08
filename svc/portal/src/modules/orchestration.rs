@@ -1064,7 +1064,7 @@ pub async fn create_plan_handler(
     match GatewayOrchestrator::create_plan(req.query_id, req.execution_steps, req.timeout_ms).await
     {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1087,7 +1087,7 @@ pub async fn execute_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::execute_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划执行完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 
@@ -1110,7 +1110,7 @@ pub async fn get_plan_status_handler(
 ) -> Json<ApiResponse<PlanStatusInfo>> {
     match GatewayOrchestrator::get_plan_status(&id).await {
         Ok(info) => Json(ApiResponse::success(info, "计划状态")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1133,7 +1133,7 @@ pub async fn cancel_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::cancel_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划已取消")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 
@@ -1162,7 +1162,7 @@ pub async fn optimize_plan_handler(
 ) -> Json<ApiResponse<OrchestrationPlan>> {
     match GatewayOrchestrator::optimize_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "编排计划已优化")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 
@@ -1192,7 +1192,7 @@ pub async fn register_service_handler(
     .await
     {
         Ok(descriptor) => Json(ApiResponse::success(descriptor, "服务注册成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1216,7 +1216,7 @@ pub async fn deregister_service_handler(
     match ServiceDiscoveryEngine::deregister_service(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "服务注销成功")),
         Ok(false) => Json(ApiResponse::error(404, "服务不存在")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 
@@ -1302,7 +1302,7 @@ pub async fn check_health_handler(
 ) -> Json<ApiResponse<ServiceHeartbeat>> {
     match ServiceDiscoveryEngine::check_health(&id).await {
         Ok(heartbeat) => Json(ApiResponse::success(heartbeat, "健康检查完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1368,7 +1368,7 @@ pub async fn add_rule_handler(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "路由规则创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1406,7 +1406,7 @@ pub async fn update_rule_handler(
 
     match DynamicRouter::update_rule(&id, updated).await {
         Ok(rule) => Json(ApiResponse::success(rule, "路由规则更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1430,7 +1430,7 @@ pub async fn remove_rule_handler(
     match DynamicRouter::remove_rule(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "路由规则删除成功")),
         Ok(false) => Json(ApiResponse::error(404, "路由规则不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 

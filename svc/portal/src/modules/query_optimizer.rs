@@ -1095,7 +1095,7 @@ pub async fn compile_query_handler(
 ) -> Json<ApiResponse<CompiledQuery>> {
     match QueryCompiler::compile_query(req.query).await {
         Ok(compiled) => Json(ApiResponse::success(compiled, "查询编译成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1145,7 +1145,7 @@ pub async fn update_rule_handler(
 
         return match result {
             Ok(rule) => Json(ApiResponse::success(rule, "规则已更新")),
-            Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+            Err(e) => Json(ApiResponse::from(e)),
         };
     }
 
@@ -1181,7 +1181,7 @@ pub async fn create_plan_handler(
 ) -> Json<ApiResponse<ExecutionPlan>> {
     match QueryPlanner::create_plan(req.query_hash, req.field_paths).await {
         Ok(plan) => Json(ApiResponse::success(plan, "计划创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1224,7 +1224,7 @@ pub async fn compare_plans_handler(
 ) -> Json<ApiResponse<PlanCompareResult>> {
     match QueryPlanner::compare_plans(req.plan_id_a, req.plan_id_b).await {
         Ok(result) => Json(ApiResponse::success(result, "计划对比完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1248,7 +1248,7 @@ pub async fn get_plan_cost_handler(
             serde_json::json!({ "plan_id": plan_id, "estimated_cost": cost }),
             "计划成本",
         )),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1258,7 +1258,7 @@ pub async fn optimize_plan_handler(
 ) -> Json<ApiResponse<ExecutionPlan>> {
     match QueryPlanner::optimize_plan(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "计划优化完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1305,7 +1305,7 @@ pub async fn accelerate_handler(
     match ExecutionAccelerator::accelerate(req.original_time_ms, req.field_count, strategies).await
     {
         Ok(result) => Json(ApiResponse::success(result, "加速完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1371,7 +1371,7 @@ pub async fn configure_strategy_handler(
     let enabled = req.enabled.unwrap_or(true);
     match ExecutionAccelerator::configure_strategy(strategy, enabled, req.parameters).await {
         Ok(config) => Json(ApiResponse::success(config, "策略配置已更新")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 

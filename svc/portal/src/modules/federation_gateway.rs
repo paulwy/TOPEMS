@@ -847,7 +847,7 @@ pub async fn register_subgraph_handler(
     .await
     {
         Ok(config) => Json(ApiResponse::success(config, "子图注册成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -885,7 +885,7 @@ pub async fn remove_subgraph_handler(Path(id): Path<String>) -> Json<ApiResponse
 
     match FederationGatewayV5::remove_subgraph(&id).await {
         Ok(()) => Json(ApiResponse::success_no_data("子图已删除")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -906,7 +906,7 @@ pub async fn execute_federated_query_handler(
 
     match FederationGatewayV5::execute_federated_query(req.query, req.variables).await {
         Ok(result) => Json(ApiResponse::success(result, "联邦查询执行成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -965,7 +965,7 @@ pub async fn start_transaction_handler(
         .await
     {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务已启动")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -990,7 +990,7 @@ pub async fn commit_transaction_handler(
 
     match TransactionCoordinator::commit_transaction(&id, req.confirm_steps).await {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务提交成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 
@@ -1014,7 +1014,7 @@ pub async fn compensate_transaction_handler(
 
     match TransactionCoordinator::compensate_transaction(&id).await {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务补偿已执行")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 
@@ -1071,7 +1071,7 @@ pub async fn get_transaction_handler(
 
     match TransactionCoordinator::get_transaction_status(&id).await {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务详情")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1095,7 +1095,7 @@ pub async fn recover_transaction_handler(
 
     match TransactionCoordinator::recover_transaction(&id).await {
         Ok(ctx) => Json(ApiResponse::success(ctx, "事务恢复完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 

@@ -1520,7 +1520,7 @@ pub async fn end_trace_handler(
 ) -> Json<ApiResponse<Trace>> {
     match PerformanceTracer::end_trace(&req.trace_id).await {
         Ok(trace) => Json(ApiResponse::success(trace, "追踪已结束")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1555,7 +1555,7 @@ pub async fn add_resolver_timing_handler(
     .await
     {
         Ok(timing) => Json(ApiResponse::success(timing, "Resolver 计时已添加")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1652,7 +1652,7 @@ pub async fn export_traces_handler(
     let format = req.format.unwrap_or_else(|| "json".to_string());
     match PerformanceTracer::export_traces(&format, req.query_hash.as_deref()).await {
         Ok(data) => Json(ApiResponse::success(data, "追踪数据导出成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1787,7 +1787,7 @@ pub async fn update_model_handler(
 
     match AnomalyDetector::update_model(&id, updates).await {
         Ok(model) => Json(ApiResponse::success(model, "检测模型更新成功")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1845,7 +1845,7 @@ pub async fn train_model_handler(
 ) -> Json<ApiResponse<DetectionModel>> {
     match AnomalyDetector::train_model(&id).await {
         Ok(model) => Json(ApiResponse::success(model, "模型训练完成")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 

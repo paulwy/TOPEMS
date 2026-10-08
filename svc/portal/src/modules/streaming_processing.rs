@@ -1251,7 +1251,7 @@ pub async fn create_stream_handler(
 
     match StreamManagerV2::create_stream(req.topic, stream_type, req.filter, req.batch_size).await {
         Ok(stream) => Json(ApiResponse::success(stream, "流创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1261,7 +1261,7 @@ pub async fn get_stream_handler(
 ) -> Json<ApiResponse<Stream>> {
     match StreamManagerV2::get_stream(&id).await {
         Ok(stream) => Json(ApiResponse::success(stream, "流详情")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1296,7 +1296,7 @@ pub async fn publish_event_handler(
 ) -> Json<ApiResponse<StreamEvent>> {
     match StreamManagerV2::publish_event(&id, req.event_type, req.payload).await {
         Ok(event) => Json(ApiResponse::success(event, "事件发布成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1308,7 +1308,7 @@ pub async fn subscribe_stream_handler(
     match StreamManagerV2::subscribe_stream(&id, req.subscriber_id).await {
         Ok(true) => Json(ApiResponse::success(true, "订阅成功")),
         Ok(false) => Json(ApiResponse::error(400, "订阅失败")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1320,7 +1320,7 @@ pub async fn unsubscribe_stream_handler(
     match StreamManagerV2::unsubscribe_stream(&id, &req.subscriber_id).await {
         Ok(true) => Json(ApiResponse::success(true, "取消订阅成功")),
         Ok(false) => Json(ApiResponse::error(404, "订阅者不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1366,7 +1366,7 @@ pub async fn delete_stream_handler(
     match StreamManagerV2::delete_stream(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "流已删除")),
         Ok(false) => Json(ApiResponse::error(404, "流不存在")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1397,7 +1397,7 @@ pub async fn create_dedup_rule_handler(
     .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "去重规则创建成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1501,7 +1501,7 @@ pub async fn enable_rule_handler(
 ) -> Json<ApiResponse<DedupRule>> {
     match DeduplicationEngine::enable_rule(&id).await {
         Ok(rule) => Json(ApiResponse::success(rule, "规则已启用")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1524,7 +1524,7 @@ pub async fn disable_rule_handler(
 ) -> Json<ApiResponse<DedupRule>> {
     match DeduplicationEngine::disable_rule(&id).await {
         Ok(rule) => Json(ApiResponse::success(rule, "规则已禁用")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1563,7 +1563,7 @@ pub async fn set_backpressure_config_handler(
     .await
     {
         Ok(config) => Json(ApiResponse::success(config, "背压配置已更新")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1586,7 +1586,7 @@ pub async fn get_backpressure_config_handler(
 ) -> Json<ApiResponse<BackpressureConfig>> {
     match BackpressureController::get_config(&id).await {
         Ok(config) => Json(ApiResponse::success(config, "背压配置")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1609,7 +1609,7 @@ pub async fn get_backpressure_state_handler(
 ) -> Json<ApiResponse<BackpressureState>> {
     match BackpressureController::get_state(&id).await {
         Ok(state) => Json(ApiResponse::success(state, "背压状态")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1634,7 +1634,7 @@ pub async fn apply_backpressure_handler(
     match BackpressureController::apply_backpressure(&id, req.event_id).await {
         Ok(true) => Json(ApiResponse::success(true, "事件已接收")),
         Ok(false) => Json(ApiResponse::success(false, "事件已丢弃（背压）")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1657,7 +1657,7 @@ pub async fn drain_queue_handler(
 ) -> Json<ApiResponse<u32>> {
     match BackpressureController::drain_queue(&id).await {
         Ok(count) => Json(ApiResponse::success(count, "队列已排空")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1718,7 +1718,7 @@ pub async fn reset_counter_handler(
     match BackpressureController::reset_counter(&id).await {
         Ok(true) => Json(ApiResponse::success(true, "计数器已重置")),
         Ok(false) => Json(ApiResponse::error(404, "计数器不存在")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 

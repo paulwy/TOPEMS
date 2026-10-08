@@ -1753,7 +1753,7 @@ pub async fn invalidate_cache_handler(
     .await
     {
         Ok(removed) => Json(ApiResponse::success(removed, "缓存失效完成")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1898,7 +1898,7 @@ pub async fn run_health_check_handler(
     let check_id = req.query_hash.unwrap_or_default();
     match SelfHealingEngine::run_health_check(&check_id).await {
         Ok(check) => Json(ApiResponse::success(check, "健康检查执行完成")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1993,7 +1993,7 @@ pub async fn get_recovery_status_handler(
 ) -> Json<ApiResponse<RecoveryPlan>> {
     match SelfHealingEngine::get_recovery_status(&id).await {
         Ok(plan) => Json(ApiResponse::success(plan, "恢复计划状态")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
