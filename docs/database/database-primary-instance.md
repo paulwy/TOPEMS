@@ -32,10 +32,9 @@
 
 | 操作 | 命令 |
 |---|---|
-| 本地 psql（开发主库） | `PGPASSWORD=<MIGRATE_URL 中密码> psql -h localhost -p 5432 -U topems -d topems`（密码见 .env 的 MIGRATE_URL，不入库） |
-| docker 内 psql（部署库） | `docker exec topems-postgres psql -U topems -d topems` |
-| 迁移执行（本地） | `MIGRATE_URL=$(grep MIGRATE_URL .env \| cut -d= -f2-) sqlx migrate run`（直接复用 .env 中的 MIGRATE_URL） |
-| 迁移执行（docker） | `docker exec topems-postgres bash -c '...'`（或部署流水线内置步骤） |
+| 本地 psql（生产主库） | `PGPASSWORD=topems psql -h localhost -p 5432 -U topems -d topems` |
+| 验证库 psql（5433） | `PGPASSWORD=topems psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6） |
+| 迁移执行（生产/开发） | `DATABASE_URL=postgres://topems:topems@localhost:5432/topems sqlx migrate run`（topems_dev 用同名 5432 库覆盖 DATABASE_URL） |
 | 一致性检查 | `bash scripts/db/check-consistency.sh` |
 
 ## 5. 相关文件

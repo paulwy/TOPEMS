@@ -69,11 +69,15 @@ pnpm --version
 
 ### 3. 安装 Docker
 
+> ⚠️ **2026-10-08 起弃用（本机已卸载）**：容器策略定案——生产数据禁入容器，Docker 仅临时验证。
+> 开发环境推荐**原生 PostgreSQL**（macOS: `brew install postgresql@18`；Linux: 发行版 postgresql 或 systemd 部署）。
+> 本节 docker 安装方式仅为历史参考，详见 `docs/deploy/container-strategy.md`。
+
 ```bash
-# macOS
+# macOS（历史——本机已卸载）
 brew install --cask docker
 
-# Ubuntu
+# Ubuntu（历史——可选，非生产推荐）
 sudo apt-get update
 sudo apt-get install docker.io docker-compose
 
