@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# [DEPRECATED] 容器策略定案（2026-10-08）：生产数据禁入容器，Docker 仅临时验证。
+# 本脚本为历史 docker-compose 部署形态入口，不再用于生产；保留仅供未来目标环境（明确 docker）参考。
+# 详见 docs/deploy/container-strategy.md
+
 # TOPEMS Docker方案启动脚本
 # 特性:
 # - 使用Docker Compose管理服务

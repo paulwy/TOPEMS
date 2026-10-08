@@ -39,7 +39,30 @@ brew services stop docker  # 或 Docker Desktop 设置中关闭开机自启
 4. **容器状态可审计**：每个容器必须有明确生命周期（创建目的/清理时机），禁止常驻无主容器
 5. **Docker daemon 异常处理**：daemon 僵死/磁盘满时，优先用原生工具（psql/pg_dump 直连）完成数据操作，不依赖 Docker CLI
 
-## 5. 相关文档
+## 5. Docker 相关代码状态（审核结论）
+
+| 文件/目录 | 状态 | 处置 |
+|---|---|---|
+| `scripts/deploy/deploy.sh` | **DEPRECATED**（docker run 离线范式） | 已标，保留参考 |
+| `scripts/deploy/docker/topems-docker.sh` | **DEPRECATED**（2026-10-08 标记） | 保留参考（见 README） |
+| `deploy/docker/`（8 compose + Dockerfile + 构建脚本） | **DEPRECATED**（README 已说明弃用原因） | 保留参考；未来目标环境明确 docker 时复用 |
+| `svc/unified-core/Dockerfile` | 应用容器化资产 | 保留（无运行时依赖） |
+| 11 个脚本中的 docker 引用 | 检测/分支为主，无生产依赖 | 保留（不影响 systemd 部署路径） |
+
+> 结论：docker 部署代码全套已标记弃用但**保留**（历史/参考价值）；生产链路零 docker 依赖。
+
+## 6. 版本一致性（2026-10-08 核对）
+
+| 组件 | 生产（5432） | 验证（5433） | 一致性 |
+|---|---|---|---|
+| PostgreSQL | 18.4 (Homebrew) | 18.4 (Homebrew) | ✅ 一致 |
+| uuid-ossp | 1.1 | 1.1 | ✅ 一致 |
+| **pgvector** | **0.8.7** | **0.8.2** | ⚠️ 差异 |
+| _sqlx_migrations | 20261008000000 | 20261008000000 | ✅ 一致（topems_dev 同步） |
+
+**pgvector 差异说明**：原生（brew）0.8.7 高于原数据源 0.8.2——0.8.x 数据文件格式向后兼容（存储格式 v1 稳定），且生产 vector 表数据量为 0（`ai.document_chunks` / `ai.vectors` 空）——**无数据风险**。后续若验证库需要对齐，`ALTER EXTENSION vector UPDATE TO '0.8.7'` 即可。
+
+## 7. 相关文档
 
 - `docs/database/database-primary-instance.md` §7（生产库独立化定案）
 - `docs/database/postgres-native-migration-20261008.md`（迁移与纯净分离记录）
