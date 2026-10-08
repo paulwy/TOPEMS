@@ -346,3 +346,4 @@ config/keys/*.pem
 /lib/Cargo.lock
 /shared/lib/Cargo.lock
 /svc/migration-sdk/Cargo.lock
+backups/

@@ -142,11 +142,11 @@ bash scripts/db/check-consistency.sh
 - **开发**：`postgres://topems:topems@localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权）
 - **5433 验证库**：仅迁移链重放/账本核对（§6 命令），不承载应用
 
-### 7.4 备份资产（2026-10-08）
+### 7.4 备份资产（2026-10-08，统一存放 `backups/`）
 
-- `/Users/xingzhai/topems_migration_backup_20261008_080512.sql`（5433 原全量，迁移时）
-- `/Users/xingzhai/topems_container_clean_20261008.sql`（5433 纯净，分离时）
-- `/Users/xingzhai/topems_pre_clean_20261008.sql`（合并库全量 = 开发基线来源）
+- `backups/topems_migration_backup_20261008_080512.sql`（5433 原全量，迁移时）
+- `backups/topems_container_clean_20261008.sql`（5433 纯净，分离时）
+- `backups/topems_pre_clean_20261008.sql`（合并库全量 = 开发基线来源）
 
 ### 7.5 Docker 容器处置
 

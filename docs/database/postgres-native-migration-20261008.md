@@ -62,9 +62,49 @@
 
 ## 备份资产
 
-- `/Users/xingzhai/topems_migration_backup_20261008_080512.sql`（5433 原全量）
-- `/Users/xingzhai/topems_container_clean_20261008.sql`（5433 纯净 dump）
-- `/Users/xingzhai/topems_pre_clean_20261008.sql`（合并库全量 = topems_dev 开发基线来源）
+- `backups/topems_migration_backup_20261008_080512.sql`（5433 原全量）
+- `backups/topems_container_clean_20261008.sql`（5433 纯净 dump）
+- `backups/topems_pre_clean_20261008.sql`（合并库全量 = topems_dev 开发基线来源）
+
+> 备份统一存放于仓库 `backups/`（已 gitignore，不入库）；清理策略见 §标准恢复流程。
+
+## 标准恢复/迁移流程（规范，2026-10-08 固化）
+
+> 本次合流缺陷的根因教训：恢复目标非空 + 无 `ON_ERROR_STOP` → 数据静默合流。
+> 以下为**所有迁移/恢复操作的强制规范**。
+
+### 规范（硬约束）
+
+1. **目标库空态核验**：恢复前必须确认目标库为空（无表/无数据），否则 `DROP` 重建或改恢复至新库
+2. **ON_ERROR_STOP 强制**：psql 一律加 `-v ON_ERROR_STOP=1`；pg_restore 必须检查退出码（非 0 = 失败）
+3. **先备份后动库**：任何 DROP/重建前，先 pg_dump 全量（-Fc 自定义格式）
+4. **版本工具匹配**：pg_dump/pg_restore 版本 ≥ 目标 server 版本（低版本客户端会拒绝高版本 server）
+5. **恢复后验证**：表数/关键表行数/扩展 三方核对（本记录 §迁移结果）
+
+### 命令模板（可直接复制）
+
+```bash
+export PGPASSWORD=<口令>
+PG18=/opt/homebrew/opt/postgresql@18/bin
+
+# 1) 备份现有库（防丢失）
+$PG18/pg_dump -h localhost -p 5432 -U topems -d topems -Fc -f backups/pre_$(date +%Y%m%d_%H%M%S).sql
+
+# 2) 目标库空态核验（有表则 DROP 重建）
+$PG18/psql -h localhost -p 5432 -U topems -d postgres -c "SELECT count(*) FROM pg_tables WHERE schemaname='public' AND tablename='core_permissions';"
+
+# 3) DROP + 重建（确认备份完成后）
+$PG18/psql -h localhost -p 5432 -U topems -d postgres -c "DROP DATABASE IF EXISTS topems;"
+$PG18/psql -h localhost -p 5432 -U topems -d postgres -c "CREATE DATABASE topems OWNER topems;"
+
+# 4) 恢复（检查退出码，非 0 立即停）
+$PG18/pg_restore -h localhost -p 5432 -U topems -d topems --no-owner backups/xxx.sql
+RC=$?; [ $RC -ne 0 ] && echo "恢复失败 (RC=$RC)" && exit 1
+
+# 5) 验证
+$PG18/psql -h localhost -p 5432 -U topems -d topems -At -c "SELECT count(*) FROM pg_tables WHERE schemaname='public';"
+$PG18/psql -h localhost -p 5432 -U topems -d topems -At -c "SELECT count(*) FROM core_permissions;"
+```
 
 ## 附：brew 沙箱禁用（EPERM 修复）
 
