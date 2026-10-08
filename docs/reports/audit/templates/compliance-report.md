@@ -163,7 +163,7 @@ GET /iam/v1/audit/logs/export?source=<source>&format=csv&start_date={{start_date
 
 - 生成命令 Command: `{{generation_command}}`
 - API 端点 API URL: `{{api_url}}`
-- 模板 Template: `docs/audit/templates/compliance-report.md`
+- 模板 Template: `docs/reports/audit/templates/compliance-report.md`
 
 ---
 

@@ -79,7 +79,7 @@
 | 2.2 | 新增/补齐表单组件 | 前端架构 | P0 | 第 7-8 周 | 未开始 | `FormRadio`、`FormSlider`、`FormAutocomplete`、`FormRating` API 一致，接入 FormField 体系 | 新表单组件 |
 | 2.3 | 统一图表组件 | 前端架构 | P1 | 第 8-9 周 | 未开始 | 5 种图表组件颜色从 Token 获取；支持空/加载/错误态；响应式；暗色模式 | `LineChartCard`、`BarChartCard`、`PieChartCard`、`AreaChartCard`、`StatTrendChart` |
 | 2.4 | 组件级 Token 扩展 | 设计负责人 + 前端架构 | P0 | 第 8-9 周 | 未开始 | ≥20 个组件级 Token；共享组件优先使用；Token 变更自动响应 | `semanticTokens.components.*` |
-| 2.5 | 暗色模式与 Cyber 主题统一 | 设计负责人 | P1 | 第 9 周 | 未开始 | 三套主题边界清晰；切换无闪烁；共享组件在三套主题下正常 | `docs/design/theme-strategy.md` |
+| 2.5 | 暗色模式与 Cyber 主题统一 | 设计负责人 | P1 | 第 9 周 | 未开始 | 三套主题边界清晰；切换无闪烁；共享组件在三套主题下正常 | `docs/design/theme-strategy.md（文档重构后不可达，见 docs/archive）` |
 | 2.6 | Token 合规扫描接入 CI | DevEx | P0 | 第 9-10 周 | 已完成 | CI 对新增/修改文件执行检查；硬编码导致 CI 失败；白名单生效 | `scripts/ci/check-design-tokens.cjs --changed-only` 接入 CI |
 
 ### 阶段 2 详细任务清单

@@ -1,7 +1,7 @@
 # Integration 跨域联动治理蓝图（直写 → API 编排）
 
 > 2026-08-31 · 为物理库拆分前置条件 #1（integration 跨域事务直写）铺路
-> 关联：`docs/architecture/database-split-plan.md` §3 阶段 2 拆分前置条件
+> 关联：`docs/database/database-split-plan.md` §3 阶段 2 拆分前置条件
 
 > 📐 **2026-10-02 状态校准（对齐 [D3](./decision-d3-integration-data-ownership.md) 决策，阶段 1 快赢任务 T2）**
 > - **下文 §5 声称的「步骤 B 直写→reqwest 已完成」与「步骤 D 撤销 allow 已完成」与代码不符**。对齐代码现状 2026-10-02 实测：

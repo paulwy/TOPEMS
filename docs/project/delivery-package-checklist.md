@@ -37,8 +37,8 @@
 | 2.1.3 | MCP 架构修订计划 | `TOPEMS_MCP_Architecture_Amendment_Plan.md` | MCP 层架构修订 | ✅ |
 | 2.1.4 | 项目验收清单 | `docs/project/project-acceptance-checklist.md` | 项目验收检查清单 | ✅ |
 | 2.1.5 | 上线检查清单 | `docs/project/go-live-checklist.md` | 上线前检查清单 | ✅ |
-| 2.1.6 | 项目交付包清单 | `docs/delivery/delivery-package-checklist.md` | 本文档 | ✅ |
-| 2.1.7 | 项目总结报告 | `docs/delivery/project-summary-report.md` | 项目最终总结 | ✅ |
+| 2.1.6 | 项目交付包清单 | `docs/project/delivery-package-checklist.md` | 本文档 | ✅ |
+| 2.1.7 | 项目总结报告 | `docs/archive/misc/project-summary-report.md` | 项目最终总结 | ✅ |
 | 2.1.8 | 变更记录 | `CHANGELOG.md` | 版本变更记录 | ✅ |
 
 ### 2.2 技术文档
@@ -66,10 +66,10 @@
 
 | 序号 | 文档名称 | 位置 | 说明 | 状态 |
 |------|---------|------|------|------|
-| 2.4.1 | 用户操作手册 | `docs/user/user-manual.md` | 最终用户操作指南 | ✅ |
-| 2.4.2 | 管理员指南 | `docs/user/admin-guide.md` | 系统管理员操作指南 | ✅ |
+| 2.4.1 | 用户操作手册 | `docs/user/user-manual.md（文档重构后不可达，见 docs/archive）` | 最终用户操作指南 | ✅ |
+| 2.4.2 | 管理员指南 | `docs/admin/admin-guide.md` | 系统管理员操作指南 | ✅ |
 | 2.4.3 | 快速入门指南 | `README.md` | 项目快速上手指南 | ✅ |
-| 2.4.4 | FAQ | `docs/user/faq.md` | 常见问题解答 | ✅ |
+| 2.4.4 | FAQ | `docs/user-guide/faq.md` | 常见问题解答 | ✅ |
 
 ## 3. 配置交付物
 

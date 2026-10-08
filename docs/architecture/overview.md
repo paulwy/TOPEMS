@@ -6,7 +6,7 @@
 > - 当前构建口径：**28 业务服务 + `svc/server` 模块化单体统一入口 + 12 个共享库子 crate**；服务清单权威源为 `config/services.yaml`（已由 `scripts/check-workspace-registry.py` 三向校验守护）。
 > - 已发生重大演进：**模块化单体**（32 svc → 7 模块组，见 `docs/architecture/modular-monolith-design.md`）；新增 `shared-mcp`/`shared-dsh`/`shared-boundary`；**aps → mes、feedback → ticket 合并**；**lowcode/billing 归档**（`svc/_archive/`）；事件总线升级 **Redis Stream**（2026-08-29）。
 > - 下文 V71 服务配置表、架构图与事件描述为 2026-08-11 快照，新增/合并服务以上文为准。
-> - 架构演进与待办清单：`docs/architecture/architecture-evolution-and-todo.md` · 待办状态追踪：`TODO.md`「架构演进与待办清单」章节。
+> - 架构演进与待办清单：`docs/archive/misc/architecture-evolution-and-todo.md` · 待办状态追踪：`TODO.md`「架构演进与待办清单」章节。
 
 > ✅ **2026-09-17 基线复核（P0-1 架构文档基线对齐）**
 > - **版本基线**：构建中业务服务 **29 个**（Cargo workspace members）+ `svc/server` 模块化单体统一入口 + 6 个 unified-core 虚拟逻辑模块（iam/flow/file/doc/automation/bi）；`scripts/check-workspace-registry.py` 实测：Cargo members 29 / services.yaml 32 条目 / ports.env 38 变量 **三向一致**。

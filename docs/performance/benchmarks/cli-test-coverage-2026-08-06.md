@@ -220,4 +220,4 @@ cli/tests/
 | `CONTRIBUTING.md` | CLI 依赖安装改为 `pip3 install -e .`；测试章节增加 CLI pytest 命令 | ✅ |
 | `README.md` | `python3 -m topems_cli db init` 前补充 `pip3 install -e .` 安装步骤 | ✅ |
 | `docs/getting-started/quickstart.md` | 步骤 2 安装依赖中增加 `pip3 install -e .` | ✅ |
-| `docs/test-coverage-report.md` | 新增修复项 #15-18；更新模块覆盖明细；更新建议优先级 | ✅ |
+| `docs/test-coverage-report.md（文档重构后不可达，见 docs/archive）` | 新增修复项 #15-18；更新模块覆盖明细；更新建议优先级 | ✅ |

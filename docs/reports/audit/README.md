@@ -108,7 +108,7 @@ const blob: Blob = await operationAuditApi.exportOperationLogs({
 | `--start-date` | 报告起始日期（`YYYY-MM-DD`，必填）                                    |
 | `--end-date`   | 报告结束日期（`YYYY-MM-DD`，必填）                                    |
 | `--format`     | `markdown`（默认）或 `json`                                           |
-| `--output`     | 输出路径（默认 `docs/reports/audit/reports/compliance-report-YYYY-MM-DD.md`） |
+| `--output`     | 输出路径（默认 `docs/reports/audit/reports/compliance-report-YYYY-MM-DD.md（文档重构后不可达，见 docs/archive）`） |
 | `--api-url`    | 审计 API 基址（默认 `$AUDIT_API_URL` 或 `http://localhost:8080`）     |
 | `--template`   | 模板文件（默认 `docs/reports/audit/templates/compliance-report.md`）          |
 | `--help`       | 帮助                                                                  |

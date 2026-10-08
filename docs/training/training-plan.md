@@ -240,12 +240,12 @@
 
 | 文档名称 | 位置 | 状态 |
 |---------|------|------|
-| 用户操作手册 | `docs/user/user-manual.md` | ✅ |
-| 管理员指南 | `docs/user/admin-guide.md` | ✅ |
+| 用户操作手册 | `docs/user/user-manual.md（文档重构后不可达，见 docs/archive）` | ✅ |
+| 管理员指南 | `docs/admin/admin-guide.md` | ✅ |
 | 运维手册 | `docs/admin/operations-manual.md` | ✅ |
 | 故障排查速查表 | `docs/admin/troubleshooting-cheatsheet.md` | ✅ |
 | 快速入门指南 | `README.md` | ✅ |
-| FAQ | `docs/user/faq.md` | ✅ |
+| FAQ | `docs/user-guide/faq.md` | ✅ |
 
 ## 5. 培训考核
 

@@ -1190,7 +1190,7 @@ bash scripts/ci/coverage-baseline.sh
 | isPending 装载态 | 部分页面用 data === undefined 判断 | 统一用 isPending 控制骨架屏 |
 | 分页状态 | 部分页面用 useState 而非 URL 同步 | 统一 useUrlState（search 模式）同步分页筛选到 URL |
 
-**产出**: `docs/audit/V83.1-react-query-standardization-report.md` + 批量修复 PR。
+**产出**: `docs/audit/V83.1-react-query-standardization-report.md（文档重构后不可达，见 docs/archive）` + 批量修复 PR。
 
 #### **[P1 - 紧随] V83-2: CLI 能力补齐 + 自动化**
 
@@ -1212,7 +1212,7 @@ bash scripts/ci/coverage-baseline.sh
 
 #### **[P2 - 中期] V84: P2-6 AI Copilot 闭环（设计已在 docs/superpowers/specs 归档）**
 
-spec 已存：`docs/superpowers/specs/2026-08-11-v69-2-p2-6-ai-copilot-refactor.md`
+spec 已存：`docs/archive/superpowers/plans/2026-08-11-v69-2-p2-6-ai-copilot-refactor.md`
 最小闭环范围：
 1. 全局 AI FAB Popover → 320×420 Copilot 悬浮窗（复用 FloatingAIHelper + useAIContext）
 2. 文本选中气泡组件（4 动作：解释/翻译/优化/问 AI）

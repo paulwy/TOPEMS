@@ -656,7 +656,7 @@ curl http://localhost:8013/metrics | grep ai_
 
 - 用户操作手册：`docs/user-guide/UserManual.md`
 - 管理员指南：`docs/admin/admin-guide.md`
-- 项目完成总结：`docs/PROJECT_COMPLETION_SUMMARY.md`
+- 项目完成总结：`docs/archive/misc/PROJECT_COMPLETION_SUMMARY.md`
 
 ### C. 版本历史
 

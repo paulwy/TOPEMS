@@ -1,7 +1,7 @@
 # TopEMS 数据库物理拆分预案（P1-2）
 
 > **状态**：预案已定 + schema 归属评审完成 + **阶段 0（schema 归位）已执行落地（2026-08-31）** + **拆分前置治理完成（2026-09-01，前置条件 #1 #2 #3 全部闭环）** · **日期**：2026-08-31（更新 2026-09-01） · **归属待办**：P1-2（物理库拆分预案）
-> **关联**：`docs/architecture/architecture-evolution-and-todo.md` · `database/postgres/init.sql` · `config/services.yaml` · **`database-schema-ownership-review.md`（归属评审报告）** · `TODO.md`（阶段 0 执行记录）
+> **关联**：`docs/archive/misc/architecture-evolution-and-todo.md` · `database/postgres/init.sql` · `config/services.yaml` · **`database-schema-ownership-review.md`（归属评审报告）** · `TODO.md`（阶段 0 执行记录）
 
 ## 1. 现状基线（2026-08-31，阶段 0 执行后重测）
 

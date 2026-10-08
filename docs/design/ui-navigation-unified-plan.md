@@ -699,17 +699,17 @@ node scripts/ci/check-design-tokens.cjs --changed-only
 
 以下文档因内容被权威文档覆盖、过时或属于过程文档，已删除：
 
-- `docs/development/frontend/ui-design-spec.md`
-- `docs/development/frontend/ui-navigation-design.md`
-- `docs/development/frontend/frontend-components.md`
-- `docs/development/frontend/page-refactoring-guide.md`
-- `docs/development/frontend/module-layout-guide.md`
-- `docs/modules/development/frontend/ui-navigation-standardization.md`
-- `docs/audit/navigation-ui-unified-review-2026-08-15.md`
-- `docs/audit/nav-architecture-verification-2026-08-15.md`
-- `docs/roadmap/V67.3-frontend-ui-optimization-plan.md`
-- `docs/superpowers/plans/2026-08-08-navigation-ui-unified.md`
-- `docs/superpowers/plans/2026-08-09-v68-3-nav-arch-compliance.md`
+- `docs/development/frontend/ui-design-spec.md（文档重构后不可达，见 docs/archive）`
+- `docs/development/frontend/ui-navigation-design.md（文档重构后不可达，见 docs/archive）`
+- `docs/development/frontend/frontend-components.md（文档重构后不可达，见 docs/archive）`
+- `docs/development/frontend/page-refactoring-guide.md（文档重构后不可达，见 docs/archive）`
+- `docs/development/frontend/module-layout-guide.md（文档重构后不可达，见 docs/archive）`
+- `docs/modules/development/frontend/ui-navigation-standardization.md（文档重构后不可达，见 docs/archive）`
+- `docs/audit/navigation-ui-unified-review-2026-08-15.md（文档重构后不可达，见 docs/archive）`
+- `docs/audit/nav-architecture-verification-2026-08-15.md（文档重构后不可达，见 docs/archive）`
+- `docs/roadmap/V67.3-frontend-ui-optimization-plan.md（文档重构后不可达，见 docs/archive）`
+- `docs/superpowers/plans/2026-08-08-navigation-ui-unified.md（文档重构后不可达，见 docs/archive）`
+- `docs/superpowers/plans/2026-08-09-v68-3-nav-arch-compliance.md（文档重构后不可达，见 docs/archive）`
 
 ---
 

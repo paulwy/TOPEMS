@@ -2,7 +2,7 @@
 
 > 状态：v1.0（core 组 7 个模块全部接入完成）
 > 日期：2026-09-16
-> 关联：`docs/architecture/TOPEMS_Architecture_Roadmap_v2.md` §1.2
+> 关联：`docs/archive/misc/TOPEMS_Architecture_Roadmap_v2.md` §1.2
 
 ## 最新更新（2026-09-16）
 

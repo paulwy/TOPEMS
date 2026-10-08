@@ -477,5 +477,5 @@ emitter.emit('navigationUpdated', pluginCode)
 | `apps/web/src/components/layout/TopNav.tsx` | 顶部导航（监听 navigationUpdated） |
 | `apps/web/src/components/layout/Sidebar.tsx` | 侧边栏（监听 navigationUpdated） |
 | `apps/web/src/components/layout/ModuleTabs.tsx` | 模块 Tab（监听 navigationUpdated） |
-| `docs/guides/ui/ui-navigation-design.md` | 导航设计文档 |
-| `docs/guides/ui/ui-design-spec.md` | UI 设计规范 |
+| `docs/guides/ui/ui-navigation-design.md（文档重构后不可达，见 docs/archive）` | 导航设计文档 |
+| `docs/guides/ui/ui-design-spec.md（文档重构后不可达，见 docs/archive）` | UI 设计规范 |
