@@ -19,7 +19,7 @@ use crate::modules::approval_common::{
 };
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::big_decimal_to_f64;
-use topems_shared_event::event::{EventType, MesWorkReportSubmittedPayload};
+use topems_shared_event::event::{commit_retry, EventType, MesWorkReportSubmittedPayload};
 
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -173,7 +173,7 @@ pub async fn get_today_production_output(
     //   operator        → reporter_name
     //   good_quantity   → output_quantity
     //
-    // 跟踪: docs/roadmap/TODO.md "V62.x Mobile BFF 数据迁移" 章节
+    // 跟踪: docs/project/TODO.md "V62.x Mobile BFF 数据迁移" 章节
     let operator = match query.operator {
         Some(op) => op,
         None => {
@@ -643,20 +643,19 @@ pub async fn create_work_report(
                         reported_at: Some(Utc::now()),
                         tenant_id: None,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::MesWorkReportSubmitted, payload)
-                        .await
-                    {
-                        tracing::error!(
-                            "[MES→ERP] MesWorkReportSubmitted 事件发布失败（进度回传滞留，需人工重发）: {}",
-                            e
-                        );
-                    } else {
-                        tracing::info!(
+                    let et = EventType::MesWorkReportSubmitted;
+                    match publisher.publish_event(et, &payload).await {
+                        Ok(_) => tracing::info!(
                             "[MES→ERP] 报工进度回传事件发布成功 - work_report_id={}, erp_order_id={:?}",
-                            work_report_id,
-                            erp_order_id
-                        );
+                            work_report_id, erp_order_id
+                        ),
+                        Err(e) => {
+                            tracing::error!(
+                                "[MES→ERP] MesWorkReportSubmitted 事件发布失败: {}，入重试队列",
+                                e
+                            );
+                            commit_retry::push_retry_typed("mes", et, &payload).await;
+                        }
                     }
                 });
             }

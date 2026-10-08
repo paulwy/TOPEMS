@@ -44,7 +44,7 @@ pub async fn get_today_quality_pass_rate(
     //   COUNT(*) 今日总数        → COUNT(*) FROM qa_quality_inspections WHERE created_at >= CURRENT_DATE
     //   status='passed' 合格数   → COUNT(*) WHERE status='completed' AND (result='qualified')
     //
-    // 跟踪: docs/roadmap/TODO.md "V62.x Mobile BFF 数据迁移" 章节
+    // 跟踪: docs/project/TODO.md "V62.x Mobile BFF 数据迁移" 章节
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "qms",
         "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE created_at >= CURRENT_DATE"
