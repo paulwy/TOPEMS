@@ -1032,3 +1032,15 @@
 ### 建议
 
 R3=9 / R5 / menu-health 内容债建议独立批次修复（动 .rs/.tsx 需各域 owner 确认）；rsa 等待上游或评估替换 jsonwebtoken；Billing 恢复后 CI 预期除基线债外全绿（文件级问题已全部修复）。
+### 📋 后续（既有债，非本批范围）
+- ~~apps/web 硬编码中文 30 处~~ → ✅ **已收口（2026-10-08，两提交 a8c8a30b3/000099030，见下节）**
+
+## 2026-10-08 前端硬编码 CJK 文案收敛收口（apps/web 30 处清零，全仓 587→617→0）
+
+### ✅ 完成
+- **apps/web 30 处硬编码中文清零（2 提交）**：web 端与三端不同，走既有 i18next 基建（`t()` 引用 + `apps/web/src/i18n/locales/{zh,en}/*.json` 资源），验收口径为 `scripts/ci/check-i18n.cjs --mode=hardcode --strict`（i18n-hardcode-admin 门禁），非 hardcoded-precise
+  - mes 15 处（`a8c8a30b3`）：MesWorkOrderPage 10 处（mock 产线 5 + '件' 模板 2 + 下拉 value 3）、MesQualityParetoPage 3 处（合格/返工/报废）、MesOeeDashboardPage 2 处（白班/夜班）；zh/en mes.json 新增 7 key（unit_piece/quality_pareto.*/oee_dashboard.*），line_a/b/c 复用既有
+  - admin/crm/erp/root 15 处（`000099030`）：SystemSettingsPage 4 处（模块级 defaultSettings 下沉为 buildDefaultSettings(t) 工厂）；TenantManagementPage 3 处（planConfig CJK labelKey → ASCII key，t() 渲染双语零变化，连带修复 raw-key 隐患）；CustomerDetailPage 2 处（MenuItem value → t）；4 处模块级 formatAmount 挪入组件、万分支 → t('ns.format.amount_wan', { v0 })；ErpSalesOrder placeholder 选择器模板串；RedesignDemo unit='件'；zh/en admin/crm/erp/components 新增 13 key
+- **累计**：先例 9a63dba1e（62）+ mobile 308 + desktop 154 + shared 63 + web 30 = **617 处全部清零**
+- **验证**：hardcode 总数 30→**0**（731 文件、admin 0）；i18n-quality 7-in-1 PASS（新增 key zh/en 镜像、无混合结构）；glossary TopN 0 违规；eslint 0 错误；web 全包 tsc --noEmit 0 错误；p4-guard 单测 8 passed（admin/mes 计数归零）；prettier 无新增告警；两次提交 lefthook 全量门禁（含 frontend-lint/typecheck、crm-contract、icon-page、api-boundary 等 25+ 项）全绿，无 --no-verify
+- **备注**：web 未新增字典模块，全部走既有命名空间资源；en 侧为合理新译（如 Day Shift/Night Shift/pcs），zh 渲染逐字节不变
