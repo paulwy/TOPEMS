@@ -738,7 +738,7 @@ jobs:
         run: pnpm --filter @topems/tokens build
 
       - name: Check token deviation
-        run: node apps/web/scripts/check-token-deviation.cjs
+        run: node scripts/check-design-tokens.mjs
 
   # ──────────────────────────────────────────────────────────────────────────
   # Frontend Audit (V64) — 5 个 CI 审计脚本，守护导航/页面标准化/图标/API 一致性
@@ -1410,7 +1410,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Patch ESM modules (react-transition-group etc.)
-        run: node scripts/patch-react-transition-group.js
+        run: node scripts/patch-react-transition-group.cjs
 
       - name: Run tests (${{ matrix.name }})
         run: pnpm --filter topems-portal ${{ matrix.cmd }}
@@ -1447,7 +1447,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Patch ESM modules
-        run: node scripts/patch-react-transition-group.js
+        run: node scripts/patch-react-transition-group.cjs
 
       - name: Run tests with coverage
         run: pnpm --filter topems-portal test:coverage
@@ -1561,7 +1561,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Patch ESM modules
-        run: node scripts/patch-react-transition-group.js
+        run: node scripts/patch-react-transition-group.cjs
 
       - name: Build and check bundle size
         run: |

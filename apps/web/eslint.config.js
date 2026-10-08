@@ -324,6 +324,7 @@ export default [
       'dist/',
       'build/',
       'public/',
+      'storybook-static/',
       'temp.tsx',
       'e2e/**/*',
       'src/__tests__/**/*',

@@ -153,6 +153,8 @@ vi.mock('@/config/runtime', () => ({
   },
   isProduction: vi.fn(() => false),
   isDevelopment: vi.fn(() => true),
+  // V64 deployment.ts 读取 VITE_DEPLOY_ENV 等环境变量；mock 返回空默认值（等价 on-premise 单租户基线）
+  getEnv: vi.fn((_key: string, defaultValue = '') => defaultValue),
 }));
 
 vi.mock('@topems/tokens', () => ({
