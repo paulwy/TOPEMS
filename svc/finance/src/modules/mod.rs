@@ -49,7 +49,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_event::event::{EventType, PaymentMadePayload, PaymentReceivedPayload};
+use topems_shared_event::event::{commit_retry, EventType, PaymentMadePayload, PaymentReceivedPayload};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct AccountQueryParams {
@@ -837,14 +837,22 @@ pub async fn create_payment_handler(
                         paid_at,
                         tenant_id: Some(tenant_id),
                     };
+                    // D6：commit 已成功（service.create_payment 内部 tx.commit），此处仅发布；
+                    // 失败入 Redis ZSET 重试队列，由 main.rs 15s run_relay 重发。
                     if let Err(e) = publisher
-                        .publish_event(EventType::PaymentMade, payload)
+                        .publish_event(EventType::PaymentMade, payload.clone())
                         .await
                     {
                         tracing::warn!(
-                            "[finance] PaymentMade 事件发布失败（graceful fallback）: {}",
+                            "[finance] PaymentMade 事件发布失败: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed(
+                            "finance",
+                            EventType::PaymentMade,
+                            &payload,
+                        )
+                        .await;
                     } else {
                         tracing::info!(
                             "[finance] PaymentMade 事件发布成功 - payment_id={}",
@@ -2982,14 +2990,22 @@ pub async fn create_collection_handler(
                         received_at: Some(Utc::now()),
                         tenant_id: Some(tenant_id),
                     };
+                    // D6：commit 已成功（service.create_collection 内部已落库），此处仅发布；
+                    // 失败入 Redis ZSET 重试队列，由 main.rs 15s run_relay 重发。
                     if let Err(e) = publisher
-                        .publish_event(EventType::PaymentReceived, payload)
+                        .publish_event(EventType::PaymentReceived, payload.clone())
                         .await
                     {
                         tracing::warn!(
-                            "[finance] PaymentReceived 事件发布失败（graceful fallback）: {}",
+                            "[finance] PaymentReceived 事件发布失败: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed(
+                            "finance",
+                            EventType::PaymentReceived,
+                            &payload,
+                        )
+                        .await;
                     } else {
                         tracing::info!(
                             "[finance] PaymentReceived 事件发布成功 - payment_no={}, amount={}",

@@ -14,6 +14,7 @@ use rust_decimal::Decimal;
 use sqlx::PgPool;
 use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
+use topems_shared_event::event::commit_retry;
 use topems_shared_event::{EventPublisher, EventType};
 use uuid::Uuid;
 
@@ -168,14 +169,21 @@ pub async fn create_reconciliation(
             created_by: Some(creator),
             created_at: now,
         };
+        // D6：写快照已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
         if let Err(e) = publisher
-            .publish_event(EventType::ReconciliationCreated, payload)
+            .publish_event(EventType::ReconciliationCreated, payload.clone())
             .await
         {
             tracing::warn!(
-                "[SettlementCenter] 发布 ReconciliationCreated 事件失败: {}",
+                "[SettlementCenter] 发布 ReconciliationCreated 失败: {}，入重试队列",
                 e
             );
+            commit_retry::push_retry_typed(
+                "finance",
+                EventType::ReconciliationCreated,
+                &payload,
+            )
+            .await;
         }
     }
 
@@ -263,14 +271,21 @@ pub async fn manual_reconcile(
             unmatched_count: stats.1,
             updated_at: now,
         };
+        // D6：tx.commit() 已成功（上），此处仅发布；失败入 ZSET 重试队列。
         if let Err(e) = publisher
-            .publish_event(EventType::ReconciliationUpdated, payload)
+            .publish_event(EventType::ReconciliationUpdated, payload.clone())
             .await
         {
             tracing::warn!(
-                "[SettlementCenter] 发布 ReconciliationUpdated 事件失败: {}",
+                "[SettlementCenter] 发布 ReconciliationUpdated 失败: {}，入重试队列",
                 e
             );
+            commit_retry::push_retry_typed(
+                "finance",
+                EventType::ReconciliationUpdated,
+                &payload,
+            )
+            .await;
         }
     }
 
@@ -537,11 +552,21 @@ pub async fn create_settlement(
             created_by: Some(creator),
             created_at: now,
         };
+        // D6：写快照已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
         if let Err(e) = publisher
-            .publish_event(EventType::SettlementCreated, payload)
+            .publish_event(EventType::SettlementCreated, payload.clone())
             .await
         {
-            tracing::warn!("[SettlementCenter] 发布 SettlementCreated 事件失败: {}", e);
+            tracing::warn!(
+                "[SettlementCenter] 发布 SettlementCreated 失败: {}，入重试队列",
+                e
+            );
+            commit_retry::push_retry_typed(
+                "finance",
+                EventType::SettlementCreated,
+                &payload,
+            )
+            .await;
         }
     }
 
@@ -588,6 +613,7 @@ pub async fn approve_reconciliation(
 
     if item.is_some() {
         if let Some(publisher) = event_publisher {
+            // D6：写快照已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
             let approved_payload = topems_shared_event::ReconciliationApprovedPayload {
                 id: recon_id,
                 tenant_id,
@@ -595,13 +621,19 @@ pub async fn approve_reconciliation(
                 approved_at: now,
             };
             if let Err(e) = publisher
-                .publish_event(EventType::ReconciliationApproved, approved_payload)
+                .publish_event(EventType::ReconciliationApproved, approved_payload.clone())
                 .await
             {
                 tracing::warn!(
-                    "[SettlementCenter] 发布 ReconciliationApproved 事件失败: {}",
+                    "[SettlementCenter] 发布 ReconciliationApproved 失败: {}，入重试队列",
                     e
                 );
+                commit_retry::push_retry_typed(
+                    "finance",
+                    EventType::ReconciliationApproved,
+                    &approved_payload,
+                )
+                .await;
             }
 
             let updated_payload = topems_shared_event::ReconciliationUpdatedPayload {
@@ -616,13 +648,19 @@ pub async fn approve_reconciliation(
                 updated_at: now,
             };
             if let Err(e) = publisher
-                .publish_event(EventType::ReconciliationUpdated, updated_payload)
+                .publish_event(EventType::ReconciliationUpdated, updated_payload.clone())
                 .await
             {
                 tracing::warn!(
-                    "[SettlementCenter] 发布 ReconciliationUpdated 事件失败: {}",
+                    "[SettlementCenter] 发布 ReconciliationUpdated 失败: {}，入重试队列",
                     e
                 );
+                commit_retry::push_retry_typed(
+                    "finance",
+                    EventType::ReconciliationUpdated,
+                    &updated_payload,
+                )
+                .await;
             }
         }
     }
@@ -680,6 +718,7 @@ pub async fn approve_settlement(
 
     if item.is_some() {
         if let Some(publisher) = event_publisher {
+            // D6：写快照已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
             let payload = topems_shared_event::SettlementApprovedPayload {
                 id: settlement_id,
                 tenant_id,
@@ -687,10 +726,19 @@ pub async fn approve_settlement(
                 approved_at: now,
             };
             if let Err(e) = publisher
-                .publish_event(EventType::SettlementApproved, payload)
+                .publish_event(EventType::SettlementApproved, payload.clone())
                 .await
             {
-                tracing::warn!("[SettlementCenter] 发布 SettlementApproved 事件失败: {}", e);
+                tracing::warn!(
+                    "[SettlementCenter] 发布 SettlementApproved 失败: {}，入重试队列",
+                    e
+                );
+                commit_retry::push_retry_typed(
+                    "finance",
+                    EventType::SettlementApproved,
+                    &payload,
+                )
+                .await;
             }
         }
     }
