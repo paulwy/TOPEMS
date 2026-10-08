@@ -70,6 +70,10 @@ impl CustomerListParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
+        .route(
+            "/internal/searchable-snapshot",
+            get(crate::modules::searchable_projection::searchable_snapshot),
+        )
         .route("/customers", get(list_customers).post(create_customer))
         .route(
             "/customers/{id}",

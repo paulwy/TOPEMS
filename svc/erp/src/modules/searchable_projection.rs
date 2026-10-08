@@ -159,3 +159,104 @@ pub async fn emit_searchable_change(
         );
     }
 }
+
+// ── B1 启动时差距对账：erp 快照端点（search backfill 拉取）──────────────────────
+//
+// CQRS 读模型重建：search 启动时调用本端点，把 erp 源表现有可搜索实体全量
+// 作为 upsert 快照返回，search 逐行 UPSERT 进自有投影，补齐"停消费期间/历史
+// 未发事件"造成的差距。不占用事件流，幂等可重复调用。
+
+use axum::{extract::State, Json};
+use topems_shared_core::response::ApiResponse;
+
+use super::ApiState;
+
+/// GET /internal/searchable-snapshot —— 返回全部可搜索实体当前快照（upsert）。
+/// 供 search 启动 backfill；返回扁平列表，每项即一条 SearchableEntityChangedPayload。
+pub async fn searchable_snapshot(
+    State(state): State<ApiState>,
+) -> Json<ApiResponse<Vec<SearchableEntityChangedPayload>>> {
+    let db = &state.db;
+    let mut out: Vec<SearchableEntityChangedPayload> = Vec::new();
+
+    // customers
+    if let Ok(rows) = sqlx::query(
+        "SELECT id, tenant_id, name, contact_person, contact_phone, email, address, status, updated_at
+         FROM erp.customers WHERE deleted_at IS NULL",
+    )
+    .fetch_all(db)
+    .await
+    {
+        for r in rows {
+            out.push(SearchableEntityChangedPayload {
+                entity_type: "customer".to_string(),
+                entity_id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+                tenant_id: r.try_get::<Uuid, _>("tenant_id").ok(),
+                op: "upsert".to_string(),
+                name: r.try_get::<String, _>("name").ok(),
+                contact_person: r.try_get::<String, _>("contact_person").ok(),
+                contact_phone: r.try_get::<String, _>("contact_phone").ok(),
+                email: r.try_get::<String, _>("email").ok(),
+                address: r.try_get::<String, _>("address").ok(),
+                status: r.try_get::<String, _>("status").ok(),
+                remark: None,
+                source_updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
+            });
+        }
+    }
+
+    // sales_orders
+    if let Ok(rows) = sqlx::query(
+        "SELECT id, tenant_id, order_no, status, remark, updated_at
+         FROM erp.sales_orders WHERE deleted_at IS NULL",
+    )
+    .fetch_all(db)
+    .await
+    {
+        for r in rows {
+            out.push(SearchableEntityChangedPayload {
+                entity_type: "sales_order".to_string(),
+                entity_id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+                tenant_id: r.try_get::<Uuid, _>("tenant_id").ok(),
+                op: "upsert".to_string(),
+                name: r.try_get::<String, _>("order_no").ok(),
+                contact_person: None,
+                contact_phone: None,
+                email: None,
+                address: None,
+                status: r.try_get::<String, _>("status").ok(),
+                remark: r.try_get::<String, _>("remark").ok(),
+                source_updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
+            });
+        }
+    }
+
+    // purchase_orders
+    if let Ok(rows) = sqlx::query(
+        "SELECT id, tenant_id, order_no, status, remark, updated_at
+         FROM erp.purchase_orders WHERE deleted_at IS NULL",
+    )
+    .fetch_all(db)
+    .await
+    {
+        for r in rows {
+            out.push(SearchableEntityChangedPayload {
+                entity_type: "purchase_order".to_string(),
+                entity_id: r.try_get::<Uuid, _>("id").unwrap_or_default(),
+                tenant_id: r.try_get::<Uuid, _>("tenant_id").ok(),
+                op: "upsert".to_string(),
+                name: r.try_get::<String, _>("order_no").ok(),
+                contact_person: None,
+                contact_phone: None,
+                email: None,
+                address: None,
+                status: r.try_get::<String, _>("status").ok(),
+                remark: r.try_get::<String, _>("remark").ok(),
+                source_updated_at: r.try_get::<DateTime<Utc>, _>("updated_at").ok(),
+            });
+        }
+    }
+
+    tracing::info!("[erp] searchable-snapshot 返回 {} 条实体供 search backfill", out.len());
+    Json(ApiResponse::success(out, "快照"))
+}

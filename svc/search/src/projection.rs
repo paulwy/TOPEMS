@@ -145,3 +145,80 @@ pub async fn start_projection_subscriber(pool: PgPool) -> Result<(), String> {
     tracing::info!("[search] 实体投影订阅者已启动（SearchableEntityChanged）");
     Ok(())
 }
+
+/// 启动时差距对账：从 erp 快照端点拉取全量可搜索实体，逐行 UPSERT 进投影。
+///
+/// 用途：补齐"停消费期间/历史未发事件"造成的投影缺口。读模型重建走 erp HTTP
+/// 快照（不直读 erp schema，守住 schema 边界）；best-effort——erp 不可达仅告警，
+/// 不阻塞 search 启动，后续增量仍由事件流收敛。
+pub async fn backfill_projections(pool: &PgPool) {
+    let erp_base = std::env::var("ERP_URL")
+        .unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let url = format!("{}/api/erp/internal/searchable-snapshot", erp_base);
+
+    // backfill 前差距：投影已有行数
+    let before: i64 = sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
+        .fetch_optional(pool)
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(0);
+
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build();
+    let token = std::env::var("BACKFILL_TOKEN").ok();
+    let mut rb = match client {
+        Ok(c) => c.get(&url),
+        Err(e) => {
+            tracing::warn!("[search] backfill 构建 HTTP 客户端失败: {}（跳过对账）", e);
+            return;
+        }
+    };
+    if let Some(t) = token.as_deref() {
+        rb = rb.bearer_auth(t);
+    }
+    let resp = rb.send().await;
+
+    match resp {
+        Ok(r) => match r.json::<serde_json::Value>().await {
+            Ok(body) => {
+                let items = body
+                    .get("data")
+                    .and_then(|d| d.as_array())
+                    .cloned()
+                    .unwrap_or_default();
+                let mut upserted = 0;
+                for item in items {
+                    if let Ok(payload) =
+                        serde_json::from_value::<SearchableEntityChangedPayload>(item)
+                    {
+                        if apply_event(pool, payload).await.is_ok() {
+                            upserted += 1;
+                        }
+                    }
+                }
+                let after: i64 =
+                    sqlx::query_scalar("SELECT count(*) FROM public.search_entity_projections")
+                        .fetch_optional(pool)
+                        .await
+                        .ok()
+                        .flatten()
+                        .unwrap_or(0);
+                tracing::info!(
+                    "[search] backfill 对账完成: 源快照 {} 条, 投影补写 {} 行, 投影行数 {} -> {}",
+                    upserted,
+                    upserted,
+                    before,
+                    after
+                );
+            }
+            Err(e) => {
+                tracing::warn!("[search] backfill 解析快照响应失败: {}（跳过对账）", e);
+            }
+        },
+        Err(e) => {
+            tracing::warn!("[search] backfill 拉取 erp 快照失败: {}（erp 未起则跳过，不阻塞）", e);
+        }
+    }
+}

@@ -38,6 +38,8 @@ async fn main() -> anyhow::Result<()> {
     if let Err(e) = projection::start_projection_subscriber(ctx.db.clone()).await {
         tracing::warn!("⚠️ search 投影订阅者启动失败: {}", e);
     }
+    // B1 启动时差距对账：从 erp 快照拉全量补投影（best-effort，erp 不可达不阻塞）
+    projection::backfill_projections(&ctx.db).await;
 
     // ── public_routes（无状态） ──────────────────────────────────────
     let public_routes = Router::new()
