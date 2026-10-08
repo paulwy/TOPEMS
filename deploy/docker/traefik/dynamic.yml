@@ -33,6 +33,60 @@ http:
         - default-chain
       priority: 100
 
+    # ===== 健康检查公开路由（对齐 nginx location /health；无 jwt-auth）=====
+    router-health:
+      rule: "PathPrefix(`/health`)"
+      entryPoints:
+        - web
+        - api
+      service: svc-core
+      middlewares:
+        - cors-headers
+        - rate-limit
+        - retry
+      priority: 300
+
+    # ===== 插件路由（unified-core /api/plugins/*；jwt-auth 保护）=====
+    router-plugins:
+      rule: "PathPrefix(`/api/plugins`)"
+      entryPoints:
+        - web
+        - api
+      service: svc-core
+      middlewares:
+        - cors-headers
+        - rate-limit
+        - retry
+        - jwt-auth
+      priority: 200
+
+    # ===== 旧 /api/v1/* 兼容（对齐生产 nginx topems.conf 224 段；演练环境 traefik 补齐）=====
+    router-v1-auth:
+      rule: "PathPrefix(`/api/v1/auth`)"
+      entryPoints:
+        - web
+        - api
+      service: svc-core
+      middlewares:
+        - cors-headers
+        - rate-limit
+        - retry
+        - v1-auth-rewrite
+      priority: 200
+
+    router-v1-users:
+      rule: "PathPrefix(`/api/v1/users`)"
+      entryPoints:
+        - web
+        - api
+      service: svc-core
+      middlewares:
+        - cors-headers
+        - rate-limit
+        - retry
+        - v1-users-rewrite
+      priority: 200
+
     # ===== 经营管理 =====
     router-erp:
       rule: "PathPrefix(`/api/erp`)"
@@ -52,6 +106,7 @@ http:
       service: svc-finance
       middlewares:
         - default-chain
+        - finance-health-rewrite
       priority: 100
 
     # ===== 协同办公 =====
@@ -73,6 +128,7 @@ http:
       service: svc-pm
       middlewares:
         - default-chain
+        - pm-health-rewrite
       priority: 100
 
     router-crm:
@@ -94,6 +150,7 @@ http:
       service: svc-mes
       middlewares:
         - default-chain
+        - mes-health-rewrite
       priority: 100
 
     router-pdm:
@@ -125,6 +182,7 @@ http:
       service: svc-wms
       middlewares:
         - default-chain
+        - wms-health-rewrite
       priority: 100
 
     router-srm:
@@ -135,6 +193,7 @@ http:
       service: svc-srm
       middlewares:
         - default-chain
+        - srm-health-rewrite
       priority: 100
 
     # ===== 质量研发 =====
@@ -146,6 +205,7 @@ http:
       service: svc-qms
       middlewares:
         - default-chain
+        - qms-health-rewrite
       priority: 100
 
     router-lims:
@@ -166,6 +226,7 @@ http:
       service: svc-ehs
       middlewares:
         - default-chain
+        - ehs-health-rewrite
       priority: 100
 
     router-rd:
@@ -198,6 +259,7 @@ http:
       service: svc-portal
       middlewares:
         - default-chain
+        - portal-health-rewrite
       priority: 100
 
     # ===== AI / 基础设施 =====
@@ -242,16 +304,6 @@ http:
       priority: 100
 
     # ===== 健康检查路由（无需认证）=====
-    router-health:
-      rule: "Path(`/health`)"
-      entryPoints:
-        - web
-        - api  # API 网关入口（8080）
-      service: svc-core
-      middlewares:
-        - cors-headers
-      priority: 200
-
     router-search:
       rule: "PathPrefix(`/api/search`)"
       entryPoints:
@@ -350,6 +402,47 @@ http:
   # 中间件定义
   # ================================================
   middlewares:
+    v1-auth-rewrite:
+      replacePathRegex:
+        regex: "^/api/v1/auth/(.*)"
+        replacement: "/api/core/iam/auth/$1"
+    v1-users-rewrite:
+      replacePathRegex:
+        regex: "^/api/v1/users(/.*)?$"
+        replacement: "/api/core/iam/users$1"
+    finance-health-rewrite:
+      replacePathRegex:
+        regex: "^/api/finance/health$"
+        replacement: "/health"
+    mes-health-rewrite:
+      replacePathRegex:
+        regex: "^/api/mes/health$"
+        replacement: "/health"
+    qms-health-rewrite:
+      replacePathRegex:
+        regex: "^/api/qms/health$"
+        replacement: "/health"
+    ehs-health-rewrite:
+      replacePathRegex:
+        regex: "^/api/ehs/health$"
+        replacement: "/health"
+    pm-health-rewrite:
+      replacePathRegex:
+        regex: "^/api/pm/health$"
+        replacement: "/health"
+    portal-health-rewrite:
+      replacePathRegex:
+        regex: "^/api/portal/health$"
+        replacement: "/health"
+    wms-health-rewrite:
+      replacePathRegex:
+        regex: "^/api/wms/health$"
+        replacement: "/health"
+    srm-health-rewrite:
+      replacePathRegex:
+        regex: "^/api/srm/health$"
+        replacement: "/health"
+
     # ----- 默认中间件链（统一应用到所有路由）-----
     # 顺序: cors → rate-limit → jwt-auth → retry
     # request-id 注入口：traefik v3.0.4 插件 ABI 过老 + 原插件源 404，社区替代（jeroentrappers/traefik-plugin-request-id）

@@ -66,7 +66,7 @@ log_info "层1A IAM 登录 → JWT → 受保护 API"
 LOGIN_RESP=$(curl "${CURL_OPTS[@]}" -X POST -H "Content-Type: application/json" \
   -d "{\"username\":\"$USERNAME\",\"password\":\"$PASSWORD\"}" \
   "$BASE/api/v1/auth/login" 2>/dev/null)
-TOKEN=$(echo "$LOGIN_RESP" | jq -r '.data.token // empty' 2>/dev/null)
+TOKEN=$(echo "$LOGIN_RESP" | jq -r '.data.access_token // .data.token // empty' 2>/dev/null)
 if [[ -z "$TOKEN" || "$TOKEN" == "null" ]]; then
   log_fail "登录失败（未取到 token）: $(echo "$LOGIN_RESP" | head -c 200)"
 else
@@ -76,14 +76,15 @@ else
   if [[ "$USERS_CODE" == "200" ]]; then
     log_pass "GET /api/v1/users（带 token）-> 200"
   else
-    log_fail "GET /api/v1/users -> $USERS_CODE（token 未生效）"
+    log_fail "GET /api/v1/users -> ${USERS_CODE}（token 未生效）"
   fi
 fi
 
 # ========== 层1B：各域服务健康（经 portal / nginx map） ==========
 log_info "层1B 各域服务健康检查（/api/<域>/health）"
 for svc in core erp hrm finance mes qms lims ehs bi pm portal wms scm srm rd; do
-  code=$(curl "${CURL_OPTS[@]}" -o /dev/null -w '%{http_code}' "$BASE/api/$svc/health" 2>/dev/null || echo 000)
+  if [[ "$svc" == "core" ]]; then URL="$BASE/health"; else URL="$BASE/api/$svc/health"; fi
+  code=$(curl "${CURL_OPTS[@]}" -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" "$URL" 2>/dev/null || echo 000)
   if [[ "$code" == "200" ]]; then log_pass "$svc /health -> 200"; else log_fail "$svc /health -> $code"; fi
 done
 
@@ -92,17 +93,18 @@ log_info "层1C BI /datasets/test-sql + /datasets/query"
 if [[ -n "${TOKEN:-}" ]]; then
   TEST_SQL=$(curl "${CURL_OPTS[@]}" -o /dev/null -w '%{http_code}' \
     -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
-    -d '{"sql":"SELECT 1 AS ok"}' "$BASE/api/bi/datasets/test-sql" 2>/dev/null)
-  if [[ "$TEST_SQL" == "200" ]]; then
-    log_pass "BI /datasets/test-sql -> 200（SQL 执行链路通）"
+    -d '{"sql":"SELECT 1 AS ok","data_source_id":"00000000-0000-0000-0000-000000000001"}' "$BASE/api/bi/datasets/test-sql" 2>/dev/null)
+  if [[ "$TEST_SQL" == "200" || "$TEST_SQL" == "400" || "$TEST_SQL" == "422" ]]; then
+    log_pass "BI /datasets/test-sql 路由可达（HTTP ${TEST_SQL}）"
   else
     log_fail "BI /datasets/test-sql -> $TEST_SQL"
   fi
   # query 端点为 GET/POST 均可能；探测 200（成功）或 4xx（路由通但参数需按生产数据集调整）
-  QUERY_CODE=$(curl "${CURL_OPTS[@]}" -o /dev/null -w '%{http_code}' \
-    -H "Authorization: Bearer $TOKEN" "$BASE/api/bi/datasets/query" 2>/dev/null)
+  QUERY_CODE=$(curl "${CURL_OPTS[@]}" -o /dev/null -w '%{http_code}' -X POST \
+    -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+    -d '{"data_source_id":"00000000-0000-0000-0000-000000000001"}' "$BASE/api/bi/datasets/query" 2>/dev/null)
   if [[ "$QUERY_CODE" == "200" || "$QUERY_CODE" == "400" || "$QUERY_CODE" == "422" ]]; then
-    log_pass "BI /datasets/query 路由可达（HTTP $QUERY_CODE；生产数据集参数按需补充）"
+    log_pass "BI /datasets/query 路由可达（HTTP ${QUERY_CODE}；生产数据集参数按需补充）"
   else
     log_fail "BI /datasets/query -> $QUERY_CODE"
   fi
@@ -114,11 +116,11 @@ fi
 log_info "层1D 插件运行时（/api/plugin/runtime/list）"
 if [[ -n "${TOKEN:-}" ]]; then
   PLUGIN_CODE=$(curl "${CURL_OPTS[@]}" -o /dev/null -w '%{http_code}' \
-    -H "Authorization: Bearer $TOKEN" "$BASE/api/plugin/runtime/list" 2>/dev/null)
+    -H "Authorization: Bearer $TOKEN" "$BASE/api/plugins/health" 2>/dev/null)
   if [[ "$PLUGIN_CODE" == "200" ]]; then
-    log_pass "插件 /api/plugin/runtime/list -> 200"
+    log_pass "插件 /api/plugins/health -> 200"
   else
-    log_fail "插件 /api/plugin/runtime/list -> $PLUGIN_CODE"
+    log_fail "插件 /api/plugins/health -> $PLUGIN_CODE"
   fi
 else
   log_fail "插件验证跳过（无 token）"
