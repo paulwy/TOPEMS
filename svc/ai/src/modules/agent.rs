@@ -27,7 +27,7 @@ pub async fn agent_run(
 ) -> Json<ApiResponse<crate::services::AgentResponse>> {
     match state.agent_service.run(req).await {
         Ok(response) => Json(ApiResponse::success(response, "Agent 执行成功")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 

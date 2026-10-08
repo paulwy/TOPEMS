@@ -1292,7 +1292,7 @@ pub async fn register_lineage(
             }),
             "血缘关系已注册",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 #[utoipa::path(
@@ -1408,7 +1408,7 @@ pub async fn export_lineage(
                 "血缘图谱导出成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1430,7 +1430,7 @@ pub async fn delete_lineage(
 
     match LineageTracker::delete_node(&req.node_id).await {
         Ok(()) => Json(ApiResponse::success_no_data("血缘节点已删除")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1462,7 +1462,7 @@ pub async fn analyze_impact(
 
     match ImpactAnalyzer::analyze(&analysis_req).await {
         Ok(result) => Json(ApiResponse::success(result, "影响分析完成")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1487,7 +1487,7 @@ pub async fn get_impact_report(
 
     match ImpactAnalyzer::get_report(&id).await {
         Ok(report) => Json(ApiResponse::success(report, "影响分析报告")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1510,7 +1510,7 @@ pub async fn simulate_change(
     let change_type = change_type_from_str(&req.change_type);
     match ImpactAnalyzer::simulate(req.entity_type, req.entity_id, change_type).await {
         Ok(simulation) => Json(ApiResponse::success(simulation, "变更模拟完成")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1532,7 +1532,7 @@ pub async fn get_affected_scope(
 
     match ImpactAnalyzer::get_affected_scope(params.entity_type, params.entity_id).await {
         Ok(scope) => Json(ApiResponse::success(scope, "受影响范围")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1572,7 +1572,7 @@ pub async fn propagate_change(
             }),
             "变更传播完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1686,7 +1686,7 @@ pub async fn rollback_propagation(
 
     match ChangePropagator::rollback(&req.propagation_id).await {
         Ok(log) => Json(ApiResponse::success(log, "传播已回滚")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 

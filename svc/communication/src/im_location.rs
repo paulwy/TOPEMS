@@ -238,10 +238,10 @@ pub async fn send_location_message(
         Ok(msg) => msg,
         Err(e) => {
             tracing::error!("Failed to send location message: {}", e);
-            return Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                &format!("发送位置消息失败: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "发送位置消息失败",
+                e,
+            )));
         }
     };
 
@@ -318,10 +318,10 @@ pub async fn list_location_messages(
             }),
             "获取位置消息列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库查询失败",
+            e,
+        ))),
     }
 }
 
@@ -368,10 +368,10 @@ pub async fn create_geofence(
         Ok(g) => g,
         Err(e) => {
             tracing::error!("Failed to create geofence: {}", e);
-            return Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                &format!("创建地理围栏失败: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "创建地理围栏失败",
+                e,
+            )));
         }
     };
 
@@ -428,10 +428,10 @@ pub async fn get_geofence(
     {
         Ok(g) => Json(ApiResponse::success(g, "获取地理围栏成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "地理围栏未找到")),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库查询失败",
+            e,
+        ))),
     }
 }
 
@@ -487,10 +487,10 @@ pub async fn list_geofences(
             }),
             "获取地理围栏列表成功",
         )),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("数据库查询失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库查询失败",
+            e,
+        ))),
     }
 }
 
@@ -512,10 +512,10 @@ pub async fn update_geofence(
             return Json(ApiResponse::error(404, "地理围栏未找到"));
         }
         Err(e) => {
-            return Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                &format!("数据库查询失败: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "数据库查询失败",
+                e,
+            )));
         }
     };
 
@@ -552,10 +552,10 @@ pub async fn update_geofence(
         Ok(g) => g,
         Err(e) => {
             tracing::error!("Failed to update geofence: {}", e);
-            return Json(ApiResponse::error(
-                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-                &format!("数据库更新失败: {}", e),
-            ));
+            return Json(ApiResponse::from(TopemsError::internal(
+                "数据库更新失败",
+                e,
+            )));
         }
     };
 
@@ -606,10 +606,10 @@ pub async fn delete_geofence(
                 Json(ApiResponse::error(404, "地理围栏未找到"))
             }
         }
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("数据库删除失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "数据库删除失败",
+            e,
+        ))),
     }
 }
 

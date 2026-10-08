@@ -114,10 +114,7 @@ pub async fn get_current_subscription(
             },
             "当前订阅获取成功（默认 free）",
         )),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("获取订阅失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取订阅失败", e))),
     }
 }
 
@@ -170,10 +167,7 @@ pub async fn upsert_subscription(
 
     match result {
         Ok(s) => Json(ApiResponse::success(s, "订阅已保存")),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("保存订阅失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("保存订阅失败", e))),
     }
 }
 
@@ -205,10 +199,7 @@ pub async fn cancel_subscription(
             StatusCode::NOT_FOUND.as_u16(),
             "订阅不存在",
         )),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("取消订阅失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("取消订阅失败", e))),
     }
 }
 

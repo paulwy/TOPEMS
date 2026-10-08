@@ -15,7 +15,7 @@ use sqlx::PgPool;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 use uuid::Uuid;
 
 use crate::models::task::{
@@ -130,10 +130,10 @@ pub async fn list_tasks(
             },
             "任务列表获取成功",
         )),
-        (Err(e), _) | (_, Err(e)) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("获取任务列表失败: {}", e),
-        )),
+        (Err(e), _) | (_, Err(e)) => Json(ApiResponse::from(TopemsError::internal(
+            "获取任务列表失败",
+            e,
+        ))),
     }
 }
 
@@ -193,10 +193,10 @@ pub async fn list_tasks_by_project(
             },
             "项目任务列表获取成功",
         )),
-        (Err(e), _) | (_, Err(e)) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("获取项目任务列表失败: {}", e),
-        )),
+        (Err(e), _) | (_, Err(e)) => Json(ApiResponse::from(TopemsError::internal(
+            "获取项目任务列表失败",
+            e,
+        ))),
     }
 }
 
@@ -252,10 +252,7 @@ pub async fn create_task(
 
     match result {
         Ok(task) => Json(ApiResponse::success(task, "任务创建成功")),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("创建任务失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("创建任务失败", e))),
     }
 }
 
@@ -294,10 +291,7 @@ pub async fn get_task(
             StatusCode::NOT_FOUND.as_u16(),
             "任务不存在",
         )),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("获取任务失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("获取任务失败", e))),
     }
 }
 
@@ -368,10 +362,7 @@ pub async fn update_task(
             StatusCode::NOT_FOUND.as_u16(),
             "任务不存在",
         )),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("更新任务失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("更新任务失败", e))),
     }
 }
 
@@ -394,10 +385,7 @@ pub async fn delete_task(
             StatusCode::NOT_FOUND.as_u16(),
             "任务不存在",
         )),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("删除任务失败: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("删除任务失败", e))),
     }
 }
 

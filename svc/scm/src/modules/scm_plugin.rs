@@ -1,7 +1,7 @@
 use crate::modules::ApiState;
 use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 /// 插件信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -132,7 +132,10 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<()>> {
     match sqlx::query("SELECT 1").fetch_one(&state.db).await {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::error(503, &format!("Database error: {}", e))),
+        Err(e) => Json(ApiResponse::from({
+            tracing::warn!("Database error: {}", e);
+            TopemsError::ServiceUnavailable("Database error".to_string())
+        })),
     }
 }
 

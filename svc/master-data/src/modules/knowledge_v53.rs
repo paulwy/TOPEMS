@@ -1518,7 +1518,7 @@ pub async fn add_kg_node(
 
     match KnowledgeGraphEngine::add_node(req.label, node_type, props).await {
         Ok(node) => Json(ApiResponse::success(node, "知识图谱节点已添加")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1549,7 +1549,7 @@ pub async fn add_kg_edge(
     .await
     {
         Ok(edge) => Json(ApiResponse::success(edge, "知识图谱边已添加")),
-        Err(e) => Json(ApiResponse::error(400, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(400, &e.classify().1)),
     }
 }
 #[utoipa::path(
@@ -1572,7 +1572,7 @@ pub async fn get_subgraph(
 
     match KnowledgeGraphEngine::get_subgraph(&node_id, params.depth).await {
         Ok(graph) => Json(ApiResponse::success(graph, "子图谱")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1594,7 +1594,7 @@ pub async fn find_path(
 
     match KnowledgeGraphEngine::find_path(&params.start_id, &params.end_id).await {
         Ok(path) => Json(ApiResponse::success(path, "路径查找成功")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1620,7 +1620,7 @@ pub async fn get_similar(
 
     match KnowledgeGraphEngine::get_similar(&node_id, params.limit).await {
         Ok(nodes) => Json(ApiResponse::success(nodes, "相似节点")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1656,7 +1656,7 @@ pub async fn export_kg(
                 "知识图谱导出成功",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1685,7 +1685,7 @@ pub async fn get_recommendations(
     match RecommendationEngine::get_recommendations(&user_id, params.target_id, params.limit).await
     {
         Ok(recs) => Json(ApiResponse::success(recs, "推荐结果")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1734,7 +1734,7 @@ pub async fn get_similar_items(
 
     match RecommendationEngine::get_similar_items(&item_id, params.limit).await {
         Ok(items) => Json(ApiResponse::success(items, "相似资产")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 
@@ -1790,7 +1790,7 @@ pub async fn register_asset(
     .await
     {
         Ok(asset) => Json(ApiResponse::success(asset, "数据资产已注册")),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }
 
@@ -1862,7 +1862,7 @@ pub async fn get_asset(
 
     match AssetCatalogManager::get_asset(&id).await {
         Ok(asset) => Json(ApiResponse::success(asset, "资产详情")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(e)),
     }
 }
 
@@ -1897,7 +1897,7 @@ pub async fn update_asset(
     .await
     {
         Ok(asset) => Json(ApiResponse::success(asset, "资产已更新")),
-        Err(e) => Json(ApiResponse::error(404, &e.to_string())),
+        Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
 }
 

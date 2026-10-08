@@ -107,9 +107,6 @@ pub async fn execute_workflow(
             }),
             "Workflow executed",
         )),
-        Err(e) => Json(ApiResponse::error(
-            StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
-            &format!("Workflow execution failed: {}", e),
-        )),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
 }

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
 
 use crate::modules::ApiState;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 /// 插件信息
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -194,7 +194,10 @@ pub async fn plugin_health_check(
         .await
     {
         Ok(_) => Json(ApiResponse::success((), "Healthy")),
-        Err(e) => Json(ApiResponse::error(503, &format!("Database error: {}", e))),
+        Err(e) => Json(ApiResponse::from({
+            tracing::warn!("Database error: {}", e);
+            TopemsError::ServiceUnavailable("Database error".to_string())
+        })),
     }
 }
 

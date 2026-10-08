@@ -523,7 +523,7 @@ pub async fn create_work_report(
     let report_date = match parse_report_date(&body.report_date) {
         Ok(d) => d,
         Err(e) => {
-            return Json(ApiResponse::error(400, &e.to_string()));
+            return Json(ApiResponse::from(e));
         }
     };
 
@@ -742,7 +742,7 @@ pub async fn update_work_report(
     let report_date = match body.report_date.as_ref() {
         Some(s) => match parse_report_date(s) {
             Ok(d) => Some(d),
-            Err(e) => return Json(ApiResponse::error(400, &e.to_string())),
+            Err(e) => return Json(ApiResponse::from(e)),
         },
         None => None,
     };

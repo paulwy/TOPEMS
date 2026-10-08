@@ -144,7 +144,7 @@ async fn get_inventory_turnover(
     } else {
         Some(match resolve_tenant_id(&claims) {
             Ok(id) => id,
-            Err(e) => return Json(ApiResponse::error(401, &e.to_string())),
+            Err(e) => return Json(ApiResponse::error(401, &e.classify().1)),
         })
     };
 
@@ -189,7 +189,7 @@ async fn get_inventory_turnover(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("inventory_turnover query error: {}", e);
-            return Json(ApiResponse::error(500, &format!("查询失败: {}", e)));
+            return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
         }
     };
 
@@ -276,7 +276,7 @@ async fn get_order_fulfillment(
 ) -> Json<ApiResponse<OrderFulfillmentResponse>> {
     let tenant_id = match resolve_tenant_id(&claims) {
         Ok(id) => id,
-        Err(e) => return Json(ApiResponse::error(401, &e.to_string())),
+        Err(e) => return Json(ApiResponse::error(401, &e.classify().1)),
     };
 
     let (start, end) = parse_date_range(&params);
@@ -328,7 +328,7 @@ async fn get_order_fulfillment(
         Ok(r) => r,
         Err(e) => {
             tracing::error!("order_fulfillment query error: {}", e);
-            return Json(ApiResponse::error(500, &format!("查询失败: {}", e)));
+            return Json(ApiResponse::from(TopemsError::internal("查询失败", e)));
         }
     };
 
