@@ -35,9 +35,18 @@ export default function MesQualityParetoPage() {
       })),
       heatmap: [] as Array<{ process: string; defect_type: string; count: number }>,
       disposition: [
-        { category: '合格', count: Math.round((analyticsData?.pass_rate ?? 0) * 10) },
-        { category: '返工', count: Math.round((analyticsData?.total_defects ?? 0) * 0.3) },
-        { category: '报废', count: Math.round((analyticsData?.total_defects ?? 0) * 0.2) },
+        {
+          category: i18n.t('mes.quality_pareto.qualified'),
+          count: Math.round((analyticsData?.pass_rate ?? 0) * 10),
+        },
+        {
+          category: i18n.t('mes.quality_pareto.rework'),
+          count: Math.round((analyticsData?.total_defects ?? 0) * 0.3),
+        },
+        {
+          category: i18n.t('mes.quality_pareto.scrap'),
+          count: Math.round((analyticsData?.total_defects ?? 0) * 0.2),
+        },
       ],
     }),
     [analyticsData]

@@ -146,7 +146,7 @@ const MesWorkOrderPage: React.FC = () => {
         status: 'in_progress',
         priority: 'high',
         workshop: t('mes.work_order_page.workshop_1'),
-        production_line: 'A 线',
+        production_line: t('mes.work_order_page.line_a'),
         operator: t('mes.demo.operator_zhang'),
         planned_start: '2026-09-14 08:00',
         planned_end: '2026-09-15 18:00',
@@ -163,7 +163,7 @@ const MesWorkOrderPage: React.FC = () => {
         status: 'completed',
         priority: 'medium',
         workshop: t('mes.work_order_page.workshop_2'),
-        production_line: 'B 线',
+        production_line: t('mes.work_order_page.line_b'),
         operator: t('mes.demo.operator_li'),
         planned_start: '2026-09-13 08:00',
         planned_end: '2026-09-14 18:00',
@@ -180,7 +180,7 @@ const MesWorkOrderPage: React.FC = () => {
         status: 'pending',
         priority: 'low',
         workshop: t('mes.work_order_page.workshop_1'),
-        production_line: 'C 线',
+        production_line: t('mes.work_order_page.line_c'),
         operator: t('mes.demo.operator_wang'),
         planned_start: '2026-09-16 08:00',
         planned_end: '2026-09-17 18:00',
@@ -195,7 +195,7 @@ const MesWorkOrderPage: React.FC = () => {
         status: 'paused',
         priority: 'medium',
         workshop: t('mes.work_order_page.workshop_3'),
-        production_line: 'A 线',
+        production_line: t('mes.work_order_page.line_a'),
         operator: t('mes.demo.operator_zhao'),
         planned_start: '2026-09-14 08:00',
         planned_end: '2026-09-15 18:00',
@@ -212,7 +212,7 @@ const MesWorkOrderPage: React.FC = () => {
         status: 'cancelled',
         priority: 'low',
         workshop: t('mes.work_order_page.workshop_2'),
-        production_line: 'C 线',
+        production_line: t('mes.work_order_page.line_c'),
         operator: t('mes.demo.operator_sun'),
         planned_start: '2026-09-15 08:00',
         planned_end: '2026-09-16 18:00',
@@ -763,11 +763,11 @@ const MesWorkOrderPage: React.FC = () => {
                 />
                 <InfoItem
                   label={t('mes.work_order.k7')}
-                  value={`${selectedOrder.quantity} 件`}
+                  value={`${selectedOrder.quantity} ${t('mes.work_order_page.unit_piece')}`}
                 />
                 <InfoItem
                   label={t('mes.work_order.k8')}
-                  value={`${selectedOrder.completed_quantity} 件`}
+                  value={`${selectedOrder.completed_quantity} ${t('mes.work_order_page.unit_piece')}`}
                 />
                 <InfoItem
                   label={t('mes.work_order_page.workshop')}
@@ -985,9 +985,18 @@ const MesWorkOrderPage: React.FC = () => {
                 id='wo-line'
                 defaultValue={t('mes.work_order_page.line_a')}
                 options={[
-                  { value: 'A 线', label: t('mes.work_order_page.line_a') },
-                  { value: 'B 线', label: t('mes.work_order_page.line_b') },
-                  { value: 'C 线', label: t('mes.work_order_page.line_c') },
+                  {
+                    value: t('mes.work_order_page.line_a'),
+                    label: t('mes.work_order_page.line_a'),
+                  },
+                  {
+                    value: t('mes.work_order_page.line_b'),
+                    label: t('mes.work_order_page.line_b'),
+                  },
+                  {
+                    value: t('mes.work_order_page.line_c'),
+                    label: t('mes.work_order_page.line_c'),
+                  },
                 ]}
               />
             </div>

@@ -60,7 +60,10 @@ export default function MesOeeDashboardPage() {
         equipment_id: `eq-${i + 1}`,
         equipment_name: item.equipment_name,
         oee: item.oee,
-        shift: i % 2 === 0 ? '白班' : '夜班',
+        shift:
+          i % 2 === 0
+            ? i18n.t('mes.oee_dashboard.shift_day')
+            : i18n.t('mes.oee_dashboard.shift_night'),
       })),
       trend_24h: (analyticsData?.trend ?? []).map((item) => ({
         timestamp: item.date,
