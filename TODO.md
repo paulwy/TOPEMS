@@ -939,3 +939,36 @@
 - 版本一致性：README 徽章 = CHANGELOG [5.15.0] = package.json 5.15.0
 - 安全：活跃区明文凭据 0；git 历史含 topems_secret（295 提交）——如需公开仓库建议轮换数据库密码
 - 遗留（并行线）：TRAE 会话 svc/finance 等改动未提交（本线不介入）；navigation-menu-demo.design/ 未跟踪
+
+## ✅ 非一致性方向三件套完成态（2026-10-08）
+
+> B15 流量窗口重采 / 5432 台账归并 / 上线运维化 三件并行（文件面互斥），提交均为本地、未 push。
+
+### B15 流量窗口重采 — ✅ 工具链验证（真实窗口前置条件已登记）
+
+- **流量构造**：本地演练环境无法启动 27 服务集群跑真实业务链路 → 采用工具链验证路径：`scripts/arch/b15_traffic_demo.py`（可复跑）启动双 mock /metrics 端点（crm 出站双 label 新格式 3 边 + erp 入站单 label 旧格式 2 边）
+- **重采执行**：`scripts/arch/service_topology.py --collect "crm:18029,erp:18010"` 跑通——双/单 label 格式兼容解析、边集去重（crm→erp 双侧观测合并取 max）、CSV/JSON/HTML 正常生成
+- **与 Oct 6 快照对比**：边集不变（工具链验证非真实流量，新增/消失边=0）；关键变化=出站侧 caller 由 bootstrap 注入（TOPEMS_SERVICE_NAME），边可见性从"仅被调方在线"扩展为"双侧任一在线即可采集"
+- **文档**：`docs/archive/reports-2026-10/runtime-matrix-decision-2026-10-03.md §5.2` 工具链验证方法/结果/真实重采前置条件（4 步：服务全启→业务流量→流量窗口→--collect 重跑）
+- **commit**：`ef7b8b33e`（2 文件 +125）
+- **残留**：真实业务流量重采需 27 服务全启 + 代表性流量运行 ≥1 周期后执行（已登记前置条件）
+
+### 5432 mes/iam 台账归并 — ✅ 完成（碎片已被并行线先行清理）
+
+- **关键事实**：核对时 `mes._sqlx_migrations`（292）与 `iam._sqlx_migrations`（49）**已被并行线先行 DROP**（无备份残留）——碎片为 public 同一迁移链的 search_path 漂移期旧版快照，DROP 无信息损失；有效缺失=0（磁盘==public 双向一致）
+- **处置**：未执行任何台账 INSERT/DELETE；现状（整表 DROP）已等价"整体废弃标记"终态
+- **收敛证据**：磁盘 331 = 5432 public 331 = 5433 public 331；validate.sh 331 文件 Checksum errors=0；**固化只读校验脚本 `scripts/db/verify-sqlx-ledger-convergence.sql`**（枚举全库台账仅 public 一行 + 完整性核对）
+- **过程插曲**：提交被 rls-permissions 钩子阻断（并行线重建 5432 后 topems_app 授权基线丢失 6 表）→ 按既有幂等脚本 `scripts/db/grant-topems-app.sql` 恢复（1279 表 DML + 5 sequence + 默认权限），钩子转 ✅
+- **commit**：`e1de65a74`（校验脚本固化）
+
+### 上线运维化 — ✅ 完成
+
+- **nginx 首部署复核**（28 服务逐条，事实源=services.yaml+main.rs）：27 一致 + **1 漂移修复——monitor:8095**（V68.1 拆分后生产 conf 漏接：无 monitor upstream、`/api/monitor/` 仍指向 core:8000，而 core 已注释 monitor_routes 仅留 health 桩；vite 代理/ports.ts 均正确、独生产 conf 漏）。修复=对称 plugin-registry 新增 monitor upstream + map 拆分；静态校验 28/28 端口一致、0 漂移、braces 53/53、map 自洽；runbook 快照同步。`nginx -t` 因 macOS epoll 限制留待生产 Linux（runbook 已知）
+- **CI 门禁进 PR**：既有 38 jobs 覆盖已全；**唯一缺口=NODE boundary（check-schema-boundary.cjs）未进 workflow** → 在 `schema-boundary-gate` job 补一步（PY+NODE 同 job）；YAML dry-run 结构验证通过（38 jobs）；双脚本本地实跑均 exit 0。**未实际触发外部 CI**（未 push）
+- **观测治理深化**：/metrics 覆盖 **28/28 无缺端点**（build_application 自动挂 + mode-C 自挂）；live 实证入站错误率（axum_http_requests_total{status}）+ 延迟（duration_seconds 直方图）已覆盖；**缺口登记**：G1 服务间边指标无 status 维度、G2 出站无延迟直方图、G3 shared-core 自定义 histogram 死指标（零观测点）；产出 `docs/admin/observability-metrics-audit-2026-10-08.md`（覆盖表+缺口+建议）
+- **commit**：`d7daa6f64`（nginx conf + ci.yml + runbook + 观测审计文档；25 pre-commit 钩子全绿）
+- **残留**：CI 未实际触发；G1/G2/G3 代码改动在 lib/svc 边界外仅登记建议（不引入新监控栈）；ports.md 表头滞后（2026-10-02 注释已声明 services.yaml 为权威源，未在本次范围内改写）
+
+### 双库账本终态（最终实测）
+
+**磁盘 331 = 5432 public 331 = 5433 public 331**；mes/iam 碎片台账=0；checksum 不一致 0。三件均为非迁移改动，账本保持收敛。
