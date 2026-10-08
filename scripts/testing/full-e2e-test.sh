@@ -152,8 +152,8 @@ setup_dependencies() {
     if [ "$all_ready" = false ]; then
         log_warning "部分依赖服务未就绪，将使用 Mock 或跳过相关测试"
         log_info "启动依赖服务命令："
-        echo "  docker run -d -p 5432:5432 -e POSTGRES_DB=topems -e POSTGRES_USER=topems -e POSTGRES_PASSWORD=topems postgres:15"
-        echo "  docker run -d -p 6379:6379 redis:7"
+        echo "  brew services start postgresql@18   # 本机 PG（开发库 topems_dev @5432）"
+        echo "  brew services start redis            # 本机 Redis（docker 已卸载，2026-10-08 起生产禁容器）"
     else
         log_success "所有依赖服务已就绪"
     fi

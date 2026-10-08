@@ -12,16 +12,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# 检测 docker compose 命令
-detect_docker_compose() {
-    if command -v docker-compose &>/dev/null; then
-        echo "docker-compose"
-    else
-        echo "docker compose"
-    fi
-}
-
-DC=$(detect_docker_compose)
+# 注：Docker 已于 2026-10-08 彻底卸载（生产禁容器），原 compose 检测函数已移除
 
 # 打印带颜色的消息
 print_ok() {

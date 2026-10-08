@@ -1,4 +1,5 @@
 #!/bin/bash
+# ⚠️ [DEPRECATED] 2026-10-08 Docker 已彻底卸载，本脚本依赖 docker daemon（测试慢启动场景）已不可用；慢启动分析改用本机 Homebrew PG（/opt/homebrew/opt/postgresql@18）直接观测。
 # scripts/dev/test-slow-db-startup.sh
 # =============================================================================
 # 验证 schema-defense-gate job 的 Wait for PostgreSQL 策略在 DB 慢启动场景下
