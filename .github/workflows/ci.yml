@@ -269,14 +269,6 @@ jobs:
 
       - name: "Check config single-source-of-truth (P0-3: services.yaml ↔ ports.env/Cargo.toml/ports.ts/vite.config)"
         run: node scripts/ci/check-config-sources.cjs --check
-    # 仅这些路径变更时在 push/PR 上运行；schedule/workflow_dispatch 每次全量跑
-    paths:
-      - 'config/**'
-      - 'Cargo.toml'
-      - 'apps/web/vite.config.ts'
-      - 'apps/web/src/config/ports.ts'
-      - 'scripts/check-workspace-registry.py'
-      - 'scripts/ci/check-config-sources.cjs'
 
   # ──────────────────────────────────────────────────────────────────────────
   # [P2-3 NEW Gate] CHANGELOG 发布校验
@@ -426,7 +418,7 @@ jobs:
       DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
     services:
       postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}-alpine
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: topems_test
           POSTGRES_PASSWORD: topems_test_secret
@@ -1789,7 +1781,7 @@ jobs:
       DATABASE_URL: postgres://topems_test:topems_test_secret@localhost:5432/topems_test
     services:
       postgres:
-        image: postgres:${{ env.POSTGRES_VERSION }}-alpine
+        image: postgres:16-alpine
         env:
           POSTGRES_USER: topems_test
           POSTGRES_PASSWORD: topems_test_secret
