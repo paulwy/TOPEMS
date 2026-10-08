@@ -911,3 +911,31 @@
   - **mes**（2 处，`0dbff2671`）/ **pm**（3 处，`e22550402`）：已 post-commit 仅补重试。
 - **验证矩阵**：7 服务 check ✅ / clippy 0 warning ✅ / 单测全绿（finance 2291、scm 27、crm 全绿、pm 全绿、wms/hrm 全绿、mes 43/47——4 失败为 equipment 表预置种子问题与本次无关）；**活 E2E**：finance + scm 重试重放实证；其余编译+单测级（本地 IAM/core 未起，鉴权业务流无法实写 E2E，如实标注）。
 - **残留（本次范围外）**：hrm MDM 主数据事件（独立 master_data stream + 消费组 DLQ）如需纳入 ZSET 需另设计 master_data 通道；wms `inventory.rs:108` 死代码未动。
+
+## 2026-10-08 文档体系治理收口（12 轮，全部推送）
+
+> 承接生产运维治理链（生产库独立化 → Docker 卸载 → Windows 指南 → 文档一致性 → 文档整理 → 深度治理），本批次对全仓库文档/脚本/资源做系统性治理并终检全绿。
+
+### 治理成果（commit 链：f1aef5e18 → 447727c6e 等 12 个提交）
+
+| 维度 | 处理 | 结果 |
+|---|---|---|
+| 过时删除 | docker-ops-2026-10-03.md（158 行，0 引用） | 删除 |
+| 零引用归档 | 9 个文档/报告 → archive/reports-2026-10/ + misc/（clippy/scm/前端UI/runtime-matrix/go-live/错误形态/web-contract/2 个 HTML 报告 + ROADMAP） | 归档可恢复 |
+| 断链修复 | 活跃区 92 处失效链接（重定向 31 + archive 指向 22 + 不可达转文本 35 + 旧目录 2） | **0** |
+| 硬编码修正 | file:///Users/air|xingzhai 绝对链接 64 处 → 仓库相对链接 | **0** |
+| 同名消除 | user-guide/admin-guide → system-admin-manual；ROADMAP → archive；SECURITY 精简指向 | **0 同名** |
+| 明文密码 | 13 处 topems_secret/PGPASSWORD=topems/:topems@/TEST_PASSWORD → 占位符（文档+脚本示例） | **0** |
+| 引用有效化 | 反饗号路径缺失 78 处（重定向 + 21 处旧体系标注不可达） | **0** |
+| 索引补全 | 15 + assets 目录 README 生成（20 活跃目录全覆盖）+ docs/README 补 3 目录 | **全覆盖** |
+| 根 README | 目录树对齐实际 20 目录；文档目录章节 153→12 行（权威索引指向） | 单一真相源 |
+| 工具链 | Makefile/lefthook 无 docker 残留；shellcheck 全量 0 error | 干净 |
+| 代码注释 | svc 2 处旧路径 docs/roadmap/TODO.md → project/TODO.md | 一致 |
+| 终检 | 断链/硬编码/密码/引用缺失/同名/README 覆盖 6 项全绿 | ✅ |
+
+### 终态（2026-10-08）
+- docs：419 md（活跃 255 + 归档 105）+ 21 活跃目录全部有 README 索引
+- 三层索引：根 README（项目介绍）→ docs/README.md（文档权威索引）→ 目录 README（文件清单）
+- 版本一致性：README 徽章 = CHANGELOG [5.15.0] = package.json 5.15.0
+- 安全：活跃区明文凭据 0；git 历史含 topems_secret（295 提交）——如需公开仓库建议轮换数据库密码
+- 遗留（并行线）：TRAE 会话 svc/finance 等改动未提交（本线不介入）；navigation-menu-demo.design/ 未跟踪
