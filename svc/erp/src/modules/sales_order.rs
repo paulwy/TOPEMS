@@ -316,6 +316,14 @@ pub async fn create_sales_order(
                 sales_order.id,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
+                }
+            }
             Json(ApiResponse::success(sales_order, "创建销售订单成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
@@ -386,6 +394,14 @@ pub async fn update_sales_order(
                 sales_order.id,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
+                }
+            }
             Json(ApiResponse::success(sales_order, "更新销售订单成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -447,6 +463,14 @@ pub async fn delete_sales_order(
                 id,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
+                }
+            }
             Json(ApiResponse::success(
                 "删除成功".to_string(),
                 "删除销售订单成功",
@@ -563,7 +587,7 @@ pub async fn approve_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    update_sales_order_status(
+    let resp = update_sales_order_status(
         state,
         claims,
         id,
@@ -572,7 +596,13 @@ pub async fn approve_sales_order(
         "审批销售订单失败",
         txn,
     )
-    .await
+    .await;
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+        }
+    }
+    resp
 }
 
 #[utoipa::path(
@@ -596,7 +626,7 @@ pub async fn ship_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    update_sales_order_status(
+    let resp = update_sales_order_status(
         state,
         claims,
         id,
@@ -605,7 +635,13 @@ pub async fn ship_sales_order(
         "销售订单发货失败",
         txn,
     )
-    .await
+    .await;
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+        }
+    }
+    resp
 }
 
 #[utoipa::path(
@@ -629,7 +665,7 @@ pub async fn complete_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    update_sales_order_status(
+    let resp = update_sales_order_status(
         state,
         claims,
         id,
@@ -638,7 +674,13 @@ pub async fn complete_sales_order(
         "完成销售订单失败",
         txn,
     )
-    .await
+    .await;
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+        }
+    }
+    resp
 }
 
 #[utoipa::path(
@@ -662,7 +704,7 @@ pub async fn cancel_sales_order(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    update_sales_order_status(
+    let resp = update_sales_order_status(
         state,
         claims,
         id,
@@ -671,7 +713,13 @@ pub async fn cancel_sales_order(
         "取消销售订单失败",
         txn,
     )
-    .await
+    .await;
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+        }
+    }
+    resp
 }
 
 // ============ #27: 批量/统计端点 ============

@@ -312,6 +312,14 @@ pub async fn create_customer(
                 customer.id,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
+                }
+            }
             Json(ApiResponse::success(customer, "创建客户成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
@@ -391,6 +399,14 @@ pub async fn update_customer(
                 customer.id,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "事务提交失败".to_string(),
+                    )));
+                }
+            }
             Json(ApiResponse::success(customer, "更新客户成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
