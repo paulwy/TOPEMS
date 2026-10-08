@@ -12,9 +12,9 @@ use sqlx::{PgPool, Row};
 use std::sync::Arc;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{
-    Event, EventPublisher, EventResult, EventSubscriber, EventType, InboundOrderRequestedPayload,
-    PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload, WmsInventoryItemReceivedPayload,
-    WmsInventoryItemShippedPayload, WmsInventoryLowStockPayload,
+    commit_retry, Event, EventPublisher, EventResult, EventSubscriber, EventType,
+    InboundOrderRequestedPayload, PurchaseOrderApprovedPayload, PurchaseOrderCreatedPayload,
+    WmsInventoryItemReceivedPayload, WmsInventoryItemShippedPayload, WmsInventoryLowStockPayload,
     WmsWarehouseTransferCompletedPayload,
 };
 
@@ -343,13 +343,16 @@ pub async fn emit_low_stock_alerts(
         };
 
         let publisher_clone = publisher.clone();
-        if let Err(e) = publisher_clone.publish_inventory_low_stock(payload).await {
-            tracing::warn!(
-                "[wms] WmsInventoryLowStock 事件发布失败（graceful fallback）: {}",
-                e
-            );
-        } else {
-            count += 1;
+        match publisher_clone.publish_inventory_low_stock(payload.clone()).await {
+            Ok(_) => count += 1,
+            Err(e) => {
+                tracing::warn!(
+                    "[wms] WmsInventoryLowStock 事件发布失败: {}，入重试队列",
+                    e
+                );
+                commit_retry::push_retry_typed("wms", EventType::WmsInventoryLowStock, &payload)
+                    .await;
+            }
         }
     }
 

@@ -16,6 +16,35 @@ use topems_shared_auth::middleware::tenant::get_tenant_id;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
+use std::sync::Arc;
+use topems_shared_event::event::{
+    commit_retry, CacheInvalidatedPayload, EventPublisher, EventType,
+};
+
+/// D6：发布 CacheInvalidated（缓存失效）；失败入 Redis ZSET 重试队列。
+/// 缓存失效为 best-effort（下游 TTL 自愈），但仍走统一重试兜底。
+async fn publish_cache_invalidated_with_retry(
+    publisher: &Arc<EventPublisher>,
+    cache_key_pattern: String,
+    invalidation_level: &str,
+    reason: Option<String>,
+) {
+    if let Err(e) = publisher
+        .publish_cache_invalidated(&cache_key_pattern, invalidation_level, reason.as_deref())
+        .await
+    {
+        tracing::warn!("[wms] CacheInvalidated 发布失败: {}，入重试队列", e);
+        let payload = CacheInvalidatedPayload {
+            source_service: "wms".to_string(),
+            source_instance: format!("retry-{}", std::process::id()),
+            cache_key_pattern,
+            invalidation_level: invalidation_level.to_string(),
+            reason,
+            invalidated_at: Utc::now(),
+        };
+        commit_retry::push_retry_typed("wms", EventType::CacheInvalidated, &payload).await;
+    }
+}
 
 fn warehouse_cache_key(tenant_id: &Option<Uuid>, id: Uuid, locale: Option<&str>) -> String {
     let t = tenant_id.map_or("all".to_string(), |t| t.to_string());
@@ -262,13 +291,13 @@ pub async fn create_warehouse(
         state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库列表缓存已清空（创建仓库）");
         if let Some(publisher) = &state.event_publisher {
-            let _ = publisher
-                .publish_cache_invalidated(
-                    &format!("wms:warehouse:{}", id),
-                    "specific",
-                    Some("warehouse_created"),
-                )
-                .await;
+            publish_cache_invalidated_with_retry(
+                publisher,
+                format!("wms:warehouse:{}", id),
+                "specific",
+                Some("warehouse_created".to_string()),
+            )
+            .await;
         }
     }
 
@@ -484,13 +513,13 @@ pub async fn update_warehouse(
         state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
         if let Some(publisher) = &state.event_publisher {
-            let _ = publisher
-                .publish_cache_invalidated(
-                    &format!("wms:warehouse:{}", id),
-                    "specific",
-                    Some("warehouse_updated"),
-                )
-                .await;
+            publish_cache_invalidated_with_retry(
+                publisher,
+                format!("wms:warehouse:{}", id),
+                "specific",
+                Some("warehouse_updated".to_string()),
+            )
+            .await;
         }
     }
 
@@ -594,13 +623,13 @@ pub async fn delete_warehouse(
         state.warehouse_cache.clear_l1();
         tracing::debug!("🗑️ 仓库缓存已失效: {}", cache_key);
         if let Some(publisher) = &state.event_publisher {
-            let _ = publisher
-                .publish_cache_invalidated(
-                    &format!("wms:warehouse:{}", id),
-                    "specific",
-                    Some("warehouse_deleted"),
-                )
-                .await;
+            publish_cache_invalidated_with_retry(
+                publisher,
+                format!("wms:warehouse:{}", id),
+                "specific",
+                Some("warehouse_deleted".to_string()),
+            )
+            .await;
         }
     }
 

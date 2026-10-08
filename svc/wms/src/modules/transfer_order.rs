@@ -17,7 +17,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 use topems_shared_db::tenant::get_tenant_id_or_new;
-use topems_shared_event::event::{EventType, WmsWarehouseTransferCompletedPayload};
+use topems_shared_event::event::{commit_retry, EventType, WmsWarehouseTransferCompletedPayload};
 
 pub fn create_routes<S>() -> Router<S>
 where
@@ -822,6 +822,16 @@ pub async fn complete_transfer(
 
     match result {
         Ok(transfer) => {
+            // D6（对齐 erp c843ad423）：本 handler 写 guard 事务但此前缺显式 commit，
+            // UPDATE 随 Drop 回滚而事件已发=幽灵事件。先 commit，成功后再发布。
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("完成调拨事务提交失败: {}", e);
+                    return Json(ApiResponse::from(TopemsError::Internal(
+                        "完成调拨单失败".to_string(),
+                    )));
+                }
+            }
             // P3 事件驱动规范化：调拨完成时发布 WmsWarehouseTransferCompleted 事件，
             // 通知 SCM（库存可见性）/Finance（仓间成本结转）。
             if let Some(ref publisher) = state.event_publisher {
@@ -856,13 +866,19 @@ pub async fn complete_transfer(
                         completed_at,
                     };
                     if let Err(e) = publisher
-                        .publish_event(EventType::WmsWarehouseTransferCompleted, payload)
+                        .publish_event(EventType::WmsWarehouseTransferCompleted, payload.clone())
                         .await
                     {
                         tracing::warn!(
-                            "[wms] WmsWarehouseTransferCompleted 事件发布失败（graceful fallback）: {}",
+                            "[wms] WmsWarehouseTransferCompleted 事件发布失败: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed(
+                            "wms",
+                            EventType::WmsWarehouseTransferCompleted,
+                            &payload,
+                        )
+                        .await;
                     } else {
                         tracing::info!(
                             "[wms] WmsWarehouseTransferCompleted 事件发布成功 - transfer_id={}",

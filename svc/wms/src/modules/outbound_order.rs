@@ -19,7 +19,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
 use topems_shared_db::tenant::get_tenant_id_or_new;
-use topems_shared_event::event::{EventType, WmsInventoryItemShippedPayload};
+use topems_shared_event::event::{commit_retry, EventType, WmsInventoryItemShippedPayload};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct OutboundOrderItemRequest {
@@ -1479,14 +1479,21 @@ pub async fn ship_outbound_order(
                         shipped_by: None,
                         shipped_at: shipped_at.or(Some(now_val)),
                     };
+                    // D6：业务写事务 tx.commit() 已成功（上），此处仅发布；失败入 ZSET 重试队列。
                     if let Err(e) = publisher
-                        .publish_event(EventType::WmsInventoryItemShipped, payload)
+                        .publish_event(EventType::WmsInventoryItemShipped, payload.clone())
                         .await
                     {
                         tracing::warn!(
-                            "[wms] WmsInventoryItemShipped 事件发布失败（graceful fallback）: {}",
+                            "[wms] WmsInventoryItemShipped 事件发布失败: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed(
+                            "wms",
+                            EventType::WmsInventoryItemShipped,
+                            &payload,
+                        )
+                        .await;
                     } else {
                         tracing::info!(
                             "[wms] WmsInventoryItemShipped 事件发布成功 - outbound_id={}",

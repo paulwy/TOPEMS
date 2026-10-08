@@ -19,7 +19,7 @@ use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
 use topems_shared_db::tenant::get_tenant_id_or_new;
-use topems_shared_event::event::{EventType, StockInboundPayload, WmsInventoryItemReceivedPayload};
+use topems_shared_event::event::{commit_retry, EventType, StockInboundPayload, WmsInventoryItemReceivedPayload};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct InboundOrderItemRequest {
@@ -330,14 +330,21 @@ pub async fn create_inbound_order(
                         received_at: Some(now_val),
                         tenant_id,
                     };
+                    // D6：commit 已成功（上 guard.take().commit），此处仅发布；失败入 ZSET 重试队列。
                     if let Err(e) = publisher
-                        .publish_event(EventType::StockInbound, payload)
+                        .publish_event(EventType::StockInbound, payload.clone())
                         .await
                     {
                         tracing::warn!(
-                            "[wms] StockInbound 事件发布失败（graceful fallback）: {}",
+                            "[wms] StockInbound 事件发布失败: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed(
+                            "wms",
+                            EventType::StockInbound,
+                            &payload,
+                        )
+                        .await;
                     } else {
                         tracing::info!("[wms] StockInbound 事件发布成功 - inbound_id={}", oid);
                     }
@@ -1427,14 +1434,21 @@ pub async fn receive_inbound_order(
                         received_by: None,
                         received_at: received_at.or(Some(now_val)),
                     };
+                    // D6：业务写事务 tx.commit() 已成功（上），此处仅发布；失败入 ZSET 重试队列。
                     if let Err(e) = publisher
-                        .publish_event(EventType::WmsInventoryItemReceived, payload)
+                        .publish_event(EventType::WmsInventoryItemReceived, payload.clone())
                         .await
                     {
                         tracing::warn!(
-                            "[wms] WmsInventoryItemReceived 事件发布失败（graceful fallback）: {}",
+                            "[wms] WmsInventoryItemReceived 事件发布失败: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed(
+                            "wms",
+                            EventType::WmsInventoryItemReceived,
+                            &payload,
+                        )
+                        .await;
                     } else {
                         tracing::info!(
                             "[wms] WmsInventoryItemReceived 事件发布成功 - inbound_id={}",
