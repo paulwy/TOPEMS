@@ -16,6 +16,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_core::TopemsError;
 
 use crate::shared::permission::tenant_bind_value;
+use topems_shared_event::event::commit_retry;
 use topems_shared_event::{EventType, InboundOrderRequestedPayload};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -132,7 +133,7 @@ pub async fn purchase_to_inbound(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    let result = create_inbound_from_purchase_internal(
+    let (result, to_emit) = create_inbound_from_purchase_internal(
         &state,
         purchase_order_id,
         warehouse_id,
@@ -149,6 +150,7 @@ pub async fn purchase_to_inbound(
             )));
         }
     }
+    emit_inbound_after_commit(&state, to_emit).await;
     result
 }
 
@@ -176,7 +178,7 @@ pub async fn create_inbound_from_purchase(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let tenant_bind = tenant_bind_value(&claims);
-    let result =
+    let (result, to_emit) =
         create_inbound_from_purchase_internal(&state, id, None, None, tenant_bind, &mut *txn).await;
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
@@ -186,10 +188,32 @@ pub async fn create_inbound_from_purchase(
             )));
         }
     }
+    emit_inbound_after_commit(&state, to_emit).await;
     result
 }
 
+/// D6：commit 成功之后发布 InboundOrderRequested；发布失败入 Redis ZSET 重试队列。
+/// 消费契约不变（at-least-once，消费侧幂等）。
+async fn emit_inbound_after_commit(state: &ApiState, to_emit: Option<InboundOrderRequestedPayload>) {
+    let (Some(payload), Some(publisher)) = (to_emit, state.event_publisher.clone()) else {
+        return;
+    };
+    let et = EventType::InboundOrderRequested;
+    match publisher.publish_event(et, &payload).await {
+        Ok(_) => tracing::info!(
+            "[SCM] InboundOrderRequested 事件发布成功 inbound_id={}",
+            payload.inbound_order_id
+        ),
+        Err(e) => {
+            tracing::warn!("[SCM] commit 后发布 InboundOrderRequested 失败: {}，入重试队列", e);
+            commit_retry::push_retry_typed("scm", et, &payload).await;
+        }
+    }
+}
+
 #[allow(clippy::as_conversions)]
+/// 返回 (HTTP 响应, 需在 commit 成功后发布的事件 payload)。
+/// D6：事件不再事务内发布，交由调用方 commit 成功后 emit（失败入 ZSET 重试）。
 pub async fn create_inbound_from_purchase_internal(
     state: &ApiState,
     purchase_order_id: Uuid,
@@ -197,7 +221,7 @@ pub async fn create_inbound_from_purchase_internal(
     _remarks: Option<String>,
     tenant_bind: Uuid,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
-) -> Json<ApiResponse<serde_json::Value>> {
+) -> (Json<ApiResponse<serde_json::Value>>, Option<InboundOrderRequestedPayload>) {
     let purchase_order = sqlx::query_as::<_, PurchaseOrder>(
         only_own_schema_query!("scm", r#"
         SELECT id, po_no AS order_number, supplier_id, order_date, delivery_date, total_amount::float8 AS total_amount, status, remarks, created_at, updated_at
@@ -230,7 +254,7 @@ pub async fn create_inbound_from_purchase_internal(
                 tenant_bind,
             )
             .await;
-            return Json(ApiResponse::success(
+            return (Json(ApiResponse::success(
                 serde_json::json!({
                     "success": false,
                     "message": "采购订单不存在或状态不是已批准".to_string(),
@@ -239,7 +263,7 @@ pub async fn create_inbound_from_purchase_internal(
                     "inbound_order_number": null,
                 }),
                 "采购订单不存在或状态不是已批准",
-            ));
+            )), None);
         }
         Err(e) => {
             tracing::error!("查询采购订单失败: {}", e);
@@ -260,9 +284,9 @@ pub async fn create_inbound_from_purchase_internal(
                 tenant_bind,
             )
             .await;
-            return Json(ApiResponse::from(TopemsError::Internal(
+            return (Json(ApiResponse::from(TopemsError::Internal(
                 "查询采购订单失败".to_string(),
-            )));
+            ))), None);
         }
     };
 
@@ -296,7 +320,7 @@ pub async fn create_inbound_from_purchase_internal(
             tenant_bind,
         )
         .await;
-        return Json(ApiResponse::success(
+        return (Json(ApiResponse::success(
             serde_json::json!({
                 "success": false,
                 "message": "该采购订单已创建入库单".to_string(),
@@ -305,7 +329,7 @@ pub async fn create_inbound_from_purchase_internal(
                 "inbound_order_number": null,
             }),
             "该采购订单已创建入库单",
-        ));
+        )), None);
     }
 
     let inbound_id = Uuid::new_v4();
@@ -335,31 +359,25 @@ pub async fn create_inbound_from_purchase_internal(
 
     match result {
         Ok(_) => {
-            if let Some(ref publisher) = state.event_publisher {
-                let tenant_id: Option<Uuid> = sqlx::query_scalar(
-                    "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
-                )
-                .fetch_optional(&mut **txn)
-                .await
-                .ok()
-                .flatten();
-                let payload = InboundOrderRequestedPayload {
-                    inbound_order_id: inbound_id,
-                    inbound_order_number: inbound_order_number.clone(),
-                    warehouse_id,
-                    supplier_id: purchase_order.supplier_id,
-                    purchase_order_id,
-                    purchase_order_number: purchase_order.order_number.clone(),
-                    requested_at: now,
-                    tenant_id,
-                };
-                if let Err(e) = publisher
-                    .publish_event(EventType::InboundOrderRequested, payload)
-                    .await
-                {
-                    tracing::warn!("[SCM] 发布 InboundOrderRequested 事件失败: {}", e);
-                }
-            }
+            // D6：事务内不再 emit（commit 失败会产生孤儿事件）。读 tenant_id 构造 payload，
+            // 交由调用方 commit 成功后发布；发布失败入 ZSET 重试队列。
+            let tenant_id: Option<Uuid> = sqlx::query_scalar(
+                "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
+            )
+            .fetch_optional(&mut **txn)
+            .await
+            .ok()
+            .flatten();
+            let to_emit = Some(InboundOrderRequestedPayload {
+                inbound_order_id: inbound_id,
+                inbound_order_number: inbound_order_number.clone(),
+                warehouse_id,
+                supplier_id: purchase_order.supplier_id,
+                purchase_order_id,
+                purchase_order_number: purchase_order.order_number.clone(),
+                requested_at: now,
+                tenant_id,
+            });
 
             let _ = sqlx::query(only_own_schema_query!(
                 "scm",
@@ -398,7 +416,7 @@ pub async fn create_inbound_from_purchase_internal(
             )
             .await;
 
-            Json(ApiResponse::success(
+            (Json(ApiResponse::success(
                 serde_json::json!({
                     "success": true,
                     "message": "入库单创建成功".to_string(),
@@ -407,7 +425,7 @@ pub async fn create_inbound_from_purchase_internal(
                     "inbound_order_number": inbound_order_number,
                 }),
                 "采购订单转入库单成功",
-            ))
+            )), to_emit)
         }
         Err(e) => {
             tracing::error!("创建入库单失败: {}", e);
@@ -465,7 +483,7 @@ pub async fn create_inbound_from_purchase_internal(
             .await;
 
             if new_retry_count < max_retries {
-                Json(ApiResponse::success(
+                (Json(ApiResponse::success(
                     serde_json::json!({
                         "success": false,
                         "message": format!("创建入库单失败，将在 {} 秒后重试 (第 {} 次)", new_retry_count * 120, new_retry_count),
@@ -476,11 +494,11 @@ pub async fn create_inbound_from_purchase_internal(
                         "next_retry_at": next_retry_at,
                     }),
                     "创建入库单失败，将重试",
-                ))
+                )), None)
             } else {
-                Json(ApiResponse::from(TopemsError::Internal(
+                (Json(ApiResponse::from(TopemsError::Internal(
                     "创建入库单失败，已达到最大重试次数".to_string(),
-                )))
+                ))), None)
             }
         }
     }
@@ -1318,6 +1336,8 @@ pub async fn batch_sync_purchase_to_wms(
             let mut retry_count = 0;
             let mut errors: Vec<SyncErrorDetail> = Vec::new();
             let now = Utc::now();
+            // D6：事务内不 emit，收集待发布事件，commit 成功后统一发布。
+            let mut pending_events: Vec<InboundOrderRequestedPayload> = Vec::new();
 
             for po in purchase_orders {
                 let existing_inbound = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
@@ -1377,27 +1397,17 @@ pub async fn batch_sync_purchase_to_wms(
 
                 match result {
                     Ok(_) => {
-                        if let Some(ref publisher) = state.event_publisher {
-                            let payload = InboundOrderRequestedPayload {
-                                inbound_order_id: inbound_id,
-                                inbound_order_number: inbound_order_number.clone(),
-                                warehouse_id: None,
-                                supplier_id: po.supplier_id,
-                                purchase_order_id: po.id,
-                                purchase_order_number: po.order_number.clone(),
-                                requested_at: now,
-                                tenant_id,
-                            };
-                            if let Err(e) = publisher
-                                .publish_event(EventType::InboundOrderRequested, payload)
-                                .await
-                            {
-                                tracing::warn!(
-                                    "[SCM] 批量发布 InboundOrderRequested 事件失败: {}",
-                                    e
-                                );
-                            }
-                        }
+                        // D6：收集 payload，事务 commit 成功后统一发布（此处不 emit）。
+                        pending_events.push(InboundOrderRequestedPayload {
+                            inbound_order_id: inbound_id,
+                            inbound_order_number: inbound_order_number.clone(),
+                            warehouse_id: None,
+                            supplier_id: po.supplier_id,
+                            purchase_order_id: po.id,
+                            purchase_order_number: po.order_number.clone(),
+                            requested_at: now,
+                            tenant_id,
+                        });
 
                         let _ = sqlx::query(only_own_schema_query!(
                             "scm",
@@ -1521,6 +1531,11 @@ pub async fn batch_sync_purchase_to_wms(
                         "提交事务失败".to_string(),
                     )));
                 }
+            }
+
+            // D6：commit 成功后统一发布本批事件；失败入 ZSET 重试队列。
+            for payload in pending_events {
+                emit_inbound_after_commit(&state, Some(payload)).await;
             }
 
             Json(ApiResponse::success(

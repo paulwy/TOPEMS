@@ -19,7 +19,7 @@ use rust_decimal::prelude::FromPrimitive;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, PaginationParams};
 use topems_shared_core::TopemsError;
-use topems_shared_event::event::{EventType, PurchaseOrderApprovedPayload};
+use topems_shared_event::event::{commit_retry, EventType, PurchaseOrderApprovedPayload};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
@@ -627,19 +627,19 @@ pub async fn approve_order(
                         approved_at: Some(now_val),
                         tenant_id,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::PurchaseOrderApproved, payload)
-                        .await
-                    {
-                        tracing::warn!(
-                            "[scm] PurchaseOrderApproved 事件发布失败（graceful fallback）: {}",
-                            e
-                        );
-                    } else {
-                        tracing::info!(
+                    let et = EventType::PurchaseOrderApproved;
+                    match publisher.publish_event(et, &payload).await {
+                        Ok(_) => tracing::info!(
                             "[scm] PurchaseOrderApproved 事件发布成功 - order_id={}",
                             order_id
-                        );
+                        ),
+                        Err(e) => {
+                            tracing::warn!(
+                                "[scm] PurchaseOrderApproved 事件发布失败: {}，入重试队列",
+                                e
+                            );
+                            commit_retry::push_retry_typed("scm", et, &payload).await;
+                        }
                     }
                 });
             }
