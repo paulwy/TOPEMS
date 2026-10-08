@@ -203,6 +203,12 @@ pub enum EventType {
     // 用户偏好变更事件（D2 U2 环3 决策 C：偏好主数据本地化到 unified-core IAM 域后发布，
     // 供 portal 只读代理/缓存失效）
     IamUserPreferencesUpdated,
+
+    // B1/F-37 search 实体投影事件（一步到位终态：erp 发事件 → search 订阅维护自有投影，
+    // search 查询只读本地投影，不再 query-time 跨服务 fan-out / 不直读 erp schema）。
+    // 合并类型：created/updated/deleted 统一为 upsert/delete 两种 op；
+    // 幂等键 = (tenant_id, entity_type, entity_id)，消费端 UPSERT/DELETE 天然幂等。
+    SearchableEntityChanged,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -251,6 +257,37 @@ impl Event {
         serde_json::from_value::<T>(self.payload.clone())
             .map_err(|e| TopemsError::ValidationFailed(format!("解析事件 payload 失败: {}", e)))
     }
+}
+
+// --- B1/F-37: search 实体投影事件 ---
+
+/// 可搜索实体快照变更事件载荷（erp → search 投影）
+///
+/// 由 erp 在 customers / sales_orders / purchase_orders 的任意写路径（create/update/
+/// delete/状态流转/批量）发布。search 消费后按 (tenant_id, entity_type, entity_id)
+/// 幂等 UPSERT（op=upsert）或删除（op=delete）自有投影表，查询只读本地投影。
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SearchableEntityChangedPayload {
+    /// 实体类型："customer" | "sales_order" | "purchase_order"
+    pub entity_type: String,
+    /// 实体主键（幂等键组成）
+    pub entity_id: Uuid,
+    /// 所属租户（幂等键组成 + 投影行级隔离）
+    pub tenant_id: Option<Uuid>,
+    /// 操作："upsert"（含快照）| "delete"（快照字段为空）
+    pub op: String,
+    /// 展示标题：客户 name 或订单 order_no
+    pub name: Option<String>,
+    /// 联系信息（customer）
+    pub contact_person: Option<String>,
+    pub contact_phone: Option<String>,
+    pub email: Option<String>,
+    pub address: Option<String>,
+    /// 状态/备注（订单）
+    pub status: Option<String>,
+    pub remark: Option<String>,
+    /// 源行 updated_at（投影排序/乱序收敛参考）
+    pub source_updated_at: Option<DateTime<Utc>>,
 }
 
 // --- HRM Events ---

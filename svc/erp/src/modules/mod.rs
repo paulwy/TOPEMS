@@ -81,6 +81,7 @@ pub mod production_order;
 pub mod purchase_order;
 pub mod sales_order;
 pub mod search;
+pub mod searchable_projection;
 pub mod settings;
 pub mod supplier;
 pub mod vehicles;

@@ -525,3 +525,16 @@ let event = bus.publish(PublishEventRequest {
 **保留 f64（对齐 U6 口径）**：数量类（quantity/adjustment/delta/available/min/threshold/total_demand 等）、比率评分（qualification_rate/accuracy/score/confidence）、坐标（lat/lng）、dashboard 统计聚合。
 
 **固化测试**：lib/shared-event `payroll_payload_decimal_precision_and_wire_shape` 断言 0.1+0.2=0.3 精确（`Decimal::from_str_exact` 构造）、出站字符串形态、旧数字 JSON 在途兼容。既有 DLQ 订阅接线（subscribe_handler/subscribe_master_data_handler）与事件幂等键（event_id/idempotency_key）逻辑未动。
+
+### 9.3 新增事件契约：SearchableEntityChanged（B1/F-37，2026-10-08）
+
+**变更性质**：新增事件类型（非 breaking，纯增量）。用途：search 聚合检索改 CQRS 本地读模型——erp 为可搜索实体发布快照事件，search 订阅维护自有投影表，查询只读本地投影（不再 query-time 跨服务 fan-out erp HTTP，亦不直读 erp schema）。
+
+**新事件**：`EventType::SearchableEntityChanged` + `SearchableEntityChangedPayload`。
+- 覆盖实体：`customer` / `sales_order` / `purchase_order`。
+- 合并类型：created/updated/deleted 统一为 `op = "upsert" | "delete"` 两种；upsert 携带完整可搜索快照（name/contact_*/email/address/status/remark/source_updated_at），delete 仅含定位键。
+- **幂等键** = `(tenant_id, entity_type, entity_id)`：消费端 `INSERT ... ON CONFLICT DO UPDATE` / `DELETE` 天然幂等，重复投递、乱序、at-least-once 重投均收敛。
+- 发布点：erp 在三类实体的全部写路径（create/update/delete/状态流转/批量）成功后，经 `modules/searchable_projection::emit_searchable_change` 从同一写事务读取最新行发布——单一辅助函数避免漏写路径。发布为最佳努力（失败仅告警，不阻断业务写）。
+- 消费：search `enable_events=true`，`subscribe_handler(SearchableEntityChanged)` 写 `public.search_entity_projections`（启动 `CREATE TABLE IF NOT EXISTS` 自举，对齐 unified-core audit_logs 先例，不占用 migrations）；handler 返回 Err 直传 Stream 层走重试/DLQ（R-6/R-7b）。
+
+**迁移窗口**：纯新增事件 + 新增投影表，无既有消费者解析此类型，无在途契约冲突；search 启动先自举表再订阅，erp 侧事件发布为增量叠加（不影响既有 SalesOrderCreated/Approved 等下游）。初始存量投影需由首次写事件追平（存量行暂无事件源，见交付报告「残留」）。

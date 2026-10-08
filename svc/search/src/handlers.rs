@@ -22,19 +22,6 @@ use crate::scoring::{
 };
 
 use std::collections::HashSet;
-use std::sync::OnceLock;
-
-use topems_shared_service_client::service_client::api::erp_api::ErpApi;
-use topems_shared_service_client::TypedServiceClient;
-
-/// ERP 服务客户端（B1 API 化：search 直读 erp schema 改走 erp HTTP API）。
-/// main.rs 初始化（对齐 crm 先例 TypedServiceClient::<ErpApi> + service token）；
-/// 初始化失败为 None，客户/订单搜索模块优雅降级为空结果。
-static ERP_CLIENT: OnceLock<Option<TypedServiceClient<ErpApi>>> = OnceLock::new();
-
-pub fn init_erp_client(client: Option<TypedServiceClient<ErpApi>>) {
-    let _ = ERP_CLIENT.set(client);
-}
 
 #[derive(Debug, Clone, FromRow)]
 struct UserSearchRow {
@@ -52,6 +39,55 @@ struct DocumentSearchRow {
     #[allow(dead_code)]
     path: String,
     mime_type: Option<String>,
+}
+
+/// 实体投影行（public.search_entity_projections，B1/F-37 终态本地读模型）
+#[derive(Debug, Clone, FromRow)]
+struct ProjectionRow {
+    entity_id: Uuid,
+    name: Option<String>,
+    contact_person: Option<String>,
+    contact_phone: Option<String>,
+    email: Option<String>,
+    address: Option<String>,
+    status: Option<String>,
+    remark: Option<String>,
+}
+
+/// 按实体类型检索本地投影（tenant 隔离 + ILIKE）。失败降级为空结果。
+async fn query_projection(
+    pool: &PgPool,
+    entity_type: &str,
+    keyword: &str,
+    limit: i64,
+) -> Vec<ProjectionRow> {
+    let kw = format!("%{}%", keyword);
+    match sqlx::query_as::<_, ProjectionRow>(
+        r#"SELECT entity_id, name, contact_person, contact_phone, email, address, status, remark
+           FROM public.search_entity_projections
+           WHERE entity_type = $1
+             AND tenant_id = COALESCE(
+                 NULLIF(current_setting('app.tenant_id', true), '')::uuid,
+                 '00000000-0000-0000-0000-000000000000')
+             AND (
+                name ILIKE $2 OR contact_person ILIKE $2 OR contact_phone ILIKE $2
+                OR email ILIKE $2 OR address ILIKE $2 OR status ILIKE $2 OR remark ILIKE $2
+             )
+           ORDER BY source_updated_at DESC NULLS LAST
+           LIMIT $3"#,
+    )
+    .bind(entity_type)
+    .bind(kw)
+    .bind(limit)
+    .fetch_all(pool)
+    .await
+    {
+        Ok(v) => v,
+        Err(e) => {
+            tracing::error!("搜索投影({})失败: {}", entity_type, e);
+            Vec::new()
+        }
+    }
 }
 
 async fn search_users(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
@@ -90,11 +126,11 @@ async fn search_users(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchRes
         .collect()
 }
 
-async fn search_customers(_pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
-    // B1/F-37：改为调 erp HTTP API（不再直读 erp.customers）
-    let hits = crate::erp_api::search_customers_via_api(keyword, limit).await;
+async fn search_customers(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
+    // B1/F-37 终态：只读本地实体投影（erp 事件维护），不再 query-time 调 erp HTTP API
+    let rows = query_projection(pool, "customer", keyword, limit).await;
 
-    hits.into_iter()
+    rows.into_iter()
         .map(|r| {
             let description = match (
                 r.contact_person.as_ref(),
@@ -111,11 +147,11 @@ async fn search_customers(_pool: &PgPool, keyword: &str, limit: i64) -> Vec<Sear
                 _ => None,
             };
             SearchResult {
-                id: r.id.to_string(),
-                title: r.name,
+                id: r.entity_id.to_string(),
+                title: r.name.unwrap_or_default(),
                 description,
                 module: "customer".to_string(),
-                path: format!("/crm/customers/{}", r.id),
+                path: format!("/crm/customers/{}", r.entity_id),
                 type_name: "客户".to_string(),
                 relevance: None,
                 snippet: None,
@@ -124,29 +160,29 @@ async fn search_customers(_pool: &PgPool, keyword: &str, limit: i64) -> Vec<Sear
         .collect()
 }
 
-async fn search_orders(_pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
-    // B1/F-37：改为调 erp HTTP API（不再直读 erp.sales_orders / erp.purchase_orders）
+async fn search_orders(pool: &PgPool, keyword: &str, limit: i64) -> Vec<SearchResult> {
+    // B1/F-37 终态：销售/采购订单均读本地投影
     let mut results: Vec<SearchResult> = Vec::new();
 
-    let sales_hits = crate::erp_api::search_sales_orders_via_api(keyword, limit / 2).await;
+    let sales_hits = query_projection(pool, "sales_order", keyword, limit / 2).await;
     results.extend(sales_hits.into_iter().map(|r| SearchResult {
-        id: r.id.to_string(),
-        title: r.order_no,
+        id: r.entity_id.to_string(),
+        title: r.name.unwrap_or_default(),
         description: r.remark.or(r.status),
         module: "order".to_string(),
-        path: format!("/sales/orders/{}", r.id),
+        path: format!("/sales/orders/{}", r.entity_id),
         type_name: "订单".to_string(),
         relevance: None,
         snippet: None,
     }));
 
-    let purchase_hits = crate::erp_api::search_purchase_orders_via_api(keyword, limit / 2).await;
+    let purchase_hits = query_projection(pool, "purchase_order", keyword, limit / 2).await;
     results.extend(purchase_hits.into_iter().map(|r| SearchResult {
-        id: r.id.to_string(),
-        title: r.order_no,
+        id: r.entity_id.to_string(),
+        title: r.name.unwrap_or_default(),
         description: r.remark.or(r.status),
         module: "order".to_string(),
-        path: format!("/purchase/orders/{}", r.id),
+        path: format!("/purchase/orders/{}", r.entity_id),
         type_name: "订单".to_string(),
         relevance: None,
         snippet: None,
@@ -198,7 +234,6 @@ async fn search_documents(pool: &PgPool, keyword: &str, limit: i64) -> Vec<Searc
 )]
 async fn search_all(
     pool: &PgPool,
-    erp: Option<&TypedServiceClient<ErpApi>>,
     keyword: &str,
     modules: &Option<Vec<String>>,
     limit: i64,
@@ -217,15 +252,11 @@ async fn search_all(
     }
 
     if should_search("customer") {
-        if let Some(_c) = erp {
-            results.extend(search_customers(pool, keyword, per_module_limit).await);
-        }
+        results.extend(search_customers(pool, keyword, per_module_limit).await);
     }
 
     if should_search("order") {
-        if let Some(_c) = erp {
-            results.extend(search_orders(pool, keyword, per_module_limit).await);
-        }
+        results.extend(search_orders(pool, keyword, per_module_limit).await);
     }
 
     if should_search("document") {
@@ -271,8 +302,7 @@ pub async fn search_handler(
 
     let query_terms = tokenize(&keyword);
 
-    let erp = ERP_CLIENT.get().and_then(|c| c.as_ref());
-    let mut results = search_all(&pool, erp, &keyword, &req.modules, page_size).await;
+    let mut results = search_all(&pool, &keyword, &req.modules, page_size).await;
 
     for r in &mut results {
         let doc_fields = vec![

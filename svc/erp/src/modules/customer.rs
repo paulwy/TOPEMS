@@ -300,7 +300,16 @@ pub async fn create_customer(
     .await;
 
     match result {
-        Ok(Some(customer)) => Json(ApiResponse::success(customer, "创建客户成功")),
+        Ok(Some(customer)) => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "customer",
+                customer.id,
+            )
+            .await;
+            Json(ApiResponse::success(customer, "创建客户成功"))
+        }
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
             "创建客户失败".to_string(),
         ))),
@@ -370,7 +379,16 @@ pub async fn update_customer(
     .await;
 
     match result {
-        Ok(Some(customer)) => Json(ApiResponse::success(customer, "更新客户成功")),
+        Ok(Some(customer)) => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "customer",
+                customer.id,
+            )
+            .await;
+            Json(ApiResponse::success(customer, "更新客户成功"))
+        }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "客户不存在".to_string(),
         ))),
@@ -423,6 +441,13 @@ pub async fn delete_customer(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "customer",
+                id,
+            )
+            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -623,6 +648,13 @@ pub async fn batch_create_customers(
         .bind(Locale::from_headers(&headers).as_sql())
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(c)) = result {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "customer",
+                c.id,
+            )
+            .await;
             created.push(c);
         }
     }
@@ -667,6 +699,13 @@ async fn batch_update_customers(
         .bind(item.payload.credit_limit).bind(&item.payload.status).bind(item.id)
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(c)) = result {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "customer",
+                c.id,
+            )
+            .await;
             updated.push(c);
         }
     }
@@ -711,6 +750,15 @@ async fn batch_delete_customers(
     }
     match query.execute(&mut **txn).await {
         Ok(r) => {
+            for id in &body.ids {
+                crate::modules::searchable_projection::emit_searchable_change(
+                    &mut **txn,
+                    &state.event_publisher,
+                    "customer",
+                    *id,
+                )
+                .await;
+            }
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -770,6 +818,13 @@ pub async fn change_customer_status(
     .bind(&body.status).bind(id).bind(Locale::from_headers(&headers).as_sql()).fetch_optional(&mut **txn).await;
     match result {
         Ok(Some(customer)) => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "customer",
+                customer.id,
+            )
+            .await;
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
             }
@@ -830,6 +885,15 @@ pub async fn batch_change_status(
     }
     match query.fetch_all(&mut **txn).await {
         Ok(customers) => {
+            for c in &customers {
+                crate::modules::searchable_projection::emit_searchable_change(
+                    &mut **txn,
+                    &state.event_publisher,
+                    "customer",
+                    c.id,
+                )
+                .await;
+            }
             if let Some(t) = guard.take() {
                 let _ = t.commit().await;
             }

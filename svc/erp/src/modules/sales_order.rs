@@ -309,6 +309,13 @@ pub async fn create_sales_order(
                     ),
                 }
             }
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "sales_order",
+                sales_order.id,
+            )
+            .await;
             Json(ApiResponse::success(sales_order, "创建销售订单成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
@@ -371,7 +378,16 @@ pub async fn update_sales_order(
     .await;
 
     match result {
-        Ok(Some(sales_order)) => Json(ApiResponse::success(sales_order, "更新销售订单成功")),
+        Ok(Some(sales_order)) => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "sales_order",
+                sales_order.id,
+            )
+            .await;
+            Json(ApiResponse::success(sales_order, "更新销售订单成功"))
+        }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "销售订单不存在".to_string(),
         ))),
@@ -423,10 +439,19 @@ pub async fn delete_sales_order(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            "删除成功".to_string(),
-            "删除销售订单成功",
-        )),
+        Ok(r) if r.rows_affected() > 0 => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "sales_order",
+                id,
+            )
+            .await;
+            Json(ApiResponse::success(
+                "删除成功".to_string(),
+                "删除销售订单成功",
+            ))
+        }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "销售订单不存在".to_string(),
         ))),
@@ -495,6 +520,13 @@ async fn update_sales_order_status(
                     }
                 }
             }
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "sales_order",
+                sales_order.id,
+            )
+            .await;
             Json(ApiResponse::success(sales_order, success_message))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -747,6 +779,13 @@ async fn batch_create_sales_orders(
         .bind(default_sales_order_status(req.status.clone())).bind(&req.remark)
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(o)) = result {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "sales_order",
+                o.id,
+            )
+            .await;
             created.push(o);
         }
     }
@@ -803,7 +842,7 @@ async fn batch_update_sales_orders(
 }
 
 async fn batch_update_status(
-    _state: &ApiState,
+    state: &ApiState,
     _claims: &Claims,
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     ids: &[Uuid],
@@ -823,10 +862,20 @@ async fn batch_update_status(
     for id in ids {
         query = query.bind(id);
     }
-    query
+    let orders = query
         .fetch_all(&mut **txn)
         .await
-        .map_err(|e| TopemsError::DatabaseQuery(e.to_string()))
+        .map_err(|e| TopemsError::DatabaseQuery(e.to_string()))?;
+    for o in &orders {
+        crate::modules::searchable_projection::emit_searchable_change(
+            &mut **txn,
+            &state.event_publisher,
+            "sales_order",
+            o.id,
+        )
+        .await;
+    }
+    Ok(orders)
 }
 #[utoipa::path(
     post,

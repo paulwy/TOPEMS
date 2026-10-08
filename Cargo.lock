@@ -6178,6 +6178,7 @@ dependencies = [
  "topems-shared-bootstrap",
  "topems-shared-core",
  "topems-shared-db",
+ "topems-shared-event",
  "topems-shared-service-client",
  "tracing",
  "url",
@@ -6516,6 +6517,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "opentelemetry",
+ "prometheus",
  "reqwest 0.12.28",
  "serde",
  "serde_json",

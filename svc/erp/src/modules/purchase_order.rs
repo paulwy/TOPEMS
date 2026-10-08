@@ -292,6 +292,14 @@ pub async fn create_purchase_order(
         }
     }
 
+    crate::modules::searchable_projection::emit_searchable_change(
+        &mut **txn,
+        &state.event_publisher,
+        "purchase_order",
+        purchase_order.id,
+    )
+    .await;
+
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
@@ -367,6 +375,14 @@ pub async fn update_purchase_order(
         }
     };
 
+    crate::modules::searchable_projection::emit_searchable_change(
+        &mut **txn,
+        &state.event_publisher,
+        "purchase_order",
+        purchase_order.id,
+    )
+    .await;
+
     if let Some(t) = guard.take() {
         if let Err(e) = t.commit().await {
             tracing::error!("事务提交失败: {}", e);
@@ -418,6 +434,13 @@ pub async fn delete_purchase_order(
 
     match result {
         Ok(_r) => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "purchase_order",
+                id,
+            )
+            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
@@ -480,6 +503,13 @@ pub async fn approve_purchase_order(
 
     match result {
         Ok(Some(order)) => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "purchase_order",
+                order.id,
+            )
+            .await;
             let tenant_id: Option<Uuid> = sqlx::query_scalar(
                 "SELECT NULLIF(current_setting('app.tenant_id', true), '')::uuid",
             )
@@ -579,6 +609,13 @@ pub async fn cancel_purchase_order(
 
     match result {
         Ok(Some(r)) => {
+            crate::modules::searchable_projection::emit_searchable_change(
+                &mut **txn,
+                &state.event_publisher,
+                "purchase_order",
+                r.id,
+            )
+            .await;
             if let Some(t) = guard.take() {
                 if let Err(e) = t.commit().await {
                     tracing::error!("事务提交失败: {}", e);
