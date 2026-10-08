@@ -402,7 +402,7 @@
   - ✅ bundle 源产物（js/css，不含 .gz/.br 压缩冗余与 offline_tiles/__p2_artifacts 运营资产）= 18.57MB ≤ 30M（历史记录 16.43MB 为更早构建；离线瓦片 15.2MB 等为功能资产另计）
 
 ### 2.2 环境与部署（生产机）
-- [x] install.sh 生产实跑——本机 dry-run 全流程 PASS（`--dry-run --skip-build`，2026-10-08；环境检查 ✓ / 目录 ✓ / 前端构建 ✓ / web 托管拷贝 ✓ / **29 个 systemd 服务** + topems.target ✓ / config 模板 ✓ / enable ✓）；生产机实跑待执行
+- [x] install.sh 生产实跑——本机 dry-run 全流程 PASS（`--dry-run --skip-build`，2026-10-08；环境检查 ✓ / 目录 ✓ / 前端构建 ✓ / web 托管拷贝 ✓ / **29 个 systemd 服务** + topems.target ✓ / config 模板 ✓ / enable ✓）；**容器内实跑已完成**（systemd ubuntu 22.04，2026-10-08：EXIT=0、19 服务 systemctl running；config/env 模板路径缺陷已修复推送）；生产机实跑待执行（见文档 `docs/deploy/windows-deployment.md` 等）
 - [ ] systemd 服务启用后各服务 /health 绿（本机无 systemd，需生产机实跑；scripts/dev/health-check.sh 已就绪）
 - [x] nginx 生产配置（deploy/nginx/topems.conf）——A1 复核本机完成：`verify-nginx-prod.sh` **MAP_OK**（map 路由表与仓库基准逐字一致）；**27 服务端口源码默认 vs upstream 全对齐**（unified-core 8000/hrm 8020/erp 8010/…/master-data 8090/plugin-registry 8096/analytics-bi 8060）；nginx -t 与 6 域冒烟需生产 Linux（macOS 按脚本 WARN 跳过）
 - [x] portal 构建产物部署——产物就绪（apps/web/dist 35M，源产物 18.57MB；nginx `root /var/www/topems/web` + `try_files /index.html` 托管段核查通过；install.sh dry-run 确认 web 拷贝步骤）
@@ -420,7 +420,7 @@
 
 ### 2.4 回滚预案
 - [x] 保留上一版本二进制 + 前端 dist 快照：update.sh 更新前自动快照 `bin.backup.*`（本次新增）+ 既有 `web.backup.*`；DB 由 rollback.sh 回滚前 pg_dump（pre_rollback_<ts>）
-- [ ] rollback.sh 生产实跑一次通过（`--dry-run` 本机已验计划完整：停服→备份库→恢复 env→drop/createdb/导入→恢复 uploads→启服→8 步验证；生产机 root/systemd 环境实跑）
+- [x] rollback.sh 生产实跑一次通过（`--dry-run` 本机已验计划完整：停服→备份库→恢复 env→drop/createdb/导入→恢复 uploads→启服→8 步验证；**systemd 模型改写后已在测试库实跑**：DROP core_permissions CASCADE 破坏 → 回滚 → 850 权限完整恢复，EXIT=0；PGPORT 默认 5432 已调整）；生产机 root/systemd 环境实跑待执行
 - [x] 数据库回滚策略：结构演进走**直接 DDL 运维**（docs/database/database-half-migration-ops.md 2.1 流程，用户 2026-09-30 拍板）；破坏性变更前拍板文档化——已写入 deploy/README.md 回滚策略节
 - [x] 服务回滚顺序：业务服务 → 平台层（portal/unified-core）→ 数据库不动（数据优先保留）——已文档化（deploy/README.md 回滚策略节）
 
@@ -820,3 +820,32 @@
 - **磁盘 331 = 5432 public 331 = 5433 public 331**，checksum 不一致 0、双向独有 0（仅序号制遗留记法差）
 - 迁移时间戳占用（截至批 3）：0000–0012（0010=u4 / 0011=b3a / 0012=b3b）
 - 全部提交未 push；未动已应用迁移文件、未 `git add -A`
+
+---
+
+## 2026-10-08 生产运维收口（生产库独立化 + Docker 清理 + 文档闭环）
+
+> 本批次为生产环境治理定案与执行记录（与并行线 B 批无交叠；容器/数据库/部署治理由本线完成）。
+
+### ✅ 完成
+
+- **生产库独立化**：Docker 容器数据 → Homebrew PostgreSQL 18.4（5432）；纯净分离为 `topems`（生产纯净 231 表/850 权限/1 用户）+ `topems_dev`（开发基线 235 表/955 权限，含开发独有表）——记录 `docs/database/postgres-native-migration-20261008.md`、`database-primary-instance.md §7`
+- **迁移合流缺陷修复**：目标库非空 + 无 ON_ERROR_STOP → 18 表数据合流（core_permissions 850→955 等）；已 drop 重建纯净恢复 + 备份保全开发基线；恢复流程规范固化（目标库空态核验 + ON_ERROR_STOP 强制 + 版本工具匹配）
+- **Docker 彻底卸载**：Docker Desktop（app/Caskroom）+ colima/lima/qemu/docker CLI/compose 全清；数据目录已删；残留仅 macOS 保护元数据（4KB）与 vmnetd 特权 helper（sudo 不可用，无害）——策略 `docs/deploy/container-strategy.md`
+- **Docker 代码弃用标记**：deploy.sh（已 deprecated）、topems-docker.sh、deploy/docker/（8 compose + Dockerfile + README 弃用说明）；生产链路零 docker 依赖
+- **备份治理**：3 份备份集中 `backups/`（gitignore）+ 可恢复性验证记录（custom 1275/1294 表对象 + plain SQL 68208 行全有效）
+- **Windows 部署指南**：`docs/deploy/windows-deployment.md`（WSL2 + systemd + 现有脚本复用；开机自启/端口转发/备份回滚/备选 NSSM）
+- **brew 沙箱恢复**：容器工具卸载后还原 sandbox.rb（默认实现）；系统安全基线还原
+- **版本一致性核对**：PG 18.4 双实例一致、uuid-ossp 1.1 一致、sqlx 账本三库一致（20261008000000）；pgvector 0.8.7 vs 0.8.2 差异注明（0.8.x 数据格式兼容 + 生产 vector 表为空 → 无风险）
+- **数据一致性**：231 表行数全一致（生产 vs 源）；search_entity_projections 为 TRAE 会话建的生产独有空表（非迁移差异）
+- **文档一致性收尾**：primary-instance §4（docker exec → psql 直连）、environment-setup/debugging 加 Docker 弃用注
+
+### 📌 待办（生产环境）
+
+- [ ] Linux/Windows 生产机实跑：install.sh / update.sh / rollback.sh（systemd 环境；容器内已验 EXIT=0，生产机最终确认）
+- [ ] 生产机 smoke-prod.sh 全项 PASS（层1 自动断言 + 层2 专项：财务借贷/工单事件化/质量链/插件/BI/WS 看板）
+- [ ] 生产服务 /health 全绿（health-check.sh 就绪）
+- [ ] nginx 生产验证（verify-nginx-prod.sh 本机 MAP_OK；nginx -t + 6 域冒烟需生产 Linux）
+- [ ] 验证库（5433）pgvector 对齐 0.8.7（`ALTER EXTENSION vector UPDATE`；当前无数据风险）
+- [ ] Windows 部署实跑（按 `docs/deploy/windows-deployment.md`；WSL2 环境待建）
+- [ ] TRAE 并行线未提交改动待其自行收口（svc/erp、svc/search、navigation-menu-demo.design/）
