@@ -88,6 +88,7 @@ use topems_shared_db::rls::rls_middleware;
 use topems_shared_auth::auth::{auth_middleware, AuthState};
 use topems_shared_auth::permission_center::PermissionCenterClient;
 use topems_shared_auth::security::{rate_limit_middleware, RateLimitConfig, RateLimitMiddleware};
+use topems_shared_auth::service::pre_register_service_metrics;
 
 use topems_shared_observability::telemetry::{init_telemetry, telemetry_middleware};
 
@@ -699,6 +700,23 @@ pub struct Application {
 /// 初始化通用资源：telemetry、数据库连接池、metrics、auth_state、event_publisher
 pub async fn bootstrap_service(config: &ServiceConfig) -> Result<ServiceContext> {
     dotenv::dotenv().ok();
+
+    // B15: 出站调用边指标（topems_service_to_service_calls_total）调用方身份注入。
+    // 共享客户端 base_client 从 TOPEMS_SERVICE_NAME 读取 caller label；此处把
+    // config.name（如 "topems-crm"）归一化为 "crm-service"（与入站 service token
+    // username 同构），确保边指标 caller/callee 双侧 label 一致可关联。
+    // 已显式设置 TOPEMS_SERVICE_NAME 的环境不覆盖（允许部署期显式指定）。
+    if env::var("TOPEMS_SERVICE_NAME").is_err() {
+        let normalized = config
+            .name
+            .strip_prefix("topems-")
+            .unwrap_or(config.name);
+        let caller = format!("{}-service", normalized);
+        env::set_var("TOPEMS_SERVICE_NAME", &caller);
+        tracing::info!("TOPEMS_SERVICE_NAME={}（出站调用边指标 caller label）", caller);
+    }
+    // 预注册服务间调用计数器：无流量时 /metrics 也能看到指标族（区分「0 调用」与「未埋点」）。
+    pre_register_service_metrics();
 
     // 模块化单体嵌入场景可跳过全局 telemetry 初始化（由宿主进程统一设置）
     let _telemetry_guard = if config.init_telemetry {

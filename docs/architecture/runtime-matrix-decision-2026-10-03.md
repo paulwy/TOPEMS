@@ -51,6 +51,28 @@ R3 遗留（implementation-overview §9）：runtime.csv 仍列 U2 之前的 erp
 3. **重跑**：`python3 scripts/arch/service_topology.py --collect "unified-core:8000,portal:8063,..."`（脚本内建 runtime vs design 一致性对比输出）；
 4. **顺带修正**：STATIC_DEPS 三条残留环边（hrm→erp、mes→erp、unified-core→portal）+ `server-*-module` 镜像行删除。
 
+### 5.1 埋点落地状态（2026-10-08 更新）
+
+- **出站侧（本项 B15 完成）**：`lib/shared-service-client/src/service_client/base_client.rs`
+  `execute_request` / `get_without_response_inner` / `get_raw_response` 三个出站统一入口均调用
+  `topems_shared_auth::service::record_service_call(caller, target_path)`，递增
+  `topems_service_to_service_calls_total{service,target}` Counter。
+  - **caller 取值**：`lib/shared-bootstrap/src/lib.rs` `bootstrap_service()` 启动时把
+    `config.name`（如 `topems-crm`）归一化为 `crm-service` 并注入 `TOPEMS_SERVICE_NAME` 环境变量；
+    base_client 从该 env 读取。与入站 service token username（`{svc}-service` 格式）同构。
+  - **target 取值**：`target_service_from_path()` 从请求路径 `/api/{svc}/...` 推导为 `{svc}-service`。
+  - **预注册**：`bootstrap_service()` 启动时调用 `pre_register_service_metrics()`，
+    确保无流量时指标族已注册（首调用后 label 样本出现于 /metrics）。
+  - **/metrics 暴露**：`prometheus_metrics_handler()` 已合并 `prometheus::gather()`（默认 registry，
+    业务 Counter 注册于此）与 axum-prometheus layer registry（HTTP 请求指标）。
+  - **实证**：`lib/shared-service-client/tests/outbound_metric.rs` 集成测试验证——
+    mock 后端 + GenericServiceClient 一次出站调用后，`service_call_count` +1，
+    且 prometheus 文本输出含 `topems_service_to_service_calls_total{service="test-caller-service",target="erp-service"}`。
+- **入站侧（已在更早 commit `459a0dba1` 落地，非本项范围）**：
+  `lib/shared-auth/src/auth.rs` auth 中间件识别 service claims（`is_service_claims`）时调用
+  `record_service_call(&claims.username, &path)`，callee label 为本进程服务名。
+- **残留**：① 生产流量窗口（需真实业务流量运行 ≥1 周期后采样）；② `--collect` 脚本重跑。
+
 ---
 
 ## 6. 附：上线检查单逐项核对终态（2026-10-03 收口）
