@@ -183,3 +183,21 @@ B1 把 search 从"直读 erp 表"改造成"订阅 erp 实体事件 → 本地投
 - ZSET `topems:event_retry:erp` 泛化为双通道：`channel=searchable`（重试时从 DB 重建 payload）与 `channel=typed`（重试时反序列化存储 payload 直重发）。
 - 验证：活 Redis create/approve → stream 各 +1；typed 通道故障注入 ZADD 到期项 → 18s 内 ZREM 且 stream +1；erp 902 测试绿；clippy 0；双门禁 PASS。
 - 残留：仅"其他 7 服务（finance/wms/hrm/scm/crm/mes/pm）同型事务内 emit 推广"一项待登记。
+
+## 附录：7 服务同型推广完成（2026-10-08）
+
+> 共享模块抽取 + 7 服务全量推广。完整 outbox（A）/ CDC（C）仍仅登记演进路线，未实施；未落 0013（Redis ZSET 免迁移）。
+
+- **共享模块**：`lib/shared-event/src/event/commit_retry.rs`（commit `58de84a89`）——`push_retry_typed(service_name, EventType, &payload)` / `push_retry_searchable` / `run_relay(service_name, &publisher, rebuild_closure)`（15s 任务）；常量 RETRY_INTERVAL_SEC=30 / MAX_ATTEMPTS=8；ZSET 键 `topems:event_retry:{service_name}`；member 含 channel 字段（typed=存 payload 直重发 / searchable=回调从 DB 重建）。erp 迁移为薄转发，行为零变化。
+- **7 服务发布点改造**（均"commit 后 emit + Err→push_retry_typed"，main.rs 各注册 15s run_relay，消费契约零改动）：
+  - finance（8 处，`fb9f186f8`）：全部已 post-commit，仅补 Err 重试；**活 E2E**：ZADD 到期 PaymentMade → 22s 内 ZSET 排空、stream 0→1、日志"重试发布成功 typed"。
+  - wms（7 处，`3efef271c`）：补 **transfer_order.rs:859 幽灵事件**（写 guard txn 无 commit → 补 `guard.take().commit()`）；**data_sync.rs:227 事务内 emit**（internal 改返回 payload、外层 commit 后发布）；inventory.rs:108 死代码未动。
+  - hrm（5 处，`b9d632b61`）：补 employee update/delete + department update/delete **幽灵事件**（缺 commit → 补 commit）；payroll 只读 post-commit 仅补重试；MDM 主数据事件走独立 `topems:stream:master_data:*` 总线，本次仅位置纠正未纳入 ZSET。
+  - scm（3 处，`82139bb75`）：data_sync internal/batch 事务内 emit → commit 后发布；**活抽验**：ZSET 故障注入 → relay 15s 内重发成功。
+  - crm（3 处，`340a2d09c`）：aftersales complete_return/阶段流转 commit 前 spawn → 移 commit 后。
+  - mes（2 处，`0dbff2671`）/ pm（3 处，`e22550402`）：已 post-commit 仅补重试。
+- **验证矩阵**：7 服务 cargo check ✅ / clippy 0 warning ✅ / 单测全绿（finance 2291、scm 27、crm 全绿、mes 43/47——4 失败为 equipment 表预置种子问题与本次无关、pm 全绿、wms/hrm 全绿）；**活 E2E**：finance（PaymentMade 重试重放）+ scm（PurchaseOrderApproved 重试重放）实证；crm/mes/pm/wms/hrm 编译+单测级（本地 IAM/core 未起，鉴权业务流无法实写 E2E，如实标注）。
+- **残留**（本次范围外）：
+  - hrm MDM 主数据事件（独立 master_data stream + 消费组 DLQ）如需纳入 ZSET 重试，需另设计 master_data 通道（超出 commit_retry 接口范围）。
+  - wms `inventory.rs:108 publish_inventory_updated` 死代码未动。
+  - 双库账本无迁移改动：磁盘 331 = 5432 public 331 = 5433 public 331（推广为纯代码改动）。
