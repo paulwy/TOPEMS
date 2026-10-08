@@ -27,6 +27,11 @@ docker rmi topems-sim:systemd ubuntu:22.04 2>/dev/null
 brew services stop docker  # 或 Docker Desktop 设置中关闭开机自启
 ```
 
+> **2026-10-08 已执行彻底卸载**（用户定案）：Docker Desktop + 全套 brew 容器工具已清——
+> app/Caskroom/colima/lima/qemu/docker CLI/compose 全部移除，用户数据目录（~/.docker、Group Containers）已删。
+> 残留（无害）：`~/Library/Containers/com.docker.docker`（4KB macOS 保护元数据）、
+> `/Library/PrivilegedHelperTools/com.docker.vmnetd`（root 特权 helper，本机 sudo 不可用未清，空转无影响）。
+
 > 当前 daemon 僵死无法执行；数据已双备份（见数据库迁移记录 §备份资产），删除无数据风险。
 
 ## 4. 未来容器使用规范（硬约束）
