@@ -48,7 +48,7 @@ done
 
 # 数据库连接参数（支持环境变量覆盖；缺省与本机 postgres 容器映射一致）
 PGHOST="${PGHOST:-localhost}"
-PGPORT="${PGPORT:-5433}"
+PGPORT="${PGPORT:-5432}"
 PGUSER="${PGUSER:-topems}"
 PGPASSWORD="${PGPASSWORD:-topems}"
 PGDATABASE="${PGDATABASE:-topems}"

@@ -7,11 +7,11 @@ cd "$REPO_ROOT"
 # 口令从环境变量注入（禁止明文硬编码）；未设置时拒绝执行
 export PGPASSWORD="${TOPEMS_DB_PASSWORD:-}"
 if [ -z "$PGPASSWORD" ]; then
-  echo "错误: 请设置 TOPEMS_DB_PASSWORD 环境变量（5433 容器库 topems 用户口令）" >&2
+  echo "错误: 请设置 TOPEMS_DB_PASSWORD 环境变量（5432 原生库 topems 用户口令）" >&2
   echo "例如: TOPEMS_DB_PASSWORD='<口令>' bash scripts/upgrade-runtime.sh" >&2
   exit 2
 fi
-DB="psql -h localhost -p 5433 -U topems -d topems"
+DB="psql -h localhost -p 5432 -U topems -d topems"
 DOCKER_DIR="$REPO_ROOT/deploy/docker"
 
 echo "════════════════════════════════════════════"
@@ -22,7 +22,7 @@ docker compose stop unified-core erp hrm pm crm mes pdm scm wms srm qms lims ehs
 
 echo
 echo "════════════════════════════════════════════"
-echo " 步骤 2/4：应用治理迁移（5433 运行库）"
+echo " 步骤 2/4：应用治理迁移（5432 运行库）"
 echo "════════════════════════════════════════════"
 echo "→ 2a. 归位 qa_ehs_*/qa_* → ehs/qms（69 张）"
 $DB -v ON_ERROR_STOP=1 -f "$REPO_ROOT/database/migrations/20260902000001_rehome_ehs_qms.sql" && echo "  归位 ✅"
