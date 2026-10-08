@@ -84,6 +84,7 @@ cd apps/core && pnpm install && pnpm dev # 启动 core
 
 ```bash
 # 1. 启动所有服务（含数据库）
+> ⚠️ **2026-10-08 起 docker 部署已弃用**（Docker 卸载，生产走 systemd 模型）：启动/查看/日志请用 `systemctl start topems.target` / `systemctl list-units 'topems*'` / `journalctl -u topems-<svc>`（详见 docs/deploy/container-strategy.md）。以下 docker 命令为历史参考。
 docker compose up -d
 
 # 2. 检查状态

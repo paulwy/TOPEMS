@@ -220,6 +220,7 @@
 - [部署指南](./AI_BUSINESS_INTELLIGENCE_DEPLOYMENT_GUIDE.md)
 - [健康检查脚本](../../scripts/deploy/ai-health-check.sh)
 - [性能测试指南](./AI_BUSINESS_INTELLIGENCE_PERFORMANCE_GUIDE.md)
+> ⚠️ 2026-10-08 起 deploy/docker/ 已弃用（生产 systemd 部署，见 docs/deploy/container-strategy.md）；此条目为历史参考。
 - [Docker Compose 配置](../../deploy/docker/docker-compose.yml)
 - [Nginx 配置](../../deploy/nginx/topems.conf)
 - [Systemd 服务配置](../../deploy/systemd/)

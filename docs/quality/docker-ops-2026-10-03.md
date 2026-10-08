@@ -1,6 +1,7 @@
 # TOPEMS Docker 资源与镜像版本运维手册（2026-10-03）
 
-> 对应提交：
+> ⚠️ **[DEPRECATED] 2026-10-08 起 Docker 已彻底卸载**（生产数据迁移 Homebrew PG，容器策略见 docs/deploy/container-strategy.md）。本文档为 docker 时代运维记录，仅供历史参考，不再适用。
+
 >
 > `bf52ed493`
 >

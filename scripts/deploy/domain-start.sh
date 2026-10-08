@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# [DEPRECATED] Docker compose 域启动脚本（2026-10-08 容器策略定案 + Docker 卸载）。
+# 生产部署走 systemd 模型（scripts/deploy/install.sh）；保留供未来目标环境（明确 docker）参考。
 # shellcheck disable=SC2034
 # TOPEMS 域服务启动脚本
 # 按业务域分组启动，降低运维成本

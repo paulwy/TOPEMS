@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# [DEPRECATED] Docker 部署形态已弃用（2026-10-08 容器策略定案 + Docker 卸载）。
+# 本脚本为 docker compose 构建 + 迁移的升级流程，不再用于生产；保留参考。
+# 生产升级走 systemd 模型：scripts/deploy/update.sh（详见 docs/deploy/container-strategy.md）
 # TOPEMS 运行环境升级脚本：停服 → 应用治理迁移 → 起服 → 验证
 # 由 MainAgent 在 docker compose build 完成后执行
 set -euo pipefail

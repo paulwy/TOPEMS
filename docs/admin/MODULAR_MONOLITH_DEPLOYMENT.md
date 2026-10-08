@@ -75,6 +75,7 @@ vi /opt/topems/config/.env
 
 ```bash
 # 使用 Docker Compose 启动数据库基础设施
+> ⚠️ **2026-10-08 起 docker-compose 部署已弃用**（Docker 卸载，生产走 systemd 模型 `scripts/deploy/install.sh`）；本节为历史部署方式参考。
 cd deploy/docker
 docker-compose up -d postgres redis rabbitmq
 ```
