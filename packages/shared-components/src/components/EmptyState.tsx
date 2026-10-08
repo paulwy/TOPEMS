@@ -1,6 +1,7 @@
 import React from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import { Info } from 'lucide-react';
+import { zh } from '../i18n/zh';
 
 // ============ 类型定义 ============
 
@@ -136,12 +137,12 @@ export const ListEmptyState: React.FC<{
   description?: string;
   actionLabel?: string;
   onAction?: () => void;
-}> = ({ title = '暂无数据', description, actionLabel, onAction }) => (
+}> = ({ title = zh['empty_state.list_title'], description, actionLabel, onAction }) => (
   <Paper sx={{ borderRadius: 2, py: 8 }}>
     <EmptyState
       emoji='📋'
       title={title}
-      description={description || '当前列表为空，没有可显示的内容'}
+      description={description || zh['empty_state.list_description']}
       action={
         actionLabel
           ? {
@@ -163,14 +164,16 @@ export const SearchEmptyState: React.FC<{
   <Paper sx={{ borderRadius: 2, py: 8 }}>
     <EmptyState
       emoji='🔍'
-      title='未找到结果'
+      title={zh['empty_state.search_title']}
       description={
-        keyword ? `未找到与"${keyword}"相关的内容，请尝试其他关键词` : '未找到匹配的搜索结果'
+        keyword
+          ? `${zh['empty_state.search_kw_prefix']}${keyword}${zh['empty_state.search_kw_suffix']}`
+          : zh['empty_state.search_no_result']
       }
       action={
         onClear
           ? {
-              label: '清除搜索',
+              label: zh['empty_state.search_clear'],
               onClick: onClear,
             }
           : undefined
@@ -187,12 +190,12 @@ export const PermissionEmptyState: React.FC<{
   <Paper sx={{ borderRadius: 2, py: 8 }}>
     <EmptyState
       emoji='🔒'
-      title='暂无权限'
-      description='您没有访问此页面的权限，请联系管理员申请权限'
+      title={zh['empty_state.permission_title']}
+      description={zh['empty_state.permission_description']}
       action={
         onRequest
           ? {
-              label: '申请权限',
+              label: zh['empty_state.permission_request'],
               onClick: onRequest,
             }
           : undefined
@@ -212,12 +215,12 @@ export const ErrorEmptyState: React.FC<ErrorEmptyStateProps> = ({ error, onRetry
   <Paper sx={{ borderRadius: 2, py: 8 }}>
     <EmptyState
       emoji='❌'
-      title='加载失败'
-      description={error || '数据加载失败，请稍后重试'}
+      title={zh['empty_state.error_title']}
+      description={error || zh['empty_state.error_description']}
       action={
         onRetry
           ? {
-              label: '重新加载',
+              label: zh['empty_state.error_retry'],
               onClick: onRetry,
             }
           : undefined

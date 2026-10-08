@@ -9,6 +9,7 @@
 import React, { Component, type ReactNode, useEffect, useState } from 'react';
 import { Button, IconButton, Tooltip } from '@mui/material';
 import { ArrowLeft } from 'lucide-react';
+import { zh } from '../i18n/zh';
 
 // ============ Error boundary for missing Router context ============
 
@@ -65,7 +66,7 @@ function renderButton(
     variant = 'icon',
     size = 'medium',
     color = 'inherit',
-    label = '返回',
+    label = zh['back_button.label'],
     sx,
     tooltip,
   }: Pick<BackButtonProps, 'variant' | 'size' | 'color' | 'label' | 'sx' | 'tooltip'>,
@@ -78,7 +79,7 @@ function renderButton(
           size={size}
           color={color}
           sx={sx}
-          aria-label="返回"
+          aria-label={zh['back_button.label']}
         >
           <ArrowLeft size={size === 'small' ? 18 : 22} />
         </IconButton>

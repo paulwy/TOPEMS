@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import type { SxProps, Theme } from '@mui/material';
 import { Box, Tabs, Tab } from '@mui/material';
 import { designTokens, semanticTokens } from '@topems/tokens';
+import { zh } from '../i18n/zh';
 
 export interface InteractiveTabItem {
   /** 唯一标识 */
@@ -40,7 +41,7 @@ export const InteractiveTabs: React.FC<InteractiveTabsProps> = ({
   animated = true,
   sx,
   className = '',
-  ariaLabel = '导航标签',
+  ariaLabel = zh['interactive_tabs.aria_label'],
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0, opacity: 0 });

@@ -8,6 +8,7 @@ import {
   LinearProgress,
 } from '@mui/material';
 import { Upload, X, File, FileImage, FileText, FileArchive, FileCode } from 'lucide-react';
+import { zh } from '../i18n/zh';
 
 export interface UploadFile {
   id: string;
@@ -76,13 +77,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
   className,
   locale,
 }) => {
-  const dragText = locale?.dragText ?? '拖拽文件到此处，或点击选择文件';
-  const clickText = locale?.clickText ?? '点击选择文件';
-  const completedText = locale?.completed ?? '上传完成';
-  const failedText = locale?.failed ?? '上传失败';
-  const removeText = locale?.remove ?? '移除';
-  const sizeExceededText = locale?.sizeExceeded ?? '文件大小超过限制';
-  const uploadFailedText = locale?.uploadFailed ?? '上传失败';
+  const dragText = locale?.dragText ?? zh['file_upload.drag_text'];
+  const clickText = locale?.clickText ?? zh['file_upload.click_text'];
+  const completedText = locale?.completed ?? zh['file_upload.completed'];
+  const failedText = locale?.failed ?? zh['file_upload.failed'];
+  const removeText = locale?.remove ?? zh['file_upload.remove'];
+  const sizeExceededText = locale?.sizeExceeded ?? zh['file_upload.size_exceeded'];
+  const uploadFailedText = locale?.uploadFailed ?? zh['file_upload.failed'];
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -215,7 +216,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </Typography>
         
         <Typography variant="caption" color="text.secondary">
-          {locale?.acceptText ?? `支持 ${accept || '所有格式'} 文件，最大 ${formatFileSize(maxSize)}，最多 ${maxFiles} 个文件`}
+          {locale?.acceptText ??
+            `${zh['file_upload.accept_prefix']}${accept || zh['file_upload.accept_default_format']}${zh['file_upload.accept_middle']}${formatFileSize(maxSize)}${zh['file_upload.accept_before_count']}${maxFiles}${zh['file_upload.accept_suffix']}`}
         </Typography>
         
         <input
@@ -267,8 +269,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
               
               <Chip
                 label={
-                  file.status === 'pending' ? (locale?.processing ?? '等待上传') :
-                  file.status === 'uploading' ? `${locale?.processing ?? '上传中'} ${file.progress}%` :
+                  file.status === 'pending' ? (locale?.processing ?? zh['file_upload.waiting']) :
+                  file.status === 'uploading' ? `${locale?.processing ?? zh['file_upload.uploading']} ${file.progress}%` :
                   file.status === 'completed' ? completedText :
                   failedText
                 }
