@@ -3264,5 +3264,9 @@
   "mes.demo.operator_sun": "Sun Qi",
   "mes.demo.remark_urgent": "Urgent order, needs priority handling",
   "mes.demo.remark_breakdown": "Equipment breakdown paused, awaiting repair",
-  "mes.demo.remark_cancelled": "Customer cancelled order"
+  "mes.demo.remark_cancelled": "Customer cancelled order",
+  "mes.demo.line_a": "Line A",
+  "mes.demo.line_b": "Line B",
+  "mes.demo.line_c": "Line C",
+  "mes.work_order.unit_piece": "pcs"
 }

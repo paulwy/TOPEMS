@@ -154,7 +154,7 @@ export interface UseBffRetryResult {
  * ```tsx
  * const { retryCount, recordError } = useBffRetry(['bff', 'dashboard'], {
  *   maxRetries: 3,
- *   onRetry: (n) => console.log(`第 ${n} 次重试`),
+ *   onRetry: (n) => logger.debug(`第 ${n} 次重试`),
  * });
  * ```
  */

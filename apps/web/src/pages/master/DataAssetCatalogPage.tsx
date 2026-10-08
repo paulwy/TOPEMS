@@ -458,6 +458,7 @@ const DataAssetCatalogPage: React.FC = () => {
                         <IconButton
                           size='small'
                           onClick={() => handleView(asset)}
+                          aria-label={i18n.t('master.data_asset_catalog.detail')}
                         >
                           <VisibilityIcon fontSize='small' />
                         </IconButton>
@@ -467,6 +468,7 @@ const DataAssetCatalogPage: React.FC = () => {
                           size='small'
                           color='error'
                           onClick={() => handleDelete(asset)}
+                          aria-label={i18n.t('master.data_asset_catalog.delete')}
                         >
                           <DeleteIcon fontSize='small' />
                         </IconButton>

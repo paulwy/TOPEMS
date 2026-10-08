@@ -20,7 +20,7 @@
  *     serviceHealthChanged { service healthy url }
  *   }`,
  *   {},
- *   (data) => console.log('health changed:', data),
+ *   (data) => logger.debug('health changed:', data),
  *   { filter: (data) => data.service === 'erp' }
  * );
  * ```

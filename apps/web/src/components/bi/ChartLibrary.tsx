@@ -20,9 +20,7 @@ import {
 import i18n from '@/i18n';
 import { designTokens } from '@topems/tokens';
 
-const PolarCasesLazy = lazy(() =>
-  import('./ChartLibrary.polar').then((m) => ({ default: m.PolarCases }))
-);
+const PolarCasesLazy = lazy(() => import('./PolarCases').then((m) => ({ default: m.PolarCases })));
 
 export type ChartType =
   'bar' | 'pie' | 'line' | 'area' | 'radar' | 'scatter' | 'composed' | 'histogram' | 'gauge';

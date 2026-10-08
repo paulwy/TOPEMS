@@ -6329,6 +6329,7 @@
   "demo.line.c": "Line C",
   "demo.stat.oee": "Overall Equipment Effectiveness",
   "demo.stat.monthly_output": "Monthly Output",
+  "demo.stat.unit_piece": "pcs",
   "demo.stat.delivery_rate": "On-time Delivery Rate",
   "demo.stat.quality_rate": "Quality Pass Rate",
   "demo.stat.unit_piece": "pcs",

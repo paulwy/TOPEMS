@@ -518,6 +518,7 @@ export const DifyChatPage: React.FC = () => {
                   size='small'
                   onClick={(e) => handleDeleteConversation(conv.id, e)}
                   sx={{ p: 0.5 }}
+                  aria-label={i18n.t('ai.chat.action.delete')}
                 >
                   <Trash2 size={14} />
                 </IconButton>
@@ -650,6 +651,7 @@ export const DifyChatPage: React.FC = () => {
                           onClick={() => handleFeedback(msg.message_id!, 'like')}
                           disabled={msg.feedback === 'like'}
                           color={msg.feedback === 'like' ? 'primary' : 'default'}
+                          aria-label={i18n.t('ai.dify.action.like')}
                         >
                           <ThumbsUp size={14} />
                         </IconButton>
@@ -663,6 +665,7 @@ export const DifyChatPage: React.FC = () => {
                           onClick={() => handleFeedback(msg.message_id!, 'dislike')}
                           disabled={msg.feedback === 'dislike'}
                           color={msg.feedback === 'dislike' ? 'error' : 'default'}
+                          aria-label={i18n.t('ai.dify.action.dislike')}
                         >
                           <ThumbsDown size={14} />
                         </IconButton>

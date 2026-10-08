@@ -335,7 +335,7 @@ export async function completeTodoGql(id: string) {
  *
  * @example
  * const unsubscribe = subscribeServiceHealth((health) => {
- *   console.log(`${health.service}: ${health.healthy ? 'healthy' : 'down'}`);
+ *   logger.debug(`${health.service}: ${health.healthy ? 'healthy' : 'down'}`);
  * });
  * // 清理时调用 unsubscribe()
  */

@@ -49,6 +49,7 @@ const NON_NAV_WHITELIST = [
   'shared',
   'template',
   'tenant',
+  'unified-core',
 ];
 
 const MAPPING_WITHOUT_API_DIR = ['asset', 'oa', 'rs'];

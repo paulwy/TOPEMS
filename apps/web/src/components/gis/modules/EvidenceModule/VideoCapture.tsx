@@ -294,6 +294,7 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
               <IconButton
                 onClick={switchCamera}
                 disabled={isRecording}
+                aria-label={i18n.t('gis.video_capture.k2')}
                 sx={{
                   borderRadius: 'full',
                   bgcolor: isRecording
@@ -310,7 +311,6 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
                     color: 'text.secondary',
                   },
                 }}
-                aria-label={i18n.t('gis.video_capture.k2')}
               >
                 <SwitchCamera size={24} />
               </IconButton>

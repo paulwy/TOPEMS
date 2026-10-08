@@ -301,6 +301,8 @@ const AuditLogPage = () => {
             <IconButton
               size='small'
               onClick={() => setFilterOpen((v) => !v)}
+              aria-label={t('admin.audit_log.filter_conditions')}
+              aria-expanded={filterOpen}
             >
               {filterOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
             </IconButton>

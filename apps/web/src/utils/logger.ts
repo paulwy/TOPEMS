@@ -1,6 +1,6 @@
 /**
  * 统一日志系统
- * 用于替代 console.log/error/warn
+ * 用于替代原生 console 输出（debug/info/warn/error）
  * 使用方法：import logger from "@/utils/logger";
  */
 

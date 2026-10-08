@@ -18,10 +18,10 @@ export interface StatsChartProps {
 }
 
 const StatsChartBarImpl = lazy(() =>
-  import('./StatsChart.bar').then((m) => ({ default: m.StatsChartBarImpl }))
+  import('./StatsChartBarImpl').then((m) => ({ default: m.StatsChartBarImpl }))
 );
 const StatsChartPieImpl = lazy(() =>
-  import('./StatsChart.pie').then((m) => ({ default: m.StatsChartPieImpl }))
+  import('./StatsChartPieImpl').then((m) => ({ default: m.StatsChartPieImpl }))
 );
 
 const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
@@ -60,8 +60,8 @@ const EmptyFallback: React.FC<{ title?: string }> = ({ title }) => (
 /**
  * 按 type 懒加载对应的图表实现（V72 P2-4b）
  *
- * - 'bar' | 'line' → 加载 StatsChart.bar（只依赖 recharts-cartesian barrel）
- * - 'pie'          → 加载 StatsChart.pie（只依赖 recharts-polar barrel）
+ * - 'bar' | 'line' → 加载 StatsChartBarImpl（只依赖 recharts-cartesian barrel）
+ * - 'pie'          → 加载 StatsChartPieImpl（只依赖 recharts-polar barrel）
  *
  * 这样当用户只访问某一种图表时，不会把另一个 barrel 的实现拉到 chunk 里，
  * 从而把 recharts 299KB 的单 chunk 拆成 ~200KB(Cartesian) + ~120KB(Polar) 两部分。

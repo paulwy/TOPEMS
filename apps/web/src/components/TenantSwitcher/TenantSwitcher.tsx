@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Select, MenuItem, FormControl, InputLabel, Box, Typography } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/store/authStore';
 import { tenantApi } from '@/api/unified-core/tenant';
 import type { Tenant } from '@/api/unified-core/tenant';
@@ -9,6 +10,7 @@ import type { Tenant } from '@/api/unified-core/tenant';
  * 仅 is_superuser=true 时显示，用于跨租户视图切换
  */
 export const TenantSwitcher: React.FC = () => {
+  const { t } = useTranslation();
   const isSuperuser = useAuthStore((s) => s.isSuperuser());
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [currentTenantId, setCurrentTenantId] = useState<string>('');
@@ -58,16 +60,16 @@ export const TenantSwitcher: React.FC = () => {
         variant='body2'
         color='text.secondary'
       >
-        租户:
+        {t('common.tenant_switcher.label')}:
       </Typography>
       <FormControl
         size='small'
         sx={{ minWidth: 180 }}
       >
-        <InputLabel>租户</InputLabel>
+        <InputLabel>{t('common.tenant_switcher.label')}</InputLabel>
         <Select
           value={currentTenantId}
-          label='租户'
+          label={t('common.tenant_switcher.label')}
           disabled={loading || tenants.length === 0}
           onChange={(e) => handleSwitch(e.target.value)}
         >

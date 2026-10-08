@@ -343,9 +343,13 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   <MenuItem value='Critical'>
                     {i18n.t('intelligent_ops.v56-ops-panel.sev_critical')}
                   </MenuItem>
-                  <MenuItem value='High'>高</MenuItem>
-                  <MenuItem value='Medium'>中</MenuItem>
-                  <MenuItem value='Low'>低</MenuItem>
+                  <MenuItem value='High'>
+                    {i18n.t('intelligent-ops.v56-ops-panel.sev_high')}
+                  </MenuItem>
+                  <MenuItem value='Medium'>
+                    {i18n.t('intelligent-ops.v56-ops-panel.sev_medium')}
+                  </MenuItem>
+                  <MenuItem value='Low'>{i18n.t('intelligent-ops.v56-ops-panel.sev_low')}</MenuItem>
                   <MenuItem value='Info'>
                     {i18n.t('intelligent_ops.v56-ops-panel.sev_info')}
                   </MenuItem>

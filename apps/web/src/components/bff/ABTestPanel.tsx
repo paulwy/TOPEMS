@@ -57,12 +57,18 @@ import {
 // ==================== 状态徽标 ====================
 
 const STATUS_META: Record<ExperimentStatus, { color: ChipOwnProps['color']; label: string }> = {
-  [ExperimentStatus.DRAFT]: { color: 'default', label: i18n.t('components.bff_ab_test_panel.status_draft') },
+  [ExperimentStatus.DRAFT]: {
+    color: 'default',
+    label: i18n.t('components.bff_ab_test_panel.status_draft'),
+  },
   [ExperimentStatus.RUNNING]: {
     color: 'success',
     label: i18n.t('components.bff_ab_test_panel.status_running'),
   },
-  [ExperimentStatus.PAUSED]: { color: 'warning', label: i18n.t('components.bff_ab_test_panel.status_paused') },
+  [ExperimentStatus.PAUSED]: {
+    color: 'warning',
+    label: i18n.t('components.bff_ab_test_panel.status_paused'),
+  },
   [ExperimentStatus.COMPLETED]: {
     color: 'info',
     label: i18n.t('components.bff_ab_test_panel.status_completed'),
@@ -220,6 +226,7 @@ function ExperimentRow({
                   admin.startExperiment(experiment.id);
                   onRefresh();
                 }}
+                aria-label={i18n.t('components.bff_ab_test_panel.start')}
               >
                 <Play size={16} />
               </IconButton>
@@ -234,6 +241,7 @@ function ExperimentRow({
                   admin.pauseExperiment(experiment.id);
                   onRefresh();
                 }}
+                aria-label={i18n.t('components.bff_ab_test_panel.pause')}
               >
                 <Pause size={16} />
               </IconButton>
@@ -248,6 +256,7 @@ function ExperimentRow({
                   admin.completeExperiment(experiment.id);
                   onRefresh();
                 }}
+                aria-label={i18n.t('components.bff_ab_test_panel.complete')}
               >
                 <CheckCircle size={16} />
               </IconButton>
@@ -261,6 +270,7 @@ function ExperimentRow({
                 admin.deleteExperiment(experiment.id);
                 onRefresh();
               }}
+              aria-label={i18n.t('components.bff_ab_test_panel.delete')}
             >
               <Trash2 size={16} />
             </IconButton>
@@ -342,7 +352,9 @@ export function ABTestPanel({
           sx={{ alignItems: 'center' }}
         >
           <FlaskConical size={20} />
-          <Typography variant='h6'>{title ?? i18n.t('components.bff_ab_test_panel.title')}</Typography>
+          <Typography variant='h6'>
+            {title ?? i18n.t('components.bff_ab_test_panel.title')}
+          </Typography>
           <Chip
             size='small'
             color='success'
@@ -357,6 +369,7 @@ export function ABTestPanel({
             <IconButton
               size='small'
               onClick={refresh}
+              aria-label={i18n.t('components.bff_ab_test_panel.refresh')}
             >
               <RefreshCw size={16} />
             </IconButton>
@@ -375,9 +388,7 @@ export function ABTestPanel({
       </Stack>
 
       {allExperiments.length === 0 ? (
-        <Alert severity='info'>
-          {i18n.t('components.bff_ab_test_panel.empty')}
-        </Alert>
+        <Alert severity='info'>{i18n.t('components.bff_ab_test_panel.empty')}</Alert>
       ) : (
         <TableContainer>
           <Table size='small'>
@@ -386,9 +397,13 @@ export function ABTestPanel({
                 <TableCell>{i18n.t('components.bff_ab_test_panel.col_name')}</TableCell>
                 <TableCell>{i18n.t('components.bff_ab_test_panel.col_status')}</TableCell>
                 <TableCell>{i18n.t('components.bff_ab_test_panel.col_variants')}</TableCell>
-                <TableCell align='right'>{i18n.t('components.bff_ab_test_panel.col_traffic')}</TableCell>
+                <TableCell align='right'>
+                  {i18n.t('components.bff_ab_test_panel.col_traffic')}
+                </TableCell>
                 <TableCell>{i18n.t('components.bff_ab_test_panel.col_result')}</TableCell>
-                <TableCell align='right'>{i18n.t('components.bff_ab_test_panel.col_actions')}</TableCell>
+                <TableCell align='right'>
+                  {i18n.t('components.bff_ab_test_panel.col_actions')}
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -468,7 +483,9 @@ export function ABTestPanel({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>{i18n.t('components.bff_ab_test_panel.cancel')}</Button>
+          <Button onClick={() => setOpen(false)}>
+            {i18n.t('components.bff_ab_test_panel.cancel')}
+          </Button>
           <Button
             variant='contained'
             startIcon={<Plus size={16} />}

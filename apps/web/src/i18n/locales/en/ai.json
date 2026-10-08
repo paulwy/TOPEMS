@@ -5997,6 +5997,7 @@
   "ai.dsh_agent_panel.exec_steps": "Execution steps ({{count}})",
   "ai.dsh_agent_panel.session_label": "Session: {{id}}...",
   "ai.dsh_agent_panel.clear_session": "Clear session",
+  "ai.dsh_agent_panel.send": "Send",
   "ai.dsh_agent_panel.help_title": "How can I help you?",
   "ai.dsh_agent_panel.help_subtitle": "Ask a question and I will use tools to find the answer",
   "ai.dsh_agent_panel.input_placeholder": "Type your question...",

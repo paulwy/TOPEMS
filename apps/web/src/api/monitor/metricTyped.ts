@@ -15,7 +15,7 @@
  * 使用方式：
  *   import { metricTypedApi } from './metricTyped';
  *   const res = await metricTypedApi.list({ page: 1, pageSize: 20 });
- *   if (res.success) { console.log(res.data.items); }
+ *   if (res.success) { logger.debug(res.data.items); }
  */
 
 import apiClient from '../client';

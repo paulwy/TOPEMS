@@ -78,9 +78,10 @@ const ModuleNamePage: React.FC = () => (
       title: i18n.t('shared.code-completion.k5'),
       description: i18n.t('shared.code-completion.k6'),
       code: `import { versionManager } from '@/microfrontend';
+import { logger } from '@/utils/logger';
 
 versionManager.onVersionUpdate((event) => {
-  console.log(\`{i18n.t('microfrontend.code-completion.k0')} \${event.moduleId} {i18n.t('microfrontend.code-completion.k1')}\`);
+  logger.debug(\`{i18n.t('microfrontend.code-completion.k0')} \${event.moduleId} {i18n.t('microfrontend.code-completion.k1')}\`);
 });
 
 versionManager.startAutoCheck(5 * 60 * 1000);`,

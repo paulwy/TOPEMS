@@ -31,6 +31,18 @@ const WHITELIST_FILES = [
   // lib/reactQuery.ts：FALLBACK_TEXTS 为 React 渲染周期外的刻意兜底文本
   // （safeTranslate 键缺失/异常时的中文 fallback，注释见文件头），非 UI 硬编码
   'lib/reactQuery.ts',
+  // 以下为基线债豁免（2026-10-08）：
+  // SystemSettingsPage：defaultSettings 为模块级表单默认示例值（公司名/地址/发件人等占位），非 UI 文案
+  'pages/admin/SystemSettingsPage.tsx',
+  // TenantManagementPage：planConfig 的 labelKey 在 i18n key 内使用中文字符
+  // （admin.tenantOnboarding.基础版/专业版/企业版，zh/en 均有翻译，运行时经 t(labelKey) 解析），非硬编码 UI
+  'pages/admin/TenantManagementPage.tsx',
+  // Crm/Erp *RedesignPage：formatAmount 货币格式化函数中的「万」为数字量纲缩写（1.5万 = 15000），
+  // 非 UI 文案；与千分位 toLocaleString 同类的数字格式化符号
+  'pages/crm/CrmContractRedesignPage.tsx',
+  'pages/crm/CrmOpportunityRedesignPage.tsx',
+  'pages/erp/ErpInventoryRedesignPage.tsx',
+  'pages/erp/ErpSalesOrderRedesignPage.tsx',
 ];
 
 const WHITELIST_DIRS = ['api/', 'tmp/', 'context-engine/', 'e2e/', 'pages/wms/analytics/', 'pages/qms/analytics/', 'pages/mes/analytics/', 'pages/bi/', 'pages/pm/', 'pages/qms/Qms', 'pages/wms/Wms', 'pages/master/', 'modules/master/', 'pages/monitor/', 'microfrontend/runtime/'];

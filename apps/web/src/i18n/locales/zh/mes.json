@@ -1823,5 +1823,9 @@
   "mes.demo.operator_sun": "孙七",
   "mes.demo.remark_urgent": "紧急订单，需优先处理",
   "mes.demo.remark_breakdown": "设备故障暂停，等待维修",
-  "mes.demo.remark_cancelled": "客户取消订单"
+  "mes.demo.remark_cancelled": "客户取消订单",
+  "mes.demo.line_a": "A 线",
+  "mes.demo.line_b": "B 线",
+  "mes.demo.line_c": "C 线",
+  "mes.work_order.unit_piece": "件"
 }

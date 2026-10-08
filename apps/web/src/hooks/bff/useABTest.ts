@@ -215,7 +215,7 @@ export interface UseExperimentResultResult {
  * ```tsx
  * const { result, isSignificant, winner } = useExperimentResult('checkout-flow-exp');
  * if (isSignificant) {
- *   console.log(`赢家变体: ${winner}`);
+ *   logger.debug(`赢家变体: ${winner}`);
  * }
  * ```
  */
@@ -277,7 +277,7 @@ export interface UseActiveExperimentsResult {
  * @example
  * ```tsx
  * const { experiments, count } = useActiveExperiments();
- * console.log(`当前 ${count} 个活跃实验`);
+ * logger.debug(`当前 ${count} 个活跃实验`);
  * ```
  */
 export function useActiveExperiments(): UseActiveExperimentsResult {

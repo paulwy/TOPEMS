@@ -3432,6 +3432,7 @@
   "ai.dsh_agent_panel.exec_steps": "执行步骤 ({{count}})",
   "ai.dsh_agent_panel.session_label": "会话: {{id}}...",
   "ai.dsh_agent_panel.clear_session": "清除会话",
+  "ai.dsh_agent_panel.send": "发送",
   "ai.dsh_agent_panel.help_title": "有什么可以帮助你的？",
   "ai.dsh_agent_panel.help_subtitle": "输入问题，我会调用工具帮你查找答案",
   "ai.dsh_agent_panel.input_placeholder": "输入你的问题...",

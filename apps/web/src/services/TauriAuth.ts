@@ -13,6 +13,8 @@
  * and the app falls back to standard localStorage-based auth.
  */
 
+import { authLogger } from '@/utils/logger';
+
 interface TauriInvokeResponse<T> {
   success: boolean;
   data: T | null;
@@ -113,13 +115,11 @@ export const tauriAuth = {
     }
     try {
       const payload = JSON.stringify({ user_json: user, roles, permissions });
-      // eslint-disable-next-line no-console -- Tauri IPC 调试日志
-      console.log('[TauriAuth] Calling set_user_info with payload length:', payload.length);
+      authLogger.debug('[TauriAuth] Calling set_user_info with payload length:', payload.length);
       const result = await invoke<void>('set_user_info', {
         data: payload,
       });
-      // eslint-disable-next-line no-console -- Tauri IPC 调试日志
-      console.log('[TauriAuth] set_user_info result:', result);
+      authLogger.debug('[TauriAuth] set_user_info result:', result);
       if (!result.success) {
         console.warn('[TauriAuth] Failed to set user info:', result.error);
       }
@@ -168,11 +168,9 @@ export const tauriAuth = {
       return;
     }
     try {
-      // eslint-disable-next-line no-console -- Tauri IPC 调试日志
-      console.log('[TauriAuth] Calling set_token_expiry with ts:', expiryTimestamp);
+      authLogger.debug('[TauriAuth] Calling set_token_expiry with ts:', expiryTimestamp);
       const result = await invoke<void>('set_token_expiry', { ts: expiryTimestamp });
-      // eslint-disable-next-line no-console -- Tauri IPC 调试日志
-      console.log('[TauriAuth] set_token_expiry result:', result);
+      authLogger.debug('[TauriAuth] set_token_expiry result:', result);
       if (!result.success) {
         console.warn('[TauriAuth] Failed to set token expiry:', result.error);
       }

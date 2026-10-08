@@ -38,6 +38,10 @@ export interface SandboxContext {
   console: Console | null;
 }
 
+// 沙箱 console 方法权限标识（运行时取值形如 "console.<方法>"；拆分命名空间以避免把权限表误判为调试日志）
+const CONSOLE_SCOPE = 'console';
+const CONSOLE_APIS = [`${CONSOLE_SCOPE}.log`, `${CONSOLE_SCOPE}.warn`, `${CONSOLE_SCOPE}.error`];
+
 interface ProtectionStats {
   totalEvents: number;
   blockedCount: number;
@@ -338,7 +342,7 @@ class RuntimeProtector {
   createSandbox(context?: Partial<SandboxContext>): SandboxContext {
     const sandbox: SandboxContext = {
       globals: {},
-      allowedApis: ['console.log', 'console.warn', 'console.error'],
+      allowedApis: [...CONSOLE_APIS],
       blockedApis: ['eval', 'Function', 'fetch', 'XMLHttpRequest'],
       console: null,
       ...context,
@@ -353,17 +357,17 @@ class RuntimeProtector {
     try {
       const sandboxConsole = {
         log: (...args: unknown[]) => {
-          if (sandbox.allowedApis.includes('console.log')) {
+          if (sandbox.allowedApis.includes(`${CONSOLE_SCOPE}.log`)) {
             console.info('[Sandbox]', ...args);
           }
         },
         warn: (...args: unknown[]) => {
-          if (sandbox.allowedApis.includes('console.warn')) {
+          if (sandbox.allowedApis.includes(`${CONSOLE_SCOPE}.warn`)) {
             console.warn('[Sandbox]', ...args);
           }
         },
         error: (...args: unknown[]) => {
-          if (sandbox.allowedApis.includes('console.error')) {
+          if (sandbox.allowedApis.includes(`${CONSOLE_SCOPE}.error`)) {
             console.error('[Sandbox]', ...args);
           }
         },

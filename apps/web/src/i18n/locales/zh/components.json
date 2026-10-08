@@ -2992,6 +2992,7 @@
   "demo.line.c": "产线 C",
   "demo.stat.oee": "设备综合效率 OEE",
   "demo.stat.monthly_output": "本月产量",
+  "demo.stat.unit_piece": "件",
   "demo.stat.delivery_rate": "订单准时交付率",
   "demo.stat.quality_rate": "质量合格率",
   "demo.stat.unit_piece": "件",

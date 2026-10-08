@@ -266,6 +266,28 @@ export const moduleMapping: Record<string, ModuleBackendMapping> = {
     module: 'ehs',
     apiBasePath: '/api/ehs',
   },
+
+  // APS 高级排程（独立服务；api/aps 经 apiClient.aps → /api/aps）
+  aps: {
+    service: 'aps',
+    module: 'aps',
+    apiBasePath: '/api/aps',
+  },
+
+  // TMS 运输管理（独立服务，端口 8073；api/tms 经 apiClient.tms → /api/tms）
+  tms: {
+    service: 'tms',
+    module: 'tms',
+    apiBasePath: '/api/tms',
+  },
+
+  // 主数据/数据资产目录（V66 试点；api/master 经 apiClient.master → /api/master-data）
+  // 注：runtime 中 master 为 master-data 的兼容别名，导航模块 code 仍为 master。
+  master: {
+    service: 'master-data',
+    module: 'master',
+    apiBasePath: '/api/master-data',
+  },
 };
 
 export const getAllModuleCodes = (): string[] => {

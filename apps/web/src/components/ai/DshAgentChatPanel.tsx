@@ -480,6 +480,7 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
             <IconButton
               onClick={handleClearSession}
               size='small'
+              aria-label={t('ai.dsh_agent_panel.clear_session')}
             >
               <DeleteIcon />
             </IconButton>
@@ -566,6 +567,7 @@ export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
           onClick={handleSend}
           disabled={!input.trim() || isLoading}
           sx={{ alignSelf: 'flex-end' }}
+          aria-label={t('ai.dsh_agent_panel.send')}
         >
           {isLoading ? <CircularProgress size={24} /> : <SendIcon />}
         </IconButton>

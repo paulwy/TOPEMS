@@ -254,6 +254,7 @@ const GovernanceDashboardPage: React.FC = () => {
             <IconButton
               size='small'
               onClick={clearError}
+              aria-label='Dismiss error'
             >
               <ErrorIcon fontSize='small' />
             </IconButton>

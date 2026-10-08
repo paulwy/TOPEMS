@@ -16,7 +16,7 @@
  * 使用方式：
  *   import { ruleTypedApi } from './ruleTyped';
  *   const res = await ruleTypedApi.list();
- *   if (res.success) { console.log(res.data); }
+ *   if (res.success) { logger.debug(res.data); }
  */
 
 import apiClient from '../client';

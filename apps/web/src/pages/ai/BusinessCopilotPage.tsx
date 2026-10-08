@@ -437,6 +437,7 @@ const BusinessCopilotPage: React.FC = () => {
             <IconButton
               size='small'
               onClick={clearError}
+              aria-label='Dismiss error'
             >
               <ClearIcon fontSize='small' />
             </IconButton>

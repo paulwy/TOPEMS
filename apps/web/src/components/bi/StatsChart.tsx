@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import type { StatsChartProps } from './StatsChart.impl';
+import type { StatsChartProps } from './StatsChartImpl';
 
 export type { StatsChartProps };
 
@@ -17,7 +17,7 @@ const ChartFallback: React.FC<{ height?: number }> = ({ height = 200 }) => (
 );
 
 const StatsChartLazy = lazy(() =>
-  import('./StatsChart.impl').then((m) => ({ default: m.StatsChartImpl }))
+  import('./StatsChartImpl').then((m) => ({ default: m.StatsChartImpl }))
 );
 
 export const StatsChart: React.FC<StatsChartProps> = (props) => (

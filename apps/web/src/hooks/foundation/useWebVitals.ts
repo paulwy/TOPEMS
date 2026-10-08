@@ -66,7 +66,7 @@ function observeType(
  * ```tsx
  * function App() {
  *   useWebVitals((metrics) => {
- *     console.log('Web Vitals:', metrics);
+ *     logger.debug('Web Vitals:', metrics);
  *   });
  *   return <div>App</div>;
  * }

@@ -244,6 +244,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             size='small'
             onClick={onZoomIn}
             disabled={canvasZoom >= zoomMax}
+            aria-label={t('automation.automation_designer_page_components_designer_canvas.r1')}
           >
             <ZoomInIcon size={18} />
           </IconButton>
@@ -253,6 +254,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             size='small'
             onClick={onZoomOut}
             disabled={canvasZoom <= zoomMin}
+            aria-label={t('automation.automation_designer_page_components_designer_canvas.r2')}
           >
             <ZoomOutIcon size={18} />
           </IconButton>
@@ -262,6 +264,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
             size='small'
             onClick={onZoomFit}
             disabled={nodes.length === 0}
+            aria-label={t('automation.designer_canvas.k0')}
           >
             <FitIcon size={18} />
           </IconButton>
@@ -270,6 +273,7 @@ export const DesignerCanvas: React.FC<DesignerCanvasProps> = ({
           <IconButton
             size='small'
             onClick={onZoomReset}
+            aria-label={t('automation.designer_canvas.100_1')}
           >
             <ResetIcon size={18} />
           </IconButton>
