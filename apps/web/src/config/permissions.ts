@@ -388,10 +388,14 @@ const PERMISSION_DEFS: Record<string, string> = {
   'admin:iam:delete': 'admin:iam:delete',
   'admin:iam:dashboard:approve': 'admin:iam:dashboard:approve',
 
-  // ai (5 codes)
+  // ai (9 codes)
   'ai:chat:read': 'ai:chat:read',
   'ai:code:read': 'ai:code:read',
+  'ai:dashboard:admin': 'ai:dashboard:admin',
+  'ai:dashboard:read': 'ai:dashboard:read',
+  'ai:dashboard:write': 'ai:dashboard:write',
   'ai:document:read': 'ai:document:read',
+  'ai:governance:read': 'ai:governance:read',
   'ai:knowledge:read': 'ai:knowledge:read',
   'ai:prompt:read': 'ai:prompt:read',
 
@@ -440,7 +444,9 @@ const PERMISSION_DEFS: Record<string, string> = {
   'crm:customer:update': 'crm:customer:update',
   'crm:customer_scoring:read': 'crm:customer_scoring:read',
   'crm:customer_segmentation:read': 'crm:customer_segmentation:read',
+  'crm:dashboard:read': 'crm:dashboard:read',
   'crm:dashboard:update': 'crm:dashboard:update',
+  'crm:dashboard:write': 'crm:dashboard:write',
   'crm:forecast:read': 'crm:forecast:read',
   'crm:interaction:read': 'crm:interaction:read',
   'crm:opportunity:read': 'crm:opportunity:read',
@@ -450,14 +456,16 @@ const PERMISSION_DEFS: Record<string, string> = {
   'crm:sales_forecast:read': 'crm:sales_forecast:read',
   'crm:sales_funnel:read': 'crm:sales_funnel:read',
 
-  // doc (2 codes)
+  // doc (3 codes)
   'doc:center:read': 'doc:center:read',
+  'doc:dashboard:read': 'doc:dashboard:read',
   'doc:document:read': 'doc:document:read',
 
   // ehs (13 codes)
   'ehs:accident:read': 'ehs:accident:read',
   'ehs:check:read': 'ehs:check:read',
   'ehs:compliance:read': 'ehs:compliance:read',
+  'ehs:dashboard:read': 'ehs:dashboard:read',
   'ehs:drill:read': 'ehs:drill:read',
   'ehs:emergency:read': 'ehs:emergency:read',
   'ehs:environment:read': 'ehs:environment:read',
@@ -474,6 +482,7 @@ const PERMISSION_DEFS: Record<string, string> = {
   'erp:announcement:read': 'erp:announcement:read',
   'erp:asset:read': 'erp:asset:read',
   'erp:audit:read': 'erp:audit:read',
+  'erp:dashboard:read': 'erp:dashboard:read',
   'erp:bank_account:read': 'erp:bank_account:read',
   'erp:budget:read': 'erp:budget:read',
   'erp:customer:read': 'erp:customer:read',
@@ -515,7 +524,8 @@ const PERMISSION_DEFS: Record<string, string> = {
   'finance:voucher:create': 'finance:voucher:create',
   'finance:voucher:read': 'finance:voucher:read',
 
-  // gis (3 codes)
+  // gis (4 codes)
+  'gis:dashboard:read': 'gis:dashboard:read',
   'gis:fence:read': 'gis:fence:read',
   'gis:map:read': 'gis:map:read',
   'gis:tracking:read': 'gis:tracking:read',
@@ -545,7 +555,8 @@ const PERMISSION_DEFS: Record<string, string> = {
   'hrm:training:read': 'hrm:training:read',
   'hrm:training_plan:read': 'hrm:training_plan:read',
 
-  // iam (4 codes)
+  // iam (5 codes)
+  'iam:dashboard:read': 'iam:dashboard:read',
   'iam:permission:read': 'iam:permission:read',
   'iam:role:read': 'iam:role:read',
   'iam:structure:read': 'iam:structure:read',
@@ -555,8 +566,10 @@ const PERMISSION_DEFS: Record<string, string> = {
   'im:dashboard:read': 'im:dashboard:read',
   'im:mail:read': 'im:mail:read',
 
-  // integration (7 codes)
+  // integration (9 codes)
   'integration:connection:read': 'integration:connection:read',
+  'integration:dashboard:admin': 'integration:dashboard:admin',
+  'integration:dashboard:read': 'integration:dashboard:read',
   'integration:erp:read': 'integration:erp:read',
   'integration:event:read': 'integration:event:read',
   'integration:lims:read': 'integration:lims:read',
@@ -586,6 +599,9 @@ const PERMISSION_DEFS: Record<string, string> = {
   // 'lowcode:form:read': 'lowcode:form:read',
   // 'lowcode:page:read': 'lowcode:page:read',
   // 'lowcode:workflow:read': 'lowcode:workflow:read',
+
+  // master (1 codes)
+  'master:data-asset:read': 'master:data-asset:read',
 
   // mes (29 codes)
   'mes:analytics:read': 'mes:analytics:read',
@@ -638,6 +654,9 @@ const PERMISSION_DEFS: Record<string, string> = {
   'monitor:metric:read': 'monitor:metric:read',
   'monitor:rule:read': 'monitor:rule:read',
 
+  // notification (1 codes)
+  'notification:dashboard:read': 'notification:dashboard:read',
+
   // oa (6 codes)
   'oa:announcement:read': 'oa:announcement:read',
   'oa:dashboard:read': 'oa:dashboard:read',
@@ -667,9 +686,11 @@ const PERMISSION_DEFS: Record<string, string> = {
   'pdm:step:read': 'pdm:step:read',
   'pdm:version:read': 'pdm:version:read',
 
-  // pm (8 codes)
+  // pm (10 codes)
   'pm:contract:create': 'pm:contract:create',
   'pm:contract:read': 'pm:contract:read',
+  'pm:dashboard:read': 'pm:dashboard:read',
+  'pm:dashboard:write': 'pm:dashboard:write',
   'pm:project:create': 'pm:project:create',
   'pm:project:read': 'pm:project:read',
   'pm:report:read': 'pm:report:read',
@@ -677,10 +698,11 @@ const PERMISSION_DEFS: Record<string, string> = {
   'pm:task:read': 'pm:task:read',
   'pm:template:read': 'pm:template:read',
 
-  // qms (11 codes)
+  // qms (12 codes)
   'qms:analytics:read': 'qms:analytics:read',
   'qms:apqp:read': 'qms:apqp:read',
   'qms:audit:read': 'qms:audit:read',
+  'qms:dashboard:read': 'qms:dashboard:read',
   'qms:eightd:read': 'qms:eightd:read',
   'qms:fmea:read': 'qms:fmea:read',
   'qms:inspection:read': 'qms:inspection:read',
@@ -805,8 +827,11 @@ const PERMISSION_DEFS: Record<string, string> = {
   'wms:warehouse:read': 'wms:warehouse:read',
   'wms:wavepick:read': 'wms:wavepick:read',
 
-  // workflow (8 codes)
+  // workflow (11 codes)
   'workflow:approval:read': 'workflow:approval:read',
+  'workflow:dashboard:admin': 'workflow:dashboard:admin',
+  'workflow:dashboard:read': 'workflow:dashboard:read',
+  'workflow:dashboard:write': 'workflow:dashboard:write',
   'workflow:definition:read': 'workflow:definition:read',
   'workflow:definition:write': 'workflow:definition:write',
   'workflow:instance:read': 'workflow:instance:read',

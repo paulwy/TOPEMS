@@ -13,8 +13,16 @@ const ALIAS_EXCEPTIONS = new Set([
   'analytics',
 ]);
 
+// 已知“独立插件已不存在”的服务：plugin.yaml 缺失为设计状态（仅告警，--strict 下豁免）。
+// - monitor：既有基线豁免
+// - aps / feedback：V2026.08 已合并归档（aps→mes 的 aps_scheduling/aps_compat 模块，feedback→ticket
+//   的 customer_feedback 类型；见 config/services.yaml 第 273/309 行注释，代码归档 svc/_archive/）。
+//   GROUP2_SERVICES 清单尚未同步移除（在 lib/shared-core/src/service_port.rs，归后端组维护），
+//   此处登记其归档事实，避免门禁误报；待 .rs 清单移除后可从本白名单删除。
 const PLUGIN_MISSING_ALLOWLIST = new Set([
   'monitor',
+  'aps',
+  'feedback',
 ]);
 
 function parseArgs(argv) {

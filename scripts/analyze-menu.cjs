@@ -418,25 +418,67 @@ function parseModuleConfig(filePath) {
   const rmOrder = pickProp(rmObjStr, 'order');
   const rmPermission = pickProp(rmObjStr, 'permission');
 
-  // 提取 routes 数组内的各项
-  // 定位 routes: [ ... ] 的内部内容 (用括号计数)
-  const routesStartIdx = rmObjStr ? rmObjStr.indexOf('routes') : -1;
-  let routesArrStr = '';
-  if (routesStartIdx >= 0) {
-    let i = routesStartIdx;
-    while (i < rmObjStr.length && rmObjStr[i] !== '[') i++;
-    if (rmObjStr[i] === '[') {
-      i++;
-      let depth = 1;
-      while (i < rmObjStr.length && depth > 0) {
-        const ch = rmObjStr[i];
-        if (ch === '[') depth++;
-        else if (ch === ']') depth--;
-        if (depth > 0) routesArrStr += ch;
-        i++;
+  // 字符串感知的方括号/圆括号平衡扫描：返回 openIdx（'['）到匹配 ']' 之间的内容
+  function extractBracketedBody(text, openIdx) {
+    let depth = 0,
+      inStr = null,
+      inTpl = 0;
+    for (let i = openIdx; i < text.length; i++) {
+      const c = text[i];
+      const prev = i > 0 ? text[i - 1] : '';
+      if (prev !== '\\') {
+        if (inTpl > 0) {
+          if (c === '`') inTpl--;
+          else if (c === '$' && text[i + 1] === '{') {
+            inTpl++;
+            i++;
+          }
+          continue;
+        }
+        if (inStr) {
+          if (c === inStr) inStr = null;
+          continue;
+        }
+        if (c === '"' || c === "'") {
+          inStr = c;
+          continue;
+        }
+        if (c === '`') {
+          inTpl = 1;
+          continue;
+        }
+        if (c === '[') depth++;
+        else if (c === ']') {
+          depth--;
+          if (depth === 0) return text.slice(openIdx + 1, i);
+        }
       }
     }
+    return '';
   }
+
+  // 从 config 对象中提取 routes/navItems 字段值；若为命名数组引用（如 `routes: adminRoutes,`），
+  // 再回到 src 中定位 `const adminRoutes: RouteConfigV2[] = [ ... ]` 取数组体
+  function extractNamedArrayBody(fieldRaw, containerObjStr, fieldIdx) {
+    if (!fieldRaw) return '';
+    const trimmed = fieldRaw.trim();
+    if (trimmed.startsWith('[')) {
+      const openIdx = containerObjStr.indexOf('[', fieldIdx);
+      return openIdx >= 0 ? extractBracketedBody(containerObjStr, openIdx) : '';
+    }
+    const idm = trimmed.match(/^(\w+)$/);
+    if (idm) {
+      const arrRe = new RegExp('const\\s+' + idm[1] + '\\s*(?::[^=]*)?=\\s*\\[');
+      const am = src.match(arrRe);
+      if (am) return extractBracketedBody(src, am.index + am[0].length - 1);
+    }
+    return '';
+  }
+
+  // 提取 routes 数组内的各项（v2：可能内联数组，也可能 routes: <命名数组>）
+  const routesStartIdx = rmObjStr ? rmObjStr.indexOf('routes') : -1;
+  const routesFieldRaw = rmObjStr ? extractTopLevelPropertyValue(rmObjStr, 'routes') : null;
+  let routesArrStr = extractNamedArrayBody(routesFieldRaw, rmObjStr, routesStartIdx);
 
   // 用简单正则拆分 routes 数组中的每个 route 对象 (按层级)
   function splitTopLevelObjects(arrStr) {
@@ -465,7 +507,125 @@ function parseModuleConfig(filePath) {
     return objs;
   }
 
-  const routeObjStrs = splitTopLevelObjects(routesArrStr);
+  // v2 结构兼容：routes 数组元素可能是内联对象（旧），也可能是命名 const 引用（如 apsDashboardRoute，
+  // v2 重构后路由对象以独立 `const xxxRoute: RouteConfigV2<...> = {...}` 声明，再在 routes 数组里按名引用）。
+  function splitTopLevelEntries(arrStr) {
+    const entries = [];
+    let depth = 0,
+      inStr = null,
+      inTpl = 0,
+      start = 0;
+    for (let i = 0; i < arrStr.length; i++) {
+      const c = arrStr[i];
+      const prev = i > 0 ? arrStr[i - 1] : '';
+      if (prev !== '\\') {
+        if (inTpl > 0) {
+          if (c === '`') inTpl--;
+          else if (c === '$' && arrStr[i + 1] === '{') {
+            inTpl++;
+            i++;
+          }
+          continue;
+        }
+        if (inStr) {
+          if (c === inStr) inStr = null;
+          continue;
+        }
+        if (c === '"' || c === "'") {
+          inStr = c;
+          continue;
+        }
+        if (c === '`') {
+          inTpl = 1;
+          continue;
+        }
+        // 跳过行注释 // ... 与块注释 /* ... */（数组体内的分区注释不应作为条目）
+        if (c === '/' && arrStr[i + 1] === '/') {
+          while (i < arrStr.length && arrStr[i] !== '\n') i++;
+          continue;
+        }
+        if (c === '/' && arrStr[i + 1] === '*') {
+          i += 2;
+          while (i < arrStr.length && !(arrStr[i] === '*' && arrStr[i + 1] === '/')) i++;
+          i++;
+          continue;
+        }
+        if (c === '{' || c === '[' || c === '(') depth++;
+        else if (c === '}' || c === ']' || c === ')') depth--;
+        else if (c === ',' && depth === 0) {
+          entries.push(arrStr.slice(start, i));
+          start = i + 1;
+        }
+      }
+    }
+    entries.push(arrStr.slice(start));
+    // 扫描时注释仅用于跳过切分，条目原文仍含注释，统一剥除后再识别（数组体内无含 // 的字符串字面量）
+    return entries
+      .map((s) => s.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '').trim())
+      .filter(Boolean);
+  }
+
+  // 从源文件中定位 `const <name>: SomeType<...> = { ... }` 的对象字面量；
+  // 若该 const 是别名声明（`const xxxRoute: Type = yyyRoute as Type;`），递归解析被别名引用的 const
+  function extractNamedConstObject(srcText, constName, seen) {
+    seen = seen || new Set();
+    if (seen.has(constName)) return null;
+    seen.add(constName);
+    // 类型注解可选：v2 中存在 `const reportViewerRoute = { ... } as RouteConfigV2<...>`（无注解）的写法
+    const re = new RegExp('const\\s+' + constName + '\\s*(?::[^=]*)?=\\s*\\{');
+    const m = srcText.match(re);
+    if (m) {
+      const braceStart = m.index + m[0].length - 1;
+      let depth = 0,
+        inStr = null,
+        inTpl = 0;
+      for (let i = braceStart; i < srcText.length; i++) {
+        const c = srcText[i];
+        const prev = i > 0 ? srcText[i - 1] : '';
+        if (prev !== '\\') {
+          if (inTpl > 0) {
+            if (c === '`') inTpl--;
+            else if (c === '$' && srcText[i + 1] === '{') {
+              inTpl++;
+              i++;
+            }
+            continue;
+          }
+          if (inStr) {
+            if (c === inStr) inStr = null;
+            continue;
+          }
+          if (c === '"' || c === "'") {
+            inStr = c;
+            continue;
+          }
+          if (c === '`') {
+            inTpl = 1;
+            continue;
+          }
+          if (c === '{') depth++;
+          else if (c === '}') {
+            depth--;
+            if (depth === 0) return srcText.slice(braceStart, i + 1);
+          }
+        }
+      }
+      return null;
+    }
+    const aliasRe = new RegExp('const\\s+' + constName + '\\s*:[^=]*=\\s*([A-Za-z_$][\\w$]*)\\s+as\\b');
+    const am = srcText.match(aliasRe);
+    if (am) return extractNamedConstObject(srcText, am[1], seen);
+    return null;
+  }
+
+  const routeObjStrs = splitTopLevelEntries(routesArrStr)
+    .map((entry) => {
+      if (entry.startsWith('{')) return entry; // 旧结构：内联 route 对象
+      const idm = entry.match(/^(\w+)$/);
+      if (idm) return extractNamedConstObject(src, idm[1]) || ''; // v2：命名 route const 引用
+      return '';
+    })
+    .filter(Boolean);
 
   const routes = routeObjStrs.map((objStr, idx) => {
     // 使用 extractTopLevelPropertyValue 精准提取
@@ -546,24 +706,10 @@ function parseModuleConfig(filePath) {
   const navSuite = pickProp(navObjStr, 'suite') || rmSuite;
   const navOrder = pickProp(navObjStr, 'order') || rmOrder;
 
-  // 提取 navItems 数组
+  // 提取 navItems 数组（v2 同 routes：可能内联数组，也可能 navItems: <命名数组>）
   const navItemsStartIdx = navObjStr ? navObjStr.indexOf('navItems') : -1;
-  let navItemsArrStr = '';
-  if (navItemsStartIdx >= 0) {
-    let i = navItemsStartIdx;
-    while (i < navObjStr.length && navObjStr[i] !== '[') i++;
-    if (navObjStr[i] === '[') {
-      i++;
-      let depth = 1;
-      while (i < navObjStr.length && depth > 0) {
-        const ch = navObjStr[i];
-        if (ch === '[') depth++;
-        else if (ch === ']') depth--;
-        if (depth > 0) navItemsArrStr += ch;
-        i++;
-      }
-    }
-  }
+  const navItemsFieldRaw = navObjStr ? extractTopLevelPropertyValue(navObjStr, 'navItems') : null;
+  let navItemsArrStr = extractNamedArrayBody(navItemsFieldRaw, navObjStr, navItemsStartIdx);
 
   const navItemObjStrs = splitTopLevelObjects(navItemsArrStr);
   function extractStringProp(objStr, propName, fromI18n = false) {
