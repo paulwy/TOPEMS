@@ -16,6 +16,7 @@ use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cach
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::ListResponse;
+use topems_shared_event::event::commit_retry;
 use topems_shared_event::event::EventType;
 use topems_shared_event::event::HrmEmployeeCreatedPayload;
 use topems_shared_event::event::MasterDataAction;
@@ -401,14 +402,21 @@ pub async fn create_employee(
                         email: emp_email,
                         department_id: dept_id,
                     };
+                    // D6：create_employee 已落库（pool 自动提交），此处仅发布；失败入 ZSET 重试队列。
                     if let Err(e) = publisher
-                        .publish_event(EventType::HrmEmployeeCreated, payload)
+                        .publish_event(EventType::HrmEmployeeCreated, payload.clone())
                         .await
                     {
                         tracing::warn!(
-                            "[hrm] HrmEmployeeCreated 事件发布失败（graceful fallback）: {}",
+                            "[hrm] HrmEmployeeCreated 事件发布失败: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed(
+                            "hrm",
+                            EventType::HrmEmployeeCreated,
+                            &payload,
+                        )
+                        .await;
                     } else {
                         tracing::info!(
                             "[hrm] HrmEmployeeCreated 事件发布成功 - employee_id={}",
@@ -518,6 +526,14 @@ pub async fn update_employee(
     let result = service.update_employee(&id, req, &mut *txn).await;
 
     if result.code == 200 {
+        // D6（对齐 erp c843ad423）：update_employee 写 guard 事务但此前缺显式 commit，
+        // UPDATE 随 Drop 回滚而事件已发=幽灵事件。先 commit，成功后再清缓存/发事件。
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("更新员工事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
         for k in employee_cache_keys_all_locales(&tenant_id, &id) {
             state.employee_cache.remove(&k).await;
         }
@@ -534,7 +550,21 @@ pub async fn update_employee(
                     )
                     .await
                 {
-                    tracing::warn!("发布缓存失效事件失败: {}", e);
+                    tracing::warn!("发布缓存失效事件失败: {}，入重试队列", e);
+                    let payload = topems_shared_event::event::CacheInvalidatedPayload {
+                        source_service: "hrm".to_string(),
+                        source_instance: format!("retry-{}", std::process::id()),
+                        cache_key_pattern: "hrm:employee:*".to_string(),
+                        invalidation_level: "pattern".to_string(),
+                        reason: Some("employee_updated".to_string()),
+                        invalidated_at: chrono::Utc::now(),
+                    };
+                    commit_retry::push_retry_typed(
+                        "hrm",
+                        EventType::CacheInvalidated,
+                        &payload,
+                    )
+                    .await;
                 }
             });
         }
@@ -647,6 +677,14 @@ pub async fn delete_employee(
     let result = service.delete_employee(&id, &mut *txn).await;
 
     if result.code == 200 {
+        // D6（对齐 erp c843ad423）：delete_employee 写 guard 事务但此前缺显式 commit，
+        // 软删随 Drop 回滚而事件已发=幽灵事件。先 commit，成功后再清缓存/发事件。
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("删除员工事务提交失败: {}", e);
+                return Json(ApiResponse::<String>::error(500, "事务提交失败"));
+            }
+        }
         for k in employee_cache_keys_all_locales(&tenant_id, &id) {
             state.employee_cache.remove(&k).await;
         }
@@ -666,7 +704,21 @@ pub async fn delete_employee(
                     )
                     .await
                 {
-                    tracing::warn!("发布缓存失效事件失败: {}", e);
+                    tracing::warn!("发布缓存失效事件失败: {}，入重试队列", e);
+                    let payload = topems_shared_event::event::CacheInvalidatedPayload {
+                        source_service: "hrm".to_string(),
+                        source_instance: format!("retry-{}", std::process::id()),
+                        cache_key_pattern: "hrm:employee:*".to_string(),
+                        invalidation_level: "pattern".to_string(),
+                        reason: Some("employee_deleted".to_string()),
+                        invalidated_at: chrono::Utc::now(),
+                    };
+                    commit_retry::push_retry_typed(
+                        "hrm",
+                        EventType::CacheInvalidated,
+                        &payload,
+                    )
+                    .await;
                 }
             });
         }

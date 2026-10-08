@@ -1009,17 +1009,24 @@ pub async fn generate_payroll_voucher(
         let publisher = publisher.clone();
         let vn = voucher_number.clone();
         tokio::spawn(async move {
+            // D6：工资发放数据已落库（pay_payroll_run 此前提交），此处仅发布；失败入 ZSET 重试队列。
             if let Err(e) = publisher
                 .publish_event(
                     topems_shared_event::event::EventType::HrmPayrollPosted,
-                    event_payload,
+                    event_payload.clone(),
                 )
                 .await
             {
                 tracing::error!(
-                    "[hrm] HrmPayrollPosted 事件发布失败（凭证将滞留，需人工重发/补事件）: {}",
+                    "[hrm] HrmPayrollPosted 事件发布失败: {}，入重试队列",
                     e
                 );
+                topems_shared_event::event::commit_retry::push_retry_typed(
+                    "hrm",
+                    topems_shared_event::event::EventType::HrmPayrollPosted,
+                    &event_payload,
+                )
+                .await;
             } else {
                 tracing::info!(
                     "[hrm] HrmPayrollPosted 事件发布成功 - payroll_run_id={}, voucher_number={}",

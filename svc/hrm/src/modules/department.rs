@@ -386,6 +386,14 @@ pub async fn update_department(
 
     match result {
         Ok(department) => {
+            // D6（对齐 erp c843ad423）：先 commit——此前缺显式提交，UPDATE 随 Drop 回滚
+            // 而 MDM 事件已发=幽灵事件。commit 成功后再发布。
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("更新部门事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             // 发布 MDM 主数据事件
             let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
             let dept_id = department.id;
@@ -461,6 +469,14 @@ pub async fn delete_department(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            // D6（对齐 erp c843ad423）：先 commit——此前缺显式提交，软删随 Drop 回滚
+            // 而 MDM 删除事件已发=幽灵事件。commit 成功后再发布。
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("删除部门事务提交失败: {}", e);
+                    return Json(ApiResponse::<String>::error(500, "事务提交失败"));
+                }
+            }
             // 发布 MDM 主数据事件
             let mdm_service = crate::services::mdm_event_service::MdmEventService::new();
             let dept_id = id;
