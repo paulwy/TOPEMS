@@ -1,5 +1,7 @@
 # TOPEMS 变更日志
 
+> 本文件为**产品对外版本**变更日志（语义化版本 5.x）。**开发版本日志**（V 系列）见 [docs/changelog/CHANGELOG.md](./docs/changelog/CHANGELOG.md)。
+
 本文档记录 TOPEMS 项目所有版本的重要变更。
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
