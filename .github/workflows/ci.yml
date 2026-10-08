@@ -184,7 +184,7 @@ jobs:
   rust-smoke:
     name: Rust Smoke (Phase 1.0 — 5 standalone services)
     needs: changes
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     # lightweight 准入：不依赖 DB/Redis/sqlx-cli/nextest，改动导致 use 解析失败或
     # crate 边界缺失时最快 <3min 失败反馈；后续 lint/test 再做深度校验。
@@ -210,7 +210,7 @@ jobs:
   rust-lint:
     name: Rust Lint
     needs: changes
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -256,7 +256,7 @@ jobs:
   # ──────────────────────────────────────────────────────────────────────────
   config-registry-gate:
     name: Gate M · 配置单一真相源三向校验 (workspace registry)
-    if: !inputs.skip_rust
+    if: inputs.skip_rust != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -308,7 +308,7 @@ jobs:
   cargo-check:
     name: Gate L · cargo check --workspace --all-targets -D warnings
     needs: changes
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -329,7 +329,7 @@ jobs:
   mes-online-check:
     name: Gate · mes online compile (real schema snapshot)
     needs: changes
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -374,7 +374,7 @@ jobs:
   date-type-audit:
     name: Gate · date-type-audit (date type contract)
     needs: changes
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -394,7 +394,7 @@ jobs:
   schema-defense-drift:
     name: Gate · schema-defense-drift (TABLE_DEFS vs inline CREATE)
     needs: changes
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -463,7 +463,7 @@ jobs:
   rust-test:
     name: Rust Tests
     needs: [changes, rust-lint, cargo-check]
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
 
     services:
@@ -629,7 +629,7 @@ jobs:
   rust-audit:
     name: Rust Security Audit
     needs: [changes, rust-test]
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -657,7 +657,7 @@ jobs:
   cargo-deny:
     name: Cargo Deny (License + Security + Bans)
     needs: [changes, rust-test]
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -2104,7 +2104,7 @@ jobs:
   schema-boundary-gate:
     name: Gate M · Schema Boundary Static Gate (cross-schema SQL lint)
     needs: changes
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -2136,7 +2136,7 @@ jobs:
   schema-defense-gate:
     name: Schema Defense Gate（26 services · strict mode）
     needs: [changes, rust-lint]
-    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && !inputs.skip_rust
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
@@ -2390,7 +2390,7 @@ jobs:
   slow-db-startup-test:
     name: Slow DB Startup Test (regression)
     needs: [changes, schema-defense-gate]
-    if: always() && needs.changes.result == 'success' && (needs.changes.outputs.ci == 'true' || github.event_name == 'schedule') && !inputs.skip_rust
+    if: always() && needs.changes.result == 'success' && (needs.changes.outputs.ci == 'true' || github.event_name == 'schedule') && inputs.skip_rust != true
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
