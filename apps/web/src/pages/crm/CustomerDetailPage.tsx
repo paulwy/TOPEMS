@@ -961,8 +961,12 @@ const CustomerDetailPage: React.FC = () => {
           onChange={(e) => setInvoiceDraft({ ...invoiceDraft, invoice_type: e.target.value })}
         >
           <MenuItem value='tax'>{t('crm.customerDetail.invoice_type_tax')}</MenuItem>
-          <MenuItem value='普通发票'>{t('crm.customerDetail.invoice_type_normal')}</MenuItem>
-          <MenuItem value='专用发票'>{t('crm.customerDetail.invoice_type_special')}</MenuItem>
+          <MenuItem value={t('crm.customerDetail.invoice_type_normal')}>
+            {t('crm.customerDetail.invoice_type_normal')}
+          </MenuItem>
+          <MenuItem value={t('crm.customerDetail.invoice_type_special')}>
+            {t('crm.customerDetail.invoice_type_special')}
+          </MenuItem>
         </TextField>
       </DialogContent>
       <DialogActions>

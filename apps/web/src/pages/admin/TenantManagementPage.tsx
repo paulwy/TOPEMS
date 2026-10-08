@@ -56,9 +56,9 @@ const statusConfig: Record<
 };
 
 const planConfig: Record<TenantPlan, { labelKey: string; variant: 'default' | 'info' | 'cyan' }> = {
-  basic: { labelKey: 'admin.tenantOnboarding.基础版', variant: 'default' },
-  professional: { labelKey: 'admin.tenantOnboarding.专业版', variant: 'info' },
-  enterprise: { labelKey: 'admin.tenantOnboarding.企业版', variant: 'cyan' },
+  basic: { labelKey: 'admin.tenant_management_page.plan_basic', variant: 'default' },
+  professional: { labelKey: 'admin.tenant_management_page.plan_professional', variant: 'info' },
+  enterprise: { labelKey: 'admin.tenant_management_page.plan_enterprise', variant: 'cyan' },
 };
 
 const TenantManagementPage: React.FC = () => {
@@ -485,9 +485,9 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
             value={formData.plan || 'basic'}
             onChange={(e) => handleChange('plan', e.target.value)}
             options={[
-              { value: 'basic', label: t('admin.tenantOnboarding.基础版') },
-              { value: 'professional', label: t('admin.tenantOnboarding.专业版') },
-              { value: 'enterprise', label: t('admin.tenantOnboarding.企业版') },
+              { value: 'basic', label: t('admin.tenant_management_page.plan_basic') },
+              { value: 'professional', label: t('admin.tenant_management_page.plan_professional') },
+              { value: 'enterprise', label: t('admin.tenant_management_page.plan_enterprise') },
             ]}
           />
         </div>
@@ -560,7 +560,7 @@ const TenantForm: React.FC<TenantFormProps> = ({ initialData, onSubmit, onCancel
         >
           {initialData
             ? t('admin.tenant_management_page.btn_save_edit')
-            : t('admin.tenantOnboarding.创建租户')}
+            : t('admin.tenant_management_page.create_tenant')}
         </Button>
       </div>
     </form>

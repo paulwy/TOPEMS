@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { TFunction } from 'i18next';
 import { Settings, Mail, MessageSquare, FileText, RefreshCw } from 'lucide-react';
 
 import {
@@ -20,15 +21,15 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['admin', 'system-settings'];
 
-// 默认设置
-const defaultSettings = {
+// 默认设置（文案经 i18n 取数；模块求值早于资源就绪，故构造逻辑下沉为工厂函数，组件内用 t() 调用）
+const buildDefaultSettings = (t: TFunction) => ({
   basic: {
-    systemName: 'TOPEMS 工业操作系统',
+    systemName: t('admin.system_settings_page.defaults.system_name'),
     systemLogo: '',
-    companyName: '示例科技有限公司',
+    companyName: t('admin.system_settings_page.defaults.company_name'),
     contactEmail: 'admin@example.com',
     contactPhone: '400-123-4567',
-    address: '北京市朝阳区示例路 123 号',
+    address: t('admin.system_settings_page.defaults.address'),
   },
   mail: {
     enabled: true,
@@ -38,7 +39,7 @@ const defaultSettings = {
     smtpPassword: '',
     useTLS: true,
     fromEmail: 'noreply@example.com',
-    fromName: 'TOPEMS 系统通知',
+    fromName: t('admin.system_settings_page.defaults.from_name'),
   },
   sms: {
     enabled: false,
@@ -54,9 +55,9 @@ const defaultSettings = {
     enableOperationLog: true,
     enableSecurityLog: true,
   },
-};
+});
 
-type SettingsType = typeof defaultSettings;
+type SettingsType = ReturnType<typeof buildDefaultSettings>;
 type TabKey = keyof SettingsType;
 
 const tabsConfig = [
@@ -69,6 +70,7 @@ const tabsConfig = [
 const SystemSettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const defaultSettings = useMemo(() => buildDefaultSettings(t), [t]);
   const [activeTab, setActiveTab] = useState<TabKey>('basic');
   const [settings, setSettings] = useState<SettingsType>(defaultSettings);
   const [toasts, setToasts] = useState<Toast[]>([]);

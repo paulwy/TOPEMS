@@ -77,16 +77,19 @@ const mapApiSalesOrders = (apiOrders: ApiSalesOrder[]): SalesOrder[] => {
 
 // Mock 数据（API 不可用时的 fallback）在组件内用 t() 构造，见 mockSalesOrders
 
-const formatAmount = (value: number) => {
-  if (value >= 10000) {
-    return `¥${(value / 10000).toFixed(1)}万`;
-  }
-  return `¥${value.toLocaleString('zh-CN')}`;
-};
-
 const ErpSalesOrderRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // 金额格式化（含"万"单位，需 t() 取数，故置于组件内）
+  const formatAmount = (value: number) => {
+    if (value >= 10000) {
+      return t('erp.erp_sales_order_redesign.format.amount_wan', {
+        v0: (value / 10000).toFixed(1),
+      });
+    }
+    return `¥${value.toLocaleString('zh-CN')}`;
+  };
 
   const mockSalesOrders: SalesOrder[] = [
     {
@@ -779,8 +782,11 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
               onClick={() => {
                 const formData: Partial<SalesOrder> = {
                   customer_name:
-                    (document.querySelector('input[placeholder*="客户名称"]') as HTMLInputElement)
-                      ?.value || '',
+                    (
+                      document.querySelector(
+                        `input[placeholder*="${t('erp.erp_sales_order_redesign.form.customer_name')}"]`
+                      ) as HTMLInputElement
+                    )?.value || '',
                   total_amount: Number(
                     (document.querySelector('input[type="number"]') as HTMLInputElement)?.value || 0
                   ),

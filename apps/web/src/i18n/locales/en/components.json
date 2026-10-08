@@ -6331,6 +6331,7 @@
   "demo.stat.monthly_output": "Monthly Output",
   "demo.stat.delivery_rate": "On-time Delivery Rate",
   "demo.stat.quality_rate": "Quality Pass Rate",
+  "demo.stat.unit_piece": "pcs",
   "demo.enter": "Enter →",
   "demo.section.realtime_alerts": "Real-time Alerts",
   "demo.alert_level.error": "Error",

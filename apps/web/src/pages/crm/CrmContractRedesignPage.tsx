@@ -78,16 +78,17 @@ const formatDateTime = (value?: string) => {
   return value;
 };
 
-const formatAmount = (value: number) => {
-  if (value >= 10000) {
-    return `¥${(value / 10000).toFixed(1)}万`;
-  }
-  return `¥${value.toLocaleString('zh-CN')}`;
-};
-
 const CrmContractRedesignPage: React.FC = () => {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+
+  // 金额格式化（含"万"单位，需 t() 取数，故置于组件内）
+  const formatAmount = (value: number) => {
+    if (value >= 10000) {
+      return t('crm.contract_redesign.format.amount_wan', { v0: (value / 10000).toFixed(1) });
+    }
+    return `¥${value.toLocaleString('zh-CN')}`;
+  };
 
   const mockContracts: Contract[] = [
     {

@@ -7797,5 +7797,13 @@
   "admin.tenant_management_page.form_plan": "Subscription Plan",
   "admin.tenant_management_page.form_status": "Status",
   "admin.tenant_management_page.form_quota": "User Quota",
-  "admin.tenant_management_page.btn_save_edit": "Save Changes"
+  "admin.tenant_management_page.btn_save_edit": "Save Changes",
+  "admin.tenant_management_page.plan_basic": "Basic",
+  "admin.tenant_management_page.plan_professional": "Professional",
+  "admin.tenant_management_page.plan_enterprise": "Enterprise",
+  "admin.tenant_management_page.create_tenant": "Create Tenant",
+  "admin.system_settings_page.defaults.system_name": "TOPEMS Industrial Operating System",
+  "admin.system_settings_page.defaults.company_name": "Example Technology Co., Ltd.",
+  "admin.system_settings_page.defaults.address": "123 Example Road, Chaoyang District, Beijing",
+  "admin.system_settings_page.defaults.from_name": "TOPEMS System Notification"
 }

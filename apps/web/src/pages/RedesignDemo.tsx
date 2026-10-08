@@ -164,7 +164,7 @@ const RedesignDemo: React.FC = () => {
           <StatTile
             label={t('demo.stat.monthly_output')}
             value='124,582'
-            unit='件'
+            unit={t('demo.stat.unit_piece')}
             trend='up'
             trendValue='+5.1%'
             icon={Factory}

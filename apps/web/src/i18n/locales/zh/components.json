@@ -2994,6 +2994,7 @@
   "demo.stat.monthly_output": "本月产量",
   "demo.stat.delivery_rate": "订单准时交付率",
   "demo.stat.quality_rate": "质量合格率",
+  "demo.stat.unit_piece": "件",
   "demo.enter": "进入 →",
   "demo.section.realtime_alerts": "实时告警",
   "demo.alert_level.error": "错误",
