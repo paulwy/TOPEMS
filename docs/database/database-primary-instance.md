@@ -34,7 +34,7 @@
 |---|---|
 | 本地 psql（生产主库） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems` |
 | 验证库 psql（5433） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6） |
-| 迁移执行（生产/开发） | `DATABASE_URL=postgres://topems:topems@localhost:5432/topems sqlx migrate run`（topems_dev 用同名 5432 库覆盖 DATABASE_URL） |
+| 迁移执行（生产/开发） | `DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems sqlx migrate run`（topems_dev 用同名 5432 库覆盖 DATABASE_URL） |
 | 一致性检查 | `bash scripts/db/check-consistency.sh` |
 
 ## 5. 相关文件
@@ -137,8 +137,8 @@ bash scripts/db/check-consistency.sh
 
 ### 7.3 连接口径（应用/脚本）
 
-- **生产/部署**：`postgres://topems:topems@localhost:5432/topems`（脚本默认 PGPORT=5432 已对齐）
-- **开发**：`postgres://topems:topems@localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权）
+- **生产/部署**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems`（脚本默认 PGPORT=5432 已对齐）
+- **开发**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权）
 - **5433 验证库**：仅迁移链重放/账本核对（§6 命令），不承载应用
 
 ### 7.4 备份资产（2026-10-08，统一存放 `backups/`）

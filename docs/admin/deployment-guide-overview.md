@@ -226,7 +226,7 @@ docker compose down -v
 DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems
 
 # Docker 环境
-DATABASE_URL=postgres://topems:topems@postgres:5432/topems
+DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@postgres:5432/topems
 
 # 生产环境
 DATABASE_URL=postgres://topems:secure_password@db.example.com:5432/topems
@@ -557,7 +557,7 @@ cargo build --release --workspace
 
 | 变量名 | 说明 | 默认值 |
 |--------|------|--------|
-| DATABASE_URL | 数据库连接URL | postgres://topems:topems@localhost:5432/topems |
+| DATABASE_URL | 数据库连接URL | postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems |
 | REDIS_URL | Redis连接URL | redis://localhost:6379 |
 | JWT_SECRET | JWT密钥 | - |
 | JWT_EXPIRY_HOURS | JWT过期时间（小时） | 24 |
