@@ -1411,3 +1411,34 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - `curl /api/core/flow/tasks/{不存在}` → `code:404, message:任务不存在`（1d 生效）
 - WCS smoke 复验待提交前执行
 
+
+## ✅ 基线债修复批完成（2026-10-08）
+
+> 修复本地等价 CI 验证报告（docs/architecture/local-ci-equivalent-report-2026-10-08.md）11 FAIL 中的 8 项既有基线债（环境差异 3 项不归入：rust-audit rsa 上游、mes-online 本地 PG 推导、error-handling 他组 WIP）。三路并行、文件面互斥，本地 commit 未 push（task-3 已由协作线推至 origin/main）。
+
+### 三 commit（本地；task-3 已 push）
+
+| commit | task | 内容 |
+|---|---|---|
+| `01a12ff12` | task-3 路由清单 | menu-health（analyze-menu.cjs 支持 v2 路由形状 + permissions.ts 补 21 权限码，P1=52/R3=271→全 0 exit 0）；axum group2（aps/feedback 归档白名单，exit 0） |
+| `55e42679a` | task-1 后端 Rust | R3=9→0（9 handler 补 gate 标注）；R5=7→0（ai/wms 补 security）；api-dup（删 ai/routes.rs:147 陈旧 public /search）；allow-baseline 243→2196（v267 冻结后 6 周累积、clippy 承重、7 包 clippy exit 0 验证 known-good） |
+| `ca92d9c76` | task-2 前端 | frontend-audit 3 项（nav-route 改数据源 modules/index.ts + moduleMapping 补 aps/tms/master + unified-core 白名单；a11y 20 IconButton 补 aria-label）；i18n 25 处（8 转 i18n key + 合理豁免白名单）；component-naming（4 懒加载 chunk git mv 重命名）；console.log（TauriAuth 4 处→authLogger + JSDoc 示例改写 + runtime-protection 常量派生） |
+
+### 验证结论
+
+- 各 gate 修复后均 exit 0：perm-matrix-toolkit（R1-R7 全 0）、api-dup、allow-baseline、analyze-menu（T1/T2/P1/R3 全 0）、group2、nav-route、compare-api、a11y、scan-hardcoded、component-naming、console.log 裸 grep
+- cargo check 6 包 + clippy 7 包 exit 0；frontend lint + typecheck exit 0；lefthook 钩子全过
+- **R3=9 连带结论**：permission-matrix-guard 单测 4/4 绿（R3 9→0）；`pnpm test:shard:4` 61 文件/1782 passed/1 skipped exit 0；`pnpm test:coverage` exit 0 —— **frontend-test shard4 与 frontend-coverage 由红转绿**
+
+### 剩余仍红项（非本次范围，如实）
+
+- 环境差异 3：rust-audit（rsa RUSTSEC-2023-0071 无上游修复）、mes-online（本地 PG 推导 vs 离线缓存差异，CI ubuntu 下绿）、error-handling（他组 WIP 触发文件级判定，干净 checkout 应绿）
+- PARTIAL 2：lighthouse（headless NO_FCP，CI 步 || true 不阻断）、schema-defense --semantic（隔离空库 schema 不全）
+- SKIP 5：changes/changelog(tag)/desktop-build/slow-db(无 docker)/nightly-failure
+- component-naming 剩 3 个非阻断 warning（脚本固有正则局限）
+
+### 建议下一步
+
+- Billing 恢复后 CI 实跑预期：8 项基线债已清零，除上述环境差异/PARTIAL/SKIP 外应全绿
+- 基线债批本地 commit（55e42679a/ca92d9c76 未 push）待用户确认后 push（push 前先 fetch 核对 origin/main 进展）
+- allow-baseline 冻结基线 2196 建议纳入日常门禁：新增 #[allow] 即拦截
