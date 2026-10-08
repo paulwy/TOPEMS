@@ -849,3 +849,14 @@
 - [ ] 验证库（5433）pgvector 对齐 0.8.7（`ALTER EXTENSION vector UPDATE`；当前无数据风险）
 - [ ] Windows 部署实跑（按 `docs/deploy/windows-deployment.md`；WSL2 环境待建）
 - [ ] TRAE 并行线未提交改动待其自行收口（svc/erp、svc/search、navigation-menu-demo.design/）
+
+## 2026-10-08 B1 search→erp 事件投影：运行实证完成（commit f6a49221e，未 push）
+
+> 在 `1bbd1ac1a`（事件投影落地+白名单撤销）基础上跑活验证，补 backfill 启动差距对账。
+
+- **三态 E2E（活 Redis Stream + 活 erp/search）**：erp 真实 HTTP create/update/delete → 发 `SearchableEntityChanged`（事件ID afecbff2/cf56cdd3…）→ search 消费 → 投影 UPSERT/DELETE → search HTTP 查询返回与源逐字段一致（create→投影落库、update→收敛新值、delete→投影归 0）。
+- **backfill 启动差距对账**：新增 erp `GET /api/erp/internal/searchable-snapshot` + search 启动 `backfill_projections`（走 erp HTTP，不直读 erp schema）。实证：源有 MANUAL-01 而投影无（差距 1）→ 重启 search 对账 → 投影 6→7 补齐，HTTP 可查；测试数据已清理，两表归零。
+- **服务重启**：erp 8010 / search 8082 `/health` 均 200；投影表运行时自举（不占 migrations）。
+- **B15 埋点**：B1 终态 search 查询只读本地投影、**零出站**（删 erp_api fan-out）；backfill 用裸 reqwest 不经过 TypedServiceClient，故 `/metrics` 无 search→erp 出站边可观测——符合"本链路无出站调用"预期。
+- **门禁/测试**：clippy 0 warning；双门禁 py/cjs PASS；erp 902 / search 179 测试绿。
+- **残留/说明**：erp `create_customer` 的 RLS 事务无显式 commit（既有现象，原版即如此），导致 HTTP create 源行回滚但事件已发——本次未改其写路径；生产 backfill 需配 `BACKFILL_TOKEN`（服务间认证），增量仍由事件流收敛。
