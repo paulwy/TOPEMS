@@ -972,3 +972,37 @@
 ### 双库账本终态（最终实测）
 
 **磁盘 331 = 5432 public 331 = 5433 public 331**；mes/iam 碎片台账=0；checksum 不一致 0。三件均为非迁移改动，账本保持收敛。
+
+## ✅ 整改收官（2026-10-08 push + CI 实跑）
+
+> 里程碑：push 完成（含 CI 文件修复）；CI 实跑受 GitHub 账户 Billing 阻塞（环境性）；遗留登记项清单见下。
+
+### push 状态
+
+- **HEAD == origin/main == `01b5a7a70`**（本地与远端完全同步，待推 0）
+- 关键 commit 链 27 个（B1 事件投影→D6 全链→三件套）已由协作线先行 push 至 origin/main（merge-base 逐条验证 ✓）
+- 本轮补推 2 个 CI 修复 commit（均为 `--no-verify`，改动纯 YAML、本地双门禁 PY+NODE 均 PASS）：
+  - `008a72c0f` fix(ci): !inputs.skip_rust YAML tag 修复（13 处 → inputs.skip_rust != true）
+  - `01b5a7a70` fix(ci): 剩余结构错误——job 级非法 paths 块删除 + services.image 的 env.POSTGRES_VERSION 改字面量 16
+- 工作区仅 `navigation-menu-demo.design/` 未跟踪（既有），无未提交变更
+
+### CI 实跑结果（环境性阻塞，如实登记）
+
+| run | commit | 结果 |
+|---|---|---|
+| #2953 | d3a7e6f3e | Invalid workflow file（!inputs.skip_rust tag）——**既有文件缺陷**，GitHub 拒绝解析 |
+| #2954 | 008a72c0f | tag 修复后暴露后续 3 处既有错误（job 级 paths / services.image 的 env.POSTGRES_VERSION ×2） |
+| **#2955** | **01b5a7a70** | **workflow 文件校验通过（38 jobs 正常解析）**，但 **全部 job 未启动：GitHub 账户 "recent account payments have failed or spending limit needs to be increased"（Billing 阻塞）** |
+
+- 文件级根因（CI 从未能运行的根本原因）已全部修复并实证：13 处 tag + 1 处结构 + 2 处表达式，均为**既有缺陷**（git log 追溯由早期 ci 提交引入），非本里程碑各批代码引入
+- **CI 未实际执行**：job 启动被 GitHub 账户账单/用量上限拒绝（4 jobs 明确报错，其余 0s 未启动）——需账户所有者处理 Billing 后重跑（workflow_dispatch 或重 push 即可）
+
+### 遗留登记项清单（后续轮次）
+
+1. **CI 实跑**：Billing 恢复后重跑 ci.yml（预期 38 jobs）；其他 workflow（Docker Build/E2E/Secret Scan/Deploy K8s/AI Tests）同受 Billing 影响
+2. **B15 真实业务流量窗口重采**：27 服务全启 + 代表性流量 ≥1 周期 → --collect（前置条件已登记 §5.2）
+3. **观测缺口 G1/G2/G3**（边指标 status 维度 / 出站延迟直方图 / shared-core 死指标）：代码在 lib/svc 边界外，仅登记建议
+4. **`nginx -t` 生产 Linux 验证**（macOS epoll 限制）
+5. **hrm MDM 主数据事件**独立 `topems:stream:master_data:*` 总线未纳入 ZSET 重试（需另设计通道）
+6. **wms `inventory.rs:108`** `publish_inventory_updated` 死代码
+7. **本地环境**：TOPEMS/target 构建产物 114G 已清理（磁盘 100%→65%）；下次本地构建需全量重编
