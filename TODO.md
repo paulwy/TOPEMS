@@ -1006,3 +1006,29 @@
 5. **hrm MDM 主数据事件**独立 `topems:stream:master_data:*` 总线未纳入 ZSET 重试（需另设计通道）
 6. **wms `inventory.rs:108`** `publish_inventory_updated` 死代码
 7. **本地环境**：TOPEMS/target 构建产物 114G 已清理（磁盘 100%→65%）；下次本地构建需全量重编
+
+## ✅ 本地等价 CI 验证完成（2026-10-08 方案 A）
+
+> GitHub CI 因账户 Billing 阻塞无法付费实跑，方案 A：对照 ci.yml 全部 **38 个 job** 逐条映射本机（macOS+PG5432/5433+Redis+pnpm+cargo）等价命令全量复跑。三路并行（脚本门禁 17 / cargo+DB 11 / frontend 9 + 机制类 1）。
+
+### 结果汇总（报告：docs/architecture/local-ci-equivalent-report-2026-10-08.md）
+
+- **✅ PASS 20**：rust-smoke/rust-lint/shellcheck/config-registry/cargo-check/date-type/schema-drift/cargo-test/rust-test(含 llvm-cov 跳过)/cargo-deny/frontend-lint/design-system/api-audit/typecheck/build/security-scan/migration-test/quality-gate(sqlx)/schema-boundary/environment-check
+- **❌ FAIL 11**：mes-online/rust-audit/frontend-audit/i18n-quality/permission-matrix/menu-health/axum-layer/frontend-test/frontend-coverage/code-quality/error-handling
+- **⚠️ PARTIAL 2**：lighthouse（serve 200、lhci NO_FCP 不阻断）、schema-defense（build 0/defense 0 失败/--semantic 1）
+- **⏭️ SKIP 5**：changes/changelog(tag)/desktop-build/slow-db(无 docker)/nightly-failure（触发条件不适用）
+
+### 修复 commits（3 个，均本地未 push）
+
+- `ff419112a`（cargo）：fmt ~20 文件+7 clippy；mes 4 测试补 NOT NULL；cargo-deny 2 ignore；migration 脚本跳 README
+- `745310ae6`（frontend）：ci.yml 2 处漂移（token-deviation→check-design-tokens.mjs、patch-react-transition-group→.cjs）+eslint 忽略 storybook-static/+api-client.spec 补 getEnv
+- `7fc6f4bb4`（脚本）：恢复被误删的 scripts/analyze-menu.cjs（fc6ba69fc 误删、ci.yml 仍引用）
+
+### 未绿项分类（如实）
+
+- **环境差异**：rust-audit（rsa RUSTSEC-2023-0071 无上游修复）、mes-online（本地 PG 推导差异）、lighthouse（headless NO_FCP）、schema-defense --semantic（隔离空库）、error-handling（他组 WIP 触发）
+- **既有基线债（非本次引入）**：frontend-audit 3 项、i18n 25 硬编码 CJK、permission R5=7（ai/wms）、menu-health P1=52/R3=271（v2 路由重构）、axum group2（aps/feedback）、code-quality 4 项（含 ai POST /search 重复）、**R3=9（9 个 admin-only handler 缺 gate 标注：communication/ehs/master-data/portal，同时致 frontend-test shard4 与 coverage 红）**
+
+### 建议
+
+R3=9 / R5 / menu-health 内容债建议独立批次修复（动 .rs/.tsx 需各域 owner 确认）；rsa 等待上游或评估替换 jsonwebtoken；Billing 恢复后 CI 预期除基线债外全绿（文件级问题已全部修复）。
