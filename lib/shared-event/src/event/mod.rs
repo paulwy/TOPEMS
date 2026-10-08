@@ -8,6 +8,7 @@
 //! - [`dashboard::EventDashboardGenerator`]：事件治理仪表盘数据生成器
 //! - [`dead_letter_queue::DeadLetterQueue`] 增强管理 API：查看/重试/归档/统计
 
+pub mod commit_retry;
 pub mod dashboard;
 pub mod dead_letter_queue;
 pub mod delayed_message;
