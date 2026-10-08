@@ -28,6 +28,7 @@ pub struct UpdateAiSettingsRequest {
 /// 获取AI配置
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["ai:read"])),
     path = "/api/ai/settings",
     tag = "AI",
     responses(
@@ -115,6 +116,7 @@ pub async fn get_settings(State(state): State<AppState>) -> Json<Value> {
 /// 更新AI配置
 #[utoipa::path(
     put,
+    security(("BearerAuth" = ["ai:write"])),
     path = "/api/ai/settings",
     tag = "AI",
     request_body = UpdateAiSettingsRequest,

@@ -453,6 +453,7 @@ pub async fn get_email(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["communication:email:write"])),

@@ -438,6 +438,7 @@ pub struct FlowTrendResponse {
 /// 获取流量趋势（入库/出库数量和订单数）
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/analytics/flow-trend",
     tag = "WMS/analytics",
     params(
@@ -1008,6 +1009,7 @@ pub struct DashboardSummary {
 
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/api/wms/analytics/dashboard-summary",
     tag = "WMS Analytics",
     responses(
@@ -1108,6 +1110,7 @@ pub struct DailyTrendItem {
 /// 获取库存分布（按仓库）
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/analytics/inventory-distribution",
     tag = "WMS Analytics",
     responses(
@@ -1157,6 +1160,7 @@ pub async fn get_inventory_distribution(
 /// 获取库存类型分布（按物料类型）
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/analytics/inventory-types",
     tag = "WMS Analytics",
     responses(
@@ -1212,6 +1216,7 @@ pub async fn get_inventory_types(
 /// 获取每日出入库趋势（最近7天）
 #[utoipa::path(
     get,
+    security(("BearerAuth" = ["wms:read"])),
     path = "/analytics/daily-trend",
     tag = "WMS Analytics",
     responses(

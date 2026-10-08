@@ -1616,6 +1616,7 @@ pub async fn revoke_permission(
     Json(ApiResponse::success_no_data("权限已撤销"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),
@@ -1759,6 +1760,7 @@ pub async fn get_user_permissions(
     Json(ApiResponse::success(filtered, "用户权限列表"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:versioning:read"])),

@@ -234,6 +234,7 @@ pub async fn create_announcement(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["portal:announcement:admin"])),
@@ -282,6 +283,7 @@ pub async fn update_announcement(
     }
 }
 
+// gate: admin-only
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["portal:announcement:admin"])),

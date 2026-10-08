@@ -144,7 +144,6 @@ pub fn create_routes(
             get(crate::modules::ai_plugin::plugin_health_check),
         )
         .route("/health/detailed", get(health::health_check_detailed))
-        .route("/search", post(ai_handlers::ai_search))
         .route(
             "/metrics",
             get(move || async move {

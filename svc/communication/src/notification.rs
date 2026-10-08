@@ -205,6 +205,7 @@ pub async fn send_notification(
 }
 
 /// 广播通知（管理员使用）
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
@@ -1676,6 +1677,7 @@ pub async fn update_archive_config(
     }))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),
@@ -1877,6 +1879,7 @@ pub async fn get_template(
 }
 
 /// 创建模板
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["communication:notification:write"])),

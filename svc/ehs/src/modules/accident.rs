@@ -416,6 +416,7 @@ pub async fn delete_accident(
     Json(ApiResponse::success(serde_json::json!({}), "事故删除成功"))
 }
 
+// gate: admin-only
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:investigation:admin"])),
@@ -610,7 +611,6 @@ pub async fn close_accident(
         "事故已关闭",
     ))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:investigation:admin"])),
