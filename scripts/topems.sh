@@ -43,7 +43,9 @@ load_services_config() {
     local config_file="$SCRIPT_DIR/services.conf"
     if [ -f "$config_file" ]; then
         SERVICES_CONFIG=$(grep -v "^#" "$config_file" | grep -v "^$" | grep -v "CORE_SERVICES")
-        CORE_SERVICES=$(grep "CORE_SERVICES" "$config_file" | cut -d'=' -f2 | tr -s ' ' | xargs)
+        CORE_SERVICES=$(grep "^CORE_SERVICES=" "$config_file" | cut -d'=' -f2 | tr -s ' ' | xargs)
+        # services.conf 自 V2026.08 起不写 CORE_SERVICES= 行（sync-ports.sh 生成），无行时回退默认核心服务
+        [ -z "$CORE_SERVICES" ] && CORE_SERVICES="iam plugin-registry"
     else
         # 默认服务配置（与 scripts/services.conf 保持一致）
         SERVICES_CONFIG="
