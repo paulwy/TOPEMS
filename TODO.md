@@ -720,10 +720,19 @@
 ### 📋 剩余登记
 - **BE-08 后续**：1891 条孤儿候选按 crate 分批（portal/erp/unified-core 优先）与业务确认开放 API 清单，确认无人调用再走下线流程（本批只读不删）；barcode 契约错位（mobile GET 调用 vs 后端仅 DELETE）建议补后端 GET 或收敛前端
 - **FE-17-2 后续**：mobile token/401 的 AsyncStorage 异步与工厂同步签名差异——若工厂未来支持异步 getToken 可进一步收敛；401 现仍静默清凭据（未改跳登录）
-- **BE-07 后续修正项**：settlement_v55 422 映射、ai dsh 自建 ErrorCode→HTTP 映射、api-error-codes.md 手册 422/COMMON_010 条目、enhanced.rs 测试 422 示例——均属代码/文档修正，未在本批动（纯文档批次）
+- **BE-07 后续修正项（2026-10-12 收口完成，见下节）**：settlement_v55 422 映射、ai dsh 自建 ErrorCode→HTTP 映射、api-error-codes.md 手册 422/COMMON_010 条目、enhanced.rs 测试 422 示例——均属代码/文档修正，未在本批动（纯文档批次）
 - **AR-03 实施窗口**：核心两文件无并发冲突，Phase 1（台账 + hash + 单测）可在任何窗口启动；加依赖建议标准库 sha2 以避开 Cargo.* 用户占用
 
 ## 2026-10-07 AR-03 Phase 1 实施（已完成，摘要 `artifacts/tier2-fixes/AR-03-Phase1-实施摘要.md`）
+
+## ✅ BE-07 收口（2026-10-12，422 约定全仓落地）
+
+> 复核实测：settlement_v55 error(422) 已不存在（并行线消化）；api-error-codes.md 已更新（422 标废弃、COMMON_010 400）。剩余真实冲突 2 处修正 + 1 处测试示例对齐。
+
+- **svc/ai/dsh/standardization/mod.rs `StandardError::http_status` 前缀映射**：`5 => 422` → **`5 => 400`**（业务逻辑 5xxxx 对齐 `ErrorCode::http_status` 精确映射与约定 §3.1）；`8 => 429` → **`8 => 503`**（限流类不再私扩 429，对齐 RateLimit→503）
+  - 该方法无外部调用方（grep 实证），纯一致性修正，行为零影响；补 `test_standard_error_http_status_prefix_mapping` 断言（400/400/503）
+- **lib/shared-core error/enhanced.rs 测试示例**：`into_response_service_error_custom_status` 的 422 → **409**（验证 ServiceError 自定义 status_code 透传机制不变，示例改用约定允许的冲突码）
+- **验证**：topems-ai dsh::standardization **31/31 绿**；topems-shared-core error **68/68 绿**；rustfmt 干净；全仓 422 字面量仅剩说明性注释（FNV 哈希种子 0xcbf29ce484222325 为数值非 HTTP 码，无需处理）
 
 ### ✅ 已实施并提交（commit `c4239ae5f`，2 文件 +475/-19）
 - **schema.rs 版本门控**：`ensure_ledger_table`（运行时 CREATE IF NOT EXISTS schema_defense_ledger，不在迁移链）/ `compute_schema_hash`（表/列排序、id 剔除、去行注释/压缩空白/关键字大写 → SHA-256 hex）/ `upsert_ledger`（ON CONFLICT DO UPDATE，失败仅 warn）/ run_schema_defense 门控三分支（无记录→全量；hash 匹配→跳过 ensure 仅 verify，last_skipped_ensure=true；不匹配→全量重放）——**函数签名完全不变，服务侧零改动**

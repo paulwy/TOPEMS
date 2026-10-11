@@ -1134,12 +1134,13 @@ mod tests {
 
     #[test]
     fn into_response_service_error_custom_status() {
+        // 用约定允许的 409（冲突类）验证自定义 status_code 透传机制（422 已禁用，见 http-status-convention.md §3.1）
         let e = TopemsError::ServiceError {
-            status_code: 422,
-            message: "unprocessable".to_string(),
+            status_code: 409,
+            message: "conflict".to_string(),
         };
         let resp = e.into_response();
-        assert_eq!(resp.status().as_u16(), 422);
+        assert_eq!(resp.status().as_u16(), 409);
     }
 
     #[test]

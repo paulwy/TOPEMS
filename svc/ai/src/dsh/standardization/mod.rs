@@ -510,10 +510,10 @@ impl StandardError {
             2 => 400,
             3 => 401,
             4 => 404,
-            5 => 422,
+            5 => 400,
             6 => 502,
             7 => 500,
-            8 => 429,
+            8 => 503,
             _ => 500,
         }
     }
@@ -853,6 +853,24 @@ mod tests {
         assert_eq!(ErrorCode::NotFound.http_status(), 404);
         assert_eq!(ErrorCode::AlreadyExists.http_status(), 409);
         assert_eq!(ErrorCode::RateLimitExceeded.http_status(), 503);
+    }
+
+    #[test]
+    fn test_standard_error_http_status_prefix_mapping() {
+        // BE-07 收口：前缀推断映射与 ErrorCode::http_status 精确映射语义对齐——
+        // 业务逻辑错误（5xxxx）→ 400（禁止 422）、限流（8xxxx）→ 503（不私扩 429）
+        assert_eq!(
+            StandardError::new(ErrorCode::InvalidParameter).http_status(),
+            400
+        );
+        assert_eq!(
+            StandardError::new(ErrorCode::BusinessRuleViolation).http_status(),
+            400
+        );
+        assert_eq!(
+            StandardError::new(ErrorCode::RateLimitExceeded).http_status(),
+            503
+        );
     }
 
     #[test]
