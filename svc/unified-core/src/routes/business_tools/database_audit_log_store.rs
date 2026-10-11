@@ -47,7 +47,8 @@ use super::permission_audit_log::{
 /// use topems_unified_core::routes::business_tools::permission_audit_log::{AuditAction, AuditLogEntry, AuditLogQuery, AuditLogStore};
 /// use std::collections::HashMap;
 ///
-/// # async fn example(pool: sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>> {
+/// # use topems_shared_core::error::TopemsError;
+/// # async fn example(pool: sqlx::PgPool) -> Result<(), TopemsError> {
 /// let store = DatabaseAuditLogStore::new(pool);
 ///
 /// // Record an audit log

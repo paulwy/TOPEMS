@@ -76,7 +76,8 @@ pub struct PermissionStoreHealth {
 /// use topems_unified_core::routes::business_tools::permission_store::PermissionStore;
 /// use topems_unified_core::routes::business_tools::TenantPermission;
 ///
-/// # async fn example(pool: sqlx::PgPool) -> Result<(), Box<dyn std::error::Error>> {
+/// # use topems_shared_core::error::TopemsError;
+/// # async fn example(pool: sqlx::PgPool) -> Result<(), TopemsError> {
 /// let store = DatabasePermissionStore::new(pool);
 ///
 /// // Create a permission

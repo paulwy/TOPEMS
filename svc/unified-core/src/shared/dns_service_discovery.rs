@@ -109,7 +109,8 @@ struct CachedService {
 /// use topems_unified_core::shared::dns_service_discovery::{DnsConfig, DnsServiceDiscovery};
 /// use topems_unified_core::shared::service_client::ServiceDiscovery;
 ///
-/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// # use topems_shared_core::error::TopemsError;
+/// # async fn example() -> Result<(), TopemsError> {
 /// let config = DnsConfig {
 ///     search_domain: Some("svc.cluster.local".to_string()),
 ///     ..Default::default()

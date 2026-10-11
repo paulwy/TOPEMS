@@ -19,7 +19,7 @@
 //! use topems_shared_service_client::service_client::trait_api::{ServiceApi, TypedServiceClient};
 //! use topems_shared_service_client::service_client::api::erp_api::ErpApi;
 //!
-//! # async fn demo() -> Result<(), Box<dyn std::error::Error>> {
+//! # async fn demo() -> Result<(), topems_shared_core::error::TopemsError> {
 //! let client = TypedServiceClient::<ErpApi>::discover_default().await?;
 //! let assets = client.list_assets(1, 20).await?;
 //! # Ok(())

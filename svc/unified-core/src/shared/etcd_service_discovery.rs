@@ -155,7 +155,8 @@ struct EtcdServiceData {
 /// use topems_unified_core::shared::etcd_service_discovery::{EtcdConfig, EtcdServiceDiscovery};
 /// use topems_unified_core::shared::service_client::{ServiceDiscovery, ServiceRegistration};
 ///
-/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// # use topems_shared_core::error::TopemsError;
+/// # async fn example() -> Result<(), TopemsError> {
 /// let config = EtcdConfig {
 ///     address: "http://localhost:2379".to_string(),
 ///     ..Default::default()

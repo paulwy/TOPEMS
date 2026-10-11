@@ -714,3 +714,15 @@ mod tests {
         assert_eq!(entry.unwrap().id, *id);
     }
 }
+
+/// B7 收尾：AuditLogError → TopemsError 语义桥接
+impl From<AuditLogError> for topems_shared_core::error::TopemsError {
+    fn from(e: AuditLogError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            AuditLogError::NotFound(m) => TopemsError::ResourceNotFound(m),
+            AuditLogError::InvalidQuery(m) => TopemsError::ValidationFailed(m),
+            AuditLogError::StoreError(m) => TopemsError::DatabaseQuery(m),
+        }
+    }
+}

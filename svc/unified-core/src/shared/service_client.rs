@@ -1982,3 +1982,20 @@ mod tests {
         assert!(configs.iter().any(|c| c.name == "finance"));
     }
 }
+
+/// B7 收尾：ServiceClientError → TopemsError 语义桥接（doc 示例与业务 `?` 跨域传播）
+impl From<ServiceClientError> for topems_shared_core::error::TopemsError {
+    fn from(e: ServiceClientError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            ServiceClientError::ServiceNotFound(m) => TopemsError::ResourceNotFound(m),
+            ServiceClientError::RequestFailed(e) => TopemsError::NetworkRequest(e.to_string()),
+            ServiceClientError::InvalidUrl(m) => TopemsError::ValidationFailed(m),
+            ServiceClientError::InvalidHeader(m) => TopemsError::ValidationFailed(m),
+            ServiceClientError::ParseFailed(m) => TopemsError::ValidationFailed(m),
+            ServiceClientError::ServiceError { message, .. } => TopemsError::NetworkRequest(message),
+            ServiceClientError::Timeout(_) => TopemsError::RequestTimeout,
+            ServiceClientError::OperationFailed(m) => TopemsError::BusinessLogic(m),
+        }
+    }
+}

@@ -216,7 +216,8 @@ struct K8sServiceList {
 /// use topems_unified_core::shared::k8s_service_discovery::{K8sConfig, K8sServiceDiscovery};
 /// use topems_unified_core::shared::service_client::ServiceDiscovery;
 ///
-/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// # use topems_shared_core::error::TopemsError;
+/// # async fn example() -> Result<(), TopemsError> {
 /// // In-cluster configuration (auto-detected)
 /// let config = K8sConfig::from_in_cluster()?;
 /// let discovery = K8sServiceDiscovery::new(config)?;

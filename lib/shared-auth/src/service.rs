@@ -14,7 +14,8 @@
 //! ```rust
 //! use topems_shared_auth::service::issue_service_token;
 //! let token = issue_service_token("shared-secret", "erp-service", &["wms:admin"], None)?;
-//! # Ok::<(), Box<dyn std::error::Error>>(())
+//! # use topems_shared_core::error::TopemsError;
+//! # Ok::<(), TopemsError>(())
 //! ```
 
 use crate::auth::Claims;

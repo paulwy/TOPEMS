@@ -675,3 +675,16 @@ async fn test_bulk_delete_skips_missing() {
     assert_eq!(result.succeeded, 1);
     assert_eq!(result.skipped, 1);
 }
+
+/// B7 收尾：PermissionStoreError → TopemsError 语义桥接
+impl From<PermissionStoreError> for topems_shared_core::error::TopemsError {
+    fn from(e: PermissionStoreError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            PermissionStoreError::NotFound(t, u) => TopemsError::ResourceNotFound(format!("权限不存在: tenant={}, user={}", t, u)),
+            PermissionStoreError::AlreadyExists(t, u) => TopemsError::BusinessLogic(format!("权限已存在: tenant={}, user={}", t, u)),
+            PermissionStoreError::Invalid(m) => TopemsError::ValidationFailed(m),
+            PermissionStoreError::StoreError(m) => TopemsError::DatabaseQuery(m),
+        }
+    }
+}
