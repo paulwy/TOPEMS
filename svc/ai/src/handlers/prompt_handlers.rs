@@ -14,6 +14,7 @@
 //! serde 显式 rename 对齐（输出与输入均为 promptTemplate）。
 //! /use 端点只做模板渲染（变量替换），不假装 LLM 输出——result 即渲染后的提示词文本。
 
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -107,7 +108,7 @@ pub struct UsePromptResult {
     pub formatted_prompt: String,
 }
 
-fn to_out(row: &sqlx::postgres::PgRow) -> Result<PromptTemplateOut, Box<dyn std::error::Error>> {
+fn to_out(row: &sqlx::postgres::PgRow) -> Result<PromptTemplateOut, TopemsError> {
     Ok(PromptTemplateOut {
         id: row.try_get("id")?,
         name: row.try_get("name")?,

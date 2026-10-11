@@ -5,6 +5,7 @@
 //! 将 Redis 事件总线的事件实时转发到 WebSocket 连接的前端客户端。
 //! 实现后端事件系统与前端实时推送的打通。
 
+use topems_shared_core::error::TopemsError;
 use crate::modules::communication::ws::WsState;
 use futures_util::StreamExt;
 use redis::AsyncCommands;
@@ -79,7 +80,7 @@ impl WsEventBridge {
     /// 事件总线默认已切 Redis Stream（`EVENT_BUS_MODE` 默认 stream），
     /// 桥接默认跟随 Stream 消费（`EVENT_BRIDGE_MODE` 默认 stream），
     /// 避免"发布端 XADD / 桥接端 PSUBSCRIBE 旧频道"的链路断裂。
-    pub async fn start(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn start(&mut self) -> Result<(), TopemsError> {
         let mode = std::env::var("EVENT_BRIDGE_MODE").unwrap_or_else(|_| "stream".to_string());
         if mode.eq_ignore_ascii_case("pubsub") {
             self.start_pubsub().await
@@ -89,7 +90,7 @@ impl WsEventBridge {
     }
 
     /// Stream 消费模式：订阅 `topems:stream:events:{EventType}`，XREADGROUP + ACK
-    async fn start_stream(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn start_stream(&mut self) -> Result<(), TopemsError> {
         use topems_shared_event::event::stream_subscriber::StreamEventSubscriber;
         use topems_shared_event::event::Event;
 
@@ -135,7 +136,7 @@ impl WsEventBridge {
     }
 
     /// Pub/Sub 消费模式（显式降级，`EVENT_BRIDGE_MODE=pubsub`）
-    async fn start_pubsub(&mut self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    async fn start_pubsub(&mut self) -> Result<(), TopemsError> {
         let client = redis::Client::open(self.config.redis_url.clone())?;
         let mut pubsub = client.get_async_connection().await?.into_pubsub();
 

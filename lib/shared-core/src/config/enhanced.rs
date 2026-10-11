@@ -1,7 +1,7 @@
 // 配置管理模块 - 统一的配置加载和管理
 // =============================================================================
 
-use anyhow::{Context, Result};
+use crate::error::TopemsError;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
@@ -56,9 +56,9 @@ impl Default for DatabaseConfig {
 
 impl DatabaseConfig {
     /// 从环境变量加载
-    pub fn from_env() -> Result<Self> {
+    pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
-            url: env::var("DATABASE_URL").context("DATABASE_URL 环境变量未设置")?,
+            url: env::var("DATABASE_URL").map_err(|e| TopemsError::ConfigValidation(format!("DATABASE_URL 环境变量未设置: {}", e)))?,
             max_connections: env::var("DB_MAX_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -85,18 +85,18 @@ impl DatabaseConfig {
     }
 
     /// 验证配置
-    pub fn validate(&self) -> Result<()> {
+    pub fn validate(&self) -> Result<(), TopemsError> {
         if self.url.is_empty() {
-            return Err(anyhow::anyhow!("数据库 URL 不能为空"));
+            return Err(TopemsError::ConfigValidation("数据库 URL 不能为空".to_string()));
         }
 
         if self.max_connections == 0 {
-            return Err(anyhow::anyhow!("最大连接数必须大于 0"));
+            return Err(TopemsError::ConfigValidation("最大连接数必须大于 0".to_string()));
         }
 
         if let Some(min) = self.min_connections {
             if min > self.max_connections {
-                return Err(anyhow::anyhow!("最小连接数不能大于最大连接数"));
+                return Err(TopemsError::ConfigValidation("最小连接数不能大于最大连接数".to_string()));
             }
         }
 
@@ -149,7 +149,7 @@ impl Default for ServiceConfig {
 
 impl ServiceConfig {
     /// 从环境变量加载
-    pub fn from_env(service_name: &str, default_port: u16) -> Result<Self> {
+    pub fn from_env(service_name: &str, default_port: u16) -> Result<Self, TopemsError> {
         Ok(Self {
             name: service_name.to_string(),
             port: env::var("SERVER_PORT")
@@ -176,13 +176,13 @@ impl ServiceConfig {
     }
 
     /// 验证配置
-    pub fn validate(&self) -> Result<()> {
+    pub fn validate(&self) -> Result<(), TopemsError> {
         if self.name.is_empty() {
-            return Err(anyhow::anyhow!("服务名称不能为空"));
+            return Err(TopemsError::ConfigValidation("服务名称不能为空".to_string()));
         }
 
         if self.port == 0 {
-            return Err(anyhow::anyhow!("服务端口不能为 0"));
+            return Err(TopemsError::ConfigValidation("服务端口不能为 0".to_string()));
         }
 
         Ok(())
@@ -214,9 +214,9 @@ impl Default for RedisConfig {
 
 impl RedisConfig {
     /// 从环境变量加载
-    pub fn from_env() -> Result<Self> {
+    pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
-            url: env::var("REDIS_URL").context("REDIS_URL 环境变量未设置")?,
+            url: env::var("REDIS_URL").map_err(|e| TopemsError::ConfigValidation(format!("REDIS_URL 环境变量未设置: {}", e)))?,
             max_connections: env::var("REDIS_MAX_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -254,9 +254,9 @@ impl Default for JwtConfig {
 
 impl JwtConfig {
     /// 从环境变量加载
-    pub fn from_env() -> Result<Self> {
+    pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
-            secret: env::var("JWT_SECRET").context("JWT_SECRET 环境变量未设置")?,
+            secret: env::var("JWT_SECRET").map_err(|e| TopemsError::ConfigValidation(format!("JWT_SECRET 环境变量未设置: {}", e)))?,
             expiration: env::var("JWT_EXPIRATION")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -269,13 +269,13 @@ impl JwtConfig {
     }
 
     /// 验证配置
-    pub fn validate(&self) -> Result<()> {
+    pub fn validate(&self) -> Result<(), TopemsError> {
         if self.secret.len() < 32 {
-            return Err(anyhow::anyhow!("JWT 密钥长度必须至少 32 个字符"));
+            return Err(TopemsError::ConfigValidation("JWT 密钥长度必须至少 32 个字符".to_string()));
         }
 
         if self.expiration == 0 {
-            return Err(anyhow::anyhow!("JWT 过期时间不能为 0"));
+            return Err(TopemsError::ConfigValidation("JWT 过期时间不能为 0".to_string()));
         }
 
         Ok(())
@@ -332,7 +332,7 @@ impl Default for AIConfig {
 
 impl AIConfig {
     /// 从环境变量加载
-    pub fn from_env() -> Result<Self> {
+    pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
             api_key: env::var("OPENAI_API_KEY").ok(),
             base_url: env::var("OPENAI_BASE_URL")
@@ -386,7 +386,7 @@ impl Default for CacheConfig {
 
 impl CacheConfig {
     /// 从环境变量加载
-    pub fn from_env() -> Result<Self> {
+    pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
             cache_type: env::var("CACHE_TYPE").unwrap_or_else(|_| "memory".to_string()),
             max_size: env::var("CACHE_MAX_SIZE")
@@ -427,7 +427,7 @@ pub struct AppConfig {
 
 impl AppConfig {
     /// 从环境变量加载完整配置
-    pub fn from_env(service_name: &str, default_port: u16) -> Result<Self> {
+    pub fn from_env(service_name: &str, default_port: u16) -> Result<Self, TopemsError> {
         let service = ServiceConfig::from_env(service_name, default_port)?;
         let database = DatabaseConfig::from_env()?;
         let jwt = JwtConfig::from_env()?;
@@ -457,14 +457,14 @@ impl AppConfig {
     }
 
     /// 验证所有配置
-    pub fn validate(&self) -> Result<()> {
+    pub fn validate(&self) -> Result<(), TopemsError> {
         self.service.validate()?;
         self.database.validate()?;
         self.jwt.validate()?;
 
         if let Some(redis) = &self.redis {
             if redis.url.is_empty() {
-                return Err(anyhow::anyhow!("Redis URL 不能为空"));
+                return Err(TopemsError::ConfigValidation("Redis URL 不能为空".to_string()));
             }
         }
 

@@ -135,7 +135,7 @@ fn split_into_chunks(content: &str, chunk_size: usize, overlap: usize) -> Vec<St
 
 pub async fn generate_embeddings(
     texts: Vec<String>,
-) -> Result<Vec<Vec<f32>>, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Vec<Vec<f32>>, TopemsError> {
     let config = CONFIG.get().ok_or("Config not initialized")?;
     let client = CLIENT.get().ok_or("Client not initialized")?;
 
@@ -196,7 +196,7 @@ pub async fn generate_embeddings(
 )]
 pub async fn process_document_for_embedding(
     doc: &Document,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<(), TopemsError> {
     let Some(file_path) = doc.file_path.as_ref() else {
         return Ok(());
     };

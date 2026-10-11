@@ -3,6 +3,7 @@
 //! 提供 5 大主数据域（客户/供应商/物料/组织/员工/科目）的统一事件结构。
 //! 所有主数据变更都通过 MasterDataEvent 发布到 Redis 事件总线。
 
+use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
@@ -215,7 +216,7 @@ impl MasterDataEvent {
     }
 
     /// 发布事件到 Redis Stream（持久化 + ACK + DLQ 就绪）
-    pub async fn publish(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn publish(&self) -> Result<(), TopemsError> {
         let redis_url =
             std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
         let client = redis::Client::open(redis_url)?;
@@ -253,7 +254,7 @@ impl MasterDataEvent {
     /// routing_key: master.{domain_prefix}.{tenant_id}.{action}
     pub async fn publish_to_rabbitmq(
         &self,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), TopemsError> {
         use lapin::{
             options::{BasicPublishOptions, ExchangeDeclareOptions},
             types::FieldTable,
@@ -264,8 +265,8 @@ impl MasterDataEvent {
             .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
 
         let connection =
-            Connection::connect(&rabbitmq_url, ConnectionProperties::default()).await?;
-        let channel = connection.create_channel().await?;
+            Connection::connect(&rabbitmq_url, ConnectionProperties::default()).await.map_err(|e| TopemsError::NetworkRequest(e.to_string()))?;
+        let channel = connection.create_channel().await.map_err(|e| TopemsError::NetworkRequest(e.to_string()))?;
 
         let exchange_name = "topems.master-data";
 
@@ -283,7 +284,8 @@ impl MasterDataEvent {
                 },
                 FieldTable::default(),
             )
-            .await?;
+            .await
+            .map_err(|e| TopemsError::NetworkRequest(e.to_string()))?;
 
         let routing_key = self.routing_key();
         let event_json = serde_json::to_string(self)?;
@@ -299,8 +301,10 @@ impl MasterDataEvent {
                 event_json.as_bytes(),
                 BasicProperties::default().with_delivery_mode(2),
             )
-            .await?
-            .await?;
+            .await
+            .map_err(|e| TopemsError::NetworkRequest(e.to_string()))?
+            .await
+            .map_err(|e| TopemsError::NetworkRequest(e.to_string()))?;
 
         tracing::info!(
             "MasterDataEvent published to RabbitMQ - domain: {:?}, action: {:?}, routing_key: {}",
@@ -331,7 +335,7 @@ impl MasterDataPublisher {
     pub async fn publish(
         &self,
         event: &MasterDataEvent,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), TopemsError> {
         let mut con = self.client.get_multiplexed_async_connection().await?;
         let event_json = serde_json::to_string(event)?;
         let stream_key = event.stream_key();
@@ -356,7 +360,7 @@ impl MasterDataPublisher {
     pub async fn publish_batch(
         &self,
         events: &[MasterDataEvent],
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    ) -> Result<(), TopemsError> {
         let mut con = self.client.get_multiplexed_async_connection().await?;
 
         for event in events {

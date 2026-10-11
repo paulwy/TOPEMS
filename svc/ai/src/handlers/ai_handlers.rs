@@ -724,7 +724,7 @@ async fn call_ai_api(
     api_key: &Option<String>,
     model: &str,
     prompt: &str,
-) -> Result<String, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<String, TopemsError> {
     let api_url = format!("{}/chat/completions", base_url);
 
     let request = OpenAIRequest {

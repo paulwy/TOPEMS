@@ -1,5 +1,6 @@
 //! Report Scheduler
 
+use topems_shared_core::error::TopemsError;
 use job_scheduler_ng::{Job, JobScheduler, Schedule};
 use sqlx::types::chrono::Utc;
 use sqlx::{PgPool, Row};
@@ -25,7 +26,7 @@ impl ReportScheduler {
         }
     }
 
-    pub async fn start(&self) -> Result<(), anyhow::Error> {
+    pub async fn start(&self) -> Result<(), TopemsError> {
         info!("Starting report scheduler...");
 
         let mut scheduler = JobScheduler::new();
@@ -33,7 +34,7 @@ impl ReportScheduler {
         self.load_schedules(&mut scheduler).await?;
 
         let pool_clone = self.pool.clone();
-        scheduler.add(Job::new("0 * * * * *".parse()?, move || {
+        scheduler.add(Job::new("0 * * * * *".parse().map_err(|e| TopemsError::ValidationFailed(format!("无效 cron 表达式: {}", e)))?, move || {
             let pool = pool_clone.clone();
             tokio::spawn(async move {
                 if let Err(e) = check_and_execute_schedules(&pool).await {
@@ -58,7 +59,7 @@ impl ReportScheduler {
         Ok(())
     }
 
-    async fn load_schedules(&self, scheduler: &mut JobScheduler<'_>) -> Result<(), anyhow::Error> {
+    async fn load_schedules(&self, scheduler: &mut JobScheduler<'_>) -> Result<(), TopemsError> {
         let active_schedules = sqlx::query(
             r#"
             SELECT id, name, schedule_type, schedule_expression
@@ -148,7 +149,7 @@ impl ReportScheduler {
         Ok(())
     }
 
-    pub async fn reload(&self) -> Result<(), anyhow::Error> {
+    pub async fn reload(&self) -> Result<(), TopemsError> {
         info!("Reloading report scheduler...");
 
         let mut scheduler = JobScheduler::new();
@@ -160,23 +161,23 @@ impl ReportScheduler {
     }
 }
 
-fn parse_interval(expression: &str) -> Result<u64, anyhow::Error> {
+fn parse_interval(expression: &str) -> Result<u64, TopemsError> {
     let parts: Vec<&str> = expression.split_whitespace().collect();
     if parts.len() == 2 {
-        let value: u64 = parts[0].parse()?;
+        let value: u64 = parts[0].parse().map_err(|e| TopemsError::ValidationFailed(format!("无效间隔数值: {}", e)))?;
         let unit = parts[1].to_lowercase();
         match unit.as_str() {
             "minutes" | "minute" | "m" => Ok(value),
             "hours" | "hour" | "h" => Ok(value * 60),
             "days" | "day" | "d" => Ok(value * 60 * 24),
-            _ => Err(anyhow::anyhow!("Unknown interval unit: {}", unit)),
+            _ => Err(TopemsError::ValidationFailed(format!("Unknown interval unit: {}", unit))),
         }
     } else {
-        Err(anyhow::anyhow!("Invalid interval format"))
+        Err(TopemsError::ValidationFailed("Invalid interval format".to_string()))
     }
 }
 
-async fn check_and_execute_schedules(pool: &PgPool) -> Result<(), anyhow::Error> {
+async fn check_and_execute_schedules(pool: &PgPool) -> Result<(), TopemsError> {
     let now = Utc::now();
 
     let due_schedules = sqlx::query(
@@ -208,7 +209,7 @@ pub async fn execute_schedule_job(
     pool: &PgPool,
     schedule_id: Uuid,
     schedule_name: &str,
-) -> Result<(), anyhow::Error> {
+) -> Result<(), TopemsError> {
     let execution_id = Uuid::new_v4();
     let started_at = Utc::now();
 
@@ -293,7 +294,7 @@ pub async fn execute_schedule_job(
     Ok(())
 }
 
-async fn run_report(pool: &PgPool, schedule_id: Uuid) -> Result<String, anyhow::Error> {
+async fn run_report(pool: &PgPool, schedule_id: Uuid) -> Result<String, TopemsError> {
     let schedule = sqlx::query!(
         r#"
         SELECT template_id, parameters
@@ -330,7 +331,7 @@ async fn run_report(pool: &PgPool, schedule_id: Uuid) -> Result<String, anyhow::
     Ok(output_path)
 }
 
-async fn notify_subscribers(pool: &PgPool, schedule_id: Uuid) -> Result<(), anyhow::Error> {
+async fn notify_subscribers(pool: &PgPool, schedule_id: Uuid) -> Result<(), TopemsError> {
     let schedule = sqlx::query!(
         r#"
         SELECT template_id, recipients

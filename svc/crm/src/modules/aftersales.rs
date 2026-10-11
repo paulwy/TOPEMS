@@ -1701,7 +1701,7 @@ pub async fn sync_return_to_finance(
     return_id: Uuid,
     tenant_id: Uuid,
     locale: &str,
-) -> Result<Uuid, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<Uuid, TopemsError> {
     let return_record: Return = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
@@ -1814,7 +1814,7 @@ pub async fn sync_return_to_inventory(
     txn: &mut sqlx::Transaction<'static, sqlx::Postgres>,
     return_id: Uuid,
     tenant_id: Uuid,
-) -> Result<u64, Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<u64, TopemsError> {
     let return_record: Return = sqlx::query_as::<_, Return>(
         r#"
         SELECT id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,

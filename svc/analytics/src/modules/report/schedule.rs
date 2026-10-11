@@ -1,5 +1,6 @@
 //! Report Schedule handlers
 
+use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, State},
     routing::{get, post},
@@ -46,14 +47,14 @@ impl fmt::Display for ScheduleType {
 }
 
 impl FromStr for ScheduleType {
-    type Err = anyhow::Error;
+    type Err = TopemsError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_lowercase().as_str() {
             "cron" => Ok(ScheduleType::Cron),
             "interval" => Ok(ScheduleType::Interval),
             "one_time" | "onetime" | "once" => Ok(ScheduleType::OneTime),
-            _ => Err(anyhow::anyhow!("Unknown schedule type: {}", s)),
+            _ => Err(TopemsError::ValidationFailed(format!("Unknown schedule type: {}", s))),
         }
     }
 }
