@@ -16,6 +16,7 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
+use topems_shared_core::error::TopemsError;
 use crate::service_client::api::{
     crm_api::CrmApi, erp_api::ErpApi, file_api::FileApi, finance_api::FinanceApi, hrm_api::HrmApi,
     iam_api::IamApi, mes_api::MesApi, monitor_api::MonitorApi, notification_api::NotificationApi,
@@ -29,7 +30,7 @@ pub mod comparison {
     use super::*;
 
     /// 使用泛型 + trait，一行宏声明服务元数据
-    pub async fn new_way() -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn new_way() -> Result<(), TopemsError> {
         // 创建客户端 — 自动服务发现
         let erp_client = TypedServiceClient::<ErpApi>::discover_default().await?;
         let hrm_client = TypedServiceClient::<HrmApi>::discover_default().await?;
@@ -49,7 +50,7 @@ pub mod creation_patterns {
     use super::*;
 
     /// 方式 1：服务发现（推荐）
-    pub async fn via_discovery() -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn via_discovery() -> Result<(), TopemsError> {
         // 解析顺序：环境变量 → Consul → 回退端口
         let client = TypedServiceClient::<ErpApi>::discover_default().await?;
         let _ = client.list_assets(1, 20).await?;
@@ -57,19 +58,19 @@ pub mod creation_patterns {
     }
 
     /// 方式 2：从环境变量创建
-    pub fn via_env() -> Result<(), Box<dyn std::error::Error>> {
+    pub fn via_env() -> Result<(), TopemsError> {
         let client = TypedServiceClient::<ErpApi>::from_env_default()?;
         Ok(())
     }
 
     /// 方式 3：直接指定 URL
-    pub fn via_direct_url() -> Result<(), Box<dyn std::error::Error>> {
+    pub fn via_direct_url() -> Result<(), TopemsError> {
         let client = TypedServiceClient::new(ErpApi, "http://10.0.0.1:8010")?;
         Ok(())
     }
 
     /// 方式 4：带 auth token
-    pub fn with_auth() -> Result<(), Box<dyn std::error::Error>> {
+    pub fn with_auth() -> Result<(), TopemsError> {
         let client = TypedServiceClient::<ErpApi>::from_env_default()?
             .with_auth_token("Bearer ey-jwt-token");
         Ok(())
@@ -81,7 +82,7 @@ pub mod cross_service {
     use super::*;
 
     /// 在一个方法中调用多个服务
-    pub async fn fetch_dashboard_data() -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn fetch_dashboard_data() -> Result<(), TopemsError> {
         let hrm = TypedServiceClient::<HrmApi>::discover_default().await?;
         let finance = TypedServiceClient::<FinanceApi>::discover_default().await?;
         let workflow = TypedServiceClient::<WorkflowApi>::discover_default().await?;
@@ -132,7 +133,7 @@ pub mod custom_service {
     }
 
     /// 使用自定义服务
-    pub async fn use_custom_service() -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn use_custom_service() -> Result<(), TopemsError> {
         let client = TypedServiceClient::<InventoryApi>::discover_default().await?;
         let _items = client.list_items(1, 20).await?;
         Ok(())
