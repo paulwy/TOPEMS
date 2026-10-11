@@ -3,6 +3,12 @@
 
 ### 并行线补充记录（2026-10-04 批1剩余+批2 收口，本地原记录保留）
 
+### B7-17 里程碑：anyhow / Box<dyn Error> 生产代码清零（commit `7f2285600`）
+- 迁移 33 处生产代码：config/enhanced.rs 8 处 anyhow + analytics scheduler/schedule 12 处 + shared-event master_data 4 + unified-core ws_event_bridge 3 + crm 2 + ai 4（embedding/prompt/ai_handlers）
+- 桥接/直通：redis/serde_json `#[from]` 直通；lapin/parse 错误 map_err → NetworkRequest/ValidationFailed
+- **保留项（有明确理由）**：main/embedded/bootstrap 入口 anyhow（18+5 处）、shared-bootstrap 11（进程边界库）、doc/examples 8（教学惯例）、rd sqlx Type trait 2（框架契约）、finance StdError 测试 6（正确性验证）、shared-core error/enhanced 3（From<anyhow> 桥接+测试）、mcp-stdio main 1
+- 全仓 check 0 error；analytics 单测 16+6 全绿
+
 ## 2026-10-04 批1剩余+批2 收口（B3/B4/B5/B6/B8/B9 完成，本地提交未 push）
 
 > 依据「下一步工作规划」D 节执行形态：批 1（快赢收口）→ 批 2（残留偿还）。用户已拍板：批1剩余+批2 共 6 项，决策项（B1/B14/B15/A2/A5）暂跳过。
