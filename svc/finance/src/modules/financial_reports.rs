@@ -16,7 +16,7 @@ use crate::services::FinanceService;
 use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 fn parse_period(s: &str) -> Option<(i32, i32)> {
     let parts: Vec<&str> = s.split('-').collect();
@@ -1458,10 +1458,10 @@ pub async fn generate_balance_sheet(
             .await
             {
                 Ok(report) => Json(ApiResponse::success(report, "生成资产负债表成功")),
-                Err(e) => Json(ApiResponse::error(500, &format!("持久化失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal("持久化失败", e))),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("生成失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("生成失败", e))),
     }
 }
 
@@ -1529,10 +1529,10 @@ pub async fn get_balance_sheet(
                         "查询成功(实时)",
                     ))
                 }
-                Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -1575,7 +1575,7 @@ pub async fn get_balance_sheet_history(
             serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -1602,10 +1602,10 @@ pub async fn generate_income_statement(
             .await
             {
                 Ok(report) => Json(ApiResponse::success(report, "生成利润表成功")),
-                Err(e) => Json(ApiResponse::error(500, &format!("持久化失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal("持久化失败", e))),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("生成失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("生成失败", e))),
     }
 }
 
@@ -1644,10 +1644,10 @@ pub async fn get_income_statement(
                     let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
                     Json(ApiResponse::success(data, "查询成功(实时)"))
                 }
-                Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -1690,7 +1690,7 @@ pub async fn get_income_statement_history(
             serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -1720,10 +1720,10 @@ pub async fn generate_cash_flow(
             .await
             {
                 Ok(report) => Json(ApiResponse::success(report, "生成现金流量表成功")),
-                Err(e) => Json(ApiResponse::error(500, &format!("持久化失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal("持久化失败", e))),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("生成失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("生成失败", e))),
     }
 }
 
@@ -1773,10 +1773,10 @@ pub async fn get_cash_flow(
                     let data = serde_json::to_value(&stmt).unwrap_or(serde_json::json!({}));
                     Json(ApiResponse::success(data, "查询成功(实时)"))
                 }
-                Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+                Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -1808,7 +1808,7 @@ pub async fn get_cash_flow_history(
             serde_json::json!({"items": items, "total": total, "page": page, "page_size": page_size}),
             "查询成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("查询失败", e))),
     }
 }
 
@@ -1856,7 +1856,7 @@ pub async fn submit_report_for_approval(
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "pending"}), "提交审批成功"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("提交失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("提交失败", e))),
     }
 }
 
@@ -1883,7 +1883,7 @@ pub async fn approve_report(
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "审批成功"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("审批失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("审批失败", e))),
     }
 }
 
@@ -1909,7 +1909,7 @@ pub async fn reject_report(
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "rejected"}), "驳回成功"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("驳回失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("驳回失败", e))),
     }
 }
 
@@ -1947,7 +1947,7 @@ pub async fn lock_report(
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "locked"}), "锁定成功"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("锁定失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("锁定失败", e))),
     }
 }
 
@@ -1972,7 +1972,7 @@ pub async fn unlock_report(
                 Json(ApiResponse::success(serde_json::json!({"report_id": req.report_id, "status": "approved"}), "解锁成功"))
             }
         }
-        Err(e) => Json(ApiResponse::error(500, &format!("解锁失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal("解锁失败", e))),
     }
 }
 

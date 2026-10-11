@@ -44,7 +44,7 @@ use uuid::Uuid;
 use crate::models::*;
 use crate::services::FinanceService;
 use crate::shared::AppState;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
@@ -1515,7 +1515,12 @@ pub async fn create_voucher_template_handler(
     let req: crate::services::finance::voucher_template::CreateVoucherTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service
         .create_voucher_template(tenant_id, req, &created_by)
@@ -1540,7 +1545,12 @@ async fn update_voucher_template_handler(
     let req: crate::services::finance::voucher_template::UpdateVoucherTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service
         .update_voucher_template(tenant_id, template_id, req)
@@ -1611,7 +1621,12 @@ pub async fn apply_template_handler(
     let req: crate::services::finance::voucher_template::ApplyTemplateRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service.apply_template(tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(result, "应用成功")),
@@ -2200,18 +2215,33 @@ pub async fn import_template_handler(
 
     let json_str = match String::from_utf8(file_data) {
         Ok(s) => s,
-        Err(e) => return Json(ApiResponse::error(400, &format!("文件编码错误: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::FileFormatError(format!(
+                "文件编码错误: {}",
+                e
+            ))))
+        }
     };
 
     let template_data: serde_json::Value = match serde_json::from_str(&json_str) {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::error(400, &format!("JSON 解析失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::FileFormatError(format!(
+                "JSON 解析失败: {}",
+                e
+            ))))
+        }
     };
 
     let create_req: crate::services::finance::voucher_template::CreateVoucherTemplateRequest =
         match serde_json::from_value(template_data) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service
         .create_voucher_template(tenant_id, create_req, &created_by)
@@ -2293,7 +2323,12 @@ pub async fn create_generation_rule_handler(
     let req: crate::services::finance::voucher_generation::CreateGenerationRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service
         .create_generation_rule(tenant_id, req, &created_by)
@@ -2318,7 +2353,12 @@ pub async fn update_generation_rule_handler(
     let req: crate::services::finance::voucher_generation::UpdateGenerationRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service
         .update_generation_rule(tenant_id, rule_id, req)
@@ -2424,7 +2464,12 @@ pub async fn test_rule_handler(
     let req: crate::services::finance::voucher_generation::TestRuleRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service.test_rule(tenant_id, req).await {
         Ok(result) => Json(ApiResponse::success(
@@ -2446,7 +2491,12 @@ pub async fn generate_vouchers_handler(
     let req: crate::services::finance::voucher_generation::GenerateVouchersRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service
         .generate_vouchers(tenant_id, req, &generated_by)
@@ -2494,7 +2544,12 @@ pub async fn import_vouchers_handler(
     let req: crate::services::finance::u8_import::ImportVouchersRequest =
         match serde_json::from_value(req) {
             Ok(r) => r,
-            Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+            Err(e) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                    "参数错误: {}",
+                    e
+                ))))
+            }
         };
     match service.import_vouchers(tenant_id, req, &imported_by).await {
         Ok(result) => Json(ApiResponse::success(

@@ -33,7 +33,7 @@ impl FromRef<AppState> for TypedServiceClient<WorkflowApi> {
     }
 }
 
-/// 统一错误出口（替代历史 `ApiResponse::error(500, &e.to_string())` 硬编码 500）。
+/// 统一错误出口（替代历史 `ApiResponse::from(TopemsError::internal("业务上下文", e))` 统一出口）。
 ///
 /// 按错误的真实类型映射业务/HTTP code，而非一律 500：
 /// - `sqlx::Error::RowNotFound` / `TopemsError::DatabaseRecordNotFound` → 404（资源不存在）

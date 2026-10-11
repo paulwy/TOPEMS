@@ -362,9 +362,17 @@
 - **门禁基线校准 V517.5**（commit fee592c4e）：泄露面 626→**39**（= 基线，剩余全在 finance）；业务层 anyhow 57→**0**（= 基线）；`--changed-only` 未发现命中 exit 0
 - **finance 39 处未迁移**（按 hint 不擅自拍板，策略见下）
 
-### finance 39 处迁移策略建议（待用户拍板）
-- 实测形态：**36 L 全部带固定文案**（financial_reports 20「持久化/生成/查询/提交/审批/驳回/锁定/解锁失败」+ mod.rs 11「参数错误/文件编码错误/JSON 解析失败」+ voucher_template 5「文件编码错误/JSON 解析失败/冲销凭证创建失败/新凭证创建失败」）——ADR §4.4「386 无上下文文案不能先做」的旧担忧已不存在（并行线已消化 347 处），**可直接按 Form 1/2 机械迁移**；仅 **3 R 无上下文**（event_routes ×2 + shared/mod.rs ×1 的 500+to_string）需按 handler 操作推断上下文
-- 建议：下一轮直接按本轮同一规则迁移 finance 39（36 机械 + 3 人工），无需另立试点；或按原 ADR 等待用户拍板
+### ✅ finance 39 处迁移完成（2026-10-12，泄露面 39→0 全仓清零）
+
+> 按 V517.5 批同一规则执行（用户拍板推进）：36 L 机械 + 3 R 人工/注释。5 文件 +43/-43，本地提交未 push。
+
+- **financial_reports.rs 20 处**（500 固定文案）：持久化/生成/查询/提交/审批/驳回/锁定/解锁失败 → `ApiResponse::from(TopemsError::internal("X失败", e))`（客户端收「内部服务器错误」，细节进日志）
+- **mod.rs 11 处**（400）：参数错误×9（serde from_value）→ `ValidationFailed("参数错误: {}")`；文件编码错误（from_utf8）→ `FileFormatError`；JSON 解析失败（from_str）→ `FileFormatError`（均 400 回显校验/文件格式安全文案，客户端文案逐字保留）
+- **voucher_template.rs 5 处**：文件编码/JSON 解析/参数错误 3×400 同 mod.rs 映射；冲销凭证创建失败/新凭证创建失败 2×500 → `internal`
+- **event_routes.rs 2 处（R 类）**：500+`e.to_string()` → `internal("启动 Saga 失败"/"补偿 Saga 失败", e)`（按 handler 操作推断上下文）
+- **shared/mod.rs 1 处（R 类）**：**实测为注释示例误报**（`/// 统一错误出口（替代历史 \`ApiResponse::error(500, &e.to_string())\`...`，gate 不解析注释）→ 更新注释文案为新写法
+- **验证**：cargo check -p topems-finance 0 error；clippy correctness 0 error；finance 单测 **1141 passed / 0 failed**；rustfmt 5 文件干净；门禁泄露面 **39→0**（ApiResponse::error 3060→3021）；基线校准 **V517.6**
+- **注意**：工作区存在并行线已暂存改动（enhanced.rs 等），提交仅含 finance 5 文件 + 基线 + TODO，未触碰暂存项
 
 ---
 

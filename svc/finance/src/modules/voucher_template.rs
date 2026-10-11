@@ -22,7 +22,7 @@ use crate::shared::AppState;
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::get_tenant_id_from_claims;
 use topems_shared_core::locale::Locale;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct TemplatePathParams {
@@ -300,17 +300,32 @@ pub async fn import_template(
 
     let json_str = match String::from_utf8(file_data) {
         Ok(s) => s,
-        Err(e) => return Json(ApiResponse::error(400, &format!("文件编码错误: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::FileFormatError(format!(
+                "文件编码错误: {}",
+                e
+            ))))
+        }
     };
 
     let template_data: serde_json::Value = match serde_json::from_str(&json_str) {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::error(400, &format!("JSON 解析失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::FileFormatError(format!(
+                "JSON 解析失败: {}",
+                e
+            ))))
+        }
     };
 
     let create_req: CreateVoucherTemplateRequest = match serde_json::from_value(template_data) {
         Ok(r) => r,
-        Err(e) => return Json(ApiResponse::error(400, &format!("参数错误: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::ValidationFailed(format!(
+                "参数错误: {}",
+                e
+            ))))
+        }
     };
     match service
         .create_voucher_template(tenant_id, create_req, &created_by)
@@ -893,7 +908,12 @@ pub async fn regenerate(
         .await
     {
         Ok(v) => v,
-        Err(e) => return Json(ApiResponse::error(500, &format!("冲销凭证创建失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::from(TopemsError::internal(
+                "冲销凭证创建失败",
+                e,
+            )))
+        }
     };
 
     // 重新生成新凭证（复制原始凭证分录）
@@ -932,7 +952,10 @@ pub async fn regenerate(
             }),
             "重新生成成功",
         )),
-        Err(e) => Json(ApiResponse::error(500, &format!("新凭证创建失败: {}", e))),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "新凭证创建失败",
+            e,
+        ))),
     }
 }
 

@@ -17,7 +17,7 @@ use crate::domain::event_publisher::PublishedEvent;
 use crate::domain::events::FinanceDomainEvent;
 use crate::domain::saga::{SagaInstance, SagaStats, SagaStatus};
 use crate::shared::AppState;
-use topems_shared_core::response::ApiResponse;
+use topems_shared_core::{response::ApiResponse, TopemsError};
 
 // =============================================================================
 // 响应模型
@@ -208,7 +208,10 @@ pub async fn start_saga(Json(req): Json<StartSagaRequest>) -> Json<ApiResponse<S
                 "Saga 已启动并执行",
             ))
         }
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "启动 Saga 失败",
+            e,
+        ))),
     }
 }
 
@@ -225,7 +228,10 @@ pub async fn compensate_saga(
             CompensateSagaResponse { saga_id, status },
             "补偿完成",
         )),
-        Err(e) => Json(ApiResponse::error(500, &e.to_string())),
+        Err(e) => Json(ApiResponse::from(TopemsError::internal(
+            "补偿 Saga 失败",
+            e,
+        ))),
     }
 }
 

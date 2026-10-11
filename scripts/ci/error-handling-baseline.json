@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-08",
-  "baselineRevision": "V517.5",
+  "generatedAt": "2026-10-12",
+  "baselineRevision": "V517.6",
   "note": "统一错误出口存量基线。数字只应下降；上升说明新增了违规，--changed-only 模式会在 CI 直接拦截。规则见 docs/architecture/unified-error-handling-decision.md",
   "rules": {
     "apiResponseErrorTotal": "全 svc 层手写 ApiResponse::error(...) 调用总数",
@@ -43,15 +43,22 @@
       "anyhowInBusinessLayer": 0,
       "leakSurfaceTotal": 39,
       "note": "B7 泄漏面迁移（2026-10-08）：portal 168 + 11 小服务 52 = 220 处清零，泄露面 259→39（剩余全在 finance：36 L 固定文案 + 3 R 无上下文，待定策略后迁移）；anyhow 清退 shared-ai 24 + integration 21 + example 消费适配，业务层 anyhow 57→12→0（剩余 2 文件登记豁免：error/enhanced.rs From<anyhow::Error> 桥接 + config/enhanced.rs 进程边界相邻，见 check-error-handling.cjs ANYHOW_EXEMPT）"
+    },
+    {
+      "revision": "V517.6",
+      "apiResponseErrorTotal": 3021,
+      "leakInternalError": 0,
+      "rawErrorToString": 0,
+      "anyhowInBusinessLayer": 0,
+      "leakSurfaceTotal": 0,
+      "note": "finance 39 处迁移（2026-10-12）：泄露面 39→0 全仓清零。36 L（financial_reports 20 / mod.rs 11 / voucher_template 5）→ TopemsError::internal（500 固定文案）或 ValidationFailed/FileFormatError（400 校验/文件格式语义，保留原文案）；3 R（event_routes×2 → internal(\"启动/补偿 Saga 失败\")、shared/mod.rs×1 为注释示例误报，更新注释文案）。5 文件 +43/-43；cargo check/clippy correctness 0 error、finance 单测 1141/0、rustfmt 干净"
     }
   ],
-  "leakByService": {
-    "finance": 39
-  },
-  "leakByServiceNote": "含两种形态：format! 拼接 + <err>.to_string() 直出。V517.5 后非 finance 泄露面已清零；finance 39 = 36 L（financial_reports 20/mod.rs 11/voucher_template 5，均带固定文案）+ 3 R（event_routes×2/shared/mod.rs×1，无上下文文案），迁移策略待定。",
-  "apiResponseErrorTotal": 3060,
-  "leakInternalError": 36,
-  "rawErrorToString": 3,
+  "leakByService": {},
+  "leakByServiceNote": "V517.6 起全仓泄露面清零（含 finance 39 = 36 L + 3 R，见 baselineHistory V517.6）。",
+  "apiResponseErrorTotal": 3021,
+  "leakInternalError": 0,
+  "rawErrorToString": 0,
   "anyhowInBusinessLayer": 0,
-  "leakSurfaceTotal": 39
+  "leakSurfaceTotal": 0
 }
