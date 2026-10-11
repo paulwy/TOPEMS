@@ -9,6 +9,35 @@
 - **保留项（有明确理由）**：main/embedded/bootstrap 入口 anyhow（18+5 处）、shared-bootstrap 11（进程边界库）、doc/examples 8（教学惯例）、rd sqlx Type trait 2（框架契约）、finance StdError 测试 6（正确性验证）、shared-core error/enhanced 3（From<anyhow> 桥接+测试）、mcp-stdio main 1
 - 全仓 check 0 error；analytics 单测 16+6 全绿
 
+### 🏁 B7 整体收尾宣言（错误语义治理 ADR 阶段二 完成）
+**主线目标**：全仓错误形态统一收敛为 `TopemsError` 语义变体（含单元/元组/struct 三形态 + `From` 双向桥接 + `IntoResponse`）。
+
+**六形态清零终检（2026-10-12 全仓实测）**：
+| 形态 | 残留 | 状态 |
+|---|---|---|
+| `Result<_, String>`（含嵌套泛型） | 0 | ✅ B7-16 清零 |
+| `map_err(format!)` | 0 | ✅ B7-15 清零 |
+| `Err(format!` | 0 | ✅ B7-15 清零 |
+| 静态 `Err("字面量")`（生产） | 0 | ✅ B7-9 清零（残留 5 处均为 &str 测试，设计保留） |
+| 业务 `anyhow::`（非 main/embedded/bootstrap/桥接） | 0 | ✅ B7-17 清零 |
+| 生产 `Box<dyn std::error::Error>` | 0 | ✅ B7-17b 清零（残留 1 处为 mcp-stdio main，进程入口） |
+
+**设计保留项（非生产路径，明确理由）**：
+- 进程入口 `main() -> anyhow::Result` / `Result<(), Box<dyn Error>>`（18 svc + mcp-stdio）
+- 启动入口 embedded/bootstrap（unified-core 3 + portal 2 + shared-bootstrap 11）
+- doc 示例 7（Rust 官方文档惯例）与 examples 教学示例（已迁，见 B7-17b）
+- rd sqlx `Type` trait 2（框架契约签名固定）、finance StdError 正确性测试 6、&str 错误测试 5
+- `From<anyhow::Error> for TopemsError` 桥接（供边界处 `?` 直通）
+
+**关键基建（B7 期间建立）**：
+- `TopemsError`：`impl From<TopemsError> for String` / `From<String>` / `From<&str>` / `From<anyhow::Error>` / `From<EventError>`（B7-16b）/ sqlx·jsonwebtoken·io·redis·serde_json·reqwest `#[from]`/显式
+- `axum::response::IntoResponse for TopemsError`（服务端统一错误响应）
+- 语义映射模板固化：sqlx→DatabaseQuery / 事件·字段解析→ValidationFailed / HTTP·邮件·AI→NetworkRequest / 文件→FileFormat·FileOperation / "不存在"→ResourceNotFound / 配置→ConfigValidation
+- pre-commit 门禁：sensitive-info / boundary-gate-py / mobile-contract-smoke / web-contract-smoke（23 项）
+
+**验收基线**：全仓 `cargo check --workspace` 0 error 0 warning；单测 ai 1190 / shared-core 790+ / service-client 73 / analytics 22 / finance 39 等全绿；main 领先 origin（未 push，用户未要求）。
+**B7 全链路 commit**：B7-6 → 7 → 9 → 10 → 11 → 12 → 13 → 14 → 15（双清零）→ 16a/16b（Result String 清零）→ 17（anyhow/Box 生产清零）→ 17b 续（examples 清零）→ 并行线 B7-13~18 + finance 泄露面清零。B7 宣告收尾 ✅
+
 ## 2026-10-04 批1剩余+批2 收口（B3/B4/B5/B6/B8/B9 完成，本地提交未 push）
 
 > 依据「下一步工作规划」D 节执行形态：批 1（快赢收口）→ 批 2（残留偿还）。用户已拍板：批1剩余+批2 共 6 项，决策项（B1/B14/B15/A2/A5）暂跳过。
