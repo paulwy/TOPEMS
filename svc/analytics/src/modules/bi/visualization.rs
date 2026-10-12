@@ -349,6 +349,147 @@ pub async fn export_chart(
     }))
 }
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["analytics:viz:read"])),
+    path = "/api/bi/widgets/{widget_id}/drilldown",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
+pub async fn get_drilldown_config(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+) -> Json<serde_json::Value> {
+    info!("Getting drilldown config for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Get drilldown config",
+        "data": {
+            "widgetId": widget_id,
+            "enabled": false,
+            "levels": []
+        }
+    }))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["analytics:viz:write"])),
+    path = "/api/bi/widgets/{widget_id}/drilldown",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
+pub async fn update_drilldown_config(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+    Json(_config): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    info!("Updating drilldown config for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Update drilldown config"
+    }))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["analytics:viz:write"])),
+    path = "/api/bi/widgets/{widget_id}/drilldown/execute",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
+pub async fn execute_drilldown(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+    Json(req): Json<DrilldownRequest>,
+) -> Json<serde_json::Value> {
+    info!(
+        "Executing drilldown for widget: {} level: {}",
+        widget_id, req.level
+    );
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Execute drilldown",
+        "data": {
+            "widgetId": widget_id,
+            "level": req.level,
+            "rows": []
+        }
+    }))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["analytics:viz:read"])),
+    path = "/api/bi/widgets/{widget_id}/annotations",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
+pub async fn get_chart_annotations(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+) -> Json<serde_json::Value> {
+    info!("Getting annotations for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Get chart annotations",
+        "data": {
+            "widgetId": widget_id,
+            "annotations": []
+        }
+    }))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["analytics:viz:write"])),
+    path = "/api/bi/widgets/{widget_id}/annotations",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
+pub async fn create_chart_annotation(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+    Json(req): Json<AnnotationRequest>,
+) -> Json<serde_json::Value> {
+    info!("Creating annotation for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Create chart annotation",
+        "data": {
+            "id": uuid::Uuid::new_v4().to_string(),
+            "widgetId": widget_id,
+            "type": req.r#type,
+            "position": req.position,
+            "content": req.content,
+            "color": req.color
+        }
+    }))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["analytics:viz:read"])),
+    path = "/api/bi/widgets/{widget_id}/fullscreen",
+    tag = "BI",
+    responses((status = 200, description = "OK", body = serde_json::Value))
+)]
+pub async fn get_fullscreen_chart(
+    State(_state): State<AppState>,
+    Path(widget_id): Path<String>,
+) -> Json<serde_json::Value> {
+    info!("Getting fullscreen chart for widget: {}", widget_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "Get fullscreen chart",
+        "data": {
+            "widgetId": widget_id,
+            "fullscreen": true,
+            "url": "/api/bi/widgets/{}/export".replace("{}", &widget_id)
+        }
+    }))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct DrilldownRequest {
     pub level: i64,

@@ -250,6 +250,24 @@ pub fn create_protected_routes(app_state: AppState) -> Router {
             "/widgets/{widget_id}/export",
             post(modules::bi::visualization::export_chart),
         )
+        .route(
+            "/widgets/{widget_id}/drilldown",
+            get(modules::bi::visualization::get_drilldown_config)
+                .put(modules::bi::visualization::update_drilldown_config),
+        )
+        .route(
+            "/widgets/{widget_id}/drilldown/execute",
+            post(modules::bi::visualization::execute_drilldown),
+        )
+        .route(
+            "/widgets/{widget_id}/annotations",
+            get(modules::bi::visualization::get_chart_annotations)
+                .post(modules::bi::visualization::create_chart_annotation),
+        )
+        .route(
+            "/widgets/{widget_id}/fullscreen",
+            get(modules::bi::visualization::get_fullscreen_chart),
+        )
         // Analysis
         .route("/analysis", get(modules::bi::analysis::list_analyses))
         .route("/analysis", post(modules::bi::analysis::create_analysis))
