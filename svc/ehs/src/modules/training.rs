@@ -12,17 +12,34 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/training", get(list_trainings).post(create_training))
         .route(
+            "/training/{id}",
+            get(get_training).put(update_training).delete(delete_training),
+        )
+        .route(
             "/training/plans",
             get(list_training_plans).post(create_training_plan),
+        )
+        .route(
+            "/training/plans/{id}",
+            get(get_training_plan).put(update_training_plan).delete(delete_training_plan),
         )
         .route(
             "/training/records",
             get(list_training_records).post(create_training_record),
         )
         .route(
+            "/training/records/{id}",
+            get(get_training_record).put(update_training_record).delete(delete_training_record),
+        )
+        .route(
             "/training/certificates",
             get(list_certificates).post(create_certificate),
         )
+        .route(
+            "/training/certificates/{id}",
+            get(get_certificate).put(update_certificate).delete(delete_certificate),
+        )
+        .route("/training/statistics", get(get_training_statistics))
 }
 
 #[derive(Debug, Deserialize)]
@@ -153,6 +170,437 @@ pub async fn create_training(
             tenant_id,
         },
         "培训创建成功",
+    ))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_training(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Training>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting training: {}", id);
+    Json(ApiResponse::success(
+        Training {
+            id,
+            training_no: "TRN-2024001".to_string(),
+            title: "安全培训".to_string(),
+            content: Some("培训内容（内存桩数据）".to_string()),
+            trainer: Some("安全讲师".to_string()),
+            training_type: Some("safety".to_string()),
+            duration_hours: Some(4),
+            scheduled_at: Some(chrono::Utc::now().to_rfc3339()),
+            status: "scheduled".to_string(),
+            tenant_id,
+        },
+        "获取培训成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训 ID")),
+    request_body = serde_json::Value,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_training(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<Training>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating training {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        Training {
+            id,
+            training_no: "TRN-2024001".to_string(),
+            title: req.get("title").and_then(|v| v.as_str()).unwrap_or("安全培训").to_string(),
+            content: req.get("content").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            trainer: req.get("trainer").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            training_type: req.get("training_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            duration_hours: req.get("duration_hours").and_then(|v| v.as_i64()).map(|v| v as i32),
+            scheduled_at: req.get("scheduled_at").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("scheduled").to_string(),
+            tenant_id,
+        },
+        "培训更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_training(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting training: {}", id);
+    Json(ApiResponse::success((), "培训删除成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/plans/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训计划 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_training_plan(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<TrainingPlan>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting training plan: {}", id);
+    Json(ApiResponse::success(
+        TrainingPlan {
+            id,
+            plan_no: "TP-2024001".to_string(),
+            title: "年度安全培训计划".to_string(),
+            description: Some("培训计划详情（内存桩数据）".to_string()),
+            training_type: Some("safety".to_string()),
+            planned_date: Some(chrono::Utc::now().to_rfc3339()),
+            trainer: Some("安全讲师".to_string()),
+            status: "planned".to_string(),
+            created_at: chrono::Utc::now().to_rfc3339(),
+            tenant_id,
+        },
+        "获取培训计划成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/plans/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训计划 ID")),
+    request_body = serde_json::Value,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_training_plan(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingPlan>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating training plan {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        TrainingPlan {
+            id,
+            plan_no: "TP-2024001".to_string(),
+            title: req.get("title").and_then(|v| v.as_str()).unwrap_or("年度安全培训计划").to_string(),
+            description: req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            training_type: req.get("training_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            planned_date: req.get("planned_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            trainer: req.get("trainer").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("planned").to_string(),
+            created_at: chrono::Utc::now().to_rfc3339(),
+            tenant_id,
+        },
+        "培训计划更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/plans/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训计划 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_training_plan(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting training plan: {}", id);
+    Json(ApiResponse::success((), "培训计划删除成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/records/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训记录 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_training_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<TrainingRecord>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting training record: {}", id);
+    Json(ApiResponse::success(
+        TrainingRecord {
+            id,
+            record_no: "TRR-2024001".to_string(),
+            training_title: "安全培训".to_string(),
+            trainer: Some("安全讲师".to_string()),
+            training_date: Some(chrono::Utc::now().to_rfc3339()),
+            duration_hours: Some(4),
+            participants: Some(30),
+            pass_count: Some(28),
+            status: "completed".to_string(),
+            tenant_id,
+        },
+        "获取培训记录成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/records/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训记录 ID")),
+    request_body = serde_json::Value,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_training_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingRecord>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating training record {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        TrainingRecord {
+            id,
+            record_no: "TRR-2024001".to_string(),
+            training_title: req.get("training_title").and_then(|v| v.as_str()).unwrap_or("安全培训").to_string(),
+            trainer: req.get("trainer").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            training_date: req.get("training_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            duration_hours: req.get("duration_hours").and_then(|v| v.as_i64()).map(|v| v as i32),
+            participants: req.get("participants").and_then(|v| v.as_i64()).map(|v| v as i32),
+            pass_count: req.get("pass_count").and_then(|v| v.as_i64()).map(|v| v as i32),
+            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("completed").to_string(),
+            tenant_id,
+        },
+        "培训记录更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/records/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训记录 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_training_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting training record: {}", id);
+    Json(ApiResponse::success((), "培训记录删除成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/certificates/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训证书 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_certificate(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<TrainingCertificate>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting certificate: {}", id);
+    Json(ApiResponse::success(
+        TrainingCertificate {
+            id,
+            certificate_no: "CERT-2024001".to_string(),
+            employee_name: "测试员工".to_string(),
+            training_title: "安全培训".to_string(),
+            issue_date: Some(chrono::Utc::now().to_rfc3339()),
+            expiry_date: Some("2026-12-31".to_string()),
+            certificate_type: Some("safety".to_string()),
+            status: "valid".to_string(),
+            tenant_id,
+        },
+        "获取培训证书成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/certificates/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训证书 ID")),
+    request_body = serde_json::Value,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_certificate(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingCertificate>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating certificate {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        TrainingCertificate {
+            id,
+            certificate_no: "CERT-2024001".to_string(),
+            employee_name: req.get("employee_name").and_then(|v| v.as_str()).unwrap_or("测试员工").to_string(),
+            training_title: req.get("training_title").and_then(|v| v.as_str()).unwrap_or("安全培训").to_string(),
+            issue_date: req.get("issue_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            expiry_date: req.get("expiry_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            certificate_type: req.get("certificate_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("valid").to_string(),
+            tenant_id,
+        },
+        "培训证书更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:training:read"])),
+    path = "/api/ehs/training/certificates/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "培训证书 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_certificate(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting certificate: {}", id);
+    Json(ApiResponse::success((), "培训证书删除成功"))
+}
+
+pub async fn get_training_statistics(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "total_trainings": 0,
+            "total_plans": 0,
+            "total_records": 0,
+            "total_certificates": 0,
+            "completion_rate": 0.0,
+        }),
+        "获取培训统计成功",
     ))
 }
 

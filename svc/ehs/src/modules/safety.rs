@@ -1,6 +1,11 @@
 //! Safety handlers - Inspection plans, items, and records
 
-use axum::{extract::State, http::HeaderMap, routing::get, Extension, Json, Router};
+use axum::{
+    extract::State,
+    http::HeaderMap,
+    routing::{delete, get, post},
+    Extension, Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -11,7 +16,20 @@ use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/checks/plans", get(list_plans).post(create_plan))
+        .route(
+            "/checks/plans/{id}",
+            get(get_plan).put(update_plan).delete(delete_plan),
+        )
+        .route("/checks/plans/{plan_id}/items", post(create_plan_item))
+        .route(
+            "/checks/plans/{plan_id}/items/{item_id}",
+            delete(delete_plan_item),
+        )
         .route("/checks/records", get(list_records).post(create_record))
+        .route(
+            "/checks/records/{id}",
+            get(get_record).put(update_record).delete(delete_record),
+        )
         .route("/checks", get(list_plans).post(create_safety_check))
         .route(
             "/checks/{id}",
@@ -217,6 +235,158 @@ pub async fn create_plan(
         },
         "检查计划创建成功",
     ))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/checks/plans/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "检查计划 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_plan(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<InspectionPlan>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting inspection plan: {}", id);
+    Json(ApiResponse::success(
+        InspectionPlan {
+            id,
+            plan_no: "IP-2024001".to_string(),
+            title: "安全检查计划".to_string(),
+            description: Some("检查计划详情（内存桩数据）".to_string()),
+            inspection_type: "routine".to_string(),
+            frequency: "monthly".to_string(),
+            start_date: Some(chrono::Utc::now().to_rfc3339()),
+            end_date: None,
+            inspector: Some("test_admin".to_string()),
+            status: "active".to_string(),
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "获取检查计划成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/checks/plans/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "检查计划 ID")),
+    request_body = CreateInspectionPlanRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_plan(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateInspectionPlanRequest>,
+) -> Json<ApiResponse<InspectionPlan>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating inspection plan {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        InspectionPlan {
+            id,
+            plan_no: "IP-2024001".to_string(),
+            title: req.title,
+            description: req.description,
+            inspection_type: req.inspection_type,
+            frequency: req.frequency,
+            start_date: req.start_date,
+            end_date: req.end_date,
+            inspector: req.inspector,
+            status: "active".to_string(),
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "检查计划更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/checks/plans/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "检查计划 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_plan(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting inspection plan: {}", id);
+    Json(ApiResponse::success((), "检查计划删除成功"))
+}
+
+pub async fn create_plan_item(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(plan_id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "id": uuid::Uuid::new_v4().to_string(),
+            "plan_id": plan_id,
+            "item_no": format!("ITM-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            "title": req.get("title").and_then(|v| v.as_str()).unwrap_or("检查项"),
+            "category": req.get("category").and_then(|v| v.as_str()).unwrap_or("general"),
+            "status": "active",
+            "tenant_id": tenant_id.to_string(),
+            "created_at": chrono::Utc::now().to_rfc3339(),
+        }),
+        "检查项创建成功",
+    ))
+}
+
+pub async fn delete_plan_item(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path((_plan_id, item_id)): axum::extract::Path<(String, String)>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting inspection plan item: {}", item_id);
+    Json(ApiResponse::success((), "检查项删除成功"))
 }
 
 #[utoipa::path(

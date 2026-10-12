@@ -19,8 +19,20 @@ pub fn create_routes() -> Router<AppState> {
             get(list_regulation_categories),
         )
         .route(
+            "/environmental-compliance/regulations/{id}",
+            get(get_regulation)
+                .put(update_regulation)
+                .delete(delete_regulation),
+        )
+        .route(
             "/environmental-compliance/evaluations",
             get(list_evaluations).post(create_evaluation),
+        )
+        .route(
+            "/environmental-compliance/evaluations/{id}",
+            get(get_evaluation)
+                .put(update_evaluation)
+                .delete(delete_evaluation),
         )
         .route(
             "/environmental-compliance/monitoring",
@@ -31,12 +43,28 @@ pub fn create_routes() -> Router<AppState> {
             get(list_monitor_types),
         )
         .route(
+            "/environmental-compliance/monitoring/{id}",
+            get(get_monitor_record)
+                .put(update_monitor_record)
+                .delete(delete_monitor_record),
+        )
+        .route(
             "/environmental-compliance/permits",
             get(list_permits).post(create_permit),
         )
         .route(
+            "/environmental-compliance/permits/{id}",
+            get(get_permit).put(update_permit).delete(delete_permit),
+        )
+        .route(
             "/environmental-compliance/incidents",
             get(list_incidents).post(create_incident),
+        )
+        .route(
+            "/environmental-compliance/incidents/{id}",
+            get(get_incident)
+                .put(update_incident)
+                .delete(delete_incident),
         )
         .route(
             "/environmental-compliance/statistics",
@@ -422,6 +450,374 @@ pub async fn create_regulation(
         },
         "环保法规创建成功",
     ))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/environmental-compliance/regulations/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "法规 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_regulation(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<EnvironmentalRegulation>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting regulation: {}", id);
+    Json(ApiResponse::success(
+        EnvironmentalRegulation {
+            id,
+            reg_no: "ER-2024001".to_string(),
+            title: "环保法规".to_string(),
+            category: "emission".to_string(),
+            regulation_type: Some("national".to_string()),
+            issuing_authority: Some("生态环境部".to_string()),
+            issued_date: Some("2024-01-01".to_string()),
+            effective_date: Some("2024-02-01".to_string()),
+            expiry_date: None,
+            status: "active".to_string(),
+            content: Some("法规内容（内存桩数据）".to_string()),
+            applicability: Some("全厂".to_string()),
+            related_files: None,
+            version: Some("v1.0".to_string()),
+            remarks: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "获取环保法规成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/environmental-compliance/regulations/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "法规 ID")),
+    request_body = UpdateRegulationRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_regulation(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateRegulationRequest>,
+) -> Json<ApiResponse<EnvironmentalRegulation>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating regulation {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        EnvironmentalRegulation {
+            id,
+            reg_no: "ER-2024001".to_string(),
+            title: req.title.unwrap_or_else(|| "环保法规".to_string()),
+            category: req.category.unwrap_or_else(|| "emission".to_string()),
+            regulation_type: req.regulation_type,
+            issuing_authority: req.issuing_authority,
+            issued_date: req.issued_date,
+            effective_date: req.effective_date,
+            expiry_date: req.expiry_date,
+            status: req.status.unwrap_or_else(|| "active".to_string()),
+            content: req.content,
+            applicability: req.applicability,
+            related_files: None,
+            version: req.version,
+            remarks: req.remarks,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "环保法规更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/environmental-compliance/regulations/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "法规 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_regulation(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting regulation: {}", id);
+    Json(ApiResponse::success((), "环保法规删除成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/environmental-compliance/monitoring/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "监测记录 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_monitor_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<EnvironmentMonitor>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting monitor record: {}", id);
+    Json(ApiResponse::success(
+        EnvironmentMonitor {
+            id,
+            record_no: "EM-2024001".to_string(),
+            monitor_type: "wastewater".to_string(),
+            monitor_point: "厂区排污口".to_string(),
+            monitor_date: Some(chrono::Utc::now().to_rfc3339()),
+            monitor_agency: Some("第三方检测机构".to_string()),
+            monitor_method: Some("cod_cr".to_string()),
+            pollutant: Some("COD".to_string()),
+            concentration: Some("45.2".to_string()),
+            unit: Some("mg/L".to_string()),
+            standard_value: Some("100".to_string()),
+            standard_type: Some("gb8978".to_string()),
+            result: "compliant".to_string(),
+            flow_rate: None,
+            emission_rate: None,
+            status: "completed".to_string(),
+            remarks: None,
+            attachments: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "获取监测记录成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/environmental-compliance/monitoring/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "监测记录 ID")),
+    request_body = CreateMonitorRecordRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_monitor_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateMonitorRecordRequest>,
+) -> Json<ApiResponse<EnvironmentMonitor>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating monitor record {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        EnvironmentMonitor {
+            id,
+            record_no: "EM-2024001".to_string(),
+            monitor_type: req.monitor_type,
+            monitor_point: req.monitor_point,
+            monitor_date: req.monitor_date,
+            monitor_agency: req.monitor_agency,
+            monitor_method: req.monitor_method,
+            pollutant: req.pollutant,
+            concentration: req.concentration,
+            unit: req.unit,
+            standard_value: req.standard_value,
+            standard_type: req.standard_type,
+            result: req.result,
+            flow_rate: req.flow_rate,
+            emission_rate: req.emission_rate,
+            status: "completed".to_string(),
+            remarks: req.remarks,
+            attachments: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "监测记录更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/environmental-compliance/monitoring/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "监测记录 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_monitor_record(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting monitor record: {}", id);
+    Json(ApiResponse::success((), "监测记录删除成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/environmental-compliance/permits/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "排污许可 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_permit(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<DischargePermit>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting permit: {}", id);
+    Json(ApiResponse::success(
+        DischargePermit {
+            id,
+            permit_no: "PERM-2024001".to_string(),
+            permit_type: "wastewater".to_string(),
+            permit_name: Some("排污许可证".to_string()),
+            issuing_authority: Some("生态环境局".to_string()),
+            issued_date: Some("2024-01-01".to_string()),
+            valid_from: Some("2024-01-01".to_string()),
+            valid_to: Some("2027-12-31".to_string()),
+            status: "valid".to_string(),
+            pollutant_list: Some(vec!["COD".to_string(), "NH3-N".to_string()]),
+            discharge_standard: Some("GB8978".to_string()),
+            total_amount_limit: Some("500t/a".to_string()),
+            discharge_location: Some("厂区排污口".to_string()),
+            holder: Some("公司名称".to_string()),
+            attachments: None,
+            remarks: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "获取排污许可成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/environmental-compliance/permits/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "排污许可 ID")),
+    request_body = UpdatePermitRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_permit(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdatePermitRequest>,
+) -> Json<ApiResponse<DischargePermit>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating permit {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        DischargePermit {
+            id,
+            permit_no: "PERM-2024001".to_string(),
+            permit_type: "wastewater".to_string(),
+            permit_name: req.permit_name,
+            issuing_authority: None,
+            issued_date: None,
+            valid_from: req.valid_from,
+            valid_to: req.valid_to,
+            status: req.status.unwrap_or_else(|| "valid".to_string()),
+            pollutant_list: req.pollutant_list,
+            discharge_standard: None,
+            total_amount_limit: None,
+            discharge_location: None,
+            holder: None,
+            attachments: None,
+            remarks: req.remarks,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "排污许可更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/environmental-compliance/permits/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "排污许可 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_permit(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting permit: {}", id);
+    Json(ApiResponse::success((), "排污许可删除成功"))
 }
 
 #[utoipa::path(

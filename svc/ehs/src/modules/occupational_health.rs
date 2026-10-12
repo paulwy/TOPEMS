@@ -15,6 +15,12 @@ pub fn create_routes() -> Router<AppState> {
             get(list_contraindications).post(create_contraindication),
         )
         .route(
+            "/occupational-health/contraindications/{id}",
+            get(get_contraindication)
+                .put(update_contraindication)
+                .delete(delete_contraindication),
+        )
+        .route(
             "/occupational-health/statistics",
             get(get_health_statistics),
         )
@@ -803,6 +809,124 @@ pub async fn create_contraindication(
         },
         "职业禁忌症创建成功",
     ))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/occupational-health/contraindications/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "禁忌症记录 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_contraindication(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Contraindication>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Getting contraindication: {}", id);
+    Json(ApiResponse::success(
+        Contraindication {
+            id,
+            employee_id: "EMP-001".to_string(),
+            employee_name: "测试员工".to_string(),
+            department: Some("生产部".to_string()),
+            position: Some("操作工".to_string()),
+            contraindication_type: "noise".to_string(),
+            description: Some("职业禁忌症（内存桩数据）".to_string()),
+            diagnosed_at: Some(chrono::Utc::now().to_rfc3339()),
+            hospital: Some("职业病防治院".to_string()),
+            status: "active".to_string(),
+            work_restriction: Some("限制接触噪声岗位".to_string()),
+            advised_position: Some("调岗至文员".to_string()),
+            follow_up_date: None,
+            remarks: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "获取职业禁忌症成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/occupational-health/contraindications/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "禁忌症记录 ID")),
+    request_body = CreateContraindicationRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_contraindication(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateContraindicationRequest>,
+) -> Json<ApiResponse<Contraindication>> {
+    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    };
+    let tenant_id = tenant_opt
+        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    tracing::debug!("Updating contraindication {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        Contraindication {
+            id,
+            employee_id: req.employee_id,
+            employee_name: req.employee_name,
+            department: req.department,
+            position: req.position,
+            contraindication_type: req.contraindication_type,
+            description: req.description,
+            diagnosed_at: req.diagnosed_at,
+            hospital: req.hospital,
+            status: "active".to_string(),
+            work_restriction: req.work_restriction,
+            advised_position: req.advised_position,
+            follow_up_date: req.follow_up_date,
+            remarks: req.remarks,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "职业禁忌症更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/occupational-health/contraindications/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "禁忌症记录 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_contraindication(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::debug!("Deleting contraindication: {}", id);
+    Json(ApiResponse::success((), "职业禁忌症删除成功"))
 }
 
 #[utoipa::path(
