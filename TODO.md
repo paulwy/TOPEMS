@@ -5,11 +5,11 @@
 
 **结论：业务裸 `?` 无缺口**（全仓 check 0 error = 所有 `?` 传播闭环）。68 个错误类型矩阵：
 
-- **显式桥接 16 个**：EventError / AuditLogError / PermissionStoreError / ServiceClientError（B7-17b 收尾）+ FsmError / AIClientError（commit 68c33da85）+ ClusterError / ConsulError / EtcdError / SagaError（commit 88c8af18a）+ BackupError / TenantError / EncryptionError / DshToolError / LogQueryError / MonitoringError（commit 9e48d0e95，覆盖全部依赖 shared-core 的库错误）
+- **显式桥接 46 个（68 错误类型覆盖率 68%，传播型错误 100% 覆盖）**：EventError / AuditLogError / PermissionStoreError / ServiceClientError（B7-17b 收尾）+ FsmError / AIClientError（commit 68c33da85）+ ClusterError / ConsulError / EtcdError / SagaError（commit 88c8af18a）+ BackupError / TenantError / EncryptionError / DshToolError / LogQueryError / MonitoringError（commit 9e48d0e95，覆盖全部依赖 shared-core 的库错误）
   - FsmError（shared-core）：TerminalState/InvalidTransition/UnknownStatus → ValidationFailed
   - AIClientError（shared-ai）：Network/Api→NetworkRequest、Parse→ValidationFailed、Config→ConfigValidation、Timeout→RequestTimeout、Auth→AuthenticationFailed、ServiceUnavailable→ServiceUnavailable、NotImplemented→Internal
 - **无需桥接（62 个）**：
-  - 服务本地 util 错误 19 个（Wms/Crm/Ehs/Gis/Integration/Rd/Srm/Tms/Ticket/Search/Qms/Sample/Analytics/Stat/Capacity/Aps/Transition/Version/BusinessTool 等）——调用点均 map_err 兜底（编译保证），补直接桥接为可选优化
+  - 服务本地 util 错误已全补（de9b6e186：17 文件 19 错误 75 变体）；ai/audit/grpc/erp/finance ValidationError 等业务域错误已补（3905a7f25 + b10c0cf69）
   - finance 测试断言 6 个（YearEndClose/Consolidation/PostValidation/ReversalValidation/PeriodValidation/ModelValidation）——不参与 `?` 传播
   - DTO/响应 struct 12 个（JsonRpc/Graphql/Gateway/ApiError/StandardError/SafeError/SerializableError/DshError/FieldError/FormError/SyncError/ConversionError）——非传播错误
   - 孤儿规则限制仅剩 2 个（shared-mcp JsonRpcError/TransportError——shared-mcp 不依赖 shared-core，impl 无处安放；Cluster/Consul/Etcd/Saga 已补）
