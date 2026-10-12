@@ -426,6 +426,21 @@ fn extract_final_message_end(body: &str) -> Option<DifyChatResponse> {
     last_end
 }
 
+
+/// B7 桥接网：DifyError → TopemsError
+impl From<DifyError> for topems_shared_core::error::TopemsError {
+    fn from(e: DifyError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            DifyError::NotConfigured => TopemsError::ConfigValidation("dify not configured".to_string()),
+            DifyError::Network(v) => TopemsError::NetworkRequest(v),
+            DifyError::Status { status, body } => TopemsError::NetworkRequest(format!("dify status {status}: {body}")),
+            DifyError::Deserialize(v) => TopemsError::ValidationFailed(v),
+            DifyError::Business(v) => TopemsError::BusinessLogic(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

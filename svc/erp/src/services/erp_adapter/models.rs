@@ -207,6 +207,22 @@ impl<T> ErpResult<T> {
     }
 }
 
+
+/// B7 桥接网：ErpAdapterError → TopemsError
+impl From<ErpAdapterError> for topems_shared_core::error::TopemsError {
+    fn from(e: ErpAdapterError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            ErpAdapterError::ConnectionFailed(v) => TopemsError::NetworkRequest(v),
+            ErpAdapterError::AuthenticationFailed(v) => TopemsError::AuthenticationFailed(v),
+            ErpAdapterError::ApiCallFailed(v) => TopemsError::NetworkRequest(v),
+            ErpAdapterError::DataTransformFailed(v) => TopemsError::ValidationFailed(v),
+            ErpAdapterError::UnsupportedOperation(v) => TopemsError::OperationNotAllowed(v),
+            ErpAdapterError::HttpError(v) => TopemsError::NetworkRequest(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

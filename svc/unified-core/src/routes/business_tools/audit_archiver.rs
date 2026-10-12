@@ -362,6 +362,19 @@ fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
 
 // ===== Tests =====
 
+
+/// B7 桥接网：ArchiveError → TopemsError
+impl From<ArchiveError> for topems_shared_core::error::TopemsError {
+    fn from(e: ArchiveError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            ArchiveError::Io(v) => TopemsError::FileOperation(v),
+            ArchiveError::Serialization(v) => TopemsError::ValidationFailed(v),
+            ArchiveError::Compression(v) => TopemsError::FileFormatError(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(
     clippy::as_conversions,

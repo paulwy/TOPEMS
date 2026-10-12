@@ -321,6 +321,25 @@ pub trait LlmProvider: Send + Sync + 'static {
     async fn list_models(&self) -> Result<Vec<String>, LlmProviderError>;
 }
 
+
+/// B7 桥接网：LlmProviderError → TopemsError
+impl From<LlmProviderError> for topems_shared_core::error::TopemsError {
+    fn from(e: LlmProviderError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            LlmProviderError::Network(v) => TopemsError::NetworkRequest(v),
+            LlmProviderError::Api { .. } => TopemsError::NetworkRequest(format!("llm api error")),
+            LlmProviderError::Timeout(v) => TopemsError::RequestTimeout,
+            LlmProviderError::RateLimit => TopemsError::BusinessLogic("llm rate limit".to_string()),
+            LlmProviderError::Authentication(v) => TopemsError::AuthenticationFailed(v),
+            LlmProviderError::Serialization(v) => TopemsError::ValidationFailed(v),
+            LlmProviderError::Configuration(v) => TopemsError::ConfigValidation(v),
+            LlmProviderError::Unsupported(v) => TopemsError::OperationNotAllowed(v),
+            LlmProviderError::Internal(v) => TopemsError::Internal(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

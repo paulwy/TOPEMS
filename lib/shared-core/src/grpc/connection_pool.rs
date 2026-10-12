@@ -319,6 +319,19 @@ impl GrpcChannelPool {
     }
 }
 
+
+/// B7 桥接网：GrpcPoolError → TopemsError
+impl From<GrpcPoolError> for crate::error::TopemsError {
+    fn from(e: GrpcPoolError) -> Self {
+        use crate::error::TopemsError;
+        match e {
+            GrpcPoolError::NoHealthyEndpoints(v) => TopemsError::ServiceUnavailable(v),
+            GrpcPoolError::InvalidUrl(v) => TopemsError::InvalidUrl(v),
+            GrpcPoolError::EndpointCreation(v) => TopemsError::NetworkRequest(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

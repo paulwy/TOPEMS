@@ -498,6 +498,18 @@ impl AuditExportControl for NoopExportControl {
 
 // ===== Tests =====
 
+
+/// B7 桥接网：ExportError → TopemsError
+impl From<ExportError> for topems_shared_core::error::TopemsError {
+    fn from(e: ExportError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            ExportError::Store(v) => TopemsError::DatabaseQuery(v),
+            ExportError::Archive(v) => TopemsError::BusinessLogic(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

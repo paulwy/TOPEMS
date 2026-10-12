@@ -505,6 +505,19 @@ pub fn vector_to_pgvector_string(vector: &[f32]) -> String {
     format!("[{}]", inner.join(","))
 }
 
+
+/// B7 桥接网：ProcessorError → TopemsError
+impl From<ProcessorError> for topems_shared_core::error::TopemsError {
+    fn from(e: ProcessorError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            ProcessorError::ParseError(v) => TopemsError::ValidationFailed(v),
+            ProcessorError::EmbeddingError(v) => TopemsError::NetworkRequest(v),
+            ProcessorError::InvalidInput(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

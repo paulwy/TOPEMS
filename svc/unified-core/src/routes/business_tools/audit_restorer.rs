@@ -393,6 +393,19 @@ fn extract_date_from_filename(filename: &str, prefix: &str) -> Option<String> {
 
 // ===== Tests =====
 
+
+/// B7 桥接网：RestoreError → TopemsError
+impl From<RestoreError> for topems_shared_core::error::TopemsError {
+    fn from(e: RestoreError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            RestoreError::Io(v) => TopemsError::FileOperation(v),
+            RestoreError::Parse(v) => TopemsError::ValidationFailed(v),
+            RestoreError::Store(v) => TopemsError::DatabaseQuery(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
