@@ -157,6 +157,19 @@ pub fn next_valid_statuses(current: &str, kind: &str) -> Vec<&'static str> {
     transitions.get(current).cloned().unwrap_or_default()
 }
 
+
+/// B7 桥接网：TransitionError → TopemsError（服务本地校验错误语义统一）
+impl From<TransitionError> for topems_shared_core::error::TopemsError {
+    fn from(e: TransitionError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            TransitionError::InvalidFromStatus(v) => TopemsError::ValidationFailed(format!("invalid from status: {v}")),
+            TransitionError::InvalidToStatus(v) => TopemsError::ValidationFailed(format!("invalid to status: {v}")),
+            TransitionError::IllegalTransition { from, to } => TopemsError::ValidationFailed(format!("illegal transition: {from} -> {to}")),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

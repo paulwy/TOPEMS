@@ -916,6 +916,21 @@ define_business_tool!(
     ]
 );
 
+
+/// B7 桥接网：BusinessToolError → TopemsError（服务本地校验错误语义统一）
+impl From<BusinessToolError> for topems_shared_core::error::TopemsError {
+    fn from(e: BusinessToolError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            BusinessToolError::ToolNotFound(v) => TopemsError::ResourceNotFound(v),
+            BusinessToolError::ServiceClientError(v) => TopemsError::from(v),
+            BusinessToolError::OperationFailed(v) => TopemsError::BusinessLogic(v),
+            BusinessToolError::InvalidInput(v) => TopemsError::ValidationFailed(v),
+            BusinessToolError::NotImplemented(v) => TopemsError::Internal(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

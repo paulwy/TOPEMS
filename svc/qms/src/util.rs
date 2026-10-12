@@ -239,6 +239,33 @@ pub fn normalize_defect_severity(s: &str) -> Option<String> {
     Some(normalized)
 }
 
+
+/// B7 桥接网：QmsUtilError → TopemsError（服务本地校验错误语义统一）
+impl From<QmsUtilError> for topems_shared_core::error::TopemsError {
+    fn from(e: QmsUtilError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            QmsUtilError::InvalidInspectionNo(v) => TopemsError::ValidationFailed(v),
+            QmsUtilError::InvalidParams(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
+
+/// B7 桥接网：SampleError → TopemsError（服务本地校验错误语义统一）
+impl From<SampleError> for topems_shared_core::error::TopemsError {
+    fn from(e: SampleError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            SampleError::InvalidLotSize(v) => TopemsError::ValidationFailed(v),
+            SampleError::InvalidAql(v) => TopemsError::ValidationFailed(v),
+            SampleError::InvalidLevel(v) => TopemsError::ValidationFailed(v),
+            SampleError::InvalidSampleSize(v) => TopemsError::ValidationFailed(v),
+            SampleError::InvalidDefectCount(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

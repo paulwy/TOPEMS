@@ -240,6 +240,19 @@ pub fn validate_version_format(version_no: &str) -> Result<(), VersionError> {
     parse_semver(version_no).map(|_| ())
 }
 
+
+/// B7 桥接网：VersionError → TopemsError（服务本地校验错误语义统一）
+impl From<VersionError> for topems_shared_core::error::TopemsError {
+    fn from(e: VersionError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            VersionError::InvalidFormat(v) => TopemsError::ValidationFailed(v),
+            VersionError::InvalidPreRelease(v) => TopemsError::ValidationFailed(v),
+            VersionError::NonNumericComponent(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

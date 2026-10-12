@@ -270,6 +270,18 @@ pub fn validate_formula_version_strict(version: &str) -> Result<(), RdError> {
     Ok(())
 }
 
+
+/// B7 桥接网：RdError → TopemsError（服务本地校验错误语义统一）
+impl From<RdError> for topems_shared_core::error::TopemsError {
+    fn from(e: RdError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            RdError::InvalidExperimentCode(v) => TopemsError::ValidationFailed(v),
+            RdError::InvalidFormulaVersion(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

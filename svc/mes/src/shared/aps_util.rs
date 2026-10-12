@@ -591,6 +591,17 @@ mod tests {
     }
 }
 
+
+/// B7 桥接网：ApsError → TopemsError（服务本地校验错误语义统一）
+impl From<ApsError> for topems_shared_core::error::TopemsError {
+    fn from(e: ApsError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            ApsError::InvalidProductionOrderNo(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod additional_tests {

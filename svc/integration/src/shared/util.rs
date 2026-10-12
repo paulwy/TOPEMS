@@ -779,6 +779,24 @@ impl SyncEventState {
 // 扩展测试模块
 // ============================================================================
 
+
+/// B7 桥接网：IntegrationError → TopemsError（服务本地校验错误语义统一）
+impl From<IntegrationError> for topems_shared_core::error::TopemsError {
+    fn from(e: IntegrationError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            IntegrationError::InvalidEventId(v) => TopemsError::ValidationFailed(v),
+            IntegrationError::DuplicateEventKey { key } => TopemsError::ValidationFailed(format!("duplicate event key: {key}")),
+            IntegrationError::RuleNotFound(v) => TopemsError::ResourceNotFound(v),
+            IntegrationError::SyncConflict(v) => TopemsError::ValidationFailed(v),
+            IntegrationError::InvalidMapping(v) => TopemsError::ValidationFailed(v),
+            IntegrationError::RetryExhausted { attempts } => TopemsError::ServiceUnavailable(format!("retry exhausted after {attempts} attempts")),
+            IntegrationError::CircuitBreakerOpen => TopemsError::ServiceUnavailable("circuit breaker open".to_string()),
+            IntegrationError::ConversionFailed(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests_ext {
     use super::*;

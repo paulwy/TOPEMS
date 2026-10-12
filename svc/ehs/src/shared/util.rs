@@ -279,6 +279,19 @@ pub fn is_compliance_due(
     elapsed >= frequency_days
 }
 
+
+/// B7 桥接网：EhsError → TopemsError（服务本地校验错误语义统一）
+impl From<EhsError> for topems_shared_core::error::TopemsError {
+    fn from(e: EhsError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            EhsError::InvalidInspectionNo(v) => TopemsError::ValidationFailed(v),
+            EhsError::InvalidPpeRequirement(v) => TopemsError::ValidationFailed(v),
+            EhsError::InvalidParam(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

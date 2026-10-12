@@ -633,6 +633,22 @@ pub fn parse_module_filter(raw: &str) -> Vec<String> {
 // 扩展测试
 // ============================================================================
 
+
+/// B7 桥接网：SearchError → TopemsError（服务本地校验错误语义统一）
+impl From<SearchError> for topems_shared_core::error::TopemsError {
+    fn from(e: SearchError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            SearchError::EmptyQuery => TopemsError::ValidationFailed("empty query".to_string()),
+            SearchError::QueryTooLong(v) => TopemsError::ValidationFailed(format!("query too long: {v}")),
+            SearchError::InvalidPage(v) => TopemsError::ValidationFailed(format!("invalid page: {v}")),
+            SearchError::InvalidPageSize(v) => TopemsError::ValidationFailed(format!("invalid page size: {v}")),
+            SearchError::InvalidFilter(v) => TopemsError::ValidationFailed(v),
+            SearchError::NoResults => TopemsError::ResourceNotFound("no search results".to_string()),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests_ext {
     use super::*;

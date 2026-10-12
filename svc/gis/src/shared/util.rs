@@ -981,6 +981,26 @@ impl SyncTaskState {
 // 扩展测试
 // ============================================================================
 
+
+/// B7 桥接网：GisError → TopemsError（服务本地校验错误语义统一）
+impl From<GisError> for topems_shared_core::error::TopemsError {
+    fn from(e: GisError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            GisError::InvalidCoordinates { lat, lng } => TopemsError::ValidationFailed(format!("invalid coordinates: lat={lat}, lng={lng}")),
+            GisError::InvalidRadius(v) => TopemsError::ValidationFailed(format!("invalid radius: {v}")),
+            GisError::InvalidGeoJson(v) => TopemsError::ValidationFailed(v),
+            GisError::InvalidWkt(v) => TopemsError::ValidationFailed(v),
+            GisError::Geometry(v) => TopemsError::ValidationFailed(v),
+            GisError::TileOutOfRange { z, x, y } => TopemsError::ValidationFailed(format!("tile out of range: z={z}, x={x}, y={y}")),
+            GisError::InvalidTileZoom(v) => TopemsError::ValidationFailed(format!("invalid tile zoom: {v}")),
+            GisError::EmptyInput => TopemsError::ValidationFailed("empty input".to_string()),
+            GisError::ParseError(v) => TopemsError::ValidationFailed(v),
+            GisError::OutOfRange(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests_ext {
     use super::*;

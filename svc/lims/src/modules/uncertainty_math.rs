@@ -747,6 +747,19 @@ mod tests {
     }
 }
 
+
+/// B7 桥接网：StatError → TopemsError（服务本地校验错误语义统一）
+impl From<StatError> for topems_shared_core::error::TopemsError {
+    fn from(e: StatError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            StatError::EmptyInput => TopemsError::ValidationFailed("empty input".to_string()),
+            StatError::InsufficientData { min_required, actual } => TopemsError::ValidationFailed(format!("insufficient data: need {min_required}, got {actual}")),
+            StatError::NonFiniteValue { index } => TopemsError::ValidationFailed(format!("non-finite value at index {index}")),
+        }
+    }
+}
+
 #[cfg(test)]
 mod type_b_edge_tests {
     use super::*;

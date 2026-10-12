@@ -189,6 +189,33 @@ pub fn is_cycle_count_due(
     now >= due_at
 }
 
+
+/// B7 桥接网：WmsError → TopemsError（服务本地校验错误语义统一）
+impl From<WmsError> for topems_shared_core::error::TopemsError {
+    fn from(e: WmsError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            WmsError::InvalidStockMoveType(v) => TopemsError::ValidationFailed(v),
+            WmsError::EmptyWarehouseCode => TopemsError::ValidationFailed("empty warehouse code".to_string()),
+            WmsError::WarehouseCodeTooLong(v) => TopemsError::ValidationFailed(format!("warehouse code too long: {v}")),
+            WmsError::InvalidWarehouseCodeChar(v) => TopemsError::ValidationFailed(format!("invalid warehouse code char: {v}")),
+        }
+    }
+}
+
+
+/// B7 桥接网：CapacityError → TopemsError（服务本地校验错误语义统一）
+impl From<CapacityError> for topems_shared_core::error::TopemsError {
+    fn from(e: CapacityError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            CapacityError::Exceeded { weight, max_capacity } => TopemsError::ValidationFailed(format!("capacity exceeded: weight={weight}, max={max_capacity}")),
+            CapacityError::NegativeWeight(v) => TopemsError::ValidationFailed(format!("negative weight: {v}")),
+            CapacityError::InvalidCapacity(v) => TopemsError::ValidationFailed(format!("invalid capacity: {v}")),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

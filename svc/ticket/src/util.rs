@@ -151,6 +151,20 @@ pub fn is_valid_channel(channel: &str) -> bool {
     matches!(channel, "web" | "mobile" | "email" | "api" | "phone")
 }
 
+
+/// B7 桥接网：TicketError → TopemsError（服务本地校验错误语义统一）
+impl From<TicketError> for topems_shared_core::error::TopemsError {
+    fn from(e: TicketError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            TicketError::InvalidTicketNo(v) => TopemsError::ValidationFailed(v),
+            TicketError::InvalidCategory(v) => TopemsError::ValidationFailed(v),
+            TicketError::InvalidTitle(v) => TopemsError::ValidationFailed(v),
+            TicketError::InvalidChannel(v) => TopemsError::ValidationFailed(v),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
