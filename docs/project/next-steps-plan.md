@@ -44,10 +44,14 @@
 
 ## 三、P2 · 技术债专项（已登记，可独立批次）
 
-### 3a. 事务一致性（D6 决策待确认）
-- 现状：D6 决策文档已出（推荐 **选项 B：commit 后 emit + 重试队列**），**未实施**。
-- 待用户拍板：① 仅 erp 三模块 vs 推广全部发布服务（finance 21 / wms 19 / hrm 21 / scm 20 / crm 9 / mes 8 / pm 3）；② 重试载体 Redis ZSET vs 0013 落表；③ 后台任务内嵌 vs 独立进程；④ 0013 落库时点。
-- **建议**：先确认范围，最小侵入从 erp 三模块起步。
+### 3a. 事务一致性（D6）— ✅ 已完成全服务推广
+> 核实结论（2026-10-13）：**D6 范围已定为"全服务推广"并全部落地**，非"待拍板"。
+- **实现**：`lib/shared-event/src/event/commit_retry.rs`（198 行共享模块，`58de84a89`）：`push_retry_typed` / `push_retry_searchable` / `run_relay`（15s 任务），Redis ZSET 键 `topems:event_retry:{service_name}`，指数退避 30s×attempts、最大 8 次。
+- **范围**：**8 个发布服务全部完成"commit 后 emit + ZSET 重试"**——erp（customer/sales_order/purchase_order，relay 内嵌模块）+ finance/wms/hrm/scm/crm/mes/pm（main.rs 各注册 run_relay）。已 push origin/main（commit 链 cde039d56/58de84a89/fb9f186f8/3efef271c/b9d632b61/82139bb75/340a2d09c/0dbff2671/e22550402，`1144` 行确认"D6 全链已 push"）。
+- **决策已落定**：重试载体 = Redis ZSET（**未落 0013 迁移**）；后台任务 = 服务内嵌（非独立进程）；完整 outbox（A）/ CDC（C）仅登记演进路线未实施。
+- **残留（本次范围外，已评估 2026-10-13）**：
+  - **hrm MDM 主数据事件**：评估结论 = **维持现状，无需纳入 ZSET**。MDM 走独立 `master_data` 总线，与主 EventType 总线平行的可靠性栈——消费侧 `process_mdm_message`（`stream_subscriber.rs:367`）与标准事件**共用消费组重试**（成功 ACK / 失败不 ACK 重投 / 超限推 `topems:mdm_dlq:{prefix}` 再 ACK），且 MDM 另走 **RabbitMQ 双发**（`publish_to_rabbitmq`）兜底发布失败。D6 决策文档第 2.1 节明确将 MDM 排除在 D6 范围，系**正确设计非遗漏**；套 ZSET 属过度工程。
+  - **wms `inventory.rs:108` 死代码**：✅ **已删除**（`publish_inventory_updated` 无任何调用点，连同 unused import 一并清理）。
 
 ### 3b. 前端/权限基线债（独立批次）
 | 项 | 说明 |
@@ -57,10 +61,8 @@
 | menu-health | P1=52 / R3=271（v2 路由重构债） |
 | axum-layer | aps/feedback 组 |
 
-### 3c. 观测与死代码
-- 观测缺口 G1/G2/G3（边指标 status 维度 / 出站延迟直方图 / shared-core 死指标）
-- hrm MDM 主数据事件独立总线未纳入 ZSET 重试
-- wms `inventory.rs:108` `publish_inventory_updated` 死代码
+### 3c. 观测缺口（独立批次）
+- 观测缺口 G1/G2/G3（边指标 status 维度 / 出站延迟直方图 / shared-core 死指标）——代码在 lib/svc 边界外，仅登记建议
 
 ---
 
@@ -86,8 +88,8 @@
 ```
 
 **关键决策待办（需你拍板）**：
-1. D6 实施范围（erp 三模块 vs 全服务）
-2. P2 3b 前端/权限债是否本周派批
+1. P2 3b 前端/权限债（R3=9 / R5=7 / menu-health）是否本周派批
+2. hrm MDM 主数据事件是否纳入 ZSET 重试（需另设计 master_data 通道，D6 范围外残留）
 
 ---
 

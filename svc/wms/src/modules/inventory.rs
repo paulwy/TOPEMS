@@ -6,10 +6,8 @@ use axum::{
 };
 use chrono::Utc;
 use num_traits::cast::ToPrimitive;
-use rust_decimal::prelude::FromPrimitive;
 use serde::Deserialize;
 use sqlx::Row;
-use std::sync::Arc;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
 use uuid::Uuid;
@@ -21,8 +19,6 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::{ApiResponse, ListResponse};
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
-use topems_shared_event::event::{EventPublisher, EventType, InventoryUpdatedPayload};
-
 fn inventory_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     serde_json::json!({
         "id": row.get::<uuid::Uuid, _>("id"),
@@ -60,60 +56,6 @@ async fn generate_inventory_movement_no(
     .await
     .unwrap_or(0);
     format!("{}-{:06}", prefix, seq + 1)
-}
-
-/// 发布 InventoryUpdated 事件，通知 SCM 等下游服务同步库存快照
-fn publish_inventory_updated(
-    event_publisher: &Option<Arc<EventPublisher>>,
-    inventory_id: Uuid,
-    warehouse_id: Uuid,
-    material_code: String,
-    material_name: String,
-    old_quantity: f64,
-    new_quantity: f64,
-    change_type: String,
-    changed_by: Uuid,
-    available_quantity: Option<f64>,
-    min_quantity: Option<f64>,
-    total_value: Option<f64>,
-) {
-    let publisher = match event_publisher {
-        Some(p) => p.clone(),
-        None => return,
-    };
-
-    let delta = new_quantity - old_quantity;
-    let changed_at = Utc::now().to_rfc3339();
-
-    let payload = InventoryUpdatedPayload {
-        inventory_id,
-        warehouse_id,
-        material_code,
-        material_name,
-        old_quantity,
-        new_quantity,
-        delta,
-        change_type,
-        changed_by,
-        changed_at,
-        available_quantity,
-        min_quantity,
-        // U6-2：库存总值 f64 -> Decimal
-        total_value: total_value
-            .map(|v| rust_decimal::Decimal::from_f64(v).unwrap_or(rust_decimal::Decimal::ZERO)),
-    };
-
-    tokio::spawn(async move {
-        if let Err(e) = publisher
-            .publish_event(EventType::InventoryUpdated, payload)
-            .await
-        {
-            tracing::warn!(
-                "[wms] InventoryUpdated 事件发布失败（graceful fallback）: {}",
-                e
-            );
-        }
-    });
 }
 
 /// V19.7: 从 Claims 中解析 tenant_id
