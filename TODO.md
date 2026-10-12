@@ -23,13 +23,19 @@
 | 项 | 定案 | commit（均在 origin/main） | 残留子项 |
 |---|---|---|---|
 | B1 search→erp 事件投影 | CQRS 本地读模型 + backfill 启动差距对账 | `1bbd1ac1a` + `f6a49221e` | 无（Redis 全链路 E2E 待服务重启，SQL 语义已验） |
-| B14 空库守卫固化 | 维持脚本层定案 + 文档固化 | `d285980dc`（脚本 ensure-empty-db-prereqs.sh / migrate-verify-empty.sh 实物在仓） | CI 挂载为建议登记未接线（可选小项） |
+| B14 空库守卫固化 | 维持脚本层定案 + 文档固化 | `d285980dc`（脚本 ensure-empty-db-prereqs.sh / migrate-verify-empty.sh 实物在仓） | ✅ CI 已接线（2026-10-12，见下） |
 | B15 出站调用埋点 | 出站统一入口三处 + shared-bootstrap 注入 caller | `9df82e1bb`（+136） | `--collect` 重跑需生产流量窗口（环境阻塞） |
 | A2 弃 docker 口径 | Homebrew PG18.4 双实例等价替代 | `d285980dc` | 无（Docker 已彻底卸载） |
 | A5 全库 FORCE RLS 审计 | B 口径策略补齐（审计脚本在仓） | `351bababa` + `01114b5df` | 无 |
 | B6 rls 池化 GUC 修复（批 2 项） | 独占连接修复 | `33733626b`（rebase 后 hash；原 337c22fd5） | 无 |
 
-**结论**：无跳过项需重启；真正剩余均为环境/可选项（B15 --collect 生产重跑、B14 CI 建议接线、生产机三件套实跑）。
+**结论**：无跳过项需重启；真正剩余均为环境项（B15 --collect 生产重跑、生产机三件套实跑）。
+
+### B14 CI 接线 — ✅ 完成（2026-10-12，commit 见下）
+- 核实：migration-test job 已有 ensure-empty-db-prereqs.sh 空库守卫 step（79cfe8b32 起）；缺 validate.sh 全量核对（本地 lefthook 仅拦新增/改动迁移）。
+- 接线：`ci.yml` migration-test job 末尾追加「Run migration validation」step——`bash scripts/migration/validate.sh`（文件名/顺序/幂等/单职责/checksums 磁盘↔台账 + DATABASE_URL 存在时 _sqlx_migrations schema drift）。
+- 本地实测：validate.sh EXIT=0（331 文件、0 errors；4 warning 均为存量审计类：ordering 23/idempotency 27/multi-responsibility 79/down 331，STRICT_MODE 未开不阻断）。
+- YAML 校验：38 jobs 结构合法。
 
 ### A2 storybook WIP 归属 — ✅ 已还原（2026-10-12 复查）
 - 并行线 WIP 的 `apps/web/.storybook/main.ts`、`preview.tsx` 删除经复查判定为**半成品**：apps/web 仍有 **71 个 *.stories.tsx**（main.ts 扫描面）+ package.json 仍有 storybook/build-storybook 脚本与 @storybook 依赖——删除会破坏 storybook 使用面。已 `git checkout` 还原，工作树完全干净。

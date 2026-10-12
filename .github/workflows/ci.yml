@@ -1861,6 +1861,14 @@ jobs:
           PGPASSWORD=topems_test_secret psql -h localhost -U topems_test -d topems_test -c "DROP SCHEMA IF EXISTS public CASCADE; CREATE SCHEMA public;" || true
           MIGRATE_URL="$DATABASE_URL" bash scripts/ensure-empty-db-prereqs.sh
 
+      - name: Run migration validation (validate.sh 三方核对 + schema drift)
+        # B14 接线（2026-10-12）：空库守卫之外补 validate.sh 静态核对——
+        # 文件名/版本顺序/幂等/单职责/checksums（磁盘↔checksums.txt↔台账）
+        # + 带 DATABASE_URL 时的 _sqlx_migrations schema drift 核对。
+        # 本地 lefthook migration-validate 仅拦"新增/改动迁移"；CI 全量兜底。
+        # 注意：脚本对存量多职责/无 down 迁移为 warning 不阻断（STRICT_MODE 未开）。
+        run: bash scripts/migration/validate.sh
+
   # ==========================================================================
   # Desktop Build (P2-5: merged from desktop-build.yml)
   #   - Cross-platform Tauri desktop app build (ubuntu, windows, macos)
