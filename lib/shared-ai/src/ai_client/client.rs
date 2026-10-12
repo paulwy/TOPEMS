@@ -404,3 +404,20 @@ mod tests {
         assert!(ai_err.to_string().contains("Parse error"));
     }
 }
+
+/// B7 桥接网：AIClientError → TopemsError（AI 调用错误统一语义）
+impl From<AIClientError> for topems_shared_core::error::TopemsError {
+    fn from(e: AIClientError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            AIClientError::NetworkError(m) => TopemsError::NetworkRequest(m),
+            AIClientError::ApiError(m) => TopemsError::NetworkRequest(m),
+            AIClientError::ParseError(m) => TopemsError::ValidationFailed(m),
+            AIClientError::ConfigError(m) => TopemsError::ConfigValidation(m),
+            AIClientError::TimeoutError(_) => TopemsError::RequestTimeout,
+            AIClientError::AuthError(m) => TopemsError::AuthenticationFailed(m),
+            AIClientError::ServiceUnavailable(m) => TopemsError::ServiceUnavailable(m),
+            AIClientError::NotImplemented(m) => TopemsError::Internal(m),
+        }
+    }
+}

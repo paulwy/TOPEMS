@@ -229,3 +229,10 @@ mod tests {
         assert!(debug.contains("b"));
     }
 }
+
+/// B7 桥接网：FsmError → TopemsError（状态转换语义 → ValidationFailed）
+impl From<FsmError> for crate::error::TopemsError {
+    fn from(e: FsmError) -> Self {
+        crate::error::TopemsError::ValidationFailed(e.to_string())
+    }
+}
