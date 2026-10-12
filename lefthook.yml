@@ -123,6 +123,16 @@ pre-commit:
           node scripts/ci/check-error-handling.cjs
         fi
 
+    # [Gate V518] 桥接网完备性（B7 收尾：新增错误类型必须有 → TopemsError 桥接）
+    bridge-coverage:
+      tags: rust errors
+      run: |
+        STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^svc/.*\.rs$|^lib/.*\.rs$|scripts/ci/check-bridge-coverage.cjs|scripts/ci/bridge-coverage-allowlist.json' || true)
+        [ -z "$STAGED" ] && exit 0
+        if [ -f "scripts/ci/check-bridge-coverage.cjs" ]; then
+          node scripts/ci/check-bridge-coverage.cjs --changed-only
+        fi
+
     # [Gate R] RLS权限校验
     rls-permissions:
       tags: database rls security

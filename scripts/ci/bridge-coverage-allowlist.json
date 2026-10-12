@@ -1,0 +1,26 @@
+{
+  "exempt": {
+    "FieldError": { "reason": "dto", "note": "BI 模块表单字段错误结构（响应 DTO，非 ? 传播）" },
+    "FormError": { "reason": "dto", "note": "BI 模块表单错误结构（响应 DTO）" },
+    "StandardError": { "reason": "dto", "note": "DSH 标准化响应结构（含 http_status，BE-07 前缀映射收口）" },
+    "ApiError": { "reason": "dto", "note": "响应错误结构（code/message/http_status）" },
+    "GatewayError": { "reason": "dto", "note": "主数据网关响应错误结构" },
+    "GraphqlError": { "reason": "dto", "note": "GraphQL 响应错误结构" },
+    "ErpE2eApiError": { "reason": "dto", "note": "ERP E2E API 响应错误结构" },
+    "ConversionError": { "reason": "dto", "note": "重试处理器转换错误结构" },
+    "SyncError": { "reason": "dto", "note": "数据同步响应错误结构（含 detail 列表）" },
+    "SafeError": { "reason": "dto", "note": "enhanced.rs 安全包装结构（SafeErrorHandler 关联）" },
+    "SerializableError": { "reason": "dto", "note": "DSH 可序列化错误结构（code/message/http_status）" },
+    "DshError": { "reason": "dto", "note": "DSH 类型层错误结构（响应包装）" },
+    "JsonRpcError": { "reason": "dto", "note": "MCP JSON-RPC 响应错误结构（同时受孤儿规则限制）" },
+    "ConsolidationError": { "reason": "test-only", "note": "finance 合并报表 StdError 正确性测试断言" },
+    "ErpE2eError": { "reason": "test-only", "note": "finance ERP E2E 正确性测试断言" },
+    "ModelValidationError": { "reason": "test-only", "note": "finance 模型校验测试断言" },
+    "PeriodValidationError": { "reason": "test-only", "note": "finance 期间校验测试断言" },
+    "ReversalValidationError": { "reason": "test-only", "note": "finance 冲销校验测试断言" },
+    "PostValidationError": { "reason": "test-only", "note": "finance 过账校验测试断言" },
+    "YearEndCloseError": { "reason": "test-only", "note": "finance 年末结转测试断言" },
+    "TransportError": { "reason": "orphan", "note": "shared-mcp 不依赖 shared-core，impl 无处安放（孤儿规则）" },
+    "TopemsError": { "reason": "self", "note": "桥接目标自身" }
+  }
+}
