@@ -16,6 +16,21 @@
 ### A4 全仓 warning 终检 — ✅ 0 warning 0 error
 - `cargo check --workspace -j 4` 双次复检（rebase 前后各一次），0 error 0 warning。
 
+## D2 决策：跳过项重启评估 — ✅ 定论（2026-10-12）：无需重启，批 3 已全部落地
+
+> 用户问询 D2（B14/A2/A5 及 B1/B15 是否重启）。逐一核实 commit 与脚本/文档实物，结论：**批 3（2026-10-08）已全部定案完成并推 origin/main，无跳过项需重启**。
+
+| 项 | 定案 | commit（均在 origin/main） | 残留子项 |
+|---|---|---|---|
+| B1 search→erp 事件投影 | CQRS 本地读模型 + backfill 启动差距对账 | `1bbd1ac1a` + `f6a49221e` | 无（Redis 全链路 E2E 待服务重启，SQL 语义已验） |
+| B14 空库守卫固化 | 维持脚本层定案 + 文档固化 | `d285980dc`（脚本 ensure-empty-db-prereqs.sh / migrate-verify-empty.sh 实物在仓） | CI 挂载为建议登记未接线（可选小项） |
+| B15 出站调用埋点 | 出站统一入口三处 + shared-bootstrap 注入 caller | `9df82e1bb`（+136） | `--collect` 重跑需生产流量窗口（环境阻塞） |
+| A2 弃 docker 口径 | Homebrew PG18.4 双实例等价替代 | `d285980dc` | 无（Docker 已彻底卸载） |
+| A5 全库 FORCE RLS 审计 | B 口径策略补齐（审计脚本在仓） | `351bababa` + `01114b5df` | 无 |
+| B6 rls 池化 GUC 修复（批 2 项） | 独占连接修复 | `33733626b`（rebase 后 hash；原 337c22fd5） | 无 |
+
+**结论**：无跳过项需重启；真正剩余均为环境/可选项（B15 --collect 生产重跑、B14 CI 建议接线、生产机三件套实跑）。
+
 ### A2 storybook WIP 归属 — ✅ 已还原（2026-10-12 复查）
 - 并行线 WIP 的 `apps/web/.storybook/main.ts`、`preview.tsx` 删除经复查判定为**半成品**：apps/web 仍有 **71 个 *.stories.tsx**（main.ts 扫描面）+ package.json 仍有 storybook/build-storybook 脚本与 @storybook 依赖——删除会破坏 storybook 使用面。已 `git checkout` 还原，工作树完全干净。
 - 后续若并行线确要移除 storybook，需整链一起删（stories + 脚本 + 依赖），非仅 .storybook 配置。
