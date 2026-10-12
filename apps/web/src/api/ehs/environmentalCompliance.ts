@@ -330,18 +330,10 @@ export const environmentalComplianceApi = {
     );
   },
 
-  async getMonitorRecord(id: string): Promise<ApiResponse<EnvironmentMonitor>> {
-    return apiClient.ehs.get<EnvironmentMonitor>(`/environmental-compliance/monitoring/${id}`);
-  },
-
   async createMonitorRecord(
     data: CreateMonitorRecordRequest
   ): Promise<ApiResponse<EnvironmentMonitor>> {
     return apiClient.ehs.post<EnvironmentMonitor>('/environmental-compliance/monitoring', data);
-  },
-
-  async deleteMonitorRecord(id: string): Promise<ApiResponse<null>> {
-    return apiClient.ehs.delete<null>(`/environmental-compliance/monitoring/${id}`);
   },
 
   async listMonitorTypes(): Promise<ApiResponse<Record<string, unknown>[]>> {

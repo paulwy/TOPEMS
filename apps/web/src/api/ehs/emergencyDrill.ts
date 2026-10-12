@@ -187,26 +187,6 @@ interface CreateDrillEvaluationRequest {
   equipment_score?: number;
 }
 
-interface CreateDrillProblemRequest {
-  description: string;
-  category?: string;
-  severity?: string;
-  responsible_person?: string;
-  deadline?: string;
-  rectification_measures?: string;
-}
-
-interface UpdateDrillProblemRequest {
-  description?: string;
-  category?: string;
-  severity?: string;
-  responsible_person?: string;
-  deadline?: string;
-  status?: string;
-  rectification_measures?: string;
-  verifier?: string;
-}
-
 // ===== API 绑定 =====
 
 export const emergencyDrillApi = {
@@ -226,20 +206,8 @@ export const emergencyDrillApi = {
     return apiClient.ehs.get<PaginatedResponse<DrillPlan>>(`/drills/plans${s ? `?${s}` : ''}`);
   },
 
-  async getDrillPlan(id: string): Promise<ApiResponse<DrillPlan>> {
-    return apiClient.ehs.get<DrillPlan>(`/drills/plans/${id}`);
-  },
-
   async createDrillPlan(data: CreateDrillPlanRequest): Promise<ApiResponse<DrillPlan>> {
     return apiClient.ehs.post<DrillPlan>('/drills/plans', data);
-  },
-
-  async updateDrillPlan(id: string, data: UpdateDrillPlanRequest): Promise<ApiResponse<DrillPlan>> {
-    return apiClient.ehs.put<DrillPlan>(`/drills/plans/${id}`, data);
-  },
-
-  async deleteDrillPlan(id: string): Promise<ApiResponse<void>> {
-    return apiClient.ehs.delete<void>(`/drills/plans/${id}`);
   },
 
   // ===== 演练记录管理 =====
@@ -284,30 +252,6 @@ export const emergencyDrillApi = {
     data: CreateDrillEvaluationRequest
   ): Promise<ApiResponse<DrillEvaluation>> {
     return apiClient.ehs.post<DrillEvaluation>(`/drills/records/${drillId}/evaluation`, data);
-  },
-
-  // ===== 演练问题 =====
-
-  async listDrillProblems(drillId: string): Promise<ApiResponse<DrillProblem[]>> {
-    return apiClient.ehs.get<DrillProblem[]>(`/drills/records/${drillId}/problems`);
-  },
-
-  async createDrillProblem(
-    drillId: string,
-    data: CreateDrillProblemRequest
-  ): Promise<ApiResponse<DrillProblem>> {
-    return apiClient.ehs.post<DrillProblem>(`/drills/records/${drillId}/problems`, data);
-  },
-
-  async updateDrillProblem(
-    drillId: string,
-    problemId: string,
-    data: UpdateDrillProblemRequest
-  ): Promise<ApiResponse<DrillProblem>> {
-    return apiClient.ehs.put<DrillProblem>(
-      `/drills/records/${drillId}/problems/${problemId}`,
-      data
-    );
   },
 
   // ===== 演练类型 =====

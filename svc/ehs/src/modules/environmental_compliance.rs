@@ -44,9 +44,7 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/environmental-compliance/monitoring/{id}",
-            get(get_monitor_record)
-                .put(update_monitor_record)
-                .delete(delete_monitor_record),
+            put(update_monitor_record),
         )
         .route(
             "/environmental-compliance/permits",
@@ -572,58 +570,6 @@ pub async fn delete_regulation(
     Json(ApiResponse::success((), "环保法规删除成功"))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/environmental-compliance/monitoring/{id}",
-    tag = "ehs",
-    params(("id" = String, Path, description = "监测记录 ID")),
-    responses((status = 200, description = "OK")),
-)]
-pub async fn get_monitor_record(
-    State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<EnvironmentMonitor>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting monitor record: {}", id);
-    Json(ApiResponse::success(
-        EnvironmentMonitor {
-            id,
-            record_no: "EM-2024001".to_string(),
-            monitor_type: "wastewater".to_string(),
-            monitor_point: "厂区排污口".to_string(),
-            monitor_date: Some(chrono::Utc::now().to_rfc3339()),
-            monitor_agency: Some("第三方检测机构".to_string()),
-            monitor_method: Some("cod_cr".to_string()),
-            pollutant: Some("COD".to_string()),
-            concentration: Some("45.2".to_string()),
-            unit: Some("mg/L".to_string()),
-            standard_value: Some("100".to_string()),
-            standard_type: Some("gb8978".to_string()),
-            result: "compliant".to_string(),
-            flow_rate: None,
-            emission_rate: None,
-            status: "completed".to_string(),
-            remarks: None,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "获取监测记录成功",
-    ))
-}
 
 #[utoipa::path(
     put,
@@ -680,23 +626,6 @@ pub async fn update_monitor_record(
     ))
 }
 
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/environmental-compliance/monitoring/{id}",
-    tag = "ehs",
-    params(("id" = String, Path, description = "监测记录 ID")),
-    responses((status = 200, description = "OK")),
-)]
-pub async fn delete_monitor_record(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting monitor record: {}", id);
-    Json(ApiResponse::success((), "监测记录删除成功"))
-}
 
 #[utoipa::path(
     get,

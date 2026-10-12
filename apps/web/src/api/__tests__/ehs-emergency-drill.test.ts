@@ -44,14 +44,6 @@ describe('EHS Emergency Drill API Tests', () => {
       expect(apiClient.ehs.get).toHaveBeenCalledWith('/drills/plans');
     });
 
-    it('getDrillPlan should call GET /drills/plans/:id', async () => {
-      const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
-      const { apiClient } = await import('../client');
-      (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: {} });
-      await emergencyDrillApi.getDrillPlan('plan-001');
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/drills/plans/plan-001');
-    });
-
     it('createDrillPlan should call POST /drills/plans with data', async () => {
       const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
       const { apiClient } = await import('../client');
@@ -59,23 +51,6 @@ describe('EHS Emergency Drill API Tests', () => {
       const data = { title: '2026年度火灾演练', drill_type: 'fire', location: '生产厂区' };
       await emergencyDrillApi.createDrillPlan(data);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/drills/plans', data);
-    });
-
-    it('updateDrillPlan should call PUT /drills/plans/:id with data', async () => {
-      const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
-      const { apiClient } = await import('../client');
-      (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
-      const data = { title: '更新演练计划', status: 'completed' };
-      await emergencyDrillApi.updateDrillPlan('plan-001', data);
-      expect(apiClient.ehs.put).toHaveBeenCalledWith('/drills/plans/plan-001', data);
-    });
-
-    it('deleteDrillPlan should call DELETE /drills/plans/:id', async () => {
-      const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
-      const { apiClient } = await import('../client');
-      (apiClient.ehs.delete as vi.Mock).mockResolvedValue({ data: null });
-      await emergencyDrillApi.deleteDrillPlan('plan-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith('/drills/plans/plan-001');
     });
   });
 
@@ -164,41 +139,6 @@ describe('EHS Emergency Drill API Tests', () => {
       (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
       await emergencyDrillApi.createDrillEvaluation('record-001', {});
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/drills/records/record-001/evaluation', {});
-    });
-  });
-
-  describe('emergencyDrillApi - 演练问题', () => {
-    it('listDrillProblems should call GET /drills/records/:id/problems', async () => {
-      const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
-      const { apiClient } = await import('../client');
-      (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: [] });
-      await emergencyDrillApi.listDrillProblems('record-001');
-      expect(apiClient.ehs.get).toHaveBeenCalledWith('/drills/records/record-001/problems');
-    });
-
-    it('createDrillProblem should call POST /drills/records/:id/problems', async () => {
-      const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
-      const { apiClient } = await import('../client');
-      (apiClient.ehs.post as vi.Mock).mockResolvedValue({ data: {} });
-      const data = {
-        description: '部分员工不熟悉疏散路线',
-        category: 'training',
-        severity: 'medium',
-      };
-      await emergencyDrillApi.createDrillProblem('record-001', data);
-      expect(apiClient.ehs.post).toHaveBeenCalledWith('/drills/records/record-001/problems', data);
-    });
-
-    it('updateDrillProblem should call PUT /drills/records/:id/problems/:problemId', async () => {
-      const { emergencyDrillApi } = await import('../ehs/emergencyDrill');
-      const { apiClient } = await import('../client');
-      (apiClient.ehs.put as vi.Mock).mockResolvedValue({ data: {} });
-      const data = { status: 'rectified', verifier: '王主管' };
-      await emergencyDrillApi.updateDrillProblem('record-001', 'problem-001', data);
-      expect(apiClient.ehs.put).toHaveBeenCalledWith(
-        '/drills/records/record-001/problems/problem-001',
-        data
-      );
     });
   });
 

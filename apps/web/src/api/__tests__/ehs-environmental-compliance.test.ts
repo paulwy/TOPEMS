@@ -161,16 +161,6 @@ describe('EHS Environmental Compliance API Tests', () => {
       expect(apiClient.ehs.get).toHaveBeenCalledWith('/environmental-compliance/monitoring');
     });
 
-    it('getMonitorRecord should call GET /monitoring/:id', async () => {
-      const { environmentalComplianceApi } = await import('../ehs/environmentalCompliance');
-      const { apiClient } = await import('../client');
-      (apiClient.ehs.get as vi.Mock).mockResolvedValue({ data: {} });
-      await environmentalComplianceApi.getMonitorRecord('mon-001');
-      expect(apiClient.ehs.get).toHaveBeenCalledWith(
-        '/environmental-compliance/monitoring/mon-001'
-      );
-    });
-
     it('createMonitorRecord should call POST with data', async () => {
       const { environmentalComplianceApi } = await import('../ehs/environmentalCompliance');
       const { apiClient } = await import('../client');
@@ -178,16 +168,6 @@ describe('EHS Environmental Compliance API Tests', () => {
       const data = { monitor_type: 'wastewater', monitor_point: '总排口', result: 'qualified' };
       await environmentalComplianceApi.createMonitorRecord(data);
       expect(apiClient.ehs.post).toHaveBeenCalledWith('/environmental-compliance/monitoring', data);
-    });
-
-    it('deleteMonitorRecord should call DELETE /monitoring/:id', async () => {
-      const { environmentalComplianceApi } = await import('../ehs/environmentalCompliance');
-      const { apiClient } = await import('../client');
-      (apiClient.ehs.delete as vi.Mock).mockResolvedValue({ data: null });
-      await environmentalComplianceApi.deleteMonitorRecord('mon-001');
-      expect(apiClient.ehs.delete).toHaveBeenCalledWith(
-        '/environmental-compliance/monitoring/mon-001'
-      );
     });
 
     it('listMonitorTypes should call GET /monitoring/types', async () => {

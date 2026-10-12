@@ -16,10 +16,6 @@ pub fn create_routes() -> Router<AppState> {
             get(list_drill_plans).post(create_drill_plan),
         )
         .route(
-            "/drills/plans/{id}",
-            get(get_drill_plan).put(update_drill_plan).delete(delete_drill_plan),
-        )
-        .route(
             "/drills/records",
             get(list_drill_records).post(create_drill_record),
         )
@@ -32,14 +28,6 @@ pub fn create_routes() -> Router<AppState> {
         .route(
             "/drills/records/{id}/evaluation",
             post(submit_drill_evaluation),
-        )
-        .route(
-            "/drills/records/{id}/problems",
-            get(list_drill_problems).post(create_drill_problem),
-        )
-        .route(
-            "/drills/records/{id}/problems/{problem_id}",
-            put(update_drill_problem),
         )
         .route("/drills/types", get(list_drill_types))
         .route("/drills/statistics", get(get_drill_statistics))
@@ -332,121 +320,6 @@ pub async fn create_drill_plan(
     ))
 }
 
-#[utoipa::path(
-    get,
-    security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/drills/plans/{id}",
-    tag = "ehs",
-    params(("id" = String, Path, description = "演练计划 ID")),
-    responses((status = 200, description = "OK")),
-)]
-pub async fn get_drill_plan(
-    State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<DrillPlan>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting drill plan: {}", id);
-    Json(ApiResponse::success(
-        DrillPlan {
-            id,
-            plan_no: "DP-2024001".to_string(),
-            title: "消防演练计划".to_string(),
-            description: Some("演练计划详情（内存桩数据）".to_string()),
-            drill_type: "fire".to_string(),
-            plan_date: Some(chrono::Utc::now().to_rfc3339()),
-            location: Some("厂区广场".to_string()),
-            participants: Some(50),
-            estimated_duration: Some(60),
-            content: Some("消防疏散演练".to_string()),
-            organizer: Some("安全部".to_string()),
-            status: "planned".to_string(),
-            related_plan_id: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "获取演练计划成功",
-    ))
-}
-
-#[utoipa::path(
-    put,
-    security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/drills/plans/{id}",
-    tag = "ehs",
-    params(("id" = String, Path, description = "演练计划 ID")),
-    request_body = CreateDrillPlanRequest,
-    responses((status = 200, description = "OK")),
-)]
-pub async fn update_drill_plan(
-    State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<CreateDrillPlanRequest>,
-) -> Json<ApiResponse<DrillPlan>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating drill plan {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        DrillPlan {
-            id,
-            plan_no: "DP-2024001".to_string(),
-            title: req.title,
-            description: req.description,
-            drill_type: req.drill_type,
-            plan_date: req.plan_date,
-            location: req.location,
-            participants: req.participants,
-            estimated_duration: req.estimated_duration,
-            content: req.content,
-            organizer: req.organizer,
-            status: "planned".to_string(),
-            related_plan_id: req.related_plan_id,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "演练计划更新成功",
-    ))
-}
-
-#[utoipa::path(
-    delete,
-    security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/drills/plans/{id}",
-    tag = "ehs",
-    params(("id" = String, Path, description = "演练计划 ID")),
-    responses((status = 200, description = "OK")),
-)]
-pub async fn delete_drill_plan(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting drill plan: {}", id);
-    Json(ApiResponse::success((), "演练计划删除成功"))
-}
 
 pub async fn submit_drill_evaluation(
     State(_state): State<crate::shared::AppState>,
@@ -480,62 +353,6 @@ pub async fn submit_drill_evaluation(
     ))
 }
 
-pub async fn list_drill_problems(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(_id): axum::extract::Path<String>,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(Vec::new(), "获取演练问题列表成功"))
-}
-
-pub async fn create_drill_problem(
-    State(_state): State<crate::shared::AppState>,
-    Extension(claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "id": uuid::Uuid::new_v4().to_string(),
-            "drill_record_id": id,
-            "description": req.get("description").and_then(|v| v.as_str()).unwrap_or("演练问题"),
-            "severity": req.get("severity").and_then(|v| v.as_str()).unwrap_or("medium"),
-            "status": "open",
-            "tenant_id": tenant_id.to_string(),
-            "created_at": chrono::Utc::now().to_rfc3339(),
-        }),
-        "演练问题创建成功",
-    ))
-}
-
-pub async fn update_drill_problem(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
-    _headers: HeaderMap,
-    axum::extract::Path((_id, problem_id)): axum::extract::Path<(String, String)>,
-    Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "id": problem_id,
-            "status": req.get("status").and_then(|v| v.as_str()).unwrap_or("in_progress"),
-            "updated_at": chrono::Utc::now().to_rfc3339(),
-        }),
-        "演练问题更新成功",
-    ))
-}
 
 #[utoipa::path(
     get,
