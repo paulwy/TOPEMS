@@ -581,6 +581,21 @@ impl Drop for ConsulRegistrationGuard {
     }
 }
 
+
+/// B7 桥接网：ConsulError → TopemsError（服务注册/发现网络语义）
+impl From<ConsulError> for topems_shared_core::error::TopemsError {
+    fn from(e: ConsulError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            ConsulError::Request(m) => TopemsError::NetworkRequest(m),
+            ConsulError::RegistrationFailed(m) => TopemsError::NetworkRequest(m),
+            ConsulError::DeregistrationFailed(m) => TopemsError::NetworkRequest(m),
+            ConsulError::DiscoveryFailed(m) => TopemsError::NetworkRequest(m),
+            ConsulError::Parse(m) => TopemsError::ValidationFailed(m),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

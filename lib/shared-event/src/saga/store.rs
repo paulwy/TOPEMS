@@ -248,6 +248,22 @@ impl SagaStore for PostgresSagaStore {
     }
 }
 
+
+/// B7 桥接网：SagaError → TopemsError（事务编排语义）
+impl From<SagaError> for topems_shared_core::error::TopemsError {
+    fn from(e: SagaError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            SagaError::StoreError(m) => TopemsError::DatabaseQuery(m),
+            SagaError::StepFailed(m) => TopemsError::BusinessLogic(m),
+            SagaError::CompensationFailed(m) => TopemsError::BusinessLogic(m),
+            SagaError::SagaNotFound(id) => TopemsError::ResourceNotFound(format!("saga {id}")),
+            SagaError::SerializationError(m) => TopemsError::ValidationFailed(m),
+            SagaError::EventError(m) => TopemsError::Internal(m.to_string()),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

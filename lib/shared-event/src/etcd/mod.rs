@@ -582,6 +582,20 @@ pub async fn try_register_service(
     }
 }
 
+
+/// B7 桥接网：EtcdError → TopemsError（etcd 协调存储语义）
+impl From<EtcdError> for topems_shared_core::error::TopemsError {
+    fn from(e: EtcdError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            EtcdError::Connect(m) => TopemsError::NetworkRequest(m),
+            EtcdError::Kv(m) => TopemsError::DatabaseQuery(m),
+            EtcdError::Lease(m) => TopemsError::DatabaseQuery(m),
+            EtcdError::Serialize(m) => TopemsError::ValidationFailed(m),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
