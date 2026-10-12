@@ -1,7 +1,23 @@
 
 ---
 
-### 并行线补充记录（2026-10-04 批1剩余+批2 收口，本地原记录保留）
+### B7 桥接网完备性复查（2026-10-12）
+
+**结论：业务裸 `?` 无缺口**（全仓 check 0 error = 所有 `?` 传播闭环）。68 个错误类型矩阵：
+
+- **显式桥接 16 个**：EventError / AuditLogError / PermissionStoreError / ServiceClientError（B7-17b 收尾）+ FsmError / AIClientError（commit 68c33da85）+ ClusterError / ConsulError / EtcdError / SagaError（commit 88c8af18a）+ BackupError / TenantError / EncryptionError / DshToolError / LogQueryError / MonitoringError（commit 9e48d0e95，覆盖全部依赖 shared-core 的库错误）
+  - FsmError（shared-core）：TerminalState/InvalidTransition/UnknownStatus → ValidationFailed
+  - AIClientError（shared-ai）：Network/Api→NetworkRequest、Parse→ValidationFailed、Config→ConfigValidation、Timeout→RequestTimeout、Auth→AuthenticationFailed、ServiceUnavailable→ServiceUnavailable、NotImplemented→Internal
+- **无需桥接（62 个）**：
+  - 服务本地 util 错误 19 个（Wms/Crm/Ehs/Gis/Integration/Rd/Srm/Tms/Ticket/Search/Qms/Sample/Analytics/Stat/Capacity/Aps/Transition/Version/BusinessTool 等）——调用点均 map_err 兜底（编译保证），补直接桥接为可选优化
+  - finance 测试断言 6 个（YearEndClose/Consolidation/PostValidation/ReversalValidation/PeriodValidation/ModelValidation）——不参与 `?` 传播
+  - DTO/响应 struct 12 个（JsonRpc/Graphql/Gateway/ApiError/StandardError/SafeError/SerializableError/DshError/FieldError/FormError/SyncError/ConversionError）——非传播错误
+  - 孤儿规则限制仅剩 2 个（shared-mcp JsonRpcError/TransportError——shared-mcp 不依赖 shared-core，impl 无处安放；Cluster/Consul/Etcd/Saga 已补）
+  - TopemsError 自身 + 同 crate 中间错误（ProcessorError/ErpAdapterError 等有 From 中转）
+
+**基建**：桥接矩阵脚本方法 = grep `pub enum/struct XxxError` + grep `From<XxxError> for (topems_shared_core::error::)?TopemsError` 双向归并。
+
+## 并行线补充记录（2026-10-04 批1剩余+批2 收口，本地原记录保留）
 
 ### B7-17 里程碑：anyhow / Box<dyn Error> 生产代码清零（commit `7f2285600`）
 - 迁移 33 处生产代码：config/enhanced.rs 8 处 anyhow + analytics scheduler/schedule 12 处 + shared-event master_data 4 + unified-core ws_event_bridge 3 + crm 2 + ai 4（embedding/prompt/ai_handlers）
