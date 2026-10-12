@@ -11,7 +11,7 @@ import {
   Linking,
   Alert,
 } from 'react-native';
-import { BarCodeScanner } from 'expo-barcode-scanner';
+import { CameraView } from 'expo-camera';
 import {
   X,
   Camera,
@@ -76,7 +76,7 @@ const ScanModal: React.FC<ScanModalProps> = ({
   const [recognizedResult, setRecognizedResult] = useState<RecognizedResult | null>(null);
   const [recognizedText, setRecognizedText] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const scannerRef = useRef<BarCodeScanner>(null);
+  const scannerRef = useRef<CameraView>(null);
   const scanLineAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -362,12 +362,46 @@ const ScanModal: React.FC<ScanModalProps> = ({
             </View>
           ) : (
             <>
-              <BarCodeScanner
+              <CameraView
                 ref={scannerRef}
                 style={styles.scanner}
-                onBarCodeScanned={scanning ? handleBarCodeScanned : undefined}
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                {...({ torchMode: torchOn ? 'on' : 'off' } as any)}
+                enableTorch={torchOn}
+                barcodeScannerSettings={{
+                  barcodeTypes:
+                    scanType === 'qr'
+                      ? (['qr'] as const)
+                      : scanType === 'barcode'
+                        ? ([
+                            'code128',
+                            'code39',
+                            'code93',
+                            'ean13',
+                            'ean8',
+                            'upc_a',
+                            'upc_e',
+                            'itf14',
+                            'pdf417',
+                            'aztec',
+                            'datamatrix',
+                            'codabar',
+                          ] as const)
+                        : ([
+                            'qr',
+                            'code128',
+                            'code39',
+                            'code93',
+                            'ean13',
+                            'ean8',
+                            'upc_a',
+                            'upc_e',
+                            'itf14',
+                            'pdf417',
+                            'aztec',
+                            'datamatrix',
+                            'codabar',
+                          ] as const),
+                }}
+                onBarcodeScanned={scanning ? handleBarCodeScanned : undefined}
               />
 
               <View style={styles.scanArea}>

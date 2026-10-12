@@ -4,9 +4,12 @@ module.exports = {
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/*.test.ts'],
   transform: {
-    // ts-jest 在本仓库解析到 typescript@5.9，不接受根 tsconfig 的
-    // ignoreDeprecations:"6.0"（TS6 取值），此处按 TS5 合法值覆盖，仅影响 jest 转译。
-    '^.+\\.tsx?$': ['ts-jest', { tsconfig: { ignoreDeprecations: '5.0' } }],
+    // ts-jest 在 expo sdk-57 下解析到 typescript@6.0.3。TS6 要求显式 rootDir，
+    // 且 baseUrl 已废弃、需 ignoreDeprecations:"6.0" 压制（与根 tsconfig.base 一致）。
+    '^.+\\.tsx?$': [
+      'ts-jest',
+      { tsconfig: { ignoreDeprecations: '6.0', rootDir: './src' } },
+    ],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {

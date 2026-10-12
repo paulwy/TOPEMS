@@ -1,4 +1,4 @@
-import * as BarcodeScanner from 'expo-barcode-scanner';
+import * as Camera from 'expo-camera';
 import { zh } from '../i18n/zh';
 
 export interface ScanResult {
@@ -16,7 +16,7 @@ export class ScanService {
   private static hasPermission = false;
 
   static async requestCameraPermission(): Promise<boolean> {
-    const { status } = await BarcodeScanner.requestPermissionsAsync();
+    const { status } = await Camera.Camera.requestCameraPermissionsAsync();
     this.hasPermission = status === 'granted';
     return this.hasPermission;
   }
@@ -26,68 +26,68 @@ export class ScanService {
   }
 
   static async getBarcodeTypes(): Promise<string[]> {
-    return Object.values(BarcodeScanner.Constants.BarCodeType);
+    return ScanService.getSupportedTypes();
   }
 
   static isQRCode(type: string): boolean {
-    return type === BarcodeScanner.Constants.BarCodeType.qr;
+    return type === 'qr';
   }
 
   static isBarcode(type: string): boolean {
     const barcodes = [
-      BarcodeScanner.Constants.BarCodeType.code128,
-      BarcodeScanner.Constants.BarCodeType.code39,
-      BarcodeScanner.Constants.BarCodeType.code93,
-      BarcodeScanner.Constants.BarCodeType.ean13,
-      BarcodeScanner.Constants.BarCodeType.ean8,
-      BarcodeScanner.Constants.BarCodeType.upc_a,
-      BarcodeScanner.Constants.BarCodeType.upc_e,
-      BarcodeScanner.Constants.BarCodeType.itf14,
-      BarcodeScanner.Constants.BarCodeType.pdf417,
-      BarcodeScanner.Constants.BarCodeType.aztec,
-      BarcodeScanner.Constants.BarCodeType.datamatrix,
-      BarcodeScanner.Constants.BarCodeType.interleaved2of5,
-      BarcodeScanner.Constants.BarCodeType.codabar,
+      'code128',
+      'code39',
+      'code93',
+      'ean13',
+      'ean8',
+      'upc_a',
+      'upc_e',
+      'itf14',
+      'pdf417',
+      'aztec',
+      'datamatrix',
+      'interleaved2of5',
+      'codabar',
     ];
     return barcodes.includes(type);
   }
 
   static getScanTypeName(type: string): string {
     const typeMap: Record<string, string> = {
-      [BarcodeScanner.Constants.BarCodeType.qr]: zh['scan.qrTypeName'],
-      [BarcodeScanner.Constants.BarCodeType.code128]: 'Code 128',
-      [BarcodeScanner.Constants.BarCodeType.code39]: 'Code 39',
-      [BarcodeScanner.Constants.BarCodeType.code93]: 'Code 93',
-      [BarcodeScanner.Constants.BarCodeType.ean13]: 'EAN-13',
-      [BarcodeScanner.Constants.BarCodeType.ean8]: 'EAN-8',
-      [BarcodeScanner.Constants.BarCodeType.upc_a]: 'UPC-A',
-      [BarcodeScanner.Constants.BarCodeType.upc_e]: 'UPC-E',
-      [BarcodeScanner.Constants.BarCodeType.itf14]: 'ITF-14',
-      [BarcodeScanner.Constants.BarCodeType.pdf417]: 'PDF417',
-      [BarcodeScanner.Constants.BarCodeType.aztec]: 'Aztec',
-      [BarcodeScanner.Constants.BarCodeType.datamatrix]: 'Data Matrix',
-      [BarcodeScanner.Constants.BarCodeType.interleaved2of5]: zh['scan.interleaved25Name'],
-      [BarcodeScanner.Constants.BarCodeType.codabar]: 'Codabar',
+      qr: zh['scan.qrTypeName'],
+      code128: 'Code 128',
+      code39: 'Code 39',
+      code93: 'Code 93',
+      ean13: 'EAN-13',
+      ean8: 'EAN-8',
+      upc_a: 'UPC-A',
+      upc_e: 'UPC-E',
+      itf14: 'ITF-14',
+      pdf417: 'PDF417',
+      aztec: 'Aztec',
+      datamatrix: 'Data Matrix',
+      interleaved2of5: zh['scan.interleaved25Name'],
+      codabar: 'Codabar',
     };
     return typeMap[type] || zh['scan.unknownTypeName'];
   }
 
   static getSupportedTypes(): string[] {
     return [
-      BarcodeScanner.Constants.BarCodeType.qr,
-      BarcodeScanner.Constants.BarCodeType.code128,
-      BarcodeScanner.Constants.BarCodeType.code39,
-      BarcodeScanner.Constants.BarCodeType.code93,
-      BarcodeScanner.Constants.BarCodeType.ean13,
-      BarcodeScanner.Constants.BarCodeType.ean8,
-      BarcodeScanner.Constants.BarCodeType.upc_a,
-      BarcodeScanner.Constants.BarCodeType.upc_e,
-      BarcodeScanner.Constants.BarCodeType.itf14,
-      BarcodeScanner.Constants.BarCodeType.pdf417,
-      BarcodeScanner.Constants.BarCodeType.aztec,
-      BarcodeScanner.Constants.BarCodeType.datamatrix,
-      BarcodeScanner.Constants.BarCodeType.interleaved2of5,
-      BarcodeScanner.Constants.BarCodeType.codabar,
+      'qr',
+      'code128',
+      'code39',
+      'code93',
+      'ean13',
+      'ean8',
+      'upc_a',
+      'upc_e',
+      'itf14',
+      'pdf417',
+      'aztec',
+      'datamatrix',
+      'interleaved2of5',
+      'codabar',
     ];
   }
 }
