@@ -329,7 +329,7 @@ impl From<LlmProviderError> for topems_shared_core::error::TopemsError {
         match e {
             LlmProviderError::Network(v) => TopemsError::NetworkRequest(v),
             LlmProviderError::Api { .. } => TopemsError::NetworkRequest(format!("llm api error")),
-            LlmProviderError::Timeout(v) => TopemsError::RequestTimeout,
+            LlmProviderError::Timeout(_) => TopemsError::RequestTimeout,
             LlmProviderError::RateLimit => TopemsError::BusinessLogic("llm rate limit".to_string()),
             LlmProviderError::Authentication(v) => TopemsError::AuthenticationFailed(v),
             LlmProviderError::Serialization(v) => TopemsError::ValidationFailed(v),
