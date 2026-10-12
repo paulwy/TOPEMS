@@ -470,6 +470,21 @@ pub enum TenantError {
     UsageLimitExceeded(String),
 }
 
+
+/// B7 桥接网：TenantError → TopemsError（租户语义）
+impl From<TenantError> for topems_shared_core::error::TopemsError {
+    fn from(e: TenantError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            TenantError::TenantNotFound => TopemsError::ResourceNotFound("tenant".to_string()),
+            TenantError::SlugAlreadyExists => TopemsError::ResourceAlreadyExists("tenant slug".to_string()),
+            TenantError::UserNotFound => TopemsError::ResourceNotFound("tenant user".to_string()),
+            TenantError::PermissionDenied => TopemsError::PermissionDenied { required: "tenant operation".to_string() },
+            TenantError::UsageLimitExceeded(m) => TopemsError::BusinessLogic(m),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

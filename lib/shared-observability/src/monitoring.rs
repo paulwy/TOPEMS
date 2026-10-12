@@ -1088,6 +1088,18 @@ pub fn default_suppression_rules() -> Vec<SuppressionRule> {
     ]
 }
 
+
+/// B7 桥接网：MonitoringError → TopemsError（监控语义）
+impl From<MonitoringError> for topems_shared_core::error::TopemsError {
+    fn from(e: MonitoringError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            MonitoringError::DateTimeConstruction => TopemsError::ValidationFailed("invalid datetime construction".to_string()),
+            MonitoringError::UnexpectedNone => TopemsError::Internal("unexpected none value".to_string()),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

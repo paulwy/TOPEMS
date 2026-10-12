@@ -275,6 +275,19 @@ impl LogQueryProvider for InMemoryLogStore {
     }
 }
 
+
+/// B7 桥接网：LogQueryError → TopemsError（日志查询语义）
+impl From<LogQueryError> for topems_shared_core::error::TopemsError {
+    fn from(e: LogQueryError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            LogQueryError::Timeout => TopemsError::RequestTimeout,
+            LogQueryError::BackendUnavailable(m) => TopemsError::ServiceUnavailable(m),
+            LogQueryError::QueryError(m) => TopemsError::ValidationFailed(m),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

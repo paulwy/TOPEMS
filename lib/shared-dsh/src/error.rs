@@ -280,6 +280,28 @@ impl From<&DshToolError> for SerializableError {
     }
 }
 
+
+/// B7 桥接网：DshToolError → TopemsError（DSH 工具语义）
+impl From<DshToolError> for topems_shared_core::error::TopemsError {
+    fn from(e: DshToolError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            DshToolError::ValidationError { field, message } => TopemsError::ValidationFailed(format!("{field}: {message}")),
+            DshToolError::NotFound { name } => TopemsError::ResourceNotFound(name),
+            DshToolError::DefinitionError { message } => TopemsError::ConfigValidation(message),
+            DshToolError::PermissionError { message } => TopemsError::OperationNotAllowed(message),
+            DshToolError::AuthError { message } => TopemsError::AuthenticationFailed(message),
+            DshToolError::RateLimitError { message, .. } => TopemsError::BusinessLogic(message),
+            DshToolError::ConflictError { message } => TopemsError::ResourceAlreadyExists(message),
+            DshToolError::InternalError { message } => TopemsError::Internal(message),
+            DshToolError::ServiceUnavailable { message } => TopemsError::ServiceUnavailable(message),
+            DshToolError::TimeoutError { message } => TopemsError::NetworkRequest(message),
+            DshToolError::ExternalServiceError { service, message } => TopemsError::NetworkRequest(format!("{service}: {message}")),
+            DshToolError::Other(m) => TopemsError::Internal(m),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {

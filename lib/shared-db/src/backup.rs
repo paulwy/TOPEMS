@@ -450,6 +450,25 @@ pub enum BackupError {
     ChecksumMismatch,
 }
 
+
+/// B7 桥接网：BackupError → TopemsError（备份/恢复语义）
+impl From<BackupError> for topems_shared_core::error::TopemsError {
+    fn from(e: BackupError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            BackupError::BackupDisabled => TopemsError::OperationNotAllowed("backup disabled".to_string()),
+            BackupError::BackupNotFound => TopemsError::ResourceNotFound("backup".to_string()),
+            BackupError::BackupNotComplete => TopemsError::BusinessLogic("backup not complete".to_string()),
+            BackupError::PgDumpNotFound(m) => TopemsError::FileNotFound(m),
+            BackupError::PgDumpFailed(m) => TopemsError::BusinessLogic(m),
+            BackupError::PsqlNotFound(m) => TopemsError::FileNotFound(m),
+            BackupError::RestoreFailed(m) => TopemsError::BusinessLogic(m),
+            BackupError::IoError(m) => TopemsError::FileOperation(m),
+            BackupError::ChecksumMismatch => TopemsError::FileFormatError("backup checksum mismatch".to_string()),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
