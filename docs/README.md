@@ -45,7 +45,7 @@ TOPEMS（Total Operations & Production Enterprise Management System）是面向�
 | [testing/](./testing/) | 测试文档 | AI 业务集成测试计划、E2E 指南、性能测试指南、Lighthouse |
 | [security/](./security/) | 安全 | [SECURITY.md](./security/SECURITY.md)、[security-best-practices.md](./security/security-best-practices.md) |
 | [performance/](./performance/) | 性能 | [performance-testing-best-practices.md](./performance/performance-testing-best-practices.md)、[optimization-guide.md](./performance/optimization-guide.md)、benchmarks/ |
-| [deploy/](./deploy/) | 部署方案 | [container-strategy.md](./deploy/container-strategy.md)（容器策略）、[windows-deployment.md](./deploy/windows-deployment.md)（WSL2）、[nginx-prod-first-deploy-runbook.md](./deploy/nginx-prod-first-deploy-runbook.md) |
+| [deploy/](./deploy/) | 部署方案 | [container-strategy.md](./deploy/container-strategy.md)（容器策略）、[windows-deployment.md](./deploy/windows-deployment.md)（WSL2）、[nginx-prod-first-deploy-runbook.md](./deploy/nginx-prod-first-deploy-runbook.md)、[mobile-eas-build-runbook.md](./deploy/mobile-eas-build-runbook.md)（Mobile EAS 原生构建） |
 | [audit/](./audit/) | 审计记录 | 审计报告与凭证轮换指引（带日期报告已归档至 `archive/reports-2026-10/`） |
 | [quality/](./quality/) | 质量与协作 | 架构分析报告、[git-collab-guide.md](./quality/git-collab-guide.md)、TRAE 隔离说明 |
 

@@ -126,7 +126,7 @@ topems/
 │   ├── desktop/                  # Tauri 桌面应用
 │   │   ├── src/                  # 桌面端前端代码
 │   │   └── src-tauri/            # Tauri Rust 后端
-│   └── mobile/                   # 移动端应用 (Expo)
+│   └── mobile/                   # 移动端应用 (Expo SDK 57, RN 0.86, React 19; EAS 构建见 docs/deploy/mobile-eas-build-runbook.md)
 │       └── src/                  # 移动端代码
 ├── svc/                          # 后端服务 (Rust, 29 个 crate)
 │   ├── server/                   # 模块化单体入口 (8099)

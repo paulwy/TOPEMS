@@ -11,8 +11,8 @@
 
 ### 变更
 
-### 变更
-
+- **Mobile：Expo SDK 50→57 大版本升级**（`apps/mobile`）：expo `~57.0.28` / react-native `0.86.3` / react `19.2.3`（18→19 迁移），跨 7 个 SDK 一步到位。迁移 `expo-barcode-scanner`→`expo-camera`（sdk-53 起移除，改用 `CameraView`+`useCameraPermissions`+`BarcodeType` 字符串联合）；`expo-notifications` 57 补 `shouldShowBanner`/`shouldShowList`；TypeScript 5→6（与全仓统一），移除废弃 `@types/react-native`；`app.json` 移除缺失资源引用（icon/splash/adaptiveIcon）并加 `expo-splash-screen` 插件；metro 移除 `disableHierarchicalLookup`。验证：mobile tsc(TS6) 0 error、jest 11/11、lint 0 error、expo-doctor 20/21（余 1 项为 web 专属 `@mui` react peer 副本跨 workspace 误报）、web tsc 0 error。详见 [docs/deploy/mobile-eas-build-runbook.md](docs/deploy/mobile-eas-build-runbook.md)
+- **Mobile：EAS 原生构建配置**：新增 `apps/mobile/eas.json`（development/preview/production 三 profile）与 `.easignore`（排除 `.env`、签名密钥等敏感信息）。首次构建需开发者登录 Expo 账号并 `eas init` 关联项目，详见 [mobile-eas-build-runbook](./docs/deploy/mobile-eas-build-runbook.md)
 - **应用自建表固化进迁移链**：ehs/lims 建表逻辑原在 Rust `init_database()` 内、迁移链未覆盖，全新环境跑集成测试会因缺表失败；新增迁移 `20260926120000_app_schema_tables.sql` 固化 ehs 43 + lims 37 + mes 32 张业务表（全 `IF NOT EXISTS` 幂等，迁移链 277 → 278）。`scripts/topems.sh test-backend` 前置 `db_migrate`（失败仅告警）；ehs/lims 集成测试 setup 调 `models::init_database()` 兜底。`cargo test --workspace` 23391 passed / 0 failed- **Rust TLS 依赖切换**：`lapin`(AMQP 客户端) 的 TLS feature 从 `rustls`（默认 `aws-lc-rs`，需 CMake/Perl/NASM 等 C 工具链）切换为 `rustls--ring`（纯 Rust ring 加密库），CI/本地编译无需额外 C 工具链即可通过。涉及 `lib/Cargo.toml` 与 `lib/shared-event/Cargo.toml`
 - **审计日志导出三件套**：实现 gzip 压缩导出（`ExportFormat::Gzip`）、NDJSON 流式导出（`stream_export_audit_logs` 端点，分页查询+逐批 yield）、定时增量导出任务（`AuditExportTask`+`AuditExportController`，周期性增量导出+窗口推进）
 - **审计日志导出任务控制 API**：新建 `audit_export_task_api.rs`，提供 6 个 REST 端点（status/start/stop/trigger/config GET+PUT），支持通过 HTTP 控制定时导出任务的启停、手动触发及配置动态更新；AppState 新增 `audit_export_config` + `audit_export_controller` 字段

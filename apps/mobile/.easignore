@@ -1,0 +1,34 @@
+# 敏感信息：本地环境变量（含 API URL 等）不入 EAS 云端
+.env
+.env.*
+!*.env.example
+
+# 凭据与密钥
+**/*.p12
+**/*.p8
+**/*.jks
+**/*.keystore
+**/*.mobileprovision
+google-service-account.json
+auth-state.json
+
+# 版本控制
+.git
+.gitignore
+.easignore
+
+# 依赖与构建产物（由 EAS 云端重新安装/构建）
+node_modules
+apps/mobile/dist
+apps/mobile/build
+apps/mobile/.expo
+**/dist
+
+# IDE / 本地
+.vscode
+.idea
+.DS_Store
+
+# 备份文件
+*.bak
+/tmp
