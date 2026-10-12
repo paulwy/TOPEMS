@@ -1,0 +1,197 @@
+web 前端契约端点(去重后): 4125 | 非字面量参数待人工复核: 75
+  进度 0/4125
+  进度 400/4125
+  进度 800/4125
+  进度 1200/4125
+  进度 1600/4125
+  进度 2000/4125
+  进度 2400/4125
+  进度 2800/4125
+  进度 3200/4125
+  进度 3600/4125
+  进度 4000/4125
+========================================================================
+[ai] 129/130 PASS, 1 FAIL
+  FAIL POST   /api/ai/complete -> http=-1 body=None (network_error) ai/chat.ts:54
+[aps] 42/42 PASS, 0 FAIL
+[automation] 30/30 PASS, 0 FAIL
+[bi] 124/131 PASS, 7 FAIL
+  FAIL GET    /api/bi/widgets/00000000-0000-0000-0000-000000000099/drilldown -> http=404 body=404 (route_missing) bi/visualization.ts:5
+  FAIL PUT    /api/bi/widgets/00000000-0000-0000-0000-000000000099/drilldown -> http=404 body=404 (route_missing) bi/visualization.ts:9
+  FAIL POST   /api/bi/widgets/00000000-0000-0000-0000-000000000099/drilldown/execute -> http=404 body=404 (route_missing) bi/visualization.ts:17
+  FAIL GET    /api/bi/widgets/00000000-0000-0000-0000-000000000099/annotations -> http=404 body=404 (route_missing) bi/visualization.ts:32
+  FAIL POST   /api/bi/widgets/00000000-0000-0000-0000-000000000099/annotations -> http=404 body=404 (route_missing) bi/visualization.ts:44
+  FAIL GET    /api/bi/widgets/00000000-0000-0000-0000-000000000099/fullscreen -> http=404 body=404 (route_missing) bi/visualization.ts:56
+  FAIL PUT    /api/bi/reports/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) report/index.ts:306
+[core] 181/181 PASS, 0 FAIL
+[crm] 108/108 PASS, 0 FAIL
+[doc] 92/92 PASS, 0 FAIL
+[ehs] 124/185 PASS, 61 FAIL
+  FAIL GET    /api/ehs/incidents/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/accident.ts:32
+  FAIL PUT    /api/ehs/incidents/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/accident.ts:43
+  FAIL DELETE /api/ehs/incidents/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/accident.ts:47
+  FAIL POST   /api/ehs/incidents/00000000-0000-0000-0000-000000000099/investigation -> http=404 body=404 (route_missing) ehs/accident.ts:54
+  FAIL PUT    /api/ehs/incidents/00000000-0000-0000-0000-000000000099/investigation -> http=404 body=404 (route_missing) ehs/accident.ts:61
+  FAIL POST   /api/ehs/incidents/00000000-0000-0000-0000-000000000099/treatment -> http=404 body=404 (route_missing) ehs/accident.ts:72
+  FAIL PUT    /api/ehs/incidents/00000000-0000-0000-0000-000000000099/treatment/actions/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/accident.ts:80
+  FAIL POST   /api/ehs/incidents/00000000-0000-0000-0000-000000000099/close -> http=404 body=404 (route_missing) ehs/accident.ts:98
+  FAIL GET    /api/ehs/environmental-compliance/regulations/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/compliance.ts:41
+  FAIL PUT    /api/ehs/environmental-compliance/regulations/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/compliance.ts:59
+  FAIL DELETE /api/ehs/environmental-compliance/regulations/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/compliance.ts:66
+  FAIL GET    /api/ehs/environmental-compliance/permits/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/compliance.ts:126
+  FAIL PUT    /api/ehs/environmental-compliance/permits/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/compliance.ts:139
+  FAIL DELETE /api/ehs/environmental-compliance/permits/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/compliance.ts:143
+  FAIL GET    /api/ehs/drills/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:230
+  FAIL PUT    /api/ehs/drills/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:238
+  FAIL DELETE /api/ehs/drills/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:242
+  FAIL GET    /api/ehs/drills/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:262
+  FAIL PUT    /api/ehs/drills/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:273
+  FAIL DELETE /api/ehs/drills/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:277
+  FAIL POST   /api/ehs/drills/records/00000000-0000-0000-0000-000000000099/evaluation -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:286
+  FAIL GET    /api/ehs/drills/records/00000000-0000-0000-0000-000000000099/problems -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:292
+  FAIL POST   /api/ehs/drills/records/00000000-0000-0000-0000-000000000099/problems -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:299
+  FAIL PUT    /api/ehs/drills/records/00000000-0000-0000-0000-000000000099/problems/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/emergencyDrill.ts:307
+  FAIL GET    /api/ehs/environmental-compliance/evaluations/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/environmentalCompliance.ts:304
+  FAIL PUT    /api/ehs/environmental-compliance/evaluations/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/environmentalCompliance.ts:317
+  FAIL DELETE /api/ehs/environmental-compliance/evaluations/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/environmentalCompliance.ts:324
+  FAIL GET    /api/ehs/environmental-compliance/monitoring/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/environmentalCompliance.ts:334
+  FAIL DELETE /api/ehs/environmental-compliance/monitoring/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/environmentalCompliance.ts:344
+  FAIL GET    /api/ehs/environmental-compliance/incidents/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/environmentalCompliance.ts:382
+  FAIL PUT    /api/ehs/environmental-compliance/incidents/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/environmentalCompliance.ts:393
+  FAIL DELETE /api/ehs/environmental-compliance/incidents/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/environmentalCompliance.ts:400
+  FAIL GET    /api/ehs/checks/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/inspection.ts:31
+  FAIL PUT    /api/ehs/checks/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/inspection.ts:44
+  FAIL DELETE /api/ehs/checks/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/inspection.ts:48
+  FAIL POST   /api/ehs/checks/plans/00000000-0000-0000-0000-000000000099/items -> http=404 body=404 (route_missing) ehs/inspection.ts:61
+  FAIL DELETE /api/ehs/checks/plans/00000000-0000-0000-0000-000000000099/items/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/inspection.ts:65
+  FAIL GET    /api/ehs/checks/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/inspection.ts:83
+  FAIL PUT    /api/ehs/checks/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/inspection.ts:96
+  FAIL DELETE /api/ehs/checks/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/inspection.ts:100
+  FAIL GET    /api/ehs/occupational-health/contraindications/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/occupationalHealth.ts:154
+  FAIL PUT    /api/ehs/occupational-health/contraindications/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/occupationalHealth.ts:167
+  FAIL DELETE /api/ehs/occupational-health/contraindications/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/occupationalHealth.ts:174
+  FAIL POST   /api/ehs/issues/00000000-0000-0000-0000-000000000099/rectification -> http=404 body=404 (route_missing) ehs/safetyIssue.ts:52
+  FAIL PUT    /api/ehs/issues/00000000-0000-0000-0000-000000000099/rectification -> http=404 body=404 (route_missing) ehs/safetyIssue.ts:59
+  FAIL POST   /api/ehs/issues/00000000-0000-0000-0000-000000000099/rectification/submit -> http=404 body=404 (route_missing) ehs/safetyIssue.ts:63
+  FAIL POST   /api/ehs/issues/00000000-0000-0000-0000-000000000099/verification -> http=404 body=404 (route_missing) ehs/safetyIssue.ts:70
+  FAIL POST   /api/ehs/issues/00000000-0000-0000-0000-000000000099/close -> http=404 body=404 (route_missing) ehs/safetyIssue.ts:74
+  FAIL GET    /api/ehs/training/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/safetyTraining.ts:76
+  FAIL PUT    /api/ehs/training/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/safetyTraining.ts:89
+  FAIL DELETE /api/ehs/training/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/safetyTraining.ts:93
+  FAIL GET    /api/ehs/training/statistics -> http=404 body=404 (route_missing) ehs/safetyTraining.ts:97
+  FAIL GET    /api/ehs/training/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:37
+  FAIL PUT    /api/ehs/training/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:50
+  FAIL DELETE /api/ehs/training/plans/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:54
+  FAIL GET    /api/ehs/training/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:75
+  FAIL PUT    /api/ehs/training/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:88
+  FAIL DELETE /api/ehs/training/records/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:92
+  FAIL GET    /api/ehs/training/certificates/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:112
+  FAIL PUT    /api/ehs/training/certificates/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:125
+  FAIL DELETE /api/ehs/training/certificates/00000000-0000-0000-0000-000000000099 -> http=404 body=404 (route_missing) ehs/training.ts:129
+[erp] 335/335 PASS, 0 FAIL
+[file] 50/50 PASS, 0 FAIL
+[finance] 228/228 PASS, 0 FAIL
+[gis] 47/47 PASS, 0 FAIL
+[help] 10/10 PASS, 0 FAIL
+[hrm] 137/137 PASS, 0 FAIL
+[iam] 48/50 PASS, 2 FAIL
+  FAIL GET    /api/core/iam/permissions -> http=200 body=500 (handler_error) iam/permission.ts:7
+  FAIL GET    /api/core/iam/roles -> http=200 body=500 (handler_error) iam/role.ts:7
+[im] 37/37 PASS, 0 FAIL
+[integration] 88/99 PASS, 11 FAIL
+  FAIL POST   /api/integration/external-erp/connections -> http=200 body=500 (handler_error) external-erp/connection.ts:32
+  FAIL POST   /api/integration/external-erp/connections/00000000-0000-0000-0000-000000000099/company-mappings -> http=200 body=500 (handler_error) external-erp/connection.ts:56
+  FAIL POST   /api/integration/external-erp/sync/accounts -> http=200 body=500 (handler_error) external-erp/sync.ts:12
+  FAIL POST   /api/integration/external-erp/sync/customers -> http=200 body=500 (handler_error) external-erp/sync.ts:15
+  FAIL POST   /api/integration/external-erp/sync/suppliers -> http=200 body=500 (handler_error) external-erp/sync.ts:18
+  FAIL POST   /api/integration/external-erp/sync/projects -> http=200 body=500 (handler_error) external-erp/sync.ts:25
+  FAIL POST   /api/integration/external-erp/sync/departments -> http=200 body=500 (handler_error) external-erp/sync.ts:32
+  FAIL POST   /api/integration/external-erp/sync/employees -> http=200 body=500 (handler_error) external-erp/sync.ts:39
+  FAIL POST   /api/integration/external-erp/sync/vouchers -> http=200 body=500 (handler_error) external-erp/sync.ts:42
+  FAIL POST   /api/integration/external-erp/sync/invoices -> http=200 body=500 (handler_error) external-erp/sync.ts:45
+  FAIL POST   /api/integration/external-erp/sync/full -> http=200 body=500 (handler_error) external-erp/sync.ts:48
+[lims] 141/142 PASS, 1 FAIL
+  FAIL PUT    /api/lims/maintenance/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) lims/instrument.ts:62
+[mail] 19/19 PASS, 0 FAIL
+[master] 171/171 PASS, 0 FAIL
+[mes] 181/188 PASS, 7 FAIL
+  FAIL GET    /api/mes/equipment/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) mes/equipment.ts:39
+  FAIL GET    /api/mes/equipment/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) mes/equipment.ts:43
+  FAIL PUT    /api/mes/equipment/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) mes/equipment.ts:51
+  FAIL POST   /api/mes/equipment/00000000-0000-0000-0000-000000000099/maintenance -> http=200 body=500 (handler_error) mes/equipment.ts:62
+  FAIL PUT    /api/mes/process-flows/00000000-0000-0000-0000-000000000099/steps/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) mes/processFlow.ts:155
+  FAIL GET    /api/mes/kanban/dashboard -> http=500 body=500 (handler_error) mes/productionKanban.ts:7
+  FAIL GET    /api/mes/kanban/order-progress/00000000-0000-0000-0000-000000000099 -> http=500 body=500 (handler_error) mes/productionKanban.ts:26
+[migration] 4/4 PASS, 0 FAIL
+[mobile] 289/293 PASS, 4 FAIL
+  FAIL GET    /api/mobile/production/orders -> http=200 body=500 (handler_error) mobile/production.ts:111
+  FAIL GET    /api/mobile/production/orders/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) mobile/production.ts:115
+  FAIL POST   /api/mobile/production/orders/00000000-0000-0000-0000-000000000099/start -> http=200 body=500 (handler_error) mobile/production.ts:119
+  FAIL POST   /api/mobile/production/orders/00000000-0000-0000-0000-000000000099/complete -> http=200 body=500 (handler_error) mobile/production.ts:133
+[monitor] 82/82 PASS, 0 FAIL
+[notification] 145/150 PASS, 5 FAIL
+  FAIL GET    /api/communication/notification/notification/channels -> http=200 body=500 (handler_error) notification/channel.ts:95
+  FAIL GET    /api/communication/notification/notification/channels/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) notification/channel.ts:99
+  FAIL PUT    /api/communication/notification/notification/channels/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) notification/channel.ts:110
+  FAIL DELETE /api/communication/notification/notification/channels/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) notification/channel.ts:114
+  FAIL POST   /api/communication/notification/notification/channels/00000000-0000-0000-0000-000000000099/test -> http=200 body=500 (handler_error) notification/channel.ts:118
+[pdm] 113/113 PASS, 0 FAIL
+[plugin] 11/11 PASS, 0 FAIL
+[plugin-runtime] 2/2 PASS, 0 FAIL
+[pm] 144/147 PASS, 3 FAIL
+  FAIL PUT    /api/pm/acceptance-records/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) pm/acceptance.ts:116
+  FAIL PUT    /api/pm/documents/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) pm/document.ts:39
+  FAIL PUT    /api/pm/risks/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) pm/risk.ts:54
+[qms] 105/106 PASS, 1 FAIL
+  FAIL POST   /api/qms/eightd/00000000-0000-0000-0000-000000000099/d1-team -> http=200 body=500 (handler_error) qms/eightD.ts:72
+[rd] 44/44 PASS, 0 FAIL
+[scm] 114/114 PASS, 0 FAIL
+[search] 2/2 PASS, 0 FAIL
+[srm] 94/94 PASS, 0 FAIL
+[ticket] 68/68 PASS, 0 FAIL
+[tms] 52/52 PASS, 0 FAIL
+[wms] 206/209 PASS, 3 FAIL
+  FAIL GET    /api/wms/batches -> http=200 body=500 (handler_error) wms/batch.ts:13
+  FAIL PUT    /api/wms/batches/00000000-0000-0000-0000-000000000099 -> http=200 body=500 (handler_error) wms/batch.ts:25
+  FAIL POST   /api/wms/batches/00000000-0000-0000-0000-000000000099/transfer-location -> http=200 body=500 (handler_error) wms/batch.ts:62
+[workflow] 222/222 PASS, 0 FAIL
+========================================================================
+总计: 4019/4125 PASS, 106 FAIL（已知非后端缺口豁免 0）
+业务性非2xx(WARN, 不阻塞; 疑似参数不符需人工复核): 2180
+  WARN GET    /api/erp/addressbook/favorites -> http=405 body=None
+  WARN GET    /api/erp/addressbook/recent -> http=400 body=None
+  WARN GET    /api/erp/addressbook/shared -> http=400 body=None
+  WARN GET    /api/erp/addressbook/groups -> http=405 body=None
+  WARN GET    /api/erp/addressbook/activity -> http=400 body=None
+  WARN GET    /api/erp/addressbook/00000000-0000-0000-0000-000000000099 -> http=400 body=None
+  WARN GET    /api/erp/addressbook/tags -> http=405 body=None
+  WARN GET    /api/erp/audit-logs/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+  WARN GET    /api/erp/audit-logs/export -> http=400 body=None
+  WARN GET    /api/erp/system/settings/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+  WARN POST   /api/erp/system/settings -> http=422 body=None
+  WARN PUT    /api/erp/system/settings/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+  WARN DELETE /api/erp/system/settings/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+  WARN PUT    /api/erp/system/settings/batch -> http=422 body=None
+  WARN GET    /api/erp/assets/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+  WARN GET    /api/erp/assets/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+  WARN POST   /api/erp/assets -> http=422 body=None
+  WARN PUT    /api/erp/assets/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+  WARN DELETE /api/erp/assets/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+  WARN GET    /api/erp/fixed-assets/00000000-0000-0000-0000-000000000099 -> http=200 body=404
+待人工复核(非字面量参数): 75
+  ? get    bi bi/analytics.ts:41 | unresolved arg=endpoint
+  ? post   hrm hrm/employee.ts:28 | unresolved arg=endpoint
+  ? post   hrm hrm/performance.ts:24 | unresolved arg=endpoint
+  ? get    lims lims/utils.ts:31 | unresolved arg=endpoint
+  ? post   lims lims/utils.ts:39 | unresolved arg=endpoint
+  ? get    qms qms/apqp.ts:59 | unresolved arg=url
+  ? get    qms qms/apqp.ts:164 | unresolved arg=url
+  ? get    qms qms/audit.ts:17 | unresolved arg=url
+  ? get    qms qms/audit.ts:23 | unresolved arg=url
+  ? get    rd rd/bug.ts:30 | unresolved arg=url
+  ? get    rd rd/build.ts:28 | unresolved arg=url
+  ? get    rd rd/deploy.ts:29 | unresolved arg=url
+  ? get    rd rd/experiment.ts:36 | unresolved arg=url
+  ? get    rd rd/experiment.ts:83 | unresolved arg=url
+  ? get    rd rd/experiment.ts:109 | unresolved arg=url
+SMOKE_EXIT=1

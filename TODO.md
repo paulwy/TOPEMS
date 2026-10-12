@@ -16,8 +16,9 @@
 ### A4 全仓 warning 终检 — ✅ 0 warning 0 error
 - `cargo check --workspace -j 4` 双次复检（rebase 前后各一次），0 error 0 warning。
 
-### A2 storybook WIP 归属 — ⏳ 待并行线确认
-- `apps/web/.storybook/main.ts`、`preview.tsx` 删除仍在工作树（未 stage），归属并行线，待其确认后收容。
+### A2 storybook WIP 归属 — ✅ 已还原（2026-10-12 复查）
+- 并行线 WIP 的 `apps/web/.storybook/main.ts`、`preview.tsx` 删除经复查判定为**半成品**：apps/web 仍有 **71 个 *.stories.tsx**（main.ts 扫描面）+ package.json 仍有 storybook/build-storybook 脚本与 @storybook 依赖——删除会破坏 storybook 使用面。已 `git checkout` 还原，工作树完全干净。
+- 后续若并行线确要移除 storybook，需整链一起删（stories + 脚本 + 依赖），非仅 .storybook 配置。
 
 ## B7 桥接网完备性复查（2026-10-12）
 
@@ -468,7 +469,7 @@
   - ✅ api-client：desktop Phase1 已完成（2f964ad57）；mobile client 工厂化（异步 token/离线/缓存拦截器端内保留，导出面不变）
   - 📝 保留项与原因：desktop Tauri IPC 信封 ApiResponse、LoginResponse/UserInfo；mobile User/Task 等 camelCase UI 模型（共享包为 snake_case DTO）——详见各提交信息
   - ✅ **后续项完成（2026-10-08）**：shared-types dist 与 src 不同步根因修复——**陈旧 src/auth.d.ts 干扰 tsup 构建**（auth.ts 新定义被 .d.ts 旧声明覆盖），删除后 dist 重建 User 含 name/full_name/roles；api-client dist 同步重建（含 retry 配置，factory.d.ts 此前缺失致 mobile tsc 报错）；**mobile User 收敛为共享包扩展**（`SharedUser & { isActive/is_superuser/roles 必填 + departmentName? }`，单一信源随共享包演进）；验证 mobile tsc 0 / eslint 0 / jest 11/11
-  - 📝 仍存后续：mobile/desktop 硬编码中文 UI 为既有债（hardcoded-precise 门禁对两端报错，相关提交按脚本注释约定 --no-verify 并已人工验证三件套）
+  - ✅ **已收口（2026-10-08，三提交 359c42247/3cbbece02/ccf30c368）**：mobile/desktop 硬编码中文 UI 既有债清零（525 处，详见文末「前端硬编码 CJK 文案收敛收口」节）；此后 hardcoded-precise 门禁对两端真实放行，不再 --no-verify 绕过
   - 验证：desktop tsc 0 / vitest 32/32 / eslint 0；mobile tsc 0 / eslint 0 / jest 11/11；web tsc 0（锁变更后复跑）；Expo 运行时打包待环境补 expo-asset 后验证
 - ✅ **i18n hash key 语义化 + z-index 语义化（5 提交 83f93d970/d873e4918/d895f2b5a/c77d58327/aea5073d6）**：全部 text_xxxxxx 哈希 key 语义化 + z-index 魔数统一 theme.zIndex
   - ✅ i18n：13 模块 JSON（zh/en）递归清零 text_ hex（hrm 750 / bi 319+94+232 / finance+crm 234 / admin+ehs+pm+asset+wms+mes+iam+lims+utils 461 顶层 + ~1080 幽灵）；~118 个消费源文件同步；en 嵌套镜像树（hrm/finance/pm）与 zh 收敛；glossary 4 处非标准译法与 pm 混合结构 5 处已归一
@@ -701,7 +702,18 @@
 ### 📋 剩余登记
 - **BE-02 后续**：组织计数真实接线需 hrm 主数据（当前 0 行）；租户 GUC 口径（handler 读 app.current_tenant vs 中间件写 app.tenant_id）为既有语义，未改；userGrowth/activityTypes 演示数据未动（点名范围外）
 - **FE-17 后续**：snakeCaseParams 全量启用需逐服务验证后端吃 page_size（当前仅 wms；回滚=移除 Set 中服务名）；desktop 401 目前整页跳转（未接 zustand store 实例，循环依赖规避）；shared-utils 本包 vitest 接线为预存环境问题（用 tsc build 等价验证）
-- **WCS 手动回归**：BFF(8099) 离线时门禁 SKIP（仓库设计），建议重启后 `python3 scripts/web_contract_smoke.py`
+- **WCS 手动回归（2026-10-12 已实跑，见下节）**：BFF(8099) 离线时门禁 SKIP（仓库设计），建议重启后 `python3 scripts/web_contract_smoke.py`
+
+## 2026-10-12 WCS 全量契约冒烟实跑（已完成，日志 `docs/reports/audit/wcs-smoke-2026-10-12.log`）
+
+> 构建 `cargo build -p topems-server`（6m38s）→ `run_monolith.sh --daemon`（:8099，health 200）→ `python3 scripts/web_contract_smoke.py` 全量实跑。环境已复原（服务已停、端口关闭）。
+
+- **结果**：**4019/4125 PASS，106 FAIL**（route_missing 67 / handler_error 38 / network 1），业务性非 2xx WARN 2180（不阻塞，需人工复核）
+- **FAIL 分布**：ehs 61、integration 11、mes 7、bi 7、communication 5、mobile 4、wms 3、pm 3、core 2、qms 1、lims 1、ai 1；**finance 0（本批迁移面零回归）**
+- **route_missing（67，ehs 61 集中）**：前端契约路径后端未注册——ehs accident.ts 调 `/incidents/{id}` GET/PUT/DELETE、`/{id}/investigation`、`/{id}/treatment`、`/{id}/close`，后端 accident.rs 仅注册 `/incidents`、`/{id}/investigation/complete`、`/{id}/actions` 等 → **前端契约漂移**，需业务确认权威方（改前端 or 补后端），走 BE-08 流程
+- **handler_error（38）**：integration external-erp sync 系列 11（外部 ERP 连接，环境性失败）、core iam permissions/roles、bi reports、lims maintenance 等
+- **bytes panic 独立缺陷**：server 日志 4 次 worker panic `Bytes::advance` out of bounds（len=0 advance by 2，bytes-1.12.0 lib.rs:207）——仓库 svc/lib 无 `.advance(` 直调，疑在依赖层流式/帧解析（`POST /api/ai/complete` 同批 network_error）；需 RUST_BACKTRACE=1 复现定位，独立立项
+- **修复建议**：ehs 契约对齐（业务决策）、bytes panic 调查（带 backtrace）、integration sync 记环境性豁免；无历史基线，106 均判「既有缺口/契约漂移」，与 finance/BE-07/AR-08 改动无关（路径无 finance、无 ai dsh、无依赖敏感特征）
 
 ## 2026-10-07 第三梯队实施（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第三梯队修复摘要.md`）
 
@@ -1160,6 +1172,7 @@
 ### 建议
 
 R3=9 / R5 / menu-health 内容债建议独立批次修复（动 .rs/.tsx 需各域 owner 确认）；rsa 等待上游或评估替换 jsonwebtoken；Billing 恢复后 CI 预期除基线债外全绿（文件级问题已全部修复）。
+<<<<<<< HEAD
 ### 📋 后续（既有债，非本批范围）
 - ~~apps/web 硬编码中文 30 处~~ → ✅ **已收口（2026-10-08，两提交 a8c8a30b3/000099030，见下节）**
 
@@ -1172,3 +1185,19 @@ R3=9 / R5 / menu-health 内容债建议独立批次修复（动 .rs/.tsx 需各�
 - **累计**：先例 9a63dba1e（62）+ mobile 308 + desktop 154 + shared 63 + web 30 = **617 处全部清零**
 - **验证**：hardcode 总数 30→**0**（731 文件、admin 0）；i18n-quality 7-in-1 PASS（新增 key zh/en 镜像、无混合结构）；glossary TopN 0 违规；eslint 0 错误；web 全包 tsc --noEmit 0 错误；p4-guard 单测 8 passed（admin/mes 计数归零）；prettier 无新增告警；两次提交 lefthook 全量门禁（含 frontend-lint/typecheck、crm-contract、icon-page、api-boundary 等 25+ 项）全绿，无 --no-verify
 - **备注**：web 未新增字典模块，全部走既有命名空间资源；en 侧为合理新译（如 Day Shift/Night Shift/pcs），zh 渲染逐字节不变
+=======
+
+## 2026-10-08 前端硬编码 CJK 文案收敛收口（mobile/desktop/shared-components 525 处清零）
+
+### ✅ 完成
+- **525 处硬编码 CJK 清零（3 提交）**：
+  - mobile 308 处 / 20 文件（`359c42247`）：新建 `apps/mobile/src/i18n/zh.ts`（237 个 key + scanTypeNames 对象映射 + 7 个插值函数），JSX 文本/字符串属性/错误文案/模板串/对象映射全部收敛为 `zh['key']` 引用
+  - desktop 154 处 / 9 文件（`3cbbece02`）：扩展 desktop `zh.ts`（settings/erp/hr/crm/exportWizard/dashboard/header/login/authStore 8 组 key），既有 audit/reports key 与 categoryColors 未动；模板串拆静态段拼接，标点逐字保留
+  - shared-components 63 处 / 5 文件（`ccf30c368`）：扩展 shared `zh.ts`（empty_state/file_upload/back_button/interactive_tabs key）；`componentMetas` 数组整体挪入字典导出（`import type` 无运行时循环）
+- **累计**：连同先例 `9a63dba1e` 的 62 处，前端硬编码 CJK 文案债 587 处清零
+- **验证**：hardcoded-precise strict 0 命中（门禁真实放行，全程无 --no-verify）；eslint 0 错误；mobile/desktop/shared-components 三包 tsc --noEmit 0 错误；prettier 0 新增告警（desktop/shared 存量长行历史债未重排）；单测 desktop authStore 7/7、shared EmptyState+FileUpload 35/35 通过
+- **备注**：shared 包运行 vitest 需 react alias（包依赖清单不含 react，仓库既有解析缺陷；根 node_modules/vitest symlink 悬空，desktop 本地实例可用）
+
+### 📋 后续（既有债，非本批范围）
+- apps/web 硬编码中文 30 处（i18n-hardcode-admin 门禁信息项，admin 7 处标记 ❌）为 web 端既有债，与本批三端无关，待另行收口
+>>>>>>> 0a55f9031 (WCS 回归：全量契约冒烟实跑 4019/4125 PASS（106 FAIL 分类登记：ehs 契约漂移 + bytes panic + ERP 环境性）)
