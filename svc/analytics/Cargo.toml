@@ -24,7 +24,7 @@ topems-shared-db = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
-rand = "0.8"
+rand.workspace = true
 dashmap = { workspace = true }
 csv = { workspace = true }
 lopdf = { workspace = true }

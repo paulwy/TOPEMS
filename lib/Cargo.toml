@@ -74,24 +74,24 @@ serde_json.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 axum.workspace = true
-async-trait = "0.1"
+async-trait.workspace = true
 jsonwebtoken.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 sqlx.workspace = true
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 
 
 # gRPC 微服务基础（V24.0 模块 C）
 # tonic 工作区已锁定 0.14，与 axum 0.8 兼容
-http = "1"
+http.workspace = true
 
 [dev-dependencies]
-tempfile = "3"
+tempfile.workspace = true
 
 [build-dependencies]
-tonic-build = "0.14"
-prost-build = "0.13"
+tonic-build.workspace = true
+prost-build.workspace = true
 
 [lints]
 workspace = true

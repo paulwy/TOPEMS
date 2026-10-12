@@ -31,9 +31,9 @@ topems-shared-db = { workspace = true }
 topems-shared-boundary = { path = "../../lib/shared-boundary" }
 utoipa.workspace = true
 async-trait.workspace = true
-rust_decimal = { version = "1.34", features = ["serde"] }
-csv = "1.3"
-strsim = "0.11"
+rust_decimal = { workspace = true, features = ["serde"] }
+csv.workspace = true
+strsim.workspace = true
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["test-util"] }

@@ -11,15 +11,15 @@ topems-shared-core = { path = "../shared-core" }
 topems-shared-event = { path = "../shared-event" }
 
 # 可观测性依赖
-opentelemetry = { version = "0.32", features = ["trace"] }
-opentelemetry_sdk = { version = "0.32", features = ["rt-tokio", "trace"] }
-opentelemetry-otlp = { version = "0.32", features = ["tonic", "trace"] }
-opentelemetry-stdout = { version = "0.32", features = ["trace"] }
-opentelemetry-semantic-conventions = "0.32"
-tracing-opentelemetry = "0.33"
+opentelemetry = { workspace = true, features = ["trace"] }
+opentelemetry_sdk = { workspace = true, features = ["rt-tokio", "trace"] }
+opentelemetry-otlp = { workspace = true, features = ["tonic", "trace"] }
+opentelemetry-stdout = { workspace = true, features = ["trace"] }
+opentelemetry-semantic-conventions.workspace = true
+tracing-opentelemetry.workspace = true
 tracing.workspace = true
 tracing-subscriber.workspace = true
-tracing-appender = "0.2"
+tracing-appender.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
@@ -27,15 +27,15 @@ uuid.workspace = true
 axum.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
-parking_lot = "0.12"
-sha2 = "0.10"
-hex = "0.4"
+parking_lot.workspace = true
+sha2.workspace = true
+hex.workspace = true
 thiserror.workspace = true
 regex.workspace = true
 sqlx.workspace = true
-reqwest = { version = "0.12", features = ["json"] }
-amqprs = { version = "2.1", features = ["tokio-rustls"] }
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+reqwest = { workspace = true, features = ["json"] }
+amqprs = { workspace = true, features = ["tokio-rustls"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 dotenv = { package = "dotenvy", version = "0.15" }
 [lints.rust]
 unknown_lints = "allow"

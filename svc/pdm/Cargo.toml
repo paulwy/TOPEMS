@@ -23,11 +23,11 @@ topems-shared-auth = { workspace = true }
 topems-shared-db = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
-bigdecimal = { version = "0.4", features = ["serde"] }
+bigdecimal = { workspace = true, features = ["serde"] }
 
 [dev-dependencies]
 topems-shared-event = { workspace = true }
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 
 [[bin]]
 name = "topems-pdm"

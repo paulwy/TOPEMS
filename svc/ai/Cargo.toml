@@ -20,7 +20,7 @@ thiserror.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
 futures.workspace = true
-async-stream = "0.3"
+async-stream.workspace = true
 topems-shared = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-boundary = { path = "../../lib/shared-boundary" }
@@ -37,7 +37,7 @@ prometheus.workspace = true
 walkdir.workspace = true
 regex.workspace = true
 tokio-stream.workspace = true
-parking_lot = "0.12"
+parking_lot.workspace = true
 
 # PDF 解析
 lopdf.workspace = true
@@ -50,7 +50,7 @@ zip.workspace = true
 async-trait.workspace = true
 
 # 随机数生成
-rand = "0.8"
+rand.workspace = true
 
 # 缓存
 moka.workspace = true
@@ -60,7 +60,7 @@ utoipa.workspace = true
 
 [dev-dependencies]
 tower = { workspace = true }
-hyper = "1.0"
+hyper.workspace = true
 [lints.rust]
 unknown_lints = "allow"
 renamed_and_removed_lints = "allow"

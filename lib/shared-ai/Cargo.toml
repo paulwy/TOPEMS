@@ -10,7 +10,7 @@ description = "TOPEMS shared AI library - vector store, embeddings, AI clients"
 topems-shared-core = { path = "../shared-core" }
 
 # AI 依赖
-reqwest = { version = "0.12", features = ["json", "stream", "multipart"] }
+reqwest = { workspace = true, features = ["json", "stream", "multipart"] }
 serde.workspace = true
 serde_json.workspace = true
 chrono.workspace = true
@@ -19,17 +19,17 @@ tracing.workspace = true
 tokio.workspace = true
 async-trait.workspace = true
 anyhow.workspace = true
-futures = "0.3"
+futures.workspace = true
 
 # 向量存储依赖
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 sqlx.workspace = true
 
 [features]
 default = []
 
 [dev-dependencies]
-serial_test = "3"
+serial_test.workspace = true
 [lints.rust]
 unknown_lints = "allow"
 renamed_and_removed_lints = "allow"

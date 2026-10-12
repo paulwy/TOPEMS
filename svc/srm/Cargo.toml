@@ -7,17 +7,17 @@ license = "MIT"
 description = "TOPEMS Supplier Relationship Management System"
 
 [dependencies]
-axum = "0.8"
-tokio = { version = "1", features = ["full"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-rust_decimal = "1"
+axum.workspace = true
+tokio = { workspace = true, features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+rust_decimal.workspace = true
 sqlx.workspace = true
-chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "1", features = ["serde", "v4"] }
-tracing = "0.1"
-anyhow = "1"
-thiserror = "2"
+chrono = { workspace = true, features = ["serde"] }
+uuid = { workspace = true, features = ["serde", "v4"] }
+tracing.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
 topems-shared = { workspace = true }
 topems-shared-bootstrap = { workspace = true }
 topems-shared-event = { workspace = true }
@@ -27,10 +27,10 @@ topems-shared-db = { workspace = true }
 topems-shared-boundary = { path = "../../lib/shared-boundary" }
 
 topems-shared-service-client = { workspace = true }
-bigdecimal = { version = "0.4", features = ["serde"] }
+bigdecimal = { workspace = true, features = ["serde"] }
 prometheus.workspace = true
-utoipa = "4"
-reqwest = { version = "0.12", features = ["json"] }
+utoipa.workspace = true
+reqwest = { workspace = true, features = ["json"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["full", "test-util"] }

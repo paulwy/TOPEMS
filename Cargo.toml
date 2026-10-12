@@ -386,6 +386,49 @@ walkdir = "2"
 moka = { version = "0.12", features = ["future", "sync"] }
 
 # ================================================
+# AR-08 依赖收敛补充（2026-10-12）：原各 crate 外联硬编码版本统一提升到 workspace。
+# 版本取当前实际使用版本（不翻 major；sqlx 0.9 / reqwest 0.13 / redis 1.x / rand 0.10 /
+# utoipa 6 / opentelemetry 0.33 / prost 0.14 / sha2 0.11 / base64 0.23 等大版本升级
+# 属独立基础设施迁移，见 TODO.md「AR-08 后续」登记，不在本批执行）
+# 特例（保持 crate 级显式版本）：shared-event lapin 与 migration-sdk sqlx 用
+# default-features = false，workspace 引用会忽略该设置（Cargo 警告，未来 hard error），
+# 故保留显式版本声明，不参与 workspace 收敛
+# ================================================
+aes-gcm = "0.10"
+amqprs = "2.1"
+async-stream = "0.3"
+base64 = "0.22"
+brotli = "3.5"
+envy = "0.4"
+etcd-client = "0.19"
+flate2 = "1.0"
+futures-lite = "2.3"
+hex = "0.4"
+hickory-resolver = "0.26"
+hmac = "0.12"
+hostname = "0.4"
+hyper = "1.0"
+lapin = "4.10"
+num-traits = "0.2.19"
+opentelemetry = "0.32"
+opentelemetry-otlp = "0.32"
+opentelemetry-semantic-conventions = "0.32"
+opentelemetry-stdout = "0.32"
+opentelemetry_sdk = "0.32"
+parking_lot = "0.12"
+prost = "0.13"
+prost-build = "0.13"
+redis = "0.24"
+serde_urlencoded = "0.7"
+serde_yaml = "0.9"
+serial_test = "3"
+sha2 = "0.10"
+strsim = "0.11"
+tonic-build = "0.14"
+tracing-appender = "0.2"
+tracing-opentelemetry = "0.33"
+
+# ================================================
 # Shared Library Sub-crates (A4.2 去门面化迁移)
 # ================================================
 # topems-shared 主 crate 及其子 crate，支持服务直接依赖而非经由 topems_shared:: 门面

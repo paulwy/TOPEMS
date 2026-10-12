@@ -32,7 +32,7 @@ axum-prometheus.workspace = true
 prometheus.workspace = true
 tower-cookies.workspace = true
 sqlx.workspace = true
-sha2 = "0.10"
+sha2.workspace = true
 topems-shared-bootstrap = { workspace = true }
 
 [dev-dependencies]

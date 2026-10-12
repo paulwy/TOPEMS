@@ -27,28 +27,28 @@ utoipa.workspace = true
 axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
-flate2 = "1.0"
+flate2.workspace = true
 
 rust_decimal = { workspace = true, features = ["db-postgres"] }
 futures-util.workspace = true
 bcrypt.workspace = true
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
-sha2 = "0.10"
-base64 = "0.22"
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
+sha2.workspace = true
+base64.workspace = true
 url.workspace = true
 reqwest.workspace = true
 lettre.workspace = true
-lazy_static = "1"
+lazy_static.workspace = true
 regex.workspace = true
 
-rand = "0.8"
-async-trait = "0.1"
-hickory-resolver = "0.26"
-async-stream = "0.3"
+rand.workspace = true
+async-trait.workspace = true
+hickory-resolver.workspace = true
+async-stream.workspace = true
 
 [dev-dependencies]
-serde_urlencoded = "0.7"
-tempfile = "3"
+serde_urlencoded.workspace = true
+tempfile.workspace = true
 bytes.workspace = true
 
 [[bin]]

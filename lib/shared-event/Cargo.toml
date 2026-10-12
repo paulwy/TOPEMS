@@ -24,31 +24,31 @@ thiserror.workspace = true
 futures.workspace = true
 tokio-util = { workspace = true, features = ["rt"] }
 futures-util.workspace = true
-futures-lite = "2.3"
+futures-lite.workspace = true
 
 # Redis/消息队列依赖
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 lapin = { version = "4.10", default-features = false, features = ["rustls--ring", "default-runtime"] }
 
 # 缓存依赖
-parking_lot = "0.12"
-rand = "0.8"
+parking_lot.workspace = true
+rand.workspace = true
 
 # 主机名依赖
-hostname = "0.4"
+hostname.workspace = true
 
 # 服务发现依赖
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { workspace = true, features = ["json"] }
 
 # SQL 依赖（saga store 用）
 sqlx.workspace = true
 
 # Consul 依赖
-serde_yaml = "0.9"
+serde_yaml.workspace = true
 
 # 正则表达式依赖（config_center 用）
 regex.workspace = true
-etcd-client = "0.19"
+etcd-client.workspace = true
 # 注（D5/U9，2026-10-03）：zookeeper 依赖已移除——事件协调无生产启用（主机制 Redis Stream），
 # zookeeper 0.8.0 future-incompat（审计 M7）随依赖移除一并消除。
 

@@ -23,19 +23,19 @@ tracing-subscriber.workspace = true
 
 # ===== 工具依赖 =====
 regex.workspace = true
-url = "2"
+url.workspace = true
 uuid.workspace = true
 utoipa.workspace = true
-reqwest = { version = "0.12", features = ["json"] }
-futures = "0.3"
-hostname = "0.4"
-serde_yaml = "0.9"
-parking_lot = "0.12"
-envy = "0.4"
+reqwest = { workspace = true, features = ["json"] }
+futures.workspace = true
+hostname.workspace = true
+serde_yaml.workspace = true
+parking_lot.workspace = true
+envy.workspace = true
 
 # ===== 压缩依赖 =====
-flate2 = "1.0"
-brotli = "3.5"
+flate2.workspace = true
+brotli.workspace = true
 
 # ===== 数据库依赖 =====
 sqlx.workspace = true
@@ -44,24 +44,24 @@ sqlx.workspace = true
 prometheus.workspace = true
 
 # ===== 日志依赖 =====
-tracing-appender = "0.2"
+tracing-appender.workspace = true
 
 # ===== OpenTelemetry 依赖 =====
-opentelemetry = { version = "0.32", features = ["trace"] }
+opentelemetry = { workspace = true, features = ["trace"] }
 
 # ===== 认证依赖 =====
 jsonwebtoken.workspace = true
 
 # ===== Redis 依赖 =====
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 
 # ===== 安全依赖（api_security 模块）=====
-hmac = "0.12"
-sha2 = "0.10"
-hex = "0.4"
+hmac.workspace = true
+sha2.workspace = true
+hex.workspace = true
 
 # ===== gRPC 微服务基础（V24.0 模块 C）=====
-prost = { version = "0.13", optional = true }
+prost = { workspace = true, optional = true }
 tonic = { workspace = true, optional = true }
 rand = { workspace = true, optional = true }
 async-trait = { workspace = true, optional = true }
@@ -76,7 +76,7 @@ service-client-bridge = []
 grpc = ["dep:tonic", "dep:prost", "dep:rand", "dep:async-trait"]
 
 [dev-dependencies]
-serial_test = "3"
+serial_test.workspace = true
 
 
 [package.metadata.cargo-machete]

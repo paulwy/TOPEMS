@@ -713,9 +713,23 @@
 
 ### 📋 本批仅登记未实施（纪律范围）
 - **BE-06 健康端点收敛**：实测修正——核心逻辑已集中 shared-bootstrap（build_detailed_health_response/create_standard_health_routes），18 个 main.rs 只是服务特有载荷薄包装（池字段/挂载路径/前缀各派系）→ 登记方案不机械重写；文档 `artifacts/tier2-fixes/BE-06-health-plugin-endpoints-consolidation.md`
-- **AR-08 workspace 依赖**：审计 44/17 过期，现快照 143 条外联硬编码/28 crate（A=70 可直接翻、B=2 thiserror 1→2、C=71 需提升根声明）；因 Cargo.* 用户并发（rust_crypto）未提交而零编辑；方案文档 `artifacts/tier2-fixes/ar08-workspace-deps-plan.md`，待 Cargo 干净后按批次执行
+- **AR-08 workspace 依赖（2026-10-12 批次已完成，见「AR-08 批次」节）**：审计 44/17 过期，现快照 143 条外联硬编码/28 crate（A=70 可直接翻、B=2 thiserror 1→2、C=71 需提升根声明）；因 Cargo.* 用户并发（rust_crypto）未提交而零编辑；方案文档 `artifacts/tier2-fixes/ar08-workspace-deps-plan.md`，待 Cargo 干净后按批次执行
 - **DIR-13 Cargo 注释**：billing 已由 66a5ded86 移除，L27/L96 拟改文本已出（L27 finance/billing→finance、L96 A 组 8→7），待 Cargo.* 干净后执行
 - **明确不做（路线图级）**：AR-03 启动 DDL 版本门控、BE-08 2179 路由 triage、FE-17 阶段 2-4、BE-05 方向乙（OpenAPI 回写）、BE-07 422 约定、BE-09 utoipa 升级
+
+### ✅ AR-08 批次（2026-10-12，外联硬编码 158→特例 2 条收敛）
+
+> 复审计（cargo metadata 口径）：**158 条外联硬编码/32 crate**（较原快照 143 增，并行线新增 brotli/opentelemetry 等）。执行顺序按原方案 A/C 合并 + B（本次已无独立 A 批——版本以 workspace 键为准统一，同 major 内安全；大版本升级全部排除，登记见下）
+
+- **根 Cargo.toml 新增 33 个 workspace 键**（aes-gcm/amqprs/async-stream/base64/brotli/envy/etcd-client/flate2/futures-lite/hex/hickory-resolver/hmac/hostname/hyper/lapin/num-traits/opentelemetry×5/parking_lot/prost×2/redis/serde_urlencoded/serde_yaml/serial_test/sha2/strsim/tonic-build/tracing-appender/tracing-opentelemetry，版本=当前使用，不翻 major）
+- **29 个 crate Cargo.toml：139 条硬编码 → workspace 引用**（`xxx.workspace = true` / `{ workspace = true, features = [...] }`，features/optional 逐条保留；shared-core prost 的 optional=true 修复补回）
+- **B 批 thiserror 1→2**：shared-dsh + migration-sdk 随转换升级到 workspace thiserror 2（API 兼容，全仓编译验证通过）
+- **特例 2 条回退显式版本**：shared-event lapin、migration-sdk sqlx 用 `default-features = false`，workspace 引用会忽略该设置（Cargo 警告、未来 hard error）→ 保持显式声明，根 Cargo.toml 注释登记
+- **验证**：cargo check --workspace **0 error / 0 warning**（2m40s）；clippy -D correctness **EXIT=0**（unified-core/ai 的 style warning 为并行线未提交代码既有）；cargo test --workspace --lib 全绿**除 topems-rd 3 个 DB 集成测试**（`password authentication failed`——测试环境 DB 凭证失败，非依赖转换回归）；门禁泄露 0；Cargo.lock 同步更新
+- **提交**：仅根 Cargo.toml/Cargo.lock + 29 个 crate Cargo.toml + TODO（并行线未提交 src 改动不碰）
+
+### ⚠️ AR-08 后续（大版本升级，独立基础设施迁移，不在本批）
+- sqlx 0.8→0.9、reqwest 0.12→0.13、redis 0.24→1.7、rand 0.8→0.10、utoipa 4→6、opentelemetry 0.32→0.33、prost 0.13→0.14、sha2 0.10→0.11、base64 0.22→0.23、hmac 0.12→0.13、aes-gcm 0.10→0.11、brotli 3.5→9、serial_test 3→4、md5 0.7→0.8、etcd-client 0.19→0.21、lapin 4.10→4.12（API 破坏面大，需逐项评估后单独立项）
 
 ### ⚠️ 事件与遗留
 - **并发改动抹除事件（已恢复）**：首次 DB-06 提交时 `git commit --only` 的 hidden-stash 恢复失败（migration-validate 在钩子内重写已暂存 checksums.txt → patch failed:190），吞掉全部未暂存改动（AR×3、FE-20/21 代码、plugin-registry 注释）；恢复：两工作包子代理（在场 IDLE_RESUMABLE）按原记忆精确重放（AR +93/-8、FE-20 注释、FE-21 三文件），重放后均已提交；教训——迁移类提交勿在暂存 checksums.txt 时被钩子重写，先对齐暂存/工作区

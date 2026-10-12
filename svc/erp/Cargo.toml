@@ -36,11 +36,11 @@ regex.workspace = true
 prometheus.workspace = true
 rust_decimal.workspace = true
 rand.workspace = true
-base64 = "0.22"
+base64.workspace = true
 async-trait.workspace = true
 
 [dev-dependencies]
-serde_urlencoded = "0.7"
+serde_urlencoded.workspace = true
 
 [lib]
 name = "topems_erp"

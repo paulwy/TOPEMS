@@ -22,30 +22,30 @@ tower.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 thiserror.workspace = true
-reqwest = { version = "0.12", features = ["json"] }
+reqwest = { workspace = true, features = ["json"] }
 
 # 数据库依赖（permission/middleware/audit_logger 使用）
 sqlx.workspace = true
 
 # 安全依赖
-sha2 = "0.10"
-hmac = "0.12"
-hex = "0.4"
-base64 = "0.22"
+sha2.workspace = true
+hmac.workspace = true
+hex.workspace = true
+base64.workspace = true
 
 # 可观测性（服务间调用 metrics）
 prometheus.workspace = true
-aes-gcm = "0.10"
+aes-gcm.workspace = true
 
 # 限流依赖
-parking_lot = "0.12"
+parking_lot.workspace = true
 dashmap.workspace = true
 
 # 其他
-rand = "0.8"
+rand.workspace = true
 
 [dev-dependencies]
-serial_test = "3"
+serial_test.workspace = true
 [lints.rust]
 unknown_lints = "allow"
 renamed_and_removed_lints = "allow"

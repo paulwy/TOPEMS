@@ -27,7 +27,7 @@ topems-shared-bootstrap = { workspace = true }
 utoipa.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
-bigdecimal = { version = "0.4", features = ["serde"] }
+bigdecimal = { workspace = true, features = ["serde"] }
 
 [lib]
 name = "topems_qms"
