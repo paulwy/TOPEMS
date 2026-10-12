@@ -419,10 +419,10 @@ pub async fn create_wip(
         req.process_id,
         req.work_station_id,
         req.batch_no,
-Utc::now().naive_utc(),
+Utc::now(),
         req.operator,
         req.notes,
-Utc::now().naive_utc(),
+Utc::now(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -450,18 +450,12 @@ Utc::now().naive_utc(),
         current_work_station_name: None,
         status: result.status.unwrap_or_else(|| "in_progress".to_string()),
         batch_no: result.batch_no,
-        start_time: result.start_time.map(|d| d.and_utc()),
-        last_transfer_time: result.last_transfer_time.map(|d| d.and_utc()),
+        start_time: result.start_time,
+        last_transfer_time: result.last_transfer_time,
         operator: result.operator,
         notes: result.notes,
-        created_at: result
-            .created_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
-        updated_at: result
-            .updated_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
+        created_at: result.created_at.unwrap_or_else(Utc::now),
+        updated_at: result.updated_at.unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(wip, "WIP创建成功"))
@@ -531,7 +525,7 @@ pub async fn get_wip(
                 current_process_id: r.current_process_id,
                 current_process_name: Some(r.process_name),
                 current_work_station_id: r.current_work_station_id,
-                current_work_station_name: r.work_station_name,
+                current_work_station_name: Some(r.work_station_name),
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
                 start_time: r.start_time,
@@ -592,7 +586,7 @@ pub async fn update_wip(
         req.status,
         req.batch_no,
         req.notes,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -622,12 +616,12 @@ pub async fn update_wip(
                 current_work_station_name: None,
                 status: r.status.unwrap_or_else(|| "in_progress".to_string()),
                 batch_no: r.batch_no,
-                start_time: r.start_time.map(|d| d.and_utc()),
-                last_transfer_time: r.last_transfer_time.map(|d| d.and_utc()),
+                start_time: r.start_time,
+                last_transfer_time: r.last_transfer_time,
                 operator: r.operator,
                 notes: r.notes,
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(wip, "WIP更新成功"))
         }
@@ -842,7 +836,7 @@ pub async fn transfer_wip(
         .await
         .ok()
         .flatten()
-        .and_then(|w| w.name)
+        .and_then(|w| Some(w.name))
     } else {
         None
     };
@@ -856,7 +850,7 @@ pub async fn transfer_wip(
         .await
         .ok()
         .flatten()
-        .and_then(|w| w.name)
+        .and_then(|w| Some(w.name))
     } else {
         None
     };
@@ -948,11 +942,11 @@ pub async fn list_wip_transfers(
             from_process_id: r.from_process_id,
             from_process_name: Some(r.from_process_name),
             from_work_station_id: r.from_work_station_id,
-            from_work_station_name: r.from_work_station_name,
+            from_work_station_name: Some(r.from_work_station_name),
             to_process_id: r.to_process_id,
             to_process_name: Some(r.to_process_name),
             to_work_station_id: r.to_work_station_id,
-            to_work_station_name: r.to_work_station_name,
+            to_work_station_name: Some(r.to_work_station_name),
             quantity: big_decimal_to_f64(Some(r.quantity)),
             transfer_time: r.transfer_time,
             operator: r.operator,

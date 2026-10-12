@@ -235,7 +235,7 @@ async fn update_risk(
             mitigation_strategy = COALESCE($9, mitigation_strategy),
             contingency_plan = COALESCE($10, contingency_plan),
             trigger_condition = COALESCE($11, trigger_condition),
-            warning_threshold = COALESCE($12::text, warning_threshold),
+            warning_threshold = COALESCE($12::int, warning_threshold),
             owner = COALESCE($13, owner),
             response_due_date = COALESCE($14, response_due_date),
             updated_at = $15

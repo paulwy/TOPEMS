@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "quantity",
-        "type_info": "Numeric"
+        "type_info": "Int4"
       },
       {
         "ordinal": 6,
@@ -51,10 +51,10 @@
     },
     "nullable": [
       false,
-      true,
+      false,
       null,
       false,
-      false,
+      true,
       false,
       true,
       false

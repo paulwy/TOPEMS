@@ -11,8 +11,8 @@
         "Jsonb",
         "Varchar",
         "Bool",
-        "Timestamp",
-        "Timestamp",
+        "Timestamptz",
+        "Timestamptz",
         "Uuid"
       ]
     },

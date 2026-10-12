@@ -66,12 +66,12 @@
       {
         "ordinal": 12,
         "name": "start_time",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 13,
         "name": "last_transfer_time",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 14,
@@ -86,12 +86,12 @@
       {
         "ordinal": 16,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 17,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -106,10 +106,10 @@
         "Uuid",
         "Uuid",
         "Varchar",
-        "Timestamp",
+        "Timestamptz",
         "Varchar",
         "Text",
-        "Timestamp"
+        "Timestamptz"
       ]
     },
     "nullable": [

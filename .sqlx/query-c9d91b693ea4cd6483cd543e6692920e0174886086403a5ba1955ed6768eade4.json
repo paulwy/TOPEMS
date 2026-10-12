@@ -51,7 +51,7 @@
       {
         "ordinal": 9,
         "name": "last_sync",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 10,
@@ -76,12 +76,12 @@
       {
         "ordinal": 14,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 15,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -95,14 +95,14 @@
         "Varchar",
         "Varchar",
         "Text",
-        "Timestamp",
+        "Timestamptz",
         "Int8",
         "Varchar",
         "Text",
         "Bool",
         "Jsonb",
         "Text",
-        "Timestamp",
+        "Timestamptz",
         "Uuid"
       ]
     },

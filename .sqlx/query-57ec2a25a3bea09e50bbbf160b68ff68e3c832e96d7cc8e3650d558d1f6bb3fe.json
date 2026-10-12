@@ -56,12 +56,12 @@
       {
         "ordinal": 10,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 11,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -72,7 +72,7 @@
         "Varchar",
         "Varchar",
         "Varchar",
-        "Varchar",
+        "Int4",
         "Varchar",
         "Text",
         "Uuid"

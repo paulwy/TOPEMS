@@ -21,7 +21,7 @@
       {
         "ordinal": 3,
         "name": "quantity",
-        "type_info": "Numeric"
+        "type_info": "Int4"
       }
     ],
     "parameters": {
@@ -30,8 +30,8 @@
       ]
     },
     "nullable": [
-      true,
       false,
+      true,
       false,
       false
     ]

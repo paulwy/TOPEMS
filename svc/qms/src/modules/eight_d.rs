@@ -353,6 +353,7 @@ pub async fn update_d1_team(
     .await;
 
     match report {
+        Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "8D报告不存在")),
         Ok(data) => {
             let _ = sqlx::query(only_own_schema_query!("qms", r#"INSERT INTO qms.qa_eightd_audit_logs (tenant_id, report_id, action, step, comment) VALUES ($1, $2, 'update', 'D1', '更新团队组建')"#)).bind(tenant_id).bind(id)
             .execute(&state.pool)

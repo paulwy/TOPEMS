@@ -336,7 +336,7 @@ pub async fn get_team(
                 team_name: r.team_name,
                 team_type: r.team_type,
                 work_station_id: r.work_station_id.map(|u| u.to_string()),
-                work_station_name: r.work_station_name,
+                work_station_name: Some(r.work_station_name),
                 leader_id: r.leader_id.map(|u| u.to_string()),
                 leader_name: r.leader_name,
                 member_count: r.member_count.unwrap_or(0),
@@ -389,7 +389,7 @@ pub async fn create_team(
         leader_id,
         req.leader_name,
         req.description,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_one(&state.pool)
     .await;
@@ -448,14 +448,8 @@ pub async fn create_team(
         member_count: result.member_count.unwrap_or(0),
         status: result.status.unwrap_or_else(|| "active".to_string()),
         description: result.description,
-        created_at: result
-            .created_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
-        updated_at: result
-            .updated_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
+        created_at: result.created_at.unwrap_or_else(Utc::now),
+        updated_at: result.updated_at.unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(team, "班组创建成功"))
@@ -504,7 +498,7 @@ pub async fn update_team(
         req.leader_name,
         req.status,
         req.description,
-        Utc::now().naive_utc(),
+        Utc::now(),
     )
     .fetch_optional(&state.pool)
     .await;
@@ -531,8 +525,8 @@ pub async fn update_team(
                 member_count: r.member_count.unwrap_or(0),
                 status: r.status.unwrap_or_else(|| "active".to_string()),
                 description: Some(r.description).unwrap_or_default(),
-                created_at: r.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-                updated_at: r.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+                created_at: r.created_at.unwrap_or_else(Utc::now),
+                updated_at: r.updated_at.unwrap_or_else(Utc::now),
             };
             Json(ApiResponse::success(team, "班组更新成功"))
         }

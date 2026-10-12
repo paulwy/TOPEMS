@@ -21,12 +21,12 @@
       {
         "ordinal": 3,
         "name": "expires_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 4,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -35,8 +35,8 @@
         "Uuid",
         "TextArray",
         "Varchar",
-        "Timestamp",
-        "Timestamp",
+        "Timestamptz",
+        "Timestamptz",
         "Uuid"
       ]
     },

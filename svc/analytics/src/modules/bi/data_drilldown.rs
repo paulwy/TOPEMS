@@ -120,8 +120,8 @@ pub async fn list_drilldown_paths(State(state): State<AppState>) -> Json<serde_j
             levels: row.levels.unwrap_or(serde_json::json!([])),
             measures: row.measures.unwrap_or(serde_json::json!([])),
             owner_id: row.owner_id,
-            created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+            created_at: row.created_at.unwrap_or_else(Utc::now),
+            updated_at: row.updated_at.unwrap_or_else(Utc::now),
         })
         .collect();
 
@@ -167,8 +167,8 @@ pub async fn create_drilldown_path(
         req.levels,
         req.measures,
         req.owner_id,
-now.naive_utc(),
-now.naive_utc(),
+now,
+now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -186,8 +186,8 @@ now.naive_utc(),
                                 levels: row.levels.unwrap_or(serde_json::json!([])),
                                 measures: row.measures.unwrap_or(serde_json::json!([])),
                                 owner_id: row.owner_id,
-        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: row.created_at.unwrap_or_else(Utc::now),
+        updated_at: row.updated_at.unwrap_or_else(Utc::now),
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -240,8 +240,8 @@ pub async fn get_drilldown_path(
                                 levels: row.levels.unwrap_or(serde_json::json!([])),
                                 measures: row.measures.unwrap_or(serde_json::json!([])),
                                 owner_id: row.owner_id,
-        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: row.created_at.unwrap_or_else(Utc::now),
+        updated_at: row.updated_at.unwrap_or_else(Utc::now),
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -283,7 +283,7 @@ pub async fn update_drilldown_path(
         req.description,
         req.levels,
         req.measures,
-now.naive_utc(),
+now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -301,8 +301,8 @@ now.naive_utc(),
                                 levels: row.levels.unwrap_or(serde_json::json!([])),
                                 measures: row.measures.unwrap_or(serde_json::json!([])),
                                 owner_id: row.owner_id,
-        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: row.created_at.unwrap_or_else(Utc::now),
+        updated_at: row.updated_at.unwrap_or_else(Utc::now),
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -427,7 +427,7 @@ pub async fn drill_down(
         Some(req.drill_dimension.clone()),
         req.drill_value.clone(),
         req.filters.clone(),
-now.naive_utc(),
+now,
         Uuid::nil(),
     )
     .fetch_optional(&state.pool)
@@ -519,7 +519,7 @@ pub async fn roll_up(
         Some(req.drill_dimension.clone()),
         req.drill_value.clone(),
         req.filters.clone(),
-now.naive_utc(),
+now,
         Uuid::nil(),
     )
     .fetch_optional(&state.pool)
@@ -592,7 +592,7 @@ pub async fn get_drilldown_history(
             drill_dimension: row.drill_dimension,
             drill_value: row.drill_value,
             filters: row.filters,
-            created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+            created_at: row.created_at.unwrap_or_else(Utc::now),
         })
         .collect();
 

@@ -1204,4 +1204,44 @@ R3=9 / R5 / menu-health 内容债建议独立批次修复（动 .rs/.tsx 需各�
 - **验证**：hardcode 总数 30→**0**（731 文件、admin 0）；i18n-quality 7-in-1 PASS（新增 key zh/en 镜像、无混合结构）；glossary TopN 0 违规；eslint 0 错误；web 全包 tsc --noEmit 0 错误；p4-guard 单测 8 passed（admin/mes 计数归零）；prettier 无新增告警；两次提交 lefthook 全量门禁（含 frontend-lint/typecheck、crm-contract、icon-page、api-boundary 等 25+ 项）全绿，无 --no-verify
 - **备注**：web 未新增字典模块，全部走既有命名空间资源；en 侧为合理新译（如 Day Shift/Night Shift/pcs），zh 渲染逐字节不变
 
+## 2026-10-13 时间类型统一落地迁移（naive TIMESTAMP → TIMESTAMPTZ / DateTime<Utc>）
+
+### 背景与决策
+- **现状**：DB 时间列是混合态（naive TIMESTAMP + TIMESTAMPTZ 并存），`.sqlx` 离线缓存同样混合（204 个 naive Timestamp + 177 个 Timestamptz + 8 个 Date），代码为迁就 naive 列散落 `.and_utc()` / `.naive_utc()` / `from_naive_utc_and_offset` / `date_naive()` 等补偿写法——这正是 mes(152)/wms(11) 编译错误与长期隐患的根源。
+- **决策**：统一到 **TIMESTAMPTZ / `DateTime<Utc>`**；纯日期（无时间语义）保留 `date` / `NaiveDate`。schema 定义源 `lib/shared-db/src/schema.rs` 本就用 TIMESTAMPTZ（890-974 行），live DB 是旧态需 ALTER 对齐，`.sqlx` 缓存重刷，代码补偿写法随之收敛。
+
+### 范围（已量化，2026-10-13 live DB localhost:5432/topems）
+- **17 个 schema、1132 个 naive TIMESTAMP 列** → timestamptz：
+  - public 562 / ehs 108 / lims 90 / qms 77 / **mes 71** / flow 53 / pdm 50 / bi 40 / integration 22 / erp 19 / mobile 18 / communication 15 / core 4 / finance 1 / ticket 1 / **wms 1**
+- `.sqlx` 缓存 204 个 naive 查询列需重刷为 Timestamptz；代码对应补偿点收敛。
+
+### 阶段计划（每阶段 ALTER 后立即验证该 schema 对应 crate 离线编译）
+- [x] **阶段 0 备份 + 枚举**：`pg_dump -Fc` 全库备份（`/tmp/topems_pre_migration_20261013_063238.dump`）；枚举所有 naive 列（1132 / 17 schema）
+- [x] **阶段 1 编译痛点优先 — mes + wms schema**：mes 72 + wms 1 = 73 列 → timestamptz（已提交）
+- [x] **阶段 2 生产核心 — qms / pdm / lims / ehs**：77 + 50 + 90 + 108 = 325 列（已随全库事务提交）
+- [x] **阶段 3 其余 — flow / bi / integration / erp / mobile / communication / core / finance / ticket / public**：735 列（已随全库事务提交）
+- [x] **DB 终态（2026-10-13 验证）**：naive TIMESTAMP **0**，TIMESTAMPTZ **4058**，date **268**（纯日期保留）
+- [x] **阶段 4 重刷缓存**（2026-10-13 完成，并行会话停后由编排 agent 执行）：对 live DB 逐 crate 重刷并合并根 `.sqlx`——mes 165 / analytics 90 / wms 13 / unified-core 11 / portal 3 / ai 3 / crm 4 = **308 条今日重刷**；运行时查询风格 crate（finance/scm/erp/mobile/hrm/qms/pdm/lims/ehs/pm/ticket/integration/srm/rd/communication/master-data/gis/search/shared-ai，无编译期宏，prepare 0 条为正确状态）离线全绿
+- [x] **阶段 5 代码收敛**（完成）：mes 18 文件 210 处错误修复（去 and_utc/naive_utc 降级、Option 双向往、Uuid/numeric/BigDecimal 对齐、清理失效导入）；analytics 1 文件（datasource.rs `last_sync` 去多余 `.naive_utc()`）；wms 3 文件（batch big_decimal_to_f64 / discrepancy as_str / inventory_alert Some）
+- [x] **阶段 6 验证**（完成）：touch 全部 1835 个 .rs 强制宏重展开后 `cargo check --workspace` **42/42 全绿（EXIT=0）**；根 `.sqlx` 308 条缓存全部为 live DB 类型（抽查时间列为 Timestamptz）；`sqlx-prepare --check` 门禁本地通过
+- [x] **阶段 7 定期检查机制**（已落地，见下节）；**收尾清理**：删除 3 条陈旧孤儿缓存（20150750 wms 旧写法 / 2055b70 analytics 旧宏残留 / 39325e1 mes 旧列名，均无源码引用，全仓确认后删除，删后仍 42/42 绿）
+
+### ⚠️ 重要发现（2026-10-13，更新收敛方向）
+- **`.sqlx` 离线缓存是陈旧的**：对 live DB(5432) 跑 `cargo sqlx prepare` 暴露缓存与 live DB 在**时间列之外**也不一致——如 `wms.batches.total_quantity` live 是 numeric(需 `big_decimal_to_f64`)、`wms.discrepancy_records.material_code` live 是 NOT NULL String(需 `.as_str()`)、`wms.inventory_alert_records.warehouse_name` live 是 nullable(需 `Some(...)`)。
+- 因此「方向 A 回退到 HEAD」**只让离线编译通过（匹配陈旧缓存），运行时会与 live DB 类型不匹配**。真正可用的终态必须是：**以 live DB 为唯一权威 → 重刷缓存 → 代码对齐 live DB 类型**（含时间列去掉 naive 补偿 + 上述非时间列类型修正）。
+- 完成代码收敛所需的 `prepare` 因**并行 Profile-2 会话持续改写 mes/wms 源码并占用 cargo build 锁**而无法稳定进行；该会话停止前，阶段 4-6 无法完成。
+
+### 迁移 SQL 约定
+```sql
+ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT TIME ZONE 'UTC';
+```
+- 语义：应用侧一律以 UTC 写入，naive 存量值按 UTC 解释，数据无偏移（忠实重解释）。
+- 事务内执行、逐 schema 提交；执行前已有 `pg_dump -Fc` 全库备份（/tmp/topems_pre_migration_*.dump），可回滚。
+
+### 定期检查机制（2026-10-13 已落地）
+- **CI 推送门禁（阻塞）**：`.github/workflows/ci.yml` 已有 `cargo-check`（`RUSTFLAGS="-D warnings" SQLX_OFFLINE=true cargo check --workspace --all-targets`）+ `Verify sqlx offline cache consistency`（对迁移构建的 test DB 跑 `./scripts/dev/sqlx-prepare.sh --check`）+ `date-type-audit`（静态日期契约）+ `mes-online-check`（真实 schema 在线编译）——缓存/代码/schema 三方漂移会在 push 时直接红
+- **CI 每日定时**：workflow `schedule: '0 2 * * *'`（UTC，北京时间 10:00）每晚全量重跑上述门禁
+- **live DB 不变量监控（新增）**：`scripts/dev/audit-date-types.sh` 断言 naive=0 / timestamptz=4058 / date=268（只读，可 `--sqlx`/`--offline` 叠加）；已在本地验证通过，并配 Doubao 每日定时任务对 live DB 执行、异常提醒
+- **本地入口**：`make sqlx-check`（缓存一致性，离线）/ `make check-offline`（全 workspace 离线 check）
+
 

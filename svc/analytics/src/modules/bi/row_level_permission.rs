@@ -186,8 +186,8 @@ pub async fn list_permission_rules(State(state): State<AppState>) -> Json<serde_
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+            created_at: row.created_at.unwrap_or_else(Utc::now),
+            updated_at: row.updated_at.unwrap_or_else(Utc::now),
         })
         .collect();
 
@@ -250,8 +250,8 @@ pub async fn create_permission_rule(
         req.user_ids.as_deref(),
         req.is_active.unwrap_or(true),
         req.created_by,
-        now.naive_utc(),
-        now.naive_utc(),
+        now,
+        now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -273,8 +273,8 @@ pub async fn create_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: row.created_at.unwrap_or_else(Utc::now),
+        updated_at: row.updated_at.unwrap_or_else(Utc::now),
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -343,8 +343,8 @@ pub async fn get_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: row.created_at.unwrap_or_else(Utc::now),
+        updated_at: row.updated_at.unwrap_or_else(Utc::now),
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -404,7 +404,7 @@ pub async fn update_permission_rule(
         req.role_ids.as_deref(),
         req.user_ids.as_deref(),
         req.is_active,
-        now.naive_utc(),
+        now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -426,8 +426,8 @@ pub async fn update_permission_rule(
                                 user_ids: row.user_ids,
                                 is_active: row.is_active.unwrap_or(true),
                                 created_by: row.created_by,
-        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: row.created_at.unwrap_or_else(Utc::now),
+        updated_at: row.updated_at.unwrap_or_else(Utc::now),
                             }
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(
@@ -709,8 +709,8 @@ pub async fn get_user_permissions(
             user_ids: row.user_ids,
             is_active: row.is_active.unwrap_or(true),
             created_by: row.created_by,
-            created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+            created_at: row.created_at.unwrap_or_else(Utc::now),
+            updated_at: row.updated_at.unwrap_or_else(Utc::now),
         })
         .collect();
 

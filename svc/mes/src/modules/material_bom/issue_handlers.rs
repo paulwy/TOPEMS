@@ -72,7 +72,7 @@ pub async fn create_material_issue(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-        now.naive_utc(),
+        now,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -130,16 +130,10 @@ pub async fn create_material_issue(
         status: issue.status.unwrap_or_else(|| "pending".to_string()),
         warehouse_id: issue.warehouse_id.map(|u| u.to_string()),
         operator_id: issue.operator_id.map(|u| u.to_string()),
-        issue_time: issue.issue_time.map(|d| d.and_utc()),
+        issue_time: issue.issue_time,
         notes: issue.notes,
-        created_at: issue
-            .created_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
-        updated_at: issue
-            .updated_at
-            .map(|d| d.and_utc())
-            .unwrap_or_else(Utc::now),
+        created_at: issue.created_at.unwrap_or_else(Utc::now),
+        updated_at: issue.updated_at.unwrap_or_else(Utc::now),
     };
 
     Json(ApiResponse::success(response, "物料领用单创建成功"))
@@ -380,8 +374,8 @@ pub async fn get_material_issue(
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
         "notes": issue.notes,
-        "created_at": issue.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
-        "updated_at": issue.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+        "created_at": issue.created_at.unwrap_or_else(Utc::now),
+        "updated_at": issue.updated_at.unwrap_or_else(Utc::now),
         "items": items.iter().map(|i| serde_json::json!({
             "id": i.id.to_string(),
             "issue_id": i.issue_id.to_string(),
@@ -432,7 +426,7 @@ pub async fn update_material_issue(
         req.warehouse_id,
         req.operator_id,
         req.notes,
-now.naive_utc(),
+now,
     )
     .fetch_optional(&state.pool)
     .await;
@@ -457,8 +451,8 @@ now.naive_utc(),
         "operator_id": issue.operator_id.map(|u| u.to_string()),
         "issue_time": issue.issue_time,
         "notes": issue.notes,
-        "created_at": issue.created_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
-        "updated_at": issue.updated_at.map(|t| t.and_utc()).unwrap_or_else(Utc::now),
+        "created_at": issue.created_at.unwrap_or_else(Utc::now),
+        "updated_at": issue.updated_at.unwrap_or_else(Utc::now),
     });
 
     Json(ApiResponse::success(issue_json, "物料领用单更新成功"))

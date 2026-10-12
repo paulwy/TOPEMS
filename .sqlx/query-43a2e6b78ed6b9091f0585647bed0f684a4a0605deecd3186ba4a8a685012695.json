@@ -76,7 +76,7 @@
       {
         "ordinal": 14,
         "name": "inspection_time",
-        "type_info": "Timestamptz"
+        "type_info": "Varchar"
       },
       {
         "ordinal": 15,
@@ -119,9 +119,9 @@
       true,
       true,
       false,
-      true,
-      true,
-      true,
+      false,
+      false,
+      false,
       true,
       true,
       true,

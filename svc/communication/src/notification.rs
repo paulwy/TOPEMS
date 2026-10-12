@@ -2179,7 +2179,7 @@ pub async fn list_channels(
          rate_limit_per_minute, retry_count, description, \
          created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
          FROM notification_channels \
-         WHERE ($1::text IS NULL OR tenant_id = $1::uuid) \
+         WHERE ($1::text IS NULL OR tenant_id = $1) \
            AND ($2::text IS NULL OR type = $2) \
            AND ($3::text IS NULL OR status = $3) \
          ORDER BY created_at DESC LIMIT $5 OFFSET $6",
@@ -2263,7 +2263,7 @@ pub async fn get_channel(
                 type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, \
          created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
-         FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2::uuid)",
+         FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(&tenant_id)
@@ -2395,7 +2395,7 @@ pub async fn update_channel(
          description = COALESCE($6, description), \
          status = COALESCE($7, status), \
          updated_at = NOW() \
-         WHERE id = $8::uuid AND tenant_id = $9::uuid \
+         WHERE id = $8 AND tenant_id = $9 \
          RETURNING id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at",
     )
@@ -2447,7 +2447,7 @@ pub async fn delete_channel(
         .clone()
         .unwrap_or_else(|| "default".to_string());
     match sqlx::query(
-        "DELETE FROM notification_channels WHERE id = $1::uuid AND tenant_id = $2::uuid",
+        "DELETE FROM notification_channels WHERE id = $1 AND tenant_id = $2",
     )
     .bind(id)
     .bind(&tenant_id)
@@ -2503,7 +2503,7 @@ pub async fn test_channel(
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \
-         FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2::uuid)",
+         FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)",
     )
     .bind(id)
     .bind(&tenant_id)

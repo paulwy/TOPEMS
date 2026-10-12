@@ -172,8 +172,8 @@ pub async fn list_widgets(State(state): State<AppState>) -> Json<serde_json::Val
             datasource_id: row.datasource_id,
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+            created_at: row.created_at.unwrap_or_else(Utc::now),
+            updated_at: row.updated_at.unwrap_or_else(Utc::now),
         })
         .collect();
 
@@ -232,8 +232,8 @@ pub async fn get_widgets_by_dashboard(
             datasource_id: row.datasource_id,
             query_config: row.query_config,
             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+            created_at: row.created_at.unwrap_or_else(Utc::now),
+            updated_at: row.updated_at.unwrap_or_else(Utc::now),
         })
         .collect();
 
@@ -292,8 +292,8 @@ pub async fn create_widget(
         req.datasource_id,
         req.query_config,
         req.cache_ttl_seconds,
-now.naive_utc(),
-now.naive_utc(),
+now,
+now,
         Uuid::nil(),
     )
     .fetch_one(&state.pool)
@@ -313,8 +313,8 @@ now.naive_utc(),
                                 datasource_id: row.datasource_id,
                                 query_config: row.query_config,
                                 cache_ttl_seconds: row.cache_ttl_seconds,
-        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: row.created_at.unwrap_or_else(Utc::now),
+        updated_at: row.updated_at.unwrap_or_else(Utc::now),
                             }
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -374,8 +374,8 @@ pub async fn get_widget(
                                 datasource_id: row.datasource_id,
                                 query_config: row.query_config,
                                 cache_ttl_seconds: row.cache_ttl_seconds,
-        created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-        updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+        created_at: row.created_at.unwrap_or_else(Utc::now),
+        updated_at: row.updated_at.unwrap_or_else(Utc::now),
                             }
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -436,7 +436,7 @@ pub async fn update_widget(
         req.datasource_id,
         req.query_config,
         req.cache_ttl_seconds,
-now.naive_utc(),
+now,
         id,
     )
     .fetch_optional(&state.pool)
@@ -459,8 +459,8 @@ now.naive_utc(),
                                             datasource_id: row.datasource_id,
                                             query_config: row.query_config,
                                             cache_ttl_seconds: row.cache_ttl_seconds,
-            created_at: row.created_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
-            updated_at: row.updated_at.map(|d| d.and_utc()).unwrap_or_else(Utc::now),
+            created_at: row.created_at.unwrap_or_else(Utc::now),
+            updated_at: row.updated_at.unwrap_or_else(Utc::now),
                                         }
                                     }))
         }

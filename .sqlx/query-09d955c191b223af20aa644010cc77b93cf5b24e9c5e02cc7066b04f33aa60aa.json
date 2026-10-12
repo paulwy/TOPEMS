@@ -31,7 +31,7 @@
       {
         "ordinal": 5,
         "name": "quantity",
-        "type_info": "Numeric"
+        "type_info": "Int4"
       },
       {
         "ordinal": 6,
@@ -46,12 +46,12 @@
       {
         "ordinal": 8,
         "name": "actual_start_date",
-        "type_info": "Timestamptz"
+        "type_info": "Date"
       },
       {
         "ordinal": 9,
         "name": "actual_end_date",
-        "type_info": "Timestamptz"
+        "type_info": "Date"
       }
     ],
     "parameters": {
@@ -61,10 +61,10 @@
     },
     "nullable": [
       false,
-      true,
+      false,
       null,
       false,
-      false,
+      true,
       false,
       true,
       false,

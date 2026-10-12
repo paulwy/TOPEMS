@@ -793,18 +793,18 @@ pub async fn list_maintenances(
             id: r.id,
             equipment_id: r.equipment_id,
             equipment_name: Some(r.equipment_name),
-            equipment_no: r.equipment_no,
+            equipment_no: Some(r.equipment_no),
             maintenance_type: r.maintenance_type,
-            description: r.description,
+            description: Some(r.description),
             maintainer: r.maintainer,
             start_time: r.start_time,
             end_time: r.end_time,
             cost: big_decimal_to_f64_opt(r.cost),
             result: r.result,
-            status: r.status.unwrap_or_default(),
+            status: r.status,
             remarks: r.remarks,
-            created_at: r.created_at.unwrap_or_else(Utc::now),
-            updated_at: r.updated_at.unwrap_or_else(Utc::now),
+            created_at: r.created_at,
+            updated_at: r.updated_at,
         })
         .collect();
 
@@ -1331,7 +1331,7 @@ pub async fn create_inspection(
                 remarks: r.remarks,
                 created_at: r
                     .created_at
-                    .map(|d| d.and_utc().to_rfc3339())
+                    .map(|d| d.to_rfc3339())
                     .unwrap_or_default(),
             },
             "创建点检记录成功",

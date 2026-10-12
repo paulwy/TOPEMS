@@ -605,8 +605,8 @@ async fn update_record(
             conclusion = COALESCE($2, conclusion),
             score = COALESCE($3, score),
             attendees = COALESCE($4::jsonb, attendees),
-            findings = COALESCE($5::text, findings),
-            recommendations = COALESCE($6::text, recommendations),
+            findings = COALESCE($5::jsonb, findings),
+            recommendations = COALESCE($6::jsonb, recommendations),
             updated_at = $7
         WHERE id = $8 RETURNING *"
     ))

@@ -46,7 +46,7 @@
       {
         "ordinal": 8,
         "name": "issue_time",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 9,
@@ -56,12 +56,12 @@
       {
         "ordinal": 10,
         "name": "created_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       },
       {
         "ordinal": 11,
         "name": "updated_at",
-        "type_info": "Timestamp"
+        "type_info": "Timestamptz"
       }
     ],
     "parameters": {
@@ -71,7 +71,7 @@
         "Uuid",
         "Uuid",
         "Text",
-        "Timestamp"
+        "Timestamptz"
       ]
     },
     "nullable": [

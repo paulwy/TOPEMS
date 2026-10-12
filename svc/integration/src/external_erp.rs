@@ -84,6 +84,7 @@ pub async fn list_connections(
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpConnection>> {
     let id = Uuid::new_v4();
@@ -140,7 +141,7 @@ pub async fn create_connection(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(id)
-    .bind(TENANT_ID)
+    .bind(&claims.tenant_id)
     .bind(&name)
     .bind(&r#type)
     .bind(&api_url)
@@ -260,6 +261,7 @@ async fn get_connection(
 )]
 pub async fn update_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpConnection>> {
@@ -296,7 +298,7 @@ pub async fn update_connection(
     .bind(isactive)
     .bind(status)
     .bind(uuid)
-    .bind(TENANT_ID)
+    .bind(&claims.tenant_id)
     .fetch_optional(&state.pool)
     .await
     {
@@ -321,6 +323,7 @@ pub async fn update_connection(
 )]
 pub async fn delete_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
@@ -329,7 +332,7 @@ pub async fn delete_connection(
         "DELETE FROM erp_connections WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(uuid)
-    .bind(TENANT_ID)
+    .bind(&claims.tenant_id)
     .execute(&state.pool)
     .await
     {
@@ -372,6 +375,7 @@ pub async fn list_entity_mappings(
 
 async fn create_entity_mapping(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpMapping>> {
@@ -410,7 +414,7 @@ async fn create_entity_mapping(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(mapping_id)
-    .bind(TENANT_ID)
+    .bind(&claims.tenant_id)
     .bind(uuid)
     .bind(&entity)
     .bind(mapping_id.to_string())
@@ -428,6 +432,7 @@ async fn create_entity_mapping(
 
 pub async fn batch_entity_mappings(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path((id, entity)): Path<(String, String)>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -471,7 +476,7 @@ pub async fn batch_entity_mappings(
              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NOW(),NOW())"
         ))
         .bind(mapping_id)
-        .bind(TENANT_ID)
+        .bind(&claims.tenant_id)
         .bind(uuid)
         .bind(&entity)
         .bind(mapping_id.to_string())
@@ -531,7 +536,7 @@ pub async fn preview_entity(
 // ===== 真实同步执行引擎 =====
 
 /// 获取 ERP 连接信息
-async fn get_connection_by_id(pool: &sqlx::PgPool, connection_id: Uuid) -> Option<ErpConnection> {
+async fn get_connection_by_id(pool: &sqlx::PgPool, connection_id: Uuid, tenant: Option<&str>) -> Option<ErpConnection> {
     sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
@@ -539,7 +544,7 @@ async fn get_connection_by_id(pool: &sqlx::PgPool, connection_id: Uuid) -> Optio
          created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1 AND tenant_id = $2"
     ))
     .bind(connection_id)
-    .bind(TENANT_ID)
+    .bind(tenant)
     .fetch_optional(pool)
     .await
     .ok()
@@ -707,6 +712,7 @@ async fn write_to_staging(
 )]
 pub async fn sync_entity(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(entity): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
@@ -733,7 +739,7 @@ pub async fn sync_entity(
          VALUES ($1,$2,$3,$4,$5,'running',NOW(),NOW())"
     ))
     .bind(task_id)
-    .bind(TENANT_ID)
+    .bind(&claims.tenant_id)
     .bind(connection_id)
     .bind(&entity)
     .bind(&direction)
@@ -765,7 +771,7 @@ pub async fn sync_entity(
         }
     };
 
-    let connection = match get_connection_by_id(&state.pool, cid).await {
+    let connection = match get_connection_by_id(&state.pool, cid, claims.tenant_id.as_deref()).await {
         Some(c) => c,
         None => {
             update_sync_log_status(
@@ -1097,6 +1103,7 @@ pub async fn export_sync_logs(
 
 pub async fn toggle_connection(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpConnection>> {
@@ -1115,7 +1122,7 @@ pub async fn toggle_connection(
     ))
     .bind(uuid)
     .bind(enabled)
-    .bind(TENANT_ID)
+    .bind(&claims.tenant_id)
     .fetch_optional(&state.pool)
     .await
     {
@@ -1129,11 +1136,12 @@ pub async fn toggle_connection(
 
 pub async fn sync_connection_status(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     // 待上游支持：此处仅回显连接当前状态，真实 ERP 连通性探测后续接入
-    match get_connection_by_id(&state.pool, uuid).await {
+    match get_connection_by_id(&state.pool, uuid, claims.tenant_id.as_deref()).await {
         Some(c) => Json(ApiResponse::success(
             serde_json::json!({"status": c.status, "isactive": c.isactive, "last_sync_at": c.last_sync_at}),
             "连接状态已刷新",
@@ -1174,6 +1182,7 @@ pub async fn list_company_mappings(
 
 pub async fn create_company_mapping(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(body): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ErpMapping>> {
@@ -1211,7 +1220,7 @@ pub async fn create_company_mapping(
          created_at AS created_at, updated_at AS updated_at"
     ))
     .bind(mapping_id)
-    .bind(TENANT_ID)
+    .bind(&claims.tenant_id)
     .bind(conn_uuid)
     .bind(mapping_id.to_string())
     .bind(&local_code)
