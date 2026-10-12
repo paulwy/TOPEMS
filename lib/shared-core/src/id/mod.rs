@@ -107,6 +107,14 @@ pub fn extract_uuid(master_data_id: &str) -> Option<Uuid> {
     parse_master_data_id(master_data_id).map(|(_, uuid)| uuid)
 }
 
+
+/// B7 桥接网：ParseMasterDataDomainError → TopemsError（主数据域解析）
+impl From<ParseMasterDataDomainError> for crate::error::TopemsError {
+    fn from(e: ParseMasterDataDomainError) -> Self {
+        crate::error::TopemsError::ValidationFailed(e.to_string())
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
