@@ -1172,9 +1172,6 @@
 ### 建议
 
 R3=9 / R5 / menu-health 内容债建议独立批次修复（动 .rs/.tsx 需各域 owner 确认）；rsa 等待上游或评估替换 jsonwebtoken；Billing 恢复后 CI 预期除基线债外全绿（文件级问题已全部修复）。
-<<<<<<< HEAD
-### 📋 后续（既有债，非本批范围）
-- ~~apps/web 硬编码中文 30 处~~ → ✅ **已收口（2026-10-08，两提交 a8c8a30b3/000099030，见下节）**
 
 ## 2026-10-08 前端硬编码 CJK 文案收敛收口（apps/web 30 处清零，全仓 587→617→0）
 
@@ -1185,19 +1182,5 @@ R3=9 / R5 / menu-health 内容债建议独立批次修复（动 .rs/.tsx 需各�
 - **累计**：先例 9a63dba1e（62）+ mobile 308 + desktop 154 + shared 63 + web 30 = **617 处全部清零**
 - **验证**：hardcode 总数 30→**0**（731 文件、admin 0）；i18n-quality 7-in-1 PASS（新增 key zh/en 镜像、无混合结构）；glossary TopN 0 违规；eslint 0 错误；web 全包 tsc --noEmit 0 错误；p4-guard 单测 8 passed（admin/mes 计数归零）；prettier 无新增告警；两次提交 lefthook 全量门禁（含 frontend-lint/typecheck、crm-contract、icon-page、api-boundary 等 25+ 项）全绿，无 --no-verify
 - **备注**：web 未新增字典模块，全部走既有命名空间资源；en 侧为合理新译（如 Day Shift/Night Shift/pcs），zh 渲染逐字节不变
-=======
 
-## 2026-10-08 前端硬编码 CJK 文案收敛收口（mobile/desktop/shared-components 525 处清零）
 
-### ✅ 完成
-- **525 处硬编码 CJK 清零（3 提交）**：
-  - mobile 308 处 / 20 文件（`359c42247`）：新建 `apps/mobile/src/i18n/zh.ts`（237 个 key + scanTypeNames 对象映射 + 7 个插值函数），JSX 文本/字符串属性/错误文案/模板串/对象映射全部收敛为 `zh['key']` 引用
-  - desktop 154 处 / 9 文件（`3cbbece02`）：扩展 desktop `zh.ts`（settings/erp/hr/crm/exportWizard/dashboard/header/login/authStore 8 组 key），既有 audit/reports key 与 categoryColors 未动；模板串拆静态段拼接，标点逐字保留
-  - shared-components 63 处 / 5 文件（`ccf30c368`）：扩展 shared `zh.ts`（empty_state/file_upload/back_button/interactive_tabs key）；`componentMetas` 数组整体挪入字典导出（`import type` 无运行时循环）
-- **累计**：连同先例 `9a63dba1e` 的 62 处，前端硬编码 CJK 文案债 587 处清零
-- **验证**：hardcoded-precise strict 0 命中（门禁真实放行，全程无 --no-verify）；eslint 0 错误；mobile/desktop/shared-components 三包 tsc --noEmit 0 错误；prettier 0 新增告警（desktop/shared 存量长行历史债未重排）；单测 desktop authStore 7/7、shared EmptyState+FileUpload 35/35 通过
-- **备注**：shared 包运行 vitest 需 react alias（包依赖清单不含 react，仓库既有解析缺陷；根 node_modules/vitest symlink 悬空，desktop 本地实例可用）
-
-### 📋 后续（既有债，非本批范围）
-- apps/web 硬编码中文 30 处（i18n-hardcode-admin 门禁信息项，admin 7 处标记 ❌）为 web 端既有债，与本批三端无关，待另行收口
->>>>>>> 0a55f9031 (WCS 回归：全量契约冒烟实跑 4019/4125 PASS（106 FAIL 分类登记：ehs 契约漂移 + bytes panic + ERP 环境性）)
