@@ -1,7 +1,25 @@
 
 ---
 
-### B7 桥接网完备性复查（2026-10-12）
+### 组合 A 仓库收尾批 — ✅ 完成（2026-10-12）
+
+### A1 git 同步 — ✅ 完成
+- **rebase 全量重放**：本地 35 commits（B7 桥接网全链 + AR-08 + CJK 收敛等）重放到远端 70 commits（CI 修复批）之上，`Successfully rebased`。
+- **冲突处理 4 处**：TODO.md × 2（并行线 CJK 节与本地执行进度节均保留合并）+ lib/shared-service-client/Cargo.toml × 1（AR-08 workspace 收敛版 + HEAD dev-dependencies 合并，serde_urlencoded 去重）+ 编辑器挂起（kill 32156 后 `GIT_EDITOR=true` 继续）。
+- **push 完成**：`38fc6c116..48d43a82b  main -> main`（18.41s），origin/main 与本地完全同步（0 差异）。
+- **rebase 后验证**：`cargo check --workspace -j 4` → 0 error 0 warning（A4 保持）。
+
+### A3 map_err 消费微优化 — ✅ 判定完成（不做机械替换）
+- 全仓 44 处 `map_err(|e| TopemsError::X(e.to_string()))` 语义映射不一致：reconciliation.rs 用 `TopemsError::Database`（sqlx From 桥接为 `DatabaseQuery`）、periods.rs 错误源为 test-only 豁免类型（PeriodValidationError 等无桥接）、master_data.rs 平台错误 chosen variant 与 From code 不同。
+- **结论**：机械替换会改变对外错误 code/message，按语义逐处评估；本轮不替换，记录在案。
+
+### A4 全仓 warning 终检 — ✅ 0 warning 0 error
+- `cargo check --workspace -j 4` 双次复检（rebase 前后各一次），0 error 0 warning。
+
+### A2 storybook WIP 归属 — ⏳ 待并行线确认
+- `apps/web/.storybook/main.ts`、`preview.tsx` 删除仍在工作树（未 stage），归属并行线，待其确认后收容。
+
+## B7 桥接网完备性复查（2026-10-12）
 
 **结论：业务裸 `?` 无缺口**（全仓 check 0 error = 所有 `?` 传播闭环）。68 个错误类型矩阵：
 
