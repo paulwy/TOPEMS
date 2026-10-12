@@ -10,11 +10,31 @@ use uuid::Uuid;
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
+        .route("/accidents", get(list_accidents))
         .route("/incidents", get(list_accidents).post(report_accident))
+        .route(
+            "/incidents/{id}",
+            get(get_accident).put(update_accident).delete(delete_accident),
+        )
+        .route(
+            "/incidents/{id}/investigation",
+            post(start_investigation).put(update_investigation),
+        )
         .route(
             "/incidents/{id}/investigation/complete",
             post(complete_investigation),
         )
+        .route("/incidents/{id}/treatment", post(create_treatment))
+        .route(
+            "/incidents/{id}/treatment/actions/{action_id}",
+            put(update_treatment_action),
+        )
+        .route(
+            "/incidents/{id}/treatment/complete",
+            post(complete_treatment),
+        )
+        .route("/incidents/{id}/review", post(create_review))
+        .route("/incidents/{id}/close", post(close_accident))
         .route(
             "/incidents/{id}/actions",
             get(list_incident_actions).post(create_incident_action),
@@ -23,11 +43,6 @@ pub fn create_routes() -> Router<AppState> {
             "/incidents/{id}/actions/{action_id}",
             put(update_incident_action),
         )
-        .route(
-            "/incidents/{id}/treatment/complete",
-            post(complete_treatment),
-        )
-        .route("/incidents/{id}/review", post(create_review))
 }
 
 #[derive(Debug, Deserialize)]
@@ -283,6 +298,316 @@ pub async fn report_accident(
     }
 
     Json(ApiResponse::success(accident, "事故报告成功"))
+}
+
+fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/incidents/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "事故 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_accident(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<AccidentDetail>> {
+    let tenant_id = resolve_tenant_id(&claims);
+    tracing::debug!("Getting accident detail: {}", id);
+    let accident = Accident {
+        id,
+        accident_no: format!("ACC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+        title: "安全事故".to_string(),
+        description: Some("事故详情（内存桩数据）".to_string()),
+        accident_type: Some("一般事故".to_string()),
+        severity: "一般".to_string(),
+        location: Some("生产车间".to_string()),
+        occurred_at: Some(chrono::Utc::now().to_rfc3339()),
+        casualties: Some(0),
+        economic_loss: Some(0.0),
+        status: "reported".to_string(),
+        reported_by: Some("test_admin".to_string()),
+        created_at: Some(chrono::Utc::now().to_rfc3339()),
+        updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        tenant_id,
+    };
+    Json(ApiResponse::success(
+        AccidentDetail {
+            accident,
+            investigation: None,
+            treatment: None,
+            review: None,
+            tenant_id,
+        },
+        "获取事故详情成功",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/incidents/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "事故 ID")),
+    request_body = CreateAccidentRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_accident(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateAccidentRequest>,
+) -> Json<ApiResponse<Accident>> {
+    let tenant_id = resolve_tenant_id(&claims);
+    tracing::debug!("Updating accident {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        Accident {
+            id,
+            accident_no: format!("ACC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            title: req.title,
+            description: req.description,
+            accident_type: req.accident_type,
+            severity: req.severity,
+            location: req.location,
+            occurred_at: req.occurred_at.or(Some(chrono::Utc::now().to_rfc3339())),
+            casualties: req.casualties.or(Some(0)),
+            economic_loss: req.economic_loss.or(Some(0.0)),
+            status: "reported".to_string(),
+            reported_by: req.reported_by,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "事故更新成功",
+    ))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/incidents/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "事故 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_accident(
+    State(_state): State<crate::shared::AppState>,
+    Extension(_claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    tracing::debug!("Deleting accident: {}", id);
+    Json(ApiResponse::success(serde_json::json!({}), "事故删除成功"))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:investigation:admin"])),
+    path = "/api/ehs/incidents/{id}/investigation",
+    tag = "ehs",
+    params(("id" = String, Path, description = "事故 ID")),
+    request_body = CreateInvestigationRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn start_investigation(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateInvestigationRequest>,
+) -> Json<ApiResponse<Investigation>> {
+    let tenant_id = resolve_tenant_id(&claims);
+    tracing::debug!("Starting investigation for accident {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        Investigation {
+            id: uuid::Uuid::new_v4().to_string(),
+            accident_id: id,
+            team: req.team,
+            findings: req.findings,
+            root_cause: req.root_cause,
+            timeline: None,
+            status: "in_progress".to_string(),
+            started_at: Some(chrono::Utc::now().to_rfc3339()),
+            completed_at: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "调查已启动",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:investigation:admin"])),
+    path = "/api/ehs/incidents/{id}/investigation",
+    tag = "ehs",
+    params(("id" = String, Path, description = "事故 ID")),
+    request_body = UpdateInvestigationRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_investigation(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateInvestigationRequest>,
+) -> Json<ApiResponse<Investigation>> {
+    let tenant_id = resolve_tenant_id(&claims);
+    tracing::debug!("Updating investigation for accident {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        Investigation {
+            id: uuid::Uuid::new_v4().to_string(),
+            accident_id: id,
+            team: None,
+            findings: req.findings,
+            root_cause: req.root_cause,
+            timeline: req.timeline,
+            status: req.status.unwrap_or_else(|| "in_progress".to_string()),
+            started_at: Some(chrono::Utc::now().to_rfc3339()),
+            completed_at: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "调查更新成功",
+    ))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/incidents/{id}/treatment",
+    tag = "ehs",
+    params(("id" = String, Path, description = "事故 ID")),
+    request_body = CreateTreatmentRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn create_treatment(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateTreatmentRequest>,
+) -> Json<ApiResponse<Treatment>> {
+    let tenant_id = resolve_tenant_id(&claims);
+    tracing::debug!("Creating treatment for accident {}: {:?}", id, req);
+    let actions = req
+        .actions
+        .into_iter()
+        .map(|a| TreatmentAction {
+            id: uuid::Uuid::new_v4().to_string(),
+            description: a.description,
+            responsible: a.responsible,
+            deadline: a.deadline,
+            status: "pending".to_string(),
+            completed_at: None,
+            tenant_id,
+        })
+        .collect();
+    Json(ApiResponse::success(
+        Treatment {
+            id: uuid::Uuid::new_v4().to_string(),
+            accident_id: id,
+            actions,
+            responsible: req.responsible,
+            status: "in_progress".to_string(),
+            started_at: Some(chrono::Utc::now().to_rfc3339()),
+            completed_at: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "处理方案已创建",
+    ))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/incidents/{id}/treatment/actions/{action_id}",
+    tag = "ehs",
+    params(
+        ("id" = String, Path, description = "事故 ID"),
+        ("action_id" = String, Path, description = "处置行动 ID")
+    ),
+    request_body = UpdateTreatmentActionRequest,
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_treatment_action(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
+    Json(req): Json<UpdateTreatmentActionRequest>,
+) -> Json<ApiResponse<TreatmentAction>> {
+    let tenant_id = resolve_tenant_id(&claims);
+    tracing::debug!("Updating treatment action {}: {:?}", action_id, req);
+    Json(ApiResponse::success(
+        TreatmentAction {
+            id: action_id,
+            description: "处置行动".to_string(),
+            responsible: None,
+            deadline: None,
+            status: req.status.unwrap_or_else(|| "in_progress".to_string()),
+            completed_at: req.completed_at,
+            tenant_id,
+        },
+        "处置行动更新成功",
+    ))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/incidents/{id}/close",
+    tag = "ehs",
+    params(("id" = String, Path, description = "事故 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn close_accident(
+    State(_state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Accident>> {
+    let tenant_id = resolve_tenant_id(&claims);
+    tracing::info!("Closing accident: {}", id);
+    Json(ApiResponse::success(
+        Accident {
+            id,
+            accident_no: format!("ACC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            title: "安全事故".to_string(),
+            description: None,
+            accident_type: None,
+            severity: "一般".to_string(),
+            location: None,
+            occurred_at: None,
+            casualties: None,
+            economic_loss: None,
+            status: "closed".to_string(),
+            reported_by: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            tenant_id,
+        },
+        "事故已关闭",
+    ))
 }
 
 #[utoipa::path(
