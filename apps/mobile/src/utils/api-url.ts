@@ -7,10 +7,10 @@ const getApiBaseUrl = (): string => {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
 
   if (!envUrl) {
-    // FE-21 对齐：默认指向 unified-core 独立进程端口 8000（与 apps/web/src/config/ports.ts
-    // 的 BACKEND_PORTS.core 单一信源一致；原 8070 在端口表中不存在，属陈旧默认值）。
-    // 模块化单体模式（topems-server:8099）请显式设置 EXPO_PUBLIC_API_URL。
-    return 'http://localhost:8000';
+    // P0-3 双轨合一：默认指向唯一对外入口 模块化单体 BFF topems-server:8099
+    // （原 unified-core 独立进程 8000 前缀直连已在 nginx 层关闭，由 8099 内嵌服务适配器统一路由）。
+    // 仍可通过 EXPO_PUBLIC_API_URL 环境变量覆盖（如指向预发/生产域名）。
+    return 'http://localhost:8099';
   }
 
   const url = new URL(envUrl);

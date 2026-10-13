@@ -29,9 +29,9 @@ const handleUnauthorized = () => {
 };
 
 const apiClient = createApiClient({
-// FE-21 默认值对齐：指向 unified-core 独立进程端口 8000（apps/web/src/config/ports.ts 的
-// BACKEND_PORTS.core）；原 8080 在端口表中不存在。模块化单体（8099）请用 VITE_API_URL 覆盖。
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+// P0-3 双轨合一：默认指向唯一对外入口 模块化单体 BFF topems-server:8099
+// （原 unified-core 独立进程 8000 前缀直连已在 nginx 层关闭）。仍可用 VITE_API_URL 环境变量覆盖。
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8099',
   getToken: () => localStorage.getItem('token'),
   onUnauthorized: handleUnauthorized,
 });
