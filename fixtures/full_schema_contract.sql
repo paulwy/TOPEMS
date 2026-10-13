@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6wyXbRk7sKiRWFVhGW00MlacGV8YbiNPfB62zMmlctu2jdvO3ITk2IfBh1xgqtV
+\restrict 8iz0qfEp8nt9Wh3wvHAf41w03Z6M6gv3xYzD8I23OukF50SrvEEakLH66XuoEsf
 
 -- Dumped from database version 18.4 (Homebrew)
 -- Dumped by pg_dump version 18.4 (Homebrew)
@@ -1082,6 +1082,20 @@ CREATE TYPE public.widget_type AS ENUM (
     'funnel',
     'radar'
 );
+
+
+--
+-- Name: core_set_updated_at(); Type: FUNCTION; Schema: ai; Owner: -
+--
+
+CREATE FUNCTION ai.core_set_updated_at() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+        BEGIN
+            NEW.updated_at := NOW();
+            RETURN NEW;
+        END;
+        $$;
 
 
 --
@@ -12945,6 +12959,53 @@ ALTER TABLE ONLY lims.lab_ledger FORCE ROW LEVEL SECURITY;
 
 
 --
+-- Name: lims_inspection_records; Type: TABLE; Schema: lims; Owner: -
+--
+
+CREATE TABLE lims.lims_inspection_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    record_no text NOT NULL,
+    source_type text NOT NULL,
+    source_inspection_id uuid NOT NULL,
+    product_id uuid,
+    product_name text DEFAULT ''::text NOT NULL,
+    result text NOT NULL,
+    qualification_rate double precision,
+    inspector text NOT NULL,
+    status text DEFAULT 'completed'::text NOT NULL,
+    tenant_id uuid,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+ALTER TABLE ONLY lims.lims_inspection_records FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: lims_safety_tasks; Type: TABLE; Schema: lims; Owner: -
+--
+
+CREATE TABLE lims.lims_safety_tasks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    task_no text NOT NULL,
+    title text NOT NULL,
+    category text NOT NULL,
+    level text NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    location text DEFAULT ''::text NOT NULL,
+    status text DEFAULT 'pending'::text NOT NULL,
+    source_type text DEFAULT 'ehs_hazard'::text NOT NULL,
+    source_hazard_id uuid NOT NULL,
+    assigned_to text DEFAULT 'system'::text NOT NULL,
+    tenant_id uuid,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL
+);
+
+ALTER TABLE ONLY lims.lims_safety_tasks FORCE ROW LEVEL SECURITY;
+
+
+--
 -- Name: maintenance_records; Type: TABLE; Schema: lims; Owner: -
 --
 
@@ -18434,6 +18495,23 @@ CREATE TABLE pm.notifications (
 );
 
 ALTER TABLE ONLY pm.notifications FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: pm_budget_items; Type: TABLE; Schema: pm; Owner: -
+--
+
+CREATE TABLE pm.pm_budget_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid,
+    category text,
+    budget_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    spent_amount numeric(18,2) DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+ALTER TABLE ONLY pm.pm_budget_items FORCE ROW LEVEL SECURITY;
 
 
 --
@@ -28067,6 +28145,24 @@ CREATE TABLE qms.qa_alert_rules (
     deleted_at timestamp with time zone,
     tenant_id uuid,
     CONSTRAINT ck_qa_alert_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+);
+
+
+--
+-- Name: qa_approval_events; Type: TABLE; Schema: qms; Owner: -
+--
+
+CREATE TABLE qms.qa_approval_events (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    entity_type character varying(32) NOT NULL,
+    entity_id uuid NOT NULL,
+    action character varying(32) NOT NULL,
+    operator character varying(64),
+    status_from character varying(32),
+    status_to character varying(32),
+    comment text,
+    created_at timestamp without time zone DEFAULT now()
 );
 
 
@@ -37999,6 +38095,38 @@ ALTER TABLE ONLY lims.lab_ledger
 
 
 --
+-- Name: lims_inspection_records lims_inspection_records_pkey; Type: CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.lims_inspection_records
+    ADD CONSTRAINT lims_inspection_records_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lims_inspection_records lims_inspection_records_source_uniq; Type: CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.lims_inspection_records
+    ADD CONSTRAINT lims_inspection_records_source_uniq UNIQUE (source_type, source_inspection_id);
+
+
+--
+-- Name: lims_safety_tasks lims_safety_tasks_pkey; Type: CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.lims_safety_tasks
+    ADD CONSTRAINT lims_safety_tasks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lims_safety_tasks lims_safety_tasks_source_uniq; Type: CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.lims_safety_tasks
+    ADD CONSTRAINT lims_safety_tasks_source_uniq UNIQUE (source_type, source_hazard_id);
+
+
+--
 -- Name: maintenance_records maintenance_records_pkey; Type: CONSTRAINT; Schema: lims; Owner: -
 --
 
@@ -40532,6 +40660,14 @@ ALTER TABLE ONLY pm.notification_settings
 
 ALTER TABLE ONLY pm.notifications
     ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pm_budget_items pm_budget_items_pkey; Type: CONSTRAINT; Schema: pm; Owner: -
+--
+
+ALTER TABLE ONLY pm.pm_budget_items
+    ADD CONSTRAINT pm_budget_items_pkey PRIMARY KEY (id);
 
 
 --
@@ -45156,6 +45292,14 @@ ALTER TABLE ONLY qms.qa_alert_messages
 
 ALTER TABLE ONLY qms.qa_alert_rules
     ADD CONSTRAINT qa_alert_rules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: qa_approval_events qa_approval_events_pkey; Type: CONSTRAINT; Schema: qms; Owner: -
+--
+
+ALTER TABLE ONLY qms.qa_approval_events
+    ADD CONSTRAINT qa_approval_events_pkey PRIMARY KEY (id);
 
 
 --
@@ -77372,6 +77516,18 @@ ALTER TABLE lims.instruments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lims.lab_ledger ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: lims_inspection_records; Type: ROW SECURITY; Schema: lims; Owner: -
+--
+
+ALTER TABLE lims.lims_inspection_records ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lims_safety_tasks; Type: ROW SECURITY; Schema: lims; Owner: -
+--
+
+ALTER TABLE lims.lims_safety_tasks ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: maintenance_records; Type: ROW SECURITY; Schema: lims; Owner: -
 --
 
@@ -77785,6 +77941,20 @@ CREATE POLICY rls_tenant_isolation ON lims.qa_lims_uncertainty_sources USING (((
 --
 
 ALTER TABLE lims.samples ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: lims_inspection_records tenant_isolation; Type: POLICY; Schema: lims; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON lims.lims_inspection_records USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: lims_safety_tasks tenant_isolation; Type: POLICY; Schema: lims; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON lims.lims_safety_tasks USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
 
 --
 -- Name: ai_analyses tenant_isolation_ai_analyses; Type: POLICY; Schema: lims; Owner: -
@@ -79408,6 +79578,12 @@ ALTER TABLE pm.notification_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pm.notifications ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: pm_budget_items; Type: ROW SECURITY; Schema: pm; Owner: -
+--
+
+ALTER TABLE pm.pm_budget_items ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: pm_master_data_refs; Type: ROW SECURITY; Schema: pm; Owner: -
 --
 
@@ -79587,6 +79763,13 @@ ALTER TABLE pm.settlement_items ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE pm.settlements ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: pm_budget_items tenant_isolation; Type: POLICY; Schema: pm; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON pm.pm_budget_items USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
 
 --
 -- Name: acceptance_items tenant_isolation_acceptance_items; Type: POLICY; Schema: pm; Owner: -
@@ -82909,5 +83092,5 @@ ALTER TABLE wms.wms_master_data_refs ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6wyXbRk7sKiRWFVhGW00MlacGV8YbiNPfB62zMmlctu2jdvO3ITk2IfBh1xgqtV
+\unrestrict 8iz0qfEp8nt9Wh3wvHAf41w03Z6M6gv3xYzD8I23OukF50SrvEEakLH66XuoEsf
 
