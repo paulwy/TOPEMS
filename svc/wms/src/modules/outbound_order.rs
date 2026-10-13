@@ -1413,8 +1413,8 @@ pub async fn ship_outbound_order(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = 'shipping', packing_status = 'completed', packing_end_time = $1,
-            shipping_status = 'in_progress', actual_ship_date = $1, updated_at = $1
+            status = 'shipping', packing_status = 'completed', packing_end_time = $1::timestamptz,
+            shipping_status = 'in_progress', actual_ship_date = $1::date, updated_at = $1::timestamptz
         WHERE id = $2 AND deleted_at IS NULL
         "#
     ))
@@ -1580,7 +1580,7 @@ pub async fn complete_outbound_order(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
-            status = 'completed', shipping_status = 'completed', delivery_date = $2, updated_at = $2
+            status = 'completed', shipping_status = 'completed', delivery_date = $2::date, updated_at = $2::timestamptz
         WHERE id = $1 AND status = 'shipping' AND deleted_at IS NULL
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 

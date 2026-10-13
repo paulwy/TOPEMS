@@ -153,14 +153,14 @@ pub async fn dashboard_aggregate(State(state): State<ApiState>) -> impl IntoResp
     .unwrap_or_default();
 
     let monthly_performance: Vec<NameValue> = sqlx::query_as(
-        "SELECT TO_CHAR(created_at, 'YYYY-MM') AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months' GROUP BY name ORDER BY name ASC",
+        "SELECT TO_CHAR(created_at, 'YYYY-MM') AS name, COUNT(*) AS value FROM crm.opportunities WHERE deleted_at IS NULL AND created_at >= NOW() - INTERVAL '6 months' GROUP BY TO_CHAR(created_at, 'YYYY-MM') ORDER BY name ASC",
     )
     .fetch_all(db)
     .await
     .unwrap_or_default();
 
     let industries: Vec<NameValue> = sqlx::query_as(
-        "SELECT COALESCE(industry, 'unknown') AS name, COUNT(*) AS value FROM crm.customers WHERE deleted_at IS NULL GROUP BY name ORDER BY value DESC LIMIT 10",
+        "SELECT COALESCE(industry, 'unknown') AS name, COUNT(*) AS value FROM crm.customers WHERE deleted_at IS NULL GROUP BY COALESCE(industry, 'unknown') ORDER BY value DESC LIMIT 10",
     )
     .fetch_all(db)
     .await

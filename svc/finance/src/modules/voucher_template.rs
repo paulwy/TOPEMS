@@ -233,7 +233,7 @@ pub async fn get_usage_stats(
         Some(get_tenant_id_from_claims(&claims))
     };
     let rule_count: i64 = sqlx::query_scalar(
-        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config->>'template_id' = $2"),
+        only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance_voucher_generation_rules WHERE ($1::uuid IS NULL OR tenant_id = $1) AND mapping_config::jsonb->>'template_id' = $2"),
     )
     .bind(tenant_id)
     .bind(template_id.to_string())

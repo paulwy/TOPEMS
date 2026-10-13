@@ -174,7 +174,7 @@ pub async fn check_plugin_updates(
     let current_version = plugin.version.clone();
 
     let latest_version: Option<PluginVersion> = sqlx::query_as(
-        "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
+        "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
     )
     .bind(plugin.id)
     .fetch_optional(&state.pool)
@@ -267,7 +267,7 @@ pub async fn rollback_plugin_version(
     let current_version = plugin.version.clone();
 
     let target_version_info: Option<PluginVersion> = sqlx::query_as(
-        "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND version = $2",
+        "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND version = $2",
     )
     .bind(plugin.id)
     .bind(&target_version)
@@ -349,7 +349,7 @@ pub async fn check_all_updates(
         let current_version = plugin.version.clone();
 
         let latest_version: Option<PluginVersion> = sqlx::query_as(
-            "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
+            "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
         )
         .bind(plugin.id)
         .fetch_optional(&state.pool)

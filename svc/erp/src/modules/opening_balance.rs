@@ -204,9 +204,9 @@ pub async fn create_opening_balance(
 
     let result = sqlx::query_as::<_, OpeningBalance>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
+        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-        RETURNING id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at
+        RETURNING id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -573,7 +573,7 @@ pub async fn import_opening_balances(
 
         let result = sqlx::query(
             only_own_schema_query!("erp", r#"
-            INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
+            INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             "#),
         )

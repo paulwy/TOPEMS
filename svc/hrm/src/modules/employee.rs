@@ -284,7 +284,7 @@ pub async fn get_employee_details(
         LEFT JOIN hrm.departments d ON e.department_id = d.id
         LEFT JOIN hrm.companies c ON e.org_id = c.id
         LEFT JOIN hrm.positions p ON e.position_id = p.id
-        WHERE e.id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $2)
+        WHERE e.id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -823,7 +823,7 @@ pub async fn export_employees(
                        d.name as department_name
                 FROM hrm.employees e
                 LEFT JOIN hrm.departments d ON e.department_id = d.id
-                WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $2) AND e.id = ANY($1)
+                WHERE ($2::uuid = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $2::uuid) AND e.id = ANY($1)
                 LIMIT $3
                 "#
             ))
@@ -848,7 +848,7 @@ pub async fn export_employees(
                        d.name as department_name
                 FROM hrm.employees e
                 LEFT JOIN hrm.departments d ON e.department_id = d.id
-                WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $1)
+                WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $1::uuid)
                 LIMIT $2
                 "#
             ))

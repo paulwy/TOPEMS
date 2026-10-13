@@ -775,7 +775,7 @@ pub async fn depreciate_assets(
                 let query_result = if calc.is_fully_depreciated {
                     // 足额折旧：累计=原值、净值=0，状态切换为 'depreciated'
                     sqlx::query(
-                        only_own_schema_query!("erp", "UPDATE erp.fixed_assets SET accumulated_depreciation = $2, net_value = $3, status = 'depreciated', depreciation_period = $4, updated_at = $5 WHERE id = $1"),
+                        only_own_schema_query!("erp", "UPDATE erp.fixed_assets SET accumulated_depreciation = $2, status = 'depreciated', depreciation_period = $4, updated_at = $5 WHERE id = $1"),
                     )
                     .bind(asset.id)
                     .bind(calc.new_accumulated_depreciation)
@@ -787,7 +787,7 @@ pub async fn depreciate_assets(
                 } else {
                     // 正常计提：更新累计、净值、期间
                     sqlx::query(
-                        only_own_schema_query!("erp", "UPDATE erp.fixed_assets SET accumulated_depreciation = $2, net_value = $3, depreciation_period = $4, updated_at = $5 WHERE id = $1"),
+                        only_own_schema_query!("erp", "UPDATE erp.fixed_assets SET accumulated_depreciation = $2, depreciation_period = $4, updated_at = $5 WHERE id = $1"),
                     )
                     .bind(asset.id)
                     .bind(calc.new_accumulated_depreciation)

@@ -25,7 +25,7 @@ pub async fn db_get_dashboard_stats(pool: &Pool<Postgres>) -> sqlx::Result<(i64,
 
     let photo_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "mobile",
-        "SELECT COUNT(*) FROM photo_evidence"
+        "SELECT COUNT(*) FROM mobile.photo_evidences"
     ))
     .fetch_one(pool)
     .await?;
@@ -41,7 +41,7 @@ pub async fn db_get_dashboard_stats(pool: &Pool<Postgres>) -> sqlx::Result<(i64,
 }
 
 pub async fn db_get_patrol_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PatrolRecord>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, patrol_no, location, patrol_type, status, started_at, completed_at, created_at FROM mobile.patrol_records ORDER BY created_at DESC"))
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, patrol_type, status, checked_by, checked_at, created_at FROM mobile.patrol_records ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -93,7 +93,7 @@ pub async fn db_create_patrol_record(
 }
 
 pub async fn db_get_scan_records(pool: &Pool<Postgres>) -> sqlx::Result<Vec<ScanRecord>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, scan_type, scan_value, scan_result, status, scanned_at FROM mobile.scan_records ORDER BY created_at DESC"))
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, barcode, location_lat, location_lng, item_type, quantity, operator, scanned_at, created_at FROM mobile.scan_records ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -140,7 +140,7 @@ pub async fn db_create_scan_record(
 }
 
 pub async fn db_get_photo_evidence(pool: &Pool<Postgres>) -> sqlx::Result<Vec<PhotoEvidence>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_hash, description, latitude, longitude, created_at FROM photo_evidence ORDER BY created_at DESC"))
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at FROM mobile.photo_evidences ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -158,7 +158,7 @@ pub async fn db_create_photo_evidence(
     let now = Utc::now();
 
     sqlx::query(
-        only_own_schema_query!("mobile", "INSERT INTO photo_evidence (id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at)
+        only_own_schema_query!("mobile", "INSERT INTO mobile.photo_evidences (id, tenant_id, title, description, location_lat, location_lng, address, file_url, recorded_by, recorded_at, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)")
     )
     .bind(id)
@@ -191,7 +191,7 @@ pub async fn db_create_photo_evidence(
 }
 
 pub async fn db_get_audio_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<AudioRecording>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, duration, description, created_at FROM mobile.audio_recordings ORDER BY created_at DESC"))
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, location_lat, location_lng, address, duration_seconds, file_url, recorded_by, recorded_at, created_at FROM mobile.audio_recordings ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -244,7 +244,7 @@ pub async fn db_create_audio_recording(
 }
 
 pub async fn db_get_video_recordings(pool: &Pool<Postgres>) -> sqlx::Result<Vec<VideoRecording>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, duration, resolution, description, created_at FROM mobile.video_recordings ORDER BY created_at DESC"))
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, start_location_lat, start_location_lng, location_track, duration_seconds, file_url, thumbnail_url, recorded_by, recorded_at, created_at FROM mobile.video_recordings ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -299,7 +299,7 @@ pub async fn db_create_video_recording(
 }
 
 pub async fn db_get_mobile_tasks(pool: &Pool<Postgres>) -> sqlx::Result<Vec<MobileTask>> {
-    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, task_no, task_type, title, description, status, priority, assigned_by, due_date, created_at FROM mobile.mobile_tasks ORDER BY created_at DESC"))
+    let rows = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at FROM mobile.mobile_tasks ORDER BY created_at DESC"))
         .fetch_all(pool)
         .await?;
 
@@ -382,7 +382,7 @@ pub async fn db_update_task_status(
         return Ok(None);
     }
 
-    let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, task_no, task_type, title, description, status, priority, assigned_by, due_date, created_at FROM mobile.mobile_tasks WHERE id = $1"))
+    let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, title, description, task_type, priority, status, assignee, location_lat, location_lng, due_date, completed_at, created_at, updated_at FROM mobile.mobile_tasks WHERE id = $1"))
         .bind(task_id)
         .fetch_one(pool)
         .await?;
@@ -397,12 +397,12 @@ pub async fn db_get_offline_operations(
 ) -> sqlx::Result<Vec<OfflineOperation>> {
     let query = if let Some(s) = status {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at ASC"),
+            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at FROM mobile.offline_operations WHERE user_id = $1 AND sync_status = $2 ORDER BY created_at ASC"),
         )
         .bind(user_id)
         .bind(s)
     } else {
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, operation_type, entity_type, entity_id, payload, sync_status, created_at FROM mobile.offline_operations WHERE user_id = $1 ORDER BY created_at ASC"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, operation_type, entity_type, entity_id, operation_data, sync_status, sync_attempts, last_sync_error, created_at, synced_at FROM mobile.offline_operations WHERE user_id = $1 ORDER BY created_at ASC"))
             .bind(user_id)
     };
 
@@ -491,7 +491,7 @@ pub async fn db_get_sync_policy(
     pool: &Pool<Postgres>,
     user_id: Uuid,
 ) -> sqlx::Result<Option<SyncPolicy>> {
-    let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, policy_type, sync_interval, last_sync_at, is_active FROM mobile.sync_policies WHERE user_id = $1"))
+    let row = sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, auto_sync_enabled, sync_interval_minutes, sync_on_network_change, conflict_strategy, created_at, updated_at FROM mobile.sync_policies WHERE user_id = $1"))
         .bind(user_id)
         .fetch_optional(pool)
         .await?;
@@ -820,12 +820,12 @@ pub async fn db_get_photo_uploads(
 ) -> sqlx::Result<Vec<PhotoUpload>> {
     let query = if let Some(s) = status {
         sqlx::query(
-            only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM mobile.photo_uploads WHERE user_id = $1 AND upload_status = $2 ORDER BY created_at DESC"),
+            only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at FROM mobile.photo_uploads WHERE user_id = $1 AND upload_status = $2 ORDER BY created_at DESC"),
         )
         .bind(user_id)
         .bind(s)
     } else {
-        sqlx::query(only_own_schema_query!("mobile", "SELECT id, user_id, file_path, file_size, upload_status, error_message, created_at FROM mobile.photo_uploads WHERE user_id = $1 ORDER BY created_at DESC"))
+        sqlx::query(only_own_schema_query!("mobile", "SELECT id, tenant_id, user_id, file_name, file_path, file_size, mime_type, width, height, compression_ratio, has_watermark, watermark_text, upload_status, upload_progress, thumbnail_url, location_lat, location_lng, created_at, uploaded_at FROM mobile.photo_uploads WHERE user_id = $1 ORDER BY created_at DESC"))
             .bind(user_id)
     };
 

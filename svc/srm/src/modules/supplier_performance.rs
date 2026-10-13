@@ -183,7 +183,7 @@ pub async fn get_performance_reports(
               AND ($7::timestamptz IS NULL OR evaluation_date <= $7)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.($1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR s.tenant_id = $1)
           AND s.status != 'deleted'
           AND ($2::text IS NULL OR s.name ILIKE $2)
           AND ($3::text IS NULL OR s.category = $3)
@@ -224,7 +224,7 @@ pub async fn get_performance_reports(
                       AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
                     GROUP BY supplier_id
                 ) e ON s.id = e.supplier_id
-                WHERE s.($1::uuid IS NULL OR tenant_id = $1)
+                WHERE ($1::uuid IS NULL OR s.tenant_id = $1)
                   AND s.status != 'deleted'
                   AND ($2::text IS NULL OR s.name ILIKE $2)
                   AND ($3::text IS NULL OR s.category = $3)
@@ -392,7 +392,7 @@ pub async fn get_performance_report(
             WHERE ($2::uuid IS NULL OR tenant_id = $2) AND supplier_id = $1
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.id = $1 AND s.($2::uuid IS NULL OR tenant_id = $2)
+        WHERE s.id = $1 AND ($2::uuid IS NULL OR s.tenant_id = $2)
         "#,
         "srm"
     ))
@@ -841,7 +841,7 @@ pub async fn get_top_suppliers(
             WHERE ($1::uuid IS NULL OR tenant_id = $1)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.($1::uuid IS NULL OR tenant_id = $1) AND s.status = 'active' AND e.avg_overall_score IS NOT NULL
+        WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.status = 'active' AND e.avg_overall_score IS NOT NULL
         ORDER BY e.avg_overall_score DESC
         LIMIT 10
         "#, "srm"),
@@ -886,7 +886,7 @@ pub async fn get_top_suppliers(
             WHERE ($1::uuid IS NULL OR tenant_id = $1)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.($1::uuid IS NULL OR tenant_id = $1) AND s.status = 'active'
+        WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.status = 'active'
         ORDER BY po.total_orders DESC NULLS LAST
         LIMIT 10
         "#, "srm"),
@@ -999,7 +999,7 @@ pub async fn export_performance_report(
               AND ($6::timestamptz IS NULL OR evaluation_date <= $6)
             GROUP BY supplier_id
         ) e ON s.id = e.supplier_id
-        WHERE s.($1::uuid IS NULL OR tenant_id = $1)
+        WHERE ($1::uuid IS NULL OR s.tenant_id = $1)
           AND s.status != 'deleted'
           AND ($2::text IS NULL OR s.name ILIKE $2)
           AND ($3::text IS NULL OR s.category = $3)
@@ -1220,7 +1220,7 @@ pub async fn get_performance_summary(
         SELECT CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END, AVG(e.overall_score) as avg_score
         FROM srm.supplier_evaluations e
         JOIN srm.suppliers s ON e.supplier_id = s.id
-        WHERE e.($1::uuid IS NULL OR tenant_id = $1) AND e.overall_score IS NOT NULL
+        WHERE ($1::uuid IS NULL OR e.tenant_id = $1) AND e.overall_score IS NOT NULL
         GROUP BY CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
         ORDER BY avg_score DESC
         LIMIT 1
@@ -1239,7 +1239,7 @@ pub async fn get_performance_summary(
         SELECT CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END, AVG(e.overall_score) as avg_score
         FROM srm.supplier_evaluations e
         JOIN srm.suppliers s ON e.supplier_id = s.id
-        WHERE e.($1::uuid IS NULL OR tenant_id = $1) AND e.overall_score IS NOT NULL
+        WHERE ($1::uuid IS NULL OR e.tenant_id = $1) AND e.overall_score IS NOT NULL
         GROUP BY CASE WHEN $2='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END
         ORDER BY avg_score ASC
         LIMIT 1
@@ -1258,7 +1258,7 @@ pub async fn get_performance_summary(
         SELECT s.category, AVG(e.overall_score) as avg_score, COUNT(DISTINCT s.id) as supplier_count
         FROM srm.suppliers s
         LEFT JOIN srm.supplier_evaluations e ON s.id = e.supplier_id
-        WHERE s.($1::uuid IS NULL OR tenant_id = $1) AND s.status != 'deleted' AND e.overall_score IS NOT NULL
+        WHERE ($1::uuid IS NULL OR s.tenant_id = $1) AND s.status != 'deleted' AND e.overall_score IS NOT NULL
         GROUP BY s.category
         ORDER BY avg_score DESC
         "#,

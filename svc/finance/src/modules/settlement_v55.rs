@@ -1525,7 +1525,7 @@ impl InvoiceRecognizer {
         invoice_id: Uuid,
     ) -> Result<InvoiceWithItems, sqlx::Error> {
         let invoice: Invoice = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, number, vendor, invoice_date, total_amount, tax_amount, status FROM finance.finance_v55_invoices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(invoice_id)
         .bind(tenant_id)

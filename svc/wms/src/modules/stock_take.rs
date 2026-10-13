@@ -633,7 +633,7 @@ pub async fn start_stock_take(
         "wms",
         r#"
         UPDATE wms.stock_takes SET
-            status = 'in_progress', actual_date = $1, updated_at = $1
+            status = 'in_progress', actual_date = $1::date, updated_at = $1::timestamptz
         WHERE id = $2 AND status = 'planned' AND deleted_at IS NULL
         "#
     ))
@@ -1626,8 +1626,8 @@ pub async fn adjust_stock_take(
         UPDATE wms.stock_takes SET
             adjustment_status = 'completed',
             adjusted_by = 'system',
-            adjustment_date = $1,
-            updated_at = $1
+            adjustment_date = $1::date,
+            updated_at = $1::timestamptz
         WHERE id = $2 AND deleted_at IS NULL
         "#
     ))

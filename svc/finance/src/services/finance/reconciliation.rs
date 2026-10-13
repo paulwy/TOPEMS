@@ -58,7 +58,7 @@ impl ReconciliationService {
 
     async fn generate_session_no(&self, tenant_id: Uuid) -> Result<String, TopemsError> {
         let count: i64 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"),
+            only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"),
         )
         .bind(tenant_id)
         .fetch_one(&self.db_pool)
@@ -75,7 +75,7 @@ impl ReconciliationService {
         session_id: Uuid,
     ) -> Result<ReconciliationSession, TopemsError> {
         let session = sqlx::query_as::<_, ReconciliationSession>(
-            only_own_schema_query!("finance", "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -95,9 +95,9 @@ impl ReconciliationService {
         page_size: i64,
     ) -> Result<(Vec<ReconciliationSession>, i64), TopemsError> {
         let mut query =
-            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)");
+            String::from("SELECT id, tenant_id, session_no, reco_type, period_start, period_end, bank_account_id, entity_id, status, total_items, matched_items, unmatched_items, diff_items, created_by, created_at, updated_at, completed_at FROM finance.core_finance_reconciliation_sessions WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)");
         let mut count_query = String::from(
-            "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)",
+            "SELECT COUNT(*) FROM finance.core_finance_reconciliation_sessions WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)",
         );
         let _params: Vec<String> = vec![];
 
@@ -440,7 +440,7 @@ impl ReconciliationService {
         match_status: Option<MatchStatus>,
     ) -> Result<Vec<ReconciliationItem>, TopemsError> {
         let mut query = String::from(
-            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)",
+            "SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)",
         );
 
         if let Some(st) = &source_type {
@@ -519,7 +519,7 @@ impl ReconciliationService {
         let items = sqlx::query_as::<_, ReconciliationItem>(
             only_own_schema_query!("finance", r#"
             SELECT id, session_id, tenant_id, source_type, transaction_date, amount, direction, counterparty_name, counterparty_account, reference_no, description, match_status, matched_item_id, diff_reason, diff_amount, notes, created_at, updated_at FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND source_type = $3 AND match_status = 'unmatched'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND source_type = $3 AND match_status = 'unmatched'
             ORDER BY amount, transaction_date
             "#),
         )
@@ -571,7 +571,7 @@ impl ReconciliationService {
         session_id: Uuid,
     ) -> Result<(), TopemsError> {
         let total: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -580,7 +580,7 @@ impl ReconciliationService {
         .unwrap_or(0);
 
         let matched: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND match_status = 'matched'"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'matched'"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -589,7 +589,7 @@ impl ReconciliationService {
         .unwrap_or(0);
 
         let diff: i32 = sqlx::query_scalar(
-            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND match_status = 'diff'"),
+            only_own_schema_query!("finance", "SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'"),
         )
         .bind(session_id)
         .bind(tenant_id)
@@ -668,7 +668,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND source_type = 'bank'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND source_type = 'bank'
             "#
         ))
         .bind(session_id)
@@ -683,7 +683,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND source_type = 'erp'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND source_type = 'erp'
             "#
         ))
         .bind(session_id)
@@ -697,7 +697,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND match_status = 'matched'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'matched'
             "#
         ))
         .bind(session_id)
@@ -711,7 +711,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(amount), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND match_status = 'unmatched'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'unmatched'
             "#
         ))
         .bind(session_id)
@@ -725,7 +725,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(COALESCE(diff_amount, amount)), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND match_status = 'diff'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
@@ -793,7 +793,7 @@ impl ReconciliationService {
                         r#"
                         SELECT SUM(amount), COUNT(*)
                         FROM finance.core_finance_reconciliation_items
-                        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
+                        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
                           AND source_type = 'erp'
                           AND direction = 'in'
                           AND match_status IN ('unmatched', 'diff')
@@ -816,7 +816,7 @@ impl ReconciliationService {
                         r#"
                         SELECT SUM(amount), COUNT(*)
                         FROM finance.core_finance_reconciliation_items
-                        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
+                        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
                           AND source_type = 'erp'
                           AND direction = 'out'
                           AND match_status IN ('unmatched', 'diff')
@@ -926,7 +926,7 @@ impl ReconciliationService {
             "finance",
             r#"
             SELECT COUNT(*)::INT FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND match_status = 'diff'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
@@ -940,7 +940,7 @@ impl ReconciliationService {
             r#"
             SELECT COALESCE(SUM(COALESCE(diff_amount, amount)), 0)
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND match_status = 'diff'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'
             "#
         ))
         .bind(session_id)
@@ -956,7 +956,7 @@ impl ReconciliationService {
                 r#"
             SELECT diff_reason::text, COUNT(*)::INT, SUM(COALESCE(diff_amount, amount))
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) AND match_status = 'diff'
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) AND match_status = 'diff'
             GROUP BY diff_reason
             "#
             ))
@@ -981,7 +981,7 @@ impl ReconciliationService {
             r#"
             SELECT match_status::text, COUNT(*)::INT
             FROM finance.core_finance_reconciliation_items
-            WHERE session_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+            WHERE session_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
             GROUP BY match_status
             "#
         ))

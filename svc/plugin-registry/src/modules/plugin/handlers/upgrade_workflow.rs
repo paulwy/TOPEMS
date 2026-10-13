@@ -108,7 +108,7 @@ pub async fn start_plugin_upgrade(
     }
 
     let target_version_info: Option<PluginVersion> = sqlx::query_as(
-        "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND version = $2",
+        "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 AND version = $2",
     )
     .bind(plugin.id)
     .bind(&req.target_version)
@@ -264,7 +264,7 @@ pub async fn verify_plugin_version(
     });
 
     let version_exists: Option<PluginVersion> = sqlx::query_as(
-        "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = (SELECT id FROM core.core_plugins WHERE code = $1) AND version = $2"
+        "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = (SELECT id FROM core.core_plugins WHERE code = $1) AND version = $2"
     )
     .bind(&plugin_code)
     .bind(&version)

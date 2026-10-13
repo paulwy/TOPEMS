@@ -104,10 +104,10 @@ async fn global_search(
     let material_results: Vec<SearchResult> = sqlx::query(only_own_schema_query!(
         "erp",
         r#"
-        SELECT id, name as title, material_code as description, 'material' as module,
+        SELECT id, name as title, code as description, 'material' as module,
                '/erp/materials' as path, '物料' as type_name
         FROM core_erp_materials
-        WHERE LOWER(name) LIKE $1 OR LOWER(material_code) LIKE $1 OR LOWER(specification) LIKE $1
+        WHERE LOWER(name) LIKE $1 OR LOWER(code) LIKE $1 OR LOWER(specification) LIKE $1
         LIMIT $2
         "#
     ))

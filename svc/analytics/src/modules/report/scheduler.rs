@@ -215,7 +215,7 @@ pub async fn execute_schedule_job(
 
     sqlx::query(
         r#"
-        INSERT INTO report_execution_records (id, schedule_id, schedule_name, status, started_at)
+        INSERT INTO analytics.report_execution_records (id, schedule_id, schedule_name, status, started_at)
         VALUES ($1, $2, $3, $4, $5)
         "#,
     )
@@ -231,7 +231,7 @@ pub async fn execute_schedule_job(
         Ok(output_path) => {
             sqlx::query(
                 r#"
-                UPDATE report_execution_records
+                UPDATE analytics.report_execution_records
                 SET status = $1, output_path = $2, completed_at = $3
                 WHERE id = $4
                 "#,
@@ -260,7 +260,7 @@ pub async fn execute_schedule_job(
         Err(e) => {
             sqlx::query(
                 r#"
-                UPDATE report_execution_records
+                UPDATE analytics.report_execution_records
                 SET status = $1, error_message = $2, completed_at = $3
                 WHERE id = $4
                 "#,

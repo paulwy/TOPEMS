@@ -139,7 +139,7 @@ pub async fn list_sync_records(
           AND ($2::text IS NULL OR target_system = $2)
           AND ($3::text IS NULL OR sync_type = $3)
           AND ($4::text IS NULL OR status = $4)
-          AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
+          AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7::uuid)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
         "#,
@@ -163,7 +163,7 @@ pub async fn list_sync_records(
                   AND ($2::text IS NULL OR target_system = $2)
                   AND ($3::text IS NULL OR sync_type = $3)
                   AND ($4::text IS NULL OR status = $4)
-                  AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
+                  AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
                 "#,
             )
             .bind(&params.source_system)
@@ -219,7 +219,7 @@ pub async fn get_sync_record(
                status, total_count, success_count, failed_count, started_at, completed_at,
                duration_seconds, error_message, tenant_id, created_at
         FROM scm.sync_records WHERE id = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#,
     )
     .bind(id)
@@ -284,7 +284,7 @@ pub async fn create_sync_record(
                     SET status = 'completed', total_count = 0, success_count = 0,
                         failed_count = 0, completed_at = NOW(),
                         duration_seconds = 0
-                    WHERE id = $1 AND tenant_id = $2
+                    WHERE id = $1 AND tenant_id = $2::uuid
                     "#,
                 )
                 .bind(rid)
@@ -329,7 +329,7 @@ pub async fn retry_sync_record(
         SET status = 'completed', started_at = $2, completed_at = NOW(),
             duration_seconds = 0, error_message = NULL, updated_at = NOW()
         WHERE id = $1
-          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
+          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
         RETURNING id
         "#,
     )
@@ -396,7 +396,7 @@ pub async fn list_sync_details(
         SELECT id, sync_id, record_id, record_name, status, error_message, created_at
         FROM scm.sync_record_details
         WHERE sync_id = $1
-          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
         "#,
@@ -411,7 +411,7 @@ pub async fn list_sync_details(
     match items {
         Ok(items) => {
             let total = sqlx::query_scalar::<_, i64>(
-                "SELECT COUNT(*) FROM scm.sync_record_details WHERE sync_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)",
+                "SELECT COUNT(*) FROM scm.sync_record_details WHERE sync_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)",
             )
             .bind(sync_id)
             .bind(tenant_bind)

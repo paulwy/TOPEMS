@@ -301,7 +301,7 @@ pub async fn calculate_turnover(
             FROM scm.wms_inventory_snapshots i
             WHERE ($5::uuid IS NULL OR i.warehouse_id = $5)
               AND ($6::text IS NULL OR i.category = $6)
-              AND ($8 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $8)
+              AND ($8 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $8::uuid)
         ),
         movement_summary AS (
             SELECT 
@@ -314,7 +314,7 @@ pub async fn calculate_turnover(
             WHERE movement_date >= $1::timestamptz
               AND movement_date < ($2::timestamptz + INTERVAL '1 day')
               AND ($5::uuid IS NULL OR warehouse_id = $5)
-              AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $8)
+              AND ($8 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $8::uuid)
             GROUP BY item_code, warehouse_id
         )
         SELECT 
@@ -372,7 +372,7 @@ pub async fn calculate_turnover(
                 WHERE ($1::uuid IS NULL OR i.warehouse_id = $1)
                   AND ($2::text IS NULL OR i.category = $2)
                   AND ($3::text IS NULL OR i.item_name ILIKE $3 OR i.item_code ILIKE $3)
-                  AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4)
+                  AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4::uuid)
                 "#
             ))
             .bind(params.warehouse_id)
@@ -467,7 +467,7 @@ pub async fn turnover_days(
                 COUNT(*) as sku_count
             FROM scm.wms_inventory_snapshots i
             WHERE ($3::uuid IS NULL OR i.warehouse_id = $3)
-              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4::uuid)
         ),
         outbound_stats AS (
             SELECT 
@@ -478,7 +478,7 @@ pub async fn turnover_days(
               AND movement_date >= $1::timestamptz
               AND movement_date < ($2::timestamptz + INTERVAL '1 day')
               AND ($3::uuid IS NULL OR warehouse_id = $3)
-              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         )
         SELECT 
             os.total_outbound_value::float8,
@@ -603,9 +603,9 @@ pub async fn abc_analysis(
                 AND im.movement_type = 'outbound'
                 AND im.movement_date >= $1::timestamptz
                 AND im.movement_date < ($2::timestamptz + INTERVAL '1 day')
-                AND ($4 = '00000000-0000-0000-0000-000000000000' OR im.tenant_id = $4)
+                AND ($4 = '00000000-0000-0000-0000-000000000000' OR im.tenant_id = $4::uuid)
             WHERE ($3::uuid IS NULL OR i.warehouse_id = $3)
-              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4::uuid)
             GROUP BY i.item_code, i.item_name, i.total_value
         ),
         cumulative AS (
@@ -730,7 +730,7 @@ pub async fn turnover_trend(
             WHERE movement_date >= $1::timestamptz
               AND movement_date < ($2::timestamptz + INTERVAL '1 day')
               AND ($3::uuid IS NULL OR warehouse_id = $3)
-              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
             GROUP BY DATE_TRUNC('month', movement_date)
             ORDER BY month
         ),
@@ -742,7 +742,7 @@ pub async fn turnover_trend(
             WHERE synced_at >= $1::timestamptz
               AND synced_at < ($2::timestamptz + INTERVAL '1 day')
               AND ($3::uuid IS NULL OR warehouse_id = $3)
-              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
             GROUP BY DATE_TRUNC('month', synced_at)
         )
         SELECT 
@@ -847,7 +847,7 @@ pub async fn get_turnover_detail(
                 COALESCE(i.total_value, 0) as ending_value
             FROM scm.wms_inventory_snapshots i
             WHERE i.item_code = $3
-              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR i.tenant_id = $4::uuid)
         ),
         movement_summary AS (
             SELECT 
@@ -859,7 +859,7 @@ pub async fn get_turnover_detail(
             WHERE movement_date >= $1::timestamptz
               AND movement_date < ($2::timestamptz + INTERVAL '1 day')
               AND item_code = $3
-              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+              AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
             GROUP BY item_code
         )
         SELECT 

@@ -416,16 +416,20 @@ impl CrmEventHandlers {
                     .await
                 } else {
                     sqlx::query(
-                        r#"UPDATE crm.billing_records
+                        r#"UPDATE crm.billing_records b
                            SET status = 'paid',
                                paid_at = $1,
                                updated_at = $1
-                           WHERE status = 'pending'
-                             AND tenant_id = $3
-                             AND amount = $2
-                           ORDER BY created_at ASC
-                           LIMIT 1
-                           RETURNING invoice_no"#,
+                           FROM (
+                               SELECT id FROM crm.billing_records
+                               WHERE status = 'pending'
+                                 AND tenant_id = $3
+                                 AND amount = $2
+                               ORDER BY created_at ASC
+                               LIMIT 1
+                           ) s
+                           WHERE b.id = s.id
+                           RETURNING b.invoice_no"#,
                     )
                     .bind(now)
                     .bind(payload.amount)

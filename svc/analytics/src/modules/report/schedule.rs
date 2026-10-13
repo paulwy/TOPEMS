@@ -439,9 +439,9 @@ pub async fn get_execution_history(
 
     let records = sqlx::query(
         r#"
-        SELECT id, schedule_id, schedule_name, status, output_path, 
+        SELECT id, schedule_id, schedule_name, status, output_path,
                error_message, started_at, completed_at
-        FROM report_execution_records
+        FROM analytics.report_execution_records
         WHERE schedule_id = $1
         ORDER BY started_at DESC
         LIMIT 50

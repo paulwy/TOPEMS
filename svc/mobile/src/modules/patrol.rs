@@ -309,8 +309,8 @@ pub async fn update_patrol_record(
     let status = payload.status.unwrap_or(current_record.status);
 
     if let Err(e) = sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.patrol_records 
-         SET title = $1, description = $2, location_lat = $3, location_lng = $4, address = $5, status = $6, updated_at = $7 
+        only_own_schema_query!("mobile", "UPDATE mobile.patrol_records
+         SET title = $1, description = $2, location_lat = $3, location_lng = $4, address = $5, status = $6
          WHERE id = $8 AND checked_by = $9")
     )
     .bind(&title)

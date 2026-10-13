@@ -1130,7 +1130,7 @@ pub async fn get_inventory_distribution(
          FROM wms.inventory i
          LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
          WHERE i.deleted_at IS NULL
-         GROUP BY i.warehouse_id, w.warehouse_name
+         GROUP BY i.warehouse_id, w.warehouse_name, w.warehouse_name_en
          ORDER BY quantity DESC
          LIMIT 10",
     )

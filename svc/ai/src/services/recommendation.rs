@@ -111,9 +111,9 @@ impl RecommendationService {
         let query = sqlx::query(only_own_schema_query!(
             "ai",
             r#"
-            SELECT id, title, description, document_type
+            SELECT id, title, description, category
             FROM ai.documents
-            WHERE is_processed = TRUE AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE status = 'ready' AND ($2::uuid IS NULL OR tenant_id = $2)
             ORDER BY created_at DESC
             LIMIT $1
             "#,
@@ -446,7 +446,7 @@ impl RecommendationService {
             r#"
             SELECT id, title, description, category
             FROM ai.documents
-            WHERE document_type = 'article' AND is_processed = TRUE AND ($2::uuid IS NULL OR tenant_id = $2)
+            WHERE category = 'article' AND status = 'ready' AND ($2::uuid IS NULL OR tenant_id = $2)
             ORDER BY created_at DESC
             LIMIT $1
             "#,

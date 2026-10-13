@@ -87,7 +87,7 @@ pub async fn get_plugin_details(
         None => return Json(CoreResponse::error("Plugin not found")),
     };
 
-    let permissions: Vec<PluginPermission> = match sqlx::query_as("SELECT id, plugin_code, permission_key, description, is_default, created_at FROM core.core_plugin_permissions WHERE plugin_code = $1")
+    let permissions: Vec<PluginPermission> = match sqlx::query_as("SELECT id, plugin_code, permission_code, permission_name, resource_type, action, created_at FROM core.core_plugin_permissions WHERE plugin_code = $1")
             .bind(&plugin_code)
             .fetch_all(&state.pool)
             .await

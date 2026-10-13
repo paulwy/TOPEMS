@@ -234,7 +234,7 @@ async fn create_sales_forecast(
         r#"
         INSERT INTO crm.sales_forecasts (
             id, tenant_id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, 0, 'stable', 0.7, $4, 'draft', $5, $6, $7)
+        ) VALUES ($1, $2, $3, $4, 0, 'stable', 0.7, $5, 'draft', $6, $7)
         RETURNING id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         "#,
     )
@@ -369,7 +369,7 @@ pub async fn generate_forecast(
         r#"
         INSERT INTO crm.sales_forecasts (
             id, tenant_id, period_type, period, predicted_amount, trend, confidence_level, factors, status, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'generated', $8, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'generated', $9, $10)
         RETURNING id, tenant_id, period_type, period, predicted_amount, actual_amount, accuracy, trend, confidence_level, factors, status, created_at, updated_at
         "#,
     )

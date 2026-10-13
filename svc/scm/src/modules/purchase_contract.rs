@@ -69,7 +69,7 @@ pub async fn list_contracts(
     let offset = (page - 1) * page_size;
 
     let contracts = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE deleted_at IS NULL AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
+        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE deleted_at IS NULL AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid) ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
     )
     .bind(page_size)
     .bind(offset)
@@ -79,7 +79,7 @@ pub async fn list_contracts(
 
     let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "scm",
-        "SELECT COUNT(*) FROM scm.purchase_contracts WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM scm.purchase_contracts WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_bind)
     .fetch_one(&mut **txn)
@@ -243,7 +243,7 @@ pub async fn get_contract(
 
     let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
+        only_own_schema_query!("scm", "SELECT id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at FROM scm.purchase_contracts WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
     )
     .bind(contract_id)
     .bind(tenant_bind)
@@ -253,7 +253,7 @@ pub async fn get_contract(
     match contract {
         Ok(contract) => {
             let items = sqlx::query_as::<_, PurchaseContractItem>(
-                only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, line_number, product_code, product_name, specification, unit, quantity::float8, unit_price::float8, amount::float8, delivery_date, remarks, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) ORDER BY line_number"),
+                only_own_schema_query!("scm", "SELECT id, tenant_id, contract_id, line_number, product_code, product_name, specification, unit, quantity::float8, unit_price::float8, amount::float8, delivery_date, remarks, created_at FROM scm.purchase_contract_items WHERE contract_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) ORDER BY line_number"),
             )
             .bind(contract_id)
             .bind(tenant_bind)
@@ -328,7 +328,7 @@ pub async fn update_contract(
             delivery_terms = COALESCE($10, delivery_terms),
             status = COALESCE($11, status),
             remarks = COALESCE($12, remarks)
-        WHERE id = $13 AND deleted_at IS NULL AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $14)
+        WHERE id = $13 AND deleted_at IS NULL AND ($14 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $14::uuid)
         RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at
         "#
     ))
@@ -354,7 +354,7 @@ pub async fn update_contract(
             if let Some(items) = &data.items {
                 let _ = sqlx::query(only_own_schema_query!(
                     "scm",
-                    "DELETE FROM scm.purchase_contract_items WHERE contract_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
+                    "DELETE FROM scm.purchase_contract_items WHERE contract_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
                 ))
                 .bind(contract_id)
                 .bind(tenant_bind)
@@ -433,7 +433,7 @@ pub async fn delete_contract(
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.purchase_contracts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
+        "UPDATE scm.purchase_contracts SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
     ))
     .bind(contract_id)
     .bind(tenant_bind)
@@ -445,7 +445,7 @@ pub async fn delete_contract(
             // 级联软删子表（同租户条件）
             if let Err(e) = sqlx::query(only_own_schema_query!(
                 "scm",
-                "UPDATE scm.purchase_contract_items SET deleted_at = NOW() WHERE contract_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
+                "UPDATE scm.purchase_contract_items SET deleted_at = NOW() WHERE contract_id = $1 AND deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
             ))
             .bind(contract_id)
             .bind(tenant_bind)
@@ -520,7 +520,7 @@ pub async fn submit_contract(
 
     let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'pending', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid) RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at"),
     )
     .bind(remarks)
     .bind(contract_id)
@@ -600,7 +600,7 @@ pub async fn approve_contract(
         UPDATE scm.purchase_contracts SET 
             status = 'approved', approval_status = 'approved', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
-        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at
         "#
     ))
@@ -683,7 +683,7 @@ pub async fn reject_contract(
         UPDATE scm.purchase_contracts SET 
             status = 'rejected', approval_status = 'rejected', 
             approver = $1, approved_at = NOW(), remarks = COALESCE($2, remarks)
-        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+        WHERE id = $3 AND deleted_at IS NULL AND status = 'pending' AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at
         "#
     ))
@@ -761,7 +761,7 @@ pub async fn cancel_contract(
 
     let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'approved') AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'cancelled', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status IN ('draft', 'approved') AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid) RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at"),
     )
     .bind(remarks)
     .bind(contract_id)
@@ -836,7 +836,7 @@ pub async fn terminate_contract(
 
     let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'terminated', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'approved' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3) RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'terminated', remarks = COALESCE($1, remarks) WHERE id = $2 AND deleted_at IS NULL AND status = 'approved' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid) RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at"),
     )
     .bind(remarks)
     .bind(contract_id)
@@ -905,7 +905,7 @@ pub async fn renew_contract(
 
     let tenant_bind = tenant_bind_value(&claims);
     let contract = sqlx::query_as::<_, PurchaseContract>(
-        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'draft' WHERE id = $1 AND deleted_at IS NULL AND status IN ('expired', 'terminated') AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2) RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at"),
+        only_own_schema_query!("scm", "UPDATE scm.purchase_contracts SET status = 'draft' WHERE id = $1 AND deleted_at IS NULL AND status IN ('expired', 'terminated') AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid) RETURNING id, tenant_id, contract_no, title, contract_type, supplier_id, supplier_name, sign_date, effective_date, expiry_date, total_amount::float8, currency, payment_terms, delivery_terms, status, approval_status, approver, approved_at, signed_by, contract_file, remarks, created_at, updated_at, deleted_at"),
     )
     .bind(contract_id)
     .bind(tenant_bind)

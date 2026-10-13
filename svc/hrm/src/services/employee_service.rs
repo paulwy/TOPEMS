@@ -57,7 +57,7 @@ impl EmployeeService {
                    d.name as department_name
             FROM hrm.employees e
             LEFT JOIN hrm.departments d ON e.department_id = d.id
-            WHERE ($5 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $5)
+            WHERE ($5::uuid = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $5::uuid)
               AND ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
               AND ($2::text IS NULL OR e.status = $2)
               AND ($3::uuid IS NULL OR e.department_id = $3)
@@ -82,7 +82,7 @@ impl EmployeeService {
                 let total = sqlx::query_scalar::<_, i64>(
                     r#"
                     SELECT COUNT(*) FROM hrm.employees AS e
-                    WHERE deleted_at IS NULL AND ($5 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $5)
+                    WHERE deleted_at IS NULL AND ($5::uuid = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $5::uuid)
                       AND ($1::text IS NULL OR e.name ILIKE $1 OR e.employee_number ILIKE $1)
                       AND ($2::text IS NULL OR e.status = $2)
                       AND ($3::uuid IS NULL OR e.department_id = $3)
@@ -130,7 +130,7 @@ impl EmployeeService {
                    d.name as department_name
             FROM hrm.employees e
             LEFT JOIN hrm.departments d ON e.department_id = d.id
-            WHERE e.id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $2)
+            WHERE e.id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR e.tenant_id = $2::uuid)
             "#,
         )
         .bind(id)

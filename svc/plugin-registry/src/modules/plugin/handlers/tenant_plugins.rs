@@ -230,7 +230,7 @@ async fn install_plugin_inner(
                 r#"SELECT EXISTS(
                     SELECT 1 FROM core.core_tenant_plugins tp
                     JOIN core.core_plugins p ON tp.plugin_id = p.id
-                    WHERE deleted_at IS NULL AND tp.tenant_id = $1 AND p.code = $2 AND tp.is_active = true
+                    WHERE tp.deleted_at IS NULL AND tp.tenant_id = $1 AND p.code = $2 AND tp.is_active = true
                 )"#,
             )
             .bind(tenant_id)
@@ -859,7 +859,7 @@ pub async fn get_available_plugins(
 
     for plugin in plugins {
         let tenant_plugin: Option<TenantPlugin> = sqlx::query_as(
-            "SELECT id, tenant_id, plugin_id, is_enabled, config, created_at, updated_at FROM core.core_tenant_plugins WHERE deleted_at IS NULL AND tenant_id = $1 AND plugin_id = $2",
+            "SELECT id, tenant_id, plugin_id, installed_version, is_active, created_at, updated_at FROM core.core_tenant_plugins WHERE deleted_at IS NULL AND tenant_id = $1 AND plugin_id = $2",
         )
         .bind(tenant_id)
         .bind(plugin.id)

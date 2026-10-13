@@ -157,13 +157,13 @@ pub async fn query_audit_logs(
             let total: i64 = sqlx::query_scalar(
                 r#"
                 SELECT COUNT(*) FROM public.permission_audit_logs
-                WHERE ($1::uuid IS NULL OR user_id = $1)
+                WHERE ($1::text IS NULL OR user_id = $1::text)
                   AND ($2::text IS NULL OR action = $2)
                   AND ($3::timestamptz IS NULL OR changed_at >= $3)
                   AND ($4::timestamptz IS NULL OR changed_at <= $4)
                   AND ($5::text IS NULL OR COALESCE(action, '') ILIKE '%' || $5 || '%'
-                       OR COALESCE(old_value, '') ILIKE '%' || $5 || '%'
-                       OR COALESCE(new_value, '') ILIKE '%' || $5 || '%')
+                       OR COALESCE(old_value::text, '') ILIKE '%' || $5 || '%'
+                       OR COALESCE(new_value::text, '') ILIKE '%' || $5 || '%')
                 "#,
             )
             .bind(
@@ -203,13 +203,13 @@ pub async fn query_audit_logs(
                     ) AS details,
                     changed_at AS created_at
                 FROM public.permission_audit_logs
-                WHERE ($1::uuid IS NULL OR user_id = $1)
+                WHERE ($1::text IS NULL OR user_id = $1::text)
                   AND ($2::text IS NULL OR action = $2)
                   AND ($3::timestamptz IS NULL OR changed_at >= $3)
                   AND ($4::timestamptz IS NULL OR changed_at <= $4)
                   AND ($5::text IS NULL OR COALESCE(action, '') ILIKE '%' || $5 || '%'
-                       OR COALESCE(old_value, '') ILIKE '%' || $5 || '%'
-                       OR COALESCE(new_value, '') ILIKE '%' || $5 || '%')
+                       OR COALESCE(old_value::text, '') ILIKE '%' || $5 || '%'
+                       OR COALESCE(new_value::text, '') ILIKE '%' || $5 || '%')
                 ORDER BY changed_at DESC
                 LIMIT $6 OFFSET $7
                 "#,

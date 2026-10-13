@@ -1150,7 +1150,7 @@ pub async fn check_schedule_constraints(
         if req.check_equipment.unwrap_or(true) {
             let equipment = sqlx::query(
                 r#"
-                SELECT id, name, status, next_maintenance_date
+                SELECT id, equipment_name, status, next_maintenance_date
                 FROM mes.equipment
                 WHERE status = 'normal'
                 LIMIT 5

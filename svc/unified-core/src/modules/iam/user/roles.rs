@@ -131,7 +131,7 @@ pub async fn get_user_permissions(
             FROM public.core_permissions p
             INNER JOIN public.core_role_permissions rp ON p.id = rp.permission_id
             INNER JOIN public.core_user_roles ur ON rp.role_id = ur.role_id
-            WHERE r.deleted_at IS NULL AND ur.user_id = $1
+            WHERE p.deleted_at IS NULL AND ur.user_id = $1
             ORDER BY p.code
             "#,
         )

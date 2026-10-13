@@ -460,7 +460,7 @@ impl CashPoolManager {
         pool_id: Uuid,
     ) -> Result<CashPool, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2"),
+            only_own_schema_query!("finance", "SELECT id, name, pool_type, currency, balance, entities, created_at FROM finance.finance_v58_cash_pools WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"),
         )
         .bind(pool_id)
         .bind(tenant_id)
@@ -967,7 +967,7 @@ impl LiquidityOptimizer {
         tenant_id: Option<Uuid>,
     ) -> Result<serde_json::Value, sqlx::Error> {
         let targets: Vec<LiquidityTarget> = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1"),
+            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
         )
         .bind(tenant_id)
         .fetch_all(pool)
@@ -1208,7 +1208,7 @@ impl LiquidityOptimizer {
         tenant_id: Option<Uuid>,
     ) -> Result<Vec<LiquidityTarget>, sqlx::Error> {
         sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1"),
+            only_own_schema_query!("finance", "SELECT id, entity_id, min_balance, max_balance, target_balance, currency FROM finance.finance_v58_liquidity_targets WHERE ($1::uuid IS NULL OR tenant_id = $1)"),
         )
         .bind(tenant_id)
         .fetch_all(pool)

@@ -113,7 +113,7 @@ pub async fn get_statistics(
             .unwrap_or((0,));
 
     let approved_formulas: (i64,) =
-        sqlx::query_as("SELECT COUNT(*) FROM rs_formulas WHERE approval_status = 'approved'")
+        sqlx::query_as("SELECT COUNT(*) FROM rs_formulas WHERE status = 'approved'")
             .fetch_one(&mut **txn)
             .await
             .unwrap_or((0,));

@@ -64,7 +64,7 @@ pub async fn get_settings(
         SELECT key, value
         FROM scm.module_settings
         WHERE category = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(&category)

@@ -176,10 +176,10 @@ pub async fn list_customers(
 
     let mut count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
         "crm",
-        "SELECT COUNT(*) FROM crm.customers WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM crm.customers WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND deleted_at IS NULL"
     ));
     let mut list_qb = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3")
+        only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $4 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $2 OFFSET $3")
     );
     count_qb = count_qb.bind(tenant_id);
     list_qb = list_qb
@@ -190,10 +190,10 @@ pub async fn list_customers(
 
     if let Some(s) = search.clone() {
         let like = format!("%{}%", s.replace('%', "\\%").replace('_', "\\_"));
-        count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!("crm", "SELECT COUNT(*) FROM crm.customers WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND name ILIKE $2 AND deleted_at IS NULL"))
+        count_qb = sqlx::query_scalar::<_, i64>(only_own_schema_query!("crm", "SELECT COUNT(*) FROM crm.customers WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND name ILIKE $2 AND deleted_at IS NULL"))
             .bind(tenant_id).bind(like.clone());
         list_qb = sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1) AND name ILIKE $2 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $3 OFFSET $4")
+            only_own_schema_query!("crm", "SELECT id, COALESCE(tenant_id, '00000000-0000-0000-0000-000000000000') AS tenant_id, CASE WHEN $5 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, customer_type, industry, COALESCE(rating, '') AS rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue::float8 AS revenue, source, status, created_at, updated_at, deleted_at FROM crm.customers WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND name ILIKE $2 AND deleted_at IS NULL ORDER BY created_at DESC LIMIT $3 OFFSET $4")
         ).bind(tenant_id).bind(like).bind(page_size).bind(offset).bind(Locale::from_headers(&headers).as_sql());
     }
 

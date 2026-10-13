@@ -263,7 +263,7 @@ impl VectorService {
             FROM ai.document_chunks c
             JOIN ai.documents d ON c.document_id = d.id
             WHERE c.embedding <=> $1::vector < 0.5
-              AND c.($3::uuid IS NULL OR tenant_id = $3)
+              AND ($3::uuid IS NULL OR c.tenant_id = $3)
             ORDER BY c.embedding <=> $1::vector
             LIMIT $2
             "#,
@@ -336,7 +336,14 @@ impl VectorService {
     pub async fn clear_all(&self) -> Result<(), sqlx::Error> {
         sqlx::query(only_own_schema_query!(
             "ai",
-            "TRUNCATE ai.document_chunks, ai.documents CASCADE",
+            "DELETE FROM ai.document_chunks",
+            "plugin_ai"
+        ))
+        .execute(self.db.pool())
+        .await?;
+        sqlx::query(only_own_schema_query!(
+            "ai",
+            "DELETE FROM ai.documents",
             "plugin_ai"
         ))
         .execute(self.db.pool())
@@ -365,7 +372,7 @@ impl VectorService {
             JOIN ai.documents d ON c.document_id = d.id,
                  to_tsquery('simple', $1) query
             WHERE to_tsvector('simple', c.content) @@ query
-              AND c.($3::uuid IS NULL OR tenant_id = $3)
+              AND ($3::uuid IS NULL OR c.tenant_id = $3)
             ORDER BY similarity DESC
             LIMIT $2
             "#,

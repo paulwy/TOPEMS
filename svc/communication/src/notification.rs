@@ -1702,10 +1702,13 @@ pub async fn run_auto_archive(
     let archived_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications
-        SET is_archived = true
-        WHERE created_at < NOW() - INTERVAL '30 days' AND is_archived = false AND deleted_at IS NULL
-        RETURNING COUNT(*)
+        WITH archived AS (
+            UPDATE core_notifications
+            SET is_archived = true
+            WHERE created_at < NOW() - INTERVAL '30 days' AND is_archived = false AND deleted_at IS NULL
+            RETURNING 1
+        )
+        SELECT COUNT(*) FROM archived
         "#
     ))
     .fetch_one(&pool)
@@ -1715,10 +1718,13 @@ pub async fn run_auto_archive(
     let deleted_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "public",
         r#"
-        UPDATE core_notifications
-        SET deleted_at = NOW()
-        WHERE created_at < NOW() - INTERVAL '30 days' AND deleted_at IS NULL
-        RETURNING COUNT(*)
+        WITH soft_deleted AS (
+            UPDATE core_notifications
+            SET deleted_at = NOW()
+            WHERE created_at < NOW() - INTERVAL '30 days' AND deleted_at IS NULL
+            RETURNING 1
+        )
+        SELECT COUNT(*) FROM soft_deleted
         "#
     ))
     .fetch_one(&pool)

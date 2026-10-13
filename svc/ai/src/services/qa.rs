@@ -986,7 +986,7 @@ impl QAService {
                         d.title AS document_title
                     FROM ai.document_chunks c
                     JOIN ai.documents d ON c.document_id = d.id
-                    WHERE c.embedding IS NOT NULL AND d.($3::uuid IS NULL OR tenant_id = $3)
+                    WHERE c.embedding IS NOT NULL AND ($3::uuid IS NULL OR d.tenant_id = $3)
                     ORDER BY c.embedding <=> $1::vector
                     LIMIT $2
                     "#,

@@ -167,7 +167,7 @@ pub async fn list_sync_records(
           AND ($2::text IS NULL OR target_system = $2)
           AND ($3::text IS NULL OR sync_type = $3)
           AND ($4::text IS NULL OR status = $4)
-          AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
+          AND ($7::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7::uuid)
         ORDER BY created_at DESC
         LIMIT $5 OFFSET $6
         "#
@@ -192,7 +192,7 @@ pub async fn list_sync_records(
                   AND ($2::text IS NULL OR target_system = $2)
                   AND ($3::text IS NULL OR sync_type = $3)
                   AND ($4::text IS NULL OR status = $4)
-                  AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
+                  AND ($5::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
                 "#
             ))
             .bind(&params.source_system)
@@ -246,7 +246,7 @@ pub async fn get_sync_record(
                status, total_count, success_count, failed_count, skipped_count,
                started_at, completed_at, duration_seconds, error_message, created_at
         FROM wms.sync_records WHERE id = $1
-          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -370,7 +370,7 @@ pub async fn list_sync_items(
                error_message, source_data, target_data, created_at
         FROM wms.sync_record_details
         WHERE sync_record_id = $1
-          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+          AND ($4::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
         "#
@@ -386,7 +386,7 @@ pub async fn list_sync_items(
         Ok(items) => {
             let total = sqlx::query_scalar::<_, i64>(only_own_schema_query!(
                 "wms",
-                "SELECT COUNT(*) FROM wms.sync_record_details WHERE sync_record_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
+                "SELECT COUNT(*) FROM wms.sync_record_details WHERE sync_record_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
             ))
             .bind(sync_id)
             .bind(tenant_bind)
@@ -437,7 +437,7 @@ pub async fn retry_sync_record(
         SET status = 'success', started_at = $2, completed_at = NOW(),
             duration_seconds = 0, error_message = NULL, updated_at = NOW()
         WHERE id = $1
-          AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
+          AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
         RETURNING id
         "#
     ))
@@ -513,7 +513,7 @@ pub async fn retry_failed_items(
             UPDATE wms.sync_record_details
             SET status = 'success', error_message = NULL
             WHERE sync_record_id = $1 AND id = ANY($2::uuid[])
-              AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
+              AND ($3::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
             "#
         ))
         .bind(id)
@@ -563,7 +563,7 @@ pub async fn get_sync_statistics(
     let result: Result<SyncStatistics, sqlx::Error> = async {
         let (total_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COUNT(*) FROM wms.sync_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+            "SELECT COUNT(*) FROM wms.sync_records WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
         .fetch_one(&mut **txn)
@@ -571,7 +571,7 @@ pub async fn get_sync_statistics(
 
         let (successful_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COUNT(*) FROM wms.sync_records WHERE status = 'success' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+            "SELECT COUNT(*) FROM wms.sync_records WHERE status = 'success' AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
         .fetch_one(&mut **txn)
@@ -579,7 +579,7 @@ pub async fn get_sync_statistics(
 
         let (failed_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COUNT(*) FROM wms.sync_records WHERE status = 'failed' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+            "SELECT COUNT(*) FROM wms.sync_records WHERE status = 'failed' AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
         .fetch_one(&mut **txn)
@@ -587,7 +587,7 @@ pub async fn get_sync_statistics(
 
         let (in_progress_syncs,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COUNT(*) FROM wms.sync_records WHERE status IN ('running','pending') AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+            "SELECT COUNT(*) FROM wms.sync_records WHERE status IN ('running','pending') AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
         .fetch_one(&mut **txn)
@@ -595,7 +595,7 @@ pub async fn get_sync_statistics(
 
         let (total_records_synced,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COALESCE(SUM(success_count), 0) FROM wms.sync_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+            "SELECT COALESCE(SUM(success_count), 0) FROM wms.sync_records WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
         .fetch_one(&mut **txn)
@@ -603,7 +603,7 @@ pub async fn get_sync_statistics(
 
         let (total_records_failed,): (i64,) = sqlx::query_as(only_own_schema_query!(
             "wms",
-            "SELECT COALESCE(SUM(failed_count), 0) FROM wms.sync_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+            "SELECT COALESCE(SUM(failed_count), 0) FROM wms.sync_records WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
         .fetch_one(&mut **txn)
@@ -611,7 +611,7 @@ pub async fn get_sync_statistics(
 
         let last_sync: Option<Option<String>> = sqlx::query_scalar(only_own_schema_query!(
             "wms",
-            "SELECT MAX(completed_at)::text FROM wms.sync_records WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+            "SELECT MAX(completed_at)::text FROM wms.sync_records WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
         ))
         .bind(tb)
         .fetch_one(&mut **txn)

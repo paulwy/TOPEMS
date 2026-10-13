@@ -294,7 +294,7 @@ impl EventStore for PgEventStore {
         &self,
         aggregate_id: &str,
     ) -> Result<Option<SnapshotRecord>, TopemsError> {
-        let result = sqlx::query(only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, snapshot_data, version, created_at FROM cqrs_snapshots WHERE aggregate_id = $1"))
+        let result = sqlx::query(only_own_schema_query!("finance", "SELECT aggregate_id, aggregate_type, state, version, created_at FROM cqrs_snapshots WHERE aggregate_id = $1"))
             .bind(aggregate_id)
             .fetch_optional(&self.pool)
             .await

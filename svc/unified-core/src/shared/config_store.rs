@@ -83,10 +83,9 @@ impl ConfigStore {
     pub async fn load_cache(&self) -> Result<(), sqlx::Error> {
         let configs = sqlx::query_as::<_, ConfigValue>(
             r#"
-            SELECT id, key, value, tenant_id, active, created_at, updated_at
-            FROM system_configs
-            WHERE active = true
-            ORDER BY key, updated_at DESC
+            SELECT id, config_key AS key, config_value AS value, tenant_id, created_at, updated_at
+            FROM public.configurations
+            ORDER BY config_key, updated_at DESC
             "#
         )
         .fetch_all(&self.pool)
@@ -196,10 +195,9 @@ impl ConfigStore {
         sqlx::query_as!(
             ConfigValue,
             r#"
-            SELECT id, key, value, tenant_id, active, created_at, updated_at
-            FROM system_configs
-            WHERE active = true
-            ORDER BY key, updated_at DESC
+            SELECT id, config_key AS key, config_value AS value, tenant_id, created_at, updated_at
+            FROM public.configurations
+            ORDER BY config_key, updated_at DESC
             "#
         )
         .fetch_all(&self.pool)

@@ -59,7 +59,7 @@ pub async fn get_marketplace_summary(
             .unwrap_or((0,));
 
     let categories: Vec<PluginCategory> = sqlx::query_as(
-        "SELECT id, name, description, sort_order, is_active, created_at, updated_at FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
+        "SELECT id, name, description, sort_order, is_active, created_at FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
     )
     .fetch_all(&state.pool)
     .await
@@ -110,7 +110,7 @@ pub async fn list_categories(
     tracing::info!("[Plugin] Listing categories");
 
     let categories: Vec<PluginCategory> = sqlx::query_as(
-        "SELECT id, name, description, sort_order, is_active, created_at, updated_at FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
+        "SELECT id, name, description, sort_order, is_active, created_at FROM core.core_plugin_categories WHERE is_active = true ORDER BY sort_order",
     )
     .fetch_all(&state.pool)
     .await
@@ -241,7 +241,7 @@ pub async fn get_plugin_versions(
     tracing::info!("[Plugin] Getting versions for plugin: {}", plugin_id);
 
     let versions: Vec<PluginVersion> = sqlx::query_as(
-        "SELECT id, plugin_id, version, changelog, download_url, is_latest, is_active, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 ORDER BY created_at DESC",
+        "SELECT id, plugin_id, version, release_notes, download_url, is_latest, is_stable, created_at FROM core.core_plugin_versions WHERE plugin_id = $1 ORDER BY created_at DESC",
     )
     .bind(plugin_id)
     .fetch_all(&state.pool)

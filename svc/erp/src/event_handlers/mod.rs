@@ -1638,11 +1638,14 @@ impl ErpEventHandlers {
                            SET status = 'paid',
                                received_amount = received_amount + $1,
                                updated_at = $2
-                           WHERE status = 'pending'
-                             AND tenant_id = $3
-                             AND amount = $1
-                           ORDER BY invoice_date ASC
-                           LIMIT 1
+                           WHERE id = (
+                               SELECT id FROM erp.receivables
+                               WHERE status = 'pending'
+                                 AND tenant_id = $3
+                                 AND amount = $1
+                               ORDER BY invoice_date ASC
+                               LIMIT 1
+                           )
                            RETURNING invoice_number"#,
                     )
                     .bind(payload.amount)
@@ -1739,11 +1742,14 @@ impl ErpEventHandlers {
                            SET status = 'paid',
                                paid_amount = paid_amount + $1,
                                updated_at = $2
-                           WHERE status = 'pending'
-                             AND tenant_id = $3
-                             AND amount = $1
-                           ORDER BY invoice_date ASC
-                           LIMIT 1
+                           WHERE id = (
+                               SELECT id FROM erp.payables
+                               WHERE status = 'pending'
+                                 AND tenant_id = $3
+                                 AND amount = $1
+                               ORDER BY invoice_date ASC
+                               LIMIT 1
+                           )
                            RETURNING invoice_number"#,
                     )
                     .bind(payload.amount)

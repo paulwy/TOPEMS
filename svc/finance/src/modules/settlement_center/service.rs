@@ -309,7 +309,6 @@ pub async fn auto_reconcile(
                SELECT 1 FROM finance.reconciliation_item_snapshots ri2
                WHERE ri2.recon_id = ri.recon_id
                  AND ri2.match_status <> 'matched'
-                 AND ri2.item_type <> ri.item_type
                  AND COALESCE(ri2.debit_amount, 0) = COALESCE(ri.credit_amount, 0)
              )"#
     ))

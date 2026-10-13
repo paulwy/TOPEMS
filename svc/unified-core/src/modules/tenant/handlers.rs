@@ -269,8 +269,8 @@ async fn seed_tenant_defaults(
     // 3. Create the admin user tied to the new tenant.
     let admin_user_id: Uuid = sqlx::query_scalar(
         r#"
-        INSERT INTO iam.users (username, email, password_hash, full_name, status, is_superuser, tenant_id)
-        VALUES ($1, $2, $3, $4, 'active', TRUE, $5)
+        INSERT INTO iam.users (username, email, password_hash, full_name, status, is_superuser)
+        VALUES ($1, $2, $3, $4, 'active', TRUE)
         RETURNING id
         "#,
     )
@@ -278,7 +278,6 @@ async fn seed_tenant_defaults(
     .bind(admin_email)
     .bind(&password_hash)
     .bind(admin_username)
-    .bind(tenant_id)
     .fetch_one(&mut **tx)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("Failed to create admin user: {}", e)))?;
@@ -1297,7 +1296,7 @@ pub async fn get_my_tenants(
     let tenants: Vec<Tenant> = sqlx::query_as(
         "SELECT t.* FROM core_tenants t
          INNER JOIN core_tenant_users tu ON t.id = tu.tenant_id
-         WHERE deleted_at IS NULL AND tu.user_id = $1 AND tu.status = 'active' AND ($2::uuid IS NULL OR tenant_id = $2)
+         WHERE t.deleted_at IS NULL AND tu.user_id = $1 AND tu.status = 'active' AND ($2::uuid IS NULL OR t.tenant_id = $2)
          ORDER BY t.created_at DESC",
     )
     .bind(user_id)

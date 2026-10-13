@@ -389,7 +389,7 @@ pub async fn list_quotes(
         WHERE ($1::text IS NULL OR q.quote_no ILIKE $1 OR s.name ILIKE $1)
           AND ($2::text IS NULL OR q.status = $2)
           AND q.deleted_at IS NULL
-          AND ($5 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $5)
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $5::uuid)
         ORDER BY q.created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -413,7 +413,7 @@ pub async fn list_quotes(
                 WHERE ($1::text IS NULL OR q.quote_no ILIKE $1 OR s.name ILIKE $1)
                   AND ($2::text IS NULL OR q.status = $2)
                   AND q.deleted_at IS NULL
-                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $3)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $3::uuid)
                 "#
             ))
             .bind(&search_pattern)
@@ -539,7 +539,7 @@ pub async fn get_quote(
                CASE WHEN $3='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name
         FROM scm.supplier_quotes q
         LEFT JOIN scm.suppliers s ON q.supplier_id = s.id
-        WHERE q.id = $1 AND q.deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $2)
+        WHERE q.id = $1 AND q.deleted_at IS NULL AND ($2 = '00000000-0000-0000-0000-000000000000' OR q.tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -557,7 +557,7 @@ pub async fn get_quote(
                        sqi.unit_price::float8, sqi.total_price::float8, sqi.lead_time_days
                 FROM scm.supplier_quote_items sqi
                 JOIN scm.purchase_inquiry_items qi ON sqi.inquiry_item_id = qi.id
-                WHERE sqi.quote_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR sqi.tenant_id = $2)
+                WHERE sqi.quote_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR sqi.tenant_id = $2::uuid)
                 "#
             ))
             .bind(id)
@@ -605,7 +605,7 @@ pub async fn update_quote(
         r#"
         UPDATE scm.supplier_quotes
         SET delivery_days = $1, valid_until = $2, payment_terms = $3, remarks = $4, updated_at = $5
-        WHERE id = $6 AND status = 'draft' AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
+        WHERE id = $6 AND status = 'draft' AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7::uuid)
         "#
     ))
     .bind(req.delivery_days)
@@ -673,7 +673,7 @@ pub async fn submit_quote(
         r#"
         UPDATE scm.supplier_quotes
         SET status = 'submitted', updated_at = $1
-        WHERE id = $2 AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
+        WHERE id = $2 AND status = 'draft' AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
         "#
     ))
     .bind(Utc::now())
@@ -748,7 +748,7 @@ pub async fn list_comparisons(
         LEFT JOIN scm.suppliers s ON c.recommended_supplier_id = s.id
         LEFT JOIN scm.purchase_inquiries i ON c.inquiry_id = i.id
         WHERE ($1::text IS NULL OR c.comparison_no ILIKE $1 OR i.title ILIKE $1)
-          AND ($4 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $4)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $4::uuid)
         ORDER BY c.created_at DESC
         LIMIT $2 OFFSET $3
         "#),
@@ -769,7 +769,7 @@ pub async fn list_comparisons(
                 SELECT COUNT(*) FROM scm.price_comparisons c
                 LEFT JOIN scm.purchase_inquiries i ON c.inquiry_id = i.id
                 WHERE ($1::text IS NULL OR c.comparison_no ILIKE $1 OR i.title ILIKE $1)
-                  AND ($2 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $2)
+                  AND ($2 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $2::uuid)
                 "#
             ))
             .bind(&search_pattern)
@@ -939,7 +939,7 @@ pub async fn get_comparison(
         FROM scm.price_comparisons c
         LEFT JOIN scm.suppliers s ON c.recommended_supplier_id = s.id
         LEFT JOIN scm.purchase_inquiries i ON c.inquiry_id = i.id
-        WHERE c.id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $2)
+        WHERE c.id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR c.tenant_id = $2::uuid)
         "#),
     )
     .bind(id)
@@ -958,7 +958,7 @@ pub async fn get_comparison(
                        CASE WHEN $3='en' THEN COALESCE(s.name_en, s.name) ELSE s.name END as supplier_name
                 FROM scm.price_comparison_items ci
                 LEFT JOIN scm.suppliers s ON ci.supplier_id = s.id
-                WHERE ci.comparison_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR ci.tenant_id = $2)
+                WHERE ci.comparison_id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR ci.tenant_id = $2::uuid)
                 ORDER BY ci.rank
                 "#
             ))
@@ -1023,7 +1023,7 @@ pub async fn approve_comparison(
         r#"
         UPDATE scm.price_comparisons
         SET remarks = CONCAT(COALESCE(remarks, ''), ' | 已审批: ', $1), updated_at = $2
-        WHERE id = $3 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+        WHERE id = $3 AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         "#
     ))
     .bind(now_str)
@@ -1088,7 +1088,7 @@ pub async fn update_comparison(
             total_score = COALESCE($6, quality_score) * 0.3 + COALESCE($7, price_score) * 0.4
                          + COALESCE($8, delivery_score) * 0.2 + COALESCE($9, service_score) * 0.1,
             updated_at = $11
-        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -1147,7 +1147,7 @@ pub async fn delete_comparison(
         "scm",
         r#"
         DELETE FROM scm.price_comparison_items WHERE comparison_id = $1
-        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -1159,7 +1159,7 @@ pub async fn delete_comparison(
         "scm",
         r#"
         DELETE FROM scm.price_comparisons WHERE id = $1
-        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)

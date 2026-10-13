@@ -73,7 +73,7 @@ pub async fn list_items(
         FROM scm.purchase_items
         WHERE ($1::text IS NULL OR product_name ILIKE $1 OR product_code ILIKE $1)
           AND ($2::uuid IS NULL OR order_id = $2)
-          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#),
@@ -94,7 +94,7 @@ pub async fn list_items(
                 SELECT COUNT(*) FROM scm.purchase_items
                 WHERE ($1::text IS NULL OR product_name ILIKE $1 OR product_code ILIKE $1)
                   AND ($2::uuid IS NULL OR order_id = $2)
-                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
                 "#
             ))
             .bind(&search_pattern)
@@ -240,7 +240,7 @@ pub async fn get_item(
     let result = sqlx::query_as::<_, PurchaseItem>(
         only_own_schema_query!("scm", r#"
         SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
-        FROM scm.purchase_items WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        FROM scm.purchase_items WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#),
     )
     .bind(id)
@@ -282,7 +282,7 @@ pub async fn update_item(
     let request_data = serde_json::to_value(&req).ok();
 
     let existing = sqlx::query_as::<_, PurchaseItem>(
-        only_own_schema_query!("scm", "SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at FROM scm.purchase_items WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"),
+        only_own_schema_query!("scm", "SELECT id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at FROM scm.purchase_items WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"),
     )
     .bind(id)
     .bind(tenant_bind)
@@ -317,7 +317,7 @@ pub async fn update_item(
         only_own_schema_query!("scm", r#"
         UPDATE scm.purchase_items SET
             product_code = $2, product_name = $3, specification = $4, unit = $5, quantity = $6, unit_price = $7, amount = $8, updated_at = $9
-        WHERE id = $1 AND ($10 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $10)
+        WHERE id = $1 AND ($10 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $10::uuid)
         RETURNING id, order_id, product_code, product_name, specification, unit, quantity, unit_price, amount, created_at, updated_at
         "#),
     )
@@ -395,7 +395,7 @@ pub async fn delete_item(
     let tenant_bind = tenant_bind_value(&claims);
     let result = sqlx::query(only_own_schema_query!(
         "scm",
-        "DELETE FROM scm.purchase_items WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)"
+        "DELETE FROM scm.purchase_items WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)"
     ))
     .bind(id)
     .bind(tenant_bind)

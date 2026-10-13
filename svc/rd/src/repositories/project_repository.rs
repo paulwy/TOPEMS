@@ -292,7 +292,7 @@ mod tests {
 
         // 清理测试表中的所有数据，确保测试隔离
         // 使用 CASCADE 以删除关联数据（如 project_phases 等外键关联表）
-        sqlx::query("TRUNCATE TABLE rs.projects, rs.project_phases, rs.project_milestones, rs.project_members CASCADE")
+        sqlx::query("DELETE FROM rs.projects")
             .execute(&pool)
             .await
             .unwrap_or_default();
@@ -497,7 +497,7 @@ mod tests {
         let repo = TestProjectRepository::new(pool.clone());
 
         // 使用 TRUNCATE 清理数据库，确保测试隔离
-        let _ = sqlx::query("TRUNCATE TABLE IF EXISTS rs.projects, rs.project_phases, rs.project_milestones, rs.project_members, rs.experiments, rs.formulas CASCADE")
+        let _ = sqlx::query("DELETE FROM rs.projects")
             .execute(&pool)
             .await;
 

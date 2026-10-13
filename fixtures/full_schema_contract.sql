@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict y7YtmoAgyhIGcrNbqfUSeHAI359fwaJY5navCBBY9G4DV3CZuKKePqLBA0D4Bdd
+\restrict krNS9s4L3iejeb2OtLsLu663hr42yzLDrOM79bfvJ4I2Sqjg5PhaL3dsaWbFkgS
 
 -- Dumped from database version 18.4 (Homebrew)
 -- Dumped by pg_dump version 18.4 (Homebrew)
@@ -13714,7 +13714,8 @@ CREATE TABLE integration.core_inter_module_sync (
     executed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    data jsonb
 );
 
 ALTER TABLE ONLY integration.core_inter_module_sync FORCE ROW LEVEL SECURITY;
@@ -20698,7 +20699,8 @@ CREATE TABLE portal.core_guide_lessons (
     is_active boolean DEFAULT true NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    guide_id uuid
 );
 
 
@@ -29506,7 +29508,8 @@ CREATE TABLE public.vehicle_requests (
 
 CREATE TABLE public.vehicles (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -31277,7 +31280,8 @@ CREATE TABLE rs.projects (
     source_type character varying(50),
     source_id uuid,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    actual_cost double precision DEFAULT 0 NOT NULL
+    actual_cost double precision DEFAULT 0 NOT NULL,
+    actual_end_date timestamp with time zone
 );
 
 
@@ -33398,6 +33402,22 @@ CREATE TABLE unified_core.password_resets (
     token text NOT NULL,
     expires_at timestamp with time zone NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: alerts; Type: TABLE; Schema: wms; Owner: -
+--
+
+CREATE TABLE wms.alerts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid,
+    severity character varying(16) DEFAULT 'info'::character varying,
+    status character varying(16) DEFAULT 'active'::character varying,
+    message text,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
 );
 
 
@@ -85495,5 +85515,5 @@ ALTER TABLE wms.wms_master_data_refs ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict y7YtmoAgyhIGcrNbqfUSeHAI359fwaJY5navCBBY9G4DV3CZuKKePqLBA0D4Bdd
+\unrestrict krNS9s4L3iejeb2OtLsLu663hr42yzLDrOM79bfvJ4I2Sqjg5PhaL3dsaWbFkgS
 

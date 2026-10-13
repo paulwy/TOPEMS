@@ -328,12 +328,12 @@ pub async fn create_work_station(
     let result = sqlx::query(
         r#"
         INSERT INTO work_stations (
-            station_no, name, workshop_id, location, status,
+            station_no, station_name, workshop_id, location, status,
             capacity, equipment_id, process_id, description,
             created_at, updated_at
         ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $9, $9)
-        RETURNING 
-            id, station_no, name, workshop_id, location,
+        RETURNING
+            id, station_no, station_name, workshop_id, location,
             status, capacity, equipment_id, process_id,
             description, created_at, updated_at
         "#,

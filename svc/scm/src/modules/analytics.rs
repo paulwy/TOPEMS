@@ -72,7 +72,7 @@ pub async fn get_purchase_trend(
              SELECT DATE(created_at) as date, COUNT(*) as count, COALESCE(SUM(total_amount)::float8, 0) as amount
              FROM scm.purchase_orders
              WHERE deleted_at IS NULL AND created_at >= CURRENT_DATE - INTERVAL '6 days'
-               AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
+               AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
              GROUP BY DATE(created_at)
          ) po ON dates.date = po.date
          ORDER BY dates.date"
@@ -114,7 +114,7 @@ pub async fn get_purchase_status(
     let tenant_bind = tenant_bind_value(&claims);
 
     let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM scm.purchase_orders WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)")
+        sqlx::query_scalar("SELECT COUNT(*) FROM scm.purchase_orders WHERE deleted_at IS NULL AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)")
             .bind(tenant_bind)
             .fetch_one(&state.db)
             .await
@@ -124,7 +124,7 @@ pub async fn get_purchase_status(
         "SELECT status, COUNT(*) as count
          FROM scm.purchase_orders
          WHERE deleted_at IS NULL
-           AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)
+           AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)
          GROUP BY status
          ORDER BY count DESC",
     )
@@ -180,8 +180,8 @@ pub async fn get_supplier_ranking(
          FROM scm.purchase_orders po
          LEFT JOIN scm.suppliers s ON po.supplier_id = s.id
          WHERE po.deleted_at IS NULL AND po.supplier_id IS NOT NULL
-           AND ($2 = '00000000-0000-0000-0000-000000000000' OR po.tenant_id = $2)
-           AND ($2 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $2)
+           AND ($2 = '00000000-0000-0000-0000-000000000000' OR po.tenant_id = $2::uuid)
+           AND ($2 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $2::uuid)
          GROUP BY po.supplier_id, s.name, s.name_en
          ORDER BY total_amount DESC
          LIMIT 10",

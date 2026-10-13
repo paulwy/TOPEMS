@@ -141,7 +141,7 @@ async fn get_dashboard_stats(
     .unwrap_or(0);
 
     let by_type: Vec<TypeCount> = sqlx::query_as(
-        "SELECT type, COUNT(*) as count FROM crm.interactions WHERE ($1::uuid IS NULL OR tenant_id = $1) GROUP BY type ORDER BY count DESC",
+        "SELECT interaction_type AS type, COUNT(*) as count FROM crm.interactions WHERE ($1::uuid IS NULL OR tenant_id = $1) GROUP BY interaction_type ORDER BY count DESC",
     )
     .bind(tenant_opt)
     .fetch_all(&mut **txn)
@@ -233,7 +233,7 @@ async fn get_customer_details(
             .unwrap_or_default();
 
             let recent_interactions = sqlx::query_as::<_, crate::models::Interaction>(
-                "SELECT id, tenant_id, customer_id, contact_id, type, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at
+                "SELECT id, tenant_id, customer_id, contact_id, interaction_type AS type, subject, content, scheduled_at, completed_at, status, notes, created_at, updated_at
                  FROM crm.interactions WHERE customer_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2) ORDER BY created_at DESC LIMIT 10"
             )
             .bind(id)

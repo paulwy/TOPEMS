@@ -551,7 +551,7 @@ impl AutoAuditEngine {
 
         let rows: Vec<(Uuid, String, String, i64)> = sqlx::query_as(only_own_schema_query!(
             "finance",
-            r#"SELECT id, voucher_no, status, COUNT(*) as cnt FROM finance.core_finance_vouchers
+            r#"SELECT (array_agg(id))[1] as id, voucher_no, status, COUNT(*) as cnt FROM finance.core_finance_vouchers
                WHERE tenant_id = $1
                GROUP BY voucher_no, status
                HAVING COUNT(*) > $2
@@ -929,7 +929,7 @@ impl AutoAuditEngine {
         sqlx::query_as::<_, AuditFinding>(
             only_own_schema_query!("finance", r#"UPDATE finance_audit_findings_v52
                SET status = 'resolved', resolved_at = $1, resolved_by = $2,
-                   evidence = jsonb_set(COALESCE(evidence, '{}'), '{resolution}', to_jsonb($3::text))
+                   evidence = jsonb_set(COALESCE(evidence, '{}')::jsonb, '{resolution}', to_jsonb($3::text))::text
                WHERE id = $4 AND tenant_id = $5
                RETURNING id, tenant_id, rule_id, entity_type, entity_id, finding_type, severity, description, evidence, status, detected_at, resolved_at, resolved_by"#),
         )

@@ -288,7 +288,7 @@ pub async fn list_suggestions(
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
-          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5)
+          AND ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $5::uuid)
         ORDER BY created_at DESC
         LIMIT $3 OFFSET $4
         "#
@@ -308,7 +308,7 @@ pub async fn list_suggestions(
                 SELECT COUNT(*) FROM scm.mrp_suggestions
                 WHERE deleted_at IS NULL AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
                   AND ($2::text IS NULL OR status = $2)
-                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3)
+                  AND ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $3::uuid)
                 "#),
             )
             .bind(&search_pattern)
@@ -375,7 +375,7 @@ pub async fn get_suggestion(
                current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                lead_time_days, suggested_order_date, suggested_delivery_date, status,
                source_type, source_order_id, remarks, created_at, updated_at
-        FROM scm.mrp_suggestions WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        FROM scm.mrp_suggestions WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -430,7 +430,7 @@ pub async fn update_suggestion(
             status = COALESCE($8, status),
             remarks = COALESCE($9, remarks),
             updated_at = $10
-        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -488,7 +488,7 @@ pub async fn delete_suggestion(
         "scm",
         r#"
         DELETE FROM scm.mrp_suggestions WHERE id = $1
-        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -554,7 +554,7 @@ pub async fn compute_mrp(
 
     let clear_result = sqlx::query(only_own_schema_query!(
         "scm",
-        "UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1)"
+        "UPDATE scm.mrp_suggestions SET deleted_at = NOW() WHERE status = 'draft' AND ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)"
     ))
     .bind(tenant_bind)
     .execute(&mut *tx)
@@ -608,14 +608,14 @@ pub async fn compute_mrp(
             '系统自动生成' as remarks,
             $3,
             $3,
-            $7
+            $7::uuid
         FROM scm.materials m
         LEFT JOIN (
             SELECT material_code, SUM(quantity) as total
             FROM scm.sales_order_items
             WHERE created_at >= CURRENT_DATE - INTERVAL '7 days'
               AND $4 = true
-              AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
+              AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7::uuid)
             GROUP BY material_code
         ) sales_orders ON m.material_code = sales_orders.material_code
         LEFT JOIN (
@@ -624,13 +624,13 @@ pub async fn compute_mrp(
             WHERE forecast_date >= CURRENT_DATE 
               AND forecast_date <= CURRENT_DATE + ($5 || ' days')::INTERVAL
               AND $6 = true
-              AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
+              AND ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7::uuid)
             GROUP BY material_code
         ) forecast ON m.material_code = forecast.material_code
         LEFT JOIN (
             SELECT item_code, SUM(quantity) as quantity
             FROM scm.wms_inventory_snapshots
-            WHERE ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7)
+            WHERE ($7 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $7::uuid)
             GROUP BY item_code
         ) i ON m.material_code = i.item_code
         LEFT JOIN (
@@ -640,11 +640,11 @@ pub async fn compute_mrp(
             FROM scm.supplier_products sp
             JOIN scm.suppliers s ON sp.supplier_id = s.id
             WHERE s.status = 'active'
-              AND ($7 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $7)
+              AND ($7 = '00000000-0000-0000-0000-000000000000' OR s.tenant_id = $7::uuid)
             ORDER BY sp.material_code, sp.priority
         ) s ON m.material_code = s.material_code
         WHERE (COALESCE(sales_orders.total, 0) + COALESCE(forecast.total, 0)) > 0
-          AND ($7 = '00000000-0000-0000-0000-000000000000' OR m.tenant_id = $7)
+          AND ($7 = '00000000-0000-0000-0000-000000000000' OR m.tenant_id = $7::uuid)
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
                   current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                   lead_time_days, suggested_order_date, suggested_delivery_date, status,
@@ -764,7 +764,7 @@ pub async fn confirm_suggestion(
                current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                lead_time_days, suggested_order_date, suggested_delivery_date, status,
                source_type, source_order_id, remarks, created_at, updated_at
-        FROM scm.mrp_suggestions WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+        FROM scm.mrp_suggestions WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
@@ -811,7 +811,7 @@ pub async fn confirm_suggestion(
                 ELSE $4 
             END,
             updated_at = $5
-        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6)
+        WHERE id = $1 AND ($6 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $6::uuid)
         RETURNING id, suggestion_number, material_code, material_name, specification, unit,
                   current_stock::float8, required_quantity::float8, suggested_quantity::float8, supplier_id, supplier_name,
                   lead_time_days, suggested_order_date, suggested_delivery_date, status,
@@ -916,7 +916,7 @@ pub async fn material_requirement_summary(
         FROM scm.mrp_suggestions
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
-          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4)
+          AND ($4 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $4::uuid)
         GROUP BY material_code, material_name
         ORDER BY shortage DESC
         LIMIT $2 OFFSET $3
@@ -938,7 +938,7 @@ pub async fn material_requirement_summary(
                 FROM scm.mrp_suggestions
                 WHERE deleted_at IS NULL
                   AND ($1::text IS NULL OR material_name ILIKE $1 OR material_code ILIKE $1)
-                  AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2)
+                  AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
                 "#
             ))
             .bind(&search_pattern)

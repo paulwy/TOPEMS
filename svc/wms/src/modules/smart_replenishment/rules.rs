@@ -345,9 +345,9 @@ pub async fn update_rule(
             consumption_days = COALESCE($9, consumption_days),
             enabled = COALESCE($10, enabled),
             priority_order = COALESCE($11, priority_order),
-            remarks = CASE 
-                WHEN remarks IS NOT NULL AND $12 IS NOT NULL THEN remarks || ' | ' || $12
-                ELSE COALESCE(remarks, $12)
+            remarks = CASE
+                WHEN remarks IS NOT NULL AND $12::text IS NOT NULL THEN remarks || ' | ' || $12::text
+                ELSE COALESCE(remarks, $12::text)
             END,
             updated_at = $13
         WHERE id = $1

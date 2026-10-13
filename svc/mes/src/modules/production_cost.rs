@@ -639,10 +639,10 @@ pub async fn get_period_cost_report(
     let work_orders = sqlx::query(
         r#"
         SELECT wo.id, wo.product_code, wo.product_name, wo.completed_quantity,
-               wo.actual_start_time, wo.actual_end_time, wo.work_station_id
+               wo.actual_start_date, wo.actual_end_date, wo.work_station_id
         FROM mes.work_orders wo
-        WHERE wo.actual_start_time IS NOT NULL
-        AND wo.actual_start_time >= $1 AND wo.actual_start_time <= $2
+        WHERE wo.actual_start_date IS NOT NULL
+        AND wo.actual_start_date >= $1 AND wo.actual_start_date <= $2
         "#,
     )
     .bind(start_date)
@@ -787,7 +787,7 @@ pub async fn get_cost_trend(
         let week_cost = sqlx::query(
             r#"
             SELECT COUNT(*) as cnt FROM mes.work_orders
-            WHERE actual_start_time >= $1 AND actual_start_time <= $2
+            WHERE actual_start_date >= $1 AND actual_start_date <= $2
             "#,
         )
         .bind(period_start)

@@ -560,8 +560,8 @@ pub async fn approve_leave(
         SET
             status = 'approved',
             approver_id = $2,
-            approval_date = $3,
-            updated_at = $3
+            approval_date = $3::date,
+            updated_at = $3::timestamptz
         WHERE id = $1 AND status = 'pending'
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
         "#)
@@ -616,9 +616,9 @@ pub async fn reject_leave(
         SET
             status = 'rejected',
             approver_id = $2,
-            approval_date = $3,
+            approval_date = $3::date,
             rejection_reason = $4,
-            updated_at = $3
+            updated_at = $3::timestamptz
         WHERE id = $1 AND status = 'pending'
         RETURNING id, employee_id, leave_type, start_date::timestamptz AS start_date, end_date::timestamptz AS end_date, days, reason, status, approver_id, approval_date::timestamptz AS approved_at, rejection_reason, created_at, updated_at
         "#)
