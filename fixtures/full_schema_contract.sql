@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict KPwjdndmaeSyVWtZbfxdPOlx1zRMkHogv9NJJciZbD31ug11gKvQpYFub9Ee26q
+\restrict y7YtmoAgyhIGcrNbqfUSeHAI359fwaJY5navCBBY9G4DV3CZuKKePqLBA0D4Bdd
 
 -- Dumped from database version 18.4 (Homebrew)
 -- Dumped by pg_dump version 18.4 (Homebrew)
@@ -2050,8 +2050,7 @@ CREATE TABLE bi.analytics_comparison_analyses (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_analytics_comparison_analyses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -2067,8 +2066,7 @@ CREATE TABLE bi.analytics_comparison_results (
     summary jsonb,
     generated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_analytics_comparison_results_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -2148,8 +2146,7 @@ CREATE TABLE bi.analytics_datasets (
     owner_id character varying(64) NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_analytics_datasets_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -2178,8 +2175,7 @@ CREATE TABLE bi.analytics_datasources (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_analytics_datasources_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -2283,8 +2279,7 @@ CREATE TABLE bi.analytics_sync_records (
     duration_ms bigint,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_analytics_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -2397,8 +2392,7 @@ CREATE TABLE bi.report_schedules (
     parameters jsonb,
     recipients jsonb,
     run_count integer DEFAULT 0,
-    error_message text,
-    CONSTRAINT ck_report_schedules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    error_message text
 );
 
 ALTER TABLE ONLY bi.report_schedules FORCE ROW LEVEL SECURITY;
@@ -2595,8 +2589,7 @@ CREATE TABLE communication.core_geofences (
     end_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_geofences_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -2689,8 +2682,7 @@ CREATE TABLE communication.notification_channels (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_notification_channels_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 
@@ -2901,8 +2893,7 @@ CREATE TABLE core.knowledge_bases (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_knowledge_bases_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY core.knowledge_bases FORCE ROW LEVEL SECURITY;
@@ -2948,8 +2939,7 @@ CREATE TABLE core.knowledge_documents (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_knowledge_documents_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY core.knowledge_documents FORCE ROW LEVEL SECURITY;
@@ -3047,8 +3037,7 @@ CREATE TABLE crm.billing_records (
     items jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_billing_records_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY crm.billing_records FORCE ROW LEVEL SECURITY;
@@ -3083,8 +3072,7 @@ CREATE TABLE crm.contacts (
     updated_by uuid,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    approval_status character varying(50) DEFAULT 'none'::character varying NOT NULL,
-    CONSTRAINT ck_contacts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    approval_status character varying(50) DEFAULT 'none'::character varying NOT NULL
 );
 
 ALTER TABLE ONLY crm.contacts FORCE ROW LEVEL SECURITY;
@@ -3133,8 +3121,7 @@ CREATE TABLE crm.contracts (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    title_en text,
-    CONSTRAINT ck_contracts_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    title_en text
 );
 
 
@@ -3156,8 +3143,7 @@ CREATE TABLE crm.core_crm_customers (
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_crm_customers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY crm.core_crm_customers FORCE ROW LEVEL SECURITY;
@@ -3214,8 +3200,7 @@ CREATE TABLE crm.customer_finance (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_customer_finance_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -3233,8 +3218,7 @@ CREATE TABLE crm.customer_orders (
     status character varying(20) DEFAULT 'completed'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_customer_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY crm.customer_orders FORCE ROW LEVEL SECURITY;
@@ -3361,8 +3345,7 @@ CREATE TABLE crm.customers (
     tags text[] DEFAULT '{}'::text[] NOT NULL,
     approval_status character varying(50) DEFAULT 'none'::character varying NOT NULL,
     organization_id uuid,
-    name_en character varying(255),
-    CONSTRAINT ck_customers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY crm.customers FORCE ROW LEVEL SECURITY;
@@ -3561,6 +3544,24 @@ COMMENT ON COLUMN crm.opportunities.probability IS '成交概率（百分比）'
 
 
 --
+-- Name: return_event_outbox; Type: TABLE; Schema: crm; Owner: -
+--
+
+CREATE TABLE crm.return_event_outbox (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    return_id uuid NOT NULL,
+    return_no character varying(64) NOT NULL,
+    event_type character varying(32) NOT NULL,
+    payload jsonb NOT NULL,
+    status character varying(16) DEFAULT 'FAILED'::character varying NOT NULL,
+    attempts integer DEFAULT 1 NOT NULL,
+    last_error text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: return_items; Type: TABLE; Schema: crm; Owner: -
 --
 
@@ -3607,8 +3608,7 @@ CREATE TABLE crm.returns (
     ticket_id uuid,
     warehouse_id uuid,
     deleted_at timestamp with time zone,
-    resolved_at timestamp with time zone,
-    CONSTRAINT ck_returns_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['pending'::text, 'accepted'::text, 'approved'::text, 'rejected'::text, 'processing'::text, 'completed'::text, 'cancelled'::text]))))
+    resolved_at timestamp with time zone
 );
 
 ALTER TABLE ONLY crm.returns FORCE ROW LEVEL SECURITY;
@@ -3657,8 +3657,7 @@ CREATE TABLE crm.sales_forecasts (
     status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_sales_forecasts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY crm.sales_forecasts FORCE ROW LEVEL SECURITY;
@@ -3678,8 +3677,7 @@ CREATE TABLE crm.sales_orders (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_sales_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY crm.sales_orders FORCE ROW LEVEL SECURITY;
@@ -3785,8 +3783,7 @@ CREATE TABLE doc.documents (
     created_by character varying(100),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_documents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY doc.documents FORCE ROW LEVEL SECURITY;
@@ -3863,8 +3860,7 @@ CREATE TABLE doc_service.archives (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by character varying(255) NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_archives_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY doc_service.archives FORCE ROW LEVEL SECURITY;
@@ -4068,8 +4064,7 @@ CREATE TABLE ehs.emergency_plans (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_emergency_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.emergency_plans FORCE ROW LEVEL SECURITY;
@@ -4094,8 +4089,7 @@ CREATE TABLE ehs.environmental_alerts (
     handle_result text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_environmental_alerts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY ehs.environmental_alerts FORCE ROW LEVEL SECURITY;
@@ -4143,8 +4137,7 @@ CREATE TABLE ehs.health_checkups (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_health_checkups_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.health_checkups FORCE ROW LEVEL SECURITY;
@@ -4171,8 +4164,7 @@ CREATE TABLE ehs.health_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_health_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.health_records FORCE ROW LEVEL SECURITY;
@@ -4198,8 +4190,7 @@ CREATE TABLE ehs.monitoring_points (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_monitoring_points_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.monitoring_points FORCE ROW LEVEL SECURITY;
@@ -4222,8 +4213,7 @@ CREATE TABLE ehs.qa_ehs_accident_investigations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_accident_investigations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_accident_investigations FORCE ROW LEVEL SECURITY;
@@ -4264,8 +4254,7 @@ CREATE TABLE ehs.qa_ehs_accident_treatments (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_accident_treatments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_accident_treatments FORCE ROW LEVEL SECURITY;
@@ -4314,8 +4303,7 @@ CREATE TABLE ehs.qa_ehs_alerts (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_alerts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_alerts FORCE ROW LEVEL SECURITY;
@@ -4344,8 +4332,7 @@ CREATE TABLE ehs.qa_ehs_compliance_evaluations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_compliance_evaluations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_compliance_evaluations FORCE ROW LEVEL SECURITY;
@@ -4370,8 +4357,7 @@ CREATE TABLE ehs.qa_ehs_compliance_items (
     status character varying(32) DEFAULT 'pending'::character varying,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_compliance_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_compliance_items FORCE ROW LEVEL SECURITY;
@@ -4399,8 +4385,7 @@ CREATE TABLE ehs.qa_ehs_contraindications (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_contraindications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_contraindications FORCE ROW LEVEL SECURITY;
@@ -4431,8 +4416,7 @@ CREATE TABLE ehs.qa_ehs_detection_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_detection_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_detection_records FORCE ROW LEVEL SECURITY;
@@ -4462,8 +4446,7 @@ CREATE TABLE ehs.qa_ehs_discharge_permits (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_discharge_permits_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_discharge_permits FORCE ROW LEVEL SECURITY;
@@ -4496,8 +4479,7 @@ CREATE TABLE ehs.qa_ehs_disease_cases (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_disease_cases_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_disease_cases FORCE ROW LEVEL SECURITY;
@@ -4548,8 +4530,7 @@ CREATE TABLE ehs.qa_ehs_drill_plans (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_drill_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_drill_plans FORCE ROW LEVEL SECURITY;
@@ -4575,8 +4556,7 @@ CREATE TABLE ehs.qa_ehs_drill_problems (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_drill_problems_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_drill_problems FORCE ROW LEVEL SECURITY;
@@ -4607,8 +4587,7 @@ CREATE TABLE ehs.qa_ehs_drill_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_drill_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_drill_records FORCE ROW LEVEL SECURITY;
@@ -4629,8 +4608,7 @@ CREATE TABLE ehs.qa_ehs_emergency_plan_approvals (
     order_num integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_emergency_plan_approvals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_emergency_plan_approvals FORCE ROW LEVEL SECURITY;
@@ -4726,8 +4704,7 @@ CREATE TABLE ehs.qa_ehs_employees (
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_employees_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_employees FORCE ROW LEVEL SECURITY;
@@ -4759,8 +4736,7 @@ CREATE TABLE ehs.qa_ehs_env_monitor_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_env_monitor_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_env_monitor_records FORCE ROW LEVEL SECURITY;
@@ -4781,8 +4757,7 @@ CREATE TABLE ehs.qa_ehs_environment (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_environment_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_environment FORCE ROW LEVEL SECURITY;
@@ -4816,8 +4791,7 @@ CREATE TABLE ehs.qa_ehs_environment_incidents (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_environment_incidents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_environment_incidents FORCE ROW LEVEL SECURITY;
@@ -4846,8 +4820,7 @@ CREATE TABLE ehs.qa_ehs_environmental_regulations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_environmental_regulations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_environmental_regulations FORCE ROW LEVEL SECURITY;
@@ -4876,8 +4849,7 @@ CREATE TABLE ehs.qa_ehs_hazard_factors (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     name_en character varying(255),
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_hazard_factors_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_hazard_factors FORCE ROW LEVEL SECURITY;
@@ -4956,8 +4928,7 @@ CREATE TABLE ehs.qa_ehs_hazardous_materials (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     name_en character varying(255),
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_hazardous_materials_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_hazardous_materials FORCE ROW LEVEL SECURITY;
@@ -5011,8 +4982,7 @@ CREATE TABLE ehs.qa_ehs_health_abnormalities (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_health_abnormalities_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_health_abnormalities FORCE ROW LEVEL SECURITY;
@@ -5038,8 +5008,7 @@ CREATE TABLE ehs.qa_ehs_health_exam_plans (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_health_exam_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_health_exam_plans FORCE ROW LEVEL SECURITY;
@@ -5107,8 +5076,7 @@ CREATE TABLE ehs.qa_ehs_health_trainings (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_health_trainings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_health_trainings FORCE ROW LEVEL SECURITY;
@@ -5154,8 +5122,7 @@ CREATE TABLE ehs.qa_ehs_inspection_plans (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_inspection_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_inspection_plans FORCE ROW LEVEL SECURITY;
@@ -5201,8 +5168,7 @@ CREATE TABLE ehs.qa_ehs_inspection_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_inspection_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_inspection_records FORCE ROW LEVEL SECURITY;
@@ -5228,8 +5194,7 @@ CREATE TABLE ehs.qa_ehs_material_stocks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_material_stocks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_material_stocks FORCE ROW LEVEL SECURITY;
@@ -5288,8 +5253,7 @@ CREATE TABLE ehs.qa_ehs_protection_measures (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_protection_measures_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_protection_measures FORCE ROW LEVEL SECURITY;
@@ -5389,8 +5353,7 @@ CREATE TABLE ehs.qa_ehs_sync_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_qa_ehs_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 ALTER TABLE ONLY ehs.qa_ehs_sync_records FORCE ROW LEVEL SECURITY;
@@ -5446,8 +5409,7 @@ CREATE TABLE ehs.risk_assessments (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_risk_assessments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.risk_assessments FORCE ROW LEVEL SECURITY;
@@ -5472,8 +5434,7 @@ CREATE TABLE ehs.risk_controls (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_risk_controls_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.risk_controls FORCE ROW LEVEL SECURITY;
@@ -5498,8 +5459,7 @@ CREATE TABLE ehs.safety_checks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_safety_checks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.safety_checks FORCE ROW LEVEL SECURITY;
@@ -5525,8 +5485,7 @@ CREATE TABLE ehs.safety_hazards (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    name_en character varying(255),
-    CONSTRAINT ck_safety_hazards_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY ehs.safety_hazards FORCE ROW LEVEL SECURITY;
@@ -5591,8 +5550,7 @@ CREATE TABLE ehs.training_programs (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_training_programs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.training_programs FORCE ROW LEVEL SECURITY;
@@ -5618,8 +5576,7 @@ CREATE TABLE ehs.training_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_training_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.training_records FORCE ROW LEVEL SECURITY;
@@ -5648,8 +5605,7 @@ CREATE TABLE ehs.vaccination_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_vaccination_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY ehs.vaccination_records FORCE ROW LEVEL SECURITY;
@@ -5704,8 +5660,7 @@ CREATE TABLE erp.asset_categories (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_asset_categories_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    name_en character varying(255)
 );
 
 
@@ -5744,8 +5699,7 @@ CREATE TABLE erp.assets (
     current_value double precision DEFAULT 0,
     department_id uuid,
     employee_id uuid,
-    description text,
-    CONSTRAINT ck_assets_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    description text
 );
 
 ALTER TABLE ONLY erp.assets FORCE ROW LEVEL SECURITY;
@@ -5797,8 +5751,7 @@ CREATE TABLE erp.bank_accounts (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
     deleted_at timestamp with time zone,
-    is_default boolean DEFAULT false NOT NULL,
-    CONSTRAINT ck_bank_accounts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    is_default boolean DEFAULT false NOT NULL
 );
 
 ALTER TABLE ONLY erp.bank_accounts FORCE ROW LEVEL SECURITY;
@@ -5824,8 +5777,7 @@ CREATE TABLE erp.company_relations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_company_relations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.company_relations FORCE ROW LEVEL SECURITY;
@@ -5891,8 +5843,7 @@ CREATE TABLE erp.consolidation_reports (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_consolidation_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.consolidation_reports FORCE ROW LEVEL SECURITY;
@@ -5939,8 +5890,7 @@ CREATE TABLE erp.consolidation_scopes (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_consolidation_scopes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.consolidation_scopes FORCE ROW LEVEL SECURITY;
@@ -5962,8 +5912,7 @@ CREATE TABLE erp.core_erp_materials (
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_erp_materials_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.core_erp_materials FORCE ROW LEVEL SECURITY;
@@ -5985,8 +5934,7 @@ CREATE TABLE erp.core_erp_suppliers (
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_erp_suppliers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.core_erp_suppliers FORCE ROW LEVEL SECURITY;
@@ -6017,8 +5965,7 @@ CREATE TABLE erp.customers (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    name_en character varying(255),
-    CONSTRAINT ck_customers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY erp.customers FORCE ROW LEVEL SECURITY;
@@ -6042,8 +5989,7 @@ CREATE TABLE erp.dict_items (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_dict_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.dict_items FORCE ROW LEVEL SECURITY;
@@ -6064,8 +6010,7 @@ CREATE TABLE erp.dict_types (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_dict_types_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.dict_types FORCE ROW LEVEL SECURITY;
@@ -6086,8 +6031,7 @@ CREATE TABLE erp.documents (
     uploader text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_documents_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.documents FORCE ROW LEVEL SECURITY;
@@ -6114,8 +6058,7 @@ CREATE TABLE erp.elimination_rules (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_elimination_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.elimination_rules FORCE ROW LEVEL SECURITY;
@@ -6159,8 +6102,7 @@ CREATE TABLE erp.erp_master_data_conflicts (
     detected_at timestamp with time zone DEFAULT now() NOT NULL,
     resolved_at timestamp with time zone,
     resolved_by text,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_erp_master_data_conflicts_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -6227,8 +6169,7 @@ CREATE TABLE erp.erp_master_data_refs (
     destroy_scheduled_at timestamp with time zone,
     destroy_scheduled_by uuid,
     destroyed_at timestamp with time zone,
-    destroyed_by uuid,
-    CONSTRAINT ck_erp_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    destroyed_by uuid
 );
 
 ALTER TABLE ONLY erp.erp_master_data_refs FORCE ROW LEVEL SECURITY;
@@ -6249,8 +6190,7 @@ CREATE TABLE erp.erp_master_data_versions (
     snapshot jsonb NOT NULL,
     changed_by text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_erp_master_data_versions_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -6280,8 +6220,7 @@ CREATE TABLE erp.erp_production_orders (
     notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_erp_production_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -6318,8 +6257,7 @@ CREATE TABLE erp.expenses (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_expenses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.expenses FORCE ROW LEVEL SECURITY;
@@ -6343,8 +6281,7 @@ CREATE TABLE erp.fin_reconciliations (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_fin_reconciliations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.fin_reconciliations FORCE ROW LEVEL SECURITY;
@@ -6378,8 +6315,7 @@ CREATE TABLE erp.financial_vouchers (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_financial_vouchers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying, 'draft'::character varying, 'pending'::character varying, 'posted'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.financial_vouchers FORCE ROW LEVEL SECURITY;
@@ -6412,8 +6348,7 @@ CREATE TABLE erp.fixed_assets (
     useful_life_months integer DEFAULT 0 NOT NULL,
     depreciation_period character varying(64) DEFAULT ''::character varying NOT NULL,
     net_value double precision GENERATED ALWAYS AS ((original_value - accumulated_depreciation)) STORED,
-    monthly_depreciation double precision GENERATED ALWAYS AS (((original_value - salvage_value) / (expected_life)::double precision)) STORED,
-    CONSTRAINT ck_fixed_assets_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    monthly_depreciation double precision GENERATED ALWAYS AS (((original_value - salvage_value) / (expected_life)::double precision)) STORED
 );
 
 ALTER TABLE ONLY erp.fixed_assets FORCE ROW LEVEL SECURITY;
@@ -6490,8 +6425,7 @@ CREATE TABLE erp.inventory (
     status character varying(32) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_inventory_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.inventory FORCE ROW LEVEL SECURITY;
@@ -6531,8 +6465,7 @@ CREATE TABLE erp.leave_requests (
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_leave_requests_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.leave_requests FORCE ROW LEVEL SECURITY;
@@ -6560,8 +6493,7 @@ CREATE TABLE erp.materials (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_materials_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.materials FORCE ROW LEVEL SECURITY;
@@ -6585,8 +6517,7 @@ CREATE TABLE erp.meeting_bookings (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    room_name character varying(256) DEFAULT ''::character varying NOT NULL,
-    CONSTRAINT ck_meeting_bookings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    room_name character varying(256) DEFAULT ''::character varying NOT NULL
 );
 
 ALTER TABLE ONLY erp.meeting_bookings FORCE ROW LEVEL SECURITY;
@@ -6606,8 +6537,7 @@ CREATE TABLE erp.meeting_rooms (
     status character varying(50) DEFAULT 'available'::character varying,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_meeting_rooms_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.meeting_rooms FORCE ROW LEVEL SECURITY;
@@ -6628,8 +6558,7 @@ CREATE TABLE erp.office_supplies (
     status character varying(50) DEFAULT 'in_stock'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_office_supplies_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -6677,8 +6606,7 @@ CREATE TABLE erp.payables (
     contract_id uuid,
     payment_schedule text,
     supplier_id uuid,
-    source_order_id uuid,
-    CONSTRAINT ck_payables_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    source_order_id uuid
 );
 
 ALTER TABLE ONLY erp.payables FORCE ROW LEVEL SECURITY;
@@ -6704,8 +6632,7 @@ CREATE TABLE erp.purchase_orders (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_purchase_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.purchase_orders FORCE ROW LEVEL SECURITY;
@@ -6734,8 +6661,7 @@ CREATE TABLE erp.receivables (
     contract_id uuid,
     payment_schedule text,
     customer_id uuid,
-    source_order_id uuid,
-    CONSTRAINT ck_receivables_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    source_order_id uuid
 );
 
 ALTER TABLE ONLY erp.receivables FORCE ROW LEVEL SECURITY;
@@ -6805,8 +6731,7 @@ CREATE TABLE erp.suppliers (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    name_en character varying(255),
-    CONSTRAINT ck_suppliers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY erp.suppliers FORCE ROW LEVEL SECURITY;
@@ -6837,8 +6762,7 @@ CREATE TABLE erp.vehicle_requests (
     requester character varying(128) DEFAULT ''::character varying NOT NULL,
     purpose text DEFAULT ''::text NOT NULL,
     driver_required boolean DEFAULT false NOT NULL,
-    rejected_reason text,
-    CONSTRAINT ck_vehicle_requests_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    rejected_reason text
 );
 
 ALTER TABLE ONLY erp.vehicle_requests FORCE ROW LEVEL SECURITY;
@@ -6862,8 +6786,7 @@ CREATE TABLE erp.vehicles (
     fuel_type character varying(50),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_vehicles_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY erp.vehicles FORCE ROW LEVEL SECURITY;
@@ -6908,8 +6831,7 @@ CREATE TABLE erp.vouchers (
     reference_no text,
     status text DEFAULT 'draft'::text NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    tenant_id uuid,
-    CONSTRAINT ck_vouchers_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY erp.vouchers FORCE ROW LEVEL SECURITY;
@@ -6933,8 +6855,7 @@ CREATE TABLE finance.accounting_subjects (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_accounting_subjects_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.accounting_subjects FORCE ROW LEVEL SECURITY;
@@ -6957,8 +6878,7 @@ CREATE TABLE finance.budgets (
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_budgets_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.budgets FORCE ROW LEVEL SECURITY;
@@ -6998,8 +6918,7 @@ CREATE TABLE finance.core_finance_accounts (
     updated_by uuid,
     deleted_at timestamp with time zone,
     category text,
-    is_leaf boolean DEFAULT false NOT NULL,
-    CONSTRAINT ck_core_finance_accounts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    is_leaf boolean DEFAULT false NOT NULL
 );
 
 ALTER TABLE ONLY finance.core_finance_accounts FORCE ROW LEVEL SECURITY;
@@ -7196,8 +7115,7 @@ CREATE TABLE finance.core_finance_payment_workflow (
     approval_history jsonb,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_finance_payment_workflow_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.core_finance_payment_workflow FORCE ROW LEVEL SECURITY;
@@ -7460,8 +7378,7 @@ CREATE TABLE finance.difference_adjustments (
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_difference_adjustments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.difference_adjustments FORCE ROW LEVEL SECURITY;
@@ -7491,8 +7408,7 @@ CREATE TABLE finance.erp_collection_records (
     updated_at timestamp with time zone,
     deleted_at timestamp with time zone,
     confirmed_by character varying(255),
-    confirmed_at timestamp with time zone,
-    CONSTRAINT ck_erp_collection_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    confirmed_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.erp_collection_records FORCE ROW LEVEL SECURITY;
@@ -7519,8 +7435,7 @@ CREATE TABLE finance.erp_payables (
     supplier_name character varying(255),
     tenant_id uuid,
     updated_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_erp_payables_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.erp_payables FORCE ROW LEVEL SECURITY;
@@ -7548,8 +7463,7 @@ CREATE TABLE finance.erp_payment_records (
     supplier_name character varying(255),
     tenant_id uuid,
     updated_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_erp_payment_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.erp_payment_records FORCE ROW LEVEL SECURITY;
@@ -7576,8 +7490,7 @@ CREATE TABLE finance.erp_receivables (
     status character varying(255),
     tenant_id uuid,
     updated_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_erp_receivables_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.erp_receivables FORCE ROW LEVEL SECURITY;
@@ -7604,8 +7517,7 @@ CREATE TABLE finance.expenses (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_expenses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.expenses FORCE ROW LEVEL SECURITY;
@@ -7750,8 +7662,7 @@ CREATE TABLE finance.finance_audit_findings_v52 (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_audit_findings_v52_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_audit_findings_v52 FORCE ROW LEVEL SECURITY;
@@ -7768,6 +7679,8 @@ CREATE TABLE finance.finance_audit_log (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL
 );
+
+ALTER TABLE ONLY finance.finance_audit_log FORCE ROW LEVEL SECURITY;
 
 
 --
@@ -8087,8 +8000,7 @@ CREATE TABLE finance.finance_u8_import_records (
     tenant_id uuid,
     total_count integer,
     updated_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_u8_import_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_u8_import_records FORCE ROW LEVEL SECURITY;
@@ -8195,8 +8107,7 @@ CREATE TABLE finance.finance_v54_review_workflows (
     steps jsonb DEFAULT '[]'::jsonb NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v54_review_workflows_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v54_review_workflows FORCE ROW LEVEL SECURITY;
@@ -8278,8 +8189,7 @@ CREATE TABLE finance.finance_v55_invoices (
     validated_at timestamp with time zone,
     posted_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v55_invoices_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v55_invoices FORCE ROW LEVEL SECURITY;
@@ -8318,8 +8228,7 @@ CREATE TABLE finance.finance_v55_payment_results (
     transaction_ref character varying(255),
     fee double precision DEFAULT 0 NOT NULL,
     processed_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v55_payment_results_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v55_payment_results FORCE ROW LEVEL SECURITY;
@@ -8401,8 +8310,7 @@ CREATE TABLE finance.finance_v56_tax_forms (
     rejection_reason text,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v56_tax_forms_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v56_tax_forms FORCE ROW LEVEL SECURITY;
@@ -8443,8 +8351,7 @@ CREATE TABLE finance.finance_v56_tax_plans (
     approved_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v56_tax_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v56_tax_plans FORCE ROW LEVEL SECURITY;
@@ -8554,8 +8461,7 @@ CREATE TABLE finance.finance_v57_generated_reports (
     generated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
     format character varying(20) DEFAULT 'json'::character varying NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v57_generated_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v57_generated_reports FORCE ROW LEVEL SECURITY;
@@ -8724,8 +8630,7 @@ CREATE TABLE finance.finance_v58_pool_transfers (
     reference character varying(255) NOT NULL,
     status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v58_pool_transfers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v58_pool_transfers FORCE ROW LEVEL SECURITY;
@@ -8835,8 +8740,7 @@ CREATE TABLE finance.finance_v59_scoring_models (
     accuracy double precision DEFAULT 0 NOT NULL,
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v59_scoring_models_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v59_scoring_models FORCE ROW LEVEL SECURITY;
@@ -8936,8 +8840,7 @@ CREATE TABLE finance.finance_v60_alerts (
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     acknowledged_at timestamp with time zone,
     resolved_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v60_alerts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v60_alerts FORCE ROW LEVEL SECURITY;
@@ -8978,8 +8881,7 @@ CREATE TABLE finance.finance_v60_decision_scenarios (
     status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v60_decision_scenarios_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v60_decision_scenarios FORCE ROW LEVEL SECURITY;
@@ -9015,8 +8917,7 @@ CREATE TABLE finance.finance_v60_schedule_executions (
     duration_ms double precision,
     status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
     output jsonb,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v60_schedule_executions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v60_schedule_executions FORCE ROW LEVEL SECURITY;
@@ -9037,8 +8938,7 @@ CREATE TABLE finance.finance_v60_schedule_tasks (
     status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_v60_schedule_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_v60_schedule_tasks FORCE ROW LEVEL SECURITY;
@@ -9062,8 +8962,7 @@ CREATE TABLE finance.finance_voucher_generation_rules (
     status character varying(255),
     tenant_id uuid,
     updated_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_voucher_generation_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_voucher_generation_rules FORCE ROW LEVEL SECURITY;
@@ -9114,8 +9013,7 @@ CREATE TABLE finance.finance_voucher_templates (
     tenant_id uuid,
     updated_at timestamp with time zone,
     voucher_type character varying(255),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_voucher_templates_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.finance_voucher_templates FORCE ROW LEVEL SECURITY;
@@ -9144,8 +9042,7 @@ CREATE TABLE finance.financial_reports (
     approved_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_financial_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.financial_reports FORCE ROW LEVEL SECURITY;
@@ -9170,8 +9067,7 @@ CREATE TABLE finance.mv_receivable_aging (
     version bigint DEFAULT 0,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_mv_receivable_aging_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY finance.mv_receivable_aging FORCE ROW LEVEL SECURITY;
@@ -9194,8 +9090,7 @@ CREATE TABLE finance.mv_voucher_summary (
     posted_at timestamp with time zone,
     version bigint DEFAULT 0,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_mv_voucher_summary_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY finance.mv_voucher_summary FORCE ROW LEVEL SECURITY;
@@ -9221,8 +9116,7 @@ CREATE TABLE finance.payables (
     deleted_at timestamp with time zone,
     project_id uuid,
     contract_id uuid,
-    payment_schedule text,
-    CONSTRAINT ck_payables_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    payment_schedule text
 );
 
 ALTER TABLE ONLY finance.payables FORCE ROW LEVEL SECURITY;
@@ -9248,8 +9142,7 @@ CREATE TABLE finance.receivables (
     deleted_at timestamp with time zone,
     project_id uuid,
     contract_id uuid,
-    payment_schedule text,
-    CONSTRAINT ck_receivables_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    payment_schedule text
 );
 
 ALTER TABLE ONLY finance.receivables FORCE ROW LEVEL SECURITY;
@@ -9276,8 +9169,7 @@ CREATE TABLE finance.reconcile_items (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_reconcile_items_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY finance.reconcile_items FORCE ROW LEVEL SECURITY;
@@ -9302,8 +9194,7 @@ CREATE TABLE finance.reconcile_orders (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_reconcile_orders_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY finance.reconcile_orders FORCE ROW LEVEL SECURITY;
@@ -9344,8 +9235,7 @@ CREATE TABLE finance.reconciliation_settlement_links (
     created_by uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_reconciliation_settlement_links_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.reconciliation_settlement_links FORCE ROW LEVEL SECURITY;
@@ -9377,8 +9267,7 @@ CREATE TABLE finance.reconciliation_snapshots (
     matched_count integer,
     total_credit numeric,
     total_debit numeric,
-    unmatched_count integer,
-    CONSTRAINT ck_reconciliation_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    unmatched_count integer
 );
 
 ALTER TABLE ONLY finance.reconciliation_snapshots FORCE ROW LEVEL SECURITY;
@@ -9456,8 +9345,7 @@ CREATE TABLE finance.settlement_snapshots (
     updated_at timestamp with time zone,
     deleted_at timestamp with time zone,
     approved_at timestamp with time zone,
-    approved_by uuid,
-    CONSTRAINT ck_settlement_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    approved_by uuid
 );
 
 ALTER TABLE ONLY finance.settlement_snapshots FORCE ROW LEVEL SECURITY;
@@ -9508,8 +9396,7 @@ CREATE TABLE finance.vouchers (
     entity_id text,
     status text DEFAULT 'posted'::text,
     created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_vouchers_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY finance.vouchers FORCE ROW LEVEL SECURITY;
@@ -9554,8 +9441,7 @@ CREATE TABLE flow.approvals (
     timeout_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_approvals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY flow.approvals FORCE ROW LEVEL SECURITY;
@@ -9613,8 +9499,7 @@ CREATE TABLE flow.core_doc_documents (
     created_by character varying(100),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_doc_documents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -9705,8 +9590,7 @@ CREATE TABLE flow.core_files (
     status character varying(32) DEFAULT 'active'::character varying,
     deleted_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_core_files_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -9819,8 +9703,7 @@ CREATE TABLE flow.core_login_logs (
     error_message text,
     login_time timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_login_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -9876,8 +9759,7 @@ CREATE TABLE flow.core_master_data_refs (
     source_service text NOT NULL,
     last_synced_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT ck_core_master_data_refs_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -9898,8 +9780,7 @@ CREATE TABLE flow.core_mdm_approvals (
     reviewed_at timestamp with time zone,
     review_comment text,
     payload jsonb,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_mdm_approvals_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -9935,8 +9816,7 @@ CREATE TABLE flow.core_menu_groups (
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_menu_groups_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -9958,8 +9838,7 @@ CREATE TABLE flow.core_menus (
     permissions jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_menus_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -10072,8 +9951,7 @@ CREATE TABLE flow.core_tenant_users (
     status character varying(32) DEFAULT 'active'::character varying,
     created_at timestamp with time zone DEFAULT now(),
     last_login timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_tenant_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -10124,8 +10002,7 @@ CREATE TABLE flow.core_workflow_instances (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_workflow_instances_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY flow.core_workflow_instances FORCE ROW LEVEL SECURITY;
@@ -10149,8 +10026,7 @@ CREATE TABLE flow.core_workflow_tasks (
     priority integer DEFAULT 0,
     due_time timestamp with time zone,
     claimed_at timestamp with time zone,
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_core_workflow_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 ALTER TABLE ONLY flow.core_workflow_tasks FORCE ROW LEVEL SECURITY;
@@ -10332,8 +10208,7 @@ CREATE TABLE gis.business_locations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_business_locations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY gis.business_locations FORCE ROW LEVEL SECURITY;
@@ -10395,8 +10270,7 @@ CREATE TABLE gis.device_locations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_device_locations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY gis.device_locations FORCE ROW LEVEL SECURITY;
@@ -10426,8 +10300,7 @@ CREATE TABLE gis.devices (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     organization_id uuid,
     tenant_id uuid NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_devices_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY gis.devices FORCE ROW LEVEL SECURITY;
@@ -10517,8 +10390,7 @@ CREATE TABLE gis.geodata (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_geodata_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY gis.geodata FORCE ROW LEVEL SECURITY;
@@ -10609,8 +10481,7 @@ CREATE TABLE gis.geofences (
     end_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_geofences_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -10688,8 +10559,7 @@ CREATE TABLE gis.locations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_locations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY gis.locations FORCE ROW LEVEL SECURITY;
@@ -10791,8 +10661,7 @@ CREATE TABLE gis.maps (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_maps_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY gis.maps FORCE ROW LEVEL SECURITY;
@@ -10823,8 +10692,7 @@ CREATE TABLE gis.pipelines (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid NOT NULL,
-    description text,
-    CONSTRAINT ck_pipelines_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    description text
 );
 
 ALTER TABLE ONLY gis.pipelines FORCE ROW LEVEL SECURITY;
@@ -10937,8 +10805,7 @@ CREATE TABLE gis.warehouse_locations (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid NOT NULL,
-    description text,
-    CONSTRAINT ck_warehouse_locations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    description text
 );
 
 ALTER TABLE ONLY gis.warehouse_locations FORCE ROW LEVEL SECURITY;
@@ -10973,8 +10840,7 @@ CREATE TABLE hrm.attendance_records (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_attendance_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.attendance_records FORCE ROW LEVEL SECURITY;
@@ -11076,8 +10942,7 @@ CREATE TABLE hrm.candidates (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     updated_by uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_candidates_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY hrm.candidates FORCE ROW LEVEL SECURITY;
@@ -11110,8 +10975,7 @@ CREATE TABLE hrm.companies (
     legal_person character varying(100),
     industry character varying(100),
     registered_capital numeric(18,2),
-    established_date date,
-    CONSTRAINT ck_companies_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    established_date date
 );
 
 ALTER TABLE ONLY hrm.companies FORCE ROW LEVEL SECURITY;
@@ -11170,8 +11034,7 @@ CREATE TABLE hrm.contract_renewals (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_contract_renewals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.contract_renewals FORCE ROW LEVEL SECURITY;
@@ -11204,8 +11067,7 @@ CREATE TABLE hrm.contracts (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_contracts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.contracts FORCE ROW LEVEL SECURITY;
@@ -11260,8 +11122,7 @@ CREATE TABLE hrm.departments (
     deleted_at timestamp with time zone,
     tenant_id uuid NOT NULL,
     company_id uuid,
-    name_en character varying(255),
-    CONSTRAINT ck_departments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY hrm.departments FORCE ROW LEVEL SECURITY;
@@ -11342,8 +11203,7 @@ CREATE TABLE hrm.employees (
     employee_type character varying(64),
     user_id uuid,
     company_id uuid,
-    name_en text,
-    CONSTRAINT ck_employees_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en text
 );
 
 ALTER TABLE ONLY hrm.employees FORCE ROW LEVEL SECURITY;
@@ -11475,8 +11335,7 @@ CREATE TABLE hrm.hrm_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_hrm_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -11570,8 +11429,7 @@ CREATE TABLE hrm.interviews (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     updated_by uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_interviews_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY hrm.interviews FORCE ROW LEVEL SECURITY;
@@ -11602,8 +11460,7 @@ CREATE TABLE hrm.job_openings (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     updated_by uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_job_openings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY hrm.job_openings FORCE ROW LEVEL SECURITY;
@@ -11632,8 +11489,7 @@ CREATE TABLE hrm.leave_records (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_leave_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.leave_records FORCE ROW LEVEL SECURITY;
@@ -11715,8 +11571,7 @@ CREATE TABLE hrm.payroll_items (
     paid_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_payroll_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY hrm.payroll_items FORCE ROW LEVEL SECURITY;
@@ -11749,8 +11604,7 @@ CREATE TABLE hrm.payroll_records (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_payroll_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.payroll_records FORCE ROW LEVEL SECURITY;
@@ -11794,8 +11648,7 @@ CREATE TABLE hrm.payroll_runs (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     updated_by uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_payroll_runs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY hrm.payroll_runs FORCE ROW LEVEL SECURITY;
@@ -11821,8 +11674,7 @@ CREATE TABLE hrm.performance_goals (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_performance_goals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.performance_goals FORCE ROW LEVEL SECURITY;
@@ -11856,8 +11708,7 @@ CREATE TABLE hrm.performance_records (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_performance_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.performance_records FORCE ROW LEVEL SECURITY;
@@ -11905,8 +11756,7 @@ CREATE TABLE hrm.performance_reviews (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_performance_reviews_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.performance_reviews FORCE ROW LEVEL SECURITY;
@@ -11937,8 +11787,7 @@ CREATE TABLE hrm.positions (
     deleted_at timestamp with time zone,
     tenant_id uuid NOT NULL,
     company_id uuid,
-    name_en text,
-    CONSTRAINT ck_positions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en text
 );
 
 ALTER TABLE ONLY hrm.positions FORCE ROW LEVEL SECURITY;
@@ -11984,8 +11833,7 @@ CREATE TABLE hrm.recruitment_applications (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_recruitment_applications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.recruitment_applications FORCE ROW LEVEL SECURITY;
@@ -12029,8 +11877,7 @@ CREATE TABLE hrm.recruitment_records (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_recruitment_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.recruitment_records FORCE ROW LEVEL SECURITY;
@@ -12075,8 +11922,7 @@ CREATE TABLE hrm.salary_adjustments (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_salary_adjustments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY hrm.salary_adjustments FORCE ROW LEVEL SECURITY;
@@ -12141,8 +11987,7 @@ CREATE TABLE hrm.training_courses (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     updated_by uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_training_courses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY hrm.training_courses FORCE ROW LEVEL SECURITY;
@@ -12207,8 +12052,7 @@ CREATE TABLE hrm.training_plans (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     created_by uuid,
     updated_by uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_training_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY hrm.training_plans FORCE ROW LEVEL SECURITY;
@@ -12247,8 +12091,7 @@ CREATE TABLE hrm.training_records (
     certificate_no character varying(100),
     completed_at timestamp with time zone,
     feedback text,
-    score numeric(5,2),
-    CONSTRAINT ck_training_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    score numeric(5,2)
 );
 
 ALTER TABLE ONLY hrm.training_records FORCE ROW LEVEL SECURITY;
@@ -13602,8 +13445,7 @@ CREATE TABLE iam.roles (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
     deleted_at timestamp with time zone,
-    status character varying(50),
-    CONSTRAINT ck_roles_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    status character varying(50)
 );
 
 ALTER TABLE ONLY iam.roles FORCE ROW LEVEL SECURITY;
@@ -13634,6 +13476,23 @@ CREATE TABLE iam.schema_registry (
 
 CREATE TABLE iam.sessions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: tenant_users; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.tenant_users (
+    id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    email text NOT NULL,
+    role character varying,
+    status character varying,
+    created_at timestamp with time zone,
+    last_login timestamp with time zone,
     deleted_at timestamp with time zone
 );
 
@@ -13727,8 +13586,7 @@ CREATE TABLE iam.users (
     roles text[],
     permissions text[],
     deleted_at timestamp with time zone,
-    full_name_en character varying,
-    CONSTRAINT ck_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    full_name_en character varying
 );
 
 
@@ -13774,8 +13632,7 @@ CREATE TABLE integration.async_tasks (
     last_error text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_async_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -13798,8 +13655,7 @@ CREATE TABLE integration.conversion_executions (
     started_at timestamp with time zone,
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_conversion_executions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY integration.conversion_executions FORCE ROW LEVEL SECURITY;
@@ -13831,8 +13687,7 @@ CREATE TABLE integration.conversion_rules (
     stop_on_failure boolean DEFAULT false NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_conversion_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY integration.conversion_rules FORCE ROW LEVEL SECURITY;
@@ -13859,8 +13714,7 @@ CREATE TABLE integration.core_inter_module_sync (
     executed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_inter_module_sync_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY integration.core_inter_module_sync FORCE ROW LEVEL SECURITY;
@@ -13960,8 +13814,7 @@ CREATE TABLE integration.erp_connections (
     last_sync_error text,
     consecutive_failures integer DEFAULT 0 NOT NULL,
     last_failure_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_erp_connections_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY integration.erp_connections FORCE ROW LEVEL SECURITY;
@@ -14128,8 +13981,7 @@ CREATE TABLE integration.external_erp_sync_logs (
     started_at timestamp with time zone,
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_external_erp_sync_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'running'::text, 'success'::text, 'failed'::text, 'completed'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY integration.external_erp_sync_logs FORCE ROW LEVEL SECURITY;
@@ -14183,8 +14035,7 @@ CREATE TABLE integration.integration_events (
     synced_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_integration_events_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY integration.integration_events FORCE ROW LEVEL SECURITY;
@@ -14277,8 +14128,7 @@ CREATE TABLE integration.mes_erp_sync_logs (
     error_message text,
     attempt integer DEFAULT 1 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_mes_erp_sync_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -14425,8 +14275,7 @@ CREATE TABLE lims.inspection_processes (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_inspection_processes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY lims.inspection_processes FORCE ROW LEVEL SECURITY;
@@ -14475,8 +14324,7 @@ CREATE TABLE lims.inspection_tasks (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    sample_no text,
-    CONSTRAINT ck_inspection_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    sample_no text
 );
 
 ALTER TABLE ONLY lims.inspection_tasks FORCE ROW LEVEL SECURITY;
@@ -14526,8 +14374,7 @@ CREATE TABLE lims.instruments (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_instruments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY lims.instruments FORCE ROW LEVEL SECURITY;
@@ -14551,8 +14398,7 @@ CREATE TABLE lims.lab_ledger (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_lab_ledger_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY lims.lab_ledger FORCE ROW LEVEL SECURITY;
@@ -14673,8 +14519,7 @@ CREATE TABLE lims.qa_lab_inspection_reports (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
     deleted_at timestamp with time zone,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lab_inspection_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lab_inspection_reports FORCE ROW LEVEL SECURITY;
@@ -14699,8 +14544,7 @@ CREATE TABLE lims.qa_lab_instruments (
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
     name_en character varying(255),
-    organization_id uuid,
-    CONSTRAINT ck_qa_lab_instruments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lab_instruments FORCE ROW LEVEL SECURITY;
@@ -14725,8 +14569,7 @@ CREATE TABLE lims.qa_lab_processes (
     is_active boolean DEFAULT true,
     name_en character varying(255),
     process_name_en character varying(255),
-    organization_id uuid,
-    CONSTRAINT ck_qa_lab_processes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lab_processes FORCE ROW LEVEL SECURITY;
@@ -14797,8 +14640,7 @@ CREATE TABLE lims.qa_lab_reagents (
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
     name_en character varying(255),
-    organization_id uuid,
-    CONSTRAINT ck_qa_lab_reagents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lab_reagents FORCE ROW LEVEL SECURITY;
@@ -14848,6 +14690,54 @@ ALTER TABLE ONLY lims.qa_lab_sample_lifecycle FORCE ROW LEVEL SECURITY;
 
 
 --
+-- Name: qa_lab_samples; Type: TABLE; Schema: lims; Owner: -
+--
+
+CREATE TABLE lims.qa_lab_samples (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid,
+    sample_no character varying(64) NOT NULL,
+    sample_name character varying(256) NOT NULL,
+    sample_type character varying(64),
+    source character varying(64),
+    quantity numeric(12,2),
+    unit character varying(32),
+    status character varying(32) DEFAULT 'received'::character varying,
+    received_at timestamp with time zone DEFAULT now(),
+    expired_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: qa_lab_tasks; Type: TABLE; Schema: lims; Owner: -
+--
+
+CREATE TABLE lims.qa_lab_tasks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid,
+    task_no character varying(64) NOT NULL,
+    sample_id uuid NOT NULL,
+    sample_no character varying(64) NOT NULL,
+    test_items jsonb NOT NULL,
+    status character varying(32) DEFAULT 'pending'::character varying,
+    assigned_to character varying(64),
+    instrument_id uuid,
+    planned_date timestamp with time zone,
+    actual_start_date timestamp with time zone,
+    actual_end_date timestamp with time zone,
+    result jsonb,
+    conclusion character varying(500),
+    recorded_by character varying(64),
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: qa_lims_audit_logs; Type: TABLE; Schema: lims; Owner: -
 --
 
@@ -14868,8 +14758,7 @@ CREATE TABLE lims.qa_lims_audit_logs (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
     deleted_at timestamp with time zone,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_audit_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_audit_logs FORCE ROW LEVEL SECURITY;
@@ -14923,8 +14812,7 @@ CREATE TABLE lims.qa_lims_collection_tasks (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_collection_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_collection_tasks FORCE ROW LEVEL SECURITY;
@@ -14952,8 +14840,7 @@ CREATE TABLE lims.qa_lims_instrument_data (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_instrument_data_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_instrument_data FORCE ROW LEVEL SECURITY;
@@ -14975,8 +14862,7 @@ CREATE TABLE lims.qa_lims_method_categories (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_method_categories_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_method_categories FORCE ROW LEVEL SECURITY;
@@ -15003,8 +14889,7 @@ CREATE TABLE lims.qa_lims_method_validations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
     deleted_at timestamp with time zone,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_method_validations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_method_validations FORCE ROW LEVEL SECURITY;
@@ -15051,8 +14936,7 @@ CREATE TABLE lims.qa_lims_parse_rules (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_parse_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_parse_rules FORCE ROW LEVEL SECURITY;
@@ -15080,8 +14964,7 @@ CREATE TABLE lims.qa_lims_pt_corrective_actions (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
     deleted_at timestamp with time zone,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_pt_corrective_actions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_pt_corrective_actions FORCE ROW LEVEL SECURITY;
@@ -15144,8 +15027,7 @@ CREATE TABLE lims.qa_lims_pt_plans (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_pt_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_pt_plans FORCE ROW LEVEL SECURITY;
@@ -15226,8 +15108,7 @@ CREATE TABLE lims.qa_lims_rfid_tags (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_rfid_tags_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_rfid_tags FORCE ROW LEVEL SECURITY;
@@ -15253,8 +15134,7 @@ CREATE TABLE lims.qa_lims_sample_barcodes (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_sample_barcodes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_sample_barcodes FORCE ROW LEVEL SECURITY;
@@ -15279,8 +15159,7 @@ CREATE TABLE lims.qa_lims_sync_records (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
     deleted_at timestamp with time zone,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_sync_records FORCE ROW LEVEL SECURITY;
@@ -15314,8 +15193,7 @@ CREATE TABLE lims.qa_lims_test_methods (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_test_methods_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_test_methods FORCE ROW LEVEL SECURITY;
@@ -15374,8 +15252,7 @@ CREATE TABLE lims.qa_lims_uncertainty_projects (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    organization_id uuid,
-    CONSTRAINT ck_qa_lims_uncertainty_projects_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid
 );
 
 ALTER TABLE ONLY lims.qa_lims_uncertainty_projects FORCE ROW LEVEL SECURITY;
@@ -15447,8 +15324,7 @@ CREATE TABLE lims.reagents (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_reagents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY lims.reagents FORCE ROW LEVEL SECURITY;
@@ -15575,8 +15451,7 @@ CREATE TABLE mail.templates (
     category character varying(50) DEFAULT 'general'::character varying NOT NULL,
     tags jsonb DEFAULT '[]'::jsonb,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_templates_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mail.templates FORCE ROW LEVEL SECURITY;
@@ -15600,8 +15475,7 @@ CREATE TABLE master_data.core_dict_items (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_core_dict_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY master_data.core_dict_items FORCE ROW LEVEL SECURITY;
@@ -15622,8 +15496,7 @@ CREATE TABLE master_data.core_dict_types (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_core_dict_types_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY master_data.core_dict_types FORCE ROW LEVEL SECURITY;
@@ -15797,8 +15670,7 @@ CREATE TABLE mes.batch_records (
     notes text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_batch_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -15841,8 +15713,7 @@ CREATE TABLE mes.capacities (
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
     workshop text,
-    shift character varying(32),
-    CONSTRAINT ck_capacities_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    shift character varying(32)
 );
 
 ALTER TABLE ONLY mes.capacities FORCE ROW LEVEL SECURITY;
@@ -15870,8 +15741,7 @@ CREATE TABLE mes.core_billing_invoices (
     line_items jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_billing_invoices_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -15965,8 +15835,7 @@ CREATE TABLE mes.core_dashboard_refresh_log (
     row_count integer DEFAULT 0,
     error_message text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_dashboard_refresh_log_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -15987,8 +15856,7 @@ CREATE TABLE mes.core_dict_items (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_dict_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16006,8 +15874,7 @@ CREATE TABLE mes.core_dict_types (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_dict_types_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16032,8 +15899,7 @@ CREATE TABLE mes.core_email_queue (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     sent_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_email_queue_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16129,8 +15995,7 @@ CREATE TABLE mes.core_files (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_files_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16210,8 +16075,7 @@ CREATE TABLE mes.core_inter_module_sync (
     executed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_inter_module_sync_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16230,8 +16094,7 @@ CREATE TABLE mes.core_login_logs (
     error_message text,
     login_time timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_login_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16249,8 +16112,7 @@ CREATE TABLE mes.core_menu_groups (
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_menu_groups_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16272,8 +16134,7 @@ CREATE TABLE mes.core_menus (
     permissions jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_menus_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16314,8 +16175,7 @@ CREATE TABLE mes.core_mobile_offline_records (
     error_message text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_mobile_offline_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16575,8 +16435,7 @@ CREATE TABLE mes.core_subscriptions (
     cancel_at_period_end boolean DEFAULT false,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_subscriptions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16667,8 +16526,7 @@ CREATE TABLE mes.core_tenant_users (
     status character varying(32) DEFAULT 'active'::character varying,
     created_at timestamp with time zone DEFAULT now(),
     last_login timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_tenant_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16698,8 +16556,7 @@ CREATE TABLE mes.core_tenants (
     updated_at timestamp with time zone DEFAULT now(),
     activated_at timestamp with time zone,
     suspended_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_tenants_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16751,8 +16608,7 @@ CREATE TABLE mes.core_users (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     last_login_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16773,8 +16629,7 @@ CREATE TABLE mes.core_workflow_instances (
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_workflow_instances_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16792,8 +16647,7 @@ CREATE TABLE mes.core_workflow_tasks (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     completed_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_workflow_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16813,8 +16667,7 @@ CREATE TABLE mes.core_workflows (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     published_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_workflows_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -16886,8 +16739,7 @@ CREATE TABLE mes.demand_forecasts (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_demand_forecasts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mes.demand_forecasts FORCE ROW LEVEL SECURITY;
@@ -17078,8 +16930,7 @@ CREATE TABLE mes.equipment_inspection_records (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_equipment_inspection_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY mes.equipment_inspection_records FORCE ROW LEVEL SECURITY;
@@ -17120,8 +16971,7 @@ CREATE TABLE mes.equipment_inspections (
     remarks text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_equipment_inspections_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -17166,8 +17016,7 @@ CREATE TABLE mes.equipment_maintenance_records (
     tenant_id uuid,
     completed_at timestamp with time zone,
     fault_reason text,
-    started_at timestamp with time zone,
-    CONSTRAINT ck_equipment_maintenance_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    started_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mes.equipment_maintenance_records FORCE ROW LEVEL SECURITY;
@@ -17317,8 +17166,7 @@ CREATE TABLE mes.material_boms (
     description text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_material_boms_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -17368,8 +17216,7 @@ CREATE TABLE mes.material_issues (
     notes text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_material_issues_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -17393,8 +17240,7 @@ CREATE TABLE mes.material_plans (
     tenant_id text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_material_plans_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -17433,8 +17279,7 @@ CREATE TABLE mes.material_requirements (
     remark text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_material_requirements_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -17474,8 +17319,7 @@ CREATE TABLE mes.material_returns (
     notes text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_material_returns_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -17592,8 +17436,7 @@ CREATE TABLE mes.process_flows (
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_process_flows_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY mes.process_flows FORCE ROW LEVEL SECURITY;
@@ -17619,8 +17462,7 @@ CREATE TABLE mes.process_route_steps (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_process_route_steps_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY mes.process_route_steps FORCE ROW LEVEL SECURITY;
@@ -17656,8 +17498,7 @@ CREATE TABLE mes.process_routes (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_process_routes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY mes.process_routes FORCE ROW LEVEL SECURITY;
@@ -17796,8 +17637,7 @@ CREATE TABLE mes.production_plans (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_production_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mes.production_plans FORCE ROW LEVEL SECURITY;
@@ -17840,8 +17680,7 @@ CREATE TABLE mes.production_processes (
     updated_by uuid,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    equipment_required boolean,
-    CONSTRAINT ck_production_processes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    equipment_required boolean
 );
 
 ALTER TABLE ONLY mes.production_processes FORCE ROW LEVEL SECURITY;
@@ -17968,8 +17807,7 @@ CREATE TABLE mes.production_schedules (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_production_schedules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -18020,8 +17858,7 @@ CREATE TABLE mes.quality_patrol_items (
     remark text,
     created_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_quality_patrol_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mes.quality_patrol_items FORCE ROW LEVEL SECURITY;
@@ -18046,8 +17883,7 @@ CREATE TABLE mes.quality_patrols (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_quality_patrols_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mes.quality_patrols FORCE ROW LEVEL SECURITY;
@@ -18120,8 +17956,7 @@ CREATE TABLE mes.quality_standards (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_quality_standards_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mes.quality_standards FORCE ROW LEVEL SECURITY;
@@ -18218,8 +18053,7 @@ CREATE TABLE mes.team_members (
     join_date timestamp with time zone DEFAULT now(),
     status character varying(32) DEFAULT 'active'::character varying,
     created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_team_members_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -18241,8 +18075,7 @@ CREATE TABLE mes.teams (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_teams_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -18264,18 +18097,6 @@ CREATE TABLE mes.tenant_permissions (
 
 
 --
--- Name: tenant_permissions_id_seq; Type: SEQUENCE; Schema: mes; Owner: -
---
-
-CREATE SEQUENCE mes.tenant_permissions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
 -- Name: tool_permissions; Type: TABLE; Schema: mes; Owner: -
 --
 
@@ -18291,18 +18112,6 @@ CREATE TABLE mes.tool_permissions (
     deleted_at timestamp with time zone,
     CONSTRAINT chk_max_permission CHECK (((max_permission)::text = ANY (ARRAY[('read'::character varying)::text, ('write'::character varying)::text, ('admin'::character varying)::text])))
 );
-
-
---
--- Name: tool_permissions_id_seq; Type: SEQUENCE; Schema: mes; Owner: -
---
-
-CREATE SEQUENCE mes.tool_permissions_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
 
 
 --
@@ -18432,8 +18241,7 @@ CREATE TABLE mes.work_reports (
     deleted_at timestamp with time zone,
     approved_by uuid,
     approved_at timestamp with time zone,
-    approval_remark text,
-    CONSTRAINT ck_work_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    approval_remark text
 );
 
 
@@ -18566,8 +18374,7 @@ CREATE TABLE mobile.core_mobile_offline_records (
     error_message text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_mobile_offline_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mobile.core_mobile_offline_records FORCE ROW LEVEL SECURITY;
@@ -18661,8 +18468,7 @@ CREATE TABLE mobile.mobile_attendance (
     status character varying(20) DEFAULT 'not_checked_in'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_mobile_attendance_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -18683,8 +18489,7 @@ CREATE TABLE mobile.mobile_leave_applications (
     approved_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_mobile_leave_applications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -18706,8 +18511,7 @@ CREATE TABLE mobile.mobile_push_notifications (
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_mobile_push_notifications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mobile.mobile_push_notifications FORCE ROW LEVEL SECURITY;
@@ -18752,8 +18556,7 @@ CREATE TABLE mobile.mobile_tasks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_mobile_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY mobile.mobile_tasks FORCE ROW LEVEL SECURITY;
@@ -18862,8 +18665,7 @@ CREATE TABLE mobile.oa_meetings (
     attendees jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_oa_meetings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mobile.oa_meetings FORCE ROW LEVEL SECURITY;
@@ -18890,8 +18692,7 @@ CREATE TABLE mobile.oa_tasks (
     project_id character varying(128),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_oa_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mobile.oa_tasks FORCE ROW LEVEL SECURITY;
@@ -18935,8 +18736,7 @@ CREATE TABLE mobile.offline_sync_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     completed_at timestamp with time zone,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_offline_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mobile.offline_sync_records FORCE ROW LEVEL SECURITY;
@@ -19072,8 +18872,7 @@ CREATE TABLE mobile.push_notifications (
     tenant_id uuid,
     deleted_at timestamp with time zone,
     user_id uuid,
-    read_at timestamp with time zone,
-    CONSTRAINT ck_push_notifications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    read_at timestamp with time zone
 );
 
 ALTER TABLE ONLY mobile.push_notifications FORCE ROW LEVEL SECURITY;
@@ -19263,8 +19062,7 @@ CREATE TABLE pdm.pdm_boms (
     description text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_boms_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_boms FORCE ROW LEVEL SECURITY;
@@ -19291,8 +19089,7 @@ CREATE TABLE pdm.pdm_change_notices (
     effective_date timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_change_notices_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_change_notices FORCE ROW LEVEL SECURITY;
@@ -19314,8 +19111,7 @@ CREATE TABLE pdm.pdm_configurations (
     created_by character varying(128),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_configurations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_configurations FORCE ROW LEVEL SECURITY;
@@ -19346,8 +19142,7 @@ CREATE TABLE pdm.pdm_document_versions (
     file_content bytea,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_document_versions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_document_versions FORCE ROW LEVEL SECURITY;
@@ -19371,8 +19166,7 @@ CREATE TABLE pdm.pdm_documents (
     created_by character varying(128),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_documents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_documents FORCE ROW LEVEL SECURITY;
@@ -19395,8 +19189,7 @@ CREATE TABLE pdm.pdm_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT ck_pdm_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 ALTER TABLE ONLY pdm.pdm_master_data_refs FORCE ROW LEVEL SECURITY;
@@ -19417,8 +19210,7 @@ CREATE TABLE pdm.pdm_materials (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_pdm_materials_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY pdm.pdm_materials FORCE ROW LEVEL SECURITY;
@@ -19442,8 +19234,7 @@ CREATE TABLE pdm.pdm_production_batches (
     notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_production_batches_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_production_batches FORCE ROW LEVEL SECURITY;
@@ -19465,8 +19256,7 @@ CREATE TABLE pdm.pdm_production_formulas (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_pdm_production_formulas_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY pdm.pdm_production_formulas FORCE ROW LEVEL SECURITY;
@@ -19489,8 +19279,7 @@ CREATE TABLE pdm.pdm_production_processes (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_pdm_production_processes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY pdm.pdm_production_processes FORCE ROW LEVEL SECURITY;
@@ -19511,8 +19300,7 @@ CREATE TABLE pdm.pdm_production_steps (
     equipment_requirement character varying(256),
     quality_check character varying(256),
     status character varying(32) DEFAULT 'active'::character varying,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_production_steps_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_production_steps FORCE ROW LEVEL SECURITY;
@@ -19533,8 +19321,7 @@ CREATE TABLE pdm.pdm_products (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_pdm_products_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY pdm.pdm_products FORCE ROW LEVEL SECURITY;
@@ -19577,8 +19364,7 @@ CREATE TABLE pdm.pdm_project_phases (
     deliverables text[] DEFAULT '{}'::text[],
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_project_phases_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_project_phases FORCE ROW LEVEL SECURITY;
@@ -19605,8 +19391,7 @@ CREATE TABLE pdm.pdm_projects (
     created_by character varying(128),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_projects_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_projects FORCE ROW LEVEL SECURITY;
@@ -19629,8 +19414,7 @@ CREATE TABLE pdm.pdm_versions (
     created_by character varying(128),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_versions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_versions FORCE ROW LEVEL SECURITY;
@@ -19654,8 +19438,7 @@ CREATE TABLE pdm.pdm_workflow_instances (
     created_by character varying(128) NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_workflow_instances_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_workflow_instances FORCE ROW LEVEL SECURITY;
@@ -19677,8 +19460,7 @@ CREATE TABLE pdm.pdm_workflows (
     created_by character varying(128) NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_pdm_workflows_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pdm.pdm_workflows FORCE ROW LEVEL SECURITY;
@@ -19705,8 +19487,7 @@ CREATE TABLE plugin_finance.difference_adjustments (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_difference_adjustments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -19751,8 +19532,7 @@ CREATE TABLE plugin_finance.reconciliation_settlement_links (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_reconciliation_settlement_links_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -19782,8 +19562,7 @@ CREATE TABLE plugin_finance.reconciliation_snapshots (
     synced_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_reconciliation_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -19807,8 +19586,7 @@ CREATE TABLE plugin_finance.settlement_snapshots (
     synced_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_settlement_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -19868,8 +19646,7 @@ CREATE TABLE plugin_wms.purchase_order_snapshots (
     synced_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_purchase_order_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -19917,8 +19694,7 @@ CREATE TABLE pm.acceptance_plans (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_acceptance_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.acceptance_plans FORCE ROW LEVEL SECURITY;
@@ -19944,8 +19720,7 @@ CREATE TABLE pm.acceptance_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_acceptance_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.acceptance_records FORCE ROW LEVEL SECURITY;
@@ -19969,8 +19744,7 @@ CREATE TABLE pm.acceptances (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_acceptances_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY pm.acceptances FORCE ROW LEVEL SECURITY;
@@ -20027,8 +19801,7 @@ CREATE TABLE pm.budgets (
     start_date timestamp with time zone,
     end_date timestamp with time zone,
     created_by character varying(64),
-    version integer DEFAULT 1 NOT NULL,
-    CONSTRAINT ck_budgets_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    version integer DEFAULT 1 NOT NULL
 );
 
 ALTER TABLE ONLY pm.budgets FORCE ROW LEVEL SECURITY;
@@ -20053,8 +19826,7 @@ CREATE TABLE pm.contract_milestones (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_contract_milestones_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.contract_milestones FORCE ROW LEVEL SECURITY;
@@ -20080,8 +19852,7 @@ CREATE TABLE pm.contract_payment_schedule (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_contract_payment_schedule_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.contract_payment_schedule FORCE ROW LEVEL SECURITY;
@@ -20132,8 +19903,7 @@ CREATE TABLE pm.contracts (
     deleted_at timestamp with time zone,
     tenant_id uuid NOT NULL,
     tax_rate numeric(12,2),
-    description text,
-    CONSTRAINT ck_contracts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    description text
 );
 
 ALTER TABLE ONLY pm.contracts FORCE ROW LEVEL SECURITY;
@@ -20161,8 +19931,7 @@ CREATE TABLE pm.defects (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_defects_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.defects FORCE ROW LEVEL SECURITY;
@@ -20225,8 +19994,7 @@ CREATE TABLE pm.documents (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_documents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY pm.documents FORCE ROW LEVEL SECURITY;
@@ -20272,8 +20040,7 @@ CREATE TABLE pm.notifications (
     priority text,
     metadata jsonb,
     due_date timestamp with time zone,
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_notifications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 ALTER TABLE ONLY pm.notifications FORCE ROW LEVEL SECURITY;
@@ -20313,8 +20080,7 @@ CREATE TABLE pm.pm_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT ck_pm_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 ALTER TABLE ONLY pm.pm_master_data_refs FORCE ROW LEVEL SECURITY;
@@ -20371,8 +20137,7 @@ CREATE TABLE pm.project_approvals (
     approvals jsonb,
     created_by uuid,
     current_step integer,
-    total_steps integer,
-    CONSTRAINT ck_project_approvals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    total_steps integer
 );
 
 ALTER TABLE ONLY pm.project_approvals FORCE ROW LEVEL SECURITY;
@@ -20412,8 +20177,7 @@ CREATE TABLE pm.project_benefits (
     eac double precision,
     etc double precision,
     roi double precision,
-    notes text,
-    CONSTRAINT ck_project_benefits_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    notes text
 );
 
 ALTER TABLE ONLY pm.project_benefits FORCE ROW LEVEL SECURITY;
@@ -20440,8 +20204,7 @@ CREATE TABLE pm.project_documents (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_project_documents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.project_documents FORCE ROW LEVEL SECURITY;
@@ -20472,8 +20235,7 @@ CREATE TABLE pm.project_expenses (
     resource_id uuid,
     expense_ref_id character varying,
     approval_workflow_id uuid,
-    attachment_ids uuid[],
-    CONSTRAINT ck_project_expenses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    attachment_ids uuid[]
 );
 
 ALTER TABLE ONLY pm.project_expenses FORCE ROW LEVEL SECURITY;
@@ -20498,8 +20260,7 @@ CREATE TABLE pm.project_members (
     deleted_at timestamp with time zone,
     responsibilities text,
     start_date timestamp with time zone,
-    end_date timestamp with time zone,
-    CONSTRAINT ck_project_members_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    end_date timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.project_members FORCE ROW LEVEL SECURITY;
@@ -20523,8 +20284,7 @@ CREATE TABLE pm.project_milestones (
     deleted_at timestamp with time zone,
     tenant_id uuid NOT NULL,
     date timestamp with time zone,
-    acceptance_criteria text,
-    CONSTRAINT ck_project_milestones_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    acceptance_criteria text
 );
 
 ALTER TABLE ONLY pm.project_milestones FORCE ROW LEVEL SECURITY;
@@ -20549,8 +20309,7 @@ CREATE TABLE pm.project_phases (
     deleted_at timestamp with time zone,
     tenant_id uuid NOT NULL,
     sequence_number integer,
-    predecessor_ids uuid[],
-    CONSTRAINT ck_project_phases_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    predecessor_ids uuid[]
 );
 
 ALTER TABLE ONLY pm.project_phases FORCE ROW LEVEL SECURITY;
@@ -20576,8 +20335,7 @@ CREATE TABLE pm.project_reports (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
     deleted_at timestamp with time zone,
-    created_by character varying(64),
-    CONSTRAINT ck_project_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    created_by character varying(64)
 );
 
 ALTER TABLE ONLY pm.project_reports FORCE ROW LEVEL SECURITY;
@@ -20604,8 +20362,7 @@ CREATE TABLE pm.project_resources (
     start_date timestamp with time zone,
     end_date timestamp with time zone,
     allocation_percent integer,
-    created_by character varying,
-    CONSTRAINT ck_project_resources_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    created_by character varying
 );
 
 ALTER TABLE ONLY pm.project_resources FORCE ROW LEVEL SECURITY;
@@ -20639,8 +20396,7 @@ CREATE TABLE pm.project_risks (
     tenant_id uuid,
     deleted_at timestamp with time zone,
     risk_level character varying(16),
-    mitigation_plan text,
-    CONSTRAINT ck_project_risks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    mitigation_plan text
 );
 
 ALTER TABLE ONLY pm.project_risks FORCE ROW LEVEL SECURITY;
@@ -20726,8 +20482,7 @@ CREATE TABLE pm.quality_checks (
     result_details jsonb,
     nonconformities jsonb,
     corrective_actions jsonb,
-    follow_up_date timestamp with time zone,
-    CONSTRAINT ck_quality_checks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    follow_up_date timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.quality_checks FORCE ROW LEVEL SECURITY;
@@ -20794,8 +20549,7 @@ CREATE TABLE pm.risks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid NOT NULL,
-    CONSTRAINT ck_risks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid NOT NULL
 );
 
 ALTER TABLE ONLY pm.risks FORCE ROW LEVEL SECURITY;
@@ -20906,8 +20660,7 @@ CREATE TABLE pm.settlements (
     settlement_name character varying,
     settlement_period_start timestamp with time zone,
     settlement_period_end timestamp with time zone,
-    approved_at timestamp with time zone,
-    CONSTRAINT ck_settlements_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    approved_at timestamp with time zone
 );
 
 ALTER TABLE ONLY pm.settlements FORCE ROW LEVEL SECURITY;
@@ -20996,8 +20749,7 @@ CREATE TABLE portal.federation_compensation_logs (
     status character varying(32) NOT NULL,
     error_message text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_federation_compensation_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21014,8 +20766,7 @@ CREATE TABLE portal.federation_execution_logs (
     result jsonb,
     error_message text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_federation_execution_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21063,8 +20814,7 @@ CREATE TABLE portal.federation_transaction_steps (
     payload jsonb,
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_federation_transaction_steps_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21353,8 +21103,7 @@ CREATE TABLE portal.intelligent_gw_conflicts (
     resolution character varying(64) NOT NULL,
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_intelligent_gw_conflicts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21386,8 +21135,7 @@ CREATE TABLE portal.intelligent_gw_stitch_logs (
     status character varying(32) NOT NULL,
     details jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_intelligent_gw_stitch_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21403,8 +21151,7 @@ CREATE TABLE portal.intelligent_gw_stitch_plans (
     resolution_strategy character varying(64) NOT NULL,
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_intelligent_gw_stitch_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21558,8 +21305,7 @@ CREATE TABLE portal.portal_announcements (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_portal_announcements_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY portal.portal_announcements FORCE ROW LEVEL SECURITY;
@@ -21594,8 +21340,7 @@ CREATE TABLE portal.portal_api_versions (
     sunset_at timestamp with time zone,
     changelog text,
     breaking_changes jsonb DEFAULT '[]'::jsonb NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_api_versions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21748,8 +21493,7 @@ CREATE TABLE portal.portal_canary_configs (
     end_time timestamp with time zone,
     status character varying(32) DEFAULT 'draft'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_canary_configs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21874,8 +21618,7 @@ CREATE TABLE portal.portal_consistency_checks (
     model character varying(32) NOT NULL,
     violations jsonb DEFAULT '[]'::jsonb NOT NULL,
     status character varying(32) DEFAULT 'passed'::character varying NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_consistency_checks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21907,8 +21650,7 @@ CREATE TABLE portal.portal_dead_letter_queue (
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
     last_retry_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_dead_letter_queue_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21957,8 +21699,7 @@ CREATE TABLE portal.portal_deployment_steps (
     message text,
     duration_ms bigint DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_deployment_steps_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -21975,8 +21716,7 @@ CREATE TABLE portal.portal_deployments (
     started_at timestamp with time zone,
     completed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_deployments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22007,8 +21747,7 @@ CREATE TABLE portal.portal_distributed_queries (
     timeout_ms bigint DEFAULT 30000 NOT NULL,
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_distributed_queries_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22038,8 +21777,7 @@ CREATE TABLE portal.portal_edge_deployments (
     status character varying(32) DEFAULT 'deploying'::character varying NOT NULL,
     version integer DEFAULT 1 NOT NULL,
     deployed_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_edge_deployments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22086,8 +21824,7 @@ CREATE TABLE portal.portal_edge_replication (
     cache_key character varying(512) NOT NULL,
     replicated_at timestamp with time zone DEFAULT now() NOT NULL,
     status character varying(32) DEFAULT 'success'::character varying NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_edge_replication_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22120,8 +21857,7 @@ CREATE TABLE portal.portal_execution_steps (
     result jsonb,
     started_at timestamp with time zone,
     completed_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_execution_steps_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22166,8 +21902,7 @@ CREATE TABLE portal.portal_healing_actions (
     target character varying(256) NOT NULL,
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
     executed_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_healing_actions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22300,8 +22035,7 @@ CREATE TABLE portal.portal_orchestration_plans (
     timeout_ms bigint DEFAULT 30000 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_orchestration_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22319,8 +22053,7 @@ CREATE TABLE portal.portal_persisted_queries (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     access_count bigint DEFAULT 0 NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_persisted_queries_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22336,8 +22069,7 @@ CREATE TABLE portal.portal_persisted_query_versions (
     status character varying(32) DEFAULT 'active'::character varying NOT NULL,
     created_by character varying(128),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_persisted_query_versions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22443,8 +22175,7 @@ CREATE TABLE portal.portal_recovery_plans (
     estimated_duration_ms bigint DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_recovery_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22462,8 +22193,7 @@ CREATE TABLE portal.portal_replay_requests (
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_replay_requests_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22479,8 +22209,7 @@ CREATE TABLE portal.portal_replay_results (
     duration_ms bigint DEFAULT 0 NOT NULL,
     status character varying(32) DEFAULT 'completed'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_replay_results_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22511,8 +22240,7 @@ CREATE TABLE portal.portal_rollback_actions (
     executed_at timestamp with time zone,
     reason text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_rollback_actions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22668,8 +22396,7 @@ CREATE TABLE portal.portal_service_heartbeats (
     service_id character varying(64) NOT NULL,
     status character varying(32) NOT NULL,
     latency_ms bigint DEFAULT 0 NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_service_heartbeats_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22716,8 +22443,7 @@ CREATE TABLE portal.portal_streams (
     status character varying(32) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_streams_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22734,8 +22460,7 @@ CREATE TABLE portal.portal_sub_queries (
     depends_on jsonb DEFAULT '[]'::jsonb NOT NULL,
     result jsonb,
     status character varying(32) DEFAULT 'pending'::character varying NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_sub_queries_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22751,8 +22476,7 @@ CREATE TABLE portal.portal_subscribers (
     connected_at timestamp with time zone DEFAULT now() NOT NULL,
     last_seen timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_subscribers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22801,8 +22525,7 @@ CREATE TABLE portal.portal_subscription_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     last_activity timestamp with time zone DEFAULT now() NOT NULL,
     delivered_count bigint DEFAULT 0 NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_portal_subscription_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -22936,8 +22659,7 @@ CREATE TABLE public._archive_core_doc_documents (
     created_by character varying(100),
     created_at timestamp with time zone DEFAULT now() CONSTRAINT core_doc_documents_created_at_not_null NOT NULL,
     updated_at timestamp with time zone DEFAULT now() CONSTRAINT core_doc_documents_updated_at_not_null NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck__archive_core_doc_documents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY public._archive_core_doc_documents FORCE ROW LEVEL SECURITY;
@@ -23005,27 +22727,7 @@ CREATE TABLE public._archive_core_workflow_instances (
     created_at timestamp with time zone DEFAULT now() CONSTRAINT core_workflow_instances_created_at_not_null NOT NULL,
     updated_at timestamp with time zone DEFAULT now() CONSTRAINT core_workflow_instances_updated_at_not_null NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck__archive_core_workflow_instances_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
-);
-
-
---
--- Name: _archive_core_workflow_tasks; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public._archive_core_workflow_tasks (
-    id uuid DEFAULT gen_random_uuid() CONSTRAINT core_workflow_tasks_id_not_null NOT NULL,
-    instance_id uuid CONSTRAINT core_workflow_tasks_instance_id_not_null NOT NULL,
-    node_id character varying(64) CONSTRAINT core_workflow_tasks_node_id_not_null NOT NULL,
-    assignee_id uuid CONSTRAINT core_workflow_tasks_assignee_id_not_null NOT NULL,
-    status character varying(32) DEFAULT 'pending'::character varying,
-    comment text,
-    created_at timestamp with time zone DEFAULT now() CONSTRAINT core_workflow_tasks_created_at_not_null NOT NULL,
-    completed_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck__archive_core_workflow_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -23126,8 +22828,7 @@ CREATE TABLE public.analytics_comparison_analyses (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_analytics_comparison_analyses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -23143,8 +22844,7 @@ CREATE TABLE public.analytics_comparison_results (
     summary jsonb,
     generated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_analytics_comparison_results_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -23225,8 +22925,7 @@ CREATE TABLE public.analytics_datasets (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_analytics_datasets_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -23255,8 +22954,7 @@ CREATE TABLE public.analytics_datasources (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_analytics_datasources_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -23361,8 +23059,7 @@ CREATE TABLE public.analytics_sync_records (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_analytics_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -23436,8 +23133,7 @@ CREATE TABLE public.approvals (
     comment text,
     approved_at timestamp with time zone,
     timeout_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_approvals_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY public.approvals FORCE ROW LEVEL SECURITY;
@@ -23553,8 +23249,7 @@ CREATE TABLE public.automation_rules (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_automation_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY public.automation_rules FORCE ROW LEVEL SECURITY;
@@ -23580,8 +23275,7 @@ CREATE TABLE public.automation_runs (
     completed_at timestamp with time zone,
     duration_ms integer,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_automation_runs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY public.automation_runs FORCE ROW LEVEL SECURITY;
@@ -23653,8 +23347,7 @@ CREATE TABLE public.business_locations (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_business_locations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -23715,8 +23408,7 @@ CREATE TABLE public.core_api_version_configs (
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_core_api_version_configs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -23742,8 +23434,7 @@ CREATE TABLE public.core_billing_invoices (
     line_items jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_billing_invoices_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -23824,25 +23515,6 @@ CREATE TABLE public.core_chat_rooms (
 
 
 --
--- Name: core_dashboard_refresh_log; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.core_dashboard_refresh_log (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    module character varying(64) NOT NULL,
-    tenant_id uuid NOT NULL,
-    refresh_time timestamp with time zone DEFAULT now() NOT NULL,
-    status character varying(32) DEFAULT 'success'::character varying NOT NULL,
-    duration_ms integer,
-    row_count integer DEFAULT 0,
-    error_message text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_dashboard_refresh_log_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
-);
-
-
---
 -- Name: core_dict_items; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -23860,7 +23532,7 @@ CREATE TABLE public.core_dict_items (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_dict_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(200)
 );
 
 
@@ -23879,7 +23551,7 @@ CREATE TABLE public.core_dict_types (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_dict_types_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(200)
 );
 
 
@@ -23925,8 +23597,7 @@ CREATE TABLE public.core_doc_documents (
     created_by character varying(100),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_doc_documents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -23992,8 +23663,7 @@ CREATE TABLE public.core_email_queue (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     sent_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_email_queue_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -24010,7 +23680,8 @@ CREATE TABLE public.core_email_templates (
     tenant_id uuid NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    name_en character varying(255)
 );
 
 
@@ -24074,8 +23745,7 @@ CREATE TABLE public.core_feedbacks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_core_feedbacks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -24128,8 +23798,7 @@ CREATE TABLE public.core_files (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_core_files_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -24176,8 +23845,7 @@ CREATE TABLE public.core_finance_accounts (
     isactive boolean DEFAULT true,
     created_by uuid,
     updated_by uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_finance_accounts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -24514,8 +24182,7 @@ CREATE TABLE public.core_inter_module_sync (
     executed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_inter_module_sync_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -24592,8 +24259,7 @@ CREATE TABLE public.core_master_data_refs (
     source_service text NOT NULL,
     last_synced_at timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT ck_core_master_data_refs_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -24614,8 +24280,7 @@ CREATE TABLE public.core_mdm_approvals (
     reviewed_at timestamp with time zone,
     review_comment text,
     payload jsonb,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_mdm_approvals_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -24651,8 +24316,7 @@ CREATE TABLE public.core_menu_groups (
     status character varying(20) DEFAULT 'active'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_menu_groups_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY public.core_menu_groups FORCE ROW LEVEL SECURITY;
@@ -24676,8 +24340,7 @@ CREATE TABLE public.core_menus (
     permissions jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_menus_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -24718,8 +24381,7 @@ CREATE TABLE public.core_mobile_offline_records (
     error_message text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_mobile_offline_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -25075,8 +24737,7 @@ CREATE TABLE public.core_subscriptions (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_core_subscriptions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -25168,8 +24829,7 @@ CREATE TABLE public.core_tenant_users (
     status character varying(32) DEFAULT 'active'::character varying,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     last_login timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_core_tenant_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -25304,8 +24964,7 @@ CREATE TABLE public.core_users (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     last_login_at timestamp with time zone,
     deleted_at timestamp with time zone,
-    full_name_en character varying(128),
-    CONSTRAINT ck_core_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    full_name_en character varying(128)
 );
 
 
@@ -25350,8 +25009,7 @@ CREATE TABLE public.core_workflow_tasks (
     claimed_at timestamp with time zone,
     tenant_id uuid,
     deleted_at timestamp with time zone,
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_core_workflow_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 ALTER TABLE ONLY public.core_workflow_tasks FORCE ROW LEVEL SECURITY;
@@ -25486,8 +25144,7 @@ CREATE TABLE public.crm_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_crm_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -25542,8 +25199,7 @@ CREATE TABLE public.device_locations (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_device_locations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -25575,7 +25231,11 @@ CREATE TABLE public.devices (
 
 CREATE TABLE public.dynamic_data (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    schema_id uuid NOT NULL,
+    data_json jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -25732,8 +25392,7 @@ CREATE TABLE public.erp_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_erp_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -25793,8 +25452,7 @@ CREATE TABLE public.finance_voucher_templates (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_finance_voucher_templates_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -25815,8 +25473,7 @@ CREATE TABLE public.financial_records (
     created_by character varying(255),
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_financial_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -25834,8 +25491,7 @@ CREATE TABLE public.financial_reports (
     data jsonb,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_financial_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -25876,8 +25532,7 @@ CREATE TABLE public.hrm_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_hrm_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -25895,8 +25550,7 @@ CREATE TABLE public.inspection_records (
     inspection_time timestamp with time zone NOT NULL,
     issues text,
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_inspection_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -26238,7 +25892,8 @@ CREATE TABLE public.notification_channels (
     retry_count integer DEFAULT 3,
     description text,
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    updated_at timestamp with time zone DEFAULT now(),
+    name_en character varying(255)
 );
 
 
@@ -26260,8 +25915,7 @@ CREATE TABLE public.notification_templates (
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_notification_templates_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -26801,8 +26455,7 @@ CREATE TABLE public.pipelines (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_pipelines_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -26823,8 +26476,7 @@ CREATE TABLE public.pm_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_pm_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -26844,7 +26496,8 @@ CREATE TABLE public.process_flow_steps (
 
 CREATE TABLE public.process_flows (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    name_en character varying(255)
 );
 
 
@@ -26926,8 +26579,7 @@ CREATE TABLE public.qa_alert_messages (
     acknowledged_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_alert_messages_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -26952,8 +26604,7 @@ CREATE TABLE public.qa_alert_rules (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_alert_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -26973,8 +26624,7 @@ CREATE TABLE public.qa_apqp_approvals (
     approved_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_apqp_approvals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -26998,8 +26648,7 @@ CREATE TABLE public.qa_apqp_phases (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_apqp_phases_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27028,8 +26677,7 @@ CREATE TABLE public.qa_apqp_projects (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_apqp_projects_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -27054,8 +26702,7 @@ CREATE TABLE public.qa_apqp_risks (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_apqp_risks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27079,8 +26726,7 @@ CREATE TABLE public.qa_apqp_tasks (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_apqp_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27106,8 +26752,7 @@ CREATE TABLE public.qa_audit_findings (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_audit_findings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27131,8 +26776,7 @@ CREATE TABLE public.qa_audit_plans (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_audit_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27153,8 +26797,7 @@ CREATE TABLE public.qa_audit_tasks (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_audit_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27173,8 +26816,7 @@ CREATE TABLE public.qa_corrective_action_items (
     remark text,
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_corrective_action_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27199,8 +26841,7 @@ CREATE TABLE public.qa_corrective_actions (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_corrective_actions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27221,8 +26862,7 @@ CREATE TABLE public.qa_ehs_accident_investigations (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_accident_investigations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27259,8 +26899,7 @@ CREATE TABLE public.qa_ehs_accident_treatments (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_accident_treatments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27284,8 +26923,7 @@ CREATE TABLE public.qa_ehs_accidents (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_accidents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27312,8 +26950,7 @@ CREATE TABLE public.qa_ehs_compliance_evaluations (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_compliance_evaluations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27336,8 +26973,7 @@ CREATE TABLE public.qa_ehs_compliance_items (
     status character varying(32) DEFAULT 'pending'::character varying,
     created_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_compliance_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27363,8 +26999,7 @@ CREATE TABLE public.qa_ehs_contraindications (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_contraindications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27393,8 +27028,7 @@ CREATE TABLE public.qa_ehs_detection_records (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_detection_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27422,8 +27056,7 @@ CREATE TABLE public.qa_ehs_discharge_permits (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_discharge_permits_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27454,8 +27087,7 @@ CREATE TABLE public.qa_ehs_disease_cases (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_disease_cases_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27502,8 +27134,7 @@ CREATE TABLE public.qa_ehs_drill_plans (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_drill_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27527,8 +27158,7 @@ CREATE TABLE public.qa_ehs_drill_problems (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_drill_problems_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27557,8 +27187,7 @@ CREATE TABLE public.qa_ehs_drill_records (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_drill_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27577,8 +27206,7 @@ CREATE TABLE public.qa_ehs_emergency_plan_approvals (
     order_num integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_emergency_plan_approvals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27646,8 +27274,7 @@ CREATE TABLE public.qa_ehs_emergency_plans (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_emergency_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27667,8 +27294,7 @@ CREATE TABLE public.qa_ehs_employees (
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_employees_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27698,8 +27324,7 @@ CREATE TABLE public.qa_ehs_env_monitor_records (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_env_monitor_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27718,8 +27343,7 @@ CREATE TABLE public.qa_ehs_environment (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_environment_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27751,8 +27375,7 @@ CREATE TABLE public.qa_ehs_environment_incidents (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_environment_incidents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27779,8 +27402,7 @@ CREATE TABLE public.qa_ehs_environmental_regulations (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_environmental_regulations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27806,8 +27428,7 @@ CREATE TABLE public.qa_ehs_hazard_factors (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_hazard_factors_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27828,8 +27449,7 @@ CREATE TABLE public.qa_ehs_hazard_rectifications (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_hazard_rectifications_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27880,8 +27500,7 @@ CREATE TABLE public.qa_ehs_hazardous_materials (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_hazardous_materials_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27905,8 +27524,7 @@ CREATE TABLE public.qa_ehs_hazards (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_hazards_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27931,8 +27549,7 @@ CREATE TABLE public.qa_ehs_health_abnormalities (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_health_abnormalities_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -27956,8 +27573,7 @@ CREATE TABLE public.qa_ehs_health_exam_plans (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_health_exam_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28021,8 +27637,7 @@ CREATE TABLE public.qa_ehs_health_trainings (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_health_trainings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28064,8 +27679,7 @@ CREATE TABLE public.qa_ehs_inspection_plans (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_inspection_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28107,8 +27721,7 @@ CREATE TABLE public.qa_ehs_inspection_records (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_inspection_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28132,8 +27745,7 @@ CREATE TABLE public.qa_ehs_material_stocks (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_material_stocks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28188,8 +27800,7 @@ CREATE TABLE public.qa_ehs_protection_measures (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_protection_measures_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28214,8 +27825,7 @@ CREATE TABLE public.qa_ehs_risks (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_risks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28263,8 +27873,7 @@ CREATE TABLE public.qa_ehs_sync_records (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28285,8 +27894,7 @@ CREATE TABLE public.qa_ehs_trainings (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_ehs_trainings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28338,8 +27946,7 @@ CREATE TABLE public.qa_eightd_reports (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_eightd_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28366,8 +27973,7 @@ CREATE TABLE public.qa_fmea_analyses (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_fmea_analyses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28481,8 +28087,7 @@ CREATE TABLE public.qa_lab_inspection_reports (
     status character varying(32) DEFAULT 'draft'::character varying,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lab_inspection_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28503,8 +28108,7 @@ CREATE TABLE public.qa_lab_instruments (
     next_calibration_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lab_instruments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28522,8 +28126,7 @@ CREATE TABLE public.qa_lab_processes (
     status character varying(32) DEFAULT 'active'::character varying,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lab_processes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28584,8 +28187,7 @@ CREATE TABLE public.qa_lab_reagents (
     expired_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lab_reagents_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28666,8 +28268,7 @@ CREATE TABLE public.qa_lab_samples_merge_backup_20260919 (
     expired_at timestamp with time zone,
     created_at timestamp with time zone,
     updated_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lab_samples_merge_backup_20260919_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28693,8 +28294,7 @@ CREATE TABLE public.qa_lab_tasks (
     recorded_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lab_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28718,8 +28318,7 @@ CREATE TABLE public.qa_lims_audit_logs (
     ip_address character varying(128),
     user_agent text,
     created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_audit_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28767,8 +28366,7 @@ CREATE TABLE public.qa_lims_collection_tasks (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_collection_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28793,8 +28391,7 @@ CREATE TABLE public.qa_lims_instrument_data (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_instrument_data_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28813,8 +28410,7 @@ CREATE TABLE public.qa_lims_method_categories (
     status character varying(32) DEFAULT 'active'::character varying,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_method_categories_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28838,8 +28434,7 @@ CREATE TABLE public.qa_lims_method_validations (
     notes text,
     status character varying(32) DEFAULT 'completed'::character varying,
     created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_method_validations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28880,8 +28475,7 @@ CREATE TABLE public.qa_lims_parse_rules (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_parse_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28906,8 +28500,7 @@ CREATE TABLE public.qa_lims_pt_corrective_actions (
     verified_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_pt_corrective_actions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -28964,8 +28557,7 @@ CREATE TABLE public.qa_lims_pt_plans (
     notes text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_pt_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29037,8 +28629,7 @@ CREATE TABLE public.qa_lims_rfid_tags (
     last_read_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_rfid_tags_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29061,8 +28652,7 @@ CREATE TABLE public.qa_lims_sample_barcodes (
     last_printed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_sample_barcodes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29084,8 +28674,7 @@ CREATE TABLE public.qa_lims_sync_records (
     error_msg text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29116,8 +28705,7 @@ CREATE TABLE public.qa_lims_test_methods (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_test_methods_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29170,8 +28758,7 @@ CREATE TABLE public.qa_lims_uncertainty_projects (
     notes text,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_lims_uncertainty_projects_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29213,8 +28800,7 @@ CREATE TABLE public.qa_qms_sync_records (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_qms_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29265,8 +28851,7 @@ CREATE TABLE public.qa_quality_inspections (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_quality_inspections_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29288,8 +28873,7 @@ CREATE TABLE public.qa_quality_issues (
     created_at timestamp with time zone DEFAULT now(),
     resolved_at timestamp with time zone,
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_quality_issues_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29317,8 +28901,7 @@ CREATE TABLE public.qa_spc_charts (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_spc_charts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29358,8 +28941,7 @@ CREATE TABLE public.qa_standard_revisions (
     tenant_id uuid,
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_standard_revisions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29381,8 +28963,7 @@ CREATE TABLE public.qa_standards (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_standards_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29464,8 +29045,7 @@ CREATE TABLE public.report_execution_records (
     started_at timestamp with time zone DEFAULT now(),
     completed_at timestamp with time zone,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_report_execution_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29489,8 +29069,7 @@ CREATE TABLE public.report_schedules (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_report_schedules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -29554,8 +29133,7 @@ CREATE TABLE public.reports (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -29565,7 +29143,16 @@ CREATE TABLE public.reports (
 
 CREATE TABLE public.schema_registry (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
+    deleted_at timestamp with time zone,
+    name character varying(100) NOT NULL,
+    title character varying(200) NOT NULL,
+    description text,
+    schema_json jsonb NOT NULL,
+    table_name character varying(100) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    version integer DEFAULT 1 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -29586,8 +29173,7 @@ CREATE TABLE public.scm_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_scm_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -29661,8 +29247,7 @@ CREATE TABLE public.subscriptions (
     expires_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_subscriptions_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY public.subscriptions FORCE ROW LEVEL SECURITY;
@@ -29687,8 +29272,7 @@ CREATE TABLE public.supply_chain_orders (
     created_by character varying(255),
     created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_supply_chain_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29797,8 +29381,7 @@ CREATE TABLE public.tenants (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_tenants_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29942,8 +29525,7 @@ CREATE TABLE public.versions (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_versions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -29963,8 +29545,7 @@ CREATE TABLE public.warehouse_locations (
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_warehouse_locations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -30005,8 +29586,7 @@ CREATE TABLE public.wms_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    CONSTRAINT ck_wms_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now()
 );
 
 
@@ -30092,8 +29672,7 @@ CREATE TABLE qms.corrective_actions (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_corrective_actions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY qms.corrective_actions FORCE ROW LEVEL SECURITY;
@@ -30208,8 +29787,7 @@ CREATE TABLE qms.inspection_items (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_inspection_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY qms.inspection_items FORCE ROW LEVEL SECURITY;
@@ -30241,8 +29819,7 @@ CREATE TABLE qms.qa_alert_messages (
     acknowledged_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_alert_messages_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    tenant_id uuid
 );
 
 
@@ -30267,8 +29844,7 @@ CREATE TABLE qms.qa_alert_rules (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_alert_rules_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -30306,8 +29882,7 @@ CREATE TABLE qms.qa_apqp_approvals (
     approved_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_apqp_approvals_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'planning'::text, 'pending'::text, 'completed'::text, 'cancelled'::text, 'approved'::text, 'rejected'::text]))))
+    tenant_id uuid
 );
 
 
@@ -30331,8 +29906,7 @@ CREATE TABLE qms.qa_apqp_phases (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_apqp_phases_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'planning'::text, 'pending'::text, 'completed'::text, 'cancelled'::text, 'approved'::text, 'rejected'::text]))))
+    tenant_id uuid
 );
 
 
@@ -30361,8 +29935,7 @@ CREATE TABLE qms.qa_apqp_projects (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_apqp_projects_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'planning'::text, 'pending'::text, 'completed'::text, 'cancelled'::text, 'approved'::text, 'rejected'::text]))))
+    tenant_id uuid
 );
 
 
@@ -30387,8 +29960,7 @@ CREATE TABLE qms.qa_apqp_risks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_apqp_risks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'planning'::text, 'pending'::text, 'completed'::text, 'cancelled'::text, 'approved'::text, 'rejected'::text, 'open'::text, 'closed'::text, 'mitigating'::text]))))
+    tenant_id uuid
 );
 
 
@@ -30412,8 +29984,7 @@ CREATE TABLE qms.qa_apqp_tasks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_apqp_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'planning'::text, 'pending'::text, 'completed'::text, 'cancelled'::text, 'approved'::text, 'rejected'::text]))))
+    tenant_id uuid
 );
 
 
@@ -30439,8 +30010,7 @@ CREATE TABLE qms.qa_audit_findings (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_audit_findings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY qms.qa_audit_findings FORCE ROW LEVEL SECURITY;
@@ -30466,8 +30036,7 @@ CREATE TABLE qms.qa_audit_plans (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_audit_plans_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY qms.qa_audit_plans FORCE ROW LEVEL SECURITY;
@@ -30490,8 +30059,7 @@ CREATE TABLE qms.qa_audit_tasks (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_audit_tasks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY qms.qa_audit_tasks FORCE ROW LEVEL SECURITY;
@@ -30512,8 +30080,7 @@ CREATE TABLE qms.qa_corrective_action_items (
     remark text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_corrective_action_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY qms.qa_corrective_action_items FORCE ROW LEVEL SECURITY;
@@ -30541,8 +30108,7 @@ CREATE TABLE qms.qa_corrective_actions (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    related_issue_type text,
-    CONSTRAINT ck_qa_corrective_actions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    related_issue_type text
 );
 
 ALTER TABLE ONLY qms.qa_corrective_actions FORCE ROW LEVEL SECURITY;
@@ -30568,8 +30134,7 @@ CREATE TABLE qms.qa_ehs_hazards (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    related_inspection_id uuid,
-    CONSTRAINT ck_qa_ehs_hazards_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    related_inspection_id uuid
 );
 
 ALTER TABLE ONLY qms.qa_ehs_hazards FORCE ROW LEVEL SECURITY;
@@ -30625,8 +30190,7 @@ CREATE TABLE qms.qa_eightd_reports (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_eightd_reports_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY qms.qa_eightd_reports FORCE ROW LEVEL SECURITY;
@@ -30655,8 +30219,7 @@ CREATE TABLE qms.qa_fmea_analyses (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_fmea_analyses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY qms.qa_fmea_analyses FORCE ROW LEVEL SECURITY;
@@ -30756,8 +30319,7 @@ CREATE TABLE qms.qa_qms_sync_records (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_qms_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY qms.qa_qms_sync_records FORCE ROW LEVEL SECURITY;
@@ -30839,8 +30401,7 @@ CREATE TABLE qms.qa_quality_issues (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    title_en character varying(255),
-    CONSTRAINT ck_qa_quality_issues_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text, 'draft'::text, 'pending'::text, 'open'::text, 'new'::text, 'completed'::text, 'cancelled'::text]))))
+    title_en character varying(255)
 );
 
 ALTER TABLE ONLY qms.qa_quality_issues FORCE ROW LEVEL SECURITY;
@@ -30870,8 +30431,7 @@ CREATE TABLE qms.qa_spc_charts (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_spc_charts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY qms.qa_spc_charts FORCE ROW LEVEL SECURITY;
@@ -30915,8 +30475,7 @@ CREATE TABLE qms.qa_standard_revisions (
     created_by character varying(64),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_qa_standard_revisions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY qms.qa_standard_revisions FORCE ROW LEVEL SECURITY;
@@ -30940,8 +30499,7 @@ CREATE TABLE qms.qa_standards (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_qa_standards_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY qms.qa_standards FORCE ROW LEVEL SECURITY;
@@ -31083,8 +30641,7 @@ CREATE TABLE qms.quality_issues (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_quality_issues_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY qms.quality_issues FORCE ROW LEVEL SECURITY;
@@ -31150,8 +30707,7 @@ CREATE TABLE qms.quality_standards (
     created_by uuid,
     updated_by uuid,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_quality_standards_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY qms.quality_standards FORCE ROW LEVEL SECURITY;
@@ -31208,8 +30764,7 @@ CREATE TABLE rd.bugs (
     description text,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    created_at timestamp with time zone,
-    CONSTRAINT ck_bugs_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    created_at timestamp with time zone
 );
 
 
@@ -31232,8 +30787,7 @@ CREATE TABLE rd.builds (
     logs text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_builds_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -31260,8 +30814,7 @@ CREATE TABLE rd.deploys (
     logs text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_deploys_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -31279,8 +30832,7 @@ CREATE TABLE rd.test_cases (
     related_requirement text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_test_cases_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -31384,8 +30936,7 @@ CREATE TABLE rs.change_orders (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_change_orders_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 
@@ -31408,8 +30959,7 @@ CREATE TABLE rs.change_requests (
     proposed_by text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_change_requests_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY rs.change_requests FORCE ROW LEVEL SECURITY;
@@ -31500,8 +31050,7 @@ CREATE TABLE rs.experiments (
     batch_number text,
     scale double precision,
     scale_unit text,
-    completed_at timestamp with time zone,
-    CONSTRAINT ck_experiments_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    completed_at timestamp with time zone
 );
 
 ALTER TABLE ONLY rs.experiments FORCE ROW LEVEL SECURITY;
@@ -31618,8 +31167,7 @@ CREATE TABLE rs.patents (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_patents_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -31644,8 +31192,7 @@ CREATE TABLE rs.project_members (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_project_members_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 
@@ -31670,8 +31217,7 @@ CREATE TABLE rs.project_milestones (
     accepted_by character varying(255),
     accepted_at timestamp with time zone,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    CONSTRAINT ck_project_milestones_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL
 );
 
 
@@ -31696,8 +31242,7 @@ CREATE TABLE rs.project_phases (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid NOT NULL,
-    weight integer,
-    CONSTRAINT ck_project_phases_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    weight integer
 );
 
 
@@ -31756,8 +31301,7 @@ CREATE TABLE rs.research_costs (
     created_by uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_research_costs_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 
@@ -31906,8 +31450,7 @@ CREATE TABLE scm.incoming_inspections (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     actual_arrival_date timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_incoming_inspections_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.incoming_inspections FORCE ROW LEVEL SECURITY;
@@ -31935,8 +31478,7 @@ CREATE TABLE scm.incoming_notices (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     actual_arrival_date timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_incoming_notices_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.incoming_notices FORCE ROW LEVEL SECURITY;
@@ -32031,8 +31573,7 @@ CREATE TABLE scm.mrp_suggestions (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_mrp_suggestions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.mrp_suggestions FORCE ROW LEVEL SECURITY;
@@ -32142,8 +31683,7 @@ CREATE TABLE scm.purchase_contracts (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_purchase_contracts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.purchase_contracts FORCE ROW LEVEL SECURITY;
@@ -32165,8 +31705,7 @@ CREATE TABLE scm.purchase_inquiries (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_purchase_inquiries_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying, 'draft'::character varying, 'pending'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.purchase_inquiries FORCE ROW LEVEL SECURITY;
@@ -32216,8 +31755,7 @@ CREATE TABLE scm.purchase_items (
     deleted_at timestamp with time zone,
     product_code character varying,
     product_name character varying,
-    amount double precision,
-    CONSTRAINT ck_purchase_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    amount double precision
 );
 
 ALTER TABLE ONLY scm.purchase_items FORCE ROW LEVEL SECURITY;
@@ -32282,8 +31820,7 @@ CREATE TABLE scm.purchase_requisitions (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_purchase_requisitions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.purchase_requisitions FORCE ROW LEVEL SECURITY;
@@ -32364,8 +31901,7 @@ CREATE TABLE scm.srm_supplier_snapshots (
     synced_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_srm_supplier_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY scm.srm_supplier_snapshots FORCE ROW LEVEL SECURITY;
@@ -32423,8 +31959,7 @@ CREATE TABLE scm.supplier_admissions (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_supplier_admissions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.supplier_admissions FORCE ROW LEVEL SECURITY;
@@ -32491,8 +32026,7 @@ CREATE TABLE scm.supplier_evaluations (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    total_score double precision DEFAULT 0,
-    CONSTRAINT ck_supplier_evaluations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    total_score double precision DEFAULT 0
 );
 
 ALTER TABLE ONLY scm.supplier_evaluations FORCE ROW LEVEL SECURITY;
@@ -32522,8 +32056,7 @@ CREATE TABLE scm.supplier_products (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    material_code text,
-    CONSTRAINT ck_supplier_products_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    material_code text
 );
 
 ALTER TABLE ONLY scm.supplier_products FORCE ROW LEVEL SECURITY;
@@ -32569,8 +32102,7 @@ CREATE TABLE scm.supplier_quotes (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_supplier_quotes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.supplier_quotes FORCE ROW LEVEL SECURITY;
@@ -32611,8 +32143,7 @@ CREATE TABLE scm.suppliers (
     lead_time_days integer,
     code text,
     level text,
-    name_en character varying(255),
-    CONSTRAINT ck_suppliers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY scm.suppliers FORCE ROW LEVEL SECURITY;
@@ -32642,8 +32173,7 @@ CREATE TABLE scm.sync_logs (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_sync_logs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY scm.sync_logs FORCE ROW LEVEL SECURITY;
@@ -32662,8 +32192,7 @@ CREATE TABLE scm.sync_record_details (
     error_message text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_sync_record_details_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY scm.sync_record_details FORCE ROW LEVEL SECURITY;
@@ -32691,8 +32220,7 @@ CREATE TABLE scm.sync_records (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_sync_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying, 'pending'::character varying, 'running'::character varying, 'completed'::character varying, 'failed'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY scm.sync_records FORCE ROW LEVEL SECURITY;
@@ -32717,8 +32245,7 @@ CREATE TABLE scm.wms_inbound_order_snapshots (
     synced_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_wms_inbound_order_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY scm.wms_inbound_order_snapshots FORCE ROW LEVEL SECURITY;
@@ -32796,8 +32323,7 @@ CREATE TABLE scm.wms_outbound_order_snapshots (
     synced_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_wms_outbound_order_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY scm.wms_outbound_order_snapshots FORCE ROW LEVEL SECURITY;
@@ -32821,8 +32347,7 @@ CREATE TABLE scm.wms_replenishment_suggestion_snapshots (
     synced_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_wms_replenishment_suggestion_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY scm.wms_replenishment_suggestion_snapshots FORCE ROW LEVEL SECURITY;
@@ -32902,8 +32427,7 @@ CREATE TABLE srm.bid_requests (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_bid_requests_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -32951,8 +32475,7 @@ CREATE TABLE srm.biddings (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_biddings_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY srm.biddings FORCE ROW LEVEL SECURITY;
@@ -32976,8 +32499,7 @@ CREATE TABLE srm.bids (
     created_by uuid,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_bids_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 
@@ -33015,8 +32537,7 @@ CREATE TABLE srm.inquiries (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_inquiries_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY (ARRAY['draft'::text, 'published'::text, 'in_progress'::text, 'closed'::text, 'awarded'::text, 'cancelled'::text, 'active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY srm.inquiries FORCE ROW LEVEL SECURITY;
@@ -33041,8 +32562,7 @@ CREATE TABLE srm.purchase_orders (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_purchase_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY srm.purchase_orders FORCE ROW LEVEL SECURITY;
@@ -33072,8 +32592,7 @@ CREATE TABLE srm.quotations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_quotations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY srm.quotations FORCE ROW LEVEL SECURITY;
@@ -33113,8 +32632,7 @@ CREATE TABLE srm.scm_supplier_snapshots (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_scm_supplier_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY srm.scm_supplier_snapshots FORCE ROW LEVEL SECURITY;
@@ -33190,8 +32708,7 @@ CREATE TABLE srm.supplier_contracts (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_supplier_contracts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY srm.supplier_contracts FORCE ROW LEVEL SECURITY;
@@ -33218,8 +32735,7 @@ CREATE TABLE srm.supplier_evaluations (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_supplier_evaluations_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY srm.supplier_evaluations FORCE ROW LEVEL SECURITY;
@@ -33266,8 +32782,7 @@ CREATE TABLE srm.supplier_products (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid,
-    CONSTRAINT ck_supplier_products_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid
 );
 
 ALTER TABLE ONLY srm.supplier_products FORCE ROW LEVEL SECURITY;
@@ -33301,8 +32816,7 @@ CREATE TABLE srm.suppliers (
     bank_account character varying(50),
     sync_from_scm boolean DEFAULT false NOT NULL,
     scm_supplier_id uuid,
-    name_en character varying(255),
-    CONSTRAINT ck_suppliers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY srm.suppliers FORCE ROW LEVEL SECURITY;
@@ -33326,8 +32840,7 @@ CREATE TABLE srm.tender_awards (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_tender_awards_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY srm.tender_awards FORCE ROW LEVEL SECURITY;
@@ -33355,8 +32868,7 @@ CREATE TABLE srm.tender_bids (
     total_score numeric(5,2),
     remarks text,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_tender_bids_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY srm.tender_bids FORCE ROW LEVEL SECURITY;
@@ -33380,8 +32892,7 @@ CREATE TABLE srm.tenders (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_tenders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY srm.tenders FORCE ROW LEVEL SECURITY;
@@ -33734,8 +33245,7 @@ CREATE TABLE tms.tms_carriers (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_tms_carriers_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY tms.tms_carriers FORCE ROW LEVEL SECURITY;
@@ -33757,8 +33267,7 @@ CREATE TABLE tms.tms_drivers (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_tms_drivers_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY tms.tms_drivers FORCE ROW LEVEL SECURITY;
@@ -33781,8 +33290,7 @@ CREATE TABLE tms.tms_routes (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    name_en character varying(255),
-    CONSTRAINT ck_tms_routes_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    name_en character varying(255)
 );
 
 ALTER TABLE ONLY tms.tms_routes FORCE ROW LEVEL SECURITY;
@@ -33812,8 +33320,7 @@ CREATE TABLE tms.tms_shipments (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     actual_departure timestamp with time zone,
     actual_arrival timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_tms_shipments_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY tms.tms_shipments FORCE ROW LEVEL SECURITY;
@@ -33835,8 +33342,7 @@ CREATE TABLE tms.tms_vehicles (
     tenant_id uuid,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_tms_vehicles_status_standard CHECK (((status IS NULL) OR (status = ANY (ARRAY['active'::text, 'inactive'::text, 'archived'::text]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY tms.tms_vehicles FORCE ROW LEVEL SECURITY;
@@ -33877,8 +33383,7 @@ CREATE TABLE unified_core.inter_module_sync (
     executed_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_inter_module_sync_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY unified_core.inter_module_sync FORCE ROW LEVEL SECURITY;
@@ -33970,8 +33475,7 @@ CREATE TABLE wms.batches (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_batches_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY wms.batches FORCE ROW LEVEL SECURITY;
@@ -34203,8 +33707,7 @@ CREATE TABLE wms.inbound_orders (
     organization_id uuid CONSTRAINT inbound_orders_organization_id_not_null1 NOT NULL,
     approved_by uuid,
     approved_at timestamp with time zone,
-    order_date timestamp with time zone,
-    CONSTRAINT ck_inbound_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    order_date timestamp with time zone
 );
 
 ALTER TABLE ONLY wms.inbound_orders FORCE ROW LEVEL SECURITY;
@@ -34382,8 +33885,7 @@ CREATE TABLE wms.inventory_alert_records (
     item_id uuid,
     item_code text,
     alert_level text,
-    threshold_quantity numeric,
-    CONSTRAINT ck_inventory_alert_records_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    threshold_quantity numeric
 );
 
 ALTER TABLE ONLY wms.inventory_alert_records FORCE ROW LEVEL SECURITY;
@@ -34490,8 +33992,7 @@ CREATE TABLE wms.inventory_movements (
     notes text,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_inventory_movements_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY wms.inventory_movements FORCE ROW LEVEL SECURITY;
@@ -34517,8 +34018,7 @@ CREATE TABLE wms.labor_shifts (
     tasks_completed bigint DEFAULT 0 NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     org_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_labor_shifts_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY wms.labor_shifts FORCE ROW LEVEL SECURITY;
@@ -34731,8 +34231,7 @@ CREATE TABLE wms.outbound_orders (
     approved_by uuid,
     approved_at timestamp with time zone,
     order_date timestamp with time zone,
-    is_synced_to_crm boolean DEFAULT false NOT NULL,
-    CONSTRAINT ck_outbound_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    is_synced_to_crm boolean DEFAULT false NOT NULL
 );
 
 ALTER TABLE ONLY wms.outbound_orders FORCE ROW LEVEL SECURITY;
@@ -34833,8 +34332,7 @@ CREATE TABLE wms.purchase_order_snapshots (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_purchase_order_snapshots_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY wms.purchase_order_snapshots FORCE ROW LEVEL SECURITY;
@@ -34859,8 +34357,7 @@ CREATE TABLE wms.replenishment_order_items (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_replenishment_order_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY wms.replenishment_order_items FORCE ROW LEVEL SECURITY;
@@ -34881,8 +34378,7 @@ CREATE TABLE wms.replenishment_orders (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_replenishment_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY wms.replenishment_orders FORCE ROW LEVEL SECURITY;
@@ -34949,8 +34445,7 @@ CREATE TABLE wms.replenishment_suggestions (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone,
-    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid,
-    CONSTRAINT ck_replenishment_suggestions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
 ALTER TABLE ONLY wms.replenishment_suggestions FORCE ROW LEVEL SECURITY;
@@ -35028,8 +34523,7 @@ CREATE TABLE wms.serial_numbers (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_serial_numbers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY wms.serial_numbers FORCE ROW LEVEL SECURITY;
@@ -35075,8 +34569,7 @@ CREATE TABLE wms.slotting_suggestions (
     status character varying(20) DEFAULT 'pending'::character varying NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     applied_at timestamp with time zone,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_slotting_suggestions_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY wms.slotting_suggestions FORCE ROW LEVEL SECURITY;
@@ -35149,8 +34642,7 @@ CREATE TABLE wms.stock_take_items (
     deleted_at timestamp with time zone,
     tenant_id uuid,
     organization_id uuid CONSTRAINT stock_take_items_organization_id_not_null1 NOT NULL,
-    status character varying,
-    CONSTRAINT ck_stock_take_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    status character varying
 );
 
 ALTER TABLE ONLY wms.stock_take_items FORCE ROW LEVEL SECURITY;
@@ -35227,8 +34719,7 @@ CREATE TABLE wms.stock_takes (
     tenant_id uuid,
     organization_id uuid CONSTRAINT stock_takes_organization_id_not_null1 NOT NULL,
     material_category character varying(50),
-    remarks text,
-    CONSTRAINT ck_stock_takes_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    remarks text
 );
 
 ALTER TABLE ONLY wms.stock_takes FORCE ROW LEVEL SECURITY;
@@ -35386,8 +34877,7 @@ CREATE TABLE wms.transfer_order_items (
     item_name text,
     quantity numeric DEFAULT 0,
     order_number text,
-    transfer_no text,
-    CONSTRAINT ck_transfer_order_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    transfer_no text
 );
 
 ALTER TABLE ONLY wms.transfer_order_items FORCE ROW LEVEL SECURITY;
@@ -35428,8 +34918,7 @@ CREATE TABLE wms.transfer_orders (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     tenant_id uuid,
-    deleted_at timestamp with time zone,
-    CONSTRAINT ck_transfer_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    deleted_at timestamp with time zone
 );
 
 ALTER TABLE ONLY wms.transfer_orders FORCE ROW LEVEL SECURITY;
@@ -35503,8 +34992,7 @@ CREATE TABLE wms.transfers (
     updated_by uuid,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    organization_id uuid CONSTRAINT transfers_organization_id_not_null1 NOT NULL,
-    CONSTRAINT ck_transfers_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid CONSTRAINT transfers_organization_id_not_null1 NOT NULL
 );
 
 ALTER TABLE ONLY wms.transfers FORCE ROW LEVEL SECURITY;
@@ -35578,8 +35066,7 @@ CREATE TABLE wms.warehouses (
     tenant_id uuid,
     organization_id uuid DEFAULT '00000000-0000-0000-0000-000000000002'::uuid CONSTRAINT warehouses_organization_id_not_null1 NOT NULL,
     name text,
-    warehouse_name_en character varying(255),
-    CONSTRAINT ck_warehouses_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    warehouse_name_en character varying(255)
 );
 
 ALTER TABLE ONLY wms.warehouses FORCE ROW LEVEL SECURITY;
@@ -35630,8 +35117,7 @@ CREATE TABLE wms.wave_pick_items (
     updated_by uuid,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    organization_id uuid CONSTRAINT wave_pick_items_organization_id_not_null1 NOT NULL,
-    CONSTRAINT ck_wave_pick_items_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid CONSTRAINT wave_pick_items_organization_id_not_null1 NOT NULL
 );
 
 ALTER TABLE ONLY wms.wave_pick_items FORCE ROW LEVEL SECURITY;
@@ -35680,8 +35166,7 @@ CREATE TABLE wms.wave_picks (
     updated_by uuid,
     deleted_at timestamp with time zone,
     tenant_id uuid,
-    organization_id uuid CONSTRAINT wave_picks_organization_id_not_null1 NOT NULL,
-    CONSTRAINT ck_wave_picks_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    organization_id uuid CONSTRAINT wave_picks_organization_id_not_null1 NOT NULL
 );
 
 ALTER TABLE ONLY wms.wave_picks FORCE ROW LEVEL SECURITY;
@@ -35746,8 +35231,7 @@ CREATE TABLE wms.wms_master_data_refs (
     payload_snapshot jsonb,
     last_synced_at timestamp with time zone DEFAULT now(),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    CONSTRAINT ck_wms_master_data_refs_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 ALTER TABLE ONLY wms.wms_master_data_refs FORCE ROW LEVEL SECURITY;
@@ -36591,6 +36075,14 @@ ALTER TABLE ONLY crm.interactions
 
 ALTER TABLE ONLY crm.opportunities
     ADD CONSTRAINT opportunities_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: return_event_outbox return_event_outbox_pkey; Type: CONSTRAINT; Schema: crm; Owner: -
+--
+
+ALTER TABLE ONLY crm.return_event_outbox
+    ADD CONSTRAINT return_event_outbox_pkey PRIMARY KEY (id);
 
 
 --
@@ -37807,6 +37299,14 @@ ALTER TABLE ONLY erp.erp_master_data_quality_reports
 
 ALTER TABLE ONLY erp.erp_master_data_quality_rules
     ADD CONSTRAINT erp_master_data_quality_rules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: erp_master_data_refs erp_master_data_refs_master_data_id_key; Type: CONSTRAINT; Schema: erp; Owner: -
+--
+
+ALTER TABLE ONLY erp.erp_master_data_refs
+    ADD CONSTRAINT erp_master_data_refs_master_data_id_key UNIQUE (master_data_id);
 
 
 --
@@ -40922,6 +40422,14 @@ ALTER TABLE ONLY iam.sessions
 
 
 --
+-- Name: tenant_users tenant_users_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.tenant_users
+    ADD CONSTRAINT tenant_users_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: user_access_logs user_access_logs_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
 --
 
@@ -41399,6 +40907,38 @@ ALTER TABLE ONLY lims.qa_lab_records
 
 ALTER TABLE ONLY lims.qa_lab_sample_lifecycle
     ADD CONSTRAINT qa_lab_sample_lifecycle_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: qa_lab_samples qa_lab_samples_pkey; Type: CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.qa_lab_samples
+    ADD CONSTRAINT qa_lab_samples_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: qa_lab_samples qa_lab_samples_sample_no_key; Type: CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.qa_lab_samples
+    ADD CONSTRAINT qa_lab_samples_sample_no_key UNIQUE (sample_no);
+
+
+--
+-- Name: qa_lab_tasks qa_lab_tasks_pkey; Type: CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.qa_lab_tasks
+    ADD CONSTRAINT qa_lab_tasks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: qa_lab_tasks qa_lab_tasks_task_no_key; Type: CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.qa_lab_tasks
+    ADD CONSTRAINT qa_lab_tasks_task_no_key UNIQUE (task_no);
 
 
 --
@@ -45370,14 +44910,6 @@ ALTER TABLE ONLY public.core_chat_rooms
 
 
 --
--- Name: core_dashboard_refresh_log core_dashboard_refresh_log_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_dashboard_refresh_log
-    ADD CONSTRAINT core_dashboard_refresh_log_pkey PRIMARY KEY (id);
-
-
---
 -- Name: core_dict_items core_dict_items_dict_type_id_code_key; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -46231,14 +45763,6 @@ ALTER TABLE ONLY public._archive_core_workflow_instances
 
 ALTER TABLE ONLY public.core_workflow_instances
     ADD CONSTRAINT core_workflow_instances_pkey1 PRIMARY KEY (id);
-
-
---
--- Name: _archive_core_workflow_tasks core_workflow_tasks_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public._archive_core_workflow_tasks
-    ADD CONSTRAINT core_workflow_tasks_pkey PRIMARY KEY (id);
 
 
 --
@@ -50970,6 +50494,13 @@ CREATE INDEX idx_report_schedules_template ON bi.report_schedules USING btree (t
 
 
 --
+-- Name: idx_report_subscriptions_template_id; Type: INDEX; Schema: bi; Owner: -
+--
+
+CREATE INDEX idx_report_subscriptions_template_id ON bi.report_subscriptions USING btree (template_id);
+
+
+--
 -- Name: idx_report_subscriptions_user; Type: INDEX; Schema: bi; Owner: -
 --
 
@@ -51173,13 +50704,6 @@ CREATE INDEX idx_core_plugin_instances_status ON core.core_plugin_instances USIN
 
 
 --
--- Name: idx_core_plugin_navigation_code; Type: INDEX; Schema: core; Owner: -
---
-
-CREATE INDEX idx_core_plugin_navigation_code ON core.core_plugin_navigation USING btree (plugin_code);
-
-
---
 -- Name: idx_core_plugin_permissions_code; Type: INDEX; Schema: core; Owner: -
 --
 
@@ -51247,13 +50771,6 @@ CREATE INDEX idx_core_plugin_versions_version ON core.core_plugin_versions USING
 --
 
 CREATE INDEX idx_core_plugins_category ON core.core_plugins USING btree (category);
-
-
---
--- Name: idx_core_plugins_code; Type: INDEX; Schema: core; Owner: -
---
-
-CREATE INDEX idx_core_plugins_code ON core.core_plugins USING btree (code);
 
 
 --
@@ -51397,41 +50914,6 @@ CREATE INDEX idx_kd_tenant_id ON core.knowledge_documents USING btree (tenant_id
 
 
 --
--- Name: idx_knowledge_chunks_doc; Type: INDEX; Schema: core; Owner: -
---
-
-CREATE INDEX idx_knowledge_chunks_doc ON core.knowledge_chunks USING btree (document_id);
-
-
---
--- Name: idx_knowledge_chunks_document_id; Type: INDEX; Schema: core; Owner: -
---
-
-CREATE INDEX idx_knowledge_chunks_document_id ON core.knowledge_chunks USING btree (document_id);
-
-
---
--- Name: idx_knowledge_chunks_kb_id; Type: INDEX; Schema: core; Owner: -
---
-
-CREATE INDEX idx_knowledge_chunks_kb_id ON core.knowledge_chunks USING btree (kb_id);
-
-
---
--- Name: idx_knowledge_documents_kb; Type: INDEX; Schema: core; Owner: -
---
-
-CREATE INDEX idx_knowledge_documents_kb ON core.knowledge_documents USING btree (kb_id);
-
-
---
--- Name: idx_knowledge_documents_kb_id; Type: INDEX; Schema: core; Owner: -
---
-
-CREATE INDEX idx_knowledge_documents_kb_id ON core.knowledge_documents USING btree (kb_id);
-
-
---
 -- Name: idx_knowledge_qa_history_kb_id; Type: INDEX; Schema: core; Owner: -
 --
 
@@ -51551,13 +51033,6 @@ CREATE INDEX idx_crm_billing_records_tenant ON crm.billing_records USING btree (
 
 
 --
--- Name: idx_crm_contacts_customer; Type: INDEX; Schema: crm; Owner: -
---
-
-CREATE INDEX idx_crm_contacts_customer ON crm.contacts USING btree (customer_id);
-
-
---
 -- Name: idx_crm_contacts_tenant; Type: INDEX; Schema: crm; Owner: -
 --
 
@@ -51628,13 +51103,6 @@ CREATE INDEX idx_crm_customer_scores_customer ON crm.customer_scores USING btree
 
 
 --
--- Name: idx_crm_customer_tags_tag; Type: INDEX; Schema: crm; Owner: -
---
-
-CREATE INDEX idx_crm_customer_tags_tag ON crm.customer_tags USING btree (tag_id);
-
-
---
 -- Name: idx_crm_customer_tags_tenant_id; Type: INDEX; Schema: crm; Owner: -
 --
 
@@ -51670,24 +51138,10 @@ CREATE INDEX idx_crm_interactions_created ON crm.interactions USING btree (creat
 
 
 --
--- Name: idx_crm_interactions_customer; Type: INDEX; Schema: crm; Owner: -
---
-
-CREATE INDEX idx_crm_interactions_customer ON crm.interactions USING btree (customer_id);
-
-
---
 -- Name: idx_crm_interactions_tenant_id; Type: INDEX; Schema: crm; Owner: -
 --
 
 CREATE INDEX idx_crm_interactions_tenant_id ON crm.interactions USING btree (tenant_id);
-
-
---
--- Name: idx_crm_opportunities_customer; Type: INDEX; Schema: crm; Owner: -
---
-
-CREATE INDEX idx_crm_opportunities_customer ON crm.opportunities USING btree (customer_id);
 
 
 --
@@ -52003,6 +51457,13 @@ CREATE INDEX idx_opportunities_status ON crm.opportunities USING btree (status);
 --
 
 CREATE INDEX idx_opportunities_tenant_stage_created ON crm.opportunities USING btree (tenant_id, stage, created_at);
+
+
+--
+-- Name: idx_return_event_outbox_status; Type: INDEX; Schema: crm; Owner: -
+--
+
+CREATE INDEX idx_return_event_outbox_status ON crm.return_event_outbox USING btree (status, created_at);
 
 
 --
@@ -52517,10 +51978,24 @@ CREATE INDEX idx_monitoring_points_no ON ehs.monitoring_points USING btree (poin
 
 
 --
--- Name: idx_qa_ehs_accidents_no; Type: INDEX; Schema: ehs; Owner: -
+-- Name: idx_qa_ehs_accident_investigations_accident_id; Type: INDEX; Schema: ehs; Owner: -
 --
 
-CREATE INDEX idx_qa_ehs_accidents_no ON ehs.qa_ehs_accidents USING btree (accident_no);
+CREATE INDEX idx_qa_ehs_accident_investigations_accident_id ON ehs.qa_ehs_accident_investigations USING btree (accident_id);
+
+
+--
+-- Name: idx_qa_ehs_accident_reviews_accident_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_accident_reviews_accident_id ON ehs.qa_ehs_accident_reviews USING btree (accident_id);
+
+
+--
+-- Name: idx_qa_ehs_accident_treatments_accident_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_accident_treatments_accident_id ON ehs.qa_ehs_accident_treatments USING btree (accident_id);
 
 
 --
@@ -52538,17 +52013,24 @@ CREATE INDEX idx_qa_ehs_alerts_status ON ehs.qa_ehs_alerts USING btree (status);
 
 
 --
--- Name: idx_qa_ehs_compliance_evals_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_compliance_evals_no ON ehs.qa_ehs_compliance_evaluations USING btree (eval_no);
-
-
---
 -- Name: idx_qa_ehs_compliance_evals_status; Type: INDEX; Schema: ehs; Owner: -
 --
 
 CREATE INDEX idx_qa_ehs_compliance_evals_status ON ehs.qa_ehs_compliance_evaluations USING btree (status);
+
+
+--
+-- Name: idx_qa_ehs_compliance_items_evaluation_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_compliance_items_evaluation_id ON ehs.qa_ehs_compliance_items USING btree (evaluation_id);
+
+
+--
+-- Name: idx_qa_ehs_compliance_items_regulation_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_compliance_items_regulation_id ON ehs.qa_ehs_compliance_items USING btree (regulation_id);
 
 
 --
@@ -52559,17 +52041,10 @@ CREATE INDEX idx_qa_ehs_contraindications_employee ON ehs.qa_ehs_contraindicatio
 
 
 --
--- Name: idx_qa_ehs_detection_records_no; Type: INDEX; Schema: ehs; Owner: -
+-- Name: idx_qa_ehs_detection_records_factor_id; Type: INDEX; Schema: ehs; Owner: -
 --
 
-CREATE INDEX idx_qa_ehs_detection_records_no ON ehs.qa_ehs_detection_records USING btree (record_no);
-
-
---
--- Name: idx_qa_ehs_discharge_permits_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_discharge_permits_no ON ehs.qa_ehs_discharge_permits USING btree (permit_no);
+CREATE INDEX idx_qa_ehs_detection_records_factor_id ON ehs.qa_ehs_detection_records USING btree (factor_id);
 
 
 --
@@ -52580,13 +52055,6 @@ CREATE INDEX idx_qa_ehs_discharge_permits_status ON ehs.qa_ehs_discharge_permits
 
 
 --
--- Name: idx_qa_ehs_disease_cases_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_disease_cases_no ON ehs.qa_ehs_disease_cases USING btree (case_no);
-
-
---
 -- Name: idx_qa_ehs_disease_cases_status; Type: INDEX; Schema: ehs; Owner: -
 --
 
@@ -52594,10 +52062,10 @@ CREATE INDEX idx_qa_ehs_disease_cases_status ON ehs.qa_ehs_disease_cases USING b
 
 
 --
--- Name: idx_qa_ehs_drill_plans_no; Type: INDEX; Schema: ehs; Owner: -
+-- Name: idx_qa_ehs_drill_evaluations_drill_id; Type: INDEX; Schema: ehs; Owner: -
 --
 
-CREATE INDEX idx_qa_ehs_drill_plans_no ON ehs.qa_ehs_drill_plans USING btree (plan_no);
+CREATE INDEX idx_qa_ehs_drill_evaluations_drill_id ON ehs.qa_ehs_drill_evaluations USING btree (drill_id);
 
 
 --
@@ -52608,10 +52076,17 @@ CREATE INDEX idx_qa_ehs_drill_plans_status ON ehs.qa_ehs_drill_plans USING btree
 
 
 --
--- Name: idx_qa_ehs_drill_records_no; Type: INDEX; Schema: ehs; Owner: -
+-- Name: idx_qa_ehs_drill_problems_drill_id; Type: INDEX; Schema: ehs; Owner: -
 --
 
-CREATE INDEX idx_qa_ehs_drill_records_no ON ehs.qa_ehs_drill_records USING btree (record_no);
+CREATE INDEX idx_qa_ehs_drill_problems_drill_id ON ehs.qa_ehs_drill_problems USING btree (drill_id);
+
+
+--
+-- Name: idx_qa_ehs_drill_records_plan_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_drill_records_plan_id ON ehs.qa_ehs_drill_records USING btree (plan_id);
 
 
 --
@@ -52622,17 +52097,31 @@ CREATE INDEX idx_qa_ehs_drill_records_status ON ehs.qa_ehs_drill_records USING b
 
 
 --
+-- Name: idx_qa_ehs_emergency_plan_approvals_plan_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_emergency_plan_approvals_plan_id ON ehs.qa_ehs_emergency_plan_approvals USING btree (plan_id);
+
+
+--
+-- Name: idx_qa_ehs_emergency_plan_supplies_plan_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_emergency_plan_supplies_plan_id ON ehs.qa_ehs_emergency_plan_supplies USING btree (plan_id);
+
+
+--
+-- Name: idx_qa_ehs_emergency_plan_versions_plan_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_emergency_plan_versions_plan_id ON ehs.qa_ehs_emergency_plan_versions USING btree (plan_id);
+
+
+--
 -- Name: idx_qa_ehs_emergency_plans_category; Type: INDEX; Schema: ehs; Owner: -
 --
 
 CREATE INDEX idx_qa_ehs_emergency_plans_category ON ehs.qa_ehs_emergency_plans USING btree (category);
-
-
---
--- Name: idx_qa_ehs_emergency_plans_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_emergency_plans_no ON ehs.qa_ehs_emergency_plans USING btree (plan_no);
 
 
 --
@@ -52657,24 +52146,10 @@ CREATE INDEX idx_qa_ehs_employees_name ON ehs.qa_ehs_employees USING btree (name
 
 
 --
--- Name: idx_qa_ehs_env_incidents_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_env_incidents_no ON ehs.qa_ehs_environment_incidents USING btree (incident_no);
-
-
---
 -- Name: idx_qa_ehs_env_incidents_status; Type: INDEX; Schema: ehs; Owner: -
 --
 
 CREATE INDEX idx_qa_ehs_env_incidents_status ON ehs.qa_ehs_environment_incidents USING btree (status);
-
-
---
--- Name: idx_qa_ehs_env_monitor_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_env_monitor_no ON ehs.qa_ehs_env_monitor_records USING btree (record_no);
 
 
 --
@@ -52689,13 +52164,6 @@ CREATE INDEX idx_qa_ehs_env_monitor_type ON ehs.qa_ehs_env_monitor_records USING
 --
 
 CREATE INDEX idx_qa_ehs_env_regulations_category ON ehs.qa_ehs_environmental_regulations USING btree (category);
-
-
---
--- Name: idx_qa_ehs_env_regulations_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_env_regulations_no ON ehs.qa_ehs_environmental_regulations USING btree (reg_no);
 
 
 --
@@ -52717,6 +52185,20 @@ CREATE INDEX idx_qa_ehs_hazard_factors_no ON ehs.qa_ehs_hazard_factors USING btr
 --
 
 CREATE INDEX idx_qa_ehs_hazard_factors_type ON ehs.qa_ehs_hazard_factors USING btree (factor_type);
+
+
+--
+-- Name: idx_qa_ehs_hazard_rectifications_hazard_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_hazard_rectifications_hazard_id ON ehs.qa_ehs_hazard_rectifications USING btree (hazard_id);
+
+
+--
+-- Name: idx_qa_ehs_hazard_verifications_hazard_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_hazard_verifications_hazard_id ON ehs.qa_ehs_hazard_verifications USING btree (hazard_id);
 
 
 --
@@ -52762,10 +52244,10 @@ CREATE INDEX idx_qa_ehs_hazards_status ON ehs.qa_ehs_hazards USING btree (status
 
 
 --
--- Name: idx_qa_ehs_health_exam_plans_no; Type: INDEX; Schema: ehs; Owner: -
+-- Name: idx_qa_ehs_health_abnormalities_record_id; Type: INDEX; Schema: ehs; Owner: -
 --
 
-CREATE INDEX idx_qa_ehs_health_exam_plans_no ON ehs.qa_ehs_health_exam_plans USING btree (plan_no);
+CREATE INDEX idx_qa_ehs_health_abnormalities_record_id ON ehs.qa_ehs_health_abnormalities USING btree (record_id);
 
 
 --
@@ -52783,38 +52265,59 @@ CREATE INDEX idx_qa_ehs_health_exam_records_employee ON ehs.qa_ehs_health_exam_r
 
 
 --
--- Name: idx_qa_ehs_health_exam_records_no; Type: INDEX; Schema: ehs; Owner: -
+-- Name: idx_qa_ehs_health_exam_records_plan_id; Type: INDEX; Schema: ehs; Owner: -
 --
 
-CREATE INDEX idx_qa_ehs_health_exam_records_no ON ehs.qa_ehs_health_exam_records USING btree (record_no);
-
-
---
--- Name: idx_qa_ehs_plans_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_plans_no ON ehs.qa_ehs_inspection_plans USING btree (plan_no);
+CREATE INDEX idx_qa_ehs_health_exam_records_plan_id ON ehs.qa_ehs_health_exam_records USING btree (plan_id);
 
 
 --
--- Name: idx_qa_ehs_records_no; Type: INDEX; Schema: ehs; Owner: -
+-- Name: idx_qa_ehs_inspection_items_plan_id; Type: INDEX; Schema: ehs; Owner: -
 --
 
-CREATE INDEX idx_qa_ehs_records_no ON ehs.qa_ehs_inspection_records USING btree (record_no);
-
-
---
--- Name: idx_qa_ehs_risks_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_risks_no ON ehs.qa_ehs_risks USING btree (risk_no);
+CREATE INDEX idx_qa_ehs_inspection_items_plan_id ON ehs.qa_ehs_inspection_items USING btree (plan_id);
 
 
 --
--- Name: idx_qa_ehs_stock_records_no; Type: INDEX; Schema: ehs; Owner: -
+-- Name: idx_qa_ehs_inspection_record_items_item_id; Type: INDEX; Schema: ehs; Owner: -
 --
 
-CREATE INDEX idx_qa_ehs_stock_records_no ON ehs.qa_ehs_stock_records USING btree (record_no);
+CREATE INDEX idx_qa_ehs_inspection_record_items_item_id ON ehs.qa_ehs_inspection_record_items USING btree (item_id);
+
+
+--
+-- Name: idx_qa_ehs_inspection_record_items_record_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_inspection_record_items_record_id ON ehs.qa_ehs_inspection_record_items USING btree (record_id);
+
+
+--
+-- Name: idx_qa_ehs_inspection_records_plan_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_inspection_records_plan_id ON ehs.qa_ehs_inspection_records USING btree (plan_id);
+
+
+--
+-- Name: idx_qa_ehs_material_stocks_material_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_material_stocks_material_id ON ehs.qa_ehs_material_stocks USING btree (material_id);
+
+
+--
+-- Name: idx_qa_ehs_msds_material_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_msds_material_id ON ehs.qa_ehs_msds USING btree (material_id);
+
+
+--
+-- Name: idx_qa_ehs_stock_records_material_id; Type: INDEX; Schema: ehs; Owner: -
+--
+
+CREATE INDEX idx_qa_ehs_stock_records_material_id ON ehs.qa_ehs_stock_records USING btree (material_id);
 
 
 --
@@ -52822,13 +52325,6 @@ CREATE INDEX idx_qa_ehs_stock_records_no ON ehs.qa_ehs_stock_records USING btree
 --
 
 CREATE INDEX idx_qa_ehs_stock_records_type ON ehs.qa_ehs_stock_records USING btree (record_type);
-
-
---
--- Name: idx_qa_ehs_sync_no; Type: INDEX; Schema: ehs; Owner: -
---
-
-CREATE INDEX idx_qa_ehs_sync_no ON ehs.qa_ehs_sync_records USING btree (sync_no);
 
 
 --
@@ -52934,6 +52430,13 @@ CREATE INDEX idx_vaccination_records_employee ON ehs.vaccination_records USING b
 --
 
 CREATE INDEX audit_logs_tenant_id_idx ON erp.audit_logs USING btree (tenant_id);
+
+
+--
+-- Name: erp_master_data_refs_domain_idx; Type: INDEX; Schema: erp; Owner: -
+--
+
+CREATE INDEX erp_master_data_refs_domain_idx ON erp.erp_master_data_refs USING btree (domain);
 
 
 --
@@ -53777,13 +53280,6 @@ CREATE INDEX idx_vehicle_requests_vehicle_id ON erp.vehicle_requests USING btree
 
 
 --
--- Name: idx_vehicles_plate_number; Type: INDEX; Schema: erp; Owner: -
---
-
-CREATE INDEX idx_vehicles_plate_number ON erp.vehicles USING btree (plate_number);
-
-
---
 -- Name: idx_vehicles_status; Type: INDEX; Schema: erp; Owner: -
 --
 
@@ -53875,122 +53371,10 @@ CREATE INDEX idx_aux_balance_tenant_id ON finance.core_finance_aux_balances USIN
 
 
 --
--- Name: idx_core_finance_accounts_parent_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_accounts_parent_id ON finance.core_finance_accounts USING btree (parent_id);
-
-
---
--- Name: idx_core_finance_approval_workflows_tenant_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_approval_workflows_tenant_id ON finance.core_finance_approval_workflows USING btree (tenant_id);
-
-
---
--- Name: idx_core_finance_aux_accounts_parent_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_aux_accounts_parent_id ON finance.core_finance_aux_accounts USING btree (parent_id);
-
-
---
--- Name: idx_core_finance_aux_accounts_tenant_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_aux_accounts_tenant_id ON finance.core_finance_aux_accounts USING btree (tenant_id);
-
-
---
--- Name: idx_core_finance_aux_balances_account_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_aux_balances_account_id ON finance.core_finance_aux_balances USING btree (account_id);
-
-
---
--- Name: idx_core_finance_aux_balances_tenant_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_aux_balances_tenant_id ON finance.core_finance_aux_balances USING btree (tenant_id);
-
-
---
--- Name: idx_core_finance_ledger_account_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_ledger_account_id ON finance.core_finance_ledger USING btree (account_id);
-
-
---
--- Name: idx_core_finance_ledger_tenant_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_ledger_tenant_id ON finance.core_finance_ledger USING btree (tenant_id);
-
-
---
 -- Name: idx_core_finance_ledger_voucher_id; Type: INDEX; Schema: finance; Owner: -
 --
 
 CREATE INDEX idx_core_finance_ledger_voucher_id ON finance.core_finance_ledger USING btree (voucher_id);
-
-
---
--- Name: idx_core_finance_periods_tenant_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_periods_tenant_id ON finance.core_finance_periods USING btree (tenant_id);
-
-
---
--- Name: idx_core_finance_reconciliation_items_matched_item_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_reconciliation_items_matched_item_id ON finance.core_finance_reconciliation_items USING btree (matched_item_id);
-
-
---
--- Name: idx_core_finance_reconciliation_items_session_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_reconciliation_items_session_id ON finance.core_finance_reconciliation_items USING btree (session_id);
-
-
---
--- Name: idx_core_finance_reconciliation_items_tenant_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_reconciliation_items_tenant_id ON finance.core_finance_reconciliation_items USING btree (tenant_id);
-
-
---
--- Name: idx_core_finance_reconciliation_sessions_tenant_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_reconciliation_sessions_tenant_id ON finance.core_finance_reconciliation_sessions USING btree (tenant_id);
-
-
---
--- Name: idx_core_finance_voucher_lines_account_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_voucher_lines_account_id ON finance.core_finance_voucher_lines USING btree (account_id);
-
-
---
--- Name: idx_core_finance_voucher_lines_voucher_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_voucher_lines_voucher_id ON finance.core_finance_voucher_lines USING btree (voucher_id);
-
-
---
--- Name: idx_core_finance_vouchers_tenant_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_core_finance_vouchers_tenant_id ON finance.core_finance_vouchers USING btree (tenant_id);
 
 
 --
@@ -54026,6 +53410,13 @@ CREATE INDEX idx_fin_voucher_lines_vid ON finance.voucher_lines USING btree (vou
 --
 
 CREATE INDEX idx_fin_vouchers_tenant ON finance.vouchers USING btree (tenant_id);
+
+
+--
+-- Name: idx_finance_source_amount_snapshots_source_type; Type: INDEX; Schema: finance; Owner: -
+--
+
+CREATE INDEX idx_finance_source_amount_snapshots_source_type ON finance.source_amount_snapshots USING btree (source_type);
 
 
 --
@@ -54659,13 +54050,6 @@ CREATE INDEX idx_reconcile_items_order ON finance.reconcile_items USING btree (o
 
 
 --
--- Name: idx_reconcile_items_order_id; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_reconcile_items_order_id ON finance.reconcile_items USING btree (order_id);
-
-
---
 -- Name: idx_reconcile_items_source; Type: INDEX; Schema: finance; Owner: -
 --
 
@@ -54712,13 +54096,6 @@ CREATE INDEX idx_sales_invoices_customer ON finance.sales_invoices USING btree (
 --
 
 CREATE INDEX idx_sales_invoices_due_date ON finance.sales_invoices USING btree (due_date);
-
-
---
--- Name: idx_sales_invoices_invoice_no; Type: INDEX; Schema: finance; Owner: -
---
-
-CREATE INDEX idx_sales_invoices_invoice_no ON finance.sales_invoices USING btree (invoice_number);
 
 
 --
@@ -55632,6 +55009,13 @@ CREATE INDEX idx_voucher_tenant_id ON finance.core_finance_vouchers USING btree 
 
 
 --
+-- Name: uq_finance_source_amount_snapshots_type_id; Type: INDEX; Schema: finance; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_finance_source_amount_snapshots_type_id ON finance.source_amount_snapshots USING btree (source_type, source_id);
+
+
+--
 -- Name: ux_core_finance_periods_tenant_period; Type: INDEX; Schema: finance; Owner: -
 --
 
@@ -55671,6 +55055,27 @@ CREATE INDEX idx_approvals_instance_id ON flow.approvals USING btree (workflow_i
 --
 
 CREATE INDEX idx_approvals_status ON flow.approvals USING btree (status);
+
+
+--
+-- Name: idx_core_doc_documents_folder_id; Type: INDEX; Schema: flow; Owner: -
+--
+
+CREATE INDEX idx_core_doc_documents_folder_id ON flow.core_doc_documents USING btree (folder_id);
+
+
+--
+-- Name: idx_core_doc_documents_template_id; Type: INDEX; Schema: flow; Owner: -
+--
+
+CREATE INDEX idx_core_doc_documents_template_id ON flow.core_doc_documents USING btree (template_id);
+
+
+--
+-- Name: idx_core_doc_folders_parent_id; Type: INDEX; Schema: flow; Owner: -
+--
+
+CREATE INDEX idx_core_doc_folders_parent_id ON flow.core_doc_folders USING btree (parent_id);
 
 
 --
@@ -55734,6 +55139,13 @@ CREATE INDEX idx_core_flow_delegates_delegator ON flow.core_flow_delegates USING
 --
 
 CREATE INDEX idx_core_flow_rules_workflow ON flow.core_flow_rules USING btree (workflow_id);
+
+
+--
+-- Name: idx_core_flow_variable_history_variable_id; Type: INDEX; Schema: flow; Owner: -
+--
+
+CREATE INDEX idx_core_flow_variable_history_variable_id ON flow.core_flow_variable_history USING btree (variable_id);
 
 
 --
@@ -55807,13 +55219,6 @@ CREATE INDEX idx_core_tasks_instance ON flow.core_workflow_tasks USING btree (in
 
 
 --
--- Name: idx_core_tenant_usage_period; Type: INDEX; Schema: flow; Owner: -
---
-
-CREATE INDEX idx_core_tenant_usage_period ON flow.core_tenant_usage USING btree (tenant_id, period_start);
-
-
---
 -- Name: idx_core_tenant_users_email; Type: INDEX; Schema: flow; Owner: -
 --
 
@@ -55828,24 +55233,10 @@ CREATE INDEX idx_core_tenant_users_tenant ON flow.core_tenant_users USING btree 
 
 
 --
--- Name: idx_core_tenants_code; Type: INDEX; Schema: flow; Owner: -
---
-
-CREATE INDEX idx_core_tenants_code ON flow.core_tenants USING btree (code);
-
-
---
 -- Name: idx_core_tenants_status; Type: INDEX; Schema: flow; Owner: -
 --
 
 CREATE INDEX idx_core_tenants_status ON flow.core_tenants USING btree (status);
-
-
---
--- Name: idx_core_workflows_status; Type: INDEX; Schema: flow; Owner: -
---
-
-CREATE INDEX idx_core_workflows_status ON flow.core_workflows USING btree (status);
 
 
 --
@@ -57326,6 +56717,41 @@ CREATE INDEX idx_audit_logs_user_id ON iam.audit_logs USING btree (user_id);
 
 
 --
+-- Name: idx_core_billing_invoices_subscription_id; Type: INDEX; Schema: iam; Owner: -
+--
+
+CREATE INDEX idx_core_billing_invoices_subscription_id ON iam.core_billing_invoices USING btree (subscription_id);
+
+
+--
+-- Name: idx_core_role_permissions_permission_id; Type: INDEX; Schema: iam; Owner: -
+--
+
+CREATE INDEX idx_core_role_permissions_permission_id ON iam.core_role_permissions USING btree (permission_id);
+
+
+--
+-- Name: idx_core_subscriptions_plan_id; Type: INDEX; Schema: iam; Owner: -
+--
+
+CREATE INDEX idx_core_subscriptions_plan_id ON iam.core_subscriptions USING btree (plan_id);
+
+
+--
+-- Name: idx_core_tenant_plugins_plugin_id; Type: INDEX; Schema: iam; Owner: -
+--
+
+CREATE INDEX idx_core_tenant_plugins_plugin_id ON iam.core_tenant_plugins USING btree (plugin_id);
+
+
+--
+-- Name: idx_core_user_roles_role_id; Type: INDEX; Schema: iam; Owner: -
+--
+
+CREATE INDEX idx_core_user_roles_role_id ON iam.core_user_roles USING btree (role_id);
+
+
+--
 -- Name: idx_data_permissions_user_id; Type: INDEX; Schema: iam; Owner: -
 --
 
@@ -57417,10 +56843,10 @@ CREATE INDEX idx_position_roles_position_id ON iam.position_roles USING btree (p
 
 
 --
--- Name: idx_positions_code; Type: INDEX; Schema: iam; Owner: -
+-- Name: idx_position_roles_role_id; Type: INDEX; Schema: iam; Owner: -
 --
 
-CREATE INDEX idx_positions_code ON iam.positions USING btree (code);
+CREATE INDEX idx_position_roles_role_id ON iam.position_roles USING btree (role_id);
 
 
 --
@@ -57452,6 +56878,13 @@ CREATE INDEX idx_roles_status ON iam.roles USING btree (status);
 
 
 --
+-- Name: idx_user_positions_position_id; Type: INDEX; Schema: iam; Owner: -
+--
+
+CREATE INDEX idx_user_positions_position_id ON iam.user_positions USING btree (position_id);
+
+
+--
 -- Name: idx_user_positions_user_id; Type: INDEX; Schema: iam; Owner: -
 --
 
@@ -57466,13 +56899,6 @@ CREATE INDEX idx_users_department_id ON iam.users USING btree (department_id);
 
 
 --
--- Name: idx_users_email; Type: INDEX; Schema: iam; Owner: -
---
-
-CREATE INDEX idx_users_email ON iam.users USING btree (email);
-
-
---
 -- Name: idx_users_role_id; Type: INDEX; Schema: iam; Owner: -
 --
 
@@ -57484,13 +56910,6 @@ CREATE INDEX idx_users_role_id ON iam.users USING btree (role_id);
 --
 
 CREATE INDEX idx_users_status ON iam.users USING btree (status);
-
-
---
--- Name: idx_users_username; Type: INDEX; Schema: iam; Owner: -
---
-
-CREATE INDEX idx_users_username ON iam.users USING btree (username);
 
 
 --
@@ -57526,13 +56945,6 @@ CREATE INDEX idx_async_tasks_type ON integration.async_tasks USING btree (task_t
 --
 
 CREATE INDEX idx_conversion_executions_rule ON integration.conversion_executions USING btree (rule_id);
-
-
---
--- Name: idx_conversion_executions_rule_id; Type: INDEX; Schema: integration; Owner: -
---
-
-CREATE INDEX idx_conversion_executions_rule_id ON integration.conversion_executions USING btree (rule_id);
 
 
 --
@@ -58222,38 +57634,10 @@ CREATE INDEX idx_qa_lab_calibration_records_instrument ON lims.qa_lab_calibratio
 
 
 --
--- Name: idx_qa_lab_calibration_records_instrument_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_calibration_records_instrument_id ON lims.qa_lab_calibration_records USING btree (instrument_id);
-
-
---
--- Name: idx_qa_lab_inspection_reports_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_inspection_reports_no ON lims.qa_lab_inspection_reports USING btree (report_no);
-
-
---
 -- Name: idx_qa_lab_inspection_reports_sample; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lab_inspection_reports_sample ON lims.qa_lab_inspection_reports USING btree (sample_id);
-
-
---
--- Name: idx_qa_lab_inspection_reports_sample_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_inspection_reports_sample_id ON lims.qa_lab_inspection_reports USING btree (sample_id);
-
-
---
--- Name: idx_qa_lab_instruments_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_instruments_no ON lims.qa_lab_instruments USING btree (instrument_no);
 
 
 --
@@ -58264,24 +57648,10 @@ CREATE INDEX idx_qa_lab_instruments_status ON lims.qa_lab_instruments USING btre
 
 
 --
--- Name: idx_qa_lab_processes_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_processes_no ON lims.qa_lab_processes USING btree (process_no);
-
-
---
 -- Name: idx_qa_lab_reagent_alerts_reagent; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lab_reagent_alerts_reagent ON lims.qa_lab_reagent_alerts USING btree (reagent_id);
-
-
---
--- Name: idx_qa_lab_reagent_alerts_reagent_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_reagent_alerts_reagent_id ON lims.qa_lab_reagent_alerts USING btree (reagent_id);
 
 
 --
@@ -58292,31 +57662,10 @@ CREATE INDEX idx_qa_lab_reagent_history_reagent ON lims.qa_lab_reagent_history U
 
 
 --
--- Name: idx_qa_lab_reagent_history_reagent_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_reagent_history_reagent_id ON lims.qa_lab_reagent_history USING btree (reagent_id);
-
-
---
--- Name: idx_qa_lab_reagents_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_reagents_no ON lims.qa_lab_reagents USING btree (reagent_no);
-
-
---
 -- Name: idx_qa_lab_reagents_status; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lab_reagents_status ON lims.qa_lab_reagents USING btree (status);
-
-
---
--- Name: idx_qa_lab_records_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_records_no ON lims.qa_lab_records USING btree (record_no);
 
 
 --
@@ -58327,24 +57676,10 @@ CREATE INDEX idx_qa_lab_records_task ON lims.qa_lab_records USING btree (task_id
 
 
 --
--- Name: idx_qa_lab_records_task_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_records_task_id ON lims.qa_lab_records USING btree (task_id);
-
-
---
 -- Name: idx_qa_lab_sample_lifecycle_sample; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lab_sample_lifecycle_sample ON lims.qa_lab_sample_lifecycle USING btree (sample_id);
-
-
---
--- Name: idx_qa_lab_sample_lifecycle_sample_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lab_sample_lifecycle_sample_id ON lims.qa_lab_sample_lifecycle USING btree (sample_id);
 
 
 --
@@ -58411,20 +57746,6 @@ CREATE INDEX idx_qa_lims_collection_tasks_instrument ON lims.qa_lims_collection_
 
 
 --
--- Name: idx_qa_lims_collection_tasks_instrument_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_collection_tasks_instrument_id ON lims.qa_lims_collection_tasks USING btree (instrument_id);
-
-
---
--- Name: idx_qa_lims_collection_tasks_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_collection_tasks_no ON lims.qa_lims_collection_tasks USING btree (task_no);
-
-
---
 -- Name: idx_qa_lims_collection_tasks_status; Type: INDEX; Schema: lims; Owner: -
 --
 
@@ -58446,20 +57767,6 @@ CREATE INDEX idx_qa_lims_instrument_data_instrument ON lims.qa_lims_instrument_d
 
 
 --
--- Name: idx_qa_lims_instrument_data_instrument_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_instrument_data_instrument_id ON lims.qa_lims_instrument_data USING btree (instrument_id);
-
-
---
--- Name: idx_qa_lims_instrument_data_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_instrument_data_no ON lims.qa_lims_instrument_data USING btree (data_no);
-
-
---
 -- Name: idx_qa_lims_instrument_data_protocol; Type: INDEX; Schema: lims; Owner: -
 --
 
@@ -58471,13 +57778,6 @@ CREATE INDEX idx_qa_lims_instrument_data_protocol ON lims.qa_lims_instrument_dat
 --
 
 CREATE INDEX idx_qa_lims_instrument_data_status ON lims.qa_lims_instrument_data USING btree (status);
-
-
---
--- Name: idx_qa_lims_method_categories_code; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_method_categories_code ON lims.qa_lims_method_categories USING btree (category_code);
 
 
 --
@@ -58495,31 +57795,10 @@ CREATE INDEX idx_qa_lims_method_validations_method ON lims.qa_lims_method_valida
 
 
 --
--- Name: idx_qa_lims_method_validations_method_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_method_validations_method_id ON lims.qa_lims_method_validations USING btree (method_id);
-
-
---
 -- Name: idx_qa_lims_method_versions_method; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lims_method_versions_method ON lims.qa_lims_method_versions USING btree (method_id);
-
-
---
--- Name: idx_qa_lims_method_versions_method_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_method_versions_method_id ON lims.qa_lims_method_versions USING btree (method_id);
-
-
---
--- Name: idx_qa_lims_parse_rules_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_parse_rules_no ON lims.qa_lims_parse_rules USING btree (rule_no);
 
 
 --
@@ -58544,13 +57823,6 @@ CREATE INDEX idx_qa_lims_pt_corrective_actions_evaluation_id ON lims.qa_lims_pt_
 
 
 --
--- Name: idx_qa_lims_pt_corrective_actions_plan_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_pt_corrective_actions_plan_id ON lims.qa_lims_pt_corrective_actions USING btree (plan_id);
-
-
---
 -- Name: idx_qa_lims_pt_corrective_plan; Type: INDEX; Schema: lims; Owner: -
 --
 
@@ -58572,24 +57844,10 @@ CREATE INDEX idx_qa_lims_pt_evaluations_plan ON lims.qa_lims_pt_evaluations USIN
 
 
 --
--- Name: idx_qa_lims_pt_evaluations_plan_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_pt_evaluations_plan_id ON lims.qa_lims_pt_evaluations USING btree (plan_id);
-
-
---
 -- Name: idx_qa_lims_pt_evaluations_sample_id; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lims_pt_evaluations_sample_id ON lims.qa_lims_pt_evaluations USING btree (sample_id);
-
-
---
--- Name: idx_qa_lims_pt_plans_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_pt_plans_no ON lims.qa_lims_pt_plans USING btree (plan_no);
 
 
 --
@@ -58607,13 +57865,6 @@ CREATE INDEX idx_qa_lims_pt_results_plan ON lims.qa_lims_pt_results USING btree 
 
 
 --
--- Name: idx_qa_lims_pt_results_plan_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_pt_results_plan_id ON lims.qa_lims_pt_results USING btree (plan_id);
-
-
---
 -- Name: idx_qa_lims_pt_results_sample; Type: INDEX; Schema: lims; Owner: -
 --
 
@@ -58621,24 +57872,10 @@ CREATE INDEX idx_qa_lims_pt_results_sample ON lims.qa_lims_pt_results USING btre
 
 
 --
--- Name: idx_qa_lims_pt_results_sample_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_pt_results_sample_id ON lims.qa_lims_pt_results USING btree (sample_id);
-
-
---
 -- Name: idx_qa_lims_pt_samples_plan; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lims_pt_samples_plan ON lims.qa_lims_pt_samples USING btree (plan_id);
-
-
---
--- Name: idx_qa_lims_pt_samples_plan_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_pt_samples_plan_id ON lims.qa_lims_pt_samples USING btree (plan_id);
 
 
 --
@@ -58656,20 +57893,6 @@ CREATE INDEX idx_qa_lims_rfid_tags_status ON lims.qa_lims_rfid_tags USING btree 
 
 
 --
--- Name: idx_qa_lims_rfid_tags_tag; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_rfid_tags_tag ON lims.qa_lims_rfid_tags USING btree (tag_id);
-
-
---
--- Name: idx_qa_lims_sample_barcodes_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_sample_barcodes_no ON lims.qa_lims_sample_barcodes USING btree (barcode);
-
-
---
 -- Name: idx_qa_lims_sample_barcodes_sample; Type: INDEX; Schema: lims; Owner: -
 --
 
@@ -58677,24 +57900,10 @@ CREATE INDEX idx_qa_lims_sample_barcodes_sample ON lims.qa_lims_sample_barcodes 
 
 
 --
--- Name: idx_qa_lims_sample_barcodes_sample_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_sample_barcodes_sample_id ON lims.qa_lims_sample_barcodes USING btree (sample_id);
-
-
---
 -- Name: idx_qa_lims_sample_barcodes_status; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lims_sample_barcodes_status ON lims.qa_lims_sample_barcodes USING btree (status);
-
-
---
--- Name: idx_qa_lims_sync_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_sync_no ON lims.qa_lims_sync_records USING btree (sync_no);
 
 
 --
@@ -58719,20 +57928,6 @@ CREATE INDEX idx_qa_lims_test_methods_category ON lims.qa_lims_test_methods USIN
 
 
 --
--- Name: idx_qa_lims_test_methods_category_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_test_methods_category_id ON lims.qa_lims_test_methods USING btree (category_id);
-
-
---
--- Name: idx_qa_lims_test_methods_code; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_test_methods_code ON lims.qa_lims_test_methods USING btree (method_code);
-
-
---
 -- Name: idx_qa_lims_test_methods_status; Type: INDEX; Schema: lims; Owner: -
 --
 
@@ -58747,31 +57942,10 @@ CREATE INDEX idx_qa_lims_uncertainty_components_project ON lims.qa_lims_uncertai
 
 
 --
--- Name: idx_qa_lims_uncertainty_components_project_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_uncertainty_components_project_id ON lims.qa_lims_uncertainty_components USING btree (project_id);
-
-
---
 -- Name: idx_qa_lims_uncertainty_components_source; Type: INDEX; Schema: lims; Owner: -
 --
 
 CREATE INDEX idx_qa_lims_uncertainty_components_source ON lims.qa_lims_uncertainty_components USING btree (source_id);
-
-
---
--- Name: idx_qa_lims_uncertainty_components_source_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_uncertainty_components_source_id ON lims.qa_lims_uncertainty_components USING btree (source_id);
-
-
---
--- Name: idx_qa_lims_uncertainty_projects_no; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_uncertainty_projects_no ON lims.qa_lims_uncertainty_projects USING btree (project_no);
 
 
 --
@@ -58786,13 +57960,6 @@ CREATE INDEX idx_qa_lims_uncertainty_projects_status ON lims.qa_lims_uncertainty
 --
 
 CREATE INDEX idx_qa_lims_uncertainty_sources_project ON lims.qa_lims_uncertainty_sources USING btree (project_id);
-
-
---
--- Name: idx_qa_lims_uncertainty_sources_project_id; Type: INDEX; Schema: lims; Owner: -
---
-
-CREATE INDEX idx_qa_lims_uncertainty_sources_project_id ON lims.qa_lims_uncertainty_sources USING btree (project_id);
 
 
 --
@@ -59020,17 +58187,17 @@ CREATE INDEX equipment_tenant_id_idx ON mes.equipment USING btree (tenant_id);
 
 
 --
--- Name: idx_batch_records_batch_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_batch_records_batch_no ON mes.batch_records USING btree (batch_no);
-
-
---
 -- Name: idx_bom_items_bom_id; Type: INDEX; Schema: mes; Owner: -
 --
 
 CREATE INDEX idx_bom_items_bom_id ON mes.bom_items USING btree (bom_id);
+
+
+--
+-- Name: idx_core_billing_invoices_subscription_id; Type: INDEX; Schema: mes; Owner: -
+--
+
+CREATE INDEX idx_core_billing_invoices_subscription_id ON mes.core_billing_invoices USING btree (subscription_id);
 
 
 --
@@ -59377,13 +58544,6 @@ CREATE INDEX idx_core_plugins_category ON mes.core_plugins USING btree (category
 
 
 --
--- Name: idx_core_plugins_code; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_core_plugins_code ON mes.core_plugins USING btree (code);
-
-
---
 -- Name: idx_core_plugins_installed; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -59398,17 +58558,17 @@ CREATE INDEX idx_core_plugins_tenant ON mes.core_plugins USING btree (tenant_id)
 
 
 --
+-- Name: idx_core_role_permissions_permission_id; Type: INDEX; Schema: mes; Owner: -
+--
+
+CREATE INDEX idx_core_role_permissions_permission_id ON mes.core_role_permissions USING btree (permission_id);
+
+
+--
 -- Name: idx_core_role_permissions_role_id; Type: INDEX; Schema: mes; Owner: -
 --
 
 CREATE INDEX idx_core_role_permissions_role_id ON mes.core_role_permissions USING btree (role_id);
-
-
---
--- Name: idx_core_roles_name; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_core_roles_name ON mes.core_roles USING btree (name);
 
 
 --
@@ -59419,10 +58579,10 @@ CREATE INDEX idx_core_roles_tenant ON mes.core_roles USING btree (tenant_id);
 
 
 --
--- Name: idx_core_subscriptions_tenant; Type: INDEX; Schema: mes; Owner: -
+-- Name: idx_core_subscriptions_plan_id; Type: INDEX; Schema: mes; Owner: -
 --
 
-CREATE INDEX idx_core_subscriptions_tenant ON mes.core_subscriptions USING btree (tenant_id);
+CREATE INDEX idx_core_subscriptions_plan_id ON mes.core_subscriptions USING btree (plan_id);
 
 
 --
@@ -59440,17 +58600,17 @@ CREATE INDEX idx_core_tasks_tenant ON mes.core_workflow_tasks USING btree (tenan
 
 
 --
+-- Name: idx_core_tenant_plugins_plugin_id; Type: INDEX; Schema: mes; Owner: -
+--
+
+CREATE INDEX idx_core_tenant_plugins_plugin_id ON mes.core_tenant_plugins USING btree (plugin_id);
+
+
+--
 -- Name: idx_core_tenant_plugins_tenant; Type: INDEX; Schema: mes; Owner: -
 --
 
 CREATE INDEX idx_core_tenant_plugins_tenant ON mes.core_tenant_plugins USING btree (tenant_id);
-
-
---
--- Name: idx_core_tenant_usage_period; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_core_tenant_usage_period ON mes.core_tenant_usage USING btree (tenant_id, period_start);
 
 
 --
@@ -59468,13 +58628,6 @@ CREATE INDEX idx_core_tenant_users_tenant ON mes.core_tenant_users USING btree (
 
 
 --
--- Name: idx_core_tenants_code; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_core_tenants_code ON mes.core_tenants USING btree (code);
-
-
---
 -- Name: idx_core_tenants_status; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -59489,6 +58642,13 @@ CREATE INDEX idx_core_usage_tenant_period ON mes.core_usage_records USING btree 
 
 
 --
+-- Name: idx_core_user_roles_role_id; Type: INDEX; Schema: mes; Owner: -
+--
+
+CREATE INDEX idx_core_user_roles_role_id ON mes.core_user_roles USING btree (role_id);
+
+
+--
 -- Name: idx_core_user_roles_user_id; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -59496,24 +58656,10 @@ CREATE INDEX idx_core_user_roles_user_id ON mes.core_user_roles USING btree (use
 
 
 --
--- Name: idx_core_users_email; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_core_users_email ON mes.core_users USING btree (email);
-
-
---
 -- Name: idx_core_users_tenant; Type: INDEX; Schema: mes; Owner: -
 --
 
 CREATE INDEX idx_core_users_tenant ON mes.core_users USING btree (tenant_id);
-
-
---
--- Name: idx_core_users_username; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_core_users_username ON mes.core_users USING btree (username);
 
 
 --
@@ -59769,13 +58915,6 @@ CREATE INDEX idx_equipment_next_maintenance_date ON mes.equipment USING btree (n
 
 
 --
--- Name: idx_equipment_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_equipment_no ON mes.equipment USING btree (equipment_no);
-
-
---
 -- Name: idx_equipment_oee_equipment_id; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -59881,13 +59020,6 @@ CREATE INDEX idx_login_logs_user_id ON mes.core_login_logs USING btree (user_id)
 
 
 --
--- Name: idx_material_boms_bom_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_material_boms_bom_no ON mes.material_boms USING btree (bom_no);
-
-
---
 -- Name: idx_material_boms_product_id; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -59906,13 +59038,6 @@ CREATE INDEX idx_material_issue_items_issue_id ON mes.material_issue_items USING
 --
 
 CREATE INDEX idx_material_issues_bom_id ON mes.material_issues USING btree (bom_id);
-
-
---
--- Name: idx_material_issues_issue_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_material_issues_issue_no ON mes.material_issues USING btree (issue_no);
 
 
 --
@@ -59958,13 +59083,6 @@ CREATE INDEX idx_material_requirements_material_code ON mes.material_requirement
 
 
 --
--- Name: idx_material_requirements_mrp_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_material_requirements_mrp_no ON mes.material_requirements USING btree (mrp_no);
-
-
---
 -- Name: idx_material_requirements_order_id; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -59990,13 +59108,6 @@ CREATE INDEX idx_material_return_items_return_id ON mes.material_return_items US
 --
 
 CREATE INDEX idx_material_returns_order_id ON mes.material_returns USING btree (order_id);
-
-
---
--- Name: idx_material_returns_return_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_material_returns_return_no ON mes.material_returns USING btree (return_no);
 
 
 --
@@ -60476,13 +59587,6 @@ CREATE INDEX idx_production_schedules_process_id ON mes.production_schedules USI
 
 
 --
--- Name: idx_production_schedules_schedule_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_production_schedules_schedule_no ON mes.production_schedules USING btree (schedule_no);
-
-
---
 -- Name: idx_production_schedules_status; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -60602,13 +59706,6 @@ CREATE INDEX idx_quality_records_order_id ON mes.quality_records USING btree (or
 
 
 --
--- Name: idx_quality_records_record_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_quality_records_record_no ON mes.quality_records USING btree (record_no);
-
-
---
 -- Name: idx_quality_standard_values_standard_id; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -60644,13 +59741,6 @@ CREATE INDEX idx_schema_registry_created_at ON mes.schema_registry USING btree (
 
 
 --
--- Name: idx_schema_registry_name; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_schema_registry_name ON mes.schema_registry USING btree (name);
-
-
---
 -- Name: idx_team_members_employee_id; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -60669,13 +59759,6 @@ CREATE INDEX idx_team_members_team_id ON mes.team_members USING btree (team_id);
 --
 
 CREATE INDEX idx_teams_status ON mes.teams USING btree (status);
-
-
---
--- Name: idx_teams_team_code; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_teams_team_code ON mes.teams USING btree (team_code);
 
 
 --
@@ -60756,13 +59839,6 @@ CREATE INDEX idx_wips_status ON mes.wips USING btree (status);
 
 
 --
--- Name: idx_wips_wip_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_wips_wip_no ON mes.wips USING btree (wip_no);
-
-
---
 -- Name: idx_work_orders_order_id; Type: INDEX; Schema: mes; Owner: -
 --
 
@@ -60774,6 +59850,13 @@ CREATE INDEX idx_work_orders_order_id ON mes.work_orders USING btree (order_id);
 --
 
 CREATE INDEX idx_work_stations_code ON mes.work_stations USING btree (station_code);
+
+
+--
+-- Name: idx_work_stations_equipment_id; Type: INDEX; Schema: mes; Owner: -
+--
+
+CREATE INDEX idx_work_stations_equipment_id ON mes.work_stations USING btree (equipment_id);
 
 
 --
@@ -60798,17 +59881,17 @@ CREATE INDEX idx_work_stations_organization_id ON mes.work_stations USING btree 
 
 
 --
+-- Name: idx_work_stations_process_id; Type: INDEX; Schema: mes; Owner: -
+--
+
+CREATE INDEX idx_work_stations_process_id ON mes.work_stations USING btree (process_id);
+
+
+--
 -- Name: idx_work_stations_station_code; Type: INDEX; Schema: mes; Owner: -
 --
 
 CREATE INDEX idx_work_stations_station_code ON mes.work_stations USING btree (station_code);
-
-
---
--- Name: idx_work_stations_station_no; Type: INDEX; Schema: mes; Owner: -
---
-
-CREATE INDEX idx_work_stations_station_no ON mes.work_stations USING btree (station_no);
 
 
 --
@@ -61330,24 +60413,10 @@ CREATE INDEX idx_pdm_bom_items_bom ON pdm.pdm_bom_items USING btree (bom_id);
 
 
 --
--- Name: idx_pdm_bom_items_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_bom_items_tenant_id ON pdm.pdm_bom_items USING btree (tenant_id);
-
-
---
 -- Name: idx_pdm_boms_product; Type: INDEX; Schema: pdm; Owner: -
 --
 
 CREATE INDEX idx_pdm_boms_product ON pdm.pdm_boms USING btree (product_id);
-
-
---
--- Name: idx_pdm_boms_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_boms_tenant_id ON pdm.pdm_boms USING btree (tenant_id);
 
 
 --
@@ -61372,24 +60441,10 @@ CREATE INDEX idx_pdm_change_notices_status ON pdm.pdm_change_notices USING btree
 
 
 --
--- Name: idx_pdm_change_notices_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_change_notices_tenant_id ON pdm.pdm_change_notices USING btree (tenant_id);
-
-
---
 -- Name: idx_pdm_configurations_product; Type: INDEX; Schema: pdm; Owner: -
 --
 
 CREATE INDEX idx_pdm_configurations_product ON pdm.pdm_configurations USING btree (product_id);
-
-
---
--- Name: idx_pdm_configurations_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_configurations_tenant_id ON pdm.pdm_configurations USING btree (tenant_id);
 
 
 --
@@ -61435,24 +60490,10 @@ CREATE INDEX idx_pdm_documents_status ON pdm.pdm_documents USING btree (status);
 
 
 --
--- Name: idx_pdm_documents_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_documents_tenant_id ON pdm.pdm_documents USING btree (tenant_id);
-
-
---
 -- Name: idx_pdm_materials_material_no; Type: INDEX; Schema: pdm; Owner: -
 --
 
 CREATE INDEX idx_pdm_materials_material_no ON pdm.pdm_materials USING btree (material_no);
-
-
---
--- Name: idx_pdm_materials_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_materials_tenant_id ON pdm.pdm_materials USING btree (tenant_id);
 
 
 --
@@ -61470,27 +60511,6 @@ CREATE INDEX idx_pdm_production_batches_batch_no ON pdm.pdm_production_batches U
 
 
 --
--- Name: idx_pdm_production_batches_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_production_batches_tenant_id ON pdm.pdm_production_batches USING btree (tenant_id);
-
-
---
--- Name: idx_pdm_production_formulas_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_production_formulas_tenant_id ON pdm.pdm_production_formulas USING btree (tenant_id);
-
-
---
--- Name: idx_pdm_production_processes_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_production_processes_tenant_id ON pdm.pdm_production_processes USING btree (tenant_id);
-
-
---
 -- Name: idx_pdm_production_steps_process_id; Type: INDEX; Schema: pdm; Owner: -
 --
 
@@ -61498,24 +60518,10 @@ CREATE INDEX idx_pdm_production_steps_process_id ON pdm.pdm_production_steps USI
 
 
 --
--- Name: idx_pdm_production_steps_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_production_steps_tenant_id ON pdm.pdm_production_steps USING btree (tenant_id);
-
-
---
 -- Name: idx_pdm_products_product_no; Type: INDEX; Schema: pdm; Owner: -
 --
 
 CREATE INDEX idx_pdm_products_product_no ON pdm.pdm_products USING btree (product_no);
-
-
---
--- Name: idx_pdm_products_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_products_tenant_id ON pdm.pdm_products USING btree (tenant_id);
 
 
 --
@@ -61568,13 +60574,6 @@ CREATE INDEX idx_pdm_versions_target ON pdm.pdm_versions USING btree (target_typ
 
 
 --
--- Name: idx_pdm_versions_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_versions_tenant_id ON pdm.pdm_versions USING btree (tenant_id);
-
-
---
 -- Name: idx_pdm_workflow_instances_status; Type: INDEX; Schema: pdm; Owner: -
 --
 
@@ -61586,20 +60585,6 @@ CREATE INDEX idx_pdm_workflow_instances_status ON pdm.pdm_workflow_instances USI
 --
 
 CREATE INDEX idx_pdm_workflow_instances_target ON pdm.pdm_workflow_instances USING btree (target_type, target_id);
-
-
---
--- Name: idx_pdm_workflow_instances_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_workflow_instances_tenant_id ON pdm.pdm_workflow_instances USING btree (tenant_id);
-
-
---
--- Name: idx_pdm_workflows_tenant_id; Type: INDEX; Schema: pdm; Owner: -
---
-
-CREATE INDEX idx_pdm_workflows_tenant_id ON pdm.pdm_workflows USING btree (tenant_id);
 
 
 --
@@ -62702,6 +61687,13 @@ CREATE INDEX idx_automation_variables_tenant ON public.automation_variables USIN
 
 
 --
+-- Name: idx_barcode_scans_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_barcode_scans_user_id ON public.barcode_scans USING btree (user_id);
+
+
+--
 -- Name: idx_comparison_created_at; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -62825,6 +61817,13 @@ CREATE INDEX idx_core_dict_items_dict_type_id ON public.core_dict_items USING bt
 --
 
 CREATE INDEX idx_core_dict_items_parent_id ON public.core_dict_items USING btree (parent_id);
+
+
+--
+-- Name: idx_core_doc_document_versions_document_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_core_doc_document_versions_document_id ON public.core_doc_document_versions USING btree (document_id);
 
 
 --
@@ -63000,6 +61999,13 @@ CREATE INDEX idx_core_flow_delegates_delegator ON public.core_flow_delegates USI
 --
 
 CREATE INDEX idx_core_flow_rules_workflow ON public.core_flow_rules USING btree (workflow_id);
+
+
+--
+-- Name: idx_core_flow_variable_history_variable_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_core_flow_variable_history_variable_id ON public.core_flow_variable_history USING btree (variable_id);
 
 
 --
@@ -63185,13 +62191,6 @@ CREATE INDEX idx_core_notifications_user ON public.core_notifications USING btre
 
 
 --
--- Name: idx_core_permissions_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_permissions_code ON public.core_permissions USING btree (code);
-
-
---
 -- Name: idx_core_permissions_resource; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -63311,24 +62310,10 @@ CREATE INDEX idx_core_role_permissions_role_id ON public.core_role_permissions U
 
 
 --
--- Name: idx_core_roles_name; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_roles_name ON public.core_roles USING btree (name);
-
-
---
 -- Name: idx_core_roles_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_core_roles_tenant ON public.core_roles USING btree (tenant_id);
-
-
---
--- Name: idx_core_roles_tenant_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_roles_tenant_id ON public.core_roles USING btree (tenant_id);
 
 
 --
@@ -63350,13 +62335,6 @@ CREATE INDEX idx_core_subscriptions_tenant ON public.core_subscriptions USING bt
 --
 
 CREATE INDEX idx_core_subscriptions_tenant_id ON public.core_subscriptions USING btree (tenant_id);
-
-
---
--- Name: idx_core_tasks_instance; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_tasks_instance ON public._archive_core_workflow_tasks USING btree (instance_id);
 
 
 --
@@ -63395,13 +62373,6 @@ CREATE INDEX idx_core_tenant_settings_tenant_id ON public.core_tenant_settings U
 
 
 --
--- Name: idx_core_tenant_usage_period; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_tenant_usage_period ON public.core_tenant_usage USING btree (tenant_id, period_start);
-
-
---
 -- Name: idx_core_tenant_usage_tenant_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -63427,13 +62398,6 @@ CREATE INDEX idx_core_tenant_users_tenant ON public.core_tenant_users USING btre
 --
 
 CREATE INDEX idx_core_tenant_users_tenant_id ON public.core_tenant_users USING btree (tenant_id);
-
-
---
--- Name: idx_core_tenants_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_tenants_code ON public.core_tenants USING btree (code);
 
 
 --
@@ -63472,13 +62436,6 @@ CREATE INDEX idx_core_user_roles_user_id ON public.core_user_roles USING btree (
 
 
 --
--- Name: idx_core_users_email; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_users_email ON public.core_users USING btree (email);
-
-
---
 -- Name: idx_core_users_tenant; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -63490,27 +62447,6 @@ CREATE INDEX idx_core_users_tenant ON public.core_users USING btree (tenant_id);
 --
 
 CREATE INDEX idx_core_users_tenant_id ON public.core_users USING btree (tenant_id);
-
-
---
--- Name: idx_core_users_username; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_users_username ON public.core_users USING btree (username);
-
-
---
--- Name: idx_core_workflow_instances_workflow_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_workflow_instances_workflow_id ON public.core_workflow_instances USING btree (workflow_id);
-
-
---
--- Name: idx_core_workflow_tasks_instance_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_core_workflow_tasks_instance_id ON public.core_workflow_tasks USING btree (instance_id);
 
 
 --
@@ -63560,34 +62496,6 @@ CREATE INDEX idx_cqrs_snapshots_type ON public.cqrs_snapshots USING btree (aggre
 --
 
 CREATE INDEX idx_cwi_initiator ON public._archive_core_workflow_instances USING btree (initiator_id);
-
-
---
--- Name: idx_cwt_instance; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_cwt_instance ON public._archive_core_workflow_tasks USING btree (instance_id);
-
-
---
--- Name: idx_dashboard_refresh_module; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_dashboard_refresh_module ON public.core_dashboard_refresh_log USING btree (module);
-
-
---
--- Name: idx_dashboard_refresh_tenant; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_dashboard_refresh_tenant ON public.core_dashboard_refresh_log USING btree (tenant_id);
-
-
---
--- Name: idx_dashboard_refresh_time; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_dashboard_refresh_time ON public.core_dashboard_refresh_log USING btree (refresh_time);
 
 
 --
@@ -63668,6 +62576,13 @@ CREATE INDEX idx_device_locations_map_id ON public.device_locations USING btree 
 
 
 --
+-- Name: idx_devices_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_devices_user_id ON public.devices USING btree (user_id);
+
+
+--
 -- Name: idx_dict_items_parent_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -63728,6 +62643,27 @@ CREATE INDEX idx_drilldown_history_user ON public.analytics_drilldown_history US
 --
 
 CREATE INDEX idx_drilldown_owner ON public.analytics_drilldown_paths USING btree (owner_id);
+
+
+--
+-- Name: idx_dynamic_data_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dynamic_data_created_at ON public.dynamic_data USING btree (created_at DESC);
+
+
+--
+-- Name: idx_dynamic_data_data_json_gin; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dynamic_data_data_json_gin ON public.dynamic_data USING gin (data_json);
+
+
+--
+-- Name: idx_dynamic_data_schema_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_dynamic_data_schema_id ON public.dynamic_data USING btree (schema_id);
 
 
 --
@@ -63997,6 +62933,13 @@ CREATE INDEX idx_mobile_offline_user ON public.core_mobile_offline_records USING
 
 
 --
+-- Name: idx_mobile_scan_records_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_mobile_scan_records_user_id ON public.mobile_scan_records USING btree (user_id);
+
+
+--
 -- Name: idx_monitor_settings_category; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -64036,6 +62979,13 @@ CREATE INDEX idx_navigation_menu_tenant ON public.navigation_menu USING btree (t
 --
 
 CREATE INDEX idx_notification_channels_tenant ON public.notification_channels USING btree (tenant_id);
+
+
+--
+-- Name: idx_offline_operations_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_offline_operations_user_id ON public.offline_operations USING btree (user_id);
 
 
 --
@@ -64368,6 +63318,13 @@ CREATE INDEX idx_pdm_workflows_type ON public.pdm_workflows USING btree (workflo
 
 
 --
+-- Name: idx_photo_uploads_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_photo_uploads_user_id ON public.photo_uploads USING btree (user_id);
+
+
+--
 -- Name: idx_pinned_apps_order; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -64414,6 +63371,13 @@ CREATE INDEX idx_public_tenants_tenant_id ON public.tenants USING btree (tenant_
 --
 
 CREATE INDEX idx_public_versions_tenant_id ON public.versions USING btree (tenant_id);
+
+
+--
+-- Name: idx_push_devices_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_push_devices_user_id ON public.push_devices USING btree (user_id);
 
 
 --
@@ -65327,13 +64291,6 @@ CREATE INDEX idx_qa_lab_calibration_records_instrument_id ON public.qa_lab_calib
 
 
 --
--- Name: idx_qa_lab_inspection_reports_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lab_inspection_reports_no ON public.qa_lab_inspection_reports USING btree (report_no);
-
-
---
 -- Name: idx_qa_lab_inspection_reports_sample; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -65348,24 +64305,10 @@ CREATE INDEX idx_qa_lab_inspection_reports_sample_id ON public.qa_lab_inspection
 
 
 --
--- Name: idx_qa_lab_instruments_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lab_instruments_no ON public.qa_lab_instruments USING btree (instrument_no);
-
-
---
 -- Name: idx_qa_lab_instruments_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_qa_lab_instruments_status ON public.qa_lab_instruments USING btree (status);
-
-
---
--- Name: idx_qa_lab_processes_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lab_processes_no ON public.qa_lab_processes USING btree (process_no);
 
 
 --
@@ -65397,24 +64340,10 @@ CREATE INDEX idx_qa_lab_reagent_history_reagent_id ON public.qa_lab_reagent_hist
 
 
 --
--- Name: idx_qa_lab_reagents_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lab_reagents_no ON public.qa_lab_reagents USING btree (reagent_no);
-
-
---
 -- Name: idx_qa_lab_reagents_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_qa_lab_reagents_status ON public.qa_lab_reagents USING btree (status);
-
-
---
--- Name: idx_qa_lab_records_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lab_records_no ON public.qa_lab_records USING btree (record_no);
 
 
 --
@@ -65446,24 +64375,10 @@ CREATE INDEX idx_qa_lab_sample_lifecycle_sample_id ON public.qa_lab_sample_lifec
 
 
 --
--- Name: idx_qa_lab_samples_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lab_samples_no ON public.qa_lab_samples USING btree (sample_no);
-
-
---
 -- Name: idx_qa_lab_samples_status; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_qa_lab_samples_status ON public.qa_lab_samples USING btree (status);
-
-
---
--- Name: idx_qa_lab_tasks_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lab_tasks_no ON public.qa_lab_tasks USING btree (task_no);
 
 
 --
@@ -65551,13 +64466,6 @@ CREATE INDEX idx_qa_lims_collection_tasks_instrument_id ON public.qa_lims_collec
 
 
 --
--- Name: idx_qa_lims_collection_tasks_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_collection_tasks_no ON public.qa_lims_collection_tasks USING btree (task_no);
-
-
---
 -- Name: idx_qa_lims_collection_tasks_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -65586,13 +64494,6 @@ CREATE INDEX idx_qa_lims_instrument_data_instrument_id ON public.qa_lims_instrum
 
 
 --
--- Name: idx_qa_lims_instrument_data_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_instrument_data_no ON public.qa_lims_instrument_data USING btree (data_no);
-
-
---
 -- Name: idx_qa_lims_instrument_data_protocol; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -65604,13 +64505,6 @@ CREATE INDEX idx_qa_lims_instrument_data_protocol ON public.qa_lims_instrument_d
 --
 
 CREATE INDEX idx_qa_lims_instrument_data_status ON public.qa_lims_instrument_data USING btree (status);
-
-
---
--- Name: idx_qa_lims_method_categories_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_method_categories_code ON public.qa_lims_method_categories USING btree (category_code);
 
 
 --
@@ -65646,13 +64540,6 @@ CREATE INDEX idx_qa_lims_method_versions_method ON public.qa_lims_method_version
 --
 
 CREATE INDEX idx_qa_lims_method_versions_method_id ON public.qa_lims_method_versions USING btree (method_id);
-
-
---
--- Name: idx_qa_lims_parse_rules_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_parse_rules_no ON public.qa_lims_parse_rules USING btree (rule_no);
 
 
 --
@@ -65719,13 +64606,6 @@ CREATE INDEX idx_qa_lims_pt_evaluations_sample_id ON public.qa_lims_pt_evaluatio
 
 
 --
--- Name: idx_qa_lims_pt_plans_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_pt_plans_no ON public.qa_lims_pt_plans USING btree (plan_no);
-
-
---
 -- Name: idx_qa_lims_pt_plans_status; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -65789,20 +64669,6 @@ CREATE INDEX idx_qa_lims_rfid_tags_status ON public.qa_lims_rfid_tags USING btre
 
 
 --
--- Name: idx_qa_lims_rfid_tags_tag; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_rfid_tags_tag ON public.qa_lims_rfid_tags USING btree (tag_id);
-
-
---
--- Name: idx_qa_lims_sample_barcodes_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_sample_barcodes_no ON public.qa_lims_sample_barcodes USING btree (barcode);
-
-
---
 -- Name: idx_qa_lims_sample_barcodes_sample; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -65821,13 +64687,6 @@ CREATE INDEX idx_qa_lims_sample_barcodes_sample_id ON public.qa_lims_sample_barc
 --
 
 CREATE INDEX idx_qa_lims_sample_barcodes_status ON public.qa_lims_sample_barcodes USING btree (status);
-
-
---
--- Name: idx_qa_lims_sync_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_sync_no ON public.qa_lims_sync_records USING btree (sync_no);
 
 
 --
@@ -65856,13 +64715,6 @@ CREATE INDEX idx_qa_lims_test_methods_category ON public.qa_lims_test_methods US
 --
 
 CREATE INDEX idx_qa_lims_test_methods_category_id ON public.qa_lims_test_methods USING btree (category_id);
-
-
---
--- Name: idx_qa_lims_test_methods_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_test_methods_code ON public.qa_lims_test_methods USING btree (method_code);
 
 
 --
@@ -65898,13 +64750,6 @@ CREATE INDEX idx_qa_lims_uncertainty_components_source ON public.qa_lims_uncerta
 --
 
 CREATE INDEX idx_qa_lims_uncertainty_components_source_id ON public.qa_lims_uncertainty_components USING btree (source_id);
-
-
---
--- Name: idx_qa_lims_uncertainty_projects_no; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_qa_lims_uncertainty_projects_no ON public.qa_lims_uncertainty_projects USING btree (project_no);
 
 
 --
@@ -66020,6 +64865,13 @@ CREATE INDEX idx_qa_standards_code ON public.qa_standards USING btree (code);
 
 
 --
+-- Name: idx_refresh_tokens_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_refresh_tokens_user_id ON public.refresh_tokens USING btree (user_id);
+
+
+--
 -- Name: idx_report_execution_records_schedule_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -66104,6 +64956,20 @@ CREATE INDEX idx_rlp_table ON public.analytics_row_level_permissions USING btree
 
 
 --
+-- Name: idx_schema_registry_active; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_schema_registry_active ON public.schema_registry USING btree (is_active);
+
+
+--
+-- Name: idx_schema_registry_created_at; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_schema_registry_created_at ON public.schema_registry USING btree (created_at DESC);
+
+
+--
 -- Name: idx_search_logs_created; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -66136,6 +65002,13 @@ CREATE INDEX idx_sep_type_name ON public.search_entity_projections USING btree (
 --
 
 CREATE INDEX idx_shares_dashboard ON public.analytics_dashboard_shares USING btree (dashboard_id);
+
+
+--
+-- Name: idx_shortcuts_user_id; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_shortcuts_user_id ON public.shortcuts USING btree (user_id);
 
 
 --
@@ -66269,13 +65142,6 @@ CREATE INDEX idx_tool_permissions_tenant_permission_id ON public.tool_permission
 --
 
 CREATE INDEX idx_tool_permissions_tool ON public.tool_permissions USING btree (tool_name);
-
-
---
--- Name: idx_user_settings_user_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX idx_user_settings_user_id ON public.user_settings USING btree (user_id);
 
 
 --
@@ -66430,6 +65296,13 @@ CREATE INDEX pdm_workflow_instances_tenant_id_idx ON public.pdm_workflow_instanc
 --
 
 CREATE INDEX pdm_workflows_tenant_id_idx ON public.pdm_workflows USING btree (tenant_id);
+
+
+--
+-- Name: schema_registry_name_key; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX schema_registry_name_key ON public.schema_registry USING btree (name);
 
 
 --
@@ -66699,13 +65572,6 @@ CREATE INDEX idx_qa_apqp_projects_created_at ON qms.qa_apqp_projects USING btree
 
 
 --
--- Name: idx_qa_apqp_projects_no; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_apqp_projects_no ON qms.qa_apqp_projects USING btree (project_no);
-
-
---
 -- Name: idx_qa_apqp_projects_status; Type: INDEX; Schema: qms; Owner: -
 --
 
@@ -66811,24 +65677,10 @@ CREATE INDEX idx_qa_eightd_audit_logs_report ON qms.qa_eightd_audit_logs USING b
 
 
 --
--- Name: idx_qa_eightd_reports_no; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_eightd_reports_no ON qms.qa_eightd_reports USING btree (report_no);
-
-
---
 -- Name: idx_qa_eightd_reports_status; Type: INDEX; Schema: qms; Owner: -
 --
 
 CREATE INDEX idx_qa_eightd_reports_status ON qms.qa_eightd_reports USING btree (status);
-
-
---
--- Name: idx_qa_fmea_analyses_no; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_fmea_analyses_no ON qms.qa_fmea_analyses USING btree (fmea_no);
 
 
 --
@@ -66881,13 +65733,6 @@ CREATE INDEX idx_qa_inspections_inspector ON qms.qa_quality_inspections USING bt
 
 
 --
--- Name: idx_qa_inspections_no; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_inspections_no ON qms.qa_quality_inspections USING btree (inspection_no);
-
-
---
 -- Name: idx_qa_inspections_status; Type: INDEX; Schema: qms; Owner: -
 --
 
@@ -66902,24 +65747,10 @@ CREATE INDEX idx_qa_issues_created_at ON qms.qa_quality_issues USING btree (crea
 
 
 --
--- Name: idx_qa_issues_no; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_issues_no ON qms.qa_quality_issues USING btree (issue_no);
-
-
---
 -- Name: idx_qa_issues_status; Type: INDEX; Schema: qms; Owner: -
 --
 
 CREATE INDEX idx_qa_issues_status ON qms.qa_quality_issues USING btree (status);
-
-
---
--- Name: idx_qa_qms_sync_no; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_qms_sync_no ON qms.qa_qms_sync_records USING btree (sync_no);
 
 
 --
@@ -66951,20 +65782,6 @@ CREATE INDEX idx_qa_quality_costs_dept ON qms.qa_quality_costs USING btree (depa
 
 
 --
--- Name: idx_qa_quality_costs_no; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_quality_costs_no ON qms.qa_quality_costs USING btree (cost_no);
-
-
---
--- Name: idx_qa_spc_charts_no; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_spc_charts_no ON qms.qa_spc_charts USING btree (chart_no);
-
-
---
 -- Name: idx_qa_spc_charts_type; Type: INDEX; Schema: qms; Owner: -
 --
 
@@ -66983,13 +65800,6 @@ CREATE INDEX idx_qa_spc_data_points_chart ON qms.qa_spc_data_points USING btree 
 --
 
 CREATE INDEX idx_qa_standard_revisions_standard ON qms.qa_standard_revisions USING btree (standard_id);
-
-
---
--- Name: idx_qa_standards_code; Type: INDEX; Schema: qms; Owner: -
---
-
-CREATE INDEX idx_qa_standards_code ON qms.qa_standards USING btree (code);
 
 
 --
@@ -67921,6 +66731,13 @@ CREATE INDEX idx_supplier_evaluations_supplier ON scm.supplier_evaluations USING
 --
 
 CREATE INDEX idx_supplier_evaluations_supplier_id ON scm.supplier_evaluations USING btree (supplier_id);
+
+
+--
+-- Name: idx_supplier_products_supplier_id; Type: INDEX; Schema: scm; Owner: -
+--
+
+CREATE INDEX idx_supplier_products_supplier_id ON scm.supplier_products USING btree (supplier_id);
 
 
 --
@@ -70325,6 +69142,20 @@ CREATE TRIGGER update_updated_at_trigger BEFORE UPDATE ON mes.work_stations FOR 
 
 
 --
+-- Name: dynamic_data trigger_dynamic_data_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trigger_dynamic_data_updated_at BEFORE UPDATE ON public.dynamic_data FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
+-- Name: schema_registry trigger_schema_registry_updated_at; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trigger_schema_registry_updated_at BEFORE UPDATE ON public.schema_registry FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+
+--
 -- Name: alert_rules update_alert_rules_updated_at; Type: TRIGGER; Schema: public; Owner: -
 --
 
@@ -72054,6 +70885,14 @@ ALTER TABLE ONLY lims.qa_lab_sample_lifecycle
 
 
 --
+-- Name: qa_lab_tasks qa_lab_tasks_sample_id_fkey; Type: FK CONSTRAINT; Schema: lims; Owner: -
+--
+
+ALTER TABLE ONLY lims.qa_lab_tasks
+    ADD CONSTRAINT qa_lab_tasks_sample_id_fkey FOREIGN KEY (sample_id) REFERENCES lims.qa_lab_samples(id) ON DELETE CASCADE;
+
+
+--
 -- Name: qa_lims_barcode_scan_records qa_lims_barcode_scan_records_barcode_id_fkey; Type: FK CONSTRAINT; Schema: lims; Owner: -
 --
 
@@ -73459,14 +72298,6 @@ ALTER TABLE ONLY public.core_user_roles
 
 ALTER TABLE ONLY public.core_user_roles
     ADD CONSTRAINT core_user_roles_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.core_users(id);
-
-
---
--- Name: _archive_core_workflow_tasks core_workflow_tasks_instance_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public._archive_core_workflow_tasks
-    ADD CONSTRAINT core_workflow_tasks_instance_id_fkey FOREIGN KEY (instance_id) REFERENCES public._archive_core_workflow_instances(id);
 
 
 --
@@ -77248,6 +76079,12 @@ ALTER TABLE finance.finance_audit_findings_v ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance.finance_audit_findings_v52 ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: finance_audit_log; Type: ROW SECURITY; Schema: finance; Owner: -
+--
+
+ALTER TABLE finance.finance_audit_log ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: finance_audit_rules_v; Type: ROW SECURITY; Schema: finance; Owner: -
 --
 
@@ -77841,6 +76678,20 @@ CREATE POLICY rls_tenant_isolation ON finance.core_finance_vouchers USING (((cur
 
 
 --
+-- Name: cqrs_events rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.cqrs_events USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: cqrs_projection_progress rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.cqrs_projection_progress USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: difference_adjustments rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
@@ -77876,10 +76727,31 @@ CREATE POLICY rls_tenant_isolation ON finance.erp_receivables USING (((current_s
 
 
 --
+-- Name: expenses rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.expenses USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: finance_alert_configs_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_alert_configs_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: finance_alert_configs_v52 rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
 CREATE POLICY rls_tenant_isolation ON finance.finance_alert_configs_v52 USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: finance_alert_history_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_alert_history_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
 
 
 --
@@ -77890,10 +76762,24 @@ CREATE POLICY rls_tenant_isolation ON finance.finance_alert_history_v52 USING ((
 
 
 --
+-- Name: finance_anomaly_alerts_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_anomaly_alerts_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: finance_anomaly_alerts_v52 rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
 CREATE POLICY rls_tenant_isolation ON finance.finance_anomaly_alerts_v52 USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: finance_audit_findings_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_audit_findings_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
 
 
 --
@@ -77904,10 +76790,31 @@ CREATE POLICY rls_tenant_isolation ON finance.finance_audit_findings_v52 USING (
 
 
 --
+-- Name: finance_audit_log rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_audit_log USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: finance_audit_rules_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_audit_rules_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: finance_audit_rules_v52 rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
 CREATE POLICY rls_tenant_isolation ON finance.finance_audit_rules_v52 USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: finance_budget_variances_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_budget_variances_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
 
 
 --
@@ -77918,10 +76825,24 @@ CREATE POLICY rls_tenant_isolation ON finance.finance_budget_variances_v53 USING
 
 
 --
+-- Name: finance_cash_flow_predictions_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_cash_flow_predictions_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: finance_cash_flow_predictions_v53 rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
 CREATE POLICY rls_tenant_isolation ON finance.finance_cash_flow_predictions_v53 USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: finance_compliance_issues rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_compliance_issues USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
 
 
 --
@@ -77946,10 +76867,24 @@ CREATE POLICY rls_tenant_isolation ON finance.finance_control_points USING (((cu
 
 
 --
+-- Name: finance_detection_configs_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_detection_configs_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: finance_detection_configs_v52 rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
 CREATE POLICY rls_tenant_isolation ON finance.finance_detection_configs_v52 USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: finance_prediction_models_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_prediction_models_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
 
 
 --
@@ -77967,10 +76902,24 @@ CREATE POLICY rls_tenant_isolation ON finance.finance_risk_assessments USING (((
 
 
 --
+-- Name: finance_u rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_u USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: finance_u8_import_records rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
 CREATE POLICY rls_tenant_isolation ON finance.finance_u8_import_records USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: finance_v rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.finance_v USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
 
 
 --
@@ -78338,6 +77287,48 @@ CREATE POLICY rls_tenant_isolation ON finance.financial_reports USING (((current
 
 
 --
+-- Name: mv_receivable_aging rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.mv_receivable_aging USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: mv_voucher_summary rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.mv_voucher_summary USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: payables rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.payables USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: receivables rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.receivables USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: reconcile_items rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.reconcile_items USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
+-- Name: reconcile_orders rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.reconcile_orders USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: reconciliation_item_snapshots rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
@@ -78387,6 +77378,13 @@ CREATE POLICY rls_tenant_isolation ON finance.source_amount_snapshots USING (((c
 
 
 --
+-- Name: voucher_lines rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON finance.voucher_lines USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
+
+
+--
 -- Name: vouchers rls_tenant_isolation; Type: POLICY; Schema: finance; Owner: -
 --
 
@@ -78416,6 +77414,20 @@ ALTER TABLE finance.settlement_snapshots ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE finance.source_amount_snapshots ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: mv_receivable_aging tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON finance.mv_receivable_aging USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: mv_voucher_summary tenant_isolation; Type: POLICY; Schema: finance; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON finance.mv_voucher_summary USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
 
 --
 -- Name: accounting_subjects tenant_isolation_accounting_subjects; Type: POLICY; Schema: finance; Owner: -
@@ -79428,6 +78440,27 @@ ALTER TABLE gis.geofeatures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gis.geofence_alerts ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: geofences gis_allow_all_geofences; Type: POLICY; Schema: gis; Owner: -
+--
+
+CREATE POLICY gis_allow_all_geofences ON gis.geofences USING (true) WITH CHECK (true);
+
+
+--
+-- Name: schema_defense_ledger gis_allow_all_schema_defense_ledger; Type: POLICY; Schema: gis; Owner: -
+--
+
+CREATE POLICY gis_allow_all_schema_defense_ledger ON gis.schema_defense_ledger USING (true) WITH CHECK (true);
+
+
+--
+-- Name: track_positions gis_allow_all_track_positions; Type: POLICY; Schema: gis; Owner: -
+--
+
+CREATE POLICY gis_allow_all_track_positions ON gis.track_positions USING (true) WITH CHECK (true);
+
+
+--
 -- Name: gis_map_markers; Type: ROW SECURITY; Schema: gis; Owner: -
 --
 
@@ -79544,6 +78577,13 @@ CREATE POLICY rls_tenant_isolation ON gis.geofeatures USING (((current_setting('
 --
 
 CREATE POLICY rls_tenant_isolation ON gis.geofence_alerts USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: gis_map_markers rls_tenant_isolation; Type: POLICY; Schema: gis; Owner: -
+--
+
+CREATE POLICY rls_tenant_isolation ON gis.gis_map_markers USING (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)))) WITH CHECK (((COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000'::text) OR (current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (tenant_id IS NULL) OR ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text))));
 
 
 --
@@ -82030,6 +81070,13 @@ ALTER TABLE mobile.devices ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mobile.media_files ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: oa_announcement_reads mobile_allow_all_oa_announcement_reads; Type: POLICY; Schema: mobile; Owner: -
+--
+
+CREATE POLICY mobile_allow_all_oa_announcement_reads ON mobile.oa_announcement_reads USING (true) WITH CHECK (true);
+
+
+--
 -- Name: mobile_push_notifications; Type: ROW SECURITY; Schema: mobile; Owner: -
 --
 
@@ -83531,12 +82578,6 @@ ALTER TABLE public.automation_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.automation_variables ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: core_dashboard_refresh_log; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.core_dashboard_refresh_log ENABLE ROW LEVEL SECURITY;
-
---
 -- Name: core_login_logs; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
@@ -83945,13 +82986,6 @@ CREATE POLICY tenant_isolation_automation_runs ON public.automation_runs USING (
 --
 
 CREATE POLICY tenant_isolation_automation_variables ON public.automation_variables USING ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL)));
-
-
---
--- Name: core_dashboard_refresh_log tenant_isolation_core_dashboard_refresh_log; Type: POLICY; Schema: public; Owner: -
---
-
-CREATE POLICY tenant_isolation_core_dashboard_refresh_log ON public.core_dashboard_refresh_log USING ((((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text)) OR (tenant_id IS NULL)));
 
 
 --
@@ -86461,5 +85495,5 @@ ALTER TABLE wms.wms_master_data_refs ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict KPwjdndmaeSyVWtZbfxdPOlx1zRMkHogv9NJJciZbD31ug11gKvQpYFub9Ee26q
+\unrestrict y7YtmoAgyhIGcrNbqfUSeHAI359fwaJY5navCBBY9G4DV3CZuKKePqLBA0D4Bdd
 
