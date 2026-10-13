@@ -704,17 +704,54 @@ pub async fn reports_center_stats(
                AND (tenant_id = current_setting('app.current_tenant', true)::uuid OR current_setting('app.current_tenant', true) = '')) AS recent_activities
     "#).fetch_one(&state.pool).await.unwrap_or((0, 0, 0, 0, 0));
 
-    // Last 6 months user growth
-    let months = [
-        "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08",
-    ];
-    let user_growth: Vec<serde_json::Value> = months.iter().map(|m| {
-        serde_json::json!({
-            "month": m,
-            "新增用户": if *m == "2026-08" { 42 } else { (0..10).fold(0i64, |acc, _| acc + 15 + (rand::random::<u8>() as i64 % 20)) },
-            "活跃用户": if *m == "2026-08" { 128 } else { (0..10).fold(0i64, |acc, _| acc + 40 + (rand::random::<u8>() as i64 % 30)) },
+    // 近 6 个月真实用户增长（数据来源表：core_users）：
+    //   新增用户 = core_users.created_at 分月计数；
+    //   活跃用户 = core_users.last_login_at 分月计数。
+    // 租户谓词与上方总量查询一致（app.current_tenant GUC / 超管空串）。
+    // 查询失败返回空数组，绝不回退到随机假数据。
+    let user_growth: Vec<serde_json::Value> = {
+        use sqlx::Row as _;
+        sqlx::query(
+            r#"
+            WITH months AS (
+                SELECT to_char(m, 'YYYY-MM') AS month
+                FROM generate_series(
+                    date_trunc('month', NOW()) - INTERVAL '5 months',
+                    date_trunc('month', NOW()),
+                    INTERVAL '1 month'
+                ) AS m
+            )
+            SELECT
+                months.month AS month,
+                (SELECT COUNT(*) FROM core_users u
+                   WHERE to_char(u.created_at, 'YYYY-MM') = months.month
+                     AND (u.tenant_id = current_setting('app.current_tenant', true)::uuid
+                          OR current_setting('app.current_tenant', true) = '')) AS new_users,
+                (SELECT COUNT(*) FROM core_users u
+                   WHERE u.last_login_at IS NOT NULL
+                     AND to_char(u.last_login_at, 'YYYY-MM') = months.month
+                     AND (u.tenant_id = current_setting('app.current_tenant', true)::uuid
+                          OR current_setting('app.current_tenant', true) = '')) AS active_users
+            FROM months
+            ORDER BY months.month
+            "#,
+        )
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|row| {
+            let month: String = row.try_get("month").unwrap_or_default();
+            let new_users: i64 = row.try_get("new_users").unwrap_or_default();
+            let active_users: i64 = row.try_get("active_users").unwrap_or_default();
+            serde_json::json!({
+                "month": month,
+                "新增用户": new_users,
+                "活跃用户": active_users,
+            })
         })
-    }).collect();
+        .collect()
+    };
 
     // Role distribution (static placeholder split; 普通用户 uses the real user count,
     // no more total_users.max(80) fabricated floor).

@@ -1,9 +1,20 @@
 use chrono::{DateTime, Utc};
-use rand::Rng;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use std::collections::HashMap;
 use topems_shared_core::error::TopemsError;
+use tracing::warn;
+
+/// DEMO_MODE 开关：仅用于「无真实数据集绑定」的占位图表。
+/// 读环境变量 `TOPEMS_BI_DEMO_MODE`（1/true/on 开启），**默认关闭**。
+/// - 关闭（生产默认）：无真实数据集绑定的图表一律返回空集，绝不静默造假。
+/// - 开启：返回硬编码（确定性、非随机）DEMO 数据，并在日志中显式标注非真实数据。
+fn demo_mode_enabled() -> bool {
+    matches!(
+        std::env::var("TOPEMS_BI_DEMO_MODE").as_deref(),
+        Ok("1") | Ok("true") | Ok("TRUE") | Ok("on") | Ok("ON")
+    )
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum ChartType {
@@ -363,127 +374,166 @@ impl ChartService {
         &self,
         query: &ChartQuery,
     ) -> Result<Vec<HashMap<String, serde_json::Value>>, TopemsError> {
-        let mut results: Vec<HashMap<String, serde_json::Value>> = Vec::new();
-
-        let sample_data = self.generate_sample_data(query).await;
-
-        for row in sample_data {
-            results.push(row);
+        // ① 结构化数据集路径：调用方显式提供了 (table, columns)（如 line/bar/pie）。
+        //    直接跑真实参数化查询（见 query_real_dataset），数据来源 = 调用方指定、
+        //    且经 validate_dataset 白名单校验的表；不新建任何表/视图。
+        if !query.columns.is_empty() {
+            return Ok(self.query_real_dataset(query).await);
         }
 
-        Ok(results)
+        // ② 无结构化数据集绑定路径（通用 visualization / widget 占位，columns 为空）：
+        //    生产默认（DEMO_MODE 关闭）返回空集，绝不静默造假；
+        //    仅当显式开启 DEMO_MODE 时返回硬编码 DEMO 数据并在日志中标注。
+        if demo_mode_enabled() {
+            warn!(
+                "BI DEMO_MODE=on: chart_type={:?} 返回硬编码 DEMO 数据（非真实数据）",
+                query.chart_type
+            );
+            return Ok(self.demo_sample_data(query).await);
+        }
+
+        Ok(Vec::new())
     }
 
-    async fn generate_sample_data(
+    /// 真实数据集查询：对调用方经 `validate_dataset` 校验过的 (table, columns) 执行
+    /// `SELECT to_jsonb("col") AS "col", ... FROM "table" LIMIT 500`。
+    ///
+    /// - 标识符已由 `validate_identifier` 做字符白名单 + 危险子字串拦截，不存在注入面；
+    /// - `to_jsonb()` 把任意标量（int/text/timestamptz/uuid/numeric…）统一转成 JSON，
+    ///   避免逐类型解码；
+    /// - 租户隔离依赖请求级 `app.current_tenant` GUC（服务 enable_rls=true），与 BI 层
+    ///   其它读路径一致；本通用查询不臆测目标表是否含 tenant_id 列，故不硬编码谓词。
+    /// - 任何失败（表不存在 / 列不存在 / SQL 错误）一律记 warn 并返回空集，绝不回退到假数据。
+    async fn query_real_dataset(
+        &self,
+        query: &ChartQuery,
+    ) -> Vec<HashMap<String, serde_json::Value>> {
+        let (table, cols) = match validate_dataset(&query.data_source, &query.columns) {
+            Ok(v) => v,
+            Err(e) => {
+                warn!("real dataset skip（非法数据集）: {}", e);
+                return Vec::new();
+            }
+        };
+
+        let select_list = cols
+            .iter()
+            .map(|quoted| format!("to_jsonb({}) AS {}", quoted, quoted))
+            .collect::<Vec<_>>()
+            .join(", ");
+        let sql = format!("SELECT {} FROM {} LIMIT 500", select_list, table);
+
+        let rows = match sqlx::query(&sql).fetch_all(&self.pool).await {
+            Ok(rows) => rows,
+            Err(e) => {
+                warn!("real dataset query failed（返回空集，不造假）: {}", e);
+                return Vec::new();
+            }
+        };
+
+        let mut out = Vec::with_capacity(rows.len());
+        for row in rows {
+            let mut map = HashMap::new();
+            for col in &query.columns {
+                match row.try_get::<serde_json::Value, &str>(col.as_str()) {
+                    Ok(v) => {
+                        map.insert(col.clone(), v);
+                    }
+                    Err(e) => {
+                        warn!("real dataset 列读取失败 '{}'（跳过该行该列）: {}", col, e);
+                    }
+                }
+            }
+            out.push(map);
+        }
+        out
+    }
+
+    /// 硬编码（确定性）DEMO 样本——仅在 DEMO_MODE 开启时使用。
+    /// 数据为固定常量，**不使用任何随机数**；行形状与历史前端契约保持一致。
+    async fn demo_sample_data(
         &self,
         query: &ChartQuery,
     ) -> Vec<HashMap<String, serde_json::Value>> {
         let mut data = Vec::new();
 
+        // 固定常量矩阵，避免引入随机数（rand 已从生产代码清零）。
+        const LINE_VALUE1: [f64; 6] = [62.0, 75.0, 58.0, 88.0, 70.0, 95.0];
+        const LINE_VALUE2: [f64; 6] = [40.0, 52.0, 46.0, 60.0, 55.0, 68.0];
+        const PIE_VALUES: [f64; 4] = [35.0, 25.0, 22.0, 18.0];
+        const HIST_COUNTS: [f64; 10] = [12.0, 18.0, 25.0, 33.0, 42.0, 38.0, 29.0, 21.0, 15.0, 10.0];
+        const TABLE_VALUES: [f64; 5] = [150.0, 320.0, 280.0, 510.0, 430.0];
+
         match query.chart_type {
             ChartType::Line | ChartType::Bar | ChartType::Area => {
-                let months = vec!["1月", "2月", "3月", "4月", "5月", "6月"];
-                let mut rng = rand::thread_rng();
-                for month in months {
+                let months = ["1月", "2月", "3月", "4月", "5月", "6月"];
+                for (i, month) in months.iter().enumerate() {
                     let mut row = HashMap::new();
                     row.insert(
                         "month".to_string(),
-                        serde_json::Value::String(month.to_string()),
+                        serde_json::Value::String((*month).to_string()),
                     );
                     row.insert(
                         "value1".to_string(),
-                        serde_json::Value::Number(
-                            serde_json::Number::from_f64((rng.gen::<f64>() * 100.0) + 50.0)
-                                .unwrap_or_else(|| serde_json::Number::from(50)),
-                        ),
+                        serde_json::Value::from(LINE_VALUE1[i]),
                     );
                     row.insert(
                         "value2".to_string(),
-                        serde_json::Value::Number(
-                            serde_json::Number::from_f64((rng.gen::<f64>() * 80.0) + 30.0)
-                                .unwrap_or_else(|| serde_json::Number::from(30)),
-                        ),
+                        serde_json::Value::from(LINE_VALUE2[i]),
                     );
                     data.push(row);
                 }
             }
             ChartType::Pie => {
-                let categories = vec!["A类", "B类", "C类", "D类"];
-                let mut rng = rand::thread_rng();
-                for category in categories {
+                let categories = ["A类", "B类", "C类", "D类"];
+                for (i, category) in categories.iter().enumerate() {
                     let mut row = HashMap::new();
                     row.insert(
                         "category".to_string(),
-                        serde_json::Value::String(category.to_string()),
+                        serde_json::Value::String((*category).to_string()),
                     );
-                    row.insert(
-                        "value".to_string(),
-                        serde_json::Value::Number(
-                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0)
-                                .unwrap_or_else(|| serde_json::Number::from(0)),
-                        ),
-                    );
+                    row.insert("value".to_string(), serde_json::Value::from(PIE_VALUES[i]));
                     data.push(row);
                 }
             }
             ChartType::Scatter => {
-                let mut rng = rand::thread_rng();
-                for _ in 0..20 {
+                // 确定性网格点，替代原先的随机散点。
+                for i in 0..20 {
                     let mut row = HashMap::new();
                     row.insert(
                         "x".to_string(),
-                        serde_json::Value::Number(
-                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0)
-                                .unwrap_or_else(|| serde_json::Number::from(0)),
-                        ),
+                        serde_json::Value::from((i * 5) as f64 % 100.0),
                     );
                     row.insert(
                         "y".to_string(),
-                        serde_json::Value::Number(
-                            serde_json::Number::from_f64(rng.gen::<f64>() * 100.0)
-                                .unwrap_or_else(|| serde_json::Number::from(0)),
-                        ),
+                        serde_json::Value::from(((i * 37) % 100) as f64),
                     );
                     data.push(row);
                 }
             }
             ChartType::Histogram => {
-                let mut rng = rand::thread_rng();
-                for i in 0..10 {
+                for (i, count) in HIST_COUNTS.iter().enumerate() {
                     let mut row = HashMap::new();
                     row.insert(
                         "bin".to_string(),
                         serde_json::Value::String(format!("{}-{}", i * 10, (i + 1) * 10)),
                     );
-                    row.insert(
-                        "count".to_string(),
-                        serde_json::Value::Number(
-                            serde_json::Number::from_f64((rng.gen::<f64>() * 50.0) + 10.0)
-                                .unwrap_or_else(|| serde_json::Number::from(10)),
-                        ),
-                    );
+                    row.insert("count".to_string(), serde_json::Value::from(*count));
                     data.push(row);
                 }
             }
             ChartType::Table => {
-                let mut rng = rand::thread_rng();
-                for i in 0..5 {
+                for (i, value) in TABLE_VALUES.iter().enumerate() {
                     let mut row = HashMap::new();
                     row.insert(
                         "id".to_string(),
-                        serde_json::Value::Number(serde_json::Number::from(i + 1)),
+                        serde_json::Value::from((i + 1) as i64),
                     );
                     row.insert(
                         "name".to_string(),
                         serde_json::Value::String(format!("项目 {}", i + 1)),
                     );
-                    row.insert(
-                        "value".to_string(),
-                        serde_json::Value::Number(
-                            serde_json::Number::from_f64((rng.gen::<f64>() * 1000.0) + 100.0)
-                                .unwrap_or_else(|| serde_json::Number::from(100)),
-                        ),
-                    );
+                    row.insert("value".to_string(), serde_json::Value::from(*value));
                     data.push(row);
                 }
             }
