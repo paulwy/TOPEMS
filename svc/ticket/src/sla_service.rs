@@ -263,7 +263,7 @@ impl TicketSlaService {
     async fn match_policy(&self, ticket: &Ticket) -> Result<Option<TicketSlaPolicy>, sqlx::Error> {
         let policy = sqlx::query_as::<_, TicketSlaPolicy>(
             r#"
-            SELECT id, tenant_id, ticket_type, priority, response_time_min, resolution_time_min, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
+            SELECT id, tenant_id, name, description, ticket_type, severity, response_hours, resolution_hours, escalation_levels, escalation_hours_1, escalation_hours_2, escalation_hours_3, working_hours_only, business_hours_start, business_hours_end, weekend_excluded, is_default, is_active, created_at, updated_at FROM ticket.core_ticket_sla_policies
             WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1)
               AND is_active = true
               AND (ticket_type IS NULL OR ticket_type = $2)
@@ -292,7 +292,7 @@ impl TicketSlaService {
     ) -> Result<Vec<SlaEscalationEvent>, sqlx::Error> {
         let events = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
-            SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM ticket.core_ticket_sla_escalations
+            SELECT id, ticket_id, tenant_id, level, escalation_time, escalated_to, reason, created_at FROM ticket.core_ticket_sla_escalations
             WHERE ticket_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)
             ORDER BY level ASC, created_at ASC
             "#,
@@ -417,7 +417,7 @@ impl TicketSlaService {
 
         let event = sqlx::query_as::<_, SlaEscalationEvent>(
             r#"
-            SELECT id, tenant_id, policy_id, level, role, notify_method, delay_min, created_at, updated_at FROM ticket.core_ticket_sla_escalations WHERE id = $1
+            SELECT id, ticket_id, tenant_id, level, escalation_time, escalated_to, reason, created_at FROM ticket.core_ticket_sla_escalations WHERE id = $1
             "#,
         )
         .bind(event_id)

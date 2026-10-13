@@ -247,7 +247,7 @@ pub async fn create_material(
     let result = sqlx::query_as::<_, Material>(
         r#"
         INSERT INTO pdm_materials (
-            id, tenant_id, material_no, name, spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
+            id, tenant_id, material_no, name, spec, unit, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, tenant_id, material_no, name, spec, unit, status, created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at
         "#,

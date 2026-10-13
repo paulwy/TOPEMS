@@ -188,7 +188,7 @@ pub async fn create_reagent(
     let tenant_id = ctx.tenant_id;
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_reagents (tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9) RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "INSERT INTO qa_lab_reagents (tenant_id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'normal', $9) RETURNING id::TEXT, tenant_id::TEXT, reagent_no, name, specification, manufacturer, batch_no, quantity::FLOAT8, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
     )
     .bind(tenant_id)
     .bind(reagent_no)

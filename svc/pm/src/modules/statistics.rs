@@ -938,7 +938,7 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
 
     let by_level: Vec<LevelCount> = sqlx::query_as::<_, (String, i64)>(only_own_schema_query!(
         "pm",
-        "SELECT COALESCE(level, 'unknown'), COUNT(*) FROM pm.risks GROUP BY level"
+        "SELECT COALESCE(risk_level, 'unknown'), COUNT(*) FROM pm.risks GROUP BY risk_level"
     ))
     .fetch_all(db)
     .await
@@ -948,7 +948,7 @@ async fn build_risk_statistics(db: &PgPool) -> RiskStatistics {
     .collect();
 
     let by_category: Vec<CategoryCount> = sqlx::query_as::<_, (String, i64, i64)>(
-        only_own_schema_query!("pm", "SELECT COALESCE(risk_category, 'uncategorized'), COUNT(*), SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) FROM pm.risks GROUP BY risk_category"),
+        only_own_schema_query!("pm", "SELECT COALESCE(risk_type, 'uncategorized'), COUNT(*), SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) FROM pm.risks GROUP BY risk_type"),
     )
     .fetch_all(db)
     .await
