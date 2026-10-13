@@ -1,6 +1,28 @@
 
 ---
 
+## 防复发：storybook 配置第三次误删 + 约定文件保护护栏（2026-10-14）✅
+
+> 用户要求分析 `apps/web/.storybook/main.ts` / `preview.tsx` 的工作区删除是否合理。判定：**误删**（第三次同模式）。已恢复 + 建立保护护栏。
+
+### 判定依据（均已核实）
+- **Storybook 组件库仍活跃**：`apps/web/src` 下 **71 个 `.stories.tsx`**；`package.json:54-55/132-166` 有 `storybook dev -p 6006`、`build-storybook`、`@storybook/react-vite`、`addon-docs`、`eslint-plugin-storybook` 依赖；`node_modules/.bin/storybook` 已装。
+- **配置有效**：main.ts 扫描 `src/**/*.stories.*`；preview.tsx 引用存在的 `theme/storybook-theme.ts`。
+- **历史误删 2 次**：`296a82c53 fix: 恢复 storybook 配置（11d250f3b 误删 main.ts）`、`b76344ead fix: 恢复误删的 storybook 配置与 shim`（1b5cefce4 删孤儿时误删）。本次为第 3 次。
+- **根因**：`detect-ts-unused-exports.cjs` 只扫 `apps/web/src`，把仅被 `.storybook/` 跨目录引用（CLI 约定读取、不经 import）的 `storybook-theme.ts` 判为 L1 孤儿；`.storybook/*` 配置本身不经 import，任何"未引用"扫描都会误判。
+
+### 处理动作
+- [x] 恢复两文件：`git restore --source=HEAD --worktree apps/web/.storybook/{main.ts,preview.tsx}`（无损，HEAD=已 push 20b98afd4）
+- [x] `scripts/audit/detect-ts-unused-exports.cjs` 新增 `CONVENTION_PRESERVE_SUFFIX`（`/theme/storybook-theme.ts` 等），命中归 **L3-HOLD 不进 L1/L2 删除候选**
+- [x] 新建保护清单 `scripts/audit/preserve-convention.json`：列出 `apps/web/.storybook/**` 与 `storybook-theme.ts` 为受保护约定文件，作为跨工具统一依据
+- [x] 验证：node --check 语法 OK；实跑 detect 工具 2372 文件，**storybook-theme 在 L1/L2 删除候选数 = 0** ✅；JSON 校验通过
+
+### 长期防复发规则
+- 任何"孤儿/未引用文件"清理脚本或人工删除，凡命中 `preserve-convention.json` 的 path 必须跳过（注明 skipped-convention）。
+- 新增 CLI 约定目录读取的配置/资源（非 import 引用）时，先登记进 `preserve-convention.json` 或 `CONVENTION_PRESERVE_SUFFIX`。
+
+---
+
 ## 架构审查 P0 实施批（2026-10-13 规划，✅ 全部批次完成，15 commits 本地落地未 push）
 
 > 依据 `artifacts/TOPEMS-技术架构审查报告-2026-10-13.md`（7 维度审查：架构缺陷收敛、模块化单体、27/29 实、前后端 PASS4135/FAIL0、主体真实数据、MCP 3.5/5、DSH 已支撑）+ 用户拍板三项：**outbox 推广全部发布服务 / 保留 8099 聚合面关闭 nginx 直连 / shared-dsh 并入 svc/ai**。

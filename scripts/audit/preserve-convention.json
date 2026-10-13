@@ -1,0 +1,17 @@
+{
+  "_doc": "约定文件保护清单。这些文件由 CLI/框架按约定目录读取，不经 import 引用，任何孤儿/未引用文件清理工具与人工删除操作必须跳过。误删会破坏对应工作流。历史：storybook 配置已被误删 3 次（11d250f3b / 1b5cefce4 / 2026-10 工作区）。",
+  "_enforcement": "detect-ts-unused-exports.cjs 已内置 CONVENTION_PRESERVE_SUFFIX 引用本类文件归 L3-HOLD；本清单为跨工具统一依据。",
+  "entries": [
+    {
+      "path": "apps/web/.storybook/**",
+      "reason": "Storybook CLI 按约定读取 .storybook/main.ts / preview.tsx（react-vite 配置 + 装饰器）。71 个 src/**/*.stories.tsx 依赖此配置渲染，package.json 有 storybook/build-storybook 脚本与依赖。",
+      "protected": true
+    },
+    {
+      "path": "apps/web/src/theme/storybook-theme.ts",
+      "reason": "仅被 apps/web/.storybook/preview.tsx import（.storybook 在 src 外，detect-ts-unused-exports 扫描范围不可见其引用方），会被误判为 L1 孤儿。",
+      "protected": true
+    }
+  ],
+  "rule": "任何生成删除清单或执行删除的脚本，若目标命中上述 path（glob 匹配），必须跳过并在输出中注明 skipped-convention。"
+}

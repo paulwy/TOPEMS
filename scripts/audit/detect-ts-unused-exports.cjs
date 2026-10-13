@@ -64,6 +64,15 @@ const EXCLUDE_DIR = new Set([
 ]);
 const EXCLUDE_FILE_EXT = new Set(['.test.ts', '.test.tsx', '.spec.ts', '.spec.tsx', '.stories.tsx', '.d.ts']);
 
+// 约定文件保护：被 CLI 按约定目录读取、不经 import 引用的文件（扫描器看不到其引用方）。
+// 若误入 L1/L2 删除候选，会触发误删。历史记录：storybook 配置已被误删 3 次
+// （11d250f3b / 1b5cefce4 / 2026-10 工作区），本集合为显式防复发护栏。
+// 路径为相对 ROOT 的后缀；命中即归入 L3-HOLD，绝不进 L1/L2。
+const CONVENTION_PRESERVE_SUFFIX = [
+  '/theme/storybook-theme.ts', // 仅被 .storybook/preview.tsx 引用（.storybook 在 src 外，扫描不可见）
+  '/storybook-theme.ts',
+];
+
 function walk(dir, out = []) {
   let entries;
   try {
@@ -283,7 +292,13 @@ function main() {
       anyValueExport,
       anyTypeExport,
     };
-    if (level === 'L1') L1.push(record);
+    // 约定文件保护：命中 CONVENTION_PRESERVE_SUFFIX 则归 L3-HOLD，绝不进 L1/L2 删除候选。
+    const isConventionPreserved = [...defFiles].some((df) =>
+      CONVENTION_PRESERVE_SUFFIX.some((s) => df.endsWith(s))
+    );
+    if (isConventionPreserved) {
+      L3.push(record);
+    } else if (level === 'L1') L1.push(record);
     else if (level === 'L2') L2.push(record);
     else L3.push(record);
   }
