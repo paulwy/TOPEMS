@@ -107,10 +107,10 @@ const UI_LABELS: Record<UIType, string> = {
 };
 
 const ENV_LABELS: Record<EnvironmentName, string> = {
-  development: i18n.t('dev-platform.v53-platform-console.k0'),
-  staging: i18n.t('dev-platform.v53-platform-console.k1'),
-  production: i18n.t('dev-platform.v53-platform-console.k2'),
-  preview: i18n.t('dev-platform.v53-platform-console.k3'),
+  development: i18n.t('dev_platform.v53-platform-console.env_development'),
+  staging: i18n.t('dev_platform.v53-platform-console.env_staging'),
+  production: i18n.t('dev_platform.v53-platform-console.env_production'),
+  preview: i18n.t('dev_platform.v53-platform-console.k3'),
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -219,37 +219,37 @@ const V53PlatformConsole: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Activity size={16} />}
               iconPosition='start'
-              label={i18n.t('dev-platform.v53-platform-console.k4')}
+              label={i18n.t('dev_platform.v53-platform-console.k4')}
               value='dashboard'
             />
             <Tab
               icon={<Rocket size={16} />}
               iconPosition='start'
-              label={i18n.t('dev-platform.v53-platform-console.k5')}
+              label={i18n.t('dev_platform.v53-platform-console.k5')}
               value='platform'
             />
             <Tab
               icon={<Layout size={16} />}
               iconPosition='start'
-              label={i18n.t('dev-platform.v53-platform-console.k6')}
+              label={i18n.t('dev_platform.v53-platform-console.k6')}
               value='builder'
             />
             <Tab
               icon={<Blocks size={16} />}
               iconPosition='start'
-              label={i18n.t('dev-platform.v53-platform-console.k7')}
+              label={i18n.t('dev_platform.v53-platform-console.k7')}
               value='marketplace'
             />
             <Tab
               icon={<Workflow size={16} />}
               iconPosition='start'
-              label={i18n.t('dev-platform.v53-platform-console.k8')}
+              label={i18n.t('dev_platform.v53-platform-console.k8')}
               value='pipelines'
             />
             <Tab
               icon={<Zap size={16} />}
               iconPosition='start'
-              label={i18n.t('dev-platform.v53-platform-console.k9')}
+              label={i18n.t('dev_platform.v53-platform-console.k9')}
               value='activity'
             />
           </Tabs>
@@ -355,7 +355,7 @@ const DashboardTab: React.FC<{
       >
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title={i18n.t('dev-platform.v53-platform-console.k10')}
+            title={i18n.t('dev_platform.v53-platform-console.k10')}
             value={platformStats.totalProjects}
             icon={<Package size={24} />}
             color={designTokens.colors.secondary.dark}
@@ -363,7 +363,7 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title={i18n.t('dev-platform.v53-platform-console.k11')}
+            title={i18n.t('dev_platform.v53-platform-console.k11')}
             value={platformStats.totalPipelines}
             icon={<Workflow size={24} />}
             color={designTokens.colors.pink.main}
@@ -371,7 +371,7 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title={i18n.t('dev-platform.v53-platform-console.k12')}
+            title={i18n.t('dev_platform.v53-platform-console.k12')}
             value={marketStats.totalPlugins}
             icon={<Blocks size={24} />}
             color={`${designTokens.colors.teal['500']}`}
@@ -379,7 +379,7 @@ const DashboardTab: React.FC<{
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
-            title={i18n.t('dev-platform.v53-platform-console.k13')}
+            title={i18n.t('dev_platform.v53-platform-console.k13')}
             value={`${healthyProjects}/${platformStats.totalProjects || 0}`}
             icon={<Shield size={24} />}
             color={`${designTokens.colors.success.main}`}
@@ -389,7 +389,7 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 8 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k14')}
+              title={i18n.t('dev_platform.v53-platform-console.k14')}
               avatar={<Rocket size={18} />}
             />
             <CardContent>
@@ -397,11 +397,11 @@ const DashboardTab: React.FC<{
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k15')}</TableCell>
-                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k16')}</TableCell>
-                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k17')}</TableCell>
+                      <TableCell>{i18n.t('dev_platform.v53-platform-console.k15')}</TableCell>
+                      <TableCell>{i18n.t('dev_platform.v53-platform-console.k16')}</TableCell>
+                      <TableCell>{i18n.t('dev_platform.v53-platform-console.k17')}</TableCell>
                       <TableCell align='right'>
-                        {i18n.t('dev-platform.v53-platform-console.k18')}
+                        {i18n.t('dev_platform.v53-platform-console.k18')}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -413,7 +413,7 @@ const DashboardTab: React.FC<{
                           align='center'
                           sx={{ py: 4, color: 'text.secondary' }}
                         >
-                          {i18n.t('dev-platform.v53-platform-console.empty_projects')}
+                          {i18n.t('dev_platform.v53-platform-console.empty_projects')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -499,7 +499,7 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k20')}
+              title={i18n.t('dev_platform.v53-platform-console.k20')}
               avatar={<Blocks size={18} />}
             />
             <CardContent>
@@ -511,7 +511,7 @@ const DashboardTab: React.FC<{
                       color={designTokens.colors.secondary.dark}
                     />
                   }
-                  label={i18n.t('dev-platform.v53-platform-console.k21')}
+                  label={i18n.t('dev_platform.v53-platform-console.k21')}
                   value={`${installedPlugins.length} ${i18n.t('dev_platform.v53-platform-console.k2')}`}
                 />
                 <InfoRow
@@ -521,7 +521,7 @@ const DashboardTab: React.FC<{
                       color={`${designTokens.colors.teal['500']}`}
                     />
                   }
-                  label={i18n.t('dev-platform.v53-platform-console.k22')}
+                  label={i18n.t('dev_platform.v53-platform-console.k22')}
                   value={`${installedPlugins.filter((p) => p.updateAvailable).length} ${i18n.t('dev_platform.v53-platform-console.k3')}`}
                 />
                 <InfoRow
@@ -531,7 +531,7 @@ const DashboardTab: React.FC<{
                       color={designTokens.colors.warning.main}
                     />
                   }
-                  label={i18n.t('dev-platform.v53-platform-console.k23')}
+                  label={i18n.t('dev_platform.v53-platform-console.k23')}
                   value={`${marketStats.featuredPlugins} ${i18n.t('dev_platform.v53-platform-console.k4')}`}
                 />
                 <InfoRow
@@ -541,7 +541,7 @@ const DashboardTab: React.FC<{
                       color={`${designTokens.colors.success.main}`}
                     />
                   }
-                  label={i18n.t('dev-platform.v53-platform-console.k24')}
+                  label={i18n.t('dev_platform.v53-platform-console.k24')}
                   value={`${marketStats.verifiedPlugins} ${i18n.t('dev_platform.v53-platform-console.k5')}`}
                 />
               </Stack>
@@ -552,7 +552,7 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k25')}
+              title={i18n.t('dev_platform.v53-platform-console.k25')}
               avatar={<Workflow size={18} />}
             />
             <CardContent>
@@ -622,7 +622,7 @@ const DashboardTab: React.FC<{
         <Grid size={{ xs: 12, md: 6 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k26')}
+              title={i18n.t('dev_platform.v53-platform-console.k26')}
               avatar={<Layout size={18} />}
             />
             <CardContent>
@@ -658,7 +658,7 @@ const DashboardTab: React.FC<{
                           color='text.secondary'
                         >
                           {page.status} · {page.components.length}{' '}
-                          {i18n.t('dev-platform.v53-platform-console.k0')}
+                          {i18n.t('dev_platform.v53-platform-console.k0')}
                         </Typography>
                       </Box>
                       <Chip
@@ -808,7 +808,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                 color='text.secondary'
                 sx={{ mb: 2 }}
               >
-                {i18n.t('dev-platform.v53-platform-console.start_first')}
+                {i18n.t('dev_platform.v53-platform-console.start_first')}
               </Typography>
               <Button
                 variant='contained'
@@ -830,7 +830,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                   title={project.name}
                   avatar={<Code2 size={18} />}
                   action={
-                    <Tooltip title={i18n.t('dev-platform.v53-platform-console.k28')}>
+                    <Tooltip title={i18n.t('dev_platform.v53-platform-console.k28')}>
                       <IconButton
                         size='small'
                         onClick={() => setSelectedProject(project)}
@@ -931,18 +931,18 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
-                  label={i18n.t('dev-platform.v53-platform-console.k29')}
+                  label={i18n.t('dev_platform.v53-platform-console.k29')}
                   value={newProjectName}
                   onChange={(e) => setNewProjectName(e.target.value)}
-                  placeholder={i18n.t('dev-platform.v53-platform-console.k30')}
+                  placeholder={i18n.t('dev_platform.v53-platform-console.k30')}
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
                 <FormControl fullWidth>
-                  <InputLabel>{i18n.t('dev-platform.v53-platform-console.k31')}</InputLabel>
+                  <InputLabel>{i18n.t('dev_platform.v53-platform-console.k31')}</InputLabel>
                   <Select
                     value={selectedStack}
-                    label={i18n.t('dev-platform.v53-platform-console.k32')}
+                    label={i18n.t('dev_platform.v53-platform-console.k32')}
                     onChange={(e) => setSelectedStack(e.target.value)}
                   >
                     {presetStacks.map((s) => (
@@ -966,7 +966,7 @@ const PlatformTab: React.FC<{ projects: DevProject[] }> = ({ projects }) => {
                     {i18n.t('dev_platform.v53-platform-console.k16')}
                   </Button>
                   <Button onClick={() => setShowCreate(false)}>
-                    {i18n.t('dev-platform.v53-platform-console.k33')}
+                    {i18n.t('dev_platform.v53-platform-console.k33')}
                   </Button>
                 </Box>
               </Grid>
@@ -1178,42 +1178,42 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
   const componentTypes: Array<{ type: string; label: string; icon: React.ReactNode }> = [
     {
       type: 'text',
-      label: i18n.t('dev-platform.v53-platform-console.k34'),
+      label: i18n.t('dev_platform.v53-platform-console.k34'),
       icon: <MousePointerClick size={16} />,
     },
     {
       type: 'heading',
-      label: i18n.t('dev-platform.v53-platform-console.k35'),
+      label: i18n.t('dev_platform.v53-platform-console.k35'),
       icon: <MousePointerClick size={16} />,
     },
     {
       type: 'button',
-      label: i18n.t('dev-platform.v53-platform-console.k36'),
+      label: i18n.t('dev_platform.v53-platform-console.k36'),
       icon: <MousePointerClick size={16} />,
     },
     {
       type: 'input',
-      label: i18n.t('dev-platform.v53-platform-console.k37'),
+      label: i18n.t('dev_platform.v53-platform-console.k37'),
       icon: <MousePointerClick size={16} />,
     },
     {
       type: 'card',
-      label: i18n.t('dev-platform.v53-platform-console.k38'),
+      label: i18n.t('dev_platform.v53-platform-console.k38'),
       icon: <MousePointerClick size={16} />,
     },
     {
       type: 'table',
-      label: i18n.t('dev-platform.v53-platform-console.k39'),
+      label: i18n.t('dev_platform.v53-platform-console.k39'),
       icon: <MousePointerClick size={16} />,
     },
     {
       type: 'chart',
-      label: i18n.t('dev-platform.v53-platform-console.k40'),
+      label: i18n.t('dev_platform.v53-platform-console.k40'),
       icon: <MousePointerClick size={16} />,
     },
     {
       type: 'container',
-      label: i18n.t('dev-platform.v53-platform-console.k41'),
+      label: i18n.t('dev_platform.v53-platform-console.k41'),
       icon: <BoxIcon size={16} />,
     },
   ];
@@ -1227,7 +1227,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
         <Grid size={{ xs: 12, md: 3 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k42')}
+              title={i18n.t('dev_platform.v53-platform-console.k42')}
               avatar={<Layout size={18} />}
             />
             <CardContent>
@@ -1291,7 +1291,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
           <Card variant='outlined'>
             <CardHeader
               title={
-                selectedPage ? selectedPage.name : i18n.t('dev-platform.v53-platform-console.k43')
+                selectedPage ? selectedPage.name : i18n.t('dev_platform.v53-platform-console.k43')
               }
               avatar={<BoxIcon size={18} />}
               action={
@@ -1398,7 +1398,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
         <Grid size={{ xs: 12, md: 3 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k44')}
+              title={i18n.t('dev_platform.v53-platform-console.k44')}
               avatar={<Layers size={18} />}
             />
             <CardContent>
@@ -1426,7 +1426,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
               sx={{ mt: 2 }}
             >
               <CardHeader
-                title={i18n.t('dev-platform.v53-platform-console.k45')}
+                title={i18n.t('dev_platform.v53-platform-console.k45')}
                 avatar={<Settings size={18} />}
               />
               <CardContent>
@@ -1438,7 +1438,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         color={designTokens.colors.secondary.dark}
                       />
                     }
-                    label={i18n.t('dev-platform.v53-platform-console.k46')}
+                    label={i18n.t('dev_platform.v53-platform-console.k46')}
                     value={`${selectedPage.dataSources.length} ${i18n.t('dev_platform.v53-platform-console.k26')}`}
                   />
                   <InfoRow
@@ -1448,7 +1448,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         color={designTokens.colors.pink.main}
                       />
                     }
-                    label={i18n.t('dev-platform.v53-platform-console.k47')}
+                    label={i18n.t('dev_platform.v53-platform-console.k47')}
                     value={selectedPage.theme.mode}
                   />
                   <InfoRow
@@ -1458,7 +1458,7 @@ const BuilderTab: React.FC<{ pages: CanvasPage[] }> = ({ pages }) => {
                         color={`${designTokens.colors.teal['500']}`}
                       />
                     }
-                    label={i18n.t('dev-platform.v53-platform-console.k48')}
+                    label={i18n.t('dev_platform.v53-platform-console.k48')}
                     value={selectedPage.version}
                   />
                 </Stack>
@@ -1610,7 +1610,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                           />
                           {plugin.isVerified && (
                             <Chip
-                              label={i18n.t('dev-platform.v53-platform-console.k49')}
+                              label={i18n.t('dev_platform.v53-platform-console.k49')}
                               size='small'
                               color='success'
                               variant='outlined'
@@ -1657,7 +1657,7 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k50')}
+              title={i18n.t('dev_platform.v53-platform-console.k50')}
               avatar={<Package size={18} />}
             />
             <CardContent>
@@ -1691,8 +1691,8 @@ const MarketplaceTab: React.FC<{ installedPlugins: InstalledPlugin[] }> = ({
                         <Chip
                           label={
                             p.enabled
-                              ? i18n.t('dev-platform.v53-platform-console.k52')
-                              : i18n.t('dev-platform.v53-platform-console.k51')
+                              ? i18n.t('dev_platform.v53-platform-console.k52')
+                              : i18n.t('dev_platform.v53-platform-console.k51')
                           }
                           size='small'
                           color={p.enabled ? 'success' : 'default'}
@@ -1849,7 +1849,7 @@ const PipelinesTab: React.FC<{
         <Grid size={{ xs: 12, md: 8 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k53')}
+              title={i18n.t('dev_platform.v53-platform-console.k53')}
               avatar={<Workflow size={18} />}
             />
             <CardContent>
@@ -1857,12 +1857,12 @@ const PipelinesTab: React.FC<{
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
-                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k54')}</TableCell>
-                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k55')}</TableCell>
-                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k56')}</TableCell>
-                      <TableCell>{i18n.t('dev-platform.v53-platform-console.k57')}</TableCell>
+                      <TableCell>{i18n.t('dev_platform.v53-platform-console.k54')}</TableCell>
+                      <TableCell>{i18n.t('dev_platform.v53-platform-console.k55')}</TableCell>
+                      <TableCell>{i18n.t('dev_platform.v53-platform-console.k56')}</TableCell>
+                      <TableCell>{i18n.t('dev_platform.v53-platform-console.k57')}</TableCell>
                       <TableCell align='right'>
-                        {i18n.t('dev-platform.v53-platform-console.k58')}
+                        {i18n.t('dev_platform.v53-platform-console.k58')}
                       </TableCell>
                     </TableRow>
                   </TableHead>
@@ -1957,7 +1957,7 @@ const PipelinesTab: React.FC<{
         <Grid size={{ xs: 12, md: 4 }}>
           <Card variant='outlined'>
             <CardHeader
-              title={i18n.t('dev-platform.v53-platform-console.k59')}
+              title={i18n.t('dev_platform.v53-platform-console.k59')}
               avatar={<Play size={18} />}
             />
             <CardContent>
@@ -2234,7 +2234,7 @@ const ActivityTab: React.FC<{
       </Typography>
       <Card variant='outlined'>
         <CardHeader
-          title={i18n.t('dev-platform.v53-platform-console.k60')}
+          title={i18n.t('dev_platform.v53-platform-console.k60')}
           avatar={<Activity size={18} />}
         />
         <CardContent>

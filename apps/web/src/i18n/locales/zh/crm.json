@@ -1295,5 +1295,17 @@
   "crm.dashboard.${sc.id}": "标题",
   "crm.dashboard.${ch.id}": "标题",
   "crm.billing.status_${s.status}": "状态}",
-  "crm.billing.status_${item.status}": "标签"
+  "crm.billing.status_${item.status}": "标签",
+  "crm.contract_redesign.toast_create_fail": "合同创建失败",
+  "crm.contract_redesign.toast_create_success": "合同创建成功",
+  "crm.contract_redesign.toast_delete_fail": "合同删除失败",
+  "crm.contract_redesign.toast_delete_success": "合同删除成功",
+  "crm.contract_redesign.toast_update_fail": "合同更新失败",
+  "crm.contract_redesign.toast_update_success": "合同更新成功",
+  "crm.opportunity_redesign.toast_create_fail": "商机创建失败",
+  "crm.opportunity_redesign.toast_create_success": "商机创建成功",
+  "crm.opportunity_redesign.toast_delete_fail": "商机删除失败",
+  "crm.opportunity_redesign.toast_delete_success": "商机删除成功",
+  "crm.opportunity_redesign.toast_update_fail": "商机更新失败",
+  "crm.opportunity_redesign.toast_update_success": "商机更新成功"
 }

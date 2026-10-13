@@ -1,1 +1,16 @@
-{}
+{
+  "system_settings.company_address": "公司地址",
+  "system_settings.company_name": "公司名称",
+  "system_settings.contact_email": "联系邮箱",
+  "system_settings.contact_phone": "联系电话",
+  "system_settings.enable_email_service": "启用邮件服务",
+  "system_settings.enable_sms_service": "启用短信服务",
+  "system_settings.log_level": "日志级别",
+  "system_settings.log_retention_days": "日志保留天数",
+  "system_settings.password": "密码",
+  "system_settings.reset": "重置",
+  "system_settings.sms_provider": "短信服务商",
+  "system_settings.system_name": "系统名称",
+  "system_settings.system_settings": "系统设置",
+  "system_settings.username": "用户名"
+}

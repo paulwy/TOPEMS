@@ -81,7 +81,7 @@ export function createCrudPageAdapter<T, TCreate = Partial<T>, TUpdate = Partial
 
     const responseLike = asResponse(await api.list(normalizedParams));
     if (responseLike.success === false) {
-      throw new Error(responseLike.message || i18n.t('schema.crud_page_adapter.k0'));
+      throw new Error(responseLike.message || i18n.t('schema:crud_page_adapter.k0'));
     }
 
     const { items, total } = normalizeListResponse<T>(
@@ -94,21 +94,21 @@ export function createCrudPageAdapter<T, TCreate = Partial<T>, TUpdate = Partial
   const create = async (data: Partial<Record<string, unknown>>) => {
     const raw = asResponse<T>(await api.create(data as unknown as TCreate));
     if (raw.success === false)
-      throw new Error(raw.message || i18n.t('schema.crud_page_adapter.k1'));
+      throw new Error(raw.message || i18n.t('schema:crud_page_adapter.k1'));
     return (raw.data ?? {}) as unknown as Record<string, unknown>;
   };
 
   const update = async (id: string, data: Partial<Record<string, unknown>>) => {
     const raw = asResponse<T>(await api.update(id, data as unknown as TUpdate));
     if (raw.success === false)
-      throw new Error(raw.message || i18n.t('schema.crud_page_adapter.k2'));
+      throw new Error(raw.message || i18n.t('schema:crud_page_adapter.k2'));
     return (raw.data ?? {}) as unknown as Record<string, unknown>;
   };
 
   const del = async (id: string) => {
     const raw = asResponse(await api.delete(id));
     if (raw.success === false)
-      throw new Error(raw.message || i18n.t('schema.crud_page_adapter.k3'));
+      throw new Error(raw.message || i18n.t('schema:crud_page_adapter.k3'));
   };
 
   return { list, create, update, delete: del };

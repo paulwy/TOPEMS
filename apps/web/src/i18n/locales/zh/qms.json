@@ -2062,5 +2062,8 @@
   "qms.demo.audit_auditee_2": "华东电子有限公司",
   "qms.demo.audit_auditee_3": "全公司",
   "qms.demo.audit_auditee_4": "生产二部",
-  "qms.demo.audit_auditee_5": "质量部"
+  "qms.demo.audit_auditee_5": "质量部",
+  "qms.nonconformance_redesign.field_detail_label": "问题详情",
+  "qms.nonconformance_redesign.field_detail_placeholder": "请输入问题详情",
+  "qms.nonconformance_redesign.field_quantity_placeholder": "请输入数量"
 }

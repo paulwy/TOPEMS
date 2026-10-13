@@ -3320,5 +3320,14 @@
   "components.top_bar.settings": "系统设置",
   "components.top_bar.notifications": "通知",
   "components.dashboard_template.k8": "暂无数据",
-  "components.dashboard_template.k9": "暂无仪表盘数据，请稍后刷新或检查数据源"
+  "components.dashboard_template.k9": "暂无仪表盘数据，请稍后刷新或检查数据源",
+  "components.exportMenu.currentPage": "当前页",
+  "components.exportMenu.selectedItems": "已选 {{count}} 项",
+  "components.mobileCardView.0a60ac": "是",
+  "components.mobileCardView.c9744f": "否",
+  "components.pageHeader.105c8a": "导出完成",
+  "components.pageHeader.4062b25e": "导出中...",
+  "components.pageHeader.c7f0d5": "导出",
+  "components.viewModeToggle.175e01": "切换为卡片视图",
+  "components.viewModeToggle.6cef16": "切换为表格视图"
 }

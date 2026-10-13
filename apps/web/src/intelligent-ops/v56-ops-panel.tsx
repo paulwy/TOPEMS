@@ -249,7 +249,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Activity size={16} />}
               iconPosition='start'
-              label={i18n.t('intelligent-ops.v56-ops-panel.k0')}
+              label={i18n.t('intelligent_ops.v56-ops-panel.k0')}
               value='scaling'
             />
             <Tab
@@ -267,7 +267,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <Tab
               icon={<Clock size={16} />}
               iconPosition='start'
-              label={i18n.t('intelligent-ops.v56-ops-panel.k1')}
+              label={i18n.t('intelligent_ops.v56-ops-panel.k1')}
               value='timeline'
             />
           </Tabs>
@@ -325,14 +325,14 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>{i18n.t('intelligent-ops.v56-ops-panel.k2')}</DialogTitle>
+          <DialogTitle>{i18n.t('intelligent_ops.v56-ops-panel.k2')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <FormControl size='small'>
-                <InputLabel>{i18n.t('intelligent-ops.v56-ops-panel.k3')}</InputLabel>
+                <InputLabel>{i18n.t('intelligent_ops.v56-ops-panel.k3')}</InputLabel>
                 <Select
                   value={newIncident.severity}
-                  label={i18n.t('intelligent-ops.v56-ops-panel.k4')}
+                  label={i18n.t('intelligent_ops.v56-ops-panel.k4')}
                   onChange={(e) =>
                     setNewIncident((prev) => ({
                       ...prev,
@@ -341,18 +341,18 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                   }
                 >
                   <MenuItem value='Critical'>
-                    {i18n.t('intelligent-ops.v56-ops-panel.sev_critical')}
+                    {i18n.t('intelligent_ops.v56-ops-panel.sev_critical')}
                   </MenuItem>
                   <MenuItem value='High'>高</MenuItem>
                   <MenuItem value='Medium'>中</MenuItem>
                   <MenuItem value='Low'>低</MenuItem>
                   <MenuItem value='Info'>
-                    {i18n.t('intelligent-ops.v56-ops-panel.sev_info')}
+                    {i18n.t('intelligent_ops.v56-ops-panel.sev_info')}
                   </MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label={i18n.t('intelligent-ops.v56-ops-panel.k5')}
+                label={i18n.t('intelligent_ops.v56-ops-panel.k5')}
                 value={newIncident.symptoms}
                 onChange={(e) => setNewIncident((prev) => ({ ...prev, symptoms: e.target.value }))}
                 fullWidth
@@ -360,7 +360,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 placeholder={i18n.t('intelligent_ops.v56-ops-panel.k2')}
               />
               <TextField
-                label={i18n.t('intelligent-ops.v56-ops-panel.k6')}
+                label={i18n.t('intelligent_ops.v56-ops-panel.k6')}
                 value={newIncident.components}
                 onChange={(e) =>
                   setNewIncident((prev) => ({ ...prev, components: e.target.value }))
@@ -373,7 +373,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowCreateIncident(false)}>
-              {i18n.t('intelligent-ops.v56-ops-panel.k7')}
+              {i18n.t('intelligent_ops.v56-ops-panel.k7')}
             </Button>
             <Button
               onClick={handleCreateIncident}
@@ -393,18 +393,18 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           maxWidth='sm'
           fullWidth
         >
-          <DialogTitle>{i18n.t('intelligent-ops.v56-ops-panel.k8')}</DialogTitle>
+          <DialogTitle>{i18n.t('intelligent_ops.v56-ops-panel.k8')}</DialogTitle>
           <DialogContent>
             <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
-                label={i18n.t('intelligent-ops.v56-ops-panel.k9')}
+                label={i18n.t('intelligent_ops.v56-ops-panel.k9')}
                 value={newPlaybook.name}
                 onChange={(e) => setNewPlaybook((prev) => ({ ...prev, name: e.target.value }))}
                 fullWidth
                 size='small'
               />
               <TextField
-                label={i18n.t('intelligent-ops.v56-ops-panel.k10')}
+                label={i18n.t('intelligent_ops.v56-ops-panel.k10')}
                 value={newPlaybook.trigger}
                 onChange={(e) => setNewPlaybook((prev) => ({ ...prev, trigger: e.target.value }))}
                 fullWidth
@@ -412,24 +412,24 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
                 placeholder={i18n.t('intelligent_ops.v56-ops-panel.k5')}
               />
               <FormControl size='small'>
-                <InputLabel>{i18n.t('intelligent-ops.v56-ops-panel.k11')}</InputLabel>
+                <InputLabel>{i18n.t('intelligent_ops.v56-ops-panel.k11')}</InputLabel>
                 <Select
                   value={newPlaybook.type}
-                  label={i18n.t('intelligent-ops.v56-ops-panel.k12')}
+                  label={i18n.t('intelligent_ops.v56-ops-panel.k12')}
                   onChange={(e) =>
                     setNewPlaybook((prev) => ({ ...prev, type: e.target.value as RepairType }))
                   }
                 >
-                  <MenuItem value='Restart'>{i18n.t('intelligent-ops.v56-ops-panel.k13')}</MenuItem>
-                  <MenuItem value='ScaleUp'>{i18n.t('intelligent-ops.v56-ops-panel.k14')}</MenuItem>
+                  <MenuItem value='Restart'>{i18n.t('intelligent_ops.v56-ops-panel.k13')}</MenuItem>
+                  <MenuItem value='ScaleUp'>{i18n.t('intelligent_ops.v56-ops-panel.k14')}</MenuItem>
                   <MenuItem value='ConfigUpdate'>
-                    {i18n.t('intelligent-ops.v56-ops-panel.k15')}
+                    {i18n.t('intelligent_ops.v56-ops-panel.k15')}
                   </MenuItem>
-                  <MenuItem value='Patched'>{i18n.t('intelligent-ops.v56-ops-panel.k16')}</MenuItem>
+                  <MenuItem value='Patched'>{i18n.t('intelligent_ops.v56-ops-panel.k16')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label={i18n.t('intelligent-ops.v56-ops-panel.k17')}
+                label={i18n.t('intelligent_ops.v56-ops-panel.k17')}
                 value={newPlaybook.target}
                 onChange={(e) => setNewPlaybook((prev) => ({ ...prev, target: e.target.value }))}
                 fullWidth
@@ -440,7 +440,7 @@ const V56OpsPanel: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowCreatePlaybook(false)}>
-              {i18n.t('intelligent-ops.v56-ops-panel.k18')}
+              {i18n.t('intelligent_ops.v56-ops-panel.k18')}
             </Button>
             <Button
               onClick={handleCreatePlaybook}
@@ -597,7 +597,7 @@ const ScalingTab: React.FC<{
             {i18n.t('intelligent_ops.v56-ops-panel.k16')}
           </Typography>
           {policies.length === 0 && (
-            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k19')}</Alert>
+            <Alert severity='info'>{i18n.t('intelligent_ops.v56-ops-panel.k19')}</Alert>
           )}
           {policies.map((policy) => {
             const currentValue = autoScaler.getMetricValue(policy.metric);
@@ -624,7 +624,7 @@ const ScalingTab: React.FC<{
                     variant='body2'
                     sx={{ fontWeight: 600, flex: 1 }}
                   >
-                    {policy.metric} {i18n.t('intelligent-ops.v56-ops-panel.k0')}
+                    {policy.metric} {i18n.t('intelligent_ops.v56-ops-panel.k0')}
                   </Typography>
                   <Chip
                     label={`${currentInstances} ${i18n.t('intelligent_ops.v56-ops-panel.k17')}`}
@@ -678,7 +678,7 @@ const ScalingTab: React.FC<{
                   {i18n.t('intelligent_ops.v56-ops-panel.k20')}: {policy.min_instances} -{' '}
                   {policy.max_instances} | {i18n.t('intelligent_ops.v56-ops-panel.k0')}:{' '}
                   {policy.cooldown_ms / 60000}
-                  {i18n.t('intelligent-ops.v56-ops-panel.k1')}
+                  {i18n.t('intelligent_ops.v56-ops-panel.k1')}
                 </Typography>
                 <Button
                   variant='contained'
@@ -706,7 +706,7 @@ const ScalingTab: React.FC<{
             {i18n.t('intelligent_ops.v56-ops-panel.k22')}
           </Typography>
           {scalingHistory.length === 0 && (
-            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k20')}</Alert>
+            <Alert severity='info'>{i18n.t('intelligent_ops.v56-ops-panel.k20')}</Alert>
           )}
           {scalingHistory.length > 0 && (
             <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
@@ -714,16 +714,16 @@ const ScalingTab: React.FC<{
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
-                      {i18n.t('intelligent-ops.v56-ops-panel.k21')}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k21')}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
-                      {i18n.t('intelligent-ops.v56-ops-panel.k22')}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k22')}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
-                      {i18n.t('intelligent-ops.v56-ops-panel.k23')}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k23')}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 12 }}>
-                      {i18n.t('intelligent-ops.v56-ops-panel.k24')}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k24')}
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -932,7 +932,7 @@ const RCATab: React.FC<{
             {i18n.t('intelligent_ops.v56-ops-panel.k27')}
           </Typography>
           {incidents.length === 0 && (
-            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k25')}</Alert>
+            <Alert severity='info'>{i18n.t('intelligent_ops.v56-ops-panel.k25')}</Alert>
           )}
           {incidents.length > 0 && (
             <List sx={{ maxHeight: 500, overflow: 'auto' }}>
@@ -964,7 +964,7 @@ const RCATab: React.FC<{
                           variant='body2'
                           sx={{ fontWeight: 600, flex: 1 }}
                         >
-                          {incident.symptoms[0] || i18n.t('intelligent-ops.v56-ops-panel.k26')}
+                          {incident.symptoms[0] || i18n.t('intelligent_ops.v56-ops-panel.k26')}
                         </Typography>
                         {getStatusChip(incident.status)}
                       </Box>
@@ -1007,14 +1007,14 @@ const RCATab: React.FC<{
             {i18n.t('intelligent_ops.v56-ops-panel.k28')}
           </Typography>
           {!selectedIncident && (
-            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k27')}</Alert>
+            <Alert severity='info'>{i18n.t('intelligent_ops.v56-ops-panel.k27')}</Alert>
           )}
           {selectedIncident && !causes && (
             <Stack
               direction='column'
               spacing={2}
             >
-              <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k28')}</Alert>
+              <Alert severity='info'>{i18n.t('intelligent_ops.v56-ops-panel.k28')}</Alert>
               <Button
                 variant='contained'
                 startIcon={<Search size={14} />}
@@ -1224,7 +1224,7 @@ const RepairTab: React.FC<{
             {i18n.t('intelligent_ops.v56-ops-panel.k40')}
           </Typography>
           {playbooks.length === 0 && (
-            <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k29')}</Alert>
+            <Alert severity='info'>{i18n.t('intelligent_ops.v56-ops-panel.k29')}</Alert>
           )}
           {playbooks.map((playbook) => (
             <Paper
@@ -1307,8 +1307,8 @@ const RepairTab: React.FC<{
                   sx={{ minWidth: 'auto', px: 1.5 }}
                 >
                   {playbook.status === 'Active'
-                    ? i18n.t('intelligent-ops.v56-ops-panel.k31')
-                    : i18n.t('intelligent-ops.v56-ops-panel.k30')}
+                    ? i18n.t('intelligent_ops.v56-ops-panel.k31')
+                    : i18n.t('intelligent_ops.v56-ops-panel.k30')}
                 </Button>
               </Stack>
             </Paper>
@@ -1374,16 +1374,16 @@ const RepairTab: React.FC<{
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>
-                      {i18n.t('intelligent-ops.v56-ops-panel.k32')}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k32')}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>
-                      {i18n.t('intelligent-ops.v56-ops-panel.k33')}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k33')}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>
-                      {i18n.t('intelligent-ops.v56-ops-panel.k34')}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k34')}
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600, fontSize: 11 }}>
-                      {i18n.t('intelligent-ops.v56-ops-panel.k35')}
+                      {i18n.t('intelligent_ops.v56-ops-panel.k35')}
                     </TableCell>
                   </TableRow>
                 </TableHead>
@@ -1444,8 +1444,8 @@ const TimelineTab: React.FC<{
     incidents.forEach((i) => {
       all.push({
         time: i.detected_at,
-        category: i18n.t('intelligent-ops.v56-ops-panel.k36'),
-        title: i.symptoms[0] || i18n.t('intelligent-ops.v56-ops-panel.k37'),
+        category: i18n.t('intelligent_ops.v56-ops-panel.k36'),
+        title: i.symptoms[0] || i18n.t('intelligent_ops.v56-ops-panel.k37'),
         color: SEVERITY_COLORS[i.severity],
         details: `${i.severity} · ${i.status}`,
       });
@@ -1454,7 +1454,7 @@ const TimelineTab: React.FC<{
     scalingHistory.forEach((s) => {
       all.push({
         time: s.executed_at,
-        category: i18n.t('intelligent-ops.v56-ops-panel.k38'),
+        category: i18n.t('intelligent_ops.v56-ops-panel.k38'),
         title: `${s.direction} → ${s.instances} ${i18n.t('intelligent_ops.v56-ops-panel.k47')}`,
         color:
           s.direction === 'ScaleUp'
@@ -1467,7 +1467,7 @@ const TimelineTab: React.FC<{
     repairHistory.forEach((r) => {
       all.push({
         time: r.created_at,
-        category: i18n.t('intelligent-ops.v56-ops-panel.k39'),
+        category: i18n.t('intelligent_ops.v56-ops-panel.k39'),
         title: `${r.type} on ${r.target}`,
         color: REPAIR_TYPE_COLORS[r.type],
         details: r.status,
@@ -1505,7 +1505,7 @@ const TimelineTab: React.FC<{
       </Stack>
 
       {events.length === 0 && (
-        <Alert severity='info'>{i18n.t('intelligent-ops.v56-ops-panel.k40')}</Alert>
+        <Alert severity='info'>{i18n.t('intelligent_ops.v56-ops-panel.k40')}</Alert>
       )}
 
       {events.length > 0 && (

@@ -51,5 +51,9 @@
   "intelligent_ops.v56-ops-panel.k49": "扩缩容",
   "intelligent_ops.v56-ops-panel.k50": "修复",
   "intelligent_ops.v56-ops-panel.k51": "事件时间线",
-  "intelligent_ops.v56-ops-panel.k52": "事件"
+  "intelligent_ops.v56-ops-panel.k52": "事件",
+  "intelligent_ops.v56-ops-panel.k6": "涉及组件",
+  "intelligent_ops.v56-ops-panel.k8": "创建应急预案",
+  "intelligent_ops.v56-ops-panel.sev_critical": "严重",
+  "intelligent_ops.v56-ops-panel.sev_info": "信息"
 }

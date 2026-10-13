@@ -2410,5 +2410,10 @@
   "erp.voucher.batchAction.batchApprove.success": "成功",
   "erp.voucher.batchAction.batchApprove.fail": "失败",
   "erp.voucher.batchAction.batchApprove.error": "错误",
-  "schema.crud_page_adapter.k4": "记录不存在"
+  "schema.crud_page_adapter.k4": "记录不存在",
+  "crud_page_adapter.k0": "列表加载失败",
+  "crud_page_adapter.k1": "创建失败",
+  "crud_page_adapter.k2": "更新失败",
+  "crud_page_adapter.k3": "删除失败",
+  "crud_page_adapter.k4": "记录不存在"
 }

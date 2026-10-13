@@ -38,7 +38,7 @@ export function createListPageCrudApi<T extends { id?: string | number }>(
       const result = await apiAdapter.list({ page: 1, pageSize: 1000 });
       const item = result.data.find((x) => String(x.id) === String(id));
       if (!item) {
-        throw new Error(i18n.t('schema.crud_page_adapter.k4') || 'Record not found');
+        throw new Error(i18n.t('schema:crud_page_adapter.k4') || 'Record not found');
       }
       return { success: true, code: 200, message: 'ok', data: item };
     },

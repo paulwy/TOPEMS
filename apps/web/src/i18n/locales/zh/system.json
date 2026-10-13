@@ -3,7 +3,6 @@
   "user_management": "用户管理",
   "role_management": "角色管理",
   "permission_management": "权限管理",
-  "system_settings": "系统设置",
   "audit_log": "审计日志",
   "user": "用户",
   "role": "角色",
@@ -277,5 +276,7 @@
   "system.log_config_panel.level_info": "信息",
   "system.log_config_panel.level_warn": "警告",
   "system.log_config_panel.level_error": "错误",
-  "system.log_config_panel.level_fatal": "致命"
+  "system.log_config_panel.level_fatal": "致命",
+  "system.auditPage.end_date": "结束日期",
+  "system.auditPage.start_date": "开始日期"
 }

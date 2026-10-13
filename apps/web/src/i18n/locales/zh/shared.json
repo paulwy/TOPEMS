@@ -5564,5 +5564,9 @@
   "shared.e2eTracing.k0": "[E2ETracer] 端到端初始化",
   "shared.sessionReplay.k0": "[Session Replayer] 会议回放收集",
   "shared.sessionReplay.k1": "[Session Replayer] 会议回放已启动：",
-  "shared.sessionReplay.k2": "[Session Replayer] 会议回放已停止："
+  "shared.sessionReplay.k2": "[Session Replayer] 会议回放已停止：",
+  "shared.dashboard.type_document": "文档任务",
+  "shared.dashboard.type_system": "系统任务",
+  "shared.dashboard.type_workflow": "工作流任务",
+  "shared.data_load_failed": "数据加载失败"
 }

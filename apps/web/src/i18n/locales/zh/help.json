@@ -152,5 +152,6 @@
   "help.contact_support": "contact支持",
   "help.contact_support_desc": "contact支持desc",
   "help.shortcut": "快捷键",
-  "help.all_docs": "全部文档"
+  "help.all_docs": "全部文档",
+  "help_center.guide": "使用指南"
 }

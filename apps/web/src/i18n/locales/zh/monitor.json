@@ -1405,7 +1405,7 @@
   "monitor.logs.message.delete_success_title": "删除成功",
   "monitor.logs.message.delete_success_body": "日志已删除",
   "monitor.logs.message.copy_success_title": "已复制",
-  "monitor.logs.message.copy_success_body": "{{label}} copied to clipboard",
+  "monitor.logs.message.copy_success_body": "{{label}} 已复制到剪贴板",
   "monitor.logs.message.copy_fail_title": "复制失败",
   "monitor.logs.message.copy_fail_body": "无法复制到剪贴板",
   "monitor.logs.message.export_success_title": "成功",
