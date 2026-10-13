@@ -13,7 +13,7 @@
 
 ### 推进计划（1→2→3）
 - [x] **Phase 1** 扩展门禁覆盖全 crate：修 PREPARE 名 bug（unified-core 575→16/master-data→10/plugin-registry→11，纯门禁 bug）+ 连字符 schema 映射 + analytics 多 schema + `--all` 全量基线（commit 95532d1a7）；默认 6 crate 保持绿 CI 不破。**全量实测 21 crate 共 433 HARD**（主因 42883 uuid=text / 42703 幻影列，scm≈175 主体）
-- [ ] **Phase 2** 修复 433 HARD：先复核 42P08/22P02 假阳性；按模式批修（uuid=text→幻影列→语法→GROUP BY→缺表）；逐 crate 修绿→加入 DEFAULT_CRATES 硬门禁→重跑门禁+cargo check；优先 scm(175)/finance(64)/rd(42)/wms(22)/mobile(16)/unified-core(16)
+- [x] **Phase 2** 修复 367 HARD（**完成**）：并行分片收敛（scm 175 uuid=text→`::uuid` / finance 63 / wms 22 / unified-core 16 / mobile 16 / plugin-registry 11 / crm 11 / srm 9 / hrm 8 / erp 7 / ai 7 / mes 6 / rd 5 / analytics 4 / portal 2 / integration 2 / communication 2 / tms 1）。固化迁移 `20261013100000`（建 wms.alerts + 补列 rs.projects.actual_end_date/portal.guide_id/integration.data/vehicles.created_at，幂等 TIMESTAMPTZ）。**全量门禁 29/29 crate 全绿 hard=0**，cargo check 全过，契约 naive=0/tz=4410/date=283（脚本 EXPECT_TZ=4410，cron 同步），fixture 1427 表，台账 334/磁盘 338。
 - [x] **Phase 3** 审慎应用未应用迁移 + 建表解缺表（**完成**）：先建表解缺表 15 张（既有 3 + 新建 `20261013000000` 补 12）+ rd search_path 加 rs；再**甄别应用全部 95 个未应用迁移**：
   - 应用+登记 **48 幂等修复**（20260921~20261008 i18n/列修复/RLS/索引）、**16 安全 DROP**（IF EXISTS 清理 policy/约束/索引/序列/_old）、**20261013010000**（并行运行时契约对齐）、**20261007000006**（rebuild_orphan 台账对齐，live 已超前具备）
   - 登记 **12 链同步生成迁移**（效果已在 live，仅台账对齐）；修复应用引入的 **15 个 naive 列**（iam×4 + lims.qa_lab×11）→timestamptz，naive 恢复 0
