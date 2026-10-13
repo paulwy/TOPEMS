@@ -1,6 +1,62 @@
 
 ---
 
+## 架构审查 P0 实施批（2026-10-13 规划，✅ 全部批次完成，15 commits 本地落地未 push）
+
+> 依据 `artifacts/TOPEMS-技术架构审查报告-2026-10-13.md`（7 维度审查：架构缺陷收敛、模块化单体、27/29 实、前后端 PASS4135/FAIL0、主体真实数据、MCP 3.5/5、DSH 已支撑）+ 用户拍板三项：**outbox 推广全部发布服务 / 保留 8099 聚合面关闭 nginx 直连 / shared-dsh 并入 svc/ai**。
+> 差异核对已完成：P0-1/P0-2 为 TODO 未覆盖新工作；P0-3/P0-4 与既有 D6 决策/部署现状衔接。全部结论可回溯代码（`路径:行号`）。
+
+### P0-1 analytics 假数据消除 — ✅ 完成（2026-10-13，commit dba68b721）
+- **目标**：清除 BI 图表与用户趋势的随机假数据，对外交付可信。
+- **证据**：`svc/analytics/src/modules/bi/chart_service.rs:386/412/430/451/469`（5 处 `rand::thread_rng` 随机样本）；`svc/analytics/src/routes.rs:714-715` + `src/main.rs:838-839`（新增/活跃用户 `rand::random`）。
+- **动作**：① 图表层改为基于已聚合看板/事实表真实 SQL；② 无真实数据源路径加 `DEMO_MODE` 开关显式标注（不静默造假）；③ 趋势端点接真实计数表。
+- **验证**：BI 端点实测返回非随机稳定值；`cargo test -p topems-analytics` 全绿；grep 断言 `rand::random/thread_rng` 清零（除测试）。
+
+### P0-2 RLS 补全（unified-core / communication）— ✅ 完成（2026-10-13，commits ce80f53f0/092d91c46）
+- **目标**：全服务 RLS 真正全量（TODO 10-06 治理未覆盖此二服务）。
+- **证据**：`svc/unified-core/src/embedded.rs:61`、`src/main.rs:289`、`svc/communication/src/main.rs:24` 均 `enable_rls:false`；`database/migrations-wip/` 29 个 RLS guard fix 滞留未应用。
+- **动作**：① 三处 `enable_rls:false→true`（protected 路由挂 RLS 中间件，参照 gis 已落地 `20261004000001_b5_gis_rls_enable.sql` 范式）；② 甄别应用 migrations-wip 29 个 guard fix（含必要迁移固化登记，幂等）；③ RLS 策略仅含 tenant_id 基表，无列自动跳过。
+- **验证**：NOSUPERUSER 租户隔离实测（无GUC / 租户A / nil UUID / 无关租户四态）；`cargo check` 全仓绿；台账↔磁盘迁移数对齐。
+
+### P0-3 双轨入口合一（保留 8099，关闭 nginx 直连）— ✅ 完成（2026-10-13，commits 44acc4868/af4a74664/d14dbc0d4）⚠️上线前需目标主机 nginx -t
+- **目标**：唯一对外面 = server(8099) 聚合面，关闭 nginx 前缀直连独立服务。
+- **证据**：双轨 = server 内嵌约 30 服务适配器（:8099 BFF，契约冒烟/web_contract_smoke 依赖）vs `deploy/nginx` 前缀直连；portal 仅承接 `/api/portal/`。
+- **动作**：① `deploy/nginx/*.conf` 移除前缀直连规则，保留 8099 反代为唯一入口；② 核验三端 baseURL 均指向 8099（ports.ts 权威 core=8000/单体=8099，web/mobile/desktop 已对齐）；③ server 内未承接的孤儿适配器登记可选清理。
+- **验证（先暂存/预发再改生产）**：`python3 scripts/web_contract_smoke.py` 全量 PASS（4135/0）；三端契约冒烟；nginx -t + reload 后 health 200。
+- **⚠️**：属部署/接入面变更，严禁未经预发验证直接改生产 nginx。
+
+### P0-4a outbox 推广全部发布服务 — ✅ 完成（2026-10-13，4 批 8 服务 15 点，commits 见下实施记录）
+- **目标**：D6 决策从 erp 三模块推广至**全部发布事件服务**（用户拍板）。
+- **依据**：`docs/architecture/decision-d6-outbox-event-consistency.md`（推荐 commit 后 emit + 重试队列，免迁移最小侵入——用户已放宽为全量推广）。
+- **动作**：① 统一 outbox 模式库（commit 后 emit + Redis ZSET 重试队列，免迁移；各服务 `guard.take().commit()` 既有取舍统一）；② 逐服务改造发布写 handler（参照 sales_order 已落地范式）；③ 后台重放任务（内嵌各服务或独立进程，先登记选型）。
+- **验证**：孤儿/丢失事件注入测试（commit 失败不产生孤儿、XADD 失败可重放）；事件计数对账；cargo test 全绿。
+- **⚠️**：大面积写路径改动，按服务分批推进，每批 cargo check + 单测全绿后再下一批。
+
+### P0-4b shared-dsh 并入 svc/ai — ✅ 完成（2026-10-13，commit de1556bbf；判定=零消费直接移除，无并入动作）
+- **目标**：消除零消费孤儿库，定义并入 DSH 业务所在服务。
+- **证据**：`lib/shared-dsh` 全仓 0 引用（仅自身）；svc/ai/src/dsh/ 60+ 文件为 DSH 实际实现。
+- **动作**：① 盘点 shared-dsh 的 Tool/Resource/Prompt 类型是否有 svc/ai 复用；② 有价值定义并入 svc/ai（或迁移引用点），无复用定义清理；③ 移除 `lib/shared-dsh` crate + workspace/Cargo.toml 条目。
+- **验证**：`cargo check --workspace` 0 error 0 warning；grep 确认 shared-dsh 全仓 0 引用；单测全绿。
+
+### 实施记录（2026-10-13，全部本地提交未 push，origin/main 仍 bb323d396）
+- **P0-1**（`dba68b721`，3 文件 +205/−81）：chart_service.rs 5 处 `thread_rng` 清零 → 真实 dataset SQL（validate_dataset 白名单）/`TOPEMS_BI_DEMO_MODE` 显式开关（demo 数据为确定性常量非随机）；routes.rs:714-715 与 main.rs:838-839 用户趋势改 core_users `created_at`/`last_login_at` 分月真实计数（generate_series）。验证：rand grep=0、check 0/0、analytics 测试全绿、pre-commit 全绿。
+- **P0-2**（`ce80f53f0` + `092d91c46`）：三处 enable_rls false→true（communication/main.rs:24 走 build_application 自动挂 rls_middleware；unified-core main.rs:289/embedded.rs:61 自带 tenant_rls_middleware，声明式对齐 gis 先例）；migrations-wip 28 个 guard fix 甄别：218 个 DROP 目标现网全 GONE、引用表 218/218 存在、flow 列已生效 → **26 个 git mv 入活动链 + checksums 341→367**（validate.sh EXIT=0），**2 个 skip**（000003_pm/000004_erp 版本号与已记账 000003_u3_cleanup/000004_b5b_gis 冲突，README 登记）。四态隔离实测（topems_app NOSUPERUSER）：core.core_tenant_plugins 无GUC=4/租户A=2/nil UUID=4/无关租户=0/空串=4 不报错；notification.notifications 62 行 NULL 恒放行、空串不再 500。check 0/0、552 单测绿。
+- **P0-3**（`44acc4868` + `af4a74664` + `d14dbc0d4`）：预发门禁先行——access_log.rs:168/248 修 `entity_id::text`（uuid 列按 String 解码的 500 panic，**冒烟 4117/4117 PASS 0 FAIL 两轮**后才改配置）；nginx 双配置（deploy/nginx/topems.conf + apps/web/nginx.conf）改单一 server_service(8099) 拓扑（删 27 per-service upstream + map 块，/api/ 直代 8099，health/metrics 改指 8099，保留 SSL/限流/静态/legacy rewrite）；三端 baseURL 对齐 8099（mobile api-url.ts:13、desktop client.ts:34，保留 env 覆盖）。校验：check-config-sources.cjs EXIT=0（未改校验器）；nginx -t 沙箱副本 syntax OK（本机 Darwin 平台差异 epoll/brotli/证书路径——**上线前需目标 Linux 主机 nginx -t**）。冒烟契约总数实测 4117（规划文案 4135 为契约漂移前数值，以 0 FAIL 为门禁）。
+- **P0-4a**（8 服务 15 点，每服务独立 commit，统一"commit 后 emit + Err→`push_retry_typed` + main.rs 15s `run_relay`"，照 D6/pm 范式，消费契约零改动）：
+  - B1：ehs `681701f96`（accident.rs:296/hazard.rs:395——复核为无 DB 写业务桩，重试仍 at-least-once）/ qms `d8d0e565b`（quality_issue.rs:204）/ lims `e32cfc634`（reagent.rs:255、inspection_task.rs:704/727/751 含缓存失效）；
+  - B2：pdm `863d32932`（material.rs:285-298）/ ai `60add64d2`（document.rs:193-209）/ rd `a82f752f9`（**修正生产一致性 bug：create_project 的 txn_arc 无任何提交层，INSERT 此前永不落库且发布孤儿事件——按 srm 范式补显式 `guard.take().commit()`（project.rs:247-262）后 commit 成功才发布（:325-339）**）；
+  - B3：srm `885f9dbb0`（supplier.rs 6 点 449/476/751/1354/1486/1616，正确范式机械替换）；
+  - B4：portal `b3b6838c4`（event_handlers/mod.rs:109-116 + main.rs:104-124）。
+  - grep 终验：8 服务 `push_retry_typed` 15 处与盘点精确一致。D6 范围外登记（未动）：MDM/RabbitMQ 总线（pdm mdm_event_service 4 点、unified-core master_data 3 点 + 死 outbox 表 DDL 待决策）、portal graphql 订阅 fan-out 4 处（含 :341 HealthCheck masquerade 预存错配）、ai 进程内 event_trigger。
+- **P0-4b**（`de1556bbf`，9 文件纯删除 2177 行）：shared-dsh 全仓 0 消费（无下游依赖/无 import/Cargo.lock 仅自声明）→ 直接 git rm 整 crate + workspace 条目 + lock 自动更新，grep 0 残留、check 0/0。无"并入"动作（svc/ai 本地实现形状不同，并入属过度工程化，规避）。
+- **全批门禁**：cargo check --workspace 0 error 0 warning（终验 11.67s）；各服务单测绿 0 failed（ehs 231×2 / qms 499 / lims 313 / pdm 325 / ai 1191 / rd 152 / srm 559 / portal 37 / unified-core+communication 552）；lefthook pre-commit 每 commit 全绿。**环境性例外如实登记**：ehs/ai/rd 的 DB 集成测试因本机测试库凭据缺失（28P01）未跑绿（与本批 diff 无关）；nginx -t 需目标 Linux 主机执行；生产 nginx 未部署/reload（本批仅提交配置，遵门禁）。
+
+### 执行顺序与门禁 — ✅ 全部批次完成（2026-10-13，15 commits 本地落地未 push）
+- 顺序：P0-1 → P0-2 → P0-4b（低风险先行）→ P0-3（预发验证后）→ P0-4a（大改，分批）。✅ 已按此序完成。
+- 每批提交后 `cargo check --workspace` + 对应服务单测全绿 + pre-commit 全绿；按项目惯例 commit 链推 origin（用户要求推送时）——本次**未 push**（用户未要求；HEAD 领先 origin/main 15 个提交）。
+
+---
+
 ## 运行时 SQL 契约门禁全仓审计（2026-10-13）
 
 > 报告：`docs/audit/运行时SQL契约门禁审计报告_2026-10-13.md`。时间类型迁移收尾后四项核查。
