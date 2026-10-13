@@ -69,3 +69,34 @@
 - 本目录文件**不删除**，仅从活动链摘除；第二/三梯队评审通过后再决定并入顺序。
 - 任何 `migrate run` / 空库守卫 / drift 扫描均不读本目录。
 - `scripts/migration/validate.sh` 的 `MIGRATION_DIRS` 不含本目录，不会校验其 checksum。
+
+## 三、P0-2 办理结果（2026-10-13，RLS guard fix 甄别）
+
+针对 20261006 全库 RLS 治理产出的滞留 guard fix，连 5432 逐文件实测现网后甄别。
+判定法：`DROP POLICY IF EXISTS` 目标 (schema.table.policy) 与现网 `pg_policies` LEFT JOIN 对比；
+引用表与 `pg_class`（relkind='r'）对比。
+
+- **现网实测结论**：218 个 DROP 目标策略全部已不存在（GONE），引用表 218/218 均存在；
+  flow 的 `core_workflow_tasks.updated_at` 列已存在。即 10-06 治理 SQL 已直接在现网执行，
+  guard fix 重跑为幂等 no-op（IF EXISTS / IF NOT EXISTS 守卫，无副作用）。
+- **甄别标准**：幂等（IF EXISTS 守卫）+ 单职责（单 schema）→ 全部通过内容甄别。
+
+### 已 promoted 入活动链（26 个，移入 database/migrations/ 并登记 checksums）
+
+沿用 B5 半手工惯例：DDL 效果已在现网生效，文件入链 + 登记 checksums，
+**不手工插入 `_sqlx_migrations` 账本**；后续 `sqlx migrate run` 自然以 no-op 重跑并补记账本。
+
+| 版本 | 文件 |
+|------|------|
+| 20261006000000 | flow_schema_rls_guard_fix.sql |
+| 20261006000005~000029 | wms/mobile/ehs/mes/lims/crm/srm/qms/scm/doc_service/integration/portal/public/bi/iam/finance/rs/hrm/mail/master_data/notification/storage/ai/core/report 各 rls_guard_fix.sql |
+
+### 有意 skip（2 个，滞留本目录，不入链）
+
+| 版本 | 文件 | skip 理由 |
+|------|------|-----------|
+| 20261006000003 | pm_rls_guard_fix.sql | 版本号与活动链已记账本 `20261006000003_u3_fake_sync_records_cleanup` 冲突，sqlx 不允许同版本双文件；DROP 效果已在现网生效（策略已 GONE），安全意图已满足，仅登记受阻 |
+| 20261006000004 | erp_rls_guard_fix.sql | 版本号与活动链已记账本 `20261006000004_b5b_gis_rls_allowall_policy` 冲突；DROP 效果已在现网生效，安全意图已满足 |
+
+> 另：`20261006000001_scm_sync_records_status_relax.sql` 为非 RLS 迁移，不在本批次范围；
+> `20261004000001_b5_gis_rls_enable.sql` / `20261005000001` / `20261005000002` 为已落地迁移，不动。
