@@ -12,7 +12,6 @@ members = [
     "lib/shared-ai",
     "lib/shared-bootstrap",
     "lib/shared-mcp",
-    "lib/shared-dsh",
     "lib/shared-boundary",
     # [示例] 按需引入示例；默认排除以加速 workspace grep 与增量编译
     # "examples/minimal-service",
