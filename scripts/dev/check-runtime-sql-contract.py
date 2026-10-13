@@ -29,7 +29,25 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent.parent
 DEFAULT_DB_URL = "postgresql://topems:3b07cf82f13669d9c360214db1fc2d40@localhost:5432/topems"
+# 默认门禁（已修复全绿，阻塞 CI；新 crate 修绿后再加入）
 DEFAULT_CRATES = ["qms", "pdm", "lims", "ehs", "pm", "ticket"]
+
+# 全量使用运行时 sqlx::query(_as|_scalar)/only_own_schema_query! 的 crate（--all 全量基线/报告）
+FULL_CRATES = [
+    "qms", "pdm", "lims", "ehs", "pm", "ticket",
+    "wms", "crm", "ai", "mes", "portal",
+    "unified-core", "analytics", "erp", "finance", "gis", "hrm",
+    "integration", "master-data", "mobile", "monitor", "plugin-registry",
+    "rd", "scm", "search", "server", "srm", "tms", "communication",
+]
+
+# crate → {dir, search_path}；dir 缺省等于 crate 名（svc/{dir}/src），search_path 缺省 [crate, public]
+# - unified-core: 目录名带连字符，schema 为 unified_core
+# - analytics:    无同名 schema，其 SQL 引用 bi/doc/report/shared 多 schema
+CRATE_CFG = {
+    "unified-core": {"dir": "unified-core", "search_path": ["unified_core", "public"]},
+    "analytics": {"dir": "analytics", "search_path": ["bi", "doc", "report", "shared", "crm", "core", "public"]},
+}
 
 # 目标调用形态：sqlx::query / query_as / query_scalar（含 ::<T> 类型实参）+ only_own_schema_query!
 CALL_RE = re.compile(
@@ -118,9 +136,12 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--db-url", default=DEFAULT_DB_URL)
     ap.add_argument("--crates", default=",".join(DEFAULT_CRATES))
+    ap.add_argument("--all", action="store_true", help="跑全量运行时 crate（FULL_CRATES，基线/报告用）")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
     crates = [c.strip() for c in args.crates.split(",") if c.strip()]
+    if args.all:
+        crates = FULL_CRATES
 
     import psycopg2
     conn = psycopg2.connect(args.db_url)
@@ -129,7 +150,9 @@ def main():
     report = {}
     hard_any = False
     for crate in crates:
-        src = ROOT / "svc" / crate / "src"
+        cfg = CRATE_CFG.get(crate, {})
+        dirname = cfg.get("dir", crate)
+        src = ROOT / "svc" / dirname / "src"
         if not src.is_dir():
             report[crate] = {"error": f"目录不存在 {src}"}; hard_any = True; continue
         items = []
@@ -139,12 +162,14 @@ def main():
                              for sql, line in extract_sql_from_file(f.read_text()))
             except Exception:
                 pass
-        schema = crate  # schema 名与 crate 同名
+        # search_path：缺省 [crate(-→_), public]（连字符目录名自动映射下划线 schema）；analytics 等多 schema crate 用配置
+        search_path = cfg.get("search_path", [crate.replace("-", "_"), "public"])
         stats = {"total": len(items), "hard": [], "warn": 0, "ok": 0, "skipped": 0}
         cur = conn.cursor()
-        cur.execute(f"SET search_path TO {schema}, public")
+        cur.execute(f"SET search_path TO {', '.join(search_path)}")
         for i, (sql, fpath, line) in enumerate(items):
-            name = f"_rc_{crate}_{i:04d}"
+            # PREPARE 语句名不能含连字符（crate 名可能带 -），统一替换为 _
+            name = f"_rc_{crate.replace('-', '_')}_{i:04d}"
             try:
                 cur.execute(f"PREPARE {name} AS {sql}")
                 cur.execute(f"DEALLOCATE {name}")
