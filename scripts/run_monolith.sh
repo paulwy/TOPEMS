@@ -25,7 +25,7 @@ MODE="${1:-}"
 
 # 服务间调用统一指向模块化单体入口（服务名 → <SVC>_SERVICE_URL）
 SERVICES=(CRM ERP FEEDBACK FILE FINANCE HRM IAM AI BI COMMUNICATION EHS GIS
-          INTEGRATION LIMS MASTER_DATA MOBILE PDM PM PORTAL RD SCM SRM DOC
+          INTEGRATION LIMS MASTER_DATA MES MOBILE PDM PM PORTAL RD SCM SRM DOC
           MONITOR NOTIFICATION QMS SEARCH TICKET WMS WORKFLOW)
 
 build_env() {
@@ -56,7 +56,7 @@ while IFS= read -r kv; do
 done < <(build_env)
 
 if [ ! -x "$BIN" ]; then
-  echo "错误：未找到 $BIN，请先执行 cargo build -p topems-server" >&2
+  echo "错误：未找到 ${BIN}，请先执行 cargo build -p topems-server" >&2
   exit 1
 fi
 
