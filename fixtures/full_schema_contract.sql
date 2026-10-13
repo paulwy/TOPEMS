@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZKgh91iHXlNKUfxuI7BnHHaIb3JPQksrZjX5XuVEHggDc6B0gP8VB2cz5eq5yGi
+\restrict KPwjdndmaeSyVWtZbfxdPOlx1zRMkHogv9NJJciZbD31ug11gKvQpYFub9Ee26q
 
 -- Dumped from database version 18.4 (Homebrew)
 -- Dumped by pg_dump version 18.4 (Homebrew)
@@ -12856,7 +12856,7 @@ CREATE TABLE iam.core_plugin_instances (
     runtime_url character varying(512),
     runtime_status character varying(32) DEFAULT 'stopped'::character varying,
     base_path character varying(128) DEFAULT '/api/plugins/{code}'::character varying,
-    last_heartbeat timestamp without time zone,
+    last_heartbeat timestamp with time zone,
     started_at timestamp with time zone,
     stopped_at timestamp with time zone,
     tenant_id uuid NOT NULL,
@@ -13117,7 +13117,7 @@ CREATE TABLE iam.core_tenant_users (
     role character varying(32) DEFAULT 'member'::character varying,
     status character varying(32) DEFAULT 'active'::character varying,
     created_at timestamp with time zone DEFAULT now(),
-    last_login timestamp without time zone,
+    last_login timestamp with time zone,
     deleted_at timestamp with time zone
 );
 
@@ -13163,8 +13163,8 @@ CREATE TABLE iam.core_usage_records (
     metric_name character varying(128),
     quantity bigint DEFAULT 0 NOT NULL,
     unit character varying(32),
-    period_start timestamp without time zone NOT NULL,
-    period_end timestamp without time zone NOT NULL,
+    period_start timestamp with time zone NOT NULL,
+    period_end timestamp with time zone NOT NULL,
     cost_cents integer DEFAULT 0,
     created_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone
@@ -86461,5 +86461,5 @@ ALTER TABLE wms.wms_master_data_refs ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZKgh91iHXlNKUfxuI7BnHHaIb3JPQksrZjX5XuVEHggDc6B0gP8VB2cz5eq5yGi
+\unrestrict KPwjdndmaeSyVWtZbfxdPOlx1zRMkHogv9NJJciZbD31ug11gKvQpYFub9Ee26q
 
