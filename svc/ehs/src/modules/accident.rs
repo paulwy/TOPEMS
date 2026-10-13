@@ -4,6 +4,7 @@ use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router}
 use serde::{Deserialize, Serialize};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::commit_retry;
 
 use uuid::Uuid;
 
@@ -285,14 +286,14 @@ pub async fn report_accident(
                 location,
                 occurred_at,
             };
-            if let Err(e) = publisher
-                .publish_event(
-                    topems_shared_event::event::EventType::EhsAccidentReported,
-                    payload,
-                )
-                .await
-            {
-                tracing::warn!("[ehs] EhsAccidentReported 事件发布失败: {}", e);
+            let et = topems_shared_event::event::EventType::EhsAccidentReported;
+            if let Err(e) = publisher.publish_event(et, &payload).await {
+                tracing::warn!(
+                    "[ehs] EhsAccidentReported 事件发布失败: {}，入重试队列",
+                    e
+                );
+                // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
+                commit_retry::push_retry_typed("ehs", et, &payload).await;
             }
         });
     }
