@@ -8,7 +8,7 @@
 #
 # 契约（与迁移终态一致）：
 #   - timestamp without time zone (naive) == 0
-#   - timestamp with time zone (timestamptz) == 4058
+#   - timestamp with time zone (timestamptz) == 4066
 #   - date == 268
 #   - 三者和 == 全部时间/日期列
 #
@@ -23,7 +23,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 DB_URL="${DB_URL:-postgresql://topems:3b07cf82f13669d9c360214db1fc2d40@localhost:5432/topems}"
 EXPECT_NAIVE=0
-EXPECT_TZ=4058
+EXPECT_TZ=4066
 EXPECT_DATE=268
 
 echo "[audit-date-types] live DB 日期类型审计 — $(date '+%Y-%m-%d %H:%M:%S %Z')"

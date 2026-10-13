@@ -31,7 +31,7 @@ pub async fn log_approval_event(
             status_from VARCHAR(32),
             status_to VARCHAR(32),
             comment TEXT,
-            created_at TIMESTAMP DEFAULT NOW()
+            created_at TIMESTAMPTZ DEFAULT NOW()
         )"#,
     )
     .execute(pool)
