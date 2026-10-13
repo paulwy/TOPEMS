@@ -14,8 +14,11 @@
 ### 推进计划（1→2→3）
 - [x] **Phase 1** 扩展门禁覆盖全 crate：修 PREPARE 名 bug（unified-core 575→16/master-data→10/plugin-registry→11，纯门禁 bug）+ 连字符 schema 映射 + analytics 多 schema + `--all` 全量基线（commit 95532d1a7）；默认 6 crate 保持绿 CI 不破。**全量实测 21 crate 共 433 HARD**（主因 42883 uuid=text / 42703 幻影列，scm≈175 主体）
 - [ ] **Phase 2** 修复 433 HARD：先复核 42P08/22P02 假阳性；按模式批修（uuid=text→幻影列→语法→GROUP BY→缺表）；逐 crate 修绿→加入 DEFAULT_CRATES 硬门禁→重跑门禁+cargo check；优先 scm(175)/finance(64)/rd(42)/wms(22)/mobile(16)/unified-core(16)
-- [~] **Phase 3** 审慎应用未应用迁移 + 建表解缺表（**部分完成**）：已应用既有迁移 3 张（gis_map_markers/hrm_cache_invalidation_logs/integration_sync_logs）+ 新建 `20261013000000` 补 12 张（portal_notifications/portal_dashboard_stats/public.search_entity_projections/bi_datasets/finance_audit_log/inventory_items/tms.drivers|carriers/rs.rs_projects|rs_formulas|rs_experiments/erp.event_idempotency），列对齐代码、幂等；rd search_path 加 rs（projects→rs.projects）；重导 fixture 1424 表；**修复大迁移 20261007000006 部分应用引入的 4 处 iam naive 列→timestamptz**（naive 0→4→0 回归已除）；门禁实测 gis/search 转全绿、总 HARD 433→~377。提交 `156ff4d10`/`9f43bb925`/`dcaa5ef4e` 已推 origin。
-  - ⏳ 待续：剩余 82 个未应用迁移逐文件甄别（superseded/WIP/应应用）；大迁移 20261007000006 未登记的半程产物（erp.event_idempotency 已单独立迁移登记，其余 runtime 表已随 fixture 反映）
+- [x] **Phase 3** 审慎应用未应用迁移 + 建表解缺表（**完成**）：先建表解缺表 15 张（既有 3 + 新建 `20261013000000` 补 12）+ rd search_path 加 rs；再**甄别应用全部 95 个未应用迁移**：
+  - 应用+登记 **48 幂等修复**（20260921~20261008 i18n/列修复/RLS/索引）、**16 安全 DROP**（IF EXISTS 清理 policy/约束/索引/序列/_old）、**20261013010000**（并行运行时契约对齐）、**20261007000006**（rebuild_orphan 台账对齐，live 已超前具备）
+  - 登记 **12 链同步生成迁移**（效果已在 live，仅台账对齐）；修复应用引入的 **15 个 naive 列**（iam×4 + lims.qa_lab×11）→timestamptz，naive 恢复 0
+  - **有意 skip 17 个**：14 引导 bootstrap（superseded，core_* 全存在）+ `20261003000002`（删 lims.qa_lab_tasks/samples 破坏代码）/`20261007000008`（FK 依赖 core_billing_invoices）/`20261007000012`（删 accounting_subjects，代码 7 处引用）
+  - **终态契约 naive=0 / timestamptz=4405 / date=283**，脚本 EXPECT_TZ=4405，每日 cron 期望已同步；重导 fixture **1426 表**；台账 255→**333**，磁盘 337（剩 17 全为有意 skip）；门禁全量复测：**11 crate 全绿（新增 master-data）**，总 HARD 433→**367**，无新破坏。提交 `156ff4d10`/`dcaa5ef4e`/`2e724c367` 已推 origin。
 
 ---
 
