@@ -83,7 +83,7 @@ impl TypedServiceClient<MesApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/equipment?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 获取在制品汇总
@@ -113,7 +113,7 @@ impl TypedServiceClient<MesApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/work-reports?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 提交报工记录

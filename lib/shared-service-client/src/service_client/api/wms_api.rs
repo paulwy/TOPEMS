@@ -43,7 +43,7 @@ impl TypedServiceClient<WmsApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/inbound-orders?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 列出出库单
@@ -53,7 +53,7 @@ impl TypedServiceClient<WmsApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/outbound-orders?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 更新库存
@@ -97,14 +97,14 @@ impl TypedServiceClient<WmsApi> {
         self.get(&self.build_path(&path)).await
     }
 
-    /// 列出盘点单
+    /// 列出盘点单（对齐 WMS 实际路由 /stock-takes）
     pub async fn list_stocktake(
         &self,
         page: i32,
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
-        let path = format!("/stocktake?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        let path = format!("/stock-takes?page={}&pagesize={}", page, page_size);
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 创建库存移动记录
@@ -153,23 +153,23 @@ impl TypedServiceClient<WmsApi> {
         self.get(&self.build_path(&path)).await
     }
 
-    /// 列出盘点任务
+    /// 列出盘点任务（盘点任务即盘点单列表，对齐 /stock-takes）
     pub async fn list_stocktake_tasks(
         &self,
         page: i32,
         page_size: i32,
-    ) -> ServiceClientResult<serde_json::Value> {
-        let path = format!("/stocktake/tasks?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+    ) -> ServiceClientResult<Vec<serde_json::Value>> {
+        let path = format!("/stock-takes?page={}&pagesize={}", page, page_size);
+        self.get_items(&self.build_path(&path)).await
     }
 
-    /// 创建盘点记录
+    /// 创建盘点记录（对齐 WMS 实际路由 /stock-takes/{id}/items）
     pub async fn create_stocktake_record(
         &self,
         task_id: &str,
         data: &serde_json::Value,
     ) -> ServiceClientResult<serde_json::Value> {
-        let path = format!("/stocktake/{}/records", task_id);
+        let path = format!("/stock-takes/{}/items", task_id);
         self.post(&self.build_path(&path), data).await
     }
 }

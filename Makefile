@@ -46,6 +46,14 @@ check-offline: ## 离线 cargo check（SQLX_OFFLINE=true，模拟 CI GitHub Acti
 check-migrations: ## 检查 database/migrations/ 命名规范、序号连续性、禁止修改历史迁移
 	node scripts/check-migrations.mjs
 
+gate-runtime-contract: ## 运行时查询风格 crate 的在线 SQL 契约门禁（qms/pdm/lims/ehs/pm/ticket）
+	@echo "==> 对 live DB PREPARE 校验运行时 SQL（缺列/缺表/别名错/类型强制错会被阻断）"
+	python3 scripts/dev/check-runtime-sql-contract.py
+
+gate-runtime-contract-ci: ## 同左，但对 schema 快照 DB（CI 用，需传入 DB_URL）
+	@[ -n "$(DB_URL)" ] || (echo "用法: make gate-runtime-contract-ci DB_URL=<dsn>"; exit 2)
+	python3 scripts/dev/check-runtime-sql-contract.py --db-url "$(DB_URL)"
+
 # ---------- 常用快捷命令 ----------
 check-iam: ## 仅离线 check topems-unified-core（IAM 端口 8000）
 	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-unified-core

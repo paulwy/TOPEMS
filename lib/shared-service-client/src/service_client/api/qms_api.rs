@@ -86,7 +86,7 @@ impl TypedServiceClient<QmsApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/quality-tasks?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 获取质检任务
@@ -112,7 +112,7 @@ impl TypedServiceClient<QmsApi> {
         page_size: i32,
     ) -> ServiceClientResult<Vec<serde_json::Value>> {
         let path = format!("/defect-records?page={}&pagesize={}", page, page_size);
-        self.get(&self.build_path(&path)).await
+        self.get_items(&self.build_path(&path)).await
     }
 
     /// 上报缺陷

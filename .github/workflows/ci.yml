@@ -358,6 +358,48 @@ jobs:
             --db-url "postgresql://postgres:postgres@localhost:5432/topems?options=-csearch_path=mes,public"
 
   # ──────────────────────────────────────────────────────────────────────────
+  # runtime-sql-contract-gate：运行时查询风格 crate（qms/pdm/lims/ehs/pm/ticket）在线契约门禁
+  # 流程：postgres 起库 → 导入全 schema 快照 fixtures/full_schema_contract.sql
+  #       → 对每 crate 提取的运行时 SQL 逐个 PREPARE → 断言 0 HARD
+  # 规则：这些 crate 无 sqlx 编译期宏，离线 cargo check 绿 ≠ SQL↔schema 契约成立；
+  #       缺列/缺表/别名错/类型强制错在 CI 阻断（本地：make gate-runtime-contract）
+  # ──────────────────────────────────────────────────────────────────────────
+  runtime-sql-contract-gate:
+    name: Gate · runtime SQL contract (6 crates)
+    needs: changes
+    if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: topems
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install postgresql-client + psycopg2
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client python3-psycopg2 >/dev/null
+
+      - name: Import full schema snapshot
+        run: |
+          psql "postgresql://postgres:postgres@localhost:5432/topems" \
+            -v ON_ERROR_STOP=1 -q -f fixtures/full_schema_contract.sql
+
+      - name: Run runtime SQL contract gate (0 hard-fail assert)
+        run: |
+          python3 scripts/dev/check-runtime-sql-contract.py \
+            --db-url "postgresql://postgres:postgres@localhost:5432/topems"
+
+  # ──────────────────────────────────────────────────────────────────────────
   # date-type-audit：日期时间类型分层审计门禁（契约 docs/date_type_convention.md）
   # 流程：纯静态 Python 扫描（无需 DB）→ 断言 exit 0（实体违规 0 + Instant 序列化 0）
   # 规则：任何提交引入实体层 String/NaiveDateTime/int-timestamp 时间字段，或

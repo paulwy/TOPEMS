@@ -269,8 +269,15 @@ impl<T: ServiceApi> TypedServiceClient<T> {
     // ============ ApiResponse 解包辅助 ============
 
     /// GET 请求并解包 `ApiResponse<T>` 的 `data` 字段。
+    /// 业务 code 非 200（如 HTTP200+code404 的契约形态）时返回对应状态错误，避免误报 missing data。
     pub async fn get_and_unwrap<R: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<R> {
         let resp: ApiResponse<R> = self.inner.get(path).await?;
+        if resp.code != 200 {
+            return Err(TopemsError::ServiceError {
+                status_code: resp.code,
+                message: resp.message,
+            });
+        }
         resp.data
             .ok_or_else(|| TopemsError::Config("API response missing `data` field".into()))
     }
