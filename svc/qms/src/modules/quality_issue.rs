@@ -14,6 +14,7 @@ use topems_shared_auth::get_tenant_id;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::commit_retry;
 use topems_shared_event::event::EventType;
 use topems_shared_event::event::QmsQualityIssueCreatedPayload;
 
@@ -193,14 +194,14 @@ pub async fn create_issue(
                         created_by: created_by_val,
                         related_inspection_id: related_id,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::QmsQualityIssueCreated, payload)
-                        .await
-                    {
+                    let et = EventType::QmsQualityIssueCreated;
+                    if let Err(e) = publisher.publish_event(et, &payload).await {
                         tracing::warn!(
-                            "[qms] QmsQualityIssueCreated 事件发布失败（graceful fallback）: {}",
+                            "[qms] QmsQualityIssueCreated 事件发布失败（graceful fallback）: {}，入重试队列",
                             e
                         );
+                        // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
+                        commit_retry::push_retry_typed("qms", et, &payload).await;
                     } else {
                         tracing::info!(
                             "[qms] QmsQualityIssueCreated 事件发布成功 - issue_id={}",
