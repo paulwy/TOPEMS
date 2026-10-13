@@ -21,6 +21,7 @@ use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cach
 use topems_shared_core::l2_cache::AsyncL2Cache;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::commit_retry;
 use topems_shared_event::event::{
     EventPublisher, EventType, SrmSupplierCreatedPayload, SrmSupplierRegisteredPayload,
     SrmSupplierStatusChangedPayload, SrmSupplierUpdatedPayload,
@@ -438,14 +439,14 @@ pub async fn create_supplier(
                         registered_by,
                         registered_at,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::SrmSupplierRegistered, registered_payload)
-                        .await
-                    {
+                    let et = EventType::SrmSupplierRegistered;
+                    if let Err(e) = publisher.publish_event(et, &registered_payload).await {
                         tracing::warn!(
-                            "[srm] SrmSupplierRegistered 事件发布失败（graceful fallback）: {}",
+                            "[srm] SrmSupplierRegistered 事件发布失败（graceful fallback）: {}，入重试队列",
                             e
                         );
+                        // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
+                        commit_retry::push_retry_typed("srm", et, &registered_payload).await;
                     } else {
                         tracing::debug!(
                             "[srm] SrmSupplierRegistered 事件发布成功 - supplier_id={}",
@@ -466,14 +467,13 @@ pub async fn create_supplier(
                         created_by,
                         created_at,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::SrmSupplierCreated, created_payload)
-                        .await
-                    {
+                    let et = EventType::SrmSupplierCreated;
+                    if let Err(e) = publisher.publish_event(et, &created_payload).await {
                         tracing::warn!(
-                            "[srm] SrmSupplierCreated 事件发布失败（graceful fallback）: {}",
+                            "[srm] SrmSupplierCreated 事件发布失败（graceful fallback）: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed("srm", et, &created_payload).await;
                     } else {
                         tracing::debug!(
                             "[srm] SrmSupplierCreated 事件发布成功 - supplier_id={}",
@@ -742,14 +742,13 @@ pub async fn update_supplier(
                         updated_by,
                         updated_at,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::SrmSupplierUpdated, payload)
-                        .await
-                    {
+                    let et = EventType::SrmSupplierUpdated;
+                    if let Err(e) = publisher.publish_event(et, &payload).await {
                         tracing::warn!(
-                            "[srm] SrmSupplierUpdated 事件发布失败（graceful fallback）: {}",
+                            "[srm] SrmSupplierUpdated 事件发布失败（graceful fallback）: {}，入重试队列",
                             e
                         );
+                        commit_retry::push_retry_typed("srm", et, &payload).await;
                     } else {
                         tracing::debug!(
                             "[srm] SrmSupplierUpdated 事件发布成功 - supplier_id={}",
@@ -1346,14 +1345,13 @@ pub async fn start_supplier_approval(
                     changed_by,
                     changed_at,
                 };
-                if let Err(e) = publisher
-                    .publish_event(EventType::SrmSupplierStatusChanged, payload)
-                    .await
-                {
+                let et = EventType::SrmSupplierStatusChanged;
+                if let Err(e) = publisher.publish_event(et, &payload).await {
                     tracing::warn!(
-                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}",
+                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}，入重试队列",
                         e
                     );
+                    commit_retry::push_retry_typed("srm", et, &payload).await;
                 } else {
                     tracing::debug!(
                         "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
@@ -1479,14 +1477,13 @@ pub async fn approve_supplier(
                     changed_by,
                     changed_at,
                 };
-                if let Err(e) = publisher
-                    .publish_event(EventType::SrmSupplierStatusChanged, payload)
-                    .await
-                {
+                let et = EventType::SrmSupplierStatusChanged;
+                if let Err(e) = publisher.publish_event(et, &payload).await {
                     tracing::warn!(
-                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}",
+                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}，入重试队列",
                         e
                     );
+                    commit_retry::push_retry_typed("srm", et, &payload).await;
                 } else {
                     tracing::debug!(
                         "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
@@ -1610,14 +1607,13 @@ pub async fn reject_supplier(
                     changed_by,
                     changed_at,
                 };
-                if let Err(e) = publisher
-                    .publish_event(EventType::SrmSupplierStatusChanged, payload)
-                    .await
-                {
+                let et = EventType::SrmSupplierStatusChanged;
+                if let Err(e) = publisher.publish_event(et, &payload).await {
                     tracing::warn!(
-                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}",
+                        "[srm] SrmSupplierStatusChanged 事件发布失败（graceful fallback）: {}，入重试队列",
                         e
                     );
+                    commit_retry::push_retry_typed("srm", et, &payload).await;
                 } else {
                     tracing::debug!(
                         "[srm] SrmSupplierStatusChanged 事件发布成功 - supplier_id={}",
