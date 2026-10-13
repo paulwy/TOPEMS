@@ -21,7 +21,7 @@ async fn main() -> anyhow::Result<()> {
         port_env_var: Some("COMMUNICATION_PORT"),
         max_db_connections: 20,
         enable_events: false,
-        enable_rls: false,
+        enable_rls: true,
         enable_request_context: true,
         api_prefix: "/api/communication",
         legacy_prefixes: &["/api/core/comm", "/api/core/notification"],
