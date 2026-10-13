@@ -47,6 +47,8 @@ FULL_CRATES = [
 CRATE_CFG = {
     "unified-core": {"dir": "unified-core", "search_path": ["unified_core", "public"]},
     "analytics": {"dir": "analytics", "search_path": ["bi", "doc", "report", "shared", "crm", "core", "public"]},
+    # rd 使用 rs schema（projects 等）+ 补建的 rs_projects/rs_formulas/rs_experiments
+    "rd": {"search_path": ["rd", "rs", "public"]},
 }
 
 # 目标调用形态：sqlx::query / query_as / query_scalar（含 ::<T> 类型实参）+ only_own_schema_query!

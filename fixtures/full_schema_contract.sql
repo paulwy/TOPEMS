@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 1BbdoEXjH620kactsZRmymWrF7zzyoIp7ZGG8GsbFvT3e0WXj8xqIQHdQ2zhZfq
+\restrict ZKgh91iHXlNKUfxuI7BnHHaIb3JPQksrZjX5XuVEHggDc6B0gP8VB2cz5eq5yGi
 
 -- Dumped from database version 18.4 (Homebrew)
 -- Dumped by pg_dump version 18.4 (Homebrew)
@@ -31,6 +31,13 @@ CREATE SCHEMA _sqlx_test;
 --
 
 CREATE SCHEMA ai;
+
+
+--
+-- Name: analytics; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA analytics;
 
 
 --
@@ -1646,6 +1653,385 @@ CREATE TABLE ai.vectors (
 
 
 --
+-- Name: analytics_comparison_analyses; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_comparison_analyses (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    comparison_type text NOT NULL,
+    dimension_a text NOT NULL,
+    dimension_b text NOT NULL,
+    indicators jsonb,
+    filters jsonb,
+    status text NOT NULL,
+    last_run_at timestamp with time zone,
+    created_by text,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_comparison_results; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_comparison_results (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    comparison_id uuid NOT NULL,
+    status text NOT NULL,
+    summary jsonb,
+    data jsonb,
+    generated_at timestamp with time zone,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_dashboard_shares; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_dashboard_shares (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    dashboard_id uuid NOT NULL,
+    permission text NOT NULL,
+    expires_at timestamp with time zone,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    shared_with text[]
+);
+
+
+--
+-- Name: analytics_dashboard_templates; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_dashboard_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    category text,
+    layout jsonb,
+    preview_image text,
+    is_active boolean DEFAULT true,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    tags text[]
+);
+
+
+--
+-- Name: analytics_dashboards; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_dashboards (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    layout jsonb,
+    is_public boolean DEFAULT false,
+    auto_refresh_enabled boolean DEFAULT false,
+    auto_refresh_interval integer,
+    owner_id text NOT NULL,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_datasets; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_datasets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    datasource_id uuid NOT NULL,
+    owner_id uuid NOT NULL,
+    sql_query text,
+    fields jsonb,
+    filters jsonb,
+    config jsonb,
+    is_public boolean DEFAULT false,
+    status text NOT NULL,
+    published_at timestamp with time zone,
+    last_refreshed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_datasources; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_datasources (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    source_type text NOT NULL,
+    host text,
+    port integer,
+    database text,
+    username text,
+    password text,
+    connection_string text,
+    connection_config jsonb,
+    query_template text,
+    sync_frequency text,
+    is_enabled boolean DEFAULT true,
+    status text NOT NULL,
+    last_sync timestamp with time zone,
+    data_volume bigint,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_drilldown_history; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_drilldown_history (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    path_id uuid NOT NULL,
+    user_id text NOT NULL,
+    action text NOT NULL,
+    from_level integer NOT NULL,
+    to_level integer NOT NULL,
+    drill_dimension text,
+    drill_value text,
+    filters jsonb,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_drilldown_paths; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_drilldown_paths (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    datasource_id uuid NOT NULL,
+    owner_id text NOT NULL,
+    levels jsonb,
+    measures jsonb,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_row_level_permissions; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_row_level_permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    datasource_id uuid NOT NULL,
+    table_name text NOT NULL,
+    rule_type text NOT NULL,
+    condition jsonb,
+    is_active boolean DEFAULT true,
+    created_by text NOT NULL,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    role_ids text[],
+    user_ids text[]
+);
+
+
+--
+-- Name: analytics_self_service_reports; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_self_service_reports (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    datasource_id uuid NOT NULL,
+    owner_id text NOT NULL,
+    fields jsonb,
+    filters jsonb,
+    config jsonb,
+    is_public boolean DEFAULT false,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_sync_records; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_sync_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    data_source_id uuid,
+    sync_type text,
+    status text NOT NULL,
+    records_count integer DEFAULT 0,
+    affected_records integer DEFAULT 0,
+    duration_ms integer DEFAULT 0,
+    error_message text,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: analytics_widgets; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.analytics_widgets (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    dashboard_id uuid,
+    datasource_id uuid,
+    name text NOT NULL,
+    widget_type text NOT NULL,
+    config jsonb,
+    query_config jsonb,
+    "position" jsonb,
+    cache_ttl_seconds integer,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: report_execution_records; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.report_execution_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    schedule_id uuid,
+    schedule_name text,
+    status text NOT NULL,
+    output_path text,
+    error_message text,
+    started_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: report_schedules; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.report_schedules (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    template_id uuid,
+    schedule_type text,
+    schedule_expression text,
+    parameters jsonb,
+    recipients jsonb,
+    status text NOT NULL,
+    run_count integer DEFAULT 0,
+    last_run_at timestamp with time zone,
+    error_message text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: report_subscriptions; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.report_subscriptions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    template_id uuid,
+    user_id uuid NOT NULL,
+    email text,
+    frequency text,
+    enabled boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: report_templates; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.report_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    code text,
+    description text,
+    report_type text,
+    category text,
+    data_source text,
+    output_format text,
+    columns jsonb,
+    filter_config jsonb,
+    layout_config jsonb,
+    style_config jsonb,
+    is_active boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: reports; Type: TABLE; Schema: analytics; Owner: -
+--
+
+CREATE TABLE analytics.reports (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    description text,
+    report_type text,
+    template_id uuid,
+    config jsonb,
+    status text NOT NULL,
+    last_run_at timestamp with time zone,
+    created_by text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: analytics_comparison_analyses; Type: TABLE; Schema: bi; Owner: -
 --
 
@@ -1963,6 +2349,18 @@ ALTER TABLE ONLY bi.audit_logs FORCE ROW LEVEL SECURITY;
 --
 
 COMMENT ON TABLE bi.audit_logs IS '审计日志表';
+
+
+--
+-- Name: bi_datasets; Type: TABLE; Schema: bi; Owner: -
+--
+
+CREATE TABLE bi.bi_datasets (
+    table_name character varying NOT NULL,
+    column_name character varying NOT NULL,
+    data_type character varying NOT NULL,
+    is_active boolean DEFAULT true NOT NULL
+);
 
 
 --
@@ -5888,6 +6286,17 @@ CREATE TABLE erp.erp_production_orders (
 
 
 --
+-- Name: event_idempotency; Type: TABLE; Schema: erp; Owner: -
+--
+
+CREATE TABLE erp.event_idempotency (
+    idempotency_key text NOT NULL,
+    event_type text NOT NULL,
+    processed_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: expenses; Type: TABLE; Schema: erp; Owner: -
 --
 
@@ -6086,6 +6495,18 @@ CREATE TABLE erp.inventory (
 );
 
 ALTER TABLE ONLY erp.inventory FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: inventory_items; Type: TABLE; Schema: erp; Owner: -
+--
+
+CREATE TABLE erp.inventory_items (
+    id uuid NOT NULL,
+    quantity numeric DEFAULT 0 NOT NULL,
+    reorder_point numeric,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL
+);
 
 
 --
@@ -7334,6 +7755,19 @@ CREATE TABLE finance.finance_audit_findings_v52 (
 );
 
 ALTER TABLE ONLY finance.finance_audit_findings_v52 FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: finance_audit_log; Type: TABLE; Schema: finance; Owner: -
+--
+
+CREATE TABLE finance.finance_audit_log (
+    id uuid NOT NULL,
+    entity_type text NOT NULL,
+    action text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL
+);
 
 
 --
@@ -10188,6 +10622,28 @@ COMMENT ON TABLE gis.geofences IS 'IM geo-fence sync（schema.rs 定义，增量
 
 
 --
+-- Name: gis_map_markers; Type: TABLE; Schema: gis; Owner: -
+--
+
+CREATE TABLE gis.gis_map_markers (
+    id uuid NOT NULL,
+    marker_type text NOT NULL,
+    source_type text NOT NULL,
+    source_id uuid NOT NULL,
+    title text NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    level text DEFAULT 'normal'::text NOT NULL,
+    location text DEFAULT ''::text NOT NULL,
+    status text DEFAULT 'active'::text NOT NULL,
+    created_at timestamp with time zone NOT NULL,
+    updated_at timestamp with time zone NOT NULL,
+    tenant_id uuid
+);
+
+ALTER TABLE ONLY gis.gis_map_markers FORCE ROW LEVEL SECURITY;
+
+
+--
 -- Name: location_photos; Type: TABLE; Schema: gis; Owner: -
 --
 
@@ -10982,6 +11438,24 @@ COMMENT ON COLUMN hrm.employees.employee_type IS '员工类型';
 --
 
 COMMENT ON COLUMN hrm.employees.user_id IS '关联的 IAM 用户 ID';
+
+
+--
+-- Name: hrm_cache_invalidation_logs; Type: TABLE; Schema: hrm; Owner: -
+--
+
+CREATE TABLE hrm.hrm_cache_invalidation_logs (
+    id uuid NOT NULL,
+    cache_type text NOT NULL,
+    cache_key text NOT NULL,
+    operation text NOT NULL,
+    source_event text NOT NULL,
+    invalidated_at timestamp with time zone NOT NULL,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+ALTER TABLE ONLY hrm.hrm_cache_invalidation_logs FORCE ROW LEVEL SECURITY;
 
 
 --
@@ -11838,6 +12312,978 @@ ALTER TABLE ONLY iam.audit_logs FORCE ROW LEVEL SECURITY;
 
 
 --
+-- Name: core_billing_invoices; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_billing_invoices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    subscription_id uuid,
+    invoice_number character varying(64) NOT NULL,
+    status character varying(32) DEFAULT 'draft'::character varying,
+    subtotal_cents integer DEFAULT 0,
+    discount_cents integer DEFAULT 0,
+    tax_cents integer DEFAULT 0,
+    total_cents integer DEFAULT 0,
+    period_start date NOT NULL,
+    period_end date NOT NULL,
+    paid_at timestamp with time zone,
+    payment_method character varying(64),
+    payment_reference character varying(256),
+    line_items jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_billing_plans; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_billing_plans (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(64) NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    license_type character varying(32) DEFAULT 'subscription'::character varying,
+    price_cents integer DEFAULT 0 NOT NULL,
+    price_period character varying(32) DEFAULT 'monthly'::character varying,
+    included_users integer DEFAULT 5,
+    included_storage_gb bigint DEFAULT 5,
+    included_api_calls bigint DEFAULT 50000,
+    included_modules text[],
+    overage_users_cents integer DEFAULT 500,
+    overage_storage_cents integer DEFAULT 50,
+    overage_api_calls_cents integer DEFAULT 10,
+    is_active boolean DEFAULT true,
+    is_trial boolean DEFAULT false,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_chat_members; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_chat_members (
+    room_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role character varying(32) DEFAULT 'member'::character varying,
+    tenant_id uuid NOT NULL,
+    joined_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: core_chat_messages; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_chat_messages (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    room_id uuid NOT NULL,
+    sender_id uuid NOT NULL,
+    sender_name character varying(128),
+    message_type character varying(32) DEFAULT 'text'::character varying,
+    content text NOT NULL,
+    file_url character varying(512),
+    is_recalled boolean DEFAULT false,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_chat_rooms; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_chat_rooms (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128),
+    room_type character varying(32) DEFAULT 'private'::character varying,
+    creator_id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_dashboard_refresh_log; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_dashboard_refresh_log (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    module character varying(64) NOT NULL,
+    tenant_id uuid NOT NULL,
+    refresh_time timestamp with time zone DEFAULT now() NOT NULL,
+    status character varying(32) DEFAULT 'success'::character varying NOT NULL,
+    duration_ms integer,
+    row_count integer DEFAULT 0,
+    error_message text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_dict_items; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_dict_items (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    dict_type_id uuid NOT NULL,
+    code character varying(100) NOT NULL,
+    name character varying(200) NOT NULL,
+    value text,
+    sort_order integer DEFAULT 0 NOT NULL,
+    parent_id uuid,
+    extra_data jsonb,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_dict_types; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_dict_types (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(100) NOT NULL,
+    name character varying(200) NOT NULL,
+    category character varying(100) DEFAULT 'general'::character varying NOT NULL,
+    description text,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_email_queue; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_email_queue (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    from_email character varying(256) NOT NULL,
+    to_email character varying(256) NOT NULL,
+    subject character varying(512),
+    body text,
+    html_body text,
+    cc text[],
+    bcc text[],
+    attempts integer DEFAULT 0,
+    max_attempts integer DEFAULT 3,
+    status character varying(32) DEFAULT 'pending'::character varying,
+    error_message text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    sent_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_email_templates; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_email_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    subject_template character varying(512) NOT NULL,
+    body_template text NOT NULL,
+    description text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_emails; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_emails (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    from_email character varying(256) NOT NULL,
+    to_email character varying(256) NOT NULL,
+    subject character varying(512),
+    body text,
+    html_body text,
+    cc text[],
+    bcc text[],
+    is_read boolean DEFAULT false,
+    tenant_id uuid NOT NULL,
+    sent_at timestamp with time zone,
+    read_at timestamp with time zone,
+    deleted_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: core_faqs; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_faqs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    question text NOT NULL,
+    answer text NOT NULL,
+    category character varying(100) DEFAULT 'general'::character varying NOT NULL,
+    views bigint DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_file_folders; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_file_folders (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    parent_id uuid,
+    owner_id uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_files; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_files (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(256) NOT NULL,
+    original_name character varying(256),
+    path character varying(512) NOT NULL,
+    size bigint NOT NULL,
+    mime_type character varying(128),
+    extension character varying(32),
+    folder_id uuid,
+    uploader_id uuid NOT NULL,
+    status character varying(32) DEFAULT 'active'::character varying,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_guide_lessons; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_guide_lessons (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    guide_id uuid NOT NULL,
+    title text NOT NULL,
+    content text DEFAULT ''::text NOT NULL,
+    duration character varying(50) DEFAULT '5min'::character varying NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_guide_progress; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_guide_progress (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    guide_id uuid NOT NULL,
+    user_id character varying(255) NOT NULL,
+    completed_lessons uuid[] DEFAULT '{}'::uuid[] NOT NULL,
+    progress integer DEFAULT 0 NOT NULL,
+    completed_at timestamp with time zone,
+    tenant_id uuid NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_guides; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_guides (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    title text NOT NULL,
+    description text DEFAULT ''::text NOT NULL,
+    category character varying(100) DEFAULT 'general'::character varying NOT NULL,
+    duration character varying(50) DEFAULT '10min'::character varying NOT NULL,
+    lessons_count integer DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_inter_module_sync; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_inter_module_sync (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    sync_type character varying(64) NOT NULL,
+    source_module character varying(64) NOT NULL,
+    target_module character varying(64) NOT NULL,
+    source_entity character varying(128) NOT NULL,
+    source_id uuid,
+    source_code character varying(128),
+    status character varying(32) DEFAULT 'pending'::character varying,
+    retry_count integer DEFAULT 0,
+    max_retries integer DEFAULT 3,
+    error_message text,
+    next_retry_at timestamp with time zone,
+    executed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_login_logs; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_login_logs (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id uuid,
+    username character varying(64) NOT NULL,
+    ip_address character varying(128) NOT NULL,
+    user_agent text,
+    status character varying(32) NOT NULL,
+    error_message text,
+    login_time timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_menu_groups; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_menu_groups (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    name character varying(200) NOT NULL,
+    code character varying(100) NOT NULL,
+    icon character varying(200),
+    sort_order integer DEFAULT 0 NOT NULL,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_menus; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_menus (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    group_id uuid NOT NULL,
+    parent_id uuid,
+    name character varying(200) NOT NULL,
+    code character varying(100) NOT NULL,
+    path character varying(500),
+    icon character varying(200),
+    sort_order integer DEFAULT 0 NOT NULL,
+    status character varying(20) DEFAULT 'active'::character varying NOT NULL,
+    permissions jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_migration_history; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_migration_history (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_name character varying(128) NOT NULL,
+    version character varying(64) NOT NULL,
+    name character varying(256) NOT NULL,
+    description text,
+    applied_at timestamp with time zone,
+    duration_ms bigint,
+    success boolean DEFAULT true,
+    error_message text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_mobile_offline_records; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_mobile_offline_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    module character varying(64) NOT NULL,
+    action character varying(64) NOT NULL,
+    data jsonb NOT NULL,
+    status character varying(32) DEFAULT 'pending'::character varying,
+    retry_count integer DEFAULT 0,
+    max_retries integer DEFAULT 3,
+    error_message text,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_notification_templates; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_notification_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    title_template character varying(256) NOT NULL,
+    content_template text NOT NULL,
+    notification_type character varying(64) DEFAULT 'info'::character varying,
+    description text,
+    created_by uuid,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_notifications; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_notifications (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    title character varying(256) NOT NULL,
+    content text,
+    notification_type character varying(64) DEFAULT 'info'::character varying,
+    is_read boolean DEFAULT false,
+    is_archived boolean DEFAULT false,
+    priority integer DEFAULT 0,
+    data jsonb,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    read_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_permissions; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(128) NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    resource character varying(64),
+    action character varying(32),
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_plugin_categories; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_plugin_categories (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(64) NOT NULL,
+    code character varying(64) NOT NULL,
+    description text,
+    icon character varying(64),
+    sort_order integer DEFAULT 0,
+    plugin_count integer DEFAULT 0,
+    is_active boolean DEFAULT true,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_plugin_instances; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_plugin_instances (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_id uuid NOT NULL,
+    runtime_url character varying(512),
+    runtime_status character varying(32) DEFAULT 'stopped'::character varying,
+    base_path character varying(128) DEFAULT '/api/plugins/{code}'::character varying,
+    last_heartbeat timestamp without time zone,
+    started_at timestamp with time zone,
+    stopped_at timestamp with time zone,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_plugin_permissions; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_plugin_permissions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_code character varying(64) NOT NULL,
+    permission_code character varying(100) NOT NULL,
+    permission_name character varying(255),
+    resource_type character varying(50),
+    action character varying(50),
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_plugin_pricing; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_plugin_pricing (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_code character varying(64) NOT NULL,
+    plugin_name character varying(128) NOT NULL,
+    base_price_cents integer DEFAULT 0,
+    per_user_price_cents integer DEFAULT 0,
+    is_active boolean DEFAULT true,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_plugin_reviews; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_plugin_reviews (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    user_name character varying(128),
+    rating integer,
+    title character varying(256),
+    content text,
+    is_verified_purchase boolean DEFAULT false,
+    is_featured boolean DEFAULT false,
+    helpful_count integer DEFAULT 0,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone,
+    CONSTRAINT core_plugin_reviews_rating_check CHECK (((rating >= 1) AND (rating <= 5)))
+);
+
+
+--
+-- Name: core_plugin_versions; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_plugin_versions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    plugin_id uuid NOT NULL,
+    version character varying(32) NOT NULL,
+    release_notes text,
+    is_stable boolean DEFAULT true,
+    is_latest boolean DEFAULT false,
+    download_url character varying(512),
+    checksum character varying(64),
+    file_size bigint,
+    min_app_version character varying(32),
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_plugins; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_plugins (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    code character varying(64) NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    version character varying(32) NOT NULL,
+    plugin_type character varying(32) DEFAULT 'business'::character varying,
+    is_installed boolean DEFAULT false,
+    installed_at timestamp with time zone,
+    is_active boolean DEFAULT false,
+    activated_at timestamp with time zone,
+    is_free boolean DEFAULT true,
+    price_cents integer DEFAULT 0,
+    remote_url character varying(512),
+    checksum character varying(64),
+    entry_point character varying(256),
+    dependencies jsonb DEFAULT '[]'::jsonb,
+    install_count integer DEFAULT 0,
+    rating numeric(3,2) DEFAULT 0,
+    rating_count integer DEFAULT 0,
+    is_published boolean DEFAULT false,
+    is_featured boolean DEFAULT false,
+    is_recommended boolean DEFAULT false,
+    author_name character varying(128),
+    author_url character varying(512),
+    homepage_url character varying(512),
+    screenshots jsonb DEFAULT '[]'::jsonb,
+    tags text[],
+    category character varying(64),
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    published_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_role_permissions; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_role_permissions (
+    role_id uuid NOT NULL,
+    permission_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: core_roles; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_roles (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(64) NOT NULL,
+    description text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_subscriptions; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_subscriptions (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    plan_id uuid NOT NULL,
+    status character varying(32) DEFAULT 'active'::character varying,
+    current_period_start date NOT NULL,
+    current_period_end date NOT NULL,
+    is_trial boolean DEFAULT false,
+    trial_ends_at timestamp with time zone,
+    cancelled_at timestamp with time zone,
+    cancel_at_period_end boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_tenant_modules; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_tenant_modules (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    module_code character varying(64) NOT NULL,
+    module_name character varying(128),
+    is_active boolean DEFAULT true,
+    activated_at timestamp with time zone DEFAULT now(),
+    expires_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_tenant_plugins; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_tenant_plugins (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    plugin_id uuid NOT NULL,
+    installed_version character varying(32),
+    is_active boolean DEFAULT true,
+    license_type character varying(32) DEFAULT 'subscription'::character varying,
+    license_expires_at timestamp with time zone,
+    purchase_order_id character varying(128),
+    activated_at timestamp with time zone DEFAULT now(),
+    last_used_at timestamp with time zone,
+    usage_count integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_tenant_settings; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_tenant_settings (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    setting_key character varying(128) NOT NULL,
+    setting_value text,
+    is_public boolean DEFAULT false,
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_tenant_usage; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_tenant_usage (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    users_count integer DEFAULT 0,
+    storage_used_mb bigint DEFAULT 0,
+    api_calls_count bigint DEFAULT 0,
+    period_start date NOT NULL,
+    period_end date NOT NULL,
+    base_cost numeric(10,2) DEFAULT 0,
+    overage_cost numeric(10,2) DEFAULT 0,
+    plugin_cost numeric(10,2) DEFAULT 0,
+    total_cost numeric(10,2) DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_tenant_users; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_tenant_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    email character varying(256) NOT NULL,
+    role character varying(32) DEFAULT 'member'::character varying,
+    status character varying(32) DEFAULT 'active'::character varying,
+    created_at timestamp with time zone DEFAULT now(),
+    last_login timestamp without time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_tenants; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_tenants (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    code character varying(64) NOT NULL,
+    tenant_type character varying(32) DEFAULT 'shared'::character varying,
+    plan character varying(32) DEFAULT 'basic'::character varying,
+    license_type character varying(32) DEFAULT 'subscription'::character varying,
+    license_expires_at timestamp with time zone,
+    database_host character varying(256),
+    database_port integer DEFAULT 5432,
+    database_name character varying(64),
+    quota_users integer DEFAULT 20,
+    quota_storage_gb bigint DEFAULT 10,
+    quota_api_calls bigint DEFAULT 100000,
+    quota_plugins text[],
+    features jsonb DEFAULT '{}'::jsonb,
+    status character varying(32) DEFAULT 'trial'::character varying,
+    trial_expires_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    activated_at timestamp with time zone,
+    suspended_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_usage_records; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_usage_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    metric_type character varying(64) NOT NULL,
+    metric_name character varying(128),
+    quantity bigint DEFAULT 0 NOT NULL,
+    unit character varying(32),
+    period_start timestamp without time zone NOT NULL,
+    period_end timestamp without time zone NOT NULL,
+    cost_cents integer DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_user_roles; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_user_roles (
+    user_id uuid NOT NULL,
+    role_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
+);
+
+
+--
+-- Name: core_users; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    username character varying(64) NOT NULL,
+    email character varying(255) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    full_name character varying(128),
+    phone character varying(32),
+    avatar_url character varying(512),
+    status character varying(32) DEFAULT 'active'::character varying,
+    is_superuser boolean DEFAULT false,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    last_login_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_workflow_instances; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_workflow_instances (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    workflow_id uuid NOT NULL,
+    title character varying(256) NOT NULL,
+    initiator_id uuid NOT NULL,
+    current_node_id character varying(64),
+    status character varying(32) DEFAULT 'pending'::character varying,
+    variables jsonb,
+    tenant_id uuid NOT NULL,
+    started_at timestamp with time zone DEFAULT now(),
+    completed_at timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_workflow_tasks; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_workflow_tasks (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    instance_id uuid NOT NULL,
+    node_id character varying(64) NOT NULL,
+    assignee_id uuid NOT NULL,
+    status character varying(32) DEFAULT 'pending'::character varying,
+    comment text,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    completed_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: core_workflows; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.core_workflows (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(128) NOT NULL,
+    description text,
+    definition jsonb NOT NULL,
+    status character varying(32) DEFAULT 'draft'::character varying,
+    version integer DEFAULT 1,
+    created_by uuid NOT NULL,
+    tenant_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now(),
+    updated_at timestamp with time zone DEFAULT now(),
+    published_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: crm_dashboard_snapshots; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.crm_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_opportunities integer DEFAULT 0,
+    win_amount numeric(15,2) DEFAULT 0,
+    conversion_rate numeric(5,2) DEFAULT 0,
+    avg_cycle_days numeric(6,1) DEFAULT 0,
+    stage_distribution jsonb DEFAULT '[]'::jsonb,
+    trend_data jsonb DEFAULT '[]'::jsonb,
+    industry_distribution jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: data_permissions; Type: TABLE; Schema: iam; Owner: -
 --
 
@@ -11853,11 +13299,105 @@ CREATE TABLE iam.data_permissions (
 
 
 --
+-- Name: dynamic_data; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.dynamic_data (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    schema_id uuid NOT NULL,
+    data_json jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: ehs_dashboard_snapshots; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.ehs_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_accidents integer DEFAULT 0,
+    pending_hazards integer DEFAULT 0,
+    training_rate numeric(5,2) DEFAULT 0,
+    drill_count integer DEFAULT 0,
+    accident_trend jsonb DEFAULT '[]'::jsonb,
+    hazard_types jsonb DEFAULT '[]'::jsonb,
+    training_trend jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: hrm_dashboard_snapshots; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.hrm_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_employees integer DEFAULT 0,
+    new_hires integer DEFAULT 0,
+    on_leave integer DEFAULT 0,
+    avg_salary numeric(10,2) DEFAULT 0,
+    department_distribution jsonb DEFAULT '[]'::jsonb,
+    hire_trend jsonb DEFAULT '[]'::jsonb,
+    education_distribution jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: lims_dashboard_snapshots; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.lims_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    pending_samples integer DEFAULT 0,
+    in_progress_tasks integer DEFAULT 0,
+    instrument_utilization numeric(5,2) DEFAULT 0,
+    pass_rate numeric(5,2) DEFAULT 0,
+    sample_trend jsonb DEFAULT '[]'::jsonb,
+    task_status jsonb DEFAULT '[]'::jsonb,
+    instrument_status jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: password_reset_tokens; Type: TABLE; Schema: iam; Owner: -
 --
 
 CREATE TABLE iam.password_reset_tokens (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: pdm_dashboard_snapshots; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.pdm_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    active_projects integer DEFAULT 0,
+    pending_documents integer DEFAULT 0,
+    bom_changes integer DEFAULT 0,
+    completion_rate numeric(5,2) DEFAULT 0,
+    project_distribution jsonb DEFAULT '[]'::jsonb,
+    document_types jsonb DEFAULT '[]'::jsonb,
+    change_trend jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone
 );
 
@@ -12070,6 +13610,25 @@ ALTER TABLE ONLY iam.roles FORCE ROW LEVEL SECURITY;
 
 
 --
+-- Name: schema_registry; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.schema_registry (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(100) NOT NULL,
+    title character varying(200) NOT NULL,
+    description text,
+    schema_json jsonb NOT NULL,
+    table_name character varying(100) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    version integer DEFAULT 1 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: sessions; Type: TABLE; Schema: iam; Owner: -
 --
 
@@ -12170,6 +13729,26 @@ CREATE TABLE iam.users (
     deleted_at timestamp with time zone,
     full_name_en character varying,
     CONSTRAINT ck_users_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+);
+
+
+--
+-- Name: wms_dashboard_snapshots; Type: TABLE; Schema: iam; Owner: -
+--
+
+CREATE TABLE iam.wms_dashboard_snapshots (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    tenant_id uuid NOT NULL,
+    snapshot_date date DEFAULT CURRENT_DATE NOT NULL,
+    total_inventory integer DEFAULT 0,
+    pending_inbound integer DEFAULT 0,
+    pending_outbound integer DEFAULT 0,
+    space_utilization numeric(5,2) DEFAULT 0,
+    inbound_trend jsonb DEFAULT '[]'::jsonb,
+    category_distribution jsonb DEFAULT '[]'::jsonb,
+    outbound_trend jsonb DEFAULT '[]'::jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 
@@ -12609,6 +14188,27 @@ CREATE TABLE integration.integration_events (
 );
 
 ALTER TABLE ONLY integration.integration_events FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: integration_sync_logs; Type: TABLE; Schema: integration; Owner: -
+--
+
+CREATE TABLE integration.integration_sync_logs (
+    id uuid NOT NULL,
+    sync_type text NOT NULL,
+    source_system text NOT NULL,
+    target_system text NOT NULL,
+    status text NOT NULL,
+    trace_id text DEFAULT ''::text NOT NULL,
+    details text DEFAULT ''::text NOT NULL,
+    started_at timestamp with time zone NOT NULL,
+    source_type text NOT NULL,
+    source_id uuid NOT NULL,
+    tenant_id uuid
+);
+
+ALTER TABLE ONLY integration.integration_sync_logs FORCE ROW LEVEL SECURITY;
 
 
 --
@@ -15239,6 +16839,33 @@ CREATE TABLE mes.crm_dashboard_snapshots (
 
 
 --
+-- Name: dashboard_stats; Type: TABLE; Schema: mes; Owner: -
+--
+
+CREATE TABLE mes.dashboard_stats (
+    id integer NOT NULL,
+    tenant_id uuid NOT NULL,
+    key character varying(100) NOT NULL,
+    value character varying(255) NOT NULL,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: dashboard_stats_id_seq; Type: SEQUENCE; Schema: mes; Owner: -
+--
+
+CREATE SEQUENCE mes.dashboard_stats_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
 -- Name: demand_forecasts; Type: TABLE; Schema: mes; Owner: -
 --
 
@@ -15597,6 +17224,27 @@ CREATE TABLE mes.equipment_oee (
 
 
 --
+-- Name: financial_records; Type: TABLE; Schema: mes; Owner: -
+--
+
+CREATE TABLE mes.financial_records (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    tenant_id uuid NOT NULL,
+    record_type character varying(50) NOT NULL,
+    category character varying(255) NOT NULL,
+    amount numeric(15,2) NOT NULL,
+    description text,
+    transaction_date date NOT NULL,
+    payment_method character varying(100),
+    status character varying(50) DEFAULT 'pending'::character varying,
+    created_by character varying(255),
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: hrm_dashboard_snapshots; Type: TABLE; Schema: mes; Owner: -
 --
 
@@ -15612,6 +17260,24 @@ CREATE TABLE mes.hrm_dashboard_snapshots (
     hire_trend jsonb DEFAULT '[]'::jsonb,
     education_distribution jsonb DEFAULT '[]'::jsonb,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: inspection_records; Type: TABLE; Schema: mes; Owner: -
+--
+
+CREATE TABLE mes.inspection_records (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    tenant_id uuid NOT NULL,
+    item_name character varying(255) NOT NULL,
+    category character varying(255) NOT NULL,
+    status character varying(50) NOT NULL,
+    inspector character varying(255),
+    inspection_time timestamp with time zone NOT NULL,
+    issues text,
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     deleted_at timestamp with time zone
 );
 
@@ -15847,6 +17513,40 @@ CREATE TABLE mes.pdm_dashboard_snapshots (
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone
 );
+
+
+--
+-- Name: permission_audit_logs; Type: TABLE; Schema: mes; Owner: -
+--
+
+CREATE TABLE mes.permission_audit_logs (
+    id bigint NOT NULL,
+    tenant_id character varying(64) NOT NULL,
+    user_id character varying(64) NOT NULL,
+    action character varying(32) NOT NULL,
+    old_value jsonb,
+    new_value jsonb,
+    changed_by character varying(64) NOT NULL,
+    changed_at timestamp with time zone DEFAULT now() NOT NULL,
+    ip_address inet,
+    user_agent text,
+    details jsonb,
+    metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT chk_action CHECK (((action)::text = ANY (ARRAY[('create'::character varying)::text, ('update'::character varying)::text, ('delete'::character varying)::text, ('activate'::character varying)::text, ('deactivate'::character varying)::text, ('role_change'::character varying)::text])))
+);
+
+
+--
+-- Name: permission_audit_logs_id_seq; Type: SEQUENCE; Schema: mes; Owner: -
+--
+
+CREATE SEQUENCE mes.permission_audit_logs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 
 --
@@ -16482,6 +18182,29 @@ COMMENT ON COLUMN mes.schema_registry.table_name IS '动态创建的数据表名
 
 
 --
+-- Name: supply_chain_orders; Type: TABLE; Schema: mes; Owner: -
+--
+
+CREATE TABLE mes.supply_chain_orders (
+    id uuid DEFAULT public.uuid_generate_v4() NOT NULL,
+    tenant_id uuid NOT NULL,
+    order_type character varying(50) NOT NULL,
+    supplier_customer character varying(255) NOT NULL,
+    product_name character varying(255) NOT NULL,
+    quantity integer NOT NULL,
+    unit_price numeric(15,2) NOT NULL,
+    total_amount numeric(15,2) NOT NULL,
+    order_date date NOT NULL,
+    delivery_date date,
+    status character varying(50) DEFAULT 'pending'::character varying,
+    created_by character varying(255),
+    created_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: team_members; Type: TABLE; Schema: mes; Owner: -
 --
 
@@ -16521,6 +18244,65 @@ CREATE TABLE mes.teams (
     tenant_id uuid,
     CONSTRAINT ck_teams_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
 );
+
+
+--
+-- Name: tenant_permissions; Type: TABLE; Schema: mes; Owner: -
+--
+
+CREATE TABLE mes.tenant_permissions (
+    id bigint NOT NULL,
+    tenant_id character varying(64) NOT NULL,
+    user_id character varying(64) NOT NULL,
+    role character varying(32) DEFAULT 'member'::character varying NOT NULL,
+    active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT chk_role CHECK (((role)::text = ANY (ARRAY[('owner'::character varying)::text, ('admin'::character varying)::text, ('member'::character varying)::text, ('viewer'::character varying)::text])))
+);
+
+
+--
+-- Name: tenant_permissions_id_seq; Type: SEQUENCE; Schema: mes; Owner: -
+--
+
+CREATE SEQUENCE mes.tenant_permissions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tool_permissions; Type: TABLE; Schema: mes; Owner: -
+--
+
+CREATE TABLE mes.tool_permissions (
+    id bigint NOT NULL,
+    tenant_permission_id bigint NOT NULL,
+    tool_name character varying(64) NOT NULL,
+    max_permission character varying(16) DEFAULT 'read'::character varying NOT NULL,
+    allowed_operations text[],
+    denied_operations text[],
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone,
+    CONSTRAINT chk_max_permission CHECK (((max_permission)::text = ANY (ARRAY[('read'::character varying)::text, ('write'::character varying)::text, ('admin'::character varying)::text])))
+);
+
+
+--
+-- Name: tool_permissions_id_seq; Type: SEQUENCE; Schema: mes; Owner: -
+--
+
+CREATE SEQUENCE mes.tool_permissions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
 
 --
@@ -20098,6 +21880,19 @@ CREATE TABLE portal.portal_consistency_checks (
 
 
 --
+-- Name: portal_dashboard_stats; Type: TABLE; Schema: portal; Owner: -
+--
+
+CREATE TABLE portal.portal_dashboard_stats (
+    stat_key text NOT NULL,
+    stat_value bigint DEFAULT 0 NOT NULL,
+    stat_label text,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL
+);
+
+
+--
 -- Name: portal_dead_letter_queue; Type: TABLE; Schema: portal; Owner: -
 --
 
@@ -20471,6 +22266,25 @@ CREATE TABLE portal.portal_metrics (
     value double precision DEFAULT 0 NOT NULL,
     labels jsonb DEFAULT '{}'::jsonb NOT NULL,
     deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: portal_notifications; Type: TABLE; Schema: portal; Owner: -
+--
+
+CREATE TABLE portal.portal_notifications (
+    id uuid NOT NULL,
+    title text NOT NULL,
+    content text,
+    service text,
+    service_name text,
+    notification_type text,
+    read boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    link_url text,
+    target_user uuid,
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL
 );
 
 
@@ -21216,6 +23030,23 @@ CREATE TABLE public._archive_core_workflow_tasks (
 
 
 --
+-- Name: _archive_core_workflow_versions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public._archive_core_workflow_versions (
+    id uuid DEFAULT gen_random_uuid() CONSTRAINT core_workflow_versions_id_not_null NOT NULL,
+    workflow_id uuid,
+    version integer,
+    definition jsonb,
+    isactive boolean DEFAULT true,
+    created_at timestamp with time zone DEFAULT now() CONSTRAINT core_workflow_versions_created_at_not_null NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() CONSTRAINT core_workflow_versions_updated_at_not_null NOT NULL,
+    deleted_at timestamp with time zone,
+    tenant_id uuid
+);
+
+
+--
 -- Name: _sqlx_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -21776,6 +23607,26 @@ CREATE TABLE public.automation_variables (
 );
 
 ALTER TABLE ONLY public.automation_variables FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: barcode_scans; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.barcode_scans (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    barcode character varying(500) NOT NULL,
+    barcode_type character varying(50) NOT NULL,
+    decoded_data text NOT NULL,
+    location_lat double precision,
+    location_lng double precision,
+    result_action character varying(100),
+    result_data jsonb,
+    scanned_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
 
 
 --
@@ -23697,6 +25548,28 @@ CREATE TABLE public.device_locations (
 
 
 --
+-- Name: devices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.devices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    device_id character varying(255) NOT NULL,
+    device_name character varying(255) NOT NULL,
+    device_type character varying(100) NOT NULL,
+    os_type character varying(100) NOT NULL,
+    os_version character varying(50) NOT NULL,
+    app_version character varying(50) NOT NULL,
+    push_token character varying(512),
+    is_active boolean DEFAULT true NOT NULL,
+    last_login_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: dynamic_data; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -24199,6 +26072,26 @@ CREATE TABLE public.material_returns (
 
 
 --
+-- Name: media_files; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.media_files (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    file_name character varying(255) NOT NULL,
+    file_type character varying(50) NOT NULL,
+    file_url character varying(500),
+    file_size bigint NOT NULL,
+    mime_type character varying(100) NOT NULL,
+    uploaded_by character varying(255) NOT NULL,
+    uploaded_by_name character varying(255),
+    description text,
+    tags text[],
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: meeting_bookings; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -24247,6 +26140,43 @@ CREATE TABLE public.mes_qms_sync (
     last_synced_at timestamp with time zone,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: mobile_scan_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mobile_scan_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    scan_type character varying(100) NOT NULL,
+    scan_data text NOT NULL,
+    result_data jsonb,
+    location_lat double precision,
+    location_lng double precision,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: mobile_users; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.mobile_users (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    username character varying(255) NOT NULL,
+    password_hash character varying(255) NOT NULL,
+    nickname character varying(255),
+    phone text,
+    email text,
+    avatar_url character varying(500),
+    department character varying(255),
+    "position" character varying(255),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 
@@ -24332,6 +26262,44 @@ CREATE TABLE public.notification_templates (
     tenant_id uuid,
     deleted_at timestamp with time zone,
     CONSTRAINT ck_notification_templates_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+);
+
+
+--
+-- Name: offline_operations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.offline_operations (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    operation_type character varying(50) NOT NULL,
+    entity_type character varying(100) NOT NULL,
+    entity_id character varying(255),
+    operation_data jsonb NOT NULL,
+    sync_status character varying(50) DEFAULT 'pending'::character varying NOT NULL,
+    sync_attempts integer DEFAULT 0 NOT NULL,
+    last_sync_error text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    synced_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: offline_sync_records; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.offline_sync_records (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    sync_type character varying(100) NOT NULL,
+    sync_data jsonb NOT NULL,
+    status character varying(50) DEFAULT 'pending'::character varying NOT NULL,
+    synced_count integer DEFAULT 0 NOT NULL,
+    failed_count integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    completed_at timestamp with time zone,
+    deleted_at timestamp with time zone
 );
 
 
@@ -24771,6 +26739,33 @@ ALTER SEQUENCE public.permission_audit_logs_id_seq OWNED BY public.permission_au
 
 
 --
+-- Name: photo_uploads; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.photo_uploads (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    file_name character varying(255) NOT NULL,
+    file_path character varying(500) NOT NULL,
+    file_size bigint NOT NULL,
+    mime_type character varying(100) NOT NULL,
+    width integer,
+    height integer,
+    compression_ratio double precision,
+    has_watermark boolean DEFAULT false NOT NULL,
+    watermark_text character varying(255),
+    upload_status character varying(50) DEFAULT 'uploading'::character varying NOT NULL,
+    upload_progress integer DEFAULT 0 NOT NULL,
+    thumbnail_url character varying(500),
+    location_lat double precision,
+    location_lng double precision,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    uploaded_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: pinned_apps; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -24849,6 +26844,65 @@ CREATE TABLE public.process_flow_steps (
 
 CREATE TABLE public.process_flows (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: push_devices; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.push_devices (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    device_token character varying(512) NOT NULL,
+    platform character varying(50) NOT NULL,
+    device_model character varying(255) NOT NULL,
+    app_version character varying(50) NOT NULL,
+    os_version character varying(50) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: push_notifications; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.push_notifications (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    title character varying(255) NOT NULL,
+    body text NOT NULL,
+    notification_type character varying(100) DEFAULT 'info'::character varying NOT NULL,
+    data jsonb,
+    target_type character varying(50) NOT NULL,
+    target_ids text[] NOT NULL,
+    status character varying(50) DEFAULT 'pending'::character varying NOT NULL,
+    sent_count integer DEFAULT 0 NOT NULL,
+    delivered_count integer DEFAULT 0 NOT NULL,
+    clicked_count integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    sent_at timestamp with time zone,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: push_templates; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.push_templates (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name character varying(255) NOT NULL,
+    title_template text NOT NULL,
+    body_template text NOT NULL,
+    notification_type character varying(100) NOT NULL,
+    description text,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     deleted_at timestamp with time zone
 );
 
@@ -27383,6 +29437,20 @@ CREATE TABLE public.quality_standards (
 
 
 --
+-- Name: refresh_tokens; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.refresh_tokens (
+    id uuid DEFAULT gen_random_uuid() CONSTRAINT refresh_tokens_id_not_null1 NOT NULL,
+    user_id uuid CONSTRAINT refresh_tokens_user_id_not_null1 NOT NULL,
+    refresh_token character varying(512) NOT NULL,
+    expires_at timestamp with time zone CONSTRAINT refresh_tokens_expires_at_not_null1 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
 -- Name: report_execution_records; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -27524,6 +29592,26 @@ CREATE TABLE public.scm_master_data_refs (
 
 
 --
+-- Name: search_entity_projections; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.search_entity_projections (
+    tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000000'::uuid NOT NULL,
+    entity_type character varying(32) NOT NULL,
+    entity_id uuid NOT NULL,
+    name text,
+    contact_person text,
+    contact_phone text,
+    email text,
+    address text,
+    status text,
+    remark text,
+    source_updated_at timestamp with time zone,
+    projected_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: search_logs; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -27539,6 +29627,25 @@ CREATE TABLE public.search_logs (
 );
 
 ALTER TABLE ONLY public.search_logs FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: shortcuts; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.shortcuts (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    name character varying(100) NOT NULL,
+    icon character varying(100) NOT NULL,
+    action_type character varying(100) NOT NULL,
+    action_params jsonb,
+    sort_order integer DEFAULT 0 NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
 
 
 --
@@ -27582,6 +29689,23 @@ CREATE TABLE public.supply_chain_orders (
     updated_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
     deleted_at timestamp with time zone,
     CONSTRAINT ck_supply_chain_orders_status_standard CHECK (((status IS NULL) OR ((status)::text = ANY ((ARRAY['active'::character varying, 'inactive'::character varying, 'archived'::character varying])::text[]))))
+);
+
+
+--
+-- Name: sync_policies; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sync_policies (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    user_id uuid NOT NULL,
+    auto_sync_enabled boolean DEFAULT true NOT NULL,
+    sync_interval_minutes integer DEFAULT 5 NOT NULL,
+    sync_on_network_change boolean DEFAULT true NOT NULL,
+    conflict_strategy character varying(50) DEFAULT 'server优先'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
 );
 
 
@@ -29638,6 +31762,61 @@ CREATE TABLE rs.research_costs (
 
 
 --
+-- Name: rs_experiments; Type: TABLE; Schema: rs; Owner: -
+--
+
+CREATE TABLE rs.rs_experiments (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    status text,
+    source_type text,
+    source_id uuid,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: rs_formulas; Type: TABLE; Schema: rs; Owner: -
+--
+
+CREATE TABLE rs.rs_formulas (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    formula text,
+    status text,
+    source_type text,
+    source_id uuid,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
+-- Name: rs_projects; Type: TABLE; Schema: rs; Owner: -
+--
+
+CREATE TABLE rs.rs_projects (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text NOT NULL,
+    code text,
+    project_type text,
+    status text DEFAULT 'pending'::text NOT NULL,
+    leader text,
+    progress integer DEFAULT 0 NOT NULL,
+    start_date timestamp with time zone,
+    created_by text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    source_type text,
+    source_id uuid,
+    tenant_id uuid
+);
+
+
+--
 -- Name: schema_defense_ledger; Type: TABLE; Schema: rs; Owner: -
 --
 
@@ -31483,6 +33662,46 @@ CREATE TABLE ticket.ticket_knowledge_articles (
 );
 
 ALTER TABLE ONLY ticket.ticket_knowledge_articles FORCE ROW LEVEL SECURITY;
+
+
+--
+-- Name: carriers; Type: TABLE; Schema: tms; Owner: -
+--
+
+CREATE TABLE tms.carriers (
+    id uuid NOT NULL,
+    carrier_no text NOT NULL,
+    name text NOT NULL,
+    name_en text,
+    contact_person text,
+    contact_phone text,
+    status text DEFAULT 'active'::text NOT NULL,
+    service_area text,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
+
+
+--
+-- Name: drivers; Type: TABLE; Schema: tms; Owner: -
+--
+
+CREATE TABLE tms.drivers (
+    id uuid NOT NULL,
+    driver_no text NOT NULL,
+    name text NOT NULL,
+    phone text,
+    license_no text,
+    license_type text,
+    status text DEFAULT 'active'::text NOT NULL,
+    carrier_id uuid,
+    tenant_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    deleted_at timestamp with time zone
+);
 
 
 --
@@ -33719,6 +35938,150 @@ ALTER TABLE ONLY ai.vectors
 
 
 --
+-- Name: analytics_comparison_analyses analytics_comparison_analyses_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_comparison_analyses
+    ADD CONSTRAINT analytics_comparison_analyses_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_comparison_results analytics_comparison_results_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_comparison_results
+    ADD CONSTRAINT analytics_comparison_results_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_dashboard_shares analytics_dashboard_shares_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_dashboard_shares
+    ADD CONSTRAINT analytics_dashboard_shares_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_dashboard_templates analytics_dashboard_templates_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_dashboard_templates
+    ADD CONSTRAINT analytics_dashboard_templates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_dashboards analytics_dashboards_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_dashboards
+    ADD CONSTRAINT analytics_dashboards_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_datasets analytics_datasets_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_datasets
+    ADD CONSTRAINT analytics_datasets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_datasources analytics_datasources_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_datasources
+    ADD CONSTRAINT analytics_datasources_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_drilldown_history analytics_drilldown_history_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_drilldown_history
+    ADD CONSTRAINT analytics_drilldown_history_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_drilldown_paths analytics_drilldown_paths_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_drilldown_paths
+    ADD CONSTRAINT analytics_drilldown_paths_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_row_level_permissions analytics_row_level_permissions_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_row_level_permissions
+    ADD CONSTRAINT analytics_row_level_permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_self_service_reports analytics_self_service_reports_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_self_service_reports
+    ADD CONSTRAINT analytics_self_service_reports_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_sync_records analytics_sync_records_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_sync_records
+    ADD CONSTRAINT analytics_sync_records_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: analytics_widgets analytics_widgets_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.analytics_widgets
+    ADD CONSTRAINT analytics_widgets_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: report_execution_records report_execution_records_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.report_execution_records
+    ADD CONSTRAINT report_execution_records_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: report_schedules report_schedules_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.report_schedules
+    ADD CONSTRAINT report_schedules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: report_subscriptions report_subscriptions_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.report_subscriptions
+    ADD CONSTRAINT report_subscriptions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: report_templates report_templates_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.report_templates
+    ADD CONSTRAINT report_templates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: reports reports_pkey; Type: CONSTRAINT; Schema: analytics; Owner: -
+--
+
+ALTER TABLE ONLY analytics.reports
+    ADD CONSTRAINT reports_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: analytics_comparison_analyses analytics_comparison_analyses_pkey; Type: CONSTRAINT; Schema: bi; Owner: -
 --
 
@@ -33828,6 +36191,14 @@ ALTER TABLE ONLY bi.analytics_widgets
 
 ALTER TABLE ONLY bi.audit_logs
     ADD CONSTRAINT audit_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: bi_datasets bi_datasets_pkey; Type: CONSTRAINT; Schema: bi; Owner: -
+--
+
+ALTER TABLE ONLY bi.bi_datasets
+    ADD CONSTRAINT bi_datasets_pkey PRIMARY KEY (table_name, column_name);
 
 
 --
@@ -34020,6 +36391,14 @@ ALTER TABLE ONLY core.core_plugin_reviews
 
 ALTER TABLE ONLY core.core_plugin_versions
     ADD CONSTRAINT core_plugin_versions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_plugin_versions core_plugin_versions_plugin_id_version_key; Type: CONSTRAINT; Schema: core; Owner: -
+--
+
+ALTER TABLE ONLY core.core_plugin_versions
+    ADD CONSTRAINT core_plugin_versions_plugin_id_version_key UNIQUE (plugin_id, version);
 
 
 --
@@ -35455,6 +37834,14 @@ ALTER TABLE ONLY erp.erp_production_orders
 
 
 --
+-- Name: event_idempotency event_idempotency_pkey; Type: CONSTRAINT; Schema: erp; Owner: -
+--
+
+ALTER TABLE ONLY erp.event_idempotency
+    ADD CONSTRAINT event_idempotency_pkey PRIMARY KEY (idempotency_key);
+
+
+--
 -- Name: expenses expenses_expense_number_key; Type: CONSTRAINT; Schema: erp; Owner: -
 --
 
@@ -35532,6 +37919,14 @@ ALTER TABLE ONLY erp.internal_transactions
 
 ALTER TABLE ONLY erp.internal_transactions
     ADD CONSTRAINT internal_transactions_transaction_no_key UNIQUE (transaction_no);
+
+
+--
+-- Name: inventory_items inventory_items_pkey; Type: CONSTRAINT; Schema: erp; Owner: -
+--
+
+ALTER TABLE ONLY erp.inventory_items
+    ADD CONSTRAINT inventory_items_pkey PRIMARY KEY (id);
 
 
 --
@@ -35980,6 +38375,14 @@ ALTER TABLE ONLY finance.finance_audit_findings_v52
 
 ALTER TABLE ONLY finance.finance_audit_findings_v
     ADD CONSTRAINT finance_audit_findings_v_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: finance_audit_log finance_audit_log_pkey; Type: CONSTRAINT; Schema: finance; Owner: -
+--
+
+ALTER TABLE ONLY finance.finance_audit_log
+    ADD CONSTRAINT finance_audit_log_pkey PRIMARY KEY (id);
 
 
 --
@@ -37303,6 +39706,22 @@ ALTER TABLE ONLY gis.geofences
 
 
 --
+-- Name: gis_map_markers gis_map_markers_pkey; Type: CONSTRAINT; Schema: gis; Owner: -
+--
+
+ALTER TABLE ONLY gis.gis_map_markers
+    ADD CONSTRAINT gis_map_markers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: gis_map_markers gis_map_markers_source_uniq; Type: CONSTRAINT; Schema: gis; Owner: -
+--
+
+ALTER TABLE ONLY gis.gis_map_markers
+    ADD CONSTRAINT gis_map_markers_source_uniq UNIQUE (source_type, source_id, tenant_id);
+
+
+--
 -- Name: location_photos location_photos_pkey; Type: CONSTRAINT; Schema: gis; Owner: -
 --
 
@@ -37460,6 +39879,14 @@ ALTER TABLE ONLY hrm.departments
 
 ALTER TABLE ONLY hrm.employees
     ADD CONSTRAINT employees_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hrm_cache_invalidation_logs hrm_cache_invalidation_logs_pkey; Type: CONSTRAINT; Schema: hrm; Owner: -
+--
+
+ALTER TABLE ONLY hrm.hrm_cache_invalidation_logs
+    ADD CONSTRAINT hrm_cache_invalidation_logs_pkey PRIMARY KEY (id);
 
 
 --
@@ -37679,6 +40106,614 @@ ALTER TABLE ONLY iam.audit_logs
 
 
 --
+-- Name: core_billing_invoices core_billing_invoices_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_billing_invoices
+    ADD CONSTRAINT core_billing_invoices_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_billing_invoices core_billing_invoices_tenant_id_invoice_number_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_billing_invoices
+    ADD CONSTRAINT core_billing_invoices_tenant_id_invoice_number_key UNIQUE (tenant_id, invoice_number);
+
+
+--
+-- Name: core_billing_plans core_billing_plans_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_billing_plans
+    ADD CONSTRAINT core_billing_plans_code_key UNIQUE (code);
+
+
+--
+-- Name: core_billing_plans core_billing_plans_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_billing_plans
+    ADD CONSTRAINT core_billing_plans_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_chat_members core_chat_members_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_chat_members
+    ADD CONSTRAINT core_chat_members_pkey PRIMARY KEY (room_id, user_id);
+
+
+--
+-- Name: core_chat_messages core_chat_messages_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_chat_messages
+    ADD CONSTRAINT core_chat_messages_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_chat_rooms core_chat_rooms_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_chat_rooms
+    ADD CONSTRAINT core_chat_rooms_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_dashboard_refresh_log core_dashboard_refresh_log_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_dashboard_refresh_log
+    ADD CONSTRAINT core_dashboard_refresh_log_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_dict_items core_dict_items_dict_type_id_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_dict_items
+    ADD CONSTRAINT core_dict_items_dict_type_id_code_key UNIQUE (dict_type_id, code);
+
+
+--
+-- Name: core_dict_items core_dict_items_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_dict_items
+    ADD CONSTRAINT core_dict_items_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_dict_types core_dict_types_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_dict_types
+    ADD CONSTRAINT core_dict_types_code_key UNIQUE (code);
+
+
+--
+-- Name: core_dict_types core_dict_types_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_dict_types
+    ADD CONSTRAINT core_dict_types_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_email_queue core_email_queue_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_email_queue
+    ADD CONSTRAINT core_email_queue_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_email_templates core_email_templates_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_email_templates
+    ADD CONSTRAINT core_email_templates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_emails core_emails_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_emails
+    ADD CONSTRAINT core_emails_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_faqs core_faqs_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_faqs
+    ADD CONSTRAINT core_faqs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_file_folders core_file_folders_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_file_folders
+    ADD CONSTRAINT core_file_folders_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_files core_files_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_files
+    ADD CONSTRAINT core_files_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_guide_lessons core_guide_lessons_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_guide_lessons
+    ADD CONSTRAINT core_guide_lessons_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_guide_progress core_guide_progress_guide_id_user_id_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_guide_progress
+    ADD CONSTRAINT core_guide_progress_guide_id_user_id_key UNIQUE (guide_id, user_id);
+
+
+--
+-- Name: core_guide_progress core_guide_progress_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_guide_progress
+    ADD CONSTRAINT core_guide_progress_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_guides core_guides_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_guides
+    ADD CONSTRAINT core_guides_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_inter_module_sync core_inter_module_sync_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_inter_module_sync
+    ADD CONSTRAINT core_inter_module_sync_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_login_logs core_login_logs_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_login_logs
+    ADD CONSTRAINT core_login_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_menu_groups core_menu_groups_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_menu_groups
+    ADD CONSTRAINT core_menu_groups_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_menu_groups core_menu_groups_tenant_id_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_menu_groups
+    ADD CONSTRAINT core_menu_groups_tenant_id_code_key UNIQUE (tenant_id, code);
+
+
+--
+-- Name: core_menus core_menus_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_menus
+    ADD CONSTRAINT core_menus_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_menus core_menus_tenant_id_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_menus
+    ADD CONSTRAINT core_menus_tenant_id_code_key UNIQUE (tenant_id, code);
+
+
+--
+-- Name: core_migration_history core_migration_history_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_migration_history
+    ADD CONSTRAINT core_migration_history_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_migration_history core_migration_history_plugin_name_version_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_migration_history
+    ADD CONSTRAINT core_migration_history_plugin_name_version_key UNIQUE (plugin_name, version);
+
+
+--
+-- Name: core_mobile_offline_records core_mobile_offline_records_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_mobile_offline_records
+    ADD CONSTRAINT core_mobile_offline_records_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_notification_templates core_notification_templates_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_notification_templates
+    ADD CONSTRAINT core_notification_templates_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_notifications core_notifications_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_notifications
+    ADD CONSTRAINT core_notifications_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_permissions core_permissions_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_permissions
+    ADD CONSTRAINT core_permissions_code_key UNIQUE (code);
+
+
+--
+-- Name: core_permissions core_permissions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_permissions
+    ADD CONSTRAINT core_permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_plugin_categories core_plugin_categories_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_categories
+    ADD CONSTRAINT core_plugin_categories_code_key UNIQUE (code);
+
+
+--
+-- Name: core_plugin_categories core_plugin_categories_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_categories
+    ADD CONSTRAINT core_plugin_categories_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_plugin_instances core_plugin_instances_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_instances
+    ADD CONSTRAINT core_plugin_instances_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_plugin_instances core_plugin_instances_plugin_id_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_instances
+    ADD CONSTRAINT core_plugin_instances_plugin_id_key UNIQUE (plugin_id);
+
+
+--
+-- Name: core_plugin_permissions core_plugin_permissions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_permissions
+    ADD CONSTRAINT core_plugin_permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_plugin_permissions core_plugin_permissions_plugin_code_permission_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_permissions
+    ADD CONSTRAINT core_plugin_permissions_plugin_code_permission_code_key UNIQUE (plugin_code, permission_code);
+
+
+--
+-- Name: core_plugin_pricing core_plugin_pricing_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_pricing
+    ADD CONSTRAINT core_plugin_pricing_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_plugin_pricing core_plugin_pricing_plugin_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_pricing
+    ADD CONSTRAINT core_plugin_pricing_plugin_code_key UNIQUE (plugin_code);
+
+
+--
+-- Name: core_plugin_reviews core_plugin_reviews_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_reviews
+    ADD CONSTRAINT core_plugin_reviews_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_plugin_versions core_plugin_versions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_versions
+    ADD CONSTRAINT core_plugin_versions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_plugin_versions core_plugin_versions_plugin_id_version_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugin_versions
+    ADD CONSTRAINT core_plugin_versions_plugin_id_version_key UNIQUE (plugin_id, version);
+
+
+--
+-- Name: core_plugins core_plugins_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugins
+    ADD CONSTRAINT core_plugins_code_key UNIQUE (code);
+
+
+--
+-- Name: core_plugins core_plugins_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_plugins
+    ADD CONSTRAINT core_plugins_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_role_permissions core_role_permissions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_role_permissions
+    ADD CONSTRAINT core_role_permissions_pkey PRIMARY KEY (role_id, permission_id);
+
+
+--
+-- Name: core_roles core_roles_name_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_roles
+    ADD CONSTRAINT core_roles_name_key UNIQUE (name);
+
+
+--
+-- Name: core_roles core_roles_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_roles
+    ADD CONSTRAINT core_roles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_subscriptions core_subscriptions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_subscriptions
+    ADD CONSTRAINT core_subscriptions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_subscriptions core_subscriptions_tenant_id_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_subscriptions
+    ADD CONSTRAINT core_subscriptions_tenant_id_key UNIQUE (tenant_id);
+
+
+--
+-- Name: core_tenant_modules core_tenant_modules_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_modules
+    ADD CONSTRAINT core_tenant_modules_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_tenant_modules core_tenant_modules_tenant_id_module_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_modules
+    ADD CONSTRAINT core_tenant_modules_tenant_id_module_code_key UNIQUE (tenant_id, module_code);
+
+
+--
+-- Name: core_tenant_plugins core_tenant_plugins_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_plugins
+    ADD CONSTRAINT core_tenant_plugins_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_tenant_plugins core_tenant_plugins_tenant_id_plugin_id_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_plugins
+    ADD CONSTRAINT core_tenant_plugins_tenant_id_plugin_id_key UNIQUE (tenant_id, plugin_id);
+
+
+--
+-- Name: core_tenant_settings core_tenant_settings_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_settings
+    ADD CONSTRAINT core_tenant_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_tenant_settings core_tenant_settings_tenant_id_setting_key_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_settings
+    ADD CONSTRAINT core_tenant_settings_tenant_id_setting_key_key UNIQUE (tenant_id, setting_key);
+
+
+--
+-- Name: core_tenant_usage core_tenant_usage_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_usage
+    ADD CONSTRAINT core_tenant_usage_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_tenant_usage core_tenant_usage_tenant_id_period_start_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_usage
+    ADD CONSTRAINT core_tenant_usage_tenant_id_period_start_key UNIQUE (tenant_id, period_start);
+
+
+--
+-- Name: core_tenant_users core_tenant_users_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_users
+    ADD CONSTRAINT core_tenant_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_tenant_users core_tenant_users_tenant_id_email_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_users
+    ADD CONSTRAINT core_tenant_users_tenant_id_email_key UNIQUE (tenant_id, email);
+
+
+--
+-- Name: core_tenant_users core_tenant_users_tenant_id_user_id_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenant_users
+    ADD CONSTRAINT core_tenant_users_tenant_id_user_id_key UNIQUE (tenant_id, user_id);
+
+
+--
+-- Name: core_tenants core_tenants_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenants
+    ADD CONSTRAINT core_tenants_code_key UNIQUE (code);
+
+
+--
+-- Name: core_tenants core_tenants_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_tenants
+    ADD CONSTRAINT core_tenants_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_usage_records core_usage_records_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_usage_records
+    ADD CONSTRAINT core_usage_records_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_user_roles core_user_roles_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_user_roles
+    ADD CONSTRAINT core_user_roles_pkey PRIMARY KEY (user_id, role_id);
+
+
+--
+-- Name: core_users core_users_email_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_users
+    ADD CONSTRAINT core_users_email_key UNIQUE (email);
+
+
+--
+-- Name: core_users core_users_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_users
+    ADD CONSTRAINT core_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_users core_users_username_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_users
+    ADD CONSTRAINT core_users_username_key UNIQUE (username);
+
+
+--
+-- Name: core_workflow_instances core_workflow_instances_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_workflow_instances
+    ADD CONSTRAINT core_workflow_instances_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_workflow_tasks core_workflow_tasks_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_workflow_tasks
+    ADD CONSTRAINT core_workflow_tasks_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: core_workflows core_workflows_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.core_workflows
+    ADD CONSTRAINT core_workflows_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: crm_dashboard_snapshots crm_dashboard_snapshots_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.crm_dashboard_snapshots
+    ADD CONSTRAINT crm_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: crm_dashboard_snapshots crm_dashboard_snapshots_tenant_id_snapshot_date_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.crm_dashboard_snapshots
+    ADD CONSTRAINT crm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
+
+
+--
 -- Name: data_permissions data_permissions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
 --
 
@@ -37687,11 +40722,83 @@ ALTER TABLE ONLY iam.data_permissions
 
 
 --
+-- Name: dynamic_data dynamic_data_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.dynamic_data
+    ADD CONSTRAINT dynamic_data_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ehs_dashboard_snapshots ehs_dashboard_snapshots_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.ehs_dashboard_snapshots
+    ADD CONSTRAINT ehs_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: ehs_dashboard_snapshots ehs_dashboard_snapshots_tenant_id_snapshot_date_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.ehs_dashboard_snapshots
+    ADD CONSTRAINT ehs_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
+
+
+--
+-- Name: hrm_dashboard_snapshots hrm_dashboard_snapshots_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.hrm_dashboard_snapshots
+    ADD CONSTRAINT hrm_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: hrm_dashboard_snapshots hrm_dashboard_snapshots_tenant_id_snapshot_date_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.hrm_dashboard_snapshots
+    ADD CONSTRAINT hrm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
+
+
+--
+-- Name: lims_dashboard_snapshots lims_dashboard_snapshots_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.lims_dashboard_snapshots
+    ADD CONSTRAINT lims_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: lims_dashboard_snapshots lims_dashboard_snapshots_tenant_id_snapshot_date_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.lims_dashboard_snapshots
+    ADD CONSTRAINT lims_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
+
+
+--
 -- Name: password_reset_tokens password_reset_tokens_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
 --
 
 ALTER TABLE ONLY iam.password_reset_tokens
     ADD CONSTRAINT password_reset_tokens_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pdm_dashboard_snapshots pdm_dashboard_snapshots_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.pdm_dashboard_snapshots
+    ADD CONSTRAINT pdm_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: pdm_dashboard_snapshots pdm_dashboard_snapshots_tenant_id_snapshot_date_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.pdm_dashboard_snapshots
+    ADD CONSTRAINT pdm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
 
 
 --
@@ -37791,6 +40898,22 @@ ALTER TABLE ONLY iam.roles
 
 
 --
+-- Name: schema_registry schema_registry_name_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.schema_registry
+    ADD CONSTRAINT schema_registry_name_key UNIQUE (name);
+
+
+--
+-- Name: schema_registry schema_registry_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.schema_registry
+    ADD CONSTRAINT schema_registry_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: sessions sessions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
 --
 
@@ -37844,6 +40967,22 @@ ALTER TABLE ONLY iam.users
 
 ALTER TABLE ONLY iam.users
     ADD CONSTRAINT users_username_key UNIQUE (username);
+
+
+--
+-- Name: wms_dashboard_snapshots wms_dashboard_snapshots_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.wms_dashboard_snapshots
+    ADD CONSTRAINT wms_dashboard_snapshots_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: wms_dashboard_snapshots wms_dashboard_snapshots_tenant_id_snapshot_date_key; Type: CONSTRAINT; Schema: iam; Owner: -
+--
+
+ALTER TABLE ONLY iam.wms_dashboard_snapshots
+    ADD CONSTRAINT wms_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
 
 
 --
@@ -37948,6 +41087,22 @@ ALTER TABLE ONLY integration.hrm_finance_sync
 
 ALTER TABLE ONLY integration.integration_events
     ADD CONSTRAINT integration_events_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: integration_sync_logs integration_sync_logs_pkey; Type: CONSTRAINT; Schema: integration; Owner: -
+--
+
+ALTER TABLE ONLY integration.integration_sync_logs
+    ADD CONSTRAINT integration_sync_logs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: integration_sync_logs integration_sync_logs_source_uniq; Type: CONSTRAINT; Schema: integration; Owner: -
+--
+
+ALTER TABLE ONLY integration.integration_sync_logs
+    ADD CONSTRAINT integration_sync_logs_source_uniq UNIQUE (source_type, source_id, tenant_id);
 
 
 --
@@ -39327,6 +42482,14 @@ ALTER TABLE ONLY mes.crm_dashboard_snapshots
 
 
 --
+-- Name: dashboard_stats dashboard_stats_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.dashboard_stats
+    ADD CONSTRAINT dashboard_stats_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: demand_forecasts demand_forecasts_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
 --
 
@@ -39415,6 +42578,14 @@ ALTER TABLE ONLY mes.equipment
 
 
 --
+-- Name: financial_records financial_records_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.financial_records
+    ADD CONSTRAINT financial_records_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: hrm_dashboard_snapshots hrm_dashboard_snapshots_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
 --
 
@@ -39428,6 +42599,14 @@ ALTER TABLE ONLY mes.hrm_dashboard_snapshots
 
 ALTER TABLE ONLY mes.hrm_dashboard_snapshots
     ADD CONSTRAINT hrm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
+
+
+--
+-- Name: inspection_records inspection_records_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.inspection_records
+    ADD CONSTRAINT inspection_records_pkey PRIMARY KEY (id);
 
 
 --
@@ -39580,6 +42759,14 @@ ALTER TABLE ONLY mes.pdm_dashboard_snapshots
 
 ALTER TABLE ONLY mes.pdm_dashboard_snapshots
     ADD CONSTRAINT pdm_dashboard_snapshots_tenant_id_snapshot_date_key UNIQUE (tenant_id, snapshot_date);
+
+
+--
+-- Name: permission_audit_logs permission_audit_logs_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.permission_audit_logs
+    ADD CONSTRAINT permission_audit_logs_pkey PRIMARY KEY (id);
 
 
 --
@@ -39791,6 +42978,14 @@ ALTER TABLE ONLY mes.schema_registry
 
 
 --
+-- Name: supply_chain_orders supply_chain_orders_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.supply_chain_orders
+    ADD CONSTRAINT supply_chain_orders_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: team_members team_members_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
 --
 
@@ -39812,6 +43007,38 @@ ALTER TABLE ONLY mes.teams
 
 ALTER TABLE ONLY mes.teams
     ADD CONSTRAINT teams_team_code_key UNIQUE (team_code);
+
+
+--
+-- Name: tenant_permissions tenant_permissions_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.tenant_permissions
+    ADD CONSTRAINT tenant_permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tool_permissions tool_permissions_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.tool_permissions
+    ADD CONSTRAINT tool_permissions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tool_permissions uk_tenant_tool; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.tool_permissions
+    ADD CONSTRAINT uk_tenant_tool UNIQUE (tenant_permission_id, tool_name);
+
+
+--
+-- Name: tenant_permissions uk_tenant_user; Type: CONSTRAINT; Schema: mes; Owner: -
+--
+
+ALTER TABLE ONLY mes.tenant_permissions
+    ADD CONSTRAINT uk_tenant_user UNIQUE (tenant_id, user_id);
 
 
 --
@@ -41351,6 +44578,14 @@ ALTER TABLE ONLY portal.portal_consistency_checks
 
 
 --
+-- Name: portal_dashboard_stats portal_dashboard_stats_pkey; Type: CONSTRAINT; Schema: portal; Owner: -
+--
+
+ALTER TABLE ONLY portal.portal_dashboard_stats
+    ADD CONSTRAINT portal_dashboard_stats_pkey PRIMARY KEY (stat_key, tenant_id);
+
+
+--
 -- Name: portal_dead_letter_queue portal_dead_letter_queue_pkey; Type: CONSTRAINT; Schema: portal; Owner: -
 --
 
@@ -41532,6 +44767,14 @@ ALTER TABLE ONLY portal.portal_masking_rules
 
 ALTER TABLE ONLY portal.portal_metrics
     ADD CONSTRAINT portal_metrics_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: portal_notifications portal_notifications_pkey; Type: CONSTRAINT; Schema: portal; Owner: -
+--
+
+ALTER TABLE ONLY portal.portal_notifications
+    ADD CONSTRAINT portal_notifications_pkey PRIMARY KEY (id);
 
 
 --
@@ -42020,6 +45263,14 @@ ALTER TABLE ONLY public.automation_variables
 
 ALTER TABLE ONLY public.automation_variables
     ADD CONSTRAINT automation_variables_tenant_id_key_key UNIQUE (tenant_id, key);
+
+
+--
+-- Name: barcode_scans barcode_scans_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.barcode_scans
+    ADD CONSTRAINT barcode_scans_pkey PRIMARY KEY (id);
 
 
 --
@@ -45031,6 +48282,14 @@ ALTER TABLE ONLY public.scm_master_data_refs
 
 
 --
+-- Name: search_entity_projections search_entity_projections_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.search_entity_projections
+    ADD CONSTRAINT search_entity_projections_pkey PRIMARY KEY (tenant_id, entity_type, entity_id);
+
+
+--
 -- Name: search_logs search_logs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -45903,6 +49162,54 @@ ALTER TABLE ONLY rs.research_costs
 
 
 --
+-- Name: rs_experiments rs_experiments_pkey; Type: CONSTRAINT; Schema: rs; Owner: -
+--
+
+ALTER TABLE ONLY rs.rs_experiments
+    ADD CONSTRAINT rs_experiments_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: rs_experiments rs_experiments_source_type_source_id_key; Type: CONSTRAINT; Schema: rs; Owner: -
+--
+
+ALTER TABLE ONLY rs.rs_experiments
+    ADD CONSTRAINT rs_experiments_source_type_source_id_key UNIQUE (source_type, source_id);
+
+
+--
+-- Name: rs_formulas rs_formulas_pkey; Type: CONSTRAINT; Schema: rs; Owner: -
+--
+
+ALTER TABLE ONLY rs.rs_formulas
+    ADD CONSTRAINT rs_formulas_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: rs_formulas rs_formulas_source_type_source_id_key; Type: CONSTRAINT; Schema: rs; Owner: -
+--
+
+ALTER TABLE ONLY rs.rs_formulas
+    ADD CONSTRAINT rs_formulas_source_type_source_id_key UNIQUE (source_type, source_id);
+
+
+--
+-- Name: rs_projects rs_projects_pkey; Type: CONSTRAINT; Schema: rs; Owner: -
+--
+
+ALTER TABLE ONLY rs.rs_projects
+    ADD CONSTRAINT rs_projects_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: rs_projects rs_projects_source_type_source_id_key; Type: CONSTRAINT; Schema: rs; Owner: -
+--
+
+ALTER TABLE ONLY rs.rs_projects
+    ADD CONSTRAINT rs_projects_source_type_source_id_key UNIQUE (source_type, source_id);
+
+
+--
 -- Name: schema_defense_ledger schema_defense_ledger_pkey; Type: CONSTRAINT; Schema: rs; Owner: -
 --
 
@@ -46636,6 +49943,22 @@ ALTER TABLE ONLY ticket.ticket_automation_rules
 
 ALTER TABLE ONLY ticket.ticket_knowledge_articles
     ADD CONSTRAINT ticket_knowledge_articles_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: carriers carriers_pkey; Type: CONSTRAINT; Schema: tms; Owner: -
+--
+
+ALTER TABLE ONLY tms.carriers
+    ADD CONSTRAINT carriers_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: drivers drivers_pkey; Type: CONSTRAINT; Schema: tms; Owner: -
+--
+
+ALTER TABLE ONLY tms.drivers
+    ADD CONSTRAINT drivers_pkey PRIMARY KEY (id);
 
 
 --
@@ -62802,6 +66125,13 @@ CREATE INDEX idx_search_logs_tenant ON public.search_logs USING btree (tenant_id
 
 
 --
+-- Name: idx_sep_type_name; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_sep_type_name ON public.search_entity_projections USING btree (entity_type, name);
+
+
+--
 -- Name: idx_shares_dashboard; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -76098,6 +79428,12 @@ ALTER TABLE gis.geofeatures ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gis.geofence_alerts ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: gis_map_markers; Type: ROW SECURITY; Schema: gis; Owner: -
+--
+
+ALTER TABLE gis.gis_map_markers ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: location_photos; Type: ROW SECURITY; Schema: gis; Owner: -
 --
 
@@ -76278,6 +79614,13 @@ CREATE POLICY rls_tenant_isolation ON gis.warehouse_locations USING (((current_s
 --
 
 ALTER TABLE gis.spatial_analysis ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: gis_map_markers tenant_isolation; Type: POLICY; Schema: gis; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON gis.gis_map_markers USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
 
 --
 -- Name: audit_log tenant_isolation_audit_log; Type: POLICY; Schema: gis; Owner: -
@@ -76478,6 +79821,12 @@ ALTER TABLE hrm.departments ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE hrm.employees ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: hrm_cache_invalidation_logs; Type: ROW SECURITY; Schema: hrm; Owner: -
+--
+
+ALTER TABLE hrm.hrm_cache_invalidation_logs ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: hrm_master_data_refs; Type: ROW SECURITY; Schema: hrm; Owner: -
@@ -76782,6 +80131,13 @@ CREATE POLICY rls_tenant_isolation ON hrm.training_records USING (((current_sett
 --
 
 ALTER TABLE hrm.salary_adjustments ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: hrm_cache_invalidation_logs tenant_isolation; Type: POLICY; Schema: hrm; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON hrm.hrm_cache_invalidation_logs USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
 
 --
 -- Name: attendance_records tenant_isolation_attendance_records; Type: POLICY; Schema: hrm; Owner: -
@@ -77248,6 +80604,12 @@ ALTER TABLE integration.hrm_finance_sync ENABLE ROW LEVEL SECURITY;
 ALTER TABLE integration.integration_events ENABLE ROW LEVEL SECURITY;
 
 --
+-- Name: integration_sync_logs; Type: ROW SECURITY; Schema: integration; Owner: -
+--
+
+ALTER TABLE integration.integration_sync_logs ENABLE ROW LEVEL SECURITY;
+
+--
 -- Name: lims_qms_sync; Type: ROW SECURITY; Schema: integration; Owner: -
 --
 
@@ -77341,6 +80703,13 @@ CREATE POLICY rls_tenant_isolation ON integration.hrm_finance_sync USING (((curr
 --
 
 CREATE POLICY tenant_isolation ON integration.external_erp_staging USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
+
+
+--
+-- Name: integration_sync_logs tenant_isolation; Type: POLICY; Schema: integration; Owner: -
+--
+
+CREATE POLICY tenant_isolation ON integration.integration_sync_logs USING (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid))) WITH CHECK (((current_setting('app.tenant_id'::text, true) IS NULL) OR (current_setting('app.tenant_id'::text, true) = ''::text) OR (current_setting('app.tenant_id'::text, true) = '00000000-0000-0000-0000-000000000000'::text) OR (tenant_id IS NULL) OR (tenant_id = (NULLIF(current_setting('app.tenant_id'::text, true), ''::text))::uuid)));
 
 
 --
@@ -83092,5 +86461,5 @@ ALTER TABLE wms.wms_master_data_refs ENABLE ROW LEVEL SECURITY;
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 1BbdoEXjH620kactsZRmymWrF7zzyoIp7ZGG8GsbFvT3e0WXj8xqIQHdQ2zhZfq
+\unrestrict ZKgh91iHXlNKUfxuI7BnHHaIb3JPQksrZjX5XuVEHggDc6B0gP8VB2cz5eq5yGi
 
