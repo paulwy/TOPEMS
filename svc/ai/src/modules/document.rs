@@ -11,6 +11,7 @@ use uuid::Uuid;
 use crate::modules::models::*;
 use crate::shared::AppState;
 use topems_shared_auth::get_tenant_id_from_claims;
+use topems_shared_event::event::commit_retry;
 
 pub struct DocumentApi;
 
@@ -190,17 +191,14 @@ pub async fn upload(
                         extracted_data,
                         processed_at: Some(chrono::Utc::now()),
                     };
-                    if let Err(e) = publisher
-                        .publish_event(
-                            topems_shared_event::event::EventType::AiDocumentProcessed,
-                            payload,
-                        )
-                        .await
-                    {
+                    let et = topems_shared_event::event::EventType::AiDocumentProcessed;
+                    if let Err(e) = publisher.publish_event(et, &payload).await {
                         tracing::warn!(
-                            "[ai] AiDocumentProcessed 事件发布失败（graceful fallback）: {}",
+                            "[ai] AiDocumentProcessed 事件发布失败（graceful fallback）: {}，入重试队列",
                             e
                         );
+                        // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
+                        commit_retry::push_retry_typed("ai", et, &payload).await;
                     } else {
                         tracing::info!(
                             "[ai] AiDocumentProcessed 事件发布成功 - doc_id={}",
