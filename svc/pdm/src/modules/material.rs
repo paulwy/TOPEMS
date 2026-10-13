@@ -11,7 +11,7 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::locale::Locale;
-use topems_shared_event::event::{EventType, MasterDataAction, PdmMaterialCreatedPayload};
+use topems_shared_event::event::{commit_retry, EventType, MasterDataAction, PdmMaterialCreatedPayload};
 
 /// 物料列表缓存 Key
 fn materials_list_cache_key(
@@ -282,14 +282,14 @@ pub async fn create_material(
                         specification: mat_spec,
                         created_by: None,
                     };
-                    if let Err(e) = publisher
-                        .publish_event(EventType::PdmMaterialCreated, payload)
-                        .await
-                    {
+                    let et = EventType::PdmMaterialCreated;
+                    if let Err(e) = publisher.publish_event(et, &payload).await {
                         tracing::warn!(
-                            "[pdm] PdmMaterialCreated 事件发布失败（graceful fallback）: {}",
+                            "[pdm] PdmMaterialCreated 事件发布失败（graceful fallback）: {}，入重试队列",
                             e
                         );
+                        // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
+                        commit_retry::push_retry_typed("pdm", et, &payload).await;
                     } else {
                         tracing::info!(
                             "[pdm] PdmMaterialCreated 事件发布成功 - material_id={}",
