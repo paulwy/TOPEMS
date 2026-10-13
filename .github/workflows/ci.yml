@@ -358,14 +358,16 @@ jobs:
             --db-url "postgresql://postgres:postgres@localhost:5432/topems?options=-csearch_path=mes,public"
 
   # ──────────────────────────────────────────────────────────────────────────
-  # runtime-sql-contract-gate：运行时查询风格 crate（qms/pdm/lims/ehs/pm/ticket）在线契约门禁
+  # runtime-sql-contract-gate：运行时查询风格 crate 在线契约门禁（--all 全 29 crate）
   # 流程：postgres 起库 → 导入全 schema 快照 fixtures/full_schema_contract.sql
   #       → 对每 crate 提取的运行时 SQL 逐个 PREPARE → 断言 0 HARD
   # 规则：这些 crate 无 sqlx 编译期宏，离线 cargo check 绿 ≠ SQL↔schema 契约成立；
   #       缺列/缺表/别名错/类型强制错在 CI 阻断（本地：make gate-runtime-contract）
+  # [2026-10-13 Phase2] 由 6 crate 升级为 --all 全量 29 crate（367 HARD 清零后全绿，
+  #                     其余 23 crate 的回归也纳入 CI 守门，防止再现漏网）
   # ──────────────────────────────────────────────────────────────────────────
   runtime-sql-contract-gate:
-    name: Gate · runtime SQL contract (6 crates)
+    name: Gate · runtime SQL contract (all 29 crates)
     needs: changes
     if: (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true') && inputs.skip_rust != true
     runs-on: ubuntu-latest
@@ -394,9 +396,10 @@ jobs:
           psql "postgresql://postgres:postgres@localhost:5432/topems" \
             -v ON_ERROR_STOP=1 -q -f fixtures/full_schema_contract.sql
 
-      - name: Run runtime SQL contract gate (0 hard-fail assert)
+      - name: Run runtime SQL contract gate (0 hard-fail assert, --all 29 crates)
         run: |
           python3 scripts/dev/check-runtime-sql-contract.py \
+            --all \
             --db-url "postgresql://postgres:postgres@localhost:5432/topems"
 
   # ──────────────────────────────────────────────────────────────────────────
