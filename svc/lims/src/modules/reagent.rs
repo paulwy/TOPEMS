@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::commit_retry;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
@@ -243,14 +244,15 @@ pub async fn create_reagent(
                                     min_stock: None,
                                     expiry_date: expiry,
                                 };
-                                if let Err(e) = publisher
-                                    .publish_event(
-                                        topems_shared_event::event::EventType::LimsReagentAlert,
-                                        payload,
-                                    )
-                                    .await
-                                {
-                                    tracing::warn!("[lims] LimsReagentAlert 事件发布失败: {}", e);
+                                let et =
+                                    topems_shared_event::event::EventType::LimsReagentAlert;
+                                if let Err(e) = publisher.publish_event(et, &payload).await {
+                                    tracing::warn!(
+                                        "[lims] LimsReagentAlert 事件发布失败: {}，入重试队列",
+                                        e
+                                    );
+                                    // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发。
+                                    commit_retry::push_retry_typed("lims", et, &payload).await;
                                 }
                             });
                         }

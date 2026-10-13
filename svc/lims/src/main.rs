@@ -395,6 +395,28 @@ async fn main() -> anyhow::Result<()> {
         modules::lims_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
+    // D6：事件发布重试后台任务——周期扫描 Redis ZSET 到期项重发（typed 通道直重发；
+    // lims 无 searchable 通道，rebuild 回调恒返回 None）。对齐 pm/hrm 注册范式。
+    {
+        let publisher = ctx.event_publisher.clone();
+        tokio::spawn(async move {
+            let mut tick = tokio::time::interval(std::time::Duration::from_secs(15));
+            loop {
+                tick.tick().await;
+                if let Some(p) = &publisher {
+                    topems_shared_event::event::commit_retry::run_relay(
+                        "lims",
+                        p,
+                        |_entity_type: &str, _entity_id: uuid::Uuid| async {
+                            Option::<serde_json::Value>::None
+                        },
+                    )
+                    .await;
+                }
+            }
+        });
+    }
+
     run(app).await?;
     Ok(())
 }

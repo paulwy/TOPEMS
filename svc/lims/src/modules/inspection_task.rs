@@ -8,6 +8,7 @@ use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_event::event::{commit_retry, CacheInvalidatedPayload, EventType};
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
@@ -683,13 +684,53 @@ pub async fn submit_result(
                 let cache_key = detail_key.clone();
                 let list_key = format!("lims:task:list:{}", ctx.tenant_id);
                 tokio::spawn(async move {
-                    // 缓存失效广播
-                    let _ = publisher
+                    // 缓存失效广播（D6：失败入 Redis ZSET 重试，对齐 hrm employee 范式）
+                    if let Err(e) = publisher
                         .publish_cache_invalidated(&cache_key, "specific", Some("result_submitted"))
+                        .await
+                    {
+                        tracing::warn!(
+                            "[lims] 缓存失效事件发布失败（detail）: {}，入重试队列",
+                            e
+                        );
+                        let payload = CacheInvalidatedPayload {
+                            source_service: "lims".to_string(),
+                            source_instance: format!("retry-{}", std::process::id()),
+                            cache_key_pattern: cache_key.clone(),
+                            invalidation_level: "specific".to_string(),
+                            reason: Some("result_submitted".to_string()),
+                            invalidated_at: chrono::Utc::now(),
+                        };
+                        commit_retry::push_retry_typed(
+                            "lims",
+                            EventType::CacheInvalidated,
+                            &payload,
+                        )
                         .await;
-                    let _ = publisher
+                    }
+                    if let Err(e) = publisher
                         .publish_cache_invalidated(&list_key, "pattern", Some("result_submitted"))
+                        .await
+                    {
+                        tracing::warn!(
+                            "[lims] 缓存失效事件发布失败（list）: {}，入重试队列",
+                            e
+                        );
+                        let payload = CacheInvalidatedPayload {
+                            source_service: "lims".to_string(),
+                            source_instance: format!("retry-{}", std::process::id()),
+                            cache_key_pattern: list_key.clone(),
+                            invalidation_level: "pattern".to_string(),
+                            reason: Some("result_submitted".to_string()),
+                            invalidated_at: chrono::Utc::now(),
+                        };
+                        commit_retry::push_retry_typed(
+                            "lims",
+                            EventType::CacheInvalidated,
+                            &payload,
+                        )
                         .await;
+                    }
                     let payload =
                         topems_shared_event::event::LimsInspectionResultSubmittedPayload {
                             task_id: tid,
@@ -700,14 +741,14 @@ pub async fn submit_result(
                             result: result_val,
                             recorded_by,
                         };
-                    if let Err(e) = publisher
-                        .publish_event(
-                            topems_shared_event::event::EventType::LimsInspectionResultSubmitted,
-                            payload,
-                        )
-                        .await
-                    {
-                        tracing::warn!("[lims] LimsInspectionResultSubmitted 事件发布失败（graceful fallback）: {}", e);
+                    let et = EventType::LimsInspectionResultSubmitted;
+                    if let Err(e) = publisher.publish_event(et, &payload).await {
+                        tracing::warn!(
+                            "[lims] LimsInspectionResultSubmitted 事件发布失败（graceful fallback）: {}，入重试队列",
+                            e
+                        );
+                        // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发。
+                        commit_retry::push_retry_typed("lims", et, &payload).await;
                     } else {
                         tracing::info!(
                             "[lims] LimsInspectionResultSubmitted 事件发布成功 - task_id={}",
