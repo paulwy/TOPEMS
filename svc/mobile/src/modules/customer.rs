@@ -4,6 +4,7 @@
 use axum::{extract::State, Json};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::crm_api::CrmApi, TypedServiceClient};
+use crate::modules::contract_util::unwrap_data;
 
 /// 客户列表（前端 GET /customer）
 pub async fn list_customers(
@@ -27,7 +28,7 @@ pub async fn get_customer(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.get_customer(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "获取客户详情成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取客户详情成功")),
         Err(e) => {
             tracing::error!("调用CRM服务获取客户详情失败: {}", e);
             Json(ApiResponse::error(500, "获取客户详情失败"))
@@ -41,7 +42,7 @@ pub async fn create_customer(
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.create_customer(&payload).await {
-        Ok(data) => Json(ApiResponse::success(data, "创建客户成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建客户成功")),
         Err(e) => {
             tracing::error!("调用CRM服务创建客户失败: {}", e);
             Json(ApiResponse::error(500, "创建客户失败"))
@@ -56,7 +57,7 @@ pub async fn update_customer(
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.update_customer(&id, &payload).await {
-        Ok(data) => Json(ApiResponse::success(data, "更新客户成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "更新客户成功")),
         Err(e) => {
             tracing::error!("调用CRM服务更新客户失败: {}", e);
             Json(ApiResponse::error(500, "更新客户失败"))
@@ -70,7 +71,7 @@ pub async fn delete_customer(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.delete_customer(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "删除客户成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "删除客户成功")),
         Err(e) => {
             tracing::error!("调用CRM服务删除客户失败: {}", e);
             Json(ApiResponse::error(500, "删除客户失败"))

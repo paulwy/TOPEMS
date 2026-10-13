@@ -1245,3 +1245,65 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **本地入口**：`make sqlx-check`（缓存一致性，离线）/ `make check-offline`（全 workspace 离线 check）
 
 
+---
+
+## D3 遗留修复：mobile 内部服务调用 + ai_knowledge 启动告警（2026-10-13 规划）
+
+> 用户指令：制定规划修复两个遗留（mobile 内部服务调用、ai_knowledge 启动告警），同步更新 TODO.md。
+> 原则：缺后端补后端，完善、补充；live DB 为权威。
+
+### 遗留 1：mobile 内部服务调用（server 日志 10 处 ERROR，均为兜底降级不阻塞）
+
+**根因**（已核实）：
+- **解码错误**（WMS `/inbound-orders`、`/outbound-orders`，MES `/equipment`、`/work-reports`）：共享 client `list_*` 方法用 `get::<Vec<Value>>` 解码裸数组，后端返回 `{code,success,data:{items,total}}` envelope → `error decoding response body`
+- **404 路由缺失**（QMS `/quality-tasks`、`/defect-records`）：共享 api 路径在 QMS 无对应路由（QMS 现有 `/checks`、`/audit-tasks` 等）
+- **WMS stocktake 路径不匹配**：共享 api `/stocktake`、`/stocktake/tasks`、`/stocktake/{id}/records` vs WMS 实际 `/stock-takes`、`/stock-takes/{id}/items`
+- **Workflow `get_task` 假 id**：unified-core `/tasks/{id}` 404 响应 `data:null` → `get_and_unwrap` 报 `Config("missing data field")`（语义应为 NotFound）
+
+**修复计划**：
+- **1a 共享 client 解码**（lib/shared-service-client）：qms/wms/mes 的 8 个 `list_*` 方法改用既有 `get_items`（解包 `data.items` / `data.orders` / `data` 直数组，兼容 envelope）
+- **1b QMS 补路由**（svc/qms）：`GET /quality-tasks`、`GET /quality-tasks/{id}`、`PUT /quality-tasks/{id}/status`（数据源 qms.quality_inspections）；`GET /defect-records`、`POST /defect-records`（数据源 qms.inspection_items，result=defect 类）；返回 envelope 供 get_items 消费
+- **1c WMS stocktake 对齐**：共享 api 路径对齐 WMS 实际（`/stock-takes` list、`/stock-takes/tasks` 补路由或映射、records → `/stock-takes/{id}/items`）
+- **1d get_and_unwrap 容错**：非 2xx 先判状态码返回 NotFound/ServiceError，不再报 `Config("missing data field")`
+
+### 遗留 2：ai_knowledge 启动告警（启动 1 条 ERROR，不阻塞）
+
+**根因**（已核实）：`init_database` 用 `ddl_pool`（MIGRATE_URL=topems）对 `core.knowledge_bases`（owner=topems_app）执行 `CREATE INDEX IF NOT EXISTS`——PG 权限检查先于存在性 → `must be owner of table knowledge_bases`；索引实际已存在（idx_kb_* 5 个）。
+
+**修复计划**：
+- `svc/ai/src/modules/ai_knowledge/mod.rs`：索引创建改为 `pg_indexes` 存在性检查（已存在则跳过 DDL 不执行），缺失才创建（失败仍降级告警）
+
+### 验证与提交
+- `cargo build -p topems-server` → 重启 → 日志确认 mobile 调用错误清零 + ai_knowledge 告警消失
+- mobile 各端点实测（quality/inventory/production/approval）
+- WCS smoke 复验 0 FAIL；lefthook 门禁（migration-validate/boundary-gate-py/sqlx-cache-freshness/rls-permissions）全过
+- 分批复提交
+
+---
+
+## ✅ D3 已实施（2026-10-13 修复完成，全部验证通过）
+
+### 遗留 1 实施记录
+- **1a 共享 client 解码**：qms/wms/mes 8 个 `list_*` 改用 `get_items`（`qms_api.rs`/`wms_api.rs`/`mes_api.rs`），envelope 解包 `data.items`/`data.orders`/`data` 直数组
+- **1b QMS 补路由**：新建 `svc/qms/src/modules/quality_task.rs`（5 路由）：
+  - `GET /quality-tasks`、`GET /quality-tasks/{id}`、`PUT /quality-tasks/{id}/status`（数据源 `qms.qa_quality_inspections`）
+  - `GET /defect-records`、`POST /defect-records`（数据源 `qms.qa_inspection_results`，未合格项即缺陷）
+  - 已注册 `modules/mod.rs`；响应 envelope `{items,total,page,page_size}`
+- **1c WMS stocktake 对齐**：共享 api `/stocktake/tasks`→`/stock-takes`（list，get_items）、`/stocktake/{id}/records`→`/stock-takes/{id}/items`、`/stocktake`→`/stock-takes`（create）
+- **1d get_and_unwrap 容错**：业务 code≠200 时返回 `ServiceError{status_code,message}`（unified-core HTTP200+code404 契约），不再误报 `Config("missing data field")`（实测 `/tasks/{id}` 404 → `任务不存在`）
+- **mobile 透传解包**：新增 `svc/mobile/src/modules/contract_util.rs::unwrap_data`，批量应用到 approval/attendance/customer/inventory/notifications/production/quality 共 30 处透传 handler，消除 `ApiResponse` 双层嵌套（实测 inventory/attendance 的 `data` 已直出业务字段）
+
+### 遗留 2 实施记录
+- `svc/ai/src/modules/ai_knowledge/mod.rs` `init_database` 全面改为存在性守卫：
+  - 4 张表（knowledge_bases/documents/chunks/qa_history）→ `pg_tables` 检查，已存在跳过
+  - 17 个索引（idx_kb_*/idx_kd_*/idx_kc_*/idx_qa_*）→ `pg_indexes` 检查；创建失败降级 warn（非关键）
+  - `core_set_updated_at` 函数 + trg_kb/trg_kd 触发器 → `pg_proc`/`pg_trigger` 检查；创建失败降级 warn（增强性对象）
+  - 注：live DB 实际缺 idx_qa_*（4）、idx_kc_embedding、函数、触发器——均因 ddl_pool 无 DDL 权限无法创建，已降级 warn 不阻塞启动
+
+### 验证结果
+- `cargo build -p topems-server` 0 error；重启后：
+  - **ai_knowledge ERROR 告警 = 0**（索引/函数/触发器降级 warn 属预期）
+  - mobile 端点实测全 200 且无嵌套：`/api/mobile/quality/tasks`（质检任务有数据）、`/api/mobile/inventory/items`、`/api/mobile/production/orders`、`/api/mobile/attendance`（`data.status` 直出）、`/api/mobile/approvals`（`data.items` 直出）
+  - `curl /api/core/flow/tasks/{不存在}` → `code:404, message:任务不存在`（1d 生效）
+- WCS smoke 复验待提交前执行
+

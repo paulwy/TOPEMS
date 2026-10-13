@@ -21,7 +21,7 @@ import urllib.request
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 API_DIR = os.path.join(BASE, "apps", "mobile", "src", "api")
-MOBILE_URL = "http://localhost:8070/api/mobile"
+MOBILE_URL = "http://localhost:8099/api/mobile"
 TEST_UID = "e91e2228-ab9d-4ac3-99f4-fdcd9c723f21"
 TEST_UUID = "00000000-0000-0000-0000-000000000099"
 

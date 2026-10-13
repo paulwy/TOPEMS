@@ -14,6 +14,7 @@ use topems_shared_service_client::service_client::{
 };
 
 use super::auth_utils::extract_user_id_from_token;
+use crate::modules::contract_util::unwrap_data;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AttendanceRecord {
@@ -115,7 +116,7 @@ pub async fn get_attendance_overview(
     match client.get_attendance_overview(&user_id).await {
         Ok(data) => (
             StatusCode::OK,
-            Json(ApiResponse::success(data, "获取考勤概览成功")),
+            Json(ApiResponse::success(unwrap_data(data), "获取考勤概览成功")),
         ),
         Err(e) => {
             tracing::error!("调用HRM服务获取考勤概览失败: {}", e);
@@ -155,7 +156,7 @@ pub async fn get_attendance_stats(
     match client.get_attendance_stats(&user_id).await {
         Ok(stats) => (
             StatusCode::OK,
-            Json(ApiResponse::success(stats, "获取考勤统计成功")),
+            Json(ApiResponse::success(unwrap_data(stats), "获取考勤统计成功")),
         ),
         Err(e) => {
             tracing::error!("调用HRM服务获取考勤统计失败: {}", e);
@@ -203,7 +204,7 @@ pub async fn list_attendance_records(
     {
         Ok(data) => (
             StatusCode::OK,
-            Json(ApiResponse::success(data, "获取考勤记录成功")),
+            Json(ApiResponse::success(unwrap_data(data), "获取考勤记录成功")),
         ),
         Err(e) => {
             tracing::error!("调用HRM服务获取考勤记录失败: {}", e);
@@ -525,7 +526,7 @@ pub async fn list_leave_applications(
     {
         Ok(data) => (
             StatusCode::OK,
-            Json(ApiResponse::success(data, "获取请假申请成功")),
+            Json(ApiResponse::success(unwrap_data(data), "获取请假申请成功")),
         ),
         Err(e) => {
             tracing::error!("调用HRM服务获取请假申请失败: {}", e);

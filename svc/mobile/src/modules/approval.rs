@@ -15,6 +15,7 @@ use topems_shared_core::response::ApiResponse;
 
 use topems_shared_auth::auth::AuthState;
 use topems_shared_service_client::service_client::{TypedServiceClient, WorkflowApi, WorkflowTask};
+use crate::modules::contract_util::unwrap_data;
 
 #[derive(Debug, Deserialize)]
 pub struct ApprovalListParams {
@@ -250,7 +251,7 @@ pub async fn approve_approval_task(
                 .unwrap_or_else(|| json!({ "id": id, "status": "approved" }));
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(data, "审批通过成功")),
+                Json(ApiResponse::success(unwrap_data(data), "审批通过成功")),
             )
         }
         Ok(resp) if resp.code == 404 => (
@@ -314,7 +315,7 @@ pub async fn reject_approval_task(
                 .unwrap_or_else(|| json!({ "id": id, "status": "rejected" }));
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(data, "审批驳回成功")),
+                Json(ApiResponse::success(unwrap_data(data), "审批驳回成功")),
             )
         }
         Ok(resp) if resp.code == 404 => (
@@ -391,7 +392,7 @@ pub async fn delegate_approval_task(
                 .unwrap_or_else(|| json!({ "id": id, "status": "delegated" }));
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(data, "审批委派成功")),
+                Json(ApiResponse::success(unwrap_data(data), "审批委派成功")),
             )
         }
         Ok(resp) if resp.code == 404 => (

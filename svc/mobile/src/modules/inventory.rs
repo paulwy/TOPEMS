@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::wms_api::WmsApi, TypedServiceClient};
+use crate::modules::contract_util::unwrap_data;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateStocktakeRecordRequest {
@@ -32,7 +33,7 @@ pub async fn list_inventory_items(
     State(client): State<TypedServiceClient<WmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_inventory_items(1, 100).await {
-        Ok(data) => Json(ApiResponse::success(data, "获取库存列表成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取库存列表成功")),
         Err(e) => {
             tracing::error!("调用WMS服务获取库存列表失败: {}", e);
             Json(ApiResponse::error(500, "获取库存列表失败"))
@@ -56,7 +57,7 @@ pub async fn create_inventory_item(
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.create_inventory(&payload).await {
-        Ok(data) => Json(ApiResponse::success(data, "创建库存成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建库存成功")),
         Err(e) => {
             tracing::error!("调用WMS服务创建库存失败: {}", e);
             Json(ApiResponse::error(500, "创建库存失败"))
@@ -82,7 +83,7 @@ pub async fn get_inventory_item(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.get_inventory_item(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "获取库存详情成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取库存详情成功")),
         Err(e) => {
             tracing::error!("调用WMS服务获取库存详情失败: {}", e);
             Json(ApiResponse::error(500, "获取库存详情失败"))
@@ -97,7 +98,7 @@ pub async fn update_inventory_item(
     Json(payload): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.update_inventory(&id, &payload).await {
-        Ok(data) => Json(ApiResponse::success(data, "更新库存成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "更新库存成功")),
         Err(e) => {
             tracing::error!("调用WMS服务更新库存失败: {}", e);
             Json(ApiResponse::error(500, "更新库存失败"))
@@ -111,7 +112,7 @@ pub async fn delete_inventory_item(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.delete_inventory(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "删除库存成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "删除库存成功")),
         Err(e) => {
             tracing::error!("调用WMS服务删除库存失败: {}", e);
             Json(ApiResponse::error(500, "删除库存失败"))
@@ -124,7 +125,7 @@ pub async fn list_low_stock_items(
     State(client): State<TypedServiceClient<WmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_low_stock_inventory().await {
-        Ok(data) => Json(ApiResponse::success(data, "获取低库存列表成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取低库存列表成功")),
         Err(e) => {
             tracing::error!("调用WMS服务获取低库存列表失败: {}", e);
             Json(ApiResponse::error(500, "获取低库存列表失败"))
@@ -189,7 +190,10 @@ pub async fn list_stocktake_tasks(
     State(client): State<TypedServiceClient<WmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_stocktake_tasks(1, 100).await {
-        Ok(data) => Json(ApiResponse::success(data, "获取盘点任务列表成功")),
+        Ok(data) => Json(ApiResponse::success(
+            serde_json::json!({ "items": data, "total": data.len() }),
+            "获取盘点任务列表成功",
+        )),
         Err(e) => {
             // WMS 上游暂未实现盘点任务端点（探测 404），轻量兜底返回空列表，待上游支持。
             tracing::error!("调用WMS服务获取盘点任务失败（兜底空列表）: {}", e);
@@ -225,7 +229,7 @@ pub async fn create_stocktake_record(
     });
 
     match client.create_stocktake_record(&task_id, &data).await {
-        Ok(data) => Json(ApiResponse::success(data, "创建盘点记录成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建盘点记录成功")),
         Err(e) => {
             tracing::error!("调用WMS服务创建盘点记录失败: {}", e);
             Json(ApiResponse::error(500, "创建盘点记录失败"))

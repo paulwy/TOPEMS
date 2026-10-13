@@ -6,6 +6,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
+use crate::modules::contract_util::unwrap_data;
 use serde::Deserialize;
 use serde_json::{json, Value};
 
@@ -156,7 +157,7 @@ pub async fn get_notification(
             let data = extract_data(&raw);
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(data, "获取通知详情成功")),
+                Json(ApiResponse::success(unwrap_data(data), "获取通知详情成功")),
             )
         }
         Err(e) => {
@@ -188,7 +189,7 @@ pub async fn mark_notification_read(
             let data = extract_data(&raw);
             (
                 StatusCode::OK,
-                Json(ApiResponse::success(data, "标记已读成功")),
+                Json(ApiResponse::success(unwrap_data(data), "标记已读成功")),
             )
         }
         Err(e) => {

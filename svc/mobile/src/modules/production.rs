@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use topems_shared_service_client::service_client::{api::mes_api::MesApi, TypedServiceClient};
 
 use topems_shared_core::response::ApiResponse;
+use crate::modules::contract_util::unwrap_data;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateWorkReportRequest {
@@ -59,7 +60,7 @@ pub async fn get_production_order(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.get_production_order(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "获取生产订单详情成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取生产订单详情成功")),
         Err(e) => {
             tracing::error!("调用MES服务获取生产订单详情失败: {}", e);
             Json(ApiResponse::error(500, "获取生产订单详情失败"))
@@ -73,7 +74,7 @@ pub async fn create_production_order(
     axum::extract::Json(payload): axum::extract::Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.create_production_order(&payload).await {
-        Ok(data) => Json(ApiResponse::success(data, "创建生产订单成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "创建生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务创建生产订单失败: {}", e);
             Json(ApiResponse::error(500, "创建生产订单失败"))
@@ -88,7 +89,7 @@ pub async fn update_production_order(
     axum::extract::Json(payload): axum::extract::Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.update_production_order(&id, &payload).await {
-        Ok(data) => Json(ApiResponse::success(data, "更新生产订单成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "更新生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务更新生产订单失败: {}", e);
             Json(ApiResponse::error(500, "更新生产订单失败"))
@@ -102,7 +103,7 @@ pub async fn delete_production_order(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.delete_production_order(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "删除生产订单成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "删除生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务删除生产订单失败: {}", e);
             Json(ApiResponse::error(500, "删除生产订单失败"))
@@ -116,7 +117,7 @@ pub async fn start_production_order(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.start_production_order(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "开始生产订单成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "开始生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务开始生产订单失败: {}", e);
             Json(ApiResponse::error(500, "开始生产订单失败"))
@@ -130,7 +131,7 @@ pub async fn complete_production_order(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.complete_production_order(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "完成生产订单成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "完成生产订单成功")),
         Err(e) => {
             tracing::error!("调用MES服务完成生产订单失败: {}", e);
             Json(ApiResponse::error(500, "完成生产订单失败"))
@@ -249,7 +250,7 @@ pub async fn submit_work_report(
     });
 
     match client.submit_work_report(&data).await {
-        Ok(data) => Json(ApiResponse::success(data, "提交报工记录成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "提交报工记录成功")),
         Err(e) => {
             tracing::error!("调用MES服务提交报工记录失败: {}", e);
             Json(ApiResponse::error(500, "提交报工记录失败"))
@@ -291,7 +292,7 @@ pub async fn get_equipment(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.get_equipment(&id).await {
-        Ok(data) => Json(ApiResponse::success(data, "获取设备详情成功")),
+        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取设备详情成功")),
         Err(e) => {
             tracing::error!("调用MES服务获取设备详情失败: {}", e);
             Json(ApiResponse::error(500, "获取设备详情失败"))
