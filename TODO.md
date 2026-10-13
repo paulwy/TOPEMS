@@ -12,8 +12,8 @@
 - **④ 缺表缺库**：无缺库；缺 `portal_notifications`/`portal_dashboard_stats`/`wms.alerts` 3 表 + **85 个时间戳迁移未应用**（磁盘 336 vs 台账 251）⚠️
 
 ### 推进计划（1→2→3）
-- [ ] **Phase 1** 扩展门禁覆盖全 crate：修 unified-core 目录映射、analytics 多 schema search_path；门禁全绿为 CI 硬门
-- [ ] **Phase 2** 修复 51 处 HARD：先复核 42P08/22P02 假阳性；再修幻影列(42703)/uuid=text(42883)/畸形 SQL(42601)/GROUP BY(42803)/缺表(42P01)，逐 crate 重跑门禁
+- [x] **Phase 1** 扩展门禁覆盖全 crate：修 PREPARE 名 bug（unified-core 575→16/master-data→10/plugin-registry→11，纯门禁 bug）+ 连字符 schema 映射 + analytics 多 schema + `--all` 全量基线（commit 95532d1a7）；默认 6 crate 保持绿 CI 不破。**全量实测 21 crate 共 433 HARD**（主因 42883 uuid=text / 42703 幻影列，scm≈175 主体）
+- [ ] **Phase 2** 修复 433 HARD：先复核 42P08/22P02 假阳性；按模式批修（uuid=text→幻影列→语法→GROUP BY→缺表）；逐 crate 修绿→加入 DEFAULT_CRATES 硬门禁→重跑门禁+cargo check；优先 scm(175)/finance(64)/rd(42)/wms(22)/mobile(16)/unified-core(16)
 - [ ] **Phase 3** 审慎应用 85 个未应用迁移：甄别 superseded/WIP/应应用；按 4 表模式幂等 DDL→登记台账→校验 checksums；补建 3 缺表；live 唯一权威，不盲目 migrate run
 
 ---
