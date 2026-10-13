@@ -28,7 +28,7 @@ futures-lite.workspace = true
 
 # Redis/消息队列依赖
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
-lapin = { version = "4.10", default-features = false, features = ["rustls--ring", "default-runtime"] }
+lapin = { version = "4.12", default-features = false, features = ["rustls--ring", "default-runtime"] }
 
 # 缓存依赖
 parking_lot.workspace = true

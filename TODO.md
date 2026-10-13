@@ -882,6 +882,8 @@
 
 ### ⚠️ AR-08 后续（大版本升级，独立基础设施迁移，不在本批）
 - sqlx 0.8→0.9、reqwest 0.12→0.13、redis 0.24→1.7、rand 0.8→0.10、utoipa 4→6、opentelemetry 0.32→0.33、prost 0.13→0.14、sha2 0.10→0.11、base64 0.22→0.23、hmac 0.12→0.13、aes-gcm 0.10→0.11、brotli 3.5→9、serial_test 3→4、md5 0.7→0.8、etcd-client 0.19→0.21、lapin 4.10→4.12（API 破坏面大，需逐项评估后单独立项）
+  - ✅ **lapin 已升（2026-10-14 决策批 4.9）**：lapin 4.10.0→4.12.2（同属 major 4，原标"大版本破坏"系误记，实为补丁/次版本级）；根 workspace 键翻为 `4.12`（Cargo.toml:410），shared-event 显式声明同步为 `4.12`（`default-features=false` 保留）；`SQLX_OFFLINE=true cargo check -p topems-shared-event` 0 error 通过。
+  - 📋 **其余 15 项 DEFER/HOLD**：sqlx/reqwest/redis/utoipa/rand/opentelemetry/prost/sha2/base64/hmac/aes-gcm/serial_test/md5/etcd-client 共 14 项 DEFER（无公开 CVE、无功能受限，不因"版本旧"本身升级）；brotli 3.5→9 受 reqwest 双版本树（0.12/0.13）阻塞 HOLD。统一触发条件=①出现安全公告 ②新依赖硬要求更高版本 ③上游维护停滞；任一信号出现再单独立项。
 
 ### ⚠️ 事件与遗留
 - **并发改动抹除事件（已恢复）**：首次 DB-06 提交时 `git commit --only` 的 hidden-stash 恢复失败（migration-validate 在钩子内重写已暂存 checksums.txt → patch failed:190），吞掉全部未暂存改动（AR×3、FE-20/21 代码、plugin-registry 注释）；恢复：两工作包子代理（在场 IDLE_RESUMABLE）按原记忆精确重放（AR +93/-8、FE-20 注释、FE-21 三文件），重放后均已提交；教训——迁移类提交勿在暂存 checksums.txt 时被钩子重写，先对齐暂存/工作区
