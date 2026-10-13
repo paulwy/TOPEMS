@@ -1,6 +1,23 @@
 
 ---
 
+## 运行时 SQL 契约门禁全仓审计（2026-10-13）
+
+> 报告：`docs/audit/运行时SQL契约门禁审计报告_2026-10-13.md`。时间类型迁移收尾后四项核查。
+
+### 审计结论（四项）
+- **① 未推送代码**：13 提交已全部 `git push origin main`（643fe9383..8412e2f6b），HEAD==origin==8412e2f6b ✅
+- **② 中断任务**：stash/TODO/reflog 均干净，主线全提交；每日审计任务今早成功 ✅
+- **③ 其他模块同类问题**：门禁默认仅覆盖 6 crate；扩展实测 **51 HARD**（wms 22 / crm 11 / ai 7 / mes 6 / portal 5）+ unified-core/analytics 2 crate 未覆盖 ⚠️
+- **④ 缺表缺库**：无缺库；缺 `portal_notifications`/`portal_dashboard_stats`/`wms.alerts` 3 表 + **85 个时间戳迁移未应用**（磁盘 336 vs 台账 251）⚠️
+
+### 推进计划（1→2→3）
+- [ ] **Phase 1** 扩展门禁覆盖全 crate：修 unified-core 目录映射、analytics 多 schema search_path；门禁全绿为 CI 硬门
+- [ ] **Phase 2** 修复 51 处 HARD：先复核 42P08/22P02 假阳性；再修幻影列(42703)/uuid=text(42883)/畸形 SQL(42601)/GROUP BY(42803)/缺表(42P01)，逐 crate 重跑门禁
+- [ ] **Phase 3** 审慎应用 85 个未应用迁移：甄别 superseded/WIP/应应用；按 4 表模式幂等 DDL→登记台账→校验 checksums；补建 3 缺表；live 唯一权威，不盲目 migrate run
+
+---
+
 ### 组合 A 仓库收尾批 — ✅ 完成（2026-10-12）
 
 ### A1 git 同步 — ✅ 完成
