@@ -831,6 +831,8 @@
 - **结果**：**4019/4125 PASS，106 FAIL**（route_missing 67 / handler_error 38 / network 1），业务性非 2xx WARN 2180（不阻塞，需人工复核）
 - **FAIL 分布**：ehs 61、integration 11、mes 7、bi 7、communication 5、mobile 4、wms 3、pm 3、core 2、qms 1、lims 1、ai 1；**finance 0（本批迁移面零回归）**
 - **route_missing（67，ehs 61 集中）**：前端契约路径后端未注册——ehs accident.ts 调 `/incidents/{id}` GET/PUT/DELETE、`/{id}/investigation`、`/{id}/treatment`、`/{id}/close`，后端 accident.rs 仅注册 `/incidents`、`/{id}/investigation/complete`、`/{id}/actions` 等 → **前端契约漂移**，需业务确认权威方（改前端 or 补后端），走 BE-08 流程
+  - ✅ **已闭环（2026-10-14 决策批 4.3 标注）**：该 61 条 route_missing 由三个 commit 处置完成——`0bd3b472f`（8 条事故路由补齐）+ `f92623ab9`（44 条六模块 {id} CRUD 补齐）+ `faf307554`（8 条零引用孤儿前后端同步删）；对拍结果=补后端 53 / 收敛前端 8 / 已存在 0。本项关闭。
+  - 📋 **独立 P2（非 route_missing，本轮不接）**：上述 53 条补后端 handler 当前为内存桩模式（如 `svc/ehs/src/modules/accident.rs:332-348` `get_accident` 返回硬编码结构），契约已对齐但未接 DB 真查询。触发条件=前端真实使用对应模块时再接 `ehs_accidents` 等表 SQLX 真查询；本轮不接（避免为未使用接口预付工作量）。
 - **handler_error（38）**：integration external-erp sync 系列 11（外部 ERP 连接，环境性失败）、core iam permissions/roles、bi reports、lims maintenance 等
 - **bytes panic 独立缺陷**：server 日志 4 次 worker panic `Bytes::advance` out of bounds（len=0 advance by 2，bytes-1.12.0 lib.rs:207）——仓库 svc/lib 无 `.advance(` 直调，疑在依赖层流式/帧解析（`POST /api/ai/complete` 同批 network_error）；需 RUST_BACKTRACE=1 复现定位，独立立项
 - **修复建议**：ehs 契约对齐（业务决策）、bytes panic 调查（带 backtrace）、integration sync 记环境性豁免；无历史基线，106 均判「既有缺口/契约漂移」，与 finance/BE-07/AR-08 改动无关（路径无 finance、无 ai dsh、无依赖敏感特征）
@@ -899,6 +901,7 @@
 
 ### 📋 剩余登记
 - **BE-08 后续**：1891 条孤儿候选按 crate 分批（portal/erp/unified-core 优先）与业务确认开放 API 清单，确认无人调用再走下线流程（本批只读不删）；barcode 契约错位（mobile GET 调用 vs 后端仅 DELETE）建议补后端 GET 或收敛前端
+  - ✅ **barcode 子项已闭环（2026-10-14 决策批 4.5 标注）**：BE-08 系静态误记——后端 `/barcode/history/{id}` 实为 GET+DELETE 双注册（`svc/mobile/src/shared/mod.rs:563-569`），GET handler `get_scan_by_id`（`svc/mobile/src/modules/barcode_scanner.rs:400`）走 `mobile.barcode_scans` 真 SQLX 查询（:414 fetch_optional→200/404/500），非桩。GET 由 `bb346fe96`（10-05）引入，BE-08（10-07）triage 静态扫描漏看误记"仅 DELETE"。语义上 GET 查单条+DELETE 删单条为标准 RESTful，无需动作，本项关闭。
 - **FE-17-2 后续**：mobile token/401 的 AsyncStorage 异步与工厂同步签名差异——若工厂未来支持异步 getToken 可进一步收敛；401 现仍静默清凭据（未改跳登录）
 - **BE-07 后续修正项（2026-10-12 收口完成，见下节）**：settlement_v55 422 映射、ai dsh 自建 ErrorCode→HTTP 映射、api-error-codes.md 手册 422/COMMON_010 条目、enhanced.rs 测试 422 示例——均属代码/文档修正，未在本批动（纯文档批次）
 - **AR-03 实施窗口**：核心两文件无并发冲突，Phase 1（台账 + hash + 单测）可在任何窗口启动；加依赖建议标准库 sha2 以避开 Cargo.* 用户占用
