@@ -738,7 +738,10 @@ async fn call_ai_api(
 
     let mut req_builder = client
         .post(&api_url)
-        .header("Content-Type", "application/json");
+        .header("Content-Type", "application/json")
+        // AI 后端不可用/无响应时快速降级（返回 Err → handler 200 空结果），
+        // 避免 smoke/调用方长时间挂起判网络错误
+        .timeout(tokio::time::Duration::from_secs(10));
 
     if let Some(key) = api_key {
         if key != "ollama" {

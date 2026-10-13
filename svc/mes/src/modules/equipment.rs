@@ -261,8 +261,8 @@ pub async fn list_equipment(
         r#"
         SELECT 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date AS warranty_expiry_date,
-            maintenance_cycle AS maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
         {}
@@ -350,8 +350,8 @@ pub async fn create_equipment(
         ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11)
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date AS warranty_expiry_date,
-            maintenance_cycle AS maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
     )
@@ -409,8 +409,8 @@ pub async fn get_equipment(
         r#"
         SELECT 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date AS warranty_expiry_date,
-            maintenance_cycle AS maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         FROM equipment
         WHERE id = $1
@@ -480,8 +480,8 @@ pub async fn update_equipment(
         WHERE id = $1
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date AS warranty_expiry_date,
-            maintenance_cycle AS maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
     )
@@ -604,8 +604,8 @@ pub async fn maintenance_equipment(
         WHERE id = $1
         RETURNING 
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
-            status, location, purchase_date, warranty_end_date AS warranty_expiry_date,
-            maintenance_cycle AS maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
+            status, location, purchase_date, warranty_expiry_date,
+            maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
             description, created_at, updated_at
         "#,
     )

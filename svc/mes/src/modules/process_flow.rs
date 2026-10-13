@@ -884,7 +884,7 @@ pub async fn update_flow_step(
             equipment_ids = COALESCE($3, equipment_ids),
             standard_time = COALESCE($4, standard_time),
             wait_time = COALESCE($5, wait_time),
-            transfer_time = COALESCE($6, transfer_time),
+            transfer_time = COALESCE($6::text, transfer_time),
             quality_check_required = COALESCE($7, quality_check_required),
             description = COALESCE($8, description)
         WHERE id = $9
@@ -898,9 +898,7 @@ pub async fn update_flow_step(
         equipment_ids.as_deref(),
         standard_time,
         wait_time,
-        body.transfer_time
-            .as_ref()
-            .and_then(|t| t.parse::<i32>().ok()),
+        body.transfer_time.as_deref(),
         body.quality_check_required,
         body.description,
         step_uuid,
