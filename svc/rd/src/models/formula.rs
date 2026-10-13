@@ -49,8 +49,8 @@ pub struct CreateFormulaRequest {
     pub status: Option<String>,
     pub ingredients: Option<Vec<FormulaIngredient>>,
     pub process_steps: Option<String>,
-    pub effective_date: Option<String>,
-    pub expiration_date: Option<String>,
+    pub effective_date: Option<DateTime<Utc>>,
+    pub expiration_date: Option<DateTime<Utc>>,
     pub properties: Option<serde_json::Value>,
 }
 
@@ -63,8 +63,8 @@ pub struct UpdateFormulaRequest {
     pub approval_status: Option<String>,
     pub ingredients: Option<Vec<FormulaIngredient>>,
     pub process_steps: Option<String>,
-    pub effective_date: Option<String>,
-    pub expiration_date: Option<String>,
+    pub effective_date: Option<DateTime<Utc>>,
+    pub expiration_date: Option<DateTime<Utc>>,
     pub properties: Option<serde_json::Value>,
 }
 
