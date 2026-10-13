@@ -22,6 +22,7 @@ use crate::services::project_permission::{
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_event::event::commit_retry;
 
 #[derive(Debug, Deserialize, IntoParams)]
 pub struct ListProjectsQuery {
@@ -243,6 +244,23 @@ pub async fn create_project(
     .fetch_one(&mut **txn)
     .await;
 
+    // D6 修复：RLS 请求级事务此前在本 handler 从未 commit——中间件只 begin 不提交，
+    // handler 返回后 txn 随请求结束 drop → 自动 rollback，INSERT 不落库。
+    // 对齐 srm supplier.rs:380 / rd project_member.rs:102 的显式 commit 范式：
+    // INSERT 成功后显式提交，commit 成功才继续副作用与事件发布。
+    if let Ok(_) = &result {
+        match guard.take() {
+            Some(t) => match t.commit().await {
+                Ok(_) => {}
+                Err(e) => {
+                    tracing::error!("rls commit failed: {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            },
+            None => {}
+        }
+    }
+
     let (response, status_str, error_msg, project_id) = match &result {
         Ok(project) => (
             Json(ApiResponse::success(project.clone(), "项目创建成功")),
@@ -304,19 +322,19 @@ pub async fn create_project(
                         owner_name: Some(pleader),
                         created_at: Some(pcreated_at),
                     };
-                    if let Err(e) = publisher
-                        .publish_event(
-                            topems_shared_event::event::EventType::RdProjectCreated,
-                            payload,
-                        )
-                        .await
-                    {
+                    let et = topems_shared_event::event::EventType::RdProjectCreated;
+                    if let Err(e) = publisher.publish_event(et, &payload).await {
                         tracing::warn!(
-                            "[rd] RdProjectCreated 事件发布失败（graceful fallback）: {}",
+                            "[rd] RdProjectCreated 事件发布失败（graceful fallback）: {}，入重试队列",
                             e
                         );
+                        // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
+                        commit_retry::push_retry_typed("rd", et, &payload).await;
                     } else {
-                        tracing::info!("[rd] RdProjectCreated 事件发布成功 - project_id={}", pid);
+                        tracing::info!(
+                            "[rd] RdProjectCreated 事件发布成功 - project_id={}",
+                            pid
+                        );
                     }
                 });
             }
