@@ -165,7 +165,7 @@ pub async fn list_access_logs(
 
     let rows = sqlx::query(
         r#"
-        SELECT a.id, a.user_id, u.username, a.action, a.entity_type AS resource_type, a.entity_id AS resource_id,
+        SELECT a.id, a.user_id, u.username, a.action, a.entity_type AS resource_type, a.entity_id::text AS resource_id,
                a.ip_address::text, a.user_agent, a.status, a.created_at
         FROM public.audit_logs a
         LEFT JOIN iam.users u ON a.user_id = u.id
@@ -245,7 +245,7 @@ pub async fn get_user_access_logs(
 
     let rows = sqlx::query(
         r#"
-        SELECT a.id, a.user_id, u.username, a.action, a.entity_type AS resource_type, a.entity_id AS resource_id,
+        SELECT a.id, a.user_id, u.username, a.action, a.entity_type AS resource_type, a.entity_id::text AS resource_id,
                a.ip_address::text, a.user_agent, a.status, a.created_at
         FROM public.audit_logs a
         LEFT JOIN iam.users u ON a.user_id = u.id
