@@ -9,8 +9,6 @@
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
-use std::sync::LazyLock;
-use tokio::sync::Mutex;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -284,312 +282,6 @@ pub struct SLAIncident {
     pub impact_severity: ImpactSeverity,
     pub compensation_amount: f64,
     pub status: IncidentStatus,
-}
-
-// ==================== 内存存储 ====================
-
-struct V55Store {
-    api_products: Mutex<Vec<APIProduct>>,
-    subscriptions: Mutex<Vec<Subscription>>,
-    usage_records: Mutex<Vec<UsageRecord>>,
-    billing_records: Mutex<Vec<BillingRecord>>,
-    rate_cards: Mutex<Vec<RateCard>>,
-    sla_configs: Mutex<Vec<SLAConfig>>,
-    sla_measurements: Mutex<Vec<SLAMeasurement>>,
-    sla_incidents: Mutex<Vec<SLAIncident>>,
-    initialized: Mutex<bool>,
-}
-
-fn get_v55_store() -> &'static V55Store {
-    static STORE: LazyLock<V55Store> = LazyLock::new(|| V55Store {
-        api_products: Mutex::new(Vec::new()),
-        subscriptions: Mutex::new(Vec::new()),
-        usage_records: Mutex::new(Vec::new()),
-        billing_records: Mutex::new(Vec::new()),
-        rate_cards: Mutex::new(Vec::new()),
-        sla_configs: Mutex::new(Vec::new()),
-        sla_measurements: Mutex::new(Vec::new()),
-        sla_incidents: Mutex::new(Vec::new()),
-        initialized: Mutex::new(false),
-    });
-    &STORE
-}
-
-// ==================== 初始化种子数据 ====================
-
-async fn ensure_initialized() {
-    let store = get_v55_store();
-    let mut initialized = store.initialized.lock().await;
-    if *initialized {
-        return;
-    }
-
-    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
-    if crate::modules::persist::enabled() && persist_load().await {
-        *initialized = true;
-        return;
-    }
-
-    let now = chrono::Utc::now();
-    let now_str = now.to_rfc3339();
-    let one_month_later = (now + chrono::Duration::days(30)).to_rfc3339();
-
-    let free_product = APIProduct {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "Free Tier".to_string(),
-        tier: ProductTier::Free,
-        rate_limit_per_min: 10,
-        rate_limit_per_day: 1000,
-        features: vec!["basic_access".to_string()],
-        price_monthly: 0.0,
-        active: true,
-    };
-
-    let basic_product = APIProduct {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "Basic Tier".to_string(),
-        tier: ProductTier::Basic,
-        rate_limit_per_min: 100,
-        rate_limit_per_day: 50000,
-        features: vec!["basic_access".to_string(), "standard_support".to_string()],
-        price_monthly: 99.0,
-        active: true,
-    };
-
-    let pro_product = APIProduct {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "Professional Tier".to_string(),
-        tier: ProductTier::Professional,
-        rate_limit_per_min: 1000,
-        rate_limit_per_day: 500000,
-        features: vec![
-            "basic_access".to_string(),
-            "priority_support".to_string(),
-            "advanced_analytics".to_string(),
-        ],
-        price_monthly: 999.0,
-        active: true,
-    };
-
-    let enterprise_product = APIProduct {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "Enterprise Tier".to_string(),
-        tier: ProductTier::Enterprise,
-        rate_limit_per_min: 10000,
-        rate_limit_per_day: 10000000,
-        features: vec![
-            "basic_access".to_string(),
-            "dedicated_support".to_string(),
-            "advanced_analytics".to_string(),
-            "custom_integrations".to_string(),
-            "sla_guarantee".to_string(),
-        ],
-        price_monthly: 9999.0,
-        active: true,
-    };
-
-    let unlimited_product = APIProduct {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "Unlimited Tier".to_string(),
-        tier: ProductTier::Unlimited,
-        rate_limit_per_min: -1,
-        rate_limit_per_day: -1,
-        features: vec![
-            "all_features".to_string(),
-            "dedicated_support".to_string(),
-            "custom_integrations".to_string(),
-            "sla_guarantee".to_string(),
-            "white_label".to_string(),
-        ],
-        price_monthly: 99999.0,
-        active: true,
-    };
-
-    let default_subscription = Subscription {
-        id: uuid::Uuid::new_v4().to_string(),
-        api_product_id: free_product.id.clone(),
-        tenant_id: "tenant-001".to_string(),
-        tier: ProductTier::Free,
-        starts_at: now_str.clone(),
-        expires_at: one_month_later.clone(),
-        status: SubscriptionStatus::Active,
-    };
-
-    let rate_card = RateCard {
-        id: uuid::Uuid::new_v4().to_string(),
-        tier: ProductTier::Basic,
-        cost_per_request: 0.001,
-        cost_per_mb: 0.05,
-        overage_multiplier: 1.5,
-        currency: "CNY".to_string(),
-    };
-
-    let sla_avail = SLAConfig {
-        id: uuid::Uuid::new_v4().to_string(),
-        metric: SLAMetric::Availability,
-        target_value: 99.9,
-        unit: "%".to_string(),
-        penalty_per_min: 10.0,
-        measurement_window: 60,
-    };
-
-    let sla_latency = SLAConfig {
-        id: uuid::Uuid::new_v4().to_string(),
-        metric: SLAMetric::Latency,
-        target_value: 200.0,
-        unit: "ms".to_string(),
-        penalty_per_min: 5.0,
-        measurement_window: 60,
-    };
-
-    let sla_error = SLAConfig {
-        id: uuid::Uuid::new_v4().to_string(),
-        metric: SLAMetric::ErrorRate,
-        target_value: 0.1,
-        unit: "%".to_string(),
-        penalty_per_min: 15.0,
-        measurement_window: 60,
-    };
-
-    *store.api_products.lock().await = vec![
-        free_product,
-        basic_product,
-        pro_product,
-        enterprise_product,
-        unlimited_product,
-    ];
-    *store.subscriptions.lock().await = vec![default_subscription];
-    *store.usage_records.lock().await = Vec::new();
-    *store.billing_records.lock().await = Vec::new();
-    *store.rate_cards.lock().await = vec![rate_card];
-    *store.sla_configs.lock().await = vec![sla_avail, sla_latency, sla_error];
-    *store.sla_measurements.lock().await = Vec::new();
-    *store.sla_incidents.lock().await = Vec::new();
-
-    // U4：首次 seed 后落库。
-    if crate::modules::persist::enabled() {
-        persist_save().await;
-    }
-
-    *initialized = true;
-}
-
-// ==================== U4 持久化 ====================
-
-async fn persist_load() -> bool {
-    let store = get_v55_store();
-    let mut restored = false;
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<APIProduct>>("commercial_v55", "api_products").await
-    {
-        *store.api_products.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<Subscription>>("commercial_v55", "subscriptions").await
-    {
-        *store.subscriptions.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<UsageRecord>>("commercial_v55", "usage_records").await
-    {
-        *store.usage_records.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<BillingRecord>>("commercial_v55", "billing_records")
-            .await
-    {
-        *store.billing_records.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<RateCard>>("commercial_v55", "rate_cards").await
-    {
-        *store.rate_cards.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<SLAConfig>>("commercial_v55", "sla_configs").await
-    {
-        *store.sla_configs.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<SLAMeasurement>>("commercial_v55", "sla_measurements")
-            .await
-    {
-        *store.sla_measurements.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<SLAIncident>>("commercial_v55", "sla_incidents").await
-    {
-        *store.sla_incidents.lock().await = v;
-        restored = true;
-    }
-    restored
-}
-
-async fn persist_save() {
-    let store = get_v55_store();
-    crate::modules::persist::save(
-        "commercial_v55",
-        "api_products",
-        &*store.api_products.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "commercial_v55",
-        "subscriptions",
-        &*store.subscriptions.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "commercial_v55",
-        "usage_records",
-        &*store.usage_records.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "commercial_v55",
-        "billing_records",
-        &*store.billing_records.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "commercial_v55",
-        "rate_cards",
-        &*store.rate_cards.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "commercial_v55",
-        "sla_configs",
-        &*store.sla_configs.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "commercial_v55",
-        "sla_measurements",
-        &*store.sla_measurements.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "commercial_v55",
-        "sla_incidents",
-        &*store.sla_incidents.lock().await,
-    )
-    .await;
-}
-
-pub async fn background_flush() {
-    let store = get_v55_store();
-    if !*store.initialized.lock().await {
-        return;
-    }
-    persist_save().await;
 }
 
 // ==================== 辅助函数 ====================
@@ -1004,28 +696,25 @@ pub async fn list_subscriptions(
     tag = "commercial_v55"
 )]
 pub async fn cancel_subscription(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Subscription>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let mut subs = store.subscriptions.lock().await;
-
-    let sub = subs.iter_mut().find(|s| s.id == id);
-    let Some(sub) = sub else {
+    // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
+    let row = sqlx::query(&format!(
+        r#"UPDATE master_data.mdm_subscriptions SET status = 'cancelled'
+           WHERE id = $1
+           RETURNING {SUBSCRIPTION_COLS}"#,
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await;
+    let Some(row) = (match row { Ok(r) => r, Err(e) => return Json(ApiResponse::error(500, &format!("取消订阅失败: {e}"))), }) else {
         return Json(ApiResponse::error(404, "未找到订阅"));
     };
-
-    sub.status = SubscriptionStatus::Cancelled;
-    let updated = sub.clone();
-    // 结束可变借用（NLL 已自动结束），允许同步直写
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("commercial_v55", "subscriptions", &*subs).await;
+    let updated = subscription_from_row(&row);
 
     Json(ApiResponse::success(updated, "订阅已取消"))
 }
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:commercial:write"])),
@@ -1040,34 +729,45 @@ pub async fn cancel_subscription(
     tag = "commercial_v55"
 )]
 pub async fn upgrade_tier(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> Json<ApiResponse<Subscription>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let mut subs = store.subscriptions.lock().await;
-
-    let sub = subs.iter_mut().find(|s| s.id == id);
-    let Some(sub) = sub else {
+    // K1：写真表（先查后更，无行 404）。
+    let row = sqlx::query(&format!(
+        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"#,
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await;
+    let Some(row) = (match row { Ok(r) => r, Err(e) => return Json(ApiResponse::error(500, &format!("查询订阅失败: {e}"))), }) else {
         return Json(ApiResponse::error(404, "未找到订阅"));
     };
+    let current = subscription_from_row(&row);
+    let new_tier = req.tier.as_deref().map(tier_from_str).unwrap_or(current.tier);
 
-    if let Some(ref tier_str) = req.tier {
-        sub.tier = tier_from_str(tier_str);
+    if let Err(e) = sqlx::query("UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2")
+        .bind(product_tier_to_string(&new_tier))
+        .bind(&id)
+        .execute(&state.db)
+        .await
+    {
+        return Json(ApiResponse::error(500, &format!("升级套餐失败: {e}")));
     }
-    sub.status = SubscriptionStatus::Active;
-    let updated = sub.clone();
-    // 结束可变借用（NLL 已自动结束），允许同步直写
 
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("commercial_v55", "subscriptions", &*subs).await;
+    let row = sqlx::query(&format!(
+        r#"SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"#,
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await;
+    let Some(row) = (match row { Ok(r) => r, Err(e) => return Json(ApiResponse::error(500, &format!("回读订阅失败: {e}"))), }) else {
+        return Json(ApiResponse::error(404, "未找到订阅"));
+    };
+    let updated = subscription_from_row(&row);
 
     Json(ApiResponse::success(updated, "套餐已升级"))
 }
-
-// ==================== 处理器：计量计费 ====================
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
@@ -1079,13 +779,10 @@ pub async fn upgrade_tier(
     tag = "commercial_v55"
 )]
 pub async fn record_usage(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RecordUsageRequest>,
 ) -> Json<ApiResponse<UsageRecord>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let mut records = store.usage_records.lock().await;
-
+    // K1：写真表 master_data.mdm_usage_records。
     let record = UsageRecord {
         id: uuid::Uuid::new_v4().to_string(),
         tenant_id: req.tenant_id,
@@ -1097,14 +794,27 @@ pub async fn record_usage(
         recorded_at: chrono::Utc::now().to_rfc3339(),
     };
 
-    records.push(record.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("commercial_v55", "usage_records", &*records).await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_usage_records
+           (id, tenant_id, api_product_id, endpoint, requests, errors, data_transferred, recorded_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+    )
+    .bind(&record.id)
+    .bind(&record.tenant_id)
+    .bind(&record.api_product_id)
+    .bind(&record.endpoint)
+    .bind(record.requests)
+    .bind(record.errors)
+    .bind(record.data_transferred)
+    .bind(&record.recorded_at)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入使用记录失败: {e}")));
+    }
 
     Json(ApiResponse::success(record, "使用记录已保存"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
@@ -1116,40 +826,32 @@ pub async fn record_usage(
     tag = "commercial_v55"
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_usage_summary(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
 ) -> Json<ApiResponse<UsageSummary>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let records = store.usage_records.lock().await;
+    // K1：数据源改真表 master_data.mdm_usage_records，聚合逻辑保留。
+    let query = sqlx::query(&format!(
+        r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
+           WHERE ($1::text IS NULL OR tenant_id = $1)
+             AND ($2::text IS NULL OR api_product_id = $2)
+             AND ($3::text IS NULL OR recorded_at >= $3)
+             AND ($4::text IS NULL OR recorded_at <= $4)
+           ORDER BY recorded_at"#,
+    ))
+    .bind(params.tenant_id.as_deref())
+    .bind(params.api_product_id.as_deref())
+    .bind(params.start_time.as_deref())
+    .bind(params.end_time.as_deref())
+    .fetch_all(&state.db)
+    .await;
 
-    let filtered: Vec<&UsageRecord> = records
-        .iter()
-        .filter(|r| {
-            if let Some(tid) = &params.tenant_id {
-                if &r.tenant_id != tid {
-                    return false;
-                }
-            }
-            if let Some(pid) = &params.api_product_id {
-                if &r.api_product_id != pid {
-                    return false;
-                }
-            }
-            if let Some(start) = &params.start_time {
-                if &r.recorded_at < start {
-                    return false;
-                }
-            }
-            if let Some(end) = &params.end_time {
-                if &r.recorded_at > end {
-                    return false;
-                }
-            }
-            true
-        })
-        .collect();
+    let rows = match query {
+        Ok(r) => r,
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询用量失败: {e}"))),
+    };
+    let filtered: Vec<UsageRecord> = rows.iter().map(usage_record_from_row).collect();
 
     let total_requests: i64 = filtered.iter().map(|r| r.requests).sum();
     let total_errors: i64 = filtered.iter().map(|r| r.errors).sum();
@@ -1167,10 +869,9 @@ pub async fn get_usage_summary(
             total_data_mb,
             error_rate,
         },
-        "使用量汇总",
+        "用量汇总",
     ))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
@@ -1182,13 +883,12 @@ pub async fn get_usage_summary(
     tag = "commercial_v55"
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn generate_bill(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<GenerateBillRequest>,
 ) -> Json<ApiResponse<BillingRecord>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-
+    // K1：数据源改真表（usage_records / rate_cards / api_products），逻辑保留。
     let period_start = req
         .period_start
         .unwrap_or_else(|| (chrono::Utc::now() - chrono::Duration::days(30)).to_rfc3339());
@@ -1196,16 +896,20 @@ pub async fn generate_bill(
         .period_end
         .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
-    let records = store.usage_records.lock().await;
-    let filtered: Vec<UsageRecord> = records
-        .iter()
-        .filter(|r| {
-            r.tenant_id == req.tenant_id
-                && r.recorded_at >= period_start
-                && r.recorded_at <= period_end
-        })
-        .cloned()
-        .collect();
+    let usage_rows = sqlx::query(&format!(
+        r#"SELECT {USAGE_COLS} FROM master_data.mdm_usage_records
+           WHERE tenant_id = $1 AND recorded_at >= $2 AND recorded_at <= $3
+           ORDER BY recorded_at"#,
+    ))
+    .bind(&req.tenant_id)
+    .bind(&period_start)
+    .bind(&period_end)
+    .fetch_all(&state.db)
+    .await;
+    let filtered: Vec<UsageRecord> = match usage_rows {
+        Ok(r) => r.iter().map(usage_record_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询用量失败: {e}"))),
+    };
 
     let total_requests: i64 = filtered.iter().map(|r| r.requests).sum();
     let total_errors: i64 = filtered.iter().map(|r| r.errors).sum();
@@ -1216,9 +920,15 @@ pub async fn generate_bill(
         0.0
     };
 
-    drop(records);
-
-    let rate_cards = store.rate_cards.lock().await;
+    let rate_card_rows = sqlx::query(&format!(
+        r#"SELECT {RATE_CARD_COLS} FROM master_data.mdm_rate_cards ORDER BY tier LIMIT 1"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let rate_cards: Vec<RateCard> = match rate_card_rows {
+        Ok(r) => r.iter().map(rate_card_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询费率卡失败: {e}"))),
+    };
     let rate_card = rate_cards.first().cloned().unwrap_or(RateCard {
         id: String::new(),
         tier: ProductTier::Free,
@@ -1228,8 +938,16 @@ pub async fn generate_bill(
         currency: "CNY".to_string(),
     });
 
-    let product = store.api_products.lock().await;
-    let matched_product = product
+    let product_rows = sqlx::query(&format!(
+        r#"SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE active = TRUE ORDER BY name"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let products: Vec<APIProduct> = match product_rows {
+        Ok(r) => r.iter().map(product_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询产品失败: {e}"))),
+    };
+    let matched_product = products
         .iter()
         .find(|p| filtered.iter().any(|r| r.api_product_id == p.id));
 
@@ -1244,9 +962,6 @@ pub async fn generate_bill(
     } else {
         base_cost
     };
-
-    drop(rate_cards);
-    drop(product);
 
     let bill = BillingRecord {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1264,12 +979,28 @@ pub async fn generate_bill(
         status: BillingStatus::Pending,
     };
 
-    let mut bills = store.billing_records.lock().await;
-    bills.push(bill.clone());
+    // K1：写真表 master_data.mdm_billing_records。
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_billing_records
+           (id, tenant_id, period_start, period_end, tier, usage_summary, total_amount, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+    )
+    .bind(&bill.id)
+    .bind(&bill.tenant_id)
+    .bind(&bill.period_start)
+    .bind(&bill.period_end)
+    .bind(product_tier_to_string(&bill.tier))
+    .bind(serde_json::to_value(&bill.usage_summary).unwrap_or(serde_json::json!({})))
+    .bind(bill.total_amount)
+    .bind(billing_status_to_str(&bill.status))
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入账单失败: {e}")));
+    }
 
     Json(ApiResponse::success(bill, "账单已生成"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
@@ -1286,36 +1017,46 @@ pub async fn generate_bill(
     clippy::cast_possible_wrap,
     clippy::cast_sign_loss
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_truncation,
+    clippy::cast_possible_wrap,
+    clippy::cast_sign_loss
+)]
 pub async fn get_billing_history(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<BillingHistoryQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<BillingRecord>>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let bills = store.billing_records.lock().await;
-
+    // K1：真表分页（COALESCE 过滤 + LIMIT/OFFSET + 独立 COUNT）。
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    let filtered: Vec<BillingRecord> = bills
-        .iter()
-        .filter(|b| {
-            if let Some(tid) = &params.tenant_id {
-                if &b.tenant_id != tid {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let count_rows = sqlx::query(
+        "SELECT COUNT(*) AS total FROM master_data.mdm_billing_records WHERE ($1::text IS NULL OR tenant_id = $1)",
+    )
+    .bind(params.tenant_id.as_deref())
+    .fetch_one(&state.db)
+    .await;
+    let total: i64 = match count_rows {
+        Ok(r) => r.get::<i64, _>("total"),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询账单失败: {e}"))),
+    };
 
-    let total = filtered.len() as i64;
-    let items: Vec<BillingRecord> = filtered
-        .into_iter()
-        .skip(((page - 1) * page_size) as usize)
-        .take(page_size as usize)
-        .collect();
+    let rows = sqlx::query(&format!(
+        r#"SELECT {BILLING_COLS} FROM master_data.mdm_billing_records
+           WHERE ($1::text IS NULL OR tenant_id = $1)
+           ORDER BY period_end DESC
+           LIMIT $2 OFFSET $3"#,
+    ))
+    .bind(params.tenant_id.as_deref())
+    .bind(page_size)
+    .bind((page - 1) * page_size)
+    .fetch_all(&state.db)
+    .await;
+    let items: Vec<BillingRecord> = match rows {
+        Ok(r) => r.iter().map(billing_record_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询账单失败: {e}"))),
+    };
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -1328,7 +1069,6 @@ pub async fn get_billing_history(
         "账单历史",
     ))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
@@ -1340,13 +1080,10 @@ pub async fn get_billing_history(
     tag = "commercial_v55"
 )]
 pub async fn create_rate_card(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateRateCardRequest>,
 ) -> Json<ApiResponse<RateCard>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let mut cards = store.rate_cards.lock().await;
-
+    // K1：写真表 master_data.mdm_rate_cards。
     let card = RateCard {
         id: uuid::Uuid::new_v4().to_string(),
         tier: tier_from_str(&req.tier),
@@ -1356,14 +1093,25 @@ pub async fn create_rate_card(
         currency: req.currency.unwrap_or_else(|| "CNY".to_string()),
     };
 
-    cards.push(card.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("commercial_v55", "rate_cards", &*cards).await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_rate_cards
+           (id, tier, cost_per_request, cost_per_mb, overage_multiplier, currency)
+           VALUES ($1,$2,$3,$4,$5,$6)"#,
+    )
+    .bind(&card.id)
+    .bind(product_tier_to_string(&card.tier))
+    .bind(card.cost_per_request)
+    .bind(card.cost_per_mb)
+    .bind(card.overage_multiplier)
+    .bind(&card.currency)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("创建费率卡失败: {e}")));
+    }
 
     Json(ApiResponse::success(card, "费率卡已创建"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
@@ -1374,13 +1122,19 @@ pub async fn create_rate_card(
     ),
     tag = "commercial_v55"
 )]
-pub async fn get_rate_cards(State(_state): State<AppState>) -> Json<ApiResponse<Vec<RateCard>>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let cards = store.rate_cards.lock().await;
-    Json(ApiResponse::success(cards.clone(), "费率卡列表"))
+pub async fn get_rate_cards(State(state): State<AppState>) -> Json<ApiResponse<Vec<RateCard>>> {
+    // K1：读真表。
+    let rows = sqlx::query(&format!(
+        r#"SELECT {RATE_CARD_COLS} FROM master_data.mdm_rate_cards ORDER BY tier"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let cards: Vec<RateCard> = match rows {
+        Ok(r) => r.iter().map(rate_card_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询费率卡失败: {e}"))),
+    };
+    Json(ApiResponse::success(cards, "费率卡列表"))
 }
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["master_data:commercial:write"])),
@@ -1395,24 +1149,25 @@ pub async fn get_rate_cards(State(_state): State<AppState>) -> Json<ApiResponse<
     tag = "commercial_v55"
 )]
 pub async fn mark_bill_paid(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<BillingRecord>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let mut bills = store.billing_records.lock().await;
-
-    let bill = bills.iter_mut().find(|b| b.id == id);
-    let Some(bill) = bill else {
+    // K1：写真表（UPDATE...RETURNING，无行 404）。
+    let row = sqlx::query(&format!(
+        r#"UPDATE master_data.mdm_billing_records SET status = 'paid'
+           WHERE id = $1
+           RETURNING {BILLING_COLS}"#,
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await;
+    let Some(row) = (match row { Ok(r) => r, Err(e) => return Json(ApiResponse::error(500, &format!("标记账单失败: {e}"))), }) else {
         return Json(ApiResponse::error(404, "未找到账单"));
     };
+    let updated = billing_record_from_row(&row);
 
-    bill.status = BillingStatus::Paid;
-    Json(ApiResponse::success(bill.clone(), "账单已标记为已支付"))
+    Json(ApiResponse::success(updated, "账单已标记为已支付"))
 }
-
-// ==================== 处理器：SLA 保障 ====================
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
@@ -1424,32 +1179,38 @@ pub async fn mark_bill_paid(
     tag = "commercial_v55"
 )]
 pub async fn configure_sla(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<ConfigureSLARequest>,
 ) -> Json<ApiResponse<SLAConfig>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let mut configs = store.sla_configs.lock().await;
-
-    let metric = match req.metric.as_str() {
-        "latency" => SLAMetric::Latency,
-        "error_rate" => SLAMetric::ErrorRate,
-        _ => SLAMetric::Availability,
-    };
-
+    // K1：写真表 master_data.mdm_sla_configs。
     let config = SLAConfig {
         id: uuid::Uuid::new_v4().to_string(),
-        metric,
+        metric: sla_metric_from_str(&req.metric),
         target_value: req.target_value,
         unit: req.unit.unwrap_or_else(|| "%".to_string()),
         penalty_per_min: req.penalty_per_min.unwrap_or(10.0),
-        measurement_window: req.measurement_window.unwrap_or(60),
+        measurement_window: req.measurement_window.unwrap_or(30),
     };
 
-    configs.push(config.clone());
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_sla_configs
+           (id, metric, target_value, unit, penalty_per_min, measurement_window)
+           VALUES ($1,$2,$3,$4,$5,$6)"#,
+    )
+    .bind(&config.id)
+    .bind(sla_metric_to_str(&config.metric))
+    .bind(config.target_value)
+    .bind(&config.unit)
+    .bind(config.penalty_per_min)
+    .bind(config.measurement_window)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("配置 SLA 失败: {e}")));
+    }
+
     Json(ApiResponse::success(config, "SLA 配置已创建"))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
@@ -1460,17 +1221,22 @@ pub async fn configure_sla(
     ),
     tag = "commercial_v55"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn measure_sla(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<MeasureSLARequest>,
 ) -> Json<ApiResponse<SLAMeasurement>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-
-    let configs = store.sla_configs.lock().await;
-    let config = configs.iter().find(|c| c.id == req.config_id);
-    let Some(config) = config else {
-        return Json(ApiResponse::error(404, "未找到 SLA 配置"));
+    // K1：先读真表 SLA 配置（无行 404），再写度量。
+    let config_row = sqlx::query(&format!(
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
+    ))
+    .bind(&req.config_id)
+    .fetch_optional(&state.db)
+    .await;
+    let config = match config_row {
+        Ok(Some(r)) => sla_config_from_row(&r),
+        Ok(None) => return Json(ApiResponse::error(404, "未找到 SLA 配置")),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 配置失败: {e}"))),
     };
 
     let target = config.target_value;
@@ -1479,7 +1245,6 @@ pub async fn measure_sla(
         SLAMetric::Latency => req.measured_value <= target,
         SLAMetric::ErrorRate => req.measured_value <= target,
     };
-    drop(configs);
 
     let now = chrono::Utc::now();
     let measurement = SLAMeasurement {
@@ -1490,16 +1255,32 @@ pub async fn measure_sla(
         target_value: target,
         met,
         measured_at: now.to_rfc3339(),
-        window_start: (now - chrono::Duration::minutes(60)).to_rfc3339(),
+        window_start: (now - chrono::Duration::minutes(config.measurement_window)).to_rfc3339(),
         window_end: now.to_rfc3339(),
     };
 
-    let mut measurements = store.sla_measurements.lock().await;
-    measurements.push(measurement.clone());
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_sla_measurements
+           (id, config_id, tenant_id, measured_value, target_value, met, measured_at, window_start, window_end)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+    )
+    .bind(&measurement.id)
+    .bind(&measurement.config_id)
+    .bind(&measurement.tenant_id)
+    .bind(measurement.measured_value)
+    .bind(measurement.target_value)
+    .bind(measurement.met)
+    .bind(&measurement.measured_at)
+    .bind(&measurement.window_start)
+    .bind(&measurement.window_end)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入 SLA 度量失败: {e}")));
+    }
 
     Json(ApiResponse::success(measurement, "SLA 度量已记录"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
@@ -1512,34 +1293,40 @@ pub async fn measure_sla(
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_sla_status(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SLAStatusQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
+    // K1：数据源改真表（configs + measurements），聚合逻辑保留。
+    let config_rows = sqlx::query(&format!(
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs
+           WHERE ($1::text IS NULL OR id = $1) ORDER BY metric"#,
+    ))
+    .bind(params.config_id.as_deref())
+    .fetch_all(&state.db)
+    .await;
+    let configs: Vec<SLAConfig> = match config_rows {
+        Ok(r) => r.iter().map(sla_config_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 配置失败: {e}"))),
+    };
 
-    let configs = store.sla_configs.lock().await;
-    let measurements = store.sla_measurements.lock().await;
+    let meas_rows = sqlx::query(&format!(
+        r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
+           WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY measured_at"#,
+    ))
+    .bind(params.tenant_id.as_deref())
+    .fetch_all(&state.db)
+    .await;
+    let measurements: Vec<SLAMeasurement> = match meas_rows {
+        Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 度量失败: {e}"))),
+    };
 
     let mut statuses: Vec<serde_json::Value> = Vec::new();
 
     for config in configs.iter() {
-        if let Some(cid) = &params.config_id {
-            if &config.id != cid {
-                continue;
-            }
-        }
-
         let config_measurements: Vec<&SLAMeasurement> = measurements
             .iter()
-            .filter(|m| {
-                m.config_id == config.id
-                    && params
-                        .tenant_id
-                        .as_ref()
-                        .map(|tid| &m.tenant_id == tid)
-                        .unwrap_or(true)
-            })
+            .filter(|m| m.config_id == config.id)
             .collect();
 
         let met_count = config_measurements.iter().filter(|m| m.met).count();
@@ -1552,7 +1339,7 @@ pub async fn get_sla_status(
 
         statuses.push(serde_json::json!({
             "config_id": config.id,
-            "metric": format!("{:?}", config.metric).to_lowercase(),
+            "metric": sla_metric_to_str(&config.metric),
             "target_value": config.target_value,
             "unit": config.unit,
             "measurements_count": total,
@@ -1567,7 +1354,6 @@ pub async fn get_sla_status(
         "SLA 状态",
     ))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
@@ -1579,44 +1365,31 @@ pub async fn get_sla_status(
     tag = "commercial_v55"
 )]
 pub async fn get_sla_history(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SLAHistoryQuery>,
 ) -> Json<ApiResponse<Vec<SLAMeasurement>>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let measurements = store.sla_measurements.lock().await;
-
-    let filtered: Vec<SLAMeasurement> = measurements
-        .iter()
-        .filter(|m| {
-            if let Some(tid) = &params.tenant_id {
-                if &m.tenant_id != tid {
-                    return false;
-                }
-            }
-            if let Some(cid) = &params.config_id {
-                if &m.config_id != cid {
-                    return false;
-                }
-            }
-            if let Some(start) = &params.start_time {
-                if &m.measured_at < start {
-                    return false;
-                }
-            }
-            if let Some(end) = &params.end_time {
-                if &m.measured_at > end {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    // K1：真表 COALESCE 过滤。
+    let rows = sqlx::query(&format!(
+        r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
+           WHERE ($1::text IS NULL OR tenant_id = $1)
+             AND ($2::text IS NULL OR config_id = $2)
+             AND ($3::text IS NULL OR measured_at >= $3)
+             AND ($4::text IS NULL OR measured_at <= $4)
+           ORDER BY measured_at"#,
+    ))
+    .bind(params.tenant_id.as_deref())
+    .bind(params.config_id.as_deref())
+    .bind(params.start_time.as_deref())
+    .bind(params.end_time.as_deref())
+    .fetch_all(&state.db)
+    .await;
+    let filtered: Vec<SLAMeasurement> = match rows {
+        Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 历史失败: {e}"))),
+    };
 
     Json(ApiResponse::success(filtered, "SLA 历史记录"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
@@ -1632,24 +1405,40 @@ pub async fn get_sla_history(
     clippy::cast_possible_wrap,
     clippy::cast_precision_loss
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss
+)]
 pub async fn calculate_penalty(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SLAPenaltyQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-
-    let configs = store.sla_configs.lock().await;
-    let config = configs.iter().find(|c| c.id == params.config_id);
-    let Some(config) = config else {
-        return Json(ApiResponse::error(404, "未找到 SLA 配置"));
+    // K1：数据源改真表（config + measurements），逻辑保留。
+    let config_row = sqlx::query(&format!(
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1"#,
+    ))
+    .bind(&params.config_id)
+    .fetch_optional(&state.db)
+    .await;
+    let config = match config_row {
+        Ok(Some(r)) => sla_config_from_row(&r),
+        Ok(None) => return Json(ApiResponse::error(404, "未找到 SLA 配置")),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 配置失败: {e}"))),
     };
 
-    let measurements = store.sla_measurements.lock().await;
-    let breached: Vec<&SLAMeasurement> = measurements
-        .iter()
-        .filter(|m| m.config_id == params.config_id && m.tenant_id == params.tenant_id && !m.met)
-        .collect();
+    let meas_rows = sqlx::query(&format!(
+        r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements
+           WHERE config_id = $1 AND tenant_id = $2 AND met = FALSE ORDER BY measured_at"#,
+    ))
+    .bind(&params.config_id)
+    .bind(&params.tenant_id)
+    .fetch_all(&state.db)
+    .await;
+    let breached: Vec<SLAMeasurement> = match meas_rows {
+        Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 度量失败: {e}"))),
+    };
 
     let breach_count = breached.len() as i64;
     let penalty_per_breach = config.penalty_per_min;
@@ -1667,7 +1456,6 @@ pub async fn calculate_penalty(
         "SLA 违约金额",
     ))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:commercial:write"])),
@@ -1679,33 +1467,32 @@ pub async fn calculate_penalty(
     tag = "commercial_v55"
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn create_incident(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateSLAIncidentRequest>,
 ) -> Json<ApiResponse<SLAIncident>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
+    // K1：写真表 master_data.mdm_sla_incidents。
+    let incident_type = sla_incident_type_from_str(&req.incident_type);
+    let impact_severity = req
+        .impact_severity
+        .as_deref()
+        .map(impact_severity_from_str)
+        .unwrap_or(ImpactSeverity::Medium);
 
-    let incident_type = match req.incident_type.as_str() {
-        "degraded_performance" => SLAIncidentType::DegradedPerformance,
-        "data_loss" => SLAIncidentType::DataLoss,
-        "security_breach" => SLAIncidentType::SecurityBreach,
-        _ => SLAIncidentType::Downtime,
+    let config_row = sqlx::query(
+        "SELECT penalty_per_min FROM master_data.mdm_sla_configs WHERE id = $1 LIMIT 1",
+    )
+    .bind(&req.config_id)
+    .fetch_optional(&state.db)
+    .await;
+    let penalty_per_min = match config_row {
+        Ok(Some(r)) => r.get::<f64, _>("penalty_per_min"),
+        Ok(None) => 10.0,
+        Err(_) => 10.0,
     };
-
-    let impact_severity = match req.impact_severity.as_deref() {
-        Some("medium") => ImpactSeverity::Medium,
-        Some("high") => ImpactSeverity::High,
-        Some("critical") => ImpactSeverity::Critical,
-        _ => ImpactSeverity::Low,
-    };
-
-    let configs = store.sla_configs.lock().await;
-    let config = configs.iter().find(|c| c.id == req.config_id);
-    let penalty_per_min = config.map(|c| c.penalty_per_min).unwrap_or(10.0);
 
     let compensation_amount = penalty_per_min * req.duration_min as f64;
-    drop(configs);
 
     let incident = SLAIncident {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1718,15 +1505,27 @@ pub async fn create_incident(
         status: IncidentStatus::Open,
     };
 
-    let mut incidents = store.sla_incidents.lock().await;
-    incidents.push(incident.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("commercial_v55", "sla_incidents", &*incidents).await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_sla_incidents
+           (id, config_id, tenant_id, incident_type, duration_min, impact_severity, compensation_amount, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+    )
+    .bind(&incident.id)
+    .bind(&incident.config_id)
+    .bind(&incident.tenant_id)
+    .bind(sla_incident_type_to_str(&incident.incident_type))
+    .bind(incident.duration_min)
+    .bind(impact_severity_to_str(&incident.impact_severity))
+    .bind(incident.compensation_amount)
+    .bind(incident_status_to_str(&incident.status))
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("创建 SLA 事故失败: {e}")));
+    }
 
     Json(ApiResponse::success(incident, "SLA 事故已创建"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
@@ -1738,40 +1537,27 @@ pub async fn create_incident(
     tag = "commercial_v55"
 )]
 pub async fn get_incidents(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SLAIncidentsQuery>,
 ) -> Json<ApiResponse<Vec<SLAIncident>>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let incidents = store.sla_incidents.lock().await;
-
-    let filtered: Vec<SLAIncident> = incidents
-        .iter()
-        .filter(|i| {
-            if let Some(tid) = &params.tenant_id {
-                if &i.tenant_id != tid {
-                    return false;
-                }
-            }
-            if let Some(st) = &params.status {
-                let status_str = match &i.status {
-                    IncidentStatus::Open => "open",
-                    IncidentStatus::Investigating => "investigating",
-                    IncidentStatus::Resolved => "resolved",
-                    IncidentStatus::Closed => "closed",
-                };
-                if status_str != st.as_str() {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    // K1：真表 COALESCE 过滤。
+    let rows = sqlx::query(&format!(
+        r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents
+           WHERE ($1::text IS NULL OR tenant_id = $1)
+             AND ($2::text IS NULL OR status = $2)
+           ORDER BY id"#,
+    ))
+    .bind(params.tenant_id.as_deref())
+    .bind(params.status.as_deref())
+    .fetch_all(&state.db)
+    .await;
+    let filtered: Vec<SLAIncident> = match rows {
+        Ok(r) => r.iter().map(sla_incident_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 事故失败: {e}"))),
+    };
 
     Json(ApiResponse::success(filtered, "SLA 事故列表"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:commercial:read"])),
@@ -1788,15 +1574,39 @@ pub async fn get_incidents(
     clippy::cast_precision_loss
 )]
 pub async fn generate_sla_report(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SLAReportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
+    // K1：数据源改真表（configs / measurements / incidents），逻辑保留。
+    let config_rows = sqlx::query(&format!(
+        r#"SELECT {SLA_CONFIG_COLS} FROM master_data.mdm_sla_configs ORDER BY metric"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let configs: Vec<SLAConfig> = match config_rows {
+        Ok(r) => r.iter().map(sla_config_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 配置失败: {e}"))),
+    };
 
-    let configs = store.sla_configs.lock().await;
-    let measurements = store.sla_measurements.lock().await;
-    let incidents = store.sla_incidents.lock().await;
+    let meas_rows = sqlx::query(&format!(
+        r#"SELECT {SLA_MEASUREMENT_COLS} FROM master_data.mdm_sla_measurements ORDER BY measured_at"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let measurements: Vec<SLAMeasurement> = match meas_rows {
+        Ok(r) => r.iter().map(sla_measurement_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 度量失败: {e}"))),
+    };
+
+    let incident_rows = sqlx::query(&format!(
+        r#"SELECT {SLA_INCIDENT_COLS} FROM master_data.mdm_sla_incidents ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let incidents: Vec<SLAIncident> = match incident_rows {
+        Ok(r) => r.iter().map(sla_incident_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询 SLA 事故失败: {e}"))),
+    };
 
     let tenant_filter = params.tenant_id.as_deref();
 
@@ -1847,7 +1657,7 @@ pub async fn generate_sla_report(
 
         config_summaries.push(serde_json::json!({
             "config_id": config.id,
-            "metric": format!("{:?}", config.metric).to_lowercase(),
+            "metric": sla_metric_to_str(&config.metric),
             "target_value": config.target_value,
             "unit": config.unit,
             "measurements_count": total,
@@ -1873,6 +1683,195 @@ pub async fn generate_sla_report(
     });
 
     Json(ApiResponse::success(report, "SLA 报告"))
+}
+// ==================== K1：真表映射（master_data.mdm_usage_records / billing / rate_cards / sla_*） ====================
+
+const USAGE_COLS: &str =
+    "id, tenant_id, api_product_id, endpoint, requests, errors, data_transferred, recorded_at";
+const BILLING_COLS: &str =
+    "id, tenant_id, period_start, period_end, tier, usage_summary, total_amount, status";
+const RATE_CARD_COLS: &str =
+    "id, tier, cost_per_request, cost_per_mb, overage_multiplier, currency";
+const SLA_CONFIG_COLS: &str =
+    "id, metric, target_value, unit, penalty_per_min, measurement_window";
+const SLA_MEASUREMENT_COLS: &str =
+    "id, config_id, tenant_id, measured_value, target_value, met, measured_at, window_start, window_end";
+const SLA_INCIDENT_COLS: &str =
+    "id, config_id, tenant_id, incident_type, duration_min, impact_severity, compensation_amount, status";
+
+fn usage_record_from_row(row: &sqlx::postgres::PgRow) -> UsageRecord {
+    use sqlx::Row;
+    UsageRecord {
+        id: row.get::<String, _>("id"),
+        tenant_id: row.get::<String, _>("tenant_id"),
+        api_product_id: row.get::<String, _>("api_product_id"),
+        endpoint: row.get::<String, _>("endpoint"),
+        requests: row.get::<i64, _>("requests"),
+        errors: row.get::<i64, _>("errors"),
+        data_transferred: row.get::<f64, _>("data_transferred"),
+        recorded_at: row.get::<String, _>("recorded_at"),
+    }
+}
+
+fn billing_status_from_str(s: &str) -> BillingStatus {
+    match s {
+        "invoiced" => BillingStatus::Invoiced,
+        "paid" => BillingStatus::Paid,
+        "overdue" => BillingStatus::Overdue,
+        _ => BillingStatus::Pending,
+    }
+}
+
+fn billing_status_to_str(b: &BillingStatus) -> String {
+    match b {
+        BillingStatus::Pending => "pending".to_string(),
+        BillingStatus::Invoiced => "invoiced".to_string(),
+        BillingStatus::Paid => "paid".to_string(),
+        BillingStatus::Overdue => "overdue".to_string(),
+    }
+}
+
+fn billing_record_from_row(row: &sqlx::postgres::PgRow) -> BillingRecord {
+    use sqlx::Row;
+    let summary: serde_json::Value = row.get::<serde_json::Value, _>("usage_summary");
+    BillingRecord {
+        id: row.get::<String, _>("id"),
+        tenant_id: row.get::<String, _>("tenant_id"),
+        period_start: row.get::<String, _>("period_start"),
+        period_end: row.get::<String, _>("period_end"),
+        tier: tier_from_str(&row.get::<String, _>("tier")),
+        usage_summary: serde_json::from_value(summary).unwrap_or(UsageSummary {
+            total_requests: 0,
+            total_errors: 0,
+            total_data_mb: 0.0,
+            error_rate: 0.0,
+        }),
+        total_amount: row.get::<f64, _>("total_amount"),
+        status: billing_status_from_str(&row.get::<String, _>("status")),
+    }
+}
+
+fn rate_card_from_row(row: &sqlx::postgres::PgRow) -> RateCard {
+    use sqlx::Row;
+    RateCard {
+        id: row.get::<String, _>("id"),
+        tier: tier_from_str(&row.get::<String, _>("tier")),
+        cost_per_request: row.get::<f64, _>("cost_per_request"),
+        cost_per_mb: row.get::<f64, _>("cost_per_mb"),
+        overage_multiplier: row.get::<f64, _>("overage_multiplier"),
+        currency: row.get::<String, _>("currency"),
+    }
+}
+
+fn sla_metric_from_str(s: &str) -> SLAMetric {
+    match s {
+        "latency" => SLAMetric::Latency,
+        "error_rate" => SLAMetric::ErrorRate,
+        _ => SLAMetric::Availability,
+    }
+}
+
+fn sla_metric_to_str(m: &SLAMetric) -> String {
+    match m {
+        SLAMetric::Availability => "availability".to_string(),
+        SLAMetric::Latency => "latency".to_string(),
+        SLAMetric::ErrorRate => "error_rate".to_string(),
+    }
+}
+
+fn sla_config_from_row(row: &sqlx::postgres::PgRow) -> SLAConfig {
+    use sqlx::Row;
+    SLAConfig {
+        id: row.get::<String, _>("id"),
+        metric: sla_metric_from_str(&row.get::<String, _>("metric")),
+        target_value: row.get::<f64, _>("target_value"),
+        unit: row.get::<String, _>("unit"),
+        penalty_per_min: row.get::<f64, _>("penalty_per_min"),
+        measurement_window: row.get::<i64, _>("measurement_window"),
+    }
+}
+
+fn sla_measurement_from_row(row: &sqlx::postgres::PgRow) -> SLAMeasurement {
+    use sqlx::Row;
+    SLAMeasurement {
+        id: row.get::<String, _>("id"),
+        config_id: row.get::<String, _>("config_id"),
+        tenant_id: row.get::<String, _>("tenant_id"),
+        measured_value: row.get::<f64, _>("measured_value"),
+        target_value: row.get::<f64, _>("target_value"),
+        met: row.get::<bool, _>("met"),
+        measured_at: row.get::<String, _>("measured_at"),
+        window_start: row.get::<String, _>("window_start"),
+        window_end: row.get::<String, _>("window_end"),
+    }
+}
+
+fn sla_incident_type_from_str(s: &str) -> SLAIncidentType {
+    match s {
+        "degraded_performance" => SLAIncidentType::DegradedPerformance,
+        "data_loss" => SLAIncidentType::DataLoss,
+        "security_breach" => SLAIncidentType::SecurityBreach,
+        _ => SLAIncidentType::Downtime,
+    }
+}
+
+fn sla_incident_type_to_str(t: &SLAIncidentType) -> String {
+    match t {
+        SLAIncidentType::Downtime => "downtime".to_string(),
+        SLAIncidentType::DegradedPerformance => "degraded_performance".to_string(),
+        SLAIncidentType::DataLoss => "data_loss".to_string(),
+        SLAIncidentType::SecurityBreach => "security_breach".to_string(),
+    }
+}
+
+fn impact_severity_from_str(s: &str) -> ImpactSeverity {
+    match s {
+        "low" => ImpactSeverity::Low,
+        "high" => ImpactSeverity::High,
+        "critical" => ImpactSeverity::Critical,
+        _ => ImpactSeverity::Medium,
+    }
+}
+
+fn impact_severity_to_str(s: &ImpactSeverity) -> String {
+    match s {
+        ImpactSeverity::Low => "low".to_string(),
+        ImpactSeverity::Medium => "medium".to_string(),
+        ImpactSeverity::High => "high".to_string(),
+        ImpactSeverity::Critical => "critical".to_string(),
+    }
+}
+
+fn incident_status_from_str(s: &str) -> IncidentStatus {
+    match s {
+        "investigating" => IncidentStatus::Investigating,
+        "resolved" => IncidentStatus::Resolved,
+        "closed" => IncidentStatus::Closed,
+        _ => IncidentStatus::Open,
+    }
+}
+
+fn incident_status_to_str(s: &IncidentStatus) -> String {
+    match s {
+        IncidentStatus::Open => "open".to_string(),
+        IncidentStatus::Investigating => "investigating".to_string(),
+        IncidentStatus::Resolved => "resolved".to_string(),
+        IncidentStatus::Closed => "closed".to_string(),
+    }
+}
+
+fn sla_incident_from_row(row: &sqlx::postgres::PgRow) -> SLAIncident {
+    use sqlx::Row;
+    SLAIncident {
+        id: row.get::<String, _>("id"),
+        config_id: row.get::<String, _>("config_id"),
+        tenant_id: row.get::<String, _>("tenant_id"),
+        incident_type: sla_incident_type_from_str(&row.get::<String, _>("incident_type")),
+        duration_min: row.get::<i64, _>("duration_min"),
+        impact_severity: impact_severity_from_str(&row.get::<String, _>("impact_severity")),
+        compensation_amount: row.get::<f64, _>("compensation_amount"),
+        status: incident_status_from_str(&row.get::<String, _>("status")),
+    }
 }
 
 #[cfg(test)]

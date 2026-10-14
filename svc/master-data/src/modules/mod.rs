@@ -30,8 +30,6 @@ pub mod dict;
 /// 与 main.rs 后台 3s flush 的调用面一致；各模块内部按 initialized 门控，
 /// 未 seed/load 前为 no-op，避免启动空集合覆盖库内既有快照。
 pub async fn flush_all() {
-    commercial_v55::background_flush().await;
-    metadata_v60::background_flush().await;
 }
 
 /// B10 写后同步落库中间件：POST/PUT/PATCH/DELETE 请求处理完成后立即全量 flush。

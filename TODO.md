@@ -1625,3 +1625,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - store 收敛：删 `struct QualityV51Store` / `get_quality_v51_store` / `ensure_initialized` / `persist_load` / `persist_save` / `background_flush` + LazyLock/Mutex import；mod.rs+main.rs flush 循环删 v51 行。**至此 K1 仅剩 commercial_v55/metadata_v60 未收敛**。
 - 验证：cargo check master-data 零警告零错误（修复点：AutoFixRequest/RunFixWorkflowRequest/GenerateSuggestionsRequest 真实字段与映射层 from_row 缺 use sqlx::Row、QualityTrendPoint 字段为 score/checks/issues_found/issues_fixed 非 predicted_score）；离线 build + monolith 8099 重启后全链路实测 20 接口（rules list/create 恢复 200、run_quality_check 写 checks、list_checks 分页、check_results、score/dashboard 聚合、apply_auto_fix、get_fix_actions、revert 404 守卫、fix_history、run_fix_workflow、ai/suggest、ai/suggestions 过滤、approve+reject 含二次 400 守卫、ai/insights、ai/predict）全绿；DB 7 表落库确认与快照一致（测试残留已清理）。
 - 备注：v51 路由形态 `/auto-fix/actions/{id}/revert`、`/ai/suggest`、`/ai/suggestions/{id}/approve|reject`、`/ai/insights`、`/ai/predict`（与 v54 分支/审计路由形态不同，实测确认）。
+
+## K1 续｜commercial_v55 剩余实体接真表 + store 收敛（2026-10-15，迁移 20261015000069）
+
+**背景**：迁移 60 只挑了 v55 的 api_products/subscriptions 两表（6 handler 已真表）；计量计费/SLA 6 实体仍在内存 Store + persist。mdm_collections **无 v55 快照** → 新表空、无需回填（运行时写入）。
+
+**已接通真表（master_data schema，迁移 20261015000069 建 6 表 + RLS DO 块循环 FORCE，无回填）：**
+- `commercial_v55` 剩余实体 → `mdm_usage_records` / `mdm_billing_records`（usage_summary JSONB）/ `mdm_rate_cards` / `mdm_sla_configs` / `mdm_sla_measurements` / `mdm_sla_incidents`。业务 tenant_id TEXT + RLS tenant_uid 双列（避免语义冲突）。
+- 改造：17 个 store handler → sqlx 真读写（cancel_subscription/mark_bill_paid 用 UPDATE...RETURNING 返回更新后行；upgrade 先查后更+回读；measure_sla 先查 config 404 守卫再写；generate_bill 聚合后 INSERT 账单含 usage_summary JSONB）+ 文件尾映射层（6 COLS + 6 from_row + billing_status/sla_metric/sla_incident_type/impact_severity/incident_status 5 组 from/to 逆函数）。
+- store 收敛：删 `struct V55Store` / `get_v55_store` / `ensure_initialized`（含 5 个 demo 产品种子）/ `persist_load` / `persist_save` / `background_flush` + LazyLock/Mutex import；mod.rs+main.rs flush 删 v55 行。**至此 K1 仅剩 metadata_v60 未收敛**。
+- 验证：cargo check 零警告（踩坑 2：sqlx::query_as tuple 不能配 from_row(&PgRow) 改用 sqlx::query；SELECT {COLS} 内插必须包 format! 否则 `{` 原样进 PG 语法错误；替换脚本边界吞注解已修）。离线 build + 8099 重启后 23 接口实测全绿（rate-cards/sla configure+measure+status+history+penalty(0→违约后 5)+404/incident+incidents+report/bill generate+billing 分页+mark-paid 200/404/cancel 200 cancelled+upgrade 200 pro/cancel+upgrade 404 守卫/subscribe 产品不存在 404）；DB 8 表落库确认，测试残留已清理归零。
+- 备注：v55 路由 `/usage/record` `/bill/generate` `/sla/configure` `/billing/{id}/mark-paid`(PUT) `/subscriptions/{id}/cancel|upgrade`(PUT)（mod.rs 实读确认）；原 store 种子（5 个 demo 产品）随收敛删除，空表起步。

@@ -111,8 +111,6 @@ async fn main() -> anyhow::Result<()> {
         let mut ticker = tokio::time::interval(std::time::Duration::from_secs(3));
         loop {
             ticker.tick().await;
-            modules::commercial_v55::background_flush().await;
-            modules::metadata_v60::background_flush().await;
         }
     });
 
