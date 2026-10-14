@@ -6,7 +6,7 @@
 //! - 智能推荐 (Intelligent Recommendation): 协同过滤、基于内容过滤、基于知识图谱推荐、混合策略、冷启动处理
 //! - 数据资产目录 (Data Asset Catalog): 资产注册、元数据管理、全文搜索、分类标签、资产发现、使用分析
 //!
-//! 设计风格：ApiResponse + LazyLock 内存存储
+//! 设计风格：ApiResponse + K1 真表（master_data schema，sqlx 直读写，store 已收敛）
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;

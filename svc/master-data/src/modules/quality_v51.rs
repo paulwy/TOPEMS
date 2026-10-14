@@ -6,7 +6,7 @@
 //! - 自动修复 (Auto-Fix): 异常检测 → 策略选择 → 修复应用 → 验证 → 确认 → 记录
 //! - 数据治理 AI: 智能匹配建议、数据质量预测、异常检测、智能丰富、治理趋势分析
 //!
-//! 设计风格：ApiResponse + LazyLock 内存存储
+//! 设计风格：ApiResponse + K1 真表（master_data schema，sqlx 直读写，store 已收敛）
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;

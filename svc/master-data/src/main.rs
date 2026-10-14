@@ -104,16 +104,6 @@ async fn main() -> anyhow::Result<()> {
         app.port
     );
 
-    // U4：后台近实时 flush——把 10 个 MDM 模块的内存集合快照回写库。
-    // 仅在模块已 load/seed 后生效（各 background_flush 内部按 initialized 门控），
-    // 避免启动空集合覆盖库内既有快照。
-    tokio::spawn(async {
-        let mut ticker = tokio::time::interval(std::time::Duration::from_secs(3));
-        loop {
-            ticker.tick().await;
-        }
-    });
-
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
         modules::master_plugin::auto_register_to_core(core_url.as_deref()).await;

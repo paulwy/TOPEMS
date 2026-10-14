@@ -6,7 +6,7 @@
 //! - 影响分析 (Impact Analysis): 直接/间接依赖分析、连锁反应模拟、服务级影响评估、风险等级计算
 //! - 变更传播 (Change Propagation): 变更检测与事件生成、规则驱动传播、级联更新、冲突解决、传播审计追踪
 //!
-//! 设计风格：ApiResponse + LazyLock 内存存储
+//! 设计风格：ApiResponse + K1 真表（master_data schema，sqlx 直读写，store 已收敛）
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
