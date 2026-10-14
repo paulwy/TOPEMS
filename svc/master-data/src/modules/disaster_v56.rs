@@ -8,12 +8,258 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
+use sqlx::Row;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use crate::shared::AppState;
+
+// ==================== K1：真表映射（master_data.mdm_* 8 表） ====================
+
+fn snapshot_type_to_str(t: &SnapshotType) -> &'static str {
+    match t {
+        SnapshotType::Full => "full",
+        SnapshotType::Incremental => "incremental",
+        SnapshotType::Differential => "differential",
+    }
+}
+
+fn priority_to_str(t: &RecoveryPlanPriority) -> &'static str {
+    match t {
+        RecoveryPlanPriority::Critical => "critical",
+        RecoveryPlanPriority::High => "high",
+        RecoveryPlanPriority::Medium => "medium",
+        RecoveryPlanPriority::Low => "low",
+    }
+}
+
+fn recovery_plan_status_to_str(t: &RecoveryPlanStatus) -> &'static str {
+    match t {
+        RecoveryPlanStatus::Draft => "draft",
+        RecoveryPlanStatus::Active => "active",
+        RecoveryPlanStatus::Executing => "executing",
+        RecoveryPlanStatus::Completed => "completed",
+        RecoveryPlanStatus::Failed => "failed",
+    }
+}
+
+fn recovery_plan_status_from_str(s: &str) -> RecoveryPlanStatus {
+    match s {
+        "active" => RecoveryPlanStatus::Active,
+        "executing" => RecoveryPlanStatus::Executing,
+        "completed" => RecoveryPlanStatus::Completed,
+        "failed" => RecoveryPlanStatus::Failed,
+        _ => RecoveryPlanStatus::Draft,
+    }
+}
+
+fn strategy_to_str(t: &RecoveryStrategy) -> &'static str {
+    match t {
+        RecoveryStrategy::ColdStandby => "cold_standby",
+        RecoveryStrategy::WarmStandby => "warm_standby",
+        RecoveryStrategy::HotStandby => "hot_standby",
+        RecoveryStrategy::ActiveActive => "active_active",
+        RecoveryStrategy::ActivePassive => "active_passive",
+    }
+}
+
+fn continuity_status_to_str(t: &ContinuityPlanStatus) -> &'static str {
+    match t {
+        ContinuityPlanStatus::Draft => "draft",
+        ContinuityPlanStatus::Active => "active",
+        ContinuityPlanStatus::Tested => "tested",
+        ContinuityPlanStatus::Expired => "expired",
+    }
+}
+
+fn replication_mode_to_str(t: &ReplicationMode) -> &'static str {
+    match t {
+        ReplicationMode::Synchronous => "synchronous",
+        ReplicationMode::Asynchronous => "asynchronous",
+        ReplicationMode::Manual => "manual",
+    }
+}
+
+fn replication_status_to_str(t: &ReplicationStatus) -> &'static str {
+    match t {
+        ReplicationStatus::Stopped => "stopped",
+        ReplicationStatus::Running => "running",
+        ReplicationStatus::Paused => "paused",
+        ReplicationStatus::Lagging => "lagging",
+    }
+}
+
+fn region_status_to_str(t: &RegionStatus) -> &'static str {
+    match t {
+        RegionStatus::Online => "online",
+        RegionStatus::Offline => "offline",
+        RegionStatus::Degraded => "degraded",
+    }
+}
+
+fn failover_trigger_to_str(t: &FailoverTrigger) -> &'static str {
+    match t {
+        FailoverTrigger::Manual => "manual",
+        FailoverTrigger::Automatic => "automatic",
+        FailoverTrigger::Scheduled => "scheduled",
+    }
+}
+
+fn failover_status_to_str(t: &FailoverStatus) -> &'static str {
+    match t {
+        FailoverStatus::Initiated => "initiated",
+        FailoverStatus::InProgress => "in_progress",
+        FailoverStatus::Completed => "completed",
+        FailoverStatus::RolledBack => "rolled_back",
+    }
+}
+
+fn recovery_point_from_row(row: &sqlx::postgres::PgRow) -> RecoveryPoint {
+    RecoveryPoint {
+        id: row.get::<String, _>("id"),
+        snapshot_type: snapshot_type_from_str(&row.get::<String, _>("snapshot_type")),
+        entity_type: row.get::<String, _>("entity_type"),
+        entity_id: row.get::<String, _>("entity_id"),
+        data: row.get::<serde_json::Value, _>("data"),
+        checksum: row.get::<String, _>("checksum"),
+        created_at: row.get::<String, _>("created_at"),
+        size_bytes: row.get::<i64, _>("size_bytes"),
+    }
+}
+const RECOVERY_POINT_COLS: &str =
+    "id, snapshot_type, entity_type, entity_id, data, checksum, created_at, size_bytes";
+
+fn recovery_plan_from_row(row: &sqlx::postgres::PgRow) -> RecoveryPlan {
+    RecoveryPlan {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        priority: priority_from_str(&row.get::<String, _>("priority")),
+        rto_minutes: row.get::<i64, _>("rto_minutes"),
+        rpo_minutes: row.get::<i64, _>("rpo_minutes"),
+        steps: serde_json::from_value(row.get::<serde_json::Value, _>("steps"))
+            .unwrap_or_default(),
+        status: recovery_plan_status_from_str(&row.get::<String, _>("status")),
+    }
+}
+const RECOVERY_PLAN_COLS: &str = "id, name, priority, rto_minutes, rpo_minutes, steps, status";
+
+fn continuity_plan_from_row(row: &sqlx::postgres::PgRow) -> ContinuityPlan {
+    ContinuityPlan {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        scope: row.get::<String, _>("scope"),
+        critical_functions: serde_json::from_value(
+            row.get::<serde_json::Value, _>("critical_functions"),
+        )
+        .unwrap_or_default(),
+        recovery_strategy: strategy_from_str(&row.get::<String, _>("recovery_strategy")),
+        test_frequency: row.get::<String, _>("test_frequency"),
+        last_tested: row.get::<Option<String>, _>("last_tested"),
+        status: match row.get::<String, _>("status").as_str() {
+            "active" => ContinuityPlanStatus::Active,
+            "tested" => ContinuityPlanStatus::Tested,
+            "expired" => ContinuityPlanStatus::Expired,
+            _ => ContinuityPlanStatus::Draft,
+        },
+    }
+}
+const CONTINUITY_PLAN_COLS: &str =
+    "id, name, scope, critical_functions, recovery_strategy, test_frequency, last_tested, status";
+
+fn critical_function_from_row(row: &sqlx::postgres::PgRow) -> CriticalFunction {
+    CriticalFunction {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        description: row.get::<String, _>("description"),
+        dependencies: serde_json::from_value(row.get::<serde_json::Value, _>("dependencies"))
+            .unwrap_or_default(),
+        max_downtime_minutes: row.get::<i64, _>("max_downtime_minutes"),
+        recovery_procedure: row.get::<String, _>("recovery_procedure"),
+    }
+}
+const CRITICAL_FUNCTION_COLS: &str =
+    "id, name, description, dependencies, max_downtime_minutes, recovery_procedure";
+
+fn bc_test_from_row(row: &sqlx::postgres::PgRow) -> BCTest {
+    BCTest {
+        id: row.get::<String, _>("id"),
+        plan_id: row.get::<String, _>("plan_id"),
+        tested_at: row.get::<String, _>("tested_at"),
+        result: row.get::<String, _>("result"),
+        duration_minutes: row.get::<i64, _>("duration_minutes"),
+        issues_found: serde_json::from_value(row.get::<serde_json::Value, _>("issues_found"))
+            .unwrap_or_default(),
+    }
+}
+const BC_TEST_COLS: &str = "id, plan_id, tested_at, result, duration_minutes, issues_found";
+
+fn region_config_from_row(row: &sqlx::postgres::PgRow) -> RegionConfig {
+    RegionConfig {
+        region_id: row.get::<String, _>("region_id"),
+        primary: row.get::<bool, _>("primary_flag"),
+        endpoint: row.get::<String, _>("endpoint"),
+        latency_ms: row.get::<i64, _>("latency_ms"),
+        status: region_status_from_str(&row.get::<String, _>("status")),
+    }
+}
+const REGION_CONFIG_COLS: &str = "region_id, primary_flag, endpoint, latency_ms, status";
+
+fn replication_config_from_row(row: &sqlx::postgres::PgRow) -> ReplicationConfig {
+    ReplicationConfig {
+        id: row.get::<String, _>("id"),
+        source_region: row.get::<String, _>("source_region"),
+        target_region: row.get::<String, _>("target_region"),
+        replication_mode: replication_mode_from_str(&row.get::<String, _>("replication_mode")),
+        lag_max_ms: row.get::<i64, _>("lag_max_ms"),
+        status: match row.get::<String, _>("status").as_str() {
+            "running" => ReplicationStatus::Running,
+            "paused" => ReplicationStatus::Paused,
+            "lagging" => ReplicationStatus::Lagging,
+            _ => ReplicationStatus::Stopped,
+        },
+    }
+}
+const REPLICATION_CONFIG_COLS: &str =
+    "id, source_region, target_region, replication_mode, lag_max_ms, status";
+
+fn failover_record_from_row(row: &sqlx::postgres::PgRow) -> FailoverRecord {
+    FailoverRecord {
+        id: row.get::<String, _>("id"),
+        from_region: row.get::<String, _>("from_region"),
+        to_region: row.get::<String, _>("to_region"),
+        trigger: match row.get::<String, _>("trigger").as_str() {
+            "automatic" => FailoverTrigger::Automatic,
+            "scheduled" => FailoverTrigger::Scheduled,
+            _ => FailoverTrigger::Manual,
+        },
+        started_at: row.get::<String, _>("started_at"),
+        completed_at: row.get::<Option<String>, _>("completed_at"),
+        reason: row.get::<String, _>("reason"),
+        status: match row.get::<String, _>("status").as_str() {
+            "in_progress" => FailoverStatus::InProgress,
+            "completed" => FailoverStatus::Completed,
+            "rolled_back" => FailoverStatus::RolledBack,
+            _ => FailoverStatus::Initiated,
+        },
+    }
+}
+const FAILOVER_RECORD_COLS: &str =
+    "id, from_region, to_region, trigger, started_at, completed_at, reason, status";
+
+
+// ==================== K1：handler 内 sqlx 错误统一出口 ====================
+
+macro_rules! db_exec {
+    ($e:expr) => {
+        match $e {
+            Ok(v) => v,
+            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        }
+    };
+}
 
 // ==================== 灾难恢复 ====================
 
@@ -734,12 +980,9 @@ pub struct SwitchRegionsRequest {
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn create_recovery_point(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateRecoveryPointRequest>,
 ) -> Json<ApiResponse<RecoveryPoint>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
     let snapshot_type = req
         .snapshot_type
         .as_deref()
@@ -763,11 +1006,22 @@ pub async fn create_recovery_point(
     };
     rp.checksum = generate_checksum(&rp);
 
-    let mut points = store.recovery_points.lock().await;
-    points.push(rp.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("disaster_v56", "recovery_points", &*points).await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_recovery_points
+           (id, snapshot_type, entity_type, entity_id, data, checksum, created_at, size_bytes)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+    )
+    .bind(&rp.id)
+    .bind(snapshot_type_to_str(&rp.snapshot_type))
+    .bind(&rp.entity_type)
+    .bind(&rp.entity_id)
+    .bind(&rp.data)
+    .bind(&rp.checksum)
+    .bind(&rp.created_at)
+    .bind(rp.size_bytes)
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入恢复点失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(rp, "恢复点已创建"))
 }
@@ -789,18 +1043,22 @@ pub async fn create_recovery_point(
     clippy::cast_sign_loss
 )]
 pub async fn list_recovery_points(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ListRecoveryPointsQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<RecoveryPoint>>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let points = store.recovery_points.lock().await;
+    let points: Vec<RecoveryPoint> = sqlx::query(&format!(
+        "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(recovery_point_from_row).collect())
+    .unwrap_or_default();
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
     let filtered: Vec<RecoveryPoint> = points
-        .iter()
+        .into_iter()
         .filter(|p| {
             if let Some(et) = &params.entity_type {
                 if &p.entity_type != et {
@@ -820,7 +1078,6 @@ pub async fn list_recovery_points(
             }
             true
         })
-        .cloned()
         .collect();
 
     let total = filtered.len() as i64;
@@ -847,14 +1104,18 @@ pub async fn list_recovery_points(
     tag = "disaster_v56"
 )]
 pub async fn restore_from_point(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RestoreRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let points = store.recovery_points.lock().await;
+    let point = db_exec!(sqlx::query(&format!(
+        "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1"
+    ))
+    .bind(&req.recovery_point_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复点失败: {e}"))))
+    .map(|r| recovery_point_from_row(&r));
 
-    let point = points.iter().find(|p| p.id == req.recovery_point_id);
     let Some(point) = point else {
         return Json(ApiResponse::error(404, "未找到恢复点"));
     };
@@ -886,13 +1147,22 @@ pub async fn restore_from_point(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_recovery_status(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
-    let points = store.recovery_points.lock().await;
-    let plans = store.recovery_plans.lock().await;
+    let points: Vec<RecoveryPoint> = sqlx::query(&format!(
+        "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(recovery_point_from_row).collect())
+    .unwrap_or_default();
+    let plans: Vec<RecoveryPlan> = sqlx::query(&format!(
+        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(recovery_plan_from_row).collect())
+    .unwrap_or_default();
 
     let total_points = points.len() as i64;
     let full_points = points
@@ -951,12 +1221,9 @@ pub async fn get_recovery_status(
     clippy::cast_possible_wrap
 )]
 pub async fn create_recovery_plan(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateRecoveryPlanRequest>,
 ) -> Json<ApiResponse<RecoveryPlan>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
     let priority = req
         .priority
         .as_deref()
@@ -995,11 +1262,21 @@ pub async fn create_recovery_plan(
         status: RecoveryPlanStatus::Draft,
     };
 
-    let mut plans = store.recovery_plans.lock().await;
-    plans.push(plan.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("disaster_v56", "recovery_plans", &*plans).await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_recovery_plans
+           (id, name, priority, rto_minutes, rpo_minutes, steps, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+    )
+    .bind(&plan.id)
+    .bind(&plan.name)
+    .bind(priority_to_str(&plan.priority))
+    .bind(plan.rto_minutes)
+    .bind(plan.rpo_minutes)
+    .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
+    .bind(recovery_plan_status_to_str(&plan.status))
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入恢复计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(plan, "恢复计划已创建"))
 }
@@ -1016,36 +1293,42 @@ pub async fn create_recovery_plan(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn execute_plan(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<ExecutePlanRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let mut plans = store.recovery_plans.lock().await;
+    let plan = db_exec!(sqlx::query(&format!(
+        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
+    ))
+    .bind(&req.plan_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复计划失败: {e}"))))
+    .map(|r| recovery_plan_from_row(&r));
 
-    let plan = plans.iter_mut().find(|p| p.id == req.plan_id);
-    let Some(plan) = plan else {
+    let Some(mut plan) = plan else {
         return Json(ApiResponse::error(404, "未找到恢复计划"));
     };
 
-    plan.status = RecoveryPlanStatus::Executing;
-
+    plan.status = RecoveryPlanStatus::Completed;
     for step in plan.steps.iter_mut() {
         step.status = "completed".to_string();
     }
 
-    plan.status = RecoveryPlanStatus::Completed;
-
-    let completed_steps: Vec<&RecoveryStep> = plan.steps.iter().collect();
-    let total_steps = completed_steps.len() as i64;
+    let total_steps = plan.steps.len() as i64;
     let plan_id = plan.id.clone();
     let plan_name = plan.name.clone();
     let rto_minutes = plan.rto_minutes;
     let rpo_minutes = plan.rpo_minutes;
-    // 结束可变借用（NLL 已自动结束），允许同步直写
 
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("disaster_v56", "recovery_plans", &*plans).await;
+    if let Err(e) = sqlx::query(
+        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1"#,
+    )
+    .bind(&plan_id)
+    .bind(recovery_plan_status_to_str(&plan.status))
+    .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("更新恢复计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1081,14 +1364,18 @@ pub async fn execute_plan(
     clippy::cast_precision_loss
 )]
 pub async fn get_plan_progress(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let plans = store.recovery_plans.lock().await;
+    let plan = db_exec!(sqlx::query(&format!(
+        "SELECT {RECOVERY_PLAN_COLS} FROM master_data.mdm_recovery_plans WHERE id = $1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复计划失败: {e}"))))
+    .map(|r| recovery_plan_from_row(&r));
 
-    let plan = plans.iter().find(|p| p.id == id);
     let Some(plan) = plan else {
         return Json(ApiResponse::error(404, "未找到恢复计划"));
     };
@@ -1130,12 +1417,9 @@ pub async fn get_plan_progress(
     tag = "disaster_v56"
 )]
 pub async fn test_recovery(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<TestRecoveryRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
     let point_id = req
         .recovery_point_id
         .clone()
@@ -1143,11 +1427,23 @@ pub async fn test_recovery(
     let plan_id = req.plan_id.clone();
     let scope = req.test_scope.unwrap_or_else(|| "full".to_string());
 
-    let points = store.recovery_points.lock().await;
     let point = if point_id == "auto-select" {
-        points.first().cloned()
+        db_exec!(sqlx::query(&format!(
+            "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points ORDER BY created_at LIMIT 1"
+        ))
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复点失败: {e}"))))
+        .map(|r| recovery_point_from_row(&r))
     } else {
-        points.iter().find(|p| p.id == point_id).cloned()
+        db_exec!(sqlx::query(&format!(
+            "SELECT {RECOVERY_POINT_COLS} FROM master_data.mdm_recovery_points WHERE id = $1"
+        ))
+        .bind(&point_id)
+        .fetch_optional(&state.db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询恢复点失败: {e}"))))
+        .map(|r| recovery_point_from_row(&r))
     };
 
     let point_data = match point {
@@ -1187,12 +1483,9 @@ pub async fn test_recovery(
     tag = "disaster_v56"
 )]
 pub async fn create_continuity_plan(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateContinuityPlanRequest>,
 ) -> Json<ApiResponse<ContinuityPlan>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
     let strategy = req
         .recovery_strategy
         .as_deref()
@@ -1228,11 +1521,22 @@ pub async fn create_continuity_plan(
         status: ContinuityPlanStatus::Draft,
     };
 
-    let mut plans = store.continuity_plans.lock().await;
-    plans.push(plan.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("disaster_v56", "continuity_plans", &*plans).await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_continuity_plans
+           (id, name, scope, critical_functions, recovery_strategy, test_frequency, last_tested, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+    )
+    .bind(&plan.id)
+    .bind(&plan.name)
+    .bind(&plan.scope)
+    .bind(serde_json::to_value(&plan.critical_functions).unwrap_or_default())
+    .bind(strategy_to_str(&plan.recovery_strategy))
+    .bind(&plan.test_frequency)
+    .bind(Option::<String>::None)
+    .bind(continuity_status_to_str(&plan.status))
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入连续性计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(plan, "连续性计划已创建"))
 }
@@ -1247,11 +1551,15 @@ pub async fn create_continuity_plan(
     ),
     tag = "disaster_v56"
 )]
-pub async fn list_plans(State(_state): State<AppState>) -> Json<ApiResponse<Vec<ContinuityPlan>>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let plans = store.continuity_plans.lock().await;
-    Json(ApiResponse::success(plans.clone(), "连续性计划列表"))
+pub async fn list_plans(State(state): State<AppState>) -> Json<ApiResponse<Vec<ContinuityPlan>>> {
+    let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
+    .unwrap_or_default();
+    Json(ApiResponse::success(plans, "连续性计划列表"))
 }
 
 #[utoipa::path(
@@ -1268,14 +1576,19 @@ pub async fn list_plans(State(_state): State<AppState>) -> Json<ApiResponse<Vec<
     tag = "disaster_v56"
 )]
 pub async fn get_plan(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<ContinuityPlan>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let plans = store.continuity_plans.lock().await;
-    match plans.iter().find(|p| p.id == id) {
-        Some(p) => Json(ApiResponse::success(p.clone(), "连续性计划详情")),
+    let plan = db_exec!(sqlx::query(&format!(
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询连续性计划失败: {e}"))))
+    .map(|r| continuity_plan_from_row(&r));
+    match plan {
+        Some(p) => Json(ApiResponse::success(p, "连续性计划详情")),
         None => Json(ApiResponse::error(404, "未找到连续性计划")),
     }
 }
@@ -1294,16 +1607,20 @@ pub async fn get_plan(
     tag = "disaster_v56"
 )]
 pub async fn update_plan(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateContinuityPlanRequest>,
 ) -> Json<ApiResponse<ContinuityPlan>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let mut plans = store.continuity_plans.lock().await;
+    let plan = db_exec!(sqlx::query(&format!(
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询连续性计划失败: {e}"))))
+    .map(|r| continuity_plan_from_row(&r));
 
-    let plan = plans.iter_mut().find(|p| p.id == id);
-    let Some(plan) = plan else {
+    let Some(mut plan) = plan else {
         return Json(ApiResponse::error(404, "未找到连续性计划"));
     };
 
@@ -1313,8 +1630,8 @@ pub async fn update_plan(
     if let Some(scope) = req.scope {
         plan.scope = scope;
     }
-    if let Some(ref s) = req.recovery_strategy {
-        plan.recovery_strategy = strategy_from_str(s);
+    if let Some(ref st) = req.recovery_strategy {
+        plan.recovery_strategy = strategy_from_str(st);
     }
     if let Some(tf) = req.test_frequency {
         plan.test_frequency = tf;
@@ -1327,13 +1644,23 @@ pub async fn update_plan(
             _ => ContinuityPlanStatus::Draft,
         };
     }
-    let updated = plan.clone();
-    // 结束可变借用（NLL 已自动结束），允许同步直写
 
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("disaster_v56", "continuity_plans", &*plans).await;
+    if let Err(e) = sqlx::query(
+        r#"UPDATE master_data.mdm_continuity_plans SET
+           name = $2, scope = $3, recovery_strategy = $4, test_frequency = $5, status = $6
+           WHERE id = $1"#,
+    )
+    .bind(&id)
+    .bind(&plan.name)
+    .bind(&plan.scope)
+    .bind(strategy_to_str(&plan.recovery_strategy))
+    .bind(&plan.test_frequency)
+    .bind(continuity_status_to_str(&plan.status))
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("更新连续性计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
-    Json(ApiResponse::success(updated, "连续性计划已更新"))
+    Json(ApiResponse::success(plan, "连续性计划已更新"))
 }
 
 #[utoipa::path(
@@ -1350,24 +1677,33 @@ pub async fn update_plan(
     tag = "disaster_v56"
 )]
 pub async fn test_plan(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     _req: Json<TestPlanRequest>,
 ) -> Json<ApiResponse<BCTest>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let mut plans = store.continuity_plans.lock().await;
+    let plan = db_exec!(sqlx::query(&format!(
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans WHERE id = $1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询连续性计划失败: {e}"))))
+    .map(|r| continuity_plan_from_row(&r));
 
-    let plan = plans.iter_mut().find(|p| p.id == id);
-    let Some(plan) = plan else {
+    let Some(_plan) = plan else {
         return Json(ApiResponse::error(404, "未找到连续性计划"));
     };
 
     let now = chrono::Utc::now();
-    plan.last_tested = Some(now.to_rfc3339());
-    plan.status = ContinuityPlanStatus::Tested;
-
-    drop(plans);
+    if let Err(e) = sqlx::query(
+        r#"UPDATE master_data.mdm_continuity_plans SET last_tested = $2, status = $3 WHERE id = $1"#,
+    )
+    .bind(&id)
+    .bind(now.to_rfc3339())
+    .bind("tested")
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("更新连续性计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     let bc_test = BCTest {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1378,24 +1714,40 @@ pub async fn test_plan(
         issues_found: Vec::new(),
     };
 
-    let mut tests = store.bc_tests.lock().await;
-    tests.push(bc_test.clone());
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_bc_tests
+           (id, plan_id, tested_at, result, duration_minutes, issues_found)
+           VALUES ($1,$2,$3,$4,$5,$6)"#,
+    )
+    .bind(&bc_test.id)
+    .bind(&bc_test.plan_id)
+    .bind(&bc_test.tested_at)
+    .bind(&bc_test.result)
+    .bind(bc_test.duration_minutes)
+    .bind(serde_json::to_value(&bc_test.issues_found).unwrap_or_default())
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入演练记录失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(bc_test, "连续性计划测试完成"))
 }
 
 pub async fn get_test_results(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<serde_json::Value>,
 ) -> Json<ApiResponse<Vec<BCTest>>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let tests = store.bc_tests.lock().await;
-
     let plan_id = params.get("plan_id").and_then(|v| v.as_str());
 
+    let tests: Vec<BCTest> = sqlx::query(&format!(
+        "SELECT {BC_TEST_COLS} FROM master_data.mdm_bc_tests"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(bc_test_from_row).collect())
+    .unwrap_or_default();
+
     let filtered: Vec<BCTest> = tests
-        .iter()
+        .into_iter()
         .filter(|t| {
             if let Some(pid) = plan_id {
                 if t.plan_id != pid {
@@ -1404,7 +1756,6 @@ pub async fn get_test_results(
             }
             true
         })
-        .cloned()
         .collect();
 
     Json(ApiResponse::success(filtered, "测试结果列表"))
@@ -1426,13 +1777,16 @@ pub async fn get_test_results(
     clippy::cast_precision_loss
 )]
 pub async fn assess_impact(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ImpactQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
-    let plans = store.continuity_plans.lock().await;
+    let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
+    .unwrap_or_default();
     let entity_type = params.entity_type.as_deref().unwrap_or("all");
     let scenario = params.scenario.as_deref().unwrap_or("outage");
 
@@ -1506,13 +1860,22 @@ pub async fn assess_impact(
     clippy::cast_precision_loss
 )]
 pub async fn get_continuity_score(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
-    let plans = store.continuity_plans.lock().await;
-    let tests = store.bc_tests.lock().await;
+    let plans: Vec<ContinuityPlan> = sqlx::query(&format!(
+        "SELECT {CONTINUITY_PLAN_COLS} FROM master_data.mdm_continuity_plans"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(continuity_plan_from_row).collect())
+    .unwrap_or_default();
+    let tests: Vec<BCTest> = sqlx::query(&format!(
+        "SELECT {BC_TEST_COLS} FROM master_data.mdm_bc_tests"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(bc_test_from_row).collect())
+    .unwrap_or_default();
 
     let total_plans = plans.len() as f64;
     let tested_plans = plans
@@ -1584,12 +1947,9 @@ pub async fn get_continuity_score(
     tag = "disaster_v56"
 )]
 pub async fn configure_replication(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<ConfigureReplicationRequest>,
 ) -> Json<ApiResponse<ReplicationConfig>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
     let mode = req
         .replication_mode
         .as_deref()
@@ -1605,8 +1965,20 @@ pub async fn configure_replication(
         status: ReplicationStatus::Stopped,
     };
 
-    let mut configs = store.replication_configs.lock().await;
-    configs.push(config.clone());
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_replication_configs
+           (id, source_region, target_region, replication_mode, lag_max_ms, status)
+           VALUES ($1,$2,$3,$4,$5,$6)"#,
+    )
+    .bind(&config.id)
+    .bind(&config.source_region)
+    .bind(&config.target_region)
+    .bind(replication_mode_to_str(&config.replication_mode))
+    .bind(config.lag_max_ms)
+    .bind(replication_status_to_str(&config.status))
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入复制配置失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(config, "复制配置已创建"))
 }
@@ -1622,19 +1994,27 @@ pub async fn configure_replication(
     tag = "disaster_v56"
 )]
 pub async fn start_replication(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<ReplicationActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let mut configs = store.replication_configs.lock().await;
+    let config = db_exec!(sqlx::query(&format!(
+        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
+    ))
+    .bind(&req.replication_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询复制配置失败: {e}"))))
+    .map(|r| replication_config_from_row(&r));
 
-    let config = configs.iter_mut().find(|c| c.id == req.replication_id);
     let Some(config) = config else {
         return Json(ApiResponse::error(404, "未找到复制配置"));
     };
 
-    config.status = ReplicationStatus::Running;
+    if let Err(e) = sqlx::query("UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1")
+        .bind(&config.id)
+        .execute(&state.db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("启动复制失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1659,19 +2039,28 @@ pub async fn start_replication(
     tag = "disaster_v56"
 )]
 pub async fn stop_replication(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<ReplicationActionRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let mut configs = store.replication_configs.lock().await;
+    let config = db_exec!(sqlx::query(&format!(
+        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs WHERE id = $1"
+    ))
+    .bind(&req.replication_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询复制配置失败: {e}"))))
+    .map(|r| replication_config_from_row(&r));
 
-    let config = configs.iter_mut().find(|c| c.id == req.replication_id);
     let Some(config) = config else {
         return Json(ApiResponse::error(404, "未找到复制配置"));
     };
 
-    config.status = ReplicationStatus::Stopped;
+    if let Err(e) = 
+    sqlx::query("UPDATE master_data.mdm_replication_configs SET status = 'stopped' WHERE id = $1")
+        .bind(&config.id)
+        .execute(&state.db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("停止复制失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1694,13 +2083,22 @@ pub async fn stop_replication(
     tag = "disaster_v56"
 )]
 pub async fn get_replication_status(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
-    let configs = store.replication_configs.lock().await;
-    let regions = store.region_configs.lock().await;
+    let configs: Vec<ReplicationConfig> = sqlx::query(&format!(
+        "SELECT {REPLICATION_CONFIG_COLS} FROM master_data.mdm_replication_configs"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(replication_config_from_row).collect())
+    .unwrap_or_default();
+    let regions: Vec<RegionConfig> = sqlx::query(&format!(
+        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(region_config_from_row).collect())
+    .unwrap_or_default();
 
     let mut statuses: Vec<serde_json::Value> = Vec::new();
     for config in configs.iter() {
@@ -1740,12 +2138,9 @@ pub async fn get_replication_status(
     tag = "disaster_v56"
 )]
 pub async fn initiate_failover(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<InitiateFailoverRequest>,
 ) -> Json<ApiResponse<FailoverRecord>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-
     let trigger = req
         .trigger
         .as_deref()
@@ -1767,8 +2162,22 @@ pub async fn initiate_failover(
         status: FailoverStatus::Initiated,
     };
 
-    let mut records = store.failover_records.lock().await;
-    records.push(failover.clone());
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_failover_records
+           (id, from_region, to_region, trigger, started_at, completed_at, reason, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+    )
+    .bind(&failover.id)
+    .bind(&failover.from_region)
+    .bind(&failover.to_region)
+    .bind(failover_trigger_to_str(&failover.trigger))
+    .bind(&failover.started_at)
+    .bind(Option::<String>::None)
+    .bind(&failover.reason)
+    .bind(failover_status_to_str(&failover.status))
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入故障转移记录失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(failover, "故障转移已发起"))
 }
@@ -1787,36 +2196,48 @@ pub async fn initiate_failover(
     tag = "disaster_v56"
 )]
 pub async fn complete_failover(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<CompleteFailoverRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let mut records = store.failover_records.lock().await;
+    let record = db_exec!(sqlx::query(&format!(
+        "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records WHERE id = $1 OR id = $2"
+    ))
+    .bind(&id)
+    .bind(&req.failover_id)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询故障转移记录失败: {e}"))))
+    .map(|r| failover_record_from_row(&r));
 
-    let record = records
-        .iter_mut()
-        .find(|r| r.id == id || r.id == req.failover_id);
     let Some(record) = record else {
         return Json(ApiResponse::error(404, "未找到故障转移记录"));
     };
 
-    record.status = FailoverStatus::Completed;
-    record.completed_at = Some(chrono::Utc::now().to_rfc3339());
+    let completed_at = chrono::Utc::now().to_rfc3339();
+    if let Err(e) = sqlx::query(
+        r#"UPDATE master_data.mdm_failover_records SET status = 'completed', completed_at = $2 WHERE id = $1"#,
+    )
+    .bind(&record.id)
+    .bind(&completed_at)
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("更新故障转移记录失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
-    let mut regions = store.region_configs.lock().await;
-    if let Some(from) = regions
-        .iter_mut()
-        .find(|r| r.region_id == record.from_region)
-    {
-        from.status = RegionStatus::Offline;
-        from.primary = false;
-    }
-    if let Some(to) = regions.iter_mut().find(|r| r.region_id == record.to_region) {
-        to.status = RegionStatus::Online;
-        to.primary = true;
-    }
+    if let Err(e) = sqlx::query(
+        r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1"#,
+    )
+    .bind(&record.from_region)
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("更新源地域失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    if let Err(e) = sqlx::query(
+        r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1"#,
+    )
+    .bind(&record.to_region)
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("更新目标地域失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1824,7 +2245,7 @@ pub async fn complete_failover(
             "from_region": record.from_region,
             "to_region": record.to_region,
             "status": "completed",
-            "completed_at": record.completed_at,
+            "completed_at": completed_at,
             "region_updated": true,
         }),
         "故障转移已完成",
@@ -1842,12 +2263,16 @@ pub async fn complete_failover(
     tag = "disaster_v56"
 )]
 pub async fn get_failover_history(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<FailoverRecord>>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let records = store.failover_records.lock().await;
-    Json(ApiResponse::success(records.clone(), "故障转移历史"))
+    let records: Vec<FailoverRecord> = sqlx::query(&format!(
+        "SELECT {FAILOVER_RECORD_COLS} FROM master_data.mdm_failover_records"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(failover_record_from_row).collect())
+    .unwrap_or_default();
+    Json(ApiResponse::success(records, "故障转移历史"))
 }
 
 #[utoipa::path(
@@ -1861,28 +2286,44 @@ pub async fn get_failover_history(
     tag = "disaster_v56"
 )]
 pub async fn switch_regions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<SwitchRegionsRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let mut regions = store.region_configs.lock().await;
+    let target = db_exec!(sqlx::query(&format!(
+        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs WHERE region_id = $1"
+    ))
+    .bind(&req.primary_region)
+    .fetch_optional(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询地域失败: {e}"))))
+    .map(|r| region_config_from_row(&r));
 
-    let target = regions
-        .iter_mut()
-        .find(|r| r.region_id == req.primary_region);
-    let Some(target) = target else {
+    let Some(_target) = target else {
         return Json(ApiResponse::error(404, "未找到目标地域"));
     };
 
-    target.primary = true;
-    target.status = RegionStatus::Online;
+    if let Err(e) = sqlx::query(
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = false WHERE region_id <> $1"#,
+    )
+    .bind(&req.primary_region)
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("重置地域主备失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    if let Err(e) = sqlx::query(
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1"#,
+    )
+    .bind(&req.primary_region)
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("切换主地域失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
-    for region in regions.iter_mut() {
-        if region.region_id != req.primary_region {
-            region.primary = false;
-        }
-    }
+    let regions: Vec<RegionConfig> = sqlx::query(&format!(
+        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(region_config_from_row).collect())
+    .unwrap_or_default();
 
     let region_snapshot: Vec<serde_json::Value> = regions
         .iter()
@@ -1916,11 +2357,15 @@ pub async fn switch_regions(
     tag = "disaster_v56"
 )]
 pub async fn get_region_health(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v56_store();
-    let regions = store.region_configs.lock().await;
+    let regions: Vec<RegionConfig> = sqlx::query(&format!(
+        "SELECT {REGION_CONFIG_COLS} FROM master_data.mdm_region_configs"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .map(|rows| rows.iter().map(region_config_from_row).collect())
+    .unwrap_or_default();
 
     let health: Vec<serde_json::Value> = regions
         .iter()
