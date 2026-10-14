@@ -2,16 +2,14 @@
 //! V60.0 MDM AC-32: 元数据管理 + 数据血缘增强 + 生命周期管理
 //!
 //! 核心能力：
-//! - 元数据管理 (MetadataManager): 元数据对象CRUD、属性管理、标签管理、统计分析
-//! - 数据血缘增强 (EnhancedLineage): 多层级血缘追踪、影响分析、血缘图谱、导出
-//! - 生命周期管理 (LifecycleManager): 阶段管理、策略配置、自动转换、批量操作
+//! - 元数据管理: 元数据对象CRUD、属性管理、标签管理、统计分析
+//! - 数据血缘增强: 多层级血缘追踪、影响分析、血缘图谱、导出
+//! - 生命周期管理: 阶段管理、策略配置、自动转换、批量操作
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
 use std::collections::HashMap;
-use std::sync::LazyLock;
-use tokio::sync::Mutex;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -161,196 +159,6 @@ pub struct MetadataStats {
 
 // ==================== 元数据管理：引擎 ====================
 
-struct MetadataManager {
-    objects: Mutex<Vec<MetadataObject>>,
-    attributes: Mutex<Vec<MetadataAttribute>>,
-    tags: Mutex<Vec<MetadataTag>>,
-    initialized: Mutex<bool>,
-}
-
-impl MetadataManager {
-    async fn create_metadata(
-        &self,
-        name: String,
-        object_type: MetadataObjectType,
-        description: String,
-        owner: String,
-        tags: Vec<String>,
-        attributes: serde_json::Value,
-    ) -> MetadataObject {
-        let now = chrono::Utc::now().to_rfc3339();
-        let obj = MetadataObject {
-            id: uuid::Uuid::new_v4().to_string(),
-            name,
-            object_type,
-            description,
-            owner,
-            tags,
-            attributes,
-            created_at: now.clone(),
-            updated_at: now,
-        };
-        self.objects.lock().await.push(obj.clone());
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        let objects = self.objects.lock().await;
-        crate::modules::persist::save("metadata_v60", "objects", &*objects).await;
-
-        obj
-    }
-
-    async fn get_metadata(&self, id: &str) -> Option<MetadataObject> {
-        let objects = self.objects.lock().await;
-        objects.iter().find(|o| o.id == id).cloned()
-    }
-
-    async fn list_metadata(&self, object_type: Option<MetadataObjectType>) -> Vec<MetadataObject> {
-        let objects = self.objects.lock().await;
-        if let Some(ot) = object_type {
-            objects
-                .iter()
-                .filter(|o| o.object_type == ot)
-                .cloned()
-                .collect()
-        } else {
-            objects.clone()
-        }
-    }
-
-    async fn search_metadata(&self, query: &str) -> Vec<MetadataObject> {
-        let objects = self.objects.lock().await;
-        let q = query.to_lowercase();
-        objects
-            .iter()
-            .filter(|o| {
-                o.name.to_lowercase().contains(&q)
-                    || o.description.to_lowercase().contains(&q)
-                    || o.tags.iter().any(|t| t.to_lowercase().contains(&q))
-            })
-            .cloned()
-            .collect()
-    }
-
-    async fn update_metadata(
-        &self,
-        id: &str,
-        name: Option<String>,
-        description: Option<String>,
-        owner: Option<String>,
-        tags: Option<Vec<String>>,
-        attributes: Option<serde_json::Value>,
-    ) -> Option<MetadataObject> {
-        let mut objects = self.objects.lock().await;
-        let obj = objects.iter_mut().find(|o| o.id == id)?;
-        if let Some(n) = name {
-            obj.name = n;
-        }
-        if let Some(d) = description {
-            obj.description = d;
-        }
-        if let Some(o) = owner {
-            obj.owner = o;
-        }
-        if let Some(t) = tags {
-            obj.tags = t;
-        }
-        if let Some(a) = attributes {
-            obj.attributes = a;
-        }
-        obj.updated_at = chrono::Utc::now().to_rfc3339();
-        let updated = obj.clone();
-        // 结束可变借用（NLL 已自动结束），允许同步直写
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("metadata_v60", "objects", &*objects).await;
-
-        Some(updated)
-    }
-
-    async fn delete_metadata(&self, id: &str) -> bool {
-        let mut objects = self.objects.lock().await;
-        let pos = objects.iter().position(|o| o.id == id);
-        if let Some(p) = pos {
-            objects.remove(p);
-
-            // B10: 写时同步直写（SIGKILL 不丢近写）。
-            crate::modules::persist::save("metadata_v60", "objects", &*objects).await;
-
-            true
-        } else {
-            false
-        }
-    }
-
-    async fn add_attribute(
-        &self,
-        object_id: String,
-        key: String,
-        value: String,
-        data_type: String,
-        is_required: bool,
-    ) -> MetadataAttribute {
-        let attr = MetadataAttribute {
-            id: uuid::Uuid::new_v4().to_string(),
-            object_id,
-            key,
-            value,
-            data_type,
-            is_required,
-        };
-        self.attributes.lock().await.push(attr.clone());
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        let attributes = self.attributes.lock().await;
-        crate::modules::persist::save("metadata_v60", "attributes", &*attributes).await;
-
-        attr
-    }
-
-    async fn add_tag(&self, name: String, color: String, description: String) -> MetadataTag {
-        let tag = MetadataTag {
-            id: uuid::Uuid::new_v4().to_string(),
-            name,
-            color,
-            description,
-            usage_count: 0,
-        };
-        self.tags.lock().await.push(tag.clone());
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        let tags = self.tags.lock().await;
-        crate::modules::persist::save("metadata_v60", "tags", &*tags).await;
-
-        tag
-    }
-
-    async fn get_metadata_stats(&self) -> MetadataStats {
-        let objects = self.objects.lock().await;
-        let attributes = self.attributes.lock().await;
-        let tags = self.tags.lock().await;
-
-        let mut by_type = HashMap::new();
-        for obj in objects.iter() {
-            let key = metadata_type_str(&obj.object_type).to_string();
-            *by_type.entry(key).or_insert(0) += 1;
-        }
-
-        let mut recent_created = objects.clone();
-        recent_created.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-        recent_created.truncate(10);
-
-        MetadataStats {
-            total_objects: objects.len(),
-            total_attributes: attributes.len(),
-            total_tags: tags.len(),
-            by_type,
-            recent_created,
-        }
-    }
-}
-
-// ==================== 数据血缘增强：数据结构 ====================
-
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TransformationType {
@@ -415,262 +223,6 @@ pub struct LineageDashboard {
 
 // ==================== 数据血缘增强：引擎 ====================
 
-struct EnhancedLineage {
-    graphs: Mutex<Vec<LineageGraph>>,
-    nodes: Mutex<Vec<LineageNodeV60>>,
-    edges: Mutex<Vec<LineageEdgeV60>>,
-    initialized: Mutex<bool>,
-}
-
-impl EnhancedLineage {
-    #[allow(clippy::as_conversions)]
-    async fn build_lineage_graph(
-        &self,
-        root_entity_id: String,
-        root_entity_type: String,
-        max_depth: u32,
-    ) -> LineageGraph {
-        let now = chrono::Utc::now().to_rfc3339();
-        let graph_id = uuid::Uuid::new_v4().to_string();
-
-        let root_node = LineageNodeV60 {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_id: root_entity_id.clone(),
-            entity_type: root_entity_type.clone(),
-            name: format!("{}:{}", root_entity_type, root_entity_id),
-            attributes: serde_json::json!({"is_root": true}),
-            level: 0,
-            position: serde_json::json!({"x": 0, "y": 0}),
-        };
-
-        let mut nodes = vec![root_node.clone()];
-        let mut edges = Vec::new();
-
-        for level in 1..=max_depth {
-            let node = LineageNodeV60 {
-                id: uuid::Uuid::new_v4().to_string(),
-                entity_id: format!("{}_level_{}", root_entity_id, level),
-                entity_type: root_entity_type.clone(),
-                name: format!("{} L{}", root_entity_type, level),
-                attributes: serde_json::json!({"level": level}),
-                level,
-                position: serde_json::json!({"x": level as i64 * 100, "y": 0}),
-            };
-
-            let edge = LineageEdgeV60 {
-                id: uuid::Uuid::new_v4().to_string(),
-                source_id: nodes.last().unwrap().id.clone(),
-                target_id: node.id.clone(),
-                transformation_type: TransformationType::Transform,
-                transformation_details: serde_json::json!({"step": level}),
-                confidence: 0.9,
-            };
-
-            nodes.push(node);
-            edges.push(edge);
-        }
-
-        let graph = LineageGraph {
-            id: graph_id,
-            nodes: nodes.clone(),
-            edges: edges.clone(),
-            root_ids: vec![root_node.id.clone()],
-            updated_at: now,
-        };
-
-        {
-            let mut graph_nodes = self.nodes.lock().await;
-            graph_nodes.extend(nodes);
-        }
-        {
-            let mut graph_edges = self.edges.lock().await;
-            graph_edges.extend(edges);
-        }
-        self.graphs.lock().await.push(graph.clone());
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        let graph_nodes = self.nodes.lock().await;
-        crate::modules::persist::save("metadata_v60", "lineage_nodes", &*graph_nodes).await;
-        let graph_edges = self.edges.lock().await;
-        crate::modules::persist::save("metadata_v60", "lineage_edges", &*graph_edges).await;
-        let graphs = self.graphs.lock().await;
-        crate::modules::persist::save("metadata_v60", "lineage_graphs", &*graphs).await;
-
-        graph
-    }
-
-    async fn get_lineage_graph(&self, id: &str) -> Option<LineageGraph> {
-        let graphs = self.graphs.lock().await;
-        graphs.iter().find(|g| g.id == id).cloned()
-    }
-
-    async fn get_upstream(&self, entity_id: &str) -> Vec<LineageNodeV60> {
-        let edges = self.edges.lock().await;
-        let nodes = self.nodes.lock().await;
-
-        let mut result = Vec::new();
-        let mut visited = std::collections::HashSet::new();
-        let mut queue = vec![entity_id.to_string()];
-
-        while let Some(current) = queue.pop() {
-            if !visited.insert(current.clone()) {
-                continue;
-            }
-
-            let upstream_edges: Vec<LineageEdgeV60> = edges
-                .iter()
-                .filter(|e| e.target_id == current)
-                .cloned()
-                .collect();
-
-            for edge in upstream_edges {
-                if let Some(node) = nodes.iter().find(|n| n.id == edge.source_id).cloned() {
-                    queue.push(node.id.clone());
-                    result.push(node);
-                }
-            }
-        }
-
-        result
-    }
-
-    async fn get_downstream(&self, entity_id: &str) -> Vec<LineageNodeV60> {
-        let edges = self.edges.lock().await;
-        let nodes = self.nodes.lock().await;
-
-        let mut result = Vec::new();
-        let mut visited = std::collections::HashSet::new();
-        let mut queue = vec![entity_id.to_string()];
-
-        while let Some(current) = queue.pop() {
-            if !visited.insert(current.clone()) {
-                continue;
-            }
-
-            let downstream_edges: Vec<LineageEdgeV60> = edges
-                .iter()
-                .filter(|e| e.source_id == current)
-                .cloned()
-                .collect();
-
-            for edge in downstream_edges {
-                if let Some(node) = nodes.iter().find(|n| n.id == edge.target_id).cloned() {
-                    queue.push(node.id.clone());
-                    result.push(node);
-                }
-            }
-        }
-
-        result
-    }
-
-    async fn get_path(&self, source_id: &str, target_id: &str) -> Option<Vec<LineageEdgeV60>> {
-        let edges = self.edges.lock().await;
-
-        let mut adjacency: HashMap<String, Vec<LineageEdgeV60>> = HashMap::new();
-        for edge in edges.iter() {
-            adjacency
-                .entry(edge.source_id.clone())
-                .or_default()
-                .push(edge.clone());
-        }
-
-        let mut queue: Vec<(String, Vec<LineageEdgeV60>)> =
-            vec![(source_id.to_string(), Vec::new())];
-        let mut visited = std::collections::HashSet::new();
-
-        while let Some((current, path)) = queue.pop() {
-            if current == target_id {
-                return Some(path);
-            }
-
-            if !visited.insert(current.clone()) {
-                continue;
-            }
-
-            if let Some(next_edges) = adjacency.get(&current) {
-                for edge in next_edges {
-                    let mut new_path = path.clone();
-                    new_path.push(edge.clone());
-                    queue.push((edge.target_id.clone(), new_path));
-                }
-            }
-        }
-
-        None
-    }
-
-    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn get_lineage_impact(&self, entity_id: &str, entity_type: &str) -> LineageImpact {
-        let downstream = self.get_downstream(entity_id).await;
-        let upstream = self.get_upstream(entity_id).await;
-
-        let affected_downstream = downstream.len();
-        let affected_nodes = downstream.len() + upstream.len();
-        let confidence = if downstream.is_empty() { 0.5 } else { 0.9 };
-        let impact_score =
-            (affected_downstream as f64 * 0.3 + affected_nodes as f64 * 0.1).min(1.0);
-
-        LineageImpact {
-            entity_id: entity_id.to_string(),
-            entity_type: entity_type.to_string(),
-            affected_nodes,
-            affected_downstream,
-            confidence,
-            impact_score,
-        }
-    }
-
-    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn get_lineage_dashboard(&self) -> LineageDashboard {
-        let graphs = self.graphs.lock().await;
-        let nodes = self.nodes.lock().await;
-        let edges = self.edges.lock().await;
-
-        let entity_types: Vec<String> = nodes
-            .iter()
-            .map(|n| n.entity_type.clone())
-            .collect::<std::collections::HashSet<_>>()
-            .into_iter()
-            .collect();
-
-        let avg_confidence = if edges.is_empty() {
-            0.0
-        } else {
-            edges.iter().map(|e| e.confidence).sum::<f64>() / edges.len() as f64
-        };
-
-        let deepest_level = nodes.iter().map(|n| n.level).max().unwrap_or(0);
-
-        LineageDashboard {
-            total_graphs: graphs.len(),
-            total_nodes: nodes.len(),
-            total_edges: edges.len(),
-            entity_types,
-            avg_confidence,
-            deepest_level,
-        }
-    }
-
-    async fn export_lineage(&self, format: &str) -> serde_json::Value {
-        let graphs = self.graphs.lock().await;
-        let nodes = self.nodes.lock().await;
-        let edges = self.edges.lock().await;
-
-        match format {
-            "json" | _ => serde_json::json!({
-                "graphs": graphs.clone(),
-                "nodes": nodes.clone(),
-                "edges": edges.clone(),
-                "exported_at": chrono::Utc::now().to_rfc3339(),
-                "format": "json"
-            }),
-        }
-    }
-}
-
-// ==================== 生命周期管理：数据结构 ====================
-
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum LifecycleStage {
@@ -711,225 +263,6 @@ pub struct LifecycleDashboard {
 }
 
 // ==================== 生命周期管理：引擎 ====================
-
-struct LifecycleManager {
-    policies: Mutex<Vec<LifecyclePolicy>>,
-    history: Mutex<Vec<LifecycleHistory>>,
-    current_stages: Mutex<HashMap<String, LifecycleStage>>,
-    initialized: Mutex<bool>,
-}
-
-impl LifecycleManager {
-    async fn get_current_stage(&self, entity_id: &str) -> Option<LifecycleStage> {
-        let stages = self.current_stages.lock().await;
-        stages.get(entity_id).cloned()
-    }
-
-    async fn transition_stage(
-        &self,
-        entity_id: &str,
-        new_stage: LifecycleStage,
-        reason: String,
-        changed_by: String,
-    ) -> LifecycleHistory {
-        let now = chrono::Utc::now().to_rfc3339();
-        let from_stage = {
-            let stages = self.current_stages.lock().await;
-            stages.get(entity_id).cloned()
-        };
-
-        let history = LifecycleHistory {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_id: entity_id.to_string(),
-            stage: new_stage.clone(),
-            from_stage,
-            reason,
-            changed_at: now,
-            changed_by,
-        };
-
-        {
-            let mut stages = self.current_stages.lock().await;
-            stages.insert(entity_id.to_string(), new_stage);
-        }
-        {
-            let mut hist = self.history.lock().await;
-            hist.push(history.clone());
-        }
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        let stages = self.current_stages.lock().await;
-        crate::modules::persist::save("metadata_v60", "current_stages", &*stages).await;
-        let hist = self.history.lock().await;
-        crate::modules::persist::save("metadata_v60", "lifecycle_history", &*hist).await;
-
-        history
-    }
-
-    async fn get_lifecycle_history(&self, entity_id: &str) -> Vec<LifecycleHistory> {
-        let history = self.history.lock().await;
-        history
-            .iter()
-            .filter(|h| h.entity_id == entity_id)
-            .cloned()
-            .collect()
-    }
-
-    async fn create_policy(
-        &self,
-        entity_type: String,
-        transitions: serde_json::Value,
-        duration_days: u32,
-        actions: Vec<String>,
-    ) -> LifecyclePolicy {
-        let policy = LifecyclePolicy {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_type,
-            transitions,
-            duration_days,
-            actions,
-        };
-        self.policies.lock().await.push(policy.clone());
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        let policies = self.policies.lock().await;
-        crate::modules::persist::save("metadata_v60", "lifecycle_policies", &*policies).await;
-
-        policy
-    }
-
-    async fn get_policies(&self, entity_type: Option<String>) -> Vec<LifecyclePolicy> {
-        let policies = self.policies.lock().await;
-        if let Some(et) = entity_type {
-            policies
-                .iter()
-                .filter(|p| p.entity_type == et)
-                .cloned()
-                .collect()
-        } else {
-            policies.clone()
-        }
-    }
-
-    async fn auto_transition(&self) -> Vec<LifecycleHistory> {
-        let policies = self.policies.lock().await;
-        let mut results = Vec::new();
-
-        for policy in policies.iter() {
-            if let Some(transitions) = policy.transitions.as_array() {
-                for transition in transitions {
-                    if let (Some(from), Some(to)) = (
-                        transition.get("from").and_then(|v| v.as_str()),
-                        transition.get("to").and_then(|v| v.as_str()),
-                    ) {
-                        let stages = self.current_stages.lock().await;
-                        let matching: Vec<String> = stages
-                            .iter()
-                            .filter(|(_, v)| lifecycle_stage_str(v) == from)
-                            .map(|(k, _)| k.clone())
-                            .collect();
-                        drop(stages);
-
-                        for entity_id in matching {
-                            if let Some(to_stage) = parse_lifecycle_stage(to) {
-                                let history = self
-                                    .transition_stage(
-                                        &entity_id,
-                                        to_stage,
-                                        format!("auto_transition: {}", policy.entity_type),
-                                        "system".to_string(),
-                                    )
-                                    .await;
-                                results.push(history);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        results
-    }
-
-    async fn get_lifecycle_dashboard(&self) -> LifecycleDashboard {
-        let stages = self.current_stages.lock().await;
-        let policies = self.policies.lock().await;
-        let history = self.history.lock().await;
-
-        let mut by_stage = HashMap::new();
-        for stage in stages.values() {
-            let key = lifecycle_stage_str(stage).to_string();
-            *by_stage.entry(key).or_insert(0) += 1;
-        }
-
-        let mut recent_transitions = history.clone();
-        recent_transitions.sort_by(|a, b| b.changed_at.cmp(&a.changed_at));
-        recent_transitions.truncate(10);
-
-        LifecycleDashboard {
-            total_entities: stages.len(),
-            by_stage,
-            policies_count: policies.len(),
-            recent_transitions,
-        }
-    }
-
-    async fn bulk_transition(
-        &self,
-        entity_ids: Vec<String>,
-        target_stage: LifecycleStage,
-        reason: String,
-        changed_by: String,
-    ) -> Vec<LifecycleHistory> {
-        let mut results = Vec::new();
-        for entity_id in entity_ids {
-            let history = self
-                .transition_stage(
-                    &entity_id,
-                    target_stage.clone(),
-                    reason.clone(),
-                    changed_by.clone(),
-                )
-                .await;
-            results.push(history);
-        }
-        results
-    }
-}
-
-// ==================== V60 内存存储 ====================
-
-struct V60Store {
-    metadata: MetadataManager,
-    lineage: EnhancedLineage,
-    lifecycle: LifecycleManager,
-}
-
-fn get_v60_store() -> &'static V60Store {
-    static STORE: LazyLock<V60Store> = LazyLock::new(|| V60Store {
-        metadata: MetadataManager {
-            objects: Mutex::new(Vec::new()),
-            attributes: Mutex::new(Vec::new()),
-            tags: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        },
-        lineage: EnhancedLineage {
-            graphs: Mutex::new(Vec::new()),
-            nodes: Mutex::new(Vec::new()),
-            edges: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        },
-        lifecycle: LifecycleManager {
-            policies: Mutex::new(Vec::new()),
-            history: Mutex::new(Vec::new()),
-            current_stages: Mutex::new(HashMap::new()),
-            initialized: Mutex::new(false),
-        },
-    });
-    &STORE
-}
-
-// ==================== 辅助函数 ====================
 
 fn metadata_type_str(t: &MetadataObjectType) -> &str {
     match t {
@@ -986,253 +319,6 @@ fn transformation_type_str(t: &TransformationType) -> &str {
 }
 
 // ==================== 初始化种子数据 ====================
-
-async fn ensure_initialized() {
-    let store = get_v60_store();
-
-    // U4：优先从库恢复既有快照；命中则置全部子引擎为已初始化并跳过 demo seed。
-    if crate::modules::persist::enabled() && persist_load().await {
-        *store.metadata.initialized.lock().await = true;
-        *store.lineage.initialized.lock().await = true;
-        *store.lifecycle.initialized.lock().await = true;
-        return;
-    }
-
-    {
-        let mut init = store.metadata.initialized.lock().await;
-        if *init {
-            return;
-        }
-
-        let now = chrono::Utc::now().to_rfc3339();
-
-        let seed_objects = vec![
-            MetadataObject {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "客户主数据表".to_string(),
-                object_type: MetadataObjectType::Table,
-                description: "客户核心主数据表，包含客户基本信息".to_string(),
-                owner: "data_owner_001".to_string(),
-                tags: vec!["customer".to_string(), "master".to_string()],
-                attributes: serde_json::json!({"row_count": 150000, "storage": "partitioned"}),
-                created_at: now.clone(),
-                updated_at: now.clone(),
-            },
-            MetadataObject {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "供应商主数据表".to_string(),
-                object_type: MetadataObjectType::Table,
-                description: "供应商核心主数据表".to_string(),
-                owner: "data_owner_002".to_string(),
-                tags: vec!["supplier".to_string()],
-                attributes: serde_json::json!({"row_count": 8500, "storage": "normal"}),
-                created_at: now.clone(),
-                updated_at: now,
-            },
-        ];
-        *store.metadata.objects.lock().await = seed_objects;
-
-        let seed_tags = vec![
-            MetadataTag {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "customer".to_string(),
-                color: "#3498db".to_string(),
-                description: "客户域".to_string(),
-                usage_count: 15,
-            },
-            MetadataTag {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "supplier".to_string(),
-                color: "#2ecc71".to_string(),
-                description: "供应商域".to_string(),
-                usage_count: 8,
-            },
-            MetadataTag {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "master".to_string(),
-                color: "#e74c3c".to_string(),
-                description: "主数据".to_string(),
-                usage_count: 25,
-            },
-        ];
-        *store.metadata.tags.lock().await = seed_tags;
-        *init = true;
-    }
-
-    {
-        let mut init = store.lineage.initialized.lock().await;
-        if *init {
-            return;
-        }
-
-        let graph = store
-            .lineage
-            .build_lineage_graph("customer_table".to_string(), "table".to_string(), 3)
-            .await;
-        let _ = graph;
-        *init = true;
-    }
-
-    {
-        let mut init = store.lifecycle.initialized.lock().await;
-        if *init {
-            return;
-        }
-
-        let seed_policies = vec![LifecyclePolicy {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_type: "customer".to_string(),
-            transitions: serde_json::json!([
-                {"from": "created", "to": "active"},
-                {"from": "active", "to": "maintenance"},
-                {"from": "maintenance", "to": "deprecated"},
-                {"from": "deprecated", "to": "archived"}
-            ]),
-            duration_days: 90,
-            actions: vec!["notify_owner".to_string(), "audit_log".to_string()],
-        }];
-        *store.lifecycle.policies.lock().await = seed_policies;
-
-        let mut stages = HashMap::new();
-        stages.insert("entity_001".to_string(), LifecycleStage::Active);
-        stages.insert("entity_002".to_string(), LifecycleStage::Maintenance);
-        *store.lifecycle.current_stages.lock().await = stages;
-        *init = true;
-    }
-
-    // U4：首次 seed 后落库。
-    if crate::modules::persist::enabled() {
-        persist_save().await;
-    }
-}
-
-// ==================== U4 持久化 ====================
-
-async fn persist_load() -> bool {
-    use std::collections::HashMap;
-    let store = get_v60_store();
-    let mut restored = false;
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<MetadataObject>>("metadata_v60", "objects").await
-    {
-        *store.metadata.objects.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<MetadataAttribute>>("metadata_v60", "attributes").await
-    {
-        *store.metadata.attributes.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<MetadataTag>>("metadata_v60", "tags").await
-    {
-        *store.metadata.tags.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<LineageGraph>>("metadata_v60", "lineage_graphs").await
-    {
-        *store.lineage.graphs.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<LineageNodeV60>>("metadata_v60", "lineage_nodes").await
-    {
-        *store.lineage.nodes.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<LineageEdgeV60>>("metadata_v60", "lineage_edges").await
-    {
-        *store.lineage.edges.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<LifecyclePolicy>>("metadata_v60", "lifecycle_policies")
-            .await
-    {
-        *store.lifecycle.policies.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<LifecycleHistory>>("metadata_v60", "lifecycle_history")
-            .await
-    {
-        *store.lifecycle.history.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<HashMap<String, LifecycleStage>>(
-        "metadata_v60",
-        "current_stages",
-    )
-    .await
-    {
-        *store.lifecycle.current_stages.lock().await = v;
-        restored = true;
-    }
-    restored
-}
-
-async fn persist_save() {
-    let store = get_v60_store();
-    crate::modules::persist::save(
-        "metadata_v60",
-        "objects",
-        &*store.metadata.objects.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "metadata_v60",
-        "attributes",
-        &*store.metadata.attributes.lock().await,
-    )
-    .await;
-    crate::modules::persist::save("metadata_v60", "tags", &*store.metadata.tags.lock().await).await;
-    crate::modules::persist::save(
-        "metadata_v60",
-        "lineage_graphs",
-        &*store.lineage.graphs.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "metadata_v60",
-        "lineage_nodes",
-        &*store.lineage.nodes.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "metadata_v60",
-        "lineage_edges",
-        &*store.lineage.edges.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "metadata_v60",
-        "lifecycle_policies",
-        &*store.lifecycle.policies.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "metadata_v60",
-        "lifecycle_history",
-        &*store.lifecycle.history.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "metadata_v60",
-        "current_stages",
-        &*store.lifecycle.current_stages.lock().await,
-    )
-    .await;
-}
-
-pub async fn background_flush() {
-    let store = get_v60_store();
-    if !*store.metadata.initialized.lock().await {
-        return;
-    }
-    persist_save().await;
-}
 
 // ==================== 请求/响应结构 ====================
 
@@ -1464,13 +550,24 @@ pub async fn list_metadata(
     tag = "metadata_v60"
 )]
 pub async fn search_metadata(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SearchMetadataQuery>,
 ) -> Json<ApiResponse<Vec<MetadataObject>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表 LIKE 搜索。
+    let pattern = format!("%{}%", params.q);
+    let rows = sqlx::query(&format!(
+        r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
+           WHERE name ILIKE $1 OR description ILIKE $1 OR owner ILIKE $1
+           ORDER BY created_at DESC"#,
+    ))
+    .bind(&pattern)
+    .fetch_all(&state.db)
+    .await;
+    let results: Vec<MetadataObject> = match rows {
+        Ok(r) => r.iter().map(metadata_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("搜索元数据失败: {e}"))),
+    };
 
-    let results = store.metadata.search_metadata(&params.q).await;
     Json(ApiResponse::success(results, "元数据搜索结果"))
 }
 
@@ -1581,26 +678,39 @@ pub async fn delete_metadata(
     tag = "metadata_v60"
 )]
 pub async fn add_attribute(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<AddAttributeRequest>,
 ) -> Json<ApiResponse<MetadataAttribute>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：写真表 master_data.mdm_metadata_attributes。
+    let attr = MetadataAttribute {
+        id: uuid::Uuid::new_v4().to_string(),
+        object_id: id,
+        key: req.key,
+        value: req.value,
+        data_type: req.data_type.unwrap_or_else(|| "string".to_string()),
+        is_required: req.is_required.unwrap_or(false),
+    };
 
-    let attr = store
-        .metadata
-        .add_attribute(
-            id,
-            req.key,
-            req.value,
-            req.data_type.unwrap_or_else(|| "string".to_string()),
-            req.is_required.unwrap_or(false),
-        )
-        .await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_metadata_attributes
+           (id, object_id, key, value, data_type, is_required)
+           VALUES ($1,$2,$3,$4,$5,$6)"#,
+    )
+    .bind(&attr.id)
+    .bind(&attr.object_id)
+    .bind(&attr.key)
+    .bind(&attr.value)
+    .bind(&attr.data_type)
+    .bind(attr.is_required)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("添加属性失败: {e}")));
+    }
+
     Json(ApiResponse::success(attr, "属性已添加"))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
@@ -1612,23 +722,36 @@ pub async fn add_attribute(
     tag = "metadata_v60"
 )]
 pub async fn add_tag(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AddTagRequest>,
 ) -> Json<ApiResponse<MetadataTag>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：写真表 master_data.mdm_metadata_tags。
+    let tag = MetadataTag {
+        id: uuid::Uuid::new_v4().to_string(),
+        name: req.name,
+        color: req.color.unwrap_or_else(|| "#95a5a6".to_string()),
+        description: req.description.unwrap_or_default(),
+        usage_count: 0,
+    };
 
-    let tag = store
-        .metadata
-        .add_tag(
-            req.name,
-            req.color.unwrap_or_else(|| "#95a5a6".to_string()),
-            req.description.unwrap_or_default(),
-        )
-        .await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_metadata_tags
+           (id, name, color, description, usage_count)
+           VALUES ($1,$2,$3,$4,$5)"#,
+    )
+    .bind(&tag.id)
+    .bind(&tag.name)
+    .bind(&tag.color)
+    .bind(&tag.description)
+    .bind(tag.usage_count as i64)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("添加标签失败: {e}")));
+    }
+
     Json(ApiResponse::success(tag, "标签已添加"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
@@ -1640,16 +763,54 @@ pub async fn add_tag(
     tag = "metadata_v60"
 )]
 pub async fn get_metadata_stats(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<MetadataStats>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-    let stats = store.metadata.get_metadata_stats().await;
-    Json(ApiResponse::success(stats, "元数据统计"))
+    // K1：数据源改真表（objects/attributes/tags），聚合逻辑保留。
+    let obj_rows = sqlx::query(&format!(
+        r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects ORDER BY created_at DESC"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let objects: Vec<MetadataObject> = match obj_rows {
+        Ok(r) => r.iter().map(metadata_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询元数据失败: {e}"))),
+    };
+
+    let attr_count = sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_metadata_attributes")
+        .fetch_one(&state.db)
+        .await;
+    let tag_count = sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_metadata_tags")
+        .fetch_one(&state.db)
+        .await;
+    let (total_attributes, total_tags) = match (attr_count, tag_count) {
+        (Ok(a), Ok(t)) => (
+            a.get::<i64, _>("total"),
+            t.get::<i64, _>("total"),
+        ),
+        _ => (0, 0),
+    };
+
+    let mut by_type = HashMap::new();
+    for obj in objects.iter() {
+        let key = metadata_type_str(&obj.object_type).to_string();
+        *by_type.entry(key).or_insert(0) += 1;
+    }
+
+    let mut recent_created = objects.clone();
+    recent_created.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+    recent_created.truncate(10);
+
+    Json(ApiResponse::success(
+        MetadataStats {
+            total_objects: objects.len(),
+            total_attributes: total_attributes as usize,
+            total_tags: total_tags as usize,
+            by_type,
+            recent_created,
+        },
+        "元数据统计",
+    ))
 }
-
-// ==================== 处理器：数据血缘增强 ====================
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
@@ -1660,18 +821,115 @@ pub async fn get_metadata_stats(
     ),
     tag = "metadata_v60"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn build_lineage_graph(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<BuildLineageGraphRequest>,
 ) -> Json<ApiResponse<LineageGraph>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-
+    // K1：算法照搬，写入真表（nodes/edges/graphs）。
+    let now = chrono::Utc::now().to_rfc3339();
+    let graph_id = uuid::Uuid::new_v4().to_string();
     let max_depth = req.max_depth.unwrap_or(3);
-    let graph = store
-        .lineage
-        .build_lineage_graph(req.root_entity_id, req.root_entity_type, max_depth)
-        .await;
+
+    let root_node = LineageNodeV60 {
+        id: uuid::Uuid::new_v4().to_string(),
+        entity_id: req.root_entity_id.clone(),
+        entity_type: req.root_entity_type.clone(),
+        name: format!("{}:{}", req.root_entity_type, req.root_entity_id),
+        attributes: serde_json::json!({"is_root": true}),
+        level: 0,
+        position: serde_json::json!({"x": 0, "y": 0}),
+    };
+
+    let mut nodes = vec![root_node.clone()];
+    let mut edges = Vec::new();
+
+    for level in 1..=max_depth {
+        let node = LineageNodeV60 {
+            id: uuid::Uuid::new_v4().to_string(),
+            entity_id: format!("{}_level_{}", req.root_entity_id, level),
+            entity_type: req.root_entity_type.clone(),
+            name: format!("{} L{}", req.root_entity_type, level),
+            attributes: serde_json::json!({"level": level}),
+            level,
+            position: serde_json::json!({"x": level as i64 * 100, "y": 0}),
+        };
+
+        let edge = LineageEdgeV60 {
+            id: uuid::Uuid::new_v4().to_string(),
+            source_id: nodes.last().unwrap().id.clone(),
+            target_id: node.id.clone(),
+            transformation_type: TransformationType::Transform,
+            transformation_details: serde_json::json!({"step": level}),
+            confidence: 0.9,
+        };
+
+        nodes.push(node);
+        edges.push(edge);
+    }
+
+    let graph = LineageGraph {
+        id: graph_id,
+        nodes: nodes.clone(),
+        edges: edges.clone(),
+        root_ids: vec![root_node.id.clone()],
+        updated_at: now,
+    };
+
+    for node in nodes.iter() {
+        if let Err(e) = sqlx::query(
+            r#"INSERT INTO master_data.mdm_v60_lineage_nodes
+               (id, entity_id, entity_type, name, attributes, level, position)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+        )
+        .bind(&node.id)
+        .bind(&node.entity_id)
+        .bind(&node.entity_type)
+        .bind(&node.name)
+        .bind(node.attributes.clone())
+        .bind(node.level as i64)
+        .bind(node.position.clone())
+        .execute(&state.db)
+        .await
+        {
+            return Json(ApiResponse::error(500, &format!("写入血缘节点失败: {e}")));
+        }
+    }
+    for edge in edges.iter() {
+        if let Err(e) = sqlx::query(
+            r#"INSERT INTO master_data.mdm_v60_lineage_edges
+               (id, source_id, target_id, transformation_type, transformation_details, confidence)
+               VALUES ($1,$2,$3,$4,$5,$6)"#,
+        )
+        .bind(&edge.id)
+        .bind(&edge.source_id)
+        .bind(&edge.target_id)
+        .bind(transformation_type_str(&edge.transformation_type))
+        .bind(edge.transformation_details.clone())
+        .bind(edge.confidence)
+        .execute(&state.db)
+        .await
+        {
+            return Json(ApiResponse::error(500, &format!("写入血缘边失败: {e}")));
+        }
+    }
+
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_v60_lineage_graphs
+           (id, nodes, edges, root_ids, updated_at)
+           VALUES ($1,$2,$3,$4,$5)"#,
+    )
+    .bind(&graph.id)
+    .bind(serde_json::to_value(&graph.nodes).unwrap_or(serde_json::json!([])))
+    .bind(serde_json::to_value(&graph.edges).unwrap_or(serde_json::json!([])))
+    .bind(serde_json::to_value(&graph.root_ids).unwrap_or(serde_json::json!([])))
+    .bind(&graph.updated_at)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入血缘图谱失败: {e}")));
+    }
+
     Json(ApiResponse::success(graph, "血缘图谱已构建"))
 }
 #[utoipa::path(
@@ -1686,15 +944,20 @@ pub async fn build_lineage_graph(
 )]
 
 pub async fn get_lineage_graph(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<LineageGraph>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-
-    match store.lineage.get_lineage_graph(&id).await {
-        Some(graph) => Json(ApiResponse::success(graph, "血缘图谱")),
-        None => Json(ApiResponse::error(404, "未找到血缘图谱")),
+    // K1：读真表。
+    let row = sqlx::query(&format!(
+        r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs WHERE id = $1 LIMIT 1"#,
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await;
+    match row {
+        Ok(Some(r)) => Json(ApiResponse::success(lineage_graph_from_row(&r), "血缘图谱")),
+        Ok(None) => Json(ApiResponse::error(404, "未找到血缘图谱")),
+        Err(e) => Json(ApiResponse::error(500, &format!("查询血缘图谱失败: {e}"))),
     }
 }
 #[utoipa::path(
@@ -1709,14 +972,15 @@ pub async fn get_lineage_graph(
 )]
 
 pub async fn get_upstream(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Vec<LineageNodeV60>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-
-    let nodes = store.lineage.get_upstream(&id).await;
-    Json(ApiResponse::success(nodes, "上游血缘节点"))
+    // K1：真表全量加载 + 内存 BFS（逻辑保留）。
+    let result = upstream_downstream(&state, &id, true).await;
+    match result {
+        Ok(nodes) => Json(ApiResponse::success(nodes, "上游血缘节点")),
+        Err(e) => Json(ApiResponse::error(500, &format!("查询上游血缘失败: {e}"))),
+    }
 }
 #[utoipa::path(
     get,
@@ -1730,16 +994,16 @@ pub async fn get_upstream(
 )]
 
 pub async fn get_downstream(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Vec<LineageNodeV60>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-
-    let nodes = store.lineage.get_downstream(&id).await;
-    Json(ApiResponse::success(nodes, "下游血缘节点"))
+    // K1：真表全量加载 + 内存 BFS（逻辑保留）。
+    let result = upstream_downstream(&state, &id, false).await;
+    match result {
+        Ok(nodes) => Json(ApiResponse::success(nodes, "下游血缘节点")),
+        Err(e) => Json(ApiResponse::error(500, &format!("查询下游血缘失败: {e}"))),
+    }
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
@@ -1751,18 +1015,52 @@ pub async fn get_downstream(
     tag = "metadata_v60"
 )]
 pub async fn get_path(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<GetPathRequest>,
 ) -> Json<ApiResponse<Vec<LineageEdgeV60>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表全量加载 + 内存 BFS（逻辑保留）。
+    let edge_rows = sqlx::query(&format!(
+        r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let edges: Vec<LineageEdgeV60> = match edge_rows {
+        Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘边失败: {e}"))),
+    };
 
-    match store.lineage.get_path(&req.source_id, &req.target_id).await {
-        Some(path) => Json(ApiResponse::success(path, "血缘路径")),
-        None => Json(ApiResponse::error(404, "未找到血缘路径")),
+    let mut adjacency: HashMap<String, Vec<LineageEdgeV60>> = HashMap::new();
+    for edge in edges.iter() {
+        adjacency
+            .entry(edge.source_id.clone())
+            .or_default()
+            .push(edge.clone());
     }
-}
 
+    let mut queue: Vec<(String, Vec<LineageEdgeV60>)> =
+        vec![(req.source_id, Vec::new())];
+    let mut visited = std::collections::HashSet::new();
+
+    while let Some((current, path)) = queue.pop() {
+        if current == req.target_id {
+            return Json(ApiResponse::success(path, "血缘路径"));
+        }
+
+        if !visited.insert(current.clone()) {
+            continue;
+        }
+
+        if let Some(next_edges) = adjacency.get(&current) {
+            for edge in next_edges {
+                let mut new_path = path.clone();
+                new_path.push(edge.clone());
+                queue.push((edge.target_id.clone(), new_path));
+            }
+        }
+    }
+
+    Json(ApiResponse::error(404, "未找到血缘路径"))
+}
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
@@ -1776,17 +1074,39 @@ pub async fn get_path(
     ),
     tag = "metadata_v60"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_lineage_impact(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<LineageImpact>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表 + 复用 upstream/downstream 逻辑。
+    let downstream = match upstream_downstream(&state, &id, false).await {
+        Ok(v) => v,
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询下游血缘失败: {e}"))),
+    };
+    let upstream = match upstream_downstream(&state, &id, true).await {
+        Ok(v) => v,
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询上游血缘失败: {e}"))),
+    };
 
-    let impact = store.lineage.get_lineage_impact(&id, "entity").await;
-    Json(ApiResponse::success(impact, "血缘影响分析"))
+    let affected_downstream = downstream.len();
+    let affected_nodes = downstream.len() + upstream.len();
+    let confidence = if downstream.is_empty() { 0.5 } else { 0.9 };
+    let impact_score =
+        (affected_downstream as f64 * 0.3 + affected_nodes as f64 * 0.1).min(1.0);
+
+    Json(ApiResponse::success(
+        LineageImpact {
+            entity_id: id,
+            entity_type: "entity".to_string(),
+            affected_nodes,
+            affected_downstream,
+            confidence,
+            impact_score,
+        },
+        "血缘影响分析",
+    ))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
@@ -1797,13 +1117,67 @@ pub async fn get_lineage_impact(
     ),
     tag = "metadata_v60"
 )]
+#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_lineage_dashboard(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<LineageDashboard>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-    let dashboard = store.lineage.get_lineage_dashboard().await;
-    Json(ApiResponse::success(dashboard, "血缘仪表盘"))
+    // K1：真表全量加载 + 聚合逻辑保留。
+    let graph_rows = sqlx::query(&format!(
+        r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let graphs: Vec<LineageGraph> = match graph_rows {
+        Ok(r) => r.iter().map(lineage_graph_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘图谱失败: {e}"))),
+    };
+
+    let node_rows = sqlx::query(&format!(
+        r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let nodes: Vec<LineageNodeV60> = match node_rows {
+        Ok(r) => r.iter().map(lineage_node_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘节点失败: {e}"))),
+    };
+
+    let edge_rows = sqlx::query(&format!(
+        r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let edges: Vec<LineageEdgeV60> = match edge_rows {
+        Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘边失败: {e}"))),
+    };
+
+    let entity_types: Vec<String> = nodes
+        .iter()
+        .map(|n| n.entity_type.clone())
+        .collect::<std::collections::HashSet<_>>()
+        .into_iter()
+        .collect();
+
+    let avg_confidence = if edges.is_empty() {
+        0.0
+    } else {
+        edges.iter().map(|e| e.confidence).sum::<f64>() / edges.len() as f64
+    };
+
+    let deepest_level = nodes.iter().map(|n| n.level).max().unwrap_or(0);
+
+    Json(ApiResponse::success(
+        LineageDashboard {
+            total_graphs: graphs.len(),
+            total_nodes: nodes.len(),
+            total_edges: edges.len(),
+            entity_types,
+            avg_confidence,
+            deepest_level,
+        },
+        "血缘看板",
+    ))
 }
 #[utoipa::path(
     get,
@@ -1814,19 +1188,51 @@ pub async fn get_lineage_dashboard(
 )]
 
 pub async fn export_lineage(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ExportLineageQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表全量导出。
+    let graph_rows = sqlx::query(&format!(
+        r#"SELECT {GRAPH_COLS} FROM master_data.mdm_v60_lineage_graphs ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let graphs: Vec<LineageGraph> = match graph_rows {
+        Ok(r) => r.iter().map(lineage_graph_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘图谱失败: {e}"))),
+    };
 
-    let format = params.format.as_deref().unwrap_or("json");
-    let data = store.lineage.export_lineage(format).await;
-    Json(ApiResponse::success(data, "血缘导出数据"))
+    let node_rows = sqlx::query(&format!(
+        r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let nodes: Vec<LineageNodeV60> = match node_rows {
+        Ok(r) => r.iter().map(lineage_node_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘节点失败: {e}"))),
+    };
+
+    let edge_rows = sqlx::query(&format!(
+        r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let edges: Vec<LineageEdgeV60> = match edge_rows {
+        Ok(r) => r.iter().map(lineage_edge_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询血缘边失败: {e}"))),
+    };
+
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "graphs": graphs,
+            "nodes": nodes,
+            "edges": edges,
+            "exported_at": chrono::Utc::now().to_rfc3339(),
+            "format": params.format.unwrap_or_else(|| "json".to_string()),
+        }),
+        "血缘导出",
+    ))
 }
-
-// ==================== 处理器：生命周期管理 ====================
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
@@ -1841,21 +1247,25 @@ pub async fn export_lineage(
     tag = "metadata_v60"
 )]
 pub async fn get_current_stage(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-
-    match store.lifecycle.get_current_stage(&id).await {
-        Some(stage) => Json(ApiResponse::success(
-            serde_json::json!({"stage": lifecycle_stage_str(&stage)}),
-            "当前生命周期阶段",
-        )),
-        None => Json(ApiResponse::error(404, "未找到实体的生命周期信息")),
+    // K1：读真表 mdm_lifecycle_stages。
+    let row = sqlx::query(
+        "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
+    )
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await;
+    match row {
+        Ok(Some(r)) => {
+            let stage = r.get::<String, _>("stage");
+            Json(ApiResponse::success(serde_json::json!({"stage": stage}), "当前生命周期阶段"))
+        }
+        Ok(None) => Json(ApiResponse::error(404, "未找到实体的生命周期信息")),
+        Err(e) => Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
     }
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
@@ -1870,30 +1280,69 @@ pub async fn get_current_stage(
     tag = "metadata_v60"
 )]
 pub async fn transition_stage(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<TransitionRequest>,
 ) -> Json<ApiResponse<LifecycleHistory>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：写真表（UPSERT stages + INSERT history）。
+    let new_stage = parse_lifecycle_stage(&req.new_stage).unwrap_or(LifecycleStage::Created);
+    let now = chrono::Utc::now().to_rfc3339();
 
-    let new_stage = match parse_lifecycle_stage(&req.new_stage) {
-        Some(s) => s,
-        None => return Json(ApiResponse::error(400, "无效的生命周期阶段")),
+    let from_row = sqlx::query(
+        "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
+    )
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await;
+    let from_stage = match from_row {
+        Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
+        Ok(None) => None,
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
     };
 
-    let history = store
-        .lifecycle
-        .transition_stage(
-            &id,
-            new_stage,
-            req.reason.unwrap_or_else(|| "手动转换".to_string()),
-            req.changed_by.unwrap_or_else(|| "user".to_string()),
-        )
-        .await;
-    Json(ApiResponse::success(history, "生命周期阶段已转换"))
-}
+    let history = LifecycleHistory {
+        id: uuid::Uuid::new_v4().to_string(),
+        entity_id: id.clone(),
+        stage: new_stage.clone(),
+        from_stage: from_stage.clone(),
+        reason: req.reason.unwrap_or_default(),
+        changed_at: now,
+        changed_by: req.changed_by.unwrap_or_else(|| "admin".to_string()),
+    };
 
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_lifecycle_stages (entity_id, stage)
+           VALUES ($1,$2)
+           ON CONFLICT (entity_id) DO UPDATE SET stage = EXCLUDED.stage"#,
+    )
+    .bind(&id)
+    .bind(lifecycle_stage_str(&new_stage))
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("更新生命周期阶段失败: {e}")));
+    }
+
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_lifecycle_history
+           (id, entity_id, stage, from_stage, reason, changed_at, changed_by)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+    )
+    .bind(&history.id)
+    .bind(&history.entity_id)
+    .bind(lifecycle_stage_str(&history.stage))
+    .bind(history.from_stage.as_ref().map(lifecycle_stage_str))
+    .bind(&history.reason)
+    .bind(&history.changed_at)
+    .bind(&history.changed_by)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入生命周期历史失败: {e}")));
+    }
+
+    Json(ApiResponse::success(history, "生命周期阶段已变更"))
+}
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
@@ -1908,16 +1357,24 @@ pub async fn transition_stage(
     tag = "metadata_v60"
 )]
 pub async fn get_lifecycle_history(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Vec<LifecycleHistory>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：读真表。
+    let rows = sqlx::query(&format!(
+        r#"SELECT {HISTORY_COLS} FROM master_data.mdm_lifecycle_history
+           WHERE entity_id = $1 ORDER BY changed_at DESC"#,
+    ))
+    .bind(&id)
+    .fetch_all(&state.db)
+    .await;
+    let history: Vec<LifecycleHistory> = match rows {
+        Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期历史失败: {e}"))),
+    };
 
-    let history = store.lifecycle.get_lifecycle_history(&id).await;
     Json(ApiResponse::success(history, "生命周期历史"))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
@@ -1929,24 +1386,36 @@ pub async fn get_lifecycle_history(
     tag = "metadata_v60"
 )]
 pub async fn create_policy(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreatePolicyRequest>,
 ) -> Json<ApiResponse<LifecyclePolicy>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：写真表 master_data.mdm_lifecycle_policies。
+    let policy = LifecyclePolicy {
+        id: uuid::Uuid::new_v4().to_string(),
+        entity_type: req.entity_type,
+        transitions: req.transitions,
+        duration_days: req.duration_days.unwrap_or(0),
+        actions: req.actions.unwrap_or_default(),
+    };
 
-    let policy = store
-        .lifecycle
-        .create_policy(
-            req.entity_type,
-            req.transitions,
-            req.duration_days.unwrap_or(90),
-            req.actions.unwrap_or_default(),
-        )
-        .await;
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_lifecycle_policies
+           (id, entity_type, transitions, duration_days, actions)
+           VALUES ($1,$2,$3,$4,$5)"#,
+    )
+    .bind(&policy.id)
+    .bind(&policy.entity_type)
+    .bind(policy.transitions.clone())
+    .bind(policy.duration_days as i64)
+    .bind(serde_json::to_value(&policy.actions).unwrap_or(serde_json::json!([])))
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("创建生命周期策略失败: {e}")));
+    }
+
     Json(ApiResponse::success(policy, "生命周期策略已创建"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
@@ -1958,16 +1427,24 @@ pub async fn create_policy(
     tag = "metadata_v60"
 )]
 pub async fn get_policies(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<GetPoliciesQuery>,
 ) -> Json<ApiResponse<Vec<LifecyclePolicy>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表 COALESCE 过滤。
+    let rows = sqlx::query(&format!(
+        r#"SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies
+           WHERE ($1::text IS NULL OR entity_type = $1) ORDER BY entity_type"#,
+    ))
+    .bind(params.entity_type.as_deref())
+    .fetch_all(&state.db)
+    .await;
+    let policies: Vec<LifecyclePolicy> = match rows {
+        Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期策略失败: {e}"))),
+    };
 
-    let policies = store.lifecycle.get_policies(params.entity_type).await;
     Json(ApiResponse::success(policies, "生命周期策略列表"))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
@@ -1979,15 +1456,116 @@ pub async fn get_policies(
     tag = "metadata_v60"
 )]
 pub async fn auto_transition(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<LifecycleHistory>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：读真表 policies + stages，逐 transition 执行（逻辑保留）。
+    let policy_rows = sqlx::query(&format!(
+        r#"SELECT {POLICY_COLS} FROM master_data.mdm_lifecycle_policies ORDER BY entity_type"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let policies: Vec<LifecyclePolicy> = match policy_rows {
+        Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期策略失败: {e}"))),
+    };
 
-    let results = store.lifecycle.auto_transition().await;
-    Json(ApiResponse::success(results, "自动转换完成"))
+    let stage_rows = sqlx::query(
+        "SELECT entity_id, stage FROM master_data.mdm_lifecycle_stages ORDER BY entity_id",
+    )
+    .fetch_all(&state.db)
+    .await;
+    let mut current: HashMap<String, LifecycleStage> = match stage_rows {
+        Ok(r) => r
+            .iter()
+            .map(|row| {
+                (
+                    row.get::<String, _>("entity_id"),
+                    parse_lifecycle_stage(&row.get::<String, _>("stage"))
+                        .unwrap_or(LifecycleStage::Created),
+                )
+            })
+            .collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
+    };
+
+    let mut results = Vec::new();
+
+    for policy in policies.iter() {
+        if let Some(transitions) = policy.transitions.as_array() {
+            for transition in transitions {
+                if let (Some(from), Some(to)) = (
+                    transition.get("from").and_then(|v| v.as_str()),
+                    transition.get("to").and_then(|v| v.as_str()),
+                ) {
+                    let matching: Vec<String> = current
+                        .iter()
+                        .filter(|(_, v)| lifecycle_stage_str(v) == from)
+                        .map(|(k, _)| k.clone())
+                        .collect();
+
+                    for entity_id in matching {
+                        if let Some(to_stage) = parse_lifecycle_stage(to) {
+                            let now = chrono::Utc::now().to_rfc3339();
+                            let from_stage = current.get(&entity_id).cloned();
+
+                            let history = LifecycleHistory {
+                                id: uuid::Uuid::new_v4().to_string(),
+                                entity_id: entity_id.clone(),
+                                stage: to_stage.clone(),
+                                from_stage: from_stage.clone(),
+                                reason: format!("auto_transition: {}", policy.entity_type),
+                                changed_at: now,
+                                changed_by: "system".to_string(),
+                            };
+
+                            if let Err(e) = sqlx::query(
+                                r#"INSERT INTO master_data.mdm_lifecycle_stages (entity_id, stage)
+                                   VALUES ($1,$2)
+                                   ON CONFLICT (entity_id) DO UPDATE SET stage = EXCLUDED.stage"#,
+                            )
+                            .bind(&entity_id)
+                            .bind(lifecycle_stage_str(&to_stage))
+                            .execute(&state.db)
+                            .await
+                            {
+                                return Json(ApiResponse::error(
+                                    500,
+                                    &format!("更新生命周期阶段失败: {e}"),
+                                ));
+                            }
+
+                            if let Err(e) = sqlx::query(
+                                r#"INSERT INTO master_data.mdm_lifecycle_history
+                                   (id, entity_id, stage, from_stage, reason, changed_at, changed_by)
+                                   VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+                            )
+                            .bind(&history.id)
+                            .bind(&history.entity_id)
+                            .bind(lifecycle_stage_str(&history.stage))
+                            .bind(history.from_stage.as_ref().map(lifecycle_stage_str))
+                            .bind(&history.reason)
+                            .bind(&history.changed_at)
+                            .bind(&history.changed_by)
+                            .execute(&state.db)
+                            .await
+                            {
+                                return Json(ApiResponse::error(
+                                    500,
+                                    &format!("写入生命周期历史失败: {e}"),
+                                ));
+                            }
+
+                            current.insert(entity_id.clone(), to_stage);
+                            results.push(history);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Json(ApiResponse::success(results, "自动生命周期流转完成"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["master_data:metadata:read"])),
@@ -1999,15 +1577,67 @@ pub async fn auto_transition(
     tag = "metadata_v60"
 )]
 pub async fn get_lifecycle_dashboard(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<LifecycleDashboard>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表全量加载 + 聚合逻辑保留。
+    let stage_rows = sqlx::query(
+        "SELECT entity_id, stage FROM master_data.mdm_lifecycle_stages ORDER BY entity_id",
+    )
+    .fetch_all(&state.db)
+    .await;
+    let stages: Vec<(String, LifecycleStage)> = match stage_rows {
+        Ok(r) => r
+            .iter()
+            .map(|row| {
+                (
+                    row.get::<String, _>("entity_id"),
+                    parse_lifecycle_stage(&row.get::<String, _>("stage"))
+                        .unwrap_or(LifecycleStage::Created),
+                )
+            })
+            .collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
+    };
 
-    let dashboard = store.lifecycle.get_lifecycle_dashboard().await;
-    Json(ApiResponse::success(dashboard, "生命周期仪表盘"))
+    let policy_count = sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_lifecycle_policies")
+        .fetch_one(&state.db)
+        .await;
+
+    let hist_rows = sqlx::query(&format!(
+        r#"SELECT {HISTORY_COLS} FROM master_data.mdm_lifecycle_history ORDER BY changed_at DESC"#,
+    ))
+    .fetch_all(&state.db)
+    .await;
+    let history: Vec<LifecycleHistory> = match hist_rows {
+        Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期历史失败: {e}"))),
+    };
+
+    let policies_count = match policy_count {
+        Ok(r) => r.get::<i64, _>("total") as usize,
+        Err(_) => 0,
+    };
+
+    let mut by_stage = HashMap::new();
+    for (_, stage) in stages.iter() {
+        let key = lifecycle_stage_str(stage).to_string();
+        *by_stage.entry(key).or_insert(0) += 1;
+    }
+
+    let mut recent_transitions = history.clone();
+    recent_transitions.sort_by(|a, b| b.changed_at.cmp(&a.changed_at));
+    recent_transitions.truncate(10);
+
+    Json(ApiResponse::success(
+        LifecycleDashboard {
+            total_entities: stages.len(),
+            by_stage,
+            policies_count,
+            recent_transitions,
+        },
+        "生命周期看板",
+    ))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["master_data:metadata:write"])),
@@ -2019,27 +1649,233 @@ pub async fn get_lifecycle_dashboard(
     tag = "metadata_v60"
 )]
 pub async fn bulk_transition(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<BulkTransitionRequest>,
 ) -> Json<ApiResponse<Vec<LifecycleHistory>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：循环执行生命周期流转（真表 UPSERT + history）。
+    let target_stage = parse_lifecycle_stage(&req.target_stage).unwrap_or(LifecycleStage::Created);
+    let reason = req.reason.unwrap_or_default();
+    let changed_by = req.changed_by.unwrap_or_else(|| "admin".to_string());
+    let mut results = Vec::new();
 
-    let target_stage = match parse_lifecycle_stage(&req.target_stage) {
-        Some(s) => s,
-        None => return Json(ApiResponse::error(400, "无效的目标生命周期阶段")),
-    };
+    for entity_id in req.entity_ids {
+        let now = chrono::Utc::now().to_rfc3339();
 
-    let results = store
-        .lifecycle
-        .bulk_transition(
-            req.entity_ids,
-            target_stage,
-            req.reason.unwrap_or_else(|| "批量转换".to_string()),
-            req.changed_by.unwrap_or_else(|| "user".to_string()),
+        let from_row = sqlx::query(
+            "SELECT stage FROM master_data.mdm_lifecycle_stages WHERE entity_id = $1 LIMIT 1",
         )
+        .bind(&entity_id)
+        .fetch_optional(&state.db)
         .await;
-    Json(ApiResponse::success(results, "批量生命周期转换完成"))
+        let from_stage = match from_row {
+            Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
+            Ok(None) => None,
+            Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
+        };
+
+        let history = LifecycleHistory {
+            id: uuid::Uuid::new_v4().to_string(),
+            entity_id: entity_id.clone(),
+            stage: target_stage.clone(),
+            from_stage: from_stage.clone(),
+            reason: reason.clone(),
+            changed_at: now,
+            changed_by: changed_by.clone(),
+        };
+
+        if let Err(e) = sqlx::query(
+            r#"INSERT INTO master_data.mdm_lifecycle_stages (entity_id, stage)
+               VALUES ($1,$2)
+               ON CONFLICT (entity_id) DO UPDATE SET stage = EXCLUDED.stage"#,
+        )
+        .bind(&entity_id)
+        .bind(lifecycle_stage_str(&target_stage))
+        .execute(&state.db)
+        .await
+        {
+            return Json(ApiResponse::error(500, &format!("更新生命周期阶段失败: {e}")));
+        }
+
+        if let Err(e) = sqlx::query(
+            r#"INSERT INTO master_data.mdm_lifecycle_history
+               (id, entity_id, stage, from_stage, reason, changed_at, changed_by)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+        )
+        .bind(&history.id)
+        .bind(&history.entity_id)
+        .bind(lifecycle_stage_str(&history.stage))
+        .bind(history.from_stage.as_ref().map(lifecycle_stage_str))
+        .bind(&history.reason)
+        .bind(&history.changed_at)
+        .bind(&history.changed_by)
+        .execute(&state.db)
+        .await
+        {
+            return Json(ApiResponse::error(500, &format!("写入生命周期历史失败: {e}")));
+        }
+
+        results.push(history);
+    }
+
+    Json(ApiResponse::success(results, "批量生命周期流转完成"))
+}
+async fn upstream_downstream(
+    state: &AppState,
+    entity_id: &str,
+    upstream: bool,
+) -> Result<Vec<LineageNodeV60>, sqlx::Error> {
+    let edge_rows = sqlx::query(&format!(
+        r#"SELECT {EDGE_COLS} FROM master_data.mdm_v60_lineage_edges ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await?;
+    let edges: Vec<LineageEdgeV60> = edge_rows.iter().map(lineage_edge_from_row).collect();
+
+    let node_rows = sqlx::query(&format!(
+        r#"SELECT {NODE_COLS} FROM master_data.mdm_v60_lineage_nodes ORDER BY id"#,
+    ))
+    .fetch_all(&state.db)
+    .await?;
+    let nodes: Vec<LineageNodeV60> = node_rows.iter().map(lineage_node_from_row).collect();
+
+    let mut result = Vec::new();
+    let mut visited = std::collections::HashSet::new();
+    let mut queue = vec![entity_id.to_string()];
+
+    while let Some(current) = queue.pop() {
+        if !visited.insert(current.clone()) {
+            continue;
+        }
+
+        let linked_edges: Vec<LineageEdgeV60> = edges
+            .iter()
+            .filter(|e| if upstream { e.target_id == current } else { e.source_id == current })
+            .cloned()
+            .collect();
+
+        for edge in linked_edges {
+            let next_id = if upstream { edge.source_id } else { edge.target_id };
+            if let Some(node) = nodes.iter().find(|n| n.id == next_id).cloned() {
+                queue.push(node.id.clone());
+                result.push(node);
+            }
+        }
+    }
+
+    Ok(result)
+}
+// ==================== K1：真表映射（master_data.mdm_metadata_attributes / tags / v60_lineage / lifecycle） ====================
+
+const ATTR_COLS: &str = "id, object_id, key, value, data_type, is_required";
+const TAG_COLS: &str = "id, name, color, description, usage_count";
+const NODE_COLS: &str = "id, entity_id, entity_type, name, attributes, level, position";
+const EDGE_COLS: &str =
+    "id, source_id, target_id, transformation_type, transformation_details, confidence";
+const GRAPH_COLS: &str = "id, nodes, edges, root_ids, updated_at";
+const POLICY_COLS: &str = "id, entity_type, transitions, duration_days, actions";
+const HISTORY_COLS: &str = "id, entity_id, stage, from_stage, reason, changed_at, changed_by";
+
+fn parse_transformation_type(s: &str) -> TransformationType {
+    match s {
+        "filter" => TransformationType::Filter,
+        "map" => TransformationType::Map,
+        "aggregate" => TransformationType::Aggregate,
+        "join" => TransformationType::Join,
+        "load" => TransformationType::Load,
+        "extract" => TransformationType::Extract,
+        _ => TransformationType::Transform,
+    }
+}
+
+fn metadata_attribute_from_row(row: &sqlx::postgres::PgRow) -> MetadataAttribute {
+    use sqlx::Row;
+    MetadataAttribute {
+        id: row.get::<String, _>("id"),
+        object_id: row.get::<String, _>("object_id"),
+        key: row.get::<String, _>("key"),
+        value: row.get::<String, _>("value"),
+        data_type: row.get::<String, _>("data_type"),
+        is_required: row.get::<bool, _>("is_required"),
+    }
+}
+
+fn metadata_tag_from_row(row: &sqlx::postgres::PgRow) -> MetadataTag {
+    use sqlx::Row;
+    MetadataTag {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        color: row.get::<String, _>("color"),
+        description: row.get::<String, _>("description"),
+        usage_count: row.get::<i64, _>("usage_count") as u64,
+    }
+}
+
+fn lineage_node_from_row(row: &sqlx::postgres::PgRow) -> LineageNodeV60 {
+    use sqlx::Row;
+    LineageNodeV60 {
+        id: row.get::<String, _>("id"),
+        entity_id: row.get::<String, _>("entity_id"),
+        entity_type: row.get::<String, _>("entity_type"),
+        name: row.get::<String, _>("name"),
+        attributes: row.get::<serde_json::Value, _>("attributes"),
+        level: row.get::<i64, _>("level") as u32,
+        position: row.get::<serde_json::Value, _>("position"),
+    }
+}
+
+fn lineage_edge_from_row(row: &sqlx::postgres::PgRow) -> LineageEdgeV60 {
+    use sqlx::Row;
+    LineageEdgeV60 {
+        id: row.get::<String, _>("id"),
+        source_id: row.get::<String, _>("source_id"),
+        target_id: row.get::<String, _>("target_id"),
+        transformation_type: parse_transformation_type(
+            &row.get::<String, _>("transformation_type"),
+        ),
+        transformation_details: row.get::<serde_json::Value, _>("transformation_details"),
+        confidence: row.get::<f64, _>("confidence"),
+    }
+}
+
+fn lineage_graph_from_row(row: &sqlx::postgres::PgRow) -> LineageGraph {
+    use sqlx::Row;
+    LineageGraph {
+        id: row.get::<String, _>("id"),
+        nodes: serde_json::from_value(row.get::<serde_json::Value, _>("nodes"))
+            .unwrap_or_default(),
+        edges: serde_json::from_value(row.get::<serde_json::Value, _>("edges"))
+            .unwrap_or_default(),
+        root_ids: serde_json::from_value(row.get::<serde_json::Value, _>("root_ids"))
+            .unwrap_or_default(),
+        updated_at: row.get::<String, _>("updated_at"),
+    }
+}
+
+fn lifecycle_policy_from_row(row: &sqlx::postgres::PgRow) -> LifecyclePolicy {
+    use sqlx::Row;
+    LifecyclePolicy {
+        id: row.get::<String, _>("id"),
+        entity_type: row.get::<String, _>("entity_type"),
+        transitions: row.get::<serde_json::Value, _>("transitions"),
+        duration_days: row.get::<i64, _>("duration_days") as u32,
+        actions: serde_json::from_value(row.get::<serde_json::Value, _>("actions"))
+            .unwrap_or_default(),
+    }
+}
+
+fn lifecycle_history_from_row(row: &sqlx::postgres::PgRow) -> LifecycleHistory {
+    use sqlx::Row;
+    let from_stage: Option<String> = row.get::<Option<String>, _>("from_stage");
+    LifecycleHistory {
+        id: row.get::<String, _>("id"),
+        entity_id: row.get::<String, _>("entity_id"),
+        stage: parse_lifecycle_stage(&row.get::<String, _>("stage"))
+            .unwrap_or(LifecycleStage::Created),
+        from_stage: from_stage.and_then(|s| parse_lifecycle_stage(&s)),
+        reason: row.get::<String, _>("reason"),
+        changed_at: row.get::<String, _>("changed_at"),
+        changed_by: row.get::<String, _>("changed_by"),
+    }
 }
 
 #[cfg(test)]
