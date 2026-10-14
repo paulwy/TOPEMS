@@ -10,8 +10,6 @@ use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::PgPool;
 use sqlx::Row;
-use std::sync::LazyLock;
-use tokio::sync::Mutex;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
@@ -61,15 +59,10 @@ pub struct GovernanceModel {
 
 // ==================== 数据治理 AI：引擎 ====================
 
-struct GovernanceAIEngine {
-    suggestions: Mutex<Vec<GovernanceSuggestionV59>>,
-    models: Mutex<Vec<GovernanceModel>>,
-    initialized: Mutex<bool>,
-}
+struct GovernanceAIEngine;
 
 impl GovernanceAIEngine {
     async fn generate_suggestions(
-        &self,
         db: &PgPool,
         entity_type: &str,
         entity_id: &str,
@@ -141,7 +134,6 @@ impl GovernanceAIEngine {
     }
 
     async fn get_suggestions(
-        &self,
         db: &PgPool,
     ) -> Result<Vec<GovernanceSuggestionV59>, TopemsError> {
         let rows = sqlx::query(
@@ -154,7 +146,6 @@ impl GovernanceAIEngine {
     }
 
     async fn get_suggestion_by_entity(
-        &self,
         db: &PgPool,
         entity_type: &str,
         entity_id: &str,
@@ -172,7 +163,6 @@ impl GovernanceAIEngine {
     }
 
     async fn apply_suggestion(
-        &self,
         db: &PgPool,
         id: &str,
     ) -> Result<Option<GovernanceSuggestionV59>, TopemsError> {
@@ -187,7 +177,6 @@ impl GovernanceAIEngine {
     }
 
     async fn dismiss_suggestion(
-        &self,
         db: &PgPool,
         id: &str,
     ) -> Result<Option<GovernanceSuggestionV59>, TopemsError> {
@@ -198,7 +187,7 @@ impl GovernanceAIEngine {
         Ok(row.map(|r| ai_suggestion_from_row(&r)))
     }
 
-    async fn get_models(&self, db: &PgPool) -> Result<Vec<GovernanceModel>, TopemsError> {
+    async fn get_models(db: &PgPool) -> Result<Vec<GovernanceModel>, TopemsError> {
         let rows = sqlx::query(
             "SELECT id, name, version, domain, accuracy, last_trained, features
              FROM master_data.mdm_ai_models ORDER BY name",
@@ -209,7 +198,6 @@ impl GovernanceAIEngine {
     }
 
     async fn train_model(
-        &self,
         db: &PgPool,
         model_id: &str,
     ) -> Result<Option<GovernanceModel>, TopemsError> {
@@ -281,15 +269,10 @@ pub struct MatchStats {
 
 // ==================== 智能匹配：引擎 ====================
 
-struct IntelligentMatcher {
-    rules: Mutex<Vec<MatchRule>>,
-    results: Mutex<Vec<MatchResult>>,
-    initialized: Mutex<bool>,
-}
+struct IntelligentMatcher;
 
 impl IntelligentMatcher {
     async fn create_match_rule(
-        &self,
         db: &PgPool,
         name: String,
         rule_type: MatchRuleType,
@@ -311,7 +294,7 @@ impl IntelligentMatcher {
         Ok(match_rule_from_row(&row))
     }
 
-    async fn get_match_rules(&self, db: &PgPool) -> Result<Vec<MatchRule>, TopemsError> {
+    async fn get_match_rules(db: &PgPool) -> Result<Vec<MatchRule>, TopemsError> {
         let rows = sqlx::query(
             "SELECT id, name, rule_type, field_config, threshold, enabled
              FROM master_data.mdm_match_rules ORDER BY name",
@@ -322,7 +305,6 @@ impl IntelligentMatcher {
     }
 
     async fn match_entities(
-        &self,
         db: &PgPool,
         source_id: &str,
         target_id: &str,
@@ -394,7 +376,7 @@ impl IntelligentMatcher {
         Ok(results)
     }
 
-    async fn get_match_results(&self, db: &PgPool) -> Result<Vec<MatchResult>, TopemsError> {
+    async fn get_match_results(db: &PgPool) -> Result<Vec<MatchResult>, TopemsError> {
         let rows = sqlx::query(
             "SELECT id, source_id, target_id, match_score, match_type, confidence, status, matched_at
              FROM master_data.mdm_match_results ORDER BY matched_at DESC",
@@ -405,7 +387,6 @@ impl IntelligentMatcher {
     }
 
     async fn manual_review(
-        &self,
         db: &PgPool,
         id: &str,
         status: MatchStatus,
@@ -424,23 +405,21 @@ impl IntelligentMatcher {
     }
 
     async fn confirm_match(
-        &self,
         db: &PgPool,
         id: &str,
     ) -> Result<Option<MatchResult>, TopemsError> {
-        self.manual_review(db, id, MatchStatus::Confirmed).await
+        Self::manual_review(db, id, MatchStatus::Confirmed).await
     }
 
     async fn reject_match(
-        &self,
         db: &PgPool,
         id: &str,
     ) -> Result<Option<MatchResult>, TopemsError> {
-        self.manual_review(db, id, MatchStatus::Rejected).await
+        Self::manual_review(db, id, MatchStatus::Rejected).await
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn get_match_stats(&self, db: &PgPool) -> Result<MatchStats, TopemsError> {
+    async fn get_match_stats(db: &PgPool) -> Result<MatchStats, TopemsError> {
         let rules_row = sqlx::query("SELECT COUNT(*) AS n FROM master_data.mdm_match_rules")
             .fetch_one(db)
             .await?;
@@ -515,16 +494,10 @@ pub struct ClassificationStats {
 
 // ==================== 自动分类：引擎 ====================
 
-struct AutoClassifier {
-    models: Mutex<Vec<ClassificationModel>>,
-    results: Mutex<Vec<ClassificationResult>>,
-    rules: Mutex<Vec<serde_json::Value>>,
-    initialized: Mutex<bool>,
-}
+struct AutoClassifier;
 
 impl AutoClassifier {
     async fn create_classifier(
-        &self,
         db: &PgPool,
         name: String,
         entity_type: String,
@@ -547,7 +520,6 @@ impl AutoClassifier {
     }
 
     async fn get_classifiers(
-        &self,
         db: &PgPool,
     ) -> Result<Vec<ClassificationModel>, TopemsError> {
         let rows = sqlx::query(
@@ -560,7 +532,6 @@ impl AutoClassifier {
     }
 
     async fn classify_entity(
-        &self,
         db: &PgPool,
         entity_type: &str,
         entity_id: &str,
@@ -626,7 +597,6 @@ impl AutoClassifier {
     }
 
     async fn get_classification(
-        &self,
         db: &PgPool,
         entity_id: &str,
     ) -> Result<Option<ClassificationResult>, TopemsError> {
@@ -641,7 +611,6 @@ impl AutoClassifier {
     }
 
     async fn get_entity_categories(
-        &self,
         db: &PgPool,
         entity_type: &str,
     ) -> Result<Vec<String>, TopemsError> {
@@ -665,7 +634,6 @@ impl AutoClassifier {
     }
 
     async fn review_classification(
-        &self,
         db: &PgPool,
         id: &str,
         approved: bool,
@@ -687,7 +655,7 @@ impl AutoClassifier {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn get_classification_stats(&self, db: &PgPool) -> Result<ClassificationStats, TopemsError> {
+    async fn get_classification_stats(db: &PgPool) -> Result<ClassificationStats, TopemsError> {
         let models_row = sqlx::query("SELECT COUNT(*) AS n FROM master_data.mdm_classification_models")
             .fetch_one(db)
             .await?;
@@ -717,7 +685,6 @@ impl AutoClassifier {
     }
 
     async fn update_rules(
-        &self,
         db: &PgPool,
         rules: Vec<serde_json::Value>,
     ) -> Result<Vec<serde_json::Value>, TopemsError> {
@@ -741,33 +708,7 @@ impl AutoClassifier {
 
 // ==================== V59 内存存储 ====================
 
-struct V59Store {
-    ai: GovernanceAIEngine,
-    matcher: IntelligentMatcher,
-    classifier: AutoClassifier,
-}
 
-fn get_v59_store() -> &'static V59Store {
-    static STORE: LazyLock<V59Store> = LazyLock::new(|| V59Store {
-        ai: GovernanceAIEngine {
-            suggestions: Mutex::new(Vec::new()),
-            models: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        },
-        matcher: IntelligentMatcher {
-            rules: Mutex::new(Vec::new()),
-            results: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        },
-        classifier: AutoClassifier {
-            models: Mutex::new(Vec::new()),
-            results: Mutex::new(Vec::new()),
-            rules: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        },
-    });
-    &STORE
-}
 
 // ==================== 辅助函数 ====================
 
@@ -860,258 +801,11 @@ fn parse_classification_status(s: &str) -> Option<ClassificationStatus> {
 
 // ==================== 初始化种子数据 ====================
 
-async fn ensure_initialized() {
-    let store = get_v59_store();
-
-    // U4：优先从库恢复既有快照；命中则置全部子引擎为已初始化并跳过 demo seed。
-    if crate::modules::persist::enabled() && persist_load().await {
-        *store.ai.initialized.lock().await = true;
-        *store.matcher.initialized.lock().await = true;
-        *store.classifier.initialized.lock().await = true;
-        return;
-    }
-
-    {
-        let mut init = store.ai.initialized.lock().await;
-        if *init {
-            return;
-        }
-
-        let now = chrono::Utc::now().to_rfc3339();
-
-        let seed_models = vec![
-            GovernanceModel {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "客户数据质量模型".to_string(),
-                version: "1.0.0".to_string(),
-                domain: "customer".to_string(),
-                accuracy: 0.87,
-                last_trained: Some(now.clone()),
-                features: vec![
-                    "completeness".to_string(),
-                    "accuracy".to_string(),
-                    "consistency".to_string(),
-                ],
-            },
-            GovernanceModel {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "供应商数据治理模型".to_string(),
-                version: "0.9.0".to_string(),
-                domain: "supplier".to_string(),
-                accuracy: 0.82,
-                last_trained: Some(now.clone()),
-                features: vec![
-                    "validity".to_string(),
-                    "timeliness".to_string(),
-                    "uniqueness".to_string(),
-                ],
-            },
-        ];
-        *store.ai.models.lock().await = seed_models;
-        *init = true;
-    }
-
-    {
-        let mut init = store.matcher.initialized.lock().await;
-        if *init {
-            return;
-        }
-
-        let seed_rules = vec![
-            MatchRule {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "精确匹配".to_string(),
-                rule_type: MatchRuleType::Exact,
-                field_config: serde_json::json!({"fields": ["name", "code"]}),
-                threshold: 0.98,
-                enabled: true,
-            },
-            MatchRule {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "模糊匹配".to_string(),
-                rule_type: MatchRuleType::Fuzzy,
-                field_config: serde_json::json!({"fields": ["name"], "method": "levenshtein"}),
-                threshold: 0.80,
-                enabled: true,
-            },
-            MatchRule {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "语义匹配".to_string(),
-                rule_type: MatchRuleType::Semantic,
-                field_config: serde_json::json!({"fields": ["description"], "model": "embedding"}),
-                threshold: 0.75,
-                enabled: true,
-            },
-        ];
-        *store.matcher.rules.lock().await = seed_rules;
-        *init = true;
-    }
-
-    {
-        let mut init = store.classifier.initialized.lock().await;
-        if *init {
-            return;
-        }
-
-        let seed_models = vec![
-            ClassificationModel {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "客户分类器".to_string(),
-                entity_type: "customer".to_string(),
-                categories: vec![
-                    "enterprise".to_string(),
-                    "smb".to_string(),
-                    "individual".to_string(),
-                ],
-                algorithm: ClassificationAlgorithm::Ensemble,
-                accuracy: 0.91,
-                status: ClassificationStatus::Active,
-            },
-            ClassificationModel {
-                id: uuid::Uuid::new_v4().to_string(),
-                name: "物料分类器".to_string(),
-                entity_type: "material".to_string(),
-                categories: vec![
-                    "raw_material".to_string(),
-                    "semi_finished".to_string(),
-                    "finished_goods".to_string(),
-                ],
-                algorithm: ClassificationAlgorithm::Ml,
-                accuracy: 0.88,
-                status: ClassificationStatus::Active,
-            },
-        ];
-        *store.classifier.models.lock().await = seed_models;
-
-        let seed_rules = vec![
-            serde_json::json!({"entity_type": "customer", "rule": "field_industry = 'enterprise' -> enterprise"}),
-            serde_json::json!({"entity_type": "material", "rule": "field_type = 'raw' -> raw_material"}),
-        ];
-        *store.classifier.rules.lock().await = seed_rules;
-        *init = true;
-    }
-
-    // U4：首次 seed 后落库。
-    if crate::modules::persist::enabled() {
-        persist_save().await;
-    }
-}
 
 // ==================== U4 持久化 ====================
 
-async fn persist_load() -> bool {
-    use serde_json::Value;
-    let store = get_v59_store();
-    let mut restored = false;
-    if let Some(v) = crate::modules::persist::load::<Vec<GovernanceSuggestionV59>>(
-        "ai_governance_v59",
-        "ai_suggestions",
-    )
-    .await
-    {
-        *store.ai.suggestions.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<GovernanceModel>>("ai_governance_v59", "ai_models")
-            .await
-    {
-        *store.ai.models.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<MatchRule>>("ai_governance_v59", "matcher_rules").await
-    {
-        *store.matcher.rules.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<MatchResult>>("ai_governance_v59", "matcher_results")
-            .await
-    {
-        *store.matcher.results.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<ClassificationModel>>(
-        "ai_governance_v59",
-        "classifier_models",
-    )
-    .await
-    {
-        *store.classifier.models.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<ClassificationResult>>(
-        "ai_governance_v59",
-        "classifier_results",
-    )
-    .await
-    {
-        *store.classifier.results.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<Value>>("ai_governance_v59", "classifier_rules").await
-    {
-        *store.classifier.rules.lock().await = v;
-        restored = true;
-    }
-    restored
-}
 
-async fn persist_save() {
-    let store = get_v59_store();
-    crate::modules::persist::save(
-        "ai_governance_v59",
-        "ai_suggestions",
-        &*store.ai.suggestions.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "ai_governance_v59",
-        "ai_models",
-        &*store.ai.models.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "ai_governance_v59",
-        "matcher_rules",
-        &*store.matcher.rules.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "ai_governance_v59",
-        "matcher_results",
-        &*store.matcher.results.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "ai_governance_v59",
-        "classifier_models",
-        &*store.classifier.models.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "ai_governance_v59",
-        "classifier_results",
-        &*store.classifier.results.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "ai_governance_v59",
-        "classifier_rules",
-        &*store.classifier.rules.lock().await,
-    )
-    .await;
-}
 
-pub async fn background_flush() {
-    let store = get_v59_store();
-    if !*store.ai.initialized.lock().await {
-        return;
-    }
-    persist_save().await;
-}
 
 // ==================== 请求/响应结构 ====================
 
@@ -1193,10 +887,7 @@ pub async fn analyze(
     State(state): State<AppState>,
     Json(req): Json<AnalyzeRequest>,
 ) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
-    let store = get_v59_store();
-    let suggestions = db_exec!(store
-        .ai
-        .generate_suggestions(&state.db, &req.entity_type, &req.entity_id)
+    let suggestions = db_exec!(GovernanceAIEngine::generate_suggestions(&state.db, &req.entity_type, &req.entity_id)
         .await);
     Json(ApiResponse::success(suggestions, "数据治理分析完成"))
 }
@@ -1212,13 +903,12 @@ pub async fn get_suggestions(
     State(state): State<AppState>,
     Query(params): Query<GetSuggestionsQuery>,
 ) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
-    let store = get_v59_store();
 
     if let (Some(et), Some(eid)) = (&params.entity_type, &params.entity_id) {
-        let suggestions = db_exec!(store.ai.get_suggestion_by_entity(&state.db, et, eid).await);
+        let suggestions = db_exec!(GovernanceAIEngine::get_suggestion_by_entity(&state.db, et, eid).await);
         Json(ApiResponse::success(suggestions, "实体治理建议"))
     } else {
-        let suggestions = db_exec!(store.ai.get_suggestions(&state.db).await);
+        let suggestions = db_exec!(GovernanceAIEngine::get_suggestions(&state.db).await);
         Json(ApiResponse::success(suggestions, "治理建议列表"))
     }
 }
@@ -1240,10 +930,7 @@ pub async fn get_entity_suggestions(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Vec<GovernanceSuggestionV59>>> {
-    let store = get_v59_store();
-    let suggestions = db_exec!(store
-        .ai
-        .get_suggestion_by_entity(&state.db, "unknown", &id)
+    let suggestions = db_exec!(GovernanceAIEngine::get_suggestion_by_entity(&state.db, "unknown", &id)
         .await);
     Json(ApiResponse::success(suggestions, "实体治理建议"))
 }
@@ -1265,9 +952,8 @@ pub async fn apply_suggestion(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<GovernanceSuggestionV59>> {
-    let store = get_v59_store();
 
-    match db_exec!(store.ai.apply_suggestion(&state.db, &id).await) {
+    match db_exec!(GovernanceAIEngine::apply_suggestion(&state.db, &id).await) {
         Some(s) => Json(ApiResponse::success(s, "建议已应用")),
         None => Json(ApiResponse::error(404, "未找到建议")),
     }
@@ -1290,9 +976,8 @@ pub async fn dismiss_suggestion(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let store = get_v59_store();
 
-    match db_exec!(store.ai.dismiss_suggestion(&state.db, &id).await) {
+    match db_exec!(GovernanceAIEngine::dismiss_suggestion(&state.db, &id).await) {
         Some(_) => Json(ApiResponse::success((), "建议已忽略")),
         None => Json(ApiResponse::success((), "建议已忽略")),
     }
@@ -1309,8 +994,7 @@ pub async fn dismiss_suggestion(
     tag = "ai_governance_v59"
 )]
 pub async fn get_models(State(state): State<AppState>) -> Json<ApiResponse<Vec<GovernanceModel>>> {
-    let store = get_v59_store();
-    let models = db_exec!(store.ai.get_models(&state.db).await);
+    let models = db_exec!(GovernanceAIEngine::get_models(&state.db).await);
     Json(ApiResponse::success(models, "治理模型列表"))
 }
 
@@ -1331,9 +1015,8 @@ pub async fn train_model(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<GovernanceModel>> {
-    let store = get_v59_store();
 
-    match db_exec!(store.ai.train_model(&state.db, &id).await) {
+    match db_exec!(GovernanceAIEngine::train_model(&state.db, &id).await) {
         Some(m) => Json(ApiResponse::success(m, "模型训练完成")),
         None => Json(ApiResponse::error(404, "未找到模型")),
     }
@@ -1355,7 +1038,6 @@ pub async fn create_match_rule(
     State(state): State<AppState>,
     Json(req): Json<CreateMatchRuleRequest>,
 ) -> Json<ApiResponse<MatchRule>> {
-    let store = get_v59_store();
 
     let rule_type = match parse_match_rule_type(&req.rule_type) {
         Some(r) => r,
@@ -1364,9 +1046,7 @@ pub async fn create_match_rule(
 
     let threshold = req.threshold.unwrap_or(0.8);
 
-    let rule = db_exec!(store
-        .matcher
-        .create_match_rule(
+    let rule = db_exec!(IntelligentMatcher::create_match_rule(
             &state.db,
             req.name,
             rule_type,
@@ -1388,8 +1068,7 @@ pub async fn create_match_rule(
     tag = "ai_governance_v59"
 )]
 pub async fn get_match_rules(State(state): State<AppState>) -> Json<ApiResponse<Vec<MatchRule>>> {
-    let store = get_v59_store();
-    let rules = db_exec!(store.matcher.get_match_rules(&state.db).await);
+    let rules = db_exec!(IntelligentMatcher::get_match_rules(&state.db).await);
     Json(ApiResponse::success(rules, "匹配规则列表"))
 }
 
@@ -1407,11 +1086,8 @@ pub async fn match_entities(
     State(state): State<AppState>,
     Json(req): Json<MatchEntitiesRequest>,
 ) -> Json<ApiResponse<Vec<MatchResult>>> {
-    let store = get_v59_store();
     let entity_type = req.entity_type.as_deref().unwrap_or("unknown");
-    let results = db_exec!(store
-        .matcher
-        .match_entities(&state.db, &req.source_id, &req.target_id, entity_type)
+    let results = db_exec!(IntelligentMatcher::match_entities(&state.db, &req.source_id, &req.target_id, entity_type)
         .await);
     Json(ApiResponse::success(results, "实体匹配完成"))
 }
@@ -1429,8 +1105,7 @@ pub async fn match_entities(
 pub async fn get_match_results(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<MatchResult>>> {
-    let store = get_v59_store();
-    let results = db_exec!(store.matcher.get_match_results(&state.db).await);
+    let results = db_exec!(IntelligentMatcher::get_match_results(&state.db).await);
     Json(ApiResponse::success(results, "匹配结果列表"))
 }
 
@@ -1452,14 +1127,13 @@ pub async fn review_match(
     Path(id): Path<String>,
     Json(req): Json<ReviewMatchRequest>,
 ) -> Json<ApiResponse<MatchResult>> {
-    let store = get_v59_store();
 
     let status = match parse_match_status(&req.action) {
         Some(s) => s,
         None => return Json(ApiResponse::error(400, "无效的审核操作")),
     };
 
-    match db_exec!(store.matcher.manual_review(&state.db, &id, status).await) {
+    match db_exec!(IntelligentMatcher::manual_review(&state.db, &id, status).await) {
         Some(r) => Json(ApiResponse::success(r, "匹配审核完成")),
         None => Json(ApiResponse::error(404, "未找到匹配结果")),
     }
@@ -1482,9 +1156,8 @@ pub async fn confirm_match(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<MatchResult>> {
-    let store = get_v59_store();
 
-    match db_exec!(store.matcher.confirm_match(&state.db, &id).await) {
+    match db_exec!(IntelligentMatcher::confirm_match(&state.db, &id).await) {
         Some(r) => Json(ApiResponse::success(r, "匹配已确认")),
         None => Json(ApiResponse::error(404, "未找到匹配结果")),
     }
@@ -1507,9 +1180,8 @@ pub async fn reject_match(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<MatchResult>> {
-    let store = get_v59_store();
 
-    match db_exec!(store.matcher.reject_match(&state.db, &id).await) {
+    match db_exec!(IntelligentMatcher::reject_match(&state.db, &id).await) {
         Some(r) => Json(ApiResponse::success(r, "匹配已拒绝")),
         None => Json(ApiResponse::error(404, "未找到匹配结果")),
     }
@@ -1526,8 +1198,7 @@ pub async fn reject_match(
     tag = "ai_governance_v59"
 )]
 pub async fn get_match_stats(State(state): State<AppState>) -> Json<ApiResponse<MatchStats>> {
-    let store = get_v59_store();
-    let stats = db_exec!(store.matcher.get_match_stats(&state.db).await);
+    let stats = db_exec!(IntelligentMatcher::get_match_stats(&state.db).await);
     Json(ApiResponse::success(stats, "匹配统计"))
 }
 
@@ -1547,7 +1218,6 @@ pub async fn create_classifier(
     State(state): State<AppState>,
     Json(req): Json<CreateClassifierRequest>,
 ) -> Json<ApiResponse<ClassificationModel>> {
-    let store = get_v59_store();
 
     let algorithm = req
         .algorithm
@@ -1555,9 +1225,7 @@ pub async fn create_classifier(
         .and_then(parse_classification_algo)
         .unwrap_or(ClassificationAlgorithm::RuleBased);
 
-    let model = db_exec!(store
-        .classifier
-        .create_classifier(&state.db, req.name, req.entity_type, req.categories, algorithm)
+    let model = db_exec!(AutoClassifier::create_classifier(&state.db, req.name, req.entity_type, req.categories, algorithm)
         .await);
     Json(ApiResponse::success(model, "分类器已创建"))
 }
@@ -1575,8 +1243,7 @@ pub async fn create_classifier(
 pub async fn get_classifiers(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<ClassificationModel>>> {
-    let store = get_v59_store();
-    let models = db_exec!(store.classifier.get_classifiers(&state.db).await);
+    let models = db_exec!(AutoClassifier::get_classifiers(&state.db).await);
     Json(ApiResponse::success(models, "分类器列表"))
 }
 
@@ -1598,8 +1265,7 @@ pub async fn classify_entity(
     State(state): State<AppState>,
     Path((entity_type, id)): Path<(String, String)>,
 ) -> Json<ApiResponse<ClassificationResult>> {
-    let store = get_v59_store();
-    let result = db_exec!(store.classifier.classify_entity(&state.db, &entity_type, &id).await);
+    let result = db_exec!(AutoClassifier::classify_entity(&state.db, &entity_type, &id).await);
     Json(ApiResponse::success(result, "分类完成"))
 }
 
@@ -1621,9 +1287,8 @@ pub async fn get_classification(
     State(state): State<AppState>,
     Path((_entity_type, id)): Path<(String, String)>,
 ) -> Json<ApiResponse<ClassificationResult>> {
-    let store = get_v59_store();
 
-    match db_exec!(store.classifier.get_classification(&state.db, &id).await) {
+    match db_exec!(AutoClassifier::get_classification(&state.db, &id).await) {
         Some(r) => Json(ApiResponse::success(r, "分类结果")),
         None => Json(ApiResponse::error(404, "未找到分类结果")),
     }
@@ -1646,8 +1311,7 @@ pub async fn get_entity_categories(
     State(state): State<AppState>,
     Path(entity_type): Path<String>,
 ) -> Json<ApiResponse<Vec<String>>> {
-    let store = get_v59_store();
-    let categories = db_exec!(store.classifier.get_entity_categories(&state.db, &entity_type).await);
+    let categories = db_exec!(AutoClassifier::get_entity_categories(&state.db, &entity_type).await);
     Json(ApiResponse::success(categories, "实体分类列表"))
 }
 
@@ -1669,11 +1333,8 @@ pub async fn review_classification(
     Path(id): Path<String>,
     Json(req): Json<ReviewClassificationRequest>,
 ) -> Json<ApiResponse<ClassificationResult>> {
-    let store = get_v59_store();
 
-    match db_exec!(store
-        .classifier
-        .review_classification(&state.db, &id, req.approved, req.corrected_category)
+    match db_exec!(AutoClassifier::review_classification(&state.db, &id, req.approved, req.corrected_category)
         .await)
     {
         Some(r) => Json(ApiResponse::success(r, "分类审核完成")),
@@ -1694,8 +1355,7 @@ pub async fn review_classification(
 pub async fn get_classification_stats(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<ClassificationStats>> {
-    let store = get_v59_store();
-    let stats = db_exec!(store.classifier.get_classification_stats(&state.db).await);
+    let stats = db_exec!(AutoClassifier::get_classification_stats(&state.db).await);
     Json(ApiResponse::success(stats, "分类统计"))
 }
 
@@ -1717,9 +1377,8 @@ pub async fn update_classifier_rules(
     Path(id): Path<String>,
     Json(req): Json<UpdateRulesRequest>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    let store = get_v59_store();
     let _ = id;
-    let rules = db_exec!(store.classifier.update_rules(&state.db, req.rules).await);
+    let rules = db_exec!(AutoClassifier::update_rules(&state.db, req.rules).await);
     Json(ApiResponse::success(rules, "分类规则已更新"))
 }
 

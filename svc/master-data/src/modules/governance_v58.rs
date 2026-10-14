@@ -8,8 +8,6 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
-use std::sync::LazyLock;
-use tokio::sync::Mutex;
 use sqlx::Row;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
@@ -147,17 +145,10 @@ pub struct BenchmarkData {
 
 // ==================== 治理成熟度：引擎 ====================
 
-struct GovernanceMaturity {
-    assessments: Mutex<Vec<MaturityAssessment>>,
-    dimension_scores: Mutex<Vec<DimensionScore>>,
-    improvement_plans: Mutex<Vec<ImprovementPlan>>,
-    history: Mutex<Vec<MaturityHistoryEntry>>,
-    initialized: Mutex<bool>,
-}
+struct GovernanceMaturity;
 
 impl GovernanceMaturity {
     async fn assess_maturity(
-        &self,
         db: &sqlx::PgPool,
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
@@ -217,7 +208,6 @@ impl GovernanceMaturity {
     }
 
     async fn get_assessment(
-        &self,
         db: &sqlx::PgPool,
         id: &str,
     ) -> Result<Option<MaturityAssessment>, TopemsError> {
@@ -232,14 +222,12 @@ impl GovernanceMaturity {
     }
 
     async fn get_dimension_scores(
-        &self,
         db: &sqlx::PgPool,
     ) -> Result<Vec<DimensionScore>, TopemsError> {
         fetch_dimension_scores(db).await
     }
 
     async fn create_improvement_plan(
-        &self,
         db: &sqlx::PgPool,
         dimension: GovernanceDimension,
         target_level: MaturityLevel,
@@ -274,7 +262,6 @@ impl GovernanceMaturity {
     }
 
     async fn track_progress(
-        &self,
         db: &sqlx::PgPool,
     ) -> Result<Vec<MaturityProgress>, TopemsError> {
         let scores = fetch_dimension_scores(db).await?;
@@ -292,7 +279,6 @@ impl GovernanceMaturity {
     }
 
     async fn get_maturity_history(
-        &self,
         db: &sqlx::PgPool,
         dimension: Option<&str>,
     ) -> Result<Vec<MaturityHistoryEntry>, TopemsError> {
@@ -308,7 +294,6 @@ impl GovernanceMaturity {
     }
 
     async fn get_benchmark(
-        &self,
         db: &sqlx::PgPool,
     ) -> Result<Vec<BenchmarkData>, TopemsError> {
         let scores = fetch_dimension_scores(db).await?;
@@ -416,16 +401,10 @@ pub struct WorkflowHistoryEntry {
 
 // ==================== 自动化工作流：引擎 ====================
 
-struct MDMWorkflowEngine {
-    workflows: Mutex<Vec<WorkflowV58>>,
-    templates: Mutex<Vec<WorkflowTemplate>>,
-    history: Mutex<Vec<WorkflowHistoryEntry>>,
-    initialized: Mutex<bool>,
-}
+struct MDMWorkflowEngine;
 
 impl MDMWorkflowEngine {
     async fn create_workflow(
-        &self,
         db: &sqlx::PgPool,
         name: String,
         workflow_type: WorkflowType,
@@ -462,7 +441,6 @@ impl MDMWorkflowEngine {
     }
 
     async fn start_workflow(
-        &self,
         db: &sqlx::PgPool,
         workflow_id: &str,
     ) -> Result<Option<WorkflowV58>, TopemsError> {
@@ -517,7 +495,6 @@ impl MDMWorkflowEngine {
     }
 
     async fn advance_step(
-        &self,
         db: &sqlx::PgPool,
         workflow_id: &str,
     ) -> Result<Option<WorkflowV58>, TopemsError> {
@@ -574,7 +551,6 @@ impl MDMWorkflowEngine {
     }
 
     async fn get_workflow_status(
-        &self,
         db: &sqlx::PgPool,
         workflow_id: &str,
     ) -> Result<Option<WorkflowV58>, TopemsError> {
@@ -583,7 +559,6 @@ impl MDMWorkflowEngine {
     }
 
     async fn list_workflows(
-        &self,
         db: &sqlx::PgPool,
         workflow_type: Option<&str>,
         status: Option<&str>,
@@ -608,14 +583,12 @@ impl MDMWorkflowEngine {
     }
 
     async fn get_templates(
-        &self,
         db: &sqlx::PgPool,
     ) -> Result<Vec<WorkflowTemplate>, TopemsError> {
         fetch_workflow_templates(db).await
     }
 
     async fn approve_step(
-        &self,
         db: &sqlx::PgPool,
         workflow_id: &str,
         step_id: &str,
@@ -674,7 +647,6 @@ impl MDMWorkflowEngine {
     }
 
     async fn reject_step(
-        &self,
         db: &sqlx::PgPool,
         workflow_id: &str,
         step_id: &str,
@@ -734,7 +706,6 @@ impl MDMWorkflowEngine {
     }
 
     async fn get_workflow_history(
-        &self,
         db: &sqlx::PgPool,
         workflow_id: &str,
     ) -> Result<Vec<WorkflowHistoryEntry>, TopemsError> {
@@ -839,16 +810,10 @@ pub struct ProductLineage {
 
 // ==================== 数据产品化：管理器 ====================
 
-struct DataProductManager {
-    products: Mutex<Vec<DataProduct>>,
-    contracts: Mutex<Vec<DataContract>>,
-    exposures: Mutex<Vec<ApiExposure>>,
-    initialized: Mutex<bool>,
-}
+struct DataProductManager;
 
 impl DataProductManager {
     async fn create_data_product(
-        &self,
         db: &sqlx::PgPool,
         name: String,
         description: String,
@@ -893,7 +858,6 @@ impl DataProductManager {
     }
 
     async fn get_data_product(
-        &self,
         db: &sqlx::PgPool,
         id: &str,
     ) -> Result<Option<DataProduct>, TopemsError> {
@@ -902,7 +866,6 @@ impl DataProductManager {
     }
 
     async fn list_data_products(
-        &self,
         db: &sqlx::PgPool,
         domain: Option<&str>,
         status: Option<&str>,
@@ -927,7 +890,6 @@ impl DataProductManager {
     }
 
     async fn update_contract(
-        &self,
         db: &sqlx::PgPool,
         product_id: &str,
         schema: serde_json::Value,
@@ -981,7 +943,6 @@ impl DataProductManager {
     }
 
     async fn get_contract_status(
-        &self,
         db: &sqlx::PgPool,
         product_id: &str,
     ) -> Result<Option<ContractStatus>, TopemsError> {
@@ -1010,13 +971,12 @@ impl DataProductManager {
     }
 
     async fn expose_as_api(
-        &self,
         db: &sqlx::PgPool,
         product_id: &str,
         auth_type: String,
         rate_limit: String,
     ) -> Result<Option<ApiExposure>, TopemsError> {
-        let Some(product) = self.get_data_product(db, product_id).await? else {
+        let Some(product) = Self::get_data_product(db, product_id).await? else {
             return Ok(None);
         };
         let exposure = ApiExposure {
@@ -1050,7 +1010,6 @@ impl DataProductManager {
     }
 
     async fn get_consumers(
-        &self,
         db: &sqlx::PgPool,
         product_id: &str,
     ) -> Result<Vec<ConsumerInfo>, TopemsError> {
@@ -1072,7 +1031,6 @@ impl DataProductManager {
     }
 
     async fn get_product_lineage(
-        &self,
         db: &sqlx::PgPool,
         product_id: &str,
     ) -> Result<ProductLineage, TopemsError> {
@@ -1094,36 +1052,7 @@ impl DataProductManager {
 
 // ==================== V58 内存存储 ====================
 
-struct V58Store {
-    maturity: GovernanceMaturity,
-    workflow: MDMWorkflowEngine,
-    products: DataProductManager,
-}
 
-fn get_v58_store() -> &'static V58Store {
-    static STORE: LazyLock<V58Store> = LazyLock::new(|| V58Store {
-        maturity: GovernanceMaturity {
-            assessments: Mutex::new(Vec::new()),
-            dimension_scores: Mutex::new(Vec::new()),
-            improvement_plans: Mutex::new(Vec::new()),
-            history: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        },
-        workflow: MDMWorkflowEngine {
-            workflows: Mutex::new(Vec::new()),
-            templates: Mutex::new(Vec::new()),
-            history: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        },
-        products: DataProductManager {
-            products: Mutex::new(Vec::new()),
-            contracts: Mutex::new(Vec::new()),
-            exposures: Mutex::new(Vec::new()),
-            initialized: Mutex::new(false),
-        },
-    });
-    &STORE
-}
 
 // ==================== 辅助函数 ====================
 
@@ -1217,304 +1146,11 @@ fn generate_recommendations(dimension: &GovernanceDimension, gaps: &[String]) ->
 
 // ==================== 初始化种子数据 ====================
 
-async fn ensure_initialized() {
-    let store = get_v58_store();
-    let mut init = store.maturity.initialized.lock().await;
-    if *init {
-        return;
-    }
-
-    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
-    if crate::modules::persist::enabled() && persist_load().await {
-        *init = true;
-        return;
-    }
-
-    let now = chrono::Utc::now().to_rfc3339();
-
-    let seed_scores = vec![
-        DimensionScore {
-            dimension: GovernanceDimension::Quality,
-            score: 72.5,
-            weight: 0.25,
-            maturity_level: MaturityLevel::Defined,
-            evidence: vec![
-                "质量规则覆盖率 85%".to_string(),
-                "自动化检测率 60%".to_string(),
-            ],
-        },
-        DimensionScore {
-            dimension: GovernanceDimension::Consistency,
-            score: 65.0,
-            weight: 0.20,
-            maturity_level: MaturityLevel::Developed,
-            evidence: vec![
-                "跨系统一致性 78%".to_string(),
-                "编码标准覆盖 90%".to_string(),
-            ],
-        },
-        DimensionScore {
-            dimension: GovernanceDimension::Ownership,
-            score: 58.0,
-            weight: 0.20,
-            maturity_level: MaturityLevel::Developed,
-            evidence: vec!["责任人覆盖率 70%".to_string(), "认责流程已建立".to_string()],
-        },
-        DimensionScore {
-            dimension: GovernanceDimension::Process,
-            score: 50.0,
-            weight: 0.20,
-            maturity_level: MaturityLevel::Developed,
-            evidence: vec![
-                "变更流程覆盖率 65%".to_string(),
-                "审批流程已上线".to_string(),
-            ],
-        },
-        DimensionScore {
-            dimension: GovernanceDimension::Technology,
-            score: 45.0,
-            weight: 0.15,
-            maturity_level: MaturityLevel::Developed,
-            evidence: vec!["MDM 工具已部署".to_string(), "自动化率 50%".to_string()],
-        },
-    ];
-
-    *store.maturity.dimension_scores.lock().await = seed_scores;
-
-    let seed_templates = vec![
-        WorkflowTemplate {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "客户主数据入职流程".to_string(),
-            description: "新客户主数据创建的标准审批流程".to_string(),
-            workflow_type: WorkflowType::Onboarding,
-            steps: vec![
-                serde_json::json!({"type": "action", "name": "填写客户信息"}),
-                serde_json::json!({"type": "review", "name": "数据质量检查"}),
-                serde_json::json!({"type": "approval", "name": "主管审批"}),
-                serde_json::json!({"type": "notification", "name": "通知相关方"}),
-            ],
-        },
-        WorkflowTemplate {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "供应商变更审批".to_string(),
-            description: "供应商信息变更的多级审批流程".to_string(),
-            workflow_type: WorkflowType::ChangeRequest,
-            steps: vec![
-                serde_json::json!({"type": "action", "name": "提交变更申请"}),
-                serde_json::json!({"type": "review", "name": "合规审查"}),
-                serde_json::json!({"type": "approval", "name": "部门经理审批"}),
-                serde_json::json!({"type": "approval", "name": "总监审批"}),
-                serde_json::json!({"type": "notification", "name": "通知申请人"}),
-            ],
-        },
-        WorkflowTemplate {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "物料退役流程".to_string(),
-            description: "物料主数据退役的审批流程".to_string(),
-            workflow_type: WorkflowType::Decommission,
-            steps: vec![
-                serde_json::json!({"type": "action", "name": "提交退役申请"}),
-                serde_json::json!({"type": "review", "name": "影响分析"}),
-                serde_json::json!({"type": "approval", "name": "物料经理审批"}),
-                serde_json::json!({"type": "notification", "name": "通知库存/采购"}),
-            ],
-        },
-    ];
-
-    *store.workflow.templates.lock().await = seed_templates;
-
-    let seed_products = vec![
-        DataProduct {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "客户主数据".to_string(),
-            description: "企业客户核心主数据集".to_string(),
-            owner: "data-team".to_string(),
-            domain: "customer".to_string(),
-            consumers: vec!["sales-system".to_string(), "crm-system".to_string()],
-            data_contract: None,
-            sla_level: SlaLevel::Gold,
-            status: DataProductStatus::Published,
-            created_at: now.clone(),
-            updated_at: now.clone(),
-        },
-        DataProduct {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "供应商主数据".to_string(),
-            description: "企业供应商核心主数据集".to_string(),
-            owner: "procurement-team".to_string(),
-            domain: "supplier".to_string(),
-            consumers: vec!["erp-system".to_string()],
-            data_contract: None,
-            sla_level: SlaLevel::Silver,
-            status: DataProductStatus::Published,
-            created_at: now.clone(),
-            updated_at: now,
-        },
-    ];
-
-    *store.products.products.lock().await = seed_products;
-
-    // U4：首次 seed 后落库。
-    if crate::modules::persist::enabled() {
-        persist_save().await;
-    }
-
-    *init = true;
-}
 
 // ==================== U4 持久化 ====================
 
-async fn persist_load() -> bool {
-    let store = get_v58_store();
-    let mut restored = false;
-    if let Some(v) = crate::modules::persist::load::<Vec<MaturityAssessment>>(
-        "governance_v58",
-        "maturity_assessments",
-    )
-    .await
-    {
-        *store.maturity.assessments.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<DimensionScore>>("governance_v58", "dimension_scores")
-            .await
-    {
-        *store.maturity.dimension_scores.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<ImprovementPlan>>("governance_v58", "improvement_plans")
-            .await
-    {
-        *store.maturity.improvement_plans.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<MaturityHistoryEntry>>(
-        "governance_v58",
-        "maturity_history",
-    )
-    .await
-    {
-        *store.maturity.history.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<WorkflowV58>>("governance_v58", "workflows").await
-    {
-        *store.workflow.workflows.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<WorkflowTemplate>>(
-        "governance_v58",
-        "workflow_templates",
-    )
-    .await
-    {
-        *store.workflow.templates.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<WorkflowHistoryEntry>>(
-        "governance_v58",
-        "workflow_history",
-    )
-    .await
-    {
-        *store.workflow.history.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<DataProduct>>("governance_v58", "data_products").await
-    {
-        *store.products.products.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<DataContract>>("governance_v58", "data_contracts").await
-    {
-        *store.products.contracts.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<ApiExposure>>("governance_v58", "api_exposures").await
-    {
-        *store.products.exposures.lock().await = v;
-        restored = true;
-    }
-    restored
-}
 
-async fn persist_save() {
-    let store = get_v58_store();
-    crate::modules::persist::save(
-        "governance_v58",
-        "maturity_assessments",
-        &*store.maturity.assessments.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "dimension_scores",
-        &*store.maturity.dimension_scores.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "improvement_plans",
-        &*store.maturity.improvement_plans.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "maturity_history",
-        &*store.maturity.history.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "workflows",
-        &*store.workflow.workflows.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "workflow_templates",
-        &*store.workflow.templates.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "workflow_history",
-        &*store.workflow.history.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "data_products",
-        &*store.products.products.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "data_contracts",
-        &*store.products.contracts.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "governance_v58",
-        "api_exposures",
-        &*store.products.exposures.lock().await,
-    )
-    .await;
-}
 
-pub async fn background_flush() {
-    let store = get_v58_store();
-    if !*store.maturity.initialized.lock().await {
-        return;
-    }
-    persist_save().await;
-}
 
 // ==================== 请求/响应结构 ====================
 
@@ -1620,7 +1256,6 @@ pub async fn assess_maturity(
     State(state): State<AppState>,
     Json(req): Json<AssessMaturityRequest>,
 ) -> Json<ApiResponse<MaturityAssessment>> {
-    let store = get_v58_store();
 
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
@@ -1632,7 +1267,7 @@ pub async fn assess_maturity(
         .and_then(parse_maturity_level)
         .unwrap_or(MaturityLevel::Optimized);
 
-    let result = db_exec!(store.maturity.assess_maturity(&state.db, dimension, target).await);
+    let result = db_exec!(GovernanceMaturity::assess_maturity(&state.db, dimension, target).await);
     Json(ApiResponse::success(result, "成熟度评估完成"))
 }
 
@@ -1650,15 +1285,14 @@ pub async fn get_assessment(
     State(state): State<AppState>,
     Query(params): Query<GetAssessmentQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let store = get_v58_store();
 
     if let Some(id) = params.id {
-        match db_exec!(store.maturity.get_assessment(&state.db, &id).await) {
+        match db_exec!(GovernanceMaturity::get_assessment(&state.db, &id).await) {
             Some(a) => Json(ApiResponse::success(serde_json::json!(a), "成熟度评估详情")),
             None => Json(ApiResponse::error(404, "未找到评估记录")),
         }
     } else {
-        let scores = db_exec!(store.maturity.get_dimension_scores(&state.db).await);
+        let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&state.db).await);
         Json(ApiResponse::success(
             serde_json::json!({"dimension_scores": scores}),
             "成熟度概览",
@@ -1679,8 +1313,7 @@ pub async fn get_assessment(
 pub async fn get_dimension_scores(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<DimensionScore>>> {
-    let store = get_v58_store();
-    let scores = db_exec!(store.maturity.get_dimension_scores(&state.db).await);
+    let scores = db_exec!(GovernanceMaturity::get_dimension_scores(&state.db).await);
     Json(ApiResponse::success(scores, "维度评分列表"))
 }
 
@@ -1698,7 +1331,6 @@ pub async fn create_improvement_plan(
     State(state): State<AppState>,
     Json(req): Json<ImprovementPlanRequest>,
 ) -> Json<ApiResponse<ImprovementPlan>> {
-    let store = get_v58_store();
 
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
@@ -1709,10 +1341,7 @@ pub async fn create_improvement_plan(
         None => return Json(ApiResponse::error(400, "无效的目标等级")),
     };
 
-    let plan = db_exec!(
-        store
-            .maturity
-            .create_improvement_plan(&state.db, dimension, target, req.actions)
+    let plan = db_exec!(GovernanceMaturity::create_improvement_plan(&state.db, dimension, target, req.actions)
             .await
     );
     Json(ApiResponse::success(plan, "改进计划已创建"))
@@ -1731,8 +1360,7 @@ pub async fn create_improvement_plan(
 pub async fn track_progress(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<MaturityProgress>>> {
-    let store = get_v58_store();
-    let progress = db_exec!(store.maturity.track_progress(&state.db).await);
+    let progress = db_exec!(GovernanceMaturity::track_progress(&state.db).await);
     Json(ApiResponse::success(progress, "成熟度进度"))
 }
 
@@ -1750,11 +1378,7 @@ pub async fn get_maturity_history(
     State(state): State<AppState>,
     Query(params): Query<MaturityHistoryQuery>,
 ) -> Json<ApiResponse<Vec<MaturityHistoryEntry>>> {
-    let store = get_v58_store();
-    let history = db_exec!(
-        store
-            .maturity
-            .get_maturity_history(&state.db, params.dimension.as_deref())
+    let history = db_exec!(GovernanceMaturity::get_maturity_history(&state.db, params.dimension.as_deref())
             .await
     );
     Json(ApiResponse::success(history, "成熟度历史"))
@@ -1773,8 +1397,7 @@ pub async fn get_maturity_history(
 pub async fn get_benchmark(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<BenchmarkData>>> {
-    let store = get_v58_store();
-    let benchmark = db_exec!(store.maturity.get_benchmark(&state.db).await);
+    let benchmark = db_exec!(GovernanceMaturity::get_benchmark(&state.db).await);
     Json(ApiResponse::success(benchmark, "基准对比数据"))
 }
 
@@ -1794,7 +1417,6 @@ pub async fn create_workflow(
     State(state): State<AppState>,
     Json(req): Json<CreateWorkflowRequest>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-    let store = get_v58_store();
 
     let workflow_type = match parse_workflow_type(&req.workflow_type) {
         Some(t) => t,
@@ -1823,10 +1445,7 @@ pub async fn create_workflow(
         })
         .collect();
 
-    let workflow = db_exec!(
-        store
-            .workflow
-            .create_workflow(&state.db, req.name, workflow_type, steps)
+    let workflow = db_exec!(MDMWorkflowEngine::create_workflow(&state.db, req.name, workflow_type, steps)
             .await
     );
     Json(ApiResponse::success(workflow, "工作流已创建"))
@@ -1849,9 +1468,8 @@ pub async fn start_workflow(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-    let store = get_v58_store();
 
-    match db_exec!(store.workflow.start_workflow(&state.db, &id).await) {
+    match db_exec!(MDMWorkflowEngine::start_workflow(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "工作流已启动")),
         None => Json(ApiResponse::error(400, "工作流无法启动")),
     }
@@ -1875,9 +1493,8 @@ pub async fn advance_step(
     Path(id): Path<String>,
     Json(_req): Json<AdvanceStepRequest>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-    let store = get_v58_store();
 
-    match db_exec!(store.workflow.advance_step(&state.db, &id).await) {
+    match db_exec!(MDMWorkflowEngine::advance_step(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "步骤已推进")),
         None => Json(ApiResponse::error(400, "无法推进工作流")),
     }
@@ -1900,9 +1517,8 @@ pub async fn get_workflow_status(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-    let store = get_v58_store();
 
-    match db_exec!(store.workflow.get_workflow_status(&state.db, &id).await) {
+    match db_exec!(MDMWorkflowEngine::get_workflow_status(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "工作流状态")),
         None => Json(ApiResponse::error(404, "未找到工作流")),
     }
@@ -1922,11 +1538,7 @@ pub async fn list_workflows(
     State(state): State<AppState>,
     Query(params): Query<ListWorkflowsQuery>,
 ) -> Json<ApiResponse<Vec<WorkflowV58>>> {
-    let store = get_v58_store();
-    let workflows = db_exec!(
-        store
-            .workflow
-            .list_workflows(&state.db, params.workflow_type.as_deref(), params.status.as_deref())
+    let workflows = db_exec!(MDMWorkflowEngine::list_workflows(&state.db, params.workflow_type.as_deref(), params.status.as_deref())
             .await
     );
     Json(ApiResponse::success(workflows, "工作流列表"))
@@ -1945,8 +1557,7 @@ pub async fn list_workflows(
 pub async fn get_workflow_templates(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<WorkflowTemplate>>> {
-    let store = get_v58_store();
-    let templates = db_exec!(store.workflow.get_templates(&state.db).await);
+    let templates = db_exec!(MDMWorkflowEngine::get_templates(&state.db).await);
     Json(ApiResponse::success(templates, "工作流模板"))
 }
 
@@ -1968,11 +1579,10 @@ pub async fn approve_step(
     Path(id): Path<String>,
     Json(req): Json<ApproveStepRequest>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-    let store = get_v58_store();
 
     let (workflow_id, step_id) = parse_step_path(&id);
 
-    match db_exec!(store.workflow.approve_step(&state.db, &workflow_id, &step_id).await) {
+    match db_exec!(MDMWorkflowEngine::approve_step(&state.db, &workflow_id, &step_id).await) {
         Some(w) => Json(ApiResponse::success(
             w,
             &req.comment.unwrap_or_else(|| "步骤已批准".to_string()),
@@ -1999,11 +1609,10 @@ pub async fn reject_step(
     Path(id): Path<String>,
     Json(req): Json<RejectStepRequest>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-    let store = get_v58_store();
 
     let (workflow_id, step_id) = parse_step_path(&id);
 
-    match db_exec!(store.workflow.reject_step(&state.db, &workflow_id, &step_id).await) {
+    match db_exec!(MDMWorkflowEngine::reject_step(&state.db, &workflow_id, &step_id).await) {
         Some(w) => Json(ApiResponse::success(
             w,
             &req.reason.unwrap_or_else(|| "步骤已拒绝".to_string()),
@@ -2016,8 +1625,7 @@ pub async fn get_workflow_history(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Vec<WorkflowHistoryEntry>>> {
-    let store = get_v58_store();
-    let history = db_exec!(store.workflow.get_workflow_history(&state.db, &id).await);
+    let history = db_exec!(MDMWorkflowEngine::get_workflow_history(&state.db, &id).await);
     Json(ApiResponse::success(history, "工作流历史"))
 }
 
@@ -2037,7 +1645,6 @@ pub async fn create_data_product(
     State(state): State<AppState>,
     Json(req): Json<CreateDataProductRequest>,
 ) -> Json<ApiResponse<DataProduct>> {
-    let store = get_v58_store();
 
     let sla = req
         .sla_level
@@ -2045,10 +1652,7 @@ pub async fn create_data_product(
         .and_then(parse_sla_level)
         .unwrap_or(SlaLevel::Silver);
 
-    let product = db_exec!(
-        store
-            .products
-            .create_data_product(&state.db, req.name, req.description, req.owner, req.domain, sla)
+    let product = db_exec!(DataProductManager::create_data_product(&state.db, req.name, req.description, req.owner, req.domain, sla)
             .await
     );
     Json(ApiResponse::success(product, "数据产品已创建"))
@@ -2071,9 +1675,8 @@ pub async fn get_data_product(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<DataProduct>> {
-    let store = get_v58_store();
 
-    match db_exec!(store.products.get_data_product(&state.db, &id).await) {
+    match db_exec!(DataProductManager::get_data_product(&state.db, &id).await) {
         Some(p) => Json(ApiResponse::success(p, "数据产品详情")),
         None => Json(ApiResponse::error(404, "未找到数据产品")),
     }
@@ -2093,11 +1696,7 @@ pub async fn list_data_products(
     State(state): State<AppState>,
     Query(params): Query<ListDataProductsQuery>,
 ) -> Json<ApiResponse<Vec<DataProduct>>> {
-    let store = get_v58_store();
-    let products = db_exec!(
-        store
-            .products
-            .list_data_products(&state.db, params.domain.as_deref(), params.status.as_deref())
+    let products = db_exec!(DataProductManager::list_data_products(&state.db, params.domain.as_deref(), params.status.as_deref())
             .await
     );
     Json(ApiResponse::success(products, "数据产品列表"))
@@ -2121,7 +1720,6 @@ pub async fn update_contract(
     Path(id): Path<String>,
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<DataContract>> {
-    let store = get_v58_store();
 
     let security = req
         .security_level
@@ -2139,10 +1737,7 @@ pub async fn update_contract(
 
     let sla = req.freshness_sla.unwrap_or_else(|| "24h".to_string());
 
-    match db_exec!(
-        store
-            .products
-            .update_contract(&state.db, &id, req.schema, requirements, sla, security)
+    match db_exec!(DataProductManager::update_contract(&state.db, &id, req.schema, requirements, sla, security)
             .await
     ) {
         Some(c) => Json(ApiResponse::success(c, "数据契约已更新")),
@@ -2167,9 +1762,8 @@ pub async fn get_contract_status(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<ContractStatus>> {
-    let store = get_v58_store();
 
-    match db_exec!(store.products.get_contract_status(&state.db, &id).await) {
+    match db_exec!(DataProductManager::get_contract_status(&state.db, &id).await) {
         Some(s) => Json(ApiResponse::success(s, "契约状态")),
         None => Json(ApiResponse::error(404, "未找到数据产品")),
     }
@@ -2193,12 +1787,11 @@ pub async fn expose_as_api(
     Path(id): Path<String>,
     Json(req): Json<ExposeApiRequest>,
 ) -> Json<ApiResponse<ApiExposure>> {
-    let store = get_v58_store();
 
     let auth = req.auth_type.unwrap_or_else(|| "bearer".to_string());
     let rate = req.rate_limit.unwrap_or_else(|| "1000/min".to_string());
 
-    match db_exec!(store.products.expose_as_api(&state.db, &id, auth, rate).await) {
+    match db_exec!(DataProductManager::expose_as_api(&state.db, &id, auth, rate).await) {
         Some(e) => Json(ApiResponse::success(e, "API 已暴露")),
         None => Json(ApiResponse::error(404, "未找到数据产品")),
     }
@@ -2221,8 +1814,7 @@ pub async fn get_consumers(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Vec<ConsumerInfo>>> {
-    let store = get_v58_store();
-    let consumers = db_exec!(store.products.get_consumers(&state.db, &id).await);
+    let consumers = db_exec!(DataProductManager::get_consumers(&state.db, &id).await);
     Json(ApiResponse::success(consumers, "消费者列表"))
 }
 
@@ -2243,8 +1835,7 @@ pub async fn get_product_lineage(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<ProductLineage>> {
-    let store = get_v58_store();
-    let lineage = db_exec!(store.products.get_product_lineage(&state.db, &id).await);
+    let lineage = db_exec!(DataProductManager::get_product_lineage(&state.db, &id).await);
     Json(ApiResponse::success(lineage, "数据产品血缘"))
 }
 
