@@ -13,12 +13,111 @@ use serde::Deserialize;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use sqlx::Row;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
+
+// ==================== K1：真表映射（master_data.mdm_kg_* 等 8 表） ====================
+
+fn kg_node_from_row(row: &sqlx::postgres::PgRow) -> KGNode {
+    KGNode {
+        id: row.get::<String, _>("id"),
+        label: row.get::<String, _>("label"),
+        r#type: node_type_from_str(&row.get::<String, _>("node_type")),
+        properties: row.get::<serde_json::Value, _>("properties"),
+        embeddings: serde_json::from_value(row.get::<serde_json::Value, _>("embeddings"))
+            .unwrap_or_default(),
+        created_at: row.get::<String, _>("created_at"),
+    }
+}
+const KG_NODE_COLS: &str = "id, label, node_type, properties, embeddings, created_at";
+
+fn kg_edge_from_row(row: &sqlx::postgres::PgRow) -> KGEdge {
+    KGEdge {
+        id: row.get::<String, _>("id"),
+        source_id: row.get::<String, _>("source_id"),
+        target_id: row.get::<String, _>("target_id"),
+        relation_type: relation_type_from_str(&row.get::<String, _>("relation_type")),
+        weight: row.get::<f64, _>("weight"),
+        confidence: row.get::<f64, _>("confidence"),
+    }
+}
+const KG_EDGE_COLS: &str = "id, source_id, target_id, relation_type, weight, confidence";
+
+fn kg_graph_from_row(row: &sqlx::postgres::PgRow) -> KnowledgeGraph {
+    KnowledgeGraph {
+        nodes: serde_json::from_value(row.get::<serde_json::Value, _>("nodes"))
+            .unwrap_or_default(),
+        edges: serde_json::from_value(row.get::<serde_json::Value, _>("edges"))
+            .unwrap_or_default(),
+        version: row.get::<i64, _>("version"),
+        last_updated: row.get::<String, _>("last_updated"),
+    }
+}
+const KG_GRAPH_COLS: &str = "id, nodes, edges, version, last_updated";
+
+fn recommendation_from_row(row: &sqlx::postgres::PgRow) -> Recommendation {
+    Recommendation {
+        id: row.get::<String, _>("id"),
+        target_id: row.get::<String, _>("target_id"),
+        item_id: row.get::<String, _>("item_id"),
+        score: row.get::<f64, _>("score"),
+        reason: row.get::<serde_json::Value, _>("reason"),
+        source: recommendation_source_from_str(&row.get::<String, _>("source")),
+    }
+}
+const RECOMMENDATION_COLS: &str = "id, target_id, item_id, score, reason, source";
+
+fn interaction_from_row(row: &sqlx::postgres::PgRow) -> InteractionRecord {
+    InteractionRecord {
+        id: row.get::<String, _>("id"),
+        user_id: row.get::<String, _>("user_id"),
+        item_id: row.get::<String, _>("item_id"),
+        interaction_type: row.get::<String, _>("interaction_type"),
+        timestamp: row.get::<String, _>("timestamp"),
+    }
+}
+const INTERACTION_COLS: &str = "id, user_id, item_id, interaction_type, timestamp";
+
+fn asset_from_row(row: &sqlx::postgres::PgRow) -> DataAsset {
+    DataAsset {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        asset_type: asset_type_from_str(&row.get::<String, _>("asset_type")),
+        description: row.get::<String, _>("description"),
+        owner: row.get::<String, _>("owner"),
+        domain: row.get::<String, _>("domain"),
+        tags: serde_json::from_value(row.get::<serde_json::Value, _>("tags"))
+            .unwrap_or_default(),
+        lineage_summary: row.get::<serde_json::Value, _>("lineage_summary"),
+        quality_score: row.get::<f64, _>("quality_score"),
+        access_level: row.get::<String, _>("access_level"),
+        updated_at: row.get::<String, _>("updated_at"),
+    }
+}
+const ASSET_COLS: &str = "id, name, asset_type, description, owner, domain, tags, lineage_summary, quality_score, access_level, updated_at";
+
+fn asset_category_from_row(row: &sqlx::postgres::PgRow) -> AssetCategory {
+    AssetCategory {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        parent_id: row.get::<Option<String>, _>("parent_id"),
+        asset_count: row.get::<i64, _>("asset_count"),
+    }
+}
+const ASSET_CATEGORY_COLS: &str = "id, name, parent_id, asset_count";
+
+fn search_index_from_row(row: &sqlx::postgres::PgRow) -> (String, Vec<String>) {
+    let key: String = row.get("key");
+    let value: Vec<String> =
+        serde_json::from_value(row.get::<serde_json::Value, _>("value")).unwrap_or_default();
+    (key, value)
+}
+const SEARCH_INDEX_COLS: &str = "key, value";
 
 // ==================== 知识图谱 ====================
 
@@ -596,6 +695,52 @@ pub async fn background_flush() {
 
 // ==================== 内部辅助函数 ====================
 
+fn relation_type_to_str(t: &KGRelationType) -> &'static str {
+    match t {
+        KGRelationType::BelongsTo => "belongs_to",
+        KGRelationType::PartOf => "part_of",
+        KGRelationType::DependsOn => "depends_on",
+        KGRelationType::SimilarTo => "similar_to",
+        KGRelationType::DerivedFrom => "derived_from",
+    }
+}
+
+fn node_type_to_str(t: &KGNodeType) -> &'static str {
+    match t {
+        KGNodeType::Entity => "entity",
+        KGNodeType::Concept => "concept",
+        KGNodeType::Attribute => "attribute",
+        KGNodeType::Relation => "relation",
+    }
+}
+
+fn asset_type_to_str(t: &AssetType) -> &'static str {
+    match t {
+        AssetType::Entity => "entity",
+        AssetType::Attribute => "attribute",
+        AssetType::Relation => "relation",
+        AssetType::Dataset => "dataset",
+    }
+}
+
+fn recommendation_source_from_str(s: &str) -> RecommendationSource {
+    match s {
+        "collaborative" => RecommendationSource::Collaborative,
+        "content" => RecommendationSource::Content,
+        "knowledge_graph" => RecommendationSource::KnowledgeGraph,
+        _ => RecommendationSource::Hybrid,
+    }
+}
+
+fn recommendation_source_to_str(s: &RecommendationSource) -> &'static str {
+    match s {
+        RecommendationSource::Collaborative => "collaborative",
+        RecommendationSource::Content => "content",
+        RecommendationSource::KnowledgeGraph => "knowledge_graph",
+        RecommendationSource::Hybrid => "hybrid",
+    }
+}
+
 fn relation_type_from_str(s: &str) -> KGRelationType {
     match s {
         "part_of" => KGRelationType::PartOf,
@@ -637,6 +782,62 @@ fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
     dot_product / (norm_a * norm_b)
 }
 
+// ==================== K1：真表读取与图谱重算助手 ====================
+
+async fn fetch_kg_nodes(db: &sqlx::PgPool) -> Vec<KGNode> {
+    sqlx::query(&format!("SELECT {KG_NODE_COLS} FROM master_data.mdm_kg_nodes"))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(kg_node_from_row).collect())
+        .unwrap_or_default()
+}
+
+async fn fetch_kg_edges(db: &sqlx::PgPool) -> Vec<KGEdge> {
+    sqlx::query(&format!("SELECT {KG_EDGE_COLS} FROM master_data.mdm_kg_edges"))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(kg_edge_from_row).collect())
+        .unwrap_or_default()
+}
+
+async fn fetch_kg_graph(db: &sqlx::PgPool) -> Option<KnowledgeGraph> {
+    sqlx::query(&format!(
+        "SELECT {KG_GRAPH_COLS} FROM master_data.mdm_kg_graphs ORDER BY id LIMIT 1"
+    ))
+    .fetch_optional(db)
+    .await
+    .ok()
+    .flatten()
+    .map(|r| kg_graph_from_row(&r))
+}
+
+async fn refresh_kg_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
+    let nodes = fetch_kg_nodes(db).await;
+    let edges = fetch_kg_edges(db).await;
+    let now = chrono::Utc::now().to_rfc3339();
+    let graph = KnowledgeGraph {
+        nodes,
+        edges,
+        version: 0,
+        last_updated: now,
+    };
+    sqlx::query(
+        r#"INSERT INTO master_data.mdm_kg_graphs (id, nodes, edges, version, last_updated)
+           VALUES ('default', $1, $2, 1, $3)
+           ON CONFLICT (id) DO UPDATE
+           SET nodes = EXCLUDED.nodes, edges = EXCLUDED.edges,
+               version = master_data.mdm_kg_graphs.version + 1,
+               last_updated = EXCLUDED.last_updated"#,
+    )
+    .bind(serde_json::to_value(&graph.nodes).unwrap_or_default())
+    .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
+    .bind(&graph.last_updated)
+    .execute(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("刷新知识图谱失败: {e}")))?;
+    Ok(())
+}
+
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 fn jaccard_similarity<T: Eq + std::hash::Hash>(a: &[T], b: &[T]) -> f64 {
     let set_a: HashSet<&T> = HashSet::from_iter(a.iter());
@@ -656,14 +857,11 @@ struct KnowledgeGraphEngine;
 
 impl KnowledgeGraphEngine {
     async fn add_node(
+        db: &sqlx::PgPool,
         label: String,
         node_type: KGNodeType,
         properties: serde_json::Value,
     ) -> Result<KGNode, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let mut nodes = store.kg_nodes.lock().await;
-        let mut graphs = store.kg_graphs.lock().await;
-
         let now = chrono::Utc::now().to_rfc3339();
         let node = KGNode {
             id: uuid::Uuid::new_v4().to_string(),
@@ -673,30 +871,34 @@ impl KnowledgeGraphEngine {
             embeddings: Vec::new(),
             created_at: now.clone(),
         };
-        nodes.push(node.clone());
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_kg_nodes (id, label, node_type, properties, embeddings, created_at)
+               VALUES ($1,$2,$3,$4,$5,$6)"#,
+        )
+        .bind(&node.id)
+        .bind(&node.label)
+        .bind(node_type_to_str(&node.r#type))
+        .bind(&node.properties)
+        .bind(serde_json::to_value(&node.embeddings).unwrap_or_default())
+        .bind(&node.created_at)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱节点失败: {e}")))?;
 
-        if let Some(graph) = graphs.first_mut() {
-            graph.nodes = nodes.clone();
-            graph.version += 1;
-            graph.last_updated = now;
-        }
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("knowledge_v53", "kg_nodes", &*nodes).await;
-        crate::modules::persist::save("knowledge_v53", "kg_graphs", &*graphs).await;
+        refresh_kg_graph(db).await?;
 
         Ok(node)
     }
 
     async fn add_edge(
+        db: &sqlx::PgPool,
         source_id: String,
         target_id: String,
         relation_type: KGRelationType,
         weight: Option<f64>,
         confidence: Option<f64>,
     ) -> Result<KGEdge, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let nodes = store.kg_nodes.lock().await;
+        let nodes = fetch_kg_nodes(db).await;
         if !nodes.iter().any(|n| n.id == source_id) {
             return Err(TopemsError::ResourceNotFound(format!(
                 "源节点不存在: {}",
@@ -709,10 +911,6 @@ impl KnowledgeGraphEngine {
                 target_id
             )));
         }
-        drop(nodes);
-
-        let mut edges = store.kg_edges.lock().await;
-        let mut graphs = store.kg_graphs.lock().await;
 
         let edge = KGEdge {
             id: uuid::Uuid::new_v4().to_string(),
@@ -722,29 +920,32 @@ impl KnowledgeGraphEngine {
             weight: weight.unwrap_or(1.0),
             confidence: confidence.unwrap_or(1.0),
         };
-        edges.push(edge.clone());
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_kg_edges (id, source_id, target_id, relation_type, weight, confidence)
+               VALUES ($1,$2,$3,$4,$5,$6)"#,
+        )
+        .bind(&edge.id)
+        .bind(&edge.source_id)
+        .bind(&edge.target_id)
+        .bind(relation_type_to_str(&edge.relation_type))
+        .bind(edge.weight)
+        .bind(edge.confidence)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入知识图谱边失败: {e}")))?;
 
-        let now = chrono::Utc::now().to_rfc3339();
-        if let Some(graph) = graphs.first_mut() {
-            graph.edges = edges.clone();
-            graph.version += 1;
-            graph.last_updated = now;
-        }
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("knowledge_v53", "kg_edges", &*edges).await;
-        crate::modules::persist::save("knowledge_v53", "kg_graphs", &*graphs).await;
+        refresh_kg_graph(db).await?;
 
         Ok(edge)
     }
 
     async fn get_subgraph(
+        db: &sqlx::PgPool,
         node_id: &str,
         depth: Option<i32>,
     ) -> Result<KnowledgeGraph, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let nodes = store.kg_nodes.lock().await;
-        let edges = store.kg_edges.lock().await;
+        let nodes = fetch_kg_nodes(db).await;
+        let edges = fetch_kg_edges(db).await;
 
         let max_depth = depth.unwrap_or(3);
         let mut visited = HashSet::new();
@@ -779,9 +980,6 @@ impl KnowledgeGraphEngine {
             }
         }
 
-        drop(nodes);
-        drop(edges);
-
         Ok(KnowledgeGraph {
             nodes: subgraph_nodes,
             edges: subgraph_edges,
@@ -790,10 +988,13 @@ impl KnowledgeGraphEngine {
         })
     }
 
-    async fn find_path(start_id: &str, end_id: &str) -> Result<Vec<KGEdge>, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let nodes = store.kg_nodes.lock().await;
-        let edges = store.kg_edges.lock().await;
+    async fn find_path(
+        db: &sqlx::PgPool,
+        start_id: &str,
+        end_id: &str,
+    ) -> Result<Vec<KGEdge>, TopemsError> {
+        let nodes = fetch_kg_nodes(db).await;
+        let edges = fetch_kg_edges(db).await;
 
         if !nodes.iter().any(|n| n.id == start_id) {
             return Err(TopemsError::ResourceNotFound(format!(
@@ -807,7 +1008,6 @@ impl KnowledgeGraphEngine {
                 end_id
             )));
         }
-        drop(nodes);
 
         let mut visited = HashSet::new();
         let mut queue: Vec<(String, Vec<KGEdge>)> = vec![(start_id.to_string(), Vec::new())];
@@ -840,9 +1040,12 @@ impl KnowledgeGraphEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    async fn get_similar(node_id: &str, limit: Option<i32>) -> Result<Vec<KGNode>, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let nodes = store.kg_nodes.lock().await;
+    async fn get_similar(
+        db: &sqlx::PgPool,
+        node_id: &str,
+        limit: Option<i32>,
+    ) -> Result<Vec<KGNode>, TopemsError> {
+        let nodes = fetch_kg_nodes(db).await;
         let target = nodes
             .iter()
             .find(|n| n.id == node_id)
@@ -880,10 +1083,12 @@ impl KnowledgeGraphEngine {
         Ok(result)
     }
 
-    async fn export_graph(format: &str) -> Result<String, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let graphs = store.kg_graphs.lock().await;
-        let graph = graphs.first().cloned().ok_or("没有可用的知识图谱")?;
+    async fn export_graph(db: &sqlx::PgPool, format: &str) -> Result<String, TopemsError> {
+        let graph = fetch_kg_graph(db).await;
+        let graph = match graph {
+            Some(g) if !g.nodes.is_empty() || !g.edges.is_empty() => g,
+            _ => return Err(TopemsError::BusinessLogic("没有可用的知识图谱".to_string())),
+        };
 
         match format {
             "dot" => {
@@ -926,13 +1131,27 @@ impl RecommendationEngine {
         clippy::cast_sign_loss
     )]
     async fn get_recommendations(
+        db: &sqlx::PgPool,
         user_id: &str,
         target_id: Option<String>,
         limit: Option<i32>,
     ) -> Result<Vec<Recommendation>, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let interactions = store.interactions.lock().await;
-        let assets = store.assets.lock().await;
+        // K1：交互与资产从真表读。
+        let interactions: Vec<InteractionRecord> =
+            sqlx::query(&format!(
+                "SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions WHERE user_id = $1"
+            ))
+            .bind(user_id)
+            .fetch_all(db)
+            .await
+            .map(|rows| rows.iter().map(interaction_from_row).collect())
+            .unwrap_or_default();
+        let assets: Vec<DataAsset> =
+            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+                .fetch_all(db)
+                .await
+                .map(|rows| rows.iter().map(asset_from_row).collect())
+                .unwrap_or_default();
 
         let limit = limit.unwrap_or(10) as usize;
 
@@ -1025,23 +1244,33 @@ impl RecommendationEngine {
             })
             .collect();
 
-        drop(interactions);
-        drop(assets);
-
-        let mut recs = store.recommendations.lock().await;
-        recs.extend(recommendations.clone());
+        // K1：结果写真表（推荐即生成即存）。
+        for rec in &recommendations {
+            sqlx::query(
+                r#"INSERT INTO master_data.mdm_recommendations
+                   (id, target_id, item_id, score, reason, source)
+                   VALUES ($1,$2,$3,$4,$5,$6)"#,
+            )
+            .bind(&rec.id)
+            .bind(&rec.target_id)
+            .bind(&rec.item_id)
+            .bind(rec.score)
+            .bind(&rec.reason)
+            .bind(recommendation_source_to_str(&rec.source))
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("写入推荐记录失败: {e}")))?;
+        }
 
         Ok(recommendations)
     }
 
     async fn record_interaction(
+        db: &sqlx::PgPool,
         user_id: String,
         item_id: String,
         interaction_type: String,
-    ) -> InteractionRecord {
-        let store = get_knowledge_v53_store();
-        let mut interactions = store.interactions.lock().await;
-
+    ) -> Result<InteractionRecord, TopemsError> {
         let record = InteractionRecord {
             id: uuid::Uuid::new_v4().to_string(),
             user_id,
@@ -1049,17 +1278,34 @@ impl RecommendationEngine {
             interaction_type,
             timestamp: chrono::Utc::now().to_rfc3339(),
         };
-        interactions.push(record.clone());
-        record
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_interactions
+               (id, user_id, item_id, interaction_type, timestamp)
+               VALUES ($1,$2,$3,$4,$5)"#,
+        )
+        .bind(&record.id)
+        .bind(&record.user_id)
+        .bind(&record.item_id)
+        .bind(&record.interaction_type)
+        .bind(&record.timestamp)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入交互记录失败: {e}")))?;
+        Ok(record)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     async fn get_similar_items(
+        db: &sqlx::PgPool,
         item_id: &str,
         limit: Option<i32>,
     ) -> Result<Vec<DataAsset>, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let assets = store.assets.lock().await;
+        let assets: Vec<DataAsset> =
+            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+                .fetch_all(db)
+                .await
+                .map(|rows| rows.iter().map(asset_from_row).collect())
+                .unwrap_or_default();
         let target = assets
             .iter()
             .find(|a| a.id == item_id)
@@ -1093,10 +1339,19 @@ impl RecommendationEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    async fn get_popular_items(limit: Option<i32>) -> Vec<DataAsset> {
-        let store = get_knowledge_v53_store();
-        let assets = store.assets.lock().await;
-        let interactions = store.interactions.lock().await;
+    async fn get_popular_items(db: &sqlx::PgPool, limit: Option<i32>) -> Vec<DataAsset> {
+        let assets: Vec<DataAsset> =
+            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+                .fetch_all(db)
+                .await
+                .map(|rows| rows.iter().map(asset_from_row).collect())
+                .unwrap_or_default();
+        let interactions: Vec<InteractionRecord> =
+            sqlx::query(&format!("SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions"))
+                .fetch_all(db)
+                .await
+                .map(|rows| rows.iter().map(interaction_from_row).collect())
+                .unwrap_or_default();
 
         let limit = limit.unwrap_or(10) as usize;
 
@@ -1125,10 +1380,19 @@ impl RecommendationEngine {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
-    async fn get_trending_items(limit: Option<i32>) -> Vec<DataAsset> {
-        let store = get_knowledge_v53_store();
-        let assets = store.assets.lock().await;
-        let interactions = store.interactions.lock().await;
+    async fn get_trending_items(db: &sqlx::PgPool, limit: Option<i32>) -> Vec<DataAsset> {
+        let assets: Vec<DataAsset> =
+            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+                .fetch_all(db)
+                .await
+                .map(|rows| rows.iter().map(asset_from_row).collect())
+                .unwrap_or_default();
+        let interactions: Vec<InteractionRecord> =
+            sqlx::query(&format!("SELECT {INTERACTION_COLS} FROM master_data.mdm_interactions"))
+                .fetch_all(db)
+                .await
+                .map(|rows| rows.iter().map(interaction_from_row).collect())
+                .unwrap_or_default();
 
         let limit = limit.unwrap_or(10) as usize;
         let now = chrono::Utc::now();
@@ -1173,6 +1437,7 @@ struct AssetCatalogManager;
 
 impl AssetCatalogManager {
     async fn register_asset(
+        db: &sqlx::PgPool,
         name: String,
         asset_type: AssetType,
         description: String,
@@ -1180,16 +1445,12 @@ impl AssetCatalogManager {
         domain: String,
         tags: Vec<String>,
     ) -> Result<DataAsset, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let mut assets = store.assets.lock().await;
-        let mut search_index = store.search_index.lock().await;
-
         let now = chrono::Utc::now().to_rfc3339();
         let asset = DataAsset {
             id: uuid::Uuid::new_v4().to_string(),
             name: name.clone(),
             asset_type,
-            description,
+            description: description.clone(),
             owner,
             domain: domain.clone(),
             tags: tags.clone(),
@@ -1198,30 +1459,28 @@ impl AssetCatalogManager {
             access_level: "internal".to_string(),
             updated_at: now,
         };
-        assets.push(asset.clone());
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_assets
+               (id, name, asset_type, description, owner, domain, tags, lineage_summary, quality_score, access_level, updated_at)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)"#,
+        )
+        .bind(&asset.id)
+        .bind(&asset.name)
+        .bind(asset_type_to_str(&asset.asset_type))
+        .bind(&asset.description)
+        .bind(&asset.owner)
+        .bind(&asset.domain)
+        .bind(serde_json::to_value(&asset.tags).unwrap_or_default())
+        .bind(&asset.lineage_summary)
+        .bind(asset.quality_score)
+        .bind(&asset.access_level)
+        .bind(&asset.updated_at)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入数据资产失败: {e}")))?;
 
-        search_index
-            .entry(asset.name.to_lowercase())
-            .or_default()
-            .push(asset.id.clone());
-        search_index
-            .entry(asset.description.to_lowercase())
-            .or_default()
-            .push(asset.id.clone());
-        for tag in &tags {
-            search_index
-                .entry(tag.to_lowercase())
-                .or_default()
-                .push(asset.id.clone());
-        }
-        search_index
-            .entry(domain.to_lowercase())
-            .or_default()
-            .push(asset.id.clone());
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("knowledge_v53", "assets", &*assets).await;
-        crate::modules::persist::save("knowledge_v53", "search_index", &*search_index).await;
+        // 搜索索引同步落真表。
+        upsert_search_index(db, &asset, &description, &domain, &tags).await?;
 
         Ok(asset)
     }
@@ -1233,6 +1492,7 @@ impl AssetCatalogManager {
         clippy::cast_sign_loss
     )]
     async fn search_assets(
+        db: &sqlx::PgPool,
         query: Option<String>,
         asset_type: Option<AssetType>,
         domain: Option<String>,
@@ -1240,10 +1500,14 @@ impl AssetCatalogManager {
         page: Option<i64>,
         page_size: Option<i64>,
     ) -> (Vec<DataAsset>, i64) {
-        let store = get_knowledge_v53_store();
-        let assets = store.assets.lock().await;
+        let assets: Vec<DataAsset> =
+            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+                .fetch_all(db)
+                .await
+                .map(|rows| rows.iter().map(asset_from_row).collect())
+                .unwrap_or_default();
 
-        let mut filtered: Vec<DataAsset> = assets.iter().cloned().collect();
+        let mut filtered: Vec<DataAsset> = assets;
 
         if let Some(ref q) = query {
             let q_lower = q.to_lowercase();
@@ -1279,17 +1543,20 @@ impl AssetCatalogManager {
         (items, total)
     }
 
-    async fn get_asset(id: &str) -> Result<DataAsset, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let assets = store.assets.lock().await;
-        assets
-            .iter()
-            .find(|a| a.id == id)
-            .cloned()
-            .ok_or_else(|| TopemsError::ResourceNotFound(format!("未找到资产: {}", id)))
+    async fn get_asset(db: &sqlx::PgPool, id: &str) -> Result<DataAsset, TopemsError> {
+        sqlx::query(&format!(
+            "SELECT {ASSET_COLS} FROM master_data.mdm_assets WHERE id = $1"
+        ))
+        .bind(id)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询数据资产失败: {e}")))?
+        .map(|r| asset_from_row(&r))
+        .ok_or_else(|| TopemsError::ResourceNotFound(format!("未找到资产: {}", id)))
     }
 
     async fn update_asset(
+        db: &sqlx::PgPool,
         id: &str,
         name: Option<String>,
         description: Option<String>,
@@ -1297,37 +1564,25 @@ impl AssetCatalogManager {
         quality_score: Option<f64>,
         access_level: Option<String>,
     ) -> Result<DataAsset, TopemsError> {
-        let store = get_knowledge_v53_store();
-        let mut assets = store.assets.lock().await;
-        let mut search_index = store.search_index.lock().await;
+        let current = sqlx::query(&format!(
+            "SELECT {ASSET_COLS} FROM master_data.mdm_assets WHERE id = $1"
+        ))
+        .bind(id)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询数据资产失败: {e}")))?
+        .map(|r| asset_from_row(&r))
+        .ok_or_else(|| TopemsError::BusinessLogic(format!("未找到资产: {}", id)))?;
 
-        let asset = assets
-            .iter_mut()
-            .find(|a| a.id == id)
-            .ok_or_else(|| format!("未找到资产: {}", id))?;
-
+        let mut asset = current;
         if let Some(n) = name {
             asset.name = n;
-            search_index
-                .entry(asset.name.to_lowercase())
-                .or_default()
-                .push(asset.id.clone());
         }
         if let Some(d) = description {
             asset.description = d;
-            search_index
-                .entry(asset.description.to_lowercase())
-                .or_default()
-                .push(asset.id.clone());
         }
         if let Some(t) = tags {
-            asset.tags = t.clone();
-            for tag in &t {
-                search_index
-                    .entry(tag.to_lowercase())
-                    .or_default()
-                    .push(asset.id.clone());
-            }
+            asset.tags = t;
         }
         if let Some(q) = quality_score {
             asset.quality_score = q;
@@ -1336,20 +1591,38 @@ impl AssetCatalogManager {
             asset.access_level = al;
         }
         asset.updated_at = chrono::Utc::now().to_rfc3339();
-        let updated = asset.clone();
-        // 结束可变借用（NLL 已自动结束），允许同步直写
 
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("knowledge_v53", "assets", &*assets).await;
-        crate::modules::persist::save("knowledge_v53", "search_index", &*search_index).await;
+        sqlx::query(
+            r#"UPDATE master_data.mdm_assets SET
+               name = $2, description = $3, tags = $4, quality_score = $5,
+               access_level = $6, updated_at = $7
+               WHERE id = $1"#,
+        )
+        .bind(id)
+        .bind(&asset.name)
+        .bind(&asset.description)
+        .bind(serde_json::to_value(&asset.tags).unwrap_or_default())
+        .bind(asset.quality_score)
+        .bind(&asset.access_level)
+        .bind(&asset.updated_at)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("更新数据资产失败: {e}")))?;
 
-        Ok(updated)
+        // 搜索索引同步刷新。
+        upsert_search_index(db, &asset, &asset.description, &asset.domain, &asset.tags).await?;
+
+        Ok(asset)
     }
 
-    async fn list_categories() -> Vec<AssetCategory> {
-        let store = get_knowledge_v53_store();
-        let categories = store.asset_categories.lock().await;
-        categories.clone()
+    async fn list_categories(db: &sqlx::PgPool) -> Vec<AssetCategory> {
+        sqlx::query(&format!(
+            "SELECT {ASSET_CATEGORY_COLS} FROM master_data.mdm_asset_categories"
+        ))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(asset_category_from_row).collect())
+        .unwrap_or_default()
     }
 
     #[allow(
@@ -1357,9 +1630,13 @@ impl AssetCatalogManager {
         clippy::cast_possible_wrap,
         clippy::cast_precision_loss
     )]
-    async fn get_asset_stats() -> AssetStats {
-        let store = get_knowledge_v53_store();
-        let assets = store.assets.lock().await;
+    async fn get_asset_stats(db: &sqlx::PgPool) -> AssetStats {
+        let assets: Vec<DataAsset> =
+            sqlx::query(&format!("SELECT {ASSET_COLS} FROM master_data.mdm_assets"))
+                .fetch_all(db)
+                .await
+                .map(|rows| rows.iter().map(asset_from_row).collect())
+                .unwrap_or_default();
 
         let total = assets.len() as i64;
         let mut by_type: HashMap<String, i64> = HashMap::new();
@@ -1396,6 +1673,59 @@ impl AssetCatalogManager {
             recent_updates,
         }
     }
+}
+
+// ==================== K1：搜索索引同步助手 ====================
+
+async fn upsert_search_index(
+    db: &sqlx::PgPool,
+    asset: &DataAsset,
+    description: &str,
+    domain: &str,
+    tags: &[String],
+) -> Result<(), TopemsError> {
+    let mut keys = Vec::new();
+    keys.push(asset.name.to_lowercase());
+    if !description.is_empty() {
+        keys.push(description.to_lowercase());
+    }
+    for tag in tags {
+        keys.push(tag.to_lowercase());
+    }
+    if !domain.is_empty() {
+        keys.push(domain.to_lowercase());
+    }
+
+    for key in keys {
+        // 追加 asset id 到既有索引值（去重由 jsonb 内含实现：读→合并→写）。
+        let existing: Vec<String> = sqlx::query(
+            "SELECT value FROM master_data.mdm_search_indexes WHERE key = $1",
+        )
+        .bind(&key)
+        .fetch_optional(db)
+        .await
+        .ok()
+        .flatten()
+        .and_then(|r| r.try_get::<serde_json::Value, _>("value").ok())
+        .and_then(|v| serde_json::from_value::<Vec<String>>(v).ok())
+        .unwrap_or_default();
+
+        let mut merged = existing;
+        if !merged.contains(&asset.id) {
+            merged.push(asset.id.clone());
+        }
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_search_indexes (key, value)
+               VALUES ($1, $2)
+               ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"#,
+        )
+        .bind(&key)
+        .bind(serde_json::to_value(&merged).unwrap_or_default())
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入搜索索引失败: {e}")))?;
+    }
+    Ok(())
 }
 
 // ==================== 请求/响应结构 ====================
@@ -1508,15 +1838,14 @@ pub struct UpdateAssetRequest {
     tag = "knowledge_v53"
 )]
 pub async fn add_kg_node(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AddKGNodeRequest>,
 ) -> Json<ApiResponse<KGNode>> {
-    ensure_initialized().await;
 
     let node_type = node_type_from_str(&req.node_type);
     let props = req.properties.unwrap_or_else(|| serde_json::json!({}));
 
-    match KnowledgeGraphEngine::add_node(req.label, node_type, props).await {
+    match KnowledgeGraphEngine::add_node(&state.db, req.label, node_type, props).await {
         Ok(node) => Json(ApiResponse::success(node, "知识图谱节点已添加")),
         Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
     }
@@ -1533,13 +1862,12 @@ pub async fn add_kg_node(
     tag = "knowledge_v53"
 )]
 pub async fn add_kg_edge(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AddKGEdgeRequest>,
 ) -> Json<ApiResponse<KGEdge>> {
-    ensure_initialized().await;
 
     let relation_type = relation_type_from_str(&req.relation_type);
-    match KnowledgeGraphEngine::add_edge(
+    match KnowledgeGraphEngine::add_edge(&state.db, 
         req.source_id,
         req.target_id,
         relation_type,
@@ -1564,13 +1892,12 @@ pub async fn add_kg_edge(
 )]
 
 pub async fn get_subgraph(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(node_id): Path<String>,
     Query(params): Query<SubgraphQuery>,
 ) -> Json<ApiResponse<KnowledgeGraph>> {
-    ensure_initialized().await;
 
-    match KnowledgeGraphEngine::get_subgraph(&node_id, params.depth).await {
+    match KnowledgeGraphEngine::get_subgraph(&state.db, &node_id, params.depth).await {
         Ok(graph) => Json(ApiResponse::success(graph, "子图谱")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1587,12 +1914,11 @@ pub async fn get_subgraph(
     tag = "knowledge_v53"
 )]
 pub async fn find_path(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<PathQuery>,
 ) -> Json<ApiResponse<Vec<KGEdge>>> {
-    ensure_initialized().await;
 
-    match KnowledgeGraphEngine::find_path(&params.start_id, &params.end_id).await {
+    match KnowledgeGraphEngine::find_path(&state.db, &params.start_id, &params.end_id).await {
         Ok(path) => Json(ApiResponse::success(path, "路径查找成功")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1612,13 +1938,12 @@ pub async fn find_path(
     tag = "knowledge_v53"
 )]
 pub async fn get_similar(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(node_id): Path<String>,
     Query(params): Query<SimilarQuery>,
 ) -> Json<ApiResponse<Vec<KGNode>>> {
-    ensure_initialized().await;
 
-    match KnowledgeGraphEngine::get_similar(&node_id, params.limit).await {
+    match KnowledgeGraphEngine::get_similar(&state.db, &node_id, params.limit).await {
         Ok(nodes) => Json(ApiResponse::success(nodes, "相似节点")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1635,13 +1960,12 @@ pub async fn get_similar(
     tag = "knowledge_v53"
 )]
 pub async fn export_kg(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ExportKGQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
 
     let format = params.format.unwrap_or_else(|| "json".to_string());
-    match KnowledgeGraphEngine::export_graph(&format).await {
+    match KnowledgeGraphEngine::export_graph(&state.db, &format).await {
         Ok(content) => {
             let content_type = match format.as_str() {
                 "dot" => "text/vnd.graphviz",
@@ -1676,13 +2000,12 @@ pub async fn export_kg(
     tag = "knowledge_v53"
 )]
 pub async fn get_recommendations(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(user_id): Path<String>,
     Query(params): Query<RecommendationQuery>,
 ) -> Json<ApiResponse<Vec<Recommendation>>> {
-    ensure_initialized().await;
 
-    match RecommendationEngine::get_recommendations(&user_id, params.target_id, params.limit).await
+    match RecommendationEngine::get_recommendations(&state.db, &user_id, params.target_id, params.limit).await
     {
         Ok(recs) => Json(ApiResponse::success(recs, "推荐结果")),
         Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
@@ -1700,16 +2023,22 @@ pub async fn get_recommendations(
     tag = "knowledge_v53"
 )]
 pub async fn record_interaction(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RecordInteractionRequest>,
 ) -> Json<ApiResponse<InteractionRecord>> {
-    ensure_initialized().await;
 
     let interaction_type = req.interaction_type.unwrap_or_else(|| "view".to_string());
-    let record =
-        RecommendationEngine::record_interaction(req.user_id, req.item_id, interaction_type).await;
-
-    Json(ApiResponse::success(record, "交互记录已保存"))
+    match RecommendationEngine::record_interaction(
+        &state.db,
+        req.user_id,
+        req.item_id,
+        interaction_type,
+    )
+    .await
+    {
+        Ok(record) => Json(ApiResponse::success(record, "交互记录已保存")),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+    }
 }
 
 #[utoipa::path(
@@ -1726,13 +2055,12 @@ pub async fn record_interaction(
     tag = "knowledge_v53"
 )]
 pub async fn get_similar_items(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(item_id): Path<String>,
     Query(params): Query<SimilarItemsQuery>,
 ) -> Json<ApiResponse<Vec<DataAsset>>> {
-    ensure_initialized().await;
 
-    match RecommendationEngine::get_similar_items(&item_id, params.limit).await {
+    match RecommendationEngine::get_similar_items(&state.db, &item_id, params.limit).await {
         Ok(items) => Json(ApiResponse::success(items, "相似资产")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1749,12 +2077,11 @@ pub async fn get_similar_items(
     tag = "knowledge_v53"
 )]
 pub async fn get_trending_items(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<TrendingQuery>,
 ) -> Json<ApiResponse<Vec<DataAsset>>> {
-    ensure_initialized().await;
 
-    let items = RecommendationEngine::get_trending_items(params.limit).await;
+    let items = RecommendationEngine::get_trending_items(&state.db, params.limit).await;
     Json(ApiResponse::success(items, "趋势资产"))
 }
 
@@ -1771,15 +2098,14 @@ pub async fn get_trending_items(
     tag = "knowledge_v53"
 )]
 pub async fn register_asset(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RegisterAssetRequest>,
 ) -> Json<ApiResponse<DataAsset>> {
-    ensure_initialized().await;
 
     let asset_type = asset_type_from_str(&req.asset_type);
     let tags = req.tags.unwrap_or_default();
 
-    match AssetCatalogManager::register_asset(
+    match AssetCatalogManager::register_asset(&state.db, 
         req.name,
         asset_type,
         req.description,
@@ -1805,10 +2131,9 @@ pub async fn register_asset(
     tag = "knowledge_v53"
 )]
 pub async fn search_assets(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SearchAssetsQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<DataAsset>>> {
-    ensure_initialized().await;
 
     let asset_type = params.asset_type.as_ref().map(|t| asset_type_from_str(t));
     let tags = params
@@ -1816,7 +2141,7 @@ pub async fn search_assets(
         .as_ref()
         .map(|t| t.split(',').map(|s| s.trim().to_string()).collect());
 
-    let (items, total) = AssetCatalogManager::search_assets(
+    let (items, total) = AssetCatalogManager::search_assets(&state.db, 
         params.q,
         asset_type,
         params.domain,
@@ -1855,12 +2180,11 @@ pub async fn search_assets(
     tag = "knowledge_v53"
 )]
 pub async fn get_asset(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<DataAsset>> {
-    ensure_initialized().await;
 
-    match AssetCatalogManager::get_asset(&id).await {
+    match AssetCatalogManager::get_asset(&state.db, &id).await {
         Ok(asset) => Json(ApiResponse::success(asset, "资产详情")),
         Err(e) => Json(ApiResponse::from(e)),
     }
@@ -1880,13 +2204,12 @@ pub async fn get_asset(
     tag = "knowledge_v53"
 )]
 pub async fn update_asset(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateAssetRequest>,
 ) -> Json<ApiResponse<DataAsset>> {
-    ensure_initialized().await;
 
-    match AssetCatalogManager::update_asset(
+    match AssetCatalogManager::update_asset(&state.db, 
         &id,
         req.name,
         req.description,
@@ -1912,11 +2235,10 @@ pub async fn update_asset(
     tag = "knowledge_v53"
 )]
 pub async fn list_categories(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<AssetCategory>>> {
-    ensure_initialized().await;
 
-    let categories = AssetCatalogManager::list_categories().await;
+    let categories = AssetCatalogManager::list_categories(&state.db, ).await;
     Json(ApiResponse::success(categories, "资产分类列表"))
 }
 
@@ -1930,10 +2252,9 @@ pub async fn list_categories(
     ),
     tag = "knowledge_v53"
 )]
-pub async fn get_asset_stats(State(_state): State<AppState>) -> Json<ApiResponse<AssetStats>> {
-    ensure_initialized().await;
+pub async fn get_asset_stats(State(state): State<AppState>) -> Json<ApiResponse<AssetStats>> {
 
-    let stats = AssetCatalogManager::get_asset_stats().await;
+    let stats = AssetCatalogManager::get_asset_stats(&state.db, ).await;
     Json(ApiResponse::success(stats, "资产统计"))
 }
 

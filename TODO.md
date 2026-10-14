@@ -1538,3 +1538,15 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 验证：cargo check master-data + build topems-server 零警告；迁移 20261014000060/20261015000061 已应用至 live DB（5432，psql fallback + _sqlx_migrations 登记 manual-via-migrate-sh）；monolith 8099 重启后 lineage 14 个接口全链路实测（register/graph/upstream/downstream 404/export/delete/impact analyze+report/simulate/scope/propagate/rules add+list/log/rollback）全绿，DB 侧确认 8 表落库；K1 核心 3 模块（v54/v55/v60）同库抽验通过（历史 60 迁移补应用）。
 - 遗留（K1 后续批次）：lineage 内存 store 基础设施（get_lineage_v52_store/persist_load/persist_save/ensure_initialized/background_flush）保留未清理，服务层已不写 store；其余 5 个冻结模块（knowledge_v53/disaster_v56/semantic_v57/governance_v58/ai_governance_v59）待同法接真表。
 - 注：本次首次发现并处置「权威库 topems 迁移链停留在 2026-08-10（_sqlx_migrations 32 条）」，K1 核心 3 模块迁移 20261014000060 此前未上权威库，本次一并补应用并登记。
+
+## K1 续｜knowledge_v53 接真表（2026-10-15，迁移 20261015000062）
+
+**已接通真表（master_data schema，迁移 20261015000062 建 8 表 + RLS + 回填）：**
+- `knowledge_v53` → `mdm_kg_nodes` / `mdm_kg_edges` / `mdm_kg_graphs`（图谱整体 JSONB 承载，add_node/add_edge 后 refresh_kg_graph 重算 upsert 'default' + version+1）/ `mdm_recommendations` / `mdm_interactions` / `mdm_assets` / `mdm_asset_categories` / `mdm_search_indexes`（search_index 为 (key, value[]) 扁平键值表，回填走 `CROSS JOIN LATERAL jsonb_each`）。
+- 回填（live DB 实测）：kg_nodes 6 / kg_edges 6 / assets 6 / categories 4 / search_index 21（kg_graphs 空、recommendations 12、interactions 0，符合快照现状；kg_graphs 由首次写后 refresh 生成 'default'）。
+- KnowledgeGraphEngine：add_node（INSERT + 图刷新）、add_edge（真表 EXISTS 校验两端点 → INSERT + 图刷新）、get_subgraph/find_path/get_similar（真表 fetch 全量后内存 BFS/余弦），export_graph（空图 404「没有可用的知识图谱」）。
+- RecommendationEngine：get_recommendations（真表读 assets+interactions，候选写真表 mdm_recommendations）、record_interaction（真表 INSERT，返回 Result<InteractionRecord>）、get_similar_items/get_popular_items/get_trending_items（真表 fetch 后内存排序）。
+- AssetCatalogManager：register_asset/update_asset（写 mdm_assets + 搜索索引同步 upsert mdm_search_indexes）、get_asset（按 id 查）、search_assets（真表全量过滤分页）、list_categories（真表读）、get_asset_stats（聚合真表）。
+- enum→TEXT 逆函数补齐：relation_type_to_str / node_type_to_str / asset_type_to_str / recommendation_source_to_str（与既有 from_str 互为逆；另补 recommendation_source_from_str）。
+- 验证：cargo check master-data + build topems-server 零警告零错误；迁移 20261015000062 已应用至 live DB 并登记 _sqlx_migrations；monolith 8099 重启（新二进制）后 knowledge 全链路实测：assets list/stats/search/register/get/update、categories、kg nodes register/add_edge（源不存在 400）/subgraph（7 节点 7 边）/path/similar/export dot、interactions、recommendations（冷启动 6 条 + 交互后 1 条）、trending 全绿；DB 侧确认 8 表落库（kg_nodes 7 / kg_edges 7 / kg_graphs version 3 / assets 7 / search_index 25 / recommendations 13 / interactions 1）。
+- 遗留（K1 后续批次）：knowledge 内存 store 基础设施（get_knowledge_v53_store/persist_load/persist_save/ensure_initialized/background_flush）保留未清理，服务层已不写 store；其余 4 个冻结模块（disaster_v56/semantic_v57/governance_v58/ai_governance_v59）待同法接真表。
