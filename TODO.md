@@ -1526,3 +1526,15 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - `lineage_v52` / `knowledge_v53` / `disaster_v56` / `semantic_v57` / `governance_v58` / `ai_governance_v59` 6 模块整体冻结，handler 仍为内存实现，未接真表。
 - versioning_v54 的分支/审计事件/权限/角色（branches/audit_events/permissions/roles 子集合）、commercial_v55 的计量计费/SLA、metadata_v60 的血缘/生命周期属性标签等子实体，随核心主表之后分批接真表。
 - quality_v51（已真表）与 schema_registry（真范本）不动。
+
+## K1 续｜lineage_v52 接真表（2026-10-15，迁移 20261015000061）
+
+**已接通真表（master_data schema，迁移 20261015000061 建 8 表 + RLS + 回填）：**
+- `lineage_v52` → `mdm_lineage_nodes` / `mdm_lineage_edges` / `mdm_lineage_graphs`（nodes/edges 以 JSONB 列承载，register/delete 后 refresh_graph 整体重算 + version+1）/ `mdm_impact_analyses` / `mdm_impact_simulations` / `mdm_change_events` / `mdm_propagation_rules` / `mdm_propagation_logs`。
+- LineageTracker：register（节点按 entity_type+entity_id 查复用/缺则 INSERT + 边 INSERT + 图刷新）、get_graph、get_upstream/get_downstream（fetch 全量真表后内存 BFS）、export_graph（空图 404「没有可用的血缘图谱」）、delete_node（EXISTS 守卫 → 删节点+关联边+图刷新）。
+- ImpactAnalyzer：analyze/simulate 结果 JSONB 写真表，get_report 按 id 读，get_affected_scope 真表读+BFS。
+- ChangePropagator：propagate（规则从真表读，事件+日志写真表）、get_rules/add_rule（Result 化）、get_log（source_entity_id 过滤）、rollback（状态检查 → UPDATE status/rollback_id）。
+- enum→TEXT 逆函数补齐：edge_type_to_str / change_type_to_str / propagation_action_to_str（与既有 from_str 互为逆）。
+- 验证：cargo check master-data + build topems-server 零警告；迁移 20261014000060/20261015000061 已应用至 live DB（5432，psql fallback + _sqlx_migrations 登记 manual-via-migrate-sh）；monolith 8099 重启后 lineage 14 个接口全链路实测（register/graph/upstream/downstream 404/export/delete/impact analyze+report/simulate/scope/propagate/rules add+list/log/rollback）全绿，DB 侧确认 8 表落库；K1 核心 3 模块（v54/v55/v60）同库抽验通过（历史 60 迁移补应用）。
+- 遗留（K1 后续批次）：lineage 内存 store 基础设施（get_lineage_v52_store/persist_load/persist_save/ensure_initialized/background_flush）保留未清理，服务层已不写 store；其余 5 个冻结模块（knowledge_v53/disaster_v56/semantic_v57/governance_v58/ai_governance_v59）待同法接真表。
+- 注：本次首次发现并处置「权威库 topems 迁移链停留在 2026-08-10（_sqlx_migrations 32 条）」，K1 核心 3 模块迁移 20261014000060 此前未上权威库，本次一并补应用并登记。

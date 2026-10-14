@@ -10,6 +10,7 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
+use sqlx::Row;
 use std::collections::{HashMap, HashSet};
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
@@ -19,6 +20,97 @@ use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
+
+// ==================== K1：真表映射（master_data.mdm_lineage_*） ====================
+
+fn node_from_row(row: &sqlx::postgres::PgRow) -> LineageNode {
+    LineageNode {
+        id: row.get::<String, _>("id"),
+        entity_type: row.get::<String, _>("entity_type"),
+        entity_id: row.get::<String, _>("entity_id"),
+        name: row.get::<String, _>("name"),
+        description: row.get::<Option<String>, _>("description"),
+        created_at: row.get::<String, _>("created_at"),
+    }
+}
+const NODE_COLS: &str = "id, entity_type, entity_id, name, description, created_at";
+
+fn edge_from_row(row: &sqlx::postgres::PgRow) -> LineageEdge {
+    LineageEdge {
+        id: row.get::<String, _>("id"),
+        from_node_id: row.get::<String, _>("from_node_id"),
+        to_node_id: row.get::<String, _>("to_node_id"),
+        edge_type: edge_type_from_str(&row.get::<String, _>("edge_type")),
+        transformation_description: row.get::<Option<String>, _>("transformation_description"),
+    }
+}
+const EDGE_COLS: &str =
+    "id, from_node_id, to_node_id, edge_type, transformation_description";
+
+fn graph_from_row(row: &sqlx::postgres::PgRow) -> LineageGraph {
+    LineageGraph {
+        nodes: serde_json::from_value(row.get::<serde_json::Value, _>("nodes"))
+            .unwrap_or_default(),
+        edges: serde_json::from_value(row.get::<serde_json::Value, _>("edges"))
+            .unwrap_or_default(),
+        version: row.get::<i64, _>("version"),
+        last_updated: row.get::<String, _>("last_updated"),
+    }
+}
+const GRAPH_COLS: &str = "id, nodes, edges, version, last_updated";
+
+fn analysis_from_row(row: &sqlx::postgres::PgRow) -> ImpactAnalysisResult {
+    serde_json::from_value(row.get::<serde_json::Value, _>("data"))
+        .unwrap_or_else(|_| panic!("impact analysis data 反序列化失败"))
+}
+const ANALYSIS_COLS: &str = "id, data";
+
+fn simulation_from_row(row: &sqlx::postgres::PgRow) -> ImpactSimulation {
+    serde_json::from_value(row.get::<serde_json::Value, _>("data"))
+        .unwrap_or_else(|_| panic!("impact simulation data 反序列化失败"))
+}
+const SIMULATION_COLS: &str = "id, data";
+
+fn event_from_row(row: &sqlx::postgres::PgRow) -> ChangeEvent {
+    ChangeEvent {
+        id: row.get::<String, _>("id"),
+        entity_type: row.get::<String, _>("entity_type"),
+        entity_id: row.get::<String, _>("entity_id"),
+        change_type: change_type_from_str(&row.get::<String, _>("change_type")),
+        old_value: row.get::<Option<serde_json::Value>, _>("old_value"),
+        new_value: row.get::<Option<serde_json::Value>, _>("new_value"),
+        triggered_at: row.get::<String, _>("triggered_at"),
+    }
+}
+const EVENT_COLS: &str =
+    "id, entity_type, entity_id, change_type, old_value, new_value, triggered_at";
+
+fn rule_from_row(row: &sqlx::postgres::PgRow) -> PropagationRule {
+    PropagationRule {
+        id: row.get::<String, _>("id"),
+        source_entity_type: row.get::<String, _>("source_entity_type"),
+        target_entity_type: row.get::<String, _>("target_entity_type"),
+        condition: row.get::<String, _>("condition"),
+        action: propagation_action_from_str(&row.get::<String, _>("action")),
+    }
+}
+const RULE_COLS: &str =
+    "id, source_entity_type, target_entity_type, condition, action";
+
+fn log_from_row(row: &sqlx::postgres::PgRow) -> PropagationLog {
+    PropagationLog {
+        id: row.get::<String, _>("id"),
+        change_event_id: row.get::<String, _>("change_event_id"),
+        rule_id: row.get::<String, _>("rule_id"),
+        source_entity_id: row.get::<String, _>("source_entity_id"),
+        target_entity_id: row.get::<String, _>("target_entity_id"),
+        action: propagation_action_from_str(&row.get::<String, _>("action")),
+        status: row.get::<String, _>("status"),
+        propagated_at: row.get::<String, _>("propagated_at"),
+        rollback_id: row.get::<Option<String>, _>("rollback_id"),
+    }
+}
+const LOG_COLS: &str = "id, change_event_id, rule_id, source_entity_id, target_entity_id, action, status, propagated_at, rollback_id";
 
 // ==================== 数据血缘 ====================
 
@@ -564,6 +656,7 @@ struct LineageTracker;
 
 impl LineageTracker {
     async fn register(
+        db: &sqlx::PgPool,
         from_entity_type: String,
         from_entity_id: String,
         to_entity_type: String,
@@ -571,48 +664,71 @@ impl LineageTracker {
         edge_type: EdgeType,
         transformation_description: Option<String>,
     ) -> Result<(LineageNode, LineageNode, LineageEdge), TopemsError> {
-        let store = get_lineage_v52_store();
-        let mut nodes = store.lineage_nodes.lock().await;
-        let mut edges = store.lineage_edges.lock().await;
-        let mut graphs = store.lineage_graphs.lock().await;
-
         let now = chrono::Utc::now().to_rfc3339();
 
-        let from_node = nodes
-            .iter()
-            .find(|n| n.entity_type == from_entity_type && n.entity_id == from_entity_id)
-            .cloned()
-            .unwrap_or_else(|| {
-                let id = uuid::Uuid::new_v4().to_string();
-                let node = LineageNode {
-                    id,
-                    entity_type: from_entity_type.clone(),
-                    entity_id: from_entity_id.clone(),
-                    name: format!("{}:{}", from_entity_type, from_entity_id),
-                    description: None,
-                    created_at: now.clone(),
-                };
-                nodes.push(node.clone());
-                node
-            });
+        // K1：真表权威——节点按 (entity_type, entity_id) 查复用，缺则 INSERT。
+        let from_node = sqlx::query(&format!(
+            "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
+             WHERE entity_type = $1 AND entity_id = $2 LIMIT 1"
+        ))
+        .bind(&from_entity_type)
+        .bind(&from_entity_id)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询上游节点失败: {e}")))?
+        .map(|r| node_from_row(&r))
+        .unwrap_or_else(|| {
+            let node = LineageNode {
+                id: uuid::Uuid::new_v4().to_string(),
+                entity_type: from_entity_type.clone(),
+                entity_id: from_entity_id.clone(),
+                name: format!("{}:{}", from_entity_type, from_entity_id),
+                description: None,
+                created_at: now.clone(),
+            };
+            node
+        });
 
-        let to_node = nodes
-            .iter()
-            .find(|n| n.entity_type == to_entity_type && n.entity_id == to_entity_id)
-            .cloned()
-            .unwrap_or_else(|| {
-                let id = uuid::Uuid::new_v4().to_string();
-                let node = LineageNode {
-                    id,
-                    entity_type: to_entity_type.clone(),
-                    entity_id: to_entity_id.clone(),
-                    name: format!("{}:{}", to_entity_type, to_entity_id),
-                    description: None,
-                    created_at: now.clone(),
-                };
-                nodes.push(node.clone());
-                node
-            });
+        let to_node = sqlx::query(&format!(
+            "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
+             WHERE entity_type = $1 AND entity_id = $2 LIMIT 1"
+        ))
+        .bind(&to_entity_type)
+        .bind(&to_entity_id)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询下游节点失败: {e}")))?
+        .map(|r| node_from_row(&r))
+        .unwrap_or_else(|| {
+            let node = LineageNode {
+                id: uuid::Uuid::new_v4().to_string(),
+                entity_type: to_entity_type.clone(),
+                entity_id: to_entity_id.clone(),
+                name: format!("{}:{}", to_entity_type, to_entity_id),
+                description: None,
+                created_at: now.clone(),
+            };
+            node
+        });
+
+        // 缺失节点落库。
+        for node in [&from_node, &to_node] {
+            sqlx::query(
+                r#"INSERT INTO master_data.mdm_lineage_nodes
+                   (id, entity_type, entity_id, name, description, created_at)
+                   VALUES ($1,$2,$3,$4,$5,$6)
+                   ON CONFLICT (id) DO NOTHING"#,
+            )
+            .bind(&node.id)
+            .bind(&node.entity_type)
+            .bind(&node.entity_id)
+            .bind(&node.name)
+            .bind(&node.description)
+            .bind(&node.created_at)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘节点失败: {e}")))?;
+        }
 
         let edge = LineageEdge {
             id: uuid::Uuid::new_v4().to_string(),
@@ -621,27 +737,36 @@ impl LineageTracker {
             edge_type,
             transformation_description,
         };
-        edges.push(edge.clone());
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_lineage_edges
+               (id, from_node_id, to_node_id, edge_type, transformation_description)
+               VALUES ($1,$2,$3,$4,$5)"#,
+        )
+        .bind(&edge.id)
+        .bind(&edge.from_node_id)
+        .bind(&edge.to_node_id)
+        .bind(edge_type_to_str(&edge.edge_type))
+        .bind(&edge.transformation_description)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入血缘边失败: {e}")))?;
 
-        if let Some(graph) = graphs.first_mut() {
-            graph.nodes = nodes.clone();
-            graph.edges = edges.clone();
-            graph.version += 1;
-            graph.last_updated = now;
-        }
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("lineage_v52", "lineage_nodes", &*nodes).await;
-        crate::modules::persist::save("lineage_v52", "lineage_edges", &*edges).await;
-        crate::modules::persist::save("lineage_v52", "lineage_graphs", &*graphs).await;
+        // 图谱整体重算（读全量节点/边 → upsert 默认图）。
+        refresh_graph(db).await?;
 
         Ok((from_node, to_node, edge))
     }
 
-    async fn get_graph() -> LineageGraph {
-        let store = get_lineage_v52_store();
-        let graphs = store.lineage_graphs.lock().await;
-        graphs.first().cloned().unwrap_or_else(|| LineageGraph {
+    async fn get_graph(db: &sqlx::PgPool) -> LineageGraph {
+        sqlx::query(&format!(
+            "SELECT {GRAPH_COLS} FROM master_data.mdm_lineage_graphs ORDER BY id LIMIT 1"
+        ))
+        .fetch_optional(db)
+        .await
+        .ok()
+        .flatten()
+        .map(|r| graph_from_row(&r))
+        .unwrap_or_else(|| LineageGraph {
             nodes: Vec::new(),
             edges: Vec::new(),
             version: 0,
@@ -649,10 +774,13 @@ impl LineageTracker {
         })
     }
 
-    async fn get_upstream(node_id: &str, depth: Option<i32>) -> Vec<LineageNode> {
-        let store = get_lineage_v52_store();
-        let nodes = store.lineage_nodes.lock().await;
-        let edges = store.lineage_edges.lock().await;
+    async fn get_upstream(
+        db: &sqlx::PgPool,
+        node_id: &str,
+        depth: Option<i32>,
+    ) -> Vec<LineageNode> {
+        let nodes = fetch_nodes(db).await;
+        let edges = fetch_edges(db).await;
 
         let max_depth = depth.unwrap_or(10);
         let mut visited = HashSet::new();
@@ -679,10 +807,13 @@ impl LineageTracker {
         result
     }
 
-    async fn get_downstream(node_id: &str, depth: Option<i32>) -> Vec<LineageNode> {
-        let store = get_lineage_v52_store();
-        let nodes = store.lineage_nodes.lock().await;
-        let edges = store.lineage_edges.lock().await;
+    async fn get_downstream(
+        db: &sqlx::PgPool,
+        node_id: &str,
+        depth: Option<i32>,
+    ) -> Vec<LineageNode> {
+        let nodes = fetch_nodes(db).await;
+        let edges = fetch_edges(db).await;
 
         let max_depth = depth.unwrap_or(10);
         let mut visited = HashSet::new();
@@ -709,10 +840,11 @@ impl LineageTracker {
         result
     }
 
-    async fn export_graph(format: &str) -> Result<String, TopemsError> {
-        let store = get_lineage_v52_store();
-        let graphs = store.lineage_graphs.lock().await;
-        let graph = graphs.first().cloned().ok_or("没有可用的血缘图谱")?;
+    async fn export_graph(db: &sqlx::PgPool, format: &str) -> Result<String, TopemsError> {
+        let graph = Self::get_graph(db).await;
+        if graph.nodes.is_empty() && graph.edges.is_empty() {
+            return Err(TopemsError::BusinessLogic("没有可用的血缘图谱".to_string()));
+        }
 
         match format {
             "dot" => {
@@ -747,33 +879,88 @@ impl LineageTracker {
         }
     }
 
-    async fn delete_node(node_id: &str) -> Result<(), TopemsError> {
-        let store = get_lineage_v52_store();
-        let mut nodes = store.lineage_nodes.lock().await;
-        let mut edges = store.lineage_edges.lock().await;
-        let mut graphs = store.lineage_graphs.lock().await;
-
-        let len_before = nodes.len();
-        nodes.retain(|n| n.id != node_id);
-        if nodes.len() == len_before {
+    async fn delete_node(db: &sqlx::PgPool, node_id: &str) -> Result<(), TopemsError> {
+        let exists = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS (SELECT 1 FROM master_data.mdm_lineage_nodes WHERE id = $1)",
+        )
+        .bind(node_id)
+        .fetch_one(db)
+        .await
+        .unwrap_or(false);
+        if !exists {
             return Err(TopemsError::BusinessLogic("未找到血缘节点".to_string()));
         }
 
-        edges.retain(|e| e.from_node_id != node_id && e.to_node_id != node_id);
+        sqlx::query("DELETE FROM master_data.mdm_lineage_nodes WHERE id = $1")
+            .bind(node_id)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("删除血缘节点失败: {e}")))?;
+        sqlx::query(
+            "DELETE FROM master_data.mdm_lineage_edges WHERE from_node_id = $1 OR to_node_id = $1",
+        )
+        .bind(node_id)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("删除血缘边失败: {e}")))?;
 
-        if let Some(graph) = graphs.first_mut() {
-            graph.nodes = nodes.clone();
-            graph.edges = edges.clone();
-            graph.version += 1;
-            graph.last_updated = chrono::Utc::now().to_rfc3339();
-        }
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）——后台 3s flush 仅作兜底。
-        crate::modules::persist::save("lineage_v52", "lineage_nodes", &*nodes).await;
-        crate::modules::persist::save("lineage_v52", "lineage_edges", &*edges).await;
-        crate::modules::persist::save("lineage_v52", "lineage_graphs", &*graphs).await;
+        refresh_graph(db).await?;
 
         Ok(())
+    }
+}
+
+// ==================== K1：图谱/节点/边 读取与重算助手 ====================
+
+async fn fetch_nodes(db: &sqlx::PgPool) -> Vec<LineageNode> {
+    sqlx::query(&format!("SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes"))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(node_from_row).collect())
+        .unwrap_or_default()
+}
+
+async fn fetch_edges(db: &sqlx::PgPool) -> Vec<LineageEdge> {
+    sqlx::query(&format!("SELECT {EDGE_COLS} FROM master_data.mdm_lineage_edges"))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(edge_from_row).collect())
+        .unwrap_or_default()
+}
+
+async fn refresh_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
+    let nodes = fetch_nodes(db).await;
+    let edges = fetch_edges(db).await;
+    let now = chrono::Utc::now().to_rfc3339();
+    let graph = LineageGraph {
+        nodes,
+        edges,
+        version: 0,
+        last_updated: now,
+    };
+    sqlx::query(
+        r#"INSERT INTO master_data.mdm_lineage_graphs (id, nodes, edges, version, last_updated)
+           VALUES ('default', $1, $2, 1, $3)
+           ON CONFLICT (id) DO UPDATE
+           SET nodes = EXCLUDED.nodes, edges = EXCLUDED.edges,
+               version = master_data.mdm_lineage_graphs.version + 1,
+               last_updated = EXCLUDED.last_updated"#,
+    )
+    .bind(serde_json::to_value(&graph.nodes).unwrap_or_default())
+    .bind(serde_json::to_value(&graph.edges).unwrap_or_default())
+    .bind(&graph.last_updated)
+    .execute(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("刷新血缘图谱失败: {e}")))?;
+    Ok(())
+}
+
+fn edge_type_to_str(e: &EdgeType) -> &'static str {
+    match e {
+        EdgeType::DerivesFrom => "derives_from",
+        EdgeType::Transforms => "transforms",
+        EdgeType::DependsOn => "depends_on",
+        EdgeType::Implements => "implements",
     }
 }
 
@@ -787,10 +974,12 @@ impl ImpactAnalyzer {
         clippy::cast_possible_truncation,
         clippy::cast_possible_wrap
     )]
-    async fn analyze(req: &ImpactAnalysisRequest) -> Result<ImpactAnalysisResult, TopemsError> {
-        let store = get_lineage_v52_store();
-        let nodes = store.lineage_nodes.lock().await;
-        let edges = store.lineage_edges.lock().await;
+    async fn analyze(
+        db: &sqlx::PgPool,
+        req: &ImpactAnalysisRequest,
+    ) -> Result<ImpactAnalysisResult, TopemsError> {
+        let nodes = fetch_nodes(db).await;
+        let edges = fetch_edges(db).await;
 
         let target_node = nodes
             .iter()
@@ -884,33 +1073,46 @@ impl ImpactAnalyzer {
             analyzed_at: chrono::Utc::now().to_rfc3339(),
         };
 
-        drop(nodes);
-        drop(edges);
-
-        let mut analyses = store.impact_analyses.lock().await;
-        analyses.push(result.clone());
+        // K1：结果写真表（JSONB 全量承载）。
+        let data = serde_json::to_value(&result)
+            .map_err(|e| TopemsError::BusinessLogic(format!("影响分析序列化失败: {e}")))?;
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_impact_analyses (id, data, analyzed_at)
+               VALUES ($1, $2, $3)"#,
+        )
+        .bind(&result.id)
+        .bind(&data)
+        .bind(&result.analyzed_at)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入影响分析失败: {e}")))?;
 
         Ok(result)
     }
 
-    async fn get_report(id: &str) -> Result<ImpactAnalysisResult, TopemsError> {
-        let store = get_lineage_v52_store();
-        let analyses = store.impact_analyses.lock().await;
-        analyses
-            .iter()
-            .find(|r| r.id == id)
-            .cloned()
-            .ok_or_else(|| TopemsError::ResourceNotFound("未找到影响分析报告".to_string()))
+    async fn get_report(
+        db: &sqlx::PgPool,
+        id: &str,
+    ) -> Result<ImpactAnalysisResult, TopemsError> {
+        sqlx::query(&format!(
+            "SELECT {ANALYSIS_COLS} FROM master_data.mdm_impact_analyses WHERE id = $1"
+        ))
+        .bind(id)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询影响分析失败: {e}")))?
+        .map(|r| analysis_from_row(&r))
+        .ok_or_else(|| TopemsError::ResourceNotFound("未找到影响分析报告".to_string()))
     }
 
     async fn simulate(
+        db: &sqlx::PgPool,
         entity_type: String,
         entity_id: String,
         change_type: ChangeType,
     ) -> Result<ImpactSimulation, TopemsError> {
-        let store = get_lineage_v52_store();
-        let nodes = store.lineage_nodes.lock().await;
-        let edges = store.lineage_edges.lock().await;
+        let nodes = fetch_nodes(db).await;
+        let edges = fetch_edges(db).await;
 
         let target = nodes
             .iter()
@@ -968,22 +1170,29 @@ impl ImpactAnalyzer {
             simulation_timestamp: chrono::Utc::now().to_rfc3339(),
         };
 
-        drop(nodes);
-        drop(edges);
-
-        let mut simulations = store.impact_simulations.lock().await;
-        simulations.push(simulation.clone());
+        let data = serde_json::to_value(&simulation)
+            .map_err(|e| TopemsError::BusinessLogic(format!("变更模拟序列化失败: {e}")))?;
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_impact_simulations (id, data, created_at)
+               VALUES ($1, $2, $3)"#,
+        )
+        .bind(&simulation.id)
+        .bind(&data)
+        .bind(&simulation.simulation_timestamp)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入变更模拟失败: {e}")))?;
 
         Ok(simulation)
     }
 
     async fn get_affected_scope(
+        db: &sqlx::PgPool,
         entity_type: String,
         entity_id: String,
     ) -> Result<serde_json::Value, TopemsError> {
-        let store = get_lineage_v52_store();
-        let nodes = store.lineage_nodes.lock().await;
-        let edges = store.lineage_edges.lock().await;
+        let nodes = fetch_nodes(db).await;
+        let edges = fetch_edges(db).await;
 
         let target = nodes
             .iter()
@@ -1037,14 +1246,13 @@ struct ChangePropagator;
 
 impl ChangePropagator {
     async fn propagate(
+        db: &sqlx::PgPool,
         entity_type: String,
         entity_id: String,
         change_type: ChangeType,
         old_value: Option<serde_json::Value>,
         new_value: Option<serde_json::Value>,
     ) -> Result<(ChangeEvent, Vec<PropagationLog>), TopemsError> {
-        let store = get_lineage_v52_store();
-
         let now = chrono::Utc::now().to_rfc3339();
 
         let event = ChangeEvent {
@@ -1057,16 +1265,19 @@ impl ChangePropagator {
             triggered_at: now.clone(),
         };
 
-        let rules = store.propagation_rules.lock().await;
-        let applicable_rules: Vec<PropagationRule> = rules
-            .iter()
-            .filter(|r| r.source_entity_type == entity_type)
-            .cloned()
-            .collect();
-        drop(rules);
+        // K1：规则从真表读取。
+        let rules: Vec<PropagationRule> = sqlx::query(&format!(
+            "SELECT {RULE_COLS} FROM master_data.mdm_propagation_rules
+             WHERE source_entity_type = $1"
+        ))
+        .bind(&entity_type)
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(rule_from_row).collect())
+        .unwrap_or_default();
 
         let mut logs = Vec::new();
-        for rule in &applicable_rules {
+        for rule in &rules {
             let log = PropagationLog {
                 id: uuid::Uuid::new_v4().to_string(),
                 change_event_id: event.id.clone(),
@@ -1081,35 +1292,60 @@ impl ChangePropagator {
             logs.push(log);
         }
 
-        let mut events = store.change_events.lock().await;
-        events.push(event.clone());
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("lineage_v52", "change_events", &*events).await;
-        drop(events);
+        // K1：事件 + 日志写真表。
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_change_events
+               (id, entity_type, entity_id, change_type, old_value, new_value, triggered_at)
+               VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+        )
+        .bind(&event.id)
+        .bind(&event.entity_type)
+        .bind(&event.entity_id)
+        .bind(change_type_to_str(&event.change_type))
+        .bind(&event.old_value)
+        .bind(&event.new_value)
+        .bind(&event.triggered_at)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入变更事件失败: {e}")))?;
 
-        let mut prop_logs = store.propagation_logs.lock().await;
-        prop_logs.extend(logs.clone());
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("lineage_v52", "propagation_logs", &*prop_logs).await;
+        for log in &logs {
+            sqlx::query(
+                r#"INSERT INTO master_data.mdm_propagation_logs
+                   (id, change_event_id, rule_id, source_entity_id, target_entity_id, action, status, propagated_at)
+                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+            )
+            .bind(&log.id)
+            .bind(&log.change_event_id)
+            .bind(&log.rule_id)
+            .bind(&log.source_entity_id)
+            .bind(&log.target_entity_id)
+            .bind(propagation_action_to_str(&log.action))
+            .bind(&log.status)
+            .bind(&log.propagated_at)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("写入传播日志失败: {e}")))?;
+        }
 
         Ok((event, logs))
     }
 
-    async fn get_rules() -> Vec<PropagationRule> {
-        let store = get_lineage_v52_store();
-        let rules = store.propagation_rules.lock().await;
-        rules.clone()
+    async fn get_rules(db: &sqlx::PgPool) -> Vec<PropagationRule> {
+        sqlx::query(&format!("SELECT {RULE_COLS} FROM master_data.mdm_propagation_rules"))
+            .fetch_all(db)
+            .await
+            .map(|rows| rows.iter().map(rule_from_row).collect())
+            .unwrap_or_default()
     }
 
     async fn add_rule(
+        db: &sqlx::PgPool,
         source_entity_type: String,
         target_entity_type: String,
         condition: String,
         action: PropagationAction,
-    ) -> PropagationRule {
-        let store = get_lineage_v52_store();
-        let mut rules = store.propagation_rules.lock().await;
-
+    ) -> Result<PropagationRule, TopemsError> {
         let rule = PropagationRule {
             id: uuid::Uuid::new_v4().to_string(),
             source_entity_type,
@@ -1117,56 +1353,97 @@ impl ChangePropagator {
             condition,
             action,
         };
-        rules.push(rule.clone());
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("lineage_v52", "propagation_rules", &*rules).await;
-        rule
+        sqlx::query(
+            r#"INSERT INTO master_data.mdm_propagation_rules
+               (id, source_entity_type, target_entity_type, condition, action)
+               VALUES ($1,$2,$3,$4,$5)"#,
+        )
+        .bind(&rule.id)
+        .bind(&rule.source_entity_type)
+        .bind(&rule.target_entity_type)
+        .bind(&rule.condition)
+        .bind(propagation_action_to_str(&rule.action))
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入传播规则失败: {e}")))?;
+        Ok(rule)
     }
 
     async fn get_log(
+        db: &sqlx::PgPool,
         entity_type: Option<String>,
         entity_id: Option<String>,
     ) -> Vec<PropagationLog> {
-        let store = get_lineage_v52_store();
-        let logs = store.propagation_logs.lock().await;
-
-        logs.iter()
-            .filter(|l| {
-                if let Some(eid) = &entity_id {
-                    if &l.source_entity_id != eid {
-                        return false;
-                    }
-                }
-                let _ = &entity_type;
-                true
-            })
-            .cloned()
-            .collect()
+        let mut sql = format!("SELECT {LOG_COLS} FROM master_data.mdm_propagation_logs");
+        let mut binds: Vec<String> = Vec::new();
+        let mut conds = Vec::new();
+        if let Some(eid) = &entity_id {
+            conds.push("source_entity_id = $1".to_string());
+            binds.push(eid.clone());
+        }
+        let _ = &entity_type;
+        if !conds.is_empty() {
+            sql.push_str(&format!(" WHERE {}", conds.join(" AND ")));
+        }
+        let mut q = sqlx::query(&sql);
+        for b in &binds {
+            q = q.bind(b);
+        }
+        q.fetch_all(db)
+            .await
+            .map(|rows| rows.iter().map(log_from_row).collect())
+            .unwrap_or_default()
     }
 
-    async fn rollback(propagation_id: &str) -> Result<PropagationLog, TopemsError> {
-        let store = get_lineage_v52_store();
-        let mut logs = store.propagation_logs.lock().await;
-
-        let log = logs
-            .iter_mut()
-            .find(|l| l.id == propagation_id)
-            .ok_or_else(|| "未找到传播记录".to_string())?;
-
+    async fn rollback(db: &sqlx::PgPool, propagation_id: &str) -> Result<PropagationLog, TopemsError> {
+        let existing = sqlx::query(&format!(
+            "SELECT {LOG_COLS} FROM master_data.mdm_propagation_logs WHERE id = $1"
+        ))
+        .bind(propagation_id)
+        .fetch_optional(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询传播记录失败: {e}")))?
+        .map(|r| log_from_row(&r));
+        let log = match existing {
+            Some(l) => l,
+            None => return Err(TopemsError::BusinessLogic("未找到传播记录".to_string())),
+        };
         if log.status == "rolled_back" {
             return Err(TopemsError::BusinessLogic("该记录已回滚".to_string()));
         }
+        let rollback_id = uuid::Uuid::new_v4().to_string();
+        sqlx::query(
+            "UPDATE master_data.mdm_propagation_logs SET status = 'rolled_back', rollback_id = $2 WHERE id = $1",
+        )
+        .bind(propagation_id)
+        .bind(&rollback_id)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("回滚传播记录失败: {e}")))?;
 
-        log.status = "rolled_back".to_string();
-        log.rollback_id = Some(uuid::Uuid::new_v4().to_string());
-        let rolled_back = log.clone();
-        // 结束可变借用（NLL 已自动结束），允许同步直写
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("lineage_v52", "propagation_logs", &*logs).await;
-
+        let mut rolled_back = log;
+        rolled_back.status = "rolled_back".to_string();
+        rolled_back.rollback_id = Some(rollback_id);
         Ok(rolled_back)
+    }
+}
+
+fn change_type_to_str(c: &ChangeType) -> &'static str {
+    match c {
+        ChangeType::Create => "create",
+        ChangeType::Update => "update",
+        ChangeType::Delete => "delete",
+        ChangeType::Rename => "rename",
+        ChangeType::Merge => "merge",
+    }
+}
+
+fn propagation_action_to_str(a: &PropagationAction) -> &'static str {
+    match a {
+        PropagationAction::CascadeUpdate => "cascade_update",
+        PropagationAction::SyncNotify => "sync_notify",
+        PropagationAction::Reject => "reject",
+        PropagationAction::Transform => "transform",
     }
 }
 
@@ -1267,14 +1544,13 @@ pub struct RollbackPropagationRequest {
     tag = "lineage_v52"
 )]
 pub async fn register_lineage(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RegisterLineageRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
 
     let edge_type = edge_type_from_str(&req.edge_type);
 
-    match LineageTracker::register(
+    match LineageTracker::register(&state.db, 
         req.from_entity_type,
         req.from_entity_id,
         req.to_entity_type,
@@ -1303,9 +1579,8 @@ pub async fn register_lineage(
     tag = "lineage_v52"
 )]
 
-pub async fn get_lineage_graph(State(_state): State<AppState>) -> Json<ApiResponse<LineageGraph>> {
-    ensure_initialized().await;
-    let graph = LineageTracker::get_graph().await;
+pub async fn get_lineage_graph(State(state): State<AppState>) -> Json<ApiResponse<LineageGraph>> {
+    let graph = LineageTracker::get_graph(&state.db).await;
     Json(ApiResponse::success(graph, "血缘图谱"))
 }
 #[utoipa::path(
@@ -1321,26 +1596,29 @@ pub async fn get_lineage_graph(State(_state): State<AppState>) -> Json<ApiRespon
 )]
 
 pub async fn get_upstream(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path((entity_type, id)): Path<(String, String)>,
     Query(params): Query<LineageQuery>,
 ) -> Json<ApiResponse<Vec<LineageNode>>> {
-    ensure_initialized().await;
-
-    let store = get_lineage_v52_store();
-    let nodes = store.lineage_nodes.lock().await;
-    let target = nodes
-        .iter()
-        .find(|n| n.entity_type == entity_type && n.entity_id == id)
-        .cloned();
-    drop(nodes);
+    // K1：目标节点从真表查询。
+    let target = sqlx::query(&format!(
+        "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
+         WHERE entity_type = $1 AND entity_id = $2 LIMIT 1"
+    ))
+    .bind(&entity_type)
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .ok()
+    .flatten()
+    .map(|r| node_from_row(&r));
 
     let target = match target {
         Some(t) => t,
         None => return Json(ApiResponse::error(404, "未找到实体")),
     };
 
-    let upstream = LineageTracker::get_upstream(&target.id, params.depth).await;
+    let upstream = LineageTracker::get_upstream(&state.db, &target.id, params.depth).await;
     Json(ApiResponse::success(upstream, "上游血缘节点"))
 }
 #[utoipa::path(
@@ -1356,26 +1634,29 @@ pub async fn get_upstream(
 )]
 
 pub async fn get_downstream(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path((entity_type, id)): Path<(String, String)>,
     Query(params): Query<LineageQuery>,
 ) -> Json<ApiResponse<Vec<LineageNode>>> {
-    ensure_initialized().await;
-
-    let store = get_lineage_v52_store();
-    let nodes = store.lineage_nodes.lock().await;
-    let target = nodes
-        .iter()
-        .find(|n| n.entity_type == entity_type && n.entity_id == id)
-        .cloned();
-    drop(nodes);
+    // K1：目标节点从真表查询。
+    let target = sqlx::query(&format!(
+        "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes
+         WHERE entity_type = $1 AND entity_id = $2 LIMIT 1"
+    ))
+    .bind(&entity_type)
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .ok()
+    .flatten()
+    .map(|r| node_from_row(&r));
 
     let target = match target {
         Some(t) => t,
         None => return Json(ApiResponse::error(404, "未找到实体")),
     };
 
-    let downstream = LineageTracker::get_downstream(&target.id, params.depth).await;
+    let downstream = LineageTracker::get_downstream(&state.db, &target.id, params.depth).await;
     Json(ApiResponse::success(downstream, "下游血缘节点"))
 }
 #[utoipa::path(
@@ -1387,13 +1668,12 @@ pub async fn get_downstream(
 )]
 
 pub async fn export_lineage(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ExportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
 
     let format = params.format.unwrap_or_else(|| "json".to_string());
-    match LineageTracker::export_graph(&format).await {
+    match LineageTracker::export_graph(&state.db, &format).await {
         Ok(content) => {
             let content_type = match format.as_str() {
                 "dot" => "text/vnd.graphviz",
@@ -1423,12 +1703,11 @@ pub async fn export_lineage(
     tag = "lineage_v52"
 )]
 pub async fn delete_lineage(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<DeleteLineageRequest>,
 ) -> Json<ApiResponse<()>> {
-    ensure_initialized().await;
 
-    match LineageTracker::delete_node(&req.node_id).await {
+    match LineageTracker::delete_node(&state.db, &req.node_id).await {
         Ok(()) => Json(ApiResponse::success_no_data("血缘节点已删除")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1447,10 +1726,9 @@ pub async fn delete_lineage(
     tag = "lineage_v52"
 )]
 pub async fn analyze_impact(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AnalyzeImpactRequest>,
 ) -> Json<ApiResponse<ImpactAnalysisResult>> {
-    ensure_initialized().await;
 
     let change_type = change_type_from_str(&req.change_type);
     let analysis_req = ImpactAnalysisRequest {
@@ -1460,7 +1738,7 @@ pub async fn analyze_impact(
         include_chain_reactions: req.include_chain_reactions,
     };
 
-    match ImpactAnalyzer::analyze(&analysis_req).await {
+    match ImpactAnalyzer::analyze(&state.db, &analysis_req).await {
         Ok(result) => Json(ApiResponse::success(result, "影响分析完成")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1480,12 +1758,11 @@ pub async fn analyze_impact(
     tag = "lineage_v52"
 )]
 pub async fn get_impact_report(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<ImpactAnalysisResult>> {
-    ensure_initialized().await;
 
-    match ImpactAnalyzer::get_report(&id).await {
+    match ImpactAnalyzer::get_report(&state.db, &id).await {
         Ok(report) => Json(ApiResponse::success(report, "影响分析报告")),
         Err(e) => Json(ApiResponse::from(e)),
     }
@@ -1502,13 +1779,12 @@ pub async fn get_impact_report(
     tag = "lineage_v52"
 )]
 pub async fn simulate_change(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<SimulateChangeRequest>,
 ) -> Json<ApiResponse<ImpactSimulation>> {
-    ensure_initialized().await;
 
     let change_type = change_type_from_str(&req.change_type);
-    match ImpactAnalyzer::simulate(req.entity_type, req.entity_id, change_type).await {
+    match ImpactAnalyzer::simulate(&state.db, req.entity_type, req.entity_id, change_type).await {
         Ok(simulation) => Json(ApiResponse::success(simulation, "变更模拟完成")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1525,12 +1801,11 @@ pub async fn simulate_change(
     tag = "lineage_v52"
 )]
 pub async fn get_affected_scope(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<AffectedScopeQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
 
-    match ImpactAnalyzer::get_affected_scope(params.entity_type, params.entity_id).await {
+    match ImpactAnalyzer::get_affected_scope(&state.db, params.entity_type, params.entity_id).await {
         Ok(scope) => Json(ApiResponse::success(scope, "受影响范围")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1549,13 +1824,12 @@ pub async fn get_affected_scope(
     tag = "lineage_v52"
 )]
 pub async fn propagate_change(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<PropagateChangeRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
 
     let change_type = change_type_from_str(&req.change_type);
-    match ChangePropagator::propagate(
+    match ChangePropagator::propagate(&state.db, 
         req.entity_type,
         req.entity_id,
         change_type,
@@ -1587,10 +1861,9 @@ pub async fn propagate_change(
     tag = "lineage_v52"
 )]
 pub async fn get_propagation_rules(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<PropagationRule>>> {
-    ensure_initialized().await;
-    let rules = ChangePropagator::get_rules().await;
+    let rules = ChangePropagator::get_rules(&state.db).await;
     Json(ApiResponse::success(rules, "传播规则列表"))
 }
 
@@ -1605,21 +1878,23 @@ pub async fn get_propagation_rules(
     tag = "lineage_v52"
 )]
 pub async fn add_propagation_rule(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AddPropagationRuleRequest>,
 ) -> Json<ApiResponse<PropagationRule>> {
-    ensure_initialized().await;
 
     let action = propagation_action_from_str(&req.action);
-    let rule = ChangePropagator::add_rule(
+    match ChangePropagator::add_rule(
+        &state.db,
         req.source_entity_type,
         req.target_entity_type,
         req.condition,
         action,
     )
-    .await;
-
-    Json(ApiResponse::success(rule, "传播规则已添加"))
+    .await
+    {
+        Ok(rule) => Json(ApiResponse::success(rule, "传播规则已添加")),
+        Err(e) => Json(ApiResponse::error(500, &e.classify().1)),
+    }
 }
 
 #[utoipa::path(
@@ -1639,12 +1914,11 @@ pub async fn add_propagation_rule(
     clippy::cast_sign_loss
 )]
 pub async fn get_propagation_log(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<PropagationLogQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<PropagationLog>>> {
-    ensure_initialized().await;
 
-    let logs = ChangePropagator::get_log(params.entity_type, params.entity_id).await;
+    let logs = ChangePropagator::get_log(&state.db, params.entity_type, params.entity_id).await;
 
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
@@ -1679,12 +1953,11 @@ pub async fn get_propagation_log(
     tag = "lineage_v52"
 )]
 pub async fn rollback_propagation(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RollbackPropagationRequest>,
 ) -> Json<ApiResponse<PropagationLog>> {
-    ensure_initialized().await;
 
-    match ChangePropagator::rollback(&req.propagation_id).await {
+    match ChangePropagator::rollback(&state.db, &req.propagation_id).await {
         Ok(log) => Json(ApiResponse::success(log, "传播已回滚")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
