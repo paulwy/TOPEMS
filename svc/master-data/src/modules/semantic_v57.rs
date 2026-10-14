@@ -8,11 +8,196 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
+use sqlx::Row;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
+
+// ==================== K1：handler 内 sqlx 错误统一出口 ====================
+
+macro_rules! db_exec {
+    ($e:expr) => {
+        match $e {
+            Ok(v) => v,
+            Err(e) => return Json(ApiResponse::error(500, &e.to_string())),
+        }
+    };
+}
+
+// ==================== K1：真表映射（master_data.mdm_* 8 表） ====================
+
+fn graph_node_from_row(row: &sqlx::postgres::PgRow) -> GraphNodeV57 {
+    GraphNodeV57 {
+        id: row.get::<String, _>("id"),
+        label: row.get::<String, _>("label"),
+        node_type: row.get::<String, _>("node_type"),
+        properties: row.get::<serde_json::Value, _>("properties"),
+        embeddings: serde_json::from_value(row.get::<serde_json::Value, _>("embeddings"))
+            .unwrap_or_default(),
+        degree: row.get::<i64, _>("degree"),
+        community_id: row.get::<Option<String>, _>("community_id"),
+    }
+}
+const GRAPH_NODE_COLS: &str = "id, label, node_type, properties, embeddings, degree, community_id";
+
+fn graph_edge_from_row(row: &sqlx::postgres::PgRow) -> GraphEdgeV57 {
+    GraphEdgeV57 {
+        source_id: row.get::<String, _>("source_id"),
+        target_id: row.get::<String, _>("target_id"),
+        relation_type: row.get::<String, _>("relation_type"),
+        weight: row.get::<f64, _>("weight"),
+        confidence: row.get::<f64, _>("confidence"),
+    }
+}
+const GRAPH_EDGE_COLS: &str = "source_id, target_id, relation_type, weight, confidence";
+
+fn graph_community_from_row(row: &sqlx::postgres::PgRow) -> GraphCommunity {
+    GraphCommunity {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        node_ids: serde_json::from_value(row.get::<serde_json::Value, _>("node_ids"))
+            .unwrap_or_default(),
+        algorithm: row.get::<String, _>("algorithm"),
+        modularity: row.get::<f64, _>("modularity"),
+    }
+}
+const GRAPH_COMMUNITY_COLS: &str = "id, name, node_ids, algorithm, modularity";
+
+fn search_index_from_row(row: &sqlx::postgres::PgRow) -> SearchIndex {
+    SearchIndex {
+        id: row.get::<String, _>("id"),
+        entity_type: row.get::<String, _>("entity_type"),
+        entity_id: row.get::<String, _>("entity_id"),
+        embeddings: serde_json::from_value(row.get::<serde_json::Value, _>("embeddings"))
+            .unwrap_or_default(),
+        text: row.get::<String, _>("text"),
+        metadata: row.get::<serde_json::Value, _>("metadata"),
+    }
+}
+const SEARCH_INDEX_COLS: &str = "id, entity_type, entity_id, embeddings, text, metadata";
+
+fn tag_from_row(row: &sqlx::postgres::PgRow) -> Tag {
+    Tag {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        category: row.get::<String, _>("category"),
+        color: row.get::<String, _>("color"),
+        description: row.get::<String, _>("description"),
+        usage_count: row.get::<i64, _>("usage_count"),
+    }
+}
+const TAG_COLS: &str = "id, name, category, color, description, usage_count";
+
+fn tag_rule_from_row(row: &sqlx::postgres::PgRow) -> TagRule {
+    TagRule {
+        id: row.get::<String, _>("id"),
+        tag_id: row.get::<String, _>("tag_id"),
+        condition: row.get::<serde_json::Value, _>("condition"),
+        auto_apply: row.get::<bool, _>("auto_apply"),
+        priority: row.get::<i32, _>("priority"),
+    }
+}
+const TAG_RULE_COLS: &str = "id, tag_id, condition, auto_apply, priority";
+
+fn tagged_entity_from_row(row: &sqlx::postgres::PgRow) -> TaggedEntity {
+    TaggedEntity {
+        entity_type: row.get::<String, _>("entity_type"),
+        entity_id: row.get::<String, _>("entity_id"),
+        tag_ids: serde_json::from_value(row.get::<serde_json::Value, _>("tag_ids"))
+            .unwrap_or_default(),
+        confidence: row.get::<f64, _>("confidence"),
+        applied_at: row.get::<String, _>("applied_at"),
+    }
+}
+const TAGGED_ENTITY_COLS: &str = "entity_type, entity_id, tag_ids, confidence, applied_at";
+
+async fn fetch_graph_nodes(db: &sqlx::PgPool) -> Result<Vec<GraphNodeV57>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {GRAPH_NODE_COLS} FROM master_data.mdm_graph_nodes ORDER BY id"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询图谱节点失败: {e}")))?;
+    Ok(rows.iter().map(graph_node_from_row).collect())
+}
+
+async fn fetch_graph_edges(db: &sqlx::PgPool) -> Result<Vec<GraphEdgeV57>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {GRAPH_EDGE_COLS} FROM master_data.mdm_graph_edges"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询图谱边失败: {e}")))?;
+    Ok(rows.iter().map(graph_edge_from_row).collect())
+}
+
+async fn fetch_graph_communities(db: &sqlx::PgPool) -> Result<Vec<GraphCommunity>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {GRAPH_COMMUNITY_COLS} FROM master_data.mdm_graph_communities ORDER BY id"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询社区失败: {e}")))?;
+    Ok(rows.iter().map(graph_community_from_row).collect())
+}
+
+async fn fetch_search_indexes(db: &sqlx::PgPool) -> Result<Vec<SearchIndex>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {SEARCH_INDEX_COLS} FROM master_data.mdm_semantic_search_indexes ORDER BY id"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询搜索索引失败: {e}")))?;
+    Ok(rows.iter().map(search_index_from_row).collect())
+}
+
+async fn fetch_tags(db: &sqlx::PgPool) -> Result<Vec<Tag>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {TAG_COLS} FROM master_data.mdm_tags ORDER BY id"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询标签失败: {e}")))?;
+    Ok(rows.iter().map(tag_from_row).collect())
+}
+
+async fn fetch_tag_rules(db: &sqlx::PgPool) -> Result<Vec<TagRule>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {TAG_RULE_COLS} FROM master_data.mdm_tag_rules ORDER BY id"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询标签规则失败: {e}")))?;
+    Ok(rows.iter().map(tag_rule_from_row).collect())
+}
+
+async fn fetch_tagged_entities(db: &sqlx::PgPool) -> Result<Vec<TaggedEntity>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {TAGGED_ENTITY_COLS} FROM master_data.mdm_tagged_entities"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询实体标签失败: {e}")))?;
+    Ok(rows.iter().map(tagged_entity_from_row).collect())
+}
+
+async fn fetch_graph_node_properties(db: &sqlx::PgPool, id: &str) -> serde_json::Value {
+    let row = sqlx::query("SELECT properties FROM master_data.mdm_graph_nodes WHERE id = $1")
+        .bind(id)
+        .fetch_optional(db)
+        .await
+        .ok()
+        .flatten();
+    match row {
+        Some(r) => r
+            .try_get::<serde_json::Value, _>("properties")
+            .unwrap_or_else(|_| serde_json::json!({})),
+        None => serde_json::json!({}),
+    }
+}
 
 // ==================== 图谱数据结构 ====================
 
@@ -55,49 +240,82 @@ struct EnhancedKnowledgeGraph {
 
 impl EnhancedKnowledgeGraph {
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn add_node(&self, mut node: GraphNodeV57) -> GraphNodeV57 {
-        let nodes = self.nodes.lock().await;
-        let degree = self
-            .edges
-            .lock()
-            .await
-            .iter()
-            .filter(|e| e.source_id == node.id || e.target_id == node.id)
-            .count() as i64;
+    async fn add_node(
+        &self,
+        db: &sqlx::PgPool,
+        mut node: GraphNodeV57,
+    ) -> Result<GraphNodeV57, TopemsError> {
+        let degree = sqlx::query(
+            "SELECT count(*)::bigint AS c FROM master_data.mdm_graph_edges WHERE source_id = $1 OR target_id = $1",
+        )
+        .bind(&node.id)
+        .fetch_one(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("计算节点度失败: {e}")))?
+        .get::<i64, _>("c");
         node.degree = degree;
-        drop(nodes);
-        let mut nodes = self.nodes.lock().await;
-        nodes.push(node.clone());
 
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("semantic_v57", "graph_nodes", &*nodes).await;
+        sqlx::query(&format!(
+            "INSERT INTO master_data.mdm_graph_nodes ({GRAPH_NODE_COLS})
+             VALUES ($1,$2,$3,$4,$5,$6,$7)
+             ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, node_type = EXCLUDED.node_type,
+               properties = EXCLUDED.properties, embeddings = EXCLUDED.embeddings,
+               degree = EXCLUDED.degree, community_id = EXCLUDED.community_id"
+        ))
+        .bind(&node.id)
+        .bind(&node.label)
+        .bind(&node.node_type)
+        .bind(serde_json::to_value(&node.properties).unwrap_or_default())
+        .bind(serde_json::to_value(&node.embeddings).unwrap_or_default())
+        .bind(node.degree)
+        .bind(&node.community_id)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入图谱节点失败: {e}")))?;
 
-        node
+        Ok(node)
     }
 
-    async fn add_edge(&self, edge: GraphEdgeV57) -> GraphEdgeV57 {
-        let mut edges = self.edges.lock().await;
-        edges.push(edge.clone());
-        {
-            let mut nodes = self.nodes.lock().await;
-            if let Some(n) = nodes.iter_mut().find(|n| n.id == edge.source_id) {
-                n.degree += 1;
-            }
-            if let Some(n) = nodes.iter_mut().find(|n| n.id == edge.target_id) {
-                n.degree += 1;
-            }
-        }
+    async fn add_edge(
+        &self,
+        db: &sqlx::PgPool,
+        edge: GraphEdgeV57,
+    ) -> Result<GraphEdgeV57, TopemsError> {
+        sqlx::query(
+            "INSERT INTO master_data.mdm_graph_edges (source_id, target_id, relation_type, weight, confidence)
+             VALUES ($1,$2,$3,$4,$5)
+             ON CONFLICT (source_id, target_id, relation_type) DO UPDATE SET
+               weight = EXCLUDED.weight, confidence = EXCLUDED.confidence",
+        )
+        .bind(&edge.source_id)
+        .bind(&edge.target_id)
+        .bind(&edge.relation_type)
+        .bind(edge.weight)
+        .bind(edge.confidence)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入图谱边失败: {e}")))?;
 
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("semantic_v57", "graph_edges", &*edges).await;
-        let nodes = self.nodes.lock().await;
-        crate::modules::persist::save("semantic_v57", "graph_nodes", &*nodes).await;
+        sqlx::query("UPDATE master_data.mdm_graph_nodes SET degree = degree + 1 WHERE id = $1")
+            .bind(&edge.source_id)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("更新节点度失败: {e}")))?;
+        sqlx::query("UPDATE master_data.mdm_graph_nodes SET degree = degree + 1 WHERE id = $1")
+            .bind(&edge.target_id)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("更新节点度失败: {e}")))?;
 
-        edge
+        Ok(edge)
     }
 
-    async fn get_neighbors(&self, node_id: &str) -> Vec<GraphNodeV57> {
-        let edges = self.edges.lock().await;
+    async fn get_neighbors(
+        &self,
+        db: &sqlx::PgPool,
+        node_id: &str,
+    ) -> Result<Vec<GraphNodeV57>, TopemsError> {
+        let edges = fetch_graph_edges(db).await?;
         let neighbor_ids: Vec<String> = edges
             .iter()
             .filter(|e| e.source_id == node_id || e.target_id == node_id)
@@ -109,28 +327,42 @@ impl EnhancedKnowledgeGraph {
                 }
             })
             .collect();
-        drop(edges);
 
-        let nodes = self.nodes.lock().await;
-        nodes
+        let nodes = fetch_graph_nodes(db).await?;
+        Ok(nodes
             .iter()
             .filter(|n| neighbor_ids.contains(&n.id))
             .cloned()
-            .collect()
+            .collect())
     }
 
-    async fn get_community(&self, node_id: &str) -> Option<GraphCommunity> {
-        let nodes = self.nodes.lock().await;
+    async fn get_community(
+        &self,
+        db: &sqlx::PgPool,
+        node_id: &str,
+    ) -> Result<Option<GraphCommunity>, TopemsError> {
+        let nodes = fetch_graph_nodes(db).await?;
         let node = nodes.iter().find(|n| n.id == node_id);
-        let community_id = node.and_then(|n| n.community_id.clone())?;
-        drop(nodes);
+        let Some(community_id) = node.and_then(|n| n.community_id.clone()) else {
+            return Ok(None);
+        };
 
-        let communities = self.communities.lock().await;
-        communities.iter().find(|c| c.id == community_id).cloned()
+        let communities = fetch_graph_communities(db).await?;
+        let matched = communities
+            .iter()
+            .find(|c| c.id == community_id)
+            .or_else(|| communities.iter().find(|c| c.id == format!("community_{community_id}")))
+            .cloned();
+        Ok(matched)
     }
 
-    async fn find_shortest_path(&self, from_id: &str, to_id: &str) -> Vec<String> {
-        let edges = self.edges.lock().await;
+    async fn find_shortest_path(
+        &self,
+        db: &sqlx::PgPool,
+        from_id: &str,
+        to_id: &str,
+    ) -> Result<Vec<String>, TopemsError> {
+        let edges = fetch_graph_edges(db).await?;
         let mut adjacency: std::collections::HashMap<String, Vec<String>> =
             std::collections::HashMap::new();
         for edge in edges.iter() {
@@ -143,7 +375,6 @@ impl EnhancedKnowledgeGraph {
                 .or_default()
                 .push(edge.source_id.clone());
         }
-        drop(edges);
 
         let mut queue = std::collections::VecDeque::new();
         let mut visited = std::collections::HashSet::new();
@@ -162,7 +393,7 @@ impl EnhancedKnowledgeGraph {
                     node = p.clone();
                 }
                 path.reverse();
-                return path;
+                return Ok(path);
             }
 
             if let Some(neighbors) = adjacency.get(&current) {
@@ -174,31 +405,37 @@ impl EnhancedKnowledgeGraph {
                 }
             }
         }
-        Vec::new()
+        Ok(Vec::new())
     }
 
-    async fn get_subgraph(&self, node_ids: &[String]) -> (Vec<GraphNodeV57>, Vec<GraphEdgeV57>) {
-        let nodes = self.nodes.lock().await;
+    async fn get_subgraph(
+        &self,
+        db: &sqlx::PgPool,
+        node_ids: &[String],
+    ) -> Result<(Vec<GraphNodeV57>, Vec<GraphEdgeV57>), TopemsError> {
+        let nodes = fetch_graph_nodes(db).await?;
         let sub_nodes: Vec<GraphNodeV57> = nodes
             .iter()
             .filter(|n| node_ids.contains(&n.id))
             .cloned()
             .collect();
-        drop(nodes);
 
-        let edges = self.edges.lock().await;
+        let edges = fetch_graph_edges(db).await?;
         let sub_edges: Vec<GraphEdgeV57> = edges
             .iter()
             .filter(|e| node_ids.contains(&e.source_id) && node_ids.contains(&e.target_id))
             .cloned()
             .collect();
-        (sub_nodes, sub_edges)
+        Ok((sub_nodes, sub_edges))
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn detect_communities(&self) -> Vec<GraphCommunity> {
-        let mut nodes = self.nodes.lock().await;
-        let edges = self.edges.lock().await;
+    async fn detect_communities(
+        &self,
+        db: &sqlx::PgPool,
+    ) -> Result<Vec<GraphCommunity>, TopemsError> {
+        let nodes = fetch_graph_nodes(db).await?;
+        let edges = fetch_graph_edges(db).await?;
 
         let mut node_community: std::collections::HashMap<String, String> =
             std::collections::HashMap::new();
@@ -236,13 +473,37 @@ impl EnhancedKnowledgeGraph {
             });
         }
 
-        for node in nodes.iter_mut() {
-            node.community_id = node_community.get(&node.id).cloned();
+        // 写社区表（UPSERT 幂等）
+        for community in &detected {
+            sqlx::query(
+                "INSERT INTO master_data.mdm_graph_communities (id, name, node_ids, algorithm, modularity)
+                 VALUES ($1,$2,$3,$4,$5)
+                 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, node_ids = EXCLUDED.node_ids,
+                   algorithm = EXCLUDED.algorithm, modularity = EXCLUDED.modularity",
+            )
+            .bind(&community.id)
+            .bind(&community.name)
+            .bind(serde_json::to_value(&community.node_ids).unwrap_or_default())
+            .bind(&community.algorithm)
+            .bind(community.modularity)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("写入社区失败: {e}")))?;
         }
 
-        drop(edges);
-        *self.communities.lock().await = detected.clone();
-        detected
+        // 回写节点 community_id（与社区表 id 的 community_ 前缀保持一致）
+        for node in &nodes {
+            if let Some(cid) = node_community.get(&node.id) {
+                sqlx::query("UPDATE master_data.mdm_graph_nodes SET community_id = $2 WHERE id = $1")
+                    .bind(&node.id)
+                    .bind(format!("community_{cid}"))
+                    .execute(db)
+                    .await
+                    .map_err(|e| TopemsError::BusinessLogic(format!("更新节点社区失败: {e}")))?;
+            }
+        }
+
+        Ok(detected)
     }
 }
 
@@ -276,11 +537,12 @@ struct SemanticSearchEngine {
 impl SemanticSearchEngine {
     async fn index_entity(
         &self,
+        db: &sqlx::PgPool,
         entity_type: String,
         entity_id: String,
         text: String,
         metadata: serde_json::Value,
-    ) -> SearchIndex {
+    ) -> Result<SearchIndex, TopemsError> {
         let embeddings = generate_simulated_embedding(&text, &entity_type);
         let index = SearchIndex {
             id: uuid::Uuid::new_v4().to_string(),
@@ -290,17 +552,31 @@ impl SemanticSearchEngine {
             text,
             metadata,
         };
-        self.indexes.lock().await.push(index.clone());
 
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        let indexes = self.indexes.lock().await;
-        crate::modules::persist::save("semantic_v57", "search_indexes", &*indexes).await;
+        sqlx::query(&format!(
+            "INSERT INTO master_data.mdm_semantic_search_indexes ({SEARCH_INDEX_COLS})
+             VALUES ($1,$2,$3,$4,$5,$6)"
+        ))
+        .bind(&index.id)
+        .bind(&index.entity_type)
+        .bind(&index.entity_id)
+        .bind(serde_json::to_value(&index.embeddings).unwrap_or_default())
+        .bind(&index.text)
+        .bind(&index.metadata)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入搜索索引失败: {e}")))?;
 
-        index
+        Ok(index)
     }
 
-    async fn search_semantic(&self, query_embeddings: &[f64], top_k: usize) -> Vec<SearchResult> {
-        let indexes = self.indexes.lock().await;
+    async fn search_semantic(
+        &self,
+        db: &sqlx::PgPool,
+        query_embeddings: &[f64],
+        top_k: usize,
+    ) -> Result<Vec<SearchResult>, TopemsError> {
+        let indexes = fetch_search_indexes(db).await?;
         let mut results: Vec<(SearchIndex, f64)> = indexes
             .iter()
             .map(|idx| {
@@ -313,7 +589,7 @@ impl SemanticSearchEngine {
         results.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         results.truncate(top_k);
 
-        results
+        Ok(results
             .into_iter()
             .map(|(idx, score)| SearchResult {
                 entity_type: idx.entity_type,
@@ -321,16 +597,21 @@ impl SemanticSearchEngine {
                 score,
                 highlights: vec![idx.text],
             })
-            .collect()
+            .collect())
     }
 
-    async fn search_hybrid(&self, query: &str, top_k: usize) -> Vec<SearchResult> {
+    async fn search_hybrid(
+        &self,
+        db: &sqlx::PgPool,
+        query: &str,
+        top_k: usize,
+    ) -> Result<Vec<SearchResult>, TopemsError> {
         let query_embeddings = generate_simulated_embedding(query, "search_query");
-        let semantic_results = self.search_semantic(&query_embeddings, top_k).await;
+        let semantic_results = self.search_semantic(db, &query_embeddings, top_k).await?;
 
         let keywords: Vec<&str> = query.split_whitespace().collect();
 
-        let indexes = self.indexes.lock().await;
+        let indexes = fetch_search_indexes(db).await?;
         let keyword_matches: Vec<SearchResult> = indexes
             .iter()
             .filter(|idx| {
@@ -346,7 +627,6 @@ impl SemanticSearchEngine {
                 highlights: vec![idx.text.clone()],
             })
             .collect();
-        drop(indexes);
 
         let mut merged = semantic_results;
         for km in keyword_matches {
@@ -361,21 +641,18 @@ impl SemanticSearchEngine {
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
         merged.truncate(top_k);
-        merged
+        Ok(merged)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn reindex_all(&self) -> i64 {
-        let indexes = self.indexes.lock().await;
-        let count = indexes.len() as i64;
-        drop(indexes);
-        count
+    async fn reindex_all(&self, db: &sqlx::PgPool) -> Result<i64, TopemsError> {
+        let indexes = fetch_search_indexes(db).await?;
+        Ok(indexes.len() as i64)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn get_search_stats(&self) -> serde_json::Value {
-        let indexes = self.indexes.lock().await;
-        let history = self.history.lock().await;
+    async fn get_search_stats(&self, db: &sqlx::PgPool) -> Result<serde_json::Value, TopemsError> {
+        let indexes = fetch_search_indexes(db).await?;
         let total = indexes.len() as i64;
         let entity_types: Vec<String> = indexes
             .iter()
@@ -383,30 +660,34 @@ impl SemanticSearchEngine {
             .collect::<std::collections::HashSet<_>>()
             .into_iter()
             .collect();
-        let queries_count = history.len() as i64;
+        let queries_count: i64 = sqlx::query(
+            "SELECT count(*)::bigint AS c FROM master_data.mdm_search_history",
+        )
+        .fetch_one(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("查询搜索历史失败: {e}")))?
+        .get::<i64, _>("c");
 
-        serde_json::json!({
+        Ok(serde_json::json!({
             "total_indexes": total,
             "entity_types": entity_types,
             "total_queries": queries_count,
-        })
+        }))
     }
 
-    async fn remove_from_index(&self, index_id: &str) -> bool {
-        let mut indexes = self.indexes.lock().await;
-        let before = indexes.len();
-        indexes.retain(|i| i.id != index_id);
-        let removed = indexes.len() < before;
-
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("semantic_v57", "search_indexes", &*indexes).await;
-
-        removed
+    async fn remove_from_index(&self, db: &sqlx::PgPool, index_id: &str) -> Result<bool, TopemsError> {
+        let res = sqlx::query("DELETE FROM master_data.mdm_semantic_search_indexes WHERE id = $1")
+            .bind(index_id)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("删除搜索索引失败: {e}")))?;
+        Ok(res.rows_affected() > 0)
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn get_index_size(&self) -> i64 {
-        self.indexes.lock().await.len() as i64
+    async fn get_index_size(&self, db: &sqlx::PgPool) -> Result<i64, TopemsError> {
+        let indexes = fetch_search_indexes(db).await?;
+        Ok(indexes.len() as i64)
     }
 }
 
@@ -449,66 +730,81 @@ struct SmartTagger {
 }
 
 impl SmartTagger {
-    async fn create_tag(&self, mut tag: Tag) -> Tag {
+    async fn create_tag(&self, db: &sqlx::PgPool, mut tag: Tag) -> Result<Tag, TopemsError> {
         tag.usage_count = 0;
-        let mut tags = self.tags.lock().await;
-        tags.push(tag.clone());
+        sqlx::query(&format!(
+            "INSERT INTO master_data.mdm_tags ({TAG_COLS}) VALUES ($1,$2,$3,$4,$5,$6)"
+        ))
+        .bind(&tag.id)
+        .bind(&tag.name)
+        .bind(&tag.category)
+        .bind(&tag.color)
+        .bind(&tag.description)
+        .bind(tag.usage_count)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入标签失败: {e}")))?;
 
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("semantic_v57", "tagger_tags", &*tags).await;
-
-        tag
+        Ok(tag)
     }
 
     async fn apply_tag(
         &self,
+        db: &sqlx::PgPool,
         entity_type: String,
         entity_id: String,
         tag_id: String,
-    ) -> TaggedEntity {
-        let mut tagged = self.tagged_entities.lock().await;
+    ) -> Result<TaggedEntity, TopemsError> {
         let now = chrono::Utc::now().to_rfc3339();
-
-        let result = if let Some(existing) = tagged
-            .iter_mut()
+        let tagged = fetch_tagged_entities(db).await?;
+        let mut tag_ids: Vec<String> = tagged
+            .iter()
             .find(|t| t.entity_type == entity_type && t.entity_id == entity_id)
-        {
-            if !existing.tag_ids.contains(&tag_id) {
-                existing.tag_ids.push(tag_id.clone());
-                existing.confidence = 1.0;
-                existing.applied_at = now;
-            }
-            existing.clone()
-        } else {
-            let new = TaggedEntity {
-                entity_type,
-                entity_id,
-                tag_ids: vec![tag_id],
-                confidence: 1.0,
-                applied_at: now,
-            };
-            tagged.push(new.clone());
-            new
-        };
+            .map(|t| t.tag_ids.clone())
+            .unwrap_or_default();
+        if !tag_ids.contains(&tag_id) {
+            tag_ids.push(tag_id.clone());
+        }
 
-        // B10: 写时同步直写（SIGKILL 不丢近写）。
-        crate::modules::persist::save("semantic_v57", "tagger_tagged_entities", &*tagged).await;
+        sqlx::query(
+            "INSERT INTO master_data.mdm_tagged_entities (entity_type, entity_id, tag_ids, confidence, applied_at)
+             VALUES ($1,$2,$3,$4,$5)
+             ON CONFLICT (entity_type, entity_id) DO UPDATE SET
+               tag_ids = EXCLUDED.tag_ids, confidence = EXCLUDED.confidence, applied_at = EXCLUDED.applied_at",
+        )
+        .bind(&entity_type)
+        .bind(&entity_id)
+        .bind(serde_json::to_value(&tag_ids).unwrap_or_default())
+        .bind(1.0)
+        .bind(&now)
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
 
-        result
+        sqlx::query("UPDATE master_data.mdm_tags SET usage_count = usage_count + 1 WHERE id = $1")
+            .bind(&tag_id)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("更新标签计数失败: {e}")))?;
+
+        Ok(TaggedEntity {
+            entity_type,
+            entity_id,
+            tag_ids,
+            confidence: 1.0,
+            applied_at: now,
+        })
     }
 
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    // （apply_tag 尾部统一落库，见函数末尾）
     async fn auto_tag(
         &self,
+        db: &sqlx::PgPool,
         entity_type: &str,
         entity_id: &str,
         data: &serde_json::Value,
-    ) -> Vec<String> {
-        let auto_rules: Vec<TagRule> = {
-            let rules = self.rules.lock().await;
-            rules.iter().filter(|r| r.auto_apply).cloned().collect()
-        };
+    ) -> Result<Vec<String>, TopemsError> {
+        let rules = fetch_tag_rules(db).await?;
+        let auto_rules: Vec<TagRule> = rules.iter().filter(|r| r.auto_apply).cloned().collect();
 
         let mut applied_tags: Vec<String> = Vec::new();
         for rule in &auto_rules {
@@ -518,92 +814,132 @@ impl SmartTagger {
         }
 
         if !applied_tags.is_empty() {
-            let mut tagged = self.tagged_entities.lock().await;
             let now = chrono::Utc::now().to_rfc3339();
-            if let Some(existing) = tagged
-                .iter_mut()
+            let tagged = fetch_tagged_entities(db).await?;
+            let mut tag_ids: Vec<String> = tagged
+                .iter()
                 .find(|t| t.entity_type == entity_type && t.entity_id == entity_id)
-            {
-                for tag_id in &applied_tags {
-                    if !existing.tag_ids.contains(tag_id) {
-                        existing.tag_ids.push(tag_id.clone());
-                    }
+                .map(|t| t.tag_ids.clone())
+                .unwrap_or_default();
+            for tag_id in &applied_tags {
+                if !tag_ids.contains(tag_id) {
+                    tag_ids.push(tag_id.clone());
                 }
-                existing.applied_at = now;
-                existing.confidence = 0.9;
-            } else {
-                tagged.push(TaggedEntity {
-                    entity_type: entity_type.to_string(),
-                    entity_id: entity_id.to_string(),
-                    tag_ids: applied_tags.clone(),
-                    confidence: 0.9,
-                    applied_at: now,
-                });
             }
 
-            // B10: 写时同步直写（SIGKILL 不丢近写）。
-            crate::modules::persist::save("semantic_v57", "tagger_tagged_entities", &*tagged).await;
+            sqlx::query(
+                "INSERT INTO master_data.mdm_tagged_entities (entity_type, entity_id, tag_ids, confidence, applied_at)
+                 VALUES ($1,$2,$3,$4,$5)
+                 ON CONFLICT (entity_type, entity_id) DO UPDATE SET
+                   tag_ids = EXCLUDED.tag_ids, confidence = EXCLUDED.confidence, applied_at = EXCLUDED.applied_at",
+            )
+            .bind(entity_type)
+            .bind(entity_id)
+            .bind(serde_json::to_value(&tag_ids).unwrap_or_default())
+            .bind(0.9)
+            .bind(&now)
+            .execute(db)
+            .await
+            .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
+
+            for tag_id in &applied_tags {
+                sqlx::query("UPDATE master_data.mdm_tags SET usage_count = usage_count + 1 WHERE id = $1")
+                    .bind(tag_id)
+                    .execute(db)
+                    .await
+                    .map_err(|e| TopemsError::BusinessLogic(format!("更新标签计数失败: {e}")))?;
+            }
         }
 
-        applied_tags
+        Ok(applied_tags)
     }
 
-    async fn get_tags_for_entity(&self, entity_type: &str, entity_id: &str) -> Vec<Tag> {
-        let tagged = self.tagged_entities.lock().await;
+    async fn get_tags_for_entity(
+        &self,
+        db: &sqlx::PgPool,
+        entity_type: &str,
+        entity_id: &str,
+    ) -> Result<Vec<Tag>, TopemsError> {
+        let tagged = fetch_tagged_entities(db).await?;
         let entity_tags: Vec<String> = tagged
             .iter()
             .filter(|t| t.entity_type == entity_type && t.entity_id == entity_id)
             .flat_map(|t| t.tag_ids.clone())
             .collect();
-        drop(tagged);
 
-        let tags = self.tags.lock().await;
-        tags.iter()
+        let tags = fetch_tags(db).await?;
+        Ok(tags
+            .iter()
             .filter(|t| entity_tags.contains(&t.id))
             .cloned()
-            .collect()
+            .collect())
     }
 
-    async fn get_entities_by_tag(&self, tag_id: &str) -> Vec<TaggedEntity> {
-        let tagged = self.tagged_entities.lock().await;
-        tagged
+    async fn get_entities_by_tag(
+        &self,
+        db: &sqlx::PgPool,
+        tag_id: &str,
+    ) -> Result<Vec<TaggedEntity>, TopemsError> {
+        let tagged = fetch_tagged_entities(db).await?;
+        Ok(tagged
             .iter()
             .filter(|t| t.tag_ids.contains(&tag_id.to_string()))
             .cloned()
-            .collect()
+            .collect())
     }
 
-    async fn remove_tag(&self, entity_type: &str, entity_id: &str, tag_id: &str) -> bool {
-        let mut tagged = self.tagged_entities.lock().await;
-        if let Some(entity) = tagged
-            .iter_mut()
+    async fn remove_tag(
+        &self,
+        db: &sqlx::PgPool,
+        entity_type: &str,
+        entity_id: &str,
+        tag_id: &str,
+    ) -> Result<bool, TopemsError> {
+        let tagged = fetch_tagged_entities(db).await?;
+        let Some(entity) = tagged
+            .iter()
             .find(|t| t.entity_type == entity_type && t.entity_id == entity_id)
-        {
-            let before = entity.tag_ids.len();
-            entity.tag_ids.retain(|t| t != tag_id);
-            let removed = entity.tag_ids.len() < before;
-
-            // B10: 写时同步直写（SIGKILL 不丢近写）。
-            crate::modules::persist::save("semantic_v57", "tagger_tagged_entities", &*tagged).await;
-
-            removed
-        } else {
-            false
+        else {
+            return Ok(false);
+        };
+        if !entity.tag_ids.contains(&tag_id.to_string()) {
+            return Ok(false);
         }
+        let new_tag_ids: Vec<String> = entity
+            .tag_ids
+            .iter()
+            .filter(|t| **t != tag_id)
+            .cloned()
+            .collect();
+
+        sqlx::query(
+            "UPDATE master_data.mdm_tagged_entities SET tag_ids = $3, confidence = $4, applied_at = $5
+             WHERE entity_type = $1 AND entity_id = $2",
+        )
+        .bind(entity_type)
+        .bind(entity_id)
+        .bind(serde_json::to_value(&new_tag_ids).unwrap_or_default())
+        .bind(entity.confidence)
+        .bind(chrono::Utc::now().to_rfc3339())
+        .execute(db)
+        .await
+        .map_err(|e| TopemsError::BusinessLogic(format!("移除实体标签失败: {e}")))?;
+
+        Ok(true)
     }
 
-    async fn list_tags(&self, category: Option<&str>) -> Vec<Tag> {
-        let tags = self.tags.lock().await;
-        match category {
+    async fn list_tags(&self, db: &sqlx::PgPool, category: Option<&str>) -> Result<Vec<Tag>, TopemsError> {
+        let tags = fetch_tags(db).await?;
+        Ok(match category {
             Some(cat) => tags.iter().filter(|t| t.category == cat).cloned().collect(),
-            None => tags.clone(),
-        }
+            None => tags,
+        })
     }
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn get_tag_stats(&self) -> serde_json::Value {
-        let tags = self.tags.lock().await;
-        let tagged = self.tagged_entities.lock().await;
+    async fn get_tag_stats(&self, db: &sqlx::PgPool) -> Result<serde_json::Value, TopemsError> {
+        let tags = fetch_tags(db).await?;
+        let tagged = fetch_tagged_entities(db).await?;
 
         let total_tags = tags.len() as i64;
         let total_entities = tagged.len() as i64;
@@ -620,18 +956,23 @@ impl SmartTagger {
             .map(|(k, v)| serde_json::json!({"category": k, "count": v}))
             .collect();
 
-        serde_json::json!({
+        Ok(serde_json::json!({
             "total_tags": total_tags,
             "total_entities_tagged": total_entities,
             "total_assignments": total_assignments,
             "categories": categories,
-        })
+        }))
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn suggest_tags(&self, entity_type: &str, data: &serde_json::Value) -> Vec<Tag> {
-        let tags = self.tags.lock().await;
-        let rules = self.rules.lock().await;
+    async fn suggest_tags(
+        &self,
+        db: &sqlx::PgPool,
+        entity_type: &str,
+        data: &serde_json::Value,
+    ) -> Result<Vec<Tag>, TopemsError> {
+        let tags = fetch_tags(db).await?;
+        let rules = fetch_tag_rules(db).await?;
 
         let mut scored_tags: Vec<(Tag, f64)> = Vec::new();
         for tag in tags.iter() {
@@ -653,7 +994,7 @@ impl SmartTagger {
 
         scored_tags.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
         scored_tags.truncate(5);
-        scored_tags.into_iter().map(|(tag, _)| tag).collect()
+        Ok(scored_tags.into_iter().map(|(tag, _)| tag).collect())
     }
 }
 
@@ -763,226 +1104,9 @@ mod simple_rand {
 
 // ==================== 初始化种子数据 ====================
 
+#[allow(dead_code)]
 async fn ensure_initialized() {
-    let store = get_v57_store();
-    let mut initialized = store.initialized.lock().await;
-    if *initialized {
-        return;
-    }
-
-    // U4：优先从库恢复既有快照；命中则跳过 demo seed 与社区检测。
-    if crate::modules::persist::enabled() && persist_load().await {
-        *initialized = true;
-        return;
-    }
-
-    let now = chrono::Utc::now().to_rfc3339();
-
-    // --- 图谱种子数据 ---
-    let node_types = [
-        ("customer", "客户主数据"),
-        ("product", "产品主数据"),
-        ("supplier", "供应商主数据"),
-        ("employee", "员工主数据"),
-    ];
-
-    let mut nodes = Vec::new();
-    for (i, (type_name, label_prefix)) in node_types.iter().enumerate() {
-        for j in 0..3 {
-            let id = format!("{}_{}_{}", type_name, i, j);
-            nodes.push(GraphNodeV57 {
-                id: id.clone(),
-                label: format!("{} #{}", label_prefix, j + 1),
-                node_type: type_name.to_string(),
-                properties: serde_json::json!({
-                    "created_at": now,
-                    "source": "seed",
-                }),
-                embeddings: generate_simulated_embedding(&id, type_name),
-                degree: 0,
-                community_id: None,
-            });
-        }
-    }
-
-    let mut edges = Vec::new();
-    for i in 0..nodes.len() {
-        for j in (i + 1)..nodes.len() {
-            if nodes[i].node_type == nodes[j].node_type {
-                edges.push(GraphEdgeV57 {
-                    source_id: nodes[i].id.clone(),
-                    target_id: nodes[j].id.clone(),
-                    relation_type: "related".to_string(),
-                    weight: 0.8,
-                    confidence: 0.9,
-                });
-            }
-        }
-    }
-
-    {
-        let mut graph_nodes = store.graph.nodes.lock().await;
-        *graph_nodes = nodes;
-    }
-    {
-        let mut graph_edges = store.graph.edges.lock().await;
-        *graph_edges = edges;
-    }
-
-    // --- 搜索索引种子数据 ---
-    let search_data = vec![
-        (
-            "customer",
-            "cust_001",
-            "北京科技有限公司",
-            serde_json::json!({"industry": "technology", "region": "north"}),
-        ),
-        (
-            "customer",
-            "cust_002",
-            "上海贸易集团",
-            serde_json::json!({"industry": "trade", "region": "east"}),
-        ),
-        (
-            "product",
-            "prod_001",
-            "企业管理软件标准版",
-            serde_json::json!({"category": "software", "version": "2.0"}),
-        ),
-        (
-            "product",
-            "prod_002",
-            "数据分析平台高级版",
-            serde_json::json!({"category": "software", "version": "3.0"}),
-        ),
-        (
-            "supplier",
-            "supp_001",
-            "云计算服务商",
-            serde_json::json!({"service": "cloud", "tier": "gold"}),
-        ),
-        (
-            "supplier",
-            "supp_002",
-            "硬件设备供应商",
-            serde_json::json!({"service": "hardware", "tier": "silver"}),
-        ),
-        (
-            "employee",
-            "emp_001",
-            "张三 - 数据分析师",
-            serde_json::json!({"role": "analyst", "dept": "data"}),
-        ),
-        (
-            "employee",
-            "emp_002",
-            "李四 - 架构师",
-            serde_json::json!({"role": "architect", "dept": "tech"}),
-        ),
-    ];
-
-    for (et, eid, text, meta) in search_data {
-        store
-            .search
-            .index_entity(et.to_string(), eid.to_string(), text.to_string(), meta)
-            .await;
-    }
-
-    // --- 标签种子数据 ---
-    let seed_tags = vec![
-        Tag {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "VIP客户".to_string(),
-            category: "customer".to_string(),
-            color: "#FFD700".to_string(),
-            description: "重要客户标记".to_string(),
-            usage_count: 0,
-        },
-        Tag {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "重点产品".to_string(),
-            category: "product".to_string(),
-            color: "#007BFF".to_string(),
-            description: "战略性产品".to_string(),
-            usage_count: 0,
-        },
-        Tag {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "优质供应商".to_string(),
-            category: "supplier".to_string(),
-            color: "#28A745".to_string(),
-            description: "评级A以上供应商".to_string(),
-            usage_count: 0,
-        },
-        Tag {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "技术骨干".to_string(),
-            category: "employee".to_string(),
-            color: "#6F42C1".to_string(),
-            description: "核心技术人员".to_string(),
-            usage_count: 0,
-        },
-        Tag {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "高价值".to_string(),
-            category: "general".to_string(),
-            color: "#DC3545".to_string(),
-            description: "高价值实体标记".to_string(),
-            usage_count: 0,
-        },
-    ];
-
-    for tag in seed_tags {
-        store.tagger.create_tag(tag).await;
-    }
-
-    // 标签规则种子数据
-    let rules_data = vec![
-        (
-            "tag_vip",
-            serde_json::json!({"field": "industry", "operator": "equals", "value": "technology"}),
-            true,
-            3,
-        ),
-        (
-            "tag_key",
-            serde_json::json!({"field": "category", "operator": "contains", "value": "software"}),
-            true,
-            2,
-        ),
-        (
-            "tag_quality",
-            serde_json::json!({"field": "tier", "operator": "equals", "value": "gold"}),
-            true,
-            3,
-        ),
-        (
-            "tag_tech",
-            serde_json::json!({"field": "role", "operator": "contains", "value": "architect"}),
-            true,
-            2,
-        ),
-    ];
-
-    for (tag_id, condition, auto_apply, priority) in rules_data {
-        store.tagger.rules.lock().await.push(TagRule {
-            id: uuid::Uuid::new_v4().to_string(),
-            tag_id: tag_id.to_string(),
-            condition,
-            auto_apply,
-            priority,
-        });
-    }
-
-    // 执行初始社区检测
-    store.graph.detect_communities().await;
-
-    // U4：首次 seed 后落库。
-    if crate::modules::persist::enabled() {
-        persist_save().await;
-    }
-
-    *initialized = true;
+    // K1 接真表后：demo seed / 快照加载由迁移 20261015000064 回填负责，handler 直读真表。
 }
 
 // ==================== U4 持久化 ====================
@@ -1200,9 +1324,9 @@ pub struct ListTagsQuery {
 }
 
 #[derive(Debug, Deserialize)]
-pub struct SuggestTagsRequest {
+pub struct SuggestQuery {
     pub entity_type: String,
-    pub data: serde_json::Value,
+    pub id: String,
 }
 
 // ==================== 处理器：图谱 ====================
@@ -1218,10 +1342,9 @@ pub struct SuggestTagsRequest {
     tag = "semantic_v57"
 )]
 pub async fn add_graph_node(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AddGraphNodeRequest>,
 ) -> Json<ApiResponse<GraphNodeV57>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
     let id = req.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
@@ -1237,7 +1360,7 @@ pub async fn add_graph_node(
         community_id: None,
     };
 
-    let result = store.graph.add_node(node).await;
+    let result = db_exec!(store.graph.add_node(&state.db, node).await);
     Json(ApiResponse::success(result, "图谱节点已创建"))
 }
 
@@ -1252,10 +1375,9 @@ pub async fn add_graph_node(
     tag = "semantic_v57"
 )]
 pub async fn add_graph_edge(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AddGraphEdgeRequest>,
 ) -> Json<ApiResponse<GraphEdgeV57>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
     let edge = GraphEdgeV57 {
@@ -1266,7 +1388,7 @@ pub async fn add_graph_edge(
         confidence: req.confidence.unwrap_or(1.0),
     };
 
-    let result = store.graph.add_edge(edge).await;
+    let result = db_exec!(store.graph.add_edge(&state.db, edge).await);
     Json(ApiResponse::success(result, "图谱边已创建"))
 }
 
@@ -1284,12 +1406,11 @@ pub async fn add_graph_edge(
     tag = "semantic_v57"
 )]
 pub async fn get_neighbors(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Vec<GraphNodeV57>>> {
-    ensure_initialized().await;
     let store = get_v57_store();
-    let neighbors = store.graph.get_neighbors(&id).await;
+    let neighbors = db_exec!(store.graph.get_neighbors(&state.db, &id).await);
     Json(ApiResponse::success(neighbors, "邻居节点列表"))
 }
 
@@ -1307,13 +1428,12 @@ pub async fn get_neighbors(
     tag = "semantic_v57"
 )]
 pub async fn get_community(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    match store.graph.get_community(&id).await {
+    match db_exec!(store.graph.get_community(&state.db, &id).await) {
         Some(community) => Json(ApiResponse::success(
             serde_json::json!(community),
             "社区信息",
@@ -1334,16 +1454,17 @@ pub async fn get_community(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn find_shortest_path_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<FindPathRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let path = store
-        .graph
-        .find_shortest_path(&req.from_id, &req.to_id)
-        .await;
+    let path = db_exec!(
+        store
+            .graph
+            .find_shortest_path(&state.db, &req.from_id, &req.to_id)
+            .await
+    );
 
     if path.is_empty() {
         return Json(ApiResponse::error(404, "未找到可达路径"));
@@ -1368,10 +1489,9 @@ pub async fn find_shortest_path_handler(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_subgraph(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SubgraphQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
     let node_ids: Vec<String> = params
@@ -1386,7 +1506,7 @@ pub async fn get_subgraph(
         return Json(ApiResponse::error(400, "请提供 node_ids 参数"));
     }
 
-    let (nodes, edges) = store.graph.get_subgraph(&node_ids).await;
+    let (nodes, edges) = db_exec!(store.graph.get_subgraph(&state.db, &node_ids).await);
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1410,12 +1530,11 @@ pub async fn get_subgraph(
     tag = "semantic_v57"
 )]
 pub async fn detect_communities_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<GraphCommunity>>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let communities = store.graph.detect_communities().await;
+    let communities = db_exec!(store.graph.detect_communities(&state.db).await);
     Json(ApiResponse::success(communities, "社区检测完成"))
 }
 
@@ -1432,17 +1551,18 @@ pub async fn detect_communities_handler(
     tag = "semantic_v57"
 )]
 pub async fn index_entity(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<IndexEntityRequest>,
 ) -> Json<ApiResponse<SearchIndex>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
     let metadata = req.metadata.unwrap_or_else(|| serde_json::json!({}));
-    let result = store
-        .search
-        .index_entity(req.entity_type, req.entity_id, req.text, metadata)
-        .await;
+    let result = db_exec!(
+        store
+            .search
+            .index_entity(&state.db, req.entity_type, req.entity_id, req.text, metadata)
+            .await
+    );
 
     Json(ApiResponse::success(result, "实体已索引"))
 }
@@ -1458,26 +1578,30 @@ pub async fn index_entity(
     tag = "semantic_v57"
 )]
 pub async fn search_semantic_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<SemanticSearchRequest>,
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
     let top_k = req.top_k.unwrap_or(10);
     let query_embeddings = generate_simulated_embedding(&req.query, "search_query");
-    let results = store.search.search_semantic(&query_embeddings, top_k).await;
+    let results = db_exec!(store.search.search_semantic(&state.db, &query_embeddings, top_k).await);
 
-    let mut history = store.search.history.lock().await;
-    history.push(serde_json::json!({
-        "query": req.query,
-        "type": "semantic",
-        "results_count": results.len(),
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-    }));
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("semantic_v57", "search_history", &*history).await;
+    // 写搜索历史真表
+    let history_id = uuid::Uuid::new_v4().to_string();
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_search_history (id, query, results_count, created_at)
+         VALUES ($1,$2,$3,$4)",
+    )
+    .bind(&history_id)
+    .bind(&req.query)
+    .bind(results.len() as i64)
+    .bind(chrono::Utc::now().to_rfc3339())
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(results, "语义搜索结果"))
 }
@@ -1493,25 +1617,29 @@ pub async fn search_semantic_handler(
     tag = "semantic_v57"
 )]
 pub async fn search_hybrid_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<HybridSearchRequest>,
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
     let top_k = req.top_k.unwrap_or(10);
-    let results = store.search.search_hybrid(&req.query, top_k).await;
+    let results = db_exec!(store.search.search_hybrid(&state.db, &req.query, top_k).await);
 
-    let mut history = store.search.history.lock().await;
-    history.push(serde_json::json!({
-        "query": req.query,
-        "type": "hybrid",
-        "results_count": results.len(),
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-    }));
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("semantic_v57", "search_history", &*history).await;
+    // 写搜索历史真表
+    let history_id = uuid::Uuid::new_v4().to_string();
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_search_history (id, query, results_count, created_at)
+         VALUES ($1,$2,$3,$4)",
+    )
+    .bind(&history_id)
+    .bind(&req.query)
+    .bind(results.len() as i64)
+    .bind(chrono::Utc::now().to_rfc3339())
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(results, "混合搜索结果"))
 }
@@ -1527,13 +1655,12 @@ pub async fn search_hybrid_handler(
     tag = "semantic_v57"
 )]
 pub async fn reindex_all(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(_req): Json<ReindexRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let count = store.search.reindex_all().await;
+    let count = db_exec!(store.search.reindex_all(&state.db).await);
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1555,11 +1682,10 @@ pub async fn reindex_all(
     tag = "semantic_v57"
 )]
 pub async fn get_search_stats(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
     let store = get_v57_store();
-    let stats = store.search.get_search_stats().await;
+    let stats = db_exec!(store.search.get_search_stats(&state.db).await);
     Json(ApiResponse::success(stats, "搜索统计"))
 }
 
@@ -1577,13 +1703,12 @@ pub async fn get_search_stats(
     tag = "semantic_v57"
 )]
 pub async fn remove_from_index(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let removed = store.search.remove_from_index(&id).await;
+    let removed = db_exec!(store.search.remove_from_index(&state.db, &id).await);
 
     if removed {
         Json(ApiResponse::success(
@@ -1608,10 +1733,9 @@ pub async fn remove_from_index(
     tag = "semantic_v57"
 )]
 pub async fn create_tag(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateTagRequest>,
 ) -> Json<ApiResponse<Tag>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
     let tag = Tag {
@@ -1623,7 +1747,7 @@ pub async fn create_tag(
         usage_count: 0,
     };
 
-    let result = store.tagger.create_tag(tag).await;
+    let result = db_exec!(store.tagger.create_tag(&state.db, tag).await);
     Json(ApiResponse::success(result, "标签已创建"))
 }
 
@@ -1638,16 +1762,17 @@ pub async fn create_tag(
     tag = "semantic_v57"
 )]
 pub async fn apply_tag(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<ApplyTagRequest>,
 ) -> Json<ApiResponse<TaggedEntity>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let result = store
-        .tagger
-        .apply_tag(req.entity_type, req.entity_id, req.tag_id)
-        .await;
+    let result = db_exec!(
+        store
+            .tagger
+            .apply_tag(&state.db, req.entity_type, req.entity_id, req.tag_id)
+            .await
+    );
 
     Json(ApiResponse::success(result, "标签已应用"))
 }
@@ -1664,16 +1789,17 @@ pub async fn apply_tag(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn auto_tag(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AutoTagRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let applied = store
-        .tagger
-        .auto_tag(&req.entity_type, &req.entity_id, &req.data)
-        .await;
+    let applied = db_exec!(
+        store
+            .tagger
+            .auto_tag(&state.db, &req.entity_type, &req.entity_id, &req.data)
+            .await
+    );
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1701,16 +1827,17 @@ pub async fn auto_tag(
     tag = "semantic_v57"
 )]
 pub async fn get_tags_for_entity(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<Tag>>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let tags = store
-        .tagger
-        .get_tags_for_entity(&entity_type, &entity_id)
-        .await;
+    let tags = db_exec!(
+        store
+            .tagger
+            .get_tags_for_entity(&state.db, &entity_type, &entity_id)
+            .await
+    );
     Json(ApiResponse::success(tags, "实体标签列表"))
 }
 
@@ -1728,13 +1855,12 @@ pub async fn get_tags_for_entity(
     tag = "semantic_v57"
 )]
 pub async fn get_entities_by_tag(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(tag): Path<String>,
 ) -> Json<ApiResponse<Vec<TaggedEntity>>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let entities = store.tagger.get_entities_by_tag(&tag).await;
+    let entities = db_exec!(store.tagger.get_entities_by_tag(&state.db, &tag).await);
     Json(ApiResponse::success(entities, "标签实体列表"))
 }
 
@@ -1752,16 +1878,17 @@ pub async fn get_entities_by_tag(
     tag = "semantic_v57"
 )]
 pub async fn remove_tag_handler(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RemoveTagRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let removed = store
-        .tagger
-        .remove_tag(&req.entity_type, &req.entity_id, &req.tag_id)
-        .await;
+    let removed = db_exec!(
+        store
+            .tagger
+            .remove_tag(&state.db, &req.entity_type, &req.entity_id, &req.tag_id)
+            .await
+    );
 
     if removed {
         Json(ApiResponse::success(
@@ -1789,20 +1916,18 @@ pub async fn remove_tag_handler(
     tag = "semantic_v57"
 )]
 pub async fn list_tags(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ListTagsQuery>,
 ) -> Json<ApiResponse<Vec<Tag>>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let tags = store.tagger.list_tags(params.category.as_deref()).await;
+    let tags = db_exec!(store.tagger.list_tags(&state.db, params.category.as_deref()).await);
     Json(ApiResponse::success(tags, "标签列表"))
 }
 
-pub async fn get_tag_stats(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
+pub async fn get_tag_stats(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let store = get_v57_store();
-    let stats = store.tagger.get_tag_stats().await;
+    let stats = db_exec!(store.tagger.get_tag_stats(&state.db).await);
     Json(ApiResponse::success(stats, "标签统计"))
 }
 
@@ -1817,12 +1942,12 @@ pub async fn get_tag_stats(State(_state): State<AppState>) -> Json<ApiResponse<s
     tag = "semantic_v57"
 )]
 pub async fn suggest_tags(
-    State(_state): State<AppState>,
-    Json(req): Json<SuggestTagsRequest>,
+    State(state): State<AppState>,
+    Query(params): Query<SuggestQuery>,
 ) -> Json<ApiResponse<Vec<Tag>>> {
-    ensure_initialized().await;
     let store = get_v57_store();
 
-    let tags = store.tagger.suggest_tags(&req.entity_type, &req.data).await;
+    let data = fetch_graph_node_properties(&state.db, &params.id).await;
+    let tags = db_exec!(store.tagger.suggest_tags(&state.db, &params.entity_type, &data).await);
     Json(ApiResponse::success(tags, "推荐标签"))
 }
