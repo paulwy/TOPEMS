@@ -29,7 +29,7 @@ impl MonitorRealModule {
             port_env_var: Some("MONITOR_PORT"),
             max_db_connections: 10,
             enable_events: false,
-            enable_rls: false,
+            enable_rls: true,
             enable_request_context: false,
             api_prefix: "/api/monitor",
             legacy_prefixes: &[],

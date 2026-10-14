@@ -42,7 +42,7 @@ impl AiRealModule {
             max_db_connections: 10,
             enable_events: true,
             enable_request_context: false,
-            enable_rls: false,
+            enable_rls: true,
             api_prefix: "/api/ai",
             legacy_prefixes: &[],
             init_telemetry: false,

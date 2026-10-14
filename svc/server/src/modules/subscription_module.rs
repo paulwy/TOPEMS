@@ -220,7 +220,7 @@ impl SubscriptionModule {
             port_env_var: Some("SUBSCRIPTION_PORT"),
             max_db_connections: 5,
             enable_events: false,
-            enable_rls: false,
+            enable_rls: true,
             enable_request_context: false,
             api_prefix: "/api/subscriptions",
             legacy_prefixes: &[],

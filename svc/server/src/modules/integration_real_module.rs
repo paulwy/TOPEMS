@@ -34,7 +34,7 @@ impl IntegrationRealModule {
             port_env_var: Some("INTEGRATION_PORT"),
             max_db_connections: 10,
             enable_events: false,
-            enable_rls: false,
+            enable_rls: true,
             enable_request_context: false,
             api_prefix: "/api/integration",
             legacy_prefixes: &[],
