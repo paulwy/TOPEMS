@@ -477,7 +477,7 @@ pub async fn print_barcode(
     };
 
     let row = sqlx::query(
-        "UPDATE qa_lims_sample_barcodes SET print_count = print_count + 1, last_printed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT"
+        "UPDATE qa_lims_sample_barcodes SET print_count = print_count + 1, last_printed_at = NOW(), updated_at = NOW() WHERE id = $1 RETURNING id, barcode, barcode_type, sample_id, sample_no, rfid_tag, print_count, status, generated_by, generated_at::TEXT, last_printed_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id"
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -631,7 +631,7 @@ pub async fn scan_barcode(
             id, barcode_id, barcode, scan_type, sample_id, sample_no,
             operator, location, notes, scanned_at, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10)
-        RETURNING id, barcode, scan_type, sample_id, sample_no, operator, location, notes, scanned_at::TEXT
+        RETURNING id, barcode, scan_type, sample_id, sample_no, operator, location, notes, scanned_at::TEXT, tenant_id
         "#
     )
     .bind(record_id)
@@ -792,10 +792,10 @@ pub async fn list_rfid_tags(
     let offset = (page - 1) * page_size;
 
     let sql = match (query.status.as_ref(), query.tag_id.as_ref()) {
-        (Some(_), Some(_)) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND status = $1 AND tag_id LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, Some(_)) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND tag_id LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_lims_rfid_tags ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        (Some(_), Some(_)) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND status = $1 AND tag_id LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (Some(_), None) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, Some(_)) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_rfid_tags WHERE deleted_at IS NULL AND tag_id LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+        (None, None) => "SELECT id, tag_id, tag_type, sample_id, sample_no, status, assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_rfid_tags ORDER BY created_at DESC LIMIT $1 OFFSET $2",
     };
 
     let mut query_builder = sqlx::query(sql);
@@ -860,7 +860,7 @@ pub async fn create_rfid_tag(
         INSERT INTO qa_lims_rfid_tags (tag_id, tag_type, status, tenant_id)
         VALUES ($1, $2, 'unused', $3)
         RETURNING id, tag_id, tag_type, sample_id, sample_no, status,
-                  assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT
+                  assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(&req.tag_id)
@@ -938,7 +938,7 @@ pub async fn assign_rfid_tag(
         SET sample_id = $2, sample_no = $3, status = 'assigned', assigned_at = NOW(), updated_at = NOW() 
         WHERE id = $1 
         RETURNING id, tag_id, tag_type, sample_id, sample_no, status,
-                  assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT
+                  assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id
         "#
     )
     .bind(tag_uuid)
@@ -999,7 +999,7 @@ pub async fn unassign_rfid_tag(
         SET sample_id = NULL, sample_no = NULL, status = 'unused', assigned_at = NULL, updated_at = NOW() 
         WHERE id = $1 
         RETURNING id, tag_id, tag_type, sample_id, sample_no, status,
-                  assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT
+                  assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id
         "#
     )
     .bind(tag_uuid)

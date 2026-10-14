@@ -111,7 +111,7 @@ pub async fn list_audit_logs(
         r#"
         SELECT id::TEXT, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+               status, error_message, ip_address, user_agent, created_at, tenant_id
         FROM qa_lims_audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)
@@ -217,7 +217,7 @@ pub async fn get_audit_log(
         r#"
         SELECT id::TEXT, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+               status, error_message, ip_address, user_agent, created_at, tenant_id
         FROM qa_lims_audit_logs WHERE id = $1
         "#,
     )
@@ -292,7 +292,7 @@ pub async fn export_audit_logs(
         r#"
         SELECT id::TEXT, action, entity_type, entity_id, entity_ids,
                user_id, user_name, request_details, response_details,
-               status, error_message, ip_address, user_agent, created_at
+               status, error_message, ip_address, user_agent, created_at, tenant_id
         FROM qa_lims_audit_logs
         WHERE ($1::text IS NULL OR action = $1)
           AND ($2::text IS NULL OR entity_type = $2)

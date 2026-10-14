@@ -67,7 +67,7 @@ pub async fn list_records(
                 Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
             };
             sqlx::query(
-                "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC LIMIT $2 OFFSET $3"
+                "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT, r.tenant_id FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC LIMIT $2 OFFSET $3"
             )
             .bind(tid)
             .bind(page_size)
@@ -76,7 +76,7 @@ pub async fn list_records(
             .await
         }
         None => sqlx::query(
-            "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL ORDER BY r.created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT, r.tenant_id FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL ORDER BY r.created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
@@ -126,7 +126,7 @@ pub async fn create_record(
     };
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at, tenant_id) VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id::TEXT, record_no, task_id::TEXT, test_data, conclusion, recorded_by, recorded_at::TEXT, created_at::TEXT"
+        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at, tenant_id) VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id::TEXT, record_no, task_id::TEXT, test_data, conclusion, recorded_by, recorded_at::TEXT, created_at::TEXT, tenant_id"
     )
     .bind(record_no)
     .bind(task_id)
@@ -180,7 +180,7 @@ pub async fn list_records_by_task(
     };
 
     let rows = sqlx::query(
-        "SELECT r.id, r.tenant_id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC"
+        "SELECT r.id, r.tenant_id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT, r.tenant_id FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.task_id = $1 ORDER BY r.created_at DESC"
     )
     .bind(task_id)
     .fetch_all(&state.pool)
@@ -234,7 +234,7 @@ pub async fn get_record(
     };
 
     let row = sqlx::query(
-        "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.id = $1"
+        "SELECT r.id, r.record_no, r.task_id, t.task_no, r.test_data, r.conclusion, r.recorded_by, r.recorded_at::TEXT, r.created_at::TEXT, r.tenant_id FROM qa_lab_records r LEFT JOIN public.qa_lab_tasks t ON r.task_id = t.id WHERE r.deleted_at IS NULL AND r.id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)

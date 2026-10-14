@@ -104,7 +104,7 @@ pub async fn trigger_collection(
         RETURNING id::TEXT, data_no, instrument_id::TEXT, batch_no, protocol,
                   raw_data, parsed_data, status, quality_score,
                   error_msg, collected_at::TEXT, parsed_at::TEXT,
-                  created_by, created_at::TEXT, updated_at::TEXT
+                  created_by, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(data_id)
@@ -190,7 +190,7 @@ pub async fn list_collection_tasks(
              t.collection_mode, t.cron_expression, t.interval_minutes, \
              t.parse_rule_id, t.status, t.last_run_at::TEXT, t.next_run_at::TEXT, \
              t.total_collections, t.success_count, t.failed_count, \
-             t.created_by, t.created_at::TEXT, t.updated_at::TEXT, \
+             t.created_by, t.created_at::TEXT, t.updated_at::TEXT, t.tenant_id, \
              i.instrument_no, CASE WHEN $4 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name \
              FROM qa_lims_collection_tasks t \
              LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id \
@@ -202,7 +202,7 @@ pub async fn list_collection_tasks(
              t.collection_mode, t.cron_expression, t.interval_minutes, \
              t.parse_rule_id, t.status, t.last_run_at::TEXT, t.next_run_at::TEXT, \
              t.total_collections, t.success_count, t.failed_count, \
-             t.created_by, t.created_at::TEXT, t.updated_at::TEXT, \
+             t.created_by, t.created_at::TEXT, t.updated_at::TEXT, t.tenant_id, \
              i.instrument_no, CASE WHEN $3 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name \
              FROM qa_lims_collection_tasks t \
              LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id \
@@ -291,7 +291,7 @@ pub async fn get_collection_task(
                t.collection_mode, t.cron_expression, t.interval_minutes,
                t.parse_rule_id, t.status, t.last_run_at::TEXT, t.next_run_at::TEXT,
                t.total_collections, t.success_count, t.failed_count,
-               t.created_by, t.created_at::TEXT, t.updated_at::TEXT,
+               t.created_by, t.created_at::TEXT, t.updated_at::TEXT, t.tenant_id,
                i.instrument_no, CASE WHEN $2 = 'en' THEN COALESCE(i.name_en, i.name) ELSE i.name END as instrument_name
         FROM qa_lims_collection_tasks t
         LEFT JOIN qa_lab_instruments i ON t.instrument_id = i.id
@@ -364,7 +364,7 @@ pub async fn create_collection_task(
                   collection_mode, cron_expression, interval_minutes,
                   parse_rule_id, status, last_run_at::TEXT, next_run_at::TEXT,
                   total_collections, success_count, failed_count,
-                  created_by, created_at::TEXT, updated_at::TEXT
+                  created_by, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(task_id)
@@ -438,7 +438,7 @@ pub async fn update_collection_task(
                   collection_mode, cron_expression, interval_minutes,
                   parse_rule_id, status, last_run_at::TEXT, next_run_at::TEXT,
                   total_collections, success_count, failed_count,
-                  created_by, created_at::TEXT, updated_at::TEXT
+                  created_by, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(id)
