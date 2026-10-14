@@ -22,6 +22,14 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/equipment", get(list_equipment).post(create_equipment))
@@ -326,6 +334,7 @@ pub async fn create_equipment(
     }
 
     let now = Utc::now();
+    let tenant_id = get_tenant_id(&claims);
     let equipment_no = req.equipment_no.unwrap_or_else(|| {
         format!(
             "EQ{}{:04}",
@@ -346,9 +355,9 @@ pub async fn create_equipment(
             equipment_code, equipment_name, model, manufacturer, status,
             location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
-            description, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11)
-        RETURNING 
+            description, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, 'normal', $5, $6, $7, $8, NULL, $9, $10, $11, $11, $12)
+        RETURNING
             id, equipment_code AS equipment_no, equipment_name AS name, model, manufacturer,
             status, location, purchase_date, warranty_expiry_date,
             maintenance_frequency_days, last_maintenance_date, next_maintenance_date,
@@ -366,6 +375,7 @@ pub async fn create_equipment(
     .bind(next_maintenance_date)
     .bind(&req.description)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -853,6 +863,7 @@ pub async fn create_maintenance(
     }
 
     let now = Utc::now();
+    let tenant_id = get_tenant_id(&claims);
     let start_time = match DateTime::parse_from_rfc3339(&req.start_time) {
         Ok(dt) => dt.with_timezone(&Utc),
         Err(_) => now,
@@ -867,9 +878,9 @@ pub async fn create_maintenance(
         r#"
         INSERT INTO equipment_maintenance_records (
             equipment_id, maintenance_type, description, maintainer,
-            start_time, end_time, cost, result, status, remarks, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
-        RETURNING 
+            start_time, end_time, cost, result, status, remarks, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12)
+        RETURNING
             id, equipment_id, maintenance_type, description, maintainer,
             start_time, end_time, cost, result, status, remarks, created_at, updated_at
         "#,
@@ -884,6 +895,7 @@ pub async fn create_maintenance(
         req.status.clone().unwrap_or_else(|| "pending".to_string()),
         req.remarks,
         now,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;

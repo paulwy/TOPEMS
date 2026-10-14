@@ -1,6 +1,7 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 #[derive(Debug, Serialize)]
@@ -174,6 +175,7 @@ pub async fn get_report(
 )]
 pub async fn generate_report(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<GenerateReportRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let sample_id = match Uuid::parse_str(&req.sample_id) {
@@ -239,8 +241,8 @@ pub async fn generate_report(
         r#"
         INSERT INTO public.qa_lab_inspection_reports (
             id, report_no, sample_id, sample_no, sample_name, inspection_date,
-            inspector, inspection_items, conclusion, remark, status, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', NOW())
+            inspector, inspection_items, conclusion, remark, status, created_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', NOW(), $11)
         RETURNING id, report_no, sample_id, sample_no, sample_name, inspection_date,
                   inspector, inspection_items, conclusion, remark, status, created_at
         "#,
@@ -255,6 +257,7 @@ pub async fn generate_report(
     .bind(&inspection_items)
     .bind(&conclusion)
     .bind(&req.remark)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

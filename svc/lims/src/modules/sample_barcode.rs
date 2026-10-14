@@ -1,10 +1,11 @@
 use axum::{
     extract::State,
     routing::{delete, get, post},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::shared::AppState;
@@ -589,6 +590,7 @@ pub async fn delete_barcode(
 )]
 pub async fn scan_barcode(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<BarcodeScanRequest>,
 ) -> Json<ApiResponse<BarcodeScanRecord>> {
     let valid_scan_types = ["receive", "transfer", "destroy", "check"];
@@ -627,8 +629,8 @@ pub async fn scan_barcode(
         r#"
         INSERT INTO qa_lims_barcode_scan_records (
             id, barcode_id, barcode, scan_type, sample_id, sample_no,
-            operator, location, notes, scanned_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
+            operator, location, notes, scanned_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10)
         RETURNING id, barcode, scan_type, sample_id, sample_no, operator, location, notes, scanned_at::TEXT
         "#
     )
@@ -641,6 +643,7 @@ pub async fn scan_barcode(
     .bind(&req.operator)
     .bind(&req.location)
     .bind(&req.notes)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -847,20 +850,22 @@ pub async fn list_rfid_tags(
 
 pub async fn create_rfid_tag(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateRfidTagRequest>,
 ) -> Json<ApiResponse<RfidTag>> {
     let tag_type = req.tag_type.unwrap_or_else(|| "uhf".to_string());
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_rfid_tags (tag_id, tag_type, status)
-        VALUES ($1, $2, 'unused')
+        INSERT INTO qa_lims_rfid_tags (tag_id, tag_type, status, tenant_id)
+        VALUES ($1, $2, 'unused', $3)
         RETURNING id, tag_id, tag_type, sample_id, sample_no, status,
                   assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT
         "#,
     )
     .bind(&req.tag_id)
     .bind(&tag_type)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

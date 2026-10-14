@@ -181,8 +181,8 @@ pub async fn create_bidding(
     let result = sqlx::query_as::<_, Bidding>(
         only_own_schema_query!("srm", r#"
         INSERT INTO srm.biddings (id, bidding_no, title, description, category, bidding_type, status,
-            budget_amount, currency, bid_deadline, open_date, items, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            budget_amount, currency, bid_deadline, open_date, items, remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, bidding_no, title, description, category, bidding_type, status, budget_amount, currency,
             publish_date, bid_deadline, open_date, winner_supplier_id, winner_supplier_name, winner_amount,
             supplier_count, creator, department, items, remarks, created_at, updated_at

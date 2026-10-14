@@ -225,13 +225,14 @@ pub async fn complete_step(
 
     // 1) 写入检验记录
     let insert_res = sqlx::query(
-        "INSERT INTO public.qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at) VALUES ($1, $2, $3, $4, $5, NOW())",
+        "INSERT INTO public.qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at, tenant_id) VALUES ($1, $2, $3, $4, $5, NOW(), $6)",
     )
     .bind(&record_no)
     .bind(task_uuid)
     .bind(&test_data)
     .bind(&req.conclusion)
     .bind(&req.inspector)
+    .bind(ctx.tenant_id)
     .execute(&state.pool)
     .await;
 

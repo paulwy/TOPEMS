@@ -17,6 +17,14 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -324,14 +332,15 @@ pub async fn create_work_station(
         .process_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query(
         r#"
         INSERT INTO work_stations (
             station_no, station_name, workshop_id, location, status,
             capacity, equipment_id, process_id, description,
-            created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $9, $9)
+            created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, $7, $8, $9, $9, $10)
         RETURNING
             id, station_no, station_name, workshop_id, location,
             status, capacity, equipment_id, process_id,
@@ -347,6 +356,7 @@ pub async fn create_work_station(
     .bind(process_id)
     .bind(&req.description)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 

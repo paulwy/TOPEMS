@@ -111,8 +111,8 @@ pub async fn create_expense(
         "finance",
         r#"INSERT INTO expenses (id, expense_number, applicant_name, department_id, expense_type,
                                   amount, description, expense_date, receipt_count, status,
-                                  created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11)
+                                  created_at, updated_at, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING id, expense_number, applicant_name, department_id, expense_type, amount,
                      description, expense_date, receipt_count, status, approver_id, approved_at,
                      reimbursed_at, created_at, updated_at"#
@@ -693,8 +693,8 @@ pub async fn create_receivable(
         "finance",
         r#"INSERT INTO receivables (id, invoice_number, customer_name, project_id, contract_id,
                                     project_name, amount, invoice_date, due_date, status,
-                                    received_amount, payment_schedule, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11)
+                                    received_amount, payment_schedule, created_at, updated_at, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING id, invoice_number, customer_name, project_id, contract_id, project_name,
                      amount, invoice_date, due_date, status, received_amount, payment_schedule,
                      created_at, updated_at"#
@@ -972,8 +972,8 @@ pub async fn create_payable(
         "finance",
         r#"INSERT INTO payables (id, invoice_number, supplier_name, project_id, contract_id,
                                  category, amount, invoice_date, due_date, status,
-                                 paid_amount, payment_schedule, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11)
+                                 paid_amount, payment_schedule, created_at, updated_at, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'unpaid', 0, NULL, $10, $11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING id, invoice_number, supplier_name, project_id, contract_id, category,
                      amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                      created_at, updated_at"#

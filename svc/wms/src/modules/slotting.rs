@@ -685,8 +685,8 @@ pub async fn create_zone(
     let row = match sqlx::query!(
         r#"
         INSERT INTO wms.slotting_zones
-            (warehouse_id, name, zone_type, location_ids, is_active)
-        VALUES ($1, $2, $3, $4, $5)
+            (warehouse_id, name, zone_type, location_ids, is_active, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING id, tenant_id, warehouse_id, name, zone_type, location_ids, is_active, created_at
         "#,
         warehouse_id,
@@ -694,6 +694,7 @@ pub async fn create_zone(
         zone_type,
         location_ids,
         is_active,
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
     )
     .fetch_one(&mut **txn)
     .await
@@ -838,8 +839,8 @@ pub async fn create_rule(
     let row = match sqlx::query!(
         r#"
         INSERT INTO wms.slotting_rules
-            (warehouse_id, rule_type, priority, conditions, actions, is_active)
-        VALUES ($1, $2, $3, $4, $5, $6)
+            (warehouse_id, rule_type, priority, conditions, actions, is_active, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, tenant_id, warehouse_id, rule_type, priority, conditions, actions, is_active, created_at
         "#,
         warehouse_id,
@@ -848,6 +849,7 @@ pub async fn create_rule(
         conditions,
         actions,
         is_active,
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
     )
     .fetch_one(&mut **txn)
     .await {

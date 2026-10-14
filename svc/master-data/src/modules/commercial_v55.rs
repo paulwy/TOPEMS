@@ -472,8 +472,8 @@ pub async fn create_api_product(
     // K1：写真表 master_data.mdm_api_products。
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_api_products
-           (id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           (id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&product.id)
     .bind(&product.name)

@@ -265,8 +265,8 @@ impl CashFlowPredictor {
 
         sqlx::query(
             only_own_schema_query!("finance", r#"INSERT INTO finance_cash_flow_predictions_v53
-                (id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                (id, entity_id, period, predicted_inflow, predicted_outflow, predicted_net, confidence, scenario, model_version, created_at, updated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             ON CONFLICT DO NOTHING"#),
         )
         .bind(prediction_id)
@@ -280,6 +280,7 @@ impl CashFlowPredictor {
         .bind(&model_version)
         .bind(now)
         .bind(now)
+        .bind(tenant_id)
         .execute(pool)
         .await?;
 
@@ -616,8 +617,8 @@ impl CashFlowPredictor {
 
         let record = sqlx::query_as::<_, PredictionModelRecord>(
             only_own_schema_query!("finance", r#"INSERT INTO finance_prediction_models_v53
-                (id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                (id, model_type, entity_id, parameters, accuracy, is_active, trained_at, created_at, updated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             ON CONFLICT (model_type) DO UPDATE
             SET accuracy = EXCLUDED.accuracy,
                 trained_at = EXCLUDED.trained_at,
@@ -637,6 +638,7 @@ impl CashFlowPredictor {
         .bind(now)
         .bind(now)
         .bind(now)
+        .bind(tenant_id)
         .fetch_one(pool)
         .await?;
 
@@ -784,7 +786,7 @@ pub struct VarianceTrendAnalysis {
 impl BudgetAnalyzer {
     pub async fn analyze(
         pool: &PgPool,
-        _tenant_id: Uuid,
+        tenant_id: Uuid,
         req: AnalyzeBudgetRequest,
     ) -> Result<VarianceAnalysisResult, sqlx::Error> {
         let now = Utc::now();
@@ -850,8 +852,8 @@ impl BudgetAnalyzer {
         for v in &variances {
             sqlx::query(
                 only_own_schema_query!("finance", r#"INSERT INTO finance_budget_variances_v53
-                    (id, budget_item_id, period, budget_amount, actual_amount, variance_amount, variance_percentage, classification, trend, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                    (id, budget_item_id, period, budget_amount, actual_amount, variance_amount, variance_percentage, classification, trend, created_at, updated_at, tenant_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 ON CONFLICT DO NOTHING"#),
             )
             .bind(v.id)
@@ -865,6 +867,7 @@ impl BudgetAnalyzer {
             .bind(&v.trend)
             .bind(v.created_at)
             .bind(v.updated_at)
+            .bind(tenant_id)
             .execute(pool)
             .await?;
         }

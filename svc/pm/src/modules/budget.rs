@@ -517,14 +517,16 @@ async fn get_budget_items(
 async fn create_budget_item(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateBudgetItemRequest>,
 ) -> Json<ApiResponse<BudgetItem>> {
     let item_id = Uuid::new_v4();
     let now = Utc::now();
 
     let item = sqlx::query_as::<_, BudgetItem>(
-        only_own_schema_query!("pm", "INSERT INTO pm.budget_items (id, budget_id, item_code, item_name, category, subcategory, budget_amount, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.budget_items (id, budget_id, item_code, item_name, category, subcategory, budget_amount, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *")
     )
     .bind(item_id)
     .bind(id)
@@ -535,6 +537,7 @@ async fn create_budget_item(
     .bind(req.budget_amount)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

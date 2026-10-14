@@ -572,6 +572,7 @@ pub async fn get_calibration_history(
 
 pub async fn create_calibration_record(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     headers: HeaderMap,
     Json(req): Json<CreateCalibrationRecordRequest>,
 ) -> Json<ApiResponse<CalibrationRecord>> {
@@ -609,8 +610,8 @@ pub async fn create_calibration_record(
         INSERT INTO qa_lab_calibration_records (
             id, instrument_id, instrument_no, instrument_name, calibrated_by,
             calibration_date, next_calibration_date, calibration_result,
-            parameters, notes, certificate_no, created_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())
+            parameters, notes, certificate_no, created_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), $12)
         RETURNING id::TEXT, instrument_id::TEXT, instrument_no, instrument_name, calibrated_by,
                   calibration_date::TEXT, next_calibration_date::TEXT, calibration_result,
                   parameters, notes, certificate_no, created_at::TEXT
@@ -627,6 +628,7 @@ pub async fn create_calibration_record(
     .bind(&req.parameters)
     .bind(&req.notes)
     .bind(&req.certificate_no)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

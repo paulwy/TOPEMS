@@ -13,6 +13,14 @@ use topems_shared_core::response::ApiResponse;
 
 use super::big_decimal_to_f64;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListStandardsQuery {
     page: Option<i32>,
@@ -439,13 +447,14 @@ pub async fn create_standard(
                     .and_then(|d| d.and_hms_opt(0, 0, 0))
             })
     });
+    let tenant_id = get_tenant_id(&claims);
     let standard_result = sqlx::query_unchecked!(
         r#"
         INSERT INTO quality_standards (
             code, name, product_code, product_name, inspection_type,
-            status, version, effective_date, description
+            status, version, effective_date, description, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING
             id, code, name, product_code, product_name,
             inspection_type, status, version,
@@ -461,6 +470,7 @@ pub async fn create_standard(
         body.version,
         effective_date,
         body.description,
+        tenant_id,
     )
     .fetch_one(&mut *tx)
     .await;
@@ -489,9 +499,9 @@ pub async fn create_standard(
                 r#"
                 INSERT INTO quality_standard_values (
                     standard_id, item_name, lower_limit, upper_limit,
-                    unit, inspection_method, remark
+                    unit, inspection_method, remark, tenant_id
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING id, standard_id, item_name, lower_limit, upper_limit,
                     unit, inspection_method, remark
                 "#,
@@ -502,6 +512,7 @@ pub async fn create_standard(
                 v.unit,
                 v.inspection_method,
                 v.remark,
+                tenant_id,
             )
             .fetch_one(&mut *tx)
             .await;
@@ -571,6 +582,7 @@ pub async fn update_standard(
             return Json(ApiResponse::error(400, "无效的质量标准ID"));
         }
     };
+    let tenant_id = get_tenant_id(&claims);
 
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,
@@ -658,9 +670,9 @@ pub async fn update_standard(
                 r#"
                 INSERT INTO quality_standard_values (
                     standard_id, item_name, lower_limit, upper_limit,
-                    unit, inspection_method, remark
+                    unit, inspection_method, remark, tenant_id
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                 RETURNING id, standard_id, item_name, lower_limit, upper_limit,
                     unit, inspection_method, remark
                 "#,
@@ -671,6 +683,7 @@ pub async fn update_standard(
                 v.unit,
                 v.inspection_method,
                 v.remark,
+                tenant_id,
             )
             .fetch_one(&mut *tx)
             .await;

@@ -92,8 +92,9 @@ async fn log_audit_entry(state: &AppState, audit_log: &Value) -> Result<(), sqlx
             status,
             ip_address,
             user_agent,
-            created_at
-        ) VALUES ($1, 'access', 'http_request', $2, $3, $4, $5, $6, $7, $8)
+            created_at,
+            tenant_id
+        ) VALUES ($1, 'access', 'http_request', $2, $3, $4, $5, $6, $7, $8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
     "#;
 
     let request_details = json!({

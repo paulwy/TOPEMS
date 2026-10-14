@@ -624,8 +624,8 @@ pub async fn create_snapshot(
     // 写真表（权威存储）。
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_version_snapshots
-           (id, entity_type, entity_id, version, data, hash, created_by, created_at, comment)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+           (id, entity_type, entity_id, version, data, hash, created_by, created_at, comment, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&snapshot.id)
     .bind(&snapshot.entity_type)
@@ -644,8 +644,8 @@ pub async fn create_snapshot(
 
     // 审计事件写真表（权威存储）。
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_audit_events (id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
+        "INSERT INTO master_data.mdm_audit_events (id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id, tenant_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&snapshot.id)
     .bind("create")
@@ -824,8 +824,8 @@ pub async fn restore_version(
 
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_version_snapshots
-           (id, entity_type, entity_id, version, data, hash, created_by, created_at, comment)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+           (id, entity_type, entity_id, version, data, hash, created_by, created_at, comment, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&restored.id)
     .bind(&restored.entity_type)
@@ -844,8 +844,8 @@ pub async fn restore_version(
 
     // 审计事件写真表（权威存储）。
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_audit_events (id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
+        "INSERT INTO master_data.mdm_audit_events (id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id, tenant_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&restored.id)
     .bind("update")
@@ -966,8 +966,8 @@ pub async fn create_branch(
     };
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_version_branches (id, name, branch_type, parent_branch, created_at, created_by, merged_at, merged_by, status)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+        "INSERT INTO master_data.mdm_version_branches (id, name, branch_type, parent_branch, created_at, created_by, merged_at, merged_by, status, tenant_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&branch.id)
     .bind(&branch.name)
@@ -1273,8 +1273,8 @@ pub async fn export_audit_log(
     let export_id = uuid::Uuid::new_v4().to_string();
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_audit_export_logs (id, user_id, export_type, record_count, exported_at, ip_address)
-         VALUES ($1,$2,$3,$4,$5,$6)",
+        "INSERT INTO master_data.mdm_audit_export_logs (id, user_id, export_type, record_count, exported_at, ip_address, tenant_id)
+         VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&export_id)
     .bind("current_user")
@@ -1394,8 +1394,8 @@ pub async fn grant_permission(
     };
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_data_permissions (id, role_id, resource_type, resource_id, action, condition, inherited)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)",
+        "INSERT INTO master_data.mdm_data_permissions (id, role_id, resource_type, resource_id, action, condition, inherited, tenant_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&perm.id)
     .bind(&perm.role_id)
@@ -1668,8 +1668,8 @@ pub async fn create_role(
     };
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_permission_roles (id, name, description, inherited_from, created_at)
-         VALUES ($1,$2,$3,$4,$5)",
+        "INSERT INTO master_data.mdm_permission_roles (id, name, description, inherited_from, created_at, tenant_id)
+         VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&role.id)
     .bind(&role.name)
@@ -1709,8 +1709,8 @@ pub async fn assign_role(
     };
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_user_role_assignments (id, user_id, role_id, assigned_at)
-         VALUES ($1,$2,$3,$4)",
+        "INSERT INTO master_data.mdm_user_role_assignments (id, user_id, role_id, assigned_at, tenant_id)
+         VALUES ($1,$2,$3,$4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&assignment.id)
     .bind(&assignment.user_id)

@@ -419,8 +419,8 @@ impl LineageTracker {
         for node in [&from_node, &to_node] {
             sqlx::query(
                 r#"INSERT INTO master_data.mdm_lineage_nodes
-                   (id, entity_type, entity_id, name, description, created_at)
-                   VALUES ($1,$2,$3,$4,$5,$6)
+                   (id, entity_type, entity_id, name, description, created_at, tenant_id)
+                   VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                    ON CONFLICT (id) DO NOTHING"#,
             )
             .bind(&node.id)
@@ -443,8 +443,8 @@ impl LineageTracker {
         };
         sqlx::query(
             r#"INSERT INTO master_data.mdm_lineage_edges
-               (id, from_node_id, to_node_id, edge_type, transformation_description)
-               VALUES ($1,$2,$3,$4,$5)"#,
+               (id, from_node_id, to_node_id, edge_type, transformation_description, tenant_id)
+               VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&edge.id)
         .bind(&edge.from_node_id)
@@ -643,8 +643,8 @@ async fn refresh_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
         last_updated: now,
     };
     sqlx::query(
-        r#"INSERT INTO master_data.mdm_lineage_graphs (id, nodes, edges, version, last_updated)
-           VALUES ('default', $1, $2, 1, $3)
+        r#"INSERT INTO master_data.mdm_lineage_graphs (id, nodes, edges, version, last_updated, tenant_id)
+           VALUES ('default', $1, $2, 1, $3, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            ON CONFLICT (id) DO UPDATE
            SET nodes = EXCLUDED.nodes, edges = EXCLUDED.edges,
                version = master_data.mdm_lineage_graphs.version + 1,
@@ -781,8 +781,8 @@ impl ImpactAnalyzer {
         let data = serde_json::to_value(&result)
             .map_err(|e| TopemsError::BusinessLogic(format!("影响分析序列化失败: {e}")))?;
         sqlx::query(
-            r#"INSERT INTO master_data.mdm_impact_analyses (id, data, analyzed_at)
-               VALUES ($1, $2, $3)"#,
+            r#"INSERT INTO master_data.mdm_impact_analyses (id, data, analyzed_at, tenant_id)
+               VALUES ($1, $2, $3, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&result.id)
         .bind(&data)
@@ -877,8 +877,8 @@ impl ImpactAnalyzer {
         let data = serde_json::to_value(&simulation)
             .map_err(|e| TopemsError::BusinessLogic(format!("变更模拟序列化失败: {e}")))?;
         sqlx::query(
-            r#"INSERT INTO master_data.mdm_impact_simulations (id, data, created_at)
-               VALUES ($1, $2, $3)"#,
+            r#"INSERT INTO master_data.mdm_impact_simulations (id, data, created_at, tenant_id)
+               VALUES ($1, $2, $3, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&simulation.id)
         .bind(&data)
@@ -999,8 +999,8 @@ impl ChangePropagator {
         // K1：事件 + 日志写真表。
         sqlx::query(
             r#"INSERT INTO master_data.mdm_change_events
-               (id, entity_type, entity_id, change_type, old_value, new_value, triggered_at)
-               VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+               (id, entity_type, entity_id, change_type, old_value, new_value, triggered_at, tenant_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&event.id)
         .bind(&event.entity_type)
@@ -1016,8 +1016,8 @@ impl ChangePropagator {
         for log in &logs {
             sqlx::query(
                 r#"INSERT INTO master_data.mdm_propagation_logs
-                   (id, change_event_id, rule_id, source_entity_id, target_entity_id, action, status, propagated_at)
-                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+                   (id, change_event_id, rule_id, source_entity_id, target_entity_id, action, status, propagated_at, tenant_id)
+                   VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
             )
             .bind(&log.id)
             .bind(&log.change_event_id)
@@ -1059,8 +1059,8 @@ impl ChangePropagator {
         };
         sqlx::query(
             r#"INSERT INTO master_data.mdm_propagation_rules
-               (id, source_entity_type, target_entity_type, condition, action)
-               VALUES ($1,$2,$3,$4,$5)"#,
+               (id, source_entity_type, target_entity_type, condition, action, tenant_id)
+               VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&rule.id)
         .bind(&rule.source_entity_type)

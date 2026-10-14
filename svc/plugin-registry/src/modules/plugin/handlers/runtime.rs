@@ -120,8 +120,8 @@ pub async fn register_plugin(
 
     let plugin_result = sqlx::query_as(
         r#"
-        INSERT INTO core.core_plugins (code, name, description, version, plugin_type, is_published, dependencies, category)
-        VALUES ($1, $2, $3, $4, 'business', true, $5, $6)
+        INSERT INTO core.core_plugins (code, name, description, version, plugin_type, is_published, dependencies, category, tenant_id)
+        VALUES ($1, $2, $3, $4, 'business', true, $5, $6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         ON CONFLICT (code) DO UPDATE SET
             name = $2, description = $3, version = $4, dependencies = $5, category = $6
         RETURNING *

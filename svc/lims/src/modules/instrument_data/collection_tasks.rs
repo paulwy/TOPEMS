@@ -1,6 +1,7 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, Extension, Json};
 use sqlx::types::Uuid;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
@@ -24,6 +25,7 @@ use super::models::{
 )]
 pub async fn trigger_collection(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<InstrumentData>> {
     let task_id = match Uuid::parse_str(&task_id) {
@@ -96,9 +98,9 @@ pub async fn trigger_collection(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_instrument_data 
-            (id, data_no, instrument_id, batch_no, protocol, raw_data, status, collected_at, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6, 'collected', NOW(), 'system')
+        INSERT INTO qa_lims_instrument_data
+            (id, data_no, instrument_id, batch_no, protocol, raw_data, status, collected_at, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'collected', NOW(), 'system', $7)
         RETURNING id::TEXT, data_no, instrument_id::TEXT, batch_no, protocol,
                   raw_data, parsed_data, status, quality_score,
                   error_msg, collected_at::TEXT, parsed_at::TEXT,
@@ -111,6 +113,7 @@ pub async fn trigger_collection(
     .bind(&batch_no)
     .bind(&protocol)
     .bind(&sample_raw_data)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -337,6 +340,7 @@ pub async fn get_collection_task(
 
 pub async fn create_collection_task(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateCollectionTaskRequest>,
 ) -> Json<ApiResponse<CollectionTask>> {
     let task_id = Uuid::new_v4();
@@ -352,10 +356,10 @@ pub async fn create_collection_task(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_collection_tasks 
+        INSERT INTO qa_lims_collection_tasks
             (id, task_no, task_name, instrument_id, protocol, collection_mode,
-             cron_expression, interval_minutes, parse_rule_id, status, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'system')
+             cron_expression, interval_minutes, parse_rule_id, status, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'active', 'system', $10)
         RETURNING id::TEXT, task_no, task_name, instrument_id::TEXT, protocol,
                   collection_mode, cron_expression, interval_minutes,
                   parse_rule_id, status, last_run_at::TEXT, next_run_at::TEXT,
@@ -372,6 +376,7 @@ pub async fn create_collection_task(
     .bind(&req.cron_expression)
     .bind(req.interval_minutes)
     .bind(&req.parse_rule_id)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

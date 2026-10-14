@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            UPDATE production_schedules SET\n                work_station_id = COALESCE($2, work_station_id),\n                planned_start_time = COALESCE($3, planned_start_time),\n                updated_at = $4\n            WHERE id = $1 AND status IN ('pending', 'in_progress')\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "63d3839fbd1bfba1ccb05cf95f715552b996a83fc7c884a6d31e5a07f8b5e271"
+}

@@ -1,10 +1,11 @@
 use axum::{
     extract::State,
     routing::{get, post, put},
-    Json, Router,
+    Extension, Json, Router,
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::shared::AppState;
@@ -335,6 +336,7 @@ pub async fn list_projects(
 
 pub async fn create_project(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintyProjectRequest>,
 ) -> Json<ApiResponse<UncertaintyProject>> {
     let project_no = format!(
@@ -346,8 +348,8 @@ pub async fn create_project(
         r#"
         INSERT INTO qa_lims_uncertainty_projects (
             project_no, project_name, method_id, method_name, test_item,
-            measurand, measurement_range, unit, status, evaluator, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10)
+            measurand, measurement_range, unit, status, evaluator, notes, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11)
         RETURNING id, project_no, project_name, method_id, method_name, test_item,
                   measurand, measurement_range, unit, status, evaluator,
                   evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty,
@@ -364,6 +366,7 @@ pub async fn create_project(
     .bind(&req.unit)
     .bind(&req.evaluator)
     .bind(&req.notes)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -649,6 +652,7 @@ pub async fn list_sources(
 )]
 pub async fn create_source(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintySourceRequest>,
 ) -> Json<ApiResponse<UncertaintySource>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
@@ -662,8 +666,8 @@ pub async fn create_source(
         r#"
         INSERT INTO qa_lims_uncertainty_sources (
             project_id, source_name, source_type, description,
-            distribution_type, sensitivity_coefficient, sort_order
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+            distribution_type, sensitivity_coefficient, sort_order, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, project_id, source_name, source_type, description,
                   distribution_type, sensitivity_coefficient, sort_order,
                   created_at::TEXT, updated_at::TEXT
@@ -676,6 +680,7 @@ pub async fn create_source(
     .bind(&req.distribution_type)
     .bind(req.sensitivity_coefficient)
     .bind(sort_order)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -884,6 +889,7 @@ pub async fn list_components(
 )]
 pub async fn create_component(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateUncertaintyComponentRequest>,
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
@@ -914,9 +920,9 @@ pub async fn create_component(
         INSERT INTO qa_lims_uncertainty_components (
             project_id, source_id, component_type, component_name,
             standard_uncertainty, relative_uncertainty, sensitivity_coefficient,
-            degrees_freedom, calculation_method, parameters, description
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        RETURNING id, project_id, source_id, $12 as source_name, component_type,
+            degrees_freedom, calculation_method, parameters, description, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING id, project_id, source_id, $13 as source_name, component_type,
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
                   parameters, description, created_at::TEXT, updated_at::TEXT
@@ -933,6 +939,7 @@ pub async fn create_component(
     .bind(&req.calculation_method)
     .bind(&req.parameters)
     .bind(&req.description)
+    .bind(ctx.tenant_id)
     .bind(source_name.as_deref())
     .fetch_one(&state.pool)
     .await;
@@ -1088,6 +1095,7 @@ pub async fn delete_component(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn calculate_type_a(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<TypeACalculationRequest>,
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
@@ -1134,8 +1142,8 @@ pub async fn calculate_type_a(
         INSERT INTO qa_lims_uncertainty_components (
             project_id, source_id, component_type, component_name,
             standard_uncertainty, sensitivity_coefficient, degrees_freedom,
-            calculation_method, parameters
-        ) VALUES ($1, $2, 'type_a', $3, $4, $5, $6, 'statistics', $7)
+            calculation_method, parameters, tenant_id
+        ) VALUES ($1, $2, 'type_a', $3, $4, $5, $6, 'statistics', $7, $8)
         RETURNING id, project_id, source_id, NULL as source_name, component_type,
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
@@ -1149,6 +1157,7 @@ pub async fn calculate_type_a(
     .bind(sensitivity_coeff)
     .bind(degrees_freedom)
     .bind(&params)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -1193,6 +1202,7 @@ pub async fn calculate_type_a(
 )]
 pub async fn calculate_type_b(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<TypeBCalculationRequest>,
 ) -> Json<ApiResponse<UncertaintyComponent>> {
     let project_id = match Uuid::parse_str(&req.project_id) {
@@ -1228,8 +1238,8 @@ pub async fn calculate_type_b(
         INSERT INTO qa_lims_uncertainty_components (
             project_id, source_id, component_type, component_name,
             standard_uncertainty, sensitivity_coefficient, degrees_freedom,
-            calculation_method, parameters, description
-        ) VALUES ($1, $2, 'type_b', $3, $4, $5, $6, 'distribution', $7, $8)
+            calculation_method, parameters, description, tenant_id
+        ) VALUES ($1, $2, 'type_b', $3, $4, $5, $6, 'distribution', $7, $8, $9)
         RETURNING id, project_id, source_id, NULL as source_name, component_type,
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
@@ -1244,6 +1254,7 @@ pub async fn calculate_type_b(
     .bind(degrees_freedom)
     .bind(&params)
     .bind(&req.description)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

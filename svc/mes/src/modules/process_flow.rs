@@ -19,6 +19,14 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -424,13 +432,14 @@ pub async fn create_process_flow(
     let capacity_value = capacity
         .map(|v| v.to_string().parse::<f64>().unwrap_or_default())
         .unwrap_or_default();
+    let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query!(
         r#"
         INSERT INTO process_flows (
             code, name, description, version, route_id,
-            production_line, capacity, unit
+            production_line, capacity, unit, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, code, name, description, version, status,
             route_id, production_line, capacity, unit,
             created_at, updated_at
@@ -443,6 +452,7 @@ pub async fn create_process_flow(
         body.production_line,
         capacity_value,
         body.unit,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;
@@ -746,14 +756,15 @@ pub async fn add_flow_step(
             .collect()
     });
 
+    let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_unchecked!(
         r#"
         INSERT INTO process_flow_steps (
             flow_id, process_id, sequence, work_station_id,
             equipment_ids, standard_time, wait_time, transfer_time,
-            quality_check_required, description
+            quality_check_required, description, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, flow_id, process_id, sequence,
             work_station_id, equipment_ids,
             standard_time, wait_time, transfer_time,
@@ -771,6 +782,7 @@ pub async fn add_flow_step(
         transfer_time,
         body.quality_check_required,
         body.description,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;

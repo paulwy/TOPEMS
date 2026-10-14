@@ -108,8 +108,8 @@ pub async fn create_report(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         "#,
     )
     .bind(id)
@@ -122,6 +122,7 @@ pub async fn create_report(
     .bind("draft")
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .execute(&state.pool)
     .await;
 
@@ -192,8 +193,8 @@ pub async fn create_report_from_template(
 
             let result = sqlx::query(
                 r#"
-                INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at, tenant_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                 "#,
             )
             .bind(id)
@@ -206,6 +207,7 @@ pub async fn create_report_from_template(
             .bind("draft")
             .bind(now)
             .bind(now)
+            .bind(Uuid::nil())
             .execute(&state.pool)
             .await;
 

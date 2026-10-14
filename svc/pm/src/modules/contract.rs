@@ -681,6 +681,8 @@ async fn list_contract_milestones(
 async fn create_contract_milestone(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateContractMilestoneRequest>,
 ) -> Json<ApiResponse<ContractMilestone>> {
     let milestone_id = Uuid::new_v4();
@@ -690,8 +692,8 @@ async fn create_contract_milestone(
         "pm",
         r#"INSERT INTO pm.contract_milestones (
             id, contract_id, name, description, target_date, 
-            payment_amount, payment_percent, project_milestone_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#
+            payment_amount, payment_percent, project_milestone_id, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *"#
     ))
     .bind(milestone_id)
     .bind(id)
@@ -703,6 +705,7 @@ async fn create_contract_milestone(
     .bind(req.project_milestone_id)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -843,6 +846,8 @@ async fn list_payment_schedule(
 async fn create_payment_schedule(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreatePaymentScheduleRequest>,
 ) -> Json<ApiResponse<ContractPaymentSchedule>> {
     let payment_id = Uuid::new_v4();
@@ -852,8 +857,8 @@ async fn create_payment_schedule(
         "pm",
         r#"INSERT INTO pm.contract_payment_schedule (
             id, contract_id, payment_number, payment_name, payment_percent, 
-            payment_amount, due_date, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *"#
+            payment_amount, due_date, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *"#
     ))
     .bind(payment_id)
     .bind(id)
@@ -864,6 +869,7 @@ async fn create_payment_schedule(
     .bind(parse_date(&req.due_date))
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -1016,8 +1022,8 @@ async fn create_template(
     let now = Utc::now();
 
     let template = sqlx::query_as::<_, ContractTemplate>(
-        only_own_schema_query!("pm", "INSERT INTO pm.contract_templates (id, name, contract_type, description, content, created_by, created_at, updated_at) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.contract_templates (id, name, contract_type, description, content, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *")
     )
     .bind(id)
     .bind(&req.name)
@@ -1025,7 +1031,7 @@ async fn create_template(
     .bind(req.description)
     .bind(&req.content)
     .bind(req.created_by)
-    .bind(effective_tenant_id(&ctx, &claims))
+    .bind(now)
     .bind(now)
     .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)

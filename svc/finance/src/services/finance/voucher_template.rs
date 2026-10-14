@@ -230,9 +230,9 @@ impl FinanceService {
 
             let line: VoucherTemplateLine = sqlx::query_as(
                 only_own_schema_query!("finance", r#"
-                INSERT INTO finance_voucher_template_lines 
-                    (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO finance_voucher_template_lines
+                    (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at, tenant_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING *
                 "#),
             )
@@ -244,6 +244,7 @@ impl FinanceService {
             .bind(&line_req.amount_formula)
             .bind(sort_order)
             .bind(now)
+            .bind(tenant_id)
             .fetch_one(&self.db_pool)
             .await?;
 
@@ -334,9 +335,9 @@ impl FinanceService {
 
                 sqlx::query(
                     only_own_schema_query!("finance", r#"
-                    INSERT INTO finance_voucher_template_lines 
-                        (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    INSERT INTO finance_voucher_template_lines
+                        (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at, tenant_id)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                     "#),
                 )
                 .bind(line_id)
@@ -347,6 +348,7 @@ impl FinanceService {
                 .bind(&line_req.amount_formula)
                 .bind(sort_order)
                 .bind(now)
+                .bind(tenant_id)
                 .execute(&self.db_pool)
                 .await?;
             }

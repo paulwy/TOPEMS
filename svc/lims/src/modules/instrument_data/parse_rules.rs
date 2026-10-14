@@ -1,6 +1,7 @@
-use axum::{extract::State, Json};
+use axum::{extract::State, Extension, Json};
 use sqlx::types::Uuid;
 use sqlx::Row;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
 
 use super::models::{CreateParseRuleRequest, ParseRule, ParseRuleQuery, UpdateParseRuleRequest};
@@ -168,6 +169,7 @@ pub async fn get_parse_rule(
 
 pub async fn create_parse_rule(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateParseRuleRequest>,
 ) -> Json<ApiResponse<ParseRule>> {
     let rule_id = Uuid::new_v4();
@@ -175,10 +177,10 @@ pub async fn create_parse_rule(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_parse_rules 
-            (id, rule_no, rule_name, protocol, instrument_type, 
-             parse_config, quality_rules, status, version, description, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', '1.0', $8, 'system')
+        INSERT INTO qa_lims_parse_rules
+            (id, rule_no, rule_name, protocol, instrument_type,
+             parse_config, quality_rules, status, version, description, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', '1.0', $8, 'system', $9)
         RETURNING id, rule_no, rule_name, protocol, instrument_type,
                   parse_config, quality_rules, status, version, description,
                   created_by, created_at::TEXT, updated_at::TEXT
@@ -192,6 +194,7 @@ pub async fn create_parse_rule(
     .bind(&req.parse_config)
     .bind(&req.quality_rules)
     .bind(&req.description)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

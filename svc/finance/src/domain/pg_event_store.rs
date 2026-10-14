@@ -207,8 +207,8 @@ impl EventStore for PgEventStore {
             let id = Uuid::new_v4();
 
             let row = sqlx::query(
-                only_own_schema_query!("finance", "INSERT INTO cqrs_events (id, aggregate_id, aggregate_type, event_type, version, payload, metadata, occurred_at)
-                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+                only_own_schema_query!("finance", "INSERT INTO cqrs_events (id, aggregate_id, aggregate_type, event_type, version, payload, metadata, occurred_at, tenant_id)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                  RETURNING id, aggregate_id, aggregate_type, event_type, version, payload, metadata, occurred_at"),
             )
             .bind(id)

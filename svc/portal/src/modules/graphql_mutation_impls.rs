@@ -97,12 +97,13 @@ pub async fn impl_create_todo(
 
     let row = sqlx::query(
         r#"INSERT INTO portal.portal_todos
-           (user_id, title, service_code, service_name, priority, todo_type)
-           VALUES ($1, $2, 'portal', '门户中心', 'medium', 'personal')
+           (user_id, title, service_code, service_name, priority, todo_type, tenant_id)
+           VALUES ($1, $2, 'portal', '门户中心', 'medium', 'personal', $3)
            RETURNING id, title, created_at"#,
     )
     .bind(&uid)
     .bind(&title)
+    .bind(uuid::Uuid::nil())
     .fetch_one(&state.pool)
     .await
     .map_err(|e| async_graphql::Error::new(format!("创建待办失败: {}", e)))?;

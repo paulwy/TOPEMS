@@ -1,11 +1,13 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     routing::get,
     Json, Router,
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -14,6 +16,7 @@ use crate::models::document::{
     CreateDocumentRequest, CreateDocumentVersionRequest, CreateFolderRequest, DocumentFolder,
     DocumentVersion, ProjectDocument, UpdateDocumentRequest,
 };
+use crate::modules::effective_tenant_id;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -120,14 +123,16 @@ async fn get_document(
 async fn create_document(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDocumentRequest>,
 ) -> Json<ApiResponse<ProjectDocument>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let document = sqlx::query_as::<_, ProjectDocument>(
-        only_own_schema_query!("pm", "INSERT INTO pm.project_documents (id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1, 'active', $9, $10, $11, $12, $13) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.project_documents (id, project_id, document_code, document_name, document_type, file_path, file_size, file_hash, version, status, description, tags, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 1, 'active', $9, $10, $11, $12, $13, $14) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -142,6 +147,7 @@ async fn create_document(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -266,6 +272,8 @@ async fn get_document_versions(
 async fn create_document_version(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDocumentVersionRequest>,
 ) -> Json<ApiResponse<DocumentVersion>> {
     let doc_result =
@@ -297,8 +305,8 @@ async fn create_document_version(
     let file_hash = req.file_hash.clone();
 
     let version = sqlx::query_as::<_, DocumentVersion>(
-        only_own_schema_query!("pm", "INSERT INTO pm.document_versions (id, document_id, version, file_path, file_hash, change_note, created_by, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.document_versions (id, document_id, version, file_path, file_hash, change_note, created_by, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *")
     )
     .bind(version_id)
     .bind(id)
@@ -308,6 +316,7 @@ async fn create_document_version(
     .bind(req.change_note)
     .bind(req.created_by)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -413,14 +422,16 @@ async fn get_folder(
 async fn create_folder(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFolderRequest>,
 ) -> Json<ApiResponse<DocumentFolder>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let folder = sqlx::query_as::<_, DocumentFolder>(
-        only_own_schema_query!("pm", "INSERT INTO pm.document_folders (id, project_id, parent_id, folder_name, description, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.document_folders (id, project_id, parent_id, folder_name, description, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -430,6 +441,7 @@ async fn create_folder(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

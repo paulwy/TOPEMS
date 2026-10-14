@@ -6,6 +6,8 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -15,6 +17,7 @@ use crate::models::acceptance::{
     CreateAcceptancePlanRequest, CreateAcceptanceRecordRequest, UpdateAcceptanceItemRequest,
     UpdateAcceptancePlanRequest, UpdateAcceptanceRecordRequest,
 };
+use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 
 pub fn create_routes(pool: PgPool) -> Router {
@@ -125,6 +128,8 @@ async fn create_plan(
     Path(project_id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAcceptancePlanRequest>,
 ) -> Json<ApiResponse<AcceptancePlan>> {
     let id = Uuid::new_v4();
@@ -135,8 +140,8 @@ async fn create_plan(
     );
 
     let plan = sqlx::query_as::<_, AcceptancePlan>(
-        only_own_schema_query!("pm", "INSERT INTO pm.acceptance_plans (id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.acceptance_plans (id, project_id, plan_code, plan_name, acceptance_type, milestone_id, phase_id, acceptance_criteria, expected_date, status, participants, documents_required, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10, $11, $12, $13, $14, $15) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -152,6 +157,7 @@ async fn create_plan(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -327,14 +333,16 @@ async fn get_plan_items(
 async fn create_plan_item(
     State(pool): State<PgPool>,
     Path(plan_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAcceptanceItemRequest>,
 ) -> Json<ApiResponse<AcceptanceItem>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let item = sqlx::query_as::<_, AcceptanceItem>(
-        only_own_schema_query!("pm", "INSERT INTO pm.acceptance_items (id, plan_id, item_code, item_name, item_description, required_standard, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.acceptance_items (id, plan_id, item_code, item_name, item_description, required_standard, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *")
     )
     .bind(id)
     .bind(plan_id)
@@ -344,6 +352,7 @@ async fn create_plan_item(
     .bind(req.required_standard)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -530,6 +539,8 @@ async fn get_record(
 async fn create_record(
     State(pool): State<PgPool>,
     Path(plan_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateAcceptanceRecordRequest>,
 ) -> Json<ApiResponse<AcceptanceRecord>> {
     let plan = sqlx::query_as::<_, AcceptancePlan>(
@@ -561,8 +572,8 @@ async fn create_record(
     let acceptance_date = parse_date_opt(&Some(req.acceptance_date.clone())).unwrap_or(now);
 
     let record = sqlx::query_as::<_, AcceptanceRecord>(
-        only_own_schema_query!("pm", "INSERT INTO pm.acceptance_records (id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.acceptance_records (id, project_id, plan_id, acceptance_date, status, conclusion, score, accepted_by, attendees, findings, recommendations, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *")
     )
     .bind(id)
     .bind(plan.project_id)
@@ -578,6 +589,7 @@ async fn create_record(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

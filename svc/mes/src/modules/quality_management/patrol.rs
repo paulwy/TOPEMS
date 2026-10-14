@@ -8,6 +8,14 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListPatrolsQuery {
     page: Option<i32>,
@@ -308,13 +316,14 @@ pub async fn create_patrol(
         .workstation_id
         .as_ref()
         .and_then(|id| Uuid::parse_str(id).ok());
+    let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_unchecked!(
         r#"
         INSERT INTO quality_patrols (
             patrol_no, production_line, workstation_id, workstation_name,
-            inspector, patrol_time, status, result, findings, memo
+            inspector, patrol_time, status, result, findings, memo, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING
             id, patrol_no, production_line, workstation_id,
             workstation_name, inspector, patrol_time,
@@ -344,6 +353,7 @@ pub async fn create_patrol(
         body.result,
         body.findings,
         body.memo,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;
@@ -604,13 +614,14 @@ pub async fn add_patrol_item(
             return Json(ApiResponse::error(400, "无效的巡检记录ID"));
         }
     };
+    let tenant_id = get_tenant_id(&claims);
 
     let result = sqlx::query!(
         r#"
         INSERT INTO quality_patrol_items (
-            patrol_id, item_name, standard, actual_value, status, remark
+            patrol_id, item_name, standard, actual_value, status, remark, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id, patrol_id, item_name, standard, actual_value, status, remark
         "#,
         patrol_uuid,
@@ -619,6 +630,7 @@ pub async fn add_patrol_item(
         body.actual_value.as_deref(),
         body.status.clone().unwrap_or_else(|| "pending".to_string()),
         body.remark,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;

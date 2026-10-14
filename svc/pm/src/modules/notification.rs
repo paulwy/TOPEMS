@@ -149,14 +149,16 @@ async fn get_project_settings(
 async fn create_setting(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateNotificationSettingRequest>,
 ) -> Json<ApiResponse<NotificationSetting>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let setting = sqlx::query_as::<_, NotificationSetting>(
-        only_own_schema_query!("pm", "INSERT INTO pm.notification_settings (id, project_id, user_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at)
-        VALUES ($1, $2, 'system', $3, $4, $5, $6, $7, $8) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.notification_settings (id, project_id, user_id, notification_type, enabled, notify_before_days, preferred_channel, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, 'system', $3, $4, $5, $6, $7, $8, $9) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -166,6 +168,7 @@ async fn create_setting(
     .bind(req.preferred_channel)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

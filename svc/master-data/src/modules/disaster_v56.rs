@@ -709,8 +709,8 @@ pub async fn create_recovery_point(
 
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_recovery_points
-           (id, snapshot_type, entity_type, entity_id, data, checksum, created_at, size_bytes)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           (id, snapshot_type, entity_type, entity_id, data, checksum, created_at, size_bytes, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&rp.id)
     .bind(snapshot_type_to_str(&rp.snapshot_type))
@@ -965,8 +965,8 @@ pub async fn create_recovery_plan(
 
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_recovery_plans
-           (id, name, priority, rto_minutes, rpo_minutes, steps, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+           (id, name, priority, rto_minutes, rpo_minutes, steps, status, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&plan.id)
     .bind(&plan.name)
@@ -1224,8 +1224,8 @@ pub async fn create_continuity_plan(
 
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_continuity_plans
-           (id, name, scope, critical_functions, recovery_strategy, test_frequency, last_tested, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           (id, name, scope, critical_functions, recovery_strategy, test_frequency, last_tested, status, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&plan.id)
     .bind(&plan.name)
@@ -1417,8 +1417,8 @@ pub async fn test_plan(
 
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_bc_tests
-           (id, plan_id, tested_at, result, duration_minutes, issues_found)
-           VALUES ($1,$2,$3,$4,$5,$6)"#,
+           (id, plan_id, tested_at, result, duration_minutes, issues_found, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&bc_test.id)
     .bind(&bc_test.plan_id)
@@ -1668,8 +1668,8 @@ pub async fn configure_replication(
 
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_replication_configs
-           (id, source_region, target_region, replication_mode, lag_max_ms, status)
-           VALUES ($1,$2,$3,$4,$5,$6)"#,
+           (id, source_region, target_region, replication_mode, lag_max_ms, status, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&config.id)
     .bind(&config.source_region)
@@ -1865,8 +1865,8 @@ pub async fn initiate_failover(
 
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_failover_records
-           (id, from_region, to_region, trigger, started_at, completed_at, reason, status)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+           (id, from_region, to_region, trigger, started_at, completed_at, reason, status, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&failover.id)
     .bind(&failover.from_region)

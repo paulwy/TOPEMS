@@ -135,8 +135,8 @@ pub async fn create_entry(
     let now = Utc::now();
     let line: Result<VoucherTemplateLine, sqlx::Error> = sqlx::query_as(
         only_own_schema_query!("finance", r#"INSERT INTO finance_voucher_template_lines
-            (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            (id, template_id, description, account_code, direction, amount_formula, sort_order, created_at, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
            RETURNING id, template_id, description, account_code, direction, amount_formula, sort_order, created_at"#),
     )
     .bind(line_id)
@@ -147,6 +147,7 @@ pub async fn create_entry(
     .bind(&req.amount_formula)
     .bind(sort_order)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
     match line {

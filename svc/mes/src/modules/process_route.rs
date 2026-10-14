@@ -17,6 +17,14 @@ use crate::AppState;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::response::ApiResponse;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -423,16 +431,18 @@ pub async fn create_process_route(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query!(
         r#"
-        INSERT INTO process_routes (route_code, route_name, description)
-        VALUES ($1, $2, $3)
+        INSERT INTO process_routes (route_code, route_name, description, tenant_id)
+        VALUES ($1, $2, $3, $4)
         RETURNING id, route_code AS code, route_name AS name, description, status,
             created_at, updated_at
         "#,
         body.code,
         body.name,
         body.description,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;
@@ -743,12 +753,13 @@ pub async fn add_route_step(
         .estimated_time_minutes
         .and_then(|v| v.to_string().parse::<BigDecimal>().ok());
 
+    let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query!(
         r#"
         INSERT INTO process_route_steps (
-            route_id, process_id, sequence, estimated_time_minutes
+            route_id, process_id, sequence, estimated_time_minutes, tenant_id
         )
-        VALUES ($1, $2, $3, $4)
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING id, route_id, process_id, sequence,
             estimated_time_minutes,
             NULL::uuid AS work_station_id, NULL::text AS description, created_at
@@ -757,6 +768,7 @@ pub async fn add_route_step(
         process_uuid,
         body.sequence,
         estimated_time_minutes,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;

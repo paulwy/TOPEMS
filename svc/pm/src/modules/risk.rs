@@ -6,6 +6,8 @@ use axum::{
 };
 use chrono::Utc;
 use sqlx::PgPool;
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -13,6 +15,7 @@ use uuid::Uuid;
 use crate::models::risk::{
     CreateRiskEventRequest, CreateRiskRequest, ProjectRisk, RiskEvent, UpdateRiskRequest,
 };
+use crate::modules::effective_tenant_id;
 use crate::services::audit::PmAuditService;
 
 // ==================== Pure functions ====================
@@ -137,6 +140,8 @@ async fn create_risk(
     Path(project_id): Path<Uuid>,
     Extension(audit): Extension<PmAuditService>,
     headers: HeaderMap,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskRequest>,
 ) -> Json<ApiResponse<ProjectRisk>> {
     let id = Uuid::new_v4();
@@ -147,8 +152,8 @@ async fn create_risk(
     );
 
     let risk = sqlx::query_as::<_, ProjectRisk>(
-        only_own_schema_query!("pm", "INSERT INTO pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.project_risks (id, project_id, risk_code, risk_name, risk_description, risk_category, risk_subcategory, likelihood, impact, risk_score, status, mitigation_strategy, contingency_plan, trigger_condition, warning_threshold, owner, response_due_date, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'identified', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -169,6 +174,7 @@ async fn create_risk(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -358,14 +364,16 @@ async fn get_risk_events(
 async fn create_risk_event(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateRiskEventRequest>,
 ) -> Json<ApiResponse<RiskEvent>> {
     let event_id = Uuid::new_v4();
     let now = Utc::now();
 
     let event = sqlx::query_as::<_, RiskEvent>(
-        only_own_schema_query!("pm", "INSERT INTO pm.risk_events (id, risk_id, event_type, event_description, occurred_at, reported_by, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $5) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.risk_events (id, risk_id, event_type, event_description, occurred_at, reported_by, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $5, $7) RETURNING *")
     )
     .bind(event_id)
     .bind(id)
@@ -373,6 +381,7 @@ async fn create_risk_event(
     .bind(req.event_description)
     .bind(now)
     .bind(req.reported_by)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

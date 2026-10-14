@@ -1,0 +1,63 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE quality_patrol_items\n        SET\n            item_name = COALESCE($1, item_name),\n            standard = COALESCE($2, standard),\n            actual_value = COALESCE($3, actual_value),\n            status = COALESCE($4, status),\n            remark = COALESCE($5, remark)\n        WHERE id = $6\n        RETURNING id, patrol_id, item_name, standard, actual_value, status, remark\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "patrol_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "item_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "standard",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "actual_value",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "status",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "remark",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Varchar",
+        "Text",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "8c05b2a0edf13758ea6b75cd2915b8c0067ffd55c2c633f27da76cf42bf4ba63"
+}

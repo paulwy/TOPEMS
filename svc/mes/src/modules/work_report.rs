@@ -24,6 +24,14 @@ use topems_shared_event::event::{commit_retry, EventType, MesWorkReportSubmitted
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route(
@@ -506,6 +514,7 @@ pub async fn create_work_report(
     {
         return e;
     }
+    let tenant_id = get_tenant_id(&claims);
 
     let work_order_id = body
         .work_order_id
@@ -566,9 +575,9 @@ pub async fn create_work_report(
             work_station_id, work_station_name,
             reporter_name, report_date, shift,
             output_quantity, defect_quantity, labor_hours, remark,
-            status
+            status, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending')
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending', $15)
         RETURNING
             id, report_no, work_order_id, work_order_no,
             order_id, order_no, work_station_id, work_station_name,
@@ -591,6 +600,7 @@ pub async fn create_work_report(
         defect_quantity,
         labor_hours,
         body.remark,
+        tenant_id,
     )
     .fetch_one(&mut *tx)
     .await;

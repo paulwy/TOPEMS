@@ -249,8 +249,8 @@ impl EnhancedKnowledgeGraph {
         node.degree = degree;
 
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_graph_nodes ({GRAPH_NODE_COLS})
-             VALUES ($1,$2,$3,$4,$5,$6,$7)
+            "INSERT INTO master_data.mdm_graph_nodes ({GRAPH_NODE_COLS}, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
              ON CONFLICT (id) DO UPDATE SET label = EXCLUDED.label, node_type = EXCLUDED.node_type,
                properties = EXCLUDED.properties, embeddings = EXCLUDED.embeddings,
                degree = EXCLUDED.degree, community_id = EXCLUDED.community_id"
@@ -274,8 +274,8 @@ impl EnhancedKnowledgeGraph {
         edge: GraphEdgeV57,
     ) -> Result<GraphEdgeV57, TopemsError> {
         sqlx::query(
-            "INSERT INTO master_data.mdm_graph_edges (source_id, target_id, relation_type, weight, confidence)
-             VALUES ($1,$2,$3,$4,$5)
+            "INSERT INTO master_data.mdm_graph_edges (source_id, target_id, relation_type, weight, confidence, tenant_id)
+             VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
              ON CONFLICT (source_id, target_id, relation_type) DO UPDATE SET
                weight = EXCLUDED.weight, confidence = EXCLUDED.confidence",
         )
@@ -463,8 +463,8 @@ impl EnhancedKnowledgeGraph {
         // 写社区表（UPSERT 幂等）
         for community in &detected {
             sqlx::query(
-                "INSERT INTO master_data.mdm_graph_communities (id, name, node_ids, algorithm, modularity)
-                 VALUES ($1,$2,$3,$4,$5)
+                "INSERT INTO master_data.mdm_graph_communities (id, name, node_ids, algorithm, modularity, tenant_id)
+                 VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                  ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, node_ids = EXCLUDED.node_ids,
                    algorithm = EXCLUDED.algorithm, modularity = EXCLUDED.modularity",
             )
@@ -537,8 +537,8 @@ impl SemanticSearchEngine {
         };
 
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_semantic_search_indexes ({SEARCH_INDEX_COLS})
-             VALUES ($1,$2,$3,$4,$5,$6)"
+            "INSERT INTO master_data.mdm_semantic_search_indexes ({SEARCH_INDEX_COLS}, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         ))
         .bind(&index.id)
         .bind(&index.entity_type)
@@ -710,7 +710,7 @@ impl SmartTagger {
     async fn create_tag(db: &sqlx::PgPool, mut tag: Tag) -> Result<Tag, TopemsError> {
         tag.usage_count = 0;
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_tags ({TAG_COLS}) VALUES ($1,$2,$3,$4,$5,$6)"
+            "INSERT INTO master_data.mdm_tags ({TAG_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         ))
         .bind(&tag.id)
         .bind(&tag.name)
@@ -743,8 +743,8 @@ impl SmartTagger {
         }
 
         sqlx::query(
-            "INSERT INTO master_data.mdm_tagged_entities (entity_type, entity_id, tag_ids, confidence, applied_at)
-             VALUES ($1,$2,$3,$4,$5)
+            "INSERT INTO master_data.mdm_tagged_entities (entity_type, entity_id, tag_ids, confidence, applied_at, tenant_id)
+             VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
              ON CONFLICT (entity_type, entity_id) DO UPDATE SET
                tag_ids = EXCLUDED.tag_ids, confidence = EXCLUDED.confidence, applied_at = EXCLUDED.applied_at",
         )
@@ -803,8 +803,8 @@ impl SmartTagger {
             }
 
             sqlx::query(
-                "INSERT INTO master_data.mdm_tagged_entities (entity_type, entity_id, tag_ids, confidence, applied_at)
-                 VALUES ($1,$2,$3,$4,$5)
+                "INSERT INTO master_data.mdm_tagged_entities (entity_type, entity_id, tag_ids, confidence, applied_at, tenant_id)
+                 VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                  ON CONFLICT (entity_type, entity_id) DO UPDATE SET
                    tag_ids = EXCLUDED.tag_ids, confidence = EXCLUDED.confidence, applied_at = EXCLUDED.applied_at",
             )
@@ -1404,8 +1404,8 @@ pub async fn search_semantic_handler(
     // 写搜索历史真表
     let history_id = uuid::Uuid::new_v4().to_string();
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_search_history (id, query, results_count, created_at)
-         VALUES ($1,$2,$3,$4)",
+        "INSERT INTO master_data.mdm_search_history (id, query, results_count, created_at, tenant_id)
+         VALUES ($1,$2,$3,$4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&history_id)
     .bind(&req.query)
@@ -1441,8 +1441,8 @@ pub async fn search_hybrid_handler(
     // 写搜索历史真表
     let history_id = uuid::Uuid::new_v4().to_string();
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_search_history (id, query, results_count, created_at)
-         VALUES ($1,$2,$3,$4)",
+        "INSERT INTO master_data.mdm_search_history (id, query, results_count, created_at, tenant_id)
+         VALUES ($1,$2,$3,$4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&history_id)
     .bind(&req.query)

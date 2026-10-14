@@ -1,0 +1,82 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT \n            id, bom_id, material_id, material_code, material_name,\n            specification, unit, quantity, loss_rate, sequence, notes\n        FROM bom_items\n        WHERE bom_id = $1\n        ORDER BY sequence ASC\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "bom_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "material_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "material_code",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "material_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 5,
+        "name": "specification",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 6,
+        "name": "unit",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
+        "name": "quantity",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 8,
+        "name": "loss_rate",
+        "type_info": "Numeric"
+      },
+      {
+        "ordinal": 9,
+        "name": "sequence",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 10,
+        "name": "notes",
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "hash": "dbad4d9b3872db85ac24ae2940355d0f7338002bc6d1f0434ba9be928bb89ff6"
+}

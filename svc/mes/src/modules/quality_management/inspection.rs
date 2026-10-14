@@ -19,6 +19,14 @@ use topems_shared_db::decimal::big_decimal_to_f64_non_opt;
 
 use super::big_decimal_to_f64;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 #[derive(Debug, Clone, Deserialize)]
 pub struct ListInspectionsQuery {
     page_size: Option<i32>,
@@ -387,15 +395,16 @@ pub async fn create_inspection(
     let unqualified_quantity = body
         .unqualified_quantity
         .and_then(|v| BigDecimal::from_str(&v.to_string()).ok());
+    let tenant_id = get_tenant_id(&claims);
     let result = sqlx::query_unchecked!(
         r#"
             INSERT INTO quality_inspections (
             inspection_no, order_id, order_number, product_code, product_name,
             process_id, process_name, inspection_type, quantity,
             qualified_quantity, unqualified_quantity, qualification_rate,
-            inspector, inspection_time, status, result, memo
+            inspector, inspection_time, status, result, memo, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING
             id, inspection_no, order_id, order_number,
             product_code, product_name, process_id, process_name,
@@ -434,6 +443,7 @@ pub async fn create_inspection(
         body.status.unwrap_or_else(|| "pending".to_string()),
         body.result,
         body.memo,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;

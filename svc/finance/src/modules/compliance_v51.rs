@@ -1060,8 +1060,8 @@ impl ComplianceReportV51 {
                 "finance",
                 r#"INSERT INTO finance.finance_compliance_issues
                     (id, report_id, severity, category, control_point_code,
-                     description, evidence, impact_assessment)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                     description, evidence, impact_assessment, tenant_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING id, report_id, severity, category, control_point_code,
                           description, evidence, impact_assessment"#
             ))
@@ -1073,6 +1073,7 @@ impl ComplianceReportV51 {
             .bind(&issue.description)
             .bind(&issue.evidence)
             .bind(&issue.impact_assessment)
+            .bind(tenant_id)
             .fetch_one(pool)
             .await?;
             saved_issues.push(saved);

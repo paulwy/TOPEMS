@@ -132,8 +132,8 @@ pub async fn create_integration_alert(
     let source_system = req.source_system.unwrap_or_else(|| "系统".to_string());
 
     let result = sqlx::query(
-        "INSERT INTO ehs.qa_ehs_alerts (alert_no, title, alert_type, severity, description, status, source_system, source_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        "INSERT INTO ehs.qa_ehs_alerts (alert_no, title, alert_type, severity, description, status, source_system, source_id, tenant_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, '00000000-0000-0000-0000-000000000000')
          ON CONFLICT (alert_no) DO UPDATE SET updated_at = NOW()
          RETURNING id, alert_no, title, status",
     )

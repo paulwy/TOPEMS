@@ -190,8 +190,8 @@ pub async fn create_template(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO report_templates (id, name, code, description, category, report_type, data_source, layout_config, filter_config, style_config, columns, output_format, is_active, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        INSERT INTO report_templates (id, name, code, description, category, report_type, data_source, layout_config, filter_config, style_config, columns, output_format, is_active, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
         "#,
     )
     .bind(id)
@@ -209,6 +209,7 @@ pub async fn create_template(
     .bind(true)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .execute(&state.pool)
     .await;
 

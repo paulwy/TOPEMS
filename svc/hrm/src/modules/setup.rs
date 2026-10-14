@@ -274,8 +274,8 @@ pub async fn setup_company_info(
             // 记录日志
             let _ = sqlx::query(
                 only_own_schema_query!("hrm", r#"
-                INSERT INTO hrm.initialization_logs (id, organization_id, step_name, action, new_data, created_at)
-                VALUES ($1, $2, 'company_info', 'update', $3, $4)
+                INSERT INTO hrm.initialization_logs (id, organization_id, step_name, action, new_data, created_at, tenant_id)
+                VALUES ($1, $2, 'company_info', 'update', $3, $4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                 "#)
             )
             .bind(Uuid::new_v4())

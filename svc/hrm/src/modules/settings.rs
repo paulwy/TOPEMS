@@ -91,7 +91,7 @@ pub async fn update_settings(
     let now = Utc::now().naive_utc();
     let mut updated = 0;
     for (key, value) in &req.settings {
-        let result = sqlx::query(only_own_schema_query!("hrm", "INSERT INTO hrm.module_settings (category, key, value, created_at, updated_at) VALUES ($1, $2, $3, $4, $4) ON CONFLICT (tenant_id, category, key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at"))
+        let result = sqlx::query(only_own_schema_query!("hrm", "INSERT INTO hrm.module_settings (category, key, value, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, $4, $4, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) ON CONFLICT (tenant_id, category, key) DO UPDATE SET value = EXCLUDED.value, updated_at = EXCLUDED.updated_at"))
             .bind(&category)
             .bind(key)
             .bind(value)

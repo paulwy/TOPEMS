@@ -260,7 +260,7 @@ pub async fn compute_replenishment(
          warehouse_id, warehouse_name, location_id, current_stock, available_stock,
          safety_stock, reorder_point, max_stock, consumption_rate, lead_time_days,
          suggested_quantity, supplier_id, supplier_name, status, priority, trigger_type,
-         remarks, created_at, updated_at)
+         remarks, created_at, updated_at, tenant_id)
         SELECT
             gen_random_uuid(),
             $1 || '_' || ROW_NUMBER() OVER (),
@@ -301,7 +301,8 @@ pub async fn compute_replenishment(
             END as trigger_type,
             '系统自动生成' as remarks,
             $2,
-            $2
+            $2,
+            $6
         FROM wms.inventory i
         LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
         LEFT JOIN wms.replenishment_rules r ON 
@@ -346,6 +347,7 @@ pub async fn compute_replenishment(
     .bind(consumption_days)
     .bind(req.warehouse_id)
     .bind(req.rule_based_only.unwrap_or(false))
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_all(&mut *tx)
     .await;
 

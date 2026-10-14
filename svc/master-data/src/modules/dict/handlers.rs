@@ -205,8 +205,8 @@ pub async fn create_dict_type(
     }
 
     let sql = format!(
-        r#"INSERT INTO core_dict_types (code, name, name_en, category, description, status)
-           VALUES ($1, $2, $3, $4, $5, 'active')
+        r#"INSERT INTO core_dict_types (code, name, name_en, category, description, status, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING {}"#,
         dict_type_columns("$6")
     );
@@ -501,8 +501,8 @@ pub async fn create_dict_item(
     }
 
     let sql = format!(
-        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')
+        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING {}"#,
         dict_item_columns("$9")
     );
@@ -672,8 +672,8 @@ pub async fn batch_create_dict_items(
     };
 
     let insert_sql = format!(
-        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active')
+        r#"INSERT INTO core_dict_items (dict_type_id, code, name, name_en, value, sort_order, parent_id, extra_data, status, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING {}"#,
         dict_item_columns("$9")
     );

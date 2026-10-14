@@ -127,8 +127,8 @@ pub async fn create_order(
         r#"
         INSERT INTO wms.replenishment_orders (
             id, order_number, warehouse_id, warehouse_name, status,
-            total_quantity, total_amount, created_at, updated_at
-        ) VALUES ($1, $2, $3::uuid, $4, 'active', $5, $6, $7, $8)
+            total_quantity, total_amount, created_at, updated_at, tenant_id
+        ) VALUES ($1, $2, $3::uuid, $4, 'active', $5, $6, $7, $8, $9)
         RETURNING id, order_number, warehouse_id, warehouse_name, status,
                   total_quantity, total_amount, created_at, updated_at
         "#,
@@ -149,6 +149,7 @@ pub async fn create_order(
     )
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 
@@ -163,8 +164,8 @@ pub async fn create_order(
                         INSERT INTO wms.replenishment_order_items (
                             id, order_id, line_number, sku, material_name, specification,
                             unit, quantity, unit_price, total_amount, status,
-                            created_at, updated_at
-                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', $11, $12)
+                            created_at, updated_at, tenant_id
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'pending', $11, $12, $13)
                         "#,
                     )
                     .bind(item_id)
@@ -183,6 +184,7 @@ pub async fn create_order(
                     .bind(item.get("total_amount").and_then(|v| v.as_f64()))
                     .bind(now)
                     .bind(now)
+                    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
                     .execute(&mut **txn)
                     .await;
                     line_number += 1;

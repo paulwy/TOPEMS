@@ -356,6 +356,8 @@ async fn get_settlement_items(
 async fn create_settlement_item(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSettlementItemRequest>,
 ) -> Json<ApiResponse<SettlementItem>> {
     let id = Uuid::new_v4();
@@ -372,8 +374,8 @@ async fn create_settlement_item(
     };
 
     let item = sqlx::query_as::<_, SettlementItem>(
-        only_own_schema_query!("pm", "INSERT INTO pm.settlement_items (id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_percent, description, expense_ref_id, contract_ref_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.settlement_items (id, settlement_id, item_code, item_name, category, budget_amount, actual_amount, variance_amount, variance_percent, description, expense_ref_id, contract_ref_id, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING *")
     )
     .bind(id)
     .bind(settlement_id)
@@ -389,6 +391,7 @@ async fn create_settlement_item(
     .bind(req.contract_ref_id)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&state.pool)
     .await;
 
@@ -525,14 +528,16 @@ async fn get_settlement_adjustments(
 async fn create_settlement_adjustment(
     State(state): State<SettlementState>,
     Path(settlement_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateSettlementAdjustmentRequest>,
 ) -> Json<ApiResponse<SettlementAdjustment>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let adjustment = sqlx::query_as::<_, SettlementAdjustment>(
-        only_own_schema_query!("pm", "INSERT INTO pm.settlement_adjustments (id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.settlement_adjustments (id, settlement_id, adjustment_type, adjustment_code, description, amount, reason, supporting_documents, created_by, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *")
     )
     .bind(id)
     .bind(settlement_id)
@@ -544,6 +549,7 @@ async fn create_settlement_adjustment(
     .bind(req.supporting_documents)
     .bind(req.created_by)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&state.pool)
     .await;
 

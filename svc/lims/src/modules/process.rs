@@ -1,6 +1,7 @@
-use axum::{extract::State, http::HeaderMap, routing::get, Json, Router};
+use axum::{extract::State, http::HeaderMap, routing::get, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
@@ -157,14 +158,16 @@ pub async fn get_process(
 
 pub async fn create_process(
     State(state): State<AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateProcessRequest>,
 ) -> Json<ApiResponse<InspectionProcess>> {
     let row = sqlx::query(
-        "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
+        "INSERT INTO qa_lab_processes (process_name, description, steps, is_active, created_at, updated_at, tenant_id) VALUES ($1, $2, $3, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $4) RETURNING id::TEXT, tenant_id::TEXT, process_name, description, steps, is_active, created_at::TEXT, updated_at::TEXT",
     )
     .bind(req.name)
     .bind(req.description)
     .bind(req.steps)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

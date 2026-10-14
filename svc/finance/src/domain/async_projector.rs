@@ -102,7 +102,7 @@ impl AsyncProjector {
             }
             None => {
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO cqrs_projection_progress (view_name, processed_count, error_count) VALUES ($1, 0, 0)"),
+                    only_own_schema_query!("finance", "INSERT INTO cqrs_projection_progress (view_name, processed_count, error_count, tenant_id) VALUES ($1, 0, 0, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
                 )
                 .bind(view_name)
                 .execute(&self.pool)

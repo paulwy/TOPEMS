@@ -900,9 +900,9 @@ pub async fn upload_plugin(
             code, name, description, version, plugin_type,
             is_free, price_cents, remote_url, entry_point,
             dependencies, author_name, author_url, homepage_url,
-            screenshots, tags, category, is_published
+            screenshots, tags, category, is_published, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, false, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#,
     )

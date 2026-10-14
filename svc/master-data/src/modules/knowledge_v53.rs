@@ -387,8 +387,8 @@ async fn refresh_kg_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
         last_updated: now,
     };
     sqlx::query(
-        r#"INSERT INTO master_data.mdm_kg_graphs (id, nodes, edges, version, last_updated)
-           VALUES ('default', $1, $2, 1, $3)
+        r#"INSERT INTO master_data.mdm_kg_graphs (id, nodes, edges, version, last_updated, tenant_id)
+           VALUES ('default', $1, $2, 1, $3, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            ON CONFLICT (id) DO UPDATE
            SET nodes = EXCLUDED.nodes, edges = EXCLUDED.edges,
                version = master_data.mdm_kg_graphs.version + 1,
@@ -437,8 +437,8 @@ impl KnowledgeGraphEngine {
             created_at: now.clone(),
         };
         sqlx::query(
-            r#"INSERT INTO master_data.mdm_kg_nodes (id, label, node_type, properties, embeddings, created_at)
-               VALUES ($1,$2,$3,$4,$5,$6)"#,
+            r#"INSERT INTO master_data.mdm_kg_nodes (id, label, node_type, properties, embeddings, created_at, tenant_id)
+               VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&node.id)
         .bind(&node.label)
@@ -486,8 +486,8 @@ impl KnowledgeGraphEngine {
             confidence: confidence.unwrap_or(1.0),
         };
         sqlx::query(
-            r#"INSERT INTO master_data.mdm_kg_edges (id, source_id, target_id, relation_type, weight, confidence)
-               VALUES ($1,$2,$3,$4,$5,$6)"#,
+            r#"INSERT INTO master_data.mdm_kg_edges (id, source_id, target_id, relation_type, weight, confidence, tenant_id)
+               VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&edge.id)
         .bind(&edge.source_id)
@@ -813,8 +813,8 @@ impl RecommendationEngine {
         for rec in &recommendations {
             sqlx::query(
                 r#"INSERT INTO master_data.mdm_recommendations
-                   (id, target_id, item_id, score, reason, source)
-                   VALUES ($1,$2,$3,$4,$5,$6)"#,
+                   (id, target_id, item_id, score, reason, source, tenant_id)
+                   VALUES ($1,$2,$3,$4,$5,$6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
             )
             .bind(&rec.id)
             .bind(&rec.target_id)
@@ -845,8 +845,8 @@ impl RecommendationEngine {
         };
         sqlx::query(
             r#"INSERT INTO master_data.mdm_interactions
-               (id, user_id, item_id, interaction_type, timestamp)
-               VALUES ($1,$2,$3,$4,$5)"#,
+               (id, user_id, item_id, interaction_type, timestamp, tenant_id)
+               VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&record.id)
         .bind(&record.user_id)
@@ -1026,8 +1026,8 @@ impl AssetCatalogManager {
         };
         sqlx::query(
             r#"INSERT INTO master_data.mdm_assets
-               (id, name, asset_type, description, owner, domain, tags, lineage_summary, quality_score, access_level, updated_at)
-               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)"#,
+               (id, name, asset_type, description, owner, domain, tags, lineage_summary, quality_score, access_level, updated_at, tenant_id)
+               VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(&asset.id)
         .bind(&asset.name)
@@ -1280,8 +1280,8 @@ async fn upsert_search_index(
             merged.push(asset.id.clone());
         }
         sqlx::query(
-            r#"INSERT INTO master_data.mdm_search_indexes (key, value)
-               VALUES ($1, $2)
+            r#"INSERT INTO master_data.mdm_search_indexes (key, value, tenant_id)
+               VALUES ($1, $2, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value"#,
         )
         .bind(&key)

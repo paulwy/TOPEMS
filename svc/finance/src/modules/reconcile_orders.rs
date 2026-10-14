@@ -361,8 +361,8 @@ pub async fn create_reconcile_order(
         );
         let row = match sqlx::query(only_own_schema_query!("finance",
             "INSERT INTO finance.reconcile_orders \
-             (order_no, counterparty_id, period, start_date, end_date, status) \
-             VALUES ($1, $2, $3, $4, $5, 'pending') \
+             (order_no, counterparty_id, period, start_date, end_date, status, tenant_id) \
+             VALUES ($1, $2, $3, $4, $5, 'pending', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
              RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                        total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"))
             .bind(&order_no)
@@ -415,8 +415,8 @@ pub async fn auto_reconcile(
         );
         let row = match sqlx::query(only_own_schema_query!("finance",
             "INSERT INTO finance.reconcile_orders \
-             (order_no, counterparty_id, period, start_date, end_date, status) \
-             VALUES ($1, $2, $3, $4, $5, 'draft') \
+             (order_no, counterparty_id, period, start_date, end_date, status, tenant_id) \
+             VALUES ($1, $2, $3, $4, $5, 'draft', COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
              RETURNING id, order_no, counterparty_id, counterparty_name, period, start_date, end_date, \
                        total_amount, matched_amount, unmatched_amount, status, created_at, updated_at"))
             .bind(&order_no)

@@ -1,11 +1,13 @@
 use axum::{
-    extract::{Path, State},
+    extract::{Extension, Path, State},
     http::StatusCode,
     routing::{get, post},
     Json, Router,
 };
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
+use topems_shared_auth::auth::Claims;
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;
@@ -13,6 +15,7 @@ use uuid::Uuid;
 use crate::models::report::{
     CreateReportRequest, CreateReportTemplateRequest, ProjectReport, ReportTemplate,
 };
+use crate::modules::effective_tenant_id;
 
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
@@ -116,14 +119,16 @@ async fn get_report(
 async fn create_report(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportRequest>,
 ) -> Json<ApiResponse<ProjectReport>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let report = sqlx::query_as::<_, ProjectReport>(
-        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8, $9, $10) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -134,6 +139,7 @@ async fn create_report(
     .bind(req.generated_by)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -165,6 +171,8 @@ async fn create_report(
 async fn generate_report(
     State(pool): State<PgPool>,
     Path(project_id): Path<Uuid>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportRequest>,
 ) -> Json<ApiResponse<ProjectReport>> {
     let id = Uuid::new_v4();
@@ -263,8 +271,8 @@ async fn generate_report(
     let summary = generate_summary(&report_data);
 
     let report = sqlx::query_as::<_, ProjectReport>(
-        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, generated_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, 'generated', $7, $8, $9, $10, $11, $12) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.project_reports (id, project_id, report_code, report_name, report_type, report_period, status, generated_at, data, summary, generated_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'generated', $7, $8, $9, $10, $11, $12, $13) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -278,6 +286,7 @@ async fn generate_report(
     .bind(req.generated_by)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 
@@ -383,14 +392,16 @@ async fn get_template(
 
 async fn create_template(
     State(pool): State<PgPool>,
+    Extension(ctx): Extension<TenantContext>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReportTemplateRequest>,
 ) -> Json<ApiResponse<ReportTemplate>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
 
     let template = sqlx::query_as::<_, ReportTemplate>(
-        only_own_schema_query!("pm", "INSERT INTO pm.report_templates (id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, true, $6, $7, $8) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.report_templates (id, template_code, template_name, report_type, content, is_active, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, true, $6, $7, $8, $9) RETURNING *")
     )
     .bind(id)
     .bind(&req.template_code)
@@ -400,6 +411,7 @@ async fn create_template(
     .bind(req.created_by)
     .bind(now)
     .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

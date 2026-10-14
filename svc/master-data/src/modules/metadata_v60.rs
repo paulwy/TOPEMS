@@ -456,8 +456,8 @@ pub async fn create_metadata(
     // K1：写真表 master_data.mdm_metadata_objects。
     if let Err(e) = sqlx::query(
         r#"INSERT INTO master_data.mdm_metadata_objects
-           (id, name, object_type, description, owner, tags, attributes, created_at, updated_at)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+           (id, name, object_type, description, owner, tags, attributes, created_at, updated_at, tenant_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&obj.id)
     .bind(&obj.name)

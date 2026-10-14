@@ -206,10 +206,10 @@ pub async fn create_schedule(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO report_schedules (id, name, template_id, schedule_type, 
-                                      schedule_expression, parameters, recipients, 
-                                      status, run_count, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        INSERT INTO report_schedules (id, name, template_id, schedule_type,
+                                      schedule_expression, parameters, recipients,
+                                      status, run_count, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         "#,
     )
     .bind(id)
@@ -223,6 +223,7 @@ pub async fn create_schedule(
     .bind(0)
     .bind(now)
     .bind(now)
+    .bind(Uuid::nil())
     .execute(&state.pool)
     .await;
 

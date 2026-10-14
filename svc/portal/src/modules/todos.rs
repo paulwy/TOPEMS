@@ -104,8 +104,8 @@ async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<T
     let result = sqlx::query(
         r#"
         INSERT INTO portal.portal_todos
-            (user_id, title, service_code, service_name, due_date, priority, todo_type)
-        VALUES ($1, $2, $3, $4, $5, $6, 'personal')
+            (user_id, title, service_code, service_name, due_date, priority, todo_type, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'personal', $7)
         RETURNING id, title, service_code, service_name, due_date, priority, completed, todo_type, link_url
         "#
     )
@@ -115,6 +115,7 @@ async fn add_local_todo(pool: &PgPool, user_id: &str, todo: NewTodo) -> Option<T
     .bind(service_name)
     .bind(due_date)
     .bind(&todo.priority)
+    .bind(uuid::Uuid::nil())
     .fetch_one(pool)
     .await;
 

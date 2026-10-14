@@ -319,8 +319,8 @@ async fn create_defect(
     let now = Utc::now();
 
     let defect = sqlx::query_as::<_, Defect>(
-        only_own_schema_query!("pm", "INSERT INTO pm.defects (id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_by, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13) RETURNING *")
+        only_own_schema_query!("pm", "INSERT INTO pm.defects (id, project_id, check_id, defect_code, defect_name, defect_description, severity, priority, status, assignee, due_date, created_by, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'open', $9, $10, $11, $12, $13, $14) RETURNING *")
     )
     .bind(id)
     .bind(project_id)
@@ -333,8 +333,9 @@ async fn create_defect(
     .bind(req.assignee)
     .bind(parse_date_opt(&req.due_date))
     .bind(req.created_by)
-    .bind(effective_tenant_id(&ctx, &claims))
     .bind(now)
+    .bind(now)
+    .bind(effective_tenant_id(&ctx, &claims))
     .fetch_one(&pool)
     .await;
 

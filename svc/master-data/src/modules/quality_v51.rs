@@ -511,8 +511,8 @@ pub async fn run_quality_check(
 
     for check in &results {
         if let Err(e) = sqlx::query(
-            "INSERT INTO master_data.mdm_quality_checks (id, entity_type, entity_id, rule_id, status, score, details, checked_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+            "INSERT INTO master_data.mdm_quality_checks (id, entity_type, entity_id, rule_id, status, score, details, checked_at, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(&check.id)
         .bind(&check.entity_type)
@@ -1033,8 +1033,8 @@ pub async fn apply_auto_fix(
     };
 
     if let Err(e) = sqlx::query(
-        "INSERT INTO master_data.mdm_auto_fix_actions (id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+        "INSERT INTO master_data.mdm_auto_fix_actions (id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at, tenant_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&action.id)
     .bind(&action.rule_id)
@@ -1258,8 +1258,8 @@ pub async fn run_fix_workflow(
 
     for action in &applied_actions {
         if let Err(e) = sqlx::query(
-            "INSERT INTO master_data.mdm_auto_fix_actions (id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+            "INSERT INTO master_data.mdm_auto_fix_actions (id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(&action.id)
         .bind(&action.rule_id)
@@ -1334,8 +1334,8 @@ pub async fn generate_suggestions(
 
     for s in &suggestions {
         if let Err(e) = sqlx::query(
-            "INSERT INTO master_data.mdm_governance_suggestions (id, entity_type, entity_id, suggestion_type, confidence, rationale, suggested_action, ai_model_version, status, created_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+            "INSERT INTO master_data.mdm_governance_suggestions (id, entity_type, entity_id, suggestion_type, confidence, rationale, suggested_action, ai_model_version, status, created_at, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(&s.id)
         .bind(&s.entity_type)

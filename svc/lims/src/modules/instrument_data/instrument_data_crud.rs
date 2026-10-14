@@ -1,5 +1,6 @@
-use axum::{extract::State, http::HeaderMap, Json};
+use axum::{extract::State, http::HeaderMap, Extension, Json};
 use sqlx::{types::Uuid, Postgres, QueryBuilder, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
@@ -178,6 +179,7 @@ pub async fn get_instrument_data(
 
 pub async fn create_instrument_data(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateInstrumentDataRequest>,
 ) -> Json<ApiResponse<InstrumentData>> {
     let data_id = Uuid::new_v4();
@@ -199,9 +201,9 @@ pub async fn create_instrument_data(
 
     let row = sqlx::query(
         r#"
-        INSERT INTO qa_lims_instrument_data 
-            (id, data_no, instrument_id, batch_no, protocol, raw_data, status, created_by)
-        VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'system')
+        INSERT INTO qa_lims_instrument_data
+            (id, data_no, instrument_id, batch_no, protocol, raw_data, status, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, 'pending', 'system', $7)
         RETURNING id, data_no, instrument_id, batch_no, protocol,
                   raw_data, parsed_data, status, quality_score,
                   error_msg, collected_at::TEXT, parsed_at::TEXT,
@@ -214,6 +216,7 @@ pub async fn create_instrument_data(
     .bind(&batch_no)
     .bind(&req.protocol)
     .bind(&req.raw_data)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

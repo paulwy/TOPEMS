@@ -158,8 +158,8 @@ pub async fn create_rule(
         (id, rule_name, rule_type, warehouse_id, warehouse_name,
          material_category, material_code, safety_stock, reorder_point,
          max_stock, safety_factor, lead_time_days, consumption_days,
-         enabled, priority_order, remarks, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+         enabled, priority_order, remarks, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING id, rule_name, rule_type, warehouse_id, warehouse_name,
                   material_category, material_code, safety_stock, reorder_point,
                   max_stock, safety_factor, lead_time_days, consumption_days,
@@ -184,6 +184,7 @@ pub async fn create_rule(
     .bind(&req.remarks)
     .bind(now)
     .bind(now)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
     .fetch_one(&mut **txn)
     .await;
 

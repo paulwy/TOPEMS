@@ -1,6 +1,7 @@
-use axum::{extract::State, routing::get, Json, Router};
+use axum::{extract::State, routing::get, Extension, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
@@ -111,6 +112,7 @@ pub async fn list_records(
 
 pub async fn create_record(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreateRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
     let record_no = format!(
@@ -124,13 +126,14 @@ pub async fn create_record(
     };
 
     let row = sqlx::query(
-        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id::TEXT, record_no, task_id::TEXT, test_data, conclusion, recorded_by, recorded_at::TEXT, created_at::TEXT"
+        "INSERT INTO qa_lab_records (record_no, task_id, test_data, conclusion, recorded_by, recorded_at, tenant_id) VALUES ($1, $2, $3, $4, $5, NOW(), $6) RETURNING id::TEXT, record_no, task_id::TEXT, test_data, conclusion, recorded_by, recorded_at::TEXT, created_at::TEXT"
     )
     .bind(record_no)
     .bind(task_id)
     .bind(req.test_data)
     .bind(&req.conclusion)
     .bind(&req.recorded_by)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 

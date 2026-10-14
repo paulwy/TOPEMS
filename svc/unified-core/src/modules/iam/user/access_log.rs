@@ -352,8 +352,8 @@ pub async fn create_access_log(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO public.audit_logs (user_id, action, entity_type, entity_id, ip_address, user_agent, status, response_details, created_at)
-        VALUES ($1, $2, $3, $4, $5::inet, $6, $7, $8, NOW())
+        INSERT INTO public.audit_logs (user_id, action, entity_type, entity_id, ip_address, user_agent, status, response_details, created_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5::inet, $6, $7, $8, NOW(), COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, created_at
         "#,
     )

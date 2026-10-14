@@ -143,9 +143,9 @@ impl MaterializedView for PgVoucherSummaryView {
                 let total = rust_decimal::Decimal::from_f64(e.total_amount)
                     .unwrap_or(rust_decimal::Decimal::ZERO);
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO mv_voucher_summary 
-                     (id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, created_by, created_at, version)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1)
+                    only_own_schema_query!("finance", "INSERT INTO mv_voucher_summary
+                     (id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, created_by, created_at, version, tenant_id)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 1, '00000000-0000-0000-0000-000000000000')
                      ON CONFLICT (id) DO UPDATE SET
                          voucher_no = EXCLUDED.voucher_no,
                          voucher_date = EXCLUDED.voucher_date,
@@ -414,11 +414,11 @@ impl MaterializedView for PgReceivableAgingView {
                 let amount = rust_decimal::Decimal::from_f64(e.amount)
                     .unwrap_or(rust_decimal::Decimal::ZERO);
                 sqlx::query(
-                    only_own_schema_query!("finance", "INSERT INTO mv_receivable_aging 
-                     (id, customer_id, customer_name, total_amount, current_amount, 
-                      bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, 
-                      status, version, updated_at)
-                     VALUES ($1, $2, $3, $4, $5, 0, 0, 0, 0, 0, $6, 1, NOW())
+                    only_own_schema_query!("finance", "INSERT INTO mv_receivable_aging
+                     (id, customer_id, customer_name, total_amount, current_amount,
+                      bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount,
+                      status, version, updated_at, tenant_id)
+                     VALUES ($1, $2, $3, $4, $5, 0, 0, 0, 0, 0, $6, 1, NOW(), '00000000-0000-0000-0000-000000000000')
                      ON CONFLICT (id) DO UPDATE SET
                          customer_id = EXCLUDED.customer_id,
                          total_amount = EXCLUDED.total_amount,

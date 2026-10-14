@@ -176,8 +176,8 @@ impl GovernanceMaturity {
         };
 
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_maturity_assessments ({ASSESSMENT_COLS})
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"
+            "INSERT INTO master_data.mdm_maturity_assessments ({ASSESSMENT_COLS}, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         ))
         .bind(&assessment.id)
         .bind(dimension_str(&assessment.dimension))
@@ -192,8 +192,8 @@ impl GovernanceMaturity {
         .map_err(|e| TopemsError::BusinessLogic(format!("写入成熟度评估失败: {e}")))?;
 
         sqlx::query(
-            "INSERT INTO master_data.mdm_maturity_history (id, dimension, score, level, recorded_at)
-             VALUES ($1,$2,$3,$4,$5)",
+            "INSERT INTO master_data.mdm_maturity_history (id, dimension, score, level, recorded_at, tenant_id)
+             VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind(dimension_str(&assessment.dimension))
@@ -244,8 +244,8 @@ impl GovernanceMaturity {
         };
 
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_improvement_plans ({IMPROVEMENT_PLAN_COLS})
-             VALUES ($1,$2,$3,$4,$5,$6,$7)"
+            "INSERT INTO master_data.mdm_improvement_plans ({IMPROVEMENT_PLAN_COLS}, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         ))
         .bind(&plan.id)
         .bind(dimension_str(&plan.dimension))
@@ -423,7 +423,7 @@ impl MDMWorkflowEngine {
         };
 
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_workflows ({WORKFLOW_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"
+            "INSERT INTO master_data.mdm_workflows ({WORKFLOW_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         ))
         .bind(&workflow.id)
         .bind(&workflow.name)
@@ -474,8 +474,8 @@ impl MDMWorkflowEngine {
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
-            "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7)",
+            "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind(workflow_id)
@@ -626,8 +626,8 @@ impl MDMWorkflowEngine {
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
-            "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7)",
+            "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind(workflow_id)
@@ -685,8 +685,8 @@ impl MDMWorkflowEngine {
         .await
         .map_err(|e| TopemsError::BusinessLogic(format!("更新工作流失败: {e}")))?;
         sqlx::query(
-            "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at)
-             VALUES ($1,$2,$3,$4,$5,$6,$7)",
+            "INSERT INTO master_data.mdm_workflow_history (id, workflow_id, action, step_id, actor, comment, recorded_at, tenant_id)
+             VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind(workflow_id)
@@ -837,7 +837,7 @@ impl DataProductManager {
         };
 
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_data_products ({DATA_PRODUCT_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)"
+            "INSERT INTO master_data.mdm_data_products ({DATA_PRODUCT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         ))
         .bind(&product.id)
         .bind(&product.name)
@@ -913,7 +913,7 @@ impl DataProductManager {
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7)"
+            "INSERT INTO master_data.mdm_data_contracts ({DATA_CONTRACT_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         ))
         .bind(&contract.product_id)
         .bind(serde_json::to_value(&contract.schema).unwrap_or_default())
@@ -993,7 +993,7 @@ impl DataProductManager {
         };
 
         sqlx::query(&format!(
-            "INSERT INTO master_data.mdm_api_exposures ({API_EXPOSURE_COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7)"
+            "INSERT INTO master_data.mdm_api_exposures ({API_EXPOSURE_COLS}, tenant_id) VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
         ))
         .bind(&exposure.id)
         .bind(&exposure.product_id)
