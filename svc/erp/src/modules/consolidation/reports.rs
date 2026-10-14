@@ -180,8 +180,8 @@ pub async fn generate_report(
     let result = sqlx::query_as::<_, ConsolidationReport>(
         r#"
         INSERT INTO erp.consolidation_reports
-        (id, report_no, report_type, scope_id, period, year, quarter, month, status, company_count)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'calculating', $9)
+        (id, report_no, report_type, scope_id, period, year, quarter, month, status, company_count, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'calculating', $9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#,
     )

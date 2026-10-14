@@ -353,8 +353,8 @@ pub async fn create_dict_type(
 
     let result = sqlx::query_as::<_, DictType>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO erp.dict_types (id, code, name, category, description, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, 'active', $6, $7)
+        INSERT INTO erp.dict_types (id, code, name, category, description, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, 'active', $6, $7, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, code, name, category, description, status, created_at, updated_at
         "#),
     )
@@ -882,8 +882,8 @@ pub async fn create_dict_item(
 
     let result = sqlx::query_as::<_, DictItem>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
+        INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
         "#),
     )
@@ -1251,8 +1251,8 @@ pub async fn batch_create_dict_items(
 
         let result = sqlx::query_as::<_, DictItem>(
             only_own_schema_query!("erp", r#"
-            INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
+            INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
             "#),
         )

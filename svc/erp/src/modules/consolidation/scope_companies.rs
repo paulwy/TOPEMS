@@ -76,8 +76,8 @@ pub async fn add_scope_company(
     let result = sqlx::query_as::<_, ConsolidationScopeCompany>(
         r#"
         INSERT INTO erp.consolidation_scope_companies
-        (id, scope_id, company_id, is_parent, control_type, ownership_percentage, consolidation_percentage, minority_interest, effective_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        (id, scope_id, company_id, is_parent, control_type, ownership_percentage, consolidation_percentage, minority_interest, effective_date, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#,
     )

@@ -94,19 +94,26 @@ impl RlsMiddleware {
 
             // 空安全：current_setting('app.tenant_id') 未设置时返回空串，''::UUID 会报错；
             // 使用 NULLIF(...,'')::UUID 使未设置租户时仅放行 tenant_id IS NULL 的行。
+            // nil 上下文（超管/服务令牌由 tenant_middleware 固定为 nil UUID）全量放行，
+            // 与 tenant.rs 注释「超管/服务调用在受限 DB 用户下仍可全量访问」保持一致。
+            let nil_uuid = "00000000-0000-0000-0000-000000000000";
             let policy_sql = if policy_exists {
                 format!(
                     "ALTER POLICY {} ON {}.{} USING (
-                        tenant_id = NULLIF(current_setting('app.tenant_id'), '')::UUID OR tenant_id IS NULL
+                        tenant_id = NULLIF(current_setting('app.tenant_id'), '')::UUID
+                        OR tenant_id IS NULL
+                        OR NULLIF(current_setting('app.tenant_id'), '') = '{nil}'
                     )",
-                    policy_name, schema, table_name
+                    policy_name, schema, table_name, nil = nil_uuid
                 )
             } else {
                 format!(
                     "CREATE POLICY {} ON {}.{} FOR ALL USING (
-                        tenant_id = NULLIF(current_setting('app.tenant_id'), '')::UUID OR tenant_id IS NULL
+                        tenant_id = NULLIF(current_setting('app.tenant_id'), '')::UUID
+                        OR tenant_id IS NULL
+                        OR NULLIF(current_setting('app.tenant_id'), '') = '{nil}'
                     )",
-                    policy_name, schema, table_name
+                    policy_name, schema, table_name, nil = nil_uuid
                 )
             };
             sqlx::query(&policy_sql).execute(pool).await?;

@@ -178,11 +178,11 @@ pub async fn create_production_order(
             planned_start_date, planned_end_date,
             workshop_id, workshop_name, priority, notes,
             created_at, updated_at
-        ) VALUES (
+        , tenant_id) VALUES (
             $1, $2, $3, $4, $5, 0, 'pending', $6,
             $7, $8, $9, $10, $11, $12, $13, $14,
             $15, $15
-        )
+        , COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, order_no, product_id, product_name, product_code,
                   quantity::float8 AS quantity, completed_quantity::float8 AS completed_quantity, status, source,
                   source_order_id, source_order_number,

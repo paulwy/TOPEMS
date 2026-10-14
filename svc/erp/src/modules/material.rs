@@ -258,7 +258,7 @@ pub async fn create_material(
     }
 
     let result = sqlx::query_as::<_, Material>(
-        only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, name, specification, unit, category, brand, model, barcode, safety_stock::float8 AS safety_stock, unit_price::float8 AS unit_price, tax_rate::float8 AS tax_rate, description, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -447,7 +447,7 @@ pub async fn import_materials(
             continue;
         }
         let result = sqlx::query(
-            only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) ON CONFLICT (code) DO NOTHING"),
+            only_own_schema_query!("erp", "INSERT INTO erp.materials (code, name, specification, unit, category, brand, model, barcode, safety_stock, unit_price, tax_rate, description, status, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) ON CONFLICT (code) DO NOTHING"),
         )
         .bind(&item.code)
         .bind(&item.name)

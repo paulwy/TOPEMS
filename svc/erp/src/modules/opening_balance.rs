@@ -204,8 +204,8 @@ pub async fn create_opening_balance(
 
     let result = sqlx::query_as::<_, OpeningBalance>(
         only_own_schema_query!("erp", r#"
-        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at
         "#),
     )
@@ -573,8 +573,8 @@ pub async fn import_opening_balances(
 
         let result = sqlx::query(
             only_own_schema_query!("erp", r#"
-            INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance, credit_balance, created_at, updated_at, tenant_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
             "#),
         )
         .bind(Uuid::new_v4())
@@ -666,8 +666,8 @@ pub async fn carry_forward_opening_balance(
     let request_data = serde_json::to_value(&req).ok();
 
     let query = r#"
-        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at)
-        SELECT uuid_generate_v4(), company_id, subject_code, subject_name, $2, debit_balance, credit_balance, NOW(), NOW()
+        INSERT INTO erp.opening_balances (id, company_id, subject_code, subject_name, period, debit_balance::float8 AS debit_balance, credit_balance::float8 AS credit_balance, created_at, updated_at, tenant_id)
+        SELECT uuid_generate_v4(), company_id, subject_code, subject_name, $2, debit_balance, credit_balance, NOW(), NOW(), COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')
         FROM erp.opening_balances
         WHERE period = $1
         ON CONFLICT (company_id, subject_code, period) DO UPDATE SET

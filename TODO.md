@@ -1671,3 +1671,32 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 2. **BACKFILL_TOKEN 配置 → 已完成**：`.env.example` 增补配置段（需含 exp 字段的远期服务令牌，erp 认证要求 exp；`is_superuser=true` + `permissions=["*"]`，否则快照接口 403 缺 erp:admin）；本地 `.env` 已配。
 3. **观察项（保留）**：创建客户行 tenant_id 为 NULL（k1 token tenant_id=0000…0001 未落入行，RLS policy `tenant_id IS NULL` 分支放行可见）——客户创建租户注入的既有行为，非 B1 投影问题，仅记录。
 - 本轮临时进程 erp/search 为 E2E 起停，现场保留 monolith 8099；投影表 GRANT 已随迁移固化。
+
+## B7 剩余现状核实（2026-10-15）✅ 已收敛，无待办
+
+> TODO 历史「B7 剩余（后续批次候选，按业务层 anyhow 计数：server 41/shared-ai 24/…）」为早期记录。本轮全仓核实：业务层 anyhow 已清零，剩余 43 处全部为**合法边界**——main.rs 进程边界（server/ai/integration/analytics/unified-core/ticket/erp 的 `main() -> anyhow::Result` 与初始化守卫：ai DIFY/DOCUMENTS/VECTORS OnceLock、ticket DB 表 fail-fast、erp 降级客户端构建）、shared-bootstrap 进程边界 + 测试、shared-core `impl From<anyhow::Error> for TopemsError` 转换桥。`scripts/ci/check-error-handling.cjs`（anyhow-in-business：业务层禁止、仅 main/bootstrap 边界允许）exit 0 通过。**结论：B7 剩余项无需再实施**，历史计数标记为已过时。
+
+## B1 观察项「erp 租户隔离」核查 → 修复（2026-10-15）✅ 已实施待提交
+
+> 背景：B1 E2E 观察项「create_customer 行 tenant_id 为 NULL」升级核查，确认系统性缺陷：
+> erp 59 处 INSERT 中 26 处缺 tenant_id 列（表无默认）→ 行落 NULL → 落入 RLS `tenant_id IS NULL`
+> 豁免区 → 跨租户任意可见。audit_logs 814 行全 NULL 同源（写入方未设租户）。
+
+**修复（代码）**：
+- 26 处 INSERT 补 `tenant_id`：HTTP 写路径（25 处）用 `COALESCE(NULLIF(current_setting('app.tenant_id'), '')::UUID, nil-UUID)`（请求 RLS txn 事务级 current_setting 由 tenant_middleware 设置），事件路径 event_idempotency 用 `payload.tenant_id.unwrap_or(nil)`（与 receivables 先例一致）；`only_own_schema_query!` 宏内 SQL 与 INSERT-SELECT（opening_balance 跨期复制）同步处理。
+- audit：`shared-db` AuditLogService / SchemaAwareAuditLogService 的 INSERT tenant_id 绑定改 `COALESCE($1, current_setting, nil)`（一处修复全服务收益）。
+- RLS policy 生成器（`lib/shared-db/src/rls.rs`）：policy 增加 nil 上下文（超管/服务令牌）全量放行分支——对齐 tenant.rs 注释「超管/服务调用全量访问」，修复「超管 RLS 只豁免 zero 字面量、看不到普通租户行」的缺陷。
+
+**修复（DB migration 72/73）**：
+- 72：回填 erp.customers/audit_logs/sales_orders NULL → nil（按 pg_stat 判断，仅 3 表）。
+- 73：全 erp 表回填 NULL → nil（补 72 遗漏，dict_types 等 44 行）；顺带修复 `prevent_archived_dict_write` 触发器函数（① 无条件引用 NEW.type_id 使 dict_types UPDATE/DELETE 报错、② 引用不存在的 erp.archive_marks、③ BEFORE DELETE 时 RETURN NEW(NULL) 静默取消删除——改为 TG_OP=DELETE 分支 RETURN OLD + dict_items 专用 type_id 检查先取局部变量）。
+
+**验证（live DB + 实测）**：
+- SQL 三层：topems_app SET 0001 → dict_types 仅见自己行（1）；SET nil → 全量（45）；业务新行落正确租户（租户 0001 token 创建 → 行 0001；超管创建 → nil）。
+- erp 902 测试全绿；门禁 error-handling / rls-permissions exit 0；cargo check 通过。
+- E2E：租户 0001 仅见自己数据 ✓；超管（nil 上下文）全量 ✓；测试数据已清理。
+
+**遗留（后续批次候选）**：
+- `dict_cache`（erp 进程内）缓存 key 仅基于 claims.tenant_id，不区分 RLS 上下文（超管/租户共享缓存 key，超管可能命中租户缓存视图）——需缓存 key 纳入 RLS 上下文或按角色隔离。
+- audit 完整租户注入：当前 audit 走 pool 连接（无请求级 current_setting），COALESCE 兜底落 nil；要落操作者租户需 log_audit_event 传入 claims.tenant_id（46 处调用面改造）。
+- dict 行级归档保护（archive_marks）表不存在，归档检查为空实现，删除放行。

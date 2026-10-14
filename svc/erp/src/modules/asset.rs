@@ -147,8 +147,8 @@ pub async fn create_asset(
     let result = sqlx::query_as::<_, Asset>(
         only_own_schema_query!("erp", "
         INSERT INTO erp.assets (id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
-                                 serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'in_use', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+                                 serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'in_use', $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, asset_number, name, category, brand, model, purchase_date, purchase_amount, location, responsible_id, status, created_at, updated_at,
                   serial_number, manufacturer, rated_power, rated_voltage, rated_current, specifications, image_url, department
         "),

@@ -2223,9 +2223,10 @@ impl ErpEventHandlers {
         // 幂等：账本插入冲突 = 已处理过，直接收敛返回
         let key = format!("mes_work_report:{}", payload.work_report_id);
         let inserted = sqlx::query(
-            "INSERT INTO erp.event_idempotency (idempotency_key, event_type) VALUES ($1, 'MesWorkReportSubmitted') ON CONFLICT (idempotency_key) DO NOTHING",
+            "INSERT INTO erp.event_idempotency (idempotency_key, event_type, tenant_id) VALUES ($1, 'MesWorkReportSubmitted', $2) ON CONFLICT (idempotency_key) DO NOTHING",
         )
         .bind(&key)
+        .bind(payload.tenant_id.unwrap_or(uuid::Uuid::nil()))
         .execute(&self.db)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("写入幂等账本失败: {}", e)))?;

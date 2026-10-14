@@ -238,8 +238,8 @@ pub async fn create_asset_category(
 
     let row = match sqlx::query(only_own_schema_query!(
         "erp",
-        "INSERT INTO erp.asset_categories (name, code, parent_id, description, status, name_en) \
-         VALUES ($1, $2, $3, $4, $5, $6) \
+        "INSERT INTO erp.asset_categories (name, code, parent_id, description, status, name_en, tenant_id) \
+         VALUES ($1, $2, $3, $4, $5, $6, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
          RETURNING id, CASE WHEN $7 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, \
                   code, parent_id, description, status, created_at, updated_at"
     ))

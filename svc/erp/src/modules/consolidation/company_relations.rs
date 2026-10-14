@@ -136,8 +136,8 @@ pub async fn create_company_relation(
     let result = sqlx::query_as::<_, CompanyRelation>(
         r#"
         INSERT INTO erp.company_relations
-        (id, parent_company_id, child_company_id, relation_type, ownership_percentage, control_percentage, effective_date, expiry_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (id, parent_company_id, child_company_id, relation_type, ownership_percentage, control_percentage, effective_date, expiry_date, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#,
     )

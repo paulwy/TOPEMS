@@ -281,7 +281,7 @@ pub async fn create_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -657,7 +657,7 @@ pub async fn batch_create_customers(
     for req in &body.customers {
         let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
             "erp",
-            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
         ))
         .bind(&req.code).bind(&req.name).bind(&req.short_name).bind(&req.contact_person)
         .bind(&req.contact_phone).bind(&req.email).bind(&req.address).bind(&req.province)

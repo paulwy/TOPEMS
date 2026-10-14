@@ -245,8 +245,8 @@ pub async fn create_fixed_asset(
         INSERT INTO erp.fixed_assets (id, asset_code, asset_name, asset_type, asset_category, 
                purchase_date, original_value, accumulated_depreciation, 
                depreciation_method, useful_life_months, depreciation_period, 
-               department_id, location, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+               department_id, location, status, created_at, updated_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                   original_value, accumulated_depreciation, net_value, depreciation_method, 
                   useful_life_months, depreciation_period, department_id, 
