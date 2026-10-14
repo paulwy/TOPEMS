@@ -229,7 +229,7 @@ pub async fn list_projects(
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
-    let base_sql = "SELECT p.id, p.project_no, p.project_name, p.method_id, p.method_name, p.test_item, p.measurand, p.measurement_range, p.unit, p.status, p.evaluator, p.evaluation_date::TEXT, p.combined_uncertainty, p.expanded_uncertainty, p.coverage_factor, p.confidence_level, p.notes, p.created_at::TEXT, p.updated_at::TEXT FROM qa_lims_uncertainty_projects p";
+    let base_sql = "SELECT p.id, p.project_no, p.project_name, p.method_id, p.method_name, p.test_item, p.measurand, p.measurement_range, p.unit, p.status, p.evaluator, p.evaluation_date::TEXT, p.combined_uncertainty, p.expanded_uncertainty, p.coverage_factor, p.confidence_level, p.notes, p.created_at::TEXT, p.updated_at::TEXT, p.tenant_id FROM qa_lims_uncertainty_projects p";
 
     let sql = match (query.status.as_ref(), query.method_id.as_ref(), query.project_name.as_ref()) {
         (Some(_), Some(_), Some(_)) => format!("{} WHERE p.status = $1 AND p.method_id = $2 AND p.project_name LIKE $3 ORDER BY p.created_at DESC LIMIT $4 OFFSET $5", base_sql),
@@ -353,7 +353,7 @@ pub async fn create_project(
         RETURNING id, project_no, project_name, method_id, method_name, test_item,
                   measurand, measurement_range, unit, status, evaluator,
                   evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty,
-                  coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT
+                  coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(&project_no)
@@ -426,7 +426,7 @@ pub async fn get_project(
     };
 
     let row = sqlx::query(
-        "SELECT id, project_no, project_name, method_id, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty, coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id, project_no, project_name, method_id, method_name, test_item, measurand, measurement_range, unit, status, evaluator, evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty, coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_uncertainty_projects WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -498,7 +498,7 @@ pub async fn update_project(
         RETURNING id, project_no, project_name, method_id, method_name, test_item,
                   measurand, measurement_range, unit, status, evaluator,
                   evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty,
-                  coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT
+                  coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(id)
@@ -603,7 +603,7 @@ pub async fn list_sources(
         r#"
         SELECT id, project_id, source_name, source_type, description,
                distribution_type, sensitivity_coefficient, sort_order,
-               created_at::TEXT, updated_at::TEXT
+               created_at::TEXT, updated_at::TEXT, tenant_id
         FROM qa_lims_uncertainty_sources
         WHERE project_id = $1
         ORDER BY sort_order ASC, created_at ASC
@@ -670,7 +670,7 @@ pub async fn create_source(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, project_id, source_name, source_type, description,
                   distribution_type, sensitivity_coefficient, sort_order,
-                  created_at::TEXT, updated_at::TEXT
+                  created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(project_id)
@@ -744,7 +744,7 @@ pub async fn update_source(
         WHERE id = $1
         RETURNING id, project_id, source_name, source_type, description,
                   distribution_type, sensitivity_coefficient, sort_order,
-                  created_at::TEXT, updated_at::TEXT
+                  created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(id)
@@ -834,7 +834,7 @@ pub async fn list_components(
         SELECT c.id, c.project_id, c.source_id, s.source_name, c.component_type,
                c.component_name, c.standard_uncertainty, c.relative_uncertainty,
                c.sensitivity_coefficient, c.degrees_freedom, c.calculation_method,
-               c.parameters, c.description, c.created_at::TEXT, c.updated_at::TEXT
+               c.parameters, c.description, c.created_at::TEXT, c.updated_at::TEXT, c.tenant_id
         FROM qa_lims_uncertainty_components c
         LEFT JOIN qa_lims_uncertainty_sources s ON c.source_id = s.id
         WHERE c.project_id = $1
@@ -925,7 +925,7 @@ pub async fn create_component(
         RETURNING id, project_id, source_id, $13 as source_name, component_type,
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
-                  parameters, description, created_at::TEXT, updated_at::TEXT
+                  parameters, description, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(project_id)
@@ -1012,7 +1012,7 @@ pub async fn update_component(
         RETURNING id, project_id, source_id, NULL as source_name, component_type,
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
-                  parameters, description, created_at::TEXT, updated_at::TEXT
+                  parameters, description, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(id)
@@ -1147,7 +1147,7 @@ pub async fn calculate_type_a(
         RETURNING id, project_id, source_id, NULL as source_name, component_type,
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
-                  parameters, description, created_at::TEXT, updated_at::TEXT
+                  parameters, description, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(project_id)
@@ -1243,7 +1243,7 @@ pub async fn calculate_type_b(
         RETURNING id, project_id, source_id, NULL as source_name, component_type,
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
-                  parameters, description, created_at::TEXT, updated_at::TEXT
+                  parameters, description, created_at::TEXT, updated_at::TEXT, tenant_id
         "#,
     )
     .bind(project_id)
