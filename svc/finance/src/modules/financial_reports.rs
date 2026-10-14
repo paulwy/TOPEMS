@@ -2058,13 +2058,13 @@ pub async fn get_business_overview(
     .await
     .unwrap_or(0);
 
-    let total_debit: f64 = sqlx::query_scalar(
+    let total_debit: Decimal = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COALESCE(SUM(total_debit), 0) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(0.0);
+    .unwrap_or(Decimal::ZERO);
 
     let subject_count: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),
@@ -2349,7 +2349,9 @@ pub async fn get_cash_flow_analysis(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(String, f64, f64)> = sqlx::query_as(only_own_schema_query!(
+    // 金额聚合在 Decimal 域完成：DB 侧 SUM(numeric) 直接解码为 Decimal，
+    // 不经过 f64（避免 0.1+0.2 类尾差）；总额在 JSON 序列化前由 Decimal 求和。
+    let rows: Vec<(String, Decimal, Decimal)> = sqlx::query_as(only_own_schema_query!(
         "finance",
         r#"SELECT vi.account_code,
                   COALESCE(SUM(vi.debit), 0) as inflow,
@@ -2367,6 +2369,9 @@ pub async fn get_cash_flow_analysis(
     .await
     .unwrap_or_default();
 
+    let total_inflow: Decimal = rows.iter().map(|r| r.1).sum();
+    let total_outflow: Decimal = rows.iter().map(|r| r.2).sum();
+
     let cash_flows: Vec<serde_json::Value> = rows
         .into_iter()
         .map(|(code, inflow, outflow)| {
@@ -2383,8 +2388,8 @@ pub async fn get_cash_flow_analysis(
         serde_json::json!({
             "period": period,
             "cash_flows": cash_flows,
-            "total_inflow": cash_flows.iter().map(|c| c["inflow"].as_f64().unwrap_or(0.0)).sum::<f64>(),
-            "total_outflow": cash_flows.iter().map(|c| c["outflow"].as_f64().unwrap_or(0.0)).sum::<f64>(),
+            "total_inflow": total_inflow,
+            "total_outflow": total_outflow,
         }),
         "查询成功",
     ))
@@ -2397,7 +2402,7 @@ pub async fn get_expense_analysis(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let rows: Vec<(String, Option<String>, f64)> = sqlx::query_as(
+    let rows: Vec<(String, Option<String>, Decimal)> = sqlx::query_as(
         only_own_schema_query!("finance", r#"SELECT vi.account_code, vi.account_name,
                   COALESCE(SUM(vi.debit), 0) as expense_amount
            FROM finance.core_finance_voucher_lines vi
@@ -2414,6 +2419,9 @@ pub async fn get_expense_analysis(
     .await
     .unwrap_or_default();
 
+    // 金额聚合在 Decimal 域完成：总额在 JSON 序列化前由 Decimal 求和，不经 f64。
+    let total_expense: Decimal = rows.iter().map(|r| r.2).sum();
+
     let expenses: Vec<serde_json::Value> = rows
         .into_iter()
         .map(|(code, name, amount)| {
@@ -2429,7 +2437,7 @@ pub async fn get_expense_analysis(
         serde_json::json!({
             "period": period,
             "expenses": expenses,
-            "total_expense": expenses.iter().map(|e| e["expense_amount"].as_f64().unwrap_or(0.0)).sum::<f64>(),
+            "total_expense": total_expense,
         }),
         "查询成功",
     ))
@@ -2449,7 +2457,7 @@ pub async fn get_profit_analysis(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let period = params.get("period").cloned().unwrap_or_default();
 
-    let total_revenue: f64 = sqlx::query_scalar(
+    let total_revenue: Decimal = sqlx::query_scalar(
         only_own_schema_query!("finance", r#"SELECT COALESCE(SUM(vi.credit), 0)
            FROM finance.core_finance_voucher_lines vi
            JOIN finance.core_finance_vouchers v ON v.id = vi.voucher_id
@@ -2461,9 +2469,9 @@ pub async fn get_profit_analysis(
     .bind(&period)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(0.0);
+    .unwrap_or(Decimal::ZERO);
 
-    let total_cost: f64 = sqlx::query_scalar(only_own_schema_query!(
+    let total_cost: Decimal = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         r#"SELECT COALESCE(SUM(vi.debit), 0)
            FROM finance.core_finance_voucher_lines vi
@@ -2476,9 +2484,9 @@ pub async fn get_profit_analysis(
     .bind(&period)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(0.0);
+    .unwrap_or(Decimal::ZERO);
 
-    let total_expense: f64 = sqlx::query_scalar(only_own_schema_query!(
+    let total_expense: Decimal = sqlx::query_scalar(only_own_schema_query!(
         "finance",
         r#"SELECT COALESCE(SUM(vi.debit), 0)
            FROM finance.core_finance_voucher_lines vi
@@ -2491,10 +2499,21 @@ pub async fn get_profit_analysis(
     .bind(&period)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(0.0);
+    .unwrap_or(Decimal::ZERO);
 
+    // 金额加减在 Decimal 域完成；margin 为比率，最后一步才转 f64 用于展示。
     let gross_profit = total_revenue - total_cost;
     let net_profit = gross_profit - total_expense;
+    let gross_margin: f64 = if total_revenue > Decimal::ZERO {
+        (gross_profit / total_revenue).to_f64().unwrap_or(0.0)
+    } else {
+        0.0
+    };
+    let net_margin: f64 = if total_revenue > Decimal::ZERO {
+        (net_profit / total_revenue).to_f64().unwrap_or(0.0)
+    } else {
+        0.0
+    };
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -2504,8 +2523,8 @@ pub async fn get_profit_analysis(
             "gross_profit": gross_profit,
             "total_expense": total_expense,
             "net_profit": net_profit,
-            "gross_margin": if total_revenue > 0.0 { gross_profit / total_revenue } else { 0.0 },
-            "net_margin": if total_revenue > 0.0 { net_profit / total_revenue } else { 0.0 },
+            "gross_margin": gross_margin,
+            "net_margin": net_margin,
         }),
         "查询成功",
     ))
@@ -2549,13 +2568,13 @@ pub async fn get_financial_overview(
     .await
     .unwrap_or(0);
 
-    let total_amount: f64 = sqlx::query_scalar(
+    let total_amount: Decimal = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COALESCE(SUM(total_debit), 0) FROM finance.core_finance_vouchers WHERE period = $1 AND status = 'posted' AND deleted_at IS NULL"),
     )
     .bind(&period)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(0.0);
+    .unwrap_or(Decimal::ZERO);
 
     let subject_count: i64 = sqlx::query_scalar(
         only_own_schema_query!("finance", "SELECT COUNT(*) FROM finance.accounting_subjects WHERE status = 'active' AND deleted_at IS NULL"),

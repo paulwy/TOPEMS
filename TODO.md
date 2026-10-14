@@ -1,6 +1,17 @@
 
 ---
 
+## P1-2 finance 金额报表聚合 f64→Decimal（2026-10-14）✅
+
+> 读侧报表/预测聚合的金额累加/比较改在 Decimal 域完成；DB 侧 SQL SUM(numeric) 直接解 Decimal，Rust 侧求和用 rust_decimal；比率/统计字段（margin/百分比/置信区间/预测均值）保留 f64，仅最后一步展示转换。
+- `financial_reports.rs`：cash_flow/expense 行 SUM 解码 f64→Decimal（总额在 JSON 序列化前 Decimal 求和，不再 `as_f64()` 抽 JSON）；total_debit/total_revenue/total_cost/total_expense/total_amount query_scalar 解 Decimal；gross/net profit Decimal 加减，margin 比率最后转 f64。
+- `forecast_v53.rs`：BudgetVariance/BudgetItemInput/VarianceAnalysisResult/VarianceTrendPoint 的金额字段（budget/actual/variance/total_*）f64→Decimal（DB 列 numeric(18,2)）；analyze/get_report/analyze_trend/root_causes 合计均在 Decimal 域；测试字面量改 Decimal::from。
+- 验证：SQLX_OFFLINE cargo check -p topems-finance --lib 0 error/0 warning；cargo test -p topems-finance --lib 1141 passed/0 failed。
+- 差异实证：逐行累加 [0.1…1.1]，f64=5.6000000000000005 vs Decimal=5.6（尾差 5E-16）；0.1+0.2 f64=0.30000000000000004 vs Decimal=0.3。
+- crm 抽查：sales_forecast.rs:1054 为预测准确率均值（统计量，非金额台账聚合），不属本范围。
+
+---
+
 ## 防复发：storybook 配置第三次误删 + 约定文件保护护栏（2026-10-14）✅
 
 > 用户要求分析 `apps/web/.storybook/main.ts` / `preview.tsx` 的工作区删除是否合理。判定：**误删**（第三次同模式）。已恢复 + 建立保护护栏。

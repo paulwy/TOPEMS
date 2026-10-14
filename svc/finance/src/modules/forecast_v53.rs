@@ -23,6 +23,8 @@ use axum::{
     Router,
 };
 use chrono::{DateTime, Utc};
+use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::collections::HashMap;
@@ -166,9 +168,9 @@ pub struct BudgetVariance {
     pub id: Uuid,
     pub budget_item_id: String,
     pub period: String,
-    pub budget_amount: f64,
-    pub actual_amount: f64,
-    pub variance_amount: f64,
+    pub budget_amount: Decimal,
+    pub actual_amount: Decimal,
+    pub variance_amount: Decimal,
     pub variance_percentage: f64,
     pub classification: String,
     pub trend: String,
@@ -727,16 +729,16 @@ pub struct AnalyzeBudgetRequest {
 pub struct BudgetItemInput {
     pub item_id: String,
     pub item_name: String,
-    pub budget_amount: f64,
-    pub actual_amount: f64,
+    pub budget_amount: Decimal,
+    pub actual_amount: Decimal,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VarianceAnalysisResult {
     pub variances: Vec<BudgetVariance>,
-    pub total_budget: f64,
-    pub total_actual: f64,
-    pub total_variance: f64,
+    pub total_budget: Decimal,
+    pub total_actual: Decimal,
+    pub total_variance: Decimal,
     pub variance_percentage: f64,
     pub classification_summary: HashMap<String, i64>,
     pub root_causes: Vec<String>,
@@ -765,7 +767,7 @@ pub struct VarianceQueryParams {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VarianceTrendPoint {
     pub period: String,
-    pub variance_amount: f64,
+    pub variance_amount: Decimal,
     pub variance_percentage: f64,
     pub classification: String,
 }
@@ -787,19 +789,24 @@ impl BudgetAnalyzer {
     ) -> Result<VarianceAnalysisResult, sqlx::Error> {
         let now = Utc::now();
         let mut variances = Vec::new();
-        let mut total_budget = 0.0;
-        let mut total_actual = 0.0;
+        // 金额累加在 Decimal 域完成（budget/actual 来自请求体，DB 列为 numeric(18,2)）。
+        let mut total_budget = Decimal::ZERO;
+        let mut total_actual = Decimal::ZERO;
         let mut classification_summary: HashMap<String, i64> = HashMap::new();
 
         for item in &req.budget_items {
             let variance_amount = item.actual_amount - item.budget_amount;
-            let variance_percentage = if item.budget_amount.abs() > 0.001 {
-                (variance_amount / item.budget_amount) * 100.0
+            // 比率字段（百分比）最后一步才转 f64，金额本身不经过 f64。
+            let variance_percentage = if item.budget_amount != Decimal::ZERO {
+                (variance_amount / item.budget_amount * Decimal::from(100)).to_f64().unwrap_or(0.0)
             } else {
                 0.0
             };
 
-            let classification = Self::classify_variance(variance_amount, item.budget_amount);
+            let classification = Self::classify_variance(
+                variance_amount.to_f64().unwrap_or(0.0),
+                item.budget_amount.to_f64().unwrap_or(0.0),
+            );
             let trend = Self::detect_trend(variance_percentage);
 
             *classification_summary
@@ -826,8 +833,8 @@ impl BudgetAnalyzer {
         }
 
         let total_variance = total_actual - total_budget;
-        let variance_percentage = if total_budget.abs() > 0.001 {
-            (total_variance / total_budget) * 100.0
+        let variance_percentage = if total_budget != Decimal::ZERO {
+            (total_variance / total_budget * Decimal::from(100)).to_f64().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -908,7 +915,7 @@ impl BudgetAnalyzer {
             .collect();
 
         if !unfavorable.is_empty() {
-            let total_unfavorable: f64 = unfavorable.iter().map(|v| v.variance_amount).sum();
+            let total_unfavorable: Decimal = unfavorable.iter().map(|v| v.variance_amount).sum();
             causes.push(format!(
                 "共 {} 项不利差异，合计金额 {:.2}",
                 unfavorable.len(),
@@ -936,10 +943,11 @@ impl BudgetAnalyzer {
             .filter(|v| v.classification == "favorable")
             .collect();
         if !favorable.is_empty() {
+            let total_favorable: Decimal = favorable.iter().map(|v| v.variance_amount).sum();
             causes.push(format!(
                 "{} 项有利差异，合计金额 {:.2}",
                 favorable.len(),
-                favorable.iter().map(|v| v.variance_amount).sum::<f64>()
+                total_favorable
             ));
         }
 
@@ -1088,11 +1096,12 @@ impl BudgetAnalyzer {
     ) -> Result<VarianceAnalysisResult, sqlx::Error> {
         let variances = Self::get_variance(pool, entity_id, period, None).await?;
 
-        let total_budget: f64 = variances.iter().map(|v| v.budget_amount).sum();
-        let total_actual: f64 = variances.iter().map(|v| v.actual_amount).sum();
+        // 金额聚合在 Decimal 域完成（v.*_amount 来自 numeric(18,2) 列）。
+        let total_budget: Decimal = variances.iter().map(|v| v.budget_amount).sum();
+        let total_actual: Decimal = variances.iter().map(|v| v.actual_amount).sum();
         let total_variance = total_actual - total_budget;
-        let variance_percentage = if total_budget.abs() > 0.001 {
-            (total_variance / total_budget) * 100.0
+        let variance_percentage = if total_budget != Decimal::ZERO {
+            (total_variance / total_budget * Decimal::from(100)).to_f64().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -1142,8 +1151,9 @@ impl BudgetAnalyzer {
         }
 
         let mut points = Vec::new();
-        let mut total_variance_sum = 0.0;
-        let mut count = 0.0;
+        // 金额累加在 Decimal 域完成；count 仅作均值分母（均值为统计量，最后转 f64）。
+        let mut total_variance_sum = Decimal::ZERO;
+        let mut count: usize = 0;
 
         let mut periods: Vec<&String> = period_data.keys().collect();
         periods.sort();
@@ -1153,25 +1163,26 @@ impl BudgetAnalyzer {
                 Some(items) => items,
                 None => continue,
             };
-            let budget_sum: f64 = items.iter().map(|v| v.budget_amount).sum();
-            let actual_sum: f64 = items.iter().map(|v| v.actual_amount).sum();
+            let budget_sum: Decimal = items.iter().map(|v| v.budget_amount).sum();
+            let actual_sum: Decimal = items.iter().map(|v| v.actual_amount).sum();
             let variance_amount = actual_sum - budget_sum;
-            let variance_pct = if budget_sum.abs() > 0.001 {
-                (variance_amount / budget_sum) * 100.0
+            let variance_pct = if budget_sum != Decimal::ZERO {
+                (variance_amount / budget_sum * Decimal::from(100)).to_f64().unwrap_or(0.0)
             } else {
                 0.0
             };
 
-            let classification = if variance_amount.abs() < budget_sum.abs() * 0.02 {
+            let near_zero = Decimal::new(2, 2); // 0.02 容差
+            let classification = if variance_amount.abs() < budget_sum.abs() * near_zero {
                 VarianceClassification::Neutral.as_str().to_string()
-            } else if variance_amount > 0.0 {
+            } else if variance_amount > Decimal::ZERO {
                 VarianceClassification::Unfavorable.as_str().to_string()
             } else {
                 VarianceClassification::Favorable.as_str().to_string()
             };
 
             total_variance_sum += variance_amount;
-            count += 1.0;
+            count += 1;
 
             points.push(VarianceTrendPoint {
                 period: (*period).clone(),
@@ -1181,8 +1192,8 @@ impl BudgetAnalyzer {
             });
         }
 
-        let average_variance = if count > 0.0 {
-            total_variance_sum / count
+        let average_variance = if count > 0 {
+            (total_variance_sum / Decimal::from(count as i64)).to_f64().unwrap_or(0.0)
         } else {
             0.0
         };
@@ -1581,9 +1592,9 @@ mod tests {
             id: Uuid::new_v4(),
             budget_item_id: "item-1".into(),
             period: "2024-Q1".into(),
-            budget_amount: 1000.0,
-            actual_amount: 1200.0,
-            variance_amount: 200.0,
+            budget_amount: Decimal::from(1000),
+            actual_amount: Decimal::from(1200),
+            variance_amount: Decimal::from(200),
             variance_percentage: 20.0,
             classification: "unfavorable".into(),
             trend: "increasing".into(),
@@ -1651,8 +1662,8 @@ mod tests {
         let v = BudgetItemInput {
             item_id: "it-1".into(),
             item_name: "租金".into(),
-            budget_amount: 10000.0,
-            actual_amount: 9500.0,
+            budget_amount: Decimal::from(10000),
+            actual_amount: Decimal::from(9500),
         };
         roundtrip(&v);
     }
@@ -1678,18 +1689,18 @@ mod tests {
                 id: Uuid::new_v4(),
                 budget_item_id: "it-1".into(),
                 period: "2024-Q1".into(),
-                budget_amount: 1000.0,
-                actual_amount: 1200.0,
-                variance_amount: 200.0,
+                budget_amount: Decimal::from(1000),
+                actual_amount: Decimal::from(1200),
+                variance_amount: Decimal::from(200),
                 variance_percentage: 20.0,
                 classification: "unfavorable".into(),
                 trend: "stable".into(),
                 created_at: Utc::now(),
                 updated_at: Utc::now(),
             }],
-            total_budget: 1000.0,
-            total_actual: 1200.0,
-            total_variance: 200.0,
+            total_budget: Decimal::from(1000),
+            total_actual: Decimal::from(1200),
+            total_variance: Decimal::from(200),
             variance_percentage: 20.0,
             classification_summary: [("unfavorable".into(), 1i64)].into(),
             root_causes: vec!["成本上涨".into()],
@@ -1711,7 +1722,7 @@ mod tests {
     fn struct_variance_trend_point() {
         let v = VarianceTrendPoint {
             period: "2024-Q1".into(),
-            variance_amount: 200.0,
+            variance_amount: Decimal::from(200),
             variance_percentage: 20.0,
             classification: "unfavorable".into(),
         };
@@ -1723,7 +1734,7 @@ mod tests {
         let v = VarianceTrendAnalysis {
             points: vec![VarianceTrendPoint {
                 period: "2024-Q1".into(),
-                variance_amount: 100.0,
+                variance_amount: Decimal::from(100),
                 variance_percentage: 10.0,
                 classification: "unfavorable".into(),
             }],
