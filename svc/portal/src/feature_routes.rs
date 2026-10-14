@@ -1139,67 +1139,6 @@ pub fn build_feature_routes(
         "/api/portal/schema-versioning/versions/{version}/deprecate",
         put(modules::schema_versioning::handlers::deprecate_version_handler),
     )
-    // ==================== V51.0 超级网关: 多协议支持 + 智能路由 + 自适应降级 ====================
-    // GET /api/portal/smart-gateway/status — 网关状态
-    .route(
-        "/api/portal/smart-gateway/status",
-        get(modules::smart_gateway::get_gateway_status_handler),
-    )
-    // GET /api/portal/smart-gateway/routes — 路由列表
-    .route(
-        "/api/portal/smart-gateway/routes",
-        get(modules::smart_gateway::list_routes_handler),
-    )
-    // POST /api/portal/smart-gateway/routes — 创建路由
-    .route(
-        "/api/portal/smart-gateway/routes",
-        post(modules::smart_gateway::create_route_handler),
-    )
-    // DELETE /api/portal/smart-gateway/routes/{id} — 删除路由
-    .route(
-        "/api/portal/smart-gateway/routes/{id}",
-        delete(modules::smart_gateway::delete_route_handler),
-    )
-    // GET /api/portal/smart-gateway/protocols — 协议列表
-    .route(
-        "/api/portal/smart-gateway/protocols",
-        get(modules::smart_gateway::list_protocols_handler),
-    )
-    // POST /api/portal/smart-gateway/protocols/{name}/enable — 启用协议
-    .route(
-        "/api/portal/smart-gateway/protocols/{name}/enable",
-        post(modules::smart_gateway::enable_protocol_handler),
-    )
-    // POST /api/portal/smart-gateway/protocols/{name}/disable — 禁用协议
-    .route(
-        "/api/portal/smart-gateway/protocols/{name}/disable",
-        post(modules::smart_gateway::disable_protocol_handler),
-    )
-    // GET /api/portal/smart-gateway/degradation/status — 降级状态
-    .route(
-        "/api/portal/smart-gateway/degradation/status",
-        get(modules::smart_gateway::get_degradation_status_handler),
-    )
-    // POST /api/portal/smart-gateway/degradation/level — 设置降级级别
-    .route(
-        "/api/portal/smart-gateway/degradation/level",
-        post(modules::smart_gateway::set_degradation_level_handler),
-    )
-    // POST /api/portal/smart-gateway/degradation/evaluate — 评估降级
-    .route(
-        "/api/portal/smart-gateway/degradation/evaluate",
-        post(modules::smart_gateway::evaluate_degradation_handler),
-    )
-    // GET /api/portal/smart-gateway/health — 健康监控
-    .route(
-        "/api/portal/smart-gateway/health",
-        get(modules::smart_gateway::get_health_handler),
-    )
-    // GET /api/portal/smart-gateway/metrics — 网关指标
-    .route(
-        "/api/portal/smart-gateway/metrics",
-        get(modules::smart_gateway::get_metrics_handler),
-    )
     // ==================== V52.0 Phase 22: 自适应执行引擎 + AI 查询优化 + 流式订阅增强 ====================
     // --- 自适应执行引擎 ---
     // POST /api/portal/adaptive-execution/execute — 执行自适应查询
@@ -1278,69 +1217,6 @@ pub fn build_feature_routes(
     .route(
         "/api/portal/adaptive-execution/streams/metrics",
         get(modules::adaptive_execution::stream_metrics_handler),
-    )
-    // ==================== V53.0 BFF Phase 23: 联邦网关 V5 + 跨服务事务补偿 ====================
-    // --- 联邦网关 ---
-    // POST /api/portal/federation-gateway/subgraphs — 注册子图
-    .route(
-        "/api/portal/federation-gateway/subgraphs",
-        post(modules::federation_gateway::register_subgraph_handler),
-    )
-    // GET /api/portal/federation-gateway/subgraphs — 子图列表
-    .route(
-        "/api/portal/federation-gateway/subgraphs",
-        get(modules::federation_gateway::list_subgraphs_handler),
-    )
-    // DELETE /api/portal/federation-gateway/subgraphs/{id} — 删除子图
-    .route(
-        "/api/portal/federation-gateway/subgraphs/{id}",
-        delete(modules::federation_gateway::remove_subgraph_handler),
-    )
-    // POST /api/portal/federation-gateway/query — 执行联邦查询
-    .route(
-        "/api/portal/federation-gateway/query",
-        post(modules::federation_gateway::execute_federated_query_handler),
-    )
-    // GET /api/portal/federation-gateway/plan — 获取联邦查询计划
-    .route(
-        "/api/portal/federation-gateway/plan",
-        get(modules::federation_gateway::get_federation_plan_handler),
-    )
-    // GET /api/portal/federation-gateway/health — 联邦健康检查
-    .route(
-        "/api/portal/federation-gateway/health",
-        get(modules::federation_gateway::federation_health_handler),
-    )
-    // --- 跨服务事务 ---
-    // POST /api/portal/federation-gateway/transactions — 启动事务
-    .route(
-        "/api/portal/federation-gateway/transactions",
-        post(modules::federation_gateway::start_transaction_handler),
-    )
-    // POST /api/portal/federation-gateway/transactions/{id}/commit — 提交事务
-    .route(
-        "/api/portal/federation-gateway/transactions/{id}/commit",
-        post(modules::federation_gateway::commit_transaction_handler),
-    )
-    // POST /api/portal/federation-gateway/transactions/{id}/compensate — 补偿事务
-    .route(
-        "/api/portal/federation-gateway/transactions/{id}/compensate",
-        post(modules::federation_gateway::compensate_transaction_handler),
-    )
-    // GET /api/portal/federation-gateway/transactions — 事务列表
-    .route(
-        "/api/portal/federation-gateway/transactions",
-        get(modules::federation_gateway::list_transactions_handler),
-    )
-    // GET /api/portal/federation-gateway/transactions/{id} — 事务详情
-    .route(
-        "/api/portal/federation-gateway/transactions/{id}",
-        get(modules::federation_gateway::get_transaction_handler),
-    )
-    // POST /api/portal/federation-gateway/transactions/{id}/recover — 恢复事务
-    .route(
-        "/api/portal/federation-gateway/transactions/{id}/recover",
-        post(modules::federation_gateway::recover_transaction_handler),
     )
     // ==================== V53.0 Phase 24: GraphQL 智能网关 — AI 驱动查询路由 + 自动 Schema Stitching ====================
     // --- AI 查询路由 ---
