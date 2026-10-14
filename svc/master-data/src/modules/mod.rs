@@ -31,7 +31,6 @@ pub mod dict;
 /// 未 seed/load 前为 no-op，避免启动空集合覆盖库内既有快照。
 pub async fn flush_all() {
     quality_v51::background_flush().await;
-    versioning_v54::background_flush().await;
     commercial_v55::background_flush().await;
     metadata_v60::background_flush().await;
 }

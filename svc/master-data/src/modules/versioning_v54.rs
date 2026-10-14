@@ -10,8 +10,6 @@ use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use sqlx::Row;
 use std::collections::HashMap;
-use std::sync::LazyLock;
-use tokio::sync::Mutex;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
@@ -310,272 +308,15 @@ pub struct UserRoleAssignment {
 
 // ==================== 内存存储 ====================
 
-struct V54Store {
-    version_snapshots: Mutex<Vec<VersionSnapshot>>,
-    version_branches: Mutex<Vec<VersionBranch>>,
-    audit_events: Mutex<Vec<AuditEvent>>,
-    audit_export_logs: Mutex<Vec<AuditExportLog>>,
-    permission_roles: Mutex<Vec<PermissionRole>>,
-    data_permissions: Mutex<Vec<DataPermission>>,
-    user_role_assignments: Mutex<Vec<UserRoleAssignment>>,
-    initialized: Mutex<bool>,
-}
 
-fn get_v54_store() -> &'static V54Store {
-    static STORE: LazyLock<V54Store> = LazyLock::new(|| V54Store {
-        version_snapshots: Mutex::new(Vec::new()),
-        version_branches: Mutex::new(Vec::new()),
-        audit_events: Mutex::new(Vec::new()),
-        audit_export_logs: Mutex::new(Vec::new()),
-        permission_roles: Mutex::new(Vec::new()),
-        data_permissions: Mutex::new(Vec::new()),
-        user_role_assignments: Mutex::new(Vec::new()),
-        initialized: Mutex::new(false),
-    });
-    &STORE
-}
 
 // ==================== 初始化种子数据 ====================
 
-async fn ensure_initialized() {
-    let store = get_v54_store();
-    let mut initialized = store.initialized.lock().await;
-    if *initialized {
-        return;
-    }
-
-    // U4：优先从库恢复既有快照；命中则跳过 demo seed。
-    if crate::modules::persist::enabled() && persist_load().await {
-        *initialized = true;
-        return;
-    }
-
-    let now = chrono::Utc::now();
-    let now_str = now.to_rfc3339();
-
-    let main_branch = VersionBranch {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "main".to_string(),
-        branch_type: BranchType::Main,
-        parent_branch: None,
-        created_at: now_str.clone(),
-        created_by: "system".to_string(),
-        merged_at: None,
-        merged_by: None,
-        status: "active".to_string(),
-    };
-
-    let feature_branch = VersionBranch {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "feature/customer-v2".to_string(),
-        branch_type: BranchType::Feature,
-        parent_branch: Some(main_branch.id.clone()),
-        created_at: now_str.clone(),
-        created_by: "admin".to_string(),
-        merged_at: None,
-        merged_by: None,
-        status: "active".to_string(),
-    };
-
-    let snapshot = VersionSnapshot {
-        id: uuid::Uuid::new_v4().to_string(),
-        entity_type: "customer".to_string(),
-        entity_id: "C0001".to_string(),
-        version: "v1.0.0".to_string(),
-        data: serde_json::json!({
-            "name": "阿里巴巴集团",
-            "code": "C0001",
-            "industry": "technology",
-            "status": "active"
-        }),
-        hash: "a1b2c3d4e5f6".to_string(),
-        created_by: "admin".to_string(),
-        created_at: now_str.clone(),
-        comment: "初始版本".to_string(),
-    };
-
-    let audit_event = AuditEvent {
-        id: uuid::Uuid::new_v4().to_string(),
-        event_type: AuditEventType::Create,
-        category: AuditEventCategory::Modification,
-        entity_type: "customer".to_string(),
-        entity_id: "C0001".to_string(),
-        user_id: "admin".to_string(),
-        old_value: None,
-        new_value: Some(snapshot.data.clone()),
-        ip_address: "127.0.0.1".to_string(),
-        timestamp: now_str.clone(),
-        session_id: uuid::Uuid::new_v4().to_string(),
-    };
-
-    let admin_role = PermissionRole {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "admin".to_string(),
-        description: "系统管理员，拥有所有权限".to_string(),
-        inherited_from: None,
-        created_at: now_str.clone(),
-    };
-
-    let editor_role = PermissionRole {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "editor".to_string(),
-        description: "数据编辑，可读写数据".to_string(),
-        inherited_from: Some(admin_role.id.clone()),
-        created_at: now_str.clone(),
-    };
-
-    let viewer_role = PermissionRole {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: "viewer".to_string(),
-        description: "数据查看者，只读".to_string(),
-        inherited_from: Some(editor_role.id.clone()),
-        created_at: now_str.clone(),
-    };
-
-    let perm = DataPermission {
-        id: uuid::Uuid::new_v4().to_string(),
-        role_id: editor_role.id.clone(),
-        resource_type: "customer".to_string(),
-        resource_id: "*".to_string(),
-        action: PermissionAction::Read,
-        condition: None,
-        inherited: false,
-    };
-
-    let user_assign = UserRoleAssignment {
-        id: uuid::Uuid::new_v4().to_string(),
-        user_id: "user-001".to_string(),
-        role_id: editor_role.id.clone(),
-        assigned_at: now_str.clone(),
-    };
-
-    *store.version_snapshots.lock().await = vec![snapshot];
-    *store.version_branches.lock().await = vec![main_branch, feature_branch];
-    *store.audit_events.lock().await = vec![audit_event];
-    *store.audit_export_logs.lock().await = Vec::new();
-    *store.permission_roles.lock().await = vec![admin_role, editor_role, viewer_role];
-    *store.data_permissions.lock().await = vec![perm];
-    *store.user_role_assignments.lock().await = vec![user_assign];
-
-    // U4：首次 seed 后落库。
-    if crate::modules::persist::enabled() {
-        persist_save().await;
-    }
-
-    *initialized = true;
-}
 
 // ==================== U4 持久化 ====================
 
-async fn persist_load() -> bool {
-    let store = get_v54_store();
-    let mut restored = false;
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<VersionSnapshot>>("versioning_v54", "version_snapshots")
-            .await
-    {
-        *store.version_snapshots.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<VersionBranch>>("versioning_v54", "version_branches")
-            .await
-    {
-        *store.version_branches.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<AuditEvent>>("versioning_v54", "audit_events").await
-    {
-        *store.audit_events.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<AuditExportLog>>("versioning_v54", "audit_export_logs")
-            .await
-    {
-        *store.audit_export_logs.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<PermissionRole>>("versioning_v54", "permission_roles")
-            .await
-    {
-        *store.permission_roles.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<DataPermission>>("versioning_v54", "data_permissions")
-            .await
-    {
-        *store.data_permissions.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<UserRoleAssignment>>(
-        "versioning_v54",
-        "user_role_assignments",
-    )
-    .await
-    {
-        *store.user_role_assignments.lock().await = v;
-        restored = true;
-    }
-    restored
-}
 
-async fn persist_save() {
-    let store = get_v54_store();
-    crate::modules::persist::save(
-        "versioning_v54",
-        "version_snapshots",
-        &*store.version_snapshots.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "versioning_v54",
-        "version_branches",
-        &*store.version_branches.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "versioning_v54",
-        "audit_events",
-        &*store.audit_events.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "versioning_v54",
-        "audit_export_logs",
-        &*store.audit_export_logs.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "versioning_v54",
-        "permission_roles",
-        &*store.permission_roles.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "versioning_v54",
-        "data_permissions",
-        &*store.data_permissions.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "versioning_v54",
-        "user_role_assignments",
-        &*store.user_role_assignments.lock().await,
-    )
-    .await;
-}
 
-pub async fn background_flush() {
-    let store = get_v54_store();
-    if !*store.initialized.lock().await {
-        return;
-    }
-    persist_save().await;
-}
 
 // ==================== 请求/响应结构 ====================
 
@@ -852,8 +593,6 @@ pub async fn create_snapshot(
     State(state): State<AppState>,
     Json(req): Json<CreateSnapshotRequest>,
 ) -> Json<ApiResponse<VersionSnapshot>> {
-    let store = get_v54_store();
-
     // K1：版本号基于真表现有快照推导（不再读内存 Store）。
     let rows = sqlx::query(&format!(
         "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
@@ -903,22 +642,27 @@ pub async fn create_snapshot(
         return Json(ApiResponse::error(500, &format!("写入版本快照失败: {e}")));
     }
 
-    // 审计事件暂仍落内存 Store（后续批次接真表，见 TODO.md K1 backlog）。
-    let mut events = store.audit_events.lock().await;
-    events.push(AuditEvent {
-        id: uuid::Uuid::new_v4().to_string(),
-        event_type: AuditEventType::Create,
-        category: AuditEventCategory::Modification,
-        entity_type: snapshot.entity_type.clone(),
-        entity_id: snapshot.entity_id.clone(),
-        user_id: snapshot.created_by.clone(),
-        old_value: None,
-        new_value: Some(snapshot.data.clone()),
-        ip_address: "127.0.0.1".to_string(),
-        timestamp: snapshot.created_at.clone(),
-        session_id: uuid::Uuid::new_v4().to_string(),
-    });
-    crate::modules::persist::save("versioning_v54", "audit_events", &*events).await;
+    // 审计事件写真表（权威存储）。
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_audit_events (id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
+    )
+    .bind(&snapshot.id)
+    .bind("create")
+    .bind("modification")
+    .bind(&snapshot.entity_type)
+    .bind(&snapshot.entity_id)
+    .bind(&snapshot.created_by)
+    .bind(Option::<serde_json::Value>::None)
+    .bind(&snapshot.data)
+    .bind("127.0.0.1")
+    .bind(&snapshot.created_at)
+    .bind(uuid::Uuid::new_v4().to_string())
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入审计事件失败: {e}")));
+    }
 
     Json(ApiResponse::success(snapshot, "版本快照已创建"))
 }
@@ -1098,23 +842,27 @@ pub async fn restore_version(
         return Json(ApiResponse::error(500, &format!("写回版本快照失败: {e}")));
     }
 
-    // 审计事件暂仍落内存 Store（后续批次接真表）。
-    let store = get_v54_store();
-    let mut events = store.audit_events.lock().await;
-    events.push(AuditEvent {
-        id: uuid::Uuid::new_v4().to_string(),
-        event_type: AuditEventType::Update,
-        category: AuditEventCategory::Modification,
-        entity_type: restored.entity_type.clone(),
-        entity_id: restored.entity_id.clone(),
-        user_id: restored.created_by.clone(),
-        old_value: None,
-        new_value: Some(restored.data.clone()),
-        ip_address: "127.0.0.1".to_string(),
-        timestamp: restored.created_at.clone(),
-        session_id: uuid::Uuid::new_v4().to_string(),
-    });
-    crate::modules::persist::save("versioning_v54", "audit_events", &*events).await;
+    // 审计事件写真表（权威存储）。
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_audit_events (id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)",
+    )
+    .bind(&restored.id)
+    .bind("update")
+    .bind("modification")
+    .bind(&restored.entity_type)
+    .bind(&restored.entity_id)
+    .bind(&restored.created_by)
+    .bind(Option::<serde_json::Value>::None)
+    .bind(&restored.data)
+    .bind("127.0.0.1")
+    .bind(&restored.created_at)
+    .bind(uuid::Uuid::new_v4().to_string())
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入审计事件失败: {e}")));
+    }
 
     Json(ApiResponse::success(restored, "版本已恢复"))
 }
@@ -1196,18 +944,13 @@ pub async fn list_history(
     tag = "versioning_v54"
 )]
 pub async fn create_branch(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateBranchRequest>,
 ) -> Json<ApiResponse<VersionBranch>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let mut branches = store.version_branches.lock().await;
-
-    let branch_type = req
-        .branch_type
-        .as_deref()
-        .map(branch_type_from_str)
-        .unwrap_or(BranchType::Feature);
+    let branch_type = match req.branch_type.as_deref() {
+        Some(t) => branch_type_from_str(t),
+        None => BranchType::Feature,
+    };
     let now = chrono::Utc::now().to_rfc3339();
 
     let branch = VersionBranch {
@@ -1222,10 +965,24 @@ pub async fn create_branch(
         status: "active".to_string(),
     };
 
-    branches.push(branch.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "version_branches", &*branches).await;
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_version_branches (id, name, branch_type, parent_branch, created_at, created_by, merged_at, merged_by, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)",
+    )
+    .bind(&branch.id)
+    .bind(&branch.name)
+    .bind(branch_type_to_str(&branch.branch_type))
+    .bind(&branch.parent_branch)
+    .bind(&branch.created_at)
+    .bind(&branch.created_by)
+    .bind(&branch.merged_at)
+    .bind(&branch.merged_by)
+    .bind(&branch.status)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("创建分支失败: {e}")));
+    }
 
     Json(ApiResponse::success(branch, "分支已创建"))
 }
@@ -1241,32 +998,38 @@ pub async fn create_branch(
     tag = "versioning_v54"
 )]
 pub async fn merge_branch(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<MergeBranchRequest>,
 ) -> Json<ApiResponse<VersionBranch>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let mut branches = store.version_branches.lock().await;
-
-    let source_exists = branches.iter().any(|b| b.name == req.source_branch);
-    if !source_exists {
+    let source_exists: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM master_data.mdm_version_branches WHERE name = $1",
+    )
+    .bind(&req.source_branch)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
+    if source_exists == 0 {
         return Json(ApiResponse::error(404, "源分支不存在"));
     }
 
-    let target = branches.iter_mut().find(|b| b.name == req.target_branch);
-    let Some(target) = target else {
+    let now = chrono::Utc::now().to_rfc3339();
+    let row = sqlx::query(&format!(
+        "UPDATE master_data.mdm_version_branches
+         SET merged_at = $1, merged_by = $2, status = 'merged'
+         WHERE name = $3
+         RETURNING {BRANCH_COLS}"
+    ))
+    .bind(&now)
+    .bind("current_user")
+    .bind(&req.target_branch)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    let Some(row) = row else {
         return Json(ApiResponse::error(404, "目标分支不存在"));
     };
-
-    let now = chrono::Utc::now().to_rfc3339();
-    target.merged_at = Some(now);
-    target.merged_by = Some("current_user".to_string());
-    target.status = "merged".to_string();
-    let merged = target.clone();
-    // 结束可变借用（NLL 已自动结束），允许同步直写
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "version_branches", &*branches).await;
+    let merged = version_branch_from_row(&row);
 
     Json(ApiResponse::success(merged, "分支已合并"))
 }
@@ -1290,71 +1053,51 @@ pub async fn merge_branch(
     clippy::cast_sign_loss
 )]
 pub async fn query_audit_log(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<AuditLogQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<AuditEvent>>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let events = store.audit_events.lock().await;
-
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
-    let mut filtered: Vec<AuditEvent> = events
-        .iter()
-        .filter(|e| {
-            if let Some(et) = &params.entity_type {
-                if &e.entity_type != et {
-                    return false;
-                }
-            }
-            if let Some(eid) = &params.entity_id {
-                if &e.entity_id != eid {
-                    return false;
-                }
-            }
-            if let Some(ev) = &params.event_type {
-                let type_str = match e.event_type {
-                    AuditEventType::Create => "create",
-                    AuditEventType::Read => "read",
-                    AuditEventType::Update => "update",
-                    AuditEventType::Delete => "delete",
-                    AuditEventType::Export => "export",
-                    AuditEventType::Import => "import",
-                };
-                if type_str != ev.as_str() {
-                    return false;
-                }
-            }
-            if let Some(cat) = &params.category {
-                let cat_str = match e.category {
-                    AuditEventCategory::DataAccess => "data_access",
-                    AuditEventCategory::Modification => "modification",
-                    AuditEventCategory::Administration => "administration",
-                    AuditEventCategory::Security => "security",
-                };
-                if cat_str != cat.as_str() {
-                    return false;
-                }
-            }
-            if let Some(uid) = &params.user_id {
-                if &e.user_id != uid {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let rows = sqlx::query(&format!(
+        "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
+         WHERE entity_type = COALESCE($1, entity_type)
+           AND entity_id = COALESCE($2, entity_id)
+           AND event_type = COALESCE($3, event_type)
+           AND category = COALESCE($4, category)
+           AND user_id = COALESCE($5, user_id)
+         ORDER BY timestamp DESC
+         LIMIT $6 OFFSET $7"
+    ))
+    .bind(params.entity_type.as_deref())
+    .bind(params.entity_id.as_deref())
+    .bind(params.event_type.as_deref())
+    .bind(params.category.as_deref())
+    .bind(params.user_id.as_deref())
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
 
-    filtered.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
-
-    let total = filtered.len() as i64;
-    let items: Vec<AuditEvent> = filtered
-        .into_iter()
-        .skip(((page - 1) * page_size) as usize)
-        .take(page_size as usize)
-        .collect();
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM master_data.mdm_audit_events
+         WHERE entity_type = COALESCE($1, entity_type)
+           AND entity_id = COALESCE($2, entity_id)
+           AND event_type = COALESCE($3, event_type)
+           AND category = COALESCE($4, category)
+           AND user_id = COALESCE($5, user_id)",
+    )
+    .bind(params.entity_type.as_deref())
+    .bind(params.entity_id.as_deref())
+    .bind(params.event_type.as_deref())
+    .bind(params.category.as_deref())
+    .bind(params.user_id.as_deref())
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -1388,49 +1131,37 @@ pub async fn query_audit_log(
     clippy::cast_sign_loss
 )]
 pub async fn get_user_activity(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(user_id): Path<String>,
     Query(params): Query<UserActivityQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<AuditEvent>>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let events = store.audit_events.lock().await;
-
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
-    let mut filtered: Vec<AuditEvent> = events
-        .iter()
-        .filter(|e| {
-            if e.user_id != user_id {
-                return false;
-            }
-            if let Some(ev) = &params.event_type {
-                let type_str = match e.event_type {
-                    AuditEventType::Create => "create",
-                    AuditEventType::Read => "read",
-                    AuditEventType::Update => "update",
-                    AuditEventType::Delete => "delete",
-                    AuditEventType::Export => "export",
-                    AuditEventType::Import => "import",
-                };
-                if type_str != ev.as_str() {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let rows = sqlx::query(&format!(
+        "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
+         WHERE user_id = $1 AND event_type = COALESCE($2, event_type)
+         ORDER BY timestamp DESC
+         LIMIT $3 OFFSET $4"
+    ))
+    .bind(&user_id)
+    .bind(params.event_type.as_deref())
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
 
-    filtered.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
-
-    let total = filtered.len() as i64;
-    let items: Vec<AuditEvent> = filtered
-        .into_iter()
-        .skip(((page - 1) * page_size) as usize)
-        .take(page_size as usize)
-        .collect();
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM master_data.mdm_audit_events WHERE user_id = $1 AND event_type = COALESCE($2, event_type)",
+    )
+    .bind(&user_id)
+    .bind(params.event_type.as_deref())
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -1465,49 +1196,39 @@ pub async fn get_user_activity(
     clippy::cast_sign_loss
 )]
 pub async fn get_entity_history(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<EntityHistoryQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<AuditEvent>>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let events = store.audit_events.lock().await;
-
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
-    let mut filtered: Vec<AuditEvent> = events
-        .iter()
-        .filter(|e| {
-            if e.entity_type != entity_type || e.entity_id != entity_id {
-                return false;
-            }
-            if let Some(ev) = &params.event_type {
-                let type_str = match e.event_type {
-                    AuditEventType::Create => "create",
-                    AuditEventType::Read => "read",
-                    AuditEventType::Update => "update",
-                    AuditEventType::Delete => "delete",
-                    AuditEventType::Export => "export",
-                    AuditEventType::Import => "import",
-                };
-                if type_str != ev.as_str() {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let rows = sqlx::query(&format!(
+        "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
+         WHERE entity_type = $1 AND entity_id = $2 AND event_type = COALESCE($3, event_type)
+         ORDER BY timestamp DESC
+         LIMIT $4 OFFSET $5"
+    ))
+    .bind(&entity_type)
+    .bind(&entity_id)
+    .bind(params.event_type.as_deref())
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
 
-    filtered.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
-
-    let total = filtered.len() as i64;
-    let items: Vec<AuditEvent> = filtered
-        .into_iter()
-        .skip(((page - 1) * page_size) as usize)
-        .take(page_size as usize)
-        .collect();
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM master_data.mdm_audit_events WHERE entity_type = $1 AND entity_id = $2 AND event_type = COALESCE($3, event_type)",
+    )
+    .bind(&entity_type)
+    .bind(&entity_id)
+    .bind(params.event_type.as_deref())
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -1533,44 +1254,43 @@ pub async fn get_entity_history(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn export_audit_log(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<ExportAuditLogRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let events = store.audit_events.lock().await;
-
-    let filtered: Vec<AuditEvent> = events
-        .iter()
-        .filter(|e| {
-            if let Some(et) = &req.entity_type {
-                if &e.entity_type != et {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let rows = sqlx::query(&format!(
+        "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events
+         WHERE entity_type = COALESCE($1, entity_type)
+         ORDER BY timestamp DESC"
+    ))
+    .bind(req.entity_type.as_deref())
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let filtered: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
 
     let record_count = filtered.len() as i64;
     let now = chrono::Utc::now().to_rfc3339();
+    let export_id = uuid::Uuid::new_v4().to_string();
 
-    drop(events);
-
-    let mut export_logs = store.audit_export_logs.lock().await;
-    export_logs.push(AuditExportLog {
-        id: uuid::Uuid::new_v4().to_string(),
-        user_id: "current_user".to_string(),
-        export_type: req.format.unwrap_or_else(|| "json".to_string()),
-        record_count,
-        exported_at: now.clone(),
-        ip_address: "127.0.0.1".to_string(),
-    });
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_audit_export_logs (id, user_id, export_type, record_count, exported_at, ip_address)
+         VALUES ($1,$2,$3,$4,$5,$6)",
+    )
+    .bind(&export_id)
+    .bind("current_user")
+    .bind(req.format.unwrap_or_else(|| "json".to_string()))
+    .bind(record_count)
+    .bind(&now)
+    .bind("127.0.0.1")
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入导出日志失败: {e}")));
+    }
 
     Json(ApiResponse::success(
         serde_json::json!({
-            "export_id": export_logs.last().unwrap().id,
+            "export_id": export_id,
             "record_count": record_count,
             "format": "json",
             "exported_at": now,
@@ -1592,12 +1312,16 @@ pub async fn export_audit_log(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_compliance_audit(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ComplianceAuditQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let events = store.audit_events.lock().await;
+    let rows = sqlx::query(&format!(
+        "SELECT {AUDIT_EVENT_COLS} FROM master_data.mdm_audit_events ORDER BY timestamp DESC"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let events: Vec<AuditEvent> = rows.iter().map(audit_event_from_row).collect();
 
     let framework = params.framework.unwrap_or_else(|| "SOC2".to_string());
 
@@ -1607,10 +1331,10 @@ pub async fn get_compliance_audit(
 
     for e in events.iter() {
         *by_category
-            .entry(format!("{:?}", e.category).to_lowercase())
+            .entry(audit_event_category_to_str(&e.category).to_string())
             .or_insert(0) += 1;
         *by_event_type
-            .entry(format!("{:?}", e.event_type).to_lowercase())
+            .entry(audit_event_type_to_str(&e.event_type).to_string())
             .or_insert(0) += 1;
         if matches!(
             e.event_type,
@@ -1656,13 +1380,9 @@ pub async fn get_compliance_audit(
     tag = "versioning_v54"
 )]
 pub async fn grant_permission(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<GrantPermissionRequest>,
 ) -> Json<ApiResponse<DataPermission>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let mut perms = store.data_permissions.lock().await;
-
     let perm = DataPermission {
         id: uuid::Uuid::new_v4().to_string(),
         role_id: req.role_id,
@@ -1673,10 +1393,22 @@ pub async fn grant_permission(
         inherited: false,
     };
 
-    perms.push(perm.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "data_permissions", &*perms).await;
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_data_permissions (id, role_id, resource_type, resource_id, action, condition, inherited)
+         VALUES ($1,$2,$3,$4,$5,$6,$7)",
+    )
+    .bind(&perm.id)
+    .bind(&perm.role_id)
+    .bind(&perm.resource_type)
+    .bind(&perm.resource_id)
+    .bind(permission_action_to_str(&perm.action))
+    .bind(&perm.condition)
+    .bind(perm.inherited)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("授予权限失败: {e}")));
+    }
 
     Json(ApiResponse::success(perm, "权限已授予"))
 }
@@ -1695,21 +1427,20 @@ pub async fn grant_permission(
     tag = "versioning_v54"
 )]
 pub async fn revoke_permission(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let mut perms = store.data_permissions.lock().await;
-    let len_before = perms.len();
-    perms.retain(|p| p.id != id);
+    let result = sqlx::query(
+        "DELETE FROM master_data.mdm_data_permissions WHERE id = $1",
+    )
+    .bind(&id)
+    .execute(&state.db)
+    .await
+    .unwrap_or_default();
 
-    if perms.len() == len_before {
+    if result.rows_affected() == 0 {
         return Json(ApiResponse::error(404, "未找到权限"));
     }
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "data_permissions", &*perms).await;
 
     Json(ApiResponse::success_no_data("权限已撤销"))
 }
@@ -1726,21 +1457,30 @@ pub async fn revoke_permission(
     tag = "versioning_v54"
 )]
 pub async fn check_permission(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<CheckPermissionQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-
-    let assignments = store.user_role_assignments.lock().await;
-    let user_roles: Vec<String> = assignments
+    let assignment_rows = sqlx::query(&format!(
+        "SELECT {USER_ROLE_ASSIGNMENT_COLS} FROM master_data.mdm_user_role_assignments WHERE user_id = $1"
+    ))
+    .bind(&params.user_id)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let user_roles: Vec<String> = assignment_rows
         .iter()
-        .filter(|a| a.user_id == params.user_id)
-        .map(|a| a.role_id.clone())
+        .map(user_role_assignment_from_row)
+        .map(|a| a.role_id)
         .collect();
-    drop(assignments);
 
-    let roles = store.permission_roles.lock().await;
+    let role_rows = sqlx::query(&format!(
+        "SELECT {PERMISSION_ROLE_COLS} FROM master_data.mdm_permission_roles"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let roles: Vec<PermissionRole> = role_rows.iter().map(permission_role_from_row).collect();
+
     let mut all_role_ids = user_roles.clone();
     for role in roles.iter() {
         if let Some(ref parent) = role.inherited_from {
@@ -1749,9 +1489,15 @@ pub async fn check_permission(
             }
         }
     }
-    drop(roles);
 
-    let perms = store.data_permissions.lock().await;
+    let perm_rows = sqlx::query(&format!(
+        "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let perms: Vec<DataPermission> = perm_rows.iter().map(data_permission_from_row).collect();
+
     let action = permission_action_from_str(&params.action);
 
     let has_permission = perms.iter().any(|p| {
@@ -1799,22 +1545,31 @@ pub async fn check_permission(
     tag = "versioning_v54"
 )]
 pub async fn get_user_permissions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(user_id): Path<String>,
     Query(params): Query<UserPermissionsQuery>,
 ) -> Json<ApiResponse<Vec<DataPermission>>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-
-    let assignments = store.user_role_assignments.lock().await;
-    let user_roles: Vec<String> = assignments
+    let assignment_rows = sqlx::query(&format!(
+        "SELECT {USER_ROLE_ASSIGNMENT_COLS} FROM master_data.mdm_user_role_assignments WHERE user_id = $1"
+    ))
+    .bind(&user_id)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let user_roles: Vec<String> = assignment_rows
         .iter()
-        .filter(|a| a.user_id == user_id)
-        .map(|a| a.role_id.clone())
+        .map(user_role_assignment_from_row)
+        .map(|a| a.role_id)
         .collect();
-    drop(assignments);
 
-    let roles = store.permission_roles.lock().await;
+    let role_rows = sqlx::query(&format!(
+        "SELECT {PERMISSION_ROLE_COLS} FROM master_data.mdm_permission_roles"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let roles: Vec<PermissionRole> = role_rows.iter().map(permission_role_from_row).collect();
+
     let mut all_role_ids = user_roles.clone();
     for role in roles.iter() {
         if let Some(ref parent) = role.inherited_from {
@@ -1823,11 +1578,17 @@ pub async fn get_user_permissions(
             }
         }
     }
-    drop(roles);
 
-    let perms = store.data_permissions.lock().await;
+    let perm_rows = sqlx::query(&format!(
+        "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let perms: Vec<DataPermission> = perm_rows.iter().map(data_permission_from_row).collect();
+
     let mut filtered: Vec<DataPermission> = perms
-        .iter()
+        .into_iter()
         .filter(|p| {
             if !all_role_ids.contains(&p.role_id) {
                 return false;
@@ -1838,19 +1599,12 @@ pub async fn get_user_permissions(
                 }
             }
             if let Some(act) = &params.action {
-                let action_str = match p.action {
-                    PermissionAction::Read => "read",
-                    PermissionAction::Write => "write",
-                    PermissionAction::Delete => "delete",
-                    PermissionAction::Admin => "admin",
-                };
-                if action_str != act.as_str() {
+                if permission_action_to_str(&p.action) != act.as_str() {
                     return false;
                 }
             }
             true
         })
-        .cloned()
         .collect();
 
     filtered.sort_by(|a, b| a.role_id.cmp(&b.role_id));
@@ -1870,36 +1624,21 @@ pub async fn get_user_permissions(
     tag = "versioning_v54"
 )]
 pub async fn get_resource_permissions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ResourcePermissionsQuery>,
 ) -> Json<ApiResponse<Vec<DataPermission>>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let perms = store.data_permissions.lock().await;
-
-    let filtered: Vec<DataPermission> = perms
-        .iter()
-        .filter(|p| {
-            if let Some(rt) = &params.resource_type {
-                if &p.resource_type != rt {
-                    return false;
-                }
-            }
-            if let Some(act) = &params.action {
-                let action_str = match p.action {
-                    PermissionAction::Read => "read",
-                    PermissionAction::Write => "write",
-                    PermissionAction::Delete => "delete",
-                    PermissionAction::Admin => "admin",
-                };
-                if action_str != act.as_str() {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let rows = sqlx::query(&format!(
+        "SELECT {DATA_PERMISSION_COLS} FROM master_data.mdm_data_permissions
+         WHERE resource_type = COALESCE($1, resource_type)
+           AND action = COALESCE($2, action)
+         ORDER BY role_id"
+    ))
+    .bind(params.resource_type.as_deref())
+    .bind(params.action.as_deref())
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let filtered: Vec<DataPermission> = rows.iter().map(data_permission_from_row).collect();
 
     Json(ApiResponse::success(filtered, "资源权限列表"))
 }
@@ -1915,13 +1654,9 @@ pub async fn get_resource_permissions(
     tag = "versioning_v54"
 )]
 pub async fn create_role(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateRoleRequest>,
 ) -> Json<ApiResponse<PermissionRole>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let mut roles = store.permission_roles.lock().await;
-
     let now = chrono::Utc::now().to_rfc3339();
 
     let role = PermissionRole {
@@ -1932,10 +1667,20 @@ pub async fn create_role(
         created_at: now,
     };
 
-    roles.push(role.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "permission_roles", &*roles).await;
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_permission_roles (id, name, description, inherited_from, created_at)
+         VALUES ($1,$2,$3,$4,$5)",
+    )
+    .bind(&role.id)
+    .bind(&role.name)
+    .bind(&role.description)
+    .bind(&role.inherited_from)
+    .bind(&role.created_at)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("创建角色失败: {e}")));
+    }
 
     Json(ApiResponse::success(role, "角色已创建"))
 }
@@ -1951,13 +1696,9 @@ pub async fn create_role(
     tag = "versioning_v54"
 )]
 pub async fn assign_role(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AssignRoleRequest>,
 ) -> Json<ApiResponse<UserRoleAssignment>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let mut assignments = store.user_role_assignments.lock().await;
-
     let now = chrono::Utc::now().to_rfc3339();
 
     let assignment = UserRoleAssignment {
@@ -1967,10 +1708,19 @@ pub async fn assign_role(
         assigned_at: now,
     };
 
-    assignments.push(assignment.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "user_role_assignments", &*assignments).await;
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_user_role_assignments (id, user_id, role_id, assigned_at)
+         VALUES ($1,$2,$3,$4)",
+    )
+    .bind(&assignment.id)
+    .bind(&assignment.user_id)
+    .bind(&assignment.role_id)
+    .bind(&assignment.assigned_at)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("分配角色失败: {e}")));
+    }
 
     Json(ApiResponse::success(assignment, "角色已分配"))
 }
@@ -1986,23 +1736,146 @@ pub async fn assign_role(
     tag = "versioning_v54"
 )]
 pub async fn revoke_role(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RevokeRoleRequest>,
 ) -> Json<ApiResponse<()>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let mut assignments = store.user_role_assignments.lock().await;
-    let len_before = assignments.len();
-    assignments.retain(|a| !(a.user_id == req.user_id && a.role_id == req.role_id));
+    let result = sqlx::query(
+        "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2",
+    )
+    .bind(&req.user_id)
+    .bind(&req.role_id)
+    .execute(&state.db)
+    .await
+    .unwrap_or_default();
 
-    if assignments.len() == len_before {
+    if result.rows_affected() == 0 {
         return Json(ApiResponse::error(404, "未找到角色分配记录"));
     }
 
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "user_role_assignments", &*assignments).await;
-
     Json(ApiResponse::success_no_data("角色已撤销"))
+}
+
+
+// ==================== K1：真表映射层（versioning_v54 分支/审计/权限/角色） ====================
+
+const BRANCH_COLS: &str = "id, name, branch_type, parent_branch, created_at, created_by, merged_at, merged_by, status";
+const AUDIT_EVENT_COLS: &str = "id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id";
+const AUDIT_EXPORT_LOG_COLS: &str = "id, user_id, export_type, record_count, exported_at, ip_address";
+const PERMISSION_ROLE_COLS: &str = "id, name, description, inherited_from, created_at";
+const DATA_PERMISSION_COLS: &str = "id, role_id, resource_type, resource_id, action, condition, inherited";
+const USER_ROLE_ASSIGNMENT_COLS: &str = "id, user_id, role_id, assigned_at";
+
+fn branch_type_to_str(t: &BranchType) -> &'static str {
+    match t {
+        BranchType::Main => "main",
+        BranchType::Feature => "feature",
+        BranchType::Release => "release",
+        BranchType::Hotfix => "hotfix",
+    }
+}
+
+fn audit_event_type_to_str(t: &AuditEventType) -> &'static str {
+    match t {
+        AuditEventType::Create => "create",
+        AuditEventType::Read => "read",
+        AuditEventType::Update => "update",
+        AuditEventType::Delete => "delete",
+        AuditEventType::Export => "export",
+        AuditEventType::Import => "import",
+    }
+}
+
+fn audit_event_category_to_str(c: &AuditEventCategory) -> &'static str {
+    match c {
+        AuditEventCategory::DataAccess => "data_access",
+        AuditEventCategory::Modification => "modification",
+        AuditEventCategory::Administration => "administration",
+        AuditEventCategory::Security => "security",
+    }
+}
+
+fn permission_action_to_str(a: &PermissionAction) -> &'static str {
+    match a {
+        PermissionAction::Read => "read",
+        PermissionAction::Write => "write",
+        PermissionAction::Delete => "delete",
+        PermissionAction::Admin => "admin",
+    }
+}
+
+fn version_branch_from_row(r: &sqlx::postgres::PgRow) -> VersionBranch {
+    VersionBranch {
+        id: r.get("id"),
+        name: r.get("name"),
+        branch_type: branch_type_from_str(r.get::<String, _>("branch_type").as_str()),
+        parent_branch: r.get("parent_branch"),
+        created_at: r.get("created_at"),
+        created_by: r.get("created_by"),
+        merged_at: r.get("merged_at"),
+        merged_by: r.get("merged_by"),
+        status: r.get("status"),
+    }
+}
+
+fn audit_event_from_row(r: &sqlx::postgres::PgRow) -> AuditEvent {
+    let old_value: Option<serde_json::Value> = r.get("old_value");
+    let new_value: Option<serde_json::Value> = r.get("new_value");
+    AuditEvent {
+        id: r.get("id"),
+        event_type: audit_event_type_from_str(r.get::<String, _>("event_type").as_str()),
+        category: audit_category_from_str(r.get::<String, _>("category").as_str()),
+        entity_type: r.get("entity_type"),
+        entity_id: r.get("entity_id"),
+        user_id: r.get("user_id"),
+        old_value,
+        new_value,
+        ip_address: r.get("ip_address"),
+        timestamp: r.get("timestamp"),
+        session_id: r.get("session_id"),
+    }
+}
+
+fn audit_export_log_from_row(r: &sqlx::postgres::PgRow) -> AuditExportLog {
+    AuditExportLog {
+        id: r.get("id"),
+        user_id: r.get("user_id"),
+        export_type: r.get("export_type"),
+        record_count: r.get("record_count"),
+        exported_at: r.get("exported_at"),
+        ip_address: r.get("ip_address"),
+    }
+}
+
+fn permission_role_from_row(r: &sqlx::postgres::PgRow) -> PermissionRole {
+    PermissionRole {
+        id: r.get("id"),
+        name: r.get("name"),
+        description: r.get("description"),
+        inherited_from: r.get("inherited_from"),
+        created_at: r.get("created_at"),
+    }
+}
+
+fn data_permission_from_row(r: &sqlx::postgres::PgRow) -> DataPermission {
+    let condition: Option<serde_json::Value> = r.get("condition");
+    DataPermission {
+        id: r.get("id"),
+        role_id: r.get("role_id"),
+        resource_type: r.get("resource_type"),
+        resource_id: r.get("resource_id"),
+        action: permission_action_from_str(r.get::<String, _>("action").as_str()),
+        condition,
+        inherited: r.get("inherited"),
+    }
+}
+
+fn user_role_assignment_from_row(r: &sqlx::postgres::PgRow) -> UserRoleAssignment {
+    UserRoleAssignment {
+        id: r.get("id"),
+        user_id: r.get("user_id"),
+        role_id: r.get("role_id"),
+        assigned_at: r.get("assigned_at"),
+    }
 }
 
 #[cfg(test)]

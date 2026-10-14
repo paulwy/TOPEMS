@@ -112,7 +112,6 @@ async fn main() -> anyhow::Result<()> {
         loop {
             ticker.tick().await;
             modules::quality_v51::background_flush().await;
-            modules::versioning_v54::background_flush().await;
             modules::commercial_v55::background_flush().await;
             modules::metadata_v60::background_flush().await;
         }

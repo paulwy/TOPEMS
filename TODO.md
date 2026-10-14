@@ -1602,3 +1602,15 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 调度侧同步：`svc/master-data/src/modules/mod.rs` 与 `src/main.rs` 的启动 flush 循环删除 6 个已接真表模块的 `background_flush()` 调用（保留未接真表的 quality_v51/versioning_v54/commercial_v55/metadata_v60）。
 - 验证：cargo check -p topems-master-data 零警告零错误；离线 build topems-server + monolith 8099 重启后 6 模块核心链路复测全绿（lineage-v52/graph、kg-v53/assets/stats、mdm-v56/recovery/points、mdm-v57/graph/neighbors、mdm-v58/maturity/scores + data-product 全链路 + workflow approve/reject 冒号形态、mdm-v59/governance/models）；schema-boundary 门禁 PASS（master_data 为 master-data 自有 schema，无跨 schema 裸引用）。
 - 备注：approve/reject 正确调用形态为 `POST /mdm-v58/workflow/step/{workflowId}:{stepId}/approve|reject`（parse_step_path 冒号分裂），前端契约单段 id 由调用方拼组合；`/workflow/{id}/status` 返回完整 workflow 对象（superset，页面暂无 current_step/completed_steps/pending_steps 消费方，契约差异记录在案）。
+
+## K1 续｜versioning_v54 剩余实体接真表 + store 收敛（2026-10-15，迁移 20261015000067）
+
+**背景**：迁移 20261014000060 只挑核心 4 表，v54 分支/审计/权限/角色 6 实体仍走内存 Store（V54Store + persist 快照）。本轮补齐 6 表，v54 全套收敛（对齐 6 冻结模块收尾方式）。
+
+**已接通真表（master_data schema，迁移 20261015000067 建 6 表 + RLS DO 块循环 FORCE + 6 段回填）：**
+- `versioning_v54` 剩余实体 → `mdm_version_branches` / `mdm_audit_events` / `mdm_audit_export_logs` / `mdm_permission_roles` / `mdm_data_permissions` / `mdm_user_role_assignments`。回填来源 `mdm_collections`（module='versioning_v54'，branches 2 / audit_events 1 / export_logs 2 / roles 3 / perms 1 / assignments 1），JOIN LATERAL + ON CONFLICT DO NOTHING 幂等。
+- 改造：15 个 store handler 批量改写为 sqlx 真读写 + 文件尾追加映射层（BRANCH_COLS/AUDIT_EVENT_COLS/AUDIT_EXPORT_LOG_COLS/PERMISSION_ROLE_COLS/DATA_PERMISSION_COLS/USER_ROLE_ASSIGNMENT_COLS + 4 逆函数 branch_type_to_str/audit_event_type_to_str/audit_event_category_to_str/permission_action_to_str + 6 组 from_row）。**create_snapshot/restore_version 两处审计写段同步从 store 改为 INSERT mdm_audit_events**（此前遗留的 store 写点清零）。
+- 实现要点：merge_branch 用 UPDATE...RETURNING（源缺失 404 守卫）；审计读类用 COALESCE($N, col) 过滤 + LIMIT/OFFSET 分页 + 独立 COUNT；export_audit_log 写 mdm_audit_export_logs 返回 export_id；check_permission/get_user_permissions 三表查询后内存算角色继承 + 权限判定（逻辑保留）；grant/revoke/role/assign/revoke_role 直写对应表、rows_affected()==0 → 404。
+- store 收敛：删除 `struct V54Store` / `get_v54_store` / `ensure_initialized` / `persist_load` / `persist_save` / `background_flush` + LazyLock/Mutex import；mod.rs+main.rs flush 循环删 v54 行。**至此 K1 除 quality_v51/commercial_v55/metadata_v60 外全部模块无 store 残留**。
+- 验证：cargo check master-data 零警告零错误；离线 build + monolith 8099 重启后全链路实测 18 接口（create_branch/merge_branch 含源缺失 404、query_audit_log/audit/user/audit/entity/export_audit_log/compliance、grant/check（授予 true + 未授权 false）/get_user_permissions/get_resource_permissions/revoke_permission 含 404、create_role/assign_role/revoke_role 含 404、create_snapshot/restore_version 审计写真表）全绿；DB 侧 6 表落库确认（branches 2 / audit_events 1 / export_logs 2 / roles 3 / perms 1 / assignments 1，与快照一致，测试残留已清理）。
+- 遗留（K1 后续批次）：commercial_v55 / metadata_v60 仍为核心 3 模块中未完成剩余实体接真表（TODO K1 backlog）；quality_v51 标注"已真表不动"但文件内仍有 store 残留 20+ 处，疑似半接真表，待实读核对其真表覆盖范围后决定是否收敛。
