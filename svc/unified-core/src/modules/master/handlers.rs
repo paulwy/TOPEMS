@@ -950,39 +950,15 @@ async fn publish_master_data_event(
         event = event.with_operator(op);
     }
 
-    // 通过事件总线发布（容错：失败仅记录日志，不影响主流程）
-    let channel = event.channel();
-    let event_clone = event;
-    tokio::spawn(async move {
-        let redis_url =
-            std::env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
-        let client = match redis::Client::open(redis_url) {
-            Ok(c) => c,
-            Err(e) => {
-                tracing::warn!("[MDM] Redis 连接失败: {}，事件丢弃", e);
-                return;
-            }
-        };
-        let mut conn = match client.get_multiplexed_async_connection().await {
-            Ok(c) => c,
-            Err(e) => {
-                tracing::warn!("[MDM] Redis 复用连接失败: {}，事件丢弃", e);
-                return;
-            }
-        };
-        let event_json = match serde_json::to_string(&event_clone) {
-            Ok(j) => j,
-            Err(e) => {
-                tracing::warn!("[MDM] 事件序列化失败: {}", e);
-                return;
-            }
-        };
-        let _: Result<i64, _> = redis::cmd("PUBLISH")
-            .arg(&channel)
-            .arg(&event_json)
-            .query_async(&mut conn)
-            .await;
-    });
+    // 总线写路径（对齐 pdm mdm_event_service.rs）：
+    // Redis Stream XADD（持久化 + 消费组 ACK）+ RabbitMQ Topic 发布。
+    // 失败显式 warn（不再静默"事件丢弃"）；不重建 outbox 死表（Redis Stream 即持久化通道）。
+    if let Err(e) = event.publish().await {
+        tracing::warn!("[MDM] 主数据事件 Redis Stream 发布失败: {}", e);
+    }
+    if let Err(e) = event.publish_to_rabbitmq().await {
+        tracing::warn!("[MDM] 主数据事件 RabbitMQ 发布失败: {}", e);
+    }
 
     Ok(())
 }
