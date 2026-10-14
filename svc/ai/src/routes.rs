@@ -80,8 +80,9 @@ pub fn create_routes(
     // 初始化知识图谱
     let knowledge_graph = crate::dsh::knowledge_graph::KnowledgeGraph::with_defaults();
 
-    // 初始化 RAG 引擎
-    let rag_engine = crate::dsh::rag::RagEngine::with_defaults();
+    // 初始化 RAG 引擎（P2-c：注入 pool + ai_client，接真实 pgvector 检索）
+    let rag_engine = crate::dsh::rag::RagEngine::with_defaults()
+        .with_pool(pool.clone(), std::sync::Arc::new(crate::modules::ai_knowledge::service::create_ai_client()));
 
     // 初始化多 Agent 协调器
     let multi_agent_config = crate::dsh::multi_agent::CollaborationGroupConfig {

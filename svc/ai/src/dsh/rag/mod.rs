@@ -577,6 +577,10 @@ pub struct RagEngine {
     reranker: Arc<Reranker>,
     /// 检索统计
     stats: Arc<Mutex<RagStats>>,
+    /// P2-c：真实 RAG 检索连接池（None 时 perform_retrieval 返回空，兼容旧调用）
+    pool: Option<sqlx::PgPool>,
+    /// P2-c：真实 RAG 检索 AI 客户端（用于生成 embedding）
+    ai_client: Option<Arc<topems_shared_ai::ai_client::UnifiedAIClient>>,
 }
 
 /// RAG 统计
@@ -604,7 +608,16 @@ impl RagEngine {
             reranker: Arc::new(Reranker::new(config.clone())),
             config,
             stats: Arc::new(Mutex::new(RagStats::default())),
+            pool: None,
+            ai_client: None,
         }
+    }
+
+    /// P2-c：注入真实 RAG 检索依赖（pgvector 检索走 ai_knowledge/rag.rs 同构 SQL）
+    pub fn with_pool(mut self, pool: sqlx::PgPool, ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>) -> Self {
+        self.pool = Some(pool);
+        self.ai_client = Some(ai_client);
+        self
     }
 
     /// 使用默认配置创建
@@ -724,29 +737,31 @@ impl RagEngine {
         expanded_queries: &[String],
         _request: &RetrievalRequest,
     ) -> Vec<RetrievedDocument> {
-        // 简化实现：返回空结果
-        // 实际实现中应该：
-        // 1. 对每个扩展查询进行向量检索
-        // 2. 进行关键词检索
-        // 3. 合并结果并去重
-        // 4. 计算综合分数
+        // P2-c：若已注入 pool + ai_client，走真实 pgvector 检索（复用 ai_knowledge 同构 SQL）；
+        // 否则返回空（兼容旧 with_defaults 调用，如 main.rs 测试态）。
+        let (Some(pool), Some(ai_client)) = (&self.pool, &self.ai_client) else {
+            return Vec::new();
+        };
 
         let mut documents = Vec::new();
         let mut seen_doc_ids = std::collections::HashSet::new();
 
-        for (i, q) in expanded_queries.iter().enumerate() {
-            // 模拟检索结果
-            // 实际实现中应该调用向量检索服务
-            let mock_docs = self.mock_retrieval(q, i);
-            for doc in mock_docs {
-                if !seen_doc_ids.contains(&doc.doc_id) {
-                    seen_doc_ids.insert(doc.doc_id.clone());
-                    documents.push(doc);
+        for q in expanded_queries.iter() {
+            match Self::vector_search(pool, ai_client, q, 20).await {
+                Ok(docs) => {
+                    for doc in docs {
+                        if !seen_doc_ids.contains(&doc.doc_id) {
+                            seen_doc_ids.insert(doc.doc_id.clone());
+                            documents.push(doc);
+                        }
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!(query = %q, error = %e, "dsh/rag vector_search failed");
                 }
             }
         }
 
-        // 设置原始排名
         for (i, doc) in documents.iter_mut().enumerate() {
             doc.original_rank = i + 1;
         }
@@ -754,13 +769,44 @@ impl RagEngine {
         documents
     }
 
-    /// 模拟检索（实际实现中应该调用向量检索服务）
-    fn mock_retrieval(&self, query: &str, query_index: usize) -> Vec<RetrievedDocument> {
-        // 简化实现：返回空结果
-        // 实际实现中应该调用向量检索服务
-        let _ = query;
-        let _ = query_index;
-        Vec::new()
+    /// P2-c：真实 pgvector 检索（对齐 ai_knowledge/rag.rs 的 SQL 与 embedding 生成）。
+    async fn vector_search(
+        pool: &sqlx::PgPool,
+        ai_client: &Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
+        query: &str,
+        limit: i32,
+    ) -> Result<Vec<RetrievedDocument>, Box<dyn std::error::Error + Send + Sync>> {
+        // 复用 ai_knowledge 的 embedding 生成（不重复造向量）
+        let query_vector = crate::modules::ai_knowledge::document_processor::generate_embedding(ai_client, query).await?;
+        let vector_str = crate::modules::ai_knowledge::document_processor::vector_to_pgvector_string(&query_vector);
+
+        let rows: Vec<(uuid::Uuid, uuid::Uuid, String, String, f64)> = sqlx::query_as(
+            r#"SELECT c.id, c.document_id, d.title, c.content,
+                      (1 - (c.embedding <=> $1::vector))::float8 AS score
+               FROM core.knowledge_chunks c
+               JOIN core.knowledge_documents d ON d.id = c.document_id
+               WHERE c.embedding IS NOT NULL AND d.status = 'ready'
+               ORDER BY c.embedding <=> $1::vector
+               LIMIT $2"#,
+        )
+        .bind(&vector_str)
+        .bind(limit)
+        .fetch_all(pool)
+        .await?;
+
+        Ok(rows.into_iter().map(|(chunk_id, _doc_id, title, content, score)| {
+            RetrievedDocument {
+                doc_id: chunk_id.to_string(),
+                title,
+                content,
+                source: "knowledge_base".to_string(),
+                score,
+                retrieval_method: "vector".to_string(),
+                original_rank: 0,
+                reranked_rank: None,
+                metadata: HashMap::new(),
+            }
+        }).collect())
     }
 
     /// 构建上下文
