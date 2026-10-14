@@ -12,15 +12,11 @@ pub mod feature_flag;
 mod file;
 mod flow;
 // V68.1 A2.4.2: help 路由已迁移至 svc/portal（/api/portal/help/*），Portal BFF 统一承载用户服务域
-// mod help;
 mod iam;
 mod master;
 mod migration;
 // V68.1 A2.1: routes/monitor.rs 旧适配层依赖 modules::monitor（已拆到 svc/monitor），这里不再载入
-// mod monitor;
 // V68.1 A2.2: routes/plugin.rs 适配层依赖 modules::plugin（已拆到 svc/plugin-registry 8096），这里不再载入
-// mod plugin;
-// A4: MDM 主数据死信队列管理 API（list/replay）
 mod contract_stubs;
 mod mdm_dlq;
 mod settings;

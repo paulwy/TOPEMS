@@ -13,23 +13,18 @@ pub mod automation;
 pub mod business_tools;
 pub mod communication;
 // V68.1 A2.3: dict 模块已合并到 svc/master-data/src/modules/dict/（主数据域）
-// pub mod dict;
 pub mod doc;
 pub mod file;
 pub mod flow;
 // V68.1 A2.4.2: help 模块已迁移至 svc/portal/src/modules/help/（Portal BFF 用户服务域）
-// pub mod help;
 pub mod iam;
 // V68.1 A2.4.1: login_log 模块已合并为 audit/login_log_* 子模块（统一审计域）
-// pub mod login_log;
 pub mod master;
 pub mod menu;
 pub mod migration;
 // V68.1 A2.1: monitor 模块已拆出到独立 svc/monitor/ crate，这里不再 re-export
-// pub mod monitor;
 pub mod openapi;
 // V68.1 A2.2: plugin 模块已拆出到独立 svc/plugin-registry/（端口 8096）
-// pub mod plugin;
 pub mod subscription;
 pub mod system_audit;
 // P36-5: 外部集成设置（SMTP 配置 + API Key 保险库），此前模块存在但未声明/未挂载。
