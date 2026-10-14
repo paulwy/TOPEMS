@@ -1672,6 +1672,20 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 3. **观察项（保留）**：创建客户行 tenant_id 为 NULL（k1 token tenant_id=0000…0001 未落入行，RLS policy `tenant_id IS NULL` 分支放行可见）——客户创建租户注入的既有行为，非 B1 投影问题，仅记录。
 - 本轮临时进程 erp/search 为 E2E 起停，现场保留 monolith 8099；投影表 GRANT 已随迁移固化。
 
+## 重启跳过项评估（B1/B14/B15/A2/A5）— ✅ 2026-10-15 逐项核实
+
+> 历史记录中「决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5」随代码/DB 状态变化重新评估。
+
+| 项 | 跳过时状态 | 本轮实物核查 | 结论 |
+|---|---|---|---|
+| A5 erp RLS | B 口径策略补齐（审计脚本在仓） | 租户隔离主线+遗留批实质实施：26 处 INSERT 补 tenant_id、RLS policy 加 nil 上下文放行、migration 72/73 全表回填 0 NULL、audit 落操作者租户、dict_cache 缓存 key 隔离、归档保护；SQL 三层/E2E/门禁/902 测试全绿（commit fdab07bb8 + 08af8daf5） | **解除跳过 → 已完成** |
+| B14 守卫重构 | 维持脚本层定案 + 文档固化 | `scripts/ensure-empty-db-prereqs.sh` / `scripts/migrate-verify-empty.sh` 在仓，CI 已接线（2026-10-12, d285980dc） | **解除跳过 → 已完成** |
+| A2 弃 docker 口径 | Homebrew PG18.4 双实例等价替代 | docker daemon 不可用（仅 CLI 二进制残留）；5433 实例由本地 PG 双实例承接 | **解除跳过 → 已完成** |
+| B1 search→erp 事件投影 | CQRS 本地读模型 + backfill 差距对账（1bbd1ac1a + f6a49221e）；「白名单撤销」暂缓 | search→erp 常规出站已删（erp_api.rs 149 行随 9df82e1bb 删除），无白名单条目残留；projection.rs 的 backfill reqwest（ERP_URL）为设计内启动对账 | **解除跳过 → 已完成**（白名单已实质撤销） |
+| B15 出站埋点 | 出站统一入口三处 + shared-bootstrap 注入 caller（9df82e1bb） | caller 注入/出站埋点/测试在仓；残留仅 `--collect` 重跑需生产流量窗口 | **维持跳过**（环境阻塞：生产流量窗口未到） |
+
+**结论**：4/5 解除跳过（均已实质完成）；仅 B15 因生产流量窗口环境阻塞维持跳过，待生产窗口重跑 `--collect` 后闭环。
+
 ## B7 剩余现状核实（2026-10-15）✅ 已收敛，无待办
 
 > TODO 历史「B7 剩余（后续批次候选，按业务层 anyhow 计数：server 41/shared-ai 24/…）」为早期记录。本轮全仓核实：业务层 anyhow 已清零，剩余 43 处全部为**合法边界**——main.rs 进程边界（server/ai/integration/analytics/unified-core/ticket/erp 的 `main() -> anyhow::Result` 与初始化守卫：ai DIFY/DOCUMENTS/VECTORS OnceLock、ticket DB 表 fail-fast、erp 降级客户端构建）、shared-bootstrap 进程边界 + 测试、shared-core `impl From<anyhow::Error> for TopemsError` 转换桥。`scripts/ci/check-error-handling.cjs`（anyhow-in-business：业务层禁止、仅 main/bootstrap 边界允许）exit 0 通过。**结论：B7 剩余项无需再实施**，历史计数标记为已过时。
