@@ -4,12 +4,19 @@
 流程：initialize → tools/list → 调用 3 个业务工具 → 验证响应。
 """
 import json
+import os
 import subprocess
 import sys
 import time
 
 BINARY = "target/debug/mcp-stdio"
 TIMEOUT = 15
+
+# mcp-stdio fail-closed 要求 JWT_SECRET 环境变量；e2e 使用固定测试密钥。
+E2E_ENV = {
+    "JWT_SECRET": "e2e-test-jwt-secret",
+    "RUST_LOG": "warn",
+}
 
 def send(proc, msg):
     line = json.dumps(msg) + "\n"
@@ -33,6 +40,8 @@ def recv(proc):
     raise TimeoutError("等待响应超时")
 
 def main():
+    # 继承当前环境变量并覆盖 JWT_SECRET（mcp-stdio fail-closed 必需）
+    env = {**os.environ, **E2E_ENV}
     proc = subprocess.Popen(
         [BINARY],
         stdin=subprocess.PIPE,
@@ -40,6 +49,7 @@ def main():
         stderr=subprocess.DEVNULL,
         text=True,
         bufsize=1,
+        env=env,
     )
     results = []
     try:

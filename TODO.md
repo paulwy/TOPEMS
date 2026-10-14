@@ -1,6 +1,24 @@
 
 ---
 
+## P2-b MCP 7 项收敛（2026-10-14）✅
+
+> 基线 `artifacts/findings-mcp-recheck-2026-10-14.md`（3.5/5，7 项仍存）。原则：诚实声明 > 过度实现，删死代码 > 装饰性抽象。
+
+| # | 项 | 收敛方式 | 路径:行号 |
+|---|---|---|---|
+| 1 | prompts 未实现 | 保持 `prompts: None`（协议允许），server.rs 加注释说明 62 工具 description 已承载说明，不额外建 prompt 模板 | server.rs:292（注释块 :282-295） |
+| 2 | list_changed 虚报 | `Some(true)`→`Some(false)`：工具/资源启动时静态注册，运行期无动态增删，不发 notifications | server.rs:297,300 |
+| 3 | batch 批量请求 | 不实现（MCP 协议可选特性，未声明即合规）；非 batch 请求体走 parse error 拒绝 | handler.rs:140（无需改） |
+| 4 | mcp_transport/tool_schema 死模块 | git rm 两目录（2307 行）+ dsh/mod.rs 删 2 行 mod 声明 | dsh/mod.rs:49,61 → 已删 |
+| 5 | e2e 验证失效 | Python 脚本 Popen 补 `env={JWT_SECRET, RUST_LOG}`；Rust integration test Command 补 `.env("JWT_SECRET",...)`；文档 3 处配置示例 + 环境变量表补 JWT_SECRET | mcp_stdio_e2e_test.py:36, mcp_stdio_integration.rs:32, mcp-external-agent-integration.md:52,85,121,155 |
+| 6 | 无 MCP client 闭环 | 有意设计：DSH Agent 进程内直调 ToolRegistry（Rust 函数调用），MCP 协议面专供外部 AI IDE 消费；不强行造 client | orchestrator.rs:862（不改） |
+| 7 | McpTransport trait 零实现者 | 删 lib/shared-mcp/src/transport.rs（trait + TransportType + TransportConfig 全部零用户）+ lib.rs 删 mod + re-export | transport.rs 已删；lib.rs:19-22 已改 |
+
+- 验证：`cargo check --workspace` 0 error 0 warning；`cargo test -p topems-ai --lib dsh::mcp` 186 passed 0 failed；stdio 实测 initialize 返回 `tools.listChanged=false, resources.listChanged=false`（无 prompts/sampling 字段），tools/list 返回 64 tools；无 JWT_SECRET fail-closed 确认。
+
+---
+
 ## P2-a finance-demo 硬编码演示桩删除（2026-10-14）✅
 
 > 删 `svc/server` 内纯内存 finance-demo 演示桩整模块（对齐 4.8 三件套下线）。真实 finance 不受影响（`svc/finance` 独立服务 + `finance_real_module.rs` feature 门控）。
@@ -87,6 +105,7 @@
 - **P0-2b**（2026-10-14，8099 内嵌 real_module RLS 配置一致性）：增量重审发现 svc/server/src/modules/ 11 个 real_module `enable_rls: false`（gis:37/monitor:32/mobile:35/unified_core:32/plugin_registry:32/integration:37/finance:46/search:33/subscription:223/communication:207/ai:45），与各独立 main.rs 的 `true` 双副本不一致 → 全部翻 true。信源统一判断：real_module 与独立 main.rs 各自硬编码 ServiceConfig 字面量（init_telemetry 嵌入 false/独立 true 有意不同），不强行合并；仅翻 enable_rls 字段对齐。**如实登记**：enable_rls 仅在 shared-bootstrap `build_application`（lib.rs:1013-1018）内挂 rls_middleware 时生效；real_module 走 `bootstrap_service` + 自建 Router 绕过该路径，unified-core 自带 `tenant_rls_middleware`（routes/mod.rs:257），但 finance/communication/ai 等服务自建 Router 未挂 rls_middleware——翻 true 是配置一致性修复（消除双副本漂移），不改变运行时行为；请求层 RLS 中间件缺失为更深问题，列独立 P2 加固（见下）。四态实测（topems_app NOSUPERUSER，hrm.employees）：无GUC=9/租户A(000...001)=7/nil UUID=9/无关租户(0602...)=1，DB 层 RLS 策略按预期工作。check --workspace 0/0、10 crate --lib 4218 passed 0 failed。
 - **P2 待加固（8099 聚合面 RLS 请求层中间件缺失）**：finance/communication/ai/gis/monitor/mobile/plugin_registry/integration/search/subscription 的 real_module 自建 Router 时未挂 rls_middleware（shared-db/src/rls.rs:241），导致 8099 聚合面下这些服务请求不 SET app.tenant_id，RLS 策略因"无 GUC 放行"等于未生效。unified-core 例外（自带 tenant_rls_middleware）。修复方向：real_module build() 完成 Router 后 `.layer(axum::middleware::from_fn_with_state(ctx.db.clone(), rls_middleware))`（与 build_application lib.rs:1013 同构），或统一走 build_application。列独立 P2，本批不做（超出 11 处字面量范围）。
   - **✅ 已闭环（2026-10-14）**：7 个 real_module 挂载 rls_middleware（finance/communication/gis/monitor/mobile/integration/subscription），写法与 build_application lib.rs:1013 同构（`from_fn_with_state(ctx.db.clone(), topems_shared_db::rls::rls_middleware)`）。4 个跳过（已有等价租户中间件，不重复挂）：ai_real_module（svc/ai/src/routes.rs 多处 tenant_middleware）、plugin_registry_real_module（:57-60 tenant_middleware）、search_real_module（:62-63 tenant_middleware）、unified_core_real_module（自带 tenant_rls_middleware，routes/mod.rs:257）。DB 层四态实测（topems_app NOSUPERUSER，hrm.employees）：无GUC=9/租户A(000...001)=7/nil UUID=9/无关租户(0602...)=1。服务实测：8099 正常 LISTEN、finance/health 200、受保护端点 401（auth 在 rls 之前，无 JWT 不达 rls 层）。cargo check -p topems-server 0/0、--lib 0 tests exit 0。
+- **P2-c DSH RAG 空壳接线真实 pgvector 检索**（2026-10-14）：增量重审发现 dsh/rag/mod.rs perform_retrieval（:721）调 mock_retrieval（:758）返回 Vec::new()（:763），sqlx=0，检索永远空转；前端 0 调用 /dsh/rag/retrieve；agent rag_retriever 默认 None 从未 set。决策：最小接线（不删除——agent/integrations 有 RetrievedDocument 引用，删除会断编译）。改动：① RagEngine（:571）加 pool/ai_client Option 字段 + with_pool 构造器；② perform_retrieval 改为 if let Some(pool, ai_client) 走真实 pgvector 检索（vector_search 方法，复用 ai_knowledge/document_processor::generate_embedding + pgvector `<=>` 余弦距离 SQL，对齐 ai_knowledge/rag.rs:64）；③ routes.rs:84 用 with_pool(pool.clone(), create_ai_client()) 注入。pool/ai_client 为 None 时返回空（兼容 main.rs:318 测试态）。cargo check -p topems-ai 0/0、--lib 1122 passed 0 failed。
 - **P0-3**（`44acc4868` + `af4a74664` + `d14dbc0d4`）：预发门禁先行——access_log.rs:168/248 修 `entity_id::text`（uuid 列按 String 解码的 500 panic，**冒烟 4117/4117 PASS 0 FAIL 两轮**后才改配置）；nginx 双配置（deploy/nginx/topems.conf + apps/web/nginx.conf）改单一 server_service(8099) 拓扑（删 27 per-service upstream + map 块，/api/ 直代 8099，health/metrics 改指 8099，保留 SSL/限流/静态/legacy rewrite）；三端 baseURL 对齐 8099（mobile api-url.ts:13、desktop client.ts:34，保留 env 覆盖）。校验：check-config-sources.cjs EXIT=0（未改校验器）；nginx -t 沙箱副本 syntax OK（本机 Darwin 平台差异 epoll/brotli/证书路径——**上线前需目标 Linux 主机 nginx -t**）。冒烟契约总数实测 4117（规划文案 4135 为契约漂移前数值，以 0 FAIL 为门禁）。
 - **P0-4a**（8 服务 15 点，每服务独立 commit，统一"commit 后 emit + Err→`push_retry_typed` + main.rs 15s `run_relay`"，照 D6/pm 范式，消费契约零改动）：
   - B1：ehs `681701f96`（accident.rs:296/hazard.rs:395——复核为无 DB 写业务桩，重试仍 at-least-once）/ qms `d8d0e565b`（quality_issue.rs:204）/ lims `e32cfc634`（reagent.rs:255、inspection_task.rs:704/727/751 含缓存失效）；

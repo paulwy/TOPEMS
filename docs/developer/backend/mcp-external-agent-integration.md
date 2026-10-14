@@ -49,6 +49,7 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 
 | 变量                    | 默认值                     | 说明                                     |
 | --------------------- | ----------------------- | -------------------------------------- |
+| `JWT_SECRET`          | （必填，无默认）              | 服务间认证密钥；fail-closed，缺失则 mcp-stdio 拒绝启动 |
 | `CRM_SERVICE_URL`     | `http://localhost:8029` | CRM 服务地址                               |
 | `ERP_SERVICE_URL`     | `http://localhost:8030` | ERP 服务地址                               |
 | `FINANCE_SERVICE_URL` | `http://localhost:8011` | Finance 服务地址                           |
@@ -81,7 +82,9 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 
 &#x20;     "env": {
 
-&#x20;       "RUST\_LOG": "info"
+&#x20;       "JWT_SECRET": "<your-jwt-secret>",
+
+&#x20;       "RUST_LOG": "info"
 
 &#x20;     }
 
@@ -117,7 +120,9 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 
 &#x20;     "env": {
 
-&#x20;       "RUST\_LOG": "info"
+&#x20;       "JWT_SECRET": "<your-jwt-secret>",
+
+&#x20;       "RUST_LOG": "info"
 
 &#x20;     }
 
@@ -145,7 +150,13 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 
 &#x20;     "command": "/Users/air/TOPEMS/target/debug/mcp-stdio",
 
-&#x20;     "args": \[]
+&#x20;     "args": \[],
+
+&#x20;     "env": {
+
+&#x20;       "JWT_SECRET": "<your-jwt-secret>"
+
+&#x20;     }
 
 &#x20;   }
 
@@ -154,7 +165,7 @@ TOPEMS MCP Server 通过 **stdio 传输**暴露 64 个业务工具 + 3 个业务
 }
 ```
 
-或通过 CLI：`claude mcp add topems -- /Users/air/TOPEMS/target/debug/mcp-stdio`
+或通过 CLI：`JWT_SECRET=<your-jwt-secret> claude mcp add topems -- /Users/air/TOPEMS/target/debug/mcp-stdio`
 
 ## 端到端验证脚本
 

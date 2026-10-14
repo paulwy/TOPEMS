@@ -279,14 +279,23 @@ impl McpServer {
         let mut state = self.state.write().await;
         *state = ServerState::Initializing;
 
+        // 能力声明诚实原则：
+        // - tools.list_changed=false：工具在启动时一次性注册，运行期无动态增删，
+        //   不发送 notifications/tools/list_changed（避免 Client 端缓存后永远等不到增量推送）。
+        // - resources.list_changed=false：同上，3 个业务资源在启动时固定注册。
+        // - resources.subscribe=false：不支持资源订阅（无资源变更推送）。
+        // - prompts=None：有意不实现 MCP prompts 能力——62 个业务工具的 description
+        //   字段已承载足够的工具说明，外部 Agent 可自行构造 system prompt；
+        //   MCP 协议允许 prompts 为 None（表示"不提供 prompt 模板"）。
+        // - sampling=None：不主动请求 Client 侧 LLM 采样。
         let result = InitializeResult {
             protocol_version: self.protocol_version,
             capabilities: McpCapability {
                 tools: Some(ToolsCapability {
-                    list_changed: Some(true),
+                    list_changed: Some(false),
                 }),
                 resources: Some(ResourcesCapability {
-                    list_changed: Some(true),
+                    list_changed: Some(false),
                     subscribe: Some(false),
                 }),
                 prompts: None,

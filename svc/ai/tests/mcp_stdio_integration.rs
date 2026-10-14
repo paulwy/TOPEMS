@@ -29,7 +29,10 @@ fn start_mcp_stdio() -> (
     std::process::ChildStdin,
     mpsc::Receiver<Value>,
 ) {
+    // mcp-stdio fail-closed 要求 JWT_SECRET 环境变量；集成测试使用固定测试密钥。
     let mut child = Command::new(env!("CARGO_BIN_EXE_mcp-stdio"))
+        .env("JWT_SECRET", "test-jwt-secret")
+        .env("RUST_LOG", "warn")
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
