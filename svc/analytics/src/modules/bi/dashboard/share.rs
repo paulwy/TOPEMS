@@ -55,7 +55,7 @@ expires_at, now,
                                 dashboard_id: row.dashboard_id,
                                 share_url: format!("/dashboard/share/{}", row.id),
                                 permission: row.permission,
-                                expires_at: row.expires_at.map(|d| d),
+                                expires_at: row.expires_at,
         created_at: row.created_at.unwrap_or_else(Utc::now),
                             }
                         })),
@@ -167,7 +167,7 @@ pub async fn list_share_links(
             dashboard_id: row.dashboard_id,
             share_url: format!("/dashboard/share/{}", row.id),
             permission: row.permission,
-            expires_at: row.expires_at.map(|d| d),
+            expires_at: row.expires_at,
             created_at: row.created_at.unwrap_or_else(Utc::now),
         })
         .collect();

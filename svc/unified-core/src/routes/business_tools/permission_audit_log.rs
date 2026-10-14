@@ -539,6 +539,18 @@ impl<S: AuditLogStore + ?Sized> AuditLogger<S> {
     }
 }
 
+/// B7 收尾：AuditLogError → TopemsError 语义桥接
+impl From<AuditLogError> for topems_shared_core::error::TopemsError {
+    fn from(e: AuditLogError) -> Self {
+        use topems_shared_core::error::TopemsError;
+        match e {
+            AuditLogError::NotFound(m) => TopemsError::ResourceNotFound(m),
+            AuditLogError::InvalidQuery(m) => TopemsError::ValidationFailed(m),
+            AuditLogError::StoreError(m) => TopemsError::DatabaseQuery(m),
+        }
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
@@ -712,17 +724,5 @@ mod tests {
         let entry = logger.get_by_id(id).await.unwrap();
         assert!(entry.is_some());
         assert_eq!(entry.unwrap().id, *id);
-    }
-}
-
-/// B7 收尾：AuditLogError → TopemsError 语义桥接
-impl From<AuditLogError> for topems_shared_core::error::TopemsError {
-    fn from(e: AuditLogError) -> Self {
-        use topems_shared_core::error::TopemsError;
-        match e {
-            AuditLogError::NotFound(m) => TopemsError::ResourceNotFound(m),
-            AuditLogError::InvalidQuery(m) => TopemsError::ValidationFailed(m),
-            AuditLogError::StoreError(m) => TopemsError::DatabaseQuery(m),
-        }
     }
 }

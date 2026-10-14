@@ -345,12 +345,10 @@ pub fn create_embedding_service(config: &EmbeddingConfig) -> Result<Arc<dyn Embe
             Ok(Arc::new(LocalEmbedding::new(endpoint, config.dimension)))
         }
         "mock" => Ok(Arc::new(MockEmbedding::new(config.dimension))),
-        _ => {
-            return Err(TopemsError::ValidationFailed(format!(
-                "Unknown embedding provider: {}",
-                config.provider
-            )))
-        }
+        _ => Err(TopemsError::ValidationFailed(format!(
+            "Unknown embedding provider: {}",
+            config.provider
+        ))),
     }
 }
 

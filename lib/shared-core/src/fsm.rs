@@ -123,6 +123,13 @@ impl FsmDef {
     }
 }
 
+/// B7 桥接网：FsmError → TopemsError（状态转换语义 → ValidationFailed）
+impl From<FsmError> for crate::error::TopemsError {
+    fn from(e: FsmError) -> Self {
+        crate::error::TopemsError::ValidationFailed(e.to_string())
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::unwrap_used, clippy::expect_used, clippy::indexing_slicing)]
 mod tests {
@@ -227,12 +234,5 @@ mod tests {
         assert!(debug.contains("InvalidTransition"));
         assert!(debug.contains("a"));
         assert!(debug.contains("b"));
-    }
-}
-
-/// B7 桥接网：FsmError → TopemsError（状态转换语义 → ValidationFailed）
-impl From<FsmError> for crate::error::TopemsError {
-    fn from(e: FsmError) -> Self {
-        crate::error::TopemsError::ValidationFailed(e.to_string())
     }
 }

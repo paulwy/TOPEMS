@@ -873,7 +873,7 @@ pub async fn transfer_wip(
         .await
         .ok()
         .flatten()
-        .and_then(|w| Some(w.name))
+        .map(|w| w.name)
     } else {
         None
     };
@@ -887,7 +887,7 @@ pub async fn transfer_wip(
         .await
         .ok()
         .flatten()
-        .and_then(|w| Some(w.name))
+        .map(|w| w.name)
     } else {
         None
     };

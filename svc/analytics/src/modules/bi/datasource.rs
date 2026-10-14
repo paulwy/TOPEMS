@@ -312,13 +312,13 @@ pub async fn list_datasources(
                 r.port,
                 r.username,
                 r.connection_string,
-                r.last_sync.map(|d| d),
+                r.last_sync,
                 r.data_volume,
                 r.sync_frequency,
                 r.description,
                 r.is_enabled,
-                r.created_at.map(|d| d),
-                r.updated_at.map(|d| d),
+                r.created_at,
+                r.updated_at,
             )
         })
         .collect();
@@ -402,13 +402,13 @@ pub async fn create_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync.map(|d| d),
+        r.last_sync,
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        r.created_at.map(|d| d),
-        r.updated_at.map(|d| d),
+        r.created_at,
+        r.updated_at,
                             )
                         })),
         Err(e) => Json(topems_shared_core::response::error_value(
@@ -468,13 +468,13 @@ pub async fn get_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync.map(|d| d),
+        r.last_sync,
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        r.created_at.map(|d| d),
-        r.updated_at.map(|d| d),
+        r.created_at,
+        r.updated_at,
                             )
                         })),
         None => Json(topems_shared_core::response::error_value(
@@ -568,13 +568,13 @@ pub async fn update_datasource(
                                 r.port,
                                 r.username,
                                 r.connection_string,
-        r.last_sync.map(|d| d),
+        r.last_sync,
                                 r.data_volume,
                                 r.sync_frequency,
                                 r.description,
                                 r.is_enabled,
-        r.created_at.map(|d| d),
-        r.updated_at.map(|d| d),
+        r.created_at,
+        r.updated_at,
                             )
                         })),
         Ok(None) => Json(topems_shared_core::response::error_value(

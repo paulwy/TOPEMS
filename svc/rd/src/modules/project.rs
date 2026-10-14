@@ -249,15 +249,14 @@ pub async fn create_project(
     // 对齐 srm supplier.rs:380 / rd project_member.rs:102 的显式 commit 范式：
     // INSERT 成功后显式提交，commit 成功才继续副作用与事件发布。
     if let Ok(_) = &result {
-        match guard.take() {
-            Some(t) => match t.commit().await {
+        if let Some(t) = guard.take() {
+            match t.commit().await {
                 Ok(_) => {}
                 Err(e) => {
                     tracing::error!("rls commit failed: {}", e);
                     return Json(ApiResponse::error(500, "提交事务失败"));
                 }
-            },
-            None => {}
+            }
         }
     }
 
