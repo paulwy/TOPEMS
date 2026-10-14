@@ -240,6 +240,13 @@ fn dict_cache_invalidation_keys(claims: &Claims) -> Vec<String> {
     keys
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation
+)]
 pub async fn list_dict_types(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,

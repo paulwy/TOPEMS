@@ -1,6 +1,11 @@
 //! Accident handlers - Reporting, investigation, treatment, and review
 
-use axum::{extract::{Query, State}, http::HeaderMap, routing::*, Extension, Json, Router};
+use axum::{
+    extract::{Query, State},
+    http::HeaderMap,
+    routing::*,
+    Extension, Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -284,7 +289,9 @@ fn accident_from_row(r: &sqlx::postgres::PgRow) -> Accident {
             .try_get::<String, _>("economic_loss")
             .ok()
             .and_then(|s| s.parse::<f64>().ok()),
-        status: r.try_get("status").unwrap_or_else(|_| "reported".to_string()),
+        status: r
+            .try_get("status")
+            .unwrap_or_else(|_| "reported".to_string()),
         reported_by: r.try_get("reported_by").ok().flatten(),
         created_at: r.try_get("created_at").ok().flatten(),
         updated_at: r.try_get("updated_at").ok().flatten(),
@@ -317,7 +324,10 @@ pub async fn report_accident(
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
     tracing::debug!("Reporting accident: {:?}", req);
-    let accident_no = format!("ACC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let accident_no = format!(
+        "ACC-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let id = uuid::Uuid::new_v4();
     let occurred_at = req.occurred_at.clone();
     let accident = Accident {
@@ -352,7 +362,11 @@ pub async fn report_accident(
     .bind(&accident.accident_type)
     .bind(&accident.severity)
     .bind(&accident.location)
-    .bind(accident.occurred_at.clone().and_then(|t| chrono::DateTime::parse_from_rfc3339(&t).ok().map(|d| d.with_timezone(&chrono::Utc))))
+    .bind(accident.occurred_at.clone().and_then(|t| {
+        chrono::DateTime::parse_from_rfc3339(&t)
+            .ok()
+            .map(|d| d.with_timezone(&chrono::Utc))
+    }))
     .bind(accident.casualties)
     .bind(accident.economic_loss)
     .bind(&accident.status)
@@ -421,7 +435,6 @@ pub async fn get_accident(
 ) -> Json<ApiResponse<AccidentDetail>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Getting accident detail: {}", id);
-
 
     let row = sqlx::query(
         r#"SELECT id::text AS id, accident_no, title, description, accident_type, severity,
@@ -501,7 +514,11 @@ pub async fn update_accident(
     .bind(&req.accident_type)
     .bind(&req.severity)
     .bind(&req.location)
-    .bind(req.occurred_at.and_then(|t| chrono::DateTime::parse_from_rfc3339(&t).ok().map(|d| d.with_timezone(&chrono::Utc))))
+    .bind(req.occurred_at.and_then(|t| {
+        chrono::DateTime::parse_from_rfc3339(&t)
+            .ok()
+            .map(|d| d.with_timezone(&chrono::Utc))
+    }))
     .bind(req.casualties.unwrap_or(0))
     .bind(req.economic_loss.unwrap_or(0.0))
     .bind(&tenant_bind)
@@ -514,7 +531,10 @@ pub async fn update_accident(
             return Json(ApiResponse::error(500, "事故更新失败"));
         }
     };
-    Json(ApiResponse::success(accident_from_row(&row), "事故更新成功"))
+    Json(ApiResponse::success(
+        accident_from_row(&row),
+        "事故更新成功",
+    ))
 }
 
 #[utoipa::path(
@@ -590,23 +610,37 @@ pub async fn start_investigation(
             return Json(ApiResponse::error(500, "调查启动失败"));
         }
     };
-    Json(ApiResponse::success(investigation_from_row(&row), "调查已启动"))
+    Json(ApiResponse::success(
+        investigation_from_row(&row),
+        "调查已启动",
+    ))
 }
 
 fn investigation_from_row(r: &sqlx::postgres::PgRow) -> Investigation {
     Investigation {
         id: r.try_get("id").unwrap_or_default(),
         accident_id: r.try_get("accident_id").unwrap_or_default(),
-        team: r.try_get::<Option<serde_json::Value>, _>("team").ok().flatten().and_then(|v| serde_json::from_value(v).ok()),
+        team: r
+            .try_get::<Option<serde_json::Value>, _>("team")
+            .ok()
+            .flatten()
+            .and_then(|v| serde_json::from_value(v).ok()),
         findings: r.try_get("findings").ok().flatten(),
         root_cause: r.try_get("root_cause").ok().flatten(),
-        timeline: r.try_get::<Option<serde_json::Value>, _>("timeline").ok().flatten().and_then(|v| serde_json::from_value(v).ok()),
-        status: r.try_get("status").unwrap_or_else(|_| "in_progress".to_string()),
+        timeline: r
+            .try_get::<Option<serde_json::Value>, _>("timeline")
+            .ok()
+            .flatten()
+            .and_then(|v| serde_json::from_value(v).ok()),
+        status: r
+            .try_get("status")
+            .unwrap_or_else(|_| "in_progress".to_string()),
         started_at: r.try_get("started_at").ok().flatten(),
         completed_at: r.try_get("completed_at").ok().flatten(),
         created_at: r.try_get("created_at").ok().flatten(),
         updated_at: r.try_get("updated_at").ok().flatten(),
-        tenant_id: Uuid::parse_str(&r.try_get::<String, _>("tenant_id").unwrap_or_default()).unwrap_or_default(),
+        tenant_id: Uuid::parse_str(&r.try_get::<String, _>("tenant_id").unwrap_or_default())
+            .unwrap_or_default(),
     }
 }
 
@@ -654,7 +688,10 @@ pub async fn update_investigation(
             return Json(ApiResponse::error(500, "调查更新失败"));
         }
     };
-    Json(ApiResponse::success(investigation_from_row(&row), "调查更新成功"))
+    Json(ApiResponse::success(
+        investigation_from_row(&row),
+        "调查更新成功",
+    ))
 }
 
 #[utoipa::path(
@@ -771,7 +808,11 @@ pub async fn update_treatment_action(
                      status, completed_at::text AS completed_at, tenant_id::text AS tenant_id"#,
     )
     .bind(&req.status)
-    .bind(req.completed_at.and_then(|d| chrono::DateTime::parse_from_rfc3339(&d).ok().map(|t| t.with_timezone(&chrono::Utc))))
+    .bind(req.completed_at.and_then(|d| {
+        chrono::DateTime::parse_from_rfc3339(&d)
+            .ok()
+            .map(|t| t.with_timezone(&chrono::Utc))
+    }))
     .bind(&tenant_bind)
     .bind(&action_id)
     .fetch_optional(&state.pool)
@@ -790,9 +831,12 @@ pub async fn update_treatment_action(
             description: row.try_get("description").unwrap_or_default(),
             responsible: row.try_get("responsible").ok().flatten(),
             deadline: row.try_get("deadline").ok().flatten(),
-            status: row.try_get("status").unwrap_or_else(|_| "pending".to_string()),
+            status: row
+                .try_get("status")
+                .unwrap_or_else(|_| "pending".to_string()),
             completed_at: row.try_get("completed_at").ok().flatten(),
-            tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default()).unwrap_or_default(),
+            tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default())
+                .unwrap_or_default(),
         },
         "处置行动更新成功",
     ))
@@ -880,7 +924,10 @@ pub async fn complete_investigation(
             return Json(ApiResponse::error(500, "调查完成失败"));
         }
     };
-    Json(ApiResponse::success(investigation_from_row(&row), "调查完成"))
+    Json(ApiResponse::success(
+        investigation_from_row(&row),
+        "调查完成",
+    ))
 }
 
 #[utoipa::path(
@@ -937,12 +984,15 @@ pub async fn complete_treatment(
             accident_id: row.try_get("accident_id").unwrap_or_default(),
             actions: Vec::new(),
             responsible: row.try_get("responsible").ok().flatten(),
-            status: row.try_get("status").unwrap_or_else(|_| "completed".to_string()),
+            status: row
+                .try_get("status")
+                .unwrap_or_else(|_| "completed".to_string()),
             started_at: row.try_get("started_at").ok().flatten(),
             completed_at: row.try_get("completed_at").ok().flatten(),
             created_at: row.try_get("created_at").ok().flatten(),
             updated_at: row.try_get("updated_at").ok().flatten(),
-            tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default()).unwrap_or_default(),
+            tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default())
+                .unwrap_or_default(),
         },
         "处理完成",
     ))
@@ -996,12 +1046,21 @@ pub async fn create_review(
             id: row.try_get("id").unwrap_or_default(),
             accident_id: row.try_get("accident_id").unwrap_or_default(),
             summary: row.try_get("summary").ok().flatten(),
-            lessons_learned: row.try_get::<Option<serde_json::Value>, _>("lessons_learned").ok().flatten().and_then(|v| serde_json::from_value(v).ok()),
-            recommendations: row.try_get::<Option<serde_json::Value>, _>("recommendations").ok().flatten().and_then(|v| serde_json::from_value(v).ok()),
+            lessons_learned: row
+                .try_get::<Option<serde_json::Value>, _>("lessons_learned")
+                .ok()
+                .flatten()
+                .and_then(|v| serde_json::from_value(v).ok()),
+            recommendations: row
+                .try_get::<Option<serde_json::Value>, _>("recommendations")
+                .ok()
+                .flatten()
+                .and_then(|v| serde_json::from_value(v).ok()),
             reviewer: row.try_get("reviewer").ok().flatten(),
             reviewed_at: row.try_get("reviewed_at").ok().flatten(),
             created_at: row.try_get("created_at").ok().flatten(),
-            tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default()).unwrap_or_default(),
+            tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default())
+                .unwrap_or_default(),
         },
         "复盘完成",
     ))
@@ -1030,12 +1089,14 @@ pub async fn list_incident_actions(
         Ok(r) => {
             let list: Vec<serde_json::Value> = r
                 .iter()
-                .map(|row| serde_json::json!({
-                    "id": row.try_get::<String, _>("id").unwrap_or_default(),
-                    "title": row.try_get::<String, _>("title").unwrap_or_default(),
-                    "status": row.try_get::<String, _>("status").unwrap_or_default(),
-                    "created_at": row.try_get::<String, _>("created_at").ok(),
-                }))
+                .map(|row| {
+                    serde_json::json!({
+                        "id": row.try_get::<String, _>("id").unwrap_or_default(),
+                        "title": row.try_get::<String, _>("title").unwrap_or_default(),
+                        "status": row.try_get::<String, _>("status").unwrap_or_default(),
+                        "created_at": row.try_get::<String, _>("created_at").ok(),
+                    })
+                })
                 .collect();
             Json(ApiResponse::success(list, "获取事故行动列表成功"))
         }
@@ -1055,7 +1116,10 @@ pub async fn create_incident_action(
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_id = resolve_tenant_id(&claims);
     let act_id = uuid::Uuid::new_v4();
-    let title = req.get("title").and_then(|v| v.as_str()).unwrap_or("处置行动");
+    let title = req
+        .get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or("处置行动");
     if let Err(e) = sqlx::query(
         r#"INSERT INTO ehs.qa_ehs_incident_actions (id, accident_id, title, status, tenant_id)
            VALUES ($1, $2, $3, 'pending', $4)"#,
@@ -1091,7 +1155,10 @@ pub async fn update_incident_action(
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let tenant_bind = resolve_tenant_id(&claims).to_string();
-    let status = req.get("status").and_then(|v| v.as_str()).unwrap_or("in_progress");
+    let status = req
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("in_progress");
     let r = sqlx::query(
         "UPDATE ehs.qa_ehs_incident_actions SET status=$1, updated_at=now() \
          WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) \

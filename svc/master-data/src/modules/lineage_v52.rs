@@ -42,15 +42,12 @@ fn edge_from_row(row: &sqlx::postgres::PgRow) -> LineageEdge {
         transformation_description: row.get::<Option<String>, _>("transformation_description"),
     }
 }
-const EDGE_COLS: &str =
-    "id, from_node_id, to_node_id, edge_type, transformation_description";
+const EDGE_COLS: &str = "id, from_node_id, to_node_id, edge_type, transformation_description";
 
 fn graph_from_row(row: &sqlx::postgres::PgRow) -> LineageGraph {
     LineageGraph {
-        nodes: serde_json::from_value(row.get::<serde_json::Value, _>("nodes"))
-            .unwrap_or_default(),
-        edges: serde_json::from_value(row.get::<serde_json::Value, _>("edges"))
-            .unwrap_or_default(),
+        nodes: serde_json::from_value(row.get::<serde_json::Value, _>("nodes")).unwrap_or_default(),
+        edges: serde_json::from_value(row.get::<serde_json::Value, _>("edges")).unwrap_or_default(),
         version: row.get::<i64, _>("version"),
         last_updated: row.get::<String, _>("last_updated"),
     }
@@ -92,8 +89,7 @@ fn rule_from_row(row: &sqlx::postgres::PgRow) -> PropagationRule {
         action: propagation_action_from_str(&row.get::<String, _>("action")),
     }
 }
-const RULE_COLS: &str =
-    "id, source_entity_type, target_entity_type, condition, action";
+const RULE_COLS: &str = "id, source_entity_type, target_entity_type, condition, action";
 
 fn log_from_row(row: &sqlx::postgres::PgRow) -> PropagationLog {
     PropagationLog {
@@ -271,15 +267,9 @@ pub struct PropagationLog {
 
 // ==================== 内存存储 ====================
 
-
-
 // ==================== 初始化种子数据 ====================
 
-
 // ==================== U4 持久化 ====================
-
-
-
 
 // ==================== 内部辅助函数 ====================
 
@@ -617,19 +607,23 @@ impl LineageTracker {
 // ==================== K1：图谱/节点/边 读取与重算助手 ====================
 
 async fn fetch_nodes(db: &sqlx::PgPool) -> Vec<LineageNode> {
-    sqlx::query(&format!("SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes"))
-        .fetch_all(db)
-        .await
-        .map(|rows| rows.iter().map(node_from_row).collect())
-        .unwrap_or_default()
+    sqlx::query(&format!(
+        "SELECT {NODE_COLS} FROM master_data.mdm_lineage_nodes"
+    ))
+    .fetch_all(db)
+    .await
+    .map(|rows| rows.iter().map(node_from_row).collect())
+    .unwrap_or_default()
 }
 
 async fn fetch_edges(db: &sqlx::PgPool) -> Vec<LineageEdge> {
-    sqlx::query(&format!("SELECT {EDGE_COLS} FROM master_data.mdm_lineage_edges"))
-        .fetch_all(db)
-        .await
-        .map(|rows| rows.iter().map(edge_from_row).collect())
-        .unwrap_or_default()
+    sqlx::query(&format!(
+        "SELECT {EDGE_COLS} FROM master_data.mdm_lineage_edges"
+    ))
+    .fetch_all(db)
+    .await
+    .map(|rows| rows.iter().map(edge_from_row).collect())
+    .unwrap_or_default()
 }
 
 async fn refresh_graph(db: &sqlx::PgPool) -> Result<(), TopemsError> {
@@ -794,10 +788,7 @@ impl ImpactAnalyzer {
         Ok(result)
     }
 
-    async fn get_report(
-        db: &sqlx::PgPool,
-        id: &str,
-    ) -> Result<ImpactAnalysisResult, TopemsError> {
+    async fn get_report(db: &sqlx::PgPool, id: &str) -> Result<ImpactAnalysisResult, TopemsError> {
         sqlx::query(&format!(
             "SELECT {ANALYSIS_COLS} FROM master_data.mdm_impact_analyses WHERE id = $1"
         ))
@@ -1036,11 +1027,13 @@ impl ChangePropagator {
     }
 
     async fn get_rules(db: &sqlx::PgPool) -> Vec<PropagationRule> {
-        sqlx::query(&format!("SELECT {RULE_COLS} FROM master_data.mdm_propagation_rules"))
-            .fetch_all(db)
-            .await
-            .map(|rows| rows.iter().map(rule_from_row).collect())
-            .unwrap_or_default()
+        sqlx::query(&format!(
+            "SELECT {RULE_COLS} FROM master_data.mdm_propagation_rules"
+        ))
+        .fetch_all(db)
+        .await
+        .map(|rows| rows.iter().map(rule_from_row).collect())
+        .unwrap_or_default()
     }
 
     async fn add_rule(
@@ -1099,7 +1092,10 @@ impl ChangePropagator {
             .unwrap_or_default()
     }
 
-    async fn rollback(db: &sqlx::PgPool, propagation_id: &str) -> Result<PropagationLog, TopemsError> {
+    async fn rollback(
+        db: &sqlx::PgPool,
+        propagation_id: &str,
+    ) -> Result<PropagationLog, TopemsError> {
         let existing = sqlx::query(&format!(
             "SELECT {LOG_COLS} FROM master_data.mdm_propagation_logs WHERE id = $1"
         ))
@@ -1251,10 +1247,10 @@ pub async fn register_lineage(
     State(state): State<AppState>,
     Json(req): Json<RegisterLineageRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
     let edge_type = edge_type_from_str(&req.edge_type);
 
-    match LineageTracker::register(&state.db, 
+    match LineageTracker::register(
+        &state.db,
         req.from_entity_type,
         req.from_entity_id,
         req.to_entity_type,
@@ -1375,7 +1371,6 @@ pub async fn export_lineage(
     State(state): State<AppState>,
     Query(params): Query<ExportQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
     let format = params.format.unwrap_or_else(|| "json".to_string());
     match LineageTracker::export_graph(&state.db, &format).await {
         Ok(content) => {
@@ -1410,7 +1405,6 @@ pub async fn delete_lineage(
     State(state): State<AppState>,
     Json(req): Json<DeleteLineageRequest>,
 ) -> Json<ApiResponse<()>> {
-
     match LineageTracker::delete_node(&state.db, &req.node_id).await {
         Ok(()) => Json(ApiResponse::success_no_data("血缘节点已删除")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
@@ -1433,7 +1427,6 @@ pub async fn analyze_impact(
     State(state): State<AppState>,
     Json(req): Json<AnalyzeImpactRequest>,
 ) -> Json<ApiResponse<ImpactAnalysisResult>> {
-
     let change_type = change_type_from_str(&req.change_type);
     let analysis_req = ImpactAnalysisRequest {
         target_entity_id: req.target_entity_id,
@@ -1465,7 +1458,6 @@ pub async fn get_impact_report(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<ImpactAnalysisResult>> {
-
     match ImpactAnalyzer::get_report(&state.db, &id).await {
         Ok(report) => Json(ApiResponse::success(report, "影响分析报告")),
         Err(e) => Json(ApiResponse::from(e)),
@@ -1486,7 +1478,6 @@ pub async fn simulate_change(
     State(state): State<AppState>,
     Json(req): Json<SimulateChangeRequest>,
 ) -> Json<ApiResponse<ImpactSimulation>> {
-
     let change_type = change_type_from_str(&req.change_type);
     match ImpactAnalyzer::simulate(&state.db, req.entity_type, req.entity_id, change_type).await {
         Ok(simulation) => Json(ApiResponse::success(simulation, "变更模拟完成")),
@@ -1508,8 +1499,8 @@ pub async fn get_affected_scope(
     State(state): State<AppState>,
     Query(params): Query<AffectedScopeQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
-    match ImpactAnalyzer::get_affected_scope(&state.db, params.entity_type, params.entity_id).await {
+    match ImpactAnalyzer::get_affected_scope(&state.db, params.entity_type, params.entity_id).await
+    {
         Ok(scope) => Json(ApiResponse::success(scope, "受影响范围")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),
     }
@@ -1531,9 +1522,9 @@ pub async fn propagate_change(
     State(state): State<AppState>,
     Json(req): Json<PropagateChangeRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
     let change_type = change_type_from_str(&req.change_type);
-    match ChangePropagator::propagate(&state.db, 
+    match ChangePropagator::propagate(
+        &state.db,
         req.entity_type,
         req.entity_id,
         change_type,
@@ -1585,7 +1576,6 @@ pub async fn add_propagation_rule(
     State(state): State<AppState>,
     Json(req): Json<AddPropagationRuleRequest>,
 ) -> Json<ApiResponse<PropagationRule>> {
-
     let action = propagation_action_from_str(&req.action);
     match ChangePropagator::add_rule(
         &state.db,
@@ -1621,7 +1611,6 @@ pub async fn get_propagation_log(
     State(state): State<AppState>,
     Query(params): Query<PropagationLogQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<PropagationLog>>> {
-
     let logs = ChangePropagator::get_log(&state.db, params.entity_type, params.entity_id).await;
 
     let page = params.page.unwrap_or(1).max(1);
@@ -1660,7 +1649,6 @@ pub async fn rollback_propagation(
     State(state): State<AppState>,
     Json(req): Json<RollbackPropagationRequest>,
 ) -> Json<ApiResponse<PropagationLog>> {
-
     match ChangePropagator::rollback(&state.db, &req.propagation_id).await {
         Ok(log) => Json(ApiResponse::success(log, "传播已回滚")),
         Err(e) => Json(ApiResponse::error(404, &e.classify().1)),

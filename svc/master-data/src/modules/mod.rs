@@ -29,8 +29,7 @@ pub mod dict;
 /// B10：把 10 个 MDM 模块的内存集合快照全部回写库（幂等 upsert）。
 /// 与 main.rs 后台 3s flush 的调用面一致；各模块内部按 initialized 门控，
 /// 未 seed/load 前为 no-op，避免启动空集合覆盖库内既有快照。
-pub async fn flush_all() {
-}
+pub async fn flush_all() {}
 
 /// B10 写后同步落库中间件：POST/PUT/PATCH/DELETE 请求处理完成后立即全量 flush。
 /// 消除 U4 遗留的 "≤3s 快照窗口 SIGKILL 丢最近写" —— 写请求返回前数据已落库，

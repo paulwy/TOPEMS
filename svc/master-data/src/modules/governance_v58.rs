@@ -221,9 +221,7 @@ impl GovernanceMaturity {
         Ok(row.map(|r| maturity_assessment_from_row(&r)))
     }
 
-    async fn get_dimension_scores(
-        db: &sqlx::PgPool,
-    ) -> Result<Vec<DimensionScore>, TopemsError> {
+    async fn get_dimension_scores(db: &sqlx::PgPool) -> Result<Vec<DimensionScore>, TopemsError> {
         fetch_dimension_scores(db).await
     }
 
@@ -261,9 +259,7 @@ impl GovernanceMaturity {
         Ok(plan)
     }
 
-    async fn track_progress(
-        db: &sqlx::PgPool,
-    ) -> Result<Vec<MaturityProgress>, TopemsError> {
+    async fn track_progress(db: &sqlx::PgPool) -> Result<Vec<MaturityProgress>, TopemsError> {
         let scores = fetch_dimension_scores(db).await?;
         let mut progress = Vec::new();
         for score in scores.iter() {
@@ -293,9 +289,7 @@ impl GovernanceMaturity {
         })
     }
 
-    async fn get_benchmark(
-        db: &sqlx::PgPool,
-    ) -> Result<Vec<BenchmarkData>, TopemsError> {
+    async fn get_benchmark(db: &sqlx::PgPool) -> Result<Vec<BenchmarkData>, TopemsError> {
         let scores = fetch_dimension_scores(db).await?;
         let benchmarks = scores
             .iter()
@@ -582,9 +576,7 @@ impl MDMWorkflowEngine {
             .collect())
     }
 
-    async fn get_templates(
-        db: &sqlx::PgPool,
-    ) -> Result<Vec<WorkflowTemplate>, TopemsError> {
+    async fn get_templates(db: &sqlx::PgPool) -> Result<Vec<WorkflowTemplate>, TopemsError> {
         fetch_workflow_templates(db).await
     }
 
@@ -608,7 +600,10 @@ impl MDMWorkflowEngine {
         let now = chrono::Utc::now().to_rfc3339();
         step.status = WorkflowStepStatus::Approved;
         step.completed_at = Some(now.clone());
-        let actor = step.assignee.clone().unwrap_or_else(|| "system".to_string());
+        let actor = step
+            .assignee
+            .clone()
+            .unwrap_or_else(|| "system".to_string());
         workflow.updated_at = now;
 
         let mut tx = db
@@ -666,7 +661,10 @@ impl MDMWorkflowEngine {
         let now = chrono::Utc::now().to_rfc3339();
         step.status = WorkflowStepStatus::Rejected;
         step.completed_at = Some(now.clone());
-        let actor = step.assignee.clone().unwrap_or_else(|| "system".to_string());
+        let actor = step
+            .assignee
+            .clone()
+            .unwrap_or_else(|| "system".to_string());
         workflow.status = WorkflowStatus::Cancelled;
         workflow.updated_at = now;
 
@@ -1052,8 +1050,6 @@ impl DataProductManager {
 
 // ==================== V58 内存存储 ====================
 
-
-
 // ==================== 辅助函数 ====================
 
 fn dimension_str(d: &GovernanceDimension) -> &str {
@@ -1146,11 +1142,7 @@ fn generate_recommendations(dimension: &GovernanceDimension, gaps: &[String]) ->
 
 // ==================== 初始化种子数据 ====================
 
-
 // ==================== U4 持久化 ====================
-
-
-
 
 // ==================== 请求/响应结构 ====================
 
@@ -1256,7 +1248,6 @@ pub async fn assess_maturity(
     State(state): State<AppState>,
     Json(req): Json<AssessMaturityRequest>,
 ) -> Json<ApiResponse<MaturityAssessment>> {
-
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
         None => return Json(ApiResponse::error(400, "无效的维度类型")),
@@ -1285,7 +1276,6 @@ pub async fn get_assessment(
     State(state): State<AppState>,
     Query(params): Query<GetAssessmentQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
     if let Some(id) = params.id {
         match db_exec!(GovernanceMaturity::get_assessment(&state.db, &id).await) {
             Some(a) => Json(ApiResponse::success(serde_json::json!(a), "成熟度评估详情")),
@@ -1331,7 +1321,6 @@ pub async fn create_improvement_plan(
     State(state): State<AppState>,
     Json(req): Json<ImprovementPlanRequest>,
 ) -> Json<ApiResponse<ImprovementPlan>> {
-
     let dimension = match parse_dimension(&req.dimension) {
         Some(d) => d,
         None => return Json(ApiResponse::error(400, "无效的维度类型")),
@@ -1341,7 +1330,8 @@ pub async fn create_improvement_plan(
         None => return Json(ApiResponse::error(400, "无效的目标等级")),
     };
 
-    let plan = db_exec!(GovernanceMaturity::create_improvement_plan(&state.db, dimension, target, req.actions)
+    let plan = db_exec!(
+        GovernanceMaturity::create_improvement_plan(&state.db, dimension, target, req.actions)
             .await
     );
     Json(ApiResponse::success(plan, "改进计划已创建"))
@@ -1378,8 +1368,8 @@ pub async fn get_maturity_history(
     State(state): State<AppState>,
     Query(params): Query<MaturityHistoryQuery>,
 ) -> Json<ApiResponse<Vec<MaturityHistoryEntry>>> {
-    let history = db_exec!(GovernanceMaturity::get_maturity_history(&state.db, params.dimension.as_deref())
-            .await
+    let history = db_exec!(
+        GovernanceMaturity::get_maturity_history(&state.db, params.dimension.as_deref()).await
     );
     Json(ApiResponse::success(history, "成熟度历史"))
 }
@@ -1394,9 +1384,7 @@ pub async fn get_maturity_history(
     ),
     tag = "governance_v58"
 )]
-pub async fn get_benchmark(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<Vec<BenchmarkData>>> {
+pub async fn get_benchmark(State(state): State<AppState>) -> Json<ApiResponse<Vec<BenchmarkData>>> {
     let benchmark = db_exec!(GovernanceMaturity::get_benchmark(&state.db).await);
     Json(ApiResponse::success(benchmark, "基准对比数据"))
 }
@@ -1417,7 +1405,6 @@ pub async fn create_workflow(
     State(state): State<AppState>,
     Json(req): Json<CreateWorkflowRequest>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-
     let workflow_type = match parse_workflow_type(&req.workflow_type) {
         Some(t) => t,
         None => return Json(ApiResponse::error(400, "无效的工作流类型")),
@@ -1445,8 +1432,8 @@ pub async fn create_workflow(
         })
         .collect();
 
-    let workflow = db_exec!(MDMWorkflowEngine::create_workflow(&state.db, req.name, workflow_type, steps)
-            .await
+    let workflow = db_exec!(
+        MDMWorkflowEngine::create_workflow(&state.db, req.name, workflow_type, steps).await
     );
     Json(ApiResponse::success(workflow, "工作流已创建"))
 }
@@ -1468,7 +1455,6 @@ pub async fn start_workflow(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-
     match db_exec!(MDMWorkflowEngine::start_workflow(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "工作流已启动")),
         None => Json(ApiResponse::error(400, "工作流无法启动")),
@@ -1493,7 +1479,6 @@ pub async fn advance_step(
     Path(id): Path<String>,
     Json(_req): Json<AdvanceStepRequest>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-
     match db_exec!(MDMWorkflowEngine::advance_step(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "步骤已推进")),
         None => Json(ApiResponse::error(400, "无法推进工作流")),
@@ -1517,7 +1502,6 @@ pub async fn get_workflow_status(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-
     match db_exec!(MDMWorkflowEngine::get_workflow_status(&state.db, &id).await) {
         Some(w) => Json(ApiResponse::success(w, "工作流状态")),
         None => Json(ApiResponse::error(404, "未找到工作流")),
@@ -1538,8 +1522,13 @@ pub async fn list_workflows(
     State(state): State<AppState>,
     Query(params): Query<ListWorkflowsQuery>,
 ) -> Json<ApiResponse<Vec<WorkflowV58>>> {
-    let workflows = db_exec!(MDMWorkflowEngine::list_workflows(&state.db, params.workflow_type.as_deref(), params.status.as_deref())
-            .await
+    let workflows = db_exec!(
+        MDMWorkflowEngine::list_workflows(
+            &state.db,
+            params.workflow_type.as_deref(),
+            params.status.as_deref()
+        )
+        .await
     );
     Json(ApiResponse::success(workflows, "工作流列表"))
 }
@@ -1579,7 +1568,6 @@ pub async fn approve_step(
     Path(id): Path<String>,
     Json(req): Json<ApproveStepRequest>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-
     let (workflow_id, step_id) = parse_step_path(&id);
 
     match db_exec!(MDMWorkflowEngine::approve_step(&state.db, &workflow_id, &step_id).await) {
@@ -1609,7 +1597,6 @@ pub async fn reject_step(
     Path(id): Path<String>,
     Json(req): Json<RejectStepRequest>,
 ) -> Json<ApiResponse<WorkflowV58>> {
-
     let (workflow_id, step_id) = parse_step_path(&id);
 
     match db_exec!(MDMWorkflowEngine::reject_step(&state.db, &workflow_id, &step_id).await) {
@@ -1645,15 +1632,22 @@ pub async fn create_data_product(
     State(state): State<AppState>,
     Json(req): Json<CreateDataProductRequest>,
 ) -> Json<ApiResponse<DataProduct>> {
-
     let sla = req
         .sla_level
         .as_deref()
         .and_then(parse_sla_level)
         .unwrap_or(SlaLevel::Silver);
 
-    let product = db_exec!(DataProductManager::create_data_product(&state.db, req.name, req.description, req.owner, req.domain, sla)
-            .await
+    let product = db_exec!(
+        DataProductManager::create_data_product(
+            &state.db,
+            req.name,
+            req.description,
+            req.owner,
+            req.domain,
+            sla
+        )
+        .await
     );
     Json(ApiResponse::success(product, "数据产品已创建"))
 }
@@ -1675,7 +1669,6 @@ pub async fn get_data_product(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<DataProduct>> {
-
     match db_exec!(DataProductManager::get_data_product(&state.db, &id).await) {
         Some(p) => Json(ApiResponse::success(p, "数据产品详情")),
         None => Json(ApiResponse::error(404, "未找到数据产品")),
@@ -1696,8 +1689,13 @@ pub async fn list_data_products(
     State(state): State<AppState>,
     Query(params): Query<ListDataProductsQuery>,
 ) -> Json<ApiResponse<Vec<DataProduct>>> {
-    let products = db_exec!(DataProductManager::list_data_products(&state.db, params.domain.as_deref(), params.status.as_deref())
-            .await
+    let products = db_exec!(
+        DataProductManager::list_data_products(
+            &state.db,
+            params.domain.as_deref(),
+            params.status.as_deref()
+        )
+        .await
     );
     Json(ApiResponse::success(products, "数据产品列表"))
 }
@@ -1720,7 +1718,6 @@ pub async fn update_contract(
     Path(id): Path<String>,
     Json(req): Json<UpdateContractRequest>,
 ) -> Json<ApiResponse<DataContract>> {
-
     let security = req
         .security_level
         .as_deref()
@@ -1737,8 +1734,16 @@ pub async fn update_contract(
 
     let sla = req.freshness_sla.unwrap_or_else(|| "24h".to_string());
 
-    match db_exec!(DataProductManager::update_contract(&state.db, &id, req.schema, requirements, sla, security)
-            .await
+    match db_exec!(
+        DataProductManager::update_contract(
+            &state.db,
+            &id,
+            req.schema,
+            requirements,
+            sla,
+            security
+        )
+        .await
     ) {
         Some(c) => Json(ApiResponse::success(c, "数据契约已更新")),
         None => Json(ApiResponse::error(404, "未找到数据产品")),
@@ -1762,7 +1767,6 @@ pub async fn get_contract_status(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<ContractStatus>> {
-
     match db_exec!(DataProductManager::get_contract_status(&state.db, &id).await) {
         Some(s) => Json(ApiResponse::success(s, "契约状态")),
         None => Json(ApiResponse::error(404, "未找到数据产品")),
@@ -1787,7 +1791,6 @@ pub async fn expose_as_api(
     Path(id): Path<String>,
     Json(req): Json<ExposeApiRequest>,
 ) -> Json<ApiResponse<ApiExposure>> {
-
     let auth = req.auth_type.unwrap_or_else(|| "bearer".to_string());
     let rate = req.rate_limit.unwrap_or_else(|| "1000/min".to_string());
 
@@ -1913,15 +1916,20 @@ fn parse_step_path(path: &str) -> (String, String) {
 
 // ==================== K1 接真表：映射层 ====================
 
-const ASSESSMENT_COLS: &str = "id, dimension, current_level, target_level, score, gaps, recommendations, assessed_at";
+const ASSESSMENT_COLS: &str =
+    "id, dimension, current_level, target_level, score, gaps, recommendations, assessed_at";
 const DIMENSION_SCORE_COLS: &str = "dimension, score, weight, maturity_level, evidence";
-const IMPROVEMENT_PLAN_COLS: &str = "id, dimension, target_level, actions, priority, due_date, status";
-const WORKFLOW_COLS: &str = "id, name, workflow_type, steps, triggers, status, created_at, updated_at";
+const IMPROVEMENT_PLAN_COLS: &str =
+    "id, dimension, target_level, actions, priority, due_date, status";
+const WORKFLOW_COLS: &str =
+    "id, name, workflow_type, steps, triggers, status, created_at, updated_at";
 const WORKFLOW_TEMPLATE_COLS: &str = "id, name, description, workflow_type, steps";
 const WORKFLOW_HISTORY_COLS: &str = "id, workflow_id, action, step_id, actor, comment, recorded_at";
 const DATA_PRODUCT_COLS: &str = "id, name, description, owner, domain, consumers, data_contract, sla_level, status, created_at, updated_at";
-const DATA_CONTRACT_COLS: &str = "product_id, schema, quality_requirements, freshness_sla, security_level, version, updated_at";
-const API_EXPOSURE_COLS: &str = "id, product_id, endpoint, auth_type, rate_limit, enabled, created_at";
+const DATA_CONTRACT_COLS: &str =
+    "product_id, schema, quality_requirements, freshness_sla, security_level, version, updated_at";
+const API_EXPOSURE_COLS: &str =
+    "id, product_id, endpoint, auth_type, rate_limit, enabled, created_at";
 
 fn sla_level_str(l: &SlaLevel) -> &str {
     match l {
@@ -1978,8 +1986,10 @@ fn maturity_assessment_from_row(r: &sqlx::postgres::PgRow) -> MaturityAssessment
     MaturityAssessment {
         id: r.get("id"),
         dimension: parse_dimension(r.get("dimension")).unwrap_or(GovernanceDimension::Quality),
-        current_level: parse_maturity_level(r.get("current_level")).unwrap_or(MaturityLevel::Initial),
-        target_level: parse_maturity_level(r.get("target_level")).unwrap_or(MaturityLevel::Optimized),
+        current_level: parse_maturity_level(r.get("current_level"))
+            .unwrap_or(MaturityLevel::Initial),
+        target_level: parse_maturity_level(r.get("target_level"))
+            .unwrap_or(MaturityLevel::Optimized),
         score: r.get("score"),
         gaps: json_str_vec(&r.get::<serde_json::Value, _>("gaps")),
         recommendations: json_str_vec(&r.get::<serde_json::Value, _>("recommendations")),
@@ -1992,7 +2002,8 @@ fn dimension_score_from_row(r: &sqlx::postgres::PgRow) -> DimensionScore {
         dimension: parse_dimension(r.get("dimension")).unwrap_or(GovernanceDimension::Quality),
         score: r.get("score"),
         weight: r.get("weight"),
-        maturity_level: parse_maturity_level(r.get("maturity_level")).unwrap_or(MaturityLevel::Initial),
+        maturity_level: parse_maturity_level(r.get("maturity_level"))
+            .unwrap_or(MaturityLevel::Initial),
         evidence: json_str_vec(&r.get::<serde_json::Value, _>("evidence")),
     }
 }
@@ -2022,7 +2033,8 @@ fn workflow_from_row(r: &sqlx::postgres::PgRow) -> WorkflowV58 {
     WorkflowV58 {
         id: r.get("id"),
         name: r.get("name"),
-        workflow_type: parse_workflow_type(r.get("workflow_type")).unwrap_or(WorkflowType::Approval),
+        workflow_type: parse_workflow_type(r.get("workflow_type"))
+            .unwrap_or(WorkflowType::Approval),
         steps: parsed_steps,
         triggers: r.get("triggers"),
         status: workflow_status_from_str(r.get("status")),
@@ -2036,7 +2048,8 @@ fn workflow_template_from_row(r: &sqlx::postgres::PgRow) -> WorkflowTemplate {
         id: r.get("id"),
         name: r.get("name"),
         description: r.get("description"),
-        workflow_type: parse_workflow_type(r.get("workflow_type")).unwrap_or(WorkflowType::Approval),
+        workflow_type: parse_workflow_type(r.get("workflow_type"))
+            .unwrap_or(WorkflowType::Approval),
         steps: r
             .get::<serde_json::Value, _>("steps")
             .as_array()
@@ -2066,8 +2079,7 @@ fn data_product_from_row(r: &sqlx::postgres::PgRow) -> DataProduct {
         owner: r.get("owner"),
         domain: r.get("domain"),
         consumers: json_str_vec(&r.get::<serde_json::Value, _>("consumers")),
-        data_contract: contract_value
-            .and_then(|v| serde_json::from_value::<DataContract>(v).ok()),
+        data_contract: contract_value.and_then(|v| serde_json::from_value::<DataContract>(v).ok()),
         sla_level: parse_sla_level(r.get("sla_level")).unwrap_or(SlaLevel::Bronze),
         status: match r.get::<String, _>("status").as_str() {
             "published" => DataProductStatus::Published,
@@ -2086,7 +2098,8 @@ fn data_contract_from_row(r: &sqlx::postgres::PgRow) -> DataContract {
         schema: r.get("schema"),
         quality_requirements: json_str_vec(&r.get::<serde_json::Value, _>("quality_requirements")),
         freshness_sla: r.get("freshness_sla"),
-        security_level: parse_security_level(r.get("security_level")).unwrap_or(SecurityLevel::Internal),
+        security_level: parse_security_level(r.get("security_level"))
+            .unwrap_or(SecurityLevel::Internal),
         version: r.get("version"),
         updated_at: r.get("updated_at"),
     }
@@ -2106,23 +2119,31 @@ fn api_exposure_from_row(r: &sqlx::postgres::PgRow) -> ApiExposure {
 
 // ==================== K1 接真表：fetch 助手 ====================
 
-async fn fetch_maturity_assessments(db: &sqlx::PgPool) -> Result<Vec<MaturityAssessment>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {ASSESSMENT_COLS} FROM master_data.mdm_maturity_assessments"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询成熟度评估失败: {e}")))?;
+async fn fetch_maturity_assessments(
+    db: &sqlx::PgPool,
+) -> Result<Vec<MaturityAssessment>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {ASSESSMENT_COLS} FROM master_data.mdm_maturity_assessments"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询成熟度评估失败: {e}")))?;
     Ok(rows.iter().map(maturity_assessment_from_row).collect())
 }
 
 async fn fetch_dimension_scores(db: &sqlx::PgPool) -> Result<Vec<DimensionScore>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {DIMENSION_SCORE_COLS} FROM master_data.mdm_dimension_scores"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询维度得分失败: {e}")))?;
+    let rows = sqlx::query(&format!(
+        "SELECT {DIMENSION_SCORE_COLS} FROM master_data.mdm_dimension_scores"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询维度得分失败: {e}")))?;
     Ok(rows.iter().map(dimension_score_from_row).collect())
 }
 
-async fn fetch_maturity_history(db: &sqlx::PgPool) -> Result<Vec<MaturityHistoryEntry>, TopemsError> {
+async fn fetch_maturity_history(
+    db: &sqlx::PgPool,
+) -> Result<Vec<MaturityHistoryEntry>, TopemsError> {
     let rows = sqlx::query(
         "SELECT id, dimension, score, level, recorded_at FROM master_data.mdm_maturity_history",
     )
@@ -2142,61 +2163,76 @@ async fn fetch_maturity_history(db: &sqlx::PgPool) -> Result<Vec<MaturityHistory
 }
 
 async fn fetch_improvement_plans(db: &sqlx::PgPool) -> Result<Vec<ImprovementPlan>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {IMPROVEMENT_PLAN_COLS} FROM master_data.mdm_improvement_plans"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询改进计划失败: {e}")))?;
+    let rows = sqlx::query(&format!(
+        "SELECT {IMPROVEMENT_PLAN_COLS} FROM master_data.mdm_improvement_plans"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询改进计划失败: {e}")))?;
     Ok(rows.iter().map(improvement_plan_from_row).collect())
 }
 
 async fn fetch_workflows(db: &sqlx::PgPool) -> Result<Vec<WorkflowV58>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {WORKFLOW_COLS} FROM master_data.mdm_workflows"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流失败: {e}")))?;
+    let rows = sqlx::query(&format!(
+        "SELECT {WORKFLOW_COLS} FROM master_data.mdm_workflows"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流失败: {e}")))?;
     Ok(rows.iter().map(workflow_from_row).collect())
 }
 
 async fn fetch_workflow_templates(db: &sqlx::PgPool) -> Result<Vec<WorkflowTemplate>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {WORKFLOW_TEMPLATE_COLS} FROM master_data.mdm_workflow_templates"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流模板失败: {e}")))?;
+    let rows = sqlx::query(&format!(
+        "SELECT {WORKFLOW_TEMPLATE_COLS} FROM master_data.mdm_workflow_templates"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流模板失败: {e}")))?;
     Ok(rows.iter().map(workflow_template_from_row).collect())
 }
 
-async fn fetch_workflow_history(db: &sqlx::PgPool) -> Result<Vec<WorkflowHistoryEntry>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {WORKFLOW_HISTORY_COLS} FROM master_data.mdm_workflow_history"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流历史失败: {e}")))?;
+async fn fetch_workflow_history(
+    db: &sqlx::PgPool,
+) -> Result<Vec<WorkflowHistoryEntry>, TopemsError> {
+    let rows = sqlx::query(&format!(
+        "SELECT {WORKFLOW_HISTORY_COLS} FROM master_data.mdm_workflow_history"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询工作流历史失败: {e}")))?;
     Ok(rows.iter().map(workflow_history_from_row).collect())
 }
 
 async fn fetch_data_products(db: &sqlx::PgPool) -> Result<Vec<DataProduct>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {DATA_PRODUCT_COLS} FROM master_data.mdm_data_products"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询数据产品失败: {e}")))?;
+    let rows = sqlx::query(&format!(
+        "SELECT {DATA_PRODUCT_COLS} FROM master_data.mdm_data_products"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询数据产品失败: {e}")))?;
     Ok(rows.iter().map(data_product_from_row).collect())
 }
 
 async fn fetch_data_contracts(db: &sqlx::PgPool) -> Result<Vec<DataContract>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {DATA_CONTRACT_COLS} FROM master_data.mdm_data_contracts"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询数据契约失败: {e}")))?;
+    let rows = sqlx::query(&format!(
+        "SELECT {DATA_CONTRACT_COLS} FROM master_data.mdm_data_contracts"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询数据契约失败: {e}")))?;
     Ok(rows.iter().map(data_contract_from_row).collect())
 }
 
 async fn fetch_api_exposures(db: &sqlx::PgPool) -> Result<Vec<ApiExposure>, TopemsError> {
-    let rows = sqlx::query(&format!("SELECT {API_EXPOSURE_COLS} FROM master_data.mdm_api_exposures"))
-        .fetch_all(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询 API 暴露失败: {e}")))?;
+    let rows = sqlx::query(&format!(
+        "SELECT {API_EXPOSURE_COLS} FROM master_data.mdm_api_exposures"
+    ))
+    .fetch_all(db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("查询 API 暴露失败: {e}")))?;
     Ok(rows.iter().map(api_exposure_from_row).collect())
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -2331,4 +2367,3 @@ mod tests {
         assert_eq!(maturity_level_name(score), "initial");
     }
 }
-

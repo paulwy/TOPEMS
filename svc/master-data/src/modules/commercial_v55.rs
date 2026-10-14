@@ -68,8 +68,10 @@ fn subscription_from_row(row: &sqlx::postgres::PgRow) -> Subscription {
     }
 }
 
-const PRODUCT_COLS: &str = "id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active";
-const SUBSCRIPTION_COLS: &str = "id, api_product_id, tenant_id, tier, starts_at, expires_at, status";
+const PRODUCT_COLS: &str =
+    "id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active";
+const SUBSCRIPTION_COLS: &str =
+    "id, api_product_id, tenant_id, tier, starts_at, expires_at, status";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -664,14 +666,12 @@ pub async fn list_subscriptions(
     Query(params): Query<UsageSummaryQuery>,
 ) -> Json<ApiResponse<Vec<Subscription>>> {
     // K1：真表读取，可选 tenant_id / api_product_id 过滤。
-    let rows = sqlx::query(
-        &format!(
-            "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions
+    let rows = sqlx::query(&format!(
+        "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions
              WHERE ($1::text IS NULL OR tenant_id = $1)
                AND ($2::text IS NULL OR api_product_id = $2)
              ORDER BY starts_at DESC"
-        ),
-    )
+    ))
     .bind(&params.tenant_id)
     .bind(&params.api_product_id)
     .fetch_all(&state.db)
@@ -708,7 +708,10 @@ pub async fn cancel_subscription(
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
-    let Some(row) = (match row { Ok(r) => r, Err(e) => return Json(ApiResponse::error(500, &format!("取消订阅失败: {e}"))), }) else {
+    let Some(row) = (match row {
+        Ok(r) => r,
+        Err(e) => return Json(ApiResponse::error(500, &format!("取消订阅失败: {e}"))),
+    }) else {
         return Json(ApiResponse::error(404, "未找到订阅"));
     };
     let updated = subscription_from_row(&row);
@@ -740,17 +743,26 @@ pub async fn upgrade_tier(
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
-    let Some(row) = (match row { Ok(r) => r, Err(e) => return Json(ApiResponse::error(500, &format!("查询订阅失败: {e}"))), }) else {
+    let Some(row) = (match row {
+        Ok(r) => r,
+        Err(e) => return Json(ApiResponse::error(500, &format!("查询订阅失败: {e}"))),
+    }) else {
         return Json(ApiResponse::error(404, "未找到订阅"));
     };
     let current = subscription_from_row(&row);
-    let new_tier = req.tier.as_deref().map(tier_from_str).unwrap_or(current.tier);
+    let new_tier = req
+        .tier
+        .as_deref()
+        .map(tier_from_str)
+        .unwrap_or(current.tier);
 
-    if let Err(e) = sqlx::query("UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2")
-        .bind(product_tier_to_string(&new_tier))
-        .bind(&id)
-        .execute(&state.db)
-        .await
+    if let Err(e) = sqlx::query(
+        "UPDATE master_data.mdm_subscriptions SET tier = $1, status = 'active' WHERE id = $2",
+    )
+    .bind(product_tier_to_string(&new_tier))
+    .bind(&id)
+    .execute(&state.db)
+    .await
     {
         return Json(ApiResponse::error(500, &format!("升级套餐失败: {e}")));
     }
@@ -761,7 +773,10 @@ pub async fn upgrade_tier(
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
-    let Some(row) = (match row { Ok(r) => r, Err(e) => return Json(ApiResponse::error(500, &format!("回读订阅失败: {e}"))), }) else {
+    let Some(row) = (match row {
+        Ok(r) => r,
+        Err(e) => return Json(ApiResponse::error(500, &format!("回读订阅失败: {e}"))),
+    }) else {
         return Json(ApiResponse::error(404, "未找到订阅"));
     };
     let updated = subscription_from_row(&row);
@@ -826,7 +841,6 @@ pub async fn record_usage(
     tag = "commercial_v55"
 )]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_usage_summary(
     State(state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
@@ -882,7 +896,6 @@ pub async fn get_usage_summary(
     ),
     tag = "commercial_v55"
 )]
-#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn generate_bill(
     State(state): State<AppState>,
@@ -1010,12 +1023,6 @@ pub async fn generate_bill(
         (status = 500, description = "Internal server error")
     ),
     tag = "commercial_v55"
-)]
-#[allow(
-    clippy::as_conversions,
-    clippy::cast_possible_truncation,
-    clippy::cast_possible_wrap,
-    clippy::cast_sign_loss
 )]
 #[allow(
     clippy::as_conversions,
@@ -1161,7 +1168,10 @@ pub async fn mark_bill_paid(
     .bind(&id)
     .fetch_optional(&state.db)
     .await;
-    let Some(row) = (match row { Ok(r) => r, Err(e) => return Json(ApiResponse::error(500, &format!("标记账单失败: {e}"))), }) else {
+    let Some(row) = (match row {
+        Ok(r) => r,
+        Err(e) => return Json(ApiResponse::error(500, &format!("标记账单失败: {e}"))),
+    }) else {
         return Json(ApiResponse::error(404, "未找到账单"));
     };
     let updated = billing_record_from_row(&row);
@@ -1405,11 +1415,6 @@ pub async fn get_sla_history(
     clippy::cast_possible_wrap,
     clippy::cast_precision_loss
 )]
-#[allow(
-    clippy::as_conversions,
-    clippy::cast_possible_wrap,
-    clippy::cast_precision_loss
-)]
 pub async fn calculate_penalty(
     State(state): State<AppState>,
     Query(params): Query<SLAPenaltyQuery>,
@@ -1466,7 +1471,6 @@ pub async fn calculate_penalty(
     ),
     tag = "commercial_v55"
 )]
-#[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn create_incident(
     State(state): State<AppState>,
@@ -1692,8 +1696,7 @@ const BILLING_COLS: &str =
     "id, tenant_id, period_start, period_end, tier, usage_summary, total_amount, status";
 const RATE_CARD_COLS: &str =
     "id, tier, cost_per_request, cost_per_mb, overage_multiplier, currency";
-const SLA_CONFIG_COLS: &str =
-    "id, metric, target_value, unit, penalty_per_min, measurement_window";
+const SLA_CONFIG_COLS: &str = "id, metric, target_value, unit, penalty_per_min, measurement_window";
 const SLA_MEASUREMENT_COLS: &str =
     "id, config_id, tenant_id, measured_value, target_value, met, measured_at, window_start, window_end";
 const SLA_INCIDENT_COLS: &str =

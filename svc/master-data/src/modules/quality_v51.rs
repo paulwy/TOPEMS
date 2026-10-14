@@ -273,10 +273,7 @@ pub struct QualityTrendPoint {
 
 // ==================== 内存存储 ====================
 
-
-
 // ==================== 初始化种子数据 ====================
-
 
 // ==================== U4 持久化（JSONB 快照落 master_data.mdm_collections） ====================
 
@@ -948,7 +945,8 @@ pub async fn get_quality_dashboard(
     .fetch_all(&state.db)
     .await
     .unwrap_or_default();
-    let suggestions: Vec<GovernanceSuggestion> = sugg_rows.iter().map(suggestion_from_row).collect();
+    let suggestions: Vec<GovernanceSuggestion> =
+        sugg_rows.iter().map(suggestion_from_row).collect();
 
     let ins_rows = sqlx::query(&format!(
         "SELECT {INSIGHT_COLS} FROM master_data.mdm_governance_insights"
@@ -1136,13 +1134,12 @@ pub async fn revert_fix_action(
     Path(id): Path<String>,
     Json(_req): Json<RevertFixRequest>,
 ) -> Json<ApiResponse<AutoFixAction>> {
-    let current: Option<String> = sqlx::query_scalar(
-        "SELECT status FROM master_data.mdm_auto_fix_actions WHERE id = $1",
-    )
-    .bind(&id)
-    .fetch_optional(&state.db)
-    .await
-    .unwrap_or(None);
+    let current: Option<String> =
+        sqlx::query_scalar("SELECT status FROM master_data.mdm_auto_fix_actions WHERE id = $1")
+            .bind(&id)
+            .fetch_optional(&state.db)
+            .await
+            .unwrap_or(None);
 
     let Some(status) = current else {
         return Json(ApiResponse::error(404, "未找到修复操作"));
@@ -1613,10 +1610,12 @@ pub async fn predict_quality_trend(
 use sqlx::Row;
 
 const CHECK_COLS: &str = "id, entity_type, entity_id, rule_id, status, score, details, checked_at";
-const LOOP_CONFIG_COLS: &str = "entity_type, enabled_rules, auto_fix_enabled, notification_channels, max_retries";
+const LOOP_CONFIG_COLS: &str =
+    "entity_type, enabled_rules, auto_fix_enabled, notification_channels, max_retries";
 const AUTO_FIX_COLS: &str = "id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at";
 const SUGGESTION_COLS: &str = "id, entity_type, entity_id, suggestion_type, confidence, rationale, suggested_action, ai_model_version, status, created_at";
-const INSIGHT_COLS: &str = "insight_type, severity, affected_records, trend_analysis, recommendations";
+const INSIGHT_COLS: &str =
+    "insight_type, severity, affected_records, trend_analysis, recommendations";
 
 fn quality_status_to_str(s: &QualityStatus) -> &'static str {
     match s {

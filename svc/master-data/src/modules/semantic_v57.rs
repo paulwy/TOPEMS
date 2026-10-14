@@ -269,10 +269,7 @@ impl EnhancedKnowledgeGraph {
         Ok(node)
     }
 
-    async fn add_edge(
-        db: &sqlx::PgPool,
-        edge: GraphEdgeV57,
-    ) -> Result<GraphEdgeV57, TopemsError> {
+    async fn add_edge(db: &sqlx::PgPool, edge: GraphEdgeV57) -> Result<GraphEdgeV57, TopemsError> {
         sqlx::query(
             "INSERT INTO master_data.mdm_graph_edges (source_id, target_id, relation_type, weight, confidence, tenant_id)
              VALUES ($1,$2,$3,$4,$5, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
@@ -341,7 +338,11 @@ impl EnhancedKnowledgeGraph {
         let matched = communities
             .iter()
             .find(|c| c.id == community_id)
-            .or_else(|| communities.iter().find(|c| c.id == format!("community_{community_id}")))
+            .or_else(|| {
+                communities
+                    .iter()
+                    .find(|c| c.id == format!("community_{community_id}"))
+            })
             .cloned();
         Ok(matched)
     }
@@ -418,9 +419,7 @@ impl EnhancedKnowledgeGraph {
     }
 
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
-    async fn detect_communities(
-        db: &sqlx::PgPool,
-    ) -> Result<Vec<GraphCommunity>, TopemsError> {
+    async fn detect_communities(db: &sqlx::PgPool) -> Result<Vec<GraphCommunity>, TopemsError> {
         let nodes = fetch_graph_nodes(db).await?;
         let edges = fetch_graph_edges(db).await?;
 
@@ -481,12 +480,14 @@ impl EnhancedKnowledgeGraph {
         // 回写节点 community_id（与社区表 id 的 community_ 前缀保持一致）
         for node in &nodes {
             if let Some(cid) = node_community.get(&node.id) {
-                sqlx::query("UPDATE master_data.mdm_graph_nodes SET community_id = $2 WHERE id = $1")
-                    .bind(&node.id)
-                    .bind(format!("community_{cid}"))
-                    .execute(db)
-                    .await
-                    .map_err(|e| TopemsError::BusinessLogic(format!("更新节点社区失败: {e}")))?;
+                sqlx::query(
+                    "UPDATE master_data.mdm_graph_nodes SET community_id = $2 WHERE id = $1",
+                )
+                .bind(&node.id)
+                .bind(format!("community_{cid}"))
+                .execute(db)
+                .await
+                .map_err(|e| TopemsError::BusinessLogic(format!("更新节点社区失败: {e}")))?;
             }
         }
 
@@ -641,13 +642,12 @@ impl SemanticSearchEngine {
             .collect::<std::collections::HashSet<_>>()
             .into_iter()
             .collect();
-        let queries_count: i64 = sqlx::query(
-            "SELECT count(*)::bigint AS c FROM master_data.mdm_search_history",
-        )
-        .fetch_one(db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("查询搜索历史失败: {e}")))?
-        .get::<i64, _>("c");
+        let queries_count: i64 =
+            sqlx::query("SELECT count(*)::bigint AS c FROM master_data.mdm_search_history")
+                .fetch_one(db)
+                .await
+                .map_err(|e| TopemsError::BusinessLogic(format!("查询搜索历史失败: {e}")))?
+                .get::<i64, _>("c");
 
         Ok(serde_json::json!({
             "total_indexes": total,
@@ -818,11 +818,13 @@ impl SmartTagger {
             .map_err(|e| TopemsError::BusinessLogic(format!("写入实体标签失败: {e}")))?;
 
             for tag_id in &applied_tags {
-                sqlx::query("UPDATE master_data.mdm_tags SET usage_count = usage_count + 1 WHERE id = $1")
-                    .bind(tag_id)
-                    .execute(db)
-                    .await
-                    .map_err(|e| TopemsError::BusinessLogic(format!("更新标签计数失败: {e}")))?;
+                sqlx::query(
+                    "UPDATE master_data.mdm_tags SET usage_count = usage_count + 1 WHERE id = $1",
+                )
+                .bind(tag_id)
+                .execute(db)
+                .await
+                .map_err(|e| TopemsError::BusinessLogic(format!("更新标签计数失败: {e}")))?;
             }
         }
 
@@ -971,8 +973,6 @@ impl SmartTagger {
 
 // ==================== 内存存储 ====================
 
-
-
 // ==================== 辅助函数 ====================
 
 #[allow(clippy::as_conversions)]
@@ -1050,16 +1050,11 @@ mod simple_rand {
 // ==================== 初始化种子数据 ====================
 
 #[allow(dead_code)]
-
 // ==================== U4 持久化 ====================
-
-
-
 
 // ==================== 请求/响应结构 ====================
 
 // --- 图谱请求 ---
-
 #[derive(Debug, Deserialize)]
 pub struct AddGraphNodeRequest {
     pub id: Option<String>,
@@ -1174,7 +1169,6 @@ pub async fn add_graph_node(
     State(state): State<AppState>,
     Json(req): Json<AddGraphNodeRequest>,
 ) -> Json<ApiResponse<GraphNodeV57>> {
-
     let id = req.id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
     let embeddings = generate_simulated_embedding(&req.label, &req.node_type);
 
@@ -1206,7 +1200,6 @@ pub async fn add_graph_edge(
     State(state): State<AppState>,
     Json(req): Json<AddGraphEdgeRequest>,
 ) -> Json<ApiResponse<GraphEdgeV57>> {
-
     let edge = GraphEdgeV57 {
         source_id: req.source_id,
         target_id: req.target_id,
@@ -1257,7 +1250,6 @@ pub async fn get_community(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
     match db_exec!(EnhancedKnowledgeGraph::get_community(&state.db, &id).await) {
         Some(community) => Json(ApiResponse::success(
             serde_json::json!(community),
@@ -1282,9 +1274,8 @@ pub async fn find_shortest_path_handler(
     State(state): State<AppState>,
     Json(req): Json<FindPathRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
-    let path = db_exec!(EnhancedKnowledgeGraph::find_shortest_path(&state.db, &req.from_id, &req.to_id)
-            .await
+    let path = db_exec!(
+        EnhancedKnowledgeGraph::find_shortest_path(&state.db, &req.from_id, &req.to_id).await
     );
 
     if path.is_empty() {
@@ -1313,7 +1304,6 @@ pub async fn get_subgraph(
     State(state): State<AppState>,
     Query(params): Query<SubgraphQuery>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
     let node_ids: Vec<String> = params
         .node_ids
         .unwrap_or_else(String::new)
@@ -1352,7 +1342,6 @@ pub async fn get_subgraph(
 pub async fn detect_communities_handler(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<GraphCommunity>>> {
-
     let communities = db_exec!(EnhancedKnowledgeGraph::detect_communities(&state.db).await);
     Json(ApiResponse::success(communities, "社区检测完成"))
 }
@@ -1373,10 +1362,16 @@ pub async fn index_entity(
     State(state): State<AppState>,
     Json(req): Json<IndexEntityRequest>,
 ) -> Json<ApiResponse<SearchIndex>> {
-
     let metadata = req.metadata.unwrap_or_else(|| serde_json::json!({}));
-    let result = db_exec!(SemanticSearchEngine::index_entity(&state.db, req.entity_type, req.entity_id, req.text, metadata)
-            .await
+    let result = db_exec!(
+        SemanticSearchEngine::index_entity(
+            &state.db,
+            req.entity_type,
+            req.entity_id,
+            req.text,
+            metadata
+        )
+        .await
     );
 
     Json(ApiResponse::success(result, "实体已索引"))
@@ -1397,10 +1392,10 @@ pub async fn search_semantic_handler(
     State(state): State<AppState>,
     Json(req): Json<SemanticSearchRequest>,
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
-
     let top_k = req.top_k.unwrap_or(10);
     let query_embeddings = generate_simulated_embedding(&req.query, "search_query");
-    let results = db_exec!(SemanticSearchEngine::search_semantic(&state.db, &query_embeddings, top_k).await);
+    let results =
+        db_exec!(SemanticSearchEngine::search_semantic(&state.db, &query_embeddings, top_k).await);
 
     // 写搜索历史真表
     let history_id = uuid::Uuid::new_v4().to_string();
@@ -1436,7 +1431,6 @@ pub async fn search_hybrid_handler(
     State(state): State<AppState>,
     Json(req): Json<HybridSearchRequest>,
 ) -> Json<ApiResponse<Vec<SearchResult>>> {
-
     let top_k = req.top_k.unwrap_or(10);
     let results = db_exec!(SemanticSearchEngine::search_hybrid(&state.db, &req.query, top_k).await);
 
@@ -1473,7 +1467,6 @@ pub async fn reindex_all(
     State(state): State<AppState>,
     Json(_req): Json<ReindexRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
     let count = db_exec!(SemanticSearchEngine::reindex_all(&state.db).await);
 
     Json(ApiResponse::success(
@@ -1519,7 +1512,6 @@ pub async fn remove_from_index(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
     let removed = db_exec!(SemanticSearchEngine::remove_from_index(&state.db, &id).await);
 
     if removed {
@@ -1548,7 +1540,6 @@ pub async fn create_tag(
     State(state): State<AppState>,
     Json(req): Json<CreateTagRequest>,
 ) -> Json<ApiResponse<Tag>> {
-
     let tag = Tag {
         id: uuid::Uuid::new_v4().to_string(),
         name: req.name,
@@ -1576,9 +1567,8 @@ pub async fn apply_tag(
     State(state): State<AppState>,
     Json(req): Json<ApplyTagRequest>,
 ) -> Json<ApiResponse<TaggedEntity>> {
-
-    let result = db_exec!(SmartTagger::apply_tag(&state.db, req.entity_type, req.entity_id, req.tag_id)
-            .await
+    let result = db_exec!(
+        SmartTagger::apply_tag(&state.db, req.entity_type, req.entity_id, req.tag_id).await
     );
 
     Json(ApiResponse::success(result, "标签已应用"))
@@ -1599,9 +1589,8 @@ pub async fn auto_tag(
     State(state): State<AppState>,
     Json(req): Json<AutoTagRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
-    let applied = db_exec!(SmartTagger::auto_tag(&state.db, &req.entity_type, &req.entity_id, &req.data)
-            .await
+    let applied = db_exec!(
+        SmartTagger::auto_tag(&state.db, &req.entity_type, &req.entity_id, &req.data).await
     );
 
     Json(ApiResponse::success(
@@ -1633,10 +1622,8 @@ pub async fn get_tags_for_entity(
     State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<Tag>>> {
-
-    let tags = db_exec!(SmartTagger::get_tags_for_entity(&state.db, &entity_type, &entity_id)
-            .await
-    );
+    let tags =
+        db_exec!(SmartTagger::get_tags_for_entity(&state.db, &entity_type, &entity_id).await);
     Json(ApiResponse::success(tags, "实体标签列表"))
 }
 
@@ -1657,7 +1644,6 @@ pub async fn get_entities_by_tag(
     State(state): State<AppState>,
     Path(tag): Path<String>,
 ) -> Json<ApiResponse<Vec<TaggedEntity>>> {
-
     let entities = db_exec!(SmartTagger::get_entities_by_tag(&state.db, &tag).await);
     Json(ApiResponse::success(entities, "标签实体列表"))
 }
@@ -1679,9 +1665,8 @@ pub async fn remove_tag_handler(
     State(state): State<AppState>,
     Json(req): Json<RemoveTagRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-
-    let removed = db_exec!(SmartTagger::remove_tag(&state.db, &req.entity_type, &req.entity_id, &req.tag_id)
-            .await
+    let removed = db_exec!(
+        SmartTagger::remove_tag(&state.db, &req.entity_type, &req.entity_id, &req.tag_id).await
     );
 
     if removed {
@@ -1713,7 +1698,6 @@ pub async fn list_tags(
     State(state): State<AppState>,
     Query(params): Query<ListTagsQuery>,
 ) -> Json<ApiResponse<Vec<Tag>>> {
-
     let tags = db_exec!(SmartTagger::list_tags(&state.db, params.category.as_deref()).await);
     Json(ApiResponse::success(tags, "标签列表"))
 }
@@ -1737,7 +1721,6 @@ pub async fn suggest_tags(
     State(state): State<AppState>,
     Query(params): Query<SuggestQuery>,
 ) -> Json<ApiResponse<Vec<Tag>>> {
-
     let data = fetch_graph_node_properties(&state.db, &params.id).await;
     let tags = db_exec!(SmartTagger::suggest_tags(&state.db, &params.entity_type, &data).await);
     Json(ApiResponse::success(tags, "推荐标签"))

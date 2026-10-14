@@ -104,7 +104,10 @@ impl RlsMiddleware {
                         OR tenant_id IS NULL
                         OR NULLIF(current_setting('app.tenant_id'), '') = '{nil}'
                     )",
-                    policy_name, schema, table_name, nil = nil_uuid
+                    policy_name,
+                    schema,
+                    table_name,
+                    nil = nil_uuid
                 )
             } else {
                 format!(
@@ -113,7 +116,10 @@ impl RlsMiddleware {
                         OR tenant_id IS NULL
                         OR NULLIF(current_setting('app.tenant_id'), '') = '{nil}'
                     )",
-                    policy_name, schema, table_name, nil = nil_uuid
+                    policy_name,
+                    schema,
+                    table_name,
+                    nil = nil_uuid
                 )
             };
             sqlx::query(&policy_sql).execute(pool).await?;

@@ -40,7 +40,8 @@ fn metadata_from_row(row: &sqlx::postgres::PgRow) -> MetadataObject {
     }
 }
 
-const METADATA_COLS: &str = "id, name, object_type, description, owner, tags, attributes, created_at, updated_at";
+const METADATA_COLS: &str =
+    "id, name, object_type, description, owner, tags, attributes, created_at, updated_at";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -524,13 +525,11 @@ pub async fn list_metadata(
     Query(params): Query<ListMetadataQuery>,
 ) -> Json<ApiResponse<Vec<MetadataObject>>> {
     // K1：真表读取，可选 object_type 过滤。
-    let rows = sqlx::query(
-        &format!(
-            "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
+    let rows = sqlx::query(&format!(
+        "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
              WHERE ($1::text IS NULL OR object_type = $1)
              ORDER BY updated_at DESC"
-        ),
-    )
+    ))
     .bind(params.object_type.as_deref())
     .fetch_all(&state.db)
     .await
@@ -629,7 +628,10 @@ pub async fn update_metadata(
     .unwrap_or(None);
 
     match row {
-        Some(r) => Json(ApiResponse::success(metadata_from_row(&r), "元数据对象已更新")),
+        Some(r) => Json(ApiResponse::success(
+            metadata_from_row(&r),
+            "元数据对象已更新",
+        )),
         None => Json(ApiResponse::error(404, "未找到元数据对象")),
     }
 }
@@ -721,6 +723,13 @@ pub async fn add_attribute(
     ),
     tag = "metadata_v60"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation
+)]
 pub async fn add_tag(
     State(state): State<AppState>,
     Json(req): Json<AddTagRequest>,
@@ -762,9 +771,14 @@ pub async fn add_tag(
     ),
     tag = "metadata_v60"
 )]
-pub async fn get_metadata_stats(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<MetadataStats>> {
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation
+)]
+pub async fn get_metadata_stats(State(state): State<AppState>) -> Json<ApiResponse<MetadataStats>> {
     // K1：数据源改真表（objects/attributes/tags），聚合逻辑保留。
     let obj_rows = sqlx::query(&format!(
         r#"SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects ORDER BY created_at DESC"#,
@@ -776,17 +790,15 @@ pub async fn get_metadata_stats(
         Err(e) => return Json(ApiResponse::error(500, &format!("查询元数据失败: {e}"))),
     };
 
-    let attr_count = sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_metadata_attributes")
-        .fetch_one(&state.db)
-        .await;
+    let attr_count =
+        sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_metadata_attributes")
+            .fetch_one(&state.db)
+            .await;
     let tag_count = sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_metadata_tags")
         .fetch_one(&state.db)
         .await;
     let (total_attributes, total_tags) = match (attr_count, tag_count) {
-        (Ok(a), Ok(t)) => (
-            a.get::<i64, _>("total"),
-            t.get::<i64, _>("total"),
-        ),
+        (Ok(a), Ok(t)) => (a.get::<i64, _>("total"), t.get::<i64, _>("total")),
         _ => (0, 0),
     };
 
@@ -1037,8 +1049,7 @@ pub async fn get_path(
             .push(edge.clone());
     }
 
-    let mut queue: Vec<(String, Vec<LineageEdgeV60>)> =
-        vec![(req.source_id, Vec::new())];
+    let mut queue: Vec<(String, Vec<LineageEdgeV60>)> = vec![(req.source_id, Vec::new())];
     let mut visited = std::collections::HashSet::new();
 
     while let Some((current, path)) = queue.pop() {
@@ -1092,8 +1103,7 @@ pub async fn get_lineage_impact(
     let affected_downstream = downstream.len();
     let affected_nodes = downstream.len() + upstream.len();
     let confidence = if downstream.is_empty() { 0.5 } else { 0.9 };
-    let impact_score =
-        (affected_downstream as f64 * 0.3 + affected_nodes as f64 * 0.1).min(1.0);
+    let impact_score = (affected_downstream as f64 * 0.3 + affected_nodes as f64 * 0.1).min(1.0);
 
     Json(ApiResponse::success(
         LineageImpact {
@@ -1260,10 +1270,16 @@ pub async fn get_current_stage(
     match row {
         Ok(Some(r)) => {
             let stage = r.get::<String, _>("stage");
-            Json(ApiResponse::success(serde_json::json!({"stage": stage}), "当前生命周期阶段"))
+            Json(ApiResponse::success(
+                serde_json::json!({"stage": stage}),
+                "当前生命周期阶段",
+            ))
         }
         Ok(None) => Json(ApiResponse::error(404, "未找到实体的生命周期信息")),
-        Err(e) => Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
+        Err(e) => Json(ApiResponse::error(
+            500,
+            &format!("查询生命周期阶段失败: {e}"),
+        )),
     }
 }
 #[utoipa::path(
@@ -1297,7 +1313,12 @@ pub async fn transition_stage(
     let from_stage = match from_row {
         Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
         Ok(None) => None,
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询生命周期阶段失败: {e}"),
+            ))
+        }
     };
 
     let history = LifecycleHistory {
@@ -1320,7 +1341,10 @@ pub async fn transition_stage(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("更新生命周期阶段失败: {e}")));
+        return Json(ApiResponse::error(
+            500,
+            &format!("更新生命周期阶段失败: {e}"),
+        ));
     }
 
     if let Err(e) = sqlx::query(
@@ -1338,7 +1362,10 @@ pub async fn transition_stage(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("写入生命周期历史失败: {e}")));
+        return Json(ApiResponse::error(
+            500,
+            &format!("写入生命周期历史失败: {e}"),
+        ));
     }
 
     Json(ApiResponse::success(history, "生命周期阶段已变更"))
@@ -1370,7 +1397,12 @@ pub async fn get_lifecycle_history(
     .await;
     let history: Vec<LifecycleHistory> = match rows {
         Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期历史失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询生命周期历史失败: {e}"),
+            ))
+        }
     };
 
     Json(ApiResponse::success(history, "生命周期历史"))
@@ -1384,6 +1416,13 @@ pub async fn get_lifecycle_history(
         (status = 500, description = "Internal server error")
     ),
     tag = "metadata_v60"
+)]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation
 )]
 pub async fn create_policy(
     State(state): State<AppState>,
@@ -1411,7 +1450,10 @@ pub async fn create_policy(
     .execute(&state.db)
     .await
     {
-        return Json(ApiResponse::error(500, &format!("创建生命周期策略失败: {e}")));
+        return Json(ApiResponse::error(
+            500,
+            &format!("创建生命周期策略失败: {e}"),
+        ));
     }
 
     Json(ApiResponse::success(policy, "生命周期策略已创建"))
@@ -1440,7 +1482,12 @@ pub async fn get_policies(
     .await;
     let policies: Vec<LifecyclePolicy> = match rows {
         Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期策略失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询生命周期策略失败: {e}"),
+            ))
+        }
     };
 
     Json(ApiResponse::success(policies, "生命周期策略列表"))
@@ -1466,7 +1513,12 @@ pub async fn auto_transition(
     .await;
     let policies: Vec<LifecyclePolicy> = match policy_rows {
         Ok(r) => r.iter().map(lifecycle_policy_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期策略失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询生命周期策略失败: {e}"),
+            ))
+        }
     };
 
     let stage_rows = sqlx::query(
@@ -1485,7 +1537,12 @@ pub async fn auto_transition(
                 )
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询生命周期阶段失败: {e}"),
+            ))
+        }
     };
 
     let mut results = Vec::new();
@@ -1576,6 +1633,13 @@ pub async fn auto_transition(
     ),
     tag = "metadata_v60"
 )]
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation
+)]
 pub async fn get_lifecycle_dashboard(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<LifecycleDashboard>> {
@@ -1596,12 +1660,18 @@ pub async fn get_lifecycle_dashboard(
                 )
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询生命周期阶段失败: {e}"),
+            ))
+        }
     };
 
-    let policy_count = sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_lifecycle_policies")
-        .fetch_one(&state.db)
-        .await;
+    let policy_count =
+        sqlx::query("SELECT COUNT(*) AS total FROM master_data.mdm_lifecycle_policies")
+            .fetch_one(&state.db)
+            .await;
 
     let hist_rows = sqlx::query(&format!(
         r#"SELECT {HISTORY_COLS} FROM master_data.mdm_lifecycle_history ORDER BY changed_at DESC"#,
@@ -1610,7 +1680,12 @@ pub async fn get_lifecycle_dashboard(
     .await;
     let history: Vec<LifecycleHistory> = match hist_rows {
         Ok(r) => r.iter().map(lifecycle_history_from_row).collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期历史失败: {e}"))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询生命周期历史失败: {e}"),
+            ))
+        }
     };
 
     let policies_count = match policy_count {
@@ -1670,7 +1745,12 @@ pub async fn bulk_transition(
         let from_stage = match from_row {
             Ok(Some(r)) => parse_lifecycle_stage(&r.get::<String, _>("stage")),
             Ok(None) => None,
-            Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期阶段失败: {e}"))),
+            Err(e) => {
+                return Json(ApiResponse::error(
+                    500,
+                    &format!("查询生命周期阶段失败: {e}"),
+                ))
+            }
         };
 
         let history = LifecycleHistory {
@@ -1693,7 +1773,10 @@ pub async fn bulk_transition(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(500, &format!("更新生命周期阶段失败: {e}")));
+            return Json(ApiResponse::error(
+                500,
+                &format!("更新生命周期阶段失败: {e}"),
+            ));
         }
 
         if let Err(e) = sqlx::query(
@@ -1711,7 +1794,10 @@ pub async fn bulk_transition(
         .execute(&state.db)
         .await
         {
-            return Json(ApiResponse::error(500, &format!("写入生命周期历史失败: {e}")));
+            return Json(ApiResponse::error(
+                500,
+                &format!("写入生命周期历史失败: {e}"),
+            ));
         }
 
         results.push(history);
@@ -1749,12 +1835,22 @@ async fn upstream_downstream(
 
         let linked_edges: Vec<LineageEdgeV60> = edges
             .iter()
-            .filter(|e| if upstream { e.target_id == current } else { e.source_id == current })
+            .filter(|e| {
+                if upstream {
+                    e.target_id == current
+                } else {
+                    e.source_id == current
+                }
+            })
             .cloned()
             .collect();
 
         for edge in linked_edges {
-            let next_id = if upstream { edge.source_id } else { edge.target_id };
+            let next_id = if upstream {
+                edge.source_id
+            } else {
+                edge.target_id
+            };
             if let Some(node) = nodes.iter().find(|n| n.id == next_id).cloned() {
                 queue.push(node.id.clone());
                 result.push(node);
@@ -1799,6 +1895,13 @@ fn metadata_attribute_from_row(row: &sqlx::postgres::PgRow) -> MetadataAttribute
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation
+)]
 fn metadata_tag_from_row(row: &sqlx::postgres::PgRow) -> MetadataTag {
     use sqlx::Row;
     MetadataTag {
@@ -1810,6 +1913,13 @@ fn metadata_tag_from_row(row: &sqlx::postgres::PgRow) -> MetadataTag {
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation
+)]
 fn lineage_node_from_row(row: &sqlx::postgres::PgRow) -> LineageNodeV60 {
     use sqlx::Row;
     LineageNodeV60 {
@@ -1841,16 +1951,21 @@ fn lineage_graph_from_row(row: &sqlx::postgres::PgRow) -> LineageGraph {
     use sqlx::Row;
     LineageGraph {
         id: row.get::<String, _>("id"),
-        nodes: serde_json::from_value(row.get::<serde_json::Value, _>("nodes"))
-            .unwrap_or_default(),
-        edges: serde_json::from_value(row.get::<serde_json::Value, _>("edges"))
-            .unwrap_or_default(),
+        nodes: serde_json::from_value(row.get::<serde_json::Value, _>("nodes")).unwrap_or_default(),
+        edges: serde_json::from_value(row.get::<serde_json::Value, _>("edges")).unwrap_or_default(),
         root_ids: serde_json::from_value(row.get::<serde_json::Value, _>("root_ids"))
             .unwrap_or_default(),
         updated_at: row.get::<String, _>("updated_at"),
     }
 }
 
+#[allow(
+    clippy::as_conversions,
+    clippy::cast_possible_wrap,
+    clippy::cast_precision_loss,
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation
+)]
 fn lifecycle_policy_from_row(row: &sqlx::postgres::PgRow) -> LifecyclePolicy {
     use sqlx::Row;
     LifecyclePolicy {

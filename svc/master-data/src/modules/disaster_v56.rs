@@ -137,8 +137,7 @@ fn recovery_plan_from_row(row: &sqlx::postgres::PgRow) -> RecoveryPlan {
         priority: priority_from_str(&row.get::<String, _>("priority")),
         rto_minutes: row.get::<i64, _>("rto_minutes"),
         rpo_minutes: row.get::<i64, _>("rpo_minutes"),
-        steps: serde_json::from_value(row.get::<serde_json::Value, _>("steps"))
-            .unwrap_or_default(),
+        steps: serde_json::from_value(row.get::<serde_json::Value, _>("steps")).unwrap_or_default(),
         status: recovery_plan_status_from_str(&row.get::<String, _>("status")),
     }
 }
@@ -246,7 +245,6 @@ fn failover_record_from_row(row: &sqlx::postgres::PgRow) -> FailoverRecord {
 }
 const FAILOVER_RECORD_COLS: &str =
     "id, from_region, to_region, trigger, started_at, completed_at, reason, status";
-
 
 // ==================== K1：handler 内 sqlx 错误统一出口 ====================
 
@@ -450,15 +448,9 @@ pub struct FailoverRecord {
 
 // ==================== 内存存储 ====================
 
-
-
 // ==================== 初始化种子数据 ====================
 
-
 // ==================== U4 持久化 ====================
-
-
-
 
 // ==================== 辅助函数 ====================
 
@@ -722,7 +714,10 @@ pub async fn create_recovery_point(
     .bind(rp.size_bytes)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入恢复点失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入恢复点失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(rp, "恢复点已创建"))
 }
@@ -977,7 +972,10 @@ pub async fn create_recovery_plan(
     .bind(recovery_plan_status_to_str(&plan.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入恢复计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入恢复计划失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(plan, "恢复计划已创建"))
 }
@@ -1029,7 +1027,10 @@ pub async fn execute_plan(
     .bind(serde_json::to_value(&plan.steps).unwrap_or_default())
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("更新恢复计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::BusinessLogic(format!("更新恢复计划失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1359,7 +1360,10 @@ pub async fn update_plan(
     .bind(continuity_status_to_str(&plan.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("更新连续性计划失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::BusinessLogic(format!("更新连续性计划失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(plan, "连续性计划已更新"))
 }
@@ -1428,7 +1432,10 @@ pub async fn test_plan(
     .bind(serde_json::to_value(&bc_test.issues_found).unwrap_or_default())
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入演练记录失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入演练记录失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(bc_test, "连续性计划测试完成"))
 }
@@ -1679,7 +1686,10 @@ pub async fn configure_replication(
     .bind(replication_status_to_str(&config.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入复制配置失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入复制配置失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(config, "复制配置已创建"))
 }
@@ -1711,11 +1721,16 @@ pub async fn start_replication(
         return Json(ApiResponse::error(404, "未找到复制配置"));
     };
 
-    if let Err(e) = sqlx::query("UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1")
-        .bind(&config.id)
-        .execute(&state.db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("启动复制失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    if let Err(e) = sqlx::query(
+        "UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1",
+    )
+    .bind(&config.id)
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("启动复制失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1756,12 +1771,16 @@ pub async fn stop_replication(
         return Json(ApiResponse::error(404, "未找到复制配置"));
     };
 
-    if let Err(e) = 
-    sqlx::query("UPDATE master_data.mdm_replication_configs SET status = 'stopped' WHERE id = $1")
-        .bind(&config.id)
-        .execute(&state.db)
-        .await
-        .map_err(|e| TopemsError::BusinessLogic(format!("停止复制失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    if let Err(e) = sqlx::query(
+        "UPDATE master_data.mdm_replication_configs SET status = 'stopped' WHERE id = $1",
+    )
+    .bind(&config.id)
+    .execute(&state.db)
+    .await
+    .map_err(|e| TopemsError::BusinessLogic(format!("停止复制失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1878,7 +1897,10 @@ pub async fn initiate_failover(
     .bind(failover_status_to_str(&failover.status))
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("写入故障转移记录失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::BusinessLogic(format!("写入故障转移记录失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
 
     Json(ApiResponse::success(failover, "故障转移已发起"))
 }
@@ -2009,7 +2031,10 @@ pub async fn switch_regions(
     .bind(&req.primary_region)
     .execute(&state.db)
     .await
-    .map_err(|e| TopemsError::BusinessLogic(format!("重置地域主备失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
+    .map_err(|e| TopemsError::BusinessLogic(format!("重置地域主备失败: {e}")))
+    {
+        return Json(ApiResponse::error(500, &e.to_string()));
+    }
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1"#,
     )

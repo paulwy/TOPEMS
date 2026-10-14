@@ -308,15 +308,9 @@ pub struct UserRoleAssignment {
 
 // ==================== 内存存储 ====================
 
-
-
 // ==================== 初始化种子数据 ====================
 
-
 // ==================== U4 持久化 ====================
-
-
-
 
 // ==================== 请求/响应结构 ====================
 
@@ -756,7 +750,8 @@ pub async fn diff_versions(
 
     match (from_row, to_row) {
         (Some(from), Some(to)) => {
-            let mut diff = compute_diff(&snapshot_from_row(&from).data, &snapshot_from_row(&to).data);
+            let mut diff =
+                compute_diff(&snapshot_from_row(&from).data, &snapshot_from_row(&to).data);
             diff.from_version = params.from_version.clone();
             diff.to_version = params.to_version.clone();
             Json(ApiResponse::success(diff, "版本差异"))
@@ -1001,13 +996,12 @@ pub async fn merge_branch(
     State(state): State<AppState>,
     Json(req): Json<MergeBranchRequest>,
 ) -> Json<ApiResponse<VersionBranch>> {
-    let source_exists: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM master_data.mdm_version_branches WHERE name = $1",
-    )
-    .bind(&req.source_branch)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let source_exists: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM master_data.mdm_version_branches WHERE name = $1")
+            .bind(&req.source_branch)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
     if source_exists == 0 {
         return Json(ApiResponse::error(404, "源分支不存在"));
     }
@@ -1430,13 +1424,11 @@ pub async fn revoke_permission(
     State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query(
-        "DELETE FROM master_data.mdm_data_permissions WHERE id = $1",
-    )
-    .bind(&id)
-    .execute(&state.db)
-    .await
-    .unwrap_or_default();
+    let result = sqlx::query("DELETE FROM master_data.mdm_data_permissions WHERE id = $1")
+        .bind(&id)
+        .execute(&state.db)
+        .await
+        .unwrap_or_default();
 
     if result.rows_affected() == 0 {
         return Json(ApiResponse::error(404, "未找到权限"));
@@ -1755,14 +1747,16 @@ pub async fn revoke_role(
     Json(ApiResponse::success_no_data("角色已撤销"))
 }
 
-
 // ==================== K1：真表映射层（versioning_v54 分支/审计/权限/角色） ====================
 
-const BRANCH_COLS: &str = "id, name, branch_type, parent_branch, created_at, created_by, merged_at, merged_by, status";
+const BRANCH_COLS: &str =
+    "id, name, branch_type, parent_branch, created_at, created_by, merged_at, merged_by, status";
 const AUDIT_EVENT_COLS: &str = "id, event_type, category, entity_type, entity_id, user_id, old_value, new_value, ip_address, timestamp, session_id";
-const AUDIT_EXPORT_LOG_COLS: &str = "id, user_id, export_type, record_count, exported_at, ip_address";
+const AUDIT_EXPORT_LOG_COLS: &str =
+    "id, user_id, export_type, record_count, exported_at, ip_address";
 const PERMISSION_ROLE_COLS: &str = "id, name, description, inherited_from, created_at";
-const DATA_PERMISSION_COLS: &str = "id, role_id, resource_type, resource_id, action, condition, inherited";
+const DATA_PERMISSION_COLS: &str =
+    "id, role_id, resource_type, resource_id, action, condition, inherited";
 const USER_ROLE_ASSIGNMENT_COLS: &str = "id, user_id, role_id, assigned_at";
 
 fn branch_type_to_str(t: &BranchType) -> &'static str {
