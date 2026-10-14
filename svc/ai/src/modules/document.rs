@@ -42,7 +42,32 @@ pub async fn upload(
     let mut file_size: u64 = 0;
     let mut mime_type: Option<String> = None;
 
-    while let Some(field) = multipart.next_field().await.unwrap_or(None) {
+    // P0 防护 B：multipart 握手守卫——首 field 5s 内未出现（空 body / 慢探针 / 截断流）
+    // 直接 400 短路，不让空/半拉 body 进入 multer 边界扫描（bytes::advance OOB 为依赖层边界，
+    // multer 3.1.0 已是上游最新版无法升级，入口守卫是项目侧唯一防护）。
+    let mut next_field = match tokio::time::timeout(
+        std::time::Duration::from_secs(5),
+        multipart.next_field(),
+    )
+    .await
+    {
+        // 外层 timeout Result<_, Elapsed>；内层 multipart Result<Option<Field>, MultipartError>
+        Ok(Ok(Some(field))) => Some(field),
+        Ok(Ok(None)) | Ok(Err(_)) => {
+            return Json(ApiResponse::<UploadDocumentResponse>::error(
+                400,
+                "malformed multipart body: no form field",
+            ));
+        }
+        Err(_) => {
+            return Json(ApiResponse::<UploadDocumentResponse>::error(
+                400,
+                "multipart handshake timeout: no field within 5s",
+            ));
+        }
+    };
+
+    while let Some(field) = next_field {
         let name = field.name().unwrap_or_default();
         match name {
             "title" => {
@@ -116,6 +141,7 @@ pub async fn upload(
             }
             _ => {}
         }
+        next_field = multipart.next_field().await.unwrap_or(None);
     }
 
     if filename.is_empty() {

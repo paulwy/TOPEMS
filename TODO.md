@@ -838,6 +838,7 @@
   - 📋 **独立 P2（非 route_missing，本轮不接）**：上述 53 条补后端 handler 当前为内存桩模式（如 `svc/ehs/src/modules/accident.rs:332-348` `get_accident` 返回硬编码结构），契约已对齐但未接 DB 真查询。触发条件=前端真实使用对应模块时再接 `ehs_accidents` 等表 SQLX 真查询；本轮不接（避免为未使用接口预付工作量）。
 - **handler_error（38）**：integration external-erp sync 系列 11（外部 ERP 连接，环境性失败）、core iam permissions/roles、bi reports、lims maintenance 等
 - **bytes panic 独立缺陷**：server 日志 4 次 worker panic `Bytes::advance` out of bounds（len=0 advance by 2，bytes-1.12.0 lib.rs:207）——仓库 svc/lib 无 `.advance(` 直调，疑在依赖层流式/帧解析（`POST /api/ai/complete` 同批 network_error）；需 RUST_BACKTRACE=1 复现定位，独立立项
+  - ✅ **已定位并防护（2026-10-14，commit 见下）**：全 registry 扫描唯一 `advance(2)` = `multer-3.1.0/src/buffer.rs:117`（multipart 边界扫描 `advance(CRLF.len())`），触发面 = AI 上传端点（`svc/ai/src/modules/document.rs upload`、`ai_knowledge/handlers.rs upload_document`）。multer 3.1.0 经核实已是上游最新版（3.1.1+ 不存在，axum 0.8.9 要求 `^3.0`），防护 A 无可升；防护 B 入口握手守卫（首 field 5s timeout，空/截断 body → 400 短路）；防护 C panic hook 落盘 `logs/panic-{service}.log`（`lib/shared-core/src/logging/mod.rs install_panic_file_hook`）。本地实测 3 组畸形 multipart curl 全部干净 400、0 panic、0 backtrace。若生产再 panic，以 panic hook 文件栈顶修正 multer 假设。
 - **修复建议**：ehs 契约对齐（业务决策）、bytes panic 调查（带 backtrace）、integration sync 记环境性豁免；无历史基线，106 均判「既有缺口/契约漂移」，与 finance/BE-07/AR-08 改动无关（路径无 finance、无 ai dsh、无依赖敏感特征）
 
 ## 2026-10-07 第三梯队实施（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第三梯队修复摘要.md`）

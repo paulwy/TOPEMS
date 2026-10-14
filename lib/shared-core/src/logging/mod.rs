@@ -382,6 +382,37 @@ pub fn init_logging(service_name: &str) {
         service_name,
         log_format
     );
+
+    // P0 防护 C：worker panic 落盘取证（如 bytes::advance OOB）。默认 hook（stderr）仍执行，
+    // 追加写 logs/panic-{service}.log（含 panic payload + Backtrace::force_capture()），
+    // 生产无 RUST_BACKTRACE 环境变量时也能拿到完整栈。
+    install_panic_file_hook(service_name);
+}
+
+/// P0 取证 hook：panic 时把 payload + backtrace 追加到 logs/panic-{service}.log，
+/// 然后链式调用默认 hook（保留原有 stderr 行为）。
+fn install_panic_file_hook(service_name: &str) {
+    let service = service_name.to_string();
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        let log_dir = std::env::var("LOG_DIR").unwrap_or_else(|_| "./logs".to_string());
+        let _ = std::fs::create_dir_all(&log_dir);
+        let path = format!("{log_dir}/panic-{service}.log");
+        let backtrace = std::backtrace::Backtrace::force_capture();
+        let entry = format!(
+            "=== panic @ {} (service: {service}) ===\n{info}\n{backtrace}\n",
+            chrono::Utc::now().to_rfc3339()
+        );
+        if let Ok(mut file) = std::fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(&path)
+        {
+            use std::io::Write;
+            let _ = file.write_all(entry.as_bytes());
+        }
+        default_hook(info);
+    }));
 }
 
 #[macro_export]
