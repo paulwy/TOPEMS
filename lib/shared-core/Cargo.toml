@@ -60,27 +60,16 @@ hmac.workspace = true
 sha2.workspace = true
 hex.workspace = true
 
-# ===== gRPC 微服务基础（V24.0 模块 C）=====
-prost = { workspace = true, optional = true }
-tonic = { workspace = true, optional = true }
-rand = { workspace = true, optional = true }
-async-trait = { workspace = true, optional = true }
-
 [features]
 default = ["full"]
 full = ["event-bridge", "service-client-bridge"]
 event-bridge = []
 service-client-bridge = []
-# V24.0 模块 C: gRPC 微服务基础特性开关
-# 启用后激活 tonic/prost/rand/async-trait 依赖与 grpc 模块
-grpc = ["dep:tonic", "dep:prost", "dep:rand", "dep:async-trait"]
 
 [dev-dependencies]
 serial_test.workspace = true
 
 
-[package.metadata.cargo-machete]
-ignored = ["prost"]
 [lints.rust]
 unknown_lints = "allow"
 renamed_and_removed_lints = "allow"

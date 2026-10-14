@@ -36,11 +36,6 @@ pub mod supplier;
 pub mod testing;
 pub mod validation;
 
-// === gRPC 微服务基础（V24.0 模块 C）===
-// 仅当启用 grpc feature 时编译；提供连接池与健康检查抽象。
-#[cfg(feature = "grpc")]
-pub mod grpc;
-
 // === 常用类型 re-export ===
 pub use api::{
     BatchRequest, BatchRequestHandler, BatchResponse, RequestPriority, SingleRequest,

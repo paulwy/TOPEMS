@@ -18,7 +18,6 @@ full = [
     "cache",
     "business-utils",
     "infra",
-    "grpc",
 ]
 
 # 核心基础模块（始终启用）
@@ -56,10 +55,6 @@ business-utils = ["auth", "database"]
 # 基础设施
 infra = []
 
-# V24.0 模块 C: gRPC 微服务基础特性开关
-# 启用后激活 tonic/prost 依赖与 grpc 模块；服务可基于此构建 gRPC server/client
-grpc = ["topems-shared-core/grpc"]
-
 [dependencies]
 topems-shared-core = { path = "shared-core" }
 topems-shared-db = { path = "shared-db" }
@@ -81,17 +76,10 @@ uuid.workspace = true
 sqlx.workspace = true
 redis = { workspace = true, features = ["tokio-comp", "connection-manager"] }
 
-
-# gRPC 微服务基础（V24.0 模块 C）
-# tonic 工作区已锁定 0.14，与 axum 0.8 兼容
 http.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
-
-[build-dependencies]
-tonic-build.workspace = true
-prost-build.workspace = true
 
 [lints]
 workspace = true

@@ -159,18 +159,6 @@ pub fn init_plugin_registration_secret() -> String {
 }
 
 /// 生成 32 字节随机密钥的十六进制字符串（64 字符）
-#[cfg(feature = "grpc")]
-fn generate_random_secret() -> String {
-    use rand::RngCore;
-    let mut bytes = [0u8; 32];
-    rand::thread_rng().fill_bytes(&mut bytes);
-    hex::encode(bytes)
-}
-
-/// 生成 32 字节随机密钥的十六进制字符串（64 字符）
-///
-/// 非 grpc feature 下的回退实现：使用 uuid v4 作为随机源
-#[cfg(not(feature = "grpc"))]
 fn generate_random_secret() -> String {
     let mut bytes = [0u8; 32];
     let uuid1 = uuid::Uuid::new_v4();
