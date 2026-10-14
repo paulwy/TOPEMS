@@ -776,7 +776,7 @@ pub async fn get_trace(
         Err(e) => return e,
     }
 
-    let _serial_id = match Uuid::parse_str(&id) {
+    let serial_id = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
         Err(_) => {
             return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -785,5 +785,32 @@ pub async fn get_trace(
         }
     };
 
-    Json(ApiResponse::success(vec![], "获取序列号追踪成功"))
+    // S2：接真实 serial_number 表返回追踪记录（非空）
+    let row = sqlx::query(only_own_schema_query!(
+        "wms",
+        r#"SELECT id, serial_no, batch_no, status, location, created_at, updated_at
+           FROM serial_numbers WHERE id = $1"#,
+        "core"
+    ))
+    .bind(serial_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match row {
+        Ok(Some(r)) => {
+            let record = serde_json::json!({
+                "id": r.get::<Uuid, _>("id"),
+                "serial_no": r.get::<String, _>("serial_no"),
+                "batch_no": r.get::<Option<String>, _>("batch_no"),
+                "status": r.get::<String, _>("status"),
+                "location": r.get::<Option<String>, _>("location"),
+                "created_at": r.get::<chrono::DateTime<Utc>, _>("created_at"),
+                "updated_at": r.get::<chrono::DateTime<Utc>, _>("updated_at"),
+                "event_type": "lifecycle",
+            });
+            Json(ApiResponse::success(vec![record], "获取序列号追踪成功"))
+        }
+        Ok(None) => Json(ApiResponse::success(vec![], "序列号不存在")),
+        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {e}"))),
+    }
 }

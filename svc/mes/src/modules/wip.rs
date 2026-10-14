@@ -17,7 +17,7 @@ use std::str::FromStr;
 use topems_shared_auth::auth::Claims;
 
 use crate::shared::permission::{check_permission, ModulePermission};
-use topems_shared_db::decimal::big_decimal_to_f64;
+use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
 
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
@@ -33,13 +33,50 @@ pub fn create_routes() -> Router<AppState> {
         .route("/wips/transfer", post(transfer_wip))
         .route("/wips/{wip_id}/transfers", get(list_wip_transfers))
         .route("/wips/statistics", get(get_wip_statistics))
-        // 前端契约兜底：/wips/transfers/{id} 实际无此端点 — 待上游支持
-        .route("/wips/transfers/{_id}", get(stub_wip_transfer_detail))
+        // S2：/wips/transfers/{id} 接真实 wip_transfers 表详情查询
+        .route("/wips/transfers/{id}", get(stub_wip_transfer_detail))
 }
 
-/// 待上游支持：WIP 调拨单详情占位，返回空列表
-async fn stub_wip_transfer_detail() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "调拨记录查询待上游支持"))
+/// S2：WIP 调拨单详情——按 id 查 wip_transfers 表返回（非空）
+async fn stub_wip_transfer_detail(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::WipRead).await {
+        return e;
+    }
+
+    let row = sqlx::query(
+        r#"SELECT id, transfer_no, wip_id, from_process_id, from_work_station_id,
+                  to_process_id, to_work_station_id, quantity, transfer_time, operator, transfer_type, notes
+           FROM wip_transfers WHERE id = $1"#,
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match row {
+        Ok(Some(r)) => {
+            let record = serde_json::json!({
+                "id": r.get::<Uuid, _>("id"),
+                "transfer_no": r.get::<String, _>("transfer_no"),
+                "wip_id": r.get::<Uuid, _>("wip_id"),
+                "from_process_id": r.get::<Option<Uuid>, _>("from_process_id"),
+                "from_work_station_id": r.get::<Option<Uuid>, _>("from_work_station_id"),
+                "to_process_id": r.get::<Option<Uuid>, _>("to_process_id"),
+                "to_work_station_id": r.get::<Option<Uuid>, _>("to_work_station_id"),
+                "quantity": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("quantity")),
+                "transfer_time": r.get::<DateTime<Utc>, _>("transfer_time"),
+                "operator": r.get::<Option<String>, _>("operator"),
+                "transfer_type": r.get::<String, _>("transfer_type"),
+                "notes": r.get::<Option<String>, _>("notes"),
+            });
+            Json(ApiResponse::success(vec![record], "调拨记录查询成功"))
+        }
+        Ok(None) => Json(ApiResponse::success(vec![], "调拨单不存在")),
+        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {e}"))),
+    }
 }
 
 // ==================== Data Types ====================

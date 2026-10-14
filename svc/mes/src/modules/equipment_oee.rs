@@ -16,7 +16,7 @@ use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 use utoipa::ToSchema;
 
-use topems_shared_db::decimal::big_decimal_to_f64;
+use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
@@ -39,14 +39,59 @@ pub fn create_routes() -> Router<AppState> {
         .route("/equipment-oee/statistics/{_id}", get(get_oee_statistics))
         // 前端模板 /equipment-oee/{id}/efficiency/{rid} 双段兜底
         .route(
-            "/equipment-oee/{_id}/efficiency/{_rid}",
+            "/equipment-oee/{equipment_id}/efficiency/{rid}",
             get(stub_efficiency_detail),
         )
 }
 
-/// 待上游支持：效率分析详情占位（复用 efficiency 列表逻辑）
-async fn stub_efficiency_detail() -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(vec![], "设备效率详情待上游支持"))
+/// S2：效率分析详情——按设备 ID 查 OEE 记录返回（非空）
+async fn stub_efficiency_detail(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path((equipment_id, _rid)): Path<(String, String)>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
+    {
+        return e;
+    }
+
+    let equipment_uuid = match Uuid::parse_str(&equipment_id) {
+        Ok(u) => u,
+        Err(_) => return Json(ApiResponse::error(400, "无效的设备ID")),
+    };
+
+    let rows = sqlx::query(
+        r#"SELECT id, equipment_id, record_date, availability_rate, performance_rate, quality_rate, oee_value
+           FROM equipment_oee_records
+           WHERE equipment_id = $1
+           ORDER BY record_date DESC
+           LIMIT 10"#,
+    )
+    .bind(equipment_uuid)
+    .fetch_all(&state.pool)
+    .await;
+
+    match rows {
+        Ok(rows) => {
+            let records: Vec<serde_json::Value> = rows
+                .iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<Uuid, _>("id"),
+                        "equipment_id": r.get::<Uuid, _>("equipment_id"),
+                        "record_date": r.get::<chrono::NaiveDate, _>("record_date"),
+                        "availability_rate": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("availability_rate")),
+                        "performance_rate": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("performance_rate")),
+                        "quality_rate": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("quality_rate")),
+                        "oee_value": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("oee_value")),
+                    })
+                })
+                .collect();
+            Json(ApiResponse::success(records, "设备效率详情查询成功"))
+        }
+        Err(e) => Json(ApiResponse::error(500, &format!("查询失败: {e}"))),
+    }
 }
 
 // ==================== Data Types ====================
