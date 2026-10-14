@@ -332,19 +332,55 @@ pub async fn impl_publish_master_data_event(
         serde_json::to_value(&event).unwrap_or_default(),
     );
 
-    // 如果 Redis 可用，同时发布到 Redis（多实例广播）
-    let state = ctx.data::<AppState>()?;
-    if let Some(publisher) = &state.event_publisher {
-        let _ = publisher
-            .publish_event(
-                topems_shared_event::event::EventType::HealthCheck,
-                serde_json::to_value(&event).unwrap_or_default(),
-            )
-            .await;
+    // 跨实例广播：构造真实 MasterDataEvent 发布到主数据 Stream
+    // （topems:stream:master_data:{domain_prefix}），与入站
+    // subscribe_master_data（graphql_redis_pubsub.rs）消费的流族对齐。
+    // 此前误用 EventType::HealthCheck 发到 topems:stream:events:HealthCheck，
+    // 该流无任何订阅方，多实例主数据 fan-out 实际断链。
+    if let (Ok(md_domain), Ok(md_action)) = (
+        std::str::FromStr::from_str(&domain),
+        parse_master_data_action(&action),
+    ) {
+        let mdm_event = topems_shared_event::event::MasterDataEvent::new(
+            uuid::Uuid::nil(), // 门户手动触发广播，无租户上下文；入站 GQL 映射不消费 tenant_id
+            md_domain,
+            md_action,
+            master_data_id.clone(),
+            master_data_id.clone(),
+            &source_service,
+            serde_json::to_value(&event).unwrap_or_default(),
+        );
+        if let Err(e) = mdm_event.publish().await {
+            tracing::warn!(
+                "[portal-gql] 主数据事件跨实例发布失败: domain={}, action={}, err={}",
+                domain,
+                action,
+                e
+            );
+        }
+    } else {
+        tracing::warn!(
+            "[portal-gql] 主数据事件域/动作无法解析，跳过跨实例广播: domain={}, action={}",
+            domain,
+            action
+        );
     }
 
     invalidate_cache();
     Ok(event)
+}
+
+/// 解析 GraphQL 入参动作字符串（snake_case）为 MasterDataAction。
+/// 与入站回调 `format!("{:?}", action).to_lowercase()` 输出保持一致。
+fn parse_master_data_action(s: &str) -> Result<topems_shared_event::event::MasterDataAction, ()> {
+    match s {
+        "created" => Ok(topems_shared_event::event::MasterDataAction::Created),
+        "updated" => Ok(topems_shared_event::event::MasterDataAction::Updated),
+        "deleted" => Ok(topems_shared_event::event::MasterDataAction::Deleted),
+        "activated" => Ok(topems_shared_event::event::MasterDataAction::Activated),
+        "deactivated" => Ok(topems_shared_event::event::MasterDataAction::Deactivated),
+        _ => Err(()),
+    }
 }
 
 pub async fn impl_publish_notification(
