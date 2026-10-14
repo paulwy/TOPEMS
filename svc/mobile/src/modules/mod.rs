@@ -2,7 +2,6 @@ pub mod approval;
 pub mod attendance;
 pub mod auth_utils;
 pub mod barcode_scanner;
-pub mod contract_fallback;
 pub mod contract_util;
 pub mod customer;
 pub mod device;
