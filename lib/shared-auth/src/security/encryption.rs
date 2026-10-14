@@ -646,7 +646,6 @@ fn build_from_encryption_key(encryption_key: &str, is_production: bool) -> Field
     }
 }
 
-
 /// B7 桥接网：EncryptionError → TopemsError（加密语义）
 impl From<EncryptionError> for topems_shared_core::error::TopemsError {
     fn from(e: EncryptionError) -> Self {
@@ -655,10 +654,14 @@ impl From<EncryptionError> for topems_shared_core::error::TopemsError {
             EncryptionError::EncryptionFailed(m) => TopemsError::Internal(m),
             EncryptionError::DecryptionFailed(m) => TopemsError::Internal(m),
             EncryptionError::InvalidKey(m) => TopemsError::ValidationFailed(m),
-            EncryptionError::KeyNotFound(v) => TopemsError::ResourceNotFound(format!("encryption key version {v}")),
+            EncryptionError::KeyNotFound(v) => {
+                TopemsError::ResourceNotFound(format!("encryption key version {v}"))
+            }
             EncryptionError::InvalidBase64(m) => TopemsError::ValidationFailed(m),
             EncryptionError::InvalidUtf8(m) => TopemsError::ValidationFailed(m),
-            EncryptionError::CiphertextTooShort => TopemsError::ValidationFailed("ciphertext too short".to_string()),
+            EncryptionError::CiphertextTooShort => {
+                TopemsError::ValidationFailed("ciphertext too short".to_string())
+            }
         }
     }
 }

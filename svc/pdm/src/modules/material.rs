@@ -11,7 +11,9 @@ use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::cache::{record_cache_hit, record_cache_miss, record_cache_set};
 use topems_shared_core::locale::Locale;
-use topems_shared_event::event::{commit_retry, EventType, MasterDataAction, PdmMaterialCreatedPayload};
+use topems_shared_event::event::{
+    commit_retry, EventType, MasterDataAction, PdmMaterialCreatedPayload,
+};
 
 /// 物料列表缓存 Key
 fn materials_list_cache_key(

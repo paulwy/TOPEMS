@@ -581,7 +581,6 @@ impl Drop for ConsulRegistrationGuard {
     }
 }
 
-
 /// B7 桥接网：ConsulError → TopemsError（服务注册/发现网络语义）
 impl From<ConsulError> for topems_shared_core::error::TopemsError {
     fn from(e: ConsulError) -> Self {

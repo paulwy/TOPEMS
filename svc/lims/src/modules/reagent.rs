@@ -244,8 +244,7 @@ pub async fn create_reagent(
                                     min_stock: None,
                                     expiry_date: expiry,
                                 };
-                                let et =
-                                    topems_shared_event::event::EventType::LimsReagentAlert;
+                                let et = topems_shared_event::event::EventType::LimsReagentAlert;
                                 if let Err(e) = publisher.publish_event(et, &payload).await {
                                     tracing::warn!(
                                         "[lims] LimsReagentAlert 事件发布失败: {}，入重试队列",

@@ -1,6 +1,5 @@
 //! Report Schedule handlers
 
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Path, State},
     routing::{get, post},
@@ -10,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use std::fmt;
 use std::str::FromStr;
+use topems_shared_core::error::TopemsError;
 use tracing::info;
 use uuid::Uuid;
 
@@ -54,7 +54,10 @@ impl FromStr for ScheduleType {
             "cron" => Ok(ScheduleType::Cron),
             "interval" => Ok(ScheduleType::Interval),
             "one_time" | "onetime" | "once" => Ok(ScheduleType::OneTime),
-            _ => Err(TopemsError::ValidationFailed(format!("Unknown schedule type: {}", s))),
+            _ => Err(TopemsError::ValidationFailed(format!(
+                "Unknown schedule type: {}",
+                s
+            ))),
         }
     }
 }

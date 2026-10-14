@@ -582,7 +582,6 @@ pub async fn try_register_service(
     }
 }
 
-
 /// B7 桥接网：EtcdError → TopemsError（etcd 协调存储语义）
 impl From<EtcdError> for topems_shared_core::error::TopemsError {
     fn from(e: EtcdError) -> Self {

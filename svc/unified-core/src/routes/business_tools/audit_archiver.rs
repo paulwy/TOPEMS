@@ -362,7 +362,6 @@ fn compress_gzip(data: &[u8]) -> Result<Vec<u8>, ArchiveError> {
 
 // ===== Tests =====
 
-
 /// B7 桥接网：ArchiveError → TopemsError
 impl From<ArchiveError> for topems_shared_core::error::TopemsError {
     fn from(e: ArchiveError) -> Self {

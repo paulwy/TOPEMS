@@ -331,10 +331,7 @@ pub async fn create_project(
                         // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
                         commit_retry::push_retry_typed("rd", et, &payload).await;
                     } else {
-                        tracing::info!(
-                            "[rd] RdProjectCreated 事件发布成功 - project_id={}",
-                            pid
-                        );
+                        tracing::info!("[rd] RdProjectCreated 事件发布成功 - project_id={}", pid);
                     }
                 });
             }

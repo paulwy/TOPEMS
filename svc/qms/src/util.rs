@@ -239,7 +239,6 @@ pub fn normalize_defect_severity(s: &str) -> Option<String> {
     Some(normalized)
 }
 
-
 /// B7 桥接网：QmsUtilError → TopemsError（服务本地校验错误语义统一）
 impl From<QmsUtilError> for topems_shared_core::error::TopemsError {
     fn from(e: QmsUtilError) -> Self {
@@ -250,7 +249,6 @@ impl From<QmsUtilError> for topems_shared_core::error::TopemsError {
         }
     }
 }
-
 
 /// B7 桥接网：SampleError → TopemsError（服务本地校验错误语义统一）
 impl From<SampleError> for topems_shared_core::error::TopemsError {

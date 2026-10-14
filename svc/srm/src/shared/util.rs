@@ -240,7 +240,6 @@ pub fn is_preferred_supplier(rating: f64, on_time_rate: f64) -> bool {
     r >= 4.0 && o >= 0.95
 }
 
-
 /// B7 桥接网：SrmError → TopemsError（服务本地校验错误语义统一）
 impl From<SrmError> for topems_shared_core::error::TopemsError {
     fn from(e: SrmError) -> Self {

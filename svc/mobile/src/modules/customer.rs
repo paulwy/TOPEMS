@@ -1,10 +1,10 @@
 //! 客户模块（前端 mobile/customer.ts 契约对齐，2026-10-05）
 //! 复用 CRM 服务客户端（/api/crm/customers 完整 CRUD）
 
+use crate::modules::contract_util::unwrap_data;
 use axum::{extract::State, Json};
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::crm_api::CrmApi, TypedServiceClient};
-use crate::modules::contract_util::unwrap_data;
 
 /// 客户列表（前端 GET /customer）
 pub async fn list_customers(

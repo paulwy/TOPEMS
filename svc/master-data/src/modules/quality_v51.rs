@@ -130,8 +130,12 @@ fn rule_row_to_api(row: &sqlx::postgres::PgRow) -> QualityRule {
         severity: row.get("severity"),
         parameters: row.get("parameters"),
         enabled: row.get("enabled"),
-        created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
-        updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at").to_rfc3339(),
+        created_at: row
+            .get::<chrono::DateTime<chrono::Utc>, _>("created_at")
+            .to_rfc3339(),
+        updated_at: row
+            .get::<chrono::DateTime<chrono::Utc>, _>("updated_at")
+            .to_rfc3339(),
     }
 }
 
@@ -1036,7 +1040,10 @@ pub async fn create_quality_rule(
     .fetch_one(&state.db)
     .await
     {
-        Ok(row) => Json(ApiResponse::success(rule_row_to_api(&row), "质量规则已创建")),
+        Ok(row) => Json(ApiResponse::success(
+            rule_row_to_api(&row),
+            "质量规则已创建",
+        )),
         Err(e) => {
             tracing::error!("创建质量规则失败: {e}");
             Json(ApiResponse::error(500, "创建质量规则失败"))
@@ -1118,7 +1125,10 @@ pub async fn update_quality_rule(
     .fetch_optional(&state.db)
     .await
     {
-        Ok(Some(row)) => Json(ApiResponse::success(rule_row_to_api(&row), "质量规则已更新")),
+        Ok(Some(row)) => Json(ApiResponse::success(
+            rule_row_to_api(&row),
+            "质量规则已更新",
+        )),
         Ok(None) => Json(ApiResponse::error(404, "未找到质量规则")),
         Err(e) => {
             tracing::error!("更新质量规则失败: {e}");
@@ -1152,9 +1162,7 @@ pub async fn delete_quality_rule(
         .execute(&state.db)
         .await
     {
-        Ok(res) if res.rows_affected() > 0 => {
-            Json(ApiResponse::success_no_data("质量规则已删除"))
-        }
+        Ok(res) if res.rows_affected() > 0 => Json(ApiResponse::success_no_data("质量规则已删除")),
         Ok(_) => Json(ApiResponse::error(404, "未找到质量规则")),
         Err(e) => {
             tracing::error!("删除质量规则失败: {e}");

@@ -167,7 +167,6 @@ pub fn calc_estimated_arrival(departure: i64, distance_km: f64, avg_speed_kmh: f
     departure + travel_seconds as i64
 }
 
-
 /// B7 桥接网：TmsError → TopemsError（服务本地校验错误语义统一）
 impl From<TmsError> for topems_shared_core::error::TopemsError {
     fn from(e: TmsError) -> Self {

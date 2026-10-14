@@ -275,7 +275,6 @@ impl LogQueryProvider for InMemoryLogStore {
     }
 }
 
-
 /// B7 桥接网：LogQueryError → TopemsError（日志查询语义）
 impl From<LogQueryError> for topems_shared_core::error::TopemsError {
     fn from(e: LogQueryError) -> Self {

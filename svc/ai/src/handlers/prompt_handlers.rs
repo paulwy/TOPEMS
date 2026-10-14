@@ -14,7 +14,6 @@
 //! serde 显式 rename 对齐（输出与输入均为 promptTemplate）。
 //! /use 端点只做模板渲染（变量替换），不假装 LLM 输出——result 即渲染后的提示词文本。
 
-use topems_shared_core::error::TopemsError;
 use axum::{
     extract::{Extension, Path, Query, State},
     http::HeaderMap,
@@ -23,6 +22,7 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::{get_tenant_id_from_claims, Claims};
+use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 use uuid::Uuid;

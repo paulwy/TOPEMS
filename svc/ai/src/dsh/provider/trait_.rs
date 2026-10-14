@@ -321,7 +321,6 @@ pub trait LlmProvider: Send + Sync + 'static {
     async fn list_models(&self) -> Result<Vec<String>, LlmProviderError>;
 }
 
-
 /// B7 桥接网：LlmProviderError → TopemsError
 impl From<LlmProviderError> for topems_shared_core::error::TopemsError {
     fn from(e: LlmProviderError) -> Self {

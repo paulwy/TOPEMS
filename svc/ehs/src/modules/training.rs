@@ -13,7 +13,9 @@ pub fn create_routes() -> Router<AppState> {
         .route("/training", get(list_trainings).post(create_training))
         .route(
             "/training/{id}",
-            get(get_training).put(update_training).delete(delete_training),
+            get(get_training)
+                .put(update_training)
+                .delete(delete_training),
         )
         .route(
             "/training/plans",
@@ -21,7 +23,9 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/training/plans/{id}",
-            get(get_training_plan).put(update_training_plan).delete(delete_training_plan),
+            get(get_training_plan)
+                .put(update_training_plan)
+                .delete(delete_training_plan),
         )
         .route(
             "/training/records",
@@ -29,7 +33,9 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/training/records/{id}",
-            get(get_training_record).put(update_training_record).delete(delete_training_record),
+            get(get_training_record)
+                .put(update_training_record)
+                .delete(delete_training_record),
         )
         .route(
             "/training/certificates",
@@ -37,7 +43,9 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/training/certificates/{id}",
-            get(get_certificate).put(update_certificate).delete(delete_certificate),
+            get(get_certificate)
+                .put(update_certificate)
+                .delete(delete_certificate),
         )
         .route("/training/statistics", get(get_training_statistics))
 }
@@ -246,13 +254,36 @@ pub async fn update_training(
         Training {
             id,
             training_no: "TRN-2024001".to_string(),
-            title: req.get("title").and_then(|v| v.as_str()).unwrap_or("安全培训").to_string(),
-            content: req.get("content").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            trainer: req.get("trainer").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            training_type: req.get("training_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            duration_hours: req.get("duration_hours").and_then(|v| v.as_i64()).map(|v| v as i32),
-            scheduled_at: req.get("scheduled_at").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("scheduled").to_string(),
+            title: req
+                .get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("安全培训")
+                .to_string(),
+            content: req
+                .get("content")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            trainer: req
+                .get("trainer")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            training_type: req
+                .get("training_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            duration_hours: req
+                .get("duration_hours")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            scheduled_at: req
+                .get("scheduled_at")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("scheduled")
+                .to_string(),
             tenant_id,
         },
         "培训更新成功",
@@ -350,12 +381,32 @@ pub async fn update_training_plan(
         TrainingPlan {
             id,
             plan_no: "TP-2024001".to_string(),
-            title: req.get("title").and_then(|v| v.as_str()).unwrap_or("年度安全培训计划").to_string(),
-            description: req.get("description").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            training_type: req.get("training_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            planned_date: req.get("planned_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            trainer: req.get("trainer").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("planned").to_string(),
+            title: req
+                .get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("年度安全培训计划")
+                .to_string(),
+            description: req
+                .get("description")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            training_type: req
+                .get("training_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            planned_date: req
+                .get("planned_date")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            trainer: req
+                .get("trainer")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("planned")
+                .to_string(),
             created_at: chrono::Utc::now().to_rfc3339(),
             tenant_id,
         },
@@ -454,13 +505,36 @@ pub async fn update_training_record(
         TrainingRecord {
             id,
             record_no: "TRR-2024001".to_string(),
-            training_title: req.get("training_title").and_then(|v| v.as_str()).unwrap_or("安全培训").to_string(),
-            trainer: req.get("trainer").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            training_date: req.get("training_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            duration_hours: req.get("duration_hours").and_then(|v| v.as_i64()).map(|v| v as i32),
-            participants: req.get("participants").and_then(|v| v.as_i64()).map(|v| v as i32),
-            pass_count: req.get("pass_count").and_then(|v| v.as_i64()).map(|v| v as i32),
-            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("completed").to_string(),
+            training_title: req
+                .get("training_title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("安全培训")
+                .to_string(),
+            trainer: req
+                .get("trainer")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            training_date: req
+                .get("training_date")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            duration_hours: req
+                .get("duration_hours")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            participants: req
+                .get("participants")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            pass_count: req
+                .get("pass_count")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("completed")
+                .to_string(),
             tenant_id,
         },
         "培训记录更新成功",
@@ -557,12 +631,33 @@ pub async fn update_certificate(
         TrainingCertificate {
             id,
             certificate_no: "CERT-2024001".to_string(),
-            employee_name: req.get("employee_name").and_then(|v| v.as_str()).unwrap_or("测试员工").to_string(),
-            training_title: req.get("training_title").and_then(|v| v.as_str()).unwrap_or("安全培训").to_string(),
-            issue_date: req.get("issue_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            expiry_date: req.get("expiry_date").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            certificate_type: req.get("certificate_type").and_then(|v| v.as_str()).map(|s| s.to_string()),
-            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("valid").to_string(),
+            employee_name: req
+                .get("employee_name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("测试员工")
+                .to_string(),
+            training_title: req
+                .get("training_title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("安全培训")
+                .to_string(),
+            issue_date: req
+                .get("issue_date")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            expiry_date: req
+                .get("expiry_date")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            certificate_type: req
+                .get("certificate_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("valid")
+                .to_string(),
             tenant_id,
         },
         "培训证书更新成功",

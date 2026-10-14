@@ -2469,7 +2469,6 @@ pub fn create_routes() -> Router<AppState> {
         )
 }
 
-
 /// B7 桥接网：ValidationError → TopemsError（结算校验语义统一）
 impl From<ValidationError> for topems_shared_core::error::TopemsError {
     fn from(e: ValidationError) -> Self {

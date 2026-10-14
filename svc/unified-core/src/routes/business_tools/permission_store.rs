@@ -681,8 +681,12 @@ impl From<PermissionStoreError> for topems_shared_core::error::TopemsError {
     fn from(e: PermissionStoreError) -> Self {
         use topems_shared_core::error::TopemsError;
         match e {
-            PermissionStoreError::NotFound(t, u) => TopemsError::ResourceNotFound(format!("权限不存在: tenant={}, user={}", t, u)),
-            PermissionStoreError::AlreadyExists(t, u) => TopemsError::BusinessLogic(format!("权限已存在: tenant={}, user={}", t, u)),
+            PermissionStoreError::NotFound(t, u) => {
+                TopemsError::ResourceNotFound(format!("权限不存在: tenant={}, user={}", t, u))
+            }
+            PermissionStoreError::AlreadyExists(t, u) => {
+                TopemsError::BusinessLogic(format!("权限已存在: tenant={}, user={}", t, u))
+            }
             PermissionStoreError::Invalid(m) => TopemsError::ValidationFailed(m),
             PermissionStoreError::StoreError(m) => TopemsError::DatabaseQuery(m),
         }

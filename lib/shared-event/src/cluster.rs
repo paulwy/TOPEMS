@@ -555,17 +555,24 @@ pub enum ClusterError {
     ConfigurationError(String),
 }
 
-
 /// B7 桥接网：ClusterError → TopemsError（集群编排语义）
 impl From<ClusterError> for topems_shared_core::error::TopemsError {
     fn from(e: ClusterError) -> Self {
         use topems_shared_core::error::TopemsError;
         match e {
             ClusterError::NodeNotFound => TopemsError::ResourceNotFound("cluster node".to_string()),
-            ClusterError::NodeAlreadyExists => TopemsError::ResourceAlreadyExists("cluster node".to_string()),
-            ClusterError::NoHealthyNodes => TopemsError::ServiceUnavailable("no healthy cluster nodes".to_string()),
-            ClusterError::FailoverInProgress => TopemsError::BusinessLogic("failover in progress".to_string()),
-            ClusterError::ClusterNotConfigured => TopemsError::ConfigValidation("cluster not configured".to_string()),
+            ClusterError::NodeAlreadyExists => {
+                TopemsError::ResourceAlreadyExists("cluster node".to_string())
+            }
+            ClusterError::NoHealthyNodes => {
+                TopemsError::ServiceUnavailable("no healthy cluster nodes".to_string())
+            }
+            ClusterError::FailoverInProgress => {
+                TopemsError::BusinessLogic("failover in progress".to_string())
+            }
+            ClusterError::ClusterNotConfigured => {
+                TopemsError::ConfigValidation("cluster not configured".to_string())
+            }
             ClusterError::ConfigurationError(m) => TopemsError::ConfigValidation(m),
         }
     }

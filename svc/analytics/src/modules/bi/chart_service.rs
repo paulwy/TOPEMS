@@ -451,6 +451,7 @@ impl ChartService {
 
     /// 硬编码（确定性）DEMO 样本——仅在 DEMO_MODE 开启时使用。
     /// 数据为固定常量，**不使用任何随机数**；行形状与历史前端契约保持一致。
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn demo_sample_data(
         &self,
         query: &ChartQuery,
@@ -525,10 +526,7 @@ impl ChartService {
             ChartType::Table => {
                 for (i, value) in TABLE_VALUES.iter().enumerate() {
                     let mut row = HashMap::new();
-                    row.insert(
-                        "id".to_string(),
-                        serde_json::Value::from((i + 1) as i64),
-                    );
+                    row.insert("id".to_string(), serde_json::Value::from((i + 1) as i64));
                     row.insert(
                         "name".to_string(),
                         serde_json::Value::String(format!("项目 {}", i + 1)),

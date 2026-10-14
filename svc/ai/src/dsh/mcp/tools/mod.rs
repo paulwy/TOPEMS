@@ -363,7 +363,6 @@ pub fn http_call(base: &str, method: &str, path: &str, body: Option<Value>) -> O
     parsed.get("data").cloned()
 }
 
-
 /// B7 桥接网：ToolExecutionError → TopemsError
 impl From<ToolExecutionError> for topems_shared_core::error::TopemsError {
     fn from(e: ToolExecutionError) -> Self {

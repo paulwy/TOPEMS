@@ -10,10 +10,7 @@ use axum::{
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{
-    types::Uuid,
-    Row,
-};
+use sqlx::{types::Uuid, Row};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::error::TopemsError;
 use topems_shared_event::event::{commit_retry, EventType, ProductionOrderCreatedPayload};
@@ -784,6 +781,7 @@ pub async fn get_production_order(
         (status = 404, description = "生产订单不存在"),
     ),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_production_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

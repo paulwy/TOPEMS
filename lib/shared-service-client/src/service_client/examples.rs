@@ -16,13 +16,13 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 
-use topems_shared_core::error::TopemsError;
 use crate::service_client::api::{
     crm_api::CrmApi, erp_api::ErpApi, file_api::FileApi, finance_api::FinanceApi, hrm_api::HrmApi,
     iam_api::IamApi, mes_api::MesApi, monitor_api::MonitorApi, notification_api::NotificationApi,
     wms_api::WmsApi, workflow_api::WorkflowApi,
 };
 use crate::service_client::trait_api::{ServiceApi, TypedServiceClient};
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 /// 统一服务通信模式示例

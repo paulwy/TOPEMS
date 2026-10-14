@@ -97,13 +97,16 @@ pub async fn list_quality_tasks(
     let offset = (page - 1) * page_size;
     let search_pattern = query.search.as_ref().map(|s| format!("%{}%", s));
 
-    let total: i64 = match sqlx::query_scalar(only_own_schema_query!("qms", r#"
+    let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
+        "qms",
+        r#"
         SELECT COUNT(*) FROM qms.qa_quality_inspections
         WHERE deleted_at IS NULL
           AND ($1::uuid IS NULL OR tenant_id = $1)
           AND ($2::text IS NULL OR status = $2)
           AND ($3::text IS NULL OR inspection_no ILIKE $3 OR product_name ILIKE $3)
-    "#))
+    "#
+    ))
     .bind(tenant_opt)
     .bind(query.status.as_deref())
     .bind(search_pattern.as_deref())
@@ -117,7 +120,9 @@ pub async fn list_quality_tasks(
         }
     };
 
-    let items = match sqlx::query_as::<_, QualityTask>(only_own_schema_query!("qms", r#"
+    let items = match sqlx::query_as::<_, QualityTask>(only_own_schema_query!(
+        "qms",
+        r#"
         SELECT id::TEXT,
                inspection_no,
                inspection_type,
@@ -140,7 +145,8 @@ pub async fn list_quality_tasks(
           AND ($3::text IS NULL OR inspection_no ILIKE $3 OR product_name ILIKE $3)
         ORDER BY created_at DESC
         LIMIT $4 OFFSET $5
-    "#))
+    "#
+    ))
     .bind(tenant_opt)
     .bind(query.status.as_deref())
     .bind(search_pattern.as_deref())
@@ -181,7 +187,9 @@ pub async fn get_quality_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的质检任务ID")),
     };
 
-    let row = sqlx::query_as::<_, QualityTask>(only_own_schema_query!("qms", r#"
+    let row = sqlx::query_as::<_, QualityTask>(only_own_schema_query!(
+        "qms",
+        r#"
         SELECT id::TEXT,
                inspection_no,
                inspection_type,
@@ -199,7 +207,8 @@ pub async fn get_quality_task(
                COALESCE(tenant_id::TEXT, '00000000-0000-0000-0000-000000000001') AS tenant_id
         FROM qms.qa_quality_inspections
         WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2)
-    "#))
+    "#
+    ))
     .bind(id)
     .bind(tenant_opt)
     .fetch_optional(&state.pool)
@@ -241,11 +250,14 @@ pub async fn update_quality_task_status(
         return Json(ApiResponse::error(400, "状态不能为空"));
     }
 
-    let updated = sqlx::query(only_own_schema_query!("qms", r#"
+    let updated = sqlx::query(only_own_schema_query!(
+        "qms",
+        r#"
         UPDATE qms.qa_quality_inspections
         SET status = $1, updated_at = NOW()
         WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3)
-    "#))
+    "#
+    ))
     .bind(&req.status)
     .bind(id)
     .bind(tenant_opt)
@@ -254,7 +266,10 @@ pub async fn update_quality_task_status(
 
     match updated {
         Ok(r) if r.rows_affected() == 0 => Json(ApiResponse::error(404, "质检任务不存在")),
-        Ok(_) => Json(ApiResponse::success(serde_json::json!({ "id": id, "status": req.status }), "更新质检任务状态成功")),
+        Ok(_) => Json(ApiResponse::success(
+            serde_json::json!({ "id": id, "status": req.status }),
+            "更新质检任务状态成功",
+        )),
         Err(e) => {
             tracing::error!("quality-task status 更新失败: {}", e);
             Json(ApiResponse::error(500, "更新质检任务状态失败"))
@@ -280,11 +295,14 @@ pub async fn list_defect_records(
     let page_size = query.page_size.unwrap_or(10).clamp(1, 100);
     let offset = (page - 1) * page_size;
 
-    let total: i64 = match sqlx::query_scalar(only_own_schema_query!("qms", r#"
+    let total: i64 = match sqlx::query_scalar(only_own_schema_query!(
+        "qms",
+        r#"
         SELECT COUNT(*) FROM qms.qa_inspection_results
         WHERE deleted_at IS NULL AND is_qualified = false
           AND ($1::uuid IS NULL OR tenant_id = $1)
-    "#))
+    "#
+    ))
     .bind(tenant_opt)
     .fetch_one(&state.pool)
     .await
@@ -296,7 +314,9 @@ pub async fn list_defect_records(
         }
     };
 
-    let items = match sqlx::query_as::<_, DefectRecord>(only_own_schema_query!("qms", r#"
+    let items = match sqlx::query_as::<_, DefectRecord>(only_own_schema_query!(
+        "qms",
+        r#"
         SELECT id::TEXT,
                inspection_id::TEXT,
                item_name,
@@ -311,7 +331,8 @@ pub async fn list_defect_records(
           AND ($1::uuid IS NULL OR tenant_id = $1)
         ORDER BY created_at DESC
         LIMIT $2 OFFSET $3
-    "#))
+    "#
+    ))
     .bind(tenant_opt)
     .bind(page_size)
     .bind(offset)
@@ -391,7 +412,10 @@ pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/quality-tasks", get(list_quality_tasks))
         .route("/quality-tasks/{id}", get(get_quality_task))
-        .route("/quality-tasks/{id}/status", put(update_quality_task_status))
+        .route(
+            "/quality-tasks/{id}/status",
+            put(update_quality_task_status),
+        )
         .route("/defect-records", get(list_defect_records))
         .route("/defect-records", post(report_defect))
 }

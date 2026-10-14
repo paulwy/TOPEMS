@@ -497,9 +497,7 @@ mod tests {
         let repo = TestProjectRepository::new(pool.clone());
 
         // 使用 TRUNCATE 清理数据库，确保测试隔离
-        let _ = sqlx::query("DELETE FROM rs.projects")
-            .execute(&pool)
-            .await;
+        let _ = sqlx::query("DELETE FROM rs.projects").execute(&pool).await;
 
         for i in 1..=5 {
             let req = CreateProjectRequest {

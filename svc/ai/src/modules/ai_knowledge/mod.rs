@@ -50,7 +50,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     // ddl_pool 用户可能非表 owner（如 MIGRATE_URL=topems vs owner=topems_app）：
     // CREATE TABLE/INDEX IF NOT EXISTS 的权限检查先于存在性判断会报 must be owner，
     // 故先查 pg_tables / pg_indexes 存在性，已存在则跳过 DDL。
-    async fn ensure_kb_table(pool: &PgPool, table_name: &str, ddl: &str) -> Result<(), sqlx::Error> {
+    async fn ensure_kb_table(
+        pool: &PgPool,
+        table_name: &str,
+        ddl: &str,
+    ) -> Result<(), sqlx::Error> {
         let exists: bool = sqlx::query_scalar(
             "SELECT EXISTS (SELECT 1 FROM pg_tables WHERE schemaname = 'core' AND tablename = $1)",
         )
@@ -63,7 +67,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         sqlx::query(ddl).execute(pool).await?;
         Ok(())
     }
-    async fn ensure_kb_index(pool: &PgPool, index_name: &str, ddl: &str) -> Result<(), sqlx::Error> {
+    async fn ensure_kb_index(
+        pool: &PgPool,
+        index_name: &str,
+        ddl: &str,
+    ) -> Result<(), sqlx::Error> {
         let exists: bool = sqlx::query_scalar(
             "SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'core' AND indexname = $1)",
         )
@@ -84,7 +92,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         Ok(())
     }
 
-    async fn ensure_kb_function(pool: &PgPool, fn_name: &str, ddl: &str) -> Result<(), sqlx::Error> {
+    async fn ensure_kb_function(
+        pool: &PgPool,
+        fn_name: &str,
+        ddl: &str,
+    ) -> Result<(), sqlx::Error> {
         let exists: bool = sqlx::query_scalar(
             "SELECT EXISTS (SELECT 1 FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'core' AND p.proname = $1)",
         )
@@ -138,7 +150,10 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // 2. 知识库表
-        ensure_kb_table(pool, "knowledge_bases", r#"CREATE TABLE IF NOT EXISTS core.knowledge_bases (
+    ensure_kb_table(
+        pool,
+        "knowledge_bases",
+        r#"CREATE TABLE IF NOT EXISTS core.knowledge_bases (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             name VARCHAR(100) NOT NULL,
@@ -150,15 +165,40 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 deleted_at TIMESTAMP
-        "#).await?;
+        "#,
+    )
+    .await?;
 
-    ensure_kb_index(pool, "idx_kb_tenant_id", "CREATE INDEX IF NOT EXISTS idx_kb_tenant_id ON core.knowledge_bases(tenant_id)").await?;
-    ensure_kb_index(pool, "idx_kb_status", "CREATE INDEX IF NOT EXISTS idx_kb_status ON core.knowledge_bases(status)").await?;
-    ensure_kb_index(pool, "idx_kb_created_by", "CREATE INDEX IF NOT EXISTS idx_kb_created_by ON core.knowledge_bases(created_by)").await?;
-    ensure_kb_index(pool, "idx_kb_kb_type", "CREATE INDEX IF NOT EXISTS idx_kb_kb_type ON core.knowledge_bases(kb_type)").await?;
+    ensure_kb_index(
+        pool,
+        "idx_kb_tenant_id",
+        "CREATE INDEX IF NOT EXISTS idx_kb_tenant_id ON core.knowledge_bases(tenant_id)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kb_status",
+        "CREATE INDEX IF NOT EXISTS idx_kb_status ON core.knowledge_bases(status)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kb_created_by",
+        "CREATE INDEX IF NOT EXISTS idx_kb_created_by ON core.knowledge_bases(created_by)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kb_kb_type",
+        "CREATE INDEX IF NOT EXISTS idx_kb_kb_type ON core.knowledge_bases(kb_type)",
+    )
+    .await?;
 
     // 3. 知识文档表
-        ensure_kb_table(pool, "knowledge_documents", r#"CREATE TABLE IF NOT EXISTS core.knowledge_documents (
+    ensure_kb_table(
+        pool,
+        "knowledge_documents",
+        r#"CREATE TABLE IF NOT EXISTS core.knowledge_documents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             kb_id UUID NOT NULL REFERENCES core.knowledge_bases(id) ON DELETE CASCADE,
@@ -174,17 +214,47 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 deleted_at TIMESTAMP
-        "#).await?;
+        "#,
+    )
+    .await?;
 
-    ensure_kb_index(pool, "idx_kd_tenant_id", "CREATE INDEX IF NOT EXISTS idx_kd_tenant_id ON core.knowledge_documents(tenant_id)").await?;
-    ensure_kb_index(pool, "idx_kd_kb_id", "CREATE INDEX IF NOT EXISTS idx_kd_kb_id ON core.knowledge_documents(kb_id)").await?;
-    ensure_kb_index(pool, "idx_kd_status", "CREATE INDEX IF NOT EXISTS idx_kd_status ON core.knowledge_documents(status)").await?;
-    ensure_kb_index(pool, "idx_kd_doc_type", "CREATE INDEX IF NOT EXISTS idx_kd_doc_type ON core.knowledge_documents(doc_type)").await?;
-    ensure_kb_index(pool, "idx_kd_created_by", "CREATE INDEX IF NOT EXISTS idx_kd_created_by ON core.knowledge_documents(created_by)").await?;
+    ensure_kb_index(
+        pool,
+        "idx_kd_tenant_id",
+        "CREATE INDEX IF NOT EXISTS idx_kd_tenant_id ON core.knowledge_documents(tenant_id)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kd_kb_id",
+        "CREATE INDEX IF NOT EXISTS idx_kd_kb_id ON core.knowledge_documents(kb_id)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kd_status",
+        "CREATE INDEX IF NOT EXISTS idx_kd_status ON core.knowledge_documents(status)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kd_doc_type",
+        "CREATE INDEX IF NOT EXISTS idx_kd_doc_type ON core.knowledge_documents(doc_type)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kd_created_by",
+        "CREATE INDEX IF NOT EXISTS idx_kd_created_by ON core.knowledge_documents(created_by)",
+    )
+    .await?;
 
     // 4. 文档分块表（含向量）
     // 注意：embedding 列使用 pgvector 的 vector(1536) 类型
-        ensure_kb_table(pool, "knowledge_chunks", r#"CREATE TABLE IF NOT EXISTS core.knowledge_chunks (
+    ensure_kb_table(
+        pool,
+        "knowledge_chunks",
+        r#"CREATE TABLE IF NOT EXISTS core.knowledge_chunks (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             document_id UUID NOT NULL REFERENCES core.knowledge_documents(id) ON DELETE CASCADE,
@@ -196,24 +266,51 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 deleted_at TIMESTAMP
-        "#).await?;
+        "#,
+    )
+    .await?;
 
-    ensure_kb_index(pool, "idx_kc_tenant_id", "CREATE INDEX IF NOT EXISTS idx_kc_tenant_id ON core.knowledge_chunks(tenant_id)").await?;
-    ensure_kb_index(pool, "idx_kc_document_id", "CREATE INDEX IF NOT EXISTS idx_kc_document_id ON core.knowledge_chunks(document_id)").await?;
-    ensure_kb_index(pool, "idx_kc_kb_id", "CREATE INDEX IF NOT EXISTS idx_kc_kb_id ON core.knowledge_chunks(kb_id)").await?;
+    ensure_kb_index(
+        pool,
+        "idx_kc_tenant_id",
+        "CREATE INDEX IF NOT EXISTS idx_kc_tenant_id ON core.knowledge_chunks(tenant_id)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kc_document_id",
+        "CREATE INDEX IF NOT EXISTS idx_kc_document_id ON core.knowledge_chunks(document_id)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_kc_kb_id",
+        "CREATE INDEX IF NOT EXISTS idx_kc_kb_id ON core.knowledge_chunks(kb_id)",
+    )
+    .await?;
 
     // 向量相似度索引（IVFFlat）：注意 - 仅在表非空时才能创建有效索引
     // 已存在则跳过；创建失败（如 ddl_pool 非表 owner / 表为空）仅告警，不影响功能
-    if let Err(e) = ensure_kb_index(pool, "idx_kc_embedding", r#"CREATE INDEX IF NOT EXISTS idx_kc_embedding
+    if let Err(e) = ensure_kb_index(
+        pool,
+        "idx_kc_embedding",
+        r#"CREATE INDEX IF NOT EXISTS idx_kc_embedding
            ON core.knowledge_chunks USING ivfflat (embedding vector_cosine_ops)
-           WITH (lists = 100)"#)
+           WITH (lists = 100)"#,
+    )
     .await
     {
-        tracing::warn!("[ai] 向量索引 idx_kc_embedding 创建失败（语义检索将回退顺序扫描）: {}", e);
+        tracing::warn!(
+            "[ai] 向量索引 idx_kc_embedding 创建失败（语义检索将回退顺序扫描）: {}",
+            e
+        );
     }
 
     // 5. 问答历史表
-        ensure_kb_table(pool, "knowledge_qa_history", r#"CREATE TABLE IF NOT EXISTS core.knowledge_qa_history (
+    ensure_kb_table(
+        pool,
+        "knowledge_qa_history",
+        r#"CREATE TABLE IF NOT EXISTS core.knowledge_qa_history (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID NOT NULL,
             kb_id UUID NOT NULL REFERENCES core.knowledge_bases(id) ON DELETE CASCADE,
@@ -223,26 +320,65 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
             feedback INTEGER,
             user_id UUID NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        "#).await?;
+        "#,
+    )
+    .await?;
 
-    ensure_kb_index(pool, "idx_qa_tenant_id", "CREATE INDEX IF NOT EXISTS idx_qa_tenant_id ON core.knowledge_qa_history(tenant_id)").await?;
-    ensure_kb_index(pool, "idx_qa_kb_id", "CREATE INDEX IF NOT EXISTS idx_qa_kb_id ON core.knowledge_qa_history(kb_id)").await?;
-    ensure_kb_index(pool, "idx_qa_user_id", "CREATE INDEX IF NOT EXISTS idx_qa_user_id ON core.knowledge_qa_history(user_id)").await?;
-    ensure_kb_index(pool, "idx_qa_created_at", "CREATE INDEX IF NOT EXISTS idx_qa_created_at ON core.knowledge_qa_history(created_at)").await?;
+    ensure_kb_index(
+        pool,
+        "idx_qa_tenant_id",
+        "CREATE INDEX IF NOT EXISTS idx_qa_tenant_id ON core.knowledge_qa_history(tenant_id)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_qa_kb_id",
+        "CREATE INDEX IF NOT EXISTS idx_qa_kb_id ON core.knowledge_qa_history(kb_id)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_qa_user_id",
+        "CREATE INDEX IF NOT EXISTS idx_qa_user_id ON core.knowledge_qa_history(user_id)",
+    )
+    .await?;
+    ensure_kb_index(
+        pool,
+        "idx_qa_created_at",
+        "CREATE INDEX IF NOT EXISTS idx_qa_created_at ON core.knowledge_qa_history(created_at)",
+    )
+    .await?;
 
     // 6. updated_at 触发器
-    ensure_kb_function(pool, "core_set_updated_at", r#"CREATE OR REPLACE FUNCTION core_set_updated_at() RETURNS trigger AS $$
+    ensure_kb_function(
+        pool,
+        "core_set_updated_at",
+        r#"CREATE OR REPLACE FUNCTION core_set_updated_at() RETURNS trigger AS $$
         BEGIN
             NEW.updated_at := NOW();
             RETURN NEW;
         END;
-        $$ LANGUAGE plpgsql"#).await?;
+        $$ LANGUAGE plpgsql"#,
+    )
+    .await?;
 
-    ensure_kb_trigger(pool, "trg_kb_updated_at", "knowledge_bases", r#"CREATE TRIGGER trg_kb_updated_at BEFORE UPDATE ON core.knowledge_bases
-           FOR EACH ROW EXECUTE FUNCTION core_set_updated_at()"#).await?;
+    ensure_kb_trigger(
+        pool,
+        "trg_kb_updated_at",
+        "knowledge_bases",
+        r#"CREATE TRIGGER trg_kb_updated_at BEFORE UPDATE ON core.knowledge_bases
+           FOR EACH ROW EXECUTE FUNCTION core_set_updated_at()"#,
+    )
+    .await?;
 
-    ensure_kb_trigger(pool, "trg_kd_updated_at", "knowledge_documents", r#"CREATE TRIGGER trg_kd_updated_at BEFORE UPDATE ON core.knowledge_documents
-           FOR EACH ROW EXECUTE FUNCTION core_set_updated_at()"#).await?;
+    ensure_kb_trigger(
+        pool,
+        "trg_kd_updated_at",
+        "knowledge_documents",
+        r#"CREATE TRIGGER trg_kd_updated_at BEFORE UPDATE ON core.knowledge_documents
+           FOR EACH ROW EXECUTE FUNCTION core_set_updated_at()"#,
+    )
+    .await?;
 
     Ok(())
 }

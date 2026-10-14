@@ -1329,10 +1329,7 @@ pub async fn create_inspection(
                 items: r.items.map(|s| serde_json::Value::String(s.to_string())),
                 abnormalities: r.abnormalities,
                 remarks: r.remarks,
-                created_at: r
-                    .created_at
-                    .map(|d| d.to_rfc3339())
-                    .unwrap_or_default(),
+                created_at: r.created_at.map(|d| d.to_rfc3339()).unwrap_or_default(),
             },
             "创建点检记录成功",
         )),

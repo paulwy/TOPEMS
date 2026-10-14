@@ -308,7 +308,6 @@ pub fn calc_conversion_rate(leads_converted: u64, total_leads: u64) -> f64 {
     (leads_converted as f64) / (total_leads as f64)
 }
 
-
 /// B7 桥接网：CrmError → TopemsError（服务本地校验错误语义统一）
 impl From<CrmError> for topems_shared_core::error::TopemsError {
     fn from(e: CrmError) -> Self {

@@ -2,8 +2,8 @@ use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use topems_shared_service_client::service_client::{api::mes_api::MesApi, TypedServiceClient};
 
-use topems_shared_core::response::ApiResponse;
 use crate::modules::contract_util::unwrap_data;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateWorkReportRequest {
@@ -60,7 +60,10 @@ pub async fn get_production_order(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.get_production_order(&id).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取生产订单详情成功")),
+        Ok(data) => Json(ApiResponse::success(
+            unwrap_data(data),
+            "获取生产订单详情成功",
+        )),
         Err(e) => {
             tracing::error!("调用MES服务获取生产订单详情失败: {}", e);
             Json(ApiResponse::error(500, "获取生产订单详情失败"))

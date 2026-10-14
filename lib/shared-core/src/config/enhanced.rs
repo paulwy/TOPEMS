@@ -58,7 +58,9 @@ impl DatabaseConfig {
     /// 从环境变量加载
     pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
-            url: env::var("DATABASE_URL").map_err(|e| TopemsError::ConfigValidation(format!("DATABASE_URL 环境变量未设置: {}", e)))?,
+            url: env::var("DATABASE_URL").map_err(|e| {
+                TopemsError::ConfigValidation(format!("DATABASE_URL 环境变量未设置: {}", e))
+            })?,
             max_connections: env::var("DB_MAX_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -87,16 +89,22 @@ impl DatabaseConfig {
     /// 验证配置
     pub fn validate(&self) -> Result<(), TopemsError> {
         if self.url.is_empty() {
-            return Err(TopemsError::ConfigValidation("数据库 URL 不能为空".to_string()));
+            return Err(TopemsError::ConfigValidation(
+                "数据库 URL 不能为空".to_string(),
+            ));
         }
 
         if self.max_connections == 0 {
-            return Err(TopemsError::ConfigValidation("最大连接数必须大于 0".to_string()));
+            return Err(TopemsError::ConfigValidation(
+                "最大连接数必须大于 0".to_string(),
+            ));
         }
 
         if let Some(min) = self.min_connections {
             if min > self.max_connections {
-                return Err(TopemsError::ConfigValidation("最小连接数不能大于最大连接数".to_string()));
+                return Err(TopemsError::ConfigValidation(
+                    "最小连接数不能大于最大连接数".to_string(),
+                ));
             }
         }
 
@@ -178,11 +186,15 @@ impl ServiceConfig {
     /// 验证配置
     pub fn validate(&self) -> Result<(), TopemsError> {
         if self.name.is_empty() {
-            return Err(TopemsError::ConfigValidation("服务名称不能为空".to_string()));
+            return Err(TopemsError::ConfigValidation(
+                "服务名称不能为空".to_string(),
+            ));
         }
 
         if self.port == 0 {
-            return Err(TopemsError::ConfigValidation("服务端口不能为 0".to_string()));
+            return Err(TopemsError::ConfigValidation(
+                "服务端口不能为 0".to_string(),
+            ));
         }
 
         Ok(())
@@ -216,7 +228,9 @@ impl RedisConfig {
     /// 从环境变量加载
     pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
-            url: env::var("REDIS_URL").map_err(|e| TopemsError::ConfigValidation(format!("REDIS_URL 环境变量未设置: {}", e)))?,
+            url: env::var("REDIS_URL").map_err(|e| {
+                TopemsError::ConfigValidation(format!("REDIS_URL 环境变量未设置: {}", e))
+            })?,
             max_connections: env::var("REDIS_MAX_CONNECTIONS")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -256,7 +270,9 @@ impl JwtConfig {
     /// 从环境变量加载
     pub fn from_env() -> Result<Self, TopemsError> {
         Ok(Self {
-            secret: env::var("JWT_SECRET").map_err(|e| TopemsError::ConfigValidation(format!("JWT_SECRET 环境变量未设置: {}", e)))?,
+            secret: env::var("JWT_SECRET").map_err(|e| {
+                TopemsError::ConfigValidation(format!("JWT_SECRET 环境变量未设置: {}", e))
+            })?,
             expiration: env::var("JWT_EXPIRATION")
                 .ok()
                 .and_then(|s| s.parse().ok())
@@ -271,11 +287,15 @@ impl JwtConfig {
     /// 验证配置
     pub fn validate(&self) -> Result<(), TopemsError> {
         if self.secret.len() < 32 {
-            return Err(TopemsError::ConfigValidation("JWT 密钥长度必须至少 32 个字符".to_string()));
+            return Err(TopemsError::ConfigValidation(
+                "JWT 密钥长度必须至少 32 个字符".to_string(),
+            ));
         }
 
         if self.expiration == 0 {
-            return Err(TopemsError::ConfigValidation("JWT 过期时间不能为 0".to_string()));
+            return Err(TopemsError::ConfigValidation(
+                "JWT 过期时间不能为 0".to_string(),
+            ));
         }
 
         Ok(())
@@ -464,7 +484,9 @@ impl AppConfig {
 
         if let Some(redis) = &self.redis {
             if redis.url.is_empty() {
-                return Err(TopemsError::ConfigValidation("Redis URL 不能为空".to_string()));
+                return Err(TopemsError::ConfigValidation(
+                    "Redis URL 不能为空".to_string(),
+                ));
             }
         }
 

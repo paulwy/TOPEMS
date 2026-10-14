@@ -248,7 +248,6 @@ impl SagaStore for PostgresSagaStore {
     }
 }
 
-
 /// B7 桥接网：SagaError → TopemsError（事务编排语义）
 impl From<SagaError> for topems_shared_core::error::TopemsError {
     fn from(e: SagaError) -> Self {

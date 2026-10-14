@@ -689,10 +689,7 @@ pub async fn submit_result(
                         .publish_cache_invalidated(&cache_key, "specific", Some("result_submitted"))
                         .await
                     {
-                        tracing::warn!(
-                            "[lims] 缓存失效事件发布失败（detail）: {}，入重试队列",
-                            e
-                        );
+                        tracing::warn!("[lims] 缓存失效事件发布失败（detail）: {}，入重试队列", e);
                         let payload = CacheInvalidatedPayload {
                             source_service: "lims".to_string(),
                             source_instance: format!("retry-{}", std::process::id()),
@@ -712,10 +709,7 @@ pub async fn submit_result(
                         .publish_cache_invalidated(&list_key, "pattern", Some("result_submitted"))
                         .await
                     {
-                        tracing::warn!(
-                            "[lims] 缓存失效事件发布失败（list）: {}，入重试队列",
-                            e
-                        );
+                        tracing::warn!("[lims] 缓存失效事件发布失败（list）: {}，入重试队列", e);
                         let payload = CacheInvalidatedPayload {
                             source_service: "lims".to_string(),
                             source_instance: format!("retry-{}", std::process::id()),

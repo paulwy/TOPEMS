@@ -320,7 +320,6 @@ pub async fn create_drill_plan(
     ))
 }
 
-
 pub async fn submit_drill_evaluation(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -352,7 +351,6 @@ pub async fn submit_drill_evaluation(
         "演练评估提交成功",
     ))
 }
-
 
 #[utoipa::path(
     get,

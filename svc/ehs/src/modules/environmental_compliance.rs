@@ -570,7 +570,6 @@ pub async fn delete_regulation(
     Json(ApiResponse::success((), "环保法规删除成功"))
 }
 
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["ehs:write"])),
@@ -625,7 +624,6 @@ pub async fn update_monitor_record(
         "监测记录更新成功",
     ))
 }
-
 
 #[utoipa::path(
     get,

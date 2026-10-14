@@ -1993,7 +1993,9 @@ impl From<ServiceClientError> for topems_shared_core::error::TopemsError {
             ServiceClientError::InvalidUrl(m) => TopemsError::ValidationFailed(m),
             ServiceClientError::InvalidHeader(m) => TopemsError::ValidationFailed(m),
             ServiceClientError::ParseFailed(m) => TopemsError::ValidationFailed(m),
-            ServiceClientError::ServiceError { message, .. } => TopemsError::NetworkRequest(message),
+            ServiceClientError::ServiceError { message, .. } => {
+                TopemsError::NetworkRequest(message)
+            }
             ServiceClientError::Timeout(_) => TopemsError::RequestTimeout,
             ServiceClientError::OperationFailed(m) => TopemsError::BusinessLogic(m),
         }

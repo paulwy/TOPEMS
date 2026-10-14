@@ -4,9 +4,9 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::modules::contract_util::unwrap_data;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::wms_api::WmsApi, TypedServiceClient};
-use crate::modules::contract_util::unwrap_data;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateStocktakeRecordRequest {
@@ -125,7 +125,10 @@ pub async fn list_low_stock_items(
     State(client): State<TypedServiceClient<WmsApi>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match client.list_low_stock_inventory().await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "获取低库存列表成功")),
+        Ok(data) => Json(ApiResponse::success(
+            unwrap_data(data),
+            "获取低库存列表成功",
+        )),
         Err(e) => {
             tracing::error!("调用WMS服务获取低库存列表失败: {}", e);
             Json(ApiResponse::error(500, "获取低库存列表失败"))

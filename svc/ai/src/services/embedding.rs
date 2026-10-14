@@ -133,9 +133,7 @@ fn split_into_chunks(content: &str, chunk_size: usize, overlap: usize) -> Vec<St
     chunks
 }
 
-pub async fn generate_embeddings(
-    texts: Vec<String>,
-) -> Result<Vec<Vec<f32>>, TopemsError> {
+pub async fn generate_embeddings(texts: Vec<String>) -> Result<Vec<Vec<f32>>, TopemsError> {
     let config = CONFIG.get().ok_or("Config not initialized")?;
     let client = CLIENT.get().ok_or("Client not initialized")?;
 
@@ -194,9 +192,7 @@ pub async fn generate_embeddings(
     clippy::cast_possible_truncation,
     clippy::cast_possible_wrap
 )]
-pub async fn process_document_for_embedding(
-    doc: &Document,
-) -> Result<(), TopemsError> {
+pub async fn process_document_for_embedding(doc: &Document) -> Result<(), TopemsError> {
     let Some(file_path) = doc.file_path.as_ref() else {
         return Ok(());
     };

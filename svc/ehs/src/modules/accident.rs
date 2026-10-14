@@ -15,7 +15,9 @@ pub fn create_routes() -> Router<AppState> {
         .route("/incidents", get(list_accidents).post(report_accident))
         .route(
             "/incidents/{id}",
-            get(get_accident).put(update_accident).delete(delete_accident),
+            get(get_accident)
+                .put(update_accident)
+                .delete(delete_accident),
         )
         .route(
             "/incidents/{id}/investigation",
@@ -288,10 +290,7 @@ pub async fn report_accident(
             };
             let et = topems_shared_event::event::EventType::EhsAccidentReported;
             if let Err(e) = publisher.publish_event(et, &payload).await {
-                tracing::warn!(
-                    "[ehs] EhsAccidentReported 事件发布失败: {}，入重试队列",
-                    e
-                );
+                tracing::warn!("[ehs] EhsAccidentReported 事件发布失败: {}，入重试队列", e);
                 // D6：发布失败入 Redis ZSET，由 main.rs 15s run_relay 重发（typed 通道直重发 payload）。
                 commit_retry::push_retry_typed("ehs", et, &payload).await;
             }
@@ -331,7 +330,10 @@ pub async fn get_accident(
     tracing::debug!("Getting accident detail: {}", id);
     let accident = Accident {
         id,
-        accident_no: format!("ACC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+        accident_no: format!(
+            "ACC-{}",
+            uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+        ),
         title: "安全事故".to_string(),
         description: Some("事故详情（内存桩数据）".to_string()),
         accident_type: Some("一般事故".to_string()),
@@ -379,7 +381,10 @@ pub async fn update_accident(
     Json(ApiResponse::success(
         Accident {
             id,
-            accident_no: format!("ACC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            accident_no: format!(
+                "ACC-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             description: req.description,
             accident_type: req.accident_type,
@@ -593,7 +598,10 @@ pub async fn close_accident(
     Json(ApiResponse::success(
         Accident {
             id,
-            accident_no: format!("ACC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            accident_no: format!(
+                "ACC-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: "安全事故".to_string(),
             description: None,
             accident_type: None,

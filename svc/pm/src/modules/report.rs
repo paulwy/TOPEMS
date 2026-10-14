@@ -209,9 +209,10 @@ async fn generate_report(
         Err(_) => Vec::new(),
     };
 
-    let milestones_data = sqlx::query(
-        only_own_schema_query!("pm", "SELECT name, date, status FROM pm.project_milestones WHERE project_id = $1 ORDER BY date"),
-    )
+    let milestones_data = sqlx::query(only_own_schema_query!(
+        "pm",
+        "SELECT name, date, status FROM pm.project_milestones WHERE project_id = $1 ORDER BY date"
+    ))
     .bind(project_id)
     .fetch_all(&pool)
     .await;

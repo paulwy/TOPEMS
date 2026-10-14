@@ -1,9 +1,9 @@
 use axum::{extract::State, http::StatusCode, Json};
 use serde::{Deserialize, Serialize};
 
+use crate::modules::contract_util::unwrap_data;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_service_client::service_client::{api::qms_api::QmsApi, TypedServiceClient};
-use crate::modules::contract_util::unwrap_data;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateDefectRequest {
@@ -70,7 +70,10 @@ pub async fn get_quality_task(
     match client.get_quality_task(&id).await {
         Ok(data) => (
             StatusCode::OK,
-            Json(ApiResponse::success(unwrap_data(data), "获取质检任务详情成功")),
+            Json(ApiResponse::success(
+                unwrap_data(data),
+                "获取质检任务详情成功",
+            )),
         ),
         Err(e) => {
             // QMS 上游暂未实现任务详情端点（探测 404），HTTP 200 + 内层 404，待上游支持。
@@ -158,7 +161,10 @@ pub async fn update_quality_task_status(
     });
 
     match client.update_quality_task_status(&id, &data).await {
-        Ok(data) => Json(ApiResponse::success(unwrap_data(data), "更新质检任务状态成功")),
+        Ok(data) => Json(ApiResponse::success(
+            unwrap_data(data),
+            "更新质检任务状态成功",
+        )),
         Err(e) => {
             tracing::error!("调用QMS服务更新质检任务状态失败: {}", e);
             Json(ApiResponse::error(500, "更新质检任务状态失败"))

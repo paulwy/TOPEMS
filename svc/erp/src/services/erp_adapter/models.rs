@@ -207,7 +207,6 @@ impl<T> ErpResult<T> {
     }
 }
 
-
 /// B7 桥接网：ErpAdapterError → TopemsError
 impl From<ErpAdapterError> for topems_shared_core::error::TopemsError {
     fn from(e: ErpAdapterError) -> Self {

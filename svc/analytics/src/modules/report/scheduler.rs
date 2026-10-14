@@ -1,6 +1,5 @@
 //! Report Scheduler
 
-use topems_shared_core::error::TopemsError;
 use job_scheduler_ng::{Job, JobScheduler, Schedule};
 use sqlx::types::chrono::Utc;
 use sqlx::{PgPool, Row};
@@ -8,6 +7,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::Mutex;
+use topems_shared_core::error::TopemsError;
 use tracing::{error, info, warn};
 use uuid::Uuid;
 
@@ -34,14 +34,19 @@ impl ReportScheduler {
         self.load_schedules(&mut scheduler).await?;
 
         let pool_clone = self.pool.clone();
-        scheduler.add(Job::new("0 * * * * *".parse().map_err(|e| TopemsError::ValidationFailed(format!("无效 cron 表达式: {}", e)))?, move || {
-            let pool = pool_clone.clone();
-            tokio::spawn(async move {
-                if let Err(e) = check_and_execute_schedules(&pool).await {
-                    error!("Error checking schedules: {}", e);
-                }
-            });
-        }));
+        scheduler.add(Job::new(
+            "0 * * * * *"
+                .parse()
+                .map_err(|e| TopemsError::ValidationFailed(format!("无效 cron 表达式: {}", e)))?,
+            move || {
+                let pool = pool_clone.clone();
+                tokio::spawn(async move {
+                    if let Err(e) = check_and_execute_schedules(&pool).await {
+                        error!("Error checking schedules: {}", e);
+                    }
+                });
+            },
+        ));
 
         *self.scheduler.lock().await = Some(scheduler);
 
@@ -164,16 +169,23 @@ impl ReportScheduler {
 fn parse_interval(expression: &str) -> Result<u64, TopemsError> {
     let parts: Vec<&str> = expression.split_whitespace().collect();
     if parts.len() == 2 {
-        let value: u64 = parts[0].parse().map_err(|e| TopemsError::ValidationFailed(format!("无效间隔数值: {}", e)))?;
+        let value: u64 = parts[0]
+            .parse()
+            .map_err(|e| TopemsError::ValidationFailed(format!("无效间隔数值: {}", e)))?;
         let unit = parts[1].to_lowercase();
         match unit.as_str() {
             "minutes" | "minute" | "m" => Ok(value),
             "hours" | "hour" | "h" => Ok(value * 60),
             "days" | "day" | "d" => Ok(value * 60 * 24),
-            _ => Err(TopemsError::ValidationFailed(format!("Unknown interval unit: {}", unit))),
+            _ => Err(TopemsError::ValidationFailed(format!(
+                "Unknown interval unit: {}",
+                unit
+            ))),
         }
     } else {
-        Err(TopemsError::ValidationFailed("Invalid interval format".to_string()))
+        Err(TopemsError::ValidationFailed(
+            "Invalid interval format".to_string(),
+        ))
     }
 }
 

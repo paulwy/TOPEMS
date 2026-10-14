@@ -3,10 +3,10 @@
 //! 提供 5 大主数据域（客户/供应商/物料/组织/员工/科目）的统一事件结构。
 //! 所有主数据变更都通过 MasterDataEvent 发布到 Redis 事件总线。
 
-use topems_shared_core::error::TopemsError;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
+use topems_shared_core::error::TopemsError;
 use uuid::Uuid;
 
 /// master_data_id 生成器
@@ -252,9 +252,7 @@ impl MasterDataEvent {
     ///
     /// 使用 Topic Exchange: topems.master-data
     /// routing_key: master.{domain_prefix}.{tenant_id}.{action}
-    pub async fn publish_to_rabbitmq(
-        &self,
-    ) -> Result<(), TopemsError> {
+    pub async fn publish_to_rabbitmq(&self) -> Result<(), TopemsError> {
         use lapin::{
             options::{BasicPublishOptions, ExchangeDeclareOptions},
             types::FieldTable,
@@ -264,9 +262,13 @@ impl MasterDataEvent {
         let rabbitmq_url = std::env::var("RABBITMQ_URL")
             .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
 
-        let connection =
-            Connection::connect(&rabbitmq_url, ConnectionProperties::default()).await.map_err(|e| TopemsError::NetworkRequest(e.to_string()))?;
-        let channel = connection.create_channel().await.map_err(|e| TopemsError::NetworkRequest(e.to_string()))?;
+        let connection = Connection::connect(&rabbitmq_url, ConnectionProperties::default())
+            .await
+            .map_err(|e| TopemsError::NetworkRequest(e.to_string()))?;
+        let channel = connection
+            .create_channel()
+            .await
+            .map_err(|e| TopemsError::NetworkRequest(e.to_string()))?;
 
         let exchange_name = "topems.master-data";
 
@@ -332,10 +334,7 @@ pub struct MasterDataPublisher {
 
 impl MasterDataPublisher {
     /// 发布单个事件到 Redis Stream（持久化）
-    pub async fn publish(
-        &self,
-        event: &MasterDataEvent,
-    ) -> Result<(), TopemsError> {
+    pub async fn publish(&self, event: &MasterDataEvent) -> Result<(), TopemsError> {
         let mut con = self.client.get_multiplexed_async_connection().await?;
         let event_json = serde_json::to_string(event)?;
         let stream_key = event.stream_key();
@@ -357,10 +356,7 @@ impl MasterDataPublisher {
     }
 
     /// 批量发布事件到 Redis Stream（持久化）
-    pub async fn publish_batch(
-        &self,
-        events: &[MasterDataEvent],
-    ) -> Result<(), TopemsError> {
+    pub async fn publish_batch(&self, events: &[MasterDataEvent]) -> Result<(), TopemsError> {
         let mut con = self.client.get_multiplexed_async_connection().await?;
 
         for event in events {

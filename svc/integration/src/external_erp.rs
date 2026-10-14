@@ -536,7 +536,11 @@ pub async fn preview_entity(
 // ===== 真实同步执行引擎 =====
 
 /// 获取 ERP 连接信息
-async fn get_connection_by_id(pool: &sqlx::PgPool, connection_id: Uuid, tenant: Option<&str>) -> Option<ErpConnection> {
+async fn get_connection_by_id(
+    pool: &sqlx::PgPool,
+    connection_id: Uuid,
+    tenant: Option<&str>,
+) -> Option<ErpConnection> {
     sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
@@ -771,7 +775,8 @@ pub async fn sync_entity(
         }
     };
 
-    let connection = match get_connection_by_id(&state.pool, cid, claims.tenant_id.as_deref()).await {
+    let connection = match get_connection_by_id(&state.pool, cid, claims.tenant_id.as_deref()).await
+    {
         Some(c) => c,
         None => {
             update_sync_log_status(
