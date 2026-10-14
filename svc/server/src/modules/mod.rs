@@ -1,7 +1,6 @@
 //! 业务模块（Phase B 演示 + 真实接入）
 //!
 //! 当前模块：
-//! - `finance_module`：财务模块，实现 AccountBalanceProvider（进程内调用契约）
 //! - `dashboard_module`：业务看板模块，通过进程内 trait 调用 finance（非 HTTP）
 //! - `finance_real_module`：真实 finance 服务接入（feature `module-finance` 门控，Phase B3）
 //! - `erp_real_module`：真实 erp 服务接入（feature `module-erp` 门控，Phase B3 扩展）
@@ -21,7 +20,6 @@ pub mod dashboard_module;
 pub mod ehs_real_module;
 #[cfg(feature = "module-erp")]
 pub mod erp_real_module;
-pub mod finance_module;
 #[cfg(feature = "module-finance")]
 pub mod finance_real_module;
 #[cfg(feature = "module-gis")]

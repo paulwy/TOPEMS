@@ -13,7 +13,6 @@
 use anyhow::Result;
 use std::sync::{Arc, Mutex};
 use topems_server::modules::dashboard_module::DashboardModule;
-use topems_server::modules::finance_module::FinanceModule;
 use topems_server::platform_module::PlatformModule;
 use topems_server::ModuleRegistry;
 use topems_shared_bootstrap::shutdown_signal;
@@ -37,17 +36,7 @@ async fn main() -> Result<()> {
     let platform = PlatformModule::new(registry.clone());
     registry.lock().unwrap().register_boxed(Box::new(platform));
 
-    // 2. 财务模块（实现 AccountBalanceProvider 进程内调用契约）
-    let finance = FinanceModule::new();
-    {
-        let mut reg = registry.lock().unwrap();
-        // 注册进程内 provider：其他模块可通过 trait 直接调用（非 HTTP）
-        reg.register_account_balance_provider(Arc::new(finance.clone()));
-        // 注册为模块：路由合并到统一入口
-        reg.register_boxed(Box::new(finance));
-    }
-
-    // 3. 业务看板模块（通过进程内 trait 调用 finance，演示跨模块调用）
+    // 2. 业务看板模块（进程内 trait 调用；finance provider 缺失时自动降级）
     let dashboard = DashboardModule::new(registry.clone());
     registry.lock().unwrap().register_boxed(Box::new(dashboard));
 

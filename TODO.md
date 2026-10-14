@@ -1,6 +1,16 @@
 
 ---
 
+## P2-a finance-demo 硬编码演示桩删除（2026-10-14）✅
+
+> 删 `svc/server` 内纯内存 finance-demo 演示桩整模块（对齐 4.8 三件套下线）。真实 finance 不受影响（`svc/finance` 独立服务 + `finance_real_module.rs` feature 门控）。
+- 决策：整模块删除而非仅删路由——全文件 163 行均为内存 `RwLock<HashMap<String,f64>>` 硬编码 6 科目，无真实聚合；grep `finance-demo` 无前端 apiClient/页面/测试/nginx/openapi 消费方（仅 artifacts 文档 + docs/architecture 接入表）。
+- 删除：`svc/server/src/modules/finance_module.rs`（整文件）；注册面 `modules/mod.rs` `pub mod finance_module;` + 头注释；`main.rs` import + FinanceModule::new() 装配块。
+- 降级验证：dashboard_module 经 `get_account_balance_provider()` 返回 Option，provider 缺失时 `/api/dashboard/financial-summary|account/{code}` 返回 `degraded`（dashboard_module.rs:129,147），非致命。
+- 验证：SQLX_OFFLINE cargo check -p topems-server --lib 0 error/0 warning；cargo test -p topems-server --lib 0 tests（wiring crate 无单测）。
+
+---
+
 ## P1-2 finance 金额报表聚合 f64→Decimal（2026-10-14）✅
 
 > 读侧报表/预测聚合的金额累加/比较改在 Decimal 域完成；DB 侧 SQL SUM(numeric) 直接解 Decimal，Rust 侧求和用 rust_decimal；比率/统计字段（margin/百分比/置信区间/预测均值）保留 f64，仅最后一步展示转换。
