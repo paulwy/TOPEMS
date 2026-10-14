@@ -1,6 +1,16 @@
 
 ---
 
+## S1 ehs 事故域接真表（2026-10-14）🚧 部分完成
+
+> 决策 S1（ehs 53 桩接真表）第一批：事故（incident）主生命周期接真表。
+- DDL：`database/migrations/20261014000040_ehs_accident_domain_tables.sql`——建 `ehs.qa_ehs_accidents/investigations/treatments/treatment_actions/reviews/incident_actions` 6 表，对齐 qa_ehs_risks 约定（tenant_id + RLS FORCE + nil 豁免 + 软删 deleted_at）。
+- handler：`svc/ehs/src/modules/accident.rs` list/get/create/update/delete incident + start_investigation + create_review + close 改真 sqlx（runtime query + 应用层 tenant 过滤 `($1=nil OR tenant_id::text=$1)`，对齐 hazard.rs 范式）。
+- 未竟（后续批）：update_investigation/create_treatment/update_treatment_action/complete_*/incident_actions 仍桩；其余 7 域（emergency/health/occupational/training/environmental_compliance）未接。
+- 验证：SQLX_OFFLINE cargo check -p topems-ehs --lib 通过（warning 来自并行 C8 shared-core，非本批）；cargo test -p topems-ehs --lib 231/231 绿。
+
+---
+
 ## P2-b MCP 7 项收敛（2026-10-14）✅
 
 > 基线 `artifacts/findings-mcp-recheck-2026-10-14.md`（3.5/5，7 项仍存）。原则：诚实声明 > 过度实现，删死代码 > 装饰性抽象。
@@ -107,6 +117,13 @@
   - **✅ 已闭环（2026-10-14）**：7 个 real_module 挂载 rls_middleware（finance/communication/gis/monitor/mobile/integration/subscription），写法与 build_application lib.rs:1013 同构（`from_fn_with_state(ctx.db.clone(), topems_shared_db::rls::rls_middleware)`）。4 个跳过（已有等价租户中间件，不重复挂）：ai_real_module（svc/ai/src/routes.rs 多处 tenant_middleware）、plugin_registry_real_module（:57-60 tenant_middleware）、search_real_module（:62-63 tenant_middleware）、unified_core_real_module（自带 tenant_rls_middleware，routes/mod.rs:257）。DB 层四态实测（topems_app NOSUPERUSER，hrm.employees）：无GUC=9/租户A(000...001)=7/nil UUID=9/无关租户(0602...)=1。服务实测：8099 正常 LISTEN、finance/health 200、受保护端点 401（auth 在 rls 之前，无 JWT 不达 rls 层）。cargo check -p topems-server 0/0、--lib 0 tests exit 0。
 - **P2-c DSH RAG 空壳接线真实 pgvector 检索**（2026-10-14）：增量重审发现 dsh/rag/mod.rs perform_retrieval（:721）调 mock_retrieval（:758）返回 Vec::new()（:763），sqlx=0，检索永远空转；前端 0 调用 /dsh/rag/retrieve；agent rag_retriever 默认 None 从未 set。决策：最小接线（不删除——agent/integrations 有 RetrievedDocument 引用，删除会断编译）。改动：① RagEngine（:571）加 pool/ai_client Option 字段 + with_pool 构造器；② perform_retrieval 改为 if let Some(pool, ai_client) 走真实 pgvector 检索（vector_search 方法，复用 ai_knowledge/document_processor::generate_embedding + pgvector `<=>` 余弦距离 SQL，对齐 ai_knowledge/rag.rs:64）；③ routes.rs:84 用 with_pool(pool.clone(), create_ai_client()) 注入。pool/ai_client 为 None 时返回空（兼容 main.rs:318 测试态）。cargo check -p topems-ai 0/0、--lib 1122 passed 0 failed。
 - **P2-c LLM 双轨收敛决策（dsh/provider vs UnifiedAIClient）**（2026-10-14）：能力对拍——dsh/provider LlmProvider trait 有 ask/ask_stream/embed/health_check/list_models/router/failover/recording；UnifiedAIClient 有 chat/chat_stream/embed/embed_batch/health_check。三消费方（orchestrator:753/968、smart_forms:292、business_copilot:823）只用 `provider.ask()`，不用 stream/embed/list_models。orchestrator:185 `build_resilient_provider()` 创建 ProviderRouter（simple→Ollama / complex→DeepSeek）+ FailoverProvider + RecordingProvider——此路由+降级能力是 UnifiedAIClient（单客户端）不具备的。**决策：保留双轨，不删 dsh/provider**（有必需能力，删除会断三消费方编译且丢失路由+failover）；补 mod.rs 头部注释明确分工：dsh/provider=DSH Agent 编排层（多模型路由+故障降级+请求记录），UnifiedAIClient=底层单客户端（embedding+单 chat）。DeepSeekProvider/OllamaProvider 各自 reqwest 与 UnifiedAIClient HTTP 有重叠，但 ask_stream SSE 流式实现路径不同，强行合并风险高于收益。cargo check 0/0、--lib 1122 passed 0 failed。
+- **CONFIRM 六项裁决落定 + K2/K3/K4/K6 冻结标注（2026-10-14，用户裁决，只登记不改代码）**：
+  - **K1 MDM = 选 b（先接核心 3 模块，其余冻结）**：versioning_v54 + commercial_v55 + metadata_v60 一步到位接真表（迁移+回填+handler sqlx 对齐 schema_registry 14 sqlx 范式 + tenant RLS + 前端接通 versioning client）；**其余 6 模块（lineage_v52/knowledge_v53/disaster_v56/semantic_v57/governance_v58/ai_governance_v59）冻结标注"未接通"**（见实施批 K1 commit）。
+  - **K2 chat 3 表 = 保留冻结**：core_chat_rooms/members/messages（×iam/mes/public）——IM 集成是 TopEMS 规划面，表结构已设计，DROP 未来要重设计；0 实现 0 引用但保留成本≈0。**冻结不动**。
+  - **K3 前端 master 4 + system.ts = 冻结标注**：实证 unified-core 已有真实 `/system/feature-flags` 端点（feature_flag.rs:19/33/59/100）→ system.ts 后端已真；versioning 待 K1 启用；disasterRecovery/knowledgeGraph/semanticSearch 随 MDM 冻结模块联动。**全部冻结标注不删**。
+  - **K4 ai_form/form_assistant（5,717 行）= 冻结标注**：AI 中台战略面但前端 0 调用；当前接真实 LLM 是为不存在需求付费。**标注"未接通"，等前端真实需求或 AI 中台确认，不删不接**。
+  - **K5 dsh standardization = 删冗余保留被用 1 函数；business_modules = 冻结标注**（实证 business_modules 外部独立引用 0 处，仅随 business_copilot 链；standardization 1,084 行仅 1 函数被用且为 LLM 双轨收敛链消费）。**✅ 已闭环（2026-10-14）**：standardization/mod.rs 从 1,084 行精简至 21 行（仅保留 `generate_trace_id()` + 测试），删除 ErrorCategory/ErrorCode/StandardError/StandardResponse/ResponseMeta 等全部类型（grep 全仓外部消费 = 0）；business_copilot/mod.rs:1248 测试代码消费点仍在（`super::super::standardization::generate_trace_id()`）。business_modules 冻结标注"未接通，随 business_copilot/DSH 链"。cargo check -p topems-ai 0/0、--lib 981 passed 0 failed。
+  - **K6 shared-ai embedding = FREEZE**：实证 shared-ai 有 2 处 `use shared_ai` 消费（非 0 消费）→ **不并入 C9 清理**，冻结标注。
 - **P0-3**（`44acc4868` + `af4a74664` + `d14dbc0d4`）：预发门禁先行——access_log.rs:168/248 修 `entity_id::text`（uuid 列按 String 解码的 500 panic，**冒烟 4117/4117 PASS 0 FAIL 两轮**后才改配置）；nginx 双配置（deploy/nginx/topems.conf + apps/web/nginx.conf）改单一 server_service(8099) 拓扑（删 27 per-service upstream + map 块，/api/ 直代 8099，health/metrics 改指 8099，保留 SSL/限流/静态/legacy rewrite）；三端 baseURL 对齐 8099（mobile api-url.ts:13、desktop client.ts:34，保留 env 覆盖）。校验：check-config-sources.cjs EXIT=0（未改校验器）；nginx -t 沙箱副本 syntax OK（本机 Darwin 平台差异 epoll/brotli/证书路径——**上线前需目标 Linux 主机 nginx -t**）。冒烟契约总数实测 4117（规划文案 4135 为契约漂移前数值，以 0 FAIL 为门禁）。
 - **P0-4a**（8 服务 15 点，每服务独立 commit，统一"commit 后 emit + Err→`push_retry_typed` + main.rs 15s `run_relay`"，照 D6/pm 范式，消费契约零改动）：
   - B1：ehs `681701f96`（accident.rs:296/hazard.rs:395——复核为无 DB 写业务桩，重试仍 at-least-once）/ qms `d8d0e565b`（quality_issue.rs:204）/ lims `e32cfc634`（reagent.rs:255、inspection_task.rs:704/727/751 含缓存失效）；
