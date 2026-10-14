@@ -8,12 +8,70 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
+use sqlx::Row;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
 use crate::shared::AppState;
+
+// ==================== K1：真表映射（master_data.mdm_api_products / mdm_subscriptions） ====================
+
+/// 行 → APIProduct（tier/features 以 snake 字符串 / JSONB 存储）。
+fn product_from_row(row: &sqlx::postgres::PgRow) -> APIProduct {
+    APIProduct {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        tier: tier_from_str(&row.get::<String, _>("tier")),
+        rate_limit_per_min: row.get::<i64, _>("rate_limit_per_min"),
+        rate_limit_per_day: row.get::<i64, _>("rate_limit_per_day"),
+        features: serde_json::from_value(row.get::<serde_json::Value, _>("features"))
+            .unwrap_or_default(),
+        price_monthly: row.get::<f64, _>("price_monthly"),
+        active: row.get::<bool, _>("active"),
+    }
+}
+
+/// tier 枚举 → snake 字符串（写库）。
+fn tier_to_str(t: &ProductTier) -> String {
+    serde_json::to_value(t)
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_else(|| "free".to_string())
+}
+
+fn sub_status_from_str(s: &str) -> SubscriptionStatus {
+    match s {
+        "expired" => SubscriptionStatus::Expired,
+        "cancelled" => SubscriptionStatus::Cancelled,
+        "pending" => SubscriptionStatus::Pending,
+        _ => SubscriptionStatus::Active,
+    }
+}
+
+fn sub_status_to_str(s: &SubscriptionStatus) -> String {
+    serde_json::to_value(s)
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_else(|| "active".to_string())
+}
+
+/// 行 → Subscription。
+fn subscription_from_row(row: &sqlx::postgres::PgRow) -> Subscription {
+    Subscription {
+        id: row.get::<String, _>("id"),
+        api_product_id: row.get::<String, _>("api_product_id"),
+        tenant_id: row.get::<String, _>("tenant_id"),
+        tier: tier_from_str(&row.get::<String, _>("tier")),
+        starts_at: row.get::<String, _>("starts_at"),
+        expires_at: row.get::<String, _>("expires_at"),
+        status: sub_status_from_str(&row.get::<String, _>("status")),
+    }
+}
+
+const PRODUCT_COLS: &str = "id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active";
+const SUBSCRIPTION_COLS: &str = "id, api_product_id, tenant_id, tier, starts_at, expires_at, status";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -699,13 +757,9 @@ pub struct SLAReportQuery {
     tag = "commercial_v55"
 )]
 pub async fn create_api_product(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateAPIProductRequest>,
 ) -> Json<ApiResponse<APIProduct>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let mut products = store.api_products.lock().await;
-
     let tier = req
         .tier
         .as_deref()
@@ -723,10 +777,25 @@ pub async fn create_api_product(
         active: true,
     };
 
-    products.push(product.clone());
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("commercial_v55", "api_products", &*products).await;
+    // K1：写真表 master_data.mdm_api_products。
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_api_products
+           (id, name, tier, rate_limit_per_min, rate_limit_per_day, features, price_monthly, active)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)"#,
+    )
+    .bind(&product.id)
+    .bind(&product.name)
+    .bind(tier_to_str(&product.tier))
+    .bind(product.rate_limit_per_min)
+    .bind(product.rate_limit_per_day)
+    .bind(serde_json::to_value(&product.features).unwrap_or(serde_json::json!([])))
+    .bind(product.price_monthly)
+    .bind(product.active)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入 API 产品失败: {e}")));
+    }
 
     Json(ApiResponse::success(product, "API 产品已创建"))
 }
@@ -742,12 +811,16 @@ pub async fn create_api_product(
     tag = "commercial_v55"
 )]
 pub async fn list_api_products(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<APIProduct>>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let products = store.api_products.lock().await;
-    let active: Vec<APIProduct> = products.iter().filter(|p| p.active).cloned().collect();
+    // K1：真表读取启用产品。
+    let rows = sqlx::query(&format!(
+        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE active = TRUE ORDER BY name"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let active: Vec<APIProduct> = rows.iter().map(product_from_row).collect();
     Json(ApiResponse::success(active, "API 产品列表"))
 }
 
@@ -765,14 +838,20 @@ pub async fn list_api_products(
     tag = "commercial_v55"
 )]
 pub async fn get_api_product(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<APIProduct>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let products = store.api_products.lock().await;
-    match products.iter().find(|p| p.id == id) {
-        Some(p) => Json(ApiResponse::success(p.clone(), "API 产品详情")),
+    // K1：真表读取。
+    let row = sqlx::query(&format!(
+        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    match row {
+        Some(r) => Json(ApiResponse::success(product_from_row(&r), "API 产品详情")),
         None => Json(ApiResponse::error(404, "未找到 API 产品")),
     }
 }
@@ -788,24 +867,28 @@ pub async fn get_api_product(
     tag = "commercial_v55"
 )]
 pub async fn subscribe_tenant(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<SubscribeTenantRequest>,
 ) -> Json<ApiResponse<Subscription>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let products = store.api_products.lock().await;
-    let product = products.iter().find(|p| p.id == req.api_product_id);
+    // K1：产品从真表查找。
+    let product_row = sqlx::query(&format!(
+        "SELECT {PRODUCT_COLS} FROM master_data.mdm_api_products WHERE id = $1 LIMIT 1"
+    ))
+    .bind(&req.api_product_id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
 
-    let Some(product) = product else {
+    let Some(product_row) = product_row else {
         return Json(ApiResponse::error(404, "未找到 API 产品"));
     };
+    let product = product_from_row(&product_row);
 
     let tier = req
         .tier
         .as_deref()
         .map(tier_from_str)
         .unwrap_or_else(|| product.tier.clone());
-    drop(products);
 
     let now = chrono::Utc::now();
     let now_str = now.to_rfc3339();
@@ -821,8 +904,24 @@ pub async fn subscribe_tenant(
         status: SubscriptionStatus::Active,
     };
 
-    let mut subs = store.subscriptions.lock().await;
-    subs.push(sub.clone());
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_subscriptions
+           (id, api_product_id, tenant_id, tier, starts_at, expires_at, status)
+           VALUES ($1,$2,$3,$4,$5,$6,$7)"#,
+    )
+    .bind(&sub.id)
+    .bind(&sub.api_product_id)
+    .bind(&sub.tenant_id)
+    .bind(tier_to_str(&sub.tier))
+    .bind(&sub.starts_at)
+    .bind(&sub.expires_at)
+    .bind(sub_status_to_str(&sub.status))
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入订阅失败: {e}")));
+    }
+
     Json(ApiResponse::success(sub, "租户订阅已创建"))
 }
 
@@ -840,14 +939,20 @@ pub async fn subscribe_tenant(
     tag = "commercial_v55"
 )]
 pub async fn get_subscription(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<Subscription>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let subs = store.subscriptions.lock().await;
-    match subs.iter().find(|s| s.id == id) {
-        Some(s) => Json(ApiResponse::success(s.clone(), "订阅详情")),
+    // K1：真表读取。
+    let row = sqlx::query(&format!(
+        "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions WHERE id = $1 LIMIT 1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    match row {
+        Some(r) => Json(ApiResponse::success(subscription_from_row(&r), "订阅详情")),
         None => Json(ApiResponse::error(404, "未找到订阅")),
     }
 }
@@ -863,30 +968,24 @@ pub async fn get_subscription(
     tag = "commercial_v55"
 )]
 pub async fn list_subscriptions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<UsageSummaryQuery>,
 ) -> Json<ApiResponse<Vec<Subscription>>> {
-    ensure_initialized().await;
-    let store = get_v55_store();
-    let subs = store.subscriptions.lock().await;
-
-    let filtered: Vec<Subscription> = subs
-        .iter()
-        .filter(|s| {
-            if let Some(tid) = &params.tenant_id {
-                if &s.tenant_id != tid {
-                    return false;
-                }
-            }
-            if let Some(pid) = &params.api_product_id {
-                if &s.api_product_id != pid {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    // K1：真表读取，可选 tenant_id / api_product_id 过滤。
+    let rows = sqlx::query(
+        &format!(
+            "SELECT {SUBSCRIPTION_COLS} FROM master_data.mdm_subscriptions
+             WHERE ($1::text IS NULL OR tenant_id = $1)
+               AND ($2::text IS NULL OR api_product_id = $2)
+             ORDER BY starts_at DESC"
+        ),
+    )
+    .bind(&params.tenant_id)
+    .bind(&params.api_product_id)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let filtered: Vec<Subscription> = rows.iter().map(subscription_from_row).collect();
 
     Json(ApiResponse::success(filtered, "订阅列表"))
 }

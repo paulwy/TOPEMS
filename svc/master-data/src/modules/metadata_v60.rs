@@ -8,12 +8,41 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
+use sqlx::Row;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
 use topems_shared_core::response::ApiResponse;
 
 use crate::shared::AppState;
+
+// ==================== K1：真表映射（master_data.mdm_metadata_objects） ====================
+
+/// MetadataObjectType → snake 字符串（写库）。
+fn object_type_to_str(t: &MetadataObjectType) -> String {
+    serde_json::to_value(t)
+        .ok()
+        .and_then(|v| v.as_str().map(|s| s.to_string()))
+        .unwrap_or_default()
+}
+
+/// 行 → MetadataObject。
+fn metadata_from_row(row: &sqlx::postgres::PgRow) -> MetadataObject {
+    MetadataObject {
+        id: row.get::<String, _>("id"),
+        name: row.get::<String, _>("name"),
+        object_type: parse_metadata_type(&row.get::<String, _>("object_type"))
+            .unwrap_or(MetadataObjectType::Table),
+        description: row.get::<String, _>("description"),
+        owner: row.get::<String, _>("owner"),
+        tags: serde_json::from_value(row.get::<serde_json::Value, _>("tags")).unwrap_or_default(),
+        attributes: row.get::<serde_json::Value, _>("attributes"),
+        created_at: row.get::<String, _>("created_at"),
+        updated_at: row.get::<String, _>("updated_at"),
+    }
+}
+
+const METADATA_COLS: &str = "id, name, object_type, description, owner, tags, attributes, created_at, updated_at";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -1317,28 +1346,48 @@ pub struct BulkTransitionRequest {
     tag = "metadata_v60"
 )]
 pub async fn create_metadata(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateMetadataRequest>,
 ) -> Json<ApiResponse<MetadataObject>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-
     let object_type = match parse_metadata_type(&req.object_type) {
         Some(t) => t,
         None => return Json(ApiResponse::error(400, "无效的元数据对象类型")),
     };
 
-    let obj = store
-        .metadata
-        .create_metadata(
-            req.name,
-            object_type,
-            req.description.unwrap_or_default(),
-            req.owner,
-            req.tags.unwrap_or_default(),
-            req.attributes.unwrap_or_else(|| serde_json::json!({})),
-        )
-        .await;
+    let now = chrono::Utc::now().to_rfc3339();
+    let obj = MetadataObject {
+        id: uuid::Uuid::new_v4().to_string(),
+        name: req.name,
+        object_type,
+        description: req.description.unwrap_or_default(),
+        owner: req.owner,
+        tags: req.tags.unwrap_or_default(),
+        attributes: req.attributes.unwrap_or_else(|| serde_json::json!({})),
+        created_at: now.clone(),
+        updated_at: now,
+    };
+
+    // K1：写真表 master_data.mdm_metadata_objects。
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_metadata_objects
+           (id, name, object_type, description, owner, tags, attributes, created_at, updated_at)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+    )
+    .bind(&obj.id)
+    .bind(&obj.name)
+    .bind(object_type_to_str(&obj.object_type))
+    .bind(&obj.description)
+    .bind(&obj.owner)
+    .bind(serde_json::to_value(&obj.tags).unwrap_or(serde_json::json!([])))
+    .bind(&obj.attributes)
+    .bind(&obj.created_at)
+    .bind(&obj.updated_at)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入元数据对象失败: {e}")));
+    }
+
     Json(ApiResponse::success(obj, "元数据对象已创建"))
 }
 
@@ -1356,14 +1405,20 @@ pub async fn create_metadata(
     tag = "metadata_v60"
 )]
 pub async fn get_metadata(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<MetadataObject>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表读取。
+    let row = sqlx::query(&format!(
+        "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects WHERE id = $1 LIMIT 1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
 
-    match store.metadata.get_metadata(&id).await {
-        Some(obj) => Json(ApiResponse::success(obj, "元数据对象")),
+    match row {
+        Some(r) => Json(ApiResponse::success(metadata_from_row(&r), "元数据对象")),
         None => Json(ApiResponse::error(404, "未找到元数据对象")),
     }
 }
@@ -1379,15 +1434,22 @@ pub async fn get_metadata(
     tag = "metadata_v60"
 )]
 pub async fn list_metadata(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<ListMetadataQuery>,
 ) -> Json<ApiResponse<Vec<MetadataObject>>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
-
-    let object_type = params.object_type.as_deref().and_then(parse_metadata_type);
-
-    let list = store.metadata.list_metadata(object_type).await;
+    // K1：真表读取，可选 object_type 过滤。
+    let rows = sqlx::query(
+        &format!(
+            "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects
+             WHERE ($1::text IS NULL OR object_type = $1)
+             ORDER BY updated_at DESC"
+        ),
+    )
+    .bind(params.object_type.as_deref())
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let list: Vec<MetadataObject> = rows.iter().map(metadata_from_row).collect();
     Json(ApiResponse::success(list, "元数据对象列表"))
 }
 
@@ -1426,26 +1488,51 @@ pub async fn search_metadata(
     tag = "metadata_v60"
 )]
 pub async fn update_metadata(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateMetadataRequest>,
 ) -> Json<ApiResponse<MetadataObject>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表更新（COALESCE 仅覆盖传入字段），updated_at 刷新。
+    let tags_json = req
+        .tags
+        .as_ref()
+        .map(|t| serde_json::to_value(t).unwrap_or(serde_json::json!([])));
+    let res = sqlx::query(
+        r#"UPDATE master_data.mdm_metadata_objects
+           SET name = COALESCE($2, name),
+               description = COALESCE($3, description),
+               owner = COALESCE($4, owner),
+               tags = COALESCE($5, tags),
+               attributes = COALESCE($6, attributes),
+               updated_at = $7
+           WHERE id = $1"#,
+    )
+    .bind(&id)
+    .bind(&req.name)
+    .bind(&req.description)
+    .bind(&req.owner)
+    .bind(&tags_json)
+    .bind(&req.attributes)
+    .bind(chrono::Utc::now().to_rfc3339())
+    .execute(&state.db)
+    .await;
 
-    match store
-        .metadata
-        .update_metadata(
-            &id,
-            req.name,
-            req.description,
-            req.owner,
-            req.tags,
-            req.attributes,
-        )
-        .await
-    {
-        Some(obj) => Json(ApiResponse::success(obj, "元数据对象已更新")),
+    match res {
+        Ok(r) if r.rows_affected() > 0 => {}
+        Ok(_) => return Json(ApiResponse::error(404, "未找到元数据对象")),
+        Err(e) => return Json(ApiResponse::error(500, &format!("更新元数据对象失败: {e}"))),
+    }
+
+    let row = sqlx::query(&format!(
+        "SELECT {METADATA_COLS} FROM master_data.mdm_metadata_objects WHERE id = $1 LIMIT 1"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    match row {
+        Some(r) => Json(ApiResponse::success(metadata_from_row(&r), "元数据对象已更新")),
         None => Json(ApiResponse::error(404, "未找到元数据对象")),
     }
 }
@@ -1464,15 +1551,19 @@ pub async fn update_metadata(
     tag = "metadata_v60"
 )]
 pub async fn delete_metadata(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
-    ensure_initialized().await;
-    let store = get_v60_store();
+    // K1：真表删除。
+    let res = sqlx::query("DELETE FROM master_data.mdm_metadata_objects WHERE id = $1")
+        .bind(&id)
+        .execute(&state.db)
+        .await;
 
-    match store.metadata.delete_metadata(&id).await {
-        true => Json(ApiResponse::success((), "元数据对象已删除")),
-        false => Json(ApiResponse::error(404, "未找到元数据对象")),
+    match res {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "元数据对象已删除")),
+        Ok(_) => Json(ApiResponse::error(404, "未找到元数据对象")),
+        Err(e) => Json(ApiResponse::error(500, &format!("删除元数据对象失败: {e}"))),
     }
 }
 

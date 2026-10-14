@@ -1509,3 +1509,17 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - Billing 恢复后 CI 实跑预期：8 项基线债已清零，除上述环境差异/PARTIAL/SKIP 外应全绿
 - 基线债批本地 commit（55e42679a/ca92d9c76 未 push）待用户确认后 push（push 前先 fetch 核对 origin/main 进展）
 - allow-baseline 冻结基线 2196 建议纳入日常门禁：新增 #[allow] 即拦截
+---
+
+## K1｜MDM 核心 3 模块接真表（2026-10-14）
+
+**已接通真表（master_data schema，迁移 20261014000060）：**
+- `versioning_v54` → `master_data.mdm_version_snapshots`：create_snapshot / get_version / diff_versions / restore_version / list_history 已改 sqlx 真读写。
+- `commercial_v55` → `master_data.mdm_api_products` + `mdm_subscriptions`：create/list/get product、subscribe、get/list subscription 已改 sqlx 真读写。
+- `metadata_v60` → `master_data.mdm_metadata_objects`：create/get/list/update/delete metadata 已改 sqlx 真读写。
+- 前端 `apps/web/src/api/master/versioning.ts` client 已导出并绑定 master-data 子客户端（`apiClient.master`），vitest 绑定测试 `master-v144.test.ts` 在网；当前无真实页面消费，按"不做空页面"原则不新建桩页面。
+
+**冻结（未接通，仍走内存 Store + JSONB 快照）—— backlog：**
+- `lineage_v52` / `knowledge_v53` / `disaster_v56` / `semantic_v57` / `governance_v58` / `ai_governance_v59` 6 模块整体冻结，handler 仍为内存实现，未接真表。
+- versioning_v54 的分支/审计事件/权限/角色（branches/audit_events/permissions/roles 子集合）、commercial_v55 的计量计费/SLA、metadata_v60 的血缘/生命周期属性标签等子实体，随核心主表之后分批接真表。
+- quality_v51（已真表）与 schema_registry（真范本）不动。

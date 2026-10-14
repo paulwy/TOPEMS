@@ -8,6 +8,7 @@
 
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
+use sqlx::Row;
 use std::collections::HashMap;
 use std::sync::LazyLock;
 use tokio::sync::Mutex;
@@ -16,6 +17,26 @@ use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
 
 use crate::shared::AppState;
+
+// ==================== K1：真表映射（master_data.mdm_version_snapshots） ====================
+
+/// 把一行 PgRow 映射回 VersionSnapshot（列类型与结构字段一一对齐，避免 derive FromRow 对枚举的限制）。
+fn snapshot_from_row(row: &sqlx::postgres::PgRow) -> VersionSnapshot {
+    VersionSnapshot {
+        id: row.get::<String, _>("id"),
+        entity_type: row.get::<String, _>("entity_type"),
+        entity_id: row.get::<String, _>("entity_id"),
+        version: row.get::<String, _>("version"),
+        data: row.get::<serde_json::Value, _>("data"),
+        hash: row.get::<String, _>("hash"),
+        created_by: row.get::<String, _>("created_by"),
+        created_at: row.get::<String, _>("created_at"),
+        comment: row.get::<String, _>("comment"),
+    }
+}
+
+const SNAPSHOT_COLS: &str =
+    "id, entity_type, entity_id, version, data, hash, created_by, created_at, comment";
 
 // ==================== 纯函数（无副作用，可单测） ====================
 
@@ -828,14 +849,24 @@ fn compute_diff(from: &serde_json::Value, to: &serde_json::Value) -> VersionDiff
     tag = "versioning_v54"
 )]
 pub async fn create_snapshot(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateSnapshotRequest>,
 ) -> Json<ApiResponse<VersionSnapshot>> {
-    ensure_initialized().await;
     let store = get_v54_store();
-    let mut snapshots = store.version_snapshots.lock().await;
 
-    let version = generate_version(&snapshots, &req.entity_type, &req.entity_id);
+    // K1：版本号基于真表现有快照推导（不再读内存 Store）。
+    let rows = sqlx::query(&format!(
+        "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
+         WHERE entity_type = $1 AND entity_id = $2"
+    ))
+    .bind(&req.entity_type)
+    .bind(&req.entity_id)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let existing: Vec<VersionSnapshot> = rows.iter().map(snapshot_from_row).collect();
+
+    let version = generate_version(&existing, &req.entity_type, &req.entity_id);
     let hash = compute_hash(&req.data);
     let now = chrono::Utc::now().to_rfc3339();
 
@@ -851,8 +882,28 @@ pub async fn create_snapshot(
         comment: req.comment.unwrap_or_default(),
     };
 
-    snapshots.push(snapshot.clone());
+    // 写真表（权威存储）。
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_version_snapshots
+           (id, entity_type, entity_id, version, data, hash, created_by, created_at, comment)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+    )
+    .bind(&snapshot.id)
+    .bind(&snapshot.entity_type)
+    .bind(&snapshot.entity_id)
+    .bind(&snapshot.version)
+    .bind(&snapshot.data)
+    .bind(&snapshot.hash)
+    .bind(&snapshot.created_by)
+    .bind(&snapshot.created_at)
+    .bind(&snapshot.comment)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写入版本快照失败: {e}")));
+    }
 
+    // 审计事件暂仍落内存 Store（后续批次接真表，见 TODO.md K1 backlog）。
     let mut events = store.audit_events.lock().await;
     events.push(AuditEvent {
         id: uuid::Uuid::new_v4().to_string(),
@@ -867,9 +918,6 @@ pub async fn create_snapshot(
         timestamp: snapshot.created_at.clone(),
         session_id: uuid::Uuid::new_v4().to_string(),
     });
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "version_snapshots", &*snapshots).await;
     crate::modules::persist::save("versioning_v54", "audit_events", &*events).await;
 
     Json(ApiResponse::success(snapshot, "版本快照已创建"))
@@ -890,27 +938,38 @@ pub async fn create_snapshot(
     tag = "versioning_v54"
 )]
 pub async fn get_version(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<VersionQuery>,
 ) -> Json<ApiResponse<VersionSnapshot>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let snapshots = store.version_snapshots.lock().await;
-
-    let snapshot = if let Some(ref ver) = params.version {
-        snapshots
-            .iter()
-            .find(|s| s.entity_type == entity_type && s.entity_id == entity_id && s.version == *ver)
+    // K1：真表读取。
+    let row = if let Some(ref ver) = params.version {
+        sqlx::query(&format!(
+            "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
+             WHERE entity_type = $1 AND entity_id = $2 AND version = $3
+             LIMIT 1"
+        ))
+        .bind(&entity_type)
+        .bind(&entity_id)
+        .bind(ver)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap_or(None)
     } else {
-        snapshots
-            .iter()
-            .filter(|s| s.entity_type == entity_type && s.entity_id == entity_id)
-            .max_by(|a, b| a.version.cmp(&b.version))
+        sqlx::query(&format!(
+            "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
+             WHERE entity_type = $1 AND entity_id = $2
+             ORDER BY version DESC, created_at DESC LIMIT 1"
+        ))
+        .bind(&entity_type)
+        .bind(&entity_id)
+        .fetch_optional(&state.db)
+        .await
+        .unwrap_or(None)
     };
 
-    match snapshot {
-        Some(s) => Json(ApiResponse::success(s.clone(), "版本快照详情")),
+    match row {
+        Some(r) => Json(ApiResponse::success(snapshot_from_row(&r), "版本快照详情")),
         None => Json(ApiResponse::error(404, "未找到版本快照")),
     }
 }
@@ -926,27 +985,34 @@ pub async fn get_version(
     tag = "versioning_v54"
 )]
 pub async fn diff_versions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<VersionDiffQuery>,
 ) -> Json<ApiResponse<VersionDiff>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let snapshots = store.version_snapshots.lock().await;
+    // K1：真表读取两个版本。
+    let from_row = sqlx::query(&format!(
+        "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
+         WHERE entity_type = $1 AND entity_id = $2 AND version = $3 LIMIT 1"
+    ))
+    .bind(&params.entity_type)
+    .bind(&params.entity_id)
+    .bind(&params.from_version)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+    let to_row = sqlx::query(&format!(
+        "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
+         WHERE entity_type = $1 AND entity_id = $2 AND version = $3 LIMIT 1"
+    ))
+    .bind(&params.entity_type)
+    .bind(&params.entity_id)
+    .bind(&params.to_version)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
 
-    let from_snap = snapshots.iter().find(|s| {
-        s.entity_type == params.entity_type
-            && s.entity_id == params.entity_id
-            && s.version == params.from_version
-    });
-    let to_snap = snapshots.iter().find(|s| {
-        s.entity_type == params.entity_type
-            && s.entity_id == params.entity_id
-            && s.version == params.to_version
-    });
-
-    match (from_snap, to_snap) {
+    match (from_row, to_row) {
         (Some(from), Some(to)) => {
-            let mut diff = compute_diff(&from.data, &to.data);
+            let mut diff = compute_diff(&snapshot_from_row(&from).data, &snapshot_from_row(&to).data);
             diff.from_version = params.from_version.clone();
             diff.to_version = params.to_version.clone();
             Json(ApiResponse::success(diff, "版本差异"))
@@ -966,30 +1032,38 @@ pub async fn diff_versions(
     tag = "versioning_v54"
 )]
 pub async fn restore_version(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RestoreVersionRequest>,
 ) -> Json<ApiResponse<VersionSnapshot>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let snapshots = store.version_snapshots.lock().await;
+    // K1：目标版本从真表读取。
+    let target_row = sqlx::query(&format!(
+        "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
+         WHERE entity_type = $1 AND entity_id = $2 AND version = $3 LIMIT 1"
+    ))
+    .bind(&req.entity_type)
+    .bind(&req.entity_id)
+    .bind(&req.version)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
 
-    let target = snapshots
-        .iter()
-        .find(|s| {
-            s.entity_type == req.entity_type
-                && s.entity_id == req.entity_id
-                && s.version == req.version
-        })
-        .cloned();
-
-    let Some(target) = target else {
+    let Some(target) = target_row.map(|r| snapshot_from_row(&r)) else {
         return Json(ApiResponse::error(404, "未找到指定版本"));
     };
 
-    drop(snapshots);
+    // 新版本号基于真表现有快照推导。
+    let rows = sqlx::query(&format!(
+        "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
+         WHERE entity_type = $1 AND entity_id = $2"
+    ))
+    .bind(&target.entity_type)
+    .bind(&target.entity_id)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let existing: Vec<VersionSnapshot> = rows.iter().map(snapshot_from_row).collect();
 
-    let mut all = store.version_snapshots.lock().await;
-    let new_version = generate_version(&all, &target.entity_type, &target.entity_id);
+    let new_version = generate_version(&existing, &target.entity_type, &target.entity_id);
     let now = chrono::Utc::now().to_rfc3339();
 
     let restored = VersionSnapshot {
@@ -1004,8 +1078,28 @@ pub async fn restore_version(
         comment: format!("从版本 {} 恢复", target.version),
     };
 
-    all.push(restored.clone());
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO master_data.mdm_version_snapshots
+           (id, entity_type, entity_id, version, data, hash, created_by, created_at, comment)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)"#,
+    )
+    .bind(&restored.id)
+    .bind(&restored.entity_type)
+    .bind(&restored.entity_id)
+    .bind(&restored.version)
+    .bind(&restored.data)
+    .bind(&restored.hash)
+    .bind(&restored.created_by)
+    .bind(&restored.created_at)
+    .bind(&restored.comment)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("写回版本快照失败: {e}")));
+    }
 
+    // 审计事件暂仍落内存 Store（后续批次接真表）。
+    let store = get_v54_store();
     let mut events = store.audit_events.lock().await;
     events.push(AuditEvent {
         id: uuid::Uuid::new_v4().to_string(),
@@ -1020,9 +1114,6 @@ pub async fn restore_version(
         timestamp: restored.created_at.clone(),
         session_id: uuid::Uuid::new_v4().to_string(),
     });
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("versioning_v54", "version_snapshots", &*all).await;
     crate::modules::persist::save("versioning_v54", "audit_events", &*events).await;
 
     Json(ApiResponse::success(restored, "版本已恢复"))
@@ -1049,31 +1140,38 @@ pub async fn restore_version(
     clippy::cast_sign_loss
 )]
 pub async fn list_history(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
     Query(params): Query<VersionHistoryQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<VersionSnapshot>>> {
-    ensure_initialized().await;
-    let store = get_v54_store();
-    let snapshots = store.version_snapshots.lock().await;
-
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
-    let mut filtered: Vec<VersionSnapshot> = snapshots
-        .iter()
-        .filter(|s| s.entity_type == entity_type && s.entity_id == entity_id)
-        .cloned()
-        .collect();
+    // K1：真表分页查询。
+    let rows = sqlx::query(&format!(
+        "SELECT {SNAPSHOT_COLS} FROM master_data.mdm_version_snapshots
+         WHERE entity_type = $1 AND entity_id = $2
+         ORDER BY created_at DESC, version DESC
+         LIMIT $3 OFFSET $4"
+    ))
+    .bind(&entity_type)
+    .bind(&entity_id)
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<VersionSnapshot> = rows.iter().map(snapshot_from_row).collect();
 
-    filtered.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-
-    let total = filtered.len() as i64;
-    let items: Vec<VersionSnapshot> = filtered
-        .into_iter()
-        .skip(((page - 1) * page_size) as usize)
-        .take(page_size as usize)
-        .collect();
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM master_data.mdm_version_snapshots WHERE entity_type = $1 AND entity_id = $2",
+    )
+    .bind(&entity_type)
+    .bind(&entity_id)
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     Json(ApiResponse::success(
         PaginatedResponse {
