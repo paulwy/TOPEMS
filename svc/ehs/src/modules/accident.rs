@@ -445,7 +445,6 @@ pub async fn get_accident(
             tracing::error!("Failed to get accident: {}", e);
             return Json(ApiResponse::error(500, "获取事故详情失败"));
         }
- 6bb018ed1 (feat(ehs): S1 53 桩接真表（accidents/hazards 迁移+回填+handler sqlx+契约对齐）)
     };
     let accident = accident_from_row(&row);
 
@@ -516,7 +515,6 @@ pub async fn update_accident(
         }
     };
     Json(ApiResponse::success(accident_from_row(&row), "事故更新成功"))
- 6bb018ed1 (feat(ehs): S1 53 桩接真表（accidents/hazards 迁移+回填+handler sqlx+契约对齐）)
 }
 
 #[utoipa::path(
@@ -840,7 +838,6 @@ pub async fn close_accident(
         }
     };
     Json(ApiResponse::success(accident_from_row(&row), "事故已关闭"))
- 6bb018ed1 (feat(ehs): S1 53 桩接真表（accidents/hazards 迁移+回填+handler sqlx+契约对齐）)
 }
 #[utoipa::path(
     post,
