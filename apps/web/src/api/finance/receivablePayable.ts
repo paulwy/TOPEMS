@@ -45,6 +45,13 @@ export const receivablePayableApi = {
     return apiClient.finance.delete(`/receivables/${id}`);
   },
 
+  // 批 A（4.2）：应收批量操作
+  batchReceivables: (
+    invoices: Array<Partial<SalesInvoice>>
+  ): Promise<ApiResponse<SalesInvoice[]>> => {
+    return apiClient.finance.post('/receivables/batch', { invoices });
+  },
+
   listPurchaseInvoices: (params?: {
     supplier_id?: string;
     status?: string | string[];
@@ -75,6 +82,13 @@ export const receivablePayableApi = {
 
   deletePurchaseInvoice: (id: string): Promise<ApiResponse<void>> => {
     return apiClient.finance.delete(`/payables/${id}`);
+  },
+
+  // 批 A（4.2）：应付批量操作
+  batchPayables: (
+    invoices: Array<Partial<PurchaseInvoice>>
+  ): Promise<ApiResponse<PurchaseInvoice[]>> => {
+    return apiClient.finance.post('/payables/batch', { invoices });
   },
 
   listCollections: (params?: {

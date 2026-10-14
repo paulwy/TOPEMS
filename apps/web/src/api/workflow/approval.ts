@@ -63,4 +63,13 @@ export const approvalTaskApi = {
   unclaimTask: (id: string) => {
     return apiClient.workflow.post(`/approval-tasks/${id}/unclaim`);
   },
+
+  // 批 A（4.2）：待审列表 + 单条通过（后端已注册、前端补绑定）
+  listPendingApprovals: (params?: ListParams) => {
+    return apiClient.workflow.get(`/approvals/pending`, { params });
+  },
+
+  approve: (id: string, data?: { comment?: string }) => {
+    return apiClient.workflow.post(`/approvals/${id}/approve`, data);
+  },
 };

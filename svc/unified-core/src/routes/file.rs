@@ -101,15 +101,8 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
             require_permission("file:delete"),
         ));
 
-    let admin = Router::new()
-        .route(
-            "/files/{id}/permission",
-            post(modules::file::manage::set_file_permission),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("file:admin"),
-        ));
+    // 批 B（4.2）：单数 /files/{id}/permission 与复数 /permissions 合并——
+    // 统一保留复数 /permissions（set_file_permissions），删除单数 admin 别名路由。
 
     // ===== 前端契约兜底（死代码子域，待上游支持）=====
     // 这些端点前端已调用但 unified-core 暂无 handler/表，统一轻量兜底，禁止裸 404：
@@ -168,6 +161,5 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
 
     read.merge(write)
         .merge(delete_routes)
-        .merge(admin)
         .merge(stubs)
 }

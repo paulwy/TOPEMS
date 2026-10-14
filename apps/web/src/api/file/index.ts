@@ -209,6 +209,41 @@ export const fileApi = {
     return apiClient.file.get<string>('/health');
   },
 
+  // ==================== 批 A 绑定（4.2：后端已注册、前端补 apiClient） ====================
+
+  async copy(id: string, request: { target_folder_id?: string; new_name?: string }): Promise<ApiResponse<FileMetadata>> {
+    return apiClient.file.post<FileMetadata>(`/files/${id}/copy`, request);
+  },
+
+  async move(id: string, request: { target_folder_id: string }): Promise<ApiResponse<FileMetadata>> {
+    return apiClient.file.post<FileMetadata>(`/files/${id}/move`, request);
+  },
+
+  async star(id: string): Promise<ApiResponse<unknown>> {
+    return apiClient.file.post(`/files/${id}/star`);
+  },
+
+  async unstar(id: string): Promise<ApiResponse<unknown>> {
+    return apiClient.file.post(`/files/${id}/unstar`);
+  },
+
+  async preview(id: string): Promise<ApiResponse<unknown>> {
+    return apiClient.file.get(`/preview/${id}`);
+  },
+
+  async thumbnail(id: string, options?: { size?: string }): Promise<ApiResponse<unknown>> {
+    const qs = options?.size ? `?size=${encodeURIComponent(options.size)}` : '';
+    return apiClient.file.get(`/thumbnail/${id}${qs}`);
+  },
+
+  async uploadMultiple(files: File[]): Promise<ApiResponse<FileMetadata[]>> {
+    const formData = new FormData();
+    files.forEach((f) => formData.append('files', f));
+    return apiClient.file.post<FileMetadata[]>('/upload/multiple', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+
   // ==================== 子域：存储管理 ====================
 
   storage: fileStorageApi,
