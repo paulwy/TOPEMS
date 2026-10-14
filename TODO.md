@@ -1,13 +1,16 @@
 
 ---
 
-## S1 ehs 事故域接真表（2026-10-14）🚧 部分完成
+## S1 ehs 事故域接真表（2026-10-14）✅ 事故域闭环
 
-> 决策 S1（ehs 53 桩接真表）第一批：事故（incident）主生命周期接真表。
+> 决策 S1（ehs 53 桩接真表）——事故（incident）域已全链路接真表。
 - DDL：`database/migrations/20261014000040_ehs_accident_domain_tables.sql`——建 `ehs.qa_ehs_accidents/investigations/treatments/treatment_actions/reviews/incident_actions` 6 表，对齐 qa_ehs_risks 约定（tenant_id + RLS FORCE + nil 豁免 + 软删 deleted_at）。
-- handler：`svc/ehs/src/modules/accident.rs` list/get/create/update/delete incident + start_investigation + create_review + close 改真 sqlx（runtime query + 应用层 tenant 过滤 `($1=nil OR tenant_id::text=$1)`，对齐 hazard.rs 范式）。
-- 未竟（后续批）：update_investigation/create_treatment/update_treatment_action/complete_*/incident_actions 仍桩；其余 7 域（emergency/health/occupational/training/environmental_compliance）未接。
-- 验证：SQLX_OFFLINE cargo check -p topems-ehs --lib 通过（warning 来自并行 C8 shared-core，非本批）；cargo test -p topems-ehs --lib 231/231 绿。
+- handler：`svc/ehs/src/modules/accident.rs` 全部 15 handler 接真 sqlx——list/get/create/update/delete incident、start/update/complete investigation、create treatment + actions、update treatment action、complete treatment、create review、close、incident_actions list/create/update（runtime query + 应用层 tenant 过滤 `($1=nil OR tenant_id::text=$1)`，对齐 hazard.rs 范式；未命中返 404、失败返 500，不再伪装成功）。
+- **7 域前端消费面裁决**（grep `@/api/ehs` barrel 具名 import 实测）：
+  - 消费中（后续批接真表）：`trainingApi=15`、`emergencyDrillApi=30`、`environmentalComplianceApi=58`、`healthMonitoringApi=15`。
+  - 零消费（**冻结**，对齐决策 4.3"前端触发再补"）：`emergencyApi=0`(emergency_plan)、`environmentApi=0`、`occupationalHealthApi=0`。
+- 验证：SQLX_OFFLINE cargo check -p topems-ehs --lib 通过；cargo test -p topems-ehs --lib 231/231 绿。
+- 注：live DB 表 owner 在 topems/topems_app 间混杂（历史部分运行所致），RLS FORCE 由部署期 owner 统一；代码层已自含 tenant 过滤双保险。
 
 ---
 

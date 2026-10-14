@@ -622,31 +622,41 @@ fn investigation_from_row(r: &sqlx::postgres::PgRow) -> Investigation {
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_investigation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateInvestigationRequest>,
 ) -> Json<ApiResponse<Investigation>> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Updating investigation for accident {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        Investigation {
-            id: uuid::Uuid::new_v4().to_string(),
-            accident_id: id,
-            team: None,
-            findings: req.findings,
-            root_cause: req.root_cause,
-            timeline: req.timeline,
-            status: req.status.unwrap_or_else(|| "in_progress".to_string()),
-            started_at: Some(chrono::Utc::now().to_rfc3339()),
-            completed_at: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "调查更新成功",
-    ))
+    let row = sqlx::query(
+        r#"UPDATE ehs.qa_ehs_investigations
+           SET findings=COALESCE($1, findings), root_cause=COALESCE($2, root_cause),
+               timeline=$3::jsonb, status=COALESCE($4, status), updated_at=now()
+           WHERE ($5 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $5)
+             AND accident_id = $6::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
+                     timeline, status, started_at::text AS started_at, completed_at::text AS completed_at,
+                     created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id"#,
+    )
+    .bind(&req.findings)
+    .bind(&req.root_cause)
+    .bind(serde_json::to_string(&req.timeline).unwrap_or_else(|_| "null".into()))
+    .bind(&req.status)
+    .bind(&tenant_bind)
+    .bind(&id)
+    .fetch_optional(&state.pool)
+    .await;
+    let row = match row {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "调查记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update investigation: {}", e);
+            return Json(ApiResponse::error(500, "调查更新失败"));
+        }
+    };
+    Json(ApiResponse::success(investigation_from_row(&row), "调查更新成功"))
 }
 
 #[utoipa::path(
@@ -659,7 +669,7 @@ pub async fn update_investigation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_treatment(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
@@ -667,22 +677,58 @@ pub async fn create_treatment(
 ) -> Json<ApiResponse<Treatment>> {
     let tenant_id = resolve_tenant_id(&claims);
     tracing::debug!("Creating treatment for accident {}: {:?}", id, req);
-    let actions = req
-        .actions
-        .into_iter()
-        .map(|a| TreatmentAction {
-            id: uuid::Uuid::new_v4().to_string(),
+    let tx_id = uuid::Uuid::new_v4();
+    let accident_uuid = Uuid::parse_str(&id).unwrap_or_default();
+
+    // INSERT treatment 主行
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO ehs.qa_ehs_treatments (id, accident_id, responsible, status, started_at, tenant_id)
+           VALUES ($1, $2, $3, 'in_progress', now(), $4)"#,
+    )
+    .bind(tx_id)
+    .bind(accident_uuid)
+    .bind(&req.responsible)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await
+    {
+        tracing::error!("Failed to insert treatment: {}", e);
+        return Json(ApiResponse::error(500, "处理方案创建失败"));
+    }
+
+    // INSERT treatment_actions（多行）
+    let mut actions = Vec::with_capacity(req.actions.len());
+    for a in req.actions {
+        let act_id = uuid::Uuid::new_v4();
+        if let Err(e) = sqlx::query(
+            r#"INSERT INTO ehs.qa_ehs_treatment_actions (id, treatment_id, description, responsible, deadline, status, tenant_id)
+               VALUES ($1, $2, $3, $4, $5, 'pending', $6)"#,
+        )
+        .bind(act_id)
+        .bind(tx_id)
+        .bind(&a.description)
+        .bind(&a.responsible)
+        .bind(a.deadline.clone().and_then(|d| chrono::DateTime::parse_from_rfc3339(&d).ok().map(|t| t.with_timezone(&chrono::Utc))))
+        .bind(tenant_id)
+        .execute(&state.pool)
+        .await
+        {
+            tracing::error!("Failed to insert treatment action: {}", e);
+        }
+        actions.push(TreatmentAction {
+            id: act_id.to_string(),
             description: a.description,
             responsible: a.responsible,
             deadline: a.deadline,
             status: "pending".to_string(),
             completed_at: None,
             tenant_id,
-        })
-        .collect();
+        });
+    }
+
     Json(ApiResponse::success(
         Treatment {
-            id: uuid::Uuid::new_v4().to_string(),
+            id: tx_id.to_string(),
             accident_id: id,
             actions,
             responsible: req.responsible,
@@ -710,23 +756,45 @@ pub async fn create_treatment(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_treatment_action(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<UpdateTreatmentActionRequest>,
 ) -> Json<ApiResponse<TreatmentAction>> {
-    let tenant_id = resolve_tenant_id(&claims);
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Updating treatment action {}: {:?}", action_id, req);
+    let row = sqlx::query(
+        r#"UPDATE ehs.qa_ehs_treatment_actions
+           SET status=COALESCE($1, status), completed_at=$2, updated_at=now()
+           WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
+             AND id = $4::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, description, responsible, deadline::text AS deadline,
+                     status, completed_at::text AS completed_at, tenant_id::text AS tenant_id"#,
+    )
+    .bind(&req.status)
+    .bind(req.completed_at.and_then(|d| chrono::DateTime::parse_from_rfc3339(&d).ok().map(|t| t.with_timezone(&chrono::Utc))))
+    .bind(&tenant_bind)
+    .bind(&action_id)
+    .fetch_optional(&state.pool)
+    .await;
+    let row = match row {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "处置行动不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update treatment action: {}", e);
+            return Json(ApiResponse::error(500, "处置行动更新失败"));
+        }
+    };
     Json(ApiResponse::success(
         TreatmentAction {
-            id: action_id,
-            description: "处置行动".to_string(),
-            responsible: None,
-            deadline: None,
-            status: req.status.unwrap_or_else(|| "in_progress".to_string()),
-            completed_at: req.completed_at,
-            tenant_id,
+            id: row.try_get("id").unwrap_or_default(),
+            description: row.try_get("description").unwrap_or_default(),
+            responsible: row.try_get("responsible").ok().flatten(),
+            deadline: row.try_get("deadline").ok().flatten(),
+            status: row.try_get("status").unwrap_or_else(|_| "pending".to_string()),
+            completed_at: row.try_get("completed_at").ok().flatten(),
+            tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default()).unwrap_or_default(),
         },
         "处置行动更新成功",
     ))
@@ -786,57 +854,36 @@ pub async fn close_accident(
     responses((status = 200, description = "OK")),
 )]
 pub async fn complete_investigation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Investigation>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::info!("Completing investigation for accident: {}", id);
-    Json(ApiResponse::success(
-        Investigation {
-            id: "inv-001".to_string(),
-            accident_id: id,
-            team: Some(vec!["李四".to_string(), "王五".to_string()]),
-            findings: Some("操作工未佩戴防护手套，操作时注意力不集中".to_string()),
-            root_cause: Some("安全意识不足，未遵守操作规程".to_string()),
-            timeline: Some(vec![
-                Event {
-                    time: "10:00".to_string(),
-                    description: "事故发生".to_string(),
-                },
-                Event {
-                    time: "10:05".to_string(),
-                    description: "上报事故".to_string(),
-                },
-                Event {
-                    time: "10:30".to_string(),
-                    description: "成立调查组".to_string(),
-                },
-                Event {
-                    time: "14:00".to_string(),
-                    description: "调查结束".to_string(),
-                },
-            ]),
-            status: "completed".to_string(),
-            started_at: Some(chrono::Utc::now().to_rfc3339()),
-            completed_at: Some(chrono::Utc::now().to_rfc3339()),
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "调查完成",
-    ))
+    let row = sqlx::query(
+        r#"UPDATE ehs.qa_ehs_investigations
+           SET status='completed', completed_at=now(), updated_at=now()
+           WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
+             AND accident_id = $1::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, accident_id::text AS accident_id, team, findings, root_cause,
+                     timeline, status, started_at::text AS started_at, completed_at::text AS completed_at,
+                     created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id"#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .bind(&tenant_bind)
+    .fetch_optional(&state.pool)
+    .await;
+    let row = match row {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "调查记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to complete investigation: {}", e);
+            return Json(ApiResponse::error(500, "调查完成失败"));
+        }
+    };
+    Json(ApiResponse::success(investigation_from_row(&row), "调查完成"))
 }
 
 #[utoipa::path(
@@ -851,56 +898,54 @@ pub async fn complete_investigation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn complete_treatment(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Treatment>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::info!("Completing treatment for accident: {}", id);
+    // UPDATE treatments 主行 + 其下 actions 全部置 completed
+    let result = sqlx::query(
+        r#"UPDATE ehs.qa_ehs_treatments SET status='completed', completed_at=now(), updated_at=now()
+           WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+             AND accident_id = $1::uuid AND deleted_at IS NULL
+           RETURNING id::text AS id, accident_id::text AS accident_id, responsible, status,
+                     started_at::text AS started_at, completed_at::text AS completed_at,
+                     created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id"#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .fetch_optional(&state.pool)
+    .await;
+    let row = match result {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "处理方案不存在")),
+        Err(e) => {
+            tracing::error!("Failed to complete treatment: {}", e);
+            return Json(ApiResponse::error(500, "处理完成失败"));
+        }
+    };
+    let _ = sqlx::query(
+        "UPDATE ehs.qa_ehs_treatment_actions SET status='completed', completed_at=now() \
+         WHERE treatment_id = (SELECT id FROM ehs.qa_ehs_treatments WHERE accident_id=$1::uuid AND deleted_at IS NULL LIMIT 1) \
+           AND deleted_at IS NULL",
+    )
+    .bind(&id)
+    .execute(&state.pool)
+    .await;
     Json(ApiResponse::success(
         Treatment {
-            id: "treat-001".to_string(),
-            accident_id: id,
-            actions: vec![
-                TreatmentAction {
-                    id: "action-1".to_string(),
-                    description: "加强安全培训".to_string(),
-                    responsible: Some("安全部门".to_string()),
-                    deadline: Some("2024-02-15".to_string()),
-                    status: "completed".to_string(),
-                    completed_at: Some(chrono::Utc::now().to_rfc3339()),
-
-                    tenant_id,
-                },
-                TreatmentAction {
-                    id: "action-2".to_string(),
-                    description: "加装防护装置".to_string(),
-                    responsible: Some("设备部门".to_string()),
-                    deadline: Some("2024-02-20".to_string()),
-                    status: "completed".to_string(),
-                    completed_at: Some(chrono::Utc::now().to_rfc3339()),
-
-                    tenant_id,
-                },
-            ],
-            responsible: Some("安全经理".to_string()),
-            status: "completed".to_string(),
-            started_at: Some(chrono::Utc::now().to_rfc3339()),
-            completed_at: Some(chrono::Utc::now().to_rfc3339()),
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
+            id: row.try_get("id").unwrap_or_default(),
+            accident_id: row.try_get("accident_id").unwrap_or_default(),
+            actions: Vec::new(),
+            responsible: row.try_get("responsible").ok().flatten(),
+            status: row.try_get("status").unwrap_or_else(|_| "completed".to_string()),
+            started_at: row.try_get("started_at").ok().flatten(),
+            completed_at: row.try_get("completed_at").ok().flatten(),
+            created_at: row.try_get("created_at").ok().flatten(),
+            updated_at: row.try_get("updated_at").ok().flatten(),
+            tenant_id: Uuid::parse_str(&row.try_get::<String, _>("tenant_id").unwrap_or_default()).unwrap_or_default(),
         },
         "处理完成",
     ))
@@ -966,34 +1011,73 @@ pub async fn create_review(
 }
 
 pub async fn list_incident_actions(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-    axum::extract::Path(_id): axum::extract::Path<String>,
+    axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    Json(ApiResponse::success(
-        Vec::<serde_json::Value>::new(),
-        "获取事故行动列表成功",
-    ))
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let rows = sqlx::query(
+        r#"SELECT id::text AS id, title, status, created_at::text AS created_at
+           FROM ehs.qa_ehs_incident_actions
+           WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3)
+             AND accident_id = $1::uuid AND deleted_at IS NULL
+           ORDER BY created_at DESC"#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .bind(&tenant_bind)
+    .fetch_all(&state.pool)
+    .await;
+    match rows {
+        Ok(r) => {
+            let list: Vec<serde_json::Value> = r
+                .iter()
+                .map(|row| serde_json::json!({
+                    "id": row.try_get::<String, _>("id").unwrap_or_default(),
+                    "title": row.try_get::<String, _>("title").unwrap_or_default(),
+                    "status": row.try_get::<String, _>("status").unwrap_or_default(),
+                    "created_at": row.try_get::<String, _>("created_at").ok(),
+                }))
+                .collect();
+            Json(ApiResponse::success(list, "获取事故行动列表成功"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to list incident actions: {}", e);
+            Json(ApiResponse::error(500, "获取事故行动列表失败"))
+        }
+    }
 }
 
 pub async fn create_incident_action(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_id = claims
-        .tenant_id
-        .as_deref()
-        .and_then(|t| uuid::Uuid::parse_str(t).ok())
-        .unwrap_or_else(uuid::Uuid::nil);
+    let tenant_id = resolve_tenant_id(&claims);
+    let act_id = uuid::Uuid::new_v4();
+    let title = req.get("title").and_then(|v| v.as_str()).unwrap_or("处置行动");
+    if let Err(e) = sqlx::query(
+        r#"INSERT INTO ehs.qa_ehs_incident_actions (id, accident_id, title, status, tenant_id)
+           VALUES ($1, $2, $3, 'pending', $4)"#,
+    )
+    .bind(act_id)
+    .bind(Uuid::parse_str(&id).unwrap_or_default())
+    .bind(title)
+    .bind(tenant_id)
+    .execute(&state.pool)
+    .await
+    {
+        tracing::error!("Failed to insert incident action: {}", e);
+        return Json(ApiResponse::error(500, "事故行动创建失败"));
+    }
     Json(ApiResponse::success(
         serde_json::json!({
-            "id": uuid::Uuid::new_v4().to_string(),
+            "id": act_id.to_string(),
             "incident_id": id,
-            "title": req.get("title").and_then(|v| v.as_str()).unwrap_or("处置行动"),
+            "title": title,
             "status": "pending",
             "tenant_id": tenant_id.to_string(),
             "created_at": chrono::Utc::now().to_rfc3339(),
@@ -1003,20 +1087,38 @@ pub async fn create_incident_action(
 }
 
 pub async fn update_incident_action(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path((_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "id": action_id,
-            "status": req.get("status").and_then(|v| v.as_str()).unwrap_or("in_progress"),
-            "updated_at": chrono::Utc::now().to_rfc3339(),
-        }),
-        "事故行动更新成功",
-    ))
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let status = req.get("status").and_then(|v| v.as_str()).unwrap_or("in_progress");
+    let r = sqlx::query(
+        "UPDATE ehs.qa_ehs_incident_actions SET status=$1, updated_at=now() \
+         WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) \
+           AND id = $3::uuid AND deleted_at IS NULL",
+    )
+    .bind(status)
+    .bind(&tenant_bind)
+    .bind(&action_id)
+    .execute(&state.pool)
+    .await;
+    match r {
+        Ok(_) => Json(ApiResponse::success(
+            serde_json::json!({
+                "id": action_id,
+                "status": status,
+                "updated_at": chrono::Utc::now().to_rfc3339(),
+            }),
+            "事故行动更新成功",
+        )),
+        Err(e) => {
+            tracing::error!("Failed to update incident action: {}", e);
+            Json(ApiResponse::error(500, "事故行动更新失败"))
+        }
+    }
 }
 
 pub fn classify_accident(
