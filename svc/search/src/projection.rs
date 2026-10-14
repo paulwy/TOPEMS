@@ -8,8 +8,11 @@
 //! 幂等键 = (tenant_id, entity_type, entity_id)：UPSERT 天然幂等，重复投递/乱序收敛；
 //! op=delete 时删除投影行。handler 返回 Err 直传 Stream 层走重试/DLQ（对齐 R-6/R-7b）。
 //!
-//! 投影表 DDL 由本模块启动时 `CREATE TABLE IF NOT EXISTS` 自举（对齐 unified-core
-//! audit_logs 先例），不占用 database/migrations（避开并行线 0011/0012）。
+//! 投影表 DDL 已版本化：`database/migrations/20261015000071_k1_b1_search_projection_table.sql`
+//! （建表 + 检索索引 + GRANT topems_app）。运行时不再自举建表/索引——自举曾导致
+//! owner 随连接角色漂移：topems_app 非 owner 时订阅写投影 permission denied（事件
+//! 重试 3 次进 DLQ）、CREATE INDEX 报 must be owner。现仅探测表存在性：缺失即告警
+//! （migration 未应用），不阻塞订阅（待事件追平或 backfill 时由 migration 补齐后恢复）。
 
 use sqlx::PgPool;
 use std::time::Duration;
@@ -20,38 +23,21 @@ use uuid::Uuid;
 /// 零租户占位 UUID（erp 未设置 app.tenant_id 时投影行归属）
 const ZERO_TENANT: &str = "00000000-0000-0000-0000-000000000000";
 
-/// 启动时自举投影表（幂等）。对齐 unified-core audit_logs 运行时建表先例。
+/// 启动时探测投影表（migration 版本化后不再自举建表）。表缺失返回 Err，由
+/// 调用方告警（migration 未应用）；投影未就绪时搜索为空结果，待事件/backfill 追平。
 pub async fn init_projection_table(pool: &PgPool) -> Result<(), sqlx::Error> {
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS public.search_entity_projections (
-            tenant_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000',
-            entity_type VARCHAR(32) NOT NULL,
-            entity_id UUID NOT NULL,
-            name TEXT,
-            contact_person TEXT,
-            contact_phone TEXT,
-            email TEXT,
-            address TEXT,
-            status TEXT,
-            remark TEXT,
-            source_updated_at TIMESTAMPTZ,
-            projected_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-            PRIMARY KEY (tenant_id, entity_type, entity_id)
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
-
-    // 检索索引：按实体类型 + 名称 ILIKE（pg_trgm 不可用时退化为 btree 前缀辅助）
-    sqlx::query(
-        "CREATE INDEX IF NOT EXISTS idx_sep_type_name ON public.search_entity_projections(entity_type, name);",
-    )
-    .execute(pool)
-    .await?;
-
-    Ok(())
+    let exists: Option<String> =
+        sqlx::query_scalar("SELECT to_regclass('public.search_entity_projections')::text")
+            .fetch_optional(pool)
+            .await?;
+    match exists {
+        Some(_) => Ok(()),
+        None => Err(sqlx::Error::Protocol(
+            "投影表 public.search_entity_projections 缺失：请确认迁移 \
+             database/migrations/20261015000071_k1_b1_search_projection_table.sql 已应用"
+                .to_string(),
+        )),
+    }
 }
 
 /// 把事件快照 UPSERT / DELETE 到投影表（幂等）。

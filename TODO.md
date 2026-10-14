@@ -1649,3 +1649,25 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - store 收敛：删 `struct V60Store` / `get_v60_store` / `MetadataManager` / `EnhancedLineage` / `LifecycleManager` 三组 struct+impl / `ensure_initialized` / `persist_load` / `persist_save` / `background_flush` + `use tokio::sync::Mutex` import；mod.rs+main.rs 无 v60 flush 引用残留（上批已随各模块收敛清完）。**至此 K1 核心 3 模块（versioning/quality/commercial/metadata）全部收敛，无 store 残留**。
 - 验证：cargo check 零警告零错误（修复点：upstream_downstream 传参 4 处加 `&`、LifecycleStage 缺 Clone）；离线 build + monolith 8099 重启后全链路实测 25 接口（metadata CRUD + search ILIKE + stats + add_attribute/add_tag + lineage build/graph/upstream/downstream/path(uuid)/impact/dashboard/export + lifecycle stage(entity_001 archived)/transition/history/auto/bulk/policies/create_policy/dashboard）全绿；path/upstream/downstream 按节点 UUID 查询与原 store 语义一致（edges 存节点内部 id）；DB 8 表落库确认与快照一致（attrs 0/tags 3/nodes 4/edges 3/graphs 1/policies 1/history 0/stages 2），测试残留已清理归零。
 - 备注：v60 路由前缀 `/mdm-v60`；current_stage 路径 `/lifecycle/{id}/stage`（非 /stage/{id}）；GetPathRequest/BuildLineageGraphRequest 字段为 source_id/target_id/root_entity_id+root_entity_type；utoipa 注解 25=handler 25（无吞注解，openapi.rs 正常编译）。
+
+## B1 补证据｜search→erp 事件投影 Redis 全链路 E2E（2026-10-15）
+
+**背景**：重启跳过项评估后，B1（search 聚合检索终态：erp 发布 SearchableEntityChanged → search 订阅写 `public.search_entity_projections` 本地读模型）是唯一可低成本本地补验项。本轮起独立 erp(8010) + search(8082) 双服务跑真实 HTTP 三态 E2E。
+
+**发现并修复的部署缺陷（E2E 核心价值）**：
+1. **投影表权限缺陷**：`public.search_entity_projections` owner=air（本地超级用户），topems_app **0 权限** → search 订阅写投影全部 `permission denied`，事件 3 次重试后进 DLQ（日志：search 投影 upsert/delete 失败）。修复：`psql -U air`（**必须超级用户**，topems 非 super 非 owner 执行 GRANT 会静默「no privileges were granted」）→ `GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.search_entity_projections TO topems_app`。投影表是运行时自举建表，owner 随首次建表连接角色漂移，**需固化**（见下）。
+2. **BACKFILL_TOKEN 未配置**：backfill 调 erp `/api/erp/internal/searchable-snapshot` 无 token → 401 `{"code":401,"data":null}` → 解析后「源快照 0 条」**静默空跑无告警**（backfill 形同虚设）。本轮以 `BACKFILL_TOKEN=$(cat /tmp/k1_token.txt)` 注入重启后即正常（源快照 3 条 → 投影补写 3 行）。
+
+**三态 E2E 结果（全绿）**：
+- **create**：POST /api/erp/customers（code K1B1E2E-001 / B1证据客户甲）→ 200，id b6a1bb76-63f0-423e-b7d2-adb30bd54513；投影表出现该行（customer / active）。
+- **search 查询**：GET :8082/api/search?keyword=B1证据客户 → `items[0].id=b6a1bb76...`、title 带 `**` 高亮、description=张三|13800000001|厦门、module=customer、relevance=0.25、suggestions 同步——**B1 终态（本地读模型聚合检索）验证通过**。
+- **update**：PUT /api/erp/customers/{id}（name→B1证据客户甲-V2、contact_person→李四）→ 200；投影行 name/contact_person 实时更新、projected_at 推进（实时订阅写入，非 backfill）；search?keyword=V2 total=1。
+- **delete**：DELETE → 投影行删除（count 0）；search?keyword=B1证据 total=0。**create→事件→投影→查询 与 delete→投影删除→搜索消失 全链路闭环**。
+- **backfill 对账**：带 BACKFILL_TOKEN 重启后「源快照 3 条, 投影补写 3 行, 0 -> 3」——启动对账机制实盘验证通过。
+- 清理：E2E 客户已软删（deleted_at），投影行已随 delete 删除；投影表残留 2 条为历史数据（MCP端到端客户 / SO-TEST-0001），保留。
+
+**遗留缺口（已固化，见下方「B1 固化 commit」）**：
+1. **投影表权限固化 → 已完成**：迁移 `20261015000071_k1_b1_search_projection_table.sql`（建表 + 检索索引 + `GRANT SELECT, INSERT, UPDATE, DELETE ... TO topems_app`）版本化；`svc/search/src/projection.rs` `init_projection_table` 由自举建表/建索引改为**表存在性探测**（缺失即告警提示 migration 未应用）——消除 owner 漂移、`must be owner` warning 与写投影 permission denied 进 DLQ。
+2. **BACKFILL_TOKEN 配置 → 已完成**：`.env.example` 增补配置段（需含 exp 字段的远期服务令牌，erp 认证要求 exp；`is_superuser=true` + `permissions=["*"]`，否则快照接口 403 缺 erp:admin）；本地 `.env` 已配。
+3. **观察项（保留）**：创建客户行 tenant_id 为 NULL（k1 token tenant_id=0000…0001 未落入行，RLS policy `tenant_id IS NULL` 分支放行可见）——客户创建租户注入的既有行为，非 B1 投影问题，仅记录。
+- 本轮临时进程 erp/search 为 E2E 起停，现场保留 monolith 8099；投影表 GRANT 已随迁移固化。
