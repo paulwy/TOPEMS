@@ -1507,24 +1507,8 @@ pub async fn init_mdm_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query(
-        r#"
-        CREATE TABLE IF NOT EXISTS core_master_data_event_outbox (
-            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            event_id UUID NOT NULL,
-            tenant_id UUID NOT NULL,
-            domain TEXT NOT NULL,
-            action TEXT NOT NULL,
-            master_data_id TEXT NOT NULL,
-            payload JSONB NOT NULL,
-            published_at TIMESTAMP,
-            retry_count INTEGER NOT NULL DEFAULT 0,
-            created_at TIMESTAMP NOT NULL DEFAULT NOW()
-        )
-        "#,
-    )
-    .execute(pool)
-    .await?;
+    // 4.6：core_master_data_event_outbox 死表已 DROP（Redis Stream + commit_retry 接管补偿），
+    // 此处不再运行时重建，防止 DROP 后被启动逻辑重新建出。
 
     // V31.0 对账日志表
     sqlx::query(

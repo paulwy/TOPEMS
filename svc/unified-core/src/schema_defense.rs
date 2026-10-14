@@ -280,20 +280,7 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_at", "TIMESTAMP NOT NULL DEFAULT NOW()"),
         ],
     ),
-    (
-        "core_master_data_event_outbox",
-        &[
-            ("event_id", "UUID NOT NULL"),
-            ("tenant_id", "UUID NOT NULL"),
-            ("domain", "TEXT NOT NULL"),
-            ("action", "TEXT NOT NULL"),
-            ("master_data_id", "TEXT NOT NULL"),
-            ("payload", "JSONB NOT NULL"),
-            ("published_at", "TIMESTAMP"),
-            ("retry_count", "INTEGER NOT NULL DEFAULT 0"),
-            ("created_at", "TIMESTAMP NOT NULL DEFAULT NOW()"),
-        ],
-    ),
+    // 4.6：core_master_data_event_outbox 死表已 DROP，白名单条目同步摘除（防运行期重建）。
     (
         "core_mdm_reconciliation_log",
         &[
