@@ -1392,6 +1392,7 @@ pub async fn index_entity(
     ),
     tag = "semantic_v57"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_semantic_handler(
     State(state): State<AppState>,
     Json(req): Json<SemanticSearchRequest>,
@@ -1430,6 +1431,7 @@ pub async fn search_semantic_handler(
     ),
     tag = "semantic_v57"
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn search_hybrid_handler(
     State(state): State<AppState>,
     Json(req): Json<HybridSearchRequest>,

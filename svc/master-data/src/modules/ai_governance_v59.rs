@@ -418,7 +418,7 @@ impl IntelligentMatcher {
         Self::manual_review(db, id, MatchStatus::Rejected).await
     }
 
-    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss, clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     async fn get_match_stats(db: &PgPool) -> Result<MatchStats, TopemsError> {
         let rules_row = sqlx::query("SELECT COUNT(*) AS n FROM master_data.mdm_match_rules")
             .fetch_one(db)
@@ -654,7 +654,7 @@ impl AutoClassifier {
         Ok(row.map(|r| classification_result_from_row(&r)))
     }
 
-    #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
+    #[allow(clippy::as_conversions, clippy::cast_precision_loss, clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     async fn get_classification_stats(db: &PgPool) -> Result<ClassificationStats, TopemsError> {
         let models_row = sqlx::query("SELECT COUNT(*) AS n FROM master_data.mdm_classification_models")
             .fetch_one(db)
