@@ -11,8 +11,6 @@
 use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::sync::LazyLock;
-use tokio::sync::Mutex;
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 use utoipa::ToSchema;
@@ -275,356 +273,18 @@ pub struct QualityTrendPoint {
 
 // ==================== 内存存储 ====================
 
-struct QualityV51Store {
-    quality_checks: Mutex<Vec<QualityCheckV51>>,
-    quality_rules: Mutex<Vec<QualityRule>>,
-    quality_loop_configs: Mutex<Vec<QualityLoopConfig>>,
-    auto_fix_actions: Mutex<Vec<AutoFixAction>>,
-    fix_strategies: Mutex<Vec<FixStrategy>>,
-    governance_suggestions: Mutex<Vec<GovernanceSuggestion>>,
-    governance_insights: Mutex<Vec<GovernanceInsight>>,
-    initialized: Mutex<bool>,
-}
 
-fn get_quality_v51_store() -> &'static QualityV51Store {
-    static STORE: LazyLock<QualityV51Store> = LazyLock::new(|| QualityV51Store {
-        quality_checks: Mutex::new(Vec::new()),
-        quality_rules: Mutex::new(Vec::new()),
-        quality_loop_configs: Mutex::new(Vec::new()),
-        auto_fix_actions: Mutex::new(Vec::new()),
-        fix_strategies: Mutex::new(Vec::new()),
-        governance_suggestions: Mutex::new(Vec::new()),
-        governance_insights: Mutex::new(Vec::new()),
-        initialized: Mutex::new(false),
-    });
-    &STORE
-}
 
 // ==================== 初始化种子数据 ====================
 
-async fn ensure_initialized() {
-    let store = get_quality_v51_store();
-    let mut initialized = store.initialized.lock().await;
-    if *initialized {
-        return;
-    }
-
-    // U4：优先从库恢复既有快照（重启后数据仍在）；命中则跳过 demo seed。
-    if crate::modules::persist::enabled() && persist_load().await {
-        *initialized = true;
-        return;
-    }
-
-    let now = chrono::Utc::now();
-    let now_str = now.to_rfc3339();
-
-    let rules = vec![
-        QualityRule {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "客户编码格式校验".to_string(),
-            entity_type: "customer".to_string(),
-            rule_type: "format".to_string(),
-            description: "客户编码必须以 C 开头后跟数字".to_string(),
-            severity: "error".to_string(),
-            parameters: serde_json::json!({"pattern": "^C\\d{4,}$"}),
-            enabled: true,
-            created_at: now_str.clone(),
-            updated_at: now_str.clone(),
-        },
-        QualityRule {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "供应商名称必填".to_string(),
-            entity_type: "supplier".to_string(),
-            rule_type: "required".to_string(),
-            description: "供应商名称不能为空".to_string(),
-            severity: "error".to_string(),
-            parameters: serde_json::json!({"field": "name"}),
-            enabled: true,
-            created_at: now_str.clone(),
-            updated_at: now_str.clone(),
-        },
-        QualityRule {
-            id: uuid::Uuid::new_v4().to_string(),
-            name: "物料价格范围校验".to_string(),
-            entity_type: "material".to_string(),
-            rule_type: "range".to_string(),
-            description: "物料价格必须在 0 到 1000000 之间".to_string(),
-            severity: "warning".to_string(),
-            parameters: serde_json::json!({"min": 0, "max": 1000000, "field": "price"}),
-            enabled: true,
-            created_at: now_str.clone(),
-            updated_at: now_str.clone(),
-        },
-    ];
-
-    let checks = vec![
-        QualityCheckV51 {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_type: "customer".to_string(),
-            entity_id: "C0001".to_string(),
-            rule_id: rules[0].id.clone(),
-            status: QualityStatus::Passed,
-            score: 100.0,
-            details: serde_json::json!({"message": "格式校验通过"}),
-            checked_at: now_str.clone(),
-        },
-        QualityCheckV51 {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_type: "customer".to_string(),
-            entity_id: "C0002".to_string(),
-            rule_id: rules[0].id.clone(),
-            status: QualityStatus::Failed,
-            score: 0.0,
-            details: serde_json::json!({"message": "客户编码格式不正确", "value": "INVALID"}),
-            checked_at: now_str.clone(),
-        },
-        QualityCheckV51 {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_type: "supplier".to_string(),
-            entity_id: "S0001".to_string(),
-            rule_id: rules[1].id.clone(),
-            status: QualityStatus::Warning,
-            score: 50.0,
-            details: serde_json::json!({"message": "供应商名称过短", "value": "A"}),
-            checked_at: now_str.clone(),
-        },
-    ];
-
-    let loop_configs = vec![
-        QualityLoopConfig {
-            entity_type: "customer".to_string(),
-            enabled_rules: vec![rules[0].id.clone()],
-            auto_fix_enabled: true,
-            notification_channels: vec!["email".to_string(), "webhook".to_string()],
-            max_retries: 3,
-        },
-        QualityLoopConfig {
-            entity_type: "supplier".to_string(),
-            enabled_rules: vec![rules[1].id.clone()],
-            auto_fix_enabled: false,
-            notification_channels: vec!["email".to_string()],
-            max_retries: 5,
-        },
-    ];
-
-    let fix_actions = vec![
-        AutoFixAction {
-            id: uuid::Uuid::new_v4().to_string(),
-            rule_id: rules[0].id.clone(),
-            entity_type: "customer".to_string(),
-            entity_id: "C0002".to_string(),
-            action_type: AutoFixActionType::Normalize,
-            before_value: serde_json::json!("INVALID"),
-            after_value: Some(serde_json::json!("C0002")),
-            confidence: 0.95,
-            status: FixStatus::Verified,
-            applied_at: Some(now_str.clone()),
-        },
-        AutoFixAction {
-            id: uuid::Uuid::new_v4().to_string(),
-            rule_id: rules[2].id.clone(),
-            entity_type: "material".to_string(),
-            entity_id: "MAT-001".to_string(),
-            action_type: AutoFixActionType::DefaultValue,
-            before_value: serde_json::json!(null),
-            after_value: Some(serde_json::json!(0.0)),
-            confidence: 1.0,
-            status: FixStatus::Applied,
-            applied_at: Some(now_str.clone()),
-        },
-    ];
-
-    let fix_strategies = vec![
-        FixStrategy::NormalizeText,
-        FixStrategy::FillMissingDefaults,
-        FixStrategy::MapToStandardValues,
-        FixStrategy::RemoveDuplicates,
-        FixStrategy::StandardizeDateFormat,
-        FixStrategy::EnrichFromReference,
-    ];
-
-    let suggestions = vec![
-        GovernanceSuggestion {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_type: "customer".to_string(),
-            entity_id: "C0003".to_string(),
-            suggestion_type: SuggestionType::Standardize,
-            confidence: 0.88,
-            rationale: "客户名称存在多种写法，建议统一为标准名称".to_string(),
-            suggested_action: "将 '阿里巴巴' 标准化为 '阿里巴巴集团控股有限公司'".to_string(),
-            ai_model_version: "mdm-gov-v1".to_string(),
-            status: SuggestionStatus::Pending,
-            created_at: now_str.clone(),
-        },
-        GovernanceSuggestion {
-            id: uuid::Uuid::new_v4().to_string(),
-            entity_type: "material".to_string(),
-            entity_id: "MAT-005".to_string(),
-            suggestion_type: SuggestionType::Enrich,
-            confidence: 0.76,
-            rationale: "物料缺少分类信息，建议从参考数据丰富".to_string(),
-            suggested_action: "添加分类编码 'RAW-MATERIAL' 和单位 'KG'".to_string(),
-            ai_model_version: "mdm-gov-v1".to_string(),
-            status: SuggestionStatus::Pending,
-            created_at: now_str.clone(),
-        },
-    ];
-
-    let insights = vec![
-        GovernanceInsight {
-            insight_type: "data_quality".to_string(),
-            severity: "high".to_string(),
-            affected_records: 156,
-            trend_analysis: "近7天数据质量问题上升 12%，主要集中在客户主数据".to_string(),
-            recommendations: vec![
-                "加强客户数据录入规范培训".to_string(),
-                "实施自动修复策略处理常见格式问题".to_string(),
-                "建立数据质量监控仪表盘".to_string(),
-            ],
-        },
-        GovernanceInsight {
-            insight_type: "duplicate_detection".to_string(),
-            severity: "medium".to_string(),
-            affected_records: 43,
-            trend_analysis: "检测到 43 条疑似重复记录，供应商模块占比最高".to_string(),
-            recommendations: vec![
-                "实现供应商去重合并流程".to_string(),
-                "引入 AI 辅助重复检测".to_string(),
-            ],
-        },
-    ];
-
-    *store.quality_checks.lock().await = checks;
-    *store.quality_rules.lock().await = rules;
-    *store.quality_loop_configs.lock().await = loop_configs;
-    *store.auto_fix_actions.lock().await = fix_actions;
-    *store.fix_strategies.lock().await = fix_strategies;
-    *store.governance_suggestions.lock().await = suggestions;
-    *store.governance_insights.lock().await = insights;
-
-    // U4：首次 seed 后落库，后续重启直接从库恢复。
-    if crate::modules::persist::enabled() {
-        persist_save().await;
-    }
-
-    *initialized = true;
-}
 
 // ==================== U4 持久化（JSONB 快照落 master_data.mdm_collections） ====================
 
 /// 从库恢复各叶子集合；任一命中即视为已恢复。
-async fn persist_load() -> bool {
-    let store = get_quality_v51_store();
-    let mut restored = false;
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<QualityCheckV51>>("quality_v51", "quality_checks").await
-    {
-        *store.quality_checks.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<QualityRule>>("quality_v51", "quality_rules").await
-    {
-        *store.quality_rules.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<QualityLoopConfig>>(
-        "quality_v51",
-        "quality_loop_configs",
-    )
-    .await
-    {
-        *store.quality_loop_configs.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<AutoFixAction>>("quality_v51", "auto_fix_actions").await
-    {
-        *store.auto_fix_actions.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) =
-        crate::modules::persist::load::<Vec<FixStrategy>>("quality_v51", "fix_strategies").await
-    {
-        *store.fix_strategies.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<GovernanceSuggestion>>(
-        "quality_v51",
-        "governance_suggestions",
-    )
-    .await
-    {
-        *store.governance_suggestions.lock().await = v;
-        restored = true;
-    }
-    if let Some(v) = crate::modules::persist::load::<Vec<GovernanceInsight>>(
-        "quality_v51",
-        "governance_insights",
-    )
-    .await
-    {
-        *store.governance_insights.lock().await = v;
-        restored = true;
-    }
-    restored
-}
 
 /// 把各叶子集合整体快照回写库。
-async fn persist_save() {
-    let store = get_quality_v51_store();
-    crate::modules::persist::save(
-        "quality_v51",
-        "quality_checks",
-        &*store.quality_checks.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "quality_v51",
-        "quality_rules",
-        &*store.quality_rules.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "quality_v51",
-        "quality_loop_configs",
-        &*store.quality_loop_configs.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "quality_v51",
-        "auto_fix_actions",
-        &*store.auto_fix_actions.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "quality_v51",
-        "fix_strategies",
-        &*store.fix_strategies.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "quality_v51",
-        "governance_suggestions",
-        &*store.governance_suggestions.lock().await,
-    )
-    .await;
-    crate::modules::persist::save(
-        "quality_v51",
-        "governance_insights",
-        &*store.governance_insights.lock().await,
-    )
-    .await;
-}
 
 /// 后台 flush 入口：仅在模块已 load/seed 后快照回写，避免空集合覆盖库内数据。
-pub async fn background_flush() {
-    let store = get_quality_v51_store();
-    if !*store.initialized.lock().await {
-        return;
-    }
-    persist_save().await;
-}
 
 // ==================== 请求/响应结构 ====================
 
@@ -795,19 +455,23 @@ fn compute_score(checks: &[QualityCheckV51]) -> f64 {
     ),
 )]
 pub async fn run_quality_check(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RunQualityCheckRequest>,
 ) -> Json<ApiResponse<Vec<QualityCheckV51>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let rules = store.quality_rules.lock().await;
+    let rows = sqlx::query(
+        "SELECT id, name, entity_type, rule_type, description, severity, parameters, enabled, created_at, updated_at
+         FROM master_data.mdm_quality_rules
+         WHERE entity_type = $1 AND enabled = TRUE",
+    )
+    .bind(&req.entity_type)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let rules: Vec<QualityRule> = rows.iter().map(rule_row_to_api).collect();
 
     let applicable_rules: Vec<QualityRule> = rules
         .iter()
         .filter(|r| {
-            if r.entity_type != req.entity_type || !r.enabled {
-                return false;
-            }
             if let Some(ref ids) = req.rule_ids {
                 ids.contains(&r.id)
             } else {
@@ -816,8 +480,6 @@ pub async fn run_quality_check(
         })
         .cloned()
         .collect();
-
-    drop(rules);
 
     let now = chrono::Utc::now().to_rfc3339();
     let mut results = Vec::new();
@@ -847,8 +509,25 @@ pub async fn run_quality_check(
         results.push(check);
     }
 
-    let mut all_checks = store.quality_checks.lock().await;
-    all_checks.extend(results.clone());
+    for check in &results {
+        if let Err(e) = sqlx::query(
+            "INSERT INTO master_data.mdm_quality_checks (id, entity_type, entity_id, rule_id, status, score, details, checked_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+        )
+        .bind(&check.id)
+        .bind(&check.entity_type)
+        .bind(&check.entity_id)
+        .bind(&check.rule_id)
+        .bind(quality_status_to_str(&check.status))
+        .bind(check.score)
+        .bind(&check.details)
+        .bind(&check.checked_at)
+        .execute(&state.db)
+        .await
+        {
+            return Json(ApiResponse::error(500, &format!("写入质量检查失败: {e}")));
+        }
+    }
 
     Json(ApiResponse::success(results, "质量检查完成"))
 }
@@ -877,56 +556,47 @@ pub async fn run_quality_check(
     clippy::cast_sign_loss
 )]
 pub async fn list_quality_checks(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<QualityCheckQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<QualityCheckV51>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let checks = store.quality_checks.lock().await;
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
-    let mut filtered: Vec<QualityCheckV51> = checks
-        .iter()
-        .filter(|c| {
-            if let Some(et) = &params.entity_type {
-                if &c.entity_type != et {
-                    return false;
-                }
-            }
-            if let Some(eid) = &params.entity_id {
-                if &c.entity_id != eid {
-                    return false;
-                }
-            }
-            if let Some(s) = &params.status {
-                let status_str = match c.status {
-                    QualityStatus::Passed => "passed",
-                    QualityStatus::Failed => "failed",
-                    QualityStatus::Warning => "warning",
-                };
-                if status_str != s.as_str() {
-                    return false;
-                }
-            }
-            if let Some(rid) = &params.rule_id {
-                if &c.rule_id != rid {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let rows = sqlx::query(&format!(
+        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks
+         WHERE entity_type = COALESCE($1, entity_type)
+           AND entity_id = COALESCE($2, entity_id)
+           AND status = COALESCE($3, status)
+           AND rule_id = COALESCE($4, rule_id)
+         ORDER BY checked_at DESC
+         LIMIT $5 OFFSET $6"
+    ))
+    .bind(params.entity_type.as_deref())
+    .bind(params.entity_id.as_deref())
+    .bind(params.status.as_deref())
+    .bind(params.rule_id.as_deref())
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
 
-    filtered.sort_by(|a, b| b.checked_at.cmp(&a.checked_at));
-
-    let total = filtered.len() as i64;
-    let items: Vec<QualityCheckV51> = filtered
-        .into_iter()
-        .skip(((page - 1) * page_size) as usize)
-        .take(page_size as usize)
-        .collect();
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM master_data.mdm_quality_checks
+         WHERE entity_type = COALESCE($1, entity_type)
+           AND entity_id = COALESCE($2, entity_id)
+           AND status = COALESCE($3, status)
+           AND rule_id = COALESCE($4, rule_id)",
+    )
+    .bind(params.entity_type.as_deref())
+    .bind(params.entity_id.as_deref())
+    .bind(params.status.as_deref())
+    .bind(params.rule_id.as_deref())
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -955,20 +625,21 @@ pub async fn list_quality_checks(
     tag = "quality_v51"
 )]
 pub async fn get_quality_check_results(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path((entity_type, entity_id)): Path<(String, String)>,
 ) -> Json<ApiResponse<Vec<QualityCheckV51>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let checks = store.quality_checks.lock().await;
+    let rows = sqlx::query(&format!(
+        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks
+         WHERE entity_type = $1 AND entity_id = $2 ORDER BY checked_at DESC"
+    ))
+    .bind(&entity_type)
+    .bind(&entity_id)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
 
-    let results: Vec<QualityCheckV51> = checks
-        .iter()
-        .filter(|c| c.entity_type == entity_type && c.entity_id == entity_id)
-        .cloned()
-        .collect();
-
-    Json(ApiResponse::success(results, "实体质量检查结果"))
+    Json(ApiResponse::success(items, "质量检查结果"))
 }
 
 // ==================== 处理器：质量规则 ====================
@@ -1183,10 +854,14 @@ pub async fn delete_quality_rule(
     ),
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-pub async fn get_quality_score(State(_state): State<AppState>) -> Json<ApiResponse<QualityScore>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let checks = store.quality_checks.lock().await;
+pub async fn get_quality_score(State(state): State<AppState>) -> Json<ApiResponse<QualityScore>> {
+    let rows = sqlx::query(&format!(
+        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let checks: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
 
     let total = checks.len() as i64;
     let passed = checks
@@ -1249,15 +924,39 @@ pub async fn get_quality_score(State(_state): State<AppState>) -> Json<ApiRespon
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
 pub async fn get_quality_dashboard(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<QualityDashboard>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
+    let check_rows = sqlx::query(&format!(
+        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks ORDER BY checked_at DESC"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let checks: Vec<QualityCheckV51> = check_rows.iter().map(quality_check_from_row).collect();
 
-    let checks = store.quality_checks.lock().await;
-    let fix_actions = store.auto_fix_actions.lock().await;
-    let suggestions = store.governance_suggestions.lock().await;
-    let insights = store.governance_insights.lock().await;
+    let fix_rows = sqlx::query(&format!(
+        "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let fix_actions: Vec<AutoFixAction> = fix_rows.iter().map(auto_fix_from_row).collect();
+
+    let sugg_rows = sqlx::query(&format!(
+        "SELECT {SUGGESTION_COLS} FROM master_data.mdm_governance_suggestions"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let suggestions: Vec<GovernanceSuggestion> = sugg_rows.iter().map(suggestion_from_row).collect();
+
+    let ins_rows = sqlx::query(&format!(
+        "SELECT {INSIGHT_COLS} FROM master_data.mdm_governance_insights"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let insights: Vec<GovernanceInsight> = ins_rows.iter().map(insight_from_row).collect();
 
     let total_checks = checks.len() as i64;
     let score = compute_score(&checks);
@@ -1292,7 +991,7 @@ pub async fn get_quality_dashboard(
             fix_actions_pending: fix_pending,
             fix_actions_applied: fix_applied,
             suggestions_pending,
-            insights: insights.clone(),
+            insights,
             entity_type_distribution,
         },
         "质量仪表盘",
@@ -1312,12 +1011,9 @@ pub async fn get_quality_dashboard(
     ),
 )]
 pub async fn apply_auto_fix(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<AutoFixRequest>,
 ) -> Json<ApiResponse<AutoFixAction>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-
     let strategy = req.strategy.as_deref().unwrap_or("normalize_text");
     let action_type = action_type_from_str(strategy);
 
@@ -1336,8 +1032,25 @@ pub async fn apply_auto_fix(
         applied_at: Some(now),
     };
 
-    let mut actions = store.auto_fix_actions.lock().await;
-    actions.push(action.clone());
+    if let Err(e) = sqlx::query(
+        "INSERT INTO master_data.mdm_auto_fix_actions (id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+    )
+    .bind(&action.id)
+    .bind(&action.rule_id)
+    .bind(&action.entity_type)
+    .bind(&action.entity_id)
+    .bind(action_type_to_str(&action.action_type))
+    .bind(&action.before_value)
+    .bind(&action.after_value)
+    .bind(action.confidence)
+    .bind(fix_status_to_str(&action.status))
+    .bind(&action.applied_at)
+    .execute(&state.db)
+    .await
+    {
+        return Json(ApiResponse::error(500, &format!("自动修复失败: {e}")));
+    }
 
     Json(ApiResponse::success(action, "自动修复已应用"))
 }
@@ -1355,53 +1068,43 @@ pub async fn apply_auto_fix(
     clippy::cast_sign_loss
 )]
 pub async fn get_fix_actions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<FixActionQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<AutoFixAction>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let actions = store.auto_fix_actions.lock().await;
-
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
-    let mut filtered: Vec<AutoFixAction> = actions
-        .iter()
-        .filter(|a| {
-            if let Some(et) = &params.entity_type {
-                if &a.entity_type != et {
-                    return false;
-                }
-            }
-            if let Some(eid) = &params.entity_id {
-                if &a.entity_id != eid {
-                    return false;
-                }
-            }
-            if let Some(s) = &params.status {
-                let status_str = match a.status {
-                    FixStatus::Pending => "pending",
-                    FixStatus::Applied => "applied",
-                    FixStatus::Verified => "verified",
-                    FixStatus::Failed => "failed",
-                };
-                if status_str != s.as_str() {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let rows = sqlx::query(&format!(
+        "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions
+         WHERE entity_type = COALESCE($1, entity_type)
+           AND entity_id = COALESCE($2, entity_id)
+           AND status = COALESCE($3, status)
+         ORDER BY applied_at DESC
+         LIMIT $4 OFFSET $5"
+    ))
+    .bind(params.entity_type.as_deref())
+    .bind(params.entity_id.as_deref())
+    .bind(params.status.as_deref())
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<AutoFixAction> = rows.iter().map(auto_fix_from_row).collect();
 
-    filtered.sort_by(|a, b| b.applied_at.cmp(&a.applied_at));
-
-    let total = filtered.len() as i64;
-    let items: Vec<AutoFixAction> = filtered
-        .into_iter()
-        .skip(((page - 1) * page_size) as usize)
-        .take(page_size as usize)
-        .collect();
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM master_data.mdm_auto_fix_actions
+         WHERE entity_type = COALESCE($1, entity_type)
+           AND entity_id = COALESCE($2, entity_id)
+           AND status = COALESCE($3, status)",
+    )
+    .bind(params.entity_type.as_deref())
+    .bind(params.entity_id.as_deref())
+    .bind(params.status.as_deref())
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -1411,7 +1114,7 @@ pub async fn get_fix_actions(
             page_size,
             total_pages: topems_shared_core::response::total_pages_of(total, page_size),
         },
-        "修复操作列表",
+        "自动修复操作",
     ))
 }
 
@@ -1429,25 +1132,43 @@ pub async fn get_fix_actions(
     tag = "quality_v51"
 )]
 pub async fn revert_fix_action(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(_req): Json<RevertFixRequest>,
 ) -> Json<ApiResponse<AutoFixAction>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let mut actions = store.auto_fix_actions.lock().await;
-    let Some(action) = actions.iter_mut().find(|a| a.id == id) else {
+    let current: Option<String> = sqlx::query_scalar(
+        "SELECT status FROM master_data.mdm_auto_fix_actions WHERE id = $1",
+    )
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    let Some(status) = current else {
         return Json(ApiResponse::error(404, "未找到修复操作"));
     };
 
-    if !matches!(action.status, FixStatus::Applied | FixStatus::Verified) {
+    if !matches!(status.as_str(), "applied" | "verified") {
         return Json(ApiResponse::error(400, "当前状态不可回滚"));
     }
 
-    action.status = FixStatus::Pending;
-    action.after_value = None;
+    let row = sqlx::query(&format!(
+        "UPDATE master_data.mdm_auto_fix_actions
+         SET status = 'pending', after_value = NULL, applied_at = NULL
+         WHERE id = $1
+         RETURNING {AUTO_FIX_COLS}"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
 
-    Json(ApiResponse::success(action.clone(), "修复操作已回滚"))
+    let Some(row) = row else {
+        return Json(ApiResponse::error(404, "未找到修复操作"));
+    };
+    let action = auto_fix_from_row(&row);
+
+    Json(ApiResponse::success(action, "修复操作已回滚"))
 }
 
 #[utoipa::path(
@@ -1461,11 +1182,15 @@ pub async fn revert_fix_action(
     tag = "quality_v51"
 )]
 pub async fn get_fix_history(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<FixHistoryEntry>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let actions = store.auto_fix_actions.lock().await;
+    let rows = sqlx::query(&format!(
+        "SELECT {AUTO_FIX_COLS} FROM master_data.mdm_auto_fix_actions ORDER BY applied_at DESC"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let actions: Vec<AutoFixAction> = rows.iter().map(auto_fix_from_row).collect();
 
     let history: Vec<FixHistoryEntry> = actions
         .iter()
@@ -1497,12 +1222,9 @@ pub async fn get_fix_history(
     tag = "quality_v51"
 )]
 pub async fn run_fix_workflow(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<RunFixWorkflowRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-
     let now = chrono::Utc::now().to_rfc3339();
 
     let strategies = req.strategies.unwrap_or_else(|| {
@@ -1510,6 +1232,7 @@ pub async fn run_fix_workflow(
             "normalize_text".to_string(),
             "fill_missing_defaults".to_string(),
             "map_to_standard_values".to_string(),
+            "remove_duplicates".to_string(),
         ]
     });
 
@@ -1533,8 +1256,27 @@ pub async fn run_fix_workflow(
         applied_actions.push(action);
     }
 
-    let mut actions = store.auto_fix_actions.lock().await;
-    actions.extend(applied_actions.clone());
+    for action in &applied_actions {
+        if let Err(e) = sqlx::query(
+            "INSERT INTO master_data.mdm_auto_fix_actions (id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+        )
+        .bind(&action.id)
+        .bind(&action.rule_id)
+        .bind(&action.entity_type)
+        .bind(&action.entity_id)
+        .bind(action_type_to_str(&action.action_type))
+        .bind(&action.before_value)
+        .bind(&action.after_value)
+        .bind(action.confidence)
+        .bind(fix_status_to_str(&action.status))
+        .bind(&action.applied_at)
+        .execute(&state.db)
+        .await
+        {
+            return Json(ApiResponse::error(500, &format!("执行修复工作流失败: {e}")));
+        }
+    }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -1562,12 +1304,9 @@ pub async fn run_fix_workflow(
     ),
 )]
 pub async fn generate_suggestions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<GenerateSuggestionsRequest>,
 ) -> Json<ApiResponse<Vec<GovernanceSuggestion>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-
     let now = chrono::Utc::now().to_rfc3339();
     let types = req
         .suggestion_types
@@ -1593,8 +1332,27 @@ pub async fn generate_suggestions(
         suggestions.push(suggestion);
     }
 
-    let mut all = store.governance_suggestions.lock().await;
-    all.extend(suggestions.clone());
+    for s in &suggestions {
+        if let Err(e) = sqlx::query(
+            "INSERT INTO master_data.mdm_governance_suggestions (id, entity_type, entity_id, suggestion_type, confidence, rationale, suggested_action, ai_model_version, status, created_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+        )
+        .bind(&s.id)
+        .bind(&s.entity_type)
+        .bind(&s.entity_id)
+        .bind(suggestion_type_to_str(&s.suggestion_type))
+        .bind(s.confidence)
+        .bind(&s.rationale)
+        .bind(&s.suggested_action)
+        .bind(&s.ai_model_version)
+        .bind(suggestion_status_to_str(&s.status))
+        .bind(&s.created_at)
+        .execute(&state.db)
+        .await
+        {
+            return Json(ApiResponse::error(500, &format!("生成治理建议失败: {e}")));
+        }
+    }
 
     Json(ApiResponse::success(suggestions, "治理建议已生成"))
 }
@@ -1612,63 +1370,47 @@ pub async fn generate_suggestions(
     clippy::cast_sign_loss
 )]
 pub async fn get_suggestions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Query(params): Query<SuggestionQuery>,
 ) -> Json<ApiResponse<PaginatedResponse<GovernanceSuggestion>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let suggestions = store.governance_suggestions.lock().await;
-
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
-    let mut filtered: Vec<GovernanceSuggestion> = suggestions
-        .iter()
-        .filter(|s| {
-            if let Some(et) = &params.entity_type {
-                if &s.entity_type != et {
-                    return false;
-                }
-            }
-            if let Some(eid) = &params.entity_id {
-                if &s.entity_id != eid {
-                    return false;
-                }
-            }
-            if let Some(t) = &params.suggestion_type {
-                let type_str = match s.suggestion_type {
-                    SuggestionType::Standardize => "standardize",
-                    SuggestionType::Enrich => "enrich",
-                    SuggestionType::Deprecate => "deprecate",
-                    SuggestionType::Merge => "merge",
-                };
-                if type_str != t.as_str() {
-                    return false;
-                }
-            }
-            if let Some(st) = &params.status {
-                let status_str = match s.status {
-                    SuggestionStatus::Pending => "pending",
-                    SuggestionStatus::Approved => "approved",
-                    SuggestionStatus::Rejected => "rejected",
-                };
-                if status_str != st.as_str() {
-                    return false;
-                }
-            }
-            true
-        })
-        .cloned()
-        .collect();
+    let rows = sqlx::query(&format!(
+        "SELECT {SUGGESTION_COLS} FROM master_data.mdm_governance_suggestions
+         WHERE entity_type = COALESCE($1, entity_type)
+           AND entity_id = COALESCE($2, entity_id)
+           AND suggestion_type = COALESCE($3, suggestion_type)
+           AND status = COALESCE($4, status)
+         ORDER BY created_at DESC
+         LIMIT $5 OFFSET $6"
+    ))
+    .bind(params.entity_type.as_deref())
+    .bind(params.entity_id.as_deref())
+    .bind(params.suggestion_type.as_deref())
+    .bind(params.status.as_deref())
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<GovernanceSuggestion> = rows.iter().map(suggestion_from_row).collect();
 
-    filtered.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-
-    let total = filtered.len() as i64;
-    let items: Vec<GovernanceSuggestion> = filtered
-        .into_iter()
-        .skip(((page - 1) * page_size) as usize)
-        .take(page_size as usize)
-        .collect();
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM master_data.mdm_governance_suggestions
+         WHERE entity_type = COALESCE($1, entity_type)
+           AND entity_id = COALESCE($2, entity_id)
+           AND suggestion_type = COALESCE($3, suggestion_type)
+           AND status = COALESCE($4, status)",
+    )
+    .bind(params.entity_type.as_deref())
+    .bind(params.entity_id.as_deref())
+    .bind(params.suggestion_type.as_deref())
+    .bind(params.status.as_deref())
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     Json(ApiResponse::success(
         PaginatedResponse {
@@ -1696,23 +1438,42 @@ pub async fn get_suggestions(
     tag = "quality_v51"
 )]
 pub async fn approve_suggestion(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(_req): Json<ApproveSuggestionRequest>,
 ) -> Json<ApiResponse<GovernanceSuggestion>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let mut suggestions = store.governance_suggestions.lock().await;
-    let Some(suggestion) = suggestions.iter_mut().find(|s| s.id == id) else {
+    let current: Option<String> = sqlx::query_scalar(
+        "SELECT status FROM master_data.mdm_governance_suggestions WHERE id = $1",
+    )
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    let Some(status) = current else {
         return Json(ApiResponse::error(404, "未找到治理建议"));
     };
-
-    if suggestion.status != SuggestionStatus::Pending {
+    if status != "pending" {
         return Json(ApiResponse::error(400, "建议已处理"));
     }
 
-    suggestion.status = SuggestionStatus::Approved;
-    Json(ApiResponse::success(suggestion.clone(), "治理建议已批准"))
+    let row = sqlx::query(&format!(
+        "UPDATE master_data.mdm_governance_suggestions
+         SET status = 'approved'
+         WHERE id = $1
+         RETURNING {SUGGESTION_COLS}"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    let Some(row) = row else {
+        return Json(ApiResponse::error(404, "未找到治理建议"));
+    };
+    let suggestion = suggestion_from_row(&row);
+
+    Json(ApiResponse::success(suggestion, "治理建议已批准"))
 }
 
 #[utoipa::path(
@@ -1729,23 +1490,42 @@ pub async fn approve_suggestion(
     tag = "quality_v51"
 )]
 pub async fn reject_suggestion(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(_req): Json<RejectSuggestionRequest>,
 ) -> Json<ApiResponse<GovernanceSuggestion>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let mut suggestions = store.governance_suggestions.lock().await;
-    let Some(suggestion) = suggestions.iter_mut().find(|s| s.id == id) else {
+    let current: Option<String> = sqlx::query_scalar(
+        "SELECT status FROM master_data.mdm_governance_suggestions WHERE id = $1",
+    )
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    let Some(status) = current else {
         return Json(ApiResponse::error(404, "未找到治理建议"));
     };
-
-    if suggestion.status != SuggestionStatus::Pending {
+    if status != "pending" {
         return Json(ApiResponse::error(400, "建议已处理"));
     }
 
-    suggestion.status = SuggestionStatus::Rejected;
-    Json(ApiResponse::success(suggestion.clone(), "治理建议已拒绝"))
+    let row = sqlx::query(&format!(
+        "UPDATE master_data.mdm_governance_suggestions
+         SET status = 'rejected'
+         WHERE id = $1
+         RETURNING {SUGGESTION_COLS}"
+    ))
+    .bind(&id)
+    .fetch_optional(&state.db)
+    .await
+    .unwrap_or(None);
+
+    let Some(row) = row else {
+        return Json(ApiResponse::error(404, "未找到治理建议"));
+    };
+    let suggestion = suggestion_from_row(&row);
+
+    Json(ApiResponse::success(suggestion, "治理建议已拒绝"))
 }
 
 #[utoipa::path(
@@ -1759,12 +1539,17 @@ pub async fn reject_suggestion(
     tag = "quality_v51"
 )]
 pub async fn get_governance_insights(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<GovernanceInsight>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let insights = store.governance_insights.lock().await;
-    Json(ApiResponse::success(insights.clone(), "治理洞察列表"))
+    let rows = sqlx::query(&format!(
+        "SELECT {INSIGHT_COLS} FROM master_data.mdm_governance_insights ORDER BY affected_records DESC"
+    ))
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let items: Vec<GovernanceInsight> = rows.iter().map(insight_from_row).collect();
+
+    Json(ApiResponse::success(items, "治理洞察列表"))
 }
 
 #[utoipa::path(
@@ -1783,20 +1568,24 @@ pub async fn get_governance_insights(
     clippy::cast_possible_wrap
 )]
 pub async fn predict_quality_trend(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<PredictTrendRequest>,
 ) -> Json<ApiResponse<Vec<QualityTrendPoint>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let checks = store.quality_checks.lock().await;
+    let rows = sqlx::query(&format!(
+        "SELECT {CHECK_COLS} FROM master_data.mdm_quality_checks WHERE entity_type = $1"
+    ))
+    .bind(&req.entity_type)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_default();
+    let all_checks: Vec<QualityCheckV51> = rows.iter().map(quality_check_from_row).collect();
 
     let days = req.days.unwrap_or(30);
-    let entity_checks: Vec<QualityCheckV51> = checks
+    let entity_checks: Vec<QualityCheckV51> = all_checks
         .iter()
         .filter(|c| c.entity_type == req.entity_type)
         .cloned()
         .collect();
-
     let mut trend = Vec::new();
     let base_score = compute_score(&entity_checks);
     let now = chrono::Utc::now();
@@ -1817,6 +1606,136 @@ pub async fn predict_quality_trend(
     }
 
     Json(ApiResponse::success(trend, "质量趋势预测"))
+}
+
+// ==================== K1：真表映射层（quality_v51 剩余 6 实体） ====================
+
+use sqlx::Row;
+
+const CHECK_COLS: &str = "id, entity_type, entity_id, rule_id, status, score, details, checked_at";
+const LOOP_CONFIG_COLS: &str = "entity_type, enabled_rules, auto_fix_enabled, notification_channels, max_retries";
+const AUTO_FIX_COLS: &str = "id, rule_id, entity_type, entity_id, action_type, before_value, after_value, confidence, status, applied_at";
+const SUGGESTION_COLS: &str = "id, entity_type, entity_id, suggestion_type, confidence, rationale, suggested_action, ai_model_version, status, created_at";
+const INSIGHT_COLS: &str = "insight_type, severity, affected_records, trend_analysis, recommendations";
+
+fn quality_status_to_str(s: &QualityStatus) -> &'static str {
+    match s {
+        QualityStatus::Passed => "passed",
+        QualityStatus::Failed => "failed",
+        QualityStatus::Warning => "warning",
+    }
+}
+
+fn fix_status_to_str(s: &FixStatus) -> &'static str {
+    match s {
+        FixStatus::Pending => "pending",
+        FixStatus::Applied => "applied",
+        FixStatus::Verified => "verified",
+        FixStatus::Failed => "failed",
+    }
+}
+
+fn suggestion_type_to_str(s: &SuggestionType) -> &'static str {
+    match s {
+        SuggestionType::Standardize => "standardize",
+        SuggestionType::Enrich => "enrich",
+        SuggestionType::Deprecate => "deprecate",
+        SuggestionType::Merge => "merge",
+    }
+}
+
+fn suggestion_status_to_str(s: &SuggestionStatus) -> &'static str {
+    match s {
+        SuggestionStatus::Pending => "pending",
+        SuggestionStatus::Approved => "approved",
+        SuggestionStatus::Rejected => "rejected",
+    }
+}
+
+fn action_type_to_str(s: &AutoFixActionType) -> &'static str {
+    match s {
+        AutoFixActionType::Normalize => "normalize",
+        AutoFixActionType::DefaultValue => "default_value",
+        AutoFixActionType::MapValue => "map_value",
+        AutoFixActionType::RemoveDuplicate => "remove_duplicate",
+        AutoFixActionType::Standardize => "standardize",
+    }
+}
+
+fn quality_check_from_row(r: &sqlx::postgres::PgRow) -> QualityCheckV51 {
+    let details: serde_json::Value = r.get("details");
+    QualityCheckV51 {
+        id: r.get("id"),
+        entity_type: r.get("entity_type"),
+        entity_id: r.get("entity_id"),
+        rule_id: r.get("rule_id"),
+        status: quality_status_from_str(r.get::<String, _>("status").as_str()),
+        score: r.get("score"),
+        details,
+        checked_at: r.get("checked_at"),
+    }
+}
+
+fn loop_config_from_row(r: &sqlx::postgres::PgRow) -> QualityLoopConfig {
+    let enabled_rules: serde_json::Value = r.get("enabled_rules");
+    let notification_channels: serde_json::Value = r.get("notification_channels");
+    QualityLoopConfig {
+        entity_type: r.get("entity_type"),
+        enabled_rules: serde_json::from_value(enabled_rules).unwrap_or_default(),
+        auto_fix_enabled: r.get("auto_fix_enabled"),
+        notification_channels: serde_json::from_value(notification_channels).unwrap_or_default(),
+        max_retries: r.get("max_retries"),
+    }
+}
+
+fn auto_fix_from_row(r: &sqlx::postgres::PgRow) -> AutoFixAction {
+    let before_value: serde_json::Value = r.get("before_value");
+    let after_value: Option<serde_json::Value> = r.get("after_value");
+    AutoFixAction {
+        id: r.get("id"),
+        rule_id: r.get("rule_id"),
+        entity_type: r.get("entity_type"),
+        entity_id: r.get("entity_id"),
+        action_type: action_type_from_str(r.get::<String, _>("action_type").as_str()),
+        before_value,
+        after_value,
+        confidence: r.get("confidence"),
+        status: fix_status_from_str(r.get::<String, _>("status").as_str()),
+        applied_at: r.get("applied_at"),
+    }
+}
+
+fn suggestion_from_row(r: &sqlx::postgres::PgRow) -> GovernanceSuggestion {
+    GovernanceSuggestion {
+        id: r.get("id"),
+        entity_type: r.get("entity_type"),
+        entity_id: r.get("entity_id"),
+        suggestion_type: suggestion_type_from_str(r.get::<String, _>("suggestion_type").as_str()),
+        confidence: r.get("confidence"),
+        rationale: r.get("rationale"),
+        suggested_action: r.get("suggested_action"),
+        ai_model_version: r.get("ai_model_version"),
+        status: {
+            let s = r.get::<String, _>("status");
+            match s.as_str() {
+                "approved" => SuggestionStatus::Approved,
+                "rejected" => SuggestionStatus::Rejected,
+                _ => SuggestionStatus::Pending,
+            }
+        },
+        created_at: r.get("created_at"),
+    }
+}
+
+fn insight_from_row(r: &sqlx::postgres::PgRow) -> GovernanceInsight {
+    let recommendations: serde_json::Value = r.get("recommendations");
+    GovernanceInsight {
+        insight_type: r.get("insight_type"),
+        severity: r.get("severity"),
+        affected_records: r.get("affected_records"),
+        trend_analysis: r.get("trend_analysis"),
+        recommendations: serde_json::from_value(recommendations).unwrap_or_default(),
+    }
 }
 
 #[cfg(test)]
