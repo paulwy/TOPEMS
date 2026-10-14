@@ -419,6 +419,15 @@ pub async fn setup_departments(
     .execute(&mut **txn)
     .await;
 
+    // 4.4 修复：与 company 步同构提交 RLS 事务。中间件逐请求 begin 注入 txn，
+    // 不 commit 则请求结束 txn drop 自动回滚——此前接口返回成功但数据未持久化。
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed (departments): {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
+
     Json(ApiResponse::success(
         serde_json::json!({
             "created_count": created_depts.len(),
@@ -536,6 +545,14 @@ pub async fn setup_positions(
     .bind(org_id)
     .execute(&mut **txn)
     .await;
+
+    // 4.4 修复：提交 RLS 事务（否则请求结束自动回滚）。
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("rls commit failed (positions): {}", e);
+            return Json(ApiResponse::error(500, "提交事务失败"));
+        }
+    }
 
     Json(ApiResponse::success(
         serde_json::json!({
@@ -668,6 +685,14 @@ pub async fn setup_admin_user(
             .execute(&mut **txn)
             .await;
 
+            // 4.4 修复：提交 RLS 事务（否则请求结束自动回滚）。
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed (admin): {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
+
             Json(ApiResponse::success(
                 serde_json::json!({
                     "employee_id": employee.id,
@@ -770,6 +795,14 @@ pub async fn complete_initialization(
             .bind(org_id)
             .execute(&mut **txn)
             .await;
+
+            // 4.4 修复：提交 RLS 事务（否则请求结束自动回滚）。
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("rls commit failed (complete): {}", e);
+                    return Json(ApiResponse::error(500, "提交事务失败"));
+                }
+            }
 
             Json(ApiResponse::success(
                 serde_json::json!({
