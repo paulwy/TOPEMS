@@ -12155,60 +12155,6 @@ ALTER TABLE ONLY iam.audit_logs FORCE ROW LEVEL SECURITY;
 
 
 --
--- Name: core_billing_invoices; Type: TABLE; Schema: iam; Owner: -
---
-
-CREATE TABLE iam.core_billing_invoices (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tenant_id uuid NOT NULL,
-    subscription_id uuid,
-    invoice_number character varying(64) NOT NULL,
-    status character varying(32) DEFAULT 'draft'::character varying,
-    subtotal_cents integer DEFAULT 0,
-    discount_cents integer DEFAULT 0,
-    tax_cents integer DEFAULT 0,
-    total_cents integer DEFAULT 0,
-    period_start date NOT NULL,
-    period_end date NOT NULL,
-    paid_at timestamp with time zone,
-    payment_method character varying(64),
-    payment_reference character varying(256),
-    line_items jsonb DEFAULT '[]'::jsonb,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
-);
-
-
---
--- Name: core_billing_plans; Type: TABLE; Schema: iam; Owner: -
---
-
-CREATE TABLE iam.core_billing_plans (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    code character varying(64) NOT NULL,
-    name character varying(128) NOT NULL,
-    description text,
-    license_type character varying(32) DEFAULT 'subscription'::character varying,
-    price_cents integer DEFAULT 0 NOT NULL,
-    price_period character varying(32) DEFAULT 'monthly'::character varying,
-    included_users integer DEFAULT 5,
-    included_storage_gb bigint DEFAULT 5,
-    included_api_calls bigint DEFAULT 50000,
-    included_modules text[],
-    overage_users_cents integer DEFAULT 500,
-    overage_storage_cents integer DEFAULT 50,
-    overage_api_calls_cents integer DEFAULT 10,
-    is_active boolean DEFAULT true,
-    is_trial boolean DEFAULT false,
-    tenant_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
-);
-
-
---
 -- Name: core_chat_members; Type: TABLE; Schema: iam; Owner: -
 --
 
@@ -12847,27 +12793,6 @@ CREATE TABLE iam.core_roles (
     name character varying(64) NOT NULL,
     description text,
     tenant_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
-);
-
-
---
--- Name: core_subscriptions; Type: TABLE; Schema: iam; Owner: -
---
-
-CREATE TABLE iam.core_subscriptions (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tenant_id uuid NOT NULL,
-    plan_id uuid NOT NULL,
-    status character varying(32) DEFAULT 'active'::character varying,
-    current_period_start date NOT NULL,
-    current_period_end date NOT NULL,
-    is_trial boolean DEFAULT false,
-    trial_ends_at timestamp with time zone,
-    cancelled_at timestamp with time zone,
-    cancel_at_period_end boolean DEFAULT false,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone
@@ -15721,60 +15646,6 @@ ALTER TABLE ONLY mes.capacities FORCE ROW LEVEL SECURITY;
 
 
 --
--- Name: core_billing_invoices; Type: TABLE; Schema: mes; Owner: -
---
-
-CREATE TABLE mes.core_billing_invoices (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tenant_id uuid NOT NULL,
-    subscription_id uuid,
-    invoice_number character varying(64) NOT NULL,
-    status character varying(32) DEFAULT 'draft'::character varying,
-    subtotal_cents integer DEFAULT 0,
-    discount_cents integer DEFAULT 0,
-    tax_cents integer DEFAULT 0,
-    total_cents integer DEFAULT 0,
-    period_start date NOT NULL,
-    period_end date NOT NULL,
-    paid_at timestamp with time zone,
-    payment_method character varying(64),
-    payment_reference character varying(256),
-    line_items jsonb DEFAULT '[]'::jsonb,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
-);
-
-
---
--- Name: core_billing_plans; Type: TABLE; Schema: mes; Owner: -
---
-
-CREATE TABLE mes.core_billing_plans (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    code character varying(64) NOT NULL,
-    name character varying(128) NOT NULL,
-    description text,
-    license_type character varying(32) DEFAULT 'subscription'::character varying,
-    price_cents integer DEFAULT 0 NOT NULL,
-    price_period character varying(32) DEFAULT 'monthly'::character varying,
-    included_users integer DEFAULT 5,
-    included_storage_gb bigint DEFAULT 5,
-    included_api_calls bigint DEFAULT 50000,
-    included_modules text[],
-    overage_users_cents integer DEFAULT 500,
-    overage_storage_cents integer DEFAULT 50,
-    overage_api_calls_cents integer DEFAULT 10,
-    is_active boolean DEFAULT true,
-    is_trial boolean DEFAULT false,
-    tenant_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
-);
-
-
---
 -- Name: core_chat_members; Type: TABLE; Schema: mes; Owner: -
 --
 
@@ -16413,27 +16284,6 @@ CREATE TABLE mes.core_roles (
     name character varying(64) NOT NULL,
     description text,
     tenant_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
-);
-
-
---
--- Name: core_subscriptions; Type: TABLE; Schema: mes; Owner: -
---
-
-CREATE TABLE mes.core_subscriptions (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tenant_id uuid NOT NULL,
-    plan_id uuid NOT NULL,
-    status character varying(32) DEFAULT 'active'::character varying,
-    current_period_start date NOT NULL,
-    current_period_end date NOT NULL,
-    is_trial boolean DEFAULT false,
-    trial_ends_at timestamp with time zone,
-    cancelled_at timestamp with time zone,
-    cancel_at_period_end boolean DEFAULT false,
     created_at timestamp with time zone DEFAULT now(),
     updated_at timestamp with time zone DEFAULT now(),
     deleted_at timestamp with time zone
@@ -23415,60 +23265,6 @@ CREATE TABLE public.core_api_version_configs (
 
 
 --
--- Name: core_billing_invoices; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.core_billing_invoices (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    tenant_id uuid NOT NULL,
-    subscription_id uuid,
-    invoice_number character varying(64) NOT NULL,
-    status character varying(32) DEFAULT 'draft'::character varying,
-    subtotal_cents integer DEFAULT 0,
-    discount_cents integer DEFAULT 0,
-    tax_cents integer DEFAULT 0,
-    total_cents integer DEFAULT 0,
-    period_start date NOT NULL,
-    period_end date NOT NULL,
-    paid_at timestamp with time zone,
-    payment_method character varying(64),
-    payment_reference character varying(256),
-    line_items jsonb DEFAULT '[]'::jsonb,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
-);
-
-
---
--- Name: core_billing_plans; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.core_billing_plans (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    code character varying(64) NOT NULL,
-    name character varying(128) NOT NULL,
-    description text,
-    license_type character varying(32) DEFAULT 'subscription'::character varying,
-    price_cents integer DEFAULT 0 NOT NULL,
-    price_period character varying(32) DEFAULT 'monthly'::character varying,
-    included_users integer DEFAULT 5,
-    included_storage_gb bigint DEFAULT 5,
-    included_api_calls bigint DEFAULT 50000,
-    included_modules text[],
-    overage_users_cents integer DEFAULT 500,
-    overage_storage_cents integer DEFAULT 50,
-    overage_api_calls_cents integer DEFAULT 10,
-    is_active boolean DEFAULT true,
-    is_trial boolean DEFAULT false,
-    tenant_id uuid NOT NULL,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now(),
-    deleted_at timestamp with time zone
-);
-
-
---
 -- Name: core_chat_members; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -23922,30 +23718,10 @@ CREATE TABLE public.core_finance_reconciliation_sessions (
 
 
 --
--- Name: core_finance_voucher_entries; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.core_finance_voucher_entries (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
-);
-
-
---
 -- Name: core_finance_voucher_lines; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.core_finance_voucher_lines (
-    id uuid DEFAULT gen_random_uuid() NOT NULL,
-    deleted_at timestamp with time zone
-);
-
-
---
--- Name: core_finance_voucher_templates; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.core_finance_voucher_templates (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     deleted_at timestamp with time zone
 );
@@ -39626,38 +39402,6 @@ ALTER TABLE ONLY iam.audit_logs
 
 
 --
--- Name: core_billing_invoices core_billing_invoices_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_billing_invoices core_billing_invoices_tenant_id_invoice_number_key; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_tenant_id_invoice_number_key UNIQUE (tenant_id, invoice_number);
-
-
---
--- Name: core_billing_plans core_billing_plans_code_key; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_billing_plans
-    ADD CONSTRAINT core_billing_plans_code_key UNIQUE (code);
-
-
---
--- Name: core_billing_plans core_billing_plans_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_billing_plans
-    ADD CONSTRAINT core_billing_plans_pkey PRIMARY KEY (id);
-
-
---
 -- Name: core_chat_members core_chat_members_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
 --
 
@@ -40031,22 +39775,6 @@ ALTER TABLE ONLY iam.core_roles
 
 ALTER TABLE ONLY iam.core_roles
     ADD CONSTRAINT core_roles_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_subscriptions core_subscriptions_pkey; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_subscriptions
-    ADD CONSTRAINT core_subscriptions_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_subscriptions core_subscriptions_tenant_id_key; Type: CONSTRAINT; Schema: iam; Owner: -
---
-
-ALTER TABLE ONLY iam.core_subscriptions
-    ADD CONSTRAINT core_subscriptions_tenant_id_key UNIQUE (tenant_id);
 
 
 --
@@ -41434,38 +41162,6 @@ ALTER TABLE ONLY mes.capacities
 
 
 --
--- Name: core_billing_invoices core_billing_invoices_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_billing_invoices core_billing_invoices_tenant_id_invoice_number_key; Type: CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_tenant_id_invoice_number_key UNIQUE (tenant_id, invoice_number);
-
-
---
--- Name: core_billing_plans core_billing_plans_code_key; Type: CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_billing_plans
-    ADD CONSTRAINT core_billing_plans_code_key UNIQUE (code);
-
-
---
--- Name: core_billing_plans core_billing_plans_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_billing_plans
-    ADD CONSTRAINT core_billing_plans_pkey PRIMARY KEY (id);
-
-
---
 -- Name: core_chat_members core_chat_members_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
 --
 
@@ -41839,22 +41535,6 @@ ALTER TABLE ONLY mes.core_roles
 
 ALTER TABLE ONLY mes.core_roles
     ADD CONSTRAINT core_roles_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_subscriptions core_subscriptions_pkey; Type: CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_subscriptions
-    ADD CONSTRAINT core_subscriptions_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_subscriptions core_subscriptions_tenant_id_key; Type: CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_subscriptions
-    ADD CONSTRAINT core_subscriptions_tenant_id_key UNIQUE (tenant_id);
 
 
 --
@@ -44874,38 +44554,6 @@ ALTER TABLE ONLY public.core_api_version_configs
 
 
 --
--- Name: core_billing_invoices core_billing_invoices_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_billing_invoices core_billing_invoices_tenant_id_invoice_number_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_tenant_id_invoice_number_key UNIQUE (tenant_id, invoice_number);
-
-
---
--- Name: core_billing_plans core_billing_plans_code_key; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_billing_plans
-    ADD CONSTRAINT core_billing_plans_code_key UNIQUE (code);
-
-
---
--- Name: core_billing_plans core_billing_plans_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_billing_plans
-    ADD CONSTRAINT core_billing_plans_pkey PRIMARY KEY (id);
-
-
---
 -- Name: core_chat_members core_chat_members_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -45170,27 +44818,11 @@ ALTER TABLE ONLY public.core_finance_reconciliation_sessions
 
 
 --
--- Name: core_finance_voucher_entries core_finance_voucher_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_finance_voucher_entries
-    ADD CONSTRAINT core_finance_voucher_entries_pkey PRIMARY KEY (id);
-
-
---
 -- Name: core_finance_voucher_lines core_finance_voucher_lines_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.core_finance_voucher_lines
     ADD CONSTRAINT core_finance_voucher_lines_pkey PRIMARY KEY (id);
-
-
---
--- Name: core_finance_voucher_templates core_finance_voucher_templates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_finance_voucher_templates
-    ADD CONSTRAINT core_finance_voucher_templates_pkey PRIMARY KEY (id);
 
 
 --
@@ -71105,22 +70737,6 @@ ALTER TABLE ONLY mes.bom_items
 
 
 --
--- Name: core_billing_invoices core_billing_invoices_subscription_id_fkey; Type: FK CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_subscription_id_fkey FOREIGN KEY (subscription_id) REFERENCES mes.core_subscriptions(id);
-
-
---
--- Name: core_billing_invoices core_billing_invoices_tenant_id_fkey; Type: FK CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
-
-
---
 -- Name: core_chat_members core_chat_members_room_id_fkey; Type: FK CONSTRAINT; Schema: mes; Owner: -
 --
 
@@ -71222,22 +70838,6 @@ ALTER TABLE ONLY mes.core_role_permissions
 
 ALTER TABLE ONLY mes.core_role_permissions
     ADD CONSTRAINT core_role_permissions_role_id_fkey FOREIGN KEY (role_id) REFERENCES mes.core_roles(id);
-
-
---
--- Name: core_subscriptions core_subscriptions_plan_id_fkey; Type: FK CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_subscriptions
-    ADD CONSTRAINT core_subscriptions_plan_id_fkey FOREIGN KEY (plan_id) REFERENCES mes.core_billing_plans(id);
-
-
---
--- Name: core_subscriptions core_subscriptions_tenant_id_fkey; Type: FK CONSTRAINT; Schema: mes; Owner: -
---
-
-ALTER TABLE ONLY mes.core_subscriptions
-    ADD CONSTRAINT core_subscriptions_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES mes.core_tenants(id);
 
 
 --
@@ -72110,22 +71710,6 @@ ALTER TABLE ONLY public.automation_runs
 
 ALTER TABLE ONLY public.configurations
     ADD CONSTRAINT configurations_version_id_fkey FOREIGN KEY (version_id) REFERENCES public.versions(id);
-
-
---
--- Name: core_billing_invoices core_billing_invoices_subscription_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_subscription_id_fkey FOREIGN KEY (subscription_id) REFERENCES public.core_subscriptions(id);
-
-
---
--- Name: core_billing_invoices core_billing_invoices_tenant_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.core_billing_invoices
-    ADD CONSTRAINT core_billing_invoices_tenant_id_fkey FOREIGN KEY (tenant_id) REFERENCES public.core_tenants(id);
 
 
 --
