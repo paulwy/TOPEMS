@@ -39,7 +39,6 @@ pub mod business_modules;
 pub mod cache;
 pub mod config_center;
 pub mod document_intelligence;
-pub mod event_trigger;
 pub mod governance;
 pub mod governance_dashboard;
 pub mod knowledge_graph;
