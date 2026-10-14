@@ -616,7 +616,11 @@ impl RagEngine {
     }
 
     /// P2-c：注入真实 RAG 检索依赖（pgvector 检索走 ai_knowledge/rag.rs 同构 SQL）
-    pub fn with_pool(mut self, pool: sqlx::PgPool, ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>) -> Self {
+    pub fn with_pool(
+        mut self,
+        pool: sqlx::PgPool,
+        ai_client: Arc<topems_shared_ai::ai_client::UnifiedAIClient>,
+    ) -> Self {
         self.pool = Some(pool);
         self.ai_client = Some(ai_client);
         self
@@ -779,11 +783,16 @@ impl RagEngine {
         limit: i32,
     ) -> Result<Vec<RetrievedDocument>, Box<dyn std::error::Error + Send + Sync>> {
         // 复用 ai_knowledge 的 embedding 生成（不重复造向量）
-        let query_vector = crate::modules::ai_knowledge::document_processor::generate_embedding(ai_client, query).await?;
-        let vector_str = crate::modules::ai_knowledge::document_processor::vector_to_pgvector_string(&query_vector);
+        let query_vector =
+            crate::modules::ai_knowledge::document_processor::generate_embedding(ai_client, query)
+                .await?;
+        let vector_str =
+            crate::modules::ai_knowledge::document_processor::vector_to_pgvector_string(
+                &query_vector,
+            );
 
-        let rows: Vec<(uuid::Uuid, uuid::Uuid, String, String, f64)> = sqlx::query_as(
-            only_own_schema_query!(
+        let rows: Vec<(uuid::Uuid, uuid::Uuid, String, String, f64)> =
+            sqlx::query_as(only_own_schema_query!(
                 "ai",
                 r#"SELECT c.id, c.document_id, d.title, c.content,
                           (1 - (c.embedding <=> $1::vector))::float8 AS score
@@ -793,26 +802,28 @@ impl RagEngine {
                    ORDER BY c.embedding <=> $1::vector
                    LIMIT $2"#,
                 "core"
-            ),
-        )
-        .bind(&vector_str)
-        .bind(limit)
-        .fetch_all(pool)
-        .await?;
+            ))
+            .bind(&vector_str)
+            .bind(limit)
+            .fetch_all(pool)
+            .await?;
 
-        Ok(rows.into_iter().map(|(chunk_id, _doc_id, title, content, score)| {
-            RetrievedDocument {
-                doc_id: chunk_id.to_string(),
-                title,
-                content,
-                source: "knowledge_base".to_string(),
-                score,
-                retrieval_method: "vector".to_string(),
-                original_rank: 0,
-                reranked_rank: None,
-                metadata: HashMap::new(),
-            }
-        }).collect())
+        Ok(rows
+            .into_iter()
+            .map(
+                |(chunk_id, _doc_id, title, content, score)| RetrievedDocument {
+                    doc_id: chunk_id.to_string(),
+                    title,
+                    content,
+                    source: "knowledge_base".to_string(),
+                    score,
+                    retrieval_method: "vector".to_string(),
+                    original_rank: 0,
+                    reranked_rank: None,
+                    metadata: HashMap::new(),
+                },
+            )
+            .collect())
     }
 
     /// 构建上下文

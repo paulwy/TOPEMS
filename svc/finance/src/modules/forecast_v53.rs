@@ -798,7 +798,9 @@ impl BudgetAnalyzer {
             let variance_amount = item.actual_amount - item.budget_amount;
             // 比率字段（百分比）最后一步才转 f64，金额本身不经过 f64。
             let variance_percentage = if item.budget_amount != Decimal::ZERO {
-                (variance_amount / item.budget_amount * Decimal::from(100)).to_f64().unwrap_or(0.0)
+                (variance_amount / item.budget_amount * Decimal::from(100))
+                    .to_f64()
+                    .unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -834,7 +836,9 @@ impl BudgetAnalyzer {
 
         let total_variance = total_actual - total_budget;
         let variance_percentage = if total_budget != Decimal::ZERO {
-            (total_variance / total_budget * Decimal::from(100)).to_f64().unwrap_or(0.0)
+            (total_variance / total_budget * Decimal::from(100))
+                .to_f64()
+                .unwrap_or(0.0)
         } else {
             0.0
         };
@@ -1101,7 +1105,9 @@ impl BudgetAnalyzer {
         let total_actual: Decimal = variances.iter().map(|v| v.actual_amount).sum();
         let total_variance = total_actual - total_budget;
         let variance_percentage = if total_budget != Decimal::ZERO {
-            (total_variance / total_budget * Decimal::from(100)).to_f64().unwrap_or(0.0)
+            (total_variance / total_budget * Decimal::from(100))
+                .to_f64()
+                .unwrap_or(0.0)
         } else {
             0.0
         };
@@ -1168,7 +1174,9 @@ impl BudgetAnalyzer {
             let actual_sum: Decimal = items.iter().map(|v| v.actual_amount).sum();
             let variance_amount = actual_sum - budget_sum;
             let variance_pct = if budget_sum != Decimal::ZERO {
-                (variance_amount / budget_sum * Decimal::from(100)).to_f64().unwrap_or(0.0)
+                (variance_amount / budget_sum * Decimal::from(100))
+                    .to_f64()
+                    .unwrap_or(0.0)
             } else {
                 0.0
             };
@@ -1194,7 +1202,9 @@ impl BudgetAnalyzer {
         }
 
         let average_variance = if count > 0 {
-            (total_variance_sum / Decimal::from(count as i64)).to_f64().unwrap_or(0.0)
+            (total_variance_sum / Decimal::from(count as i64))
+                .to_f64()
+                .unwrap_or(0.0)
         } else {
             0.0
         };

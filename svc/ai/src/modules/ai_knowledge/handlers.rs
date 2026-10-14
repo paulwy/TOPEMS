@@ -317,25 +317,22 @@ pub async fn upload_document(
 
     // P0 防护 B：multipart 握手守卫——首 field 5s 内未出现（空 body / 慢探针 / 截断流）
     // 直接 400 短路，不让空/半拉 body 进入 multer 边界扫描（bytes::advance OOB 依赖层边界）。
-    let mut next_field = match tokio::time::timeout(
-        std::time::Duration::from_secs(5),
-        multipart.next_field(),
-    )
-    .await
-    {
-        // 外层 timeout Result<_, Elapsed>；内层 multipart Result<Option<Field>, MultipartError>
-        Ok(Ok(Some(field))) => Some(field),
-        Ok(Ok(None)) | Ok(Err(_)) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "malformed multipart body: no form field".to_string(),
-            )));
-        }
-        Err(_) => {
-            return Json(ApiResponse::from(TopemsError::ValidationFailed(
-                "multipart handshake timeout: no field within 5s".to_string(),
-            )));
-        }
-    };
+    let mut next_field =
+        match tokio::time::timeout(std::time::Duration::from_secs(5), multipart.next_field()).await
+        {
+            // 外层 timeout Result<_, Elapsed>；内层 multipart Result<Option<Field>, MultipartError>
+            Ok(Ok(Some(field))) => Some(field),
+            Ok(Ok(None)) | Ok(Err(_)) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "malformed multipart body: no form field".to_string(),
+                )));
+            }
+            Err(_) => {
+                return Json(ApiResponse::from(TopemsError::ValidationFailed(
+                    "multipart handshake timeout: no field within 5s".to_string(),
+                )));
+            }
+        };
 
     while let Some(field) = next_field {
         let name = field.name().unwrap_or("").to_string();

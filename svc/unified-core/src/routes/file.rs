@@ -159,7 +159,5 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
         .route("/attachments/{id}", delete(stub_action))
         .route("/attachments/{id}/download", get(stub_list));
 
-    read.merge(write)
-        .merge(delete_routes)
-        .merge(stubs)
+    read.merge(write).merge(delete_routes).merge(stubs)
 }
