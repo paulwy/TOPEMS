@@ -15,6 +15,8 @@ use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
 use tracing::{debug, info};
 
+use topems_shared_boundary::only_own_schema_query;
+
 // ============================================================================
 // 类型定义
 // ============================================================================
@@ -781,13 +783,17 @@ impl RagEngine {
         let vector_str = crate::modules::ai_knowledge::document_processor::vector_to_pgvector_string(&query_vector);
 
         let rows: Vec<(uuid::Uuid, uuid::Uuid, String, String, f64)> = sqlx::query_as(
-            r#"SELECT c.id, c.document_id, d.title, c.content,
-                      (1 - (c.embedding <=> $1::vector))::float8 AS score
-               FROM core.knowledge_chunks c
-               JOIN core.knowledge_documents d ON d.id = c.document_id
-               WHERE c.embedding IS NOT NULL AND d.status = 'ready'
-               ORDER BY c.embedding <=> $1::vector
-               LIMIT $2"#,
+            only_own_schema_query!(
+                "ai",
+                r#"SELECT c.id, c.document_id, d.title, c.content,
+                          (1 - (c.embedding <=> $1::vector))::float8 AS score
+                   FROM core.knowledge_chunks c
+                   JOIN core.knowledge_documents d ON d.id = c.document_id
+                   WHERE c.embedding IS NOT NULL AND d.status = 'ready'
+                   ORDER BY c.embedding <=> $1::vector
+                   LIMIT $2"#,
+                "core"
+            ),
         )
         .bind(&vector_str)
         .bind(limit)

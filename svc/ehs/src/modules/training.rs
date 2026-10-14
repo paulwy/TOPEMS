@@ -232,6 +232,7 @@ pub async fn get_training(
     request_body = serde_json::Value,
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn update_training(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
@@ -483,6 +484,7 @@ pub async fn get_training_record(
     request_body = serde_json::Value,
     responses((status = 200, description = "OK")),
 )]
+#[allow(clippy::as_conversions, clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
 pub async fn update_training_record(
     State(_state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,

@@ -1139,6 +1139,7 @@ impl BudgetAnalyzer {
         Ok(Self::detect_anomalies_internal(&variances))
     }
 
+    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     pub async fn get_trends(
         pool: &PgPool,
         entity_id: Option<String>,
