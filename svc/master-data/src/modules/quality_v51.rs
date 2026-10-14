@@ -116,6 +116,25 @@ pub struct QualityRule {
     pub updated_at: String,
 }
 
+/// A 试点：把 `master_data.mdm_quality_rules` 行映射为对外契约 `QualityRule`。
+/// id/created_at/updated_at 保持字符串契约（UUID→String、timestamptz→RFC3339），
+/// 与既有内存 Store 时期序列化结果一致，前端无感。
+fn rule_row_to_api(row: &sqlx::postgres::PgRow) -> QualityRule {
+    use sqlx::Row;
+    QualityRule {
+        id: row.get::<uuid::Uuid, _>("id").to_string(),
+        name: row.get("name"),
+        entity_type: row.get("entity_type"),
+        rule_type: row.get("rule_type"),
+        description: row.get("description"),
+        severity: row.get("severity"),
+        parameters: row.get("parameters"),
+        enabled: row.get("enabled"),
+        created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
+        updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at").to_rfc3339(),
+    }
+}
+
 // ==================== 自动修复 ====================
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -960,12 +979,27 @@ pub async fn get_quality_check_results(
     ),
 )]
 pub async fn list_quality_rules(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Json<ApiResponse<Vec<QualityRule>>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let rules = store.quality_rules.lock().await;
-    Json(ApiResponse::success(rules.clone(), "质量规则列表"))
+    // A 试点：直查关系表 master_data.mdm_quality_rules（不再走内存集合快照）。
+    match sqlx::query(
+        r#"SELECT id, name, entity_type, rule_type, description, severity,
+                  parameters, enabled, created_at, updated_at
+           FROM master_data.mdm_quality_rules
+           ORDER BY updated_at DESC"#,
+    )
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(rows) => Json(ApiResponse::success(
+            rows.iter().map(rule_row_to_api).collect(),
+            "质量规则列表",
+        )),
+        Err(e) => {
+            tracing::error!("查询质量规则失败: {e}");
+            Json(ApiResponse::error(500, "查询质量规则失败"))
+        }
+    }
 }
 
 #[utoipa::path(
@@ -979,31 +1013,35 @@ pub async fn list_quality_rules(
     ),
 )]
 pub async fn create_quality_rule(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Json(req): Json<CreateQualityRuleRequest>,
 ) -> Json<ApiResponse<QualityRule>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let mut rules = store.quality_rules.lock().await;
-
-    let now = chrono::Utc::now().to_rfc3339();
-    let rule = QualityRule {
-        id: uuid::Uuid::new_v4().to_string(),
-        name: req.name,
-        entity_type: req.entity_type,
-        rule_type: req.rule_type,
-        description: req.description,
-        severity: req.severity.unwrap_or_else(|| "warning".to_string()),
-        parameters: req.parameters.unwrap_or_default(),
-        enabled: true,
-        created_at: now.clone(),
-        updated_at: now,
-    };
-
-    rules.push(rule.clone());
-    // B10: 写时同步直写（SIGKILL 不丢近写）——后台 3s flush 仅作兜底。
-    crate::modules::persist::save("quality_v51", "quality_rules", &*rules).await;
-    Json(ApiResponse::success(rule, "质量规则已创建"))
+    let id = uuid::Uuid::new_v4();
+    let severity = req.severity.unwrap_or_else(|| "warning".to_string());
+    let parameters = req.parameters.unwrap_or_default();
+    match sqlx::query(
+        r#"INSERT INTO master_data.mdm_quality_rules
+               (id, name, entity_type, rule_type, description, severity, parameters, enabled)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+           RETURNING id, name, entity_type, rule_type, description, severity,
+                     parameters, enabled, created_at, updated_at"#,
+    )
+    .bind(id)
+    .bind(&req.name)
+    .bind(&req.entity_type)
+    .bind(&req.rule_type)
+    .bind(&req.description)
+    .bind(&severity)
+    .bind(&parameters)
+    .fetch_one(&state.db)
+    .await
+    {
+        Ok(row) => Json(ApiResponse::success(rule_row_to_api(&row), "质量规则已创建")),
+        Err(e) => {
+            tracing::error!("创建质量规则失败: {e}");
+            Json(ApiResponse::error(500, "创建质量规则失败"))
+        }
+    }
 }
 #[utoipa::path(
     get,
@@ -1017,15 +1055,27 @@ pub async fn create_quality_rule(
 )]
 
 pub async fn get_quality_rule(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<QualityRule>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let rules = store.quality_rules.lock().await;
-    match rules.iter().find(|r| r.id == id) {
-        Some(r) => Json(ApiResponse::success(r.clone(), "质量规则详情")),
-        None => Json(ApiResponse::error(404, "未找到质量规则")),
+    let Ok(id) = uuid::Uuid::parse_str(&id) else {
+        return Json(ApiResponse::error(404, "未找到质量规则"));
+    };
+    match sqlx::query(
+        r#"SELECT id, name, entity_type, rule_type, description, severity,
+                  parameters, enabled, created_at, updated_at
+           FROM master_data.mdm_quality_rules WHERE id = $1"#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(row)) => Json(ApiResponse::success(rule_row_to_api(&row), "质量规则详情")),
+        Ok(None) => Json(ApiResponse::error(404, "未找到质量规则")),
+        Err(e) => {
+            tracing::error!("查询质量规则详情失败: {e}");
+            Json(ApiResponse::error(500, "查询质量规则详情失败"))
+        }
     }
 }
 #[utoipa::path(
@@ -1040,39 +1090,41 @@ pub async fn get_quality_rule(
 )]
 
 pub async fn update_quality_rule(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
     Json(req): Json<UpdateQualityRuleRequest>,
 ) -> Json<ApiResponse<QualityRule>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let mut rules = store.quality_rules.lock().await;
-    let Some(rule) = rules.iter_mut().find(|r| r.id == id) else {
+    let Ok(id) = uuid::Uuid::parse_str(&id) else {
         return Json(ApiResponse::error(404, "未找到质量规则"));
     };
-
-    if let Some(name) = req.name {
-        rule.name = name;
+    match sqlx::query(
+        r#"UPDATE master_data.mdm_quality_rules SET
+               name = COALESCE($2, name),
+               description = COALESCE($3, description),
+               severity = COALESCE($4, severity),
+               parameters = COALESCE($5, parameters),
+               enabled = COALESCE($6, enabled),
+               updated_at = now()
+           WHERE id = $1
+           RETURNING id, name, entity_type, rule_type, description, severity,
+                     parameters, enabled, created_at, updated_at"#,
+    )
+    .bind(id)
+    .bind(&req.name)
+    .bind(&req.description)
+    .bind(&req.severity)
+    .bind(&req.parameters)
+    .bind(req.enabled)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(row)) => Json(ApiResponse::success(rule_row_to_api(&row), "质量规则已更新")),
+        Ok(None) => Json(ApiResponse::error(404, "未找到质量规则")),
+        Err(e) => {
+            tracing::error!("更新质量规则失败: {e}");
+            Json(ApiResponse::error(500, "更新质量规则失败"))
+        }
     }
-    if let Some(desc) = req.description {
-        rule.description = desc;
-    }
-    if let Some(sev) = req.severity {
-        rule.severity = sev;
-    }
-    if let Some(params) = req.parameters {
-        rule.parameters = params;
-    }
-    if let Some(enabled) = req.enabled {
-        rule.enabled = enabled;
-    }
-    rule.updated_at = chrono::Utc::now().to_rfc3339();
-    let updated = rule.clone();
-    // 结束可变借用（NLL 已自动结束），允许同步直写
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("quality_v51", "quality_rules", &*rules).await;
-    Json(ApiResponse::success(updated, "质量规则已更新"))
 }
 
 #[utoipa::path(
@@ -1089,22 +1141,26 @@ pub async fn update_quality_rule(
     tag = "quality_v51"
 )]
 pub async fn delete_quality_rule(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
-    ensure_initialized().await;
-    let store = get_quality_v51_store();
-    let mut rules = store.quality_rules.lock().await;
-    let len_before = rules.len();
-    rules.retain(|r| r.id != id);
-
-    if rules.len() == len_before {
+    let Ok(id) = uuid::Uuid::parse_str(&id) else {
         return Json(ApiResponse::error(404, "未找到质量规则"));
+    };
+    match sqlx::query("DELETE FROM master_data.mdm_quality_rules WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await
+    {
+        Ok(res) if res.rows_affected() > 0 => {
+            Json(ApiResponse::success_no_data("质量规则已删除"))
+        }
+        Ok(_) => Json(ApiResponse::error(404, "未找到质量规则")),
+        Err(e) => {
+            tracing::error!("删除质量规则失败: {e}");
+            Json(ApiResponse::error(500, "删除质量规则失败"))
+        }
     }
-
-    // B10: 写时同步直写（SIGKILL 不丢近写）。
-    crate::modules::persist::save("quality_v51", "quality_rules", &*rules).await;
-    Json(ApiResponse::success_no_data("质量规则已删除"))
 }
 
 // ==================== 处理器：质量评分与仪表盘 ====================

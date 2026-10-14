@@ -129,7 +129,31 @@ async fn main() -> anyhow::Result<()> {
         modules::master_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
+    // B10 优雅退出钩子：SIGTERM/Ctrl+C 到达后、进程退出前再全量 flush 一次，
+    // 兜底 3s ticker 窗口内未落库的快照（HTTP 写已由 flush_on_write 中间件同步落库）。
+    let shutdown_flusher = tokio::spawn(async {
+        #[cfg(unix)]
+        {
+            use tokio::signal::unix::{signal, SignalKind};
+            let mut term = signal(SignalKind::terminate()).expect("安装 SIGTERM 监听");
+            tokio::select! {
+                _ = tokio::signal::ctrl_c() => {}
+                _ = term.recv() => {}
+            }
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = tokio::signal::ctrl_c().await;
+        }
+        tracing::info!("📩 收到停机信号，退出前 flush 全部 MDM 快照...");
+        modules::flush_all().await;
+        tracing::info!("✅ 退出前 flush 完成");
+    });
+
     run(app).await?;
+
+    // run() 已完成优雅停机；给退出前 flush 最多 5s 收尾（已完成则立即返回）。
+    let _ = tokio::time::timeout(std::time::Duration::from_secs(5), shutdown_flusher).await;
     Ok(())
 }
 
@@ -163,7 +187,7 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
         "topems-master-data",
         modules,
         "1.0.0",
-        serde_json::json!({}),
+        serde_json::json!({ "persist_enabled": modules::persist::enabled() }),
     )
     .await;
     Json(ApiResponse::success(resp, "Detailed health check"))

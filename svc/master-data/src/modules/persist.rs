@@ -11,8 +11,9 @@
 //! * **best-effort**：未注入连接池（如纯函数单测）或写库失败时只记 warn、不 panic、不
 //!   改变既有内存行为——保证所有既有纯逻辑测试零改动通过。
 //! * **无接口契约影响**：持久化完全旁路在内存 Store 之外，handler 响应结构不变。
-//! * 落库语义：启动 load-on-boot 恢复快照；运行期由后台 flush 任务近实时回写，
-//!   正常重启后数据仍在（硬杀进程的 <=flush 窗口丢失为已知残留，R2 可改同步直写）。
+//! * 落库语义：启动 load-on-boot 恢复快照；运行期由后台 flush 任务近实时回写。
+//!   B10 起 HTTP 写经 `flush_on_write` 中间件同步落库（写请求 ack 前已落库）；
+//!   本层为 best-effort 快照，非事务权威存储。
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
