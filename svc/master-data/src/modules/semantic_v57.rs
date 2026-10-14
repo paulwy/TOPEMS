@@ -195,18 +195,6 @@ impl EnhancedKnowledgeGraph {
         (sub_nodes, sub_edges)
     }
 
-    #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
-    async fn compute_embeddings(&self) -> i64 {
-        let mut nodes = self.nodes.lock().await;
-        let count = nodes.len() as i64;
-        for node in nodes.iter_mut() {
-            if node.embeddings.is_empty() {
-                node.embeddings = generate_simulated_embedding(&node.label, &node.node_type);
-            }
-        }
-        count
-    }
-
     #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
     async fn detect_communities(&self) -> Vec<GraphCommunity> {
         let mut nodes = self.nodes.lock().await;
@@ -1147,11 +1135,6 @@ pub struct SubgraphQuery {
     pub node_ids: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ComputeEmbeddingsRequest {
-    pub node_ids: Option<Vec<String>>,
-}
-
 // --- 搜索请求 ---
 
 #[derive(Debug, Deserialize)]
@@ -1413,34 +1396,6 @@ pub async fn get_subgraph(
             "edge_count": edges.len() as i64,
         }),
         "子图数据",
-    ))
-}
-
-#[utoipa::path(
-    post,
-    security(("BearerAuth" = ["master_data:semantic:write"])),
-    path = "/mdm-v57/graph/embeddings",
-    responses(
-        (status = 200, description = "OK", body = serde_json::Value),
-        (status = 500, description = "Internal server error")
-    ),
-    tag = "semantic_v57"
-)]
-pub async fn compute_embeddings_handler(
-    State(_state): State<AppState>,
-    Json(_req): Json<ComputeEmbeddingsRequest>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    ensure_initialized().await;
-    let store = get_v57_store();
-
-    let count = store.graph.compute_embeddings().await;
-
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "nodes_processed": count,
-            "status": "completed",
-        }),
-        "嵌入计算已完成",
     ))
 }
 

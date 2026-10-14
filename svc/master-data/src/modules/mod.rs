@@ -348,10 +348,6 @@ pub fn create_routes() -> Router<AppState> {
                 // 静态提取折叠尾段兜底（待上游支持）
                 .route("/graph/subgraph/{tail}", get(contract_fallbacks::ok))
                 .route(
-                    "/graph/embeddings",
-                    post(semantic_v57::compute_embeddings_handler),
-                )
-                .route(
                     "/graph/communities",
                     post(semantic_v57::detect_communities_handler),
                 )

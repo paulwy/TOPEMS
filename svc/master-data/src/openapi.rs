@@ -350,7 +350,6 @@ fn _detailed_health() {}
         crate::modules::semantic_v57::get_neighbors,
         crate::modules::semantic_v57::get_community,
         crate::modules::semantic_v57::find_shortest_path_handler,
-        crate::modules::semantic_v57::compute_embeddings_handler,
         crate::modules::semantic_v57::detect_communities_handler,
         crate::modules::semantic_v57::index_entity,
         crate::modules::semantic_v57::search_semantic_handler,
