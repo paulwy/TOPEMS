@@ -1696,7 +1696,8 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - erp 902 测试全绿；门禁 error-handling / rls-permissions exit 0；cargo check 通过。
 - E2E：租户 0001 仅见自己数据 ✓；超管（nil 上下文）全量 ✓；测试数据已清理。
 
-**遗留（后续批次候选）**：
-- `dict_cache`（erp 进程内）缓存 key 仅基于 claims.tenant_id，不区分 RLS 上下文（超管/租户共享缓存 key，超管可能命中租户缓存视图）——需缓存 key 纳入 RLS 上下文或按角色隔离。
-- audit 完整租户注入：当前 audit 走 pool 连接（无请求级 current_setting），COALESCE 兜底落 nil；要落操作者租户需 log_audit_event 传入 claims.tenant_id（46 处调用面改造）。
-- dict 行级归档保护（archive_marks）表不存在，归档检查为空实现，删除放行。
+**遗留三件套 → 已修复（2026-10-15 本批）**：
+- ① dict_cache RLS 隔离 ✅：dict_cache_key 区分超管（`...:super:all`）与普通（`...:{claims.tenant_id|default}:all`）；list 用新 key；create/update/delete 失效循环清双视图；Redis L2 脏缓存（旧进程 `0001:all`=45）清理后超管 45 / 租户 1 验证通过。
+- ② audit 落操作者租户 ✅：AuditEventParams.tenant_id: Option<String> + log_audit_event 解构 → with_tenant_id；46 处构造点贯传 claims.tenant_id（24 个 handler 补 Extension(claims)，4 文件补 use Claims）；实测租户 create → audit tenant_id=0001。
+- ③ dict 归档保护评估：archive_marks 无消费方、表不存在 → **不实现建表**。顺带修复真实缺口：dict_items 归档检查引用错误列名 type_id（真实列 dict_type_id，原检查从未生效）+ 触发器缺 DELETE 事件 → 函数改用 dict_type_id（OLD/NEW）+ dict_items 触发器重建为 INSERT OR UPDATE OR DELETE；实测归档父类型下项 INSERT/UPDATE/DELETE 全拒、正常项可删。
+- audit_logs 历史测试残留（entity_id=000...99 的 47 条）已清。

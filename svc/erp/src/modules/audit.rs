@@ -20,6 +20,10 @@ pub struct AuditEventParams {
     pub entity_type: String,
     pub entity_id: Option<Uuid>,
     pub entity_ids: Option<serde_json::Value>,
+    /// 操作者租户（来自 claims.tenant_id，String 形式；写入时解析为 UUID）。
+    /// audit 写入走 pool 连接（无请求级 current_setting），必须显式传递租户，
+    /// 否则兜底落 nil（服务级）。
+    pub tenant_id: Option<String>,
     pub user_id: Option<String>,
     pub user_name: Option<String>,
     pub request_details: Option<serde_json::Value>,
@@ -199,6 +203,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
         entity_type,
         entity_id,
         entity_ids,
+        tenant_id,
         user_id,
         user_name,
         request_details,
@@ -224,6 +229,12 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
     }
     if let Some(eids) = entity_ids {
         req = req.with_entity_ids(eids);
+    }
+    if let Some(tid) = tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
+        req = req.with_tenant_id(tid);
     }
     if user_id.is_some() || user_name.is_some() {
         req = req.with_user(user_id.unwrap_or_default(), user_name.unwrap_or_default());

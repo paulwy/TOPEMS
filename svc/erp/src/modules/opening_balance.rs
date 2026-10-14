@@ -14,6 +14,7 @@ use crate::models::finance::AccountingSubject;
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_auth::auth::Claims;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct OpeningBalance {
@@ -179,6 +180,7 @@ pub async fn create_opening_balance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let mut guard = txn_arc.lock().await;
@@ -263,6 +265,7 @@ pub async fn create_opening_balance(
             entity_type: "opening_balance".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -336,6 +339,7 @@ pub async fn update_opening_balance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateOpeningBalanceRequest>,
 ) -> Json<ApiResponse<OpeningBalance>> {
     let mut guard = txn_arc.lock().await;
@@ -426,6 +430,7 @@ pub async fn update_opening_balance(
             entity_type: "opening_balance".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -455,6 +460,8 @@ pub async fn delete_opening_balance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
+
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -517,6 +524,7 @@ pub async fn delete_opening_balance(
             entity_type: "opening_balance".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: None,
@@ -544,6 +552,7 @@ pub async fn import_opening_balances(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<Vec<CreateOpeningBalanceRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
@@ -613,6 +622,7 @@ pub async fn import_opening_balances(
             entity_type: "opening_balance".to_string(),
             entity_id: None,
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -656,6 +666,7 @@ pub async fn carry_forward_opening_balance(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CarryForwardRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let mut guard = txn_arc.lock().await;
@@ -720,6 +731,7 @@ pub async fn carry_forward_opening_balance(
             entity_type: "opening_balance".to_string(),
             entity_id: None,
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,

@@ -15,6 +15,7 @@ use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
+use topems_shared_auth::auth::Claims;
 
 #[derive(Debug, Deserialize)]
 pub struct SupplyQueryParams {
@@ -132,6 +133,7 @@ pub async fn create_supply(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateOfficeSupplyRequest>,
 ) -> Json<ApiResponse<OfficeSupply>> {
     let mut guard = txn_arc.lock().await;
@@ -199,6 +201,7 @@ pub async fn create_supply(
             entity_type: "office_supply".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -282,6 +285,7 @@ pub async fn update_supply(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateOfficeSupplyRequest>,
 ) -> Json<ApiResponse<OfficeSupply>> {
     let mut guard = txn_arc.lock().await;
@@ -373,6 +377,7 @@ pub async fn update_supply(
             entity_type: "office_supply".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -406,6 +411,8 @@ pub async fn delete_supply(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
+
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -466,6 +473,7 @@ pub async fn delete_supply(
             entity_type: "office_supply".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: None,

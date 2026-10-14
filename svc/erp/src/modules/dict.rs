@@ -201,6 +201,45 @@ pub fn create_routes() -> Router<ApiState> {
     clippy::cast_possible_wrap,
     clippy::cast_sign_loss
 )]
+/// 字典类型列表缓存 key（RLS 上下文隔离）。
+///
+/// 超管（nil 上下文 → 全量视图）与普通租户（tenant_id 视图）不共享缓存 key，
+/// 否则超管会命中租户缓存视图。取值与 `tenant_middleware` 的 rls_tenant 同源：
+/// superuser → 全量（`super` 上下文），否则 → claims.tenant_id（或 "default"）。
+fn dict_cache_key(claims: &Claims) -> String {
+    if claims.is_superuser {
+        "erp:dict_type:dict:super:all".to_string()
+    } else {
+        format!(
+            "erp:dict_type:dict:{}:all",
+            claims
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "default".to_string())
+        )
+    }
+}
+
+/// 字典类型缓存失效涉及的 key 集合：super 全量视图 + 当前租户视图。
+/// dict 变更（create/update/delete）可能同时影响超管全量视图与所在租户视图，
+/// 两处都失效；第三方租户视图经 `publish_cache_invalidated("erp:dict_type:*")`
+/// 事件广播兜底清理。
+fn dict_cache_invalidation_keys(claims: &Claims) -> Vec<String> {
+    let mut keys = vec![dict_cache_key(claims)];
+    if claims.is_superuser {
+        keys.push(format!(
+            "erp:dict_type:dict:{}:all",
+            claims
+                .tenant_id
+                .clone()
+                .unwrap_or_else(|| "default".to_string())
+        ));
+    } else {
+        keys.push("erp:dict_type:dict:super:all".to_string());
+    }
+    keys
+}
+
 pub async fn list_dict_types(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
@@ -223,11 +262,9 @@ pub async fn list_dict_types(
     let status_filter = params.status.clone();
 
     // 构建缓存 Key（遵循统一命名规范：{service}:{entity}:{operation}:{tenant_id}:{params}）
-    let tenant_id = claims
-        .tenant_id
-        .clone()
-        .unwrap_or_else(|| "default".to_string());
-    let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
+    // RLS 上下文隔离：超管（nil 全量视图）与普通租户视图不共享缓存 key，
+    // 否则超管会命中租户缓存视图（见 TODO「dict_cache 缓存 key 不区分 RLS 上下文」修复）。
+    let cache_key = dict_cache_key(&claims);
 
     if search_pattern.is_none()
         && category_filter.is_none()
@@ -378,14 +415,11 @@ pub async fn create_dict_type(
                     )));
                 }
             }
-            // 失效当前租户的字典类型缓存
-            let tenant_id = claims
-                .tenant_id
-                .clone()
-                .unwrap_or_else(|| "default".to_string());
-            let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
-            state.dict_cache.remove(&cache_key).await;
-            tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+            // 失效字典类型缓存：super 全量视图 + 当前租户视图
+            for cache_key in dict_cache_invalidation_keys(&claims) {
+                state.dict_cache.remove(&cache_key).await;
+                tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+            }
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
@@ -436,6 +470,7 @@ pub async fn create_dict_type(
             entity_type: "dict_type".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -576,14 +611,11 @@ pub async fn update_dict_type(
                     )));
                 }
             }
-            // 失效当前租户的字典类型缓存
-            let tenant_id = claims
-                .tenant_id
-                .clone()
-                .unwrap_or_else(|| "default".to_string());
-            let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
-            state.dict_cache.remove(&cache_key).await;
-            tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+            // 失效字典类型缓存：super 全量视图 + 当前租户视图
+            for cache_key in dict_cache_invalidation_keys(&claims) {
+                state.dict_cache.remove(&cache_key).await;
+                tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+            }
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
@@ -633,6 +665,7 @@ pub async fn update_dict_type(
             entity_type: "dict_type".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -690,14 +723,11 @@ pub async fn delete_dict_type(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => {
-            // 失效当前租户的字典类型缓存
-            let tenant_id = claims
-                .tenant_id
-                .clone()
-                .unwrap_or_else(|| "default".to_string());
-            let cache_key = format!("erp:dict_type:dict:{}:all", tenant_id);
-            state.dict_cache.remove(&cache_key).await;
-            tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+            // 失效字典类型缓存：super 全量视图 + 当前租户视图
+            for cache_key in dict_cache_invalidation_keys(&claims) {
+                state.dict_cache.remove(&cache_key).await;
+                tracing::debug!("🗑️ 字典类型缓存已失效: {}", cache_key);
+            }
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
             if let Some(ref publisher) = state.event_publisher {
@@ -764,6 +794,7 @@ pub async fn delete_dict_type(
             entity_type: "dict_type".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: None,
@@ -869,6 +900,7 @@ pub async fn create_dict_item(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<CreateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
     let mut guard = txn_arc.lock().await;
@@ -942,6 +974,7 @@ pub async fn create_dict_item(
             entity_type: "dict_item".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -1015,6 +1048,7 @@ pub async fn update_dict_item(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
     let mut guard = txn_arc.lock().await;
@@ -1116,6 +1150,7 @@ pub async fn update_dict_item(
             entity_type: "dict_item".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,
@@ -1145,6 +1180,8 @@ pub async fn delete_dict_item(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
+
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -1207,6 +1244,7 @@ pub async fn delete_dict_item(
             entity_type: "dict_item".to_string(),
             entity_id: Some(id),
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: None,
@@ -1235,6 +1273,7 @@ pub async fn batch_create_dict_items(
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<BatchCreateDictItemRequest>,
 ) -> Json<ApiResponse<Vec<DictItem>>> {
     let mut guard = txn_arc.lock().await;
@@ -1291,6 +1330,7 @@ pub async fn batch_create_dict_items(
             entity_type: "dict_item".to_string(),
             entity_id: None,
             entity_ids: None,
+            tenant_id: claims.tenant_id,
             user_id: None,
             user_name: None,
             request_details: request_data,

@@ -13,20 +13,31 @@
 -- 的 UPDATE/DELETE 报 "record new has no field type_id"；② 引用 erp.archive_marks
 -- （该表不存在）→ 任何触发均失败。本函数仅保留 dict_items 的父类型归档检查；
 -- dict_types 无父类型概念，直接放行。
+-- 行级归档（archive_marks）无消费方、表不存在，评估后不实现（见 TODO）。
+-- DELETE 分支：NEW 为 NULL（RETURN NEW 会静默取消删除，RETURN OLD 放行），
+-- 用 OLD.dict_type_id 做父类型归档检查，归档字典下的项禁止删除，与 UPDATE/INSERT 一致。
 CREATE OR REPLACE FUNCTION prevent_archived_dict_write() RETURNS trigger AS $$
 DECLARE
     check_type_id uuid;
 BEGIN
-    -- BEFORE DELETE：NEW 为 NULL，RETURN NEW 会静默取消删除；RETURN OLD 放行。
-    -- （行级归档保护当前未实现：archive_marks 表不存在，删除放行与现状一致）
     IF TG_OP = 'DELETE' THEN
+        IF TG_TABLE_NAME = 'dict_items' THEN
+            check_type_id := OLD.dict_type_id;
+            IF EXISTS (
+                SELECT 1 FROM erp.dict_types dt
+                WHERE dt.id = check_type_id
+                AND dt.status = 'archived'
+            ) THEN
+                RAISE EXCEPTION 'Cannot modify archived dictionary items. HR dictionary data is managed by HRM service.';
+            END IF;
+        END IF;
         RETURN OLD;
     END IF;
-    -- NEW.type_id 先赋值到局部变量再参与子查询：PL/pgSQL 对 SQL 子查询中的
-    -- record 字段引用在语句准备期解析，若直接写 NEW.type_id 即使被分支包裹
-    -- 也会在 dict_types 上抛 "record new has no field type_id"。
+    -- NEW.dict_type_id 先赋值到局部变量再参与子查询：PL/pgSQL 对 SQL 子查询中的
+    -- record 字段引用在语句准备期解析，若直接写 NEW.dict_type_id 即使被分支包裹
+    -- 也会在 dict_types 上抛 "record new has no field dict_type_id"。
     IF TG_TABLE_NAME = 'dict_items' THEN
-        check_type_id := NEW.type_id;
+        check_type_id := NEW.dict_type_id;
         IF EXISTS (
             SELECT 1 FROM erp.dict_types dt
             WHERE dt.id = check_type_id
@@ -39,6 +50,15 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- ---- 1.5 触发器事件补全：dict_items 增加 DELETE 事件 ----
+-- 原触发器仅 BEFORE INSERT OR UPDATE，归档父类型下的项仍可物理删除；
+-- 补 DELETE 事件使归档保护覆盖增/改/删（函数 DELETE 分支用 OLD.dict_type_id）。
+-- 注意：触发器属主为表 owner（topems_app），需以 owner 执行本段。
+DROP TRIGGER IF EXISTS trigger_prevent_archived_dict_items_write ON erp.dict_items;
+CREATE TRIGGER trigger_prevent_archived_dict_items_write
+BEFORE INSERT OR UPDATE OR DELETE ON erp.dict_items
+FOR EACH ROW EXECUTE FUNCTION prevent_archived_dict_write();
 
 -- ---- 1. 全表租户回填（NULL → zero）----
 DO $$
