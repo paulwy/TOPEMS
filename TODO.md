@@ -821,6 +821,8 @@
 
 ### 📋 剩余登记
 - **BE-02 后续**：组织计数真实接线需 hrm 主数据（当前 0 行）；租户 GUC 口径（handler 读 app.current_tenant vs 中间件写 app.tenant_id）为既有语义，未改；userGrowth/activityTypes 演示数据未动（点名范围外）
+  - ✅ **hrm 组织主数据已填充（2026-10-14 决策批 4.4）**：公司「图宇科技」（种子公司 UPDATE）+ 5 部门（研发/产品/运营/行政/财务）+ 7 岗位 + 1 管理员员工（EMP0001 系统管理员），tenant_id/org_id=000...001，已 psql 复核 depts=5/positions=7/employees=7/companies=1。填充脚本 `scripts/hrm_setup_fill.py`（铸租户 token + 4 步向导序列，含 .env/JWT/调用序列）。
+  - ⚠️ **发现向导接线缺陷（未在本批修，登记）**：`svc/hrm/src/modules/setup.rs` 仅 `setup_company_info`（:288）对 RLS 事务 `guard.take().commit()`；departments/positions/admin_user 三步从不 commit，handler 返回即回滚——live 调接口虽返回 created_count 但不落库。另 `hrm.employees` RLS 策略无 nil 租户豁免，超管 token（tenant_middleware 置 nil）插员工会 28P/RLS 拒绝。本批遂以「事务内 SET LOCAL app.tenant_id + 显式 tenant_id 一次性装载」达成数据落地（非 seed 迁移、未建 erp 同步）；向导三步 commit 缺失建议单独修（补 guard.take().commit() 与 company 步同构）。
 - **FE-17 后续**：snakeCaseParams 全量启用需逐服务验证后端吃 page_size（当前仅 wms；回滚=移除 Set 中服务名）；desktop 401 目前整页跳转（未接 zustand store 实例，循环依赖规避）；shared-utils 本包 vitest 接线为预存环境问题（用 tsc build 等价验证）
 - **WCS 手动回归（2026-10-12 已实跑，见下节）**：BFF(8099) 离线时门禁 SKIP（仓库设计），建议重启后 `python3 scripts/web_contract_smoke.py`
 
