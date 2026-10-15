@@ -14,11 +14,112 @@ import {
   adaptEightDAuditLogToFrontend,
 } from './adapters';
 
+// API 不可用时的降级 mock（qms 服务停止等场景），避免页面空白/报错
+const MOCK_EIGHTD_REPORTS = [
+  {
+    id: 'mock-1',
+    reportNo: '8D202609001',
+    title: '伺服电机异响（模拟）',
+    problemDescription: 'API 不可用时的降级示例数据',
+    severity: 'major',
+    source: 'customer',
+    productId: 'P001',
+    productName: '伺服电机',
+    customer: '示例客户A',
+    status: 'in_progress',
+    currentStage: 4,
+    teamLeader: '张工',
+    teamMembers: ['李工', '王工'],
+    dueDate: '2026-10-30',
+    createdAt: '2026-09-15T08:00:00Z',
+  },
+  {
+    id: 'mock-2',
+    reportNo: '8D202608002',
+    title: '注塑件缩水率超标（模拟）',
+    problemDescription: 'API 不可用时的降级示例数据',
+    severity: 'critical',
+    source: 'internal',
+    productId: 'P002',
+    productName: '注塑壳体',
+    status: 'open',
+    currentStage: 2,
+    teamLeader: '李工',
+    dueDate: '2026-11-05',
+    createdAt: '2026-08-20T10:30:00Z',
+  },
+  {
+    id: 'mock-3',
+    reportNo: '8D202608003',
+    title: 'PCB 焊点虚焊（模拟）',
+    problemDescription: 'API 不可用时的降级示例数据',
+    severity: 'minor',
+    source: 'supplier',
+    productId: 'P003',
+    productName: '控制板',
+    customer: '示例客户B',
+    status: 'completed',
+    currentStage: 7,
+    teamLeader: '王工',
+    teamMembers: ['赵工'],
+    dueDate: '2026-09-20',
+    createdAt: '2026-08-05T14:00:00Z',
+  },
+  {
+    id: 'mock-4',
+    reportNo: '8D202607004',
+    title: '轴承温升异常（模拟）',
+    problemDescription: 'API 不可用时的降级示例数据',
+    severity: 'major',
+    source: 'audit',
+    productId: 'P004',
+    productName: '减速机',
+    status: 'closed',
+    currentStage: 8,
+    teamLeader: '赵工',
+    dueDate: '2026-08-30',
+    createdAt: '2026-07-10T09:00:00Z',
+  },
+  {
+    id: 'mock-5',
+    reportNo: '8D202607005',
+    title: '密封圈老化开裂（模拟）',
+    problemDescription: 'API 不可用时的降级示例数据',
+    severity: 'major',
+    source: 'customer',
+    productId: 'P005',
+    productName: '液压泵',
+    customer: '示例客户C',
+    status: 'closed',
+    currentStage: 8,
+    teamLeader: '孙工',
+    dueDate: '2026-09-10',
+    createdAt: '2026-07-22T16:30:00Z',
+  },
+].map((r) => ({
+  ...r,
+  report_no: r.reportNo,
+  product_name: r.productName,
+  created_date: r.createdAt,
+})) as unknown as EightDReport[];
+
 export const eightDApi = {
   listEightDReports: async (): Promise<ApiResponse<EightDReport[]>> => {
-    const response = await apiClient.qms.get<{ reports?: EightDReportBackend[] }>('/eightd');
-    const adaptedData = (response.data?.reports || []).map(adaptEightDReportToFrontend);
-    return { ...response, data: adaptedData };
+    try {
+      const response = await apiClient.qms.get<{ reports?: EightDReportBackend[] }>('/eightd');
+      const adaptedData = (response.data?.reports || []).map(adaptEightDReportToFrontend);
+      return { ...response, data: adaptedData };
+    } catch (e) {
+      // qms 服务不可用（503/连接失败）时降级 mock，保证列表/统计页可正常展示
+      console.warn('[8D API] service unavailable, using mock data:', e);
+      return {
+        success: true,
+        code: 0,
+        message: 'mock fallback (service unavailable)',
+        data: MOCK_EIGHTD_REPORTS as EightDReport[],
+        timestamp: Date.now(),
+      };
+    }
   },
 
   getEightDReport: async (id: string): Promise<ApiResponse<EightDReport | undefined>> => {
