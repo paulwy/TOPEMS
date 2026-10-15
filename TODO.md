@@ -1938,3 +1938,13 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - set_config 收敛：全仓 `set_config('app.tenant_id', $1, false)` 事务内 5 处（mes event_handlers/work_report/production_order×2 + erp production_order）改 true（SET LOCAL，事务结束自动恢复）；剩余 2 处评估不强行改：mes work_report:633 独占连接 SET nil（放行语义）、ai after_connect 连接级默认租户（AI 模块设计）
 - portal 编译修复：portal_plugin.rs auto_register_to_core 参数 `_core_url`→`core_url`（远端 014389ecf 引入的 E0425，blocked build）
 - 编译：unified-core check 通过 + mes/erp check 通过 + topems-server build 通过（Mach-O 188MB）
+
+## 方案C 批2-H：create_role 租户绑定确认（实测闭环）+ 批2-A finance DELETE 实测
+- 状态：create_role 已确认（无需改动）；finance DELETE 实测进行中
+- create_role 复核：已有 Extension<Claims> + INSERT 含 tenant_id（$4 bind，超管 nil / 否则 claims.tenant_id 兜底 nil）——批2-C「系统级定义」登记过时，实测：superuser 创建落 nil、tenant 创建落 0001，测试数据已清理
+- add_role_permission 维持系统级 skip（core_role_permissions 无 tenant_id + RLS 关）
+
+- 批2-A finance DELETE 端到端实测（闭环）：构造临时 voucher（0001 + c51c3a73 租户各 1，draft，含 lines），tenant 0001 走 PUT /api/finance/vouchers/{id}：
+  - 更新本租户 voucher → 200，DELETE 本租户旧 lines（物理删）+ 重插 50/50（existing 查询 WHERE tenant_id=$1 AND id=$2 + DELETE WHERE voucher_id=$1 AND tenant_id=$2 均生效）
+  - 更新他租户 voucher → 404 记录不存在（existing 查询租户约束拦截），他租户 lines 原样（100/100）——不越权，DELETE 约束为纵深防御
+  - 测试数据已清理（0 残留）；update_payment/generate_vouchers 同模式（代码审查确认租户约束完整），payment 流程依赖发票数据未单独实测，登记待补
