@@ -2125,3 +2125,8 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 软删路径已带 tenant_id（delete_device 等）非缺口；ai delete_document 已带 `($2::uuid IS NULL OR tenant_id=$2)` 非缺口
 - 复核：gis check 0 error；SQL 事务内实测 5 表（真实行保真，各表行租户不同逐一按其租户）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+
+## 方案C 批2-Zi：pm 14 处（写路径租户约束）
+- 状态：代码已修改（pm check 通过 0 error），待提交
+- pm 14 处（projects / project_phases UPDATE+DELETE / project_members UPDATE+DELETE / project_milestones UPDATE+DELETE / project_expenses UPDATE+DELETE / budgets / budget_items UPDATE+DELETE / acceptance_items UPDATE+DELETE）：无 Claims，统一内联 current_setting
+- 复核：pm check 0 error；SQL 事务内实测 8 表（projects 用真实行 3e5da2a2，空表插关联链——budgets→budget_items、acceptance_plans→acceptance_items，bitems/aitems 的 id 无默认显式给，aitems 行须带 tenant_id 否则本租户 UPDATE 0）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留

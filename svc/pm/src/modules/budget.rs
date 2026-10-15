@@ -246,7 +246,7 @@ async fn update_budget(
             total_amount = COALESCE($3, total_amount),
             status = COALESCE($4, status),
             updated_at = $5
-        WHERE id = $6 RETURNING *"
+        WHERE id = $6 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.budget_name)
     .bind(req.budget_type)
@@ -581,7 +581,7 @@ async fn update_budget_item(
             budget_amount = COALESCE($4, budget_amount),
             description = COALESCE($5, description),
             updated_at = $6
-        WHERE id = $7 AND budget_id = $8 RETURNING *"
+        WHERE id = $7 AND budget_id = $8 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.item_name)
     .bind(req.category)
@@ -616,7 +616,7 @@ async fn delete_budget_item(
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.budget_items WHERE id = $1 AND budget_id = $2"
+        "DELETE FROM pm.budget_items WHERE id = $1 AND budget_id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(item_id)
     .bind(id)

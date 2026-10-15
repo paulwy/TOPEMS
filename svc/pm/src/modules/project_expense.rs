@@ -222,7 +222,7 @@ async fn update_expense(
             status = COALESCE($5, status),
             approver = COALESCE($6, approver),
             updated_at = $7
-        WHERE project_id = $8 AND id = $9
+        WHERE project_id = $8 AND id = $9 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -270,7 +270,7 @@ async fn remove_expense(
 ) -> Json<ApiResponse<bool>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2"
+        "DELETE FROM pm.project_expenses WHERE project_id = $1 AND id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(project_id)
     .bind(id)

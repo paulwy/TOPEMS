@@ -393,7 +393,7 @@ async fn update_plan_item(
             is_passed = COALESCE($2, is_passed),
             comments = COALESCE($3, comments),
             updated_at = $4
-        WHERE id = $5 RETURNING *"
+        WHERE id = $5 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.actual_result)
     .bind(req.is_passed)
@@ -425,7 +425,7 @@ async fn delete_plan_item(
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.acceptance_items WHERE id = $1"
+        "DELETE FROM pm.acceptance_items WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
     .execute(&pool)

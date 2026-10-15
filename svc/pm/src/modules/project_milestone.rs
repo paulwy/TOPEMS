@@ -219,7 +219,7 @@ async fn update_milestone(
             phase_id = COALESCE($5, phase_id),
             acceptance_criteria = COALESCE($6, acceptance_criteria),
             updated_at = $7
-        WHERE project_id = $8 AND id = $9
+        WHERE project_id = $8 AND id = $9 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -267,7 +267,7 @@ async fn delete_milestone(
 ) -> Json<ApiResponse<bool>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_milestones WHERE project_id = $1 AND id = $2"
+        "DELETE FROM pm.project_milestones WHERE project_id = $1 AND id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(project_id)
     .bind(id)

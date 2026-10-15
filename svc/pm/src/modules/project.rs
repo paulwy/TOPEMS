@@ -471,7 +471,7 @@ async fn update_project(
             workspace_id = COALESCE($14, workspace_id),
             name_en = COALESCE($15, name_en),
             updated_at = $16
-        WHERE id = $17
+        WHERE id = $17 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id,
                   CASE WHEN $18 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, description, project_type, status, leader, start_date, end_date,

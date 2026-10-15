@@ -193,7 +193,7 @@ async fn update_member(
             start_date = COALESCE($3, start_date),
             end_date = COALESCE($4, end_date),
             updated_at = $5
-        WHERE project_id = $6 AND id = $7
+        WHERE project_id = $6 AND id = $7 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -239,7 +239,7 @@ async fn delete_member(
 ) -> Json<ApiResponse<bool>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_members WHERE project_id = $1 AND id = $2"
+        "DELETE FROM pm.project_members WHERE project_id = $1 AND id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(project_id)
     .bind(id)
