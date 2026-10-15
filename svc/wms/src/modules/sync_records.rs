@@ -318,10 +318,11 @@ pub async fn create_sync_record(
                 SET status = 'success', total_count = 0, success_count = 0,
                     failed_count = 0, skipped_count = 0, completed_at = NOW(),
                     duration_seconds = 0, updated_at = NOW()
-                WHERE id = $1
+                WHERE id = $1 AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id = $2::uuid)
                 "#
             ))
             .bind(rid)
+            .bind(tenant_id)
             .execute(&mut **txn)
             .await;
             if let Some(t) = guard.take() {

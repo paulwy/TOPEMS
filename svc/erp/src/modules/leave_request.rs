@@ -576,7 +576,7 @@ pub async fn update_leave_request(
             leave_type = $2, start_date = $3, end_date = $4,
             start_half_day = $5, end_half_day = $6, days = $7, reason = $8,
             updated_at = $9
-        WHERE id::TEXT = $1::TEXT
+        WHERE id::TEXT = $1::TEXT AND tenant_id = $10::uuid
         RETURNING id, employee_id, employee_name, leave_type, start_date, end_date,
                   start_half_day, end_half_day, days, reason, status,
                   approved_by, approved_at, rejected_reason, tenant_id, created_at, updated_at
@@ -591,6 +591,7 @@ pub async fn update_leave_request(
     .bind(days)
     .bind(&reason)
     .bind(now)
+    .bind(tenant)
     .fetch_one(&mut **txn)
     .await;
 

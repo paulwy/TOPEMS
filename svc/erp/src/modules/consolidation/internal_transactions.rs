@@ -190,7 +190,7 @@ pub async fn execute_elimination(
                 r#"
                 UPDATE erp.internal_transactions
                 SET elimination_status = 'eliminated', eliminated_amount = amount
-                WHERE id = $1
+                WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                 "#,
             )
             .bind(tx.id)

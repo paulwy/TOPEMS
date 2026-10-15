@@ -2065,3 +2065,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - inventory_alert.rs 3 处（update_alert_rule $9 / delete_alert_rule $2 / confirm_alert_record $4）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件
 - 复核：wms check 0 error；SQL 事务内实测（空表插测试行）——两表本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-Y：低频散点 4 处（写路径租户约束）
+- 状态：代码已修改（wms/hrm/erp check 通过 0 error），待提交
+- wms.sync_records 1 处（create_sync_record 内状态 UPDATE）：Claims 已有，复用 tenant_bind 变量补 $2 租户
+- hrm.departments 1 处（delete_department 软删）：Claims 已有，补 tenant_filter + $2 租户
+- erp.leave_requests 1 处（update_leave_request）：Claims 已有且前置 SELECT 已租户化（tenant 变量同源），UPDATE 补 $10 租户
+- erp.internal_transactions 1 处（execute_elimination 循环消除 UPDATE）：无 Claims（txn 内部流程），内联 current_setting 租户条件
+- 甄别跳过（已租户化，非缺口）：scm supplier_admission/purchase_contract/price_comparison/incoming_inspection（WHERE 已含租户）、wms.replenishment_order_items（已含）、hrm.employees（tenant_id=$2 已有）、scm.suppliers event_handlers（内部事件同步，无 Claims，RLS 兜底）
+- 复核：三服务 check 0 error；SQL 事务内实测——sync_records/departments 用真实行、leave_requests/internal_transactions 空表插测试行，4 表本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

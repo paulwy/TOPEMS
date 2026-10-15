@@ -459,11 +459,17 @@ pub async fn delete_department(
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
-        "UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE hrm.departments SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
