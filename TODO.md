@@ -2060,3 +2060,8 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - master_data_version.rs 1 处（rollback_to_version 回滚 UPDATE）：无 Claims，同样内联
 - 复核：erp check 0 error；SQL 事务内实测真实行（master_data_id=emp-…，tenant 0001）——本租户 UPDATE 1 / 他租户越权 0，ROLLBACK 零残留（真实行未触碰）
 
+## 方案C 批2-X：wms.inventory_alert_rules 2 处 + wms.inventory_alert_records 1 处（写路径租户约束）
+- 状态：代码已修改（wms check 通过 0 error），待提交
+- inventory_alert.rs 3 处（update_alert_rule $9 / delete_alert_rule $2 / confirm_alert_record $4）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件
+- 复核：wms check 0 error；SQL 事务内实测（空表插测试行）——两表本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

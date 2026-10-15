@@ -1195,6 +1195,11 @@ pub async fn update_alert_rule(
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1207,7 +1212,7 @@ pub async fn update_alert_rule(
             enabled = COALESCE($6, enabled),
             remarks = COALESCE($7, remarks),
             updated_at = $8
-        WHERE id = $1
+        WHERE id = $1 AND ($9::uuid IS NULL OR tenant_id = $9::uuid)
         RETURNING *
         "#
     ))
@@ -1219,6 +1224,7 @@ pub async fn update_alert_rule(
     .bind(req.enabled)
     .bind(&req.remarks)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1320,12 +1326,18 @@ pub async fn delete_alert_rule(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.inventory_alert_rules SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE wms.inventory_alert_rules SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -1595,6 +1607,11 @@ pub async fn confirm_alert_record(
     }
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1603,13 +1620,14 @@ pub async fn confirm_alert_record(
             status = 'confirmed',
             remarks = COALESCE(remarks || ' | ' || $2, $2),
             updated_at = $3
-        WHERE id = $1
+        WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         RETURNING *
         "#
     ))
     .bind(id)
     .bind(req.notes.unwrap_or_else(|| "已确认".to_string()))
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
