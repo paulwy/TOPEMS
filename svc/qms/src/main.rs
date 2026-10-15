@@ -138,12 +138,12 @@ async fn main() -> anyhow::Result<()> {
                 r#"
                 SELECT json_build_object(
                     'items', COALESCE(json_agg(t), '[]'::json),
-                    'total', (SELECT COUNT(*) FROM quality_standards WHERE deleted_at IS NULL),
+                    'total', (SELECT COUNT(*) FROM qms.qa_standards WHERE deleted_at IS NULL),
                     'page', 1,
                     'page_size', 20
                 ) as data
                 FROM (
-                    SELECT qs.* FROM quality_standards qs
+                    SELECT qs.* FROM qms.qa_standards qs
                     WHERE qs.deleted_at IS NULL
                     ORDER BY qs.created_at DESC
                     LIMIT 20 OFFSET 0
