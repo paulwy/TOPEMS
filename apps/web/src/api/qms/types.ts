@@ -983,6 +983,8 @@ export interface EightDAuditLogBackend {
 export interface EightDReport {
   id: string;
   reportNo: string;
+  /** 后端字段名兼容（旧版 CrudPage schema 用 report_no 渲染报告编号列） */
+  report_no?: string;
   title: string;
   problemDescription: string;
   severity: string;

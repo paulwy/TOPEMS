@@ -302,6 +302,7 @@ export const adaptCostTrendItemToFrontend = (backend: CostTrendItemBackend): Cos
 export const adaptEightDReportToFrontend = (backend: EightDReportBackend): EightDReport => ({
   id: backend.id,
   reportNo: backend.report_no,
+  report_no: backend.report_no,
   title: backend.title,
   problemDescription: backend.problem_description,
   severity: backend.severity,
