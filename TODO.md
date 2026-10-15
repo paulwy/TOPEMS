@@ -2144,3 +2144,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - wms 17 处（outbound_order_items×2 / inbound_order_items×3 / wave_pick_items×2 / serial_numbers×5 / stock_take_items×3 / slotting_suggestions×2）：无 Claims，统一内联 current_setting
 - 扫描甄别补充：wms replenishment_rules/safety_stock_settings/replenishment_suggestions 位于 schema_defense.rs（防御层，非业务 handler）skip；wms data_sync.rs outbound_orders 内部同步 skip；crm customer_segmentation.rs:317 扫描误报（customer_segments 无 tenant_id 列）skip
 - 复核：三服务 check 0 error；SQL 事务内实测——crm contacts/customers 用真实行（本租户 UPDATE 1 / 他租户越权 0）、erp_mappings 'default' 租户 DELETE 1 / 他租户 0、wms 6 空表插关联链（outbound_orders→items、inbound_orders→items、wave_picks→items、stock_takes→items，warehouse_id 须真实 FK 22662b98，wave_pick_items 用 remarks 列 / serial_numbers 用 remark / slotting 用 reason）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+
+## 方案C 批2-Zl：hrm + erp + mobile 并行批 30 处（写路径租户约束）
+- 状态：代码已修改（hrm/erp/mobile 三服务并行 check 均 0 error），分服务独立 commit
+- hrm 18 处（attendance_records / companies / job_openings×2 / training_plans×2 / training_records×2 / salary_adjustments×2 / leave_records×3 含软删 / departments / performance_reviews×2 / payroll_runs×2）：无 Claims，统一内联 current_setting
+- erp 11 处（fixed_assets / assets / dict_types / dict_items / opening_balances / company_relations×2 含软删 / consolidation_scope_companies×2 含软删 / consolidation_scopes×2 含软删）：无 Claims，统一内联 current_setting
+- mobile 1 处（core_mobile_offline_records）：无 Claims，统一内联 current_setting
+- skip（甄别）：hrm setup.rs initialization_status 5 处已带 `($N::uuid IS NULL OR tenant_id=$N::uuid)` 非缺口；hrm contract.rs 4 处/erp leave_request.rs 5 处/erp internal_transactions/erp consolidation_reports 442/543/604 已带租户条件非缺口；erp_production_orders、analytics.report_execution_records 无 tenant_id 列平台表 skip
+- 复核：三服务 check 0 error；SQL 事务内实测 19 表（companies/departments/erp.assets/erp.dict_types 真实行——asset/dtype 为 nil 租户行按 nil 会话测；空表插行：hrm 8 表 + erp 6 表 + mobile 1 表，注意 opening_balances.period 为 varchar(6)、leave_records 用 reason 列、performance_reviews 用 comments 列）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
