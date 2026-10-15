@@ -406,16 +406,22 @@ pub async fn update_stock_take(
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let existing = sqlx::query_as::<_, StockTake>(only_own_schema_query!(
         "wms",
         r#"
         SELECT id, tenant_id, warehouse_id, location_id, stock_take_number, status, 
                planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at 
-        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL
+        FROM wms.stock_takes WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
+    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -440,7 +446,7 @@ pub async fn update_stock_take(
         only_own_schema_query!("wms", r#"
         UPDATE wms.stock_takes SET
             warehouse_id = $2, location_id = $3, status = $4, actual_date = $5, remarks = $6, updated_at = $7
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL AND ($8::uuid IS NULL OR tenant_id = $8::uuid)
         RETURNING id, tenant_id, warehouse_id, location_id, stock_take_number, status, 
                   planned_date as start_time, actual_date as end_time, remarks, created_at, updated_at
         "#),
@@ -452,6 +458,7 @@ pub async fn update_stock_take(
     .bind(end_time)
     .bind(&remarks)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -530,11 +537,17 @@ pub async fn delete_stock_take(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+        r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -625,6 +638,11 @@ pub async fn start_stock_take(
         Err(e) => return e,
     }
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
@@ -643,11 +661,12 @@ pub async fn start_stock_take(
         r#"
         UPDATE wms.stock_takes SET
             status = 'in_progress', actual_date = $1::date, updated_at = $1::timestamptz
-        WHERE id = $2 AND status = 'planned' AND deleted_at IS NULL
+        WHERE id = $2 AND status = 'planned' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
     .bind(now.date_naive())
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut *tx)
     .await;
 
@@ -1414,6 +1433,11 @@ pub async fn complete_stock_take(
         Err(e) => return e,
     }
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
@@ -1476,7 +1500,7 @@ pub async fn complete_stock_take(
             discrepancy_quantity = $6,
             accuracy_rate = $7,
             updated_at = $8
-        WHERE id = $9 AND deleted_at IS NULL
+        WHERE id = $9 AND deleted_at IS NULL AND ($10::uuid IS NULL OR tenant_id = $10::uuid)
         "#
     ))
     .bind(total_items)
@@ -1488,6 +1512,7 @@ pub async fn complete_stock_take(
     .bind(accuracy_rate)
     .bind(now)
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut *tx)
     .await;
 
@@ -1662,11 +1687,12 @@ pub async fn adjust_stock_take(
             adjusted_by = 'system',
             adjustment_date = $1::date,
             updated_at = $1::timestamptz
-        WHERE id = $2 AND deleted_at IS NULL
+        WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
     .bind(now.date_naive())
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut *tx)
     .await;
 

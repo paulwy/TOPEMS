@@ -2048,3 +2048,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - skip：core.core_plugins 7 处（plugin-registry：install_plugin_inner install_count / publish / unpublish / update / upgrade / rollback / versioning）——平台/全局插件目录表：插件定义全局共享（SELECT 无租户过滤），install_count/version/is_published 均为跨租户全局语义，加租户约束会破坏功能
 - 复核：integration check 0 error；SQL 事务内实测（空表插测试行）——core_inter_module_sync 本租户 UPDATE 1 / 他租户越权 0，ROLLBACK 零残留
 
+## 方案C 批2-V：wms.stock_take.rs 5 处（写路径租户约束）
+- 状态：代码已修改（wms check 通过 0 error），待提交
+- stock_take.rs 5 处（update_stock_take $8 + 前置 SELECT $2 / delete_stock_take $2 / start_stock_take $3 / complete_stock_take $10 / adjust_stock_take $3）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件；update 前置 SELECT 顺手加租户（tenant_filter 提前到函数开头）
+- 已确认：adjust 内 inventory UPDATE（$5）批2-K 已租户化；inbound_order.rs / inventory.rs 相关 UPDATE 批2-K 已覆盖（逐处核对）
+- 复核：wms check 0 error；SQL 事务内实测（空表插测试行）——stock_takes 本租户 UPDATE 1 / 他租户越权 0，ROLLBACK 零残留
+
