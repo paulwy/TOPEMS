@@ -1761,3 +1761,18 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 **提交（5 批，未推送）**：
 - `698a40206` qms（11+1）→ `55027bc4a` integration → `8b5bd51ed` hrm（25）→ `888f07151` unified-core（13）→ `5b38796cf` rd/crm（2）
 - 基线：727da5a7b（origin main）；推送待用户指令。
+
+---
+
+## RLS 357 表 migration 批（2026-10-15）
+
+**背景**：420 张有 tenant_id 未开 RLS 清单（artifacts/rls_missing_tables.txt）经豁免推导 → 337 真缺口候选（83 豁免：5 备份 + 43 public.qa_ehs 旧套 + 2 系统表 + 33 无引用死表）。
+
+**实施（migration 75/76，live DB 已执行 + 已登记 _sqlx_migrations）**：
+- 75：topems owner 38 张（MIGRATE_URL 执行）。
+- 76：topems_app owner 227 张（DATABASE_URL 执行；剔除 9 张 core 全局系统表：tenant_id 全 NULL 无租户语义，回填 nil 会破坏租户可见性——其 policy 首轮已建，NULL 行经 `tenant_id IS NULL` 分支全量可见，行为不变）。
+- 每表 ENABLE RLS + CREATE/ALTER POLICY tenant_isolation_<t>（uuid 列 `::UUID` 比较；varchar/text 列按 text 比较，9 张自动适配）+ FORCE；断言 policy 存在 + NULL=0 全过。
+- 回填：mes.production_schedules 50 行 NULL→nil。
+- **ehs 双套归属**：ehs.qa_ehs_* 权威（代码显式 ehs. 前缀），其中 5 张未开已并入本批开齐；public.qa_ehs_* 43 张旧残留死表（0 行无引用）豁免不开。
+
+**结果**：337 目标中 274 张已开 RLS + policy；63 张 air owner 死表豁免（0 行开发残留，仅 iam.tenant_users 2 行测试数据，记录为已知缺口待人工）。明细见 artifacts/rls_tenant_policy_batch_20261015.txt。
