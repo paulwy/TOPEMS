@@ -304,14 +304,11 @@ const QmsInspectionPage: React.FC = () => {
     mutationFn: async (data: Partial<Inspection>) => {
       try {
         await inspectionApi.createCheck({
-          check_no: (data as any).check_no,
+          inspection_type: (data as any).inspection_type ?? 'incoming',
           product_name: (data as any).product_name,
-          batch_no: (data as any).batch_no,
-          check_type: (data as any).check_type,
-          status: data.status,
-          inspector: (data as any).inspector,
-          check_date: (data as any).check_date,
-          result: (data as any).result,
+          standard_id: (data as any).standard_id,
+          quantity: Number((data as any).quantity ?? 100),
+          created_by: (data as any).created_by,
         } as any);
       } catch (e) {
         console.warn('[QMS Inspections] Create API unavailable, using mock create:', e);
@@ -333,9 +330,10 @@ const QmsInspectionPage: React.FC = () => {
     mutationFn: async ({ id, data }: { id: string; data: Partial<Inspection> }) => {
       try {
         await inspectionApi.updateCheck(id, {
-          status: data.status,
-          result: (data as any).result,
-          inspector: (data as any).inspector,
+          inspection_type: (data as any).inspection_type,
+          product_name: (data as any).product_name,
+          standard_id: (data as any).standard_id,
+          quantity: data.quantity !== undefined ? Number(data.quantity) : undefined,
         } as any);
       } catch (e) {
         console.warn('[QMS Inspections] Update API unavailable, using mock update:', e);
