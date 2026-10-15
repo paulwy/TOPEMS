@@ -178,7 +178,7 @@ impl GovernanceAIEngine {
         db: &PgPool,
         id: &str,
     ) -> Result<Option<GovernanceSuggestionV59>, TopemsError> {
-        let row = sqlx::query("DELETE FROM master_data.mdm_ai_suggestions WHERE id = $1 RETURNING id, type, entity_type, entity_id, description, confidence, action, created_at")
+        let row = sqlx::query("DELETE FROM master_data.mdm_ai_suggestions WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, type, entity_type, entity_id, description, confidence, action, created_at")
             .bind(id)
             .fetch_optional(db)
             .await?;
@@ -203,7 +203,7 @@ impl GovernanceAIEngine {
             "UPDATE master_data.mdm_ai_models
              SET accuracy = LEAST(accuracy + 0.05, 0.99),
                  last_trained = $1
-             WHERE id = $2
+             WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
              RETURNING id, name, version, domain, accuracy, last_trained, features",
         )
         .bind(chrono::Utc::now().to_rfc3339())

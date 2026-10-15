@@ -585,13 +585,13 @@ impl LineageTracker {
             return Err(TopemsError::BusinessLogic("未找到血缘节点".to_string()));
         }
 
-        sqlx::query("DELETE FROM master_data.mdm_lineage_nodes WHERE id = $1")
+        sqlx::query("DELETE FROM master_data.mdm_lineage_nodes WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
             .bind(node_id)
             .execute(db)
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("删除血缘节点失败: {e}")))?;
         sqlx::query(
-            "DELETE FROM master_data.mdm_lineage_edges WHERE from_node_id = $1 OR to_node_id = $1",
+            "DELETE FROM master_data.mdm_lineage_edges WHERE (from_node_id = $1 OR to_node_id = $1) AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(node_id)
         .execute(db)

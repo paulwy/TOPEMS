@@ -458,7 +458,7 @@ impl MDMWorkflowEngine {
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(
-            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1",
+            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
@@ -528,7 +528,7 @@ impl MDMWorkflowEngine {
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(
-            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1",
+            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
@@ -611,7 +611,7 @@ impl MDMWorkflowEngine {
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(
-            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1",
+            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())
@@ -673,7 +673,7 @@ impl MDMWorkflowEngine {
             .await
             .map_err(|e| TopemsError::BusinessLogic(format!("开启事务失败: {e}")))?;
         sqlx::query(
-            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1",
+            "UPDATE master_data.mdm_workflows SET steps = $2, status = $3, updated_at = $4 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(workflow_id)
         .bind(serde_json::to_value(&workflow.steps).unwrap_or_default())

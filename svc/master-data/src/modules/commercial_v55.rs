@@ -702,7 +702,7 @@ pub async fn cancel_subscription(
     // K1：写真表 master_data.mdm_subscriptions（UPDATE...RETURNING，无行 404）。
     let row = sqlx::query(&format!(
         r#"UPDATE master_data.mdm_subscriptions SET status = 'cancelled'
-           WHERE id = $1
+           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))
            RETURNING {SUBSCRIPTION_COLS}"#,
     ))
     .bind(&id)

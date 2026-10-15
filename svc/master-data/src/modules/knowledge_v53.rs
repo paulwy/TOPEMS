@@ -1157,7 +1157,7 @@ impl AssetCatalogManager {
             r#"UPDATE master_data.mdm_assets SET
                name = $2, description = $3, tags = $4, quality_score = $5,
                access_level = $6, updated_at = $7
-               WHERE id = $1"#,
+               WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         )
         .bind(id)
         .bind(&asset.name)

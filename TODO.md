@@ -2095,3 +2095,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - crm 1（remove_profile_tags DELETE）：有 Claims + txn，补 tenant_filter
 - 复核：integration/unified-core/crm check 0 error；SQL 事务内实测（空表插测试行，conversion 先插 rule、customer_tags 用真实 customer/tag FK）——7 表本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-Zd：master-data 散点 11 处（写路径租户约束）
+- 状态：代码已修改（master-data check 通过 0 error），待提交
+- master-data 11 处（disaster_v56 recovery_plans / knowledge_v53 assets / ai_governance_v59 ai_suggestions DELETE+ai_models / commercial_v55 subscriptions / lineage_v52 lineage_nodes+edges DELETE / governance_v58 workflows×4）：无 Claims（tenant_middleware 即 RLS 注入），统一内联 current_setting
+- 类型适配：mdm_subscriptions.tenant_id 为 text（非 uuid）——内联条件用 text 版（不 ::UUID cast）；其余 7 表 uuid 版。master_data 共 5 表 tenant_id text（billing_records/sla_incidents/sla_measurements/subscriptions/usage_records），后续批注意
+- 复核：master-data check 0 error；SQL 事务内实测（真实行保真 / 空表插测试行）——8 表本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

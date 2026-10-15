@@ -1020,7 +1020,7 @@ pub async fn execute_plan(
     let rpo_minutes = plan.rpo_minutes;
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1"#,
+        r#"UPDATE master_data.mdm_recovery_plans SET status = $2, steps = $3 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&plan_id)
     .bind(recovery_plan_status_to_str(&plan.status))
