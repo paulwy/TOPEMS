@@ -527,7 +527,7 @@ pub async fn submit_review(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
         SET status = 'submitted', updated_at = $2
-        WHERE id = $1 AND status = 'draft'
+        WHERE id = $1 AND status = 'draft' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )
@@ -588,7 +588,7 @@ pub async fn approve_review(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.performance_reviews
         SET status = 'approved', updated_at = $2
-        WHERE id = $1 AND status = 'submitted'
+        WHERE id = $1 AND status = 'submitted' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, employee_id, review_period, reviewer_id, status, overall_rating, self_rating, manager_rating, final_rating, comments, created_at, updated_at
         "#)
     )

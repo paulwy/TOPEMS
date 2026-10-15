@@ -363,7 +363,7 @@ pub async fn update_department(
         UPDATE hrm.departments SET
             tenant_id = $2, organization_id = $3, name = $4, code = $5, parent_id = $6, manager_id = $7,
             description = $8, status = $9, updated_at = $10, name_en = COALESCE($11, name_en)
-        WHERE id = $1
+        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, tenant_id, organization_id AS org_id,
                   CASE WHEN $12 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, parent_id, manager_id, description, status, created_at, updated_at

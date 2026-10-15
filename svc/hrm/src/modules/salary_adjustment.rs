@@ -445,7 +445,7 @@ pub async fn approve_salary_adjustment(
             approver_id = $1,
             approval_date = NOW(),
             updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, tenant_id, employee_id, NULL as employee_name, NULL as department,
                   adjustment_type, previous_salary AS old_salary, new_salary, adjustment_amount,
                   reason, effective_date::timestamptz AS effective_date, status,
@@ -509,7 +509,7 @@ pub async fn reject_salary_adjustment(
             approver_id = $1,
             rejection_reason = $2,
             updated_at = NOW()
-        WHERE id = $3
+        WHERE id = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, tenant_id, employee_id, NULL as employee_name, NULL as department,
                   adjustment_type, previous_salary AS old_salary, new_salary, adjustment_amount,
                   reason, effective_date::timestamptz AS effective_date, status,

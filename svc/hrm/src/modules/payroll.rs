@@ -486,7 +486,7 @@ pub async fn calculate_payroll_run(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
         SET status = 'calculated', total_amount = $2, employee_count = $3, updated_at = $4
-        WHERE id = $1 AND status = 'draft'
+        WHERE id = $1 AND status = 'draft' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )
@@ -595,7 +595,7 @@ pub async fn pay_payroll_run(
         only_own_schema_query!("hrm", r#"
         UPDATE hrm.payroll_runs
         SET status = 'paid', paid_at = $2, updated_at = $2
-        WHERE id = $1 AND status = 'calculated'
+        WHERE id = $1 AND status = 'calculated' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, pay_period, status, total_amount, employee_count, paid_at, created_at, updated_at
         "#)
     )
