@@ -234,24 +234,35 @@ pub async fn update_safety_stock(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
-                "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
-                "material_code": row.try_get::<String, _>("material_code").ok(),
-                "material_name": row.try_get::<String, _>("material_name").ok(),
-                "specification": row.try_get::<Option<String>, _>("specification").ok(),
-                "safety_stock": row.try_get::<f64, _>("safety_stock").ok(),
-                "reorder_point": row.try_get::<f64, _>("reorder_point").ok(),
-                "max_stock": row.try_get::<Option<f64>, _>("max_stock").ok(),
-                "safety_factor": row.try_get::<Option<f64>, _>("safety_factor").ok(),
-                "lead_time_days": row.try_get::<Option<i32>, _>("lead_time_days").ok(),
-                "consumption_days": row.try_get::<Option<i32>, _>("consumption_days").ok(),
-                "updated_at": now.to_string(),
-            }),
-            "更新安全库存设置成功",
-        )),
+        Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "id": row.try_get::<Uuid, _>("id").ok(),
+                    "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
+                    "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
+                    "material_code": row.try_get::<String, _>("material_code").ok(),
+                    "material_name": row.try_get::<String, _>("material_name").ok(),
+                    "specification": row.try_get::<Option<String>, _>("specification").ok(),
+                    "safety_stock": row.try_get::<f64, _>("safety_stock").ok(),
+                    "reorder_point": row.try_get::<f64, _>("reorder_point").ok(),
+                    "max_stock": row.try_get::<Option<f64>, _>("max_stock").ok(),
+                    "safety_factor": row.try_get::<Option<f64>, _>("safety_factor").ok(),
+                    "lead_time_days": row.try_get::<Option<i32>, _>("lead_time_days").ok(),
+                    "consumption_days": row.try_get::<Option<i32>, _>("consumption_days").ok(),
+                    "updated_at": now.to_string(),
+                }),
+                "更新安全库存设置成功",
+            ))
+        }
+
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "安全库存设置不存在".to_string(),
         ))),

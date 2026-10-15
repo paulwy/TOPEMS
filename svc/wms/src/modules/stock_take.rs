@@ -495,6 +495,15 @@ pub async fn update_stock_take(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -955,6 +964,15 @@ pub async fn create_stock_take_item(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -1266,6 +1284,15 @@ pub async fn update_stock_take_item(
         &headers,
     )
     .await;
+
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
 
     response
 }
@@ -1785,6 +1812,12 @@ pub async fn approve_stock_take(
                         req.comment.as_deref(),
                     )
                     .await;
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     Json(ApiResponse::success(
                         serde_json::json!({"id": id, "status": "completed"}),
                         "审批通过",

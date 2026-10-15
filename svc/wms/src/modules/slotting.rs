@@ -286,6 +286,12 @@ pub async fn run_optimization(
         suggestion_count = inserted;
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::json!({
             "task_id": Uuid::new_v4().to_string(),
@@ -504,10 +510,21 @@ pub async fn apply_suggestion(
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(
-            serde_json::json!({ "id": r.id, "status": r.status }),
-            "success",
-        )),
+        Some(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": r.id, "status": r.status }),
+                "success",
+            ))
+        }
+
         None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "建议不存在或已处理".to_string(),
         ))),
@@ -554,10 +571,21 @@ pub async fn reject_suggestion(
     };
 
     match row {
-        Some(r) => Json(ApiResponse::success(
-            serde_json::json!({ "id": r.id, "status": r.status }),
-            "success",
-        )),
+        Some(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": r.id, "status": r.status }),
+                "success",
+            ))
+        }
+
         None => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "建议不存在或已处理".to_string(),
         ))),
@@ -694,7 +722,11 @@ pub async fn create_zone(
         zone_type,
         location_ids,
         is_active,
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()),
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .unwrap_or(Uuid::nil()),
     )
     .fetch_one(&mut **txn)
     .await
@@ -703,6 +735,12 @@ pub async fn create_zone(
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("创建分区失败", e))),
     };
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::to_value(SlottingZone {
             id: row.id,
@@ -857,6 +895,12 @@ pub async fn create_rule(
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("创建规则失败", e))),
     };
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::to_value(SlottingRule {
             id: row.id,

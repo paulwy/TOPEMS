@@ -149,7 +149,13 @@ pub async fn create_order(
     )
     .bind(now)
     .bind(now)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+            .unwrap_or(Uuid::nil()),
+    )
     .fetch_one(&mut **txn)
     .await;
 
@@ -184,7 +190,13 @@ pub async fn create_order(
                     .bind(item.get("total_amount").and_then(|v| v.as_f64()))
                     .bind(now)
                     .bind(now)
-                    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()).unwrap_or(Uuid::nil()))
+                    .bind(
+                        claims
+                            .tenant_id
+                            .as_deref()
+                            .and_then(|s| Uuid::parse_str(s).ok())
+                            .unwrap_or(Uuid::nil()),
+                    )
                     .execute(&mut **txn)
                     .await;
                     line_number += 1;
@@ -331,20 +343,29 @@ pub async fn update_order(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "order_number": row.try_get::<String, _>("order_number").ok(),
-                "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
-                "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
-                "status": row.try_get::<String, _>("status").ok(),
-                "total_quantity": row.try_get::<i64, _>("total_quantity").ok(),
-                "total_amount": row.try_get::<f64, _>("total_amount").ok(),
-                "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
-                "updated_at": now.to_string(),
-            }),
-            "更新补货订单成功",
-        )),
+        Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "id": row.try_get::<Uuid, _>("id").ok(),
+                    "order_number": row.try_get::<String, _>("order_number").ok(),
+                    "warehouse_id": row.try_get::<Option<Uuid>, _>("warehouse_id").ok(),
+                    "warehouse_name": row.try_get::<Option<String>, _>("warehouse_name").ok(),
+                    "status": row.try_get::<String, _>("status").ok(),
+                    "total_quantity": row.try_get::<i64, _>("total_quantity").ok(),
+                    "total_amount": row.try_get::<f64, _>("total_amount").ok(),
+                    "created_at": row.try_get::<chrono::NaiveDateTime, _>("created_at").ok().map(|t| t.to_string()),
+                    "updated_at": now.to_string(),
+                }),
+                "更新补货订单成功",
+            ))
+        }
+
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "补货订单不存在".to_string(),
         ))),
@@ -530,15 +551,24 @@ pub async fn confirm_order(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "order_number": row.try_get::<String, _>("order_number").ok(),
-                "status": "confirmed",
-                "updated_at": now.to_string(),
-            }),
-            "确认补货订单成功",
-        )),
+        Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "id": row.try_get::<Uuid, _>("id").ok(),
+                    "order_number": row.try_get::<String, _>("order_number").ok(),
+                    "status": "confirmed",
+                    "updated_at": now.to_string(),
+                }),
+                "确认补货订单成功",
+            ))
+        }
+
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "补货订单不存在或状态不正确".to_string(),
         ))),
@@ -593,15 +623,24 @@ pub async fn complete_order(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(
-            serde_json::json!({
-                "id": row.try_get::<Uuid, _>("id").ok(),
-                "order_number": row.try_get::<String, _>("order_number").ok(),
-                "status": "completed",
-                "updated_at": now.to_string(),
-            }),
-            "完成补货订单成功",
-        )),
+        Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "id": row.try_get::<Uuid, _>("id").ok(),
+                    "order_number": row.try_get::<String, _>("order_number").ok(),
+                    "status": "completed",
+                    "updated_at": now.to_string(),
+                }),
+                "完成补货订单成功",
+            ))
+        }
+
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "补货订单不存在或状态不正确".to_string(),
         ))),

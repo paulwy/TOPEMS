@@ -194,7 +194,15 @@ pub async fn create_batch(
     .await;
 
     match result {
-        Ok(batch) => Json(ApiResponse::success(batch, "创建批次成功")),
+        Ok(batch) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(batch, "创建批次成功"))
+        }
         Err(e) => {
             tracing::error!("创建批次失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
@@ -350,7 +358,15 @@ pub async fn update_batch(
     .await;
 
     match result {
-        Ok(batch) => Json(ApiResponse::success(batch, "更新批次成功")),
+        Ok(batch) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(batch, "更新批次成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "批次不存在".to_string(),
         ))),
@@ -657,7 +673,15 @@ pub async fn adjust_quantity(
     .await;
 
     match result {
-        Ok(batch) => Json(ApiResponse::success(batch, "调整数量成功")),
+        Ok(batch) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(batch, "调整数量成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "批次不存在".to_string(),
         ))),
@@ -726,7 +750,15 @@ pub async fn transfer_location(
     .await;
 
     match result {
-        Ok(batch) => Json(ApiResponse::success(batch, "转移库位成功")),
+        Ok(batch) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(batch, "转移库位成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "批次不存在".to_string(),
         ))),

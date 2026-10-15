@@ -904,6 +904,15 @@ pub async fn create_inbound_order_item(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -995,6 +1004,15 @@ pub async fn update_inbound_order_item(
         &headers,
     )
     .await;
+
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
 
     response
 }
@@ -1750,6 +1768,12 @@ pub async fn approve_inbound(
                         req.comment.as_deref(),
                     )
                     .await;
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     Json(ApiResponse::success(
                         serde_json::json!({"id": id, "status": "completed"}),
                         "审批通过",
@@ -1831,6 +1855,12 @@ pub async fn reject_inbound(
                         req.comment.as_deref(),
                     )
                     .await;
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     Json(ApiResponse::success(
                         serde_json::json!({"id": id, "status": "confirmed"}),
                         "审批驳回，回流至 confirmed",

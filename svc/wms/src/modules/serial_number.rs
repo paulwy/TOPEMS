@@ -214,7 +214,15 @@ pub async fn create_serial_number(
     .await;
 
     match result {
-        Ok(serial) => Json(ApiResponse::success(serial, "创建序列号成功")),
+        Ok(serial) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(serial, "创建序列号成功"))
+        }
         Err(e) => {
             tracing::error!("创建序列号失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
@@ -303,6 +311,12 @@ pub async fn bulk_create_serial_numbers(
         }
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(created_serials, "批量创建序列号成功"))
 }
 
@@ -538,7 +552,15 @@ pub async fn update_serial_number(
     .await;
 
     match result {
-        Ok(serial) => Json(ApiResponse::success(serial, "更新序列号成功")),
+        Ok(serial) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(serial, "更新序列号成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "序列号不存在".to_string(),
         ))),
@@ -738,7 +760,15 @@ pub async fn transfer_location(
     .await;
 
     match result {
-        Ok(serial) => Json(ApiResponse::success(serial, "转移库位成功")),
+        Ok(serial) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(serial, "转移库位成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "序列号不存在".to_string(),
         ))),

@@ -269,7 +269,15 @@ async fn create_inventory_movement(
     .await;
 
     match result {
-        Ok(record) => Json(ApiResponse::success(record, "创建库存移动记录成功")),
+        Ok(record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(record, "创建库存移动记录成功"))
+        }
         Err(e) => {
             tracing::error!("创建库存移动记录失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

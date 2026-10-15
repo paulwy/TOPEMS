@@ -452,7 +452,15 @@ pub async fn update_transfer(
     .await;
 
     match result {
-        Ok(transfer) => Json(ApiResponse::success(transfer, "更新调拨单成功")),
+        Ok(transfer) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(transfer, "更新调拨单成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "调拨单不存在".to_string(),
         ))),
@@ -592,7 +600,15 @@ pub async fn confirm_transfer(
     .await;
 
     match result {
-        Ok(transfer) => Json(ApiResponse::success(transfer, "确认调拨单成功")),
+        Ok(transfer) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(transfer, "确认调拨单成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "调拨单不存在或状态不正确".to_string(),
         ))),
@@ -656,7 +672,15 @@ pub async fn ship_transfer(
     .await;
 
     match result {
-        Ok(transfer) => Json(ApiResponse::success(transfer, "发货成功")),
+        Ok(transfer) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(transfer, "发货成功"))
+        }
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "调拨单不存在或状态不正确".to_string(),
         ))),
@@ -1046,6 +1070,12 @@ pub async fn approve_transfer(
                         req.comment.as_deref(),
                     )
                     .await;
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     Json(ApiResponse::success(
                         serde_json::json!({"id": transfer_id, "status": "shipped"}),
                         "审批通过",
@@ -1132,6 +1162,12 @@ pub async fn reject_transfer(
                         req.comment.as_deref(),
                     )
                     .await;
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     Json(ApiResponse::success(
                         serde_json::json!({"id": transfer_id, "status": "pending"}),
                         "审批驳回，回流至 pending",
