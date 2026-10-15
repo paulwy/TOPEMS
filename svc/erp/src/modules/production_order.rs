@@ -213,6 +213,12 @@ pub async fn create_production_order(
     match result {
         Ok(order) => {
             tracing::debug!("[ERP] Created production order: {}", order_no);
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(order, "生产订单创建成功"))
         }
         Err(e) => {
@@ -340,7 +346,16 @@ pub async fn update_production_order(
     .await;
 
     match result {
-        Ok(Some(order)) => Json(ApiResponse::success(order, "生产订单更新成功")),
+        Ok(Some(order)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(order, "生产订单更新成功"))
+        }
+
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "生产订单不存在或状态不允许修改".to_string(),
         ))),
@@ -464,7 +479,16 @@ pub async fn update_production_progress(
     .await;
 
     match result {
-        Ok(Some(order)) => Json(ApiResponse::success(order, "生产进度更新成功")),
+        Ok(Some(order)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(order, "生产进度更新成功"))
+        }
+
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "生产订单不存在".to_string(),
         ))),
@@ -575,6 +599,12 @@ pub async fn update_production_status(
                         "[ERP] event_publisher 未配置，生产工单下达事件未发布 - order_id={}",
                         order.id
                     );
+                }
+            }
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
                 }
             }
             Json(ApiResponse::success(order, "生产订单状态更新成功"))

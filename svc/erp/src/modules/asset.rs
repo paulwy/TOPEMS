@@ -176,11 +176,19 @@ pub async fn create_asset(
     .fetch_one(&mut **txn)
     .await;
     let (response, status, error_msg) = match &result {
-        Ok(asset) => (
-            Json(ApiResponse::success(asset.clone(), "资产创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(asset) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(asset.clone(), "资产创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建资产失败: {}", e);
             (
@@ -377,11 +385,19 @@ pub async fn update_asset(
     .fetch_one(&mut **txn)
     .await;
     let (response, status_str, error_msg) = match &result {
-        Ok(asset) => (
-            Json(ApiResponse::success(asset.clone(), "资产更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(asset) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(asset.clone(), "资产更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新资产失败: {}", e);
             (

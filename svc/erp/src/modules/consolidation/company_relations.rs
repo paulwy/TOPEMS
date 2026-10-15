@@ -155,6 +155,12 @@ pub async fn create_company_relation(
     match result {
         Ok(relation) => {
             log_audit(&state.db, "create", "company_relation", Some(id), &headers).await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(relation, "创建公司关系成功"))
         }
         Err(e) => {
@@ -222,6 +228,12 @@ pub async fn update_company_relation(
                 &headers,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(relation, "更新公司关系成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(

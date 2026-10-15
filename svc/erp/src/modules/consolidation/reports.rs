@@ -246,6 +246,12 @@ pub async fn generate_report(
                 &headers,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(report, "生成合并报表成功"))
         }
         Err(e) => {
@@ -451,6 +457,12 @@ pub async fn submit_report(
                 &headers,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(report, "提交审批成功"))
         }
         Err(e) => {
@@ -545,6 +557,12 @@ pub async fn approve_report(
                 &headers,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(report, "审批合并报表成功"))
         }
         Err(e) => {
@@ -599,6 +617,12 @@ pub async fn publish_report(
                 &headers,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(report, "发布合并报表成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(

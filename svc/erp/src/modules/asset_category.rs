@@ -260,6 +260,12 @@ pub async fn create_asset_category(
         }
     };
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Ok(Json(ApiResponse::error(500, "事务提交失败")));
+        }
+    }
     Ok(Json(ApiResponse::success(
         row_to_json(&row),
         "创建资产分类成功",
@@ -316,6 +322,12 @@ pub async fn update_asset_category(
         }
     };
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Ok(Json(ApiResponse::error(500, "事务提交失败")));
+        }
+    }
     Ok(Json(ApiResponse::success(
         row_to_json(&row),
         "更新资产分类成功",

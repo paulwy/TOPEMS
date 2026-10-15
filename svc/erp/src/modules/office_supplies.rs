@@ -13,9 +13,9 @@ use super::ApiState;
 use crate::models::{CreateOfficeSupplyRequest, OfficeSupply, UpdateOfficeSupplyRequest};
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
-use topems_shared_auth::auth::Claims;
 
 #[derive(Debug, Deserialize)]
 pub struct SupplyQueryParams {
@@ -170,11 +170,19 @@ pub async fn create_supply(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(supply) => (
-            Json(ApiResponse::success(supply.clone(), "办公用品创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(supply) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(supply.clone(), "办公用品创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建办公用品失败: {}", e);
             (
@@ -347,11 +355,19 @@ pub async fn update_supply(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(supply) => (
-            Json(ApiResponse::success(supply.clone(), "办公用品更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(supply) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(supply.clone(), "办公用品更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新办公用品失败: {}", e);
             (
@@ -412,7 +428,6 @@ pub async fn delete_supply(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {

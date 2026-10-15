@@ -186,6 +186,12 @@ pub async fn create_elimination_rule(
     match result {
         Ok(rule) => {
             log_audit(&state.db, "create", "elimination_rule", Some(id), &headers).await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(rule, "创建抵消规则成功"))
         }
         Err(e) => {
@@ -266,6 +272,12 @@ pub async fn update_elimination_rule(
                 &headers,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(rule, "更新抵消规则成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(

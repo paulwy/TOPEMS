@@ -155,7 +155,16 @@ pub async fn create_document(
     .await;
 
     match result {
-        Ok(doc) => Json(ApiResponse::success(doc, "文档创建成功")),
+        Ok(doc) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(doc, "文档创建成功"))
+        }
+
         Err(e) => {
             tracing::error!("创建文档失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
@@ -269,7 +278,16 @@ pub async fn update_document(
     .fetch_one(&mut **txn)
     .await
     {
-        Ok(doc) => Json(ApiResponse::success(doc, "文档更新成功")),
+        Ok(doc) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(doc, "文档更新成功"))
+        }
+
         Err(e) => {
             tracing::error!("更新文档失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

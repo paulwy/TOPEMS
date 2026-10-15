@@ -230,10 +230,7 @@ pub async fn log_audit_event(db: &PgPool, params: AuditEventParams, headers: &He
     if let Some(eids) = entity_ids {
         req = req.with_entity_ids(eids);
     }
-    if let Some(tid) = tenant_id
-        .as_deref()
-        .and_then(|s| Uuid::parse_str(s).ok())
-    {
+    if let Some(tid) = tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()) {
         req = req.with_tenant_id(tid);
     }
     if user_id.is_some() || user_name.is_some() {

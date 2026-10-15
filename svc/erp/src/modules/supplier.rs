@@ -289,7 +289,16 @@ pub async fn create_supplier(
     .await;
 
     match result {
-        Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "创建供应商成功")),
+        Ok(Some(supplier)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(supplier, "创建供应商成功"))
+        }
+
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
             "创建供应商失败".to_string(),
         ))),
@@ -358,7 +367,16 @@ pub async fn update_supplier(
     .await;
 
     match result {
-        Ok(Some(supplier)) => Json(ApiResponse::success(supplier, "更新供应商成功")),
+        Ok(Some(supplier)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(supplier, "更新供应商成功"))
+        }
+
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商不存在".to_string(),
         ))),
@@ -410,10 +428,18 @@ pub async fn delete_supplier(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            "删除成功".to_string(),
-            "删除供应商成功",
-        )),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                "删除成功".to_string(),
+                "删除供应商成功",
+            ))
+        }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "供应商不存在".to_string(),
         ))),

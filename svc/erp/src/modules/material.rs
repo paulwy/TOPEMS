@@ -277,7 +277,16 @@ pub async fn create_material(
     .await;
 
     match result {
-        Ok(Some(material)) => Json(ApiResponse::success(material, "创建物料成功")),
+        Ok(Some(material)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(material, "创建物料成功"))
+        }
+
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
             "创建物料失败".to_string(),
         ))),
@@ -337,7 +346,16 @@ pub async fn update_material(
     .await;
 
     match result {
-        Ok(Some(material)) => Json(ApiResponse::success(material, "更新物料成功")),
+        Ok(Some(material)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(material, "更新物料成功"))
+        }
+
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "物料不存在".to_string(),
         ))),
@@ -476,6 +494,12 @@ pub async fn import_materials(
         }
     }
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         MaterialImportResult { succeeded, failed },
         "物料导入完成",

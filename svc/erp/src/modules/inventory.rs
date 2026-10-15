@@ -235,7 +235,16 @@ pub async fn create_inventory(
     .await;
 
     match result {
-        Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "创建库存成功")),
+        Ok(Some(inventory)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(inventory, "创建库存成功"))
+        }
+
         Ok(None) => Json(ApiResponse::from(TopemsError::Internal(
             "创建库存失败".to_string(),
         ))),
@@ -295,7 +304,16 @@ pub async fn update_inventory(
     .await;
 
     match result {
-        Ok(Some(inventory)) => Json(ApiResponse::success(inventory, "更新库存成功")),
+        Ok(Some(inventory)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(inventory, "更新库存成功"))
+        }
+
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "库存不存在".to_string(),
         ))),

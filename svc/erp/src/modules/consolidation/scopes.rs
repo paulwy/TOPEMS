@@ -173,6 +173,12 @@ pub async fn create_scope(
                 &headers,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(scope, "创建合并范围成功"))
         }
         Err(e) => {
@@ -236,6 +242,12 @@ pub async fn update_scope(
                 &headers,
             )
             .await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(scope, "更新合并范围成功"))
         }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(

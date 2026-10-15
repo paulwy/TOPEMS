@@ -256,6 +256,12 @@ pub async fn create_bank_account(
         }
     };
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Err(internal_error("事务提交失败"));
+        }
+    }
     Ok(Json(ApiResponse::success(
         row_to_json(&row),
         "创建银行账户成功",
@@ -312,6 +318,12 @@ pub async fn update_bank_account(
         }
     };
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Err(internal_error("事务提交失败"));
+        }
+    }
     Ok(Json(ApiResponse::success(
         row_to_json(&row),
         "更新银行账户成功",

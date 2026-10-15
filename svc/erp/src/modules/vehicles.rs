@@ -16,9 +16,9 @@ use crate::models::{
 };
 use crate::modules::audit::{log_audit_event, AuditEventParams};
 use crate::utils::validate_required_field;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
-use topems_shared_auth::auth::Claims;
 
 #[derive(Debug, Deserialize)]
 pub struct VehicleQueryParams {
@@ -448,7 +448,6 @@ pub async fn delete_vehicle(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
@@ -955,7 +954,6 @@ pub async fn delete_vehicle_request(
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
     Extension(claims): Extension<Claims>,
-
 ) -> Json<ApiResponse<String>> {
     let mut guard = txn_arc.lock().await;
     let txn = match guard.as_mut() {
