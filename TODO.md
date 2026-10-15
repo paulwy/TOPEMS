@@ -1988,3 +1988,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 复核：qms+srm check 0 error；SQL 事务内实测——SET app.tenant_id 两租户、INSERT 测试行后本租户 UPDATE 1 行 / 他租户越权 UPDATE 0 行（biddings + qa_apqp_projects），ROLLBACK 零残留
 - 备注：biddings/qa_apqp_projects 均为空表（生产无数据），测试行仅在事务内存在；biddings 无 organization_id 列（INSERT 用 tenant_id 即可）
 
+## 方案C 批2-M：mobile.mobile_tasks 6 处 + mobile.devices 6 处（写路径租户约束）
+- 状态：代码已修改（mobile check 通过 0 error），待提交
+- task.rs 6 处（update_task / update_task_status / delete_task / complete_task / reopen_task / batch_update_status）：均补 Extension<Claims> + tenant_filter + UPDATE WHERE 加 `($N::uuid IS NULL OR tenant_id = $N::uuid)`（$14/$6/$3/$3/$3/$4 按各函数既有 bind 数递增）；update_task 的 current SELECT、update_task_status 的回读 SELECT 亦加租户
+- device.rs 6 处（register_device / update_push_token / update_device / unregister_device / activate_device / disable_device）：register 复用已有 JWT 解析 tenant_id 变量（$9）；其余 5 处补 Extension<Claims> + tenant_filter + WHERE 租户（$4/$5/$2/$2/$2）
+- 登记 skip：repository.rs db_update_task_status（库函数无调用方，内部未启用路径，RLS 兜底，后续评估）
+- 路由层确认：mobile main.rs 有 tenant_middleware + require_permission（auth 注入 Claims）
+- 复核：mobile check 0 error；SQL 事务内实测——mobile_tasks INSERT 后本租户 UPDATE 1 行 / 他租户越权 0 行，ROLLBACK 零残留；devices 表 1 行真实数据未触碰（同模式）
+- 编译期修复：device.rs/task.rs 补 axum::extract::Extension + topems_shared_auth::auth::Claims import（原缺失）
+

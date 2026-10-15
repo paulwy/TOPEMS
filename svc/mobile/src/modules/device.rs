@@ -1,5 +1,5 @@
 use axum::{
-    extract::{Json, Path, State},
+    extract::{Extension, Json, Path, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
 };
@@ -10,7 +10,7 @@ use topems_shared_boundary::only_own_schema_query;
 use uuid::Uuid;
 
 use super::auth_utils::{extract_bearer_token, extract_user_id_from_token};
-use topems_shared_auth::auth::{verify_jwt_token, AuthState};
+use topems_shared_auth::auth::{verify_jwt_token, AuthState, Claims};
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -183,7 +183,7 @@ pub async fn register_device(
     };
 
     if existing_device.is_some() {
-        if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET device_name = $1, device_type = $2, os_type = $3, os_version = $4, app_version = $5, push_token = $6, is_active = true, last_login_at = NOW(), updated_at = NOW() WHERE user_id = $7 AND device_id = $8"))
+        if let Err(e) = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET device_name = $1, device_type = $2, os_type = $3, os_version = $4, app_version = $5, push_token = $6, is_active = true, last_login_at = NOW(), updated_at = NOW() WHERE user_id = $7 AND device_id = $8 AND ($9::uuid IS NULL OR tenant_id = $9::uuid)"))
             .bind(&payload.device_name)
             .bind(&payload.device_type)
             .bind(&payload.os_type)
@@ -192,6 +192,7 @@ pub async fn register_device(
             .bind(&payload.push_token)
             .bind(user_id)
             .bind(&payload.device_id)
+            .bind(tenant_id)
             .execute(&pool)
             .await
         {
@@ -242,6 +243,7 @@ pub async fn register_device(
 )]
 pub async fn update_push_token(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Json(payload): Json<UpdatePushTokenRequest>,
@@ -265,11 +267,17 @@ pub async fn update_push_token(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
-    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET push_token = $1, updated_at = NOW() WHERE user_id = $2 AND device_id = $3"))
+    let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET push_token = $1, updated_at = NOW() WHERE user_id = $2 AND device_id = $3 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)"))
         .bind(&payload.push_token)
         .bind(user_id)
         .bind(&payload.device_id)
+        .bind(tenant_filter)
         .execute(&pool)
         .await;
 
@@ -398,6 +406,7 @@ pub async fn get_device_by_id(
 /// 更新设备（前端 PUT /device/{id} → 更新 app_version/os_version/is_active 等）
 pub async fn update_device(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -412,6 +421,11 @@ pub async fn update_device(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let app_version = payload.get("appVersion").and_then(|v| v.as_str());
     let os_version = payload.get("osVersion").and_then(|v| v.as_str());
@@ -420,13 +434,14 @@ pub async fn update_device(
     let result = sqlx::query(
         only_own_schema_query!(
             "mobile",
-            "UPDATE mobile.devices SET app_version = COALESCE($2, app_version), os_version = COALESCE($3, os_version), is_active = COALESCE($4, is_active), updated_at = NOW() WHERE id = $1"
+            "UPDATE mobile.devices SET app_version = COALESCE($2, app_version), os_version = COALESCE($3, os_version), is_active = COALESCE($4, is_active), updated_at = NOW() WHERE id = $1 AND ($5::uuid IS NULL OR tenant_id = $5::uuid)"
         ),
     )
     .bind(id)
     .bind(app_version)
     .bind(os_version)
     .bind(is_active)
+    .bind(tenant_filter)
     .execute(&pool)
     .await;
 
@@ -452,6 +467,7 @@ pub async fn update_device(
 /// 注销设备（前端 DELETE /device/{id}）
 pub async fn unregister_device(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -465,12 +481,18 @@ pub async fn unregister_device(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.devices WHERE id = $1"
+        "DELETE FROM mobile.devices WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&pool)
     .await;
 
@@ -495,6 +517,7 @@ pub async fn unregister_device(
 /// 激活设备（前端 POST /device/{id}/activate）
 pub async fn activate_device(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -508,12 +531,18 @@ pub async fn activate_device(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.devices SET is_active = true, updated_at = NOW() WHERE id = $1"
+        "UPDATE mobile.devices SET is_active = true, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&pool)
     .await;
 
@@ -538,6 +567,7 @@ pub async fn activate_device(
 /// 停用设备（前端 POST /device/{id}/disable）
 pub async fn disable_device(
     headers: HeaderMap,
+    Extension(claims): Extension<Claims>,
     State(auth_state): State<AuthState>,
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
@@ -551,12 +581,18 @@ pub async fn disable_device(
             );
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "UPDATE mobile.devices SET is_active = false, updated_at = NOW() WHERE id = $1"
+        "UPDATE mobile.devices SET is_active = false, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&pool)
     .await;
 
