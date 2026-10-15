@@ -167,11 +167,19 @@ pub async fn create_item(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(item) => (
-            Json(ApiResponse::success(item.clone(), "采购明细创建成功")),
-            "success",
-            None,
-        ),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(item.clone(), "采购明细创建成功")),
+                "success",
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建采购明细失败: {}", e);
             (
@@ -335,11 +343,19 @@ pub async fn update_item(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(item) => (
-            Json(ApiResponse::success(item.clone(), "采购明细更新成功")),
-            "success",
-            None,
-        ),
+        Ok(item) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(item.clone(), "采购明细更新成功")),
+                "success",
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新采购明细失败: {}", e);
             (
@@ -403,11 +419,19 @@ pub async fn delete_item(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "采购明细删除成功")),
-            "success",
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "采购明细删除成功")),
+                "success",
+                None,
+            )
+        }
         Ok(_) => (
             Json(ApiResponse::from(TopemsError::ResourceNotFound(
                 "采购明细不存在".to_string(),

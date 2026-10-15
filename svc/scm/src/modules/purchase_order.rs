@@ -174,11 +174,19 @@ pub async fn create_order(
     .await;
 
     let (response, status, error_msg) = match &result {
-        Ok(order) => (
-            Json(ApiResponse::success(order.clone(), "采购订单创建成功")),
-            "success",
-            None,
-        ),
+        Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(order.clone(), "采购订单创建成功")),
+                "success",
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建采购订单失败: {}", e);
             (
@@ -352,11 +360,19 @@ pub async fn update_order(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(order) => (
-            Json(ApiResponse::success(order.clone(), "采购订单更新成功")),
-            "success",
-            None,
-        ),
+        Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(order.clone(), "采购订单更新成功")),
+                "success",
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新采购订单失败: {}", e);
             (
@@ -433,11 +449,19 @@ pub async fn delete_order(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "采购订单删除成功")),
-            "success",
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success("".to_string(), "采购订单删除成功")),
+                "success",
+                None,
+            )
+        }
         Ok(_) => (
             Json(ApiResponse::from(TopemsError::ResourceNotFound(
                 "采购订单不存在".to_string(),
@@ -784,11 +808,19 @@ pub async fn reject_order(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(order) => (
-            Json(ApiResponse::success(order.clone(), "采购订单已驳回")),
-            "success",
-            None,
-        ),
+        Ok(order) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(order.clone(), "采购订单已驳回")),
+                "success",
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("驳回采购订单失败: {}", e);
             (

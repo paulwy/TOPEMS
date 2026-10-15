@@ -701,6 +701,14 @@ pub async fn compute_mrp(
     let count = items.len() as i64;
     let response_data = Some(serde_json::json!({ "generated_count": count }));
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
+
     let response = Json(ApiResponse::success(
         serde_json::json!({
             "suggestions": items_json,
@@ -828,15 +836,24 @@ pub async fn confirm_suggestion(
     .await;
 
     let (response, status_str, error_msg, response_data) = match &result {
-        Ok(row) => (
-            Json(ApiResponse::success(
-                mrp_suggestion_row_to_json(row),
-                "MRP建议确认成功",
-            )),
-            "success",
-            None,
-            Some(mrp_suggestion_row_to_json(row)),
-        ),
+        Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(
+                    mrp_suggestion_row_to_json(row),
+                    "MRP建议确认成功",
+                )),
+                "success",
+                None,
+                Some(mrp_suggestion_row_to_json(row)),
+            )
+        }
         Err(e) => {
             tracing::error!("确认MRP建议失败: {}", e);
             (
