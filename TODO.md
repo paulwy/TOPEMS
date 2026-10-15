@@ -1888,3 +1888,18 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - mail.rs send_with_template_by_code（core_emails）
 - 跳过并登记：report_subscriptions（analytics，0 行数据 + 读按 user_id 兜底——低优先级）；system_settings（erp，系统级设置 nil 语义合理 + 宿主无租户来源）；cqrs_snapshots（finance，内部事件快照）；search_logs（search，系统日志）
 - 下批：unified-core 平台表 INSERT 补绑（约 30 处，子批 C）
+
+## 方案C 批2（写路径租户约束）— 子批 C：unified-core 平台表 INSERT 补绑
+- 状态：已提交（待推送）
+- 修改（INSERT 加 tenant_id + bind 操作者租户，claims 样板同批1）：
+  - automation/mod.rs：create_rule（automation_rules）、create_variable + bulk_import_variables（automation_variables，修复 ON CONFLICT (tenant_id,key) 引用无列问题）
+  - file/upload.rs：upload_file + upload_multiple（core_files）
+  - file/manage.rs：copy_file（core_files）+ set_file_permission（core_file_permissions，ON CONFLICT 同步更新 tenant_id）
+- 跳过并登记（系统级/无租户来源）：
+  - versioning.rs core_api_version_configs（系统版本配置——nil 合理）
+  - iam handlers.rs/mod.rs core_tenants（租户表自身——注册无父租户）
+  - iam mod.rs core_permissions/core_roles/core_role_permissions（系统级定义）
+  - iam role.rs update_role/add_role_permission（宿主无 ctx——登记待查）
+  - iam auth.rs core_sessions/core_refresh_tokens（登录/刷新前无 claims——登录是系统级入口，会话租户后续处理）
+  - core_migration_history（系统）、core_flow_rules/core_flow_delegates（表无 tenant_id 列）
+- 编译：cargo check topems-unified-core 通过

@@ -323,9 +323,10 @@ pub async fn create_rule(
         .clone()
         .unwrap_or_else(|| "draft".to_string());
 
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     let rule: Result<AutomationRule, _> = sqlx::query_as(
-        r#"INSERT INTO automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        r#"INSERT INTO automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status, created_by, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
            RETURNING *"#,
     )
     .bind(&payload.name)
@@ -338,6 +339,7 @@ pub async fn create_rule(
     .bind(&payload.canvas)
     .bind(&status)
     .bind(user_id)
+    .bind(tenant_bind)
     .fetch_one(&state.pool)
     .await;
 
@@ -926,6 +928,7 @@ pub async fn create_variable(
     Json(payload): Json<CreateVariableRequest>,
 ) -> Json<ApiResponse<AutomationVariable>> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     let scope = payload
         .scope
         .clone()
@@ -937,8 +940,8 @@ pub async fn create_variable(
     let is_secret = payload.is_secret.unwrap_or(false);
 
     let var: Result<AutomationVariable, _> = sqlx::query_as(
-        r#"INSERT INTO automation_variables (key, value, description, scope, rule_id, is_secret, created_by)
-           VALUES ($1, $2, $3, $4, $5, $6, $7)
+        r#"INSERT INTO automation_variables (key, value, description, scope, rule_id, is_secret, created_by, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
            RETURNING id, tenant_id, key,
                      CASE WHEN is_secret THEN NULL ELSE value END as value,
                      description, scope, rule_id, is_secret, created_by, created_at, updated_at"#,
@@ -950,6 +953,7 @@ pub async fn create_variable(
     .bind(rule_id)
     .bind(is_secret)
     .bind(user_id)
+    .bind(tenant_bind)
     .fetch_one(&state.pool)
     .await;
 
@@ -1071,6 +1075,7 @@ pub async fn bulk_import_variables(
     Json(payload): Json<BulkImportRequest>,
 ) -> Json<ApiResponse<Value>> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     let mut imported = 0;
     let mut skipped = 0;
 
@@ -1080,8 +1085,8 @@ pub async fn bulk_import_variables(
         let is_secret = var.is_secret.unwrap_or(false);
 
         let result = sqlx::query(
-            r#"INSERT INTO automation_variables (key, value, description, scope, rule_id, is_secret, created_by)
-               VALUES ($1, $2, $3, $4, $5, $6, $7)
+            r#"INSERT INTO automation_variables (key, value, description, scope, rule_id, is_secret, created_by, tenant_id)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
                ON CONFLICT (tenant_id, key) DO NOTHING"#,
         )
         .bind(&var.key)
@@ -1091,6 +1096,7 @@ pub async fn bulk_import_variables(
         .bind(rule_id)
         .bind(is_secret)
         .bind(user_id)
+        .bind(tenant_bind)
         .execute(&state.pool)
         .await;
 

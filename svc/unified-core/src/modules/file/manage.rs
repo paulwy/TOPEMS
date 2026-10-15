@@ -692,6 +692,7 @@ pub async fn copy_file(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     tracing::info!(
         "File manage copy_file called with id: {} for user: {}",
         id,
@@ -810,8 +811,8 @@ pub async fn copy_file(
     // 保存新文件记录到数据库
     match sqlx::query(
         r#"
-        INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+        INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
         "#,
     )
     .bind(new_file_id)
@@ -821,6 +822,7 @@ pub async fn copy_file(
     .bind(&new_path)
     .bind(target_folder_uuid)
     .bind(user_id)
+    .bind(tenant_bind)
     .execute(&state.pool)
     .await
     {
@@ -853,6 +855,7 @@ pub async fn set_file_permission(
     Path(id): Path<String>,
     Json(payload): Json<FilePermissionRequest>,
 ) -> Json<serde_json::Value> {
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     tracing::info!(
         "File manage set_file_permission called with id: {} for user: {}",
         id,
@@ -937,12 +940,13 @@ pub async fn set_file_permission(
 
     // 保存文件权限（简化版本，实际应使用专门的权限表）
     match sqlx::query(
-        "INSERT INTO core_file_permissions (file_id, user_id, permission) VALUES ($1, $2, $3) 
-         ON CONFLICT (file_id, user_id) DO UPDATE SET permission = $3",
+        "INSERT INTO core_file_permissions (file_id, user_id, permission, tenant_id) VALUES ($1, $2, $3, $4) 
+         ON CONFLICT (file_id, user_id) DO UPDATE SET permission = $3, tenant_id = EXCLUDED.tenant_id",
     )
     .bind(file_id)
     .bind(target_user_id)
     .bind(&payload.permission)
+    .bind(tenant_bind)
     .execute(&state.pool)
     .await
     {

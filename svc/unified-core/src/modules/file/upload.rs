@@ -31,6 +31,7 @@ pub async fn upload_file(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     tracing::info!(
         "File upload upload_file called for user: {}",
         claims.username
@@ -138,8 +139,8 @@ pub async fn upload_file(
 
         match sqlx::query(
             r#"
-            INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
         .bind(file_id)
@@ -149,6 +150,7 @@ pub async fn upload_file(
         .bind(&storage_path)
         .bind(folder_id)
         .bind(user_id)
+        .bind(tenant_bind)
         .execute(&state.pool)
         .await
         {
@@ -213,6 +215,7 @@ pub async fn upload_multiple(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     tracing::info!(
         "File upload upload_multiple called for user: {}",
         claims.username
@@ -293,8 +296,8 @@ pub async fn upload_multiple(
 
         match sqlx::query(
             r#"
-            INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+            INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
         .bind(file_id)
@@ -304,6 +307,7 @@ pub async fn upload_multiple(
         .bind(&storage_path)
         .bind(folder_id)
         .bind(user_id)
+        .bind(tenant_bind)
         .execute(&state.pool)
         .await
         {
