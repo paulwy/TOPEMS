@@ -210,11 +210,12 @@ pub async fn update_warehouse_location(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
+    let tenant_filter: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()) };
     match sqlx::query_as::<_, WarehouseLocation>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.warehouse_locations 
         SET warehouse_name = $1, zone = $2, position = $3, status = $4, description = $5, updated_at = NOW()
-        WHERE id = $6
+        WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7)
         RETURNING *
         "#),
     )
@@ -224,6 +225,7 @@ pub async fn update_warehouse_location(
     .bind(&status)
     .bind(&payload.description)
     .bind(id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     {

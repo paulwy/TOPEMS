@@ -188,6 +188,7 @@ pub async fn update_device(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()) };
 
     match sqlx::query_as::<_, Device>(only_own_schema_query!(
         "gis",
@@ -195,7 +196,7 @@ pub async fn update_device(
         UPDATE gis.devices 
         SET device_name = $1, device_type = $2, description = $3, 
             properties = $4, status = COALESCE($5, status), updated_at = NOW()
-        WHERE id = $6
+        WHERE id = $6 AND ($7::uuid IS NULL OR tenant_id = $7)
         RETURNING *
         "#
     ))
@@ -205,6 +206,7 @@ pub async fn update_device(
     .bind(&payload.properties)
     .bind(&payload.status)
     .bind(id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     {

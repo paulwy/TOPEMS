@@ -2119,3 +2119,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - skip（现场核对非缺口）：ehs qa_ehs_treatments/qa_ehs_incident_actions 已带 `($2=全0 OR tenant_id::text=$2)` 租户条件；finance.core_finance_vouchers DELETE 已带 `AND tenant_id=$2`；qms.qa_apqp_projects 无 UPDATE/DELETE（SELECT 为主）；scm.wms_inventory_snapshots event handler DELETE（内部流程 + 有 RLS policy 兜底）
 - 复核：finance/hrm check 0 error；SQL 事务内实测（插关联链 reconcile_orders/payroll_runs）——本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-Zh：gis 6 处（写路径租户约束）
+- 状态：代码已修改（gis check 通过 0 error），待提交
+- gis 6 处（devices / warehouse_locations / geodata / pipelines UPDATE + device_locations UPDATE/DELETE）：handler 有 Claims，统一 Claims 模式 tenant_filter bind（superuser→None）
+- 软删路径已带 tenant_id（delete_device 等）非缺口；ai delete_document 已带 `($2::uuid IS NULL OR tenant_id=$2)` 非缺口
+- 复核：gis check 0 error；SQL 事务内实测 5 表（真实行保真，各表行租户不同逐一按其租户）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

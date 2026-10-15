@@ -532,11 +532,12 @@ async fn update_device_location(
     {
         return e;
     }
+    let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| uuid::Uuid::parse_str(s).ok()) };
     match sqlx::query_as::<_, DeviceLocation>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.device_locations
         SET map_id = $1, device_name = $2, device_code = $3, device_type = $4, position = $5, status = $6, description = $7, updated_at = NOW()
-        WHERE id = $8
+        WHERE id = $8 AND ($9::uuid IS NULL OR tenant_id = $9)
         RETURNING *
         "#),
     )
@@ -548,6 +549,7 @@ async fn update_device_location(
     .bind(&payload.status)
     .bind(&payload.description)
     .bind(id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     {
@@ -573,11 +575,13 @@ async fn delete_device_location(
     {
         return e;
     }
+    let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| uuid::Uuid::parse_str(s).ok()) };
     match sqlx::query(only_own_schema_query!(
         "gis",
-        "DELETE FROM gis.device_locations WHERE id = $1"
+        "DELETE FROM gis.device_locations WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&pool)
     .await
     {

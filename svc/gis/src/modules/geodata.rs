@@ -257,12 +257,13 @@ pub async fn update_geodata(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()) };
 
     match sqlx::query_as::<_, GeoData>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.geodata 
         SET name = $1, data_type = $2, metadata = $3, status = COALESCE($4, status), updated_at = NOW()
-        WHERE id = $5
+        WHERE id = $5 AND ($6::uuid IS NULL OR tenant_id = $6)
         RETURNING *
         "#),
     )
@@ -271,6 +272,7 @@ pub async fn update_geodata(
     .bind(&payload.metadata)
     .bind(&payload.status)
     .bind(id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     {

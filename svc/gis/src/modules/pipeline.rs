@@ -190,11 +190,12 @@ pub async fn update_pipeline(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
+    let tenant_filter: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()) };
     match sqlx::query_as::<_, Pipeline>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.pipelines 
         SET name = $1, code = $2, pipeline_type = $3, path = $4, status = $5, description = $6, updated_at = NOW()
-        WHERE id = $7
+        WHERE id = $7 AND ($8::uuid IS NULL OR tenant_id = $8)
         RETURNING *
         "#),
     )
@@ -205,6 +206,7 @@ pub async fn update_pipeline(
     .bind(&status)
     .bind(&payload.description)
     .bind(id)
+    .bind(tenant_filter)
     .fetch_one(&pool)
     .await
     {
