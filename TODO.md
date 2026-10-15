@@ -1948,3 +1948,16 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - 更新本租户 voucher → 200，DELETE 本租户旧 lines（物理删）+ 重插 50/50（existing 查询 WHERE tenant_id=$1 AND id=$2 + DELETE WHERE voucher_id=$1 AND tenant_id=$2 均生效）
   - 更新他租户 voucher → 404 记录不存在（existing 查询租户约束拦截），他租户 lines 原样（100/100）——不越权，DELETE 约束为纵深防御
   - 测试数据已清理（0 残留）；update_payment/generate_vouchers 同模式（代码审查确认租户约束完整），payment 流程依赖发票数据未单独实测，登记待补
+
+## 方案C 批2-I：erp.customers 写路径租户约束首批（7 处，实测闭环）
+- 状态：已实测闭环，待提交
+- 函数：update_customer / delete_customer / batch_update_customers / batch_delete_customers / change_customer_status / batch_change_status / batch_change_category（svc/erp/src/modules/customer.rs）
+- 模式：tenant_filter（superuser→None / 否则 claims.tenant_id parse）+ SQL 条件 `($N::uuid IS NULL OR tenant_id = $N::uuid)`；batch 动态 SQL 占位符偏移（filter_idx = ids.len()+1/+2/+3）
+- 实测（token 需 erp:admin）：
+  - update_customer：本租户 200（数据更新正确）/ 他租户 404「客户不存在」/ superuser 200
+  - delete_customer：本租户 200（软删 deleted_at）/ 他租户 404
+  - batch_delete_customers：他租户 id → 200「已删除 0 条」（无越权）
+  - batch_change_status：他租户 id → 200 空列表（状态未改）
+  - SQL 层复核：topems_app + SET app.tenant_id + 补丁后完整 UPDATE（含全列 COALESCE + RETURNING）UPDATE 1 成功
+- 500 排查记录：本租户初测 500 非补丁问题——Customer FromRow 非 Option 字段（credit_limit/customer_type）在测试数据 NULL 时解码失败（psql 层无 FromRow 不报错）；补值后 200，真实数据（列非空）正常
+- 测试数据已清理（0 残留）

@@ -366,9 +366,17 @@ pub async fn update_customer(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 AND ($18::uuid IS NULL OR tenant_id = $18::uuid) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
     )
     .bind(body.name)
     .bind(body.short_name)
@@ -387,6 +395,7 @@ pub async fn update_customer(
     .bind(id)
     .bind(body.name_en)
     .bind(Locale::from_headers(&headers).as_sql())
+    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -450,12 +459,21 @@ pub async fn delete_customer(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "erp",
-        "UPDATE erp.customers SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE erp.customers SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -708,17 +726,26 @@ async fn batch_update_customers(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
     let mut updated = Vec::new();
     for item in &body.updates {
         let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
             "erp",
-            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 AND deleted_at IS NULL RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 AND deleted_at IS NULL AND ($18::uuid IS NULL OR tenant_id = $18::uuid) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
         ))
         .bind(&item.payload.name).bind(&item.payload.short_name).bind(&item.payload.contact_person)
         .bind(&item.payload.contact_phone).bind(&item.payload.email).bind(&item.payload.address)
         .bind(&item.payload.province).bind(&item.payload.city).bind(&item.payload.district)
         .bind(&item.payload.customer_type).bind(&item.payload.industry).bind(&item.payload.scale)
         .bind(item.payload.credit_limit).bind(&item.payload.status).bind(item.id)
+        .bind(tenant_filter)
         .fetch_optional(&mut **txn).await;
         if let Ok(Some(c)) = result {
             updated.push(c);
@@ -760,18 +787,28 @@ async fn batch_delete_customers(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
     if body.ids.is_empty() {
         return Json(ApiResponse::success("".to_string(), "批量删除成功"));
     }
     let placeholders: Vec<String> = (1..=body.ids.len()).map(|i| format!("${}", i)).collect();
+    let filter_idx = body.ids.len() + 1;
     let sql = format!(
-        "UPDATE erp.customers SET deleted_at = NOW(), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL",
+        "UPDATE erp.customers SET deleted_at = NOW(), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid)",
         placeholders.join(",")
     );
     let mut query = sqlx::query(&sql);
     for id in &body.ids {
         query = query.bind(id);
     }
+    let query = query.bind(tenant_filter);
     match query.execute(&mut **txn).await {
         Ok(r) => {
             if let Some(t) = guard.take() {
@@ -835,11 +872,19 @@ pub async fn change_customer_status(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
         "erp",
-        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL RETURNING id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL AND ($4::uuid IS NULL OR tenant_id = $4::uuid) RETURNING id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
     ))
-    .bind(&body.status).bind(id).bind(Locale::from_headers(&headers).as_sql()).fetch_optional(&mut **txn).await;
+    .bind(&body.status).bind(id).bind(Locale::from_headers(&headers).as_sql()).bind(tenant_filter).fetch_optional(&mut **txn).await;
     match result {
         Ok(Some(customer)) => {
             if let Some(t) = guard.take() {
@@ -892,14 +937,23 @@ pub async fn batch_change_status(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
     if body.ids.is_empty() {
         return Json(ApiResponse::success(vec![], "批量状态更新成功"));
     }
     let placeholders: Vec<String> = (2..=body.ids.len() + 1)
         .map(|i| format!("${}", i))
         .collect();
+    let filter_idx = body.ids.len() + 2;
     let sql = format!(
-        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at",
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at",
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
@@ -907,6 +961,7 @@ pub async fn batch_change_status(
     for id in &body.ids {
         query = query.bind(id);
     }
+    let query = query.bind(tenant_filter);
     match query.fetch_all(&mut **txn).await {
         Ok(customers) => {
             if let Some(t) = guard.take() {
@@ -958,14 +1013,23 @@ pub async fn batch_change_category(
     if let Err(e) = check_permission(&state.db, &claims, &ModulePermission::FinanceWrite).await {
         return e;
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
     if body.ids.is_empty() {
         return Json(ApiResponse::success(vec![], "批量分类更新成功"));
     }
     let placeholders: Vec<String> = (3..=body.ids.len() + 2)
         .map(|i| format!("${}", i))
         .collect();
+    let filter_idx = body.ids.len() + 3;
     let sql = format!(
-        "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at",
+        "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at",
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
@@ -973,6 +1037,7 @@ pub async fn batch_change_category(
     for id in &body.ids {
         query = query.bind(id);
     }
+    let query = query.bind(tenant_filter);
     match query.fetch_all(&mut **txn).await {
         Ok(customers) => {
             if let Some(t) = guard.take() {
