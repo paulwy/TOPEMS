@@ -398,7 +398,13 @@ pub async fn update_vehicle(
 
     match result {
         Ok(Some(vehicle)) => {
-            // 失效列表缓存（更新后列表数据可能变化）
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            } // 失效列表缓存（更新后列表数据可能变化）
             state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -465,7 +471,13 @@ pub async fn delete_vehicle(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
-            // 失效列表缓存（删除后列表数据可能变化）
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            } // 失效列表缓存（删除后列表数据可能变化）
             state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -567,6 +579,13 @@ pub async fn submit_inspection(
 
             match result {
                 Ok(Some(vehicle)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "vehicle {} submit_inspection: {} -> maintenance, operator={}",
                         id,
@@ -670,6 +689,13 @@ pub async fn approve_vehicle(
 
             match result {
                 Ok(Some(vehicle)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "vehicle {} approved: {} -> {}, operator={}, requires_approval={}",
                         id,
@@ -762,6 +788,13 @@ pub async fn reject_vehicle(
 
             match result {
                 Ok(Some(vehicle)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "vehicle {} rejected: {} -> active, operator={}",
                         id,

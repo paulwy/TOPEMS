@@ -400,7 +400,16 @@ pub async fn update_driver(
     .await;
 
     match result {
-        Ok(Some(driver)) => Json(ApiResponse::success(driver, "司机更新成功")),
+        Ok(Some(driver)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(driver, "司机更新成功"))
+        }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "司机不存在".to_string(),
         ))),
@@ -446,6 +455,13 @@ pub async fn delete_driver(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "司机删除成功"))
         }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -528,6 +544,13 @@ pub async fn submit_verification(
 
             match result {
                 Ok(Some(driver)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "driver {} submit_verification: {} -> suspended, operator={}",
                         id,
@@ -616,6 +639,13 @@ pub async fn approve_driver(
 
             match result {
                 Ok(Some(driver)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "driver {} approved: {} -> active, operator={}",
                         id,
@@ -705,6 +735,13 @@ pub async fn reject_driver(
 
             match result {
                 Ok(Some(driver)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "driver {} rejected: {} -> inactive, operator={}, requires_approval={}",
                         id,

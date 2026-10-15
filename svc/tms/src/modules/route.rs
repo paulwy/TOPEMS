@@ -331,7 +331,16 @@ pub async fn update_route(
     .await;
 
     match result {
-        Ok(Some(route)) => Json(ApiResponse::success(route, "路线更新成功")),
+        Ok(Some(route)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(route, "路线更新成功"))
+        }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "路线不存在".to_string(),
         ))),
@@ -377,6 +386,13 @@ pub async fn delete_route(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "路线删除成功"))
         }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(

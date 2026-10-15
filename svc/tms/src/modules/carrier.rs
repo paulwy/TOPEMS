@@ -408,7 +408,13 @@ pub async fn update_carrier(
 
     match result {
         Ok(Some(carrier)) => {
-            // 失效列表缓存（更新后列表数据可能变化）
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            } // 失效列表缓存（更新后列表数据可能变化）
             state.dict_cache.clear_l1();
 
             // 发布缓存失效事件，通知其他服务失效相关缓存
@@ -654,6 +660,13 @@ pub async fn approve_carrier(
 
             match result {
                 Ok(Some(carrier)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "carrier {} approved: {} -> active, operator={}, requires_approval={}",
                         id,
@@ -744,6 +757,13 @@ pub async fn reject_carrier(
 
             match result {
                 Ok(Some(carrier)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "carrier {} rejected: {} -> rejected, operator={}",
                         id,

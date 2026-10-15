@@ -377,7 +377,16 @@ pub async fn update_shipment(
     .await;
 
     match result {
-        Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "运单更新成功")),
+        Ok(Some(shipment)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(shipment, "运单更新成功"))
+        }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "运单不存在".to_string(),
         ))),
@@ -423,6 +432,13 @@ pub async fn delete_shipment(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "运单删除成功"))
         }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
@@ -498,7 +514,16 @@ pub async fn dispatch_shipment(
             .await;
 
             match result {
-                Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "运单已发车")),
+                Ok(Some(shipment)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
+                    Json(ApiResponse::success(shipment, "运单已发车"))
+                }
                 Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
                     "运单不存在".to_string(),
                 ))),
@@ -583,7 +608,16 @@ pub async fn arrive_shipment(
             .await;
 
             match result {
-                Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "运单已到达")),
+                Ok(Some(shipment)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
+                    Json(ApiResponse::success(shipment, "运单已到达"))
+                }
                 Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
                     "运单不存在".to_string(),
                 ))),
@@ -666,7 +700,16 @@ pub async fn cancel_shipment(
             .await;
 
             match result {
-                Ok(Some(shipment)) => Json(ApiResponse::success(shipment, "运单已取消")),
+                Ok(Some(shipment)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
+                    Json(ApiResponse::success(shipment, "运单已取消"))
+                }
                 Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
                     "运单不存在".to_string(),
                 ))),
@@ -758,6 +801,13 @@ pub async fn submit_approval(
 
             match result {
                 Ok(Some(shipment)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "shipment {} submit_approval: {} -> pending, operator={}",
                         id,
@@ -850,6 +900,13 @@ pub async fn approve_shipment(
 
             match result {
                 Ok(Some(shipment)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "shipment {} approved: {} -> in_transit, operator={}, requires_approval={}",
                         id,
@@ -939,6 +996,13 @@ pub async fn reject_shipment(
 
             match result {
                 Ok(Some(shipment)) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     tracing::info!(
                         "shipment {} rejected: {} -> cancelled, operator={}",
                         id,
