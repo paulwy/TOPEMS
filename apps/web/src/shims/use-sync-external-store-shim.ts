@@ -3,3 +3,7 @@
 // 解构出 named export "useSyncExternalStore" 导致的 SyntaxError / 白屏问题。
 // 注：不能直接 alias 到 "react"，否则会干扰 Vite 的 dep pre-bundle，引发
 //     "react.js does not provide an export named 'forwardRef'" 副次报错。
+
+// 转发 React 19 原生 named export，供 react-i18next 的 useTranslation 等
+// ESM named import 使用（`import { useSyncExternalStore } from 'use-sync-external-store/shim'`）。
+export { useSyncExternalStore } from 'react';
