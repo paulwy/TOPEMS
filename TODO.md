@@ -1796,3 +1796,27 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 主线状态
 - 337 目标 RLS = 337/337、policy = 337/337；全库业务表 air owner = 0。
 - 主线「RLS 租户隔离收尾 + 同类缺陷清查」**实质闭环**。
+
+## 2026-10-15 下一批遗留闭环：ai_knowledge 对象 + WCS 5 处契约修复（✅ 4075/4075 全绿）
+
+> D3（2026-10-13 代码级修复）遗留 2 项落地 + WCS 全契约复验暴露缺陷清零。
+
+### migration 78：ai_knowledge 缺失 DB 对象补齐（DATABASE_URL=topems_app 执行）
+- 表已在（owner=topems_app），缺 idx_kc_embedding（ivfflat）、idx_qa_*×4、core.core_set_updated_at 函数、trg_kb/trg_kd 触发器；pgvector/pg_trgm 已装。
+- 关键修正：函数显式 `core.core_set_updated_at()`（避免 search_path 误解析到 ai/mes 同名函数）+ DROP TRIGGER IF EXISTS 重建；尾部 DO 断言全过。
+- monolith 重启后 0 ERROR / 0 WARN，ai_knowledge 启动告警消失。
+
+### WCS 复验暴露 5 处 FAIL → 全部闭环
+1. **file preview/thumbnail 404**：handler 对不存在文件返回 NOT_FOUND，未对齐"200+内层 code404"约定 → download.rs 3 处 NOT_FOUND→OK；`thumbnail/{id}/{size}` 前端 query 变量误解析为路径段 → 新增 thumbnail_compat wrapper（忽略 size 复用单段）。file 57/57 ✅
+2. **master POST /mdm-v57/graph/embeddings 404**：semantic_v57 无此路由 → 新增 compute_embeddings handler（诚实降级 501「Embedding 服务未接入」）+ 挂 /graph/embeddings。master 171/171 ✅
+3. **mes equipment-oee efficiency 500**：stub 查 `equipment_oee_records`（不存在）→ 改 `mes.equipment_oee` + 列名对齐（availability/performance/quality_rate/oee）；全文件加 mes. 前缀。
+4. **wms serial trace 500**：查/取 `location` 列（不存在）→ 改 `location_code`，响应 JSON 键仍 `"location"`（向前兼容）。wms 209/209 ✅
+5. **mes gantt 500（最后一处）**：SQL 前缀/权限/RLS 全正常，真根因 = `ws.station_name as work_station_name`（LEFT JOIN 可空列）被 sqlx 按 NOT NULL 推断，join 无匹配时 NULL decode 失败 → 3 处 LEFT JOIN 别名加 `COALESCE(col, NULL)` 强制可空 + 调用处适配。mes 188/188 ✅
+
+### migration 79：production_schedules policy 补 missing_ok
+- 排查中顺带发现：该 policy 的 `current_setting('app.tenant_id')` 无 missing_ok（与 work_stations 写法不一致），未设置上下文时会抛错。已 ALTER 补齐并固化为 migration 79（幂等 + DO 断言）。
+- 补登记 migration 75-78（此前手工执行未登记，本轮统一补登，75-79 登记表完整）。
+
+### 主线状态
+- WCS 全量 **4075/4075 PASS, 0 FAIL**（file 57 / master 171 / mes 188 / wms 209 全绿）。
+- 本轮改动未提交（含 .sqlx 缓存更新），待「推送」指令后分批推送。
