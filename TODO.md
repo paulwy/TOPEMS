@@ -2042,3 +2042,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - cycle_count.rs 4 处（update_cycle_count_config $9 / delete_cycle_count_config $3 / generate_cycle_count $5 / generate_all_cycle_counts $5）：claims 均已有（generate/generate_all 复用已有 tenant_id 变量），补 UPDATE WHERE 租户条件
 - 复核：wms check 0 error；SQL 事务内实测（空表插测试行，warehouse 用真实 FK）——batches / cycle_count_configs 本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-U：integration.core_inter_module_sync 5 处（写路径租户约束，skip 7 处）
+- 状态：代码已修改（integration check 通过 0 error），待提交
+- sync.rs 5 处（update_status $6 + retry_failed 4 分支 $2/$3/$3/$4）：2 函数均无 Claims（integration 路由有中间件），补 Extension<Claims> + tenant_filter + UPDATE WHERE 租户条件；补 axum Extension import
+- skip：core.core_plugins 7 处（plugin-registry：install_plugin_inner install_count / publish / unpublish / update / upgrade / rollback / versioning）——平台/全局插件目录表：插件定义全局共享（SELECT 无租户过滤），install_count/version/is_published 均为跨租户全局语义，加租户约束会破坏功能
+- 复核：integration check 0 error；SQL 事务内实测（空表插测试行）——core_inter_module_sync 本租户 UPDATE 1 / 他租户越权 0，ROLLBACK 零残留
+

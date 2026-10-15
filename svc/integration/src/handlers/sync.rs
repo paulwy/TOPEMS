@@ -4,7 +4,7 @@
 //! 提供同步任务的 CRUD、统计、重试以及供应链触发器（SCM→WMS、WMS→CRM、SRM→SCM）。
 //! 统一由 integration 服务承载，与既有 mes_erp / wms_scm / lims_qms 等同步模块并列。
 
-use axum::extract::{Json, State};
+use axum::extract::{Extension, Json, State};
 use serde::{Deserialize, Serialize};
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::TopemsError;
@@ -12,6 +12,7 @@ use uuid::Uuid;
 
 use crate::models::AppState;
 use topems_shared_core::response::ApiResponse;
+use topems_shared_auth::auth::Claims;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateStatusRequest {
@@ -227,8 +228,14 @@ pub async fn get_task(
 pub async fn update_status(
     State(state): State<AppState>,
     axum::extract::Path(task_id): axum::extract::Path<String>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<UpdateStatusRequest>,
 ) -> Json<ApiResponse<SyncTask>> {
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
             let now = chrono::Utc::now();
@@ -237,7 +244,7 @@ pub async fn update_status(
                 r#"
                 UPDATE integration.core_inter_module_sync
                 SET status = $2, error_message = $3, executed_at = $4, updated_at = $5
-                WHERE id = $1
+                WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
                 RETURNING *
                 "#
             ))
@@ -246,6 +253,7 @@ pub async fn update_status(
             .bind(&req.error_message)
             .bind(now)
             .bind(now)
+            .bind(tenant_filter)
             .fetch_one(&state.pool)
             .await
             {
@@ -368,21 +376,28 @@ pub async fn get_statistics(State(state): State<AppState>) -> Json<ApiResponse<S
 )]
 pub async fn retry_failed(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(req): Json<RetryFailedRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let now = chrono::Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = if req.sync_type.is_some() && req.source_module.is_some() {
         sqlx::query(only_own_schema_query!(
             "integration",
             r#"
             UPDATE integration.core_inter_module_sync
             SET status = 'pending', retry_count = 0, next_retry_at = NULL, updated_at = $1
-            WHERE status = 'failed' AND sync_type = $2 AND source_module = $3
+            WHERE status = 'failed' AND sync_type = $2 AND source_module = $3 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
             "#
         ))
         .bind(now)
         .bind(req.sync_type.unwrap_or_default())
         .bind(req.source_module.unwrap_or_default())
+        .bind(tenant_filter)
         .execute(&state.pool)
         .await
     } else if req.sync_type.is_some() {
@@ -391,11 +406,12 @@ pub async fn retry_failed(
             r#"
             UPDATE integration.core_inter_module_sync
             SET status = 'pending', retry_count = 0, next_retry_at = NULL, updated_at = $1
-            WHERE status = 'failed' AND sync_type = $2
+            WHERE status = 'failed' AND sync_type = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
             "#
         ))
         .bind(now)
         .bind(req.sync_type.unwrap_or_default())
+        .bind(tenant_filter)
         .execute(&state.pool)
         .await
     } else if req.source_module.is_some() {
@@ -404,11 +420,12 @@ pub async fn retry_failed(
             r#"
             UPDATE integration.core_inter_module_sync
             SET status = 'pending', retry_count = 0, next_retry_at = NULL, updated_at = $1
-            WHERE status = 'failed' AND source_module = $2
+            WHERE status = 'failed' AND source_module = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
             "#
         ))
         .bind(now)
         .bind(req.source_module.unwrap_or_default())
+        .bind(tenant_filter)
         .execute(&state.pool)
         .await
     } else {
@@ -417,10 +434,11 @@ pub async fn retry_failed(
             r#"
             UPDATE integration.core_inter_module_sync
             SET status = 'pending', retry_count = 0, next_retry_at = NULL, updated_at = $1
-            WHERE status = 'failed'
+            WHERE status = 'failed' AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
             "#
         ))
         .bind(now)
+        .bind(tenant_filter)
         .execute(&state.pool)
         .await
     };
