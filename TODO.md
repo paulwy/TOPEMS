@@ -1903,3 +1903,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - iam auth.rs core_sessions/core_refresh_tokens（登录/刷新前无 claims——登录是系统级入口，会话租户后续处理）
   - core_migration_history（系统）、core_flow_rules/core_flow_delegates（表无 tenant_id 列）
 - 编译：cargo check topems-unified-core 通过
+
+## 方案C 批2 — 子批 D：RLS policy nil 分支 migration（pool 直连兼容）
+- 状态：已提交（待推送）
+- 发现：批2 代码补绑租户后，实测普通用户创建 automation 规则 500——根因 PG18 未 SET 的 current_setting 返回 nil UUID 字符串，而 automation_rules 等表 policy（rls_tenant_isolation/tenant_isolation_*）无 nil 分支 → pool 直连 INSERT 绑非 NULL 租户被 RLS 拒绝
+- 修复：`20261015000080_plan_c_batch2_rls_nil_policy.sql`——11 表（automation_rules/variables/runs + core_files/file_permissions + core_notifications/templates + core_emails/templates + finance voucher/voucher_lines）的 tenant_isolation_* policy 加 `NULLIF(current_setting(...)) = '00000000-...'` 分支
+- 实测：普通用户（0001）创建 automation 规则 → tenant_id=0001 落库（200）；superuser → nil；测试数据已清理
+- 语义：非 txn crate 隔离靠 handler 显式过滤（方案C），RLS 为兜底——policy 补 nil 分支使 pool 直连可用
