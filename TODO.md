@@ -1777,3 +1777,4 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 
 **结果**：337 目标中 274 张已开 RLS + policy；63 张 air owner 死表豁免（0 行开发残留，仅 iam.tenant_users 2 行测试数据，记录为已知缺口待人工）。明细见 artifacts/rls_tenant_policy_batch_20261015.txt。
 - **air owner 63 张豁免**（二次确认 2026-10-15）：air 为 superuser 但无凭据/无成员可 SET ROLE，63 张 0 行死表无法开 RLS，维持豁免；iam.tenant_users 仅 2 行测试数据（tenant_id 非 NULL）——待 air 凭据后补开或删除测试行后豁免到底。
+- **air owner 63 张一步到位闭环**（2026-10-15 追加）：发现 unix socket peer 认证可免密以 air（superuser）连库 → ① 63 张 owner 改 topems_app；② 9 schema GRANT USAGE；③ migration 77（63 张开 RLS，DATABASE_URL 可复现）；④ 剩余 53 张 air 表（豁免/旧套/无 tenant_id）owner 统一 topems_app → **全库业务表 air owner = 0**；337 目标 RLS+policy = 337/337（100%）。
