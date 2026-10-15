@@ -925,7 +925,7 @@ impl DataProductManager {
         .map_err(|e| TopemsError::BusinessLogic(format!("写入数据契约失败: {e}")))?;
         sqlx::query(
             "UPDATE master_data.mdm_data_products
-             SET data_contract = $2, status = 'published', updated_at = $3 WHERE id = $1",
+             SET data_contract = $2, status = 'published', updated_at = $3 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
         )
         .bind(product_id)
         .bind(serde_json::to_value(&contract).unwrap_or_default())

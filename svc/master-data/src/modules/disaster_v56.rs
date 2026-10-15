@@ -1350,7 +1350,7 @@ pub async fn update_plan(
     if let Err(e) = sqlx::query(
         r#"UPDATE master_data.mdm_continuity_plans SET
            name = $2, scope = $3, recovery_strategy = $4, test_frequency = $5, status = $6
-           WHERE id = $1"#,
+           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&id)
     .bind(&plan.name)
@@ -1401,7 +1401,7 @@ pub async fn test_plan(
 
     let now = chrono::Utc::now();
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_continuity_plans SET last_tested = $2, status = $3 WHERE id = $1"#,
+        r#"UPDATE master_data.mdm_continuity_plans SET last_tested = $2, status = $3 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&id)
     .bind(now.to_rfc3339())
@@ -1722,7 +1722,7 @@ pub async fn start_replication(
     };
 
     if let Err(e) = sqlx::query(
-        "UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1",
+        "UPDATE master_data.mdm_replication_configs SET status = 'running' WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&config.id)
     .execute(&state.db)
@@ -1939,7 +1939,7 @@ pub async fn complete_failover(
 
     let completed_at = chrono::Utc::now().to_rfc3339();
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_failover_records SET status = 'completed', completed_at = $2 WHERE id = $1"#,
+        r#"UPDATE master_data.mdm_failover_records SET status = 'completed', completed_at = $2 WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&record.id)
     .bind(&completed_at)

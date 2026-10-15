@@ -601,7 +601,7 @@ pub async fn update_metadata(
                tags = COALESCE($5, tags),
                attributes = COALESCE($6, attributes),
                updated_at = $7
-           WHERE id = $1"#,
+           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&id)
     .bind(&req.name)
@@ -654,7 +654,7 @@ pub async fn delete_metadata(
     Path(id): Path<String>,
 ) -> Json<ApiResponse<()>> {
     // K1：真表删除。
-    let res = sqlx::query("DELETE FROM master_data.mdm_metadata_objects WHERE id = $1")
+    let res = sqlx::query("DELETE FROM master_data.mdm_metadata_objects WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))")
         .bind(&id)
         .execute(&state.db)
         .await;

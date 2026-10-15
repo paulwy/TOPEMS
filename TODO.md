@@ -2101,3 +2101,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 类型适配：mdm_subscriptions.tenant_id 为 text（非 uuid）——内联条件用 text 版（不 ::UUID cast）；其余 7 表 uuid 版。master_data 共 5 表 tenant_id text（billing_records/sla_incidents/sla_measurements/subscriptions/usage_records），后续批注意
 - 复核：master-data check 0 error；SQL 事务内实测（真实行保真 / 空表插测试行）——8 表本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-Ze：master-data 第二批 12 处（写路径租户约束）
+- 状态：代码已修改（master-data check 通过 0 error），待提交
+- master-data 12 处（continuity_plans×2 / replication_configs / failover_records / subscriptions tier / billing_records / metadata_objects UPDATE+DELETE / version_branches / data_permissions DELETE / auto_fix_actions / data_products）：无 Claims，内联 current_setting
+- 类型适配：billing_records（text 列）内联用 text 版；subscriptions tier 同 text 版
+- 复核：master-data check 0 error；SQL 事务内实测 9 表（真实行保真 / billing 空表插测试行）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留（subscriptions 同表 text 逻辑批2-Zd 已验证）
+
