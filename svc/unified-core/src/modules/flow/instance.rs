@@ -125,7 +125,7 @@ pub async fn list_instances(
 
     let items: Vec<WorkflowInstance> = if !has_filters {
         match sqlx::query_as::<_, WorkflowInstance>(
-            r#"SELECT id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances
+            r#"SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances
                WHERE ($1::uuid IS NULL OR initiator_id = $1 OR EXISTS (
                    SELECT 1 FROM core_workflow_tasks t
                    WHERE t.instance_id = core_workflow_instances.id AND t.assignee_id = $1 AND t.deleted_at IS NULL
@@ -160,7 +160,7 @@ pub async fn list_instances(
             .and_then(|s| Uuid::parse_str(&s).ok());
 
         match sqlx::query_as::<_, WorkflowInstance>(
-            r#"SELECT id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at
+            r#"SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at
                FROM core_workflow_instances
                WHERE (title ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
@@ -222,7 +222,7 @@ pub async fn get_instance(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
     let instance = match sqlx::query_as::<_, WorkflowInstance>(
-        "SELECT id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
+        "SELECT id, tenant_id, workflow_id, title, initiator_id, current_node_id, status, variables, started_at, completed_at, created_at, updated_at FROM core_workflow_instances WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)

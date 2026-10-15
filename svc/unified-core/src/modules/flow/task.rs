@@ -100,7 +100,7 @@ pub async fn list_tasks(
 
     let items: Vec<WorkflowTask> = if !has_filters {
         match sqlx::query_as::<_, WorkflowTask>(
-            "SELECT id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id FROM flow.core_workflow_tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            "SELECT id, tenant_id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id FROM flow.core_workflow_tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2"
         )
         .bind(page_size)
         .bind(offset)
@@ -118,7 +118,7 @@ pub async fn list_tasks(
         let instance_uuid = instance_id.and_then(|s| Uuid::parse_str(&s).ok());
 
         match sqlx::query_as::<_, WorkflowTask>(
-            r#"SELECT id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at 
+            r#"SELECT id, tenant_id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at 
                FROM core_workflow_tasks 
                WHERE (node_id ILIKE $1 OR comment ILIKE $1 OR $1 = '')
                  AND (status = $2 OR $2 = '')
@@ -168,7 +168,7 @@ pub async fn get_task(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowTask>> {
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "SELECT id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at FROM core_workflow_tasks WHERE id = $1",
+        "SELECT id, tenant_id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at FROM core_workflow_tasks WHERE id = $1",
     )
     .bind(id)
     .fetch_one(&state.pool)
