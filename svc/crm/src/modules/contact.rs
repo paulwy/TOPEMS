@@ -788,7 +788,7 @@ pub async fn start_contact_approval(
     });
 
     let _ = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = 'pending', updated_at = NOW() WHERE id = $1",
+        "UPDATE crm.contacts SET approval_status = 'pending', updated_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(id)
     .execute(&mut **txn)
@@ -908,7 +908,7 @@ pub async fn approve_contact(
     let new_approval_status = "approved".to_string();
 
     let _ = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = 'approved', updated_at = NOW() WHERE id = $1",
+        "UPDATE crm.contacts SET approval_status = 'approved', updated_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(id)
     .execute(&mut **txn)
@@ -1025,7 +1025,7 @@ pub async fn reject_contact(
     let new_approval_status = "rejected".to_string();
 
     let _ = sqlx::query(
-        "UPDATE crm.contacts SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1",
+        "UPDATE crm.contacts SET approval_status = 'rejected', updated_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(id)
     .execute(&mut **txn)

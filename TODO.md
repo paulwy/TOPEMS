@@ -2136,3 +2136,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - pm 21 处（contract_milestones UPDATE+DELETE / contract_payment_schedule / contract_templates×2 / defects / document_folders UPDATE+DELETE / project_approvals×2 / project_documents×3 UPDATE+DELETE / project_resources / settlements×2 / settlement_items UPDATE+DELETE / report_templates×2 / pm_tasks）：无 Claims，统一内联 current_setting
 - 至此 pm 服务显式租户约束全部清完（批2-Za 5 + 批2-Zi 14 + 本批 21 = 40 处）
 - 复核：pm check 0 error；SQL 事务内实测 14 表（tasks 用真实行 3125f79f，空表插关联链——contracts→milestones/pschedule、settlements→settlement_items，content json 列须 '{}'::json，bitems 类 id 无默认显式给）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+
+## 方案C 批2-Zk：crm + integration + wms 并行批 22+ 处（写路径租户约束）
+- 状态：代码已修改（crm/integration/wms 三服务并行 check 均 0 error），分服务独立 commit
+- crm 6 处（contacts/customers approval pending/approved/rejected 三态，WHERE id=$1）：无 Claims，统一内联 current_setting
+- integration 2 处（external_erp.rs erp_mappings DELETE）：无 Claims，内联 current_setting——**erp_mappings.tenant_id 为 text（值 'default'）须用 text 版内联（去 ::UUID cast）**，text 版新增表登记：erp_mappings（master_data 5 表之外）
+- wms 17 处（outbound_order_items×2 / inbound_order_items×3 / wave_pick_items×2 / serial_numbers×5 / stock_take_items×3 / slotting_suggestions×2）：无 Claims，统一内联 current_setting
+- 扫描甄别补充：wms replenishment_rules/safety_stock_settings/replenishment_suggestions 位于 schema_defense.rs（防御层，非业务 handler）skip；wms data_sync.rs outbound_orders 内部同步 skip；crm customer_segmentation.rs:317 扫描误报（customer_segments 无 tenant_id 列）skip
+- 复核：三服务 check 0 error；SQL 事务内实测——crm contacts/customers 用真实行（本租户 UPDATE 1 / 他租户越权 0）、erp_mappings 'default' 租户 DELETE 1 / 他租户 0、wms 6 空表插关联链（outbound_orders→items、inbound_orders→items、wave_picks→items、stock_takes→items，warehouse_id 须真实 FK 22662b98，wave_pick_items 用 remarks 列 / serial_numbers 用 remark / slotting 用 reason）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
