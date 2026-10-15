@@ -1654,7 +1654,7 @@ pub async fn get_project_gantt(
 
     let milestones_result = sqlx::query_as::<_, crate::models::ProjectMilestone>(
         r#"
-        SELECT id, project_id, phase_id, name, description, target_date, actual_date,
+        SELECT id, tenant_id, project_id, phase_id, name, description, target_date, actual_date,
                status, created_at, updated_at, deliverable_type, acceptance_criteria,
                acceptance_status, accepted_by, accepted_at
         FROM rs.project_milestones WHERE project_id = $1

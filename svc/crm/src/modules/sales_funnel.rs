@@ -435,7 +435,7 @@ pub async fn get_stage_opportunities(
 
     let result = sqlx::query_as::<_, Opportunity>(
         r#"
-        SELECT id, name, customer_id, value, stage, probability, close_date, notes, created_at, updated_at
+        SELECT id, tenant_id, opp_no, name, customer_id, customer_name, stage, priority, value, probability, close_date, owner_id, status, notes, created_at, updated_at
         FROM crm.opportunities
         WHERE stage = $1
         ORDER BY created_at DESC
