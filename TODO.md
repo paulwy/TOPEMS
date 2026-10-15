@@ -1820,3 +1820,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 主线状态
 - WCS 全量 **4075/4075 PASS, 0 FAIL**（file 57 / master 171 / mes 188 / wms 209 全绿）。
 - 本轮改动未提交（含 .sqlx 缓存更新），待「推送」指令后分批推送。
+
+### 2026-10-15 RLS 事务 commit 缺口全库修复（进行中）
+- 实测确认：tenant 中间件注入事务不自动 commit，247 个 HTTP 写 handler 缺 `guard.take()`+commit（HTTP 200 但 0 行落库，create_position 实测铁证）。
+- 修复样板：成功分支插 `guard.take()`+`.commit()`（commit 失败返 500），与 delete_outbound_order / erp customer 既有模板一致。
+- **hrm 批完成**：48 个候选（含 get_settings 纯读误报剔除），10 文件 +434 行；cargo check/build 绿；实测 create_position / create_leave / update_settings 落库通过。
+- 待办批：wms 63 / erp 38 / rd 25 / srm 24 / tms 23 / crm 13 / scm 10。
