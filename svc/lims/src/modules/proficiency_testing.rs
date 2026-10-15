@@ -1,8 +1,9 @@
 use axum::{
-    extract::State,
+    extract::{Extension, State},
     routing::{get, post, put},
     Json, Router,
 };
+use topems_shared_auth::middleware::tenant::TenantContext;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared_core::{response::ApiResponse, TopemsError};
@@ -256,29 +257,31 @@ pub struct UpdatePtCorrectiveActionRequest {
 )]
 pub async fn list_plans(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Query(query): axum::extract::Query<PtPlanQuery>,
 ) -> Json<ApiResponse<Vec<ProficiencyTestingPlan>>> {
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
 
     let sql = match (query.status.as_ref(), query.year.as_ref(), query.plan_name.as_ref(), query.provider.as_ref()) {
-        (Some(_), Some(_), Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_year = $2 AND plan_name LIKE $3 AND provider LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
-        (Some(_), Some(_), Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_year = $2 AND plan_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), Some(_), None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_year = $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), Some(_), None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_year = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_name LIKE $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (Some(_), None, Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND plan_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (Some(_), None, None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND status = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, Some(_), Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_year = $1 AND plan_name LIKE $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
-        (None, Some(_), Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_year = $1 AND plan_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_year = $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, Some(_), None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_year = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None, Some(_), Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_name LIKE $1 AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
-        (None, None, Some(_), None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND plan_name LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None, None, Some(_)) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND provider LIKE $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
-        (None, None, None, None) => "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans ORDER BY created_at DESC LIMIT $1 OFFSET $2",
+        (Some(_), Some(_), Some(_), Some(_)) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = $2 AND plan_year = $3 AND plan_name LIKE $4 AND provider LIKE $5 ORDER BY created_at DESC LIMIT $6 OFFSET $7",
+        (Some(_), Some(_), Some(_), None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = $2 AND plan_year = $3 AND plan_name LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (Some(_), Some(_), None, Some(_)) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = $2 AND plan_year = $3 AND provider LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (Some(_), Some(_), None, None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = $2 AND plan_year = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, Some(_), Some(_)) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = $2 AND plan_name LIKE $3 AND provider LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (Some(_), None, Some(_), None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = $2 AND plan_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, None, Some(_)) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (Some(_), None, None, None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND status = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, Some(_), Some(_), Some(_)) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND plan_year = $2 AND plan_name LIKE $3 AND provider LIKE $4 ORDER BY created_at DESC LIMIT $5 OFFSET $6",
+        (None, Some(_), Some(_), None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND plan_year = $2 AND plan_name LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (None, Some(_), None, Some(_)) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND plan_year = $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (None, Some(_), None, None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND plan_year = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, Some(_), Some(_)) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND plan_name LIKE $2 AND provider LIKE $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5",
+        (None, None, Some(_), None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND plan_name LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, None, Some(_)) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) AND deleted_at IS NULL AND provider LIKE $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
+        (None, None, None, None) => "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE ($1::uuid IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
     };
 
     let mut query_builder = sqlx::query(sql);
@@ -290,6 +293,7 @@ pub async fn list_plans(
     ) {
         (Some(st), Some(yr), Some(pn), Some(pr)) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(st)
                 .bind(yr)
                 .bind(format!("%{}%", pn))
@@ -299,6 +303,7 @@ pub async fn list_plans(
         }
         (Some(st), Some(yr), Some(pn), None) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(st)
                 .bind(yr)
                 .bind(format!("%{}%", pn))
@@ -307,6 +312,7 @@ pub async fn list_plans(
         }
         (Some(st), Some(yr), None, Some(pr)) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(st)
                 .bind(yr)
                 .bind(format!("%{}%", pr))
@@ -314,10 +320,11 @@ pub async fn list_plans(
                 .bind(offset);
         }
         (Some(st), Some(yr), None, None) => {
-            query_builder = query_builder.bind(st).bind(yr).bind(page_size).bind(offset);
+            query_builder = query_builder.bind(tenant_filter).bind(st).bind(yr).bind(page_size).bind(offset);
         }
         (Some(st), None, Some(pn), Some(pr)) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(st)
                 .bind(format!("%{}%", pn))
                 .bind(format!("%{}%", pr))
@@ -326,6 +333,7 @@ pub async fn list_plans(
         }
         (Some(st), None, Some(pn), None) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(st)
                 .bind(format!("%{}%", pn))
                 .bind(page_size)
@@ -333,16 +341,18 @@ pub async fn list_plans(
         }
         (Some(st), None, None, Some(pr)) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(st)
                 .bind(format!("%{}%", pr))
                 .bind(page_size)
                 .bind(offset);
         }
         (Some(st), None, None, None) => {
-            query_builder = query_builder.bind(st).bind(page_size).bind(offset);
+            query_builder = query_builder.bind(tenant_filter).bind(st).bind(page_size).bind(offset);
         }
         (None, Some(yr), Some(pn), Some(pr)) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(yr)
                 .bind(format!("%{}%", pn))
                 .bind(format!("%{}%", pr))
@@ -351,6 +361,7 @@ pub async fn list_plans(
         }
         (None, Some(yr), Some(pn), None) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(yr)
                 .bind(format!("%{}%", pn))
                 .bind(page_size)
@@ -358,16 +369,18 @@ pub async fn list_plans(
         }
         (None, Some(yr), None, Some(pr)) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(yr)
                 .bind(format!("%{}%", pr))
                 .bind(page_size)
                 .bind(offset);
         }
         (None, Some(yr), None, None) => {
-            query_builder = query_builder.bind(yr).bind(page_size).bind(offset);
+            query_builder = query_builder.bind(tenant_filter).bind(yr).bind(page_size).bind(offset);
         }
         (None, None, Some(pn), Some(pr)) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(format!("%{}%", pn))
                 .bind(format!("%{}%", pr))
                 .bind(page_size)
@@ -375,18 +388,20 @@ pub async fn list_plans(
         }
         (None, None, Some(pn), None) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(format!("%{}%", pn))
                 .bind(page_size)
                 .bind(offset);
         }
         (None, None, None, Some(pr)) => {
             query_builder = query_builder
+                .bind(tenant_filter)
                 .bind(format!("%{}%", pr))
                 .bind(page_size)
                 .bind(offset);
         }
         (None, None, None, None) => {
-            query_builder = query_builder.bind(page_size).bind(offset);
+            query_builder = query_builder.bind(tenant_filter).bind(page_size).bind(offset);
         }
     }
 
@@ -427,6 +442,7 @@ pub async fn list_plans(
 
 pub async fn create_plan(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreatePtPlanRequest>,
 ) -> Json<ApiResponse<ProficiencyTestingPlan>> {
     let plan_no = format!(
@@ -439,8 +455,8 @@ pub async fn create_plan(
         INSERT INTO qa_lims_pt_plans (
             plan_no, plan_name, provider, test_item, test_method, plan_year,
             sample_type, expected_result, registration_date, test_deadline,
-            report_deadline, status, contact_person, contact_phone, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'planning', $12, $13, $14)
+            report_deadline, status, contact_person, contact_phone, notes, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 'planning', $12, $13, $14, $15)
         RETURNING id::TEXT, tenant_id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year,
                   sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT,
                   report_deadline::TEXT, status, contact_person, contact_phone, notes,
@@ -461,6 +477,7 @@ pub async fn create_plan(
     .bind(&req.contact_person)
     .bind(&req.contact_phone)
     .bind(&req.notes)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -519,7 +536,7 @@ pub async fn get_plan(
     };
 
     let row = sqlx::query(
-        "SELECT id, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1"
+        "SELECT id::TEXT, plan_no, plan_name, provider, test_item, test_method, plan_year, sample_type, expected_result, registration_date::TEXT, test_deadline::TEXT, report_deadline::TEXT, status, contact_person, contact_phone, notes, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT FROM qa_lims_pt_plans WHERE deleted_at IS NULL AND id = $1"
     )
     .bind(id)
     .fetch_one(&state.pool)
@@ -681,6 +698,7 @@ pub async fn delete_plan(
 )]
 pub async fn receive_sample(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<PtSampleReceiveRequest>,
 ) -> Json<ApiResponse<PtSample>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
@@ -710,8 +728,8 @@ pub async fn receive_sample(
         r#"
         INSERT INTO qa_lims_pt_samples (
             plan_id, plan_no, plan_name, sample_code, sample_name,
-            received_date, received_by, storage_condition, sample_status, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'received', $9)
+            received_date, received_by, storage_condition, sample_status, notes, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'received', $9, $10)
         RETURNING id, plan_id, plan_no, plan_name, sample_code, sample_name,
                   received_date::TEXT, received_by, storage_condition, sample_status,
                   notes, created_at::TEXT
@@ -726,6 +744,7 @@ pub async fn receive_sample(
     .bind(&req.received_by)
     .bind(&req.storage_condition)
     .bind(&req.notes)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -777,8 +796,10 @@ pub async fn receive_sample(
 )]
 pub async fn list_plan_samples(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtSample>>> {
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
@@ -786,14 +807,15 @@ pub async fn list_plan_samples(
 
     let rows = sqlx::query(
         r#"
-        SELECT id, plan_id, plan_no, plan_name, sample_code, sample_name,
+        SELECT id::TEXT, plan_id::TEXT, plan_no, plan_name, sample_code, sample_name,
                received_date::TEXT, received_by, storage_condition, sample_status,
-               notes, created_at::TEXT, tenant_id
+               notes, created_at::TEXT, tenant_id::TEXT
         FROM qa_lims_pt_samples
-        WHERE plan_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2
         ORDER BY created_at DESC
         "#,
     )
+    .bind(tenant_filter)
     .bind(id)
     .fetch_all(&state.pool)
     .await;
@@ -830,6 +852,7 @@ pub async fn list_plan_samples(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn submit_result(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreatePtResultRequest>,
 ) -> Json<ApiResponse<PtResult>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
@@ -899,8 +922,8 @@ pub async fn submit_result(
             plan_id, plan_no, sample_id, sample_code, test_item, test_result,
             result_unit, test_date, tested_by, instrument, test_method,
             replicate_results, mean_value, standard_deviation, coefficient_variation,
-            notes, submitted_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            notes, submitted_at, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, plan_id, plan_no, sample_id, sample_code, test_item, test_result,
                   result_unit, test_date::TEXT, tested_by, instrument, test_method,
                   replicate_results, mean_value, standard_deviation, coefficient_variation,
@@ -924,6 +947,7 @@ pub async fn submit_result(
     .bind(cv)
     .bind(&req.notes)
     .bind(&submitted_at)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -983,8 +1007,10 @@ pub async fn submit_result(
 )]
 pub async fn list_plan_results(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtResult>>> {
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
@@ -992,15 +1018,16 @@ pub async fn list_plan_results(
 
     let rows = sqlx::query(
         r#"
-        SELECT id, plan_id, plan_no, sample_id, sample_code, test_item, test_result,
+        SELECT id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result,
                result_unit, test_date::TEXT, tested_by, instrument, test_method,
                replicate_results, mean_value, standard_deviation, coefficient_variation,
-               notes, submitted_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id
+               notes, submitted_at::TEXT, created_at::TEXT, updated_at::TEXT, tenant_id::TEXT
         FROM qa_lims_pt_results
-        WHERE plan_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2
         ORDER BY created_at DESC
         "#,
     )
+    .bind(tenant_filter)
     .bind(id)
     .fetch_all(&state.pool)
     .await;
@@ -1054,6 +1081,7 @@ pub async fn list_plan_results(
 )]
 pub async fn evaluate_result(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<PtEvaluateRequest>,
 ) -> Json<ApiResponse<PtEvaluation>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
@@ -1067,7 +1095,7 @@ pub async fn evaluate_result(
     };
 
     let result_row = sqlx::query(
-        "SELECT plan_no, sample_id, sample_code, test_item, test_result FROM qa_lims_pt_results WHERE id = $1"
+        "SELECT plan_no, sample_id::TEXT, sample_code, test_item, test_result FROM qa_lims_pt_results WHERE id = $1"
     )
     .bind(result_id)
     .fetch_optional(&state.pool)
@@ -1110,8 +1138,8 @@ pub async fn evaluate_result(
             plan_id, plan_no, sample_id, sample_code, test_item, test_result,
             assigned_value, standard_deviation, z_score, en_score,
             measurement_uncertainty, reference_uncertainty, evaluation_method,
-            evaluation_result, evaluated_by, evaluated_at, notes
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+            evaluation_result, evaluated_by, evaluated_at, notes, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
         RETURNING id, plan_id, plan_no, sample_id, sample_code, test_item, test_result,
                   assigned_value, standard_deviation, z_score, en_score,
                   measurement_uncertainty, reference_uncertainty, evaluation_method,
@@ -1135,6 +1163,7 @@ pub async fn evaluate_result(
     .bind(&req.evaluated_by)
     .bind(&evaluated_at)
     .bind(&req.notes)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -1193,8 +1222,10 @@ pub async fn evaluate_result(
 )]
 pub async fn list_plan_evaluations(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtEvaluation>>> {
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
@@ -1202,15 +1233,16 @@ pub async fn list_plan_evaluations(
 
     let rows = sqlx::query(
         r#"
-        SELECT id, plan_id, plan_no, sample_id, sample_code, test_item, test_result,
+        SELECT id::TEXT, plan_id::TEXT, plan_no, sample_id::TEXT, sample_code, test_item, test_result,
                assigned_value, standard_deviation, z_score, en_score,
                measurement_uncertainty, reference_uncertainty, evaluation_method,
-               evaluation_result, evaluated_by, evaluated_at::TEXT, notes, created_at::TEXT, tenant_id
+               evaluation_result, evaluated_by, evaluated_at::TEXT, notes, created_at::TEXT, tenant_id::TEXT
         FROM qa_lims_pt_evaluations
-        WHERE plan_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2
         ORDER BY created_at DESC
         "#,
     )
+    .bind(tenant_filter)
     .bind(id)
     .fetch_all(&state.pool)
     .await;
@@ -1266,6 +1298,7 @@ pub async fn list_plan_evaluations(
 )]
 pub async fn create_corrective_action(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     Json(req): Json<CreatePtCorrectiveActionRequest>,
 ) -> Json<ApiResponse<PtCorrectiveAction>> {
     let plan_id = match Uuid::parse_str(&req.plan_id) {
@@ -1294,12 +1327,12 @@ pub async fn create_corrective_action(
         r#"
         INSERT INTO qa_lims_pt_corrective_actions (
             plan_id, plan_no, evaluation_id, unsatisfactory_item,
-            root_cause, corrective_measures, responsible_person, deadline, status
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending')
+            root_cause, corrective_measures, responsible_person, deadline, status, tenant_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9)
         RETURNING id, plan_id, plan_no, evaluation_id, unsatisfactory_item,
                   root_cause, corrective_measures, responsible_person, deadline::TEXT,
                   status, verification_result, verified_by, verified_at::TEXT,
-                  created_at::TEXT, updated_at::TEXT, tenant_id
+                  created_at::TEXT, updated_at::TEXT, tenant_id::TEXT
         "#,
     )
     .bind(plan_id)
@@ -1310,6 +1343,7 @@ pub async fn create_corrective_action(
     .bind(&req.corrective_measures)
     .bind(&req.responsible_person)
     .bind(&req.deadline)
+    .bind(ctx.tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -1387,7 +1421,7 @@ pub async fn update_corrective_action(
         RETURNING id, plan_id, plan_no, evaluation_id, unsatisfactory_item,
                   root_cause, corrective_measures, responsible_person, deadline::TEXT,
                   status, verification_result, verified_by, verified_at::TEXT,
-                  created_at::TEXT, updated_at::TEXT, tenant_id
+                  created_at::TEXT, updated_at::TEXT, tenant_id::TEXT
         "#,
     )
     .bind(id)
@@ -1448,8 +1482,10 @@ pub async fn update_corrective_action(
 )]
 pub async fn list_plan_corrective_actions(
     State(state): State<crate::shared::AppState>,
+    Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtCorrectiveAction>>> {
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
@@ -1457,15 +1493,16 @@ pub async fn list_plan_corrective_actions(
 
     let rows = sqlx::query(
         r#"
-        SELECT id, plan_id, plan_no, evaluation_id, unsatisfactory_item,
+        SELECT id::TEXT, plan_id::TEXT, plan_no, evaluation_id::TEXT, unsatisfactory_item,
                root_cause, corrective_measures, responsible_person, deadline::TEXT,
                status, verification_result, verified_by, verified_at::TEXT,
-               created_at::TEXT, updated_at::TEXT, tenant_id
+               created_at::TEXT, updated_at::TEXT, tenant_id::TEXT
         FROM qa_lims_pt_corrective_actions
-        WHERE plan_id = $1
+        WHERE ($1::uuid IS NULL OR tenant_id = $1) AND plan_id = $2
         ORDER BY created_at DESC
         "#,
     )
+    .bind(tenant_filter)
     .bind(id)
     .fetch_all(&state.pool)
     .await;

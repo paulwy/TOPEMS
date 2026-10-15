@@ -411,6 +411,7 @@ async fn run_aps_scheduling(
     pool: &sqlx::PgPool,
     request: &ApsScheduleRequest,
     simulate_only: bool,
+    tenant_id: Uuid,
 ) -> Result<ApsScheduleResult, TopemsError> {
     let schedule_start = request.schedule_start.unwrap_or_else(Utc::now);
     let strategy = request.strategy.clone().unwrap_or_default();
@@ -631,7 +632,7 @@ async fn run_aps_scheduling(
     // 9. 如果不只是模拟，保存排程结果
     if !simulate_only {
         for item in &scheduled_items {
-            if let Err(e) = save_schedule_result(pool, item).await {
+            if let Err(e) = save_schedule_result(pool, item, tenant_id).await {
                 warnings.push(format!("保存排程 {} 失败: {}", item.order_no, e));
             }
         }
@@ -865,6 +866,7 @@ async fn check_material_availability(
 async fn save_schedule_result(
     pool: &sqlx::PgPool,
     item: &ApsScheduleItem,
+    tenant_id: Uuid,
 ) -> Result<(), TopemsError> {
     let now = Utc::now();
 
@@ -874,16 +876,17 @@ async fn save_schedule_result(
             schedule_no, order_id, order_no, product_id, product_name, product_code,
             quantity, work_station_id, equipment_id, process_id,
             planned_start_time, planned_end_time, status, priority, sequence, notes,
-            created_at, updated_at
+            created_at, updated_at, tenant_id
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'scheduled', $13, 0, $14, $15, $15
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'scheduled', $13, 0, $14, $15, $15, $16
         )
         ON CONFLICT (schedule_no) DO UPDATE SET
             planned_start_time = EXCLUDED.planned_start_time,
             planned_end_time = EXCLUDED.planned_end_time,
             work_station_id = EXCLUDED.work_station_id,
             equipment_id = EXCLUDED.equipment_id,
-            updated_at = EXCLUDED.updated_at
+            updated_at = EXCLUDED.updated_at,
+            tenant_id = EXCLUDED.tenant_id
         "#,
     )
     .bind(format!(
@@ -905,6 +908,7 @@ async fn save_schedule_result(
     .bind(item.priority)
     .bind(format!("APS排程，可行性: {:.0}%", item.feasibility_score))
     .bind(now)
+    .bind(tenant_id)
     .execute(pool)
     .await;
 
@@ -944,7 +948,17 @@ pub async fn execute_aps_schedule(
         return e;
     }
 
-    match run_aps_scheduling(&state.pool, &req, false).await {
+    let tenant_id = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
+
+    match run_aps_scheduling(&state.pool, &req, false, tenant_id).await {
         Ok(result) => Json(ApiResponse::success(result, "APS 智能排程执行成功")),
         Err(err) => {
             tracing::error!("APS排程失败: {}", err);
@@ -988,7 +1002,17 @@ pub async fn simulate_aps_schedule(
         overwrite_existing: Some(false),
     };
 
-    match run_aps_scheduling(&state.pool, &aps_req, true).await {
+    let tenant_id = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
+
+    match run_aps_scheduling(&state.pool, &aps_req, true, tenant_id).await {
         Ok(result) => {
             // 计算资源利用率
             let mut resource_utilization: HashMap<String, f64> = HashMap::new();

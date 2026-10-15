@@ -1834,3 +1834,37 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **scm 批完成**：9 handler 实修（元组型 Ok(x) => 块化 8 + compute_mrp 尾部型 1；剔除 get_settings/appointment_stats 纯读误报 2；修复中踩坑：脚本函数提取跨到测试代码误伤 purchase_item/purchase_order 字符串，git checkout 恢复后手工精确替换 3+4 处），3 文件；cargo check/build 绿；实测 delete_item 200 + 物理删除落库（create_item 500 为 scm 既有 only_own_schema_query 宏/RLS 上下文问题，与 commit 修复无关，DELETE 链路 200 证明中间件/RLS 正常）。待提交。
 - 待办批：全部完成（hrm 48/wms 63/erp 34/rd 30/srm 24/tms 23/crm 13/scm 9 = 244 实修 + 3 误报剔除 + 3 排除）。
 - **全仓复扫确认（2026-10-15 推送后）**：txn 中间件仅存在于 8 个业务 crate（crm/erp/hrm/rd/scm/srm/tms/wms，lib/shared-auth 提供中间件本身）；8 crate 全量复扫剩余 17 项**全部为合法排除**——① 直接 `if tx.commit()` 成功路径型（语义等价 guard.take，8 处：erp receive_mes_progress + wms stock_take×4 / compute_replenishment / receive_inbound_order / ship_outbound_order）；② HashSet/HashMap `.insert()` 误报（erp get_lineage_graph/upstream/downstream + get_quality_trend，4 处）；③ srm award_tender 独立事务已 commit（1 处）；④ 纯读误报（hrm get_settings / rd export_audit_logs / scm get_settings+appointment_stats，4 处）。**真实缺口 0，244 修复为全集，本主线闭环**。
+
+## 2026-10-15 INSERT 租户缺口核查 → 发现 RLS 上下文注入系统性缺陷（待决策）
+
+**核查**：全仓 INSERT 列清单扫描（51 候选）→ DB 表结构 join → 14 表 20 文件，其中租户业务表 7 处（mes.production_schedules / lims qa_lims_pt_*×5 / rd rs.projects）确为未绑 tenant_id。
+
+**尝试修复**（INSERT 补 `COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::uuid, nil)`）——**9 文件 18 处 + mes 148 行回填 nil**——**随后全面回退**（git checkout 9 文件；回填保留）。
+
+**回退原因（架构级发现）**：
+1. **实测**：全新 psql 会话（topems_app/air）`current_setting('app.tenant_id', true)` 返回 **`00000000-0000-0000-0000-000000000000`（nil）**（非 NULL/空串）——来源未见于 rolconfig / pg_db_role_setting / postgresql.conf（疑似 PG18 custom GUC placeholder 行为）。
+2. **推论**：**所有「未 SET 上下文」的连接（pool 直连）默认 app.tenant_id = nil**——而 RLS policy 含 `current = nil` 全量放行分支（B1 批为超管/服务令牌所加）→ **pool 直连路径 = 全量访问**——普通用户请求若 handler 走 pool 直连（不经 txn SET）可全量读写。
+3. **修复 INSERT 绑 COALESCE 的副作用**：非 txn crate（communication/mes/lims/erp settings 等）handler 全 pool 直写直读——绑非 NULL 后读（RLS 空→nil 上下文只见 NULL 行）反读不到新数据（功能破坏）；保持 NULL 则 handler user_id 等显式过滤兜底。
+4. **已回填保留**：mes.production_schedules 148 NULL → nil（安全提升：NULL 跨租户可见 → nil 超管域），198 行现全 nil；lims qa_lims_pt_* 0 行无存量。
+
+**建议修复方向（待用户决策）**：
+- **方案 B（治本小改）**：所有 PgPool `after_connect` 显式 `SET app.tenant_id = ''`（空串）——空串上下文 policy `NULLIF('','')=NULL` → 只见 `tenant_id IS NULL` 行（隔离生效）；超管/服务令牌经中间件显式 SET nil → 全量（可区分）；租户 SET 0001 → 只见自己。影响：所有 pool 直连 handler 的可见性变化（需全量回归）。
+- **方案 C（大工程）**：pool 直读 handler 全部显式 `WHERE tenant_id` + 写全部显式绑租户（改造面大）。
+- **维持现状**：8 txn crate（handler 用 txn SET）隔离正确；非 txn crate pool 直连依赖 handler 显式过滤兜底（user_id 等），RLS 空洞化但数据安全靠应用层。
+
+## 2026-10-15 方案 C 批 1：租户业务表显式过滤（mes/lims）
+
+**决策**：INSERT 缺口核查发现 RLS 上下文注入系统性缺陷（未 SET 连接 app.tenant_id 默认解析为 nil → RLS nil 分支全量放行）——用户拍板**方案 C：显式租户过滤大改造**。
+
+**批 1 范围**（租户业务表写 + 读对称改造）：
+- **lims proficiency_testing.rs**（10 函数）：5 写（create_plan/receive_sample/submit_result/evaluate_result/create_corrective_action）INSERT 加 tenant_id 列 + 绑 `ctx.tenant_id`（TenantContext：超管 nil/普通 claims）；5 读（list_plans 16 分支 + list_plan_samples/results/evaluations/corrective_actions）WHERE 加 `($1::uuid IS NULL OR tenant_id = $1)` 且超管绑 None（SQL NULL → 全量）；顺带修复 SELECT 裸 uuid 列缺 ::TEXT（id/plan_id/sample_id/evaluation_id 21+ 处——数据非空时 row.get panic 的隐藏 bug）。
+- **mes aps_scheduling.rs**：save_schedule_result 加 tenant_id 参数 + INSERT 绑（含 ON CONFLICT 更新租户）；run_aps_scheduling 链式传参；execute/simulate handler 解析 claims（超管 nil/普通 claims）。
+
+**实测（monolith :8099）**：
+- 写：superuser 创建 → tenant_id=nil；普通用户（lims:admin + tenant 0001）创建 → tenant_id=0001（落库确认）。
+- 读：superuser list → 2 条全量；普通用户 list → 1 条只见 0001。**隔离生效**。
+- 踩坑：SELECT 裸 uuid 列（id 等）缺 ::TEXT → 数据非空时 row.get panic（500）——已修；超管传 nil uuid 不触发 `IS NULL` → 改 Option<Uuid> 绑定（None → SQL NULL → 全量）。
+
+**rd 跳过**：TestProjectRepository::create（project_repository.rs:318）在 `#[cfg(test)]` 内（测试代码无生产影响）；create_project handler 已显式绑租户。
+
+**待办**：批 2 = 平台表（unified-core/communication/erp settings 等）读写显式过滤；UPDATE/DELETE 路径显式租户约束。
