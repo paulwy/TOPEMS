@@ -1825,4 +1825,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 实测确认：tenant 中间件注入事务不自动 commit，247 个 HTTP 写 handler 缺 `guard.take()`+commit（HTTP 200 但 0 行落库，create_position 实测铁证）。
 - 修复样板：成功分支插 `guard.take()`+`.commit()`（commit 失败返 500），与 delete_outbound_order / erp customer 既有模板一致。
 - **hrm 批完成**：48 个候选（含 get_settings 纯读误报剔除），10 文件 +434 行；cargo check/build 绿；实测 create_position / create_leave / update_settings 落库通过。
-- 待办批：wms 63 / erp 38 / rd 25 / srm 24 / tms 23 / crm 13 / scm 10。
+- **wms 批完成**：63 handler，commit `80468253e`；实测 create_zone 落库通过。
+- **erp 批完成**：34 handler（初筛剔除 4 个 HashSet/HashMap .insert() 误报），commit `f57f680fe`。
+- **rd 批完成**：30 handler 实修（脚本 23 + 手工 8；export_audit_logs 纯读误报不修；清理 3 处 SELECT 检查分支误插 commit 防运行期 panic；清理 1 处 Ok(None) 分支误插 + 1 处 headers() 分支误插），12 文件；cargo check/build 绿；实测 create_bug 落库通过（BUG-E4DE，对照旧进程回滚 0 行）。待提交。
+- 待办批：srm 24 / tms 23 / crm 13 / scm 10。
