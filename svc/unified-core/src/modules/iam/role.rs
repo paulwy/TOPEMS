@@ -293,6 +293,7 @@ pub async fn get_role(
 
 pub async fn update_role(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
@@ -301,6 +302,16 @@ pub async fn update_role(
         id,
         payload
     );
+
+    // 租户约束：超管 nil -> None（全量），普通用户限本租户角色
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+    };
 
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -312,11 +323,12 @@ pub async fn update_role(
         }
     };
 
-    // 检查角色是否存在
+    // 检查角色是否存在（限定操作者租户）
     let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND id = $1)",
+        "SELECT EXISTS(SELECT 1 FROM public.core_roles WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid))",
     )
     .bind(role_uuid)
+    .bind(tenant_filter)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(false);
@@ -355,12 +367,14 @@ pub async fn update_role(
 
     // 更新角色信息
     if let Some(name) = &name {
-        if let Err(e) =
-            sqlx::query("UPDATE public.core_roles SET name = $1, updated_at = NOW() WHERE id = $2")
-                .bind(name)
-                .bind(role_uuid)
-                .execute(&mut *tx)
-                .await
+        if let Err(e) = sqlx::query(
+            "UPDATE public.core_roles SET name = $1, updated_at = NOW() WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)",
+        )
+        .bind(name)
+        .bind(role_uuid)
+        .bind(tenant_filter)
+        .execute(&mut *tx)
+        .await
         {
             let _ = tx.rollback().await;
             tracing::error!("更新角色名称失败: {}", e);
@@ -373,10 +387,11 @@ pub async fn update_role(
 
     if let Some(desc) = &description {
         if let Err(e) = sqlx::query(
-            "UPDATE public.core_roles SET description = $1, updated_at = NOW() WHERE id = $2",
+            "UPDATE public.core_roles SET description = $1, updated_at = NOW() WHERE id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)",
         )
         .bind(desc)
         .bind(role_uuid)
+        .bind(tenant_filter)
         .execute(&mut *tx)
         .await
         {

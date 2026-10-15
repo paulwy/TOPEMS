@@ -556,7 +556,7 @@ pub async fn create_work_report(
             return Json(ApiResponse::error(500, "创建工报失败"));
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(Uuid::nil().to_string())
         .execute(&mut *tx)
         .await

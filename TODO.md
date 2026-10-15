@@ -1923,3 +1923,18 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 修复：`20261015000082_plan_c_batch2f_rls_policy_key_unify.sql`——15 张表 rls_tenant_isolation 的 current_setting key 从旧值 app.current_tenant_id 统一为 app.tenant_id（与 8 txn crate 事务 SET key 一致）
 - 背景：旧 key 分支永不匹配 → txn 内读非 nil 租户行被 RLS 滤（隔离过度）；pool 直连已由批2-E nil 分支兼容
 - 实测：scm.module_settings（txn crate）SET 0001 读 0001 行 match=1（修复前 0）、SET 0002 other=0（隔离保留）、pool 直连 direct=1；测试数据已清理
+
+## 方案C 批2-G：unified-core 遗留补租户 + tenant_rls RESET 修复（实测闭环）
+- 状态：已修改待提交
+- 遗留处理（登记「宿主无 ctx / 系统级待查」收尾）：
+  - flow/category.rs create_category：加 Extension<Claims> + INSERT 补 tenant_id（$7 + tenant_bind：超管 nil / 否则 claims.tenant_id）——core_flow_categories RLS 开 + 有 0001 租户数据，非系统级
+  - iam/role.rs update_role：加 Extension<Claims> + tenant_filter（超管 None 全量 / 普通用户限租户）；exists 检查与 2 处 UPDATE 均加 `($N::uuid IS NULL OR tenant_id=$N::uuid)`——core_roles 有 tenant_id + RLS 开 + 0001 租户角色
+  - add_role_permission 维持系统级 skip：core_role_permissions 无 tenant_id + RLS 关
+- 关键修复（实测发现的根因）：tenant_rls 中间件「清空」由 SET '' 改为 RESET app.tenant_id
+  - 背景：SET '' 使归还连接 GUC=空串，policy 恒真分支（NULLIF(current_setting,'')='00000000-...'）失效（空串→NULL），池化下借到该连接的绑租户 INSERT 被 RLS 拒（随机 500）
+  - RESET 后恢复「未 SET」→ current_setting 返回 nil 字符串 → 恒真分支生效
+  - 实测：create_category 循环 6 次全 200（修复前 superuser/tenant 均概率 500）；落库租户正确（superuser nil / tenant 0001）
+- update_role 实测：superuser 更新 0001 角色 200；tenant 更新本租户角色 200；tenant 更新 nil 角色 404（越权拦截）；临时测试数据已清理
+- set_config 收敛：全仓 `set_config('app.tenant_id', $1, false)` 事务内 5 处（mes event_handlers/work_report/production_order×2 + erp production_order）改 true（SET LOCAL，事务结束自动恢复）；剩余 2 处评估不强行改：mes work_report:633 独占连接 SET nil（放行语义）、ai after_connect 连接级默认租户（AI 模块设计）
+- portal 编译修复：portal_plugin.rs auto_register_to_core 参数 `_core_url`→`core_url`（远端 014389ecf 引入的 E0425，blocked build）
+- 编译：unified-core check 通过 + mes/erp check 通过 + topems-server build 通过（Mach-O 188MB）

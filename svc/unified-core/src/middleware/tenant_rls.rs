@@ -299,8 +299,10 @@ pub async fn tenant_rls_middleware(
 
             let resp = next.run(req).await;
 
-            // 归还前显式清空：保证连接归还连接池时 app.tenant_id=''（干净），不残留上一位租户
-            if let Err(e) = set_rls_policy_conn(&mut conn, "").await {
+            // 归还前显式清空：RESET 恢复「未 SET」状态（旧实现 SET '' 会把 GUC 置为空串，
+            // 而 RLS policy 恒真分支依赖未 SET 返回 nil UUID 字符串——SET '' 后 NULLIF 分支失效，
+            // 池化下后续请求借到该连接时绑租户 INSERT 会被 RLS 拒绝）
+            if let Err(e) = sqlx::query("RESET app.tenant_id").execute(&mut *conn).await {
                 tracing::error!("Failed to reset RLS policy on connection return: {}", e);
             }
             drop(conn); // 归还连接池（此时已清空会话租户状态）

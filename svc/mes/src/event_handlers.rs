@@ -102,7 +102,7 @@ async fn handle_erp_production_order_dispatched(
         .begin()
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("开启事务失败: {}", e)))?;
-    sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+    sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(Uuid::nil().to_string())
         .execute(&mut *tx)
         .await

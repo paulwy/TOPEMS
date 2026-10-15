@@ -13,12 +13,13 @@
 
 use crate::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Extension, Path, Query, State},
     Json,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::TopemsError;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -198,6 +199,7 @@ pub async fn get_category(
 
 pub async fn create_category(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateCategoryRequest>,
 ) -> Json<ApiResponse<WorkflowCategory>> {
     if payload.name.trim().is_empty() {
@@ -205,6 +207,15 @@ pub async fn create_category(
             "分类名称不能为空".to_string(),
         )));
     }
+    let tenant_bind: Uuid = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     let code = payload
         .code
         .clone()
@@ -214,8 +225,8 @@ pub async fn create_category(
 
     let row: Option<CategoryRow> = match sqlx::query_as(
         r#"INSERT INTO core_flow_categories
-             (name, code, parent_id, sort_order, status, description)
-           VALUES ($1, $2, $3, $4, $5, $6)
+             (name, code, parent_id, sort_order, status, description, tenant_id)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
            RETURNING id, name, code, parent_id, sort_order, status, description, created_at, updated_at, tenant_id"#,
     )
     .bind(payload.name.trim())
@@ -224,6 +235,7 @@ pub async fn create_category(
     .bind(sort_order)
     .bind(status)
     .bind(payload.description)
+    .bind(tenant_bind)
     .fetch_optional(&state.pool)
     .await
     {

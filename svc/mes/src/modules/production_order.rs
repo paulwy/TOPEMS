@@ -434,7 +434,7 @@ pub async fn create_production_order(
             return Json(ApiResponse::error(500, "创建生产工单失败"));
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(tenant_id.to_string())
         .execute(&mut *tx)
         .await
@@ -599,7 +599,7 @@ pub async fn create_order_from_erp(
             return Json(ApiResponse::error(500, "从ERP订单创建生产工单失败"));
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(Uuid::nil().to_string())
         .execute(&mut *tx)
         .await

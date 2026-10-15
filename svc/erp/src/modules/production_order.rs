@@ -664,7 +664,7 @@ pub async fn receive_mes_progress(
             )));
         }
     };
-    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, false)")
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
         .bind(Uuid::nil().to_string())
         .execute(&mut *tx)
         .await
