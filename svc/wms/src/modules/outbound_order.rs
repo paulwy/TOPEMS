@@ -444,13 +444,18 @@ pub async fn update_outbound_order(
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
 
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
             warehouse_id = $2, customer_id = $3, expected_ship_date = $4, actual_ship_date = $5, 
             total_value = $6, status = $7, notes = $8, updated_at = $9
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL AND ($10::uuid IS NULL OR tenant_id = $10::uuid)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -470,6 +475,7 @@ pub async fn update_outbound_order(
     .bind(&status)
     .bind(&remarks)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -552,11 +558,17 @@ pub async fn delete_outbound_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+        r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -1059,13 +1071,18 @@ pub async fn confirm_outbound_order(
         Err(e) => return e,
     }
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'confirmed', updated_at = $2
-        WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
+        WHERE id = $1 AND status = 'created' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1078,6 +1095,7 @@ pub async fn confirm_outbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1164,11 +1182,16 @@ pub async fn pick_outbound_order(
     }
     let now = Utc::now();
 
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query_as::<_, OutboundOrder>(
         only_own_schema_query!("wms", r#"
         UPDATE wms.outbound_orders SET
             status = 'picking', picking_status = 'in_progress', picking_start_time = $2, updated_at = $2
-        WHERE id = $1 AND status = 'confirmed' AND deleted_at IS NULL
+        WHERE id = $1 AND status = 'confirmed' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1181,6 +1204,7 @@ pub async fn pick_outbound_order(
     )
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1266,6 +1290,11 @@ pub async fn pack_outbound_order(
         Err(e) => return e,
     }
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -1273,7 +1302,7 @@ pub async fn pack_outbound_order(
         UPDATE wms.outbound_orders SET
             status = 'packing', picking_status = 'completed', picking_end_time = $2, 
             packing_status = 'in_progress', packing_start_time = $2, updated_at = $2
-        WHERE id = $1 AND status = 'picking' AND deleted_at IS NULL
+        WHERE id = $1 AND status = 'picking' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1286,6 +1315,7 @@ pub async fn pack_outbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1472,17 +1502,23 @@ pub async fn ship_outbound_order(
         .await;
     }
 
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let _ = sqlx::query(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'shipping', packing_status = 'completed', packing_end_time = $1::timestamptz,
             shipping_status = 'in_progress', actual_ship_date = $1::date, updated_at = $1::timestamptz
-        WHERE id = $2 AND deleted_at IS NULL
+        WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
     .bind(now)
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut *tx)
     .await;
 
@@ -1638,13 +1674,18 @@ pub async fn complete_outbound_order(
         Err(e) => return e,
     }
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.outbound_orders SET
             status = 'completed', shipping_status = 'completed', delivery_date = $2::date, updated_at = $2::timestamptz
-        WHERE id = $1 AND status = 'shipping' AND deleted_at IS NULL
+        WHERE id = $1 AND status = 'shipping' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, organization_id as tenant_id, order_number, warehouse_id, warehouse_name,
                   customer_id, customer_name, created_at as order_date, 
                   expected_ship_date as expected_delivery, actual_ship_date as actual_delivery, 
@@ -1657,6 +1698,7 @@ pub async fn complete_outbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

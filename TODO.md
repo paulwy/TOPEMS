@@ -1961,3 +1961,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - SQL 层复核：topems_app + SET app.tenant_id + 补丁后完整 UPDATE（含全列 COALESCE + RETURNING）UPDATE 1 成功
 - 500 排查记录：本租户初测 500 非补丁问题——Customer FromRow 非 Option 字段（credit_limit/customer_type）在测试数据 NULL 时解码失败（psql 层无 FromRow 不报错）；补值后 200，真实数据（列非空）正常
 - 测试数据已清理（0 残留）
+
+## 方案C 批2-J：wms.outbound_orders 7 处 + erp_master_data_refs lifecycle 5 处（写路径租户约束）
+- 状态：代码已修改（wms 编译通过；erp lifecycle 待编译验证），待提交
+- wms.outbound_orders（svc/wms/src/modules/outbound_order.rs）7 处：update_outbound_order / delete_outbound_order / confirm_outbound_order / pick_outbound_order / pack_outbound_order / ship_outbound_order / complete_outbound_order——UPDATE WHERE 加 `($N::uuid IS NULL OR tenant_id = $N::uuid)` + tenant_filter bind（superuser→None / claims.tenant_id）；租户列为 tenant_id（RLS policy 用列；organization_id 为旧列）
+- erp.erp_master_data_refs lifecycle（svc/erp/src/modules/master_data_lifecycle.rs）5 处：archive / restore / schedule_destruction / cancel_destruction / destroy——均补 Extension<Claims>（原签名缺失）+ tenant_filter；existing SELECT / UPDATE / updated SELECT 三处均加租户条件（SELECT WHERE master_data_id=$1 AND ($2::uuid ...)，UPDATE WHERE master_data_id=$N AND ($N+1::uuid ...)）
+- 候选甄别：全库无显式租户 UPDATE/DELETE 修正口径后 1048 条（排除已补 + schema_defense/integration）——805 条为「有 tenant_id + RLS 开」候选（419 表）；本批只做 handler 写路径（用户操作）
+- 登记 skip：master_data_conflict.rs 3 处（detect_conflicts 自动更新时间戳 + apply_resolved_value 辅助函数）——内部同步流程、函数无 Claims 上下文、RLS 兜底，后续评估
+- 候选明细：artifacts/ud_tenant_gap_candidates.txt（805 条 表:行）
+
