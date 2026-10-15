@@ -2113,3 +2113,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 至此 master-data v5x 冻结模块候选全部清完（批2-Zd 11 + 批2-Ze 12 + 本批 9 = 32 处）
 - 复核：master-data check 0 error；SQL 事务内实测 5 表（真实行保真）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-Zg：finance + hrm 散点 2 处（写路径租户约束）
+- 状态：代码已修改（finance/hrm check 均 0 error），待提交
+- finance.reconcile_items（update_reconcile_item，无 Claims 内联）；hrm.payroll_items（mark_paid，txn 内内联）
+- skip（现场核对非缺口）：ehs qa_ehs_treatments/qa_ehs_incident_actions 已带 `($2=全0 OR tenant_id::text=$2)` 租户条件；finance.core_finance_vouchers DELETE 已带 `AND tenant_id=$2`；qms.qa_apqp_projects 无 UPDATE/DELETE（SELECT 为主）；scm.wms_inventory_snapshots event handler DELETE（内部流程 + 有 RLS policy 兜底）
+- 复核：finance/hrm check 0 error；SQL 事务内实测（插关联链 reconcile_orders/payroll_runs）——本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

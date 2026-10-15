@@ -616,7 +616,7 @@ pub async fn update_reconcile_item(
          remark = COALESCE($11, remark), \
          difference = COALESCE($9, match_amount) - COALESCE($6, source_amount), \
          updated_at = NOW() \
-         WHERE id = $2 AND order_id = $1 \
+         WHERE id = $2 AND order_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) \
          RETURNING id, order_id, source_type, source_id, source_no, source_date, source_amount, \
                    matched, match_id, match_amount, difference, status, remark, created_at, updated_at"))
         .bind(order_id)
