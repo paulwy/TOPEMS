@@ -4030,8 +4030,13 @@ case "${1:-help}" in
         "$SCRIPT_DIR/deploy/production-deploy.sh"
         ;;
     update-password|reset-password)
+        # 2026-10-15: 密码必填（update-admin-password.sh 已移除 admin123 默认弱口令）
+        if [ -z "${2:-}" ] || [ -z "${3:-}" ]; then
+            error "用法: topems.sh update-password <用户名> <新密码>（密码必填，不再提供默认弱口令）"
+            exit 1
+        fi
         info "调用密码重置脚本..."
-        "$SCRIPT_DIR/dev/update-admin-password.sh" -y "${2:-admin}" "${3:-admin123}"
+        "$SCRIPT_DIR/dev/update-admin-password.sh" -y "$2" "$3"
         ;;
     help|--help|-h)
         show_help

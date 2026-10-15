@@ -19,22 +19,22 @@ PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent
 
 @click.command(name="reset-password")
 @click.argument("username", required=False, default="admin")
-@click.argument("password", required=False, default="admin123")
+@click.argument("password", required=True)
 def reset_password(username: str, password: str):
     """重置管理员密码（主名）
 
     语义对齐 topems.sh:4032-4035 -> scripts/dev/update-admin-password.sh <user> <password>
 
     示例:
-        topems reset-password                     # 默认 admin / admin123
-        topems reset-password admin newpass
+        topems reset-password admin newpass     # 密码必填（无默认弱口令）
     """
     script = PROJECT_ROOT / "scripts" / "dev" / "update-admin-password.sh"
     if not script.exists():
         console.print(f"[red]✗ 找不到脚本: {script}[/red]")
         return
     console.print(f"[bold]重置密码: 用户={username}[/bold]")
-    result = subprocess.run(["bash", str(script), username, password], cwd=str(PROJECT_ROOT))
+    # -y 跳过交互确认（CLI 非交互调用链，对齐 topems.sh:4034）
+    result = subprocess.run(["bash", str(script), "-y", username, password], cwd=str(PROJECT_ROOT))
     raise SystemExit(result.returncode)
 
 
