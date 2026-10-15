@@ -175,7 +175,7 @@ pub async fn mark_synced(
                 r#"
                 UPDATE mobile.core_mobile_offline_records
                 SET status = 'synced', updated_at = NOW()
-                WHERE id = $1
+                WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                 "#
             ))
             .bind(id)
