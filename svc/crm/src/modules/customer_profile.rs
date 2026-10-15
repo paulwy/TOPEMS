@@ -460,11 +460,18 @@ pub async fn remove_profile_tags(
         Err(e) => return e,
     }
 
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     for tag in &req.tags {
         let result =
-            sqlx::query("DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag = $2")
+            sqlx::query("DELETE FROM crm.customer_tags WHERE customer_id = $1 AND tag = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)")
                 .bind(id)
                 .bind(tag)
+                .bind(tenant_filter)
                 .execute(&mut **txn)
                 .await;
 

@@ -170,7 +170,7 @@ pub async fn sync_wms_scm(
         "UPDATE integration.wms_scm_sync SET
             scm_supply_id = $2, synced = $3, sync_status = $4,
             sync_error = NULL, last_synced_at = $5, updated_at = $6
-         WHERE id = $1
+         WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING id, wms_inventory_id, scm_supply_id, item_name, quantity, unit,
                   synced, sync_status, sync_error, last_synced_at, created_at, updated_at"
     ))

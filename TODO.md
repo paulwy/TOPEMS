@@ -2088,3 +2088,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 复核：mobile check 0 error；SQL 事务内实测——push_templates/offline/media/barcode 空表插测试行、push_notifications 用真实行、sync_policies NULL 行显式条件不可达（本租户 UPDATE 0 正确拦截），7 表本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 - 新观察项：mobile.push_templates 13 / push_notifications 32 / sync_policies 1 / barcode_scans 13 行 tenant_id NULL（历史未回填，同 srm.suppliers 92 / hrm.initialization_status）
 
+## 方案C 批2-Zc：integration 3 + iam 3 + crm 1（写路径租户约束）
+- 状态：代码已修改（三服务 check 通过 0 error），待提交
+- integration 3（lims_qms_sync / wms_scm_sync 回写、conversion_executions 完成态）：无 Claims，内联 current_setting
+- iam 3（unassign_position DELETE、update_position 内 position_permissions/position_roles 重建 DELETE）：有 Claims/tenant_id 变量，补 $N 租户条件
+- crm 1（remove_profile_tags DELETE）：有 Claims + txn，补 tenant_filter
+- 复核：integration/unified-core/crm check 0 error；SQL 事务内实测（空表插测试行，conversion 先插 rule、customer_tags 用真实 customer/tag FK）——7 表本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

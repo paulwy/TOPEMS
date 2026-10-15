@@ -128,14 +128,20 @@ pub async fn unassign_position(
     Extension(claims): Extension<Claims>,
     Path((user_id, position_id)): Path<(Uuid, Uuid)>,
 ) -> Json<serde_json::Value> {
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query(
         r#"
         DELETE FROM iam.user_positions
-        WHERE user_id = $1 AND position_id = $2
+        WHERE user_id = $1 AND position_id = $2 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#,
     )
     .bind(user_id)
     .bind(position_id)
+    .bind(tenant_filter)
     .execute(&state.pool)
     .await;
 
