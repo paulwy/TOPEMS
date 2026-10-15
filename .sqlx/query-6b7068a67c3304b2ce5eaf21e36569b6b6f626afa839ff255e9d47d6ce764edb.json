@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n                INSERT INTO quality_standard_values (\n                    standard_id, item_name, lower_limit, upper_limit,\n                    unit, inspection_method, remark\n                )\n                VALUES ($1, $2, $3, $4, $5, $6, $7)\n                RETURNING id, standard_id, item_name, lower_limit, upper_limit,\n                    unit, inspection_method, remark\n                ",
+  "query": "\n                INSERT INTO quality_standard_values (\n                    standard_id, item_name, lower_limit, upper_limit,\n                    unit, inspection_method, remark, tenant_id\n                )\n                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n                RETURNING id, standard_id, item_name, lower_limit, upper_limit,\n                    unit, inspection_method, remark\n                ",
   "describe": {
     "columns": [
       {
@@ -52,7 +52,8 @@
         "Numeric",
         "Varchar",
         "Varchar",
-        "Text"
+        "Text",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -66,5 +67,5 @@
       true
     ]
   },
-  "hash": "3d549b0297d87c4ae9383ac3bc569d76c328c9cc65dada5e5880d54213959678"
+  "hash": "6b7068a67c3304b2ce5eaf21e36569b6b6f626afa839ff255e9d47d6ce764edb"
 }

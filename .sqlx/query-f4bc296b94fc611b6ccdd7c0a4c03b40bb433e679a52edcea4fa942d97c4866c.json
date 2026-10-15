@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            ps.id, ps.schedule_no, ps.order_id, ps.order_no,\n            ps.product_id, ps.product_name, ps.product_code,\n            ps.quantity, ps.work_station_id, ps.equipment_id,\n            ps.process_id, ps.planned_start_time, ps.planned_end_time,\n            ps.actual_start_time, ps.actual_end_time,\n            ps.status, ps.priority, ps.sequence, ps.notes,\n            ps.created_at, ps.updated_at,\n            ws.station_name as work_station_name,\n            e.equipment_name as equipment_name,\n            pp.process_name as process_name\n        FROM production_schedules ps\n        LEFT JOIN work_stations ws ON ps.work_station_id = ws.id\n        LEFT JOIN equipment e ON ps.equipment_id = e.id\n        LEFT JOIN production_processes pp ON ps.process_id = pp.id\n        WHERE ps.id = $1\n        ",
+  "query": "\n        SELECT \n            ps.id, ps.schedule_no, ps.order_id, ps.order_no,\n            ps.product_id, ps.product_name, ps.product_code,\n            ps.quantity, ps.work_station_id, ps.equipment_id,\n            ps.process_id, ps.planned_start_time, ps.planned_end_time,\n            ps.actual_start_time, ps.actual_end_time,\n            ps.status, ps.priority, ps.sequence, ps.notes,\n            ps.created_at, ps.updated_at,\n            COALESCE(ws.station_name, NULL) as work_station_name,\n            COALESCE(e.equipment_name, NULL) as equipment_name,\n            COALESCE(pp.process_name, NULL) as process_name\n        FROM mes.production_schedules ps\n        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id\n        LEFT JOIN mes.equipment e ON ps.equipment_id = e.id\n        LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id\n        WHERE ps.id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -151,10 +151,10 @@
       true,
       true,
       true,
-      false,
-      false,
-      false
+      null,
+      null,
+      null
     ]
   },
-  "hash": "a7253dd4ff2d113e9d7261ebb182c0842317757aef7061b438c4899f25d751eb"
+  "hash": "f4bc296b94fc611b6ccdd7c0a4c03b40bb433e679a52edcea4fa942d97c4866c"
 }

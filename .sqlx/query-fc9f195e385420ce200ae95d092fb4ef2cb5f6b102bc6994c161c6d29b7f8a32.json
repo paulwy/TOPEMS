@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            INSERT INTO quality_inspections (\n            inspection_no, order_id, order_number, product_code, product_name,\n            process_id, process_name, inspection_type, quantity,\n            qualified_quantity, unqualified_quantity, qualification_rate,\n            inspector, inspection_time, status, result, memo\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)\n        RETURNING\n            id, inspection_no, order_id, order_number,\n            product_code, product_name, process_id, process_name,\n            inspection_type, quantity, qualified_quantity,\n            unqualified_quantity, qualification_rate,\n            inspector, inspection_time, status, result, memo,\n            created_at, updated_at\n        ",
+  "query": "\n            INSERT INTO quality_inspections (\n            inspection_no, order_id, order_number, product_code, product_name,\n            process_id, process_name, inspection_type, quantity,\n            qualified_quantity, unqualified_quantity, qualification_rate,\n            inspector, inspection_time, status, result, memo, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)\n        RETURNING\n            id, inspection_no, order_id, order_number,\n            product_code, product_name, process_id, process_name,\n            inspection_type, quantity, qualified_quantity,\n            unqualified_quantity, qualification_rate,\n            inspector, inspection_time, status, result, memo,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -122,7 +122,8 @@
         "Varchar",
         "Varchar",
         "Varchar",
-        "Text"
+        "Text",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -148,5 +149,5 @@
       true
     ]
   },
-  "hash": "c86a3bf286737f3e10687d6132f162b5adce74c88185dd3b39c052a4c5376cdf"
+  "hash": "fc9f195e385420ce200ae95d092fb4ef2cb5f6b102bc6994c161c6d29b7f8a32"
 }

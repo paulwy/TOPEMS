@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO process_flows (\n            code, name, description, version, route_id,\n            production_line, capacity, unit\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)\n        RETURNING id, code, name, description, version, status,\n            route_id, production_line, capacity, unit,\n            created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO process_flows (\n            code, name, description, version, route_id,\n            production_line, capacity, unit, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n        RETURNING id, code, name, description, version, status,\n            route_id, production_line, capacity, unit,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -73,7 +73,8 @@
         "Uuid",
         "Varchar",
         "Float8",
-        "Varchar"
+        "Varchar",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -91,5 +92,5 @@
       true
     ]
   },
-  "hash": "d982c835ddba69f9e2afa8d8e5227aecf9013311ea4191f91f924592d2716761"
+  "hash": "0aca9e46001aecf9a578f1341a564a624dc892a3d0cddb342b9020b8420ea645"
 }

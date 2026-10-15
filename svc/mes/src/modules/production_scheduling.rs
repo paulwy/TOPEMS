@@ -227,7 +227,7 @@ pub async fn list_production_schedules(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM production_schedules ps{}",
+        "SELECT COUNT(*) as total FROM mes.production_schedules ps{}",
         where_clause
     );
 
@@ -256,13 +256,13 @@ pub async fn list_production_schedules(
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.priority, ps.sequence, ps.notes,
             ps.created_at, ps.updated_at,
-            ws.station_name as work_station_name,
-            e.equipment_name as equipment_name,
-            pp.process_name as process_name
-        FROM production_schedules ps
-        LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
-        LEFT JOIN equipment e ON ps.equipment_id = e.id
-        LEFT JOIN production_processes pp ON ps.process_id = pp.id
+            COALESCE(ws.station_name, NULL) as work_station_name,
+            COALESCE(e.equipment_name, NULL) as equipment_name,
+            COALESCE(pp.process_name, NULL) as process_name
+        FROM mes.production_schedules ps
+        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
+        LEFT JOIN mes.equipment e ON ps.equipment_id = e.id
+        LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id
         {}
         ORDER BY ps.planned_start_time DESC, ps.priority DESC
         LIMIT ${} OFFSET ${}
@@ -541,13 +541,13 @@ pub async fn get_production_schedule(
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.priority, ps.sequence, ps.notes,
             ps.created_at, ps.updated_at,
-            ws.station_name as work_station_name,
-            e.equipment_name as equipment_name,
-            pp.process_name as process_name
-        FROM production_schedules ps
-        LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
-        LEFT JOIN equipment e ON ps.equipment_id = e.id
-        LEFT JOIN production_processes pp ON ps.process_id = pp.id
+            COALESCE(ws.station_name, NULL) as work_station_name,
+            COALESCE(e.equipment_name, NULL) as equipment_name,
+            COALESCE(pp.process_name, NULL) as process_name
+        FROM mes.production_schedules ps
+        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
+        LEFT JOIN mes.equipment e ON ps.equipment_id = e.id
+        LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id
         WHERE ps.id = $1
         "#,
         id,
@@ -575,11 +575,11 @@ pub async fn get_production_schedule(
                 product_code: r.product_code,
                 quantity: big_decimal_to_f64(Some(r.quantity)),
                 work_station_id: r.work_station_id,
-                work_station_name: Some(r.work_station_name),
+                work_station_name: r.work_station_name,
                 equipment_id: r.equipment_id,
-                equipment_name: Some(r.equipment_name),
+                equipment_name: r.equipment_name,
                 process_id: r.process_id,
-                process_name: Some(r.process_name),
+                process_name: r.process_name,
                 planned_start_time: r.planned_start_time,
                 planned_end_time: r.planned_end_time,
                 actual_start_time: r.actual_start_time,
@@ -849,9 +849,9 @@ pub async fn get_gantt_data(
             ps.planned_start_time, ps.planned_end_time,
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.quantity, ps.completed_quantity,
-            ws.station_name as work_station_name
-        FROM production_schedules ps
-        LEFT JOIN work_stations ws ON ps.work_station_id = ws.id
+            COALESCE(ws.station_name, NULL) as work_station_name
+        FROM mes.production_schedules ps
+        LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
         WHERE ps.planned_start_time IS NOT NULL
           AND ps.planned_end_time IS NOT NULL
         ORDER BY ps.planned_start_time ASC
@@ -886,7 +886,7 @@ pub async fn get_gantt_data(
             0.0
         };
 
-        let resource_name = s.work_station_name.clone();
+        let resource_name = s.work_station_name.clone().unwrap_or_default();
         if resource_ids.insert(resource_name.clone()) {
             resources.push(GanttResource {
                 id: resource_name.clone(),
@@ -1008,7 +1008,7 @@ async fn transition_schedule(
     let tenant_id = get_schedule_tenant_id(claims);
 
     let existing: Option<(String,)> = match sqlx::query_as(
-        "SELECT status FROM production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
+        "SELECT status FROM mes.production_schedules WHERE id = $1 AND tenant_id = $2 AND deleted_at IS NULL",
     )
     .bind(id)
     .bind(tenant_id)

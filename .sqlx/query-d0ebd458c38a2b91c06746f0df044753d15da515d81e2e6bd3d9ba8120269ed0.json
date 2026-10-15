@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO work_reports (\n            report_no, work_order_id, work_order_no, order_id, order_no,\n            work_station_id, work_station_name,\n            reporter_name, report_date, shift,\n            output_quantity, defect_quantity, labor_hours, remark,\n            status\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending')\n        RETURNING\n            id, report_no, work_order_id, work_order_no,\n            order_id, order_no, work_station_id, work_station_name,\n            reporter_name, report_date, shift,\n            output_quantity, defect_quantity, labor_hours, remark,\n            status, approved_by, approved_at, approval_remark,\n            created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO work_reports (\n            report_no, work_order_id, work_order_no, order_id, order_no,\n            work_station_id, work_station_name,\n            reporter_name, report_date, shift,\n            output_quantity, defect_quantity, labor_hours, remark,\n            status, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'pending', $15)\n        RETURNING\n            id, report_no, work_order_id, work_order_no,\n            order_id, order_no, work_station_id, work_station_name,\n            reporter_name, report_date, shift,\n            output_quantity, defect_quantity, labor_hours, remark,\n            status, approved_by, approved_at, approval_remark,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -124,7 +124,8 @@
         "Numeric",
         "Numeric",
         "Numeric",
-        "Text"
+        "Text",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -151,5 +152,5 @@
       false
     ]
   },
-  "hash": "3b39109176255d9b3e6c125ae3d34c5ee4d60fcfc3cdb1a62583bf920a4b94be"
+  "hash": "d0ebd458c38a2b91c06746f0df044753d15da515d81e2e6bd3d9ba8120269ed0"
 }

@@ -1740,3 +1740,25 @@ pub async fn suggest_tags(
     let tags = db_exec!(SmartTagger::suggest_tags(&state.db, &params.entity_type, &data).await);
     Json(ApiResponse::success(tags, "推荐标签"))
 }
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["master_data:semantic:write"])),
+    path = "/mdm-v57/graph/embeddings",
+    responses(
+        (status = 200, description = "OK", body = serde_json::Value),
+    ),
+    tag = "semantic_v57"
+)]
+/// 文本向量化（降级占位）：项目当前未接入 embedding 模型服务（ai 服务的
+/// generate_embeddings 需 embedding_model 配置），此处返回业务码 501 明确能力
+/// 缺口，前端可据此降级；接入模型服务后替换为真实调用。
+pub async fn compute_embeddings(
+    State(_state): State<AppState>,
+    Json(_req): Json<serde_json::Value>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    Json(ApiResponse::error(
+        501,
+        "Embedding 服务未接入：请配置 embedding_model 后由 AI 服务提供",
+    ))
+}

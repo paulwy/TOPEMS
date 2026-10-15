@@ -788,7 +788,7 @@ pub async fn get_trace(
     // S2：接真实 serial_number 表返回追踪记录（非空）
     let row = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"SELECT id, serial_no, batch_no, status, location, created_at, updated_at
+        r#"SELECT id, serial_no, batch_no, status, location_code, created_at, updated_at
            FROM serial_numbers WHERE id = $1"#,
         "core"
     ))
@@ -803,7 +803,7 @@ pub async fn get_trace(
                 "serial_no": r.get::<String, _>("serial_no"),
                 "batch_no": r.get::<Option<String>, _>("batch_no"),
                 "status": r.get::<String, _>("status"),
-                "location": r.get::<Option<String>, _>("location"),
+                "location": r.get::<Option<String>, _>("location_code"),
                 "created_at": r.get::<chrono::DateTime<Utc>, _>("created_at"),
                 "updated_at": r.get::<chrono::DateTime<Utc>, _>("updated_at"),
                 "event_type": "lifecycle",

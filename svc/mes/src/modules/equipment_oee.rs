@@ -62,8 +62,8 @@ async fn stub_efficiency_detail(
     };
 
     let rows = sqlx::query(
-        r#"SELECT id, equipment_id, record_date, availability_rate, performance_rate, quality_rate, oee_value
-           FROM equipment_oee_records
+        r#"SELECT id, equipment_id, record_date, availability, performance, quality_rate, oee
+           FROM mes.equipment_oee
            WHERE equipment_id = $1
            ORDER BY record_date DESC
            LIMIT 10"#,
@@ -81,10 +81,10 @@ async fn stub_efficiency_detail(
                         "id": r.get::<Uuid, _>("id"),
                         "equipment_id": r.get::<Uuid, _>("equipment_id"),
                         "record_date": r.get::<chrono::NaiveDate, _>("record_date"),
-                        "availability_rate": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("availability_rate")),
-                        "performance_rate": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("performance_rate")),
+                        "availability_rate": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("availability")),
+                        "performance_rate": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("performance")),
                         "quality_rate": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("quality_rate")),
-                        "oee_value": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("oee_value")),
+                        "oee_value": big_decimal_to_f64_non_opt(r.get::<BigDecimal, _>("oee")),
                     })
                 })
                 .collect();
@@ -315,7 +315,7 @@ pub async fn list_oee_records(
     }
 
     let count_sql = format!(
-        "SELECT COUNT(*) as total FROM equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
+        "SELECT COUNT(*) as total FROM mes.equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
         where_clause
     );
 
@@ -343,7 +343,7 @@ pub async fn list_oee_records(
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
-        FROM equipment_oee oee
+        FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
         {}
         ORDER BY oee.record_date DESC
@@ -615,7 +615,7 @@ pub async fn get_oee_record(
             oee.availability, oee.performance, oee.quality_rate, oee.oee,
             oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,
             e.equipment_name as equipment_name, e.equipment_code as equipment_no
-        FROM equipment_oee oee
+        FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE oee.id = $1
         "#,
@@ -693,7 +693,7 @@ pub async fn update_oee_record(
         r#"
         SELECT planned_production_time, actual_run_time, downtime,
                ideal_cycle_time, actual_output, good_output, defective_output
-        FROM equipment_oee WHERE id = $1
+        FROM mes.equipment_oee WHERE id = $1
         "#,
         id,
     )
@@ -910,7 +910,7 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as avg_performance,
             COALESCE(AVG(oee.quality_rate), 0) as avg_quality_rate,
             COALESCE(AVG(oee.oee), 0) as avg_oee
-        FROM equipment_oee oee
+        FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE ($1::uuid IS NULL OR e.id = $1)
           AND ($2::date IS NULL OR oee.record_date >= $2)
@@ -947,7 +947,7 @@ pub async fn get_oee_statistics(
             COALESCE(AVG(oee.performance), 0) as performance,
             COALESCE(AVG(oee.quality_rate), 0) as quality,
             COALESCE(AVG(oee.oee), 0) as oee
-        FROM equipment_oee oee
+        FROM mes.equipment_oee oee
         LEFT JOIN equipment e ON oee.equipment_id = e.id
         WHERE oee.record_date >= CURRENT_DATE - INTERVAL '14 days'
           AND ($1::uuid IS NULL OR e.id = $1)

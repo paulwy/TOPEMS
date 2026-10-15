@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO quality_patrols (\n            patrol_no, production_line, workstation_id, workstation_name,\n            inspector, patrol_time, status, result, findings, memo\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n        RETURNING\n            id, patrol_no, production_line, workstation_id,\n            workstation_name, inspector, patrol_time,\n            status, result, findings, memo,\n            created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO quality_standards (\n            code, name, product_code, product_name, inspection_type,\n            status, version, effective_date, description, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)\n        RETURNING\n            id, code, name, product_code, product_name,\n            inspection_type, status, version,\n            effective_date, description,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -10,61 +10,56 @@
       },
       {
         "ordinal": 1,
-        "name": "patrol_no",
+        "name": "code",
         "type_info": "Varchar"
       },
       {
         "ordinal": 2,
-        "name": "production_line",
+        "name": "name",
         "type_info": "Varchar"
       },
       {
         "ordinal": 3,
-        "name": "workstation_id",
-        "type_info": "Uuid"
+        "name": "product_code",
+        "type_info": "Varchar"
       },
       {
         "ordinal": 4,
-        "name": "workstation_name",
+        "name": "product_name",
         "type_info": "Varchar"
       },
       {
         "ordinal": 5,
-        "name": "inspector",
+        "name": "inspection_type",
         "type_info": "Varchar"
       },
       {
         "ordinal": 6,
-        "name": "patrol_time",
-        "type_info": "Varchar"
-      },
-      {
-        "ordinal": 7,
         "name": "status",
         "type_info": "Varchar"
       },
       {
+        "ordinal": 7,
+        "name": "version",
+        "type_info": "Int4"
+      },
+      {
         "ordinal": 8,
-        "name": "result",
+        "name": "effective_date",
         "type_info": "Varchar"
       },
       {
         "ordinal": 9,
-        "name": "findings",
+        "name": "description",
         "type_info": "Text"
       },
       {
         "ordinal": 10,
-        "name": "memo",
-        "type_info": "Text"
-      },
-      {
-        "ordinal": 11,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 12,
+        "ordinal": 11,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
@@ -73,24 +68,23 @@
       "Left": [
         "Varchar",
         "Varchar",
-        "Uuid",
         "Varchar",
         "Varchar",
         "Varchar",
         "Varchar",
+        "Int4",
         "Varchar",
         "Text",
-        "Text"
+        "Uuid"
       ]
     },
     "nullable": [
       false,
       false,
-      true,
+      false,
       true,
       true,
       false,
-      true,
       true,
       true,
       true,
@@ -99,5 +93,5 @@
       true
     ]
   },
-  "hash": "e864af7b3960434dd8be54ce4bcacef6f661526346e6c21780606929b4cd7134"
+  "hash": "220f8d2788fbcc147fba7d05b095d9010c962b7c321333f07ce5b374e0be911a"
 }

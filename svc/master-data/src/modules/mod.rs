@@ -341,6 +341,10 @@ pub fn create_routes() -> Router<AppState> {
                     "/graph/communities",
                     post(semantic_v57::detect_communities_handler),
                 )
+                .route(
+                    "/graph/embeddings",
+                    post(semantic_v57::compute_embeddings),
+                )
                 // --- 语义搜索 ---
                 .route("/search/index", post(semantic_v57::index_entity))
                 .route(

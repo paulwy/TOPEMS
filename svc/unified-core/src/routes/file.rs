@@ -36,6 +36,10 @@ pub fn file_routes(state: &AppState) -> Router<AppState> {
             "/thumbnail/{id}",
             get(modules::file::download::get_thumbnail),
         )
+        .route(
+            "/thumbnail/{id}/{size}",
+            get(modules::file::download::thumbnail_compat),
+        )
         .route("/files", get(modules::file::manage::list_files))
         .route("/files/{id}", get(modules::file::manage::get_file))
         .route(

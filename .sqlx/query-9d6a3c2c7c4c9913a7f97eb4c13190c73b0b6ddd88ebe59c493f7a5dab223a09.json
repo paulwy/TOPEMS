@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            oee.id, oee.equipment_id, oee.record_date,\n            oee.planned_production_time, oee.actual_run_time, oee.downtime,\n            oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,\n            oee.availability, oee.performance, oee.quality_rate, oee.oee,\n            oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,\n            e.equipment_name as equipment_name, e.equipment_code as equipment_no\n        FROM equipment_oee oee\n        LEFT JOIN equipment e ON oee.equipment_id = e.id\n        WHERE oee.id = $1\n        ",
+  "query": "\n        SELECT \n            oee.id, oee.equipment_id, oee.record_date,\n            oee.planned_production_time, oee.actual_run_time, oee.downtime,\n            oee.ideal_cycle_time, oee.actual_output, oee.good_output, oee.defective_output,\n            oee.availability, oee.performance, oee.quality_rate, oee.oee,\n            oee.shift, oee.operator, oee.notes, oee.created_at, oee.updated_at,\n            e.equipment_name as equipment_name, e.equipment_code as equipment_no\n        FROM mes.equipment_oee oee\n        LEFT JOIN equipment e ON oee.equipment_id = e.id\n        WHERE oee.id = $1\n        ",
   "describe": {
     "columns": [
       {
@@ -138,5 +138,5 @@
       false
     ]
   },
-  "hash": "5f666fd020819dc3e3ee0eeed0cac124365fcbb02dcee52438e54c4aa4287627"
+  "hash": "9d6a3c2c7c4c9913a7f97eb4c13190c73b0b6ddd88ebe59c493f7a5dab223a09"
 }

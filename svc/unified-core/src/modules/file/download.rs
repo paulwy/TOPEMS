@@ -57,7 +57,7 @@ pub async fn download_file(
         Ok(None) => {
             tracing::warn!("File not found: {}", id);
             return Err((
-                StatusCode::NOT_FOUND,
+                StatusCode::OK,
                 Json(serde_json::json!({
                     "success": false,
                     "message": "文件不存在",
@@ -196,7 +196,7 @@ pub async fn preview_file(
         Ok(None) => {
             tracing::warn!("File not found: {}", id);
             return Err((
-                StatusCode::NOT_FOUND,
+                StatusCode::OK,
                 Json(serde_json::json!({
                     "success": false,
                     "message": "文件不存在",
@@ -335,7 +335,7 @@ pub async fn get_thumbnail(
         Ok(None) => {
             tracing::warn!("File not found: {}", id);
             return Err((
-                StatusCode::NOT_FOUND,
+                StatusCode::OK,
                 Json(serde_json::json!({
                     "success": false,
                     "message": "文件不存在",
@@ -455,4 +455,14 @@ pub async fn get_thumbnail(
                 Json(json!({"error": "Failed to build response"})),
             )
         })
+}
+
+/// 契约兜底：前端模板 `/thumbnail/{id}/{size}`（query 变量误解析为路径段），
+/// 兼容双段调用，忽略 size 参数复用单段逻辑。
+pub async fn thumbnail_compat(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    AxumPath((id, _size)): AxumPath<(String, String)>,
+) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
+    get_thumbnail(axum::extract::State(state), axum::Extension(claims), AxumPath(id)).await
 }

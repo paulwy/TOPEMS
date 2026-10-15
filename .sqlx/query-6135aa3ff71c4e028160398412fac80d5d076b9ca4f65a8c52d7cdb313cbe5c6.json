@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO process_route_steps (\n            route_id, process_id, sequence, estimated_time_minutes\n        )\n        VALUES ($1, $2, $3, $4)\n        RETURNING id, route_id, process_id, sequence,\n            estimated_time_minutes,\n            NULL::uuid AS work_station_id, NULL::text AS description, created_at\n        ",
+  "query": "\n        INSERT INTO process_route_steps (\n            route_id, process_id, sequence, estimated_time_minutes, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5)\n        RETURNING id, route_id, process_id, sequence,\n            estimated_time_minutes,\n            NULL::uuid AS work_station_id, NULL::text AS description, created_at\n        ",
   "describe": {
     "columns": [
       {
@@ -49,7 +49,8 @@
         "Uuid",
         "Uuid",
         "Int4",
-        "Numeric"
+        "Numeric",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -63,5 +64,5 @@
       false
     ]
   },
-  "hash": "bb425473ce8ba11d18d3c081af2d17afc90c742796fc43bc1d94a325acfe2a8b"
+  "hash": "6135aa3ff71c4e028160398412fac80d5d076b9ca4f65a8c52d7cdb313cbe5c6"
 }

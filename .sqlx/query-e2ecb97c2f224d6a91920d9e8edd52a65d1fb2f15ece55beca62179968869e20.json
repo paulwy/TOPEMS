@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE process_flow_steps\n        SET\n            sequence = COALESCE($1, sequence),\n            work_station_id = COALESCE($2, work_station_id),\n            equipment_ids = COALESCE($3, equipment_ids),\n            standard_time = COALESCE($4, standard_time),\n            wait_time = COALESCE($5, wait_time),\n            transfer_time = COALESCE($6, transfer_time),\n            quality_check_required = COALESCE($7, quality_check_required),\n            description = COALESCE($8, description)\n        WHERE id = $9\n        RETURNING id, flow_id, process_id, sequence,\n            work_station_id, equipment_ids,\n            standard_time, wait_time, transfer_time,\n            quality_check_required, description, created_at\n        ",
+  "query": "\n        INSERT INTO process_flow_steps (\n            flow_id, process_id, sequence, work_station_id,\n            equipment_ids, standard_time, wait_time, transfer_time,\n            quality_check_required, description, tenant_id\n        )\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n        RETURNING id, flow_id, process_id, sequence,\n            work_station_id, equipment_ids,\n            standard_time, wait_time, transfer_time,\n            quality_check_required, description, created_at\n        ",
   "describe": {
     "columns": [
       {
@@ -66,6 +66,8 @@
     ],
     "parameters": {
       "Left": [
+        "Uuid",
+        "Uuid",
         "Int4",
         "Uuid",
         "UuidArray",
@@ -92,5 +94,5 @@
       true
     ]
   },
-  "hash": "1a44507d7ee08e9b5b5839a1b39f71cb40cd5b089af1938584bca5de03d8655d"
+  "hash": "e2ecb97c2f224d6a91920d9e8edd52a65d1fb2f15ece55beca62179968869e20"
 }
