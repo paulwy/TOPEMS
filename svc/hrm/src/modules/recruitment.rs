@@ -915,7 +915,7 @@ pub async fn update_candidate(
             source = COALESCE($7, source),
             status = COALESCE($8, status),
             updated_at = $9
-        WHERE deleted_at IS NULL AND id = $10
+        WHERE deleted_at IS NULL AND id = $10 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, name, email, phone, position_id, job_opening_id, resume_path, source, status, created_at, updated_at
         "#)
     )
@@ -1328,7 +1328,7 @@ pub async fn complete_interview(
             notes = COALESCE($3, notes),
             score = COALESCE($4, score),
             updated_at = $5
-        WHERE deleted_at IS NULL AND id = $6 AND status = 'scheduled'
+        WHERE deleted_at IS NULL AND id = $6 AND status = 'scheduled' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, candidate_id, interviewer_id, round, scheduled_at, actual_at, duration_minutes, status, result, notes, score, created_at, updated_at
         "#)
     )
