@@ -15,11 +15,31 @@ import type {
 import { adaptInspectionToFrontend, adaptInspectionToBackend } from './adapters';
 
 export const inspectionApi = {
-  listChecks: async (): Promise<ApiResponse<QualityCheck[]>> => {
-    const response =
-      await apiClient.qms.get<QmsPaginatedResponse<QualityInspectionBackend>>('/checks');
+  listChecks: async (query?: {
+    page?: number;
+    pageSize?: number;
+    search?: string;
+    type?: string;
+    status?: string;
+  }): Promise<ApiResponse<QualityCheck[]>> => {
+    const response = await apiClient.qms.get<QmsPaginatedResponse<QualityInspectionBackend>>(
+      '/checks',
+      {
+        params: {
+          page: query?.page,
+          page_size: query?.pageSize,
+          search: query?.search || undefined,
+          inspection_type: query?.type || undefined,
+          status: query?.status || undefined,
+        },
+      }
+    );
     const adaptedData = (response.data?.inspections || []).map(adaptInspectionToFrontend);
-    return { ...response, data: adaptedData };
+    return {
+      ...response,
+      data: adaptedData,
+      total: response.data?.total,
+    } as ApiResponse<QualityCheck[]> & { total?: number };
   },
 
   getCheck: async (id: string): Promise<ApiResponse<QualityCheck | undefined>> => {

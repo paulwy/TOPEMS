@@ -236,7 +236,7 @@ const QmsInspectionPage: React.FC = () => {
         if (typeFilter !== 'all') {
           params.type = typeFilter;
         }
-        const res = await inspectionApi.listChecks();
+        const res = await inspectionApi.listChecks(params);
         const resData = res as unknown as
           { data?: ApiQualityCheck[]; total?: number } | ApiQualityCheck[];
         let apiChecks: ApiQualityCheck[] = [];
