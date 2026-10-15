@@ -81,7 +81,7 @@ pub async fn list_plans(
 
     let result = sqlx::query_as::<_, TrainingPlan>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
+        SELECT id, tenant_id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         FROM hrm.training_plans
         WHERE deleted_at IS NULL
           AND ($1::text IS NULL OR status = $1)
@@ -153,7 +153,7 @@ pub async fn create_plan(
         only_own_schema_query!("hrm", r#"
         INSERT INTO hrm.training_plans (id, name, code, description, start_date, end_date, budget, status, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10)
-        RETURNING id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
+        RETURNING id, tenant_id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -210,7 +210,7 @@ pub async fn get_plan(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, TrainingPlan>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
+        SELECT id, tenant_id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         FROM hrm.training_plans WHERE deleted_at IS NULL AND id = $1
         "#),
     )
@@ -223,7 +223,7 @@ pub async fn get_plan(
             let courses = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
                 "hrm",
                 r#"
-                SELECT id, plan_id, name, code, category, level, description, duration_hours,
+                SELECT id, tenant_id, plan_id, name, code, category, level, description, duration_hours,
                        instructor_id, instructor_name, location, max_participants, status,
                        created_at, updated_at
                 FROM hrm.training_courses WHERE deleted_at IS NULL AND plan_id = $1
@@ -281,7 +281,7 @@ pub async fn update_plan(
             budget = COALESCE($8, budget),
             updated_at = $9
         WHERE deleted_at IS NULL AND id = $1
-        RETURNING id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
+        RETURNING id, tenant_id, name, code, description, start_date, end_date, status, budget, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -372,7 +372,7 @@ pub async fn list_courses(
     let result = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, plan_id, name, code, category, level, description, duration_hours,
+        SELECT id, tenant_id, plan_id, name, code, category, level, description, duration_hours,
                instructor_id, instructor_name, location, max_participants, status,
                created_at, updated_at
         FROM hrm.training_courses
@@ -453,7 +453,7 @@ pub async fn create_course(
             id, plan_id, name, code, category, level, description, duration_hours,
             instructor_id, instructor_name, location, max_participants, status, created_at, updated_at, tenant_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', $13, $14, $15)
-        RETURNING id, plan_id, name, code, category, level, description, duration_hours,
+        RETURNING id, tenant_id, plan_id, name, code, category, level, description, duration_hours,
                   instructor_id, instructor_name, location, max_participants, status,
                   created_at, updated_at
         "#),
@@ -518,7 +518,7 @@ pub async fn get_course(
     let result = sqlx::query_as::<_, TrainingCourse>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, plan_id, name, code, category, level, description, duration_hours,
+        SELECT id, tenant_id, plan_id, name, code, category, level, description, duration_hours,
                instructor_id, instructor_name, location, max_participants, status,
                created_at, updated_at
         FROM hrm.training_courses WHERE deleted_at IS NULL AND id = $1
@@ -567,7 +567,7 @@ pub async fn update_course(
             status = COALESCE($12, status),
             updated_at = $13
         WHERE deleted_at IS NULL AND id = $1
-        RETURNING id, plan_id, name, code, category, level, description, duration_hours,
+        RETURNING id, tenant_id, plan_id, name, code, category, level, description, duration_hours,
                   instructor_id, instructor_name, location, max_participants, status,
                   created_at, updated_at
         "#
@@ -664,7 +664,7 @@ pub async fn list_records(
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, course_id, employee_id, enrollment_date, attendance_status,
+        SELECT id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                completion_status, score, certificate_no, completed_at, feedback,
                created_at, updated_at
         FROM hrm.training_records
@@ -745,7 +745,7 @@ pub async fn create_record(
             id, tenant_id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
             created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, 'registered', 'in_progress', $6, $7)
-        RETURNING id, course_id, employee_id, enrollment_date, attendance_status,
+        RETURNING id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
         "#
@@ -819,7 +819,7 @@ pub async fn enroll_course(
             id, tenant_id, course_id, employee_id, enrollment_date, attendance_status, completion_status,
             created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, 'registered', 'in_progress', $6, $7)
-        RETURNING id, course_id, employee_id, enrollment_date, attendance_status,
+        RETURNING id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
         "#
@@ -881,7 +881,7 @@ pub async fn get_record(
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, course_id, employee_id, enrollment_date, attendance_status,
+        SELECT id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                completion_status, score, certificate_no, completed_at, feedback,
                created_at, updated_at
         FROM hrm.training_records WHERE deleted_at IS NULL AND id = $1
@@ -928,7 +928,7 @@ pub async fn update_record(
             feedback = COALESCE($7, feedback),
             updated_at = $8
         WHERE deleted_at IS NULL AND id = $1
-        RETURNING id, course_id, employee_id, enrollment_date, attendance_status,
+        RETURNING id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                   completion_status, score, certificate_no, completed_at, feedback,
                   created_at, updated_at
         "#
@@ -1016,7 +1016,7 @@ pub async fn get_course_records(
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, course_id, employee_id, enrollment_date, attendance_status,
+        SELECT id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                completion_status, score, certificate_no, completed_at, feedback,
                created_at, updated_at
         FROM hrm.training_records WHERE deleted_at IS NULL AND course_id = $1
@@ -1091,7 +1091,7 @@ pub async fn get_employee_records(
     let result = sqlx::query_as::<_, TrainingRecord>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, course_id, employee_id, enrollment_date, attendance_status,
+        SELECT id, tenant_id, course_id, employee_id, enrollment_date, attendance_status,
                completion_status, score, certificate_no, completed_at, feedback,
                created_at, updated_at
         FROM hrm.training_records WHERE deleted_at IS NULL AND employee_id = $1

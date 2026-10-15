@@ -383,7 +383,7 @@ pub async fn update_company(
             address = $6, contact_phone = $7, contact_email = $8, website = $9,
             description = $10, status = $11, updated_at = $12
         WHERE id = $1
-        RETURNING id, name, short_name, registration_number, tax_number, address,
+        RETURNING id, tenant_id, name, short_name, registration_number, tax_number, address,
                   contact_phone, contact_email as email, website, description, status, created_at, updated_at
         "#),
     )

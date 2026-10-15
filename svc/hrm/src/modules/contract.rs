@@ -428,7 +428,7 @@ pub async fn get_contract(
             let renewals = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
                 "hrm",
                 r#"
-                SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+                SELECT id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                        new_start_date, new_end_date, new_salary, status, approver_id,
                        approved_at, rejection_reason, created_at, updated_at
                 FROM hrm.contract_renewals
@@ -722,7 +722,7 @@ pub async fn create_renewal(
             id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
             new_start_date, new_end_date, new_salary, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
-        RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+        RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
         "#
@@ -789,7 +789,7 @@ pub async fn list_renewals(
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+        SELECT id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
         FROM hrm.contract_renewals
@@ -877,7 +877,7 @@ pub async fn get_renewal(
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+        SELECT id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
         FROM hrm.contract_renewals WHERE id = $1
@@ -923,7 +923,7 @@ pub async fn update_renewal(
             new_salary = COALESCE($6, new_salary),
             updated_at = $7
         WHERE id = $1 AND status = 'pending'
-        RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+        RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
         "#
@@ -1018,7 +1018,7 @@ pub async fn approve_renewal(
             approved_at = $2,
             updated_at = $2
         WHERE id = $1 AND status = 'pending'
-        RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+        RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
         "#
@@ -1077,7 +1077,7 @@ pub async fn reject_renewal(
             rejection_reason = $2,
             updated_at = $3
         WHERE id = $1 AND status = 'pending'
-        RETURNING id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+        RETURNING id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                   new_start_date, new_end_date, new_salary, status, approver_id,
                   approved_at, rejection_reason, created_at, updated_at
         "#
@@ -1134,7 +1134,7 @@ pub async fn execute_renewal(
     let renewal = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",
         r#"
-        SELECT id, contract_id, previous_contract_id, renewal_type, renewal_reason,
+        SELECT id, tenant_id, contract_id, previous_contract_id, renewal_type, renewal_reason,
                new_start_date, new_end_date, new_salary, status, approver_id,
                approved_at, rejection_reason, created_at, updated_at
         FROM hrm.contract_renewals WHERE id = $1
