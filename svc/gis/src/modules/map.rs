@@ -228,7 +228,7 @@ pub async fn update_map(
         UPDATE gis.maps 
         SET name = $1, description = $2, map_type = $3, projection = $4, 
             bounds = $5, center = $6, zoom_level = $7, status = COALESCE($8, status), updated_at = NOW()
-        WHERE id = $9
+        WHERE id = $9 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#),
     )
