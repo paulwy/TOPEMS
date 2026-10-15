@@ -234,12 +234,18 @@ pub async fn get_apqp_project(
 )]
 pub async fn update_apqp_project(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateApqpProjectRequest>,
 ) -> Json<ApiResponse<ApqpProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+    };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let product_id = req
@@ -257,7 +263,7 @@ pub async fn update_apqp_project(
         .map(|d| d.and_hms_opt(0, 0, 0).unwrap_or_default());
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET project_name = COALESCE($2, project_name), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), customer = COALESCE($5, customer), description = COALESCE($6, description), status = COALESCE($7, status), current_phase = COALESCE($8, current_phase), leader = COALESCE($9, leader), team = COALESCE($10, team), start_date = COALESCE($11, start_date), target_date = COALESCE($12, target_date), actual_end_date = COALESCE($13, actual_end_date), progress = COALESCE($14, progress), risk_level = COALESCE($15, risk_level), updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET project_name = COALESCE($2, project_name), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), customer = COALESCE($5, customer), description = COALESCE($6, description), status = COALESCE($7, status), current_phase = COALESCE($8, current_phase), leader = COALESCE($9, leader), team = COALESCE($10, team), start_date = COALESCE($11, start_date), target_date = COALESCE($12, target_date), actual_end_date = COALESCE($13, actual_end_date), progress = COALESCE($14, progress), risk_level = COALESCE($15, risk_level), updated_at = NOW() WHERE id = $1 AND ($16::uuid IS NULL OR tenant_id = $16::uuid) RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
     )
     .bind(id)
     .bind(req.project_name)
@@ -274,6 +280,7 @@ pub async fn update_apqp_project(
     .bind(actual_end_dt)
     .bind(req.progress)
     .bind(req.risk_level)
+    .bind(tenant_filter)
     .fetch_one(&state.pool)
     .await;
 
@@ -302,18 +309,25 @@ pub async fn update_apqp_project(
 )]
 pub async fn delete_apqp_project(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<bool>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_apqp_projects SET deleted_at = NOW() WHERE id = $1"#
+        r#"UPDATE qms.qa_apqp_projects SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&state.pool)
     .await;
 
@@ -341,12 +355,18 @@ pub async fn delete_apqp_project(
 )]
 pub async fn transition_project_status(
     State(state): State<crate::AppState>,
+    Extension(claims): Extension<Claims>,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<StatusTransitionRequest>,
 ) -> Json<ApiResponse<ApqpProject>> {
     let id = match Uuid::parse_str(&id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
+    };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let valid_statuses = ["planning", "developing", "verifying", "released", "closed"];
@@ -356,10 +376,11 @@ pub async fn transition_project_status(
     }
 
     let project = sqlx::query_as::<_, ApqpProject>(
-        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET status = $2, updated_at = NOW() WHERE id = $1 RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
+        only_own_schema_query!("qms", r#"UPDATE qms.qa_apqp_projects SET status = $2, updated_at = NOW() WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3::uuid) RETURNING id::TEXT, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#),
     )
     .bind(id)
     .bind(&req.target_status)
+    .bind(tenant_filter)
     .fetch_one(&state.pool)
     .await;
 
@@ -1397,12 +1418,18 @@ pub async fn approve_apqp(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let current = sqlx::query(only_own_schema_query!(
         "qms",
-        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"
+        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .fetch_one(&state.pool)
     .await;
 
@@ -1418,8 +1445,8 @@ pub async fn approve_apqp(
                 return Json(ApiResponse::error(400, "当前状态不允许审批通过"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(
-                format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS).as_str()
-            ).bind(id).fetch_one(&state.pool).await;
+                format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_IN_PRODUCTION, APQP_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
             match project {
                 Ok(data) => {
                     let tenant_str = claims.tenant_id.clone().unwrap_or_default();
@@ -1474,12 +1501,18 @@ pub async fn complete_apqp(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let current = sqlx::query(only_own_schema_query!(
         "qms",
-        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"
+        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .fetch_one(&state.pool)
     .await;
 
@@ -1495,8 +1528,8 @@ pub async fn complete_apqp(
                 return Json(ApiResponse::error(400, "当前状态不允许完成"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(
-                format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS).as_str()
-            ).bind(id).fetch_one(&state.pool).await;
+                format!("UPDATE qms.qa_apqp_projects SET status = '{}', actual_end_date = COALESCE(actual_end_date, NOW()), progress = 100, updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_COMPLETED, APQP_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
             match project {
                 Ok(data) => {
                     let tenant_str = claims.tenant_id.clone().unwrap_or_default();
@@ -1551,12 +1584,18 @@ pub async fn cancel_apqp(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let current = sqlx::query(only_own_schema_query!(
         "qms",
-        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1"
+        "SELECT status FROM qms.qa_apqp_projects WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .fetch_one(&state.pool)
     .await;
 
@@ -1567,8 +1606,8 @@ pub async fn cancel_apqp(
                 return Json(ApiResponse::error(400, "当前状态不允许取消"));
             }
             let project = sqlx::query_as::<_, ApqpProject>(
-                format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS).as_str()
-            ).bind(id).fetch_one(&state.pool).await;
+                format!("UPDATE qms.qa_apqp_projects SET status = '{}', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) RETURNING {}", STATUS_CANCELLED, APQP_SELECT_COLS).as_str()
+            ).bind(id).bind(tenant_filter).fetch_one(&state.pool).await;
             match project {
                 Ok(data) => {
                     let tenant_str = claims.tenant_id.clone().unwrap_or_default();

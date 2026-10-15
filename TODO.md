@@ -1980,3 +1980,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - RLS 列确认：inbound_orders/inventory 均有 tenant_id 列 + RLS FORCE（policy qual 用 tenant_id）
 - 复核：wms check 0 error；inbound_orders 空表（无数据）无法 SQL 复核、psql INSERT 亦被 RLS with_check 拦截（事务回滚零残留）；模式与批2-J 一致（erp 已复核样板），待端到端实测
 
+## 方案C 批2-L：srm.biddings 6 处 + qms.qa_apqp_projects 6 处（写路径租户约束）
+- 状态：代码已修改（qms+srm check 通过 0 error），待提交
+- srm bidding.rs 6 处（update / delete / publish / open / evaluate / award）：均补 Extension<Claims>（原签名缺失）+ tenant_filter + UPDATE WHERE 加 `($N::uuid IS NULL OR tenant_id = $N::uuid)` + bind（$13/$2/$4/$4/$3/$5 按各函数既有 bind 数递增）
+- qms apqp.rs 6 处：update_apqp_project / delete_apqp_project / transition_project_status 补 Extension<Claims>（原签名缺失）+ WHERE $16/$2/$3；approve / complete / cancel 已有 claims，其 current SELECT + format! 动态 UPDATE 均加租户条件（$2/$2/$2）
+- 路由层确认：qms/srm main.rs 均有 tenant_middleware + require_permission（claims 注入存在）
+- 复核：qms+srm check 0 error；SQL 事务内实测——SET app.tenant_id 两租户、INSERT 测试行后本租户 UPDATE 1 行 / 他租户越权 UPDATE 0 行（biddings + qa_apqp_projects），ROLLBACK 零残留
+- 备注：biddings/qa_apqp_projects 均为空表（生产无数据），测试行仅在事务内存在；biddings 无 organization_id 列（INSERT 用 tenant_id 即可）
+
