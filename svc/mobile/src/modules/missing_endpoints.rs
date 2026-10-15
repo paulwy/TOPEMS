@@ -300,7 +300,7 @@ pub async fn update_push_template(
                body_template = COALESCE(NULLIF($4, ''), body_template),
                is_active = COALESCE($5, is_active),
                updated_at = NOW()
-           WHERE id = $1
+           WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING id, name, notification_type, title_template, body_template, is_active, created_at"#,
     )
     .bind(id)

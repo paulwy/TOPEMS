@@ -474,7 +474,7 @@ pub async fn db_update_offline_operation_status(
     };
 
     sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.offline_operations SET sync_status = $1, sync_attempts = $2, last_sync_error = $3, synced_at = $4 WHERE id = $5"),
+        only_own_schema_query!("mobile", "UPDATE mobile.offline_operations SET sync_status = $1, sync_attempts = $2, last_sync_error = $3, synced_at = $4 WHERE id = $5 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
     )
     .bind(status)
     .bind(attempts)
@@ -525,7 +525,7 @@ pub async fn db_create_or_update_sync_policy(
         policy.updated_at = now;
 
         sqlx::query(
-            only_own_schema_query!("mobile", "UPDATE mobile.sync_policies SET auto_sync_enabled = $1, sync_interval_minutes = $2, sync_on_network_change = $3, conflict_strategy = $4, updated_at = $5 WHERE user_id = $6"),
+            only_own_schema_query!("mobile", "UPDATE mobile.sync_policies SET auto_sync_enabled = $1, sync_interval_minutes = $2, sync_on_network_change = $3, conflict_strategy = $4, updated_at = $5 WHERE user_id = $6 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
         )
         .bind(policy.auto_sync_enabled)
         .bind(policy.sync_interval_minutes)
@@ -686,7 +686,7 @@ pub async fn db_update_push_notification_stats(
     let now = Utc::now();
 
     sqlx::query(
-        only_own_schema_query!("mobile", "UPDATE mobile.push_notifications SET status = $1, sent_count = $2, delivered_count = $3, clicked_count = $4, sent_at = $5 WHERE id = $6"),
+        only_own_schema_query!("mobile", "UPDATE mobile.push_notifications SET status = $1, sent_count = $2, delivered_count = $3, clicked_count = $4, sent_at = $5 WHERE id = $6 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"),
     )
     .bind("sent")
     .bind(sent_count)

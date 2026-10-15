@@ -524,7 +524,7 @@ pub async fn delete_scan_record(
 
     let result = sqlx::query(only_own_schema_query!(
         "mobile",
-        "DELETE FROM mobile.barcode_scans WHERE id = $1 AND user_id = $2"
+        "DELETE FROM mobile.barcode_scans WHERE id = $1 AND user_id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
     .bind(user_id)

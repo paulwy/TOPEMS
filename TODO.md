@@ -2082,3 +2082,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - pm 5 处（quality_checks/project_risks/notification_settings/acceptance_records/acceptance_plans）：无 Claims（pm 无中间件），内联
 - 复核：4 服务 check 0 error；SQL 事务内实测（9 表空表插测试行，apqp 先插项目、lab 用真实样本 FK、pm 用真实项目 FK）——9 表本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-Zb：mobile 7 处（写路径租户约束）
+- 状态：代码已修改（mobile check 通过 0 error），待提交
+- mobile 7 处（push_templates update / push_notifications stats / offline_sync_records 状态 / offline_operations 状态 / sync_policies upsert / media_files 软删 / barcode_scans 删除）：handler 均无 Claims（header token 用户维度），统一内联 current_setting 租户条件（RLS 同源）
+- 复核：mobile check 0 error；SQL 事务内实测——push_templates/offline/media/barcode 空表插测试行、push_notifications 用真实行、sync_policies NULL 行显式条件不可达（本租户 UPDATE 0 正确拦截），7 表本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+- 新观察项：mobile.push_templates 13 / push_notifications 32 / sync_policies 1 / barcode_scans 13 行 tenant_id NULL（历史未回填，同 srm.suppliers 92 / hrm.initialization_status）
+
