@@ -1917,3 +1917,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 修复：`20261015000081_plan_c_batch2e_rls_nil_policy_all.sql`（生成式）——259 policy 追加统一 nil 分支（225 tenant_isolation_* + 31 rls_tenant_isolation + 3 ai.*_tenant_policy）；4 个 allow_all（USING=true）跳过
 - 实测：ai.qa_history（修复前缺 nil）topems_app 角色 INSERT 绑 0001 成功、显式过滤读返回；SET 上下文 0002 读 0001 行 count=0（隔离保留）、SET 0001 count=1；测试数据已清理
 - 遗留登记：15 张 rls_tenant_isolation 用旧 key app.current_tenant_id（ai/wms/scm/finance/hrm/mes/pdm/rs/crm/communication）——与 txn SET 的 app.tenant_id 不一致，txn 读路径隔离待统一（本批补 nil 不改此行为）
+
+## 方案C 批2 — 子批 F：RLS policy key 统一（app.current_tenant_id → app.tenant_id，15 表）
+- 状态：已提交（待推送）
+- 修复：`20261015000082_plan_c_batch2f_rls_policy_key_unify.sql`——15 张表 rls_tenant_isolation 的 current_setting key 从旧值 app.current_tenant_id 统一为 app.tenant_id（与 8 txn crate 事务 SET key 一致）
+- 背景：旧 key 分支永不匹配 → txn 内读非 nil 租户行被 RLS 滤（隔离过度）；pool 直连已由批2-E nil 分支兼容
+- 实测：scm.module_settings（txn crate）SET 0001 读 0001 行 match=1（修复前 0）、SET 0002 other=0（隔离保留）、pool 直连 direct=1；测试数据已清理
