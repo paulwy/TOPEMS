@@ -19,6 +19,8 @@
   "scripts": {
     "dev": "vite",
     "build": "node --stack-size=8192 --max-old-space-size=8192 ./node_modules/typescript/lib/tsc.js && vite build",
+    "build:dev": "node --stack-size=8192 --max-old-space-size=8192 ./node_modules/typescript/lib/tsc.js && vite build --mode development",
+    "build:nolint": "node --stack-size=8192 --max-old-space-size=8192 ./node_modules/typescript/lib/tsc.js && vite build",
     "typecheck": "node --stack-size=8192 --max-old-space-size=8192 ./node_modules/typescript/lib/tsc.js --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
