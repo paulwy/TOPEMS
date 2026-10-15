@@ -119,22 +119,8 @@ fn get_runtime_url() -> String {
 
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(_core_url: Option<&str>) {
-    let (core_url, source) = match core_url {
-        Some(v) if !v.is_empty() => (v.to_string(), "caller_param".to_string()),
-        _ => match std::env::var("CORE_URL") {
-            Ok(v) if !v.is_empty() => (v, "env:CORE_URL".to_string()),
-            _ => (
-                "http://localhost:8000".to_string(),
-                "default_fallback".to_string(),
-            ),
-        },
-    };
-    tracing::info!(
-        target: "portal::portal_plugin",
-        core_url = %core_url,
-        source = %source,
-        "[PortalPlugin] 解析 unified-core 注册地址"
-    );
+    let core_url = std::env::var("PLUGIN_REGISTRY_URL")
+        .unwrap_or_else(|_| "http://localhost:8096".to_string());
     let runtime_url = get_runtime_url();
 
     let info = PluginInfo {
