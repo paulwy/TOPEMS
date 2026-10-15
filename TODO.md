@@ -2152,3 +2152,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - mobile 1 处（core_mobile_offline_records）：无 Claims，统一内联 current_setting
 - skip（甄别）：hrm setup.rs initialization_status 5 处已带 `($N::uuid IS NULL OR tenant_id=$N::uuid)` 非缺口；hrm contract.rs 4 处/erp leave_request.rs 5 处/erp internal_transactions/erp consolidation_reports 442/543/604 已带租户条件非缺口；erp_production_orders、analytics.report_execution_records 无 tenant_id 列平台表 skip
 - 复核：三服务 check 0 error；SQL 事务内实测 19 表（companies/departments/erp.assets/erp.dict_types 真实行——asset/dtype 为 nil 租户行按 nil 会话测；空表插行：hrm 8 表 + erp 6 表 + mobile 1 表，注意 opening_balances.period 为 varchar(6)、leave_records 用 reason 列、performance_reviews 用 comments 列）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+
+## 方案C 批2-Zm：mes production_records/production_processes 6 处（写路径租户约束）
+- 状态：代码已修改，cargo check 0 error，SQL 双租户实测通过，独立 commit
+- mes 6 处：production_records×3（439 更新/511 软删/561 in_progress 更新）+ production_processes×3（410 active 更新/464 软删/511 active 更新）——无 Claims，统一内联 current_setting
+- skip（甄别）：mes.work_orders×7 无 tenant_id 列（RLS 0）平台表 skip；analytics.report_execution_records×2 无 tenant_id 列平台表 skip；master-data 残余 6 表（mdm_graph_nodes/propagation_logs/semantic_search_indexes/tagged_entities/tags/replication_configs）扫描 0 处无缺口
+- 复核：check 0 error；SQL 事务内实测 production_records 真实行（64195ecf 0001 in_progress）+ production_processes 插行（organization_id/sequence 必填）——本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留

@@ -445,7 +445,7 @@ pub async fn update_record(
             status = $7,
             notes = COALESCE($8, notes),
             updated_at = $9
-        WHERE id = $1
+        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
@@ -509,7 +509,7 @@ pub async fn delete_record(
     let result = sqlx::query!(
         r#"
         UPDATE mes.production_records SET deleted_at = NOW()
-        WHERE id = $1
+        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         "#,
         id,
     )
@@ -562,7 +562,7 @@ pub async fn complete_record(
             end_time = $2,
             status = 'completed',
             updated_at = $2
-        WHERE id = $1 AND status = 'in_progress'
+        WHERE id = $1 AND status = 'in_progress' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
             operator_id, start_time, end_time,
