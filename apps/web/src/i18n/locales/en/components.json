@@ -1484,6 +1484,7 @@
   "components.sub_table_builder.k11": "Edit Row",
   "components.sub_table_builder.k12": "New Row",
   "components.sub_table_builder.k13": "Row",
+  "components.sub_table_builder.k14": "OK",
   "components.template_ai_helper.k0": "Detected",
   "components.template_ai_helper.k1": "item Variable Reference, Added Variable List",
   "components.template_ai_helper.k2": "The following variables are defined but unused:",

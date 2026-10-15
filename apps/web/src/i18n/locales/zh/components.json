@@ -1484,6 +1484,7 @@
   "components.sub_table_builder.k11": "编辑行",
   "components.sub_table_builder.k12": "新增行",
   "components.sub_table_builder.k13": "行",
+  "components.sub_table_builder.k14": "确定",
   "components.template_ai_helper.k0": "检测到",
   "components.template_ai_helper.k1": "个变量引用，已添加到变量列表",
   "components.template_ai_helper.k2": "以下变量定义了但未使用：",

@@ -174,6 +174,22 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
     Record<string, { value: string | number; label: string }[]>
   >({});
 
+  // ── 将字段默认值同步到父级（受控父级 values 缺失时） ──
+  // 解决 WizardBuilder 等受控场景：FormBuilder 内部 state 已用 defaultValue 初始化，
+  // 但父级 values 未同步，父级 required 校验读 values 会误报"必填项未填写"。
+  React.useEffect(() => {
+    fields.forEach((field) => {
+      const parentValue = (initialValues as Record<string, unknown>)[field.name];
+      if (parentValue === undefined || parentValue === null || parentValue === '') {
+        const dv = field.defaultValue;
+        if (dv !== undefined && dv !== null && dv !== '') {
+          onFieldChange?.(field.name, dv, values);
+        }
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const validateField = useCallback(
     (field: FormFieldConfig<T>, value: unknown, formValues: T): string => {
       const isRequired =

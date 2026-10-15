@@ -163,7 +163,7 @@ pub async fn get_quality_overview(
 ) -> Json<ApiResponse<QualityOverview>> {
     let total_insp: Option<i64> = sqlx::query_scalar::<_, _>(only_own_schema_query!(
         "qms",
-        "SELECT COUNT(*) FROM qms.qa_quality_inspections WHERE status = 'completed'"
+        "SELECT COUNT(*) FROM qms.qa_quality_inspections"
     ))
     .fetch_one(&state.pool)
     .await

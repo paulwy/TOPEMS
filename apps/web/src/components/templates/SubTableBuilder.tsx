@@ -374,7 +374,7 @@ const RowFormDialog: React.FC<RowFormDialogProps> = ({
             variant='contained'
             size='small'
           >
-            {i18n.t('components.sub_table_builder.k0')}
+            {i18n.t('components.sub_table_builder.k14')}
           </Button>
         )}
       </DialogActions>
