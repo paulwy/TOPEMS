@@ -472,7 +472,16 @@ pub async fn delete_phase(
     .await
     {
         Ok(Some(pid)) => pid,
-        Ok(None) => return Json(ApiResponse::error(404, "阶段不存在")),
+        Ok(None) => {
+            if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
+            return Json(ApiResponse::error(404, "阶段不存在"))
+        }
+
         Err(e) => {
             tracing::error!("查询阶段所属项目失败: {}", e);
             return Json(ApiResponse::error(500, "查询阶段失败"));

@@ -442,7 +442,16 @@ pub async fn update_patent(
     .await;
 
     match result {
-        Ok(row) => Json(ApiResponse::success(row_to_patent(row), "专利更新成功")),
+        Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(row_to_patent(row), "专利更新成功"))
+        }
+
         Err(e) => {
             tracing::error!("更新专利失败: {}", e);
             Json(ApiResponse::error(500, "专利更新失败"))
@@ -468,7 +477,16 @@ pub async fn delete_patent(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "专利删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "专利不存在")),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::error(404, "专利不存在"))
+        }
+
         Err(e) => {
             tracing::error!("删除专利失败: {}", e);
             Json(ApiResponse::error(500, "专利删除失败"))

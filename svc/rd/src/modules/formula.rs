@@ -246,11 +246,19 @@ pub async fn create_formula(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(formula) => (
-            Json(ApiResponse::success(formula.clone(), "配方创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(formula) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(formula.clone(), "配方创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建配方失败: {}", e);
             (
@@ -378,7 +386,16 @@ pub async fn update_formula(
 
     let existing = match existing {
         Ok(Some(f)) => f,
-        Ok(None) => return Json(ApiResponse::error(404, "配方不存在")),
+        Ok(None) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            return Json(ApiResponse::error(404, "配方不存在"));
+        }
+
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询配方失败", e))),
     };
 
@@ -424,11 +441,19 @@ pub async fn update_formula(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(formula) => (
-            Json(ApiResponse::success(formula.clone(), "配方更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(formula) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(formula.clone(), "配方更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新配方失败: {}", e);
             (
@@ -496,11 +521,19 @@ pub async fn delete_formula(
             "success".to_string(),
             None,
         ),
-        Ok(_) => (
-            Json(ApiResponse::error(404, "配方不存在")),
-            "error".to_string(),
-            Some("配方不存在".to_string()),
-        ),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::error(404, "配方不存在")),
+                "error".to_string(),
+                Some("配方不存在".to_string()),
+            )
+        }
         Err(e) => {
             tracing::error!("删除配方失败: {}", e);
             (

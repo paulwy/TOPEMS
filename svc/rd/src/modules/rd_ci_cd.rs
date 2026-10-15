@@ -235,7 +235,16 @@ pub async fn create_bug(
     .fetch_one(&mut **txn)
     .await;
     match row {
-        Ok(r) => Ok(Json(ApiResponse::success(bug_to_json(&r), "创建缺陷成功"))),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+            Ok(Json(ApiResponse::success(bug_to_json(&r), "创建缺陷成功")))
+        }
+
         Err(e) => {
             tracing::error!("创建缺陷失败: {}", e);
             Err(internal_error("创建缺陷失败"))
@@ -275,8 +284,26 @@ pub async fn update_bug(
     .fetch_optional(&mut **txn)
     .await;
     match row {
-        Ok(Some(r)) => Ok(Json(ApiResponse::success(bug_to_json(&r), "更新缺陷成功"))),
-        Ok(None) => Err(not_found("缺陷不存在")),
+        Ok(Some(r)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+            Ok(Json(ApiResponse::success(bug_to_json(&r), "更新缺陷成功")))
+        }
+
+        Ok(None) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+            Err(not_found("缺陷不存在"))
+        }
+
         Err(e) => {
             tracing::error!("更新缺陷失败: {}", e);
             Err(internal_error("更新缺陷失败"))
@@ -303,7 +330,16 @@ pub async fn delete_bug(
             serde_json::json!({ "deleted": true, "id": id.to_string() }),
             "删除缺陷成功",
         ))),
-        Ok(_) => Err(not_found("缺陷不存在")),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+            Err(not_found("缺陷不存在"))
+        }
+
         Err(e) => {
             tracing::error!("删除缺陷失败: {}", e);
             Err(internal_error("删除缺陷失败"))
@@ -444,10 +480,20 @@ pub async fn create_build(
     .fetch_one(&mut **txn)
     .await;
     match row {
-        Ok(r) => Ok(Json(ApiResponse::success(
-            build_to_json(&r),
-            "创建构建成功",
-        ))),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+
+            Ok(Json(ApiResponse::success(
+                build_to_json(&r),
+                "创建构建成功",
+            )))
+        }
         Err(e) => {
             tracing::error!("创建构建失败: {}", e);
             Err(internal_error("创建构建失败"))
@@ -596,10 +642,20 @@ pub async fn create_deploy(
     .fetch_one(&mut **txn)
     .await;
     match row {
-        Ok(r) => Ok(Json(ApiResponse::success(
-            deploy_to_json(&r),
-            "创建部署成功",
-        ))),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+
+            Ok(Json(ApiResponse::success(
+                deploy_to_json(&r),
+                "创建部署成功",
+            )))
+        }
         Err(e) => {
             tracing::error!("创建部署失败: {}", e);
             Err(internal_error("创建部署失败"))
@@ -742,10 +798,20 @@ pub async fn create_test(
     .fetch_one(&mut **txn)
     .await;
     match row {
-        Ok(r) => Ok(Json(ApiResponse::success(
-            test_to_json(&r),
-            "创建测试用例成功",
-        ))),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+
+            Ok(Json(ApiResponse::success(
+                test_to_json(&r),
+                "创建测试用例成功",
+            )))
+        }
         Err(e) => {
             tracing::error!("创建测试用例失败: {}", e);
             Err(internal_error("创建测试用例失败"))
@@ -787,7 +853,16 @@ pub async fn update_test(
             test_to_json(&r),
             "更新测试用例成功",
         ))),
-        Ok(None) => Err(not_found("测试用例不存在")),
+        Ok(None) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+            Err(not_found("测试用例不存在"))
+        }
+
         Err(e) => {
             tracing::error!("更新测试用例失败: {}", e);
             Err(internal_error("更新测试用例失败"))
@@ -814,7 +889,16 @@ pub async fn delete_test(
             serde_json::json!({ "deleted": true, "id": id.to_string() }),
             "删除测试用例成功",
         ))),
-        Ok(_) => Err(not_found("测试用例不存在")),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Err(internal_error("事务提交失败"));
+                }
+            }
+            Err(not_found("测试用例不存在"))
+        }
+
         Err(e) => {
             tracing::error!("删除测试用例失败: {}", e);
             Err(internal_error("删除测试用例失败"))

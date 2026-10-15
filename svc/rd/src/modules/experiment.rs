@@ -257,11 +257,19 @@ pub async fn create_experiment(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(experiment) => (
-            Json(ApiResponse::success(experiment.clone(), "试验创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(experiment) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(experiment.clone(), "试验创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建试验失败: {}", e);
             (
@@ -383,7 +391,16 @@ pub async fn update_experiment(
 
     let existing = match existing {
         Ok(Some(e)) => e,
-        Ok(None) => return Json(ApiResponse::error(404, "试验不存在")),
+        Ok(None) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            return Json(ApiResponse::error(404, "试验不存在"));
+        }
+
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询试验失败", e))),
     };
 
@@ -426,11 +443,19 @@ pub async fn update_experiment(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(experiment) => (
-            Json(ApiResponse::success(experiment.clone(), "试验更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(experiment) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(experiment.clone(), "试验更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新试验失败: {}", e);
             (
@@ -499,11 +524,19 @@ pub async fn delete_experiment(
             "success".to_string(),
             None,
         ),
-        Ok(_) => (
-            Json(ApiResponse::error(404, "试验不存在")),
-            "error".to_string(),
-            Some("试验不存在".to_string()),
-        ),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::error(404, "试验不存在")),
+                "error".to_string(),
+                Some("试验不存在".to_string()),
+            )
+        }
         Err(e) => {
             tracing::error!("删除试验失败: {}", e);
             (
@@ -686,13 +719,21 @@ pub async fn create_experiment_record(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(
-            serde_json::json!({
-                "id": record_id,
-                "recorded_at": now
-            }),
-            "试验记录创建成功",
-        )),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "id": record_id,
+                    "recorded_at": now
+                }),
+                "试验记录创建成功",
+            ))
+        }
         Err(e) => {
             tracing::error!("创建试验记录失败: {}", e);
             Json(ApiResponse::error(500, "创建试验记录失败"))

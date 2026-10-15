@@ -542,11 +542,19 @@ pub async fn delete_material_test(
             "success".to_string(),
             None,
         ),
-        Ok(_) => (
-            Json(ApiResponse::error(404, "原料试验记录不存在")),
-            "error".to_string(),
-            Some("原料试验记录不存在".to_string()),
-        ),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::error(404, "原料试验记录不存在")),
+                "error".to_string(),
+                Some("原料试验记录不存在".to_string()),
+            )
+        }
         Err(e) => {
             tracing::error!("删除原料试验记录失败: {}", e);
             (

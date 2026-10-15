@@ -472,7 +472,16 @@ pub async fn update_project(
 
     let existing = match existing {
         Ok(Some(p)) => p,
-        Ok(None) => return Json(ApiResponse::error(404, "项目不存在")),
+        Ok(None) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            return Json(ApiResponse::error(404, "项目不存在"));
+        }
+
         Err(e) => return Json(ApiResponse::from(TopemsError::internal("查询项目失败", e))),
     };
 
@@ -513,11 +522,19 @@ pub async fn update_project(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(project) => (
-            Json(ApiResponse::success(project.clone(), "项目更新成功")),
-            "success",
-            None,
-        ),
+        Ok(project) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(project.clone(), "项目更新成功")),
+                "success",
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新项目失败: {}", e);
             (
@@ -610,11 +627,19 @@ pub async fn delete_project(
             "success",
             None,
         ),
-        Ok(_) => (
-            Json(ApiResponse::error(404, "项目不存在")),
-            "error",
-            Some("项目不存在".to_string()),
-        ),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::error(404, "项目不存在")),
+                "error",
+                Some("项目不存在".to_string()),
+            )
+        }
         Err(e) => {
             tracing::error!("删除项目失败: {}", e);
             (
@@ -1191,6 +1216,7 @@ pub async fn import_projects(
     let mut rdr = csv::Reader::from_reader(&bytes[..]);
     let _ = match rdr.headers() {
         Ok(h) => h.clone(),
+
         Err(e) => {
             tracing::error!("解析 CSV 头部失败: {}", e);
 
@@ -1355,6 +1381,13 @@ pub async fn import_projects(
         &headers,
     )
     .await;
+
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
 
     if success == total {
         Json(ApiResponse::success(result, "导入完成"))

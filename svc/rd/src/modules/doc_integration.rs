@@ -264,6 +264,15 @@ pub async fn delete_document_relation(
 
     match result {
         Ok(res) if res.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "事务提交失败")),
+                    );
+                }
+            }
             let response: ApiResponse<()> = ApiResponse::success((), "删除文档关联成功");
             (StatusCode::OK, Json(response))
         }

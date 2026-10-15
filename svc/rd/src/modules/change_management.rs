@@ -190,10 +190,21 @@ pub async fn create_change_request(
     .await;
 
     match result {
-        Ok(cr) => (
-            StatusCode::CREATED,
-            Json(ApiResponse::success(cr, "变更请求创建成功")),
-        ),
+        Ok(cr) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "事务提交失败")),
+                    );
+                }
+            }
+            (
+                StatusCode::CREATED,
+                Json(ApiResponse::success(cr, "变更请求创建成功")),
+            )
+        }
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiResponse::<ChangeRequest>::error(
@@ -364,10 +375,21 @@ pub async fn update_change_request(
     .await;
 
     match result {
-        Ok(Some(cr)) => (
-            StatusCode::OK,
-            Json(ApiResponse::success(cr, "变更请求更新成功")),
-        ),
+        Ok(Some(cr)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "事务提交失败")),
+                    );
+                }
+            }
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success(cr, "变更请求更新成功")),
+            )
+        }
         Ok(None) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::<ChangeRequest>::error(404, "变更请求不存在")),
@@ -396,13 +418,24 @@ pub async fn delete_change_request(
         .execute(&mut **txn)
         .await
     {
-        Ok(res) if res.rows_affected() > 0 => (
-            StatusCode::OK,
-            Json(ApiResponse::success(
-                serde_json::json!({"deleted": true}),
-                "变更请求已删除",
-            )),
-        ),
+        Ok(res) if res.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "事务提交失败")),
+                    );
+                }
+            }
+            (
+                StatusCode::OK,
+                Json(ApiResponse::success(
+                    serde_json::json!({"deleted": true}),
+                    "变更请求已删除",
+                )),
+            )
+        }
         Ok(_) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::<serde_json::Value>::error(
@@ -598,10 +631,21 @@ pub async fn create_change_order(
     .await;
 
     match result {
-        Ok(co) => (
-            StatusCode::CREATED,
-            Json(ApiResponse::success(co, "变更单创建成功")),
-        ),
+        Ok(co) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiResponse::error(500, "事务提交失败")),
+                    );
+                }
+            }
+            (
+                StatusCode::CREATED,
+                Json(ApiResponse::success(co, "变更单创建成功")),
+            )
+        }
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiResponse::<ChangeOrder>::error(

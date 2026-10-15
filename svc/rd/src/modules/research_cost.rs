@@ -474,7 +474,16 @@ pub async fn delete_cost(
         Ok(r) if r.rows_affected() > 0 => {
             Json(ApiResponse::success("".to_string(), "研发费用删除成功"))
         }
-        Ok(_) => Json(ApiResponse::error(404, "研发费用不存在")),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::error(404, "研发费用不存在"))
+        }
+
         Err(e) => {
             tracing::error!("删除研发费用失败: {}", e);
             Json(ApiResponse::error(500, "删除研发费用失败"))
