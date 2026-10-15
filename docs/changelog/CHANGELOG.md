@@ -43,6 +43,16 @@
 - **finance + portal 两大 crate Region 显著提升**：finance 14.53% → 17.58%（+3.05pp，16 文件 +60 tests）、portal 23.83% → 24.52%（+0.69pp，5 文件 +28 tests）
 - **ai_form handlers.rs 可测试性重构**：从直接实例化 client 改为 trait-based 注入，单测 0% → 91.46%（`refactor(ai): 引入 mock 可测试架构`）
 
+### Changed - 迁移链健壮化并正式落库 000084（2026-10-15 续）
+- **topems_test 主链落库**：`sqlx migrate run --source database/migrations` 397 条全部应用、0 失败（388 → +9）
+- **5 类阻塞修复**：000075/000082 版本撞车 git mv 改号（→000083/000084）、000075 checksum 对齐文件、000076（227 表 RLS 批）83 表缺 tenant_id 跳过、000078 `embedding` jsonb → vector(1536)、000080-000082 不存在 policy 改 DO 守卫；`finance.cqrs_projection_progress` 补 `tenant_id` 列 + 索引（000084）；RLS policy 459 个；dev 库未动
+
+### Changed - finance 投影器显式写 finance schema（2026-10-15 续）
+- **投影器 5 处 SQL 加 `finance.` 前缀**（SELECT/INSERT/UPDATE，`svc/finance/src/domain/async_projector.rs`）：修 search_path 默认不含 finance 导致投影误写 public 副本的问题；重启验证投影无 ERROR、落位 `finance.cqrs_projection_progress`
+
+### Changed - qms 缓存预热修复（2026-10-15 续）
+- **预热 SQL 改引 `qms.qa_standards`**（`svc/qms/src/main.rs` 141/146 行）：原 `FROM quality_standards` 为 public/qms 下 2 列残表（无 created_at）且无 schema 前缀；修复后日志"质量标准列表缓存预热完成"；ai `idx_kc_embedding` 索引告警随 000078 落库消除
+
 ### Changed - scripts/topems.sh 命令族收敛与文档一致性修复（2026-10-15）
 - **clean-all 顶层命令**：= `clean --all`（Rust target + 前端产物 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama），可追加 `--dry-run` 预览 / `--deep` / `--system-cache`；`clean` 默认收敛为**增量**（只清 debug 增量缓存，保留产物与依赖），全量须用 `clean-all` 或 `clean --all` / `--rust`
 - **stop-all --with-db / run-stop**：`stop-all --with-db` 同时停 PostgreSQL/Redis；`run-stop` 为其别名（一键停全部+DB）
