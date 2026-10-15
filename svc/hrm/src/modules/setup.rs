@@ -11,6 +11,7 @@ use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use super::ApiState;
+use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -204,6 +205,7 @@ pub async fn get_init_progress(
 )]
 pub async fn setup_company_info(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -213,6 +215,11 @@ pub async fn setup_company_info(
     let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     // 验证必填字段
     if req.name.trim().is_empty() {
@@ -236,7 +243,7 @@ pub async fn setup_company_info(
             website = COALESCE($9, website),
             description = COALESCE($10, description),
             updated_at = $11
-        WHERE id = $1
+        WHERE id = $1 AND ($12::uuid IS NULL OR tenant_id = $12::uuid)
         RETURNING id, tenant_id, name, short_name, registration_number, tax_number, address,
                    contact_phone, email, website, description, status, created_at, updated_at
         "#
@@ -252,6 +259,7 @@ pub async fn setup_company_info(
     .bind(&req.website)
     .bind(&req.description)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -264,10 +272,12 @@ pub async fn setup_company_info(
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'company_info'
+                  AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
             .bind(now)
             .bind(org_id)
+            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -336,6 +346,7 @@ pub struct Company {
 )]
 pub async fn setup_departments(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -345,6 +356,11 @@ pub async fn setup_departments(
     let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     if req.departments.is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -412,10 +428,12 @@ pub async fn setup_departments(
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE organization_id = $2 AND step_name = 'departments'
+          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
     .bind(now)
     .bind(org_id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -471,6 +489,7 @@ pub struct Department {
 )]
 pub async fn setup_positions(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -480,6 +499,11 @@ pub async fn setup_positions(
     let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     if req.positions.is_empty() {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -539,10 +563,12 @@ pub async fn setup_positions(
         UPDATE hrm.initialization_status
         SET status = 'completed', completed_at = $1, updated_at = $1
         WHERE organization_id = $2 AND step_name = 'positions'
+          AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
     .bind(now)
     .bind(org_id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -597,6 +623,7 @@ pub struct Position {
 )]
 pub async fn setup_admin_user(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -606,6 +633,11 @@ pub async fn setup_admin_user(
     let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     // 验证必填字段
     if req.name.trim().is_empty() {
@@ -678,10 +710,12 @@ pub async fn setup_admin_user(
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'admin_user'
+                  AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
             .bind(now)
             .bind(org_id)
+            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -739,6 +773,7 @@ pub struct Employee {
 )]
 pub async fn complete_initialization(
     State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -748,6 +783,11 @@ pub async fn complete_initialization(
     let txn = guard.as_mut().expect("rls txn missing");
     let org_id = DEFAULT_ORG_ID;
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     if !req.confirm {
         return Json(ApiResponse::from(TopemsError::ValidationFailed(
@@ -789,10 +829,12 @@ pub async fn complete_initialization(
                 UPDATE hrm.initialization_status
                 SET status = 'completed', completed_at = $1, updated_at = $1
                 WHERE organization_id = $2 AND step_name = 'completion'
+                  AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
                 "#
             ))
             .bind(now)
             .bind(org_id)
+            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 

@@ -1997,3 +1997,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 复核：mobile check 0 error；SQL 事务内实测——mobile_tasks INSERT 后本租户 UPDATE 1 行 / 他租户越权 0 行，ROLLBACK 零残留；devices 表 1 行真实数据未触碰（同模式）
 - 编译期修复：device.rs/task.rs 补 axum::extract::Extension + topems_shared_auth::auth::Claims import（原缺失）
 
+## 方案C 批2-N：hrm.contract_renewals 5 处 + hrm.initialization_status 5 处（写路径租户约束）
+- 状态：代码已修改（hrm check 通过 0 error），待提交
+- contract.rs 5 处（update_renewal / delete_renewal / approve_renewal / reject_renewal / execute_renewal）：均补 Extension<Claims> + tenant_filter + UPDATE WHERE 加 `($N::uuid IS NULL OR tenant_id = $N::uuid)`（$8/$2/$3/$4 按既有 bind 数递增）；execute_renewal 额外处理 3 条 SQL——SELECT renewal（$2 租户）、UPDATE hrm.contracts（$6 = renewal.tenant_id，跨表同租户）、UPDATE contract_renewals（$3 = renewal.tenant_id）
+- setup.rs 5 处（setup_company_info / setup_departments / setup_positions / setup_admin_user / complete_initialization）：均补 Extension<Claims> + tenant_filter + UPDATE initialization_status WHERE 加租户条件（$3）；setup_company_info 额外补 hrm.companies UPDATE 租户（$12，同函数写路径顺手补齐）
+- 登记观察：hrm.initialization_status 现有 5 行 tenant_id 为 NULL（历史数据未回填租户，RLS 下行为待评估，不在本批范畴）
+- 复核：hrm check 0 error；SQL 事务内实测——contract_renewals INSERT 后本租户 UPDATE 1 / 他租户越权 0；initialization_status 他租户 UPDATE 0（无越权），ROLLBACK 零残留
+
