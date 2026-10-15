@@ -2054,3 +2054,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 已确认：adjust 内 inventory UPDATE（$5）批2-K 已租户化；inbound_order.rs / inventory.rs 相关 UPDATE 批2-K 已覆盖（逐处核对）
 - 复核：wms check 0 error；SQL 事务内实测（空表插测试行）——stock_takes 本租户 UPDATE 1 / 他租户越权 0，ROLLBACK 零残留
 
+## 方案C 批2-W：erp.erp_master_data_refs 剩余 5 处（写路径租户约束）
+- 状态：代码已修改（erp check 通过 0 error），待提交
+- master_data_conflict.rs 4 处（detect_conflicts 内 last_synced_at UPDATE + apply_resolved_value 3 分支 name/status/code）：4 函数均无 Claims（erp 无中间件注入），用 current_setting 内联租户条件（与 RLS 同源，同 reports/pm 先例）
+- master_data_version.rs 1 处（rollback_to_version 回滚 UPDATE）：无 Claims，同样内联
+- 复核：erp check 0 error；SQL 事务内实测真实行（master_data_id=emp-…，tenant 0001）——本租户 UPDATE 1 / 他租户越权 0，ROLLBACK 零残留（真实行未触碰）
+

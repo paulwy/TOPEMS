@@ -314,7 +314,7 @@ pub async fn detect_conflicts(
         let _ = sqlx::query(only_own_schema_query!(
             "erp",
             r#"UPDATE erp.erp_master_data_refs SET last_synced_at = $1, updated_at = $1
-               WHERE master_data_id = $2"#
+               WHERE master_data_id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#
         ))
         .bind(now)
         .bind(&req.master_data_id)
@@ -787,7 +787,7 @@ async fn apply_resolved_value(
         "name" => {
             if let Some(s) = value.as_str() {
                 sqlx::query(
-                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET name = $1, updated_at = $2 WHERE master_data_id = $3"#),
+                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET name = $1, updated_at = $2 WHERE master_data_id = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#),
                 )
                 .bind(s)
                 .bind(now)
@@ -799,7 +799,7 @@ async fn apply_resolved_value(
         "status" => {
             if let Some(s) = value.as_str() {
                 sqlx::query(
-                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET status = $1, updated_at = $2 WHERE master_data_id = $3"#),
+                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET status = $1, updated_at = $2 WHERE master_data_id = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#),
                 )
                 .bind(s)
                 .bind(now)
@@ -811,7 +811,7 @@ async fn apply_resolved_value(
         "code" => {
             if let Some(s) = value.as_str() {
                 sqlx::query(
-                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET code = $1, updated_at = $2 WHERE master_data_id = $3"#),
+                    only_own_schema_query!("erp", r#"UPDATE erp.erp_master_data_refs SET code = $1, updated_at = $2 WHERE master_data_id = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#),
                 )
                 .bind(s)
                 .bind(now)
