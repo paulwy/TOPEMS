@@ -707,7 +707,7 @@ export default function FormBuilder<T extends Record<string, unknown> = Record<s
               </Box>
             );
           })}
-          // 渲染未分组的字段
+          {/* 渲染未分组的字段 */}
           {(() => {
             const groupedFieldNames = new Set(formSections.flatMap((s) => s.fields));
             const ungroupedFields = fields.filter((f) => !groupedFieldNames.has(f.name));

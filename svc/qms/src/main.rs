@@ -143,7 +143,9 @@ async fn main() -> anyhow::Result<()> {
                     'page_size', 20
                 ) as data
                 FROM (
-                    SELECT qs.* FROM qms.qa_standards qs
+                    SELECT id::TEXT, tenant_id::TEXT, code, name, category, level,
+                        specification, description, version, status, created_by,
+                        created_at, updated_at FROM qms.qa_standards qs
                     WHERE qs.deleted_at IS NULL
                     ORDER BY qs.created_at DESC
                     LIMIT 20 OFFSET 0
