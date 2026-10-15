@@ -1287,7 +1287,7 @@ pub async fn delete_company_mapping(
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company'"
+        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(mid)
     .bind(conn_uuid)
@@ -1350,7 +1350,7 @@ pub async fn delete_entity_mapping(
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3"
+        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(mid)
     .bind(conn_uuid)
