@@ -1069,7 +1069,7 @@ pub async fn count_stock_take(
                     notes = $5,
                     counting_time = $6,
                     updated_at = $6
-                WHERE id = $7 AND deleted_at IS NULL
+                WHERE id = $7 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
                 "#
             ))
             .bind(item.counted_quantity)
@@ -1248,7 +1248,7 @@ pub async fn update_stock_take_item(
         UPDATE wms.stock_take_items SET
             counted_quantity = $1, discrepancy_quantity = $2, discrepancy_type = $3, 
             status = $4, notes = $5, updated_at = $6
-        WHERE stock_take_id = $7 AND id = $8 AND deleted_at IS NULL
+        WHERE stock_take_id = $7 AND id = $8 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, stock_take_id, material_code, material_name, specification, batch_number,
                   system_quantity, counted_quantity, discrepancy_quantity, discrepancy_type,
                   unit, unit_price, discrepancy_value, notes as remarks, created_at, updated_at
@@ -1339,7 +1339,7 @@ pub async fn delete_stock_take_item(
         Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(only_own_schema_query!("wms", r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL"#))
+    let result = sqlx::query(only_own_schema_query!("wms", r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#))
         .bind(id)
         .bind(item_id)
         .execute(&mut **txn)

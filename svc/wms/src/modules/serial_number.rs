@@ -524,7 +524,7 @@ pub async fn update_serial_number(
             unit_price = COALESCE($17, unit_price),
             remark = COALESCE($18, remark),
             updated_at = $19
-        WHERE id = $20
+        WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))0 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -611,7 +611,7 @@ pub async fn delete_serial_number(
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE wms.serial_numbers SET deleted_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(serial_id)
     .execute(&mut **txn)
@@ -750,7 +750,7 @@ pub async fn transfer_location(
         UPDATE wms.serial_numbers SET
             location_id = $1,
             updated_at = NOW()
-        WHERE id = $2
+        WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -819,7 +819,7 @@ pub async fn get_trace(
     let row = sqlx::query(only_own_schema_query!(
         "wms",
         r#"SELECT id, serial_no, batch_no, status, location_code, created_at, updated_at
-           FROM serial_numbers WHERE id = $1"#,
+           FROM serial_numbers WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
         "core"
     ))
     .bind(serial_id)
