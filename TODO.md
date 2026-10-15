@@ -1910,3 +1910,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 修复：`20261015000080_plan_c_batch2_rls_nil_policy.sql`——11 表（automation_rules/variables/runs + core_files/file_permissions + core_notifications/templates + core_emails/templates + finance voucher/voucher_lines）的 tenant_isolation_* policy 加 `NULLIF(current_setting(...)) = '00000000-...'` 分支
 - 实测：普通用户（0001）创建 automation 规则 → tenant_id=0001 落库（200）；superuser → nil；测试数据已清理
 - 语义：非 txn crate 隔离靠 handler 显式过滤（方案C），RLS 为兜底——policy 补 nil 分支使 pool 直连可用
+
+## 方案C 批2 — 子批 E：全库 RLS policy 统一补 nil 分支（259 policy）
+- 状态：已提交（待推送）
+- 盘点：全库 229 张表 / 263 个 policy 缺 nil 分支（PG18 未 SET current_setting 返回 nil 字符串，旧 policy 无 nil 分支 → pool 直连显式过滤读被 RLS 滤、绑租户写被拒）
+- 修复：`20261015000081_plan_c_batch2e_rls_nil_policy_all.sql`（生成式）——259 policy 追加统一 nil 分支（225 tenant_isolation_* + 31 rls_tenant_isolation + 3 ai.*_tenant_policy）；4 个 allow_all（USING=true）跳过
+- 实测：ai.qa_history（修复前缺 nil）topems_app 角色 INSERT 绑 0001 成功、显式过滤读返回；SET 上下文 0002 读 0001 行 count=0（隔离保留）、SET 0001 count=1；测试数据已清理
+- 遗留登记：15 张 rls_tenant_isolation 用旧 key app.current_tenant_id（ai/wms/scm/finance/hrm/mes/pdm/rs/crm/communication）——与 txn SET 的 app.tenant_id 不一致，txn 读路径隔离待统一（本批补 nil 不改此行为）
