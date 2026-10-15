@@ -18,14 +18,14 @@ CREATE TABLE IF NOT EXISTS qms.qa_quality_inspections (
             status VARCHAR(32) DEFAULT 'pending',
             inspector VARCHAR(64),
             assignee VARCHAR(64),
-            inspected_at TIMESTAMP,
+            inspected_at TIMESTAMPTZ,
             result VARCHAR(32),
             memo TEXT,
             tenant_id UUID,
             created_by VARCHAR(64),
-            created_at TIMESTAMP DEFAULT NOW(),
-            updated_at TIMESTAMP DEFAULT NOW(),
-                deleted_at TIMESTAMP
+            created_at TIMESTAMPTZ DEFAULT NOW(),
+            updated_at TIMESTAMPTZ DEFAULT NOW(),
+                deleted_at TIMESTAMPTZ
         );
 
 CREATE TABLE IF NOT EXISTS qms.qa_inspection_results (

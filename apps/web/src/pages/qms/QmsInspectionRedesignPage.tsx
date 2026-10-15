@@ -60,7 +60,10 @@ const mapApiInspections = (apiChecks: ApiQualityCheck[]): Inspection[] => {
   return apiChecks.map((c, index) => ({
     id: c.id,
     check_no:
-      (c as any).check_no || (c as any).checkNo || `QC2026${String(index + 1).padStart(5, '0')}`,
+      (c as any).inspection_no ||
+      (c as any).check_no ||
+      (c as any).checkNo ||
+      `QC2026${String(index + 1).padStart(5, '0')}`,
     title: (c as any).title || (c as any).name || '-',
     inspection_type: ((c as any).inspection_type as Inspection['inspection_type']) || 'incoming',
     status: ((c as any).status as Inspection['status']) || 'pending',
@@ -251,14 +254,14 @@ const QmsInspectionPage: React.FC = () => {
             : dataObj.list || dataObj.items || [];
           total = dataObj.total || apiChecks.length;
         }
-        if (apiChecks.length > 0) {
-          setIsMockData(false);
-          return { inspections: mapApiInspections(apiChecks), total };
-        }
+        // API 成功（含空结果）即使用真实数据：空结果显示空列表而非 mock 数据
+        setIsMockData(false);
+        return { inspections: mapApiInspections(apiChecks), total };
       } catch (e) {
         console.warn('[QMS Inspections] API unavailable, using mock data:', e);
         setIsMockData(true);
       }
+      // 仅当 API 调用失败（抛异常）时才到达此处：空结果不落入 mock fallback
       // Mock fallback：本地分页
       let filtered = mockInspections;
       if (debouncedSearch) {
