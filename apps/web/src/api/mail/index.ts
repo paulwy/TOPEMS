@@ -49,7 +49,7 @@ export interface SendEmailRequest {
   template_data?: Record<string, unknown>;
 }
 
-export interface SendEmailWithTemplateRequest {
+interface SendEmailWithTemplateRequest {
   template_code: string;
   to_addresses: string[];
   cc_addresses?: string[];

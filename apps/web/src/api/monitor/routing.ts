@@ -105,7 +105,7 @@ interface AdvancedConfigInput {
   is_active?: boolean;
 }
 
-export const routingApi = {
+const routingApi = {
   getRouting: async (ruleId: string): Promise<ApiResponse<RoutingConfig[]>> => {
     return apiClient.monitor.get(`/rules/${ruleId}/routing`);
   },

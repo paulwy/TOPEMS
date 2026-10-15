@@ -9,7 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useNotificationStore } from '@/store';
 
 export type ChatMode = 'qa' | 'summary' | 'code' | 'general';
-export type MessageType = 'text' | 'code' | 'summary' | 'qa' | 'general';
+type MessageType = 'text' | 'code' | 'summary' | 'qa' | 'general';
 
 export interface Message {
   id: string;

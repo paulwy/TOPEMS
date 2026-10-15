@@ -10,7 +10,7 @@ import type { PaginatedResponse } from '@topems/shared-types';
 // 类型定义
 // ============================================
 
-export interface CustomerFinanceInfo {
+interface CustomerFinanceInfo {
   customer_id: string;
   customer_name: string;
   credit_limit: number;

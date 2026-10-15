@@ -1,0 +1,13 @@
+{
+ "targets": {
+  "apps/web/src/_archive-microfrontend/RemoteLoader.tsx": [
+   "prefetchRemoteEntry"
+  ],
+  "apps/web/src/api/ai/generated/client.ts": [
+   "copilotApi",
+   "formsApi",
+   "documentsApi",
+   "aiBusinessApi"
+  ]
+ }
+}

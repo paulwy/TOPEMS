@@ -41,7 +41,7 @@ export interface HealthCheckPlan {
   updated_at: string;
 }
 
-export interface HealthCheckResultItem {
+interface HealthCheckResultItem {
   item_name: string;
   result: string;
   unit?: string;

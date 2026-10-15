@@ -303,7 +303,7 @@ interface CreateAxiosClientOptions {
   snakeCaseParams?: boolean;
 }
 
-export const createAxiosClient = ({
+const createAxiosClient = ({
   baseURL,
   timeout = config.api.timeout,
   withCsrf = true,

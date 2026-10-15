@@ -1,0 +1,12 @@
+{
+  "total_exports": 2,
+  "total_files": 2,
+  "targets": {
+    "apps/web/src/pages/mobile/components/ApprovalList.tsx": [
+      "ApprovalList"
+    ],
+    "apps/web/src/pages/pm/components/pmProjectDetail.constants.ts": [
+      "RISK_COLORS"
+    ]
+  }
+}

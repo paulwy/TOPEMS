@@ -148,7 +148,7 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
   return withStatus;
 };
 
-export interface AvatarGroupProps {
+interface AvatarGroupProps {
   avatars: Array<Omit<CustomAvatarProps, 'size'>>;
   max?: number;
   size?: AvatarSize;

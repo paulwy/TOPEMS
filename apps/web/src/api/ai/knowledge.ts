@@ -39,7 +39,7 @@ export interface KnowledgeDocument {
   updated_at: string;
 }
 
-export interface KnowledgeChunk {
+interface KnowledgeChunk {
   id: string;
   tenant_id: string;
   document_id: string;
@@ -51,7 +51,7 @@ export interface KnowledgeChunk {
   created_at: string;
 }
 
-export interface QaHistory {
+interface QaHistory {
   id: string;
   tenant_id: string;
   kb_id?: string | null;
@@ -80,7 +80,7 @@ export interface KnowledgeSource {
   page?: number;
 }
 
-export interface KnowledgeAskResult {
+interface KnowledgeAskResult {
   question: string;
   answer: string;
   sources: KnowledgeSource[];
@@ -90,14 +90,14 @@ export interface KnowledgeAskResult {
   follow_up_questions?: string[];
 }
 
-export interface KnowledgeSemanticSearchRequest {
+interface KnowledgeSemanticSearchRequest {
   query: string;
   kb_id?: string;
   top_k?: number;
   min_score?: number;
 }
 
-export interface KnowledgeSemanticSearchItem {
+interface KnowledgeSemanticSearchItem {
   chunk_id: string;
   document_id: string;
   kb_id: string;
@@ -106,29 +106,29 @@ export interface KnowledgeSemanticSearchItem {
   metadata?: Record<string, unknown>;
 }
 
-export interface KnowledgeBasePayload {
+interface KnowledgeBasePayload {
   name: string;
   description?: string;
   kb_type?: string;
 }
 
-export interface KnowledgeDocumentUpdatePayload {
+interface KnowledgeDocumentUpdatePayload {
   title?: string;
   status?: string;
 }
 
-export interface KnowledgeQaFeedbackPayload {
+interface KnowledgeQaFeedbackPayload {
   rating?: 'up' | 'down';
   comment?: string;
 }
 
-export interface KnowledgeBaseQuery {
+interface KnowledgeBaseQuery {
   page?: number;
   page_size?: number;
   keyword?: string;
 }
 
-export interface KnowledgeDocumentQuery {
+interface KnowledgeDocumentQuery {
   kb_id?: string;
   status?: string;
   page?: number;

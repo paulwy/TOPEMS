@@ -298,7 +298,7 @@ export function getEnabledModules(userPermissions: string[]): RemoteModuleConfig
 /**
  * 按预加载策略分组
  */
-export function getModulesByPreloadStrategy(
+function getModulesByPreloadStrategy(
   strategy: RemoteModuleConfig['preload']
 ): RemoteModuleConfig[] {
   return REMOTE_MODULES.filter((m) => m.preload === strategy);

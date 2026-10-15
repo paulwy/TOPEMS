@@ -204,7 +204,7 @@ export interface RouteDeferredLoaderConfig<T = unknown> {
 }
 
 /** 路由数据加载器（联合类型） */
-export type RouteDataLoader<T = unknown> = RouteLoaderConfig<T> | RouteDeferredLoaderConfig<T>;
+type RouteDataLoader<T = unknown> = RouteLoaderConfig<T> | RouteDeferredLoaderConfig<T>;
 
 /** 判断是否为延迟加载器 */
 function isDeferredLoader<T>(loader: RouteDataLoader<T>): loader is RouteDeferredLoaderConfig<T> {
@@ -214,10 +214,10 @@ function isDeferredLoader<T>(loader: RouteDataLoader<T>): loader is RouteDeferre
 // ==================== useRouteDataLoader ====================
 
 /** 加载器结果条目 */
-export type RouteDataEntry<T = unknown> = T | DeferredData<T>;
+type RouteDataEntry<T = unknown> = T | DeferredData<T>;
 
 /** 加载器状态 */
-export interface RouteLoaderState {
+interface RouteLoaderState {
   /** 整体加载状态 */
   status: 'idle' | 'loading' | 'success' | 'partial' | 'error';
   /** 各 loader 的错误（key → Error） */
@@ -227,7 +227,7 @@ export interface RouteLoaderState {
 }
 
 /** useRouteDataLoader 返回值 */
-export interface UseRouteDataLoaderResult<T extends Record<string, RouteDataLoader>> {
+interface UseRouteDataLoaderResult<T extends Record<string, RouteDataLoader>> {
   /** 加载结果（key → 数据或 DeferredData） */
   data: {
     [K in keyof T]: T[K] extends RouteDeferredLoaderConfig<infer U>
@@ -271,7 +271,7 @@ export interface UseRouteDataLoaderResult<T extends Record<string, RouteDataLoad
  * return <Stats data={data.stats} />;
  * ```
  */
-export function useRouteDataLoader<T extends Record<string, RouteDataLoader>>(
+function useRouteDataLoader<T extends Record<string, RouteDataLoader>>(
   loaders: T,
   params: RouteParams = {}
 ): UseRouteDataLoaderResult<T> {
@@ -405,7 +405,7 @@ export function useRouteDataLoader<T extends Record<string, RouteDataLoader>>(
 // ==================== RouteDataBoundary 便捷组件 ====================
 
 /** RouteDataBoundary Props */
-export interface RouteDataBoundaryProps {
+interface RouteDataBoundaryProps {
   children: React.ReactNode;
   /** 错误边界组件 */
   errorComponent?: ComponentType<{ error: Error; retry: () => void }>;
@@ -422,7 +422,7 @@ export interface RouteDataBoundaryProps {
  * 当 DeferredData.read() 抛出 Promise 时展示 pendingComponent，
  * 抛出错误时展示 errorComponent。
  */
-export function RouteDataBoundary({
+function RouteDataBoundary({
   children,
   errorComponent: ErrorComp,
   pendingComponent: PendingComp,

@@ -20,7 +20,7 @@ export interface ControlFormData {
   deadline: string;
 }
 
-export interface HazardFormData {
+interface HazardFormData {
   name: string;
   description: string;
   category: string;

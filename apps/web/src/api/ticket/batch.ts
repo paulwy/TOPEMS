@@ -30,7 +30,7 @@ interface TicketTag {
   created_at: string;
 }
 
-export interface BatchUpdateRequest {
+interface BatchUpdateRequest {
   ids: string[];
   status?: string;
   severity?: string;

@@ -3,7 +3,7 @@ export interface ApiConfig {
   timeout: number;
 }
 
-export interface WebSocketConfig {
+interface WebSocketConfig {
   reconnectInterval: number;
   maxReconnectAttempts: number;
 }

@@ -46,7 +46,7 @@ export interface UpdateVehicleRequest {
   remark?: string;
 }
 
-export interface VehicleRequest {
+interface VehicleRequest {
   id: string;
   vehicle_id: string;
   vehicle_plate?: string;

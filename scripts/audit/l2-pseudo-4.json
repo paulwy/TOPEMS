@@ -1,0 +1,1 @@
+{"targets":{"apps/web/src/_archive-microfrontend/MicroAppRouter.tsx":["MicroAppRouter"],"apps/web/src/hooks/bff/usePartialPreRender.tsx":["usePartialPreRender"],"apps/web/src/hooks/bff/useRouteDataLoader.ts":["useRouteDataLoader"],"apps/web/src/hooks/foundation/useWebVitals.ts":["useWebVitals"]}}

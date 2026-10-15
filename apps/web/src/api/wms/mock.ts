@@ -113,7 +113,7 @@ export interface FulfillmentDatum {
 // ============================================================================
 // WMS Mock 数据形状
 // ============================================================================
-export interface WmsMockShape {
+interface WmsMockShape {
   inboundList: InboundOrderDto[];
   outboundList: OutboundOrderDto[];
   stockTakeList: StockTakeDto[];

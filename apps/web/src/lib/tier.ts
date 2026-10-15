@@ -13,21 +13,21 @@
 import i18n from '@/i18n';
 
 /** 订阅层级 */
-export enum PlanTier {
+enum PlanTier {
   FREE = 'free',
   BASIC = 'basic',
   ADVANCED = 'advanced',
 }
 
 /** 层级排序值（用于比较） */
-export const TIER_LEVEL: Record<PlanTier, number> = {
+const TIER_LEVEL: Record<PlanTier, number> = {
   [PlanTier.FREE]: 0,
   [PlanTier.BASIC]: 1,
   [PlanTier.ADVANCED]: 2,
 };
 
 /** 模块功能定义 */
-export interface ModuleFeature {
+interface ModuleFeature {
   /** 模块标识（如 "mes", "wms"） */
   module: string;
   /** 模块名称 */
@@ -46,7 +46,7 @@ export interface ModuleFeature {
  * 与后端 TierFeatureMatrix::all_modules() 保持一致。
  * 修改时请同步更新后端。
  */
-export const TIER_FEATURE_MATRIX: ModuleFeature[] = [
+const TIER_FEATURE_MATRIX: ModuleFeature[] = [
   // === Free 层（基础功能）===
   {
     module: 'iam',
@@ -340,7 +340,7 @@ const MODULE_MAP: Map<string, ModuleFeature> = new Map(
 /**
  * 从字符串解析层级
  */
-export function parsePlanTier(s: string | null | undefined): PlanTier {
+function parsePlanTier(s: string | null | undefined): PlanTier {
   if (!s) return PlanTier.BASIC;
   switch (s.toLowerCase()) {
     case 'free':
@@ -357,28 +357,28 @@ export function parsePlanTier(s: string | null | undefined): PlanTier {
 /**
  * 当前层级是否包含目标层级（当前层级 >= 目标层级）
  */
-export function tierIncludes(current: PlanTier, target: PlanTier): boolean {
+function tierIncludes(current: PlanTier, target: PlanTier): boolean {
   return TIER_LEVEL[current] >= TIER_LEVEL[target];
 }
 
 /**
  * 获取指定层级可用的模块
  */
-export function getModulesForTier(tier: PlanTier): ModuleFeature[] {
+function getModulesForTier(tier: PlanTier): ModuleFeature[] {
   return TIER_FEATURE_MATRIX.filter((m) => tierIncludes(tier, m.minTier));
 }
 
 /**
  * 获取指定层级不可用的模块
  */
-export function getModulesNotForTier(tier: PlanTier): ModuleFeature[] {
+function getModulesNotForTier(tier: PlanTier): ModuleFeature[] {
   return TIER_FEATURE_MATRIX.filter((m) => !tierIncludes(tier, m.minTier));
 }
 
 /**
  * 检查模块是否对指定层级可用
  */
-export function isModuleAvailable(module: string, tier: PlanTier): boolean {
+function isModuleAvailable(module: string, tier: PlanTier): boolean {
   const feature = MODULE_MAP.get(module);
   if (!feature) {
     // 未在矩阵中的模块默认可用（避免误伤）
@@ -392,7 +392,7 @@ export function isModuleAvailable(module: string, tier: PlanTier): boolean {
  *
  * 路径格式：/{module}/...
  */
-export function isPathAvailable(path: string, tier: PlanTier): boolean {
+function isPathAvailable(path: string, tier: PlanTier): boolean {
   // 提取路径中的模块名（第一段）
   const match = path.match(/^\/([^/]+)/);
   if (!match) return true;
@@ -424,7 +424,7 @@ export function filterModulesByTier<T extends { module?: string; path?: string }
 /**
  * 获取层级统计
  */
-export function getTierStats(): Record<PlanTier, number> {
+function getTierStats(): Record<PlanTier, number> {
   const stats: Record<PlanTier, number> = {
     [PlanTier.FREE]: 0,
     [PlanTier.BASIC]: 0,
@@ -439,6 +439,6 @@ export function getTierStats(): Record<PlanTier, number> {
 /**
  * 获取模块的最低层级要求
  */
-export function getModuleMinTier(module: string): PlanTier | null {
+function getModuleMinTier(module: string): PlanTier | null {
   return MODULE_MAP.get(module)?.minTier ?? null;
 }

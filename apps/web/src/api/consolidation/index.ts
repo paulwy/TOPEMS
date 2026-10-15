@@ -94,7 +94,7 @@ export const addCompanyToScope = async (
 /**
  * 更新合并范围内公司
  */
-export const updateScopeCompany = async (
+const updateScopeCompany = async (
   companyId: string,
   data: Partial<ConsolidationCompany>
 ): Promise<ApiResponse<ConsolidationCompany>> => {
@@ -115,7 +115,7 @@ export const removeCompanyFromScope = async (companyId: string): Promise<ApiResp
 /**
  * 获取抵消规则列表
  */
-export const getEliminationRules = async (
+const getEliminationRules = async (
   params: EliminationRuleQueryParams
 ): Promise<PaginatedResponse<EliminationRule>> => {
   return apiClient.erp.get('/consolidation/elimination-rules', {
@@ -126,14 +126,14 @@ export const getEliminationRules = async (
 /**
  * 获取抵消规则详情
  */
-export const getEliminationRule = async (ruleId: string): Promise<ApiResponse<EliminationRule>> => {
+const getEliminationRule = async (ruleId: string): Promise<ApiResponse<EliminationRule>> => {
   return apiClient.erp.get(`/consolidation/elimination-rules/${ruleId}`);
 };
 
 /**
  * 创建抵消规则
  */
-export const createEliminationRule = async (
+const createEliminationRule = async (
   data: Partial<EliminationRule>
 ): Promise<ApiResponse<EliminationRule>> => {
   return apiClient.erp.post('/consolidation/elimination-rules', data);
@@ -142,7 +142,7 @@ export const createEliminationRule = async (
 /**
  * 更新抵消规则
  */
-export const updateEliminationRule = async (
+const updateEliminationRule = async (
   ruleId: string,
   data: Partial<EliminationRule>
 ): Promise<ApiResponse<EliminationRule>> => {
@@ -152,14 +152,14 @@ export const updateEliminationRule = async (
 /**
  * 删除抵消规则
  */
-export const deleteEliminationRule = async (ruleId: string): Promise<ApiResponse<void>> => {
+const deleteEliminationRule = async (ruleId: string): Promise<ApiResponse<void>> => {
   return apiClient.erp.delete(`/consolidation/elimination-rules/${ruleId}`);
 };
 
 /**
  * 获取内部交易列表
  */
-export const getInternalTransactions = async (
+const getInternalTransactions = async (
   params?: InternalTransactionQueryParams
 ): Promise<PaginatedResponse<InternalTransaction>> => {
   return apiClient.erp.get('/consolidation/internal-transactions', {
@@ -170,7 +170,7 @@ export const getInternalTransactions = async (
 /**
  * 获取内部交易详情
  */
-export const getInternalTransaction = async (
+const getInternalTransaction = async (
   transactionId: string
 ): Promise<ApiResponse<InternalTransaction>> => {
   return apiClient.erp.get(`/consolidation/internal-transactions/${transactionId}`);
@@ -179,7 +179,7 @@ export const getInternalTransaction = async (
 /**
  * 执行内部交易抵消
  */
-export const executeElimination = async (params: {
+const executeElimination = async (params: {
   scope_id: string;
   period: string;
   rule_ids?: string[];
@@ -208,7 +208,7 @@ export const getConsolidationReports = async (
 /**
  * 获取合并报表详情
  */
-export const getConsolidationReport = async (
+const getConsolidationReport = async (
   reportId: string
 ): Promise<ApiResponse<ConsolidationReport>> => {
   return apiClient.erp.get(`/consolidation/reports/${reportId}`);
@@ -253,7 +253,7 @@ export const publishConsolidationReport = async (
 /**
  * 删除合并报表
  */
-export const deleteConsolidationReport = async (reportId: string): Promise<ApiResponse<void>> => {
+const deleteConsolidationReport = async (reportId: string): Promise<ApiResponse<void>> => {
   return apiClient.erp.delete(`/consolidation/reports/${reportId}`);
 };
 
@@ -303,7 +303,7 @@ export const deleteCompanyRelation = async (relationId: string): Promise<ApiResp
 /**
  * 获取公司财务数据（用于合并）
  */
-export const getCompanyFinancialData = async (
+const getCompanyFinancialData = async (
   companyId: string,
   period: string
 ): Promise<ApiResponse<CompanyFinancialData>> => {

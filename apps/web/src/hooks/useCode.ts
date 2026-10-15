@@ -259,7 +259,7 @@ export function usePreviewCode() {
  * 前端编码生成工具（同步版本，用于预览和本地缓存）
  * 注意：正式编码应使用服务端API
  */
-export class CodeGenerator {
+class CodeGenerator {
   private prefix: string;
   private includeDate: boolean;
   private dateFormat: 'YYYY' | 'YYYYMM' | 'YYYYMMDD';
@@ -374,7 +374,7 @@ export class CodeGenerator {
 /**
  * 预定义的编码规则
  */
-export const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
+const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
   company: {
     prefix: 'C',
     include_date: true,
@@ -484,7 +484,7 @@ export const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
 /**
  * 获取实体的编码规则
  */
-export function getCodeRuleForEntity(entityType: EntityType): Partial<CodeRule> {
+function getCodeRuleForEntity(entityType: EntityType): Partial<CodeRule> {
   return CODE_RULES[entityType] || { prefix: '', sequence_length: 6 };
 }
 

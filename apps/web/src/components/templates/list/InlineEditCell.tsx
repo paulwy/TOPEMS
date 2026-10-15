@@ -2,7 +2,7 @@ import React from 'react';
 import { FormControl, Select, MenuItem, TextField, Checkbox, Input } from '@mui/material';
 import type { ColumnDef } from './types';
 
-export interface InlineEditCellProps<T> {
+interface InlineEditCellProps<T> {
   column: ColumnDef<T>;
   value: unknown;
   onChange: (value: unknown) => void;

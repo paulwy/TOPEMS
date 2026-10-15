@@ -12,7 +12,7 @@ export interface SSEEvent {
   retry?: number;
 }
 
-export interface SSEClientOptions {
+interface SSEClientOptions {
   url: string;
   method?: 'GET' | 'POST';
   headers?: Record<string, string>;
@@ -23,10 +23,10 @@ export interface SSEClientOptions {
   maxReconnectAttempts?: number;
 }
 
-export type SSEEventHandler = (event: SSEEvent) => void;
-export type SSEErrorHandler = (error: Error) => void;
-export type SSEOpenHandler = () => void;
-export type SSECloseHandler = () => void;
+type SSEEventHandler = (event: SSEEvent) => void;
+type SSEErrorHandler = (error: Error) => void;
+type SSEOpenHandler = () => void;
+type SSECloseHandler = () => void;
 
 export class SSEClient {
   private options: SSEClientOptions;

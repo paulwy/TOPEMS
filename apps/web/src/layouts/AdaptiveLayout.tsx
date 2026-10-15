@@ -24,7 +24,7 @@ import { useAuthStore, type User } from '@/store';
 /**
  * 判断用户是否应该启用 UI V3
  */
-export function shouldUseUIV3(_user: User | null): boolean {
+function shouldUseUIV3(_user: User | null): boolean {
   // 临时修复：强制启用 UI V3
   return true;
 }

@@ -166,7 +166,7 @@ runtimeAxios.interceptors.request.use((config) => {
   return config;
 });
 
-export const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo | null> => {
+const fetchPluginInfo = async (code: string): Promise<PluginRuntimeInfo | null> => {
   const config = getPluginRegistry()[code];
   if (!config) return null;
 
@@ -195,7 +195,7 @@ export const fetchAllPluginInfo = async (): Promise<PluginRuntimeInfo[]> => {
     .map((r) => r.value);
 };
 
-export const checkPluginHealth = async (
+const checkPluginHealth = async (
   code: string
 ): Promise<{ healthy: boolean; status?: string; latency?: number }> => {
   const config = getPluginRegistry()[code];

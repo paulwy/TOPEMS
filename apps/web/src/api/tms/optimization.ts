@@ -6,7 +6,7 @@ import type { ApiResponse } from '../client';
 // /assignments/plan（订单-司机分配）、/routes/optimize（最近邻 TSP 路线）、/freight/quote（运费报价）
 
 // ---- 订单分配 ----
-export interface DriverCandidate {
+interface DriverCandidate {
   id: string;
   name: string;
   /** 最大可承载订单数 */
@@ -16,32 +16,32 @@ export interface DriverCandidate {
   available: boolean;
 }
 
-export interface OrderCandidate {
+interface OrderCandidate {
   id: string;
   /** 越小越优先 */
   priority: number;
   weight_kg: number;
 }
 
-export interface DriverAssignment {
+interface DriverAssignment {
   driver_id: string;
   driver_name: string;
   order_ids: string[];
 }
 
-export interface AssignmentResult {
+interface AssignmentResult {
   assignments: DriverAssignment[];
   unassigned: string[];
   assigned_count: number;
 }
 
 // ---- 路线优化 ----
-export interface RouteOptimizeRequest {
+interface RouteOptimizeRequest {
   /** 对称距离矩阵 distances[i][j] = 站点 i → 站点 j 的距离；站点 0 为出发点 */
   distances: number[][];
 }
 
-export interface RouteOptimizeResponse {
+interface RouteOptimizeResponse {
   /** 访问顺序（站点索引），从 0 出发 */
   visit_order: number[];
   /** 途经站点数 */
@@ -49,7 +49,7 @@ export interface RouteOptimizeResponse {
 }
 
 // ---- 运费报价 ----
-export interface FreightQuoteRequest {
+interface FreightQuoteRequest {
   distance_km: number;
   weight_kg: number;
   rate_per_km: number;
@@ -57,7 +57,7 @@ export interface FreightQuoteRequest {
   min_charge: number;
 }
 
-export interface FreightQuote {
+interface FreightQuote {
   distance_charge: number;
   weight_charge: number;
   subtotal: number;

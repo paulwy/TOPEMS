@@ -1,0 +1,47 @@
+{
+ "targets": {
+  "governanceApi": [
+   "apps/web/src/api/ai/generated/client.ts",
+   "apps/web/src/api/master/governance.ts",
+   "apps/web/src/api/master/index.ts"
+  ],
+  "automationDashboardApi": [
+   "apps/web/src/api/automation/dashboard.ts",
+   "apps/web/src/api/automation/index.ts"
+  ],
+  "subscribeServiceHealth": [
+   "apps/web/src/api/bff/index.ts",
+   "apps/web/src/api/index.ts"
+  ],
+  "masterDataApi": [
+   "apps/web/src/api/bff/index.ts",
+   "apps/web/src/api/index.ts"
+  ],
+  "accidentApi": [
+   "apps/web/src/api/ehs/accident.ts",
+   "apps/web/src/api/ehs/index.ts"
+  ],
+  "complianceApi": [
+   "apps/web/src/api/ehs/compliance.ts",
+   "apps/web/src/api/ehs/index.ts"
+  ],
+  "emergencyApi": [
+   "apps/web/src/api/ehs/emergency.ts",
+   "apps/web/src/api/ehs/index.ts"
+  ],
+  "environmentApi": [
+   "apps/web/src/api/ehs/environment.ts",
+   "apps/web/src/api/ehs/index.ts"
+  ],
+  "incidentApi": [
+   "apps/web/src/api/ehs/incident.ts",
+   "apps/web/src/api/ehs/index.ts"
+  ],
+  "connectionApi": [
+   "apps/web/src/api/external-erp/connection.ts",
+   "apps/web/src/api/external-erp/index.ts",
+   "apps/web/src/api/integration/connection.ts",
+   "apps/web/src/api/integration/index.ts"
+  ]
+ }
+}

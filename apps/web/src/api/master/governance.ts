@@ -48,7 +48,7 @@ interface GovernanceWorkflow {
   updated_at?: string;
 }
 
-export interface DataProduct {
+interface DataProduct {
   id: string;
   name: string;
   description?: string;

@@ -47,7 +47,7 @@ export interface InspectionRecordDetail {
   items: RecordItem[];
 }
 
-export interface RecordItem {
+interface RecordItem {
   id: string;
   record_id: string;
   item_id: string | null;
@@ -86,7 +86,7 @@ export interface CreateInspectionRecordRequest {
   items: CreateRecordItemRequest[];
 }
 
-export interface CreateRecordItemRequest {
+interface CreateRecordItemRequest {
   item_id?: string | null;
   item_title: string;
   item_category: string;

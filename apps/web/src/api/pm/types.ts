@@ -128,7 +128,7 @@ export interface ProjectResource {
   updated_at: string;
 }
 
-export interface ProjectExpense {
+interface ProjectExpense {
   id: string;
   project_id: string;
   phase_id?: string;
@@ -178,7 +178,7 @@ export interface ProjectBenefit {
   updated_at: string;
 }
 
-export interface ProjectApproval {
+interface ProjectApproval {
   id: string;
   project_id: string;
   status: string;
@@ -247,7 +247,7 @@ export interface ProjectGanttResponse {
   resources: GanttResource[];
 }
 
-export interface BenefitAnalysis {
+interface BenefitAnalysis {
   summary: {
     total_planned_cost: number;
     total_actual_cost: number;
@@ -340,7 +340,7 @@ export interface ContractPaymentSchedule {
   updated_at: string;
 }
 
-export interface ContractTemplate {
+interface ContractTemplate {
   id: string;
   name: string;
   contract_type: string;
@@ -384,7 +384,7 @@ export interface BudgetItem {
   updated_at: string;
 }
 
-export interface ProjectRisk {
+interface ProjectRisk {
   id: string;
   project_id: string;
   risk_code?: string;
@@ -409,7 +409,7 @@ export interface ProjectRisk {
   updated_at: string;
 }
 
-export interface RiskEvent {
+interface RiskEvent {
   id: string;
   risk_id: string;
   event_type: string;
@@ -441,7 +441,7 @@ export interface QualityCheck {
   updated_at: string;
 }
 
-export interface Defect {
+interface Defect {
   id: string;
   project_id: string;
   check_id?: string;
@@ -460,7 +460,7 @@ export interface Defect {
   updated_at: string;
 }
 
-export interface AcceptancePlan {
+interface AcceptancePlan {
   id: string;
   project_id: string;
   plan_code?: string;
@@ -478,7 +478,7 @@ export interface AcceptancePlan {
   updated_at: string;
 }
 
-export interface AcceptanceItem {
+interface AcceptanceItem {
   id: string;
   plan_id: string;
   item_code?: string;
@@ -492,7 +492,7 @@ export interface AcceptanceItem {
   updated_at: string;
 }
 
-export interface AcceptanceRecord {
+interface AcceptanceRecord {
   id: string;
   project_id: string;
   plan_id: string;
@@ -530,7 +530,7 @@ export interface Settlement {
   updated_at: string;
 }
 
-export interface SettlementItem {
+interface SettlementItem {
   id: string;
   settlement_id: string;
   item_code?: string;
@@ -547,7 +547,7 @@ export interface SettlementItem {
   updated_at: string;
 }
 
-export interface SettlementAdjustment {
+interface SettlementAdjustment {
   id: string;
   settlement_id: string;
   adjustment_type: string;
@@ -560,7 +560,7 @@ export interface SettlementAdjustment {
   created_at: string;
 }
 
-export interface ProjectDocument {
+interface ProjectDocument {
   id: string;
   project_id: string;
   document_code?: string;

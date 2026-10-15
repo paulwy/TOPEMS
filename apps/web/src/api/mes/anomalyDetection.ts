@@ -63,7 +63,7 @@ interface AnomalyQueryParams {
   status?: string;
 }
 
-export interface UpdateRuleRequest {
+interface UpdateRuleRequest {
   warning_threshold?: number;
   critical_threshold?: number;
   enabled?: boolean;

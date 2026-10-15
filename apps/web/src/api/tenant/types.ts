@@ -4,7 +4,7 @@ export type TenantPlan = 'basic' | 'professional' | 'enterprise';
 
 export type TenantRole = 'superadmin' | 'admin' | 'member' | 'guest' | 'owner';
 
-export type UserStatus = 'active' | 'invited' | 'suspended';
+type UserStatus = 'active' | 'invited' | 'suspended';
 
 interface TenantBrandingSettings {
   primary_color: string;

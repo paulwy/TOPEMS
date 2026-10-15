@@ -10,7 +10,7 @@ import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import type { CrudOperations } from '@/hooks';
 import i18n from '@/i18n';
 
-export interface CrudApiAdapterWithGet<T = Record<string, unknown>> extends CrudApiAdapter<T> {
+interface CrudApiAdapterWithGet<T = Record<string, unknown>> extends CrudApiAdapter<T> {
   get?: (id: string) => Promise<T>;
 }
 

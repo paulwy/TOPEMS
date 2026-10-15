@@ -4,7 +4,7 @@ import { Shield } from 'lucide-react';
 import type { EntitySchema } from '@/schema';
 import i18n from '@/i18n';
 
-export const roleSchema: EntitySchema = {
+const roleSchema: EntitySchema = {
   entity: 'role',
   title: i18n.t('shared.role.k0'),
   description: i18n.t('shared.role.k1'),

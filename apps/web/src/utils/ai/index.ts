@@ -12,7 +12,7 @@
 
 // ============ UI 组件推荐 ============
 
-export { UIRecommender, uiRecommender, default as uiRecommenderDefault } from './uiRecommender';
+export { UIRecommender, uiRecommender } from './uiRecommender';
 
 export type {
   ComponentRecommendation,

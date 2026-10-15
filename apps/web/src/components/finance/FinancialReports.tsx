@@ -111,7 +111,7 @@ interface BalanceSheetViewerProps {
   loading?: boolean;
 }
 
-export function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
+function BalanceSheetViewer({ data, loading }: BalanceSheetViewerProps) {
   if (loading) {
     return (
       <Box
@@ -450,7 +450,7 @@ interface IncomeStatementViewerProps {
   onExport?: () => void;
 }
 
-export function IncomeStatementViewer({ data, loading }: IncomeStatementViewerProps) {
+function IncomeStatementViewer({ data, loading }: IncomeStatementViewerProps) {
   if (loading) {
     return (
       <Box
@@ -843,7 +843,7 @@ interface CashFlowStatementViewerProps {
   onExport?: () => void;
 }
 
-export function CashFlowStatementViewer({ data, loading }: CashFlowStatementViewerProps) {
+function CashFlowStatementViewer({ data, loading }: CashFlowStatementViewerProps) {
   if (loading) {
     return (
       <Box

@@ -107,7 +107,7 @@ interface SharedWith {
   permission: 'read' | 'write' | 'manage';
 }
 
-export interface ExportRequest {
+interface ExportRequest {
   ids?: string[];
   format?: string;
 }
@@ -211,11 +211,17 @@ export const fileApi = {
 
   // ==================== 批 A 绑定（4.2：后端已注册、前端补 apiClient） ====================
 
-  async copy(id: string, request: { target_folder_id?: string; new_name?: string }): Promise<ApiResponse<FileMetadata>> {
+  async copy(
+    id: string,
+    request: { target_folder_id?: string; new_name?: string }
+  ): Promise<ApiResponse<FileMetadata>> {
     return apiClient.file.post<FileMetadata>(`/files/${id}/copy`, request);
   },
 
-  async move(id: string, request: { target_folder_id: string }): Promise<ApiResponse<FileMetadata>> {
+  async move(
+    id: string,
+    request: { target_folder_id: string }
+  ): Promise<ApiResponse<FileMetadata>> {
     return apiClient.file.post<FileMetadata>(`/files/${id}/move`, request);
   },
 

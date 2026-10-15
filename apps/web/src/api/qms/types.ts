@@ -1385,7 +1385,7 @@ export interface ActionItem {
 // ============================================================================
 // 现有 AuditPlan / AuditTask / AuditFinding 为 snake_case 单套（Backend），
 // 以下追加 camelCase Frontend 版本，与 SPC/QualityCost/EightD/FMEA 双套模式一致。
-export interface AuditPlanFrontend {
+interface AuditPlanFrontend {
   id: string;
   planNo: string;
   title: string;
@@ -1404,7 +1404,7 @@ export interface AuditPlanFrontend {
   updatedAt: string;
 }
 
-export interface CreateAuditPlanRequest {
+interface CreateAuditPlanRequest {
   planNo: string;
   title: string;
   description?: string;
@@ -1419,7 +1419,7 @@ export interface CreateAuditPlanRequest {
   createdBy?: string;
 }
 
-export interface CreateAuditPlanRequestBackend {
+interface CreateAuditPlanRequestBackend {
   plan_no: string;
   title: string;
   description?: string;
@@ -1434,7 +1434,7 @@ export interface CreateAuditPlanRequestBackend {
   created_by?: string;
 }
 
-export interface AuditTaskFrontend {
+interface AuditTaskFrontend {
   id: string;
   planId: string;
   taskNo: string;
@@ -1451,7 +1451,7 @@ export interface AuditTaskFrontend {
   updatedAt: string;
 }
 
-export interface AuditFindingFrontend {
+interface AuditFindingFrontend {
   id: string;
   taskId: string;
   findingNo: string;
@@ -1473,7 +1473,7 @@ export interface AuditFindingFrontend {
 // ============================================================================
 // 现有 ApqpProject / ApqpPhase / ApqpTask / ApqpRisk / ApqpApproval 为 snake_case
 // 单套（Backend），以下追加 camelCase Frontend 版本。
-export interface ApqpProjectFrontend {
+interface ApqpProjectFrontend {
   id: string;
   projectNo: string;
   projectName: string;
@@ -1495,7 +1495,7 @@ export interface ApqpProjectFrontend {
   updatedAt: string;
 }
 
-export interface CreateApqpProjectFrontendRequest {
+interface CreateApqpProjectFrontendRequest {
   projectNo: string;
   projectName: string;
   productId?: string;
@@ -1509,7 +1509,7 @@ export interface CreateApqpProjectFrontendRequest {
   createdBy?: string;
 }
 
-export interface CreateApqpProjectBackendRequest {
+interface CreateApqpProjectBackendRequest {
   project_no: string;
   project_name: string;
   product_id?: string;
@@ -1523,7 +1523,7 @@ export interface CreateApqpProjectBackendRequest {
   created_by?: string;
 }
 
-export interface ApqpPhaseFrontend {
+interface ApqpPhaseFrontend {
   id: string;
   projectId: string;
   phaseCode: string;
@@ -1540,7 +1540,7 @@ export interface ApqpPhaseFrontend {
   updatedAt: string;
 }
 
-export interface ApqpTaskFrontend {
+interface ApqpTaskFrontend {
   id: string;
   projectId: string;
   phaseId: string;
@@ -1557,7 +1557,7 @@ export interface ApqpTaskFrontend {
   updatedAt: string;
 }
 
-export interface ApqpRiskFrontend {
+interface ApqpRiskFrontend {
   id: string;
   projectId: string;
   riskName: string;
@@ -1575,7 +1575,7 @@ export interface ApqpRiskFrontend {
   updatedAt: string;
 }
 
-export interface ApqpApprovalFrontend {
+interface ApqpApprovalFrontend {
   id: string;
   projectId: string;
   approvalType: string;

@@ -180,7 +180,7 @@ export interface CreateProductRequest {
   unit?: string;
 }
 
-export interface UpdateProductRequest {
+interface UpdateProductRequest {
   name?: string;
   code?: string;
   version?: string;

@@ -13,7 +13,7 @@ import type * as Types from './types';
 // 业务 Copilot API
 // ============================================================================
 
-export const copilotApi = {
+const copilotApi = {
   /** 创建会话 */
   createSession: (data: Types.CreateSessionRequest): Promise<ApiResponse<Types.CopilotSession>> =>
     apiClient.post('/copilot/sessions', data),
@@ -56,7 +56,7 @@ export const copilotApi = {
 // 智能表单 API
 // ============================================================================
 
-export const formsApi = {
+const formsApi = {
   /** 获取所有表单定义 */
   getAllForms: (category?: string): Promise<ApiResponse<Types.FormDefinition[]>> =>
     apiClient.get('/forms', { params: category ? { category } : undefined }),
@@ -104,7 +104,7 @@ export const formsApi = {
 // 文档智能 API
 // ============================================================================
 
-export const documentsApi = {
+const documentsApi = {
   /** 获取文档列表 */
   listDocuments: (params?: {
     page?: number;
@@ -284,7 +284,7 @@ export const governanceApi = {
 // 统一导出
 // ============================================================================
 
-export const aiBusinessApi = {
+const aiBusinessApi = {
   ...copilotApi,
   ...formsApi,
   ...documentsApi,

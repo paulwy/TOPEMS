@@ -7,7 +7,7 @@ export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export type RiskCategory =
   'credit' | 'market' | 'liquidity' | 'operational' | 'compliance' | 'fraud';
 export type Regulation = 'sox' | 'gdpr' | 'pci_dss' | 'hipaa' | 'internal';
-export type ReviewSeverity = 'low' | 'medium' | 'high' | 'critical';
+type ReviewSeverity = 'low' | 'medium' | 'high' | 'critical';
 export interface RiskIndicator {
   id: string;
   category: string;
@@ -29,7 +29,7 @@ export interface RiskAlert {
   resolved: boolean;
 }
 
-export interface RiskDashboard {
+interface RiskDashboard {
   total_indicators: number;
   critical_count: number;
   high_count: number;
@@ -40,7 +40,7 @@ export interface RiskDashboard {
   by_category: Record<string, number>;
 }
 
-export interface FraudRule {
+interface FraudRule {
   id: string;
   name: string;
   rule_type: string;

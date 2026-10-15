@@ -39,8 +39,8 @@ import type { ApiResponse } from '../client';
 // ============ Types ============
 
 export type AssetType = 'table' | 'view' | 'function' | 'api' | 'file' | 'report' | 'dashboard';
-export type AssetStatus = 'active' | 'deprecated' | 'archived' | 'development';
-export type AssetSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
+type AssetStatus = 'active' | 'deprecated' | 'archived' | 'development';
+type AssetSensitivity = 'public' | 'internal' | 'confidential' | 'restricted';
 type LineageDirection = 'upstream' | 'downstream' | 'both';
 type LineageDepth = 1 | 2 | 3;
 

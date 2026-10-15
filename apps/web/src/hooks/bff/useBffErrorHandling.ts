@@ -302,7 +302,7 @@ export function useBffRetry(
 // ==================== useBffFallback ====================
 
 /** useBffFallback 返回值 */
-export interface UseBffFallbackResult<T> {
+interface UseBffFallbackResult<T> {
   /** 降级后的数据（主函数或降级函数返回） */
   data: T | null;
   /** 是否正在执行 */
@@ -331,7 +331,7 @@ export interface UseBffFallbackResult<T> {
  * );
  * ```
  */
-export function useBffFallback<T>(
+function useBffFallback<T>(
   primaryFn: () => Promise<T>,
   fallbackFn: (context: FallbackContext) => Promise<T> | T,
   deps: unknown[] = []
@@ -423,7 +423,7 @@ export function useBffFallback<T>(
 // ==================== useErrorReport ====================
 
 /** useErrorReport 返回值 */
-export interface UseErrorReportResult {
+interface UseErrorReportResult {
   /** 最近的错误上报记录 */
   reports: ErrorReportRecord[];
   /** 主动上报错误 */
@@ -448,7 +448,7 @@ export interface UseErrorReportResult {
  * }, [queryError]);
  * ```
  */
-export function useErrorReport(): UseErrorReportResult {
+function useErrorReport(): UseErrorReportResult {
   const [reports, setReports] = useState<ErrorReportRecord[]>([]);
 
   // 订阅错误上报事件

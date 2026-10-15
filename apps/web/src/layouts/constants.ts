@@ -7,7 +7,7 @@ interface L1BusinessDomain {
   icon: string;
 }
 
-export const L1_BUSINESS_DOMAINS: L1BusinessDomain[] = [
+const L1_BUSINESS_DOMAINS: L1BusinessDomain[] = [
   {
     key: 'workbench',
     title: '',
@@ -26,7 +26,7 @@ export const L1_BUSINESS_DOMAINS: L1BusinessDomain[] = [
   { key: 'profile', title: '', titleKey: 'shared.constants.k9', order: 10, icon: 'User' },
 ];
 
-export const L2_TO_L1_MAP: Record<string, string> = {
+const L2_TO_L1_MAP: Record<string, string> = {
   iam: 'core',
   workflow: 'core',
   notification: 'core',
@@ -62,7 +62,7 @@ export const L2_TO_L1_MAP: Record<string, string> = {
   mobile: 'workbench',
 };
 
-export const L2_MODULE_ORDER: Record<string, number> = {
+const L2_MODULE_ORDER: Record<string, number> = {
   iam: 1,
   workflow: 2,
   notification: 3,

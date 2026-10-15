@@ -169,7 +169,7 @@ export interface VoucherItemRequest {
   contract_id?: string;
 }
 
-export interface CreateFinancialVoucherRequest {
+interface CreateFinancialVoucherRequest {
   voucher_number: string;
   voucher_date: string;
   period: string;
@@ -182,7 +182,7 @@ export interface CreateFinancialVoucherRequest {
   items: VoucherItemRequest[];
 }
 
-export interface VoucherImportResult {
+interface VoucherImportResult {
   success_count: number;
   failed_count: number;
   errors: string[];
@@ -382,7 +382,7 @@ export interface BankAccount {
   updated_at: string;
 }
 
-export interface BankTransaction {
+interface BankTransaction {
   id: string;
   account_id: string;
   transaction_date: string;
@@ -396,7 +396,7 @@ export interface BankTransaction {
   created_at: string;
 }
 
-export interface CreateBankTransactionRequest {
+interface CreateBankTransactionRequest {
   account_id: string;
   transaction_date: string;
   transaction_type: string;

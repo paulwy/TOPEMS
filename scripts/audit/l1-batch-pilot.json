@@ -1,0 +1,71 @@
+{
+  "total_exports": 25,
+  "total_files": 20,
+  "targets": {
+    "apps/web/src/api/ai/businessCopilot.ts": [
+      "streamMessage"
+    ],
+    "apps/web/src/api/client.ts": [
+      "createAxiosClient"
+    ],
+    "apps/web/src/api/monitor/metrics.ts": [
+      "metricsApi"
+    ],
+    "apps/web/src/api/monitor/routing.ts": [
+      "routingApi"
+    ],
+    "apps/web/src/api/monitor/slo.ts": [
+      "sloApi"
+    ],
+    "apps/web/src/api/monitor/suppression.ts": [
+      "suppressionApi"
+    ],
+    "apps/web/src/api/pdm/pdmMaterial.ts": [
+      "pdmMaterialApi"
+    ],
+    "apps/web/src/api/pdm/pdmProduct.ts": [
+      "pdmProductApi"
+    ],
+    "apps/web/src/api/plugin/registry.ts": [
+      "fetchPluginInfo",
+      "checkPluginHealth"
+    ],
+    "apps/web/src/components/ai/ChatHistory.tsx": [
+      "ChatHistory"
+    ],
+    "apps/web/src/components/ai/DshAgentChatPanel.tsx": [
+      "DshAgentChatPanel"
+    ],
+    "apps/web/src/components/charts/_vendors/recharts-polar.ts": [
+      "LabelList",
+      "Customized"
+    ],
+    "apps/web/src/components/common/Avatar.tsx": [
+      "AvatarGroup"
+    ],
+    "apps/web/src/components/common/SkeletonScreen.tsx": [
+      "SkeletonScreen"
+    ],
+    "apps/web/src/components/common/StatCard.tsx": [
+      "StatCardBase"
+    ],
+    "apps/web/src/components/common/StatusChip.tsx": [
+      "DEFAULT_STATUS_MAPPING"
+    ],
+    "apps/web/src/components/designer/types.ts": [
+      "FORM_COMPONENTS",
+      "LAYOUT_COMPONENTS"
+    ],
+    "apps/web/src/components/finance/FinancialReports.tsx": [
+      "BalanceSheetViewer",
+      "IncomeStatementViewer",
+      "CashFlowStatementViewer"
+    ],
+    "apps/web/src/components/im/ChatInterface.tsx": [
+      "ChatInterface"
+    ],
+    "apps/web/src/components/templates/list/ExportMenu.tsx": [
+      "ExportMenu"
+    ]
+  }
+}

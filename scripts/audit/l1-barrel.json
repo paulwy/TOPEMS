@@ -1,0 +1,95 @@
+{
+  "total_exports": 59,
+  "total_files": 15,
+  "targets": {
+    "apps/web/src/api/consolidation/index.ts": [
+      "updateScopeCompany",
+      "getEliminationRules",
+      "getEliminationRule",
+      "createEliminationRule",
+      "updateEliminationRule",
+      "deleteEliminationRule",
+      "getInternalTransactions",
+      "getInternalTransaction",
+      "executeElimination",
+      "getConsolidationReport",
+      "deleteConsolidationReport",
+      "getCompanyFinancialData"
+    ],
+    "apps/web/src/api/report/index.ts": [
+      "fetchReport",
+      "runSchedule",
+      "toggleSchedule"
+    ],
+    "apps/web/src/components/aps/index.ts": [
+      "StatusBadgeDefault"
+    ],
+    "apps/web/src/components/charts/index.ts": [
+      "LazyChartComponent"
+    ],
+    "apps/web/src/components/icons/index.ts": [
+      "Accessibility",
+      "BookA",
+      "BookHeadphones",
+      "BookHeart",
+      "BookKey",
+      "BookLock",
+      "BookMarked",
+      "BookOpenCheck",
+      "BookOpenText",
+      "BookX",
+      "CircleAlert",
+      "CircleCheck",
+      "CircleHelp",
+      "CircleMinus",
+      "CirclePlus",
+      "FileAudio",
+      "FileVideo",
+      "FolderCheck",
+      "FolderCode",
+      "FolderCog",
+      "FolderHeart",
+      "FolderKey",
+      "FolderLock",
+      "FolderMinus",
+      "FolderX",
+      "Minimize",
+      "Terminal",
+      "TestTube2",
+      "Touchpad",
+      "UserCog",
+      "X"
+    ],
+    "apps/web/src/components/index.ts": [
+      "BISkeleton"
+    ],
+    "apps/web/src/pages/shared/ProfilePage/components/ProfileTabBar.tsx": [
+      "TabBar"
+    ],
+    "apps/web/src/schemas/iam/role.ts": [
+      "roleSchema"
+    ],
+    "apps/web/src/schemas/iam/user.ts": [
+      "userSchema"
+    ],
+    "apps/web/src/schemas/workflow/approval.ts": [
+      "workflowApprovalSchema"
+    ],
+    "apps/web/src/shims/use-sync-external-store-shim.ts": [
+      "useSyncExternalStore"
+    ],
+    "apps/web/src/utils/ai/index.ts": [
+      "uiRecommenderDefault"
+    ],
+    "apps/web/src/utils/bff/abTesting.ts": [
+      "twoProportionZTest"
+    ],
+    "apps/web/src/utils/graphqlPerformance.ts": [
+      "calculatePercentile"
+    ],
+    "apps/web/src/utils/telemetry.ts": [
+      "traceSync",
+      "measurePerformance"
+    ]
+  }
+}

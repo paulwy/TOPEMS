@@ -2,7 +2,7 @@ import type { ModuleCode, PermissionAction } from '@topems/app-shell';
 import { MODULES, PERMISSIONS, getModulePermissions } from '@topems/app-shell';
 import i18n from '@/i18n';
 
-export { MODULES, PERMISSIONS, getModulePermissions };
+export { PERMISSIONS, getModulePermissions };
 export type { ModuleCode, PermissionAction };
 
 interface ModulePermission {
@@ -21,7 +21,7 @@ interface PermissionGroup {
   modules: ModuleCode[];
 }
 
-export const ACTIONS: { action: PermissionAction; name: string; level: number }[] = [
+const ACTIONS: { action: PermissionAction; name: string; level: number }[] = [
   { action: 'read', name: i18n.t('shared.permissions.k0'), level: 1 },
   { action: 'write', name: i18n.t('shared.permissions.k1'), level: 2 },
   { action: 'delete', name: i18n.t('shared.permissions.k2'), level: 3 },
@@ -840,8 +840,9 @@ const PERMISSION_DEFS: Record<string, string> = {
   'workflow:statistics:read': 'workflow:statistics:read',
   'workflow:template:read': 'workflow:template:read',
 
-  // plugin (1 code · R4/R6 marker)
+  // plugin (2 codes · R4/R6 marker)
   'plugin:dashboard:read': 'plugin:dashboard:read',
+  'plugin:marketplace:read': 'plugin:marketplace:read',
 
   // registry (1 code · R4/R6 stub)
   'registry:dashboard:read': 'registry:dashboard:read',

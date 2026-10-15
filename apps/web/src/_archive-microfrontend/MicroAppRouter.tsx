@@ -17,7 +17,7 @@ import i18n from '@/i18n';
  * - /hrm/*   → topems_hrm (lazy)
  * - ...
  */
-export const MicroAppRouter: React.FC<{ userPermissions: string[] }> = ({ userPermissions }) => {
+const MicroAppRouter: React.FC<{ userPermissions: string[] }> = ({ userPermissions }) => {
   const enabledModules = getEnabledModules(userPermissions);
 
   return (

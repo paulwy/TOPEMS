@@ -84,7 +84,7 @@ interface PersonnelConstraint {
   status: 'passed' | 'warning' | 'failed';
 }
 
-export interface ConstraintCheckResult {
+interface ConstraintCheckResult {
   order_id: string;
   orderNo: string;
   overall_passed: boolean;
@@ -131,7 +131,7 @@ interface ImprovementSuggestion {
   priority: number;
 }
 
-export interface OptimizationReport {
+interface OptimizationReport {
   generated_at: string;
   total_orders: number;
   scheduled_orders: number;
@@ -142,7 +142,7 @@ export interface OptimizationReport {
   improvement_suggestions: ImprovementSuggestion[];
 }
 
-export interface BottleneckAnalysis {
+interface BottleneckAnalysis {
   analysis_date: string;
   time_period: string;
   bottleneck_resources: BottleneckResource[];

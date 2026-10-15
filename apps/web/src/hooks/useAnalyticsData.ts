@@ -73,7 +73,7 @@ export function useAnalyticsData<TData>({
 /**
  * 分析页面通用状态
  */
-export interface AnalyticsPageState {
+interface AnalyticsPageState {
   startDate: string;
   endDate: string;
   groupBy: 'month' | 'week' | 'day';

@@ -28,7 +28,7 @@ export interface CreateDocumentRequest {
   uploader?: string;
 }
 
-export interface UpdateDocumentRequest {
+interface UpdateDocumentRequest {
   title?: string;
   doc_type?: string;
   status?: string;

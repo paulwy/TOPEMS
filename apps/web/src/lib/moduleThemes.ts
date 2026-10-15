@@ -38,7 +38,7 @@ import { designTokens } from '@/theme/tokens';
 
 const ct = designTokens.colors;
 
-export interface ModuleTheme {
+interface ModuleTheme {
   code: string;
   name: string;
   icon: React.ComponentType;

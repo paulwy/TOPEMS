@@ -86,13 +86,13 @@ export type GovernanceLevel = 'excellent' | 'good' | 'fair' | 'needs_improvement
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 /** 性能等级 */
-export type PerformanceLevel = 'excellent' | 'good' | 'fair' | 'poor';
+type PerformanceLevel = 'excellent' | 'good' | 'fair' | 'poor';
 
 /** 建议优先级 */
 export type RecommendationPriority = 'critical' | 'high' | 'medium' | 'low';
 
 /** 合规框架状态 */
-export type ComplianceFrameworkStatus =
+type ComplianceFrameworkStatus =
   'compliant' | 'partially_compliant' | 'non_compliant' | 'under_assessment';
 
 /** ErrorResponse */
@@ -355,7 +355,7 @@ export interface DocumentGenerationRequest {
 }
 
 /** KeyMetrics */
-export interface KeyMetrics {
+interface KeyMetrics {
   total_requests: number;
   successful_requests: number;
   failed_requests: number;
@@ -370,7 +370,7 @@ export interface KeyMetrics {
 }
 
 /** RiskDimension */
-export interface RiskDimension {
+interface RiskDimension {
   level: RiskLevel;
   score: number;
   description: string;
@@ -401,7 +401,7 @@ export interface RiskAssessment {
 }
 
 /** ComplianceFramework */
-export interface ComplianceFramework {
+interface ComplianceFramework {
   name: string;
   description: string;
   compliance_rate: number;
@@ -409,7 +409,7 @@ export interface ComplianceFramework {
 }
 
 /** NonCompliantItem */
-export interface NonCompliantItem {
+interface NonCompliantItem {
   item_id: string;
   framework: string;
   control: string;
@@ -442,7 +442,7 @@ export interface BudgetUsage {
 }
 
 /** CostResource */
-export interface CostResource {
+interface CostResource {
   resource_id: string;
   name: string;
   resource_type: string;

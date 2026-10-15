@@ -65,6 +65,13 @@ const __UNIT_TEST_TRANSLATIONS__: Record<string, string> = {
   'shared.location_message.k3': '同步失败',
   'shared.location_message.k4': '围栏已创建',
   'shared.location_message.gis_5': '围栏创建并同步到 GIS',
+  // ── schema.crud_page_adapter (schema/crudPageAdapter + listPageCrudAdapter 依赖) ───
+  // 与 locales/zh/schema.json 保持一致（2026-10-15 组件测试暴露缺失）
+  'schema.crud_page_adapter.k0': '加载列表失败',
+  'schema.crud_page_adapter.k1': '创建失败',
+  'schema.crud_page_adapter.k2': '更新失败',
+  'schema.crud_page_adapter.k3': '删除失败',
+  'schema.crud_page_adapter.k4': '记录不存在',
   'shared.location_message.k5': '同步失败:',
   'shared.location_message.k6': '更新围栏失败',
   'shared.location_message.k7': '未知错误',

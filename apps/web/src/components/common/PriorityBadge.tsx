@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { AlertOctagon, AlertTriangle, ArrowDown, ArrowUp, Minus, Flame } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
-export type PriorityLevel =
+type PriorityLevel =
   | 'urgent'
   | 'critical'
   | 'p1'

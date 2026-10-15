@@ -19,9 +19,9 @@ export interface ApprovalResponse<T = unknown> {
 
 // ==================== 状态类型 ====================
 
-export type VehicleStatus = 'active' | 'maintenance' | 'inactive' | 'retired';
-export type DriverStatus = 'active' | 'on_leave' | 'suspended' | 'inactive';
-export type CarrierStatus = 'pending_review' | 'active' | 'suspended' | 'blacklisted' | 'rejected';
+type VehicleStatus = 'active' | 'maintenance' | 'inactive' | 'retired';
+type DriverStatus = 'active' | 'on_leave' | 'suspended' | 'inactive';
+type CarrierStatus = 'pending_review' | 'active' | 'suspended' | 'blacklisted' | 'rejected';
 export type RouteStatus = 'planning' | 'active' | 'closed' | 'deprecated' | 'cancelled';
 export type ShipmentStatus = 'draft' | 'pending' | 'in_transit' | 'delivered' | 'cancelled';
 

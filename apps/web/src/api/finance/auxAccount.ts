@@ -2,7 +2,7 @@ import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 import type { AuxAccount } from './types';
 
-export interface AuxAccountQuery {
+interface AuxAccountQuery {
   aux_type?: string;
   page?: number;
   page_size?: number;
@@ -11,7 +11,7 @@ export interface AuxAccountQuery {
   [key: string]: unknown;
 }
 
-export interface PaginatedAuxAccounts {
+interface PaginatedAuxAccounts {
   items?: AuxAccount[];
   data?: AuxAccount[];
   total?: number;

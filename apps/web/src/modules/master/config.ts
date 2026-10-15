@@ -22,7 +22,7 @@ interface DataAssetCatalogPageProps {
 }
 
 // ---- 路径常量 ----
-export const MASTER_PATHS = {
+const MASTER_PATHS = {
   root: '/master',
   dataAssetCatalog: '/master/data-asset-catalog',
 } as const;

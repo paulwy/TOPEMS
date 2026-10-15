@@ -2,7 +2,7 @@ import { apiClient } from '@/lib/apiClient';
 
 // ==================== 类型定义 ====================
 
-export interface CapacityUtilizationItem {
+interface CapacityUtilizationItem {
   equipment: string;
   date: string;
   shift: string;
@@ -15,13 +15,13 @@ export interface CapacityUtilizationResponse {
   total_equipment: number;
 }
 
-export interface EnergyMixItem {
+interface EnergyMixItem {
   energy_type: string;
   percentage: number;
   cost: number;
 }
 
-export interface EnergyTrendItem {
+interface EnergyTrendItem {
   date: string;
   kwh_per_unit: number;
 }
@@ -31,52 +31,52 @@ export interface WorkshopCostItem {
   cost: number;
 }
 
-export interface EnergyCostResponse {
+interface EnergyCostResponse {
   per_unit_trend: EnergyTrendItem[];
   energy_mix: EnergyMixItem[];
   workshop_top_n: WorkshopCostItem[];
   total_cost: number;
 }
 
-export interface EquipmentMtbfItem {
+interface EquipmentMtbfItem {
   equipment_type: string;
   mtbf_hours: number;
   mttr_hours: number;
 }
 
-export interface FaultReasonItem {
+interface FaultReasonItem {
   reason: string;
   frequency: number;
 }
 
-export interface MtbfScatterItem {
+interface MtbfScatterItem {
   mtbf: number;
   oee: number;
   label: string;
 }
 
-export interface EquipmentMtbfResponse {
+interface EquipmentMtbfResponse {
   by_equipment_type: EquipmentMtbfItem[];
   fault_reasons: FaultReasonItem[];
   scatter: MtbfScatterItem[];
   avg_mtbf: number;
 }
 
-export interface DeliveryTrendItem {
+interface DeliveryTrendItem {
   date: string;
   planned: number;
   delivered: number;
   on_time_rate: number;
 }
 
-export interface DeliveryAnalyticsResponse {
+interface DeliveryAnalyticsResponse {
   trend: DeliveryTrendItem[];
   on_time_rate: number;
   total_orders: number;
   delayed_orders: number;
 }
 
-export interface OeeDashboardItem {
+interface OeeDashboardItem {
   equipment_name: string;
   oee: number;
   availability: number;
@@ -101,14 +101,14 @@ export interface OeeDashboardResponse {
   trend: OeeTrendItem[];
 }
 
-export interface QualityParetoItem {
+interface QualityParetoItem {
   defect_type: string;
   count: number;
   percentage: number;
   cumulative_percentage: number;
 }
 
-export interface QualityParetoResponse {
+interface QualityParetoResponse {
   pareto: QualityParetoItem[];
   total_defects: number;
   pass_rate: number;

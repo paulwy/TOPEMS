@@ -202,7 +202,7 @@ export interface FieldMapping {
   transform?: string;
 }
 
-export interface TriggerCondition {
+interface TriggerCondition {
   [key: string]: unknown;
 }
 
@@ -264,7 +264,7 @@ export interface UpdateConversionRuleRequest {
 
 export type MappingType =
   'account' | 'customer' | 'supplier' | 'project' | 'department' | 'employee';
-export type MappingDirection = 'to_external' | 'from_external' | 'bidirectional';
+type MappingDirection = 'to_external' | 'from_external' | 'bidirectional';
 
 export interface ErpMapping {
   id: string;

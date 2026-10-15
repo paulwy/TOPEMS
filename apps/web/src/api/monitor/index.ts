@@ -35,7 +35,7 @@ export interface ServiceHealth {
   uptime_percentage?: number;
 }
 
-export interface ApiPerformance {
+interface ApiPerformance {
   endpoint: string;
   method: string;
   avg_response_time: number;

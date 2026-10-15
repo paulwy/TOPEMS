@@ -59,7 +59,7 @@ import { crmAuditApi } from './crmAudit';
 import { salesFunnelApi } from './salesFunnel';
 
 export * from './types';
-export { useCrmMock, default as useCrmMockDefault } from './mockData';
+export { useCrmMock } from './mockData';
 export type {
   Period,
   CrmKpis,

@@ -128,7 +128,7 @@ export interface UsePartialPreRenderResult {
  * );
  * ```
  */
-export function usePartialPreRender(route: string): UsePartialPreRenderResult {
+function usePartialPreRender(route: string): UsePartialPreRenderResult {
   const [ready, setReady] = useState(false);
   const [staticData, setStaticData] = useState<Record<string, unknown>>({});
 
@@ -176,7 +176,7 @@ export function usePartialPreRender(route: string): UsePartialPreRenderResult {
  * @param route 路由路径
  * @returns 是否预取成功
  */
-export function prefetchRouteShell(route: string): boolean {
+function prefetchRouteShell(route: string): boolean {
   if (prefetchedShells.get(route)) {
     return true;
   }
@@ -213,14 +213,14 @@ export function prefetchRouteShell(route: string): boolean {
 /**
  * 清除预取缓存（测试 / 路由卸载时使用）
  */
-export function clearPrefetchedShells(): void {
+function clearPrefetchedShells(): void {
   prefetchedShells.clear();
 }
 
 // ==================== StaticShell ====================
 
 /** StaticShell Props */
-export interface StaticShellProps {
+interface StaticShellProps {
   children: ReactNode;
   /** 路由路径（用于追踪） */
   route?: string;
@@ -242,7 +242,7 @@ export interface StaticShellProps {
  * </StaticShell>
  * ```
  */
-export const StaticShell: React.FC<StaticShellProps> = ({ children, route, immediate = true }) => {
+const StaticShell: React.FC<StaticShellProps> = ({ children, route, immediate = true }) => {
   const mountedAt = useRef(Date.now());
 
   useEffect(() => {
@@ -263,7 +263,7 @@ export const StaticShell: React.FC<StaticShellProps> = ({ children, route, immed
 // ==================== StreamingSlot ====================
 
 /** StreamingSlot Props */
-export interface StreamingSlotProps {
+interface StreamingSlotProps {
   children: ReactNode;
   /** slot 名称（对应路由配置的 dynamicSlots） */
   name: string;
@@ -326,7 +326,7 @@ const DefaultSlotFallback: React.FC<{ minHeight: number }> = ({ minHeight }) => 
  * </StreamingSlot>
  * ```
  */
-export const StreamingSlot: React.FC<StreamingSlotProps> = ({
+const StreamingSlot: React.FC<StreamingSlotProps> = ({
   children,
   name,
   fallback,
@@ -414,7 +414,7 @@ const SlotReadyWrapper: React.FC<{ children: ReactNode; onReady: () => void }> =
 // ==================== PPR 统计 ====================
 
 /** PPR slot 状态记录 */
-export interface PPRSlotRecord {
+interface PPRSlotRecord {
   name: string;
   route?: string;
   priority: number;
@@ -440,7 +440,7 @@ function notifyPPRListeners(): void {
 /**
  * 记录 PPR slot 状态（供 PerformancePanel 统计）
  */
-export function recordPPRSlot(record: PPRSlotRecord): void {
+function recordPPRSlot(record: PPRSlotRecord): void {
   pprSlotRecords.unshift(record);
   if (pprSlotRecords.length > MAX_PPR_RECORDS) {
     pprSlotRecords.pop();
@@ -451,7 +451,7 @@ export function recordPPRSlot(record: PPRSlotRecord): void {
 /**
  * 获取 PPR slot 统计
  */
-export function getPPRStats(): {
+function getPPRStats(): {
   records: PPRSlotRecord[];
   totalSlots: number;
   loadedSlots: number;
@@ -475,7 +475,7 @@ export function getPPRStats(): {
  * 订阅 PPR 统计变化
  * @returns 取消订阅函数
  */
-export function onPPRStatsChange(callback: () => void): () => void {
+function onPPRStatsChange(callback: () => void): () => void {
   pprSlotListeners.add(callback);
   return () => {
     pprSlotListeners.delete(callback);

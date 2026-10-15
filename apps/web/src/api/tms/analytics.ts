@@ -8,18 +8,18 @@ import type { ApiResponse } from '../client';
 
 // ===== 类型定义 =====
 
-export interface ShipmentTrendItem {
+interface ShipmentTrendItem {
   date: string;
   count: number;
 }
 
-export interface VehicleRankingItem {
+interface VehicleRankingItem {
   vehicle_id: string;
   vehicle_no: string;
   shipment_count: number;
 }
 
-export interface StatusDistributionItem {
+interface StatusDistributionItem {
   status: string;
   count: number;
   percentage: number;

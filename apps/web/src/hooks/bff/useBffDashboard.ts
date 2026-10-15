@@ -84,7 +84,7 @@ export interface UseBffDashboardResult {
 }
 
 /** 仪表盘查询 key */
-export const BFF_DASHBOARD_QUERY_KEY = ['bff', 'dashboard', 'federated'] as const;
+const BFF_DASHBOARD_QUERY_KEY = ['bff', 'dashboard', 'federated'] as const;
 
 /**
  * 仪表盘专用 BFF 聚合 hook

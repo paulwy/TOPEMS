@@ -34,7 +34,7 @@ export interface CacheConfig {
   max_entries?: number;
 }
 
-export interface CacheStats {
+interface CacheStats {
   total_keys: number;
   hit_rate: number;
   memory_used_bytes: number;

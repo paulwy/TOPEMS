@@ -21,7 +21,7 @@ import i18n from '@/i18n';
 
 type TabType = 'all' | 'direct' | 'group' | 'notifications' | 'contacts';
 
-export const ChatInterface: React.FC = () => {
+const ChatInterface: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const addNotification = useNotificationStore((state) => state.addNotification);

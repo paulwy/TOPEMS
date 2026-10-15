@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface RdSettingsResponse {
+interface RdSettingsResponse {
   category: string;
   settings: Record<string, string>;
 }

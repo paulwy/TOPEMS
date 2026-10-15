@@ -220,4 +220,4 @@ const ProfileTabBar: React.FC<ProfileTabBarProps> = ({
 };
 
 export default ProfileTabBar;
-export { ProfileTabBar, UserCard, TabBar };
+export { ProfileTabBar, UserCard };

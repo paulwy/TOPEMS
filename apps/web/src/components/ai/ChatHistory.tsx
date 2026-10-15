@@ -104,7 +104,7 @@ const formatTime = (date: Date) => {
   return date.toLocaleDateString();
 };
 
-export const ChatHistory: React.FC<ChatHistoryProps> = ({
+const ChatHistory: React.FC<ChatHistoryProps> = ({
   sessions,
   selectedSessionId,
   onSelectSession,

@@ -17,7 +17,7 @@ interface SettlementReconciliation {
   updated_at?: string;
 }
 
-export interface Settlement {
+interface Settlement {
   id?: string;
   settlement_code?: string;
   settlement_name?: string;

@@ -154,7 +154,7 @@ export class HeartbeatMonitor {
 /**
  * 重连策略配置
  */
-export interface ReconnectStrategyConfig {
+interface ReconnectStrategyConfig {
   /** 最小延迟（毫秒） */
   minDelay: number;
   /** 最大延迟（毫秒） */

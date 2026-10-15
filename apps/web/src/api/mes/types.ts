@@ -1056,7 +1056,7 @@ export interface ApprovalStartRequest {
   expected_approval_version?: number;
 }
 
-export interface ApprovalDecisionRequest {
+interface ApprovalDecisionRequest {
   approval_id: string;
   comment: string;
   expected_approval_version: number;
@@ -1075,7 +1075,7 @@ export interface ApprovalResponse {
 }
 
 // ==================== BI 聚合类型 ====================
-export interface OeeDashboardData {
+interface OeeDashboardData {
   overall_oee: number;
   availability_avg: number;
   performance_avg: number;
@@ -1084,32 +1084,32 @@ export interface OeeDashboardData {
   trend_24h: { timestamp: string; oee: number }[];
 }
 
-export interface DeliveryAnalyticsData {
+interface DeliveryAnalyticsData {
   on_time_rate: number;
   sla_achievement: number;
   top10_delayed: { order_no: string; delay_days: number; reason: string }[];
   distribution: { order_no: string; planned: string; actual: string; diff_days: number }[];
 }
 
-export interface QualityParetoData {
+interface QualityParetoData {
   defect_types: { type: string; count: number; cumulative_pct: number }[];
   heatmap: { process: string; defect_type: string; count: number }[];
   disposition: { category: string; count: number }[];
 }
 
-export interface MtbfData {
+interface MtbfData {
   by_equipment_type: { type: string; mtbf_hours: number; mttr_hours: number }[];
   fault_reasons: { reason: string; frequency: number }[];
   scatter: { mtbf: number; oee: number; label: string }[];
 }
 
-export interface EnergyCostData {
+interface EnergyCostData {
   per_unit_trend: { date: string; kwh_per_unit: number }[];
   energy_mix: { type: string; percentage: number; cost: number }[];
   workshop_top_n: { workshop: string; cost: number }[];
 }
 
-export interface CapacityUtilizationData {
+interface CapacityUtilizationData {
   heatmap: { equipment: string; date: string; shift: string; utilization: number }[];
   waterfall: { stage: string; value: number }[];
   bottleneck_top10: { equipment: string; utilization: number }[];

@@ -107,7 +107,7 @@ export interface Risk {
   updated_at: string;
 }
 
-export interface RiskLevelMatrix {
+interface RiskLevelMatrix {
   likelihood: 'high' | 'medium' | 'low';
   severity: 'high' | 'medium' | 'low';
   risklevel: 'high' | 'medium' | 'low' | 'extreme';
@@ -299,7 +299,7 @@ export interface CreateTreatmentRequest {
   responsible?: string | null;
 }
 
-export interface CreateTreatmentActionRequest {
+interface CreateTreatmentActionRequest {
   description: string;
   responsible?: string | null;
   deadline?: string | null;

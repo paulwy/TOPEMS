@@ -20,7 +20,7 @@ interface AnnouncementListResponse {
   total: number;
 }
 
-export interface CreateAnnouncementRequest {
+interface CreateAnnouncementRequest {
   title: string;
   content: string;
   priority?: 'low' | 'normal' | 'high' | 'urgent';
@@ -28,7 +28,7 @@ export interface CreateAnnouncementRequest {
   expire_at?: string;
 }
 
-export interface UpdateAnnouncementRequest {
+interface UpdateAnnouncementRequest {
   title?: string;
   content?: string;
   priority?: 'low' | 'normal' | 'high' | 'urgent';

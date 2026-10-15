@@ -53,7 +53,7 @@ interface DataLineageRef {
   last_synced_at?: string;
 }
 
-export interface MasterDataVersion {
+interface MasterDataVersion {
   id: string;
   master_data_id: string;
   version: number;

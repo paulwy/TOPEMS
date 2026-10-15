@@ -292,7 +292,7 @@ export interface ReportSchedule {
   updated_at: string;
 }
 
-export interface ReportExportJob {
+interface ReportExportJob {
   id: string;
   report_id: string;
   format: 'pdf' | 'excel' | 'csv' | 'word';

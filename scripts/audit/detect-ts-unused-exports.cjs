@@ -73,7 +73,7 @@ const CONVENTION_PRESERVE_SUFFIX = [
   '/storybook-theme.ts',
 ];
 
-function walk(dir, out = []) {
+function walk(dir, out = [], includeTests = false) {
   let entries;
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -82,16 +82,20 @@ function walk(dir, out = []) {
   }
   for (const e of entries) {
     if (e.name.startsWith('.')) continue;
-    if (EXCLUDE_DIR.has(e.name)) continue;
+    // includeTests=true 时（引用索引遍历）不排除 __tests__/__mocks__/__fixtures__ 与测试文件：
+    // 测试文件/目录是"引用方"，其 import 必须计入 refCount，否则 L1 会把被测试引用的导出误判为未使用。
+    if (!includeTests && EXCLUDE_DIR.has(e.name)) continue;
     const full = path.join(dir, e.name);
-    if (e.isDirectory()) walk(full, out);
+    if (e.isDirectory()) walk(full, out, includeTests);
     else if (e.isFile() && /\.(ts|tsx|js|jsx|mjs|cjs)$/.test(e.name)) {
       let skip = false;
-      for (const ext of EXCLUDE_FILE_EXT)
-        if (e.name.endsWith(ext)) {
-          skip = true;
-          break;
-        }
+      if (!includeTests) {
+        for (const ext of EXCLUDE_FILE_EXT)
+          if (e.name.endsWith(ext)) {
+            skip = true;
+            break;
+          }
+      }
       if (!skip) out.push(full);
     }
   }
@@ -195,6 +199,21 @@ function main() {
   }
   console.log(`   文件数: ${files.length} (扫描目录: ${scanDirs.length})`);
 
+  // 引用索引遍历：含测试文件/目录 + 额外引用方（apps/web/tests、packages/*）
+  // 这些文件只作为"引用方"进入 reverseIndex，其导出不进入候选（避免测试 helper/包导出误删）。
+  const indexFiles = [...files];
+  for (const dir of scanDirs) indexFiles.push(...walk(dir, [], true));
+  const EXTRA_REF_DIRS = [
+    path.join(ROOT, 'apps', 'web', 'tests'),
+    path.join(ROOT, 'apps', 'web', 'e2e'),
+    ...fs.readdirSync(path.join(ROOT, 'packages'), { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => path.join(ROOT, 'packages', e.name)),
+  ];
+  for (const dir of EXTRA_REF_DIRS) {
+    if (fs.existsSync(dir)) indexFiles.push(...walk(dir, [], true));
+  }
+
   // phase 1: 收集所有 exports
   console.log('\n📦 阶段 1/3  提取 exports ...');
   /** name -> { file, kind, isTypeOnly, count }[] */
@@ -217,7 +236,7 @@ function main() {
   // phase 2: 构建反向引用索引（每个标识符出现在哪些文件）
   console.log('\n📦 阶段 2/3  构建反向引用索引...');
   const reverseIndex = new Map(); // name -> Set<file>
-  for (const f of files) {
+  for (const f of indexFiles) {
     let src;
     try {
       src = fs.readFileSync(f, 'utf8');
@@ -225,7 +244,8 @@ function main() {
       continue;
     }
     // 粗略拿 identifiers：简单 /\b[A-Za-z_$][\w$]*\b/g 即可
-    const ids = new Set(src.match(/\b[A-Za-z_$][\w$]{1,}\b/g) || []);
+    // 用 *（允许单字符标识符，如 lucide-react 图标 X）——{1,} 会漏计单字符名导致伪 L1
+    const ids = new Set(src.match(/\b[A-Za-z_$][\w$]*\b/g) || []);
     const rel = path.relative(ROOT, f);
     for (const id of ids) {
       if (!reverseIndex.has(id)) reverseIndex.set(id, new Set());

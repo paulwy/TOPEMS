@@ -32,7 +32,7 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 export type SuggestionStatus = 'pending' | 'confirmed' | 'rejected';
-export type RuleType = 'reorder_point' | 'safety_stock' | 'eoq' | 'periodic';
+type RuleType = 'reorder_point' | 'safety_stock' | 'eoq' | 'periodic';
 export type OrderStatus = 'draft' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
 type OrderType = 'purchase' | 'transfer' | 'production';
 

@@ -110,7 +110,7 @@ interface CreateSloRequest {
   tags?: string[];
 }
 
-export const sloApi = {
+const sloApi = {
   listSlos: async (params?: {
     slo_type?: SloType;
     service_name?: string;

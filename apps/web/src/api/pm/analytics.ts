@@ -8,12 +8,12 @@ import type { ApiResponse } from '../client';
 
 // ===== 类型定义 =====
 
-export interface ProjectTrendItem {
+interface ProjectTrendItem {
   date: string;
   count: number;
 }
 
-export interface ProjectStatusItem {
+interface ProjectStatusItem {
   status: string;
   count: number;
   percentage: number;

@@ -1,0 +1,423 @@
+{
+  "targets": {
+    "apps/web/src/api/ai/generated/client.ts": [
+      "governanceApi"
+    ],
+    "apps/web/src/api/master/governance.ts": [
+      "governanceApi"
+    ],
+    "apps/web/src/api/master/index.ts": [
+      "governanceApi"
+    ],
+    "apps/web/src/api/automation/dashboard.ts": [
+      "automationDashboardApi"
+    ],
+    "apps/web/src/api/automation/index.ts": [
+      "automationDashboardApi"
+    ],
+    "apps/web/src/api/bff/index.ts": [
+      "subscribeServiceHealth",
+      "masterDataApi"
+    ],
+    "apps/web/src/api/index.ts": [
+      "subscribeServiceHealth",
+      "masterDataApi"
+    ],
+    "apps/web/src/api/ehs/accident.ts": [
+      "accidentApi"
+    ],
+    "apps/web/src/api/ehs/index.ts": [
+      "accidentApi",
+      "complianceApi",
+      "emergencyApi",
+      "environmentApi",
+      "incidentApi"
+    ],
+    "apps/web/src/api/ehs/compliance.ts": [
+      "complianceApi"
+    ],
+    "apps/web/src/api/ehs/emergency.ts": [
+      "emergencyApi"
+    ],
+    "apps/web/src/api/ehs/environment.ts": [
+      "environmentApi"
+    ],
+    "apps/web/src/api/ehs/incident.ts": [
+      "incidentApi"
+    ],
+    "apps/web/src/api/external-erp/connection.ts": [
+      "connectionApi"
+    ],
+    "apps/web/src/api/external-erp/index.ts": [
+      "connectionApi"
+    ],
+    "apps/web/src/api/integration/connection.ts": [
+      "connectionApi"
+    ],
+    "apps/web/src/api/integration/index.ts": [
+      "connectionApi",
+      "conversionRuleApi"
+    ],
+    "apps/web/src/api/finance/cashFlow.ts": [
+      "cashFlowApi"
+    ],
+    "apps/web/src/api/finance/index.ts": [
+      "cashFlowApi",
+      "expenseApprovalApi",
+      "paymentApi",
+      "taxApi"
+    ],
+    "apps/web/src/api/finance/expenseApproval.ts": [
+      "expenseApprovalApi"
+    ],
+    "apps/web/src/api/finance/payment.ts": [
+      "paymentApi"
+    ],
+    "apps/web/src/api/finance/tax.ts": [
+      "taxApi"
+    ],
+    "apps/web/src/api/hrm/index.ts": [
+      "hrmSettingsApi"
+    ],
+    "apps/web/src/api/hrm/settings.ts": [
+      "hrmSettingsApi"
+    ],
+    "apps/web/src/api/integration/conversionRule.ts": [
+      "conversionRuleApi"
+    ],
+    "apps/web/src/api/lims/barcode.ts": [
+      "barcodeApi",
+      "rfidTagApi",
+      "printConfigApi"
+    ],
+    "apps/web/src/api/lims/index.ts": [
+      "barcodeApi",
+      "rfidTagApi",
+      "printConfigApi"
+    ],
+    "apps/web/src/api/monitor/alert.ts": [
+      "alertApi"
+    ],
+    "apps/web/src/api/monitor/index.ts": [
+      "alertApi",
+      "alertBatchApi",
+      "businessMetricApi"
+    ],
+    "apps/web/src/api/monitor/alertBatch.ts": [
+      "alertBatchApi"
+    ],
+    "apps/web/src/api/monitor/businessMetric.ts": [
+      "businessMetricApi"
+    ],
+    "apps/web/src/api/notification/channel.ts": [
+      "channelApi"
+    ],
+    "apps/web/src/api/notification/index.ts": [
+      "channelApi",
+      "configApi",
+      "deliveryApi",
+      "digestApi",
+      "groupApi"
+    ],
+    "apps/web/src/api/notification/config.ts": [
+      "configApi"
+    ],
+    "apps/web/src/api/notification/delivery.ts": [
+      "deliveryApi"
+    ],
+    "apps/web/src/api/notification/digest.ts": [
+      "digestApi"
+    ],
+    "apps/web/src/api/notification/group.ts": [
+      "groupApi"
+    ],
+    "apps/web/src/api/pdm/changeNoticeAction.ts": [
+      "changeNoticeActionApi"
+    ],
+    "apps/web/src/api/pdm/index.ts": [
+      "changeNoticeActionApi",
+      "documentApprovalApi"
+    ],
+    "apps/web/src/api/pdm/documentApproval.ts": [
+      "documentApprovalApi"
+    ],
+    "apps/web/src/api/pm/acceptance.ts": [
+      "acceptancePlanApi",
+      "acceptanceItemApi",
+      "acceptanceRecordApi"
+    ],
+    "apps/web/src/api/pm/index.ts": [
+      "acceptancePlanApi",
+      "acceptanceItemApi",
+      "acceptanceRecordApi",
+      "benefitApi",
+      "budgetItemApi",
+      "contractMilestoneApi",
+      "contractPaymentApi",
+      "projectContractApi",
+      "contractTemplateApi",
+      "documentVersionApi",
+      "documentFolderApi"
+    ],
+    "apps/web/src/api/pm/benefit.ts": [
+      "benefitApi"
+    ],
+    "apps/web/src/api/pm/budget.ts": [
+      "budgetItemApi"
+    ],
+    "apps/web/src/api/pm/contract.ts": [
+      "contractMilestoneApi",
+      "contractPaymentApi",
+      "projectContractApi",
+      "contractTemplateApi"
+    ],
+    "apps/web/src/api/pm/document.ts": [
+      "documentVersionApi",
+      "documentFolderApi"
+    ],
+    "apps/web/src/api/qms/correctiveAction.ts": [
+      "correctiveActionApi"
+    ],
+    "apps/web/src/api/qms/index.ts": [
+      "correctiveActionApi"
+    ],
+    "apps/web/src/api/scm/index.ts": [
+      "scmSettingsApi"
+    ],
+    "apps/web/src/api/scm/settings.ts": [
+      "scmSettingsApi"
+    ],
+    "apps/web/src/api/srm/bidPrice.ts": [
+      "bidPriceApi"
+    ],
+    "apps/web/src/api/srm/index.ts": [
+      "bidPriceApi"
+    ],
+    "apps/web/src/api/tenant/analytics.ts": [
+      "tenantAnalyticsApi"
+    ],
+    "apps/web/src/api/tenant/index.ts": [
+      "tenantAnalyticsApi",
+      "tenantConfigApi"
+    ],
+    "apps/web/src/api/tenant/config.ts": [
+      "tenantConfigApi"
+    ],
+    "apps/web/src/api/ticket/index.ts": [
+      "slaApi"
+    ],
+    "apps/web/src/api/ticket/sla.ts": [
+      "slaApi"
+    ],
+    "apps/web/src/api/tms/index.ts": [
+      "optimizationApi"
+    ],
+    "apps/web/src/api/tms/optimization.ts": [
+      "optimizationApi"
+    ],
+    "apps/web/src/api/wms/cycleCount.ts": [
+      "cycleCountApi"
+    ],
+    "apps/web/src/api/wms/index.ts": [
+      "cycleCountApi",
+      "discrepancyApi"
+    ],
+    "apps/web/src/api/wms/discrepancy.ts": [
+      "discrepancyApi"
+    ],
+    "apps/web/src/api/wms/mock.ts": [
+      "useWmsMock"
+    ],
+    "apps/web/src/api/wms/mockData.ts": [
+      "useWmsMock"
+    ],
+    "apps/web/src/api/workflow/form.ts": [
+      "formDefinitionApi",
+      "formInstanceApi"
+    ],
+    "apps/web/src/api/workflow/index.ts": [
+      "formDefinitionApi",
+      "formInstanceApi",
+      "historyApi"
+    ],
+    "apps/web/src/api/workflow/history.ts": [
+      "historyApi"
+    ],
+    "apps/web/src/components/AccessLogger.tsx": [
+      "AccessLogger",
+      "useAccessLogger",
+      "PageAccessLogger",
+      "ActionLogger"
+    ],
+    "apps/web/src/components/index.ts": [
+      "AccessLogger",
+      "useAccessLogger",
+      "PageAccessLogger",
+      "ActionLogger",
+      "withPermission",
+      "RequirePermission",
+      "PermissionGuard",
+      "ModulePermissionGuard",
+      "ConditionalRender",
+      "LoginFormV2"
+    ],
+    "apps/web/src/components/PermissionComponents.tsx": [
+      "withPermission",
+      "RequirePermission",
+      "PermissionGuard",
+      "ModulePermissionGuard",
+      "ConditionalRender"
+    ],
+    "apps/web/src/components/ai/business/BusinessModuleSelector.tsx": [
+      "getBusinessModuleInfo"
+    ],
+    "apps/web/src/components/ai/business/index.ts": [
+      "getBusinessModuleInfo"
+    ],
+    "apps/web/src/components/aps/index.ts": [
+      "FSMActionButtonsDefault"
+    ],
+    "apps/web/src/components/tms/index.ts": [
+      "FSMActionButtonsDefault"
+    ],
+    "apps/web/src/components/auth/LoginFormV2.tsx": [
+      "LoginFormV2"
+    ],
+    "apps/web/src/components/bff/ABTestPanel.tsx": [
+      "ABTestPanel"
+    ],
+    "apps/web/src/components/bff/index.ts": [
+      "ABTestPanel",
+      "getErrorReports",
+      "clearErrorReports",
+      "DefaultBffErrorFallback",
+      "BffLoadingFallback",
+      "BffOfflineFallback",
+      "BffCacheFallback",
+      "BffFallbackContainer",
+      "useBffListPage",
+      "useBffDetailPage",
+      "QueryBuilder",
+      "MutationBuilder",
+      "queryTemplates",
+      "toPascalCase",
+      "pluralize",
+      "singularize"
+    ],
+    "apps/web/src/components/bff/BffErrorBoundary.tsx": [
+      "getErrorReports",
+      "clearErrorReports",
+      "DefaultBffErrorFallback"
+    ],
+    "apps/web/src/components/bff/BffFallback.tsx": [
+      "BffLoadingFallback",
+      "BffOfflineFallback",
+      "BffCacheFallback",
+      "BffFallbackContainer"
+    ],
+    "apps/web/src/hooks/bff/useBffSuspense.tsx": [
+      "BffLoadingFallback"
+    ],
+    "apps/web/src/hooks/bff/index.ts": [
+      "useBffListPage",
+      "useBffDetailPage"
+    ],
+    "apps/web/src/hooks/bff/useBffPage.ts": [
+      "useBffListPage",
+      "useBffDetailPage"
+    ],
+    "apps/web/src/utils/bff/queryBuilder.ts": [
+      "QueryBuilder",
+      "MutationBuilder",
+      "queryTemplates"
+    ],
+    "apps/web/src/utils/bff/codegen.ts": [
+      "toPascalCase",
+      "pluralize",
+      "singularize"
+    ]
+  },
+  "names": [
+    "governanceApi",
+    "automationDashboardApi",
+    "subscribeServiceHealth",
+    "masterDataApi",
+    "accidentApi",
+    "complianceApi",
+    "emergencyApi",
+    "environmentApi",
+    "incidentApi",
+    "connectionApi",
+    "cashFlowApi",
+    "expenseApprovalApi",
+    "paymentApi",
+    "taxApi",
+    "hrmSettingsApi",
+    "conversionRuleApi",
+    "barcodeApi",
+    "rfidTagApi",
+    "printConfigApi",
+    "alertApi",
+    "alertBatchApi",
+    "businessMetricApi",
+    "channelApi",
+    "configApi",
+    "deliveryApi",
+    "digestApi",
+    "groupApi",
+    "changeNoticeActionApi",
+    "documentApprovalApi",
+    "acceptancePlanApi",
+    "acceptanceItemApi",
+    "acceptanceRecordApi",
+    "benefitApi",
+    "budgetItemApi",
+    "contractMilestoneApi",
+    "contractPaymentApi",
+    "projectContractApi",
+    "contractTemplateApi",
+    "documentVersionApi",
+    "documentFolderApi",
+    "correctiveActionApi",
+    "scmSettingsApi",
+    "bidPriceApi",
+    "tenantAnalyticsApi",
+    "tenantConfigApi",
+    "slaApi",
+    "optimizationApi",
+    "cycleCountApi",
+    "discrepancyApi",
+    "useWmsMock",
+    "formDefinitionApi",
+    "formInstanceApi",
+    "historyApi",
+    "AccessLogger",
+    "useAccessLogger",
+    "PageAccessLogger",
+    "ActionLogger",
+    "withPermission",
+    "RequirePermission",
+    "PermissionGuard",
+    "ModulePermissionGuard",
+    "ConditionalRender",
+    "getBusinessModuleInfo",
+    "FSMActionButtonsDefault",
+    "LoginFormV2",
+    "ABTestPanel",
+    "getErrorReports",
+    "clearErrorReports",
+    "DefaultBffErrorFallback",
+    "BffLoadingFallback",
+    "BffOfflineFallback",
+    "BffCacheFallback",
+    "BffFallbackContainer",
+    "useBffListPage",
+    "useBffDetailPage",
+    "QueryBuilder",
+    "MutationBuilder",
+    "queryTemplates",
+    "toPascalCase",
+    "pluralize",
+    "singularize"
+  ]
+}

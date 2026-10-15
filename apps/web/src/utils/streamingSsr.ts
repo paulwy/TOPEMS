@@ -221,7 +221,7 @@ function escapeRegExp(str: string): string {
 // ==================== StreamingSSRManager ====================
 
 /** 流式渲染选项 */
-export interface StreamingSSROptions {
+interface StreamingSSROptions {
   /** bootstrap 脚本（客户端入口） */
   bootstrapScripts?: string[];
   /** bootstrap 模块（ESM 入口） */
@@ -239,7 +239,7 @@ export interface StreamingSSROptions {
 }
 
 /** StreamingSSRManager 渲染结果 */
-export interface StreamingRenderResult {
+interface StreamingRenderResult {
   /** HTML 片段流（ReadableStream<Uint8Array>） */
   stream: ReadableStream<Uint8Array>;
   /** 注入的 SSR 数据集合 */

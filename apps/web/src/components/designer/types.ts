@@ -175,7 +175,7 @@ export function canvasNodesToSchema(nodes: CanvasNode[]): SchemaField[] {
 // ============ 设计器组件库 ============
 
 /** 内置表单组件类型 */
-export const FORM_COMPONENTS: DesignerComponent[] = [
+const FORM_COMPONENTS: DesignerComponent[] = [
   {
     type: 'form-text',
     label: i18n.t('components.types.k0'),
@@ -357,7 +357,7 @@ export const FORM_COMPONENTS: DesignerComponent[] = [
 ];
 
 /** 内置布局组件 */
-export const LAYOUT_COMPONENTS: DesignerComponent[] = [
+const LAYOUT_COMPONENTS: DesignerComponent[] = [
   {
     type: 'layout-section',
     label: i18n.t('components.types.k45'),

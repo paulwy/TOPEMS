@@ -72,7 +72,7 @@ interface DocumentSearchParams {
   page_size?: number;
 }
 
-export interface DocumentSearchResult {
+interface DocumentSearchResult {
   documents: PdmDocument[];
   total: number;
   page: number;

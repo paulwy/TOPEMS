@@ -180,14 +180,14 @@ export function useRevalidate(): UseRevalidateResult {
   return { revalidate, revalidatePattern, revalidateAll, isRevalidating };
 }
 
-export interface UseIsrStatsResult {
+interface UseIsrStatsResult {
   stats: IsrStats;
   prune: (count?: number) => number;
   clear: () => void;
   resetStats: () => void;
 }
 
-export function useIsrStats(): UseIsrStatsResult {
+function useIsrStats(): UseIsrStatsResult {
   const [stats, setStats] = useState<IsrStats>(() => isrManager.getStats());
 
   const refresh = useCallback(() => {
@@ -221,12 +221,12 @@ export function useIsrStats(): UseIsrStatsResult {
   return { stats, prune, clear, resetStats };
 }
 
-export interface UseIsrEntryResult<T = unknown> {
+interface UseIsrEntryResult<T = unknown> {
   entry: IsrCacheEntry<T> | undefined;
   exists: boolean;
 }
 
-export function useIsrEntry<T = unknown>(key: string | string[]): UseIsrEntryResult<T> {
+function useIsrEntry<T = unknown>(key: string | string[]): UseIsrEntryResult<T> {
   const cacheKey = useMemo(() => {
     return Array.isArray(key) ? key.join(':') : key;
   }, [key]);
@@ -251,13 +251,13 @@ export function useIsrEntry<T = unknown>(key: string | string[]): UseIsrEntryRes
   };
 }
 
-export interface UseIsrConfigResult {
+interface UseIsrConfigResult {
   config: Partial<IsrConfig>;
   size: number;
   keys: string[];
 }
 
-export function useIsrConfig(): UseIsrConfigResult {
+function useIsrConfig(): UseIsrConfigResult {
   const [, setTick] = useState(0);
 
   const config = useMemo<Partial<IsrConfig>>(

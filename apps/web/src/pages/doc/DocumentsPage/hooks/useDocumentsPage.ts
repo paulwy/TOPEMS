@@ -12,7 +12,7 @@ import type { FileItem, DisplayItem, SortField, SortOrder, ViewMode } from '../t
 
 import { CACHE_DURATIONS, QUERY_KEYS } from '@/lib/reactQuery';
 
-export interface PreviewingFile {
+interface PreviewingFile {
   id: string;
   name: string;
   contentType: string;

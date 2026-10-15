@@ -14,7 +14,7 @@ export interface Attachment {
   entity_id?: string;
 }
 
-export interface UploadAttachmentRequest {
+interface UploadAttachmentRequest {
   file: File;
   entity_type?: string;
   entity_id?: string;
@@ -116,7 +116,7 @@ export interface Favorite {
   created_at: string;
 }
 
-export interface AddFavoriteRequest {
+interface AddFavoriteRequest {
   entity_type: string;
   entity_id: string;
   entity_name: string;

@@ -314,7 +314,7 @@ interface WorkflowHistoryData {
   [key: string]: unknown;
 }
 
-export interface WorkflowHistory {
+interface WorkflowHistory {
   id: string;
   workflow_instance_id?: string;
   workflow_id?: string;
@@ -661,7 +661,7 @@ export interface WorkflowCategory {
 
 // ==================== 流程实例扩展类型 ====================
 
-export interface WorkflowInstanceDetail {
+interface WorkflowInstanceDetail {
   instance: WorkflowInstance;
   workflow?: Workflow;
   tasks?: ApprovalTask[];
@@ -727,7 +727,7 @@ export interface WorkflowRule {
 
 // ==================== 流程变量相关类型 ====================
 
-export interface WorkflowVariable {
+interface WorkflowVariable {
   id: string;
   workflow_instance_id: string;
   key: string;

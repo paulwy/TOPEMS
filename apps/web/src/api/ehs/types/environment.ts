@@ -148,7 +148,7 @@ export interface ComplianceAssessment {
   updated_at: string;
 }
 
-export interface DischargeLimit {
+interface DischargeLimit {
   pollutant_name: string;
   limit_value: number;
   unit: string;

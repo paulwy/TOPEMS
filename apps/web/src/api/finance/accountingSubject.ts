@@ -18,7 +18,7 @@ export interface AccountingSubject {
   tenant_id?: string | null;
 }
 
-export interface AccountingSubjectQuery {
+interface AccountingSubjectQuery {
   page?: number;
   page_size?: number;
 
@@ -28,14 +28,14 @@ export interface AccountingSubjectQuery {
   [key: string]: unknown;
 }
 
-export interface PaginatedAccountingSubjects {
+interface PaginatedAccountingSubjects {
   items: AccountingSubject[];
   total: number;
   page: number;
   page_size: number;
 }
 
-export interface CreateAccountingSubjectRequest {
+interface CreateAccountingSubjectRequest {
   code: string;
   name: string;
   category?: string;
@@ -47,7 +47,7 @@ export interface CreateAccountingSubjectRequest {
   tenant_id?: string;
 }
 
-export interface UpdateAccountingSubjectRequest {
+interface UpdateAccountingSubjectRequest {
   name?: string;
   category?: string;
   level?: number;

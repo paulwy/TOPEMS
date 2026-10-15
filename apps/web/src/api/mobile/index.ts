@@ -247,7 +247,7 @@ export interface PushConfig {
   quiet_hours_end: string;
 }
 
-export interface PushTemplate {
+interface PushTemplate {
   id: string;
   name: string;
   type: 'system' | 'approval' | 'task' | 'reminder';

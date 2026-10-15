@@ -29,12 +29,12 @@ interface MigrationReport {
   message?: string;
 }
 
-export interface MigrationApplyResult {
+interface MigrationApplyResult {
   files: string[];
   reports: MigrationReport[];
 }
 
-export interface RollbackResult {
+interface RollbackResult {
   record: MigrationReport;
 }
 

@@ -7,7 +7,7 @@ import { extractErrorMessage } from '@/utils/errors';
 import { QUERY_KEYS } from '@/lib/reactQuery';
 import { useTranslation } from 'react-i18next';
 
-export interface AuditLogFilters {
+interface AuditLogFilters {
   keyword: string;
   operator: string;
   type: string;

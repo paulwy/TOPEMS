@@ -82,7 +82,7 @@ interface TaxCalculateRequest {
   meta?: Record<string, unknown>;
 }
 
-export interface TaxRate {
+interface TaxRate {
   id: string;
   jurisdiction: string;
   region?: string;

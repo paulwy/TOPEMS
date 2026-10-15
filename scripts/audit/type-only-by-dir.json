@@ -1,0 +1,2792 @@
+{
+  "api": [
+    {
+      "level": "L1",
+      "name": "AnomalyPoint",
+      "defFile": "apps/web/src/api/ai/assistant.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "BusinessToolDefinition",
+      "defFile": "apps/web/src/api/ai/businessCopilot.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CopilotIntentType",
+      "defFile": "apps/web/src/api/ai/businessCopilot.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "QuickActionItem",
+      "defFile": "apps/web/src/api/ai/businessCopilot.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ReferencedData",
+      "defFile": "apps/web/src/api/ai/businessCopilot.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SuggestedAction",
+      "defFile": "apps/web/src/api/ai/businessCopilot.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ToolCall",
+      "defFile": "apps/web/src/api/ai/businessCopilot.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ToolCallStatus",
+      "defFile": "apps/web/src/api/ai/businessCopilot.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ToolParameter",
+      "defFile": "apps/web/src/api/ai/businessCopilot.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FieldError",
+      "defFile": "apps/web/src/api/ai/businessIntelligence.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "FormFieldDefinition",
+      "defFile": "apps/web/src/api/ai/businessIntelligence.ts",
+      "topDir": "api",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/ai/business/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "FormFieldType",
+      "defFile": "apps/web/src/api/ai/businessIntelligence.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ComplianceFramework",
+      "defFile": "apps/web/src/api/ai/generated/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ComplianceFrameworkStatus",
+      "defFile": "apps/web/src/api/ai/generated/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CostResource",
+      "defFile": "apps/web/src/api/ai/generated/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KeyMetrics",
+      "defFile": "apps/web/src/api/ai/generated/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "NonCompliantItem",
+      "defFile": "apps/web/src/api/ai/generated/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PerformanceLevel",
+      "defFile": "apps/web/src/api/ai/generated/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RiskDimension",
+      "defFile": "apps/web/src/api/ai/generated/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeAskResult",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeBasePayload",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeBaseQuery",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeChunk",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeDocumentQuery",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeDocumentUpdatePayload",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeQaFeedbackPayload",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeSemanticSearchItem",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "KnowledgeSemanticSearchRequest",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "QaHistory",
+      "defFile": "apps/web/src/api/ai/knowledge.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "MasterDataRef",
+      "defFile": "apps/web/src/api/bff/index.ts",
+      "topDir": "api",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "ReportExportJob",
+      "defFile": "apps/web/src/api/bi/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CustomerFinanceInfo",
+      "defFile": "apps/web/src/api/crmFinance/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DischargeLimit",
+      "defFile": "apps/web/src/api/ehs/types/environment.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateTreatmentActionRequest",
+      "defFile": "apps/web/src/api/ehs/types/hazard.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RiskLevelMatrix",
+      "defFile": "apps/web/src/api/ehs/types/hazard.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "HealthCheckResultItem",
+      "defFile": "apps/web/src/api/ehs/types/health.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateRecordItemRequest",
+      "defFile": "apps/web/src/api/ehs/types/inspection.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RecordItem",
+      "defFile": "apps/web/src/api/ehs/types/inspection.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SyncErrorDetail",
+      "defFile": "apps/web/src/api/ehs/types/sync.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SyncFieldMapping",
+      "defFile": "apps/web/src/api/ehs/types/sync.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SyncFilter",
+      "defFile": "apps/web/src/api/ehs/types/sync.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateAnnouncementRequest",
+      "defFile": "apps/web/src/api/erp/core/announcement.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UpdateAnnouncementRequest",
+      "defFile": "apps/web/src/api/erp/core/announcement.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UpdateDocumentRequest",
+      "defFile": "apps/web/src/api/erp/core/document.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ArchiveStats",
+      "defFile": "apps/web/src/api/erp/core/mdmLifecycle.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "MasterDataVersion",
+      "defFile": "apps/web/src/api/erp/core/mdmRefs.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CarryForwardRequest",
+      "defFile": "apps/web/src/api/erp/core/openingBalance.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateOpeningBalanceRequest",
+      "defFile": "apps/web/src/api/erp/core/openingBalance.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "VehicleRequest",
+      "defFile": "apps/web/src/api/erp/core/vehicle.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "BankTransaction",
+      "defFile": "apps/web/src/api/erp/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateBankTransactionRequest",
+      "defFile": "apps/web/src/api/erp/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateFinancialVoucherRequest",
+      "defFile": "apps/web/src/api/erp/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "VoucherImportResult",
+      "defFile": "apps/web/src/api/erp/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ExportRequest",
+      "defFile": "apps/web/src/api/file/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AccountingSubjectQuery",
+      "defFile": "apps/web/src/api/finance/accountingSubject.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateAccountingSubjectRequest",
+      "defFile": "apps/web/src/api/finance/accountingSubject.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PaginatedAccountingSubjects",
+      "defFile": "apps/web/src/api/finance/accountingSubject.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UpdateAccountingSubjectRequest",
+      "defFile": "apps/web/src/api/finance/accountingSubject.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AuxAccountQuery",
+      "defFile": "apps/web/src/api/finance/auxAccount.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PaginatedAuxAccounts",
+      "defFile": "apps/web/src/api/finance/auxAccount.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FraudRule",
+      "defFile": "apps/web/src/api/finance/riskV54.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ReviewSeverity",
+      "defFile": "apps/web/src/api/finance/riskV54.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RiskDashboard",
+      "defFile": "apps/web/src/api/finance/riskV54.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "Settlement",
+      "defFile": "apps/web/src/api/finance/settlementCenter.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "TaxRate",
+      "defFile": "apps/web/src/api/finance/tax.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AttendanceSummary",
+      "defFile": "apps/web/src/api/hrm/hrmReports.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ContractSummary",
+      "defFile": "apps/web/src/api/hrm/hrmReports.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "EmployeeSummary",
+      "defFile": "apps/web/src/api/hrm/hrmReports.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PayrollSummary",
+      "defFile": "apps/web/src/api/hrm/hrmReports.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "TrainingSummary",
+      "defFile": "apps/web/src/api/hrm/hrmReports.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "HrmSettingsResponse",
+      "defFile": "apps/web/src/api/hrm/settings.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ProjectGroup",
+      "defFile": "apps/web/src/api/im/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "MappingDirection",
+      "defFile": "apps/web/src/api/integration/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "TriggerCondition",
+      "defFile": "apps/web/src/api/integration/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ScanBarcodeResult",
+      "defFile": "apps/web/src/api/lims/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SendEmailWithTemplateRequest",
+      "defFile": "apps/web/src/api/mail/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AssetSensitivity",
+      "defFile": "apps/web/src/api/master/dataAssetCatalogV66.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AssetStatus",
+      "defFile": "apps/web/src/api/master/dataAssetCatalogV66.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DataProduct",
+      "defFile": "apps/web/src/api/master/governance.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UpdateQualityRuleRequest",
+      "defFile": "apps/web/src/api/master/quality.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ComplianceAudit",
+      "defFile": "apps/web/src/api/master/versioning.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CapacityUtilizationItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DeliveryAnalyticsResponse",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DeliveryTrendItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "EnergyCostResponse",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "EnergyMixItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "EnergyTrendItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "EquipmentMtbfItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "EquipmentMtbfResponse",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FaultReasonItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "MtbfScatterItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "OeeDashboardItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "QualityParetoItem",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "QualityParetoResponse",
+      "defFile": "apps/web/src/api/mes/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UpdateRuleRequest",
+      "defFile": "apps/web/src/api/mes/anomalyDetection.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "BottleneckAnalysis",
+      "defFile": "apps/web/src/api/mes/aps.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ConstraintCheckResult",
+      "defFile": "apps/web/src/api/mes/aps.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "OptimizationReport",
+      "defFile": "apps/web/src/api/mes/aps.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "MesSettingsResponse",
+      "defFile": "apps/web/src/api/mes/settings.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ApprovalDecisionRequest",
+      "defFile": "apps/web/src/api/mes/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CapacityUtilizationData",
+      "defFile": "apps/web/src/api/mes/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DeliveryAnalyticsData",
+      "defFile": "apps/web/src/api/mes/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "EnergyCostData",
+      "defFile": "apps/web/src/api/mes/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "MtbfData",
+      "defFile": "apps/web/src/api/mes/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "OeeDashboardData",
+      "defFile": "apps/web/src/api/mes/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "QualityParetoData",
+      "defFile": "apps/web/src/api/mes/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "MigrationApplyResult",
+      "defFile": "apps/web/src/api/migration/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RollbackResult",
+      "defFile": "apps/web/src/api/migration/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "RegisterDeviceRequest",
+      "defFile": "apps/web/src/api/mobile/device.ts",
+      "topDir": "api",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/api/mobile/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "PushTemplate",
+      "defFile": "apps/web/src/api/mobile/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PushPlatform",
+      "defFile": "apps/web/src/api/mobile/push.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ApiPerformance",
+      "defFile": "apps/web/src/api/monitor/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "BusinessMetricKpi",
+      "defFile": "apps/web/src/api/monitor/metrics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SloQuery",
+      "defFile": "apps/web/src/api/monitor/metrics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SloRequest",
+      "defFile": "apps/web/src/api/monitor/metrics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DocumentSearchResult",
+      "defFile": "apps/web/src/api/pdm/document.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UpdateProductRequest",
+      "defFile": "apps/web/src/api/pdm/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PdmSettingsResponse",
+      "defFile": "apps/web/src/api/pdm/settings.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ProjectStatusItem",
+      "defFile": "apps/web/src/api/pm/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ProjectTrendItem",
+      "defFile": "apps/web/src/api/pm/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AcceptanceItem",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AcceptancePlan",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AcceptanceRecord",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "BenefitAnalysis",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ContractTemplate",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "Defect",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ProjectApproval",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ProjectDocument",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ProjectExpense",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ProjectRisk",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RiskEvent",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SettlementAdjustment",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SettlementItem",
+      "defFile": "apps/web/src/api/pm/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ApqpApprovalFrontend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ApqpPhaseFrontend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ApqpProjectFrontend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ApqpRiskFrontend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ApqpTaskFrontend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AuditFindingFrontend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AuditPlanFrontend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AuditTaskFrontend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateApqpProjectBackendRequest",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateApqpProjectFrontendRequest",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateAuditPlanRequest",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateAuditPlanRequestBackend",
+      "defFile": "apps/web/src/api/qms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RdSettingsResponse",
+      "defFile": "apps/web/src/api/rd/settings.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ProjectConfig",
+      "defFile": "apps/web/src/api/rd/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PurchaseStatusItem",
+      "defFile": "apps/web/src/api/scm/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PurchaseTrendItem",
+      "defFile": "apps/web/src/api/scm/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SupplierRankingItem",
+      "defFile": "apps/web/src/api/scm/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ScmSettingsResponse",
+      "defFile": "apps/web/src/api/scm/settings.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AddFavoriteRequest",
+      "defFile": "apps/web/src/api/shared/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UploadAttachmentRequest",
+      "defFile": "apps/web/src/api/shared/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RenderTemplateResponse",
+      "defFile": "apps/web/src/api/template/index.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UserStatus",
+      "defFile": "apps/web/src/api/tenant/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "BatchUpdateRequest",
+      "defFile": "apps/web/src/api/ticket/batch.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ShipmentTrendItem",
+      "defFile": "apps/web/src/api/tms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "StatusDistributionItem",
+      "defFile": "apps/web/src/api/tms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "VehicleRankingItem",
+      "defFile": "apps/web/src/api/tms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AssignmentResult",
+      "defFile": "apps/web/src/api/tms/optimization.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DriverAssignment",
+      "defFile": "apps/web/src/api/tms/optimization.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DriverCandidate",
+      "defFile": "apps/web/src/api/tms/optimization.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FreightQuote",
+      "defFile": "apps/web/src/api/tms/optimization.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FreightQuoteRequest",
+      "defFile": "apps/web/src/api/tms/optimization.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "OrderCandidate",
+      "defFile": "apps/web/src/api/tms/optimization.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RouteOptimizeRequest",
+      "defFile": "apps/web/src/api/tms/optimization.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RouteOptimizeResponse",
+      "defFile": "apps/web/src/api/tms/optimization.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CarrierStatus",
+      "defFile": "apps/web/src/api/tms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DriverStatus",
+      "defFile": "apps/web/src/api/tms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "VehicleStatus",
+      "defFile": "apps/web/src/api/tms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CacheStats",
+      "defFile": "apps/web/src/api/unified-core/system.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AbcAnalysisResponse",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AgeParetoResponse",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "DailyTrendItem",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FlowTrendResponse",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FlowTrendSummary",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "InventoryDistributionItem",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "InventoryTypeItem",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "LocationUtilizationResponse",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "WmsDashboardSummary",
+      "defFile": "apps/web/src/api/wms/analytics.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "WmsMockShape",
+      "defFile": "apps/web/src/api/wms/mock.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RuleType",
+      "defFile": "apps/web/src/api/wms/smartReplenishment.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateReplenishmentOrderItemRequest",
+      "defFile": "apps/web/src/api/wms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "CreateTransferOrderItemRequest",
+      "defFile": "apps/web/src/api/wms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UpdateInboundOrderRequest",
+      "defFile": "apps/web/src/api/wms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UpdateOutboundOrderRequest",
+      "defFile": "apps/web/src/api/wms/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "WorkflowHistory",
+      "defFile": "apps/web/src/api/workflow/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "WorkflowInstanceDetail",
+      "defFile": "apps/web/src/api/workflow/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "WorkflowVariable",
+      "defFile": "apps/web/src/api/workflow/types.ts",
+      "topDir": "api",
+      "refCount": 0,
+      "sampleRefs": []
+    }
+  ],
+  "components": [
+    {
+      "level": "L2",
+      "name": "AICodeGeneratorProps",
+      "defFile": "apps/web/src/components/ai/AICodeGenerator.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/ai/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AIDataCompleterProps",
+      "defFile": "apps/web/src/components/ai/AIDataCompleter.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/ai/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AIFormValidatorProps",
+      "defFile": "apps/web/src/components/ai/AIFormValidator.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/ai/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AIHelperButtonProps",
+      "defFile": "apps/web/src/components/ai/AIHelperButton.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/ai/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "FormValidationError",
+      "defFile": "apps/web/src/components/ai/business/SmartFormRenderer.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/ai/business/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ABTestPanelProps",
+      "defFile": "apps/web/src/components/bff/ABTestPanel.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "BffColumn",
+      "defFile": "apps/web/src/components/bff/BffDataTable.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "BffDataTableProps",
+      "defFile": "apps/web/src/components/bff/BffDataTable.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "BffFormField",
+      "defFile": "apps/web/src/components/bff/BffFormPage.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "BffFormPageProps",
+      "defFile": "apps/web/src/components/bff/BffFormPage.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "BffFormSection",
+      "defFile": "apps/web/src/components/bff/BffFormPage.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "AvatarGroupProps",
+      "defFile": "apps/web/src/components/common/Avatar.tsx",
+      "topDir": "components",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PriorityLevel",
+      "defFile": "apps/web/src/components/common/PriorityBadge.tsx",
+      "topDir": "components",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "SearchSuggestion",
+      "defFile": "apps/web/src/components/common/QuickSearch.tsx",
+      "topDir": "components",
+      "refCount": 2,
+      "sampleRefs": [
+        "apps/web/src/components/common/index.ts",
+        "apps/web/src/components/common/QuickSearch.stories.tsx"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "DataTableAlign",
+      "defFile": "apps/web/src/components/redesign/data/DataTable.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/data/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "FilterChipProps",
+      "defFile": "apps/web/src/components/redesign/data/FilterChip.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/data/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "StatTileProps",
+      "defFile": "apps/web/src/components/redesign/data/StatTile.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/data/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "StatusLightProps",
+      "defFile": "apps/web/src/components/redesign/data/StatusLight.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/data/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "StatusLightState",
+      "defFile": "apps/web/src/components/redesign/data/StatusLight.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/data/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "TrendLineProps",
+      "defFile": "apps/web/src/components/redesign/data/TrendLine.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/data/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AlertProps",
+      "defFile": "apps/web/src/components/redesign/feedback/Alert.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/feedback/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AlertVariant",
+      "defFile": "apps/web/src/components/redesign/feedback/Alert.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/feedback/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "EmptyStateVariant",
+      "defFile": "apps/web/src/components/redesign/feedback/EmptyState.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/feedback/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ErrorStateProps",
+      "defFile": "apps/web/src/components/redesign/feedback/ErrorState.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/feedback/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ToastContainerProps",
+      "defFile": "apps/web/src/components/redesign/feedback/Toast.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/feedback/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ToastVariant",
+      "defFile": "apps/web/src/components/redesign/feedback/Toast.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/feedback/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AppShellProps",
+      "defFile": "apps/web/src/components/redesign/layout/AppShell.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/layout/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "TooltipPlacement",
+      "defFile": "apps/web/src/components/redesign/overlay/Tooltip.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/overlay/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "TooltipProps",
+      "defFile": "apps/web/src/components/redesign/overlay/Tooltip.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/overlay/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AvatarProps",
+      "defFile": "apps/web/src/components/redesign/primitives/Avatar.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/primitives/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AvatarVariant",
+      "defFile": "apps/web/src/components/redesign/primitives/Avatar.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/primitives/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "BadgeProps",
+      "defFile": "apps/web/src/components/redesign/primitives/Badge.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/primitives/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "CardProps",
+      "defFile": "apps/web/src/components/redesign/primitives/Card.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/primitives/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "SelectProps",
+      "defFile": "apps/web/src/components/redesign/primitives/Select.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/primitives/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "TabsProps",
+      "defFile": "apps/web/src/components/redesign/primitives/Tabs.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/primitives/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "TagProps",
+      "defFile": "apps/web/src/components/redesign/primitives/Tag.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/primitives/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ToggleProps",
+      "defFile": "apps/web/src/components/redesign/primitives/Toggle.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/primitives/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "DetailSection",
+      "defFile": "apps/web/src/components/redesign/templates/DetailPageTemplate.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/redesign/templates/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AiToolPageTemplateProps",
+      "defFile": "apps/web/src/components/templates/AiToolPageTemplate.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/extensions/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "AuthPageTemplateProps",
+      "defFile": "apps/web/src/components/templates/AuthPageTemplate.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/extensions/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ChatPageTemplateProps",
+      "defFile": "apps/web/src/components/templates/ChatPageTemplate.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/extensions/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "DesignerTemplateProps",
+      "defFile": "apps/web/src/components/templates/DesignerTemplate.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/extensions/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "MobilePageTemplateProps",
+      "defFile": "apps/web/src/components/templates/MobilePageTemplate.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/extensions/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ReportViewerMode",
+      "defFile": "apps/web/src/components/templates/ReportViewerTemplate.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/extensions/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ReportViewerTemplateProps",
+      "defFile": "apps/web/src/components/templates/ReportViewerTemplate.tsx",
+      "topDir": "components",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/templates/extensions/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "InlineEditCellProps",
+      "defFile": "apps/web/src/components/templates/list/InlineEditCell.tsx",
+      "topDir": "components",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ListPageStateParams",
+      "defFile": "apps/web/src/components/templates/list/types.ts",
+      "topDir": "components",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseInlineEditOptions",
+      "defFile": "apps/web/src/components/templates/list/useInlineEdit.ts",
+      "topDir": "components",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "TabGroupProps",
+      "defFile": "apps/web/src/components/ui/Tabs.tsx",
+      "topDir": "components",
+      "refCount": 0,
+      "sampleRefs": []
+    }
+  ],
+  "config": [
+    {
+      "level": "L1",
+      "name": "DeploymentConfig",
+      "defFile": "apps/web/src/config/deployment.ts",
+      "topDir": "config",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SecurityConfig",
+      "defFile": "apps/web/src/config/security.ts",
+      "topDir": "config",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "WebSocketConfig",
+      "defFile": "apps/web/src/config/types.ts",
+      "topDir": "config",
+      "refCount": 0,
+      "sampleRefs": []
+    }
+  ],
+  "dev-platform": [
+    {
+      "level": "L1",
+      "name": "BuilderChangeListener",
+      "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+      "topDir": "dev-platform",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FlowNode",
+      "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+      "topDir": "dev-platform",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "FlowNodeType",
+      "defFile": "apps/web/src/dev-platform/lowcode-builder.ts",
+      "topDir": "dev-platform",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PlatformChangeListener",
+      "defFile": "apps/web/src/dev-platform/unified-dev-platform.ts",
+      "topDir": "dev-platform",
+      "refCount": 0,
+      "sampleRefs": []
+    }
+  ],
+  "hooks": [
+    {
+      "level": "L1",
+      "name": "UseActiveExperimentsResult",
+      "defFile": "apps/web/src/hooks/bff/useABTest.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseExperimentAdminResult",
+      "defFile": "apps/web/src/hooks/bff/useABTest.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseExperimentResultResult",
+      "defFile": "apps/web/src/hooks/bff/useABTest.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "UseAutoShardingOptions",
+      "defFile": "apps/web/src/hooks/bff/useAutoSharding.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "UseAutoShardingResult",
+      "defFile": "apps/web/src/hooks/bff/useAutoSharding.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "UseBffFallbackResult",
+      "defFile": "apps/web/src/hooks/bff/useBffErrorHandling.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseErrorReportResult",
+      "defFile": "apps/web/src/hooks/bff/useBffErrorHandling.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PageStateStatus",
+      "defFile": "apps/web/src/hooks/bff/useBffPage.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RelatedQueryConfig",
+      "defFile": "apps/web/src/hooks/bff/useBffPage.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "SlowQueryCallback",
+      "defFile": "apps/web/src/hooks/bff/useBffPerformance.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "UseBffPerformanceResult",
+      "defFile": "apps/web/src/hooks/bff/useBffPerformance.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "BffSuspenseBoundaryProps",
+      "defFile": "apps/web/src/hooks/bff/useBffSuspense.tsx",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SuspenseMountRecord",
+      "defFile": "apps/web/src/hooks/bff/useBffSuspense.tsx",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseBffSuspenseInfiniteResult",
+      "defFile": "apps/web/src/hooks/bff/useBffSuspense.tsx",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseOptimalEndpointResult",
+      "defFile": "apps/web/src/hooks/bff/useEdgeCompute.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "UseIsrCacheOptions",
+      "defFile": "apps/web/src/hooks/bff/useIsr.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "UseIsrCacheResult",
+      "defFile": "apps/web/src/hooks/bff/useIsr.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "UseIsrConfigResult",
+      "defFile": "apps/web/src/hooks/bff/useIsr.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseIsrEntryResult",
+      "defFile": "apps/web/src/hooks/bff/useIsr.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseIsrStatsResult",
+      "defFile": "apps/web/src/hooks/bff/useIsr.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "UseRevalidateResult",
+      "defFile": "apps/web/src/hooks/bff/useIsr.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "PPRSlotRecord",
+      "defFile": "apps/web/src/hooks/bff/usePartialPreRender.tsx",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "StaticShellProps",
+      "defFile": "apps/web/src/hooks/bff/usePartialPreRender.tsx",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "StreamingSlotProps",
+      "defFile": "apps/web/src/hooks/bff/usePartialPreRender.tsx",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "HighCostCallback",
+      "defFile": "apps/web/src/hooks/bff/useQueryCost.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "UseQueryCostOptions",
+      "defFile": "apps/web/src/hooks/bff/useQueryCost.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "UseQueryCostResult",
+      "defFile": "apps/web/src/hooks/bff/useQueryCost.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "RouteDataBoundaryProps",
+      "defFile": "apps/web/src/hooks/bff/useRouteDataLoader.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RouteDataEntry",
+      "defFile": "apps/web/src/hooks/bff/useRouteDataLoader.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RouteDataLoader",
+      "defFile": "apps/web/src/hooks/bff/useRouteDataLoader.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "RouteLoaderState",
+      "defFile": "apps/web/src/hooks/bff/useRouteDataLoader.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "UseRouteDataLoaderResult",
+      "defFile": "apps/web/src/hooks/bff/useRouteDataLoader.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "UseSmartPrefetchOptions",
+      "defFile": "apps/web/src/hooks/bff/useSmartPrefetch.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "UseSmartPrefetchResult",
+      "defFile": "apps/web/src/hooks/bff/useSmartPrefetch.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "WebVitalsMetrics",
+      "defFile": "apps/web/src/hooks/foundation/useWebVitals.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/foundation/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "AnalyticsPageState",
+      "defFile": "apps/web/src/hooks/useAnalyticsData.ts",
+      "topDir": "hooks",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "TouchRipple",
+      "defFile": "apps/web/src/hooks/useTouchFeedback.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/foundation/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "WsNotificationConfig",
+      "defFile": "apps/web/src/hooks/useWebSocketNotifications.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/features/websocket/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "WindowState",
+      "defFile": "apps/web/src/hooks/useWindowManager.ts",
+      "topDir": "hooks",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/hooks/ui/index.ts"
+      ]
+    }
+  ],
+  "lib": [
+    {
+      "level": "L1",
+      "name": "ModuleTheme",
+      "defFile": "apps/web/src/lib/moduleThemes.ts",
+      "topDir": "lib",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PluginRoute",
+      "defFile": "apps/web/src/lib/plugin-loader/PluginLoader.tsx",
+      "topDir": "lib",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SSEClientOptions",
+      "defFile": "apps/web/src/lib/sseClient.ts",
+      "topDir": "lib",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SSECloseHandler",
+      "defFile": "apps/web/src/lib/sseClient.ts",
+      "topDir": "lib",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SSEErrorHandler",
+      "defFile": "apps/web/src/lib/sseClient.ts",
+      "topDir": "lib",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "SSEEvent",
+      "defFile": "apps/web/src/lib/sseClient.ts",
+      "topDir": "lib",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/lib/__tests__/sseClient.test.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "SSEEventHandler",
+      "defFile": "apps/web/src/lib/sseClient.ts",
+      "topDir": "lib",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SSEOpenHandler",
+      "defFile": "apps/web/src/lib/sseClient.ts",
+      "topDir": "lib",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ModuleFeature",
+      "defFile": "apps/web/src/lib/tier.ts",
+      "topDir": "lib",
+      "refCount": 0,
+      "sampleRefs": []
+    }
+  ],
+  "pages": [
+    {
+      "level": "L1",
+      "name": "MessageType",
+      "defFile": "apps/web/src/pages/ai/hooks/useAiChat.ts",
+      "topDir": "pages",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SettingsTab",
+      "defFile": "apps/web/src/pages/ai/hooks/useAiModelSettings.ts",
+      "topDir": "pages",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "PreviewingFile",
+      "defFile": "apps/web/src/pages/doc/DocumentsPage/hooks/useDocumentsPage.ts",
+      "topDir": "pages",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "HazardFormData",
+      "defFile": "apps/web/src/pages/ehs/hooks/useEhsHazardDetail.ts",
+      "topDir": "pages",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SeverityChipColor",
+      "defFile": "apps/web/src/pages/mobile/hooks/useMobileQuality.ts",
+      "topDir": "pages",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "TaskAction",
+      "defFile": "apps/web/src/pages/mobile/hooks/useMobileQuality.ts",
+      "topDir": "pages",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "AuditLogFilters",
+      "defFile": "apps/web/src/pages/system/AuditLogPage/hooks/useAuditLog.ts",
+      "topDir": "pages",
+      "refCount": 0,
+      "sampleRefs": []
+    }
+  ],
+  "schema": [
+    {
+      "level": "L1",
+      "name": "CrudApiAdapterWithGet",
+      "defFile": "apps/web/src/schema/listPageCrudAdapter.ts",
+      "topDir": "schema",
+      "refCount": 0,
+      "sampleRefs": []
+    }
+  ],
+  "utils": [
+    {
+      "level": "L2",
+      "name": "FieldDefinition",
+      "defFile": "apps/web/src/utils/bff/codegen.ts",
+      "topDir": "utils",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/components/bff/index.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "FallbackAction",
+      "defFile": "apps/web/src/utils/bff/fallbackStrategy.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "BackendParamStyle",
+      "defFile": "apps/web/src/utils/listParamMapping.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "FilterGroup",
+      "defFile": "apps/web/src/utils/listParamMapping.ts",
+      "topDir": "utils",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/utils/__tests__/listParamMapping.test.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ListStateParams",
+      "defFile": "apps/web/src/utils/listParamMapping.ts",
+      "topDir": "utils",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/utils/__tests__/listParamMapping.test.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "ParamMappingOptions",
+      "defFile": "apps/web/src/utils/listParamMapping.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ShardInfo",
+      "defFile": "apps/web/src/utils/querySharding.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "StorageItem",
+      "defFile": "apps/web/src/utils/storage.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "StorageOptions",
+      "defFile": "apps/web/src/utils/storage.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L2",
+      "name": "SSRDataCollection",
+      "defFile": "apps/web/src/utils/streamingSsr.ts",
+      "topDir": "utils",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/utils/__tests__/streamingSsr.test.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "SSRDataEntry",
+      "defFile": "apps/web/src/utils/streamingSsr.ts",
+      "topDir": "utils",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/utils/__tests__/streamingSsr.test.ts"
+      ]
+    },
+    {
+      "level": "L1",
+      "name": "StreamingRenderResult",
+      "defFile": "apps/web/src/utils/streamingSsr.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "StreamingSSROptions",
+      "defFile": "apps/web/src/utils/streamingSsr.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "SpanContext",
+      "defFile": "apps/web/src/utils/tracing.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    },
+    {
+      "level": "L1",
+      "name": "ReconnectStrategyConfig",
+      "defFile": "apps/web/src/utils/websocketOptimizer.ts",
+      "topDir": "utils",
+      "refCount": 0,
+      "sampleRefs": []
+    }
+  ],
+  "ai": [
+    {
+      "level": "L2",
+      "name": "KnowledgeDocument",
+      "defFile": "apps/web/src/ai/copilot/knowledge-qa.ts",
+      "topDir": "ai",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/ai/copilot/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "QAEntry",
+      "defFile": "apps/web/src/ai/copilot/knowledge-qa.ts",
+      "topDir": "ai",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/ai/copilot/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "QAResult",
+      "defFile": "apps/web/src/ai/copilot/knowledge-qa.ts",
+      "topDir": "ai",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/ai/copilot/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "Model",
+      "defFile": "apps/web/src/ai/evolution/model-versioning.ts",
+      "topDir": "ai",
+      "refCount": 2,
+      "sampleRefs": [
+        "apps/web/src/ai/evolution/index.ts",
+        "apps/web/src/api/lims/__tests__/lims-api.test.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "ModelVersion",
+      "defFile": "apps/web/src/ai/evolution/model-versioning.ts",
+      "topDir": "ai",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/ai/evolution/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "VersionCompareResult",
+      "defFile": "apps/web/src/ai/evolution/model-versioning.ts",
+      "topDir": "ai",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/ai/evolution/index.ts"
+      ]
+    }
+  ],
+  "layouts": [
+    {
+      "level": "L2",
+      "name": "AdaptiveLayoutProps",
+      "defFile": "apps/web/src/layouts/AdaptiveLayout.tsx",
+      "topDir": "layouts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/layouts/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "GlobalLayoutV3Props",
+      "defFile": "apps/web/src/layouts/GlobalLayoutV3.tsx",
+      "topDir": "layouts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/layouts/index.ts"
+      ]
+    },
+    {
+      "level": "L2",
+      "name": "MobileLayoutV3Props",
+      "defFile": "apps/web/src/layouts/MobileLayoutV3.tsx",
+      "topDir": "layouts",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/layouts/index.ts"
+      ]
+    }
+  ],
+  "theme": [
+    {
+      "level": "L2",
+      "name": "GlowStrength",
+      "defFile": "apps/web/src/theme/effects.ts",
+      "topDir": "theme",
+      "refCount": 1,
+      "sampleRefs": [
+        "apps/web/src/utils/__tests__/effects.test.ts"
+      ]
+    }
+  ]
+}

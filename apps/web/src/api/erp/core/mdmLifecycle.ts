@@ -95,7 +95,7 @@ interface LifecycleStats {
   avg_stage_duration_days?: number;
 }
 
-export interface ArchiveStats {
+interface ArchiveStats {
   total_records: number;
   by_tier: Array<{ tier: string; count: number; size_bytes: number }>;
   restorations_last_30d?: number;

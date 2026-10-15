@@ -20,7 +20,7 @@ import type { ApiResponse } from '../client';
 export type BusinessModuleType = 'erp' | 'finance' | 'crm' | 'wms' | 'hr' | 'oa' | 'general';
 
 /** Copilot 意图类型 */
-export type CopilotIntentType =
+type CopilotIntentType =
   | 'query'
   | 'create'
   | 'update'
@@ -34,7 +34,7 @@ export type CopilotIntentType =
   | 'other';
 
 /** 工具调用状态 */
-export type ToolCallStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled';
+type ToolCallStatus = 'pending' | 'running' | 'success' | 'failed' | 'cancelled';
 
 /** 选中的记录 */
 export interface SelectedRecord {
@@ -54,7 +54,7 @@ export interface ConversationMessage {
 }
 
 /** 工具调用 */
-export interface ToolCall {
+interface ToolCall {
   call_id: string;
   tool_name: string;
   parameters: Record<string, unknown>;
@@ -63,7 +63,7 @@ export interface ToolCall {
 }
 
 /** 建议的操作 */
-export interface SuggestedAction {
+interface SuggestedAction {
   action_id: string;
   action_type: string;
   label: string;
@@ -73,7 +73,7 @@ export interface SuggestedAction {
 }
 
 /** 引用的数据 */
-export interface ReferencedData {
+interface ReferencedData {
   data_type: string;
   data_id: string;
   data_name?: string;
@@ -148,7 +148,7 @@ export interface BusinessModuleConfig {
 }
 
 /** 业务工具定义 */
-export interface BusinessToolDefinition {
+interface BusinessToolDefinition {
   tool_id: string;
   name: string;
   description: string;
@@ -159,7 +159,7 @@ export interface BusinessToolDefinition {
 }
 
 /** 工具参数 */
-export interface ToolParameter {
+interface ToolParameter {
   name: string;
   param_type: string;
   description: string;
@@ -177,7 +177,7 @@ export interface FAQItem {
 }
 
 /** 快捷操作 */
-export interface QuickActionItem {
+interface QuickActionItem {
   action_id: string;
   label: string;
   description: string;
@@ -309,7 +309,7 @@ export async function setContextData(
  * 流式发送消息（SSE）
  * 返回一个 ReadableStream，调用方需要自行处理 SSE 事件
  */
-export function streamMessage(_request: CopilotRequest): ReadableStream<Uint8Array> | null {
+function streamMessage(_request: CopilotRequest): ReadableStream<Uint8Array> | null {
   // 实际实现中使用 fetch + ReadableStream
   // 这里返回 null 作为占位，实际使用时需要根据 apiClient 的流式支持实现
   console.warn('streamMessage 需要根据 apiClient 的流式支持实现');

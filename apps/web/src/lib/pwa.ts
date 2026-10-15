@@ -17,7 +17,7 @@ window.addEventListener('appinstalled', () => {
   window.dispatchEvent(new CustomEvent('pwa-installed'));
 });
 
-export const registerSW = async (): Promise<ServiceWorkerRegistration | null> => {
+const registerSW = async (): Promise<ServiceWorkerRegistration | null> => {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
     logger.debug('Service Worker not supported');
     return null;
@@ -98,7 +98,7 @@ export const prefetchIntelligent = (): void => {
  * 预缓存微前端远程模块入口
  * 在用户认证后调用，提前缓存所有远程入口 JS 文件
  */
-export const prefetchRemoteEntries = (entryUrls: string[]): void => {
+const prefetchRemoteEntries = (entryUrls: string[]): void => {
   if (!registration?.active) return;
   // V64 防御：过滤空 entry（static 模式下所有 entry 为空），避免给 SW 发无意义消息
   const valid = entryUrls.filter((u) => typeof u === 'string' && u.trim() !== '');

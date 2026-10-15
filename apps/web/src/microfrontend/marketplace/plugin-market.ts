@@ -1448,5 +1448,5 @@ export class PluginMarket {
   }
 }
 
-export const pluginMarket = new PluginMarket();
+const pluginMarket = new PluginMarket();
 export default pluginMarket;

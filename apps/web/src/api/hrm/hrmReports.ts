@@ -8,7 +8,7 @@ interface ReportParams {
   time_range?: 'week' | 'month' | 'quarter' | 'year';
 }
 
-export interface EmployeeSummary {
+interface EmployeeSummary {
   total_count: number;
   active_count: number;
   new_hires: number;
@@ -29,7 +29,7 @@ export interface DepartmentSummary {
   headcount_change?: number;
 }
 
-export interface ContractSummary {
+interface ContractSummary {
   total_contracts: number;
   active_contracts: number;
   expiring_soon: number;
@@ -38,7 +38,7 @@ export interface ContractSummary {
   by_status: Record<string, unknown>[];
 }
 
-export interface TrainingSummary {
+interface TrainingSummary {
   total_trainings: number;
   completed_count: number;
   in_progress_count: number;
@@ -48,7 +48,7 @@ export interface TrainingSummary {
   by_type: Record<string, unknown>[];
 }
 
-export interface AttendanceSummary {
+interface AttendanceSummary {
   total_records: number;
   present_count: number;
   absent_count: number;
@@ -59,7 +59,7 @@ export interface AttendanceSummary {
   by_department: Record<string, unknown>[];
 }
 
-export interface PayrollSummary {
+interface PayrollSummary {
   total_payments: number;
   total_amount: number;
   average_amount?: number;

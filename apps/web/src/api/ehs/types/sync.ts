@@ -1,7 +1,7 @@
 import type { ListQueryParams } from './common';
 
 // ============ Data Sync Types ============
-export interface SyncErrorDetail {
+interface SyncErrorDetail {
   code?: string;
   message?: string;
   stack?: string;
@@ -47,11 +47,11 @@ export interface SyncRecordDetail {
   updated_at: string;
 }
 
-export interface SyncFilter {
+interface SyncFilter {
   [key: string]: unknown;
 }
 
-export interface SyncFieldMapping {
+interface SyncFieldMapping {
   source_field: string;
   target_field: string;
   transform?: string;

@@ -121,7 +121,7 @@ export function useIssueSalesInvoice() {
 /**
  * 取消销售发票
  */
-export function useCancelSalesInvoice() {
+function useCancelSalesInvoice() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ invoiceId, reason }: { invoiceId: string; reason: string }) =>
@@ -182,7 +182,7 @@ export function useConfirmCollection() {
 /**
  * 批量确认收款
  */
-export function useBatchConfirmCollections() {
+function useBatchConfirmCollections() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (recordIds: string[]) => crmFinanceApi.batchConfirmCollections(recordIds),
@@ -197,7 +197,7 @@ export function useBatchConfirmCollections() {
 /**
  * 客户应收账款汇总
  */
-export function useReceivableSummary(customerId?: string) {
+function useReceivableSummary(customerId?: string) {
   return useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.CRM_CUSTOMER_FINANCE_BASE, 'summary', customerId],
     queryFn: () => crmFinanceApi.getReceivableSummary(customerId),

@@ -91,7 +91,7 @@ interface DshAgentChatPanelProps {
 // 组件实现
 // ============================================================================
 
-export const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
+const DshAgentChatPanel: React.FC<DshAgentChatPanelProps> = ({
   sessionId,
   title,
   maxHeight = 600,

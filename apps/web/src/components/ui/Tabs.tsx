@@ -13,7 +13,7 @@ export interface TabItem {
   badge?: React.ReactNode;
 }
 
-export interface TabGroupProps extends Omit<BoxProps, 'onChange'> {
+interface TabGroupProps extends Omit<BoxProps, 'onChange'> {
   items: TabItem[];
   /** 当前选中 key */
   value: string;

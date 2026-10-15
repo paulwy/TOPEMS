@@ -45,7 +45,7 @@ export interface CreateChatRoomRequest {
   created_by: string;
 }
 
-export interface ProjectGroup {
+interface ProjectGroup {
   id: string;
   name: string;
   description?: string;

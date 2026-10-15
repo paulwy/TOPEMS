@@ -1,0 +1,66 @@
+{
+ "targets": {
+  "apps/web/src/api/crm/index.ts": [
+   "useCrmMockDefault"
+  ],
+  "apps/web/src/api/plugin/index.ts": [
+   "getMarketplaceSummary"
+  ],
+  "apps/web/src/api/qms/index.ts": [
+   "useQmsMockDefault"
+  ],
+  "apps/web/src/components/aps/index.ts": [
+   "StatusBadgeDefault"
+  ],
+  "apps/web/src/components/charts/index.ts": [
+   "LazyChartComponent"
+  ],
+  "apps/web/src/components/icons/index.ts": [
+   "Accessibility",
+   "BookA",
+   "BookHeadphones",
+   "BookHeart",
+   "BookKey",
+   "BookLock",
+   "BookMarked",
+   "BookOpenCheck",
+   "BookOpenText",
+   "BookX",
+   "CircleAlert",
+   "CircleCheck",
+   "CircleHelp",
+   "CircleMinus",
+   "CirclePlus",
+   "FileAudio",
+   "FileVideo",
+   "FolderCheck",
+   "FolderCode",
+   "FolderCog",
+   "FolderHeart",
+   "FolderKey",
+   "FolderLock",
+   "FolderMinus",
+   "FolderX",
+   "Minimize",
+   "Terminal",
+   "TestTube2",
+   "Touchpad",
+   "UserCog",
+   "X"
+  ],
+  "apps/web/src/components/index.ts": [
+   "BISkeleton"
+  ],
+  "apps/web/src/components/templates/index.ts": [
+   "SubTableBuilderDefault",
+   "TreeBuilderDefault",
+   "WizardBuilderDefault"
+  ],
+  "apps/web/src/utils/ai/index.ts": [
+   "uiRecommenderDefault"
+  ],
+  "apps/web/src/utils/index.ts": [
+   "lazyImportDefault"
+  ]
+ }
+}

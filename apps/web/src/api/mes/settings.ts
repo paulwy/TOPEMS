@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface MesSettingsResponse {
+interface MesSettingsResponse {
   category: string;
   settings: Record<string, string>;
 }

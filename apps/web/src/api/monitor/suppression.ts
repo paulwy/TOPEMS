@@ -24,7 +24,7 @@ interface SuppressionCreateRequest {
   enabled?: boolean;
 }
 
-export const suppressionApi = {
+const suppressionApi = {
   list: (params?: {
     enabled?: boolean;
     keyword?: string;

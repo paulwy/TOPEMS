@@ -321,7 +321,7 @@ export { useChartLinker } from './bi/ChartLinker';
 export { DrillDownPanel } from './bi/DrillDownPanel';
 export { FullscreenChart } from './bi/FullscreenChart';
 // BISkeleton 默认导出是一个对象，包含多个 skeleton 组件
-export { default as BISkeleton } from './bi/BISkeleton';
+
 export {
   MetricCardSkeleton,
   ChartCardSkeleton,

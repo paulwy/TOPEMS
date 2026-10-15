@@ -27,7 +27,7 @@ export const getRiskLabels = (_t: (key: string) => string): Record<string, strin
   medium: i18n.t('pm.project_detail.risk.medium'),
   low: i18n.t('pm.project_detail.risk.low'),
 });
-export const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
+const RISK_COLORS: Record<string, { bgcolor: string; color: string }> = {
   high: { bgcolor: 'error.lighter', color: ct.error[800] },
   medium: { bgcolor: 'warning.100', color: ct.yellow[700] },
   low: { bgcolor: 'success.lighter', color: ct.success[800] },

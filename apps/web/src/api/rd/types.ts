@@ -5,7 +5,7 @@ export interface TeamMember {
   user_id?: string;
 }
 
-export interface ProjectConfig {
+interface ProjectConfig {
   [key: string]: unknown;
 }
 

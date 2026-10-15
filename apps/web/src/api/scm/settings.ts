@@ -1,7 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-export interface ScmSettingsResponse {
+interface ScmSettingsResponse {
   category: string;
   settings: Record<string, string>;
 }

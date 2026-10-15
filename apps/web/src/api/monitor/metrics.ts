@@ -56,7 +56,7 @@ interface BusinessMetricSummary {
   top_metrics: BusinessMetric[];
 }
 
-export interface BusinessMetricKpi {
+interface BusinessMetricKpi {
   code: string;
   name: string;
   value: number;
@@ -107,7 +107,7 @@ export interface Slo {
   updated_at: string;
 }
 
-export interface SloRequest {
+interface SloRequest {
   name: string;
   description?: string | null;
   service_name: string;
@@ -167,7 +167,7 @@ export interface SloTrendPoint {
   target_value: number;
 }
 
-export interface SloQuery {
+interface SloQuery {
   service_name?: string;
   slo_type?: string;
   status?: string;
@@ -215,7 +215,7 @@ export interface AlertRuleCreateRequest {
 
 // ==================== API 方法 ====================
 
-export const metricsApi = {
+const metricsApi = {
   // 业务指标
   listBusinessMetrics: (
     params?: BusinessMetricQuery

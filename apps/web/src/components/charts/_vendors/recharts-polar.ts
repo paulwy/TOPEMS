@@ -21,5 +21,3 @@ export { ResponsiveContainer } from 'recharts/es6/component/ResponsiveContainer.
 export { Legend } from 'recharts/es6/component/Legend.js';
 export { Cell } from 'recharts/es6/component/Cell.js';
 export { Label } from 'recharts/es6/component/Label.js';
-export { LabelList } from 'recharts/es6/component/LabelList.js';
-export { Customized } from 'recharts/es6/component/Customized.js';

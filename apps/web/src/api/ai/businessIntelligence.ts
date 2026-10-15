@@ -17,7 +17,7 @@ import type { ApiResponse } from '../client';
 // ============================================================================
 
 /** 表单字段类型 */
-export type FormFieldType =
+type FormFieldType =
   | 'text'
   | 'textarea'
   | 'number'
@@ -95,7 +95,7 @@ export interface FormData {
 }
 
 /** 字段错误 */
-export interface FieldError {
+interface FieldError {
   code: string;
   message: string;
   severity: 'error' | 'warning' | 'info';

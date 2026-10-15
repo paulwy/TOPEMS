@@ -437,7 +437,7 @@ export default reportApi;
 // 向后兼容：从 @/api/bi 迁移的函数别名
 export const fetchReports = (_params?: { page?: number; pageSize?: number }) =>
   reportApi.listReports();
-export const fetchReport = (id: string) => reportApi.getReport(id);
+const fetchReport = (id: string) => reportApi.getReport(id);
 export const createReport = (data: unknown) => reportApi.createReport(data as CreateReportRequest);
 export const updateReport = (id: string, data: unknown) =>
   reportApi.updateReport(id, data as Partial<ReportConfig>);
@@ -450,8 +450,8 @@ export const createSchedule = (data: unknown) =>
 export const updateSchedule = (id: string, data: unknown) =>
   reportApi.updateSchedule(id, data as UpdateScheduleRequest);
 export const deleteSchedule = (id: string) => reportApi.deleteSchedule(id);
-export const runSchedule = (id: string) => reportApi.executeSchedule(id);
-export const toggleSchedule = (id: string, _enabled: boolean) => reportApi.executeSchedule(id);
+const runSchedule = (id: string) => reportApi.executeSchedule(id);
+const toggleSchedule = (id: string, _enabled: boolean) => reportApi.executeSchedule(id);
 
 export const reportCrudApi = {
   list: fetchReports,

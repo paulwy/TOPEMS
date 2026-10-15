@@ -187,7 +187,7 @@ export function useEdgeCache<T = unknown>(
   return { data, loading, error, refresh, invalidate, isStale };
 }
 
-export interface UseOptimalEndpointResult {
+interface UseOptimalEndpointResult {
   endpoint: EdgeEndpoint | null;
   endpoints: EdgeEndpoint[];
   healthyEndpoints: EdgeEndpoint[];
@@ -195,7 +195,7 @@ export interface UseOptimalEndpointResult {
   checkHealth: (endpointId: string) => Promise<boolean>;
 }
 
-export function useOptimalEndpoint(region?: string): UseOptimalEndpointResult {
+function useOptimalEndpoint(region?: string): UseOptimalEndpointResult {
   const [endpoints, setEndpoints] = useState<EdgeEndpoint[]>(() =>
     edgeComputeManager.getAllEndpoints()
   );
@@ -231,7 +231,7 @@ export function useOptimalEndpoint(region?: string): UseOptimalEndpointResult {
   return { endpoint, endpoints, healthyEndpoints, selectEndpoint, checkHealth };
 }
 
-export function useEdgeComputeConfig(): {
+function useEdgeComputeConfig(): {
   config: EdgeComputeConfig;
   updateConfig: (config: Partial<EdgeComputeConfig>) => void;
 } {

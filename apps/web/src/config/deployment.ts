@@ -23,7 +23,7 @@ interface FeatureFlags {
   pluginServiceEnabled: boolean;
 }
 
-export interface DeploymentConfig {
+interface DeploymentConfig {
   /** 部署模式 */
   mode: DeploymentMode;
   /** 多租户开关 */

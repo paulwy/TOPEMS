@@ -10,7 +10,7 @@
  * - offset : 用 offset/limit 代替 page/page_size
  */
 
-export type BackendParamStyle = 'standard' | 'nested' | 'offset';
+type BackendParamStyle = 'standard' | 'nested' | 'offset';
 
 export interface ListStateParams {
   search: string;
@@ -21,7 +21,7 @@ export interface ListStateParams {
   filters: Record<string, unknown>;
 }
 
-export interface ParamMappingOptions {
+interface ParamMappingOptions {
   /** 后端参数风格，默认 'standard' */
   style?: BackendParamStyle;
   /** 搜索参数名，默认 'keyword' */

@@ -6,7 +6,7 @@
 
 import config from '../config/runtime';
 
-export interface SpanContext {
+interface SpanContext {
   traceId: string;
   spanId: string;
   traceFlags: number;

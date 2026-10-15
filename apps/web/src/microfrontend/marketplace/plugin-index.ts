@@ -1,6 +1,5 @@
 export {
   PluginMarket,
-  pluginMarket,
   PluginCategory,
   type Plugin,
   type PluginVersion,

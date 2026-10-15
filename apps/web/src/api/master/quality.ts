@@ -100,7 +100,7 @@ export interface CreateQualityRuleRequest {
   parameters?: Record<string, unknown>;
 }
 
-export interface UpdateQualityRuleRequest {
+interface UpdateQualityRuleRequest {
   name?: string;
   rule_type?: string;
   severity?: string;

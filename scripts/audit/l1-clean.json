@@ -1,0 +1,31 @@
+{
+  "total_exports": 9,
+  "total_files": 8,
+  "targets": {
+    "apps/web/src/pages/shared/ProfilePage/components/ProfileTabBar.tsx": [
+      "TabBar"
+    ],
+    "apps/web/src/schemas/iam/role.ts": [
+      "roleSchema"
+    ],
+    "apps/web/src/schemas/iam/user.ts": [
+      "userSchema"
+    ],
+    "apps/web/src/schemas/workflow/approval.ts": [
+      "workflowApprovalSchema"
+    ],
+    "apps/web/src/shims/use-sync-external-store-shim.ts": [
+      "useSyncExternalStore"
+    ],
+    "apps/web/src/utils/bff/abTesting.ts": [
+      "twoProportionZTest"
+    ],
+    "apps/web/src/utils/graphqlPerformance.ts": [
+      "calculatePercentile"
+    ],
+    "apps/web/src/utils/telemetry.ts": [
+      "traceSync",
+      "measurePerformance"
+    ]
+  }
+}

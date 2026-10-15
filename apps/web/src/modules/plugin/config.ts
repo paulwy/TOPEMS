@@ -139,7 +139,7 @@ export const pluginNavConfig: ModuleNavConfig = {
       labelKey: 'plugin.nav.plugin-marketplace',
       icon: 'ShoppingCart',
       path: PLUGIN_PATHS.marketplace,
-      permission: '',
+      permission: 'plugin:marketplace:read',
       order: 1,
       group: 'setting',
       showInTabs: true,

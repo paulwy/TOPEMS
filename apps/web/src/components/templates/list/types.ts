@@ -1074,7 +1074,7 @@ interface CrudFormFieldRule {
 }
 
 /** 列表页内部状态参数（用于 transformParams 的输入） */
-export interface ListPageStateParams {
+interface ListPageStateParams {
   search: string;
   sortBy: string;
   sortOrder: 'asc' | 'desc';

@@ -168,7 +168,7 @@ export interface DevPlatformStats {
   totalModules: number;
 }
 
-export type PlatformChangeListener = (stats: DevPlatformStats) => void;
+type PlatformChangeListener = (stats: DevPlatformStats) => void;
 
 const DEFAULT_STACKS: Record<string, TechStack> = {
   'react-mui': {

@@ -77,7 +77,7 @@ interface UserPermissions {
   roles: Array<{ id: string; name: string }>;
 }
 
-export interface ComplianceAudit {
+interface ComplianceAudit {
   entity_type: string;
   entity_id: string;
   total_changes: number;

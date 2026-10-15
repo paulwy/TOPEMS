@@ -195,7 +195,7 @@ export function useTrackConversion(experimentId: string): UseTrackConversionResu
 // ==================== useExperimentResult ====================
 
 /** useExperimentResult 返回值 */
-export interface UseExperimentResultResult {
+interface UseExperimentResultResult {
   /** 实验结果 */
   result: ExperimentResult | null;
   /** 是否统计显著 */
@@ -260,7 +260,7 @@ export function useExperimentResult(experimentId: string): UseExperimentResultRe
 // ==================== useActiveExperiments ====================
 
 /** useActiveExperiments 返回值 */
-export interface UseActiveExperimentsResult {
+interface UseActiveExperimentsResult {
   /** 活跃实验列表（Running 状态） */
   experiments: Experiment[];
   /** 所有实验列表（含草稿/已完成） */
@@ -328,7 +328,7 @@ export interface CreateExperimentInput {
 }
 
 /** useExperimentAdmin 返回值 */
-export interface UseExperimentAdminResult {
+interface UseExperimentAdminResult {
   /** 创建实验 */
   createExperiment: (input: CreateExperimentInput) => Experiment;
   /** 启动实验 */

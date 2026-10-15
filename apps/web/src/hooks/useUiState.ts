@@ -13,7 +13,7 @@ export type SortOrder = 'asc' | 'desc' | undefined;
 /**
  * 加载状态管理
  */
-export function useLoading(initialState: boolean = false) {
+function useLoading(initialState: boolean = false) {
   const [loading, setLoading] = useState(initialState);
 
   const startLoading = useCallback(() => {

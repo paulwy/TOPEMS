@@ -188,7 +188,7 @@ export interface UseBffSuspenseInfiniteOptions<T = unknown> {
 }
 
 /** useBffSuspenseInfinite 返回值 */
-export interface UseBffSuspenseInfiniteResult<T = unknown> {
+interface UseBffSuspenseInfiniteResult<T = unknown> {
   /** 分页数据 */
   data: InfiniteData<T, BffInfiniteCursor>;
   /** 是否正在后台获取下一页 */
@@ -454,7 +454,7 @@ interface BffErrorBoundaryState {
 }
 
 /** BffSuspenseBoundary Props */
-export interface BffSuspenseBoundaryProps {
+interface BffSuspenseBoundaryProps {
   children: ReactNode;
   /** 加载回退，默认 <BffLoadingFallback /> */
   fallback?: ReactNode;
@@ -566,9 +566,11 @@ class BffErrorBoundaryInner extends Component<
  * </BffSuspenseBoundary>
  * ```
  */
-export const BffSuspenseBoundary: React.FC<
-  BffSuspenseBoundaryProps & { resetKey?: string | number }
-> = ({ resetKey, children, ...rest }) => {
+const BffSuspenseBoundary: React.FC<BffSuspenseBoundaryProps & { resetKey?: string | number }> = ({
+  resetKey,
+  children,
+  ...rest
+}) => {
   const [boundaryKey, setBoundaryKey] = useState(0);
   const lastResetKey = useRef(resetKey);
 
@@ -593,7 +595,7 @@ export const BffSuspenseBoundary: React.FC<
 // ==================== Suspense 使用统计追踪 ====================
 
 /** Suspense 挂载记录 */
-export interface SuspenseMountRecord {
+interface SuspenseMountRecord {
   name: string;
   mountedAt: number;
   duration: number | null;
@@ -619,7 +621,7 @@ function notifySuspenseStatsListeners(): void {
  * @param name Suspense 边界名称
  * @param duration 持续时间（毫秒），null 表示尚未结束
  */
-export function recordSuspenseMount(name: string, duration: number | null = null): void {
+function recordSuspenseMount(name: string, duration: number | null = null): void {
   suspenseMounts.unshift({ name, mountedAt: Date.now(), duration });
   if (suspenseMounts.length > MAX_SUSPENSE_RECORDS) {
     suspenseMounts.pop();
@@ -630,7 +632,7 @@ export function recordSuspenseMount(name: string, duration: number | null = null
 /**
  * 获取 Suspense 使用统计
  */
-export function getSuspenseStats(): {
+function getSuspenseStats(): {
   records: SuspenseMountRecord[];
   totalMounts: number;
   uniqueBoundaries: number;
@@ -654,7 +656,7 @@ export function getSuspenseStats(): {
  * 订阅 Suspense 统计变化
  * @returns 取消订阅函数
  */
-export function onSuspenseStatsChange(callback: () => void): () => void {
+function onSuspenseStatsChange(callback: () => void): () => void {
   suspenseStatsListeners.add(callback);
   return () => {
     suspenseStatsListeners.delete(callback);
@@ -676,7 +678,7 @@ export function onSuspenseStatsChange(callback: () => void): () => void {
  * }
  * ```
  */
-export function useSuspensePerfTracker(name: string): void {
+function useSuspensePerfTracker(name: string): void {
   const startTime = useRef<number>(Date.now());
 
   useEffect(() => {

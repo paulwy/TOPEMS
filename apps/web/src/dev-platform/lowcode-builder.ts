@@ -49,7 +49,7 @@ export type ComponentType =
   | 'custom';
 
 export type DataSourceType = 'rest' | 'graphql' | 'websocket' | 'static' | 'database';
-export type FlowNodeType = 'trigger' | 'action' | 'condition' | 'loop' | 'transform' | 'output';
+type FlowNodeType = 'trigger' | 'action' | 'condition' | 'loop' | 'transform' | 'output';
 type FlowEdgeType = 'default' | 'true' | 'false' | 'error';
 type CanvasStatus = 'draft' | 'preview' | 'published' | 'archived';
 type PublishStatus = 'idle' | 'publishing' | 'success' | 'failed';
@@ -178,7 +178,7 @@ interface FlowDefinition {
   updated_at: number;
 }
 
-export interface FlowNode {
+interface FlowNode {
   id: string;
   type: FlowNodeType;
   label: string;
@@ -240,7 +240,7 @@ interface PublishRecord {
   error?: string;
 }
 
-export type BuilderChangeListener = (pages: CanvasPage[]) => void;
+type BuilderChangeListener = (pages: CanvasPage[]) => void;
 
 function getDefaultThemeConfig(): ThemeConfig {
   return {

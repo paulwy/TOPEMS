@@ -1,6 +1,6 @@
 import { isDevelopment } from './runtime';
 
-export interface SecurityConfig {
+interface SecurityConfig {
   csp: CspConfig;
   xFrameOptions: string;
   xXssProtection: string;
@@ -23,7 +23,7 @@ interface CspConfig {
 
 const isDev = isDevelopment();
 
-export const securityConfig: SecurityConfig = {
+const securityConfig: SecurityConfig = {
   xFrameOptions: 'DENY',
   xXssProtection: '1; mode=block',
 

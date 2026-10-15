@@ -64,7 +64,7 @@ export interface FlowTrendData {
   outbound_count: number;
 }
 
-export interface FlowTrendSummary {
+interface FlowTrendSummary {
   total_inbound_qty: number;
   total_outbound_qty: number;
   total_inbound_count: number;
@@ -72,7 +72,7 @@ export interface FlowTrendSummary {
   period_count: number;
 }
 
-export interface FlowTrendResponse {
+interface FlowTrendResponse {
   data: FlowTrendData[];
   summary: FlowTrendSummary;
 }
@@ -87,7 +87,7 @@ export interface AbcAnalysisData {
   count_percentage: number;
 }
 
-export interface AbcAnalysisResponse {
+interface AbcAnalysisResponse {
   data: AbcAnalysisData[];
   total_materials: number;
   total_value: number;
@@ -102,7 +102,7 @@ export interface AgeParetoData {
   cumulative_percentage: number;
 }
 
-export interface AgeParetoResponse {
+interface AgeParetoResponse {
   data: AgeParetoData[];
   total_materials: number;
   total_value: number;
@@ -120,7 +120,7 @@ export interface LocationUtilizationData {
   dead_stock_locations: number;
 }
 
-export interface LocationUtilizationResponse {
+interface LocationUtilizationResponse {
   data: LocationUtilizationData[];
   total_locations: number;
   used_locations: number;
@@ -191,7 +191,7 @@ export async function getLocationUtilization(
 
 // ===== Dashboard 汇总 =====
 
-export interface WmsDashboardSummary {
+interface WmsDashboardSummary {
   warehouse_count: number;
   inventory_total: number;
   inventory_sku_count: number;
@@ -212,20 +212,20 @@ export async function getDashboardSummary(): Promise<ApiResponse<WmsDashboardSum
 
 // ===== Dashboard 图表数据 =====
 
-export interface InventoryDistributionItem {
+interface InventoryDistributionItem {
   warehouse_id: string;
   warehouse_name: string;
   quantity: number;
   sku_count: number;
 }
 
-export interface InventoryTypeItem {
+interface InventoryTypeItem {
   material_type: string;
   quantity: number;
   percentage: number;
 }
 
-export interface DailyTrendItem {
+interface DailyTrendItem {
   date: string;
   inbound: number;
   outbound: number;

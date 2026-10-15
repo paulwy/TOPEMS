@@ -268,7 +268,7 @@ export async function traceAsync<T>(
   }
 }
 
-export function traceSync<T>(name: string, fn: () => T, attributes?: Record<string, unknown>): T {
+function traceSync<T>(name: string, fn: () => T, attributes?: Record<string, unknown>): T {
   const span = startSpan(name, attributes);
 
   try {
@@ -315,7 +315,7 @@ export function getPerformanceMetrics(): PerformanceMetrics | null {
   };
 }
 
-export function measurePerformance<T>(name: string, fn: () => T): T {
+function measurePerformance<T>(name: string, fn: () => T): T {
   const start = performance.now();
   try {
     const result = fn();

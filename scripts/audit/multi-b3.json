@@ -1,0 +1,401 @@
+{
+  "targets": {
+    "apps/web/src/components/templates/classification.ts": [
+      "getHighFrequencyTemplates",
+      "recommendTemplate"
+    ],
+    "apps/web/src/components/templates/index.ts": [
+      "getHighFrequencyTemplates",
+      "recommendTemplate"
+    ],
+    "apps/web/src/components/templates/dashboard/CardGroupComponent.tsx": [
+      "CardGroupComponent"
+    ],
+    "apps/web/src/components/templates/dashboard/index.ts": [
+      "CardGroupComponent",
+      "ChartCardComponent"
+    ],
+    "apps/web/src/components/templates/dashboard/ChartCardComponent.tsx": [
+      "ChartCardComponent"
+    ],
+    "apps/web/src/debug/DebugOverlay.tsx": [
+      "DebugOverlay"
+    ],
+    "apps/web/src/debug/index.ts": [
+      "DebugOverlay"
+    ],
+    "apps/web/src/fullstack-automation/auto-rollback.ts": [
+      "AutoRollback"
+    ],
+    "apps/web/src/fullstack-automation/index.ts": [
+      "AutoRollback",
+      "CICDPipeline"
+    ],
+    "apps/web/src/fullstack-automation/ci-cd-pipeline.ts": [
+      "CICDPipeline"
+    ],
+    "apps/web/src/hooks/bff/index.ts": [
+      "useBffError",
+      "useBffRetry",
+      "useBffSubscription",
+      "useEdgeCompute",
+      "useEdgeCache",
+      "useQueryCost",
+      "useSlowQueryAlert",
+      "useSmartPrefetch",
+      "useExperiment",
+      "useTrackConversion",
+      "useIsrCache",
+      "useRevalidate",
+      "useBffSuspenseQuery",
+      "useBffSuspenseInfinite",
+      "registerRouteShell",
+      "unregisterRouteShell",
+      "DeferredData",
+      "createDeferred"
+    ],
+    "apps/web/src/hooks/bff/useBffErrorHandling.ts": [
+      "useBffError",
+      "useBffRetry"
+    ],
+    "apps/web/src/hooks/bff/useBffSubscription.ts": [
+      "useBffSubscription"
+    ],
+    "apps/web/src/hooks/bff/useEdgeCompute.ts": [
+      "useEdgeCompute",
+      "useEdgeCache"
+    ],
+    "apps/web/src/hooks/bff/useQueryCost.ts": [
+      "useQueryCost"
+    ],
+    "apps/web/src/hooks/bff/useSlowQueryAlert.ts": [
+      "useSlowQueryAlert"
+    ],
+    "apps/web/src/hooks/bff/useSmartPrefetch.ts": [
+      "useSmartPrefetch"
+    ],
+    "apps/web/src/hooks/bff/useABTest.ts": [
+      "useExperiment",
+      "useTrackConversion"
+    ],
+    "apps/web/src/hooks/bff/useIsr.ts": [
+      "useIsrCache",
+      "useRevalidate"
+    ],
+    "apps/web/src/hooks/bff/useBffSuspense.tsx": [
+      "useBffSuspenseQuery",
+      "useBffSuspenseInfinite"
+    ],
+    "apps/web/src/hooks/bff/usePartialPreRender.tsx": [
+      "registerRouteShell",
+      "unregisterRouteShell"
+    ],
+    "apps/web/src/hooks/bff/useRouteDataLoader.ts": [
+      "DeferredData",
+      "createDeferred"
+    ],
+    "apps/web/src/hooks/domain/index.ts": [
+      "useModuleQueries"
+    ],
+    "apps/web/src/hooks/useCrudQueries.ts": [
+      "useModuleQueries"
+    ],
+    "apps/web/src/hooks/features/ai/index.ts": [
+      "useDshAgent"
+    ],
+    "apps/web/src/hooks/features/ai/useDshAgent.ts": [
+      "useDshAgent"
+    ],
+    "apps/web/src/hooks/features/auth/index.ts": [
+      "useOrganization"
+    ],
+    "apps/web/src/hooks/useOrganization.ts": [
+      "useOrganization"
+    ],
+    "apps/web/src/hooks/features/finance/index.ts": [
+      "useErpConnections",
+      "useEmployeeFinanceInfo",
+      "useUpdateEmployeeFinanceInfo"
+    ],
+    "apps/web/src/hooks/useExternalErp.ts": [
+      "useErpConnections"
+    ],
+    "apps/web/src/hooks/useHrmFinance.ts": [
+      "useEmployeeFinanceInfo",
+      "useUpdateEmployeeFinanceInfo"
+    ],
+    "apps/web/src/hooks/features/websocket/index.ts": [
+      "useWebSocketSubscription",
+      "useWebSocketConnection",
+      "useWebSocketNotifications",
+      "useWebSocketNotificationChannel",
+      "useWebSocketAlertChannel"
+    ],
+    "apps/web/src/hooks/useWebSocket.ts": [
+      "useWebSocketSubscription",
+      "useWebSocketConnection"
+    ],
+    "apps/web/src/hooks/useWebSocketNotifications.ts": [
+      "useWebSocketNotifications",
+      "useWebSocketNotificationChannel",
+      "useWebSocketAlertChannel"
+    ],
+    "apps/web/src/hooks/foundation/index.ts": [
+      "useSwipeGesture"
+    ],
+    "apps/web/src/hooks/useTouchFeedback.ts": [
+      "useSwipeGesture"
+    ],
+    "apps/web/src/hooks/ui/index.ts": [
+      "useWindowManager"
+    ],
+    "apps/web/src/hooks/useWindowManager.ts": [
+      "useWindowManager"
+    ],
+    "apps/web/src/microfrontend/ai-ops/anomaly-detector.ts": [
+      "StatisticalAnalyzer",
+      "AnomalyDetector"
+    ],
+    "apps/web/src/microfrontend/ai-ops/index.ts": [
+      "StatisticalAnalyzer",
+      "AnomalyDetector",
+      "AutoScaler"
+    ],
+    "apps/web/src/microfrontend/index.ts": [
+      "StatisticalAnalyzer",
+      "AnomalyDetector",
+      "AutoScaler",
+      "SimplePredictor",
+      "MetricPredictor",
+      "SmartAlertManager",
+      "CodeCompletion",
+      "codeCompletion",
+      "PerformanceAnalyzer",
+      "SmartDebugger",
+      "DependencyGovernor"
+    ],
+    "apps/web/src/microfrontend/ai-ops/auto-scaler.ts": [
+      "AutoScaler"
+    ],
+    "apps/web/src/microfrontend/ai-ops/predictor.ts": [
+      "SimplePredictor",
+      "MetricPredictor"
+    ],
+    "apps/web/src/microfrontend/ai-ops/smart-alerting.ts": [
+      "SmartAlertManager"
+    ],
+    "apps/web/src/microfrontend/devex/code-completion.ts": [
+      "CodeCompletion",
+      "codeCompletion"
+    ],
+    "apps/web/src/microfrontend/devex/index.ts": [
+      "CodeCompletion",
+      "codeCompletion"
+    ],
+    "apps/web/src/microfrontend/devex/performance-analyzer.ts": [
+      "PerformanceAnalyzer"
+    ],
+    "apps/web/src/microfrontend/devex/smart-debugger.ts": [
+      "SmartDebugger"
+    ],
+    "apps/web/src/microfrontend/governance/dependency-governor.ts": [
+      "DependencyGovernor"
+    ],
+    "apps/web/src/microfrontend/governance/index.ts": [
+      "DependencyGovernor"
+    ],
+    "apps/web/src/microfrontend/marketplace/index.ts": [
+      "ModuleMarket"
+    ],
+    "apps/web/src/microfrontend/marketplace/module-market.ts": [
+      "ModuleMarket"
+    ],
+    "apps/web/src/microfrontend/runtime/cross-framework.ts": [
+      "ReactAdapter",
+      "VueAdapter",
+      "AngularAdapter",
+      "SvelteAdapter",
+      "CrossFrameworkBridge"
+    ],
+    "apps/web/src/microfrontend/runtime/index.ts": [
+      "ReactAdapter",
+      "VueAdapter",
+      "AngularAdapter",
+      "SvelteAdapter",
+      "CrossFrameworkBridge",
+      "DESIGN_SYSTEM_EVENTS",
+      "PRESET_TOKENS",
+      "LIGHT_THEME",
+      "DARK_THEME",
+      "DesignSystemManager",
+      "DynamicModuleLoader",
+      "ModuleLifecycle"
+    ],
+    "apps/web/src/microfrontend/runtime/design-system.ts": [
+      "DESIGN_SYSTEM_EVENTS",
+      "PRESET_TOKENS",
+      "LIGHT_THEME",
+      "DARK_THEME",
+      "DesignSystemManager"
+    ],
+    "apps/web/src/microfrontend/runtime/dynamic-loader.ts": [
+      "DynamicModuleLoader"
+    ],
+    "apps/web/src/microfrontend/runtime/module-lifecycle.ts": [
+      "ModuleLifecycle"
+    ],
+    "apps/web/src/microfrontend/security/csp-manager.ts": [
+      "CSPStrategy",
+      "CSPManager",
+      "cspManager"
+    ],
+    "apps/web/src/microfrontend/security/index.ts": [
+      "CSPStrategy",
+      "CSPManager",
+      "cspManager",
+      "SecurityScanner",
+      "SecurityIssueType"
+    ],
+    "apps/web/src/microfrontend/security/security-scanner.ts": [
+      "SecurityScanner",
+      "SecurityIssueType"
+    ],
+    "apps/web/src/microfrontend/serverless/edge-renderer.ts": [
+      "EdgeRenderer"
+    ],
+    "apps/web/src/microfrontend/serverless/index.ts": [
+      "EdgeRenderer",
+      "FunctionAsModule",
+      "OnDemandLoader"
+    ],
+    "apps/web/src/microfrontend/serverless/function-as-module.ts": [
+      "FunctionAsModule"
+    ],
+    "apps/web/src/microfrontend/serverless/on-demand-loader.ts": [
+      "OnDemandLoader"
+    ],
+    "apps/web/src/schema/adapterFactory.ts": [
+      "createCrudApiAdapter"
+    ],
+    "apps/web/src/schema/index.ts": [
+      "createCrudApiAdapter"
+    ],
+    "apps/web/src/schemas/admin/index.ts": [
+      "tenantSchema"
+    ],
+    "apps/web/src/schemas/admin/tenant.ts": [
+      "tenantSchema"
+    ],
+    "apps/web/src/schemas/erp/purchaseOrder.ts": [
+      "purchaseOrderSchema"
+    ],
+    "apps/web/src/schemas/scm/purchaseOrder.ts": [
+      "purchaseOrderSchema"
+    ],
+    "apps/web/src/schemas/hrm/department.ts": [
+      "getStatusOptions"
+    ],
+    "apps/web/src/schemas/hrm/employee.ts": [
+      "getStatusOptions"
+    ],
+    "apps/web/src/schemas/qms/apqp.ts": [
+      "apqpWizard"
+    ],
+    "apps/web/src/schemas/qms/index.ts": [
+      "apqpWizard"
+    ],
+    "apps/web/src/utils/ai/index.ts": [
+      "UIRecommender",
+      "uiRecommender",
+      "UILibrary",
+      "ResponsiveStrategy"
+    ],
+    "apps/web/src/utils/ai/uiRecommender.ts": [
+      "UIRecommender",
+      "uiRecommender",
+      "UILibrary",
+      "ResponsiveStrategy"
+    ]
+  },
+  "names": [
+    "getHighFrequencyTemplates",
+    "recommendTemplate",
+    "CardGroupComponent",
+    "ChartCardComponent",
+    "DebugOverlay",
+    "AutoRollback",
+    "CICDPipeline",
+    "useBffError",
+    "useBffRetry",
+    "useBffSubscription",
+    "useEdgeCompute",
+    "useEdgeCache",
+    "useQueryCost",
+    "useSlowQueryAlert",
+    "useSmartPrefetch",
+    "useExperiment",
+    "useTrackConversion",
+    "useIsrCache",
+    "useRevalidate",
+    "useBffSuspenseQuery",
+    "useBffSuspenseInfinite",
+    "registerRouteShell",
+    "unregisterRouteShell",
+    "DeferredData",
+    "createDeferred",
+    "useModuleQueries",
+    "useDshAgent",
+    "useOrganization",
+    "useErpConnections",
+    "useEmployeeFinanceInfo",
+    "useUpdateEmployeeFinanceInfo",
+    "useWebSocketSubscription",
+    "useWebSocketConnection",
+    "useWebSocketNotifications",
+    "useWebSocketNotificationChannel",
+    "useWebSocketAlertChannel",
+    "useSwipeGesture",
+    "useWindowManager",
+    "StatisticalAnalyzer",
+    "AnomalyDetector",
+    "AutoScaler",
+    "SimplePredictor",
+    "MetricPredictor",
+    "SmartAlertManager",
+    "CodeCompletion",
+    "codeCompletion",
+    "PerformanceAnalyzer",
+    "SmartDebugger",
+    "DependencyGovernor",
+    "ModuleMarket",
+    "ReactAdapter",
+    "VueAdapter",
+    "AngularAdapter",
+    "SvelteAdapter",
+    "CrossFrameworkBridge",
+    "DESIGN_SYSTEM_EVENTS",
+    "PRESET_TOKENS",
+    "LIGHT_THEME",
+    "DARK_THEME",
+    "DesignSystemManager",
+    "DynamicModuleLoader",
+    "ModuleLifecycle",
+    "CSPStrategy",
+    "CSPManager",
+    "cspManager",
+    "SecurityScanner",
+    "SecurityIssueType",
+    "EdgeRenderer",
+    "FunctionAsModule",
+    "OnDemandLoader",
+    "createCrudApiAdapter",
+    "tenantSchema",
+    "purchaseOrderSchema",
+    "getStatusOptions",
+    "apqpWizard",
+    "UIRecommender",
+    "uiRecommender",
+    "UILibrary",
+    "ResponsiveStrategy"
+  ]
+}

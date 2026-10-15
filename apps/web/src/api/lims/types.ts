@@ -378,7 +378,7 @@ export interface PrintBarcodeRequest {
   template?: string;
 }
 
-export interface ScanBarcodeResult {
+interface ScanBarcodeResult {
   barcode: string;
   sample?: Sample;
   lifecycle_events?: LifecycleEvent[];

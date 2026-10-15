@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 
-export interface UseInlineEditOptions<T> {
+interface UseInlineEditOptions<T> {
   /** 受控编辑行 id（未传则内部状态） */
   editingRowIdProp?: string | number | null;
   /** 编辑行 id 变化回调（受控模式） */

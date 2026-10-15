@@ -1,0 +1,272 @@
+{
+  "targets": {
+    "apps/web/src/components/bff/index.ts": [
+      "buildQueryName",
+      "buildMutationName",
+      "generateEntityQueries",
+      "generateTypeScriptTypes",
+      "generateReactQueryHooks",
+      "generateListPageTemplate",
+      "SmartShardingDecider",
+      "ProgressiveLoader",
+      "FallbackManager",
+      "GraphqlToRestFallback",
+      "CacheFallback",
+      "UIFallback",
+      "OfflineFallback",
+      "ABTestEngine",
+      "fnv1aHash"
+    ],
+    "apps/web/src/utils/bff/codegen.ts": [
+      "buildQueryName",
+      "buildMutationName",
+      "generateEntityQueries",
+      "generateTypeScriptTypes",
+      "generateReactQueryHooks",
+      "generateListPageTemplate"
+    ],
+    "apps/web/src/utils/bff/autoShardingV2.ts": [
+      "SmartShardingDecider",
+      "ProgressiveLoader"
+    ],
+    "apps/web/src/utils/bff/fallbackStrategy.ts": [
+      "FallbackManager",
+      "GraphqlToRestFallback",
+      "CacheFallback",
+      "UIFallback",
+      "OfflineFallback"
+    ],
+    "apps/web/src/utils/bff/abTesting.ts": [
+      "ABTestEngine",
+      "fnv1aHash"
+    ],
+    "apps/web/src/components/bi/BISkeleton.tsx": [
+      "MetricCardSkeleton",
+      "ChartCardSkeleton",
+      "ModuleCardSkeleton",
+      "VisualizationCardSkeleton",
+      "ActivityItemSkeleton",
+      "TableSkeleton",
+      "DashboardSkeleton",
+      "AnalyticsSkeleton",
+      "VisualizationSkeleton"
+    ],
+    "apps/web/src/components/index.ts": [
+      "MetricCardSkeleton",
+      "ChartCardSkeleton",
+      "ModuleCardSkeleton",
+      "VisualizationCardSkeleton",
+      "ActivityItemSkeleton",
+      "TableSkeleton",
+      "DashboardSkeleton",
+      "AnalyticsSkeleton",
+      "VisualizationSkeleton",
+      "ChartAnnotations",
+      "ChartExport",
+      "ChartLinkerProvider",
+      "useChartLinker",
+      "DrillDownPanel",
+      "FullscreenChart"
+    ],
+    "apps/web/src/components/bi/ChartAnnotations.tsx": [
+      "ChartAnnotations"
+    ],
+    "apps/web/src/components/bi/ChartExport.tsx": [
+      "ChartExport"
+    ],
+    "apps/web/src/components/bi/ChartLinker.tsx": [
+      "ChartLinkerProvider",
+      "useChartLinker"
+    ],
+    "apps/web/src/components/bi/DrillDownPanel.tsx": [
+      "DrillDownPanel"
+    ],
+    "apps/web/src/components/bi/FullscreenChart.tsx": [
+      "FullscreenChart"
+    ],
+    "apps/web/src/components/charts/CustomTooltip.tsx": [
+      "formatWithUnit"
+    ],
+    "apps/web/src/components/charts/index.ts": [
+      "formatWithUnit",
+      "getContrastingColor",
+      "createGradientId"
+    ],
+    "apps/web/src/components/charts/chartTheme.ts": [
+      "getContrastingColor",
+      "createGradientId"
+    ],
+    "apps/web/src/components/dashboard/DashboardHeader.tsx": [
+      "DashboardHeader"
+    ],
+    "apps/web/src/components/dashboard/index.ts": [
+      "DashboardHeader",
+      "defaultQuickActions",
+      "MODULE_SECTIONS",
+      "DashboardSection",
+      "TodayOverviewSection",
+      "QuickAccessSection",
+      "TodoListSection",
+      "ModuleNavigationSection",
+      "ServiceMonitorSection",
+      "RecentActivitySection",
+      "HeroSection",
+      "MobileMenu",
+      "ModuleCardV2",
+      "CARD_STYLE",
+      "ICON_WRAPPER_STYLE",
+      "ModuleStatsCard",
+      "ServiceStatusMonitor"
+    ],
+    "apps/web/src/components/dashboard/DashboardQuickActions.tsx": [
+      "defaultQuickActions"
+    ],
+    "apps/web/src/components/dashboard/DashboardSections.tsx": [
+      "MODULE_SECTIONS",
+      "DashboardSection",
+      "TodayOverviewSection",
+      "QuickAccessSection",
+      "TodoListSection",
+      "ModuleNavigationSection",
+      "ServiceMonitorSection",
+      "RecentActivitySection"
+    ],
+    "apps/web/src/components/dashboard/HeroSection.tsx": [
+      "HeroSection"
+    ],
+    "apps/web/src/components/dashboard/MobileMenu.tsx": [
+      "MobileMenu"
+    ],
+    "apps/web/src/components/dashboard/ModuleCard.tsx": [
+      "ModuleCardV2",
+      "CARD_STYLE",
+      "ICON_WRAPPER_STYLE"
+    ],
+    "apps/web/src/components/dashboard/ModuleStatsCard.tsx": [
+      "ModuleStatsCard"
+    ],
+    "apps/web/src/components/dashboard/ServiceStatusMonitor.tsx": [
+      "ServiceStatusMonitor"
+    ],
+    "apps/web/src/components/designer/DesignerPage.tsx": [
+      "DesignerPage"
+    ],
+    "apps/web/src/components/designer/index.ts": [
+      "DesignerPage"
+    ],
+    "apps/web/src/components/ehs/EHSBadges.tsx": [
+      "EHSSeverityBadge",
+      "EHSRiskLevelBadge",
+      "EHSIncidentTypeBadge"
+    ],
+    "apps/web/src/components/ehs/index.ts": [
+      "EHSSeverityBadge",
+      "EHSRiskLevelBadge",
+      "EHSIncidentTypeBadge"
+    ],
+    "apps/web/src/components/export/ImportExportModal.tsx": [
+      "ImportExportModal"
+    ],
+    "apps/web/src/components/export/index.ts": [
+      "ImportExportModal"
+    ],
+    "apps/web/src/components/gis/modules/Map3DModule/Map3DView.tsx": [
+      "DEFAULT_3D_VIEW",
+      "HeightVisualization",
+      "use3DViewController"
+    ],
+    "apps/web/src/components/gis/modules/Map3DModule/index.ts": [
+      "DEFAULT_3D_VIEW",
+      "HeightVisualization",
+      "use3DViewController"
+    ],
+    "apps/web/src/components/gis/modules/MapModule/OfflineManager.tsx": [
+      "useOfflineManager",
+      "tileToLatLng",
+      "latLngToTile",
+      "getTileBounds"
+    ],
+    "apps/web/src/components/gis/modules/MapModule/index.ts": [
+      "useOfflineManager",
+      "tileToLatLng",
+      "latLngToTile",
+      "getTileBounds"
+    ],
+    "apps/web/src/components/gis/modules/shared/GisContext.tsx": [
+      "useGisContext"
+    ],
+    "apps/web/src/components/gis/modules/shared/index.ts": [
+      "useGisContext"
+    ],
+    "apps/web/src/components/hrm/DepartmentSelector.tsx": [
+      "DepartmentSelector",
+      "DepartmentBreadcrumb"
+    ],
+    "apps/web/src/components/hrm/index.ts": [
+      "DepartmentSelector",
+      "DepartmentBreadcrumb",
+      "EmployeeForm"
+    ],
+    "apps/web/src/components/hrm/EmployeeForm.tsx": [
+      "EmployeeForm"
+    ],
+    "apps/web/src/components/layout/FlexGrid.tsx": [
+      "FlexGrid",
+      "FlexItem"
+    ],
+    "apps/web/src/components/layout/index.ts": [
+      "FlexGrid",
+      "FlexItem"
+    ],
+    "apps/web/src/components/mobile/MobileDataTable.tsx": [
+      "MobileDataTable"
+    ],
+    "apps/web/src/components/mobile/index.ts": [
+      "MobileDataTable",
+      "MobileForm"
+    ],
+    "apps/web/src/components/mobile/MobileForm.tsx": [
+      "MobileForm"
+    ],
+    "apps/web/src/components/plugin/PluginCategoryNav.tsx": [
+      "PluginCategoryNav"
+    ],
+    "apps/web/src/components/plugin/index.ts": [
+      "PluginCategoryNav"
+    ],
+    "apps/web/src/components/redesign/primitives/DateRangePicker.tsx": [
+      "createDefaultPresets"
+    ],
+    "apps/web/src/components/redesign/primitives/index.ts": [
+      "createDefaultPresets"
+    ],
+    "apps/web/src/components/security/InputSanitizer.tsx": [
+      "InputSanitizer"
+    ],
+    "apps/web/src/components/security/index.ts": [
+      "InputSanitizer",
+      "SafeHtml",
+      "SafeText"
+    ],
+    "apps/web/src/components/security/SafeHtml.tsx": [
+      "SafeHtml"
+    ],
+    "apps/web/src/components/security/SafeText.tsx": [
+      "SafeText"
+    ],
+    "apps/web/src/components/templates/classification.ts": [
+      "TEMPLATE_CLASSIFICATIONS",
+      "CORE_TEMPLATES",
+      "EXTENSION_TEMPLATES",
+      "CORE_8_TEMPLATES",
+      "getTemplateByType"
+    ],
+    "apps/web/src/components/templates/index.ts": [
+      "TEMPLATE_CLASSIFICATIONS",
+      "CORE_TEMPLATES",
+      "EXTENSION_TEMPLATES",
+      "CORE_8_TEMPLATES",
+      "getTemplateByType"
+    ]
+  }
+}

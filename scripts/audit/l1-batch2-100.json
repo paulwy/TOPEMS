@@ -1,0 +1,109 @@
+{
+  "total_exports": 61,
+  "total_files": 21,
+  "targets": {
+    "apps/web/src/config/ai-templates.ts": [
+      "getAITemplates",
+      "getAITemplatesList"
+    ],
+    "apps/web/src/config/permissions.ts": [
+      "MODULES",
+      "ACTIONS"
+    ],
+    "apps/web/src/config/ports.ts": [
+      "BACKEND_PORTS",
+      "getBackendPort"
+    ],
+    "apps/web/src/config/security.ts": [
+      "securityConfig"
+    ],
+    "apps/web/src/constants/pagination.ts": [
+      "DEFAULT_PAGE",
+      "DEFAULT_PAGE_SIZE",
+      "PAGE_SIZES",
+      "COMPACT_PAGE_SIZE",
+      "LARGE_PAGE_SIZE",
+      "pickPageSize",
+      "toBackendPagination"
+    ],
+    "apps/web/src/hooks/bff/useBffDashboard.ts": [
+      "BFF_DASHBOARD_QUERY_KEY"
+    ],
+    "apps/web/src/hooks/bff/useBffErrorHandling.ts": [
+      "useBffFallback",
+      "useErrorReport"
+    ],
+    "apps/web/src/hooks/bff/useBffSuspense.tsx": [
+      "BffSuspenseBoundary",
+      "recordSuspenseMount",
+      "getSuspenseStats",
+      "onSuspenseStatsChange",
+      "useSuspensePerfTracker"
+    ],
+    "apps/web/src/hooks/bff/useEdgeCompute.ts": [
+      "useOptimalEndpoint",
+      "useEdgeComputeConfig"
+    ],
+    "apps/web/src/hooks/bff/useIsr.ts": [
+      "useIsrStats",
+      "useIsrEntry",
+      "useIsrConfig"
+    ],
+    "apps/web/src/hooks/bff/usePartialPreRender.tsx": [
+      "prefetchRouteShell",
+      "clearPrefetchedShells",
+      "StaticShell",
+      "StreamingSlot",
+      "recordPPRSlot",
+      "getPPRStats",
+      "onPPRStatsChange"
+    ],
+    "apps/web/src/hooks/bff/useRouteDataLoader.ts": [
+      "RouteDataBoundary"
+    ],
+    "apps/web/src/hooks/useCode.ts": [
+      "CodeGenerator",
+      "CODE_RULES",
+      "getCodeRuleForEntity"
+    ],
+    "apps/web/src/hooks/useCrmFinance.ts": [
+      "useCancelSalesInvoice",
+      "useBatchConfirmCollections",
+      "useReceivableSummary"
+    ],
+    "apps/web/src/hooks/useUiState.ts": [
+      "useLoading"
+    ],
+    "apps/web/src/layouts/AdaptiveLayout.tsx": [
+      "shouldUseUIV3"
+    ],
+    "apps/web/src/layouts/constants.ts": [
+      "L1_BUSINESS_DOMAINS",
+      "L2_TO_L1_MAP",
+      "L2_MODULE_ORDER"
+    ],
+    "apps/web/src/lib/pwa.ts": [
+      "registerSW",
+      "prefetchRemoteEntries"
+    ],
+    "apps/web/src/lib/tier.ts": [
+      "PlanTier",
+      "TIER_LEVEL",
+      "TIER_FEATURE_MATRIX",
+      "parsePlanTier",
+      "tierIncludes",
+      "getModulesForTier",
+      "getModulesNotForTier",
+      "isModuleAvailable",
+      "isPathAvailable",
+      "getTierStats",
+      "getModuleMinTier"
+    ],
+    "apps/web/src/microfrontend/config.ts": [
+      "getModulesByPreloadStrategy"
+    ],
+    "apps/web/src/modules/master/config.ts": [
+      "MASTER_PATHS"
+    ]
+  }
+}

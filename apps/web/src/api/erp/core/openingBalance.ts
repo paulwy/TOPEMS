@@ -14,7 +14,7 @@ export interface OpeningBalance {
   updated_at: string;
 }
 
-export interface CreateOpeningBalanceRequest {
+interface CreateOpeningBalanceRequest {
   company_id: string;
   subject_code: string;
   subject_name: string;
@@ -32,7 +32,7 @@ interface UpdateOpeningBalanceRequest {
   credit_balance?: number;
 }
 
-export interface CarryForwardRequest {
+interface CarryForwardRequest {
   from_period: string;
   to_period: string;
 }

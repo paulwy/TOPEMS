@@ -21,7 +21,7 @@ export interface PluginManifest {
     shared?: string[];
   };
 }
-export interface PluginRoute {
+interface PluginRoute {
   path: string;
   component: string;
   exact?: boolean;

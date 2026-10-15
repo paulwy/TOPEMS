@@ -16,9 +16,9 @@ export interface DefectForm {
   quantity: number;
   description: string;
 }
-export type TaskAction = 'start' | 'pass' | 'fail';
+type TaskAction = 'start' | 'pass' | 'fail';
 export type ChipColor = 'warning' | 'primary' | 'success' | 'error' | 'info' | 'default';
-export type SeverityChipColor = 'warning' | 'error' | 'default';
+type SeverityChipColor = 'warning' | 'error' | 'default';
 export const useMobileQuality = () => {
   const { user } = useAuthStore();
   const { addNotification } = useNotificationStore();
