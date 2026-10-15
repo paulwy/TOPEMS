@@ -2004,3 +2004,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 登记观察：hrm.initialization_status 现有 5 行 tenant_id 为 NULL（历史数据未回填租户，RLS 下行为待评估，不在本批范畴）
 - 复核：hrm check 0 error；SQL 事务内实测——contract_renewals INSERT 后本租户 UPDATE 1 / 他租户越权 0；initialization_status 他租户 UPDATE 0（无越权），ROLLBACK 零残留
 
+## 方案C 批2-O：wms.wave_picks 6 处 + wms.transfer_orders 6 处（写路径租户约束）
+- 状态：代码已修改（wms check 通过 0 error），待提交
+- wave_pick.rs 6 处（update_wave_pick $5 / delete_wave_pick $2 / assign_wave_pick $4 / start_wave_pick $4 / complete_wave_pick $4 / cancel_wave_pick $3）：claims 均已有，补 tenant_filter + UPDATE WHERE 加租户条件
+- transfer_order.rs 6 处（update_transfer $13 / delete_transfer $2 / confirm_transfer $4 / ship_transfer $4 / receive_transfer $4+items $5 / complete_transfer $3）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件；receive_transfer 额外补 transfer_order_items 子表 UPDATE 租户（$5，子表有 tenant_id，同一写路径顺手补齐）
+- 复核：wms check 0 error；SQL 事务内实测（真实 warehouse 外键）——wave_picks/transfer_orders 本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

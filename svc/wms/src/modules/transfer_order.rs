@@ -400,6 +400,11 @@ pub async fn update_transfer(
     };
 
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -416,7 +421,7 @@ pub async fn update_transfer(
             priority = COALESCE($9, priority),
             remarks = COALESCE($10, remarks),
             updated_at = $11
-        WHERE id = $12
+        WHERE id = $12 AND ($13::uuid IS NULL OR tenant_id = $13::uuid)
         RETURNING *
         "#
     ))
@@ -448,6 +453,7 @@ pub async fn update_transfer(
     .bind(req.get("remarks").and_then(|v| v.as_str()))
     .bind(now)
     .bind(transfer_id)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -503,6 +509,11 @@ pub async fn delete_transfer(
             )))
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -521,9 +532,10 @@ pub async fn delete_transfer(
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE wms.transfer_orders SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(transfer_id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -581,6 +593,11 @@ pub async fn confirm_transfer(
     };
 
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -589,13 +606,14 @@ pub async fn confirm_transfer(
             status = 'confirmed',
             approved_at = $1,
             updated_at = $2
-        WHERE id = $3 AND status = 'pending'
+        WHERE id = $3 AND status = 'pending' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         RETURNING *
         "#
     ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -653,6 +671,11 @@ pub async fn ship_transfer(
     };
 
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -661,13 +684,14 @@ pub async fn ship_transfer(
             status = 'shipped',
             shipped_at = $1,
             updated_at = $2
-        WHERE id = $3 AND status = 'confirmed'
+        WHERE id = $3 AND status = 'confirmed' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         RETURNING *
         "#
     ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -726,6 +750,11 @@ pub async fn receive_transfer(
     };
 
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     if let Some(items) = data.get("items").and_then(|v| v.as_array()) {
         for item in items {
@@ -743,12 +772,14 @@ pub async fn receive_transfer(
                         status = CASE WHEN received_quantity + $1 >= planned_quantity THEN 'completed' ELSE 'partial' END,
                         updated_at = $2
                     WHERE id = $3 AND transfer_id = $4
+                      AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
                     "#),
                 )
                 .bind(received_qty)
                 .bind(now)
                 .bind(item_id)
                 .bind(transfer_id)
+                .bind(tenant_filter)
                 .execute(&mut **txn)
                 .await;
             }
@@ -762,13 +793,14 @@ pub async fn receive_transfer(
             status = 'received',
             received_at = $1,
             updated_at = $2
-        WHERE id = $3 AND status = 'shipped'
+        WHERE id = $3 AND status = 'shipped' AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         RETURNING *
         "#
     ))
     .bind(now)
     .bind(now)
     .bind(transfer_id)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -827,6 +859,11 @@ pub async fn complete_transfer(
     };
 
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, TransferOrder>(only_own_schema_query!(
         "wms",
@@ -835,12 +872,13 @@ pub async fn complete_transfer(
             status = 'completed',
             actual_date = CURRENT_DATE,
             updated_at = $1
-        WHERE id = $2 AND status = 'received'
+        WHERE id = $2 AND status = 'received' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING *
         "#
     ))
     .bind(now)
     .bind(transfer_id)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
