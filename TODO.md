@@ -2158,3 +2158,16 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - mes 6 处：production_records×3（439 更新/511 软删/561 in_progress 更新）+ production_processes×3（410 active 更新/464 软删/511 active 更新）——无 Claims，统一内联 current_setting
 - skip（甄别）：mes.work_orders×7 无 tenant_id 列（RLS 0）平台表 skip；analytics.report_execution_records×2 无 tenant_id 列平台表 skip；master-data 残余 6 表（mdm_graph_nodes/propagation_logs/semantic_search_indexes/tagged_entities/tags/replication_configs）扫描 0 处无缺口
 - 复核：check 0 error；SQL 事务内实测 production_records 真实行（64195ecf 0001 in_progress）+ production_processes 插行（organization_id/sequence 必填）——本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+
+## 方案C 批2-Zn：全库复扫收尾批 18 处（写路径租户约束）
+- 状态：代码已修改，7 服务并行 check 0 error，SQL 双租户实测通过，分服务独立 commit
+- 全库块级复扫（WHERE 无 tenant 条件）从 343 处收敛至 52 处，甄别后真缺口 18 处：
+  - hrm 5（candidates / interviews / leave_records:424 pending / performance_reviews:375 / performance_goals）
+  - finance 2（reconciliation_items 540/554 matched）
+  - erp 2（elimination_rules 更新+软删）
+  - rd 3（rs.projects 更新/软删/ANY 批删）
+  - gis 3（locations / map_markers / maps）
+  - wms 3（replenishment_suggestions / safety_stock_settings×2）
+  - portal 2（portal_todos）
+- skip（甄别）：52 处中平台表 23（work_orders/erp_production_orders/core_plugin_instances×6/iam.users/core_plugins×2/report_execution_records/geofences/material_tests/patents/research_costs）；已带 tenant_id bind 非缺口 41（crm/tms/ticket 全 19 表已带 `tenant_id=$N`）；内部流程 5（mes_erp_sync×3/async_tasks/event_handlers pm）；rd 77/367 SELECT 读路径（批1 范围）
+- 复核：7 服务 check 0 error；SQL 事务内实测 14 表（rs.projects/map_markers/replenishment_suggestions 真实行 + 11 表插行）——本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留。踩坑：interviews 用 scheduled_at 无 interview_date；finance match_status/source_type 为枚举（cross 测试用合法值）；gis.locations position 为 json；wms safety_stock SELECT 133 行顺带内联（纵深防御）；finance sessions UPDATE 629 原已带 tenant_id=$3 叠加内联（等效更严）
