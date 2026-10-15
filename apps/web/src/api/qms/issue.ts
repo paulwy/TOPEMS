@@ -12,7 +12,11 @@ import { adaptIssueToFrontend, adaptIssueToBackend } from './adapters';
 export const issueApi = {
   listIssues: async (): Promise<ApiResponse<QualityIssue[]>> => {
     const response = await apiClient.qms.get<QmsPaginatedResponse<QualityIssueBackend>>('/issues');
-    const adaptedData = (response.data?.issues || []).map(adaptIssueToFrontend);
+    const raw = response.data;
+    const rawIssues = Array.isArray(raw)
+      ? raw
+      : raw?.issues || raw?.list || raw?.items || [];
+    const adaptedData = rawIssues.map(adaptIssueToFrontend);
     return { ...response, data: adaptedData };
   },
 
