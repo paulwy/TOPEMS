@@ -1328,10 +1328,11 @@ pub async fn start_supplier_approval(
 
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1",
+        "UPDATE srm.suppliers SET status = 'pending_approval', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
         "srm"
     ))
     .bind(id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 
@@ -1466,10 +1467,11 @@ pub async fn approve_supplier(
 
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1",
+        "UPDATE srm.suppliers SET status = 'approved', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
         "srm"
     ))
     .bind(id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 
@@ -1602,10 +1604,11 @@ pub async fn reject_supplier(
 
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1",
+        "UPDATE srm.suppliers SET status = 'rejected', updated_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
         "srm"
     ))
     .bind(id)
+    .bind(tenant_opt)
     .execute(&mut **txn)
     .await;
 

@@ -2028,3 +2028,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - smart_replenishment/orders.rs 4 处（update_order $6 / delete_order $2 / confirm_order $3 / complete_order $3）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件；delete_order 额外补 replenishment_order_items 子表 DELETE 租户（$2，子表有 tenant_id）
 - 复核：wms check 0 error；SQL 事务内实测真实行——locations / replenishment_orders（update_order 同款）本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留（真实行未触碰）
 
+## 方案C 批2-S：srm.quotations 4 处 + srm.suppliers 3 处（写路径租户约束，skip 1 处）
+- 状态：代码已修改（srm check 通过 0 error），待提交
+- quotation.rs 4 处（update_quotation $11 / delete_quotation $2 / award_quotation $3 / reject_quotation $3）：4 函数均无 Claims（srm 路由有 tenant_middleware），补 Extension<Claims> + tenant_filter + UPDATE WHERE 租户条件
+- supplier.rs 3 处（start_supplier_approval $2 / approve_supplier $2 / reject_supplier $2）：3 函数已有 Claims + tenant_opt 变量 + 前置 SELECT 已租户化，仅 UPDATE 补租户条件
+- skip：event_handlers/mod.rs handle_supplier_evaluated（suppliers credit_rating UPDATE）——SCM 事件订阅内部流程，无 Claims 上下文且 payload 无 tenant_id，非用户可触达写路径，RLS 兜底
+- 观察项：srm.suppliers 92 行 tenant_id 全 NULL（历史数据未回填，RLS 行为待评估，同 hrm.initialization_status）
+- 复核：srm check 0 error；SQL 事务内实测——quotations / suppliers（空表插测试行）本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

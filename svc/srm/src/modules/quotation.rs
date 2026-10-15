@@ -268,6 +268,7 @@ pub async fn get_quotation(
 pub async fn update_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -276,6 +277,11 @@ pub async fn update_quotation(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let valid_until = req.valid_until.and_then(|s| {
         DateTime::parse_from_rfc3339(&s)
@@ -295,7 +301,7 @@ pub async fn update_quotation(
             items = COALESCE($8, items),
             remarks = COALESCE($9, remarks),
             updated_at = $10
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = 'pending' AND ($11::uuid IS NULL OR tenant_id = $11::uuid)
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
@@ -310,6 +316,7 @@ pub async fn update_quotation(
     .bind(req.items)
     .bind(req.remarks)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -335,18 +342,25 @@ pub async fn update_quotation(
 pub async fn delete_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
 ) -> Json<ApiResponse<bool>> {
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query(only_own_schema_query!(
         "srm",
-        "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1",
+        "UPDATE srm.quotations SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)",
         "srm"
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -385,6 +399,7 @@ pub async fn delete_quotation(
 pub async fn award_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -392,19 +407,25 @@ pub async fn award_quotation(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.quotations SET
             status = 'awarded',
             updated_at = $2
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = 'pending' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -443,6 +464,7 @@ pub async fn award_quotation(
 pub async fn reject_quotation(
     State(_state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
+    Extension(claims): Extension<Claims>,
     Extension(txn_arc): Extension<
         std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
     >,
@@ -450,19 +472,25 @@ pub async fn reject_quotation(
     let mut guard = txn_arc.lock().await;
     let txn = guard.as_mut().expect("rls txn missing");
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, Quotation>(
         only_own_schema_query!("srm", r#"
         UPDATE srm.quotations SET
             status = 'rejected',
             updated_at = $2
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = 'pending' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, quotation_no, inquiry_id, inquiry_no, supplier_id, supplier_name,
             title, total_amount, currency, valid_until, delivery_time, payment_terms, status, items, remarks, submitted_at, created_at, updated_at
         "#, "srm"),
     )
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
