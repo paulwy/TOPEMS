@@ -223,6 +223,8 @@ pub async fn generate_report(
             net_profit = $7,
             generated_at = NOW()
         WHERE id = $1
+          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+               OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#,
     )
@@ -439,11 +441,12 @@ pub async fn submit_report(
         r#"
         UPDATE erp.consolidation_reports
         SET approval_status = 'pending'
-        WHERE id = $1
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING *
         "#,
     )
     .bind(report_id)
+    .bind(report.tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -539,11 +542,12 @@ pub async fn approve_report(
         r#"
         UPDATE erp.consolidation_reports
         SET approval_status = 'approved', approved_at = NOW()
-        WHERE id = $1
+        WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         RETURNING *
         "#,
     )
     .bind(report_id)
+    .bind(report.tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -600,6 +604,8 @@ pub async fn publish_report(
         UPDATE erp.consolidation_reports
         SET status = 'published', published_at = NOW()
         WHERE id = $1
+          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+               OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#,
     )
@@ -658,7 +664,9 @@ pub async fn delete_report(
         Some(txn) => txn,
         None => unreachable!("rls txn missing"),
     };
-    match sqlx::query("UPDATE erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1")
+    match sqlx::query(
+        "UPDATE erp.consolidation_reports SET deleted_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
+    )
         .bind(report_id)
         .execute(&mut **txn)
         .await

@@ -2010,3 +2010,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - transfer_order.rs 6 处（update_transfer $13 / delete_transfer $2 / confirm_transfer $4 / ship_transfer $4 / receive_transfer $4+items $5 / complete_transfer $3）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件；receive_transfer 额外补 transfer_order_items 子表 UPDATE 租户（$5，子表有 tenant_id，同一写路径顺手补齐）
 - 复核：wms check 0 error；SQL 事务内实测（真实 warehouse 外键）——wave_picks/transfer_orders 本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-P：erp.sales_orders 5 处 + erp.consolidation_reports 5 处（写路径租户约束）
+- 状态：代码已修改（erp check 通过 0 error），待提交
+- sales_order.rs 5 处（update_sales_order $10 / delete_sales_order $2 / update_sales_order_status 辅助 $3 / batch_update_sales_orders $10 / batch_update_status 动态 SQL $N=ids.len+2）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件；status 辅助覆盖 approve/ship/complete/cancel 4 handler，batch_status 覆盖 4 batch handler
+- consolidation/reports.rs 5 处（generate_report / submit_report / approve_report / publish_report / delete_report）：函数均无 Claims——generate/publish/delete 用 current_setting 内联租户条件（同 INSERT 模式）；submit/approve 有前置 SELECT，用 report.tenant_id 作 $2 绑定
+- 复核：erp check 0 error；SQL 事务内实测（scopes→reports 完整链）——两表本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留；sales_orders 真实 1 行（tenant 全0）未触碰
+
