@@ -321,6 +321,11 @@ pub async fn update_order(
     }
 
     let now = Utc::now().naive_utc();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(
         r#"
@@ -329,7 +334,7 @@ pub async fn update_order(
             warehouse_name = COALESCE($3, warehouse_name),
             status = COALESCE($4, status),
             updated_at = $5
-        WHERE id = $1
+        WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
         RETURNING id, order_number, warehouse_id, warehouse_name, status,
                   total_quantity, total_amount, created_at, updated_at
         "#,
@@ -339,6 +344,7 @@ pub async fn update_order(
     .bind(req.get("warehouse_name").and_then(|v| v.as_str()))
     .bind(req.get("status").and_then(|v| v.as_str()))
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -402,15 +408,22 @@ pub async fn delete_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
-    let _ = sqlx::query("DELETE FROM wms.replenishment_order_items WHERE order_id = $1")
+    let _ = sqlx::query("DELETE FROM wms.replenishment_order_items WHERE order_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
         .bind(id)
+        .bind(tenant_filter)
         .execute(&mut **txn)
         .await;
 
     let result =
-        sqlx::query("UPDATE wms.replenishment_orders SET deleted_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE wms.replenishment_orders SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)")
             .bind(id)
+            .bind(tenant_filter)
             .execute(&mut **txn)
             .await;
 
@@ -535,18 +548,24 @@ pub async fn confirm_order(
     }
 
     let now = Utc::now().naive_utc();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
             status = 'confirmed',
             updated_at = $2
-        WHERE id = $1 AND status = 'pending'
+        WHERE id = $1 AND status = 'pending' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, order_number, status, updated_at
         "#,
     )
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -607,18 +626,24 @@ pub async fn complete_order(
     }
 
     let now = Utc::now().naive_utc();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(
         r#"
         UPDATE wms.replenishment_orders SET
             status = 'completed',
             updated_at = $2
-        WHERE id = $1 AND status = 'confirmed'
+        WHERE id = $1 AND status = 'confirmed' AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, order_number, status, updated_at
         "#,
     )
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

@@ -2022,3 +2022,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - skip 登记：rs.projects（rd）——rd handler 层（update_project/delete_project/batch_delete_projects）在方案C 批1已显式租户化；repository.rs 的 update/delete/batch_delete 3 处无生产调用（ProjectService 未接线，仅测试引用），295/500 处为 cfg(test) 测试代码——全部 skip
 - 复核：pm check 0 error；SQL 事务内实测（真实 project 外键）——pm.contracts 本租户 UPDATE 1 / 他租户越权 0，ROLLBACK 零残留
 
+## 方案C 批2-R：wms.locations 4 处 + wms.replenishment_orders 4 处（写路径租户约束）
+- 状态：代码已修改（wms check 通过 0 error），待提交
+- location.rs 4 处（update_location $9 / delete_location $2 / batch_update_locations $9 / batch_delete_locations $2）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件；update_location 前置 SELECT 顺手加租户（$2）
+- smart_replenishment/orders.rs 4 处（update_order $6 / delete_order $2 / confirm_order $3 / complete_order $3）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件；delete_order 额外补 replenishment_order_items 子表 DELETE 租户（$2，子表有 tenant_id）
+- 复核：wms check 0 error；SQL 事务内实测真实行——locations / replenishment_orders（update_order 同款）本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留（真实行未触碰）
+

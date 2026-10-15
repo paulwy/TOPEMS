@@ -361,12 +361,19 @@ pub async fn update_location(
 
     let request_data = serde_json::to_value(&req).ok();
 
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
+
     let existing = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
-        SELECT id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1
+        SELECT id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at FROM wms.locations WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#),
     )
     .bind(location_id)
+    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -387,13 +394,18 @@ pub async fn update_location(
     let capacity = req.capacity.or(existing.capacity);
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, Location>(
         only_own_schema_query!("wms", r#"
         UPDATE wms.locations SET
             warehouse_id = $2, location_code = $3, location_name = $4, location_type = $5, capacity = $6, 
             status = $7, updated_at = $8
-        WHERE id = $1
+        WHERE id = $1 AND ($9::uuid IS NULL OR tenant_id = $9::uuid)
         RETURNING id, tenant_id, warehouse_id, location_code AS code, location_name AS name, location_type AS type, capacity, status, created_at, updated_at
         "#),
     )
@@ -405,6 +417,7 @@ pub async fn update_location(
     .bind(capacity)
     .bind(&status)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -492,12 +505,18 @@ pub async fn delete_location(
             )))
         }
     };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.locations SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE wms.locations SET deleted_at = NOW() WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(location_id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -741,6 +760,11 @@ pub async fn batch_update_locations(
     }
 
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -753,7 +777,7 @@ pub async fn batch_update_locations(
             capacity = COALESCE($5, capacity),
             status = COALESCE($6, status),
             updated_at = $7
-        WHERE id = ANY($8)
+        WHERE id = ANY($8) AND ($9::uuid IS NULL OR tenant_id = $9::uuid)
         "#
     ))
     .bind(req.updates.warehouse_id)
@@ -764,6 +788,7 @@ pub async fn batch_update_locations(
     .bind(&req.updates.status)
     .bind(now)
     .bind(&ids)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -831,12 +856,18 @@ pub async fn batch_delete_locations(
             "无效的库位ID列表".to_string(),
         )));
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        "UPDATE wms.locations SET deleted_at = NOW() WHERE id = ANY($1)"
+        "UPDATE wms.locations SET deleted_at = NOW() WHERE id = ANY($1) AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(&ids)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
