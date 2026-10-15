@@ -314,7 +314,16 @@ pub async fn update_quotation(
     .await;
 
     match result {
-        Ok(Some(quotation)) => Json(ApiResponse::success(quotation, "报价更新成功")),
+        Ok(Some(quotation)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(quotation, "报价更新成功"))
+        }
         Ok(None) => Json(ApiResponse::<Quotation>::error(400, "报价状态不允许修改")),
         Err(e) => {
             tracing::error!("更新报价失败: {}", e);
@@ -342,7 +351,16 @@ pub async fn delete_quotation(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "报价删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(true, "报价删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<bool>::error(404, "报价不存在")),
         Err(e) => {
             tracing::error!("删除报价失败: {}", e);
@@ -391,7 +409,16 @@ pub async fn award_quotation(
     .await;
 
     match result {
-        Ok(Some(quotation)) => Json(ApiResponse::success(quotation, "报价已中标")),
+        Ok(Some(quotation)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(quotation, "报价已中标"))
+        }
         Ok(None) => Json(ApiResponse::<Quotation>::error(400, "报价状态不允许中标")),
         Err(e) => {
             tracing::error!("中标报价失败: {}", e);
@@ -440,7 +467,16 @@ pub async fn reject_quotation(
     .await;
 
     match result {
-        Ok(Some(quotation)) => Json(ApiResponse::success(quotation, "报价已拒绝")),
+        Ok(Some(quotation)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(quotation, "报价已拒绝"))
+        }
         Ok(None) => Json(ApiResponse::<Quotation>::error(400, "报价状态不允许拒绝")),
         Err(e) => {
             tracing::error!("拒绝报价失败: {}", e);

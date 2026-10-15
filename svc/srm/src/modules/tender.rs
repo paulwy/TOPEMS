@@ -467,6 +467,13 @@ pub async fn update_tender(
 
     match result {
         Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             let data = serde_json::json!({
                 "id": row.id.to_string(),
                 "tenant_id": row.tenant_id.to_string(),
@@ -542,6 +549,12 @@ pub async fn delete_tender(
 
     match result {
         Ok(row) if row.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(serde_json::json!({}), "删除招标成功"))
         }
         Ok(_) => Json(ApiResponse::<serde_json::Value>::error(
@@ -765,6 +778,13 @@ pub async fn create_tender_bid(
 
     match result {
         Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             let data = serde_json::json!({
                 "id": row.id.to_string(),
                 "tenant_id": row.tenant_id.to_string(),

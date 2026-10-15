@@ -413,6 +413,13 @@ pub async fn update_bid_request(
 
     match result {
         Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             let data = serde_json::json!({
                 "id": row.id.to_string(),
                 "tenant_id": row.tenant_id.to_string(),
@@ -487,10 +494,18 @@ pub async fn delete_bid_request(
     .await;
 
     match result {
-        Ok(row) if row.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({}),
-            "删除询价请求成功",
-        )),
+        Ok(row) if row.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({}),
+                "删除询价请求成功",
+            ))
+        }
         Ok(_) => Json(ApiResponse::<serde_json::Value>::error(
             404,
             "询价请求不存在或已删除",
@@ -693,6 +708,13 @@ pub async fn create_bid(
 
     match result {
         Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             let data = serde_json::json!({
                 "id": row.id.to_string(),
                 "tenant_id": row.tenant_id.to_string(),
@@ -876,6 +898,13 @@ pub async fn update_bid(
 
     match result {
         Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             let data = serde_json::json!({
                 "id": row.id.to_string(),
                 "tenant_id": row.tenant_id.to_string(),
@@ -951,6 +980,13 @@ pub async fn delete_bid(
 
     match result {
         Ok(row) if row.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+
             Json(ApiResponse::success(serde_json::json!({}), "删除报价成功"))
         }
         Ok(_) => Json(ApiResponse::<serde_json::Value>::error(

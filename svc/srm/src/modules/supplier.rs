@@ -683,6 +683,13 @@ pub async fn update_supplier(
 
     match result {
         Ok(supplier) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             let cache_key = supplier_cache_key(tenant_id, id, &locale);
             state.supplier_cache.remove(&cache_key).await;
             state.supplier_cache.clear_l1();
@@ -834,6 +841,12 @@ pub async fn delete_supplier(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             let cache_key = supplier_cache_key(tenant_id, id, &locale);
             state.supplier_cache.remove(&cache_key).await;
             state.supplier_cache.clear_l1();
@@ -1377,6 +1390,12 @@ pub async fn start_supplier_approval(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::json!({
             "supplier_id": id,
@@ -1508,6 +1527,12 @@ pub async fn approve_supplier(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::json!({
             "supplier_id": id,
@@ -1638,6 +1663,12 @@ pub async fn reject_supplier(
     )
     .await;
 
+    if let Some(t) = guard.take() {
+        if let Err(e) = t.commit().await {
+            tracing::error!("事务提交失败: {}", e);
+            return Json(ApiResponse::error(500, "事务提交失败"));
+        }
+    }
     Json(ApiResponse::success(
         serde_json::json!({
             "supplier_id": id,

@@ -362,7 +362,16 @@ pub async fn delete_bidding(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "招标删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(true, "招标删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<bool>::error(404, "招标不存在")),
         Err(e) => {
             tracing::error!("删除招标失败: {}", e);

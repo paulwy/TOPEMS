@@ -597,6 +597,12 @@ pub async fn delete_contract(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "供应商合同删除成功"))
         }
         Ok(_) => Json(ApiResponse::<String>::error(404, "供应商合同不存在")),

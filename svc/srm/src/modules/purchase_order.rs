@@ -520,7 +520,16 @@ pub async fn delete_purchase_order(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "采购订单删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(true, "采购订单删除成功"))
+        }
         Ok(_) => Json(ApiResponse::<bool>::error(404, "采购订单不存在")),
         Err(e) => {
             tracing::error!("删除采购订单失败: {}", e);
