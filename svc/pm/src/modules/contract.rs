@@ -752,7 +752,7 @@ async fn update_contract_milestone(
             payment_amount = COALESCE($4, payment_amount),
             payment_percent = COALESCE($5, payment_percent),
             updated_at = $6
-        WHERE id = $7 AND contract_id = $8 RETURNING *"#
+        WHERE id = $7 AND contract_id = $8 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"#
     ))
     .bind(&req.name)
     .bind(req.description)
@@ -787,7 +787,7 @@ async fn delete_contract_milestone(
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.contract_milestones WHERE id = $1 AND contract_id = $2"
+        "DELETE FROM pm.contract_milestones WHERE id = $1 AND contract_id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(milestone_id)
     .bind(id)
@@ -915,7 +915,7 @@ async fn update_payment_schedule(
             payment_amount = COALESCE($3, payment_amount),
             due_date = COALESCE($4, due_date),
             updated_at = $5
-        WHERE id = $6 AND contract_id = $7 RETURNING *"#
+        WHERE id = $6 AND contract_id = $7 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"#
     ))
     .bind(req.payment_name)
     .bind(req.payment_percent)
@@ -1065,7 +1065,7 @@ async fn update_template(
             description = COALESCE($3, description),
             content = COALESCE($4, content),
             updated_at = $5
-        WHERE id = $6 RETURNING *"
+        WHERE id = $6 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(&req.name)
     .bind(&req.contract_type)
@@ -1098,7 +1098,7 @@ async fn delete_template(
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "UPDATE pm.contract_templates SET is_active = false WHERE id = $1"
+        "UPDATE pm.contract_templates SET is_active = false WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
     .execute(&pool)

@@ -226,7 +226,7 @@ async fn update_settlement(
             amount = COALESCE($3, amount),
             remarks = COALESCE($4, remarks),
             updated_at = $5
-        WHERE id = $6 RETURNING *"
+        WHERE id = $6 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.settlement_name)
     .bind(req.status)
@@ -277,7 +277,7 @@ async fn approve_settlement(
             status = 'approved',
             approved_at = CURRENT_TIMESTAMP,
             updated_at = CURRENT_TIMESTAMP
-        WHERE id = $1 RETURNING *"
+        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(id)
     .fetch_one(&state.pool)
@@ -434,7 +434,7 @@ async fn update_settlement_item(
             variance_percent = CASE WHEN $3 IS NOT NULL AND budget_amount != 0 THEN (($3 - budget_amount) / budget_amount) * 100 ELSE variance_percent END,
             description = COALESCE($4, description),
             updated_at = $5
-        WHERE id = $6 RETURNING *"),
+        WHERE id = $6 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"),
     )
     .bind(req.item_name)
     .bind(req.category)
@@ -467,7 +467,7 @@ async fn delete_settlement_item(
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.settlement_items WHERE id = $1"
+        "DELETE FROM pm.settlement_items WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
     .execute(&state.pool)

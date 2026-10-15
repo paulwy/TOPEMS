@@ -2130,3 +2130,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 状态：代码已修改（pm check 通过 0 error），待提交
 - pm 14 处（projects / project_phases UPDATE+DELETE / project_members UPDATE+DELETE / project_milestones UPDATE+DELETE / project_expenses UPDATE+DELETE / budgets / budget_items UPDATE+DELETE / acceptance_items UPDATE+DELETE）：无 Claims，统一内联 current_setting
 - 复核：pm check 0 error；SQL 事务内实测 8 表（projects 用真实行 3e5da2a2，空表插关联链——budgets→budget_items、acceptance_plans→acceptance_items，bitems/aitems 的 id 无默认显式给，aitems 行须带 tenant_id 否则本租户 UPDATE 0）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+
+## 方案C 批2-Zj：pm 残余 21 处（写路径租户约束）
+- 状态：代码已修改（pm check 通过 0 error），待提交
+- pm 21 处（contract_milestones UPDATE+DELETE / contract_payment_schedule / contract_templates×2 / defects / document_folders UPDATE+DELETE / project_approvals×2 / project_documents×3 UPDATE+DELETE / project_resources / settlements×2 / settlement_items UPDATE+DELETE / report_templates×2 / pm_tasks）：无 Claims，统一内联 current_setting
+- 至此 pm 服务显式租户约束全部清完（批2-Za 5 + 批2-Zi 14 + 本批 21 = 40 处）
+- 复核：pm check 0 error；SQL 事务内实测 14 表（tasks 用真实行 3125f79f，空表插关联链——contracts→milestones/pschedule、settlements→settlement_items，content json 列须 '{}'::json，bitems 类 id 无默认显式给）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留

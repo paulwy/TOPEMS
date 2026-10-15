@@ -177,7 +177,7 @@ async fn update_document(
             description = COALESCE($4, description),
             tags = COALESCE($5, tags),
             updated_at = $6
-        WHERE id = $7 RETURNING *"
+        WHERE id = $7 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.document_name)
     .bind(req.document_type)
@@ -211,7 +211,7 @@ async fn delete_document(
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.project_documents WHERE id = $1"
+        "DELETE FROM pm.project_documents WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
     .execute(&pool)
@@ -321,7 +321,7 @@ async fn create_document_version(
     .await;
 
     if version.is_ok() {
-        let _ = sqlx::query(only_own_schema_query!("pm", "UPDATE pm.project_documents SET version = $1, file_path = $2, file_hash = $3, updated_at = $4 WHERE id = $5"))
+        let _ = sqlx::query(only_own_schema_query!("pm", "UPDATE pm.project_documents SET version = $1, file_path = $2, file_hash = $3, updated_at = $4 WHERE id = $5 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"))
             .bind(new_version)
             .bind(&req.file_path)
             .bind(file_hash)
@@ -468,7 +468,7 @@ async fn update_folder(
             folder_name = COALESCE($1, folder_name),
             description = COALESCE($2, description),
             updated_at = $3
-        WHERE id = $4 RETURNING *"
+        WHERE id = $4 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.folder_name)
     .bind(req.description)
@@ -496,7 +496,7 @@ async fn update_folder(
 async fn delete_folder(State(pool): State<PgPool>, Path(id): Path<Uuid>) -> Json<ApiResponse<()>> {
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "DELETE FROM pm.document_folders WHERE id = $1"
+        "DELETE FROM pm.document_folders WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
     .execute(&pool)

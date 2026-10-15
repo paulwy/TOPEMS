@@ -223,7 +223,7 @@ async fn update_resource(
             cost = COALESCE($6, cost),
             status = COALESCE($7, status),
             updated_at = $8
-        WHERE project_id = $9 AND id = $10
+        WHERE project_id = $9 AND id = $10 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))

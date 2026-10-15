@@ -368,7 +368,7 @@ async fn update_defect(
             resolution = COALESCE($8, resolution),
             resolved_at = CASE WHEN COALESCE($5, status) = 'resolved' THEN CURRENT_TIMESTAMP ELSE resolved_at END,
             updated_at = $9
-        WHERE id = $10 RETURNING *")
+        WHERE id = $10 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *")
     )
     .bind(req.defect_name)
     .bind(req.defect_description)

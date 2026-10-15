@@ -338,7 +338,7 @@ pub async fn update_task(
                            ELSE COALESCE($9, progress) END,
            updated_at = $10,
            title_en = COALESCE($11, title_en)
-           WHERE id = $1 AND deleted_at IS NULL
+           WHERE id = $1 AND deleted_at IS NULL AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
            RETURNING {return_cols}"#
     ))
     .bind(id)
