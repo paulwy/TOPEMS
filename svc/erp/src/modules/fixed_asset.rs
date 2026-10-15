@@ -466,7 +466,7 @@ pub async fn update_fixed_asset(
             depreciation_method = $8, useful_life_months = $9,
             department_id = $10, location = $11, status = $12,
             updated_at = $13
-        WHERE id = $1
+        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, asset_code, asset_name, asset_type, asset_category, purchase_date, 
                   original_value, accumulated_depreciation, net_value, depreciation_method, 
                   useful_life_months, depreciation_period, department_id, 

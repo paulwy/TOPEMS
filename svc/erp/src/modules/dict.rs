@@ -595,7 +595,7 @@ pub async fn update_dict_type(
         r#"
         UPDATE erp.dict_types SET
             name = $2, category = $3, description = $4, status = $5, updated_at = $6
-        WHERE id = $1
+        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, code, name, category, description, status, created_at, updated_at
         "#
     ))
@@ -1100,7 +1100,7 @@ pub async fn update_dict_item(
         only_own_schema_query!("erp", r#"
         UPDATE erp.dict_items SET
             code = $2, name = $3, value = $4, sort_order = $5, parent_id = $6, extra_data = $7, status = $8, updated_at = $9
-        WHERE id = $1
+        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
         "#),
     )
