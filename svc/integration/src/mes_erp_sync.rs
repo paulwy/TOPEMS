@@ -83,7 +83,6 @@ pub struct MesProductionProgressData {
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct SyncLog {
     pub id: Uuid,
-    pub tenant_id: Uuid,
     pub sync_record_id: Uuid,
     pub sync_direction: String,
     pub sync_type: String,
@@ -736,7 +735,7 @@ impl MesErpSyncService {
         let sync_record = sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"
-            SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
+            SELECT id, tenant_id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
                    sync_error, last_synced_at, created_at, updated_at
             FROM integration.mes_erp_sync
@@ -799,7 +798,7 @@ impl MesErpSyncService {
         sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"
-            SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
+            SELECT id, tenant_id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
                    sync_error, last_synced_at, created_at, updated_at
             FROM integration.mes_erp_sync
@@ -825,7 +824,7 @@ impl MesErpSyncService {
         sqlx::query_as::<_, MesErpSyncRecord>(only_own_schema_query!(
             "integration",
             r#"
-            SELECT id, sync_direction, mes_order_id, erp_order_id, order_number,
+            SELECT id, tenant_id, sync_direction, mes_order_id, erp_order_id, order_number,
                    sync_type, payload, sync_status, retry_count, max_retries,
                    sync_error, last_synced_at, created_at, updated_at
             FROM integration.mes_erp_sync

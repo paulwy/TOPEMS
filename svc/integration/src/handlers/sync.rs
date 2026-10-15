@@ -185,7 +185,7 @@ pub async fn get_task(
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
             let row = sqlx::query_as::<_, SyncTaskRow>(
-                only_own_schema_query!("integration", "SELECT id, source_module, target_module, sync_type, status, data, created_at, updated_at FROM integration.core_inter_module_sync WHERE id = $1"),
+                only_own_schema_query!("integration", "SELECT id, tenant_id, sync_type, source_module, target_module, source_entity, source_id, source_code, status, retry_count, max_retries, error_message, next_retry_at, executed_at, created_at, updated_at FROM integration.core_inter_module_sync WHERE id = $1"),
             )
             .bind(id)
             .fetch_optional(&state.pool)
@@ -276,7 +276,7 @@ pub async fn update_status(
 pub async fn get_pending(State(state): State<AppState>) -> Json<ApiResponse<Vec<SyncTask>>> {
     match sqlx::query_as::<_, SyncTaskRow>(
         only_own_schema_query!("integration", r#"
-        SELECT id, source_module, target_module, sync_type, status, data, created_at, updated_at FROM integration.core_inter_module_sync
+        SELECT id, tenant_id, sync_type, source_module, target_module, source_entity, source_id, source_code, status, retry_count, max_retries, error_message, next_retry_at, executed_at, created_at, updated_at FROM integration.core_inter_module_sync
         WHERE status = 'pending' OR (status = 'failed' AND retry_count < max_retries AND next_retry_at <= NOW())
         ORDER BY created_at ASC
         "#),
