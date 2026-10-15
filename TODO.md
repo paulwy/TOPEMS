@@ -1737,3 +1737,27 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - ② audit 落操作者租户 ✅：AuditEventParams.tenant_id: Option<String> + log_audit_event 解构 → with_tenant_id；46 处构造点贯传 claims.tenant_id（24 个 handler 补 Extension(claims)，4 文件补 use Claims）；实测租户 create → audit tenant_id=0001。
 - ③ dict 归档保护评估：archive_marks 无消费方、表不存在 → **不实现建表**。顺带修复真实缺口：dict_items 归档检查引用错误列名 type_id（真实列 dict_type_id，原检查从未生效）+ 触发器缺 DELETE 事件 → 函数改用 dict_type_id（OLD/NEW）+ dict_items 触发器重建为 INSERT OR UPDATE OR DELETE；实测归档父类型下项 INSERT/UPDATE/DELETE 全拒、正常项可删。
 - audit_logs 历史测试残留（entity_id=000...99 的 47 条）已清。
+
+---
+
+## FromRow 缺列批（2026-10-15 本批）
+
+**背景**：DB 层 RLS policy 复核（763 表全 FORCE 合规）与 FromRow 全量核对（211 候选）后，用户拍板开修缺列批。逐候选在**本 crate 实际 struct 定义**确认是否含 `tenant_id`：真实缺口 **47 处**（42 处为跨 crate/文件同名 struct 误报——erp/scm/finance/hrm/mes/wms/unified-core 的 PurchaseOrder/Material/Supplier/Customer/Vehicle/AlertRule/LeaveRequest/AuditLog/SyncRecord/DocumentVersion 等均无 tenant_id 字段，FromRow 不读）。
+
+**修复（代码）**：
+- qms quality_dashboard.rs 11 处：AlertRule/AlertMessage 全 SELECT + RETURNING 补 `tenant_id::TEXT`（表列 uuid / struct String）。
+- integration：mes_erp_sync.rs 3 处 SELECT 补列 + SyncLog struct 移除冗余 tenant_id（integration.mes_erp_sync_logs 实无该列）；handlers/sync.rs SELECT 对齐 SyncTaskRow 16 字段。
+- hrm 25 处：company.rs 1、training.rs 16、contract.rs 8（三表表列 uuid / struct Option<Uuid> 直补）。
+- unified-core flow 13 处：instance.rs 3、task.rs 3、approval.rs 7（SELECT 补 tenant_id；approval 的普通字符串 SQL 已定位）。
+- rd project.rs 1（rs.project_milestones）；crm sales_funnel.rs 1（crm.opportunities 全列对齐 16 字段，含 `win_rate` sqlx rename `probability`）。
+- **DYN 28 处确认**：27 处豁免（pdm VERSION_COLUMNS/PROJECT_COLUMNS、tms carrier_return_columns/SHIPMENT_RETURN/DRIVER_RETURN、qms issue_select_cols/EIGHTD_SELECT_COLS 均含 tenant_id）；**1 处真实缺口**——qms `APQP_SELECT_COLS`（apqp.rs:19）补 `tenant_id::TEXT`（3 个 UPDATE RETURNING 共用）。
+
+**验证**：
+- 复扫（/tmp/fromrow_rescan.py，struct 定义 + 向后匹配 SQL 口径）：**剩余 MISS=0**。
+- cargo check --workspace 通过（20.8s）。
+- 单测：qms/hrm/unified-core/crm/integration 全绿（152 passed）；rd 3 个 repository 测试因测试库密码认证失败（28P01，环境凭据问题、与本次改动无关）——未修，如实声明。
+- lefthook 门禁 5 批全绿（bridge-coverage/api-gate/api-boundary-gate/perm-matrix/axum-layer/boundary-gate-py）。
+
+**提交（5 批，未推送）**：
+- `698a40206` qms（11+1）→ `55027bc4a` integration → `8b5bd51ed` hrm（25）→ `888f07151` unified-core（13）→ `5b38796cf` rd/crm（2）
+- 基线：727da5a7b（origin main）；推送待用户指令。
