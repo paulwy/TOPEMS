@@ -1,0 +1,147 @@
+{
+  "data": [
+    {
+      "id": "page-index",
+      "title": "导航菜单结构演示",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787925100000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 900,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-30a99f7b",
+          "measuredAt": 1789203984295
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/index.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-platform-services-mapping",
+      "title": "核心与基础服务导航映射",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787926306000,
+      "canvasData": {
+        "x": 480,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1431,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-e1c1473f",
+          "measuredAt": 1789203984295
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/platform-services-mapping.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-finance-hr-crm-mapping",
+      "title": "财务/人力/客户域导航映射",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787928285000,
+      "canvasData": {
+        "x": 960,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1618,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-ee7d3157",
+          "measuredAt": 1789203984295
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/finance-hr-crm-mapping.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-remaining-domains-mapping",
+      "title": "剩余业务域导航映射",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787930874000,
+      "canvasData": {
+        "x": 1440,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 2052,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-c1cd820d",
+          "measuredAt": 1789203984295
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/remaining-domains-mapping.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-full-navigation-overview",
+      "title": "全站导航总览",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1787931631000,
+      "canvasData": {
+        "x": 1920,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1136,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-fe4e3d4e",
+          "measuredAt": 1789203984295
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/full-navigation-overview.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "page-global-search",
+      "title": "全局搜索中心",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1789203500000,
+      "canvasData": {
+        "x": 2400,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1067,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-bc338a2b",
+          "measuredAt": 1789203984295
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/global-search.html",
+        "interactions": []
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop",
+    "projectName": "Navigation Menu Demo"
+  }
+}

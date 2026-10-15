@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>状态示例 — Loading / 空状态 / 错误状态</title>
+<style id="theme-vars">
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Brand primary scale - refined cobalt-indigo */
+  --brand-primary-50: #eef4ff;
+  --brand-primary-100: #e0ebff;
+  --brand-primary-200: #c7daff;
+  --brand-primary-300: #a4c2fc;
+  --brand-primary-400: #769cf5;
+  --brand-primary-500: #4f78ed;
+  --brand-primary-600: #365ae3;
+  --brand-primary-700: #2a46c2;
+  --brand-primary-800: #263b9e;
+  --brand-primary-900: #24357d;
+
+  /* Neutral scale - warm slate, refined for UI density */
+  --brand-neutral-0: #ffffff;
+  --brand-neutral-50: #f8fafc;
+  --brand-neutral-100: #f1f5f9;
+  --brand-neutral-150: #e9eef4;
+  --brand-neutral-200: #e2e8f0;
+  --brand-neutral-300: #cbd5e1;
+  --brand-neutral-400: #94a3b8;
+  --brand-neutral-500: #64748b;
+  --brand-neutral-600: #475569;
+  --brand-neutral-700: #334155;
+  --brand-neutral-800: #1e293b;
+  --brand-neutral-850: #172033;
+  --brand-neutral-900: #0f172a;
+  --brand-neutral-950: #020617;
+
+  /* State colors - harmonious with primary */
+  --brand-state-success: #16a34a;
+  --brand-state-success-foreground: #ffffff;
+  --brand-state-success-subtle: #f0fdf4;
+  --brand-state-warning: #d97706;
+  --brand-state-warning-foreground: #ffffff;
+  --brand-state-warning-subtle: #fffbeb;
+  --brand-state-error: #dc2626;
+  --brand-state-error-foreground: #ffffff;
+  --brand-state-error-subtle: #fef2f2;
+  --brand-state-info: #365ae3;
+  --brand-state-info-foreground: #ffffff;
+  --brand-state-info-subtle: #eef4ff;
+
+  /* Semantic aliases */
+  --brand-background: var(--brand-neutral-0);
+  --brand-foreground: var(--brand-neutral-900);
+  --brand-card: var(--brand-neutral-0);
+  --brand-card-foreground: var(--brand-neutral-900);
+  --brand-card-muted: var(--brand-neutral-50);
+  --brand-popover: var(--brand-neutral-0);
+  --brand-popover-foreground: var(--brand-neutral-900);
+  --brand-primary: var(--brand-primary-600);
+  --brand-primary-foreground: var(--brand-neutral-0);
+  --brand-primary-subtle: var(--brand-primary-50);
+  --brand-muted: var(--brand-neutral-100);
+  --brand-muted-foreground: var(--brand-neutral-500);
+  --brand-border: var(--brand-neutral-200);
+  --brand-border-subtle: var(--brand-neutral-150);
+  --brand-input: var(--brand-neutral-200);
+  --brand-ring: var(--brand-primary-400);
+  --brand-overlay: rgba(15, 23, 42, 0.48);
+  --brand-backdrop: rgba(15, 23, 42, 0.24);
+
+  /* Radius scale - restrained */
+  --brand-radius-none: 0px;
+  --brand-radius-xs: 2px;
+  --brand-radius-sm: 4px;
+  --brand-radius-md: 8px;
+  --brand-radius-lg: 12px;
+  --brand-radius-xl: 16px;
+  --brand-radius-full: 9999px;
+
+  /* Typography - families */
+  --brand-font-sans: Inter, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --brand-font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  /* Typography - scale */
+  --brand-text-xs: 0.75rem;
+  --brand-text-xs-line: 1rem;
+  --brand-text-sm: 0.875rem;
+  --brand-text-sm-line: 1.25rem;
+  --brand-text-base: 1rem;
+  --brand-text-base-line: 1.5rem;
+  --brand-text-lg: 1.125rem;
+  --brand-text-lg-line: 1.75rem;
+  --brand-text-xl: 1.25rem;
+  --brand-text-xl-line: 1.75rem;
+  --brand-text-2xl: 1.5rem;
+  --brand-text-2xl-line: 2rem;
+  --brand-text-3xl: 1.875rem;
+  --brand-text-3xl-line: 2.25rem;
+
+  /* Typography - weights */
+  --brand-font-normal: 400;
+  --brand-font-medium: 500;
+  --brand-font-semibold: 600;
+  --brand-font-bold: 700;
+
+  /* Spacing - 4px grid */
+  --brand-space-0: 0px;
+  --brand-space-1: 4px;
+  --brand-space-2: 8px;
+  --brand-space-3: 12px;
+  --brand-space-4: 16px;
+  --brand-space-5: 20px;
+  --brand-space-6: 24px;
+  --brand-space-7: 28px;
+  --brand-space-8: 32px;
+  --brand-space-9: 36px;
+  --brand-space-10: 40px;
+  --brand-space-11: 44px;
+  --brand-space-12: 48px;
+  --brand-space-14: 56px;
+  --brand-space-16: 64px;
+  --brand-space-20: 80px;
+  --brand-space-24: 96px;
+
+  /* Elevation / shadows */
+  --brand-shadow-xs: 0 1px 2px 0 rgba(2, 6, 23, 0.04);
+  --brand-shadow-sm: 0 1px 3px 0 rgba(2, 6, 23, 0.04), 0 1px 2px -1px rgba(2, 6, 23, 0.04);
+  --brand-shadow-md: 0 4px 6px -1px rgba(2, 6, 23, 0.04), 0 2px 4px -2px rgba(2, 6, 23, 0.04);
+  --brand-shadow-lg: 0 10px 15px -3px rgba(2, 6, 23, 0.04), 0 4px 6px -4px rgba(2, 6, 23, 0.04);
+  --brand-shadow-xl: 0 20px 25px -5px rgba(2, 6, 23, 0.04), 0 8px 10px -6px rgba(2, 6, 23, 0.04);
+  --brand-shadow-inner: inset 0 2px 4px 0 rgba(2, 6, 23, 0.04);
+
+  /* Motion - transitions */
+  --brand-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --brand-transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --brand-transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --brand-transition-bounce: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --brand-transition-colors: color var(--brand-transition-base), background-color var(--brand-transition-base), border-color var(--brand-transition-base), fill var(--brand-transition-base), stroke var(--brand-transition-base);
+
+  /* Z-index scale */
+  --brand-z-base: 0;
+  --brand-z-dropdown: 100;
+  --brand-z-sticky: 200;
+  --brand-z-fixed: 300;
+  --brand-z-popover: 400;
+  --brand-z-tooltip: 500;
+  --brand-z-modal: 600;
+  --brand-z-toast: 700;
+}
+
+.dark {
+  --brand-background: var(--brand-neutral-950);
+  --brand-foreground: var(--brand-neutral-50);
+  --brand-card: var(--brand-neutral-900);
+  --brand-card-foreground: var(--brand-neutral-50);
+  --brand-card-muted: var(--brand-neutral-850);
+  --brand-popover: var(--brand-neutral-900);
+  --brand-popover-foreground: var(--brand-neutral-50);
+  --brand-primary: var(--brand-primary-500);
+  --brand-primary-foreground: var(--brand-neutral-0);
+  --brand-primary-subtle: var(--brand-primary-900);
+  --brand-muted: var(--brand-neutral-800);
+  --brand-muted-foreground: var(--brand-neutral-400);
+  --brand-border: var(--brand-neutral-800);
+  --brand-border-subtle: var(--brand-neutral-850);
+  --brand-input: var(--brand-neutral-800);
+  --brand-ring: var(--brand-primary-400);
+  --brand-overlay: rgba(2, 6, 23, 0.72);
+  --brand-backdrop: rgba(2, 6, 23, 0.48);
+
+  --brand-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --brand-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --brand-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --brand-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --brand-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --brand-shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* ============================================================
+   Micro-interaction utilities
+   ============================================================ */
+
+/* Focus ring using brand tokens */
+.focus-ring:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--brand-background), 0 0 0 4px var(--brand-ring);
+}
+
+/* Card hover / active */
+.interactive-card {
+  transition: transform var(--brand-transition-base), box-shadow var(--brand-transition-base), border-color var(--brand-transition-base);
+}
+.interactive-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--brand-shadow-md);
+}
+.interactive-card:active {
+  transform: translateY(0) scale(0.99);
+}
+
+/* Tab hover / active with sliding underline */
+.interactive-tab {
+  position: relative;
+  transition: color var(--brand-transition-fast), background-color var(--brand-transition-fast);
+}
+.interactive-tab:hover {
+  background-color: var(--brand-muted);
+}
+.interactive-tab.active {
+  color: var(--brand-primary);
+  background-color: color-mix(in srgb, var(--brand-primary) 5%, transparent);
+}
+
+/* Sliding underline pseudo-element */
+.interactive-tab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--brand-primary-400), var(--brand-primary-600));
+  border-radius: 2px 2px 0 0;
+  box-shadow: 0 -2px 8px color-mix(in srgb, var(--brand-primary) 30%, transparent);
+  transform: scaleX(0);
+  transform-origin: center;
+  opacity: 0;
+  transition: transform var(--brand-transition-slow), opacity var(--brand-transition-fast);
+}
+
+/* Hover preview: underline expands from center */
+.interactive-tab:hover::after {
+  transform: scaleX(0.5);
+  opacity: 0.5;
+}
+
+/* Active tab: underline slides in from left */
+.interactive-tab.active::after {
+  transform: scaleX(1);
+  transform-origin: left;
+  opacity: 1;
+  animation: tabUnderlineSlide var(--brand-transition-slow) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes tabUnderlineSlide {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
+/* Sidebar / list item hover */
+.interactive-item {
+  transition: color var(--brand-transition-fast), background-color var(--brand-transition-fast), padding-left var(--brand-transition-fast), border-color var(--brand-transition-fast);
+}
+.interactive-item:hover {
+  background-color: var(--brand-muted);
+}
+.interactive-item.active {
+  color: var(--brand-primary);
+  background-color: color-mix(in srgb, var(--brand-primary) 10%, transparent);
+}
+
+/* Button hover / active */
+.interactive-btn {
+  transition: transform var(--brand-transition-fast), background-color var(--brand-transition-fast), color var(--brand-transition-fast);
+}
+.interactive-btn:hover {
+  background-color: var(--brand-muted);
+}
+.interactive-btn:active {
+  transform: scale(0.94);
+}
+
+/* Link hover underline */
+.interactive-link {
+  position: relative;
+  transition: color var(--brand-transition-fast);
+}
+.interactive-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: 100%;
+  height: 1px;
+  background-color: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform var(--brand-transition-base);
+}
+.interactive-link:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Icon scale on parent hover */
+.icon-hover {
+  transition: transform var(--brand-transition-base);
+}
+.group:hover .icon-hover,
+.icon-hover:hover {
+  transform: scale(1.1);
+}
+
+/* Check badge animation */
+.check-badge {
+  transition: transform var(--brand-transition-bounce), opacity var(--brand-transition-fast);
+}
+.interactive-card:not(.selected) .check-badge {
+  transform: scale(0);
+  opacity: 0;
+}
+.interactive-card.selected .check-badge {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* Tooltip fade / slide */
+.domain-tooltip {
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition: opacity var(--brand-transition-fast), transform var(--brand-transition-fast);
+}
+.interactive-card:hover .domain-tooltip,
+.interactive-item:hover .domain-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Staggered page load animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeInUp var(--brand-transition-slow) cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  opacity: 0;
+}
+.stagger-1 { animation-delay: 40ms; }
+.stagger-2 { animation-delay: 80ms; }
+.stagger-3 { animation-delay: 120ms; }
+.stagger-4 { animation-delay: 160ms; }
+.stagger-5 { animation-delay: 200ms; }
+.stagger-6 { animation-delay: 240ms; }
+.stagger-7 { animation-delay: 280ms; }
+.stagger-8 { animation-delay: 320ms; }
+
+/* ============================================================
+   Premium visual enhancement utilities
+   ============================================================ */
+
+/* Premium glassmorphism header */
+.glass-header {
+  background: color-mix(in srgb, var(--brand-card) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom-color: color-mix(in srgb, var(--brand-border) 80%, transparent);
+}
+
+/* Subtle page background gradient */
+.page-gradient-bg {
+  background:
+    radial-gradient(ellipse at 10% 0%, color-mix(in srgb, var(--brand-primary) 6%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse at 90% 10%, color-mix(in srgb, var(--brand-secondary) 5%, transparent) 0%, transparent 45%),
+    var(--brand-background);
+}
+
+/* Section card with subtle inner glow on hover */
+.glow-card {
+  position: relative;
+  overflow: hidden;
+}
+.glow-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--brand-primary) 8%, transparent), transparent 60%);
+  opacity: 0;
+  transition: opacity var(--brand-transition-slow);
+  pointer-events: none;
+}
+.glow-card:hover::before {
+  opacity: 1;
+}
+
+/* Selected card outer glow */
+.selected-glow {
+  box-shadow:
+    0 0 0 1px var(--brand-primary-200),
+    0 0 20px color-mix(in srgb, var(--brand-primary) 15%, transparent),
+    var(--brand-shadow-md);
+}
+.dark .selected-glow,
+html[class~="dark"] .selected-glow {
+  box-shadow:
+    0 0 0 1px var(--brand-primary-700),
+    0 0 24px color-mix(in srgb, var(--brand-primary) 25%, transparent),
+    var(--brand-shadow-md);
+}
+
+/* Gradient badge */
+.gradient-badge {
+  background: linear-gradient(135deg, var(--brand-primary-50), color-mix(in srgb, var(--brand-primary-100) 70%, transparent));
+  color: var(--brand-primary-700);
+  border: 1px solid color-mix(in srgb, var(--brand-primary-200) 60%, transparent);
+}
+.dark .gradient-badge,
+html[class~="dark"] .gradient-badge {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-primary-900) 60%, transparent), color-mix(in srgb, var(--brand-primary-800) 40%, transparent));
+  color: var(--brand-primary-200);
+  border-color: color-mix(in srgb, var(--brand-primary-700) 50%, transparent);
+}
+
+/* Gradient divider */
+.gradient-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand-border), transparent);
+  border: none;
+}
+
+/* Premium hover lift with shadow */
+.premium-hover {
+  transition: transform var(--brand-transition-fast), box-shadow var(--brand-transition-fast);
+}
+.premium-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--brand-shadow-lg);
+}
+
+/* Subtle shimmer on active tab */
+.active-tab-glow {
+  position: relative;
+}
+.active-tab-glow::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--brand-primary-400), transparent);
+  opacity: 0.6;
+}
+
+/* Lucide icon color consistency */
+.icon-brand {
+  color: var(--brand-primary);
+}
+.icon-muted {
+  color: var(--brand-muted-foreground);
+}
+
+    </style>
+    <style>
+      /* ===== 三态专用样式（基于既有 token）===== */
+      .state-section { scroll-margin-top: 5rem; }
+      .state-card {
+        border: 1px solid var(--brand-border);
+        border-radius: var(--radius-lg);
+        background: var(--brand-background);
+        overflow: hidden;
+      }
+      .state-card-header {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--brand-border);
+        background: var(--brand-card-muted);
+        display: flex; align-items: center; justify-content: space-between;
+      }
+      .state-card-body { padding: 1.5rem; }
+
+      /* Loading：骨架 shimmer */
+      @keyframes skeleton-shimmer {
+        0% { background-position: -400px 0; }
+        100% { background-position: 400px 0; }
+      }
+      .skeleton {
+        position: relative; overflow: hidden;
+        background: var(--brand-muted);
+        border-radius: var(--radius-sm);
+      }
+      .skeleton::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+        animation: skeleton-shimmer 1.4s infinite;
+      }
+      .dark .skeleton::after, html[class~='dark'] .skeleton::after {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,.07), transparent);
+      }
+      .skeleton-card { border: 1px solid var(--brand-border); border-radius: var(--radius-md); padding: 1rem; }
+      .skeleton-row { height: 14px; margin-bottom: 10px; }
+      .skeleton-circle { border-radius: 9999px; }
+
+      /* 空状态 */
+      .empty-illustration {
+        width: 56px; height: 56px; margin: 0 auto 1rem;
+        border-radius: var(--radius-lg);
+        background: var(--brand-primary-subtle);
+        color: var(--brand-primary);
+        display: flex; align-items: center; justify-content: center;
+      }
+      .empty-title { font-size: 1rem; font-weight: 600; color: var(--brand-foreground); }
+      .empty-desc { font-size: 0.875rem; color: var(--brand-muted-foreground); margin-top: 0.25rem; }
+      .empty-cta { margin-top: 1rem; }
+
+      /* 错误状态 */
+      .error-code { font-size: 2rem; font-weight: 700; color: var(--brand-error, #dc2626); letter-spacing: 0.05em; }
+      .error-hint { font-size: 0.8125rem; color: var(--brand-muted-foreground); }
+
+      .btn {
+        display: inline-flex; align-items: center; gap: 0.375rem;
+        padding: 0.4375rem 0.875rem; border-radius: var(--radius-md);
+        font-size: 0.875rem; font-weight: 500; cursor: pointer;
+        transition: background-color 150ms cubic-bezier(0.4,0,0.2,1), transform 100ms cubic-bezier(0.4,0,0.2,1);
+      }
+      .btn:active { transform: scale(0.97); }
+      .btn-primary { background: var(--brand-primary); color: var(--brand-primary-foreground); }
+      .btn-primary:hover { background: var(--brand-primary-600); }
+      .btn-outline { border: 1px solid var(--brand-border); color: var(--brand-foreground); background: transparent; }
+      .btn-outline:hover { background: var(--brand-muted); }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased page-gradient-bg">
+  <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 z-[800] px-3 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium">跳转到主要内容</a>
+  <main class="flex flex-col min-h-screen" id="main-content">
+    <!-- Top App Header -->
+    <header class="sticky top-0 z-[500] h-14 flex-none flex items-center justify-between px-5 border-b bg-background glass-header" style="border-color: var(--brand-border);">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold">T</div>
+        <h1 class="text-base font-semibold text-foreground">状态示例</h1>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="index.html" class="text-xs text-muted-foreground hover:text-primary px-2 py-1 rounded-md interactive-btn focus-ring">返回总览</a>
+        <button type="button" class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-medium ml-1 focus-ring" aria-label="用户菜单">张</button>
+      </div>
+    </header>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="flex-none px-5 py-2 border-b bg-background text-xs text-muted-foreground flex items-center gap-2" style="border-color: var(--brand-border);">
+      <a href="index.html" class="interactive-link hover:text-primary">首页</a>
+      <i data-lucide="chevron-right" class="w-3 h-3"></i>
+      <span class="text-foreground font-medium" aria-current="page">状态示例（Loading / 空 / 错误）</span>
+    </nav>
+
+    <div class="flex-1 w-full max-w-6xl mx-auto px-5 py-8 flex flex-col gap-8">
+      <!-- 分区导航 -->
+      <div class="flex flex-wrap gap-2 text-sm">
+        <a href="#loading" class="px-3 py-1.5 rounded-md border bg-background text-foreground hover:bg-muted focus-ring" style="border-color: var(--brand-border);">① Loading 骨架</a>
+        <a href="#empty" class="px-3 py-1.5 rounded-md border bg-background text-foreground hover:bg-muted focus-ring" style="border-color: var(--brand-border);">② 空状态</a>
+        <a href="#error" class="px-3 py-1.5 rounded-md border bg-background text-foreground hover:bg-muted focus-ring" style="border-color: var(--brand-border);">③ 错误状态</a>
+      </div>
+
+      <!-- ===== ① Loading 骨架屏 ===== -->
+      <section id="loading" class="state-section">
+        <h2 class="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+          <i data-lucide="loader-circle" class="w-5 h-5 icon-brand"></i>Loading 骨架屏
+          <span class="text-xs font-normal text-muted-foreground">模块卡片 + 列表行，shimmer 扫光</span>
+        </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="state-card">
+            <div class="state-card-header"><span class="text-sm font-medium text-foreground">模块网格骨架</span><span class="text-xs text-muted-foreground">6 卡片</span></div>
+            <div class="state-card-body grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div class="skeleton-card"><div class="skeleton skeleton-circle w-10 h-10 mb-3"></div><div class="skeleton skeleton-row w-3/4"></div><div class="skeleton skeleton-row w-1/2" style="height:10px"></div></div>
+              <div class="skeleton-card"><div class="skeleton skeleton-circle w-10 h-10 mb-3"></div><div class="skeleton skeleton-row w-2/3"></div><div class="skeleton skeleton-row w-1/2" style="height:10px"></div></div>
+              <div class="skeleton-card"><div class="skeleton skeleton-circle w-10 h-10 mb-3"></div><div class="skeleton skeleton-row w-3/4"></div><div class="skeleton skeleton-row w-1/3" style="height:10px"></div></div>
+              <div class="skeleton-card"><div class="skeleton skeleton-circle w-10 h-10 mb-3"></div><div class="skeleton skeleton-row w-1/2"></div><div class="skeleton skeleton-row w-2/3" style="height:10px"></div></div>
+              <div class="skeleton-card"><div class="skeleton skeleton-circle w-10 h-10 mb-3"></div><div class="skeleton skeleton-row w-3/4"></div><div class="skeleton skeleton-row w-1/2" style="height:10px"></div></div>
+              <div class="skeleton-card"><div class="skeleton skeleton-circle w-10 h-10 mb-3"></div><div class="skeleton skeleton-row w-2/3"></div><div class="skeleton skeleton-row w-1/2" style="height:10px"></div></div>
+            </div>
+          </div>
+          <div class="state-card">
+            <div class="state-card-header"><span class="text-sm font-medium text-foreground">列表行骨架</span><span class="text-xs text-muted-foreground">3 行</span></div>
+            <div class="state-card-body flex flex-col gap-3">
+              <div class="flex items-center gap-3"><div class="skeleton skeleton-circle w-8 h-8 flex-none"></div><div class="flex-1"><div class="skeleton skeleton-row w-2/3"></div><div class="skeleton skeleton-row w-1/3" style="height:10px;margin-bottom:0"></div></div></div>
+              <div class="flex items-center gap-3"><div class="skeleton skeleton-circle w-8 h-8 flex-none"></div><div class="flex-1"><div class="skeleton skeleton-row w-1/2"></div><div class="skeleton skeleton-row w-1/4" style="height:10px;margin-bottom:0"></div></div></div>
+              <div class="flex items-center gap-3"><div class="skeleton skeleton-circle w-8 h-8 flex-none"></div><div class="flex-1"><div class="skeleton skeleton-row w-3/4"></div><div class="skeleton skeleton-row w-1/2" style="height:10px;margin-bottom:0"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ② 空状态 ===== -->
+      <section id="empty" class="state-section">
+        <h2 class="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+          <i data-lucide="inbox" class="w-5 h-5 icon-brand"></i>空状态
+          <span class="text-xs font-normal text-muted-foreground">无数据 / 无搜索结果 / 无收藏</span>
+        </h2>
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="state-card">
+            <div class="state-card-header"><span class="text-sm font-medium text-foreground">无待办</span></div>
+            <div class="state-card-body text-center py-8">
+              <div class="empty-illustration"><i data-lucide="inbox" class="w-7 h-7"></i></div>
+              <p class="empty-title">暂无待办事项</p>
+              <p class="empty-desc">当前没有需要处理的任务，先休息一下或创建新任务。</p>
+              <div class="empty-cta"><button class="btn btn-primary focus-ring">新建任务<i data-lucide="plus" class="w-4 h-4"></i></button></div>
+            </div>
+          </div>
+          <div class="state-card">
+            <div class="state-card-header"><span class="text-sm font-medium text-foreground">搜索无结果</span></div>
+            <div class="state-card-body text-center py-8">
+              <div class="empty-illustration"><i data-lucide="search-x" class="w-7 h-7"></i></div>
+              <p class="empty-title">未找到匹配项</p>
+              <p class="empty-desc">没有与“订单审批流”匹配的导航或文档，试试其他关键词。</p>
+              <div class="empty-cta"><button class="btn btn-outline focus-ring">清除搜索</button></div>
+            </div>
+          </div>
+          <div class="state-card">
+            <div class="state-card-header"><span class="text-sm font-medium text-foreground">空收藏</span></div>
+            <div class="state-card-body text-center py-8">
+              <div class="empty-illustration"><i data-lucide="star" class="w-7 h-7"></i></div>
+              <p class="empty-title">暂无收藏</p>
+              <p class="empty-desc">点击导航项旁的星标即可收藏，常用功能随手可达。</p>
+              <div class="empty-cta"><button class="btn btn-primary focus-ring">浏览导航</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== ③ 错误状态 ===== -->
+      <section id="error" class="state-section">
+        <h2 class="text-lg font-semibold text-foreground mb-3 flex items-center gap-2">
+          <i data-lucide="triangle-alert" class="w-5 h-5 text-error"></i>错误状态
+          <span class="text-xs font-normal text-muted-foreground">接口异常 / 加载失败 / 权限不足</span>
+        </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div class="state-card">
+            <div class="state-card-header"><span class="text-sm font-medium text-foreground">接口异常（500）</span></div>
+            <div class="state-card-body text-center py-8">
+              <div class="error-code">500</div>
+              <p class="empty-title mt-2">服务暂时不可用</p>
+              <p class="empty-desc">数据加载失败，请稍后重试；若持续异常请联系管理员。</p>
+              <div class="empty-cta flex items-center justify-center gap-2">
+                <button class="btn btn-primary focus-ring"><i data-lucide="rotate-cw" class="w-4 h-4"></i>重试</button>
+                <button class="btn btn-outline focus-ring">反馈问题</button>
+              </div>
+              <p class="error-hint mt-4">错误追踪 ID：<code class="font-mono text-xs px-1.5 py-0.5 rounded bg-muted">a3f9-2026-09-13-77c2</code></p>
+            </div>
+          </div>
+          <div class="state-card">
+            <div class="state-card-header"><span class="text-sm font-medium text-foreground">加载失败（网络）</span></div>
+            <div class="state-card-body text-center py-8">
+              <div class="empty-illustration" style="background: var(--brand-error-subtle, var(--brand-muted)); color: var(--brand-error, #dc2626);"><i data-lucide="wifi-off" class="w-7 h-7"></i></div>
+              <p class="empty-title mt-2">网络连接异常</p>
+              <p class="empty-desc">无法连接到服务器，请检查网络后重试。</p>
+              <div class="empty-cta"><button class="btn btn-outline focus-ring"><i data-lucide="refresh-cw" class="w-4 h-4"></i>重新加载</button></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="text-center text-xs text-muted-foreground py-4 border-t" style="border-color: var(--brand-border);">
+        TOPEMS 设计基准 · 状态示例页 · 与 colors_and_type.css token 同源
+      </footer>
+    </div>
+  </main>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
