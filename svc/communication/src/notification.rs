@@ -249,11 +249,12 @@ pub async fn broadcast_notification(
     let mut sent_count = 0;
 
     for user_id in &req.user_ids {
-        let id = Uuid::new_v4();
+        let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let id = Uuid::new_v4();
         let result = sqlx::query(
             only_own_schema_query!("public", r#"
-            INSERT INTO core_notifications (id, user_id, title, content, notification_type, priority, data, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            INSERT INTO core_notifications (id, user_id, title, content, notification_type, priority, data, tenant_id, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
             "#),
         )
         .bind(id)
@@ -263,6 +264,7 @@ pub async fn broadcast_notification(
         .bind(&notification_type)
         .bind(priority)
         .bind(&req.data)
+        .bind(tenant_bind)
         .execute(&pool)
         .await;
 
