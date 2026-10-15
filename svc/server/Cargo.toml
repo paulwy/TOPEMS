@@ -1,5 +1,6 @@
 [package]
 name = "topems-server"
+default-run = "topems-server"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

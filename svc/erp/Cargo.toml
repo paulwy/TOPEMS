@@ -1,5 +1,6 @@
 [package]
 name = "topems-erp"
+default-run = "topems-erp"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

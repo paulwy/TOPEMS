@@ -1,5 +1,6 @@
 [package]
 name = "topems-ai"
+default-run = "topems-ai"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
