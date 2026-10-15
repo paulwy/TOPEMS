@@ -16,7 +16,7 @@ const STATUS_IN_PRODUCTION: &str = "in_production";
 const STATUS_COMPLETED: &str = "completed";
 const STATUS_CANCELLED: &str = "cancelled";
 
-const APQP_SELECT_COLS: &str = r#"id, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#;
+const APQP_SELECT_COLS: &str = r#"id, tenant_id::TEXT, project_no, project_name, product_id::TEXT, product_name, customer, description, status, current_phase, leader, team, start_date, target_date, actual_end_date, progress, risk_level, created_by, created_at, updated_at"#;
 
 #[utoipa::path(
     get,
