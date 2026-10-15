@@ -1776,3 +1776,4 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **ehs 双套归属**：ehs.qa_ehs_* 权威（代码显式 ehs. 前缀），其中 5 张未开已并入本批开齐；public.qa_ehs_* 43 张旧残留死表（0 行无引用）豁免不开。
 
 **结果**：337 目标中 274 张已开 RLS + policy；63 张 air owner 死表豁免（0 行开发残留，仅 iam.tenant_users 2 行测试数据，记录为已知缺口待人工）。明细见 artifacts/rls_tenant_policy_batch_20261015.txt。
+- **air owner 63 张豁免**（二次确认 2026-10-15）：air 为 superuser 但无凭据/无成员可 SET ROLE，63 张 0 行死表无法开 RLS，维持豁免；iam.tenant_users 仅 2 行测试数据（tenant_id 非 NULL）——待 air 凭据后补开或删除测试行后豁免到底。
