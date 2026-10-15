@@ -1,6 +1,28 @@
 
 ---
 
+## 2026-10-15 RLS 租户隔离收尾 + 同类缺陷清查（✅ 全部推送）
+
+> 承接 RLS INSERT 缺口批，沿「租户列/响应列」主线把同类 `get("tenant_id")` 运行时 panic 风险全仓清零。推送链：`89505b776 → a6d2e1af8 → ffa44a5b1 → a28e9c6cd → 20db16a70`（origin/main 已同步）。
+
+### RLS INSERT 缺口全库核查批（`89505b776` + `a6d2e1af8`）
+- 静态扫描全仓 265 处原始缺口（SRC 153 处/127 表 + TEST 112 处不修）；4 shard 并行修复 + 主代理收尾纠偏（还原 4 处清单误报表：`rs.ai_analyses`/`rs.document_relations`/`mobile.documents`/`rs.projects`——无 tenant_id 列或无 RLS policy）。
+- `89505b776`：149 SRC INSERT 补 tenant_id / 16 服务（含 wms `.sqlx` +2、svc/mes/.sqlx 新建 165 文件），附带 pm/mes/finance 3 处既有缺陷修正。
+- `a6d2e1af8`：migration 74 回填 125 表 NULL→nil 967 行 + `public.update_updated_at_column()` 触发器函数修复。
+- 验证：125 表 0 NULL 独立回读、migration 74 登记（`_sqlx_migrations` success=true）、`cargo check --workspace` 绿、6 crate 3237 单测 0 失败、lefthook 25 钩子绿、E2E 隔离抽查（普通租户上下文 nil 行可见 0、nil 超管上下文 640=回填数）。
+
+### lims uncertainty 遗留观察（`ffa44a5b1`）
+- 实际 12 处（非观察记录的 9 处）`get("tenant_id")` 缺列：9 处 INSERT/UPDATE RETURNING + 3 处 SELECT 均无 tenant_id 列 → 逐处补列；三表 `qa_lims_uncertainty_projects/sources/components`（lims + public 双 schema）确认有 tenant_id 列。
+- 验证：cargo check -p topems-lims 绿、单测 149 绿。
+
+### 全仓 `get("tenant_id")` 缺列同类缺陷清查（`a28e9c6cd` + `20db16a70`）
+- 全仓 104 处 `get("tenant_id")` → 精确扫描（多行 SQL 全文匹配 + 检查 SELECT/RETURNING 列清单）44 处候选 → 剔误报（test_method/inspection_task 动态列常量、inspection_record:152 嵌套辅助查询、uncertainty 已修）→ 净 38 处真实缺陷。
+- 修复 58 处 / 11 文件（lims 10 + integration 1）：sample_barcode 6、audit 3、data_sync 6、process 2、inspection_record 4、instrument_data_crud 3、data_parsing 1、parse_rules 4、collection_tasks 5、proficiency_testing 23（list_plans 16 分支 + get_plan + samples/results/evaluations/corrective）、conversion_rules 1。含扫描漏检的 sample_barcode:674。
+- 误报确认：inspection_task 3 处（`TASK_SELECT_COLS` 动态常量已含 tenant_id，无需改）。
+- 验证：`cargo check` lims+integration 绿、lims 单测 149 绿、全仓复扫 **0 可疑**、lefthook 门禁绿（boundary-gate-py 17.6s）。
+
+---
+
 ## S1 ehs 事故域接真表（2026-10-14）✅ 事故域闭环
 
 > 决策 S1（ehs 53 桩接真表）——事故（incident）域已全链路接真表。
