@@ -181,5 +181,5 @@ export const auditSchema: EntitySchema = {
   formColCount: 2,
   detailTitle: i18n.t('qms.audit.k30'),
 
-  actions: ['detail'],
+  actions: ['create', 'detail'],
 };

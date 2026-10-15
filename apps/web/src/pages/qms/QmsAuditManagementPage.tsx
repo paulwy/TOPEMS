@@ -5,6 +5,7 @@ import { FileText, CheckCircle } from 'lucide-react';
 import CrudPage, { type CrudApiAdapter } from '@/components/templates/CrudPage';
 import { auditSchema } from '@/schemas/qms';
 import { auditApi } from '@/api/qms';
+import apiClient from '@/api/client';
 import type { AuditPlan } from '@/api/qms';
 import i18n from '@/i18n';
 
@@ -17,8 +18,19 @@ const apiAdapter: CrudApiAdapter<AuditPlan> = {
     const data = res.data || [];
     return { data, total: data.length };
   },
-  create: async () => {
-    throw new Error(i18n.t('qms.qms_audit_management_page.k1'));
+  create: async (data) => {
+    const res = await apiClient.qms.post<AuditPlan>('/audit-plans', {
+      title: String(data.title || ''),
+      audit_type: String(data.audit_type || 'internal'),
+      scope: data.scope ? String(data.scope) : undefined,
+      scheduled_start: data.start_date ? String(data.start_date) : undefined,
+      scheduled_end: data.end_date ? String(data.end_date) : undefined,
+      created_by: data.auditor ? String(data.auditor) : undefined,
+    });
+    if (!res.success) {
+      throw new Error(res.message || i18n.t('qms.qms_audit_management_page.k1'));
+    }
+    return res.data as AuditPlan;
   },
   update: async () => {
     throw new Error(i18n.t('qms.qms_audit_management_page.k2'));
