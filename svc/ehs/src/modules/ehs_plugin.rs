@@ -50,8 +50,8 @@ pub struct PluginHealth {
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
     let runtime_url = get_runtime_url();
     let plugin_info = PluginInfo {
-        code: "qa".to_string(),
-        name: "质量管理与安全".to_string(),
+        code: "ehs".to_string(),
+        name: "环境健康安全".to_string(),
         version: "1.0.0".to_string(),
         description: "质量管理与安全服务 - QMS质量管理、LIMS实验室管理、EHS环境健康安全"
             .to_string(),
@@ -216,11 +216,10 @@ pub async fn auto_register_to_core(_core_url: Option<&str>) {
     let runtime_url = get_runtime_url();
 
     let info = PluginInfo {
-        code: "qa".to_string(),
-        name: "质量管理与安全".to_string(),
+        code: "ehs".to_string(),
+        name: "环境健康安全".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        description: "质量管理与安全服务 - QMS质量管理、LIMS实验室管理、EHS环境健康安全"
-            .to_string(),
+        description: "环境健康安全管理服务 - 风险管控、隐患排查、事件上报".to_string(),
         author: "TOPEMS".to_string(),
         category: "quality".to_string(),
         plugin_type: "business".to_string(),

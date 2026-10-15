@@ -2,6 +2,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 
 use topems_shared_core::health::ServiceHealth;
+use topems_shared_core::plugin::PermissionDef;
 use topems_shared_core::response::ApiResponse;
 
 /// 启动时自动注册到统一核心
@@ -52,7 +53,7 @@ pub struct PluginInfo {
     pub plugin_type: String,
     pub port: u16,
     pub base_path: String,
-    pub permissions: Vec<String>,
+    pub permissions: Vec<PermissionDef>,
     pub runtime_url: String,
     #[serde(default)]
     pub dependencies: Vec<String>,
@@ -77,10 +78,10 @@ pub fn get_plugin_info() -> PluginInfo {
         port: 8071,
         base_path: "/api/gis".to_string(),
         permissions: vec![
-            "location".to_string(),
-            "geofence".to_string(),
-            "device".to_string(),
-            "track".to_string(),
+            PermissionDef { code: "location".to_string(), name: "位置服务".to_string(), resource_type: "gis".to_string(), action: "read".to_string() },
+            PermissionDef { code: "geofence".to_string(), name: "地理围栏".to_string(), resource_type: "gis".to_string(), action: "read".to_string() },
+            PermissionDef { code: "device".to_string(), name: "设备管理".to_string(), resource_type: "gis".to_string(), action: "read".to_string() },
+            PermissionDef { code: "track".to_string(), name: "轨迹追踪".to_string(), resource_type: "gis".to_string(), action: "read".to_string() },
         ],
         runtime_url,
         dependencies: vec!["mes".to_string()],

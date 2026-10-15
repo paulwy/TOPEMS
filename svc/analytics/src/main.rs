@@ -710,6 +710,12 @@ async fn main() -> anyhow::Result<()> {
     // ── 组装 shared-bootstrap Application ─────────────────────────────
     let mut app = build_application(&ctx, &config, public_routes, protected_routes, openapi_json);
 
+    // ── 启动时自动注册到统一核心 ──────────────────────────────────────
+    let core_url = std::env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        modules::bi::plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
+
     // ── 有状态公共路由（/health, /metrics, WebSocket /ws/bi/*, /api/plugins/health）─
     // 放在 build_application 外层嵌套，避免 State 类型与顶层 Router<()> 冲突
     let stateful_public = Router::new()

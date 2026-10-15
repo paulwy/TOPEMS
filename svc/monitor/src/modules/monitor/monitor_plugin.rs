@@ -33,6 +33,9 @@ pub struct DeploymentInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PermissionDef {
     pub code: String,
+    pub name: String,
+    pub resource_type: String,
+    pub action: String,
 }
 
 #[utoipa::path(
@@ -56,15 +59,9 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             base_path: "/api/monitor".to_string(),
         },
         permissions: vec![
-            PermissionDef {
-                code: "alerts".to_string(),
-            },
-            PermissionDef {
-                code: "metrics".to_string(),
-            },
-            PermissionDef {
-                code: "health".to_string(),
-            },
+            PermissionDef { code: "alerts".to_string(), name: "告警管理".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
+            PermissionDef { code: "metrics".to_string(), name: "指标采集".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
+            PermissionDef { code: "health".to_string(), name: "健康检查".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
         ],
         runtime_url,
         dependencies: vec![],
@@ -121,15 +118,9 @@ pub async fn auto_register_to_core(_core_url: Option<&str>) {
             base_path: "/api/monitor".to_string(),
         },
         permissions: vec![
-            PermissionDef {
-                code: "alerts".to_string(),
-            },
-            PermissionDef {
-                code: "metrics".to_string(),
-            },
-            PermissionDef {
-                code: "health".to_string(),
-            },
+            PermissionDef { code: "alerts".to_string(), name: "告警管理".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
+            PermissionDef { code: "metrics".to_string(), name: "指标采集".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
+            PermissionDef { code: "health".to_string(), name: "健康检查".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
         ],
         runtime_url,
         dependencies: vec![],
