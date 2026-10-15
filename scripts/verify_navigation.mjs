@@ -350,6 +350,20 @@ function pagePathToFile(pagePath) {
     }
   }
 
+  if (!matched) {
+    // V182.1: 跨目录全树回退 - 文件名包含末段 PascalCase 或末段核心词
+    // （覆盖跨模块目录存放的页面，如 /admin/feature-flag → pages/system/FeatureFlagPage，
+    //   及命名前缀变体，如 /pm/project-wizard → ProjectCreateWizardPage）
+    const tailPascal =
+      lastSegment.includes('-') ? toPascal(lastSegment.split('-').pop()) : null;
+    const treeMatch = findTreeWidePageMatch(lastPascal, tailPascal);
+    if (treeMatch) {
+      matched = treeMatch;
+      foundIndex = candidates.length;
+      candidates.push(treeMatch);
+    }
+  }
+
   return { candidates, foundIndex, matched };
 }
 
@@ -439,6 +453,30 @@ function findFuzzyPageMatch(moduleDir, lastKebab, lastPascal, cleanSegments) {
   }
 
   return bestMatch;
+}
+
+// V182.1: 跨目录全树回退 - 页面文件名包含末段 PascalCase 或末段核心词
+// （覆盖跨模块目录存放的页面，如 /admin/feature-flag → pages/system/FeatureFlagPage，
+//   及命名前缀变体，如 /pm/project-wizard → ProjectCreateWizardPage）
+function findTreeWidePageMatch(lastPascal, tailPascal) {
+  buildPageFileCache();
+  const keys = [lastPascal, tailPascal].filter((k) => k && k !== 'Detail');
+  if (keys.length === 0) return null;
+  const hits = [];
+  for (const f of _pageFileCache.files) {
+    // 匹配文件名（如 ProjectCreateWizardPage.tsx）或目录路径（如 system/FeatureFlagPage/index.tsx）
+    const matchable = f.nameNoExt + ' ' + f.dirParts.join(' ');
+    for (const key of keys) {
+      if (matchable.includes(key)) {
+        hits.push(f.fullPath);
+        break;
+      }
+    }
+  }
+  if (hits.length === 0) return null;
+  // 优先最短路径（更可能是直接页面而非嵌套目录）
+  hits.sort((a, b) => a.length - b.length);
+  return hits[0];
 }
 
 function toKebab(str) {
@@ -628,6 +666,67 @@ function extractField(block, field) {
   return match ? match[1] : undefined;
 }
 
+// 提取数组顶层的标识符引用（变量型 route，如 routes: [dashboardRoute, userManagementRoute]）
+// 跳过 {…} 对象块与字面量；对每个顶层标识符返回其名称
+function extractTopLevelIdentifiers(block) {
+  const identifiers = [];
+  let i = 0;
+  while (i < block.length) {
+    const ch = block[i];
+    if (ch === '{') {
+      const end = findMatchingBracket(block, i);
+      if (end === -1) break;
+      i = end + 1;
+    } else if (/[A-Za-z_]/.test(ch)) {
+      let j = i;
+      while (j < block.length && /[A-Za-z0-9_]/.test(block[j])) j++;
+      const id = block.slice(i, j);
+      if (!['true', 'false', 'null', 'undefined'].includes(id)) {
+        identifiers.push(id);
+      }
+      i = j;
+    } else {
+      i++;
+    }
+  }
+  return identifiers;
+}
+
+// 在 config 内容中定位标识符的 route 定义块（const xxxRoute: Type = { … }）
+function findRouteDefinitionBlock(content, identifier) {
+  const defRegex = new RegExp(
+    'const\\s+' + identifier + '\\s*(:\\s*[A-Za-z0-9_<>\\[\\],\\s]+)?\\s*=\\s*\\{'
+  );
+  const defMatch = content.match(defRegex);
+  if (!defMatch) return null;
+  const blockStart = defMatch.index + defMatch[0].lastIndexOf('{');
+  const blockEnd = findMatchingBracket(content, blockStart);
+  if (blockEnd === -1) return null;
+  return content.slice(blockStart, blockEnd + 1);
+}
+
+// 解析 path 引用为实际路径：字面量 / CONST.prop / 裸路径
+function resolvePathReference(pathRaw, pathMap, content) {
+  if (!pathRaw) return null;
+  if (pathRaw.startsWith("'") || pathRaw.startsWith('"') || pathRaw.startsWith('`')) {
+    let path = pathRaw.slice(1, -1);
+    if (pathRaw.startsWith('`')) {
+      path = path.replace(/\$\{[^}]+\}/g, ':id');
+    }
+    return path;
+  }
+  if (pathRaw.includes('.')) {
+    const parts = pathRaw.split('.');
+    const constName = parts[0];
+    const propName = parts[1];
+    if (pathMap[constName] && pathMap[constName][propName]) {
+      return pathMap[constName][propName];
+    }
+    return resolveInlinePath(content, constName, propName);
+  }
+  return pathRaw;
+}
+
 function extractAnyPath(block, field) {
   const literalRegex = new RegExp(field + '\\s*:\\s*([\'"`][^\'"`]*[\'"`])');
   const literalMatch = block.match(literalRegex);
@@ -703,29 +802,20 @@ function collectMissingRoutes(flattened) {
     const routesBlock = content.slice(routesBlockStart + 1, routesBlockEnd);
     const routeItemBlocks = extractItemBlocks(routesBlock);
 
+    // 内联对象型 route：直接提取 path
     for (const routeItem of routeItemBlocks) {
-      const pathRaw = extractAnyPath(routeItem, 'path');
-      if (!pathRaw) continue;
-
-      let path = null;
-      if (pathRaw.startsWith("'") || pathRaw.startsWith('"') || pathRaw.startsWith('`')) {
-        path = pathRaw.slice(1, -1);
-        if (pathRaw.startsWith('`')) {
-          path = path.replace(/\$\{[^}]+\}/g, ':id');
-        }
-      } else if (pathRaw.includes('.')) {
-        const parts = pathRaw.split('.');
-        const constName = parts[0];
-        const propName = parts[1];
-        if (pathMap[constName] && pathMap[constName][propName]) {
-          path = pathMap[constName][propName];
-        } else {
-          path = resolveInlinePath(content, constName, propName);
-        }
-      } else {
-        path = pathRaw;
+      const path = resolvePathReference(extractAnyPath(routeItem, 'path'), pathMap, content);
+      if (path) {
+        registeredPaths.add(path);
       }
+    }
 
+    // 变量引用型 route（const xxxRoute = { … } 定义，routes 数组中为标识符引用）
+    // 此前无法解析，导致大量"缺失路由注册"误报
+    for (const identifier of extractTopLevelIdentifiers(routesBlock)) {
+      const defBlock = findRouteDefinitionBlock(content, identifier);
+      if (!defBlock) continue;
+      const path = resolvePathReference(extractAnyPath(defBlock, 'path'), pathMap, content);
       if (path) {
         registeredPaths.add(path);
       }

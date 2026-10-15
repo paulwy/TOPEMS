@@ -504,7 +504,7 @@ docker-compose exec -T postgres psql -U topems topems < backup_before_upgrade.sq
 
 ## 相关文档
 
-- [部署脚本](../scripts/deploy/deploy.sh)
+- [部署脚本](../scripts/deploy/production-deploy.sh)
 - [健康检查脚本](../scripts/deploy/ai-health-check.sh)
 - [Docker Compose 配置](../deploy/docker/docker-compose.yml)
 - [Nginx 配置](../deploy/nginx/topems.conf)

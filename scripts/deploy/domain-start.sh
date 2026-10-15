@@ -30,6 +30,8 @@
 
 set -e
 
+# [DEPRECATED] 已弃用（2026-10-08 容器策略定案，生产走 systemd）；且下面 COMPOSE_DIR
+# 指向 scripts/deploy/docker（该目录无 compose 文件，路径已失效）——本脚本勿运行，仅存档。
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_DIR="${SCRIPT_DIR}/deploy/docker"
 

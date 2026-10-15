@@ -231,11 +231,13 @@ main() {
     log "前端构建完成"
   fi
 
-  # 编译后端
-  log "编译后端（release 模式）..."
+  # 编译后端（unified-core + ai 两个 systemd unit 都需要；失败即中止，不吞错）
+  log "编译后端（release 模式：topems-unified-core + topems-ai）..."
   cd "$PROJECT_DIR"
-  SQLX_OFFLINE=true cargo build --release -p topems-unified-core 2>/dev/null || \
-    SQLX_OFFLINE=true cargo build --release -p topems-ai
+  SQLX_OFFLINE=true cargo build --release -p topems-unified-core || \
+    error "topems-unified-core 编译失败，部署中止（上方为实际编译错误输出）"
+  SQLX_OFFLINE=true cargo build --release -p topems-ai || \
+    error "topems-ai 编译失败，部署中止（上方为实际编译错误输出）"
   log "后端编译完成"
 
   echo ""
@@ -246,9 +248,10 @@ main() {
 
     log "执行数据库迁移..."
     cd "$PROJECT_DIR"
-    SQLX_OFFLINE=false cargo sqlx migrate run --source svc/unified-core/migrations 2>/dev/null || \
-      SQLX_OFFLINE=false cargo sqlx migrate run --source svc/ai/migrations 2>/dev/null || \
-      warn "数据库迁移失败，请手动执行"
+    # 迁移源在仓库根 database/migrations（svc/*/migrations 历史路径已不存在）；
+    # 去掉 2>/dev/null 吞错——迁移失败必须可见，仅降级为 warn 不中断后续部署
+    SQLX_OFFLINE=false cargo sqlx migrate run --source database/migrations || \
+      warn "数据库迁移失败，请手动执行：cargo sqlx migrate run --source database/migrations"
 
     log "数据库迁移完成"
     echo ""

@@ -153,7 +153,11 @@ echo ""
         cd "${SCRIPT_DIR}"
 
         # Build release binaries
-        cargo build --release
+        if [[ "$DRY_RUN" == "true" ]]; then
+            echo -e "${YELLOW}[dry-run]${NC} 跳过 cargo build --release"
+        else
+            cargo build --release
+        fi
 
         # Copy binaries to installation directory
         # unified-core 包含: IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor
@@ -190,6 +194,7 @@ echo ""
             "tms"
             "monitor"
             "plugin-registry"
+            "master-data"
         )
 
         for svc in "${SERVICES[@]}"; do
@@ -217,13 +222,17 @@ echo -e "${YELLOW}Building shared packages...${NC}"
 
 # 复用首处 SCRIPT_DIR（绝对路径，不依赖当前 PWD）
 
-cd "${SCRIPT_DIR}/packages/shared-types"
-pnpm install
-pnpm run build
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo -e "${YELLOW}[dry-run]${NC} 跳过 pnpm install/build（packages/shared-types 与 packages/shared-utils）"
+else
+    cd "${SCRIPT_DIR}/packages/shared-types"
+    pnpm install
+    pnpm run build
 
-cd "${SCRIPT_DIR}/packages/shared-utils"
-pnpm install
-pnpm run build
+    cd "${SCRIPT_DIR}/packages/shared-utils"
+    pnpm install
+    pnpm run build
+fi
 
 echo -e "${GREEN}✓ Shared packages built${NC}"
 echo ""
@@ -233,9 +242,13 @@ echo ""
 #  无独立 core 构建/部署步骤，core-remote 目录同步移除）
 echo -e "${YELLOW}Building Host Shell (web)...${NC}"
 
-cd "${SCRIPT_DIR}/apps/web"
-pnpm install
-pnpm run build
+if [[ "$DRY_RUN" == "true" ]]; then
+    echo -e "${YELLOW}[dry-run]${NC} 跳过 pnpm install/build（apps/web）"
+else
+    cd "${SCRIPT_DIR}/apps/web"
+    pnpm install
+    pnpm run build
+fi
 
 run mkdir -p "${PREFIX}/web"
 run cp -r dist/* "${PREFIX}/web/"
@@ -261,6 +274,43 @@ run cp "${SCRIPT_DIR}/config/env/.env.production.template" "${PREFIX}/config/.en
 run cp "${SCRIPT_DIR}/.env.example" "${PREFIX}/config/.env.example"
 
 echo -e "${GREEN}✓ Configuration templates copied${NC}"
+echo ""
+
+# Per-service 目录与 env 文件（对齐 deploy/systemd/topems-*.service：
+# 每个 unit 引用 WorkingDirectory=${PREFIX}/svc/<svc> 与
+# EnvironmentFile=${PREFIX}/config/<svc>.env；两者不存在 systemd 无法启动）
+echo -e "${YELLOW}Setting up per-service working dirs and env files...${NC}"
+
+SYSTEMD_SERVICES=(
+    "unified-core" "ai" "analytics" "communication" "crm" "ehs" "erp" "finance"
+    "gis" "hrm" "integration" "lims" "master-data" "mes" "mobile" "monitor"
+    "pdm" "plugin-registry" "pm" "portal" "qms" "rd" "scm" "search" "server"
+    "srm" "ticket" "tms" "wms"
+)
+
+for svc in "${SYSTEMD_SERVICES[@]}"; do
+    # WorkingDirectory 必须预先存在（systemd 不会自动创建）
+    run mkdir -p "${PREFIX}/svc/${svc}"
+    # EnvironmentFile：已存在则不覆盖（保护人工配置）；否则从 .env.template 派生
+    if [[ ! -f "${PREFIX}/config/${svc}.env" ]]; then
+        if [[ -f "${PREFIX}/config/.env.template" ]]; then
+            run cp "${PREFIX}/config/.env.template" "${PREFIX}/config/${svc}.env"
+        else
+            run touch "${PREFIX}/config/${svc}.env"
+        fi
+    fi
+done
+
+# grafana / prometheus 配置（对齐 grafana.service / prometheus.service 的 --config 引用）
+if [[ -f "${SCRIPT_DIR}/deploy/docker/prometheus/prometheus.yml" ]]; then
+    run cp "${SCRIPT_DIR}/deploy/docker/prometheus/prometheus.yml" "${PREFIX}/config/prometheus.yml"
+fi
+# grafana.ini 仓库内无模板（Grafana 官方镜像自带默认 ini；provisioning 见 deploy/docker/grafana/provisioning）
+echo -e "${YELLOW}⚠ grafana.ini 无仓库模板：如改用本机 Grafana 并引用 ${PREFIX}/config/grafana.ini，请手工创建或 cp /usr/share/grafana/conf/grafana.ini.default${NC}"
+
+run chown -R "${SERVICE_USER}:${SERVICE_USER}" "${PREFIX}/svc" "${PREFIX}/config"
+
+echo -e "${GREEN}✓ Per-service working dirs and env files ready${NC}"
 echo ""
 
 # Enable services

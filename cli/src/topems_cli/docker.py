@@ -14,23 +14,45 @@ class DockerManager:
     def __init__(self, project_root: Optional[str] = None):
         self._is_windows = platform.system() == "Windows"
         self.project_root = project_root or self._find_project_root()
-        self.compose_file = f"{self.project_root}/docker-compose.yml"
+        # 主 compose 文件位于 deploy/docker/（仓库根无 docker-compose.yml）
+        self.compose_file = f"{self.project_root}/deploy/docker/docker-compose.yml"
+        self._v2_checked: Optional[bool] = None
 
     def _find_project_root(self) -> str:
-        """查找项目根目录"""
-        # 从当前文件位置向上查找项目根目录（与 manager.py 一致）
-        return str(Path(__file__).parent.parent.parent.parent.parent)
+        """查找项目根目录（本文件位于 cli/src/topems_cli/，上溯 4 层即仓库根；
+        commands/ 下的文件才需要 5 层，勿照抄）"""
+        return str(Path(__file__).parent.parent.parent.parent)
 
     def _get_docker_command(self) -> str:
         """获取 docker 命令（Windows 上可能是 docker.exe）"""
         return "docker.exe" if self._is_windows else "docker"
 
-    def _get_compose_command(self) -> str:
-        """获取 docker-compose 命令"""
+    def _compose_is_v2(self) -> bool:
+        """探测 docker compose v2 插件是否可用（docker compose version）"""
+        if self._v2_checked is not None:
+            return self._v2_checked
+        try:
+            docker_cmd = self._get_docker_command()
+            result = subprocess.run(
+                [docker_cmd, "compose", "version"],
+                capture_output=True, text=True, timeout=5,
+            )
+            self._v2_checked = result.returncode == 0
+        except Exception:
+            self._v2_checked = False
+        return self._v2_checked
+
+    def _get_compose_command(self) -> list:
+        """返回 compose 命令前缀（list 形式，便于拼接子命令）。
+
+        优先 v2 插件式 `docker compose`；不可用时回退 legacy v1 `docker-compose`。
+        """
+        if self._compose_is_v2():
+            return [self._get_docker_command(), "compose"]
         if self._is_windows:
             # Windows Server 2019 可能使用 docker-compose.exe
-            return "docker-compose.exe"
-        return "docker-compose"
+            return ["docker-compose.exe"]
+        return ["docker-compose"]
 
     def is_docker_available(self) -> bool:
         """检查 Docker 是否可用"""
@@ -51,7 +73,7 @@ class DockerManager:
         try:
             compose_cmd = self._get_compose_command()
             result = subprocess.run(
-                [compose_cmd, "--version"],
+                compose_cmd + ["--version"],
                 capture_output=True,
                 text=True,
                 timeout=5,
@@ -82,7 +104,7 @@ class DockerManager:
         try:
             compose_cmd = self._get_compose_command()
             result = subprocess.run(
-                [compose_cmd, "ps", "-q"],
+                compose_cmd + ["ps", "-q"],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,
@@ -101,7 +123,9 @@ class DockerManager:
             return False
 
         compose_cmd = self._get_compose_command()
-        cmd = [compose_cmd, "up", "-d"]
+        # 2026-10-15 修复：显式 -f 指向 deploy/docker/docker-compose.yml（仓库根无 compose 文件，
+        # 否则报 "no configuration file provided"）
+        cmd = compose_cmd + ["-f", self.compose_file, "up", "-d"]
         if services:
             cmd.extend(services)
         if profile:
@@ -131,9 +155,10 @@ class DockerManager:
             return False
 
         compose_cmd = self._get_compose_command()
-        cmd = [compose_cmd, "down"]
+        # 2026-10-15 修复：显式 -f 指向 deploy/docker/docker-compose.yml（同 start_services）
+        cmd = compose_cmd + ["-f", self.compose_file, "down"]
         if services:
-            cmd = [compose_cmd, "stop"] + services
+            cmd = compose_cmd + ["-f", self.compose_file, "stop"] + services
 
         try:
             env = os.environ.copy()
@@ -152,16 +177,26 @@ class DockerManager:
             return False
 
     def get_container_status(self) -> dict:
-        """获取容器状态"""
+        """获取容器状态（v2 插件支持 `ps --format json`；v1 不支持，回退文本模式）"""
         try:
             compose_cmd = self._get_compose_command()
-            result = subprocess.run(
-                [compose_cmd, "ps", "--format", "json"],
-                cwd=self.project_root,
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
+            if self._compose_is_v2():
+                result = subprocess.run(
+                    compose_cmd + ["ps", "--format", "json"],
+                    cwd=self.project_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
+            else:
+                # legacy v1 docker-compose ps 无 --format json，输出纯文本表格
+                result = subprocess.run(
+                    compose_cmd + ["ps"],
+                    cwd=self.project_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                )
             if result.returncode == 0 and result.stdout:
                 containers = []
                 for line in result.stdout.strip().split("\n"):
@@ -198,7 +233,7 @@ class DockerManager:
         try:
             compose_cmd = self._get_compose_command()
             result = subprocess.run(
-                [compose_cmd, "logs", "--tail", str(lines), service],
+                compose_cmd + ["logs", "--tail", str(lines), service],
                 cwd=self.project_root,
                 capture_output=True,
                 text=True,

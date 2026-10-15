@@ -32,9 +32,22 @@ if [ -z "$DB_PASSWORD" ]; then
     exit 2
 fi
 
+# -y/--yes：跳过交互确认（供 topems.sh 等非交互调用链使用；默认仍需人工确认）
+ASSUME_YES=0
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -y|--yes) ASSUME_YES=1; shift ;;
+        -h|--help)
+            echo "用法: DB_PASSWORD='<口令>' $0 [-y] <用户名> <新密码>"
+            echo "  -y, --yes   跳过交互确认直接执行"
+            exit 0 ;;
+        *) break ;;
+    esac
+done
+
 # 用户名与密码均为必填（不再提供 admin/admin123 默认弱口令）
-USERNAME="${1:?用法: $0 <用户名> <新密码>}"
-NEW_PASSWORD="${2:?用法: $0 <用户名> <新密码>}"
+USERNAME="${1:?用法: $0 [-y] <用户名> <新密码>}"
+NEW_PASSWORD="${2:?用法: $0 [-y] <用户名> <新密码>}"
 if [ ${#NEW_PASSWORD} -lt 8 ]; then
     echo "错误: 新密码长度至少 8 位" >&2
     exit 2
@@ -77,12 +90,14 @@ WHERE username = :'username';
 }
 echo
 
-# 确认操作
-read -p "确认重置密码? (yes/no): " confirm
-if [ "$confirm" != "yes" ] && [ "$confirm" != "y" ] && [ "$confirm" != "Y" ] && [ "$confirm" != "YES" ] && [ "$confirm" != "Yes" ]; then
-    echo "已取消"
-    unset PGPASSWORD
-    exit 0
+# 确认操作（-y/--yes 跳过确认）
+if [ "$ASSUME_YES" -eq 0 ]; then
+    read -p "确认重置密码? (yes/no): " confirm
+    if [ "$confirm" != "yes" ] && [ "$confirm" != "y" ] && [ "$confirm" != "Y" ] && [ "$confirm" != "YES" ] && [ "$confirm" != "Yes" ]; then
+        echo "已取消"
+        unset PGPASSWORD
+        exit 0
+    fi
 fi
 echo
 

@@ -7,7 +7,7 @@
 不写 seed SQL 迁移、不从 erp 同步（决策报告明确禁止）。
 
 用法：
-  cd /Users/air/TOPEMS && set -a && . ./.env && set +a && python3 scripts/hrm_setup_fill.py
+  cd <仓库根目录> && set -a && . ./.env && set +a && python3 scripts/hrm_setup_fill.py
 """
 import json
 import os

@@ -215,7 +215,7 @@ topems/
 
 | 入口 | 定位 | 适用场景 | 典型命令 |
 |------|------|---------|---------|
-| **`scripts/topems.sh`** | **主入口**（零依赖 Bash） | 日常开发：服务启停、构建、测试、清理 | `./scripts/topems.sh start all`、`build`、`test`、`clean` |
+| **`scripts/topems.sh`** | **主入口**（零依赖 Bash） | 日常开发：服务启停、构建、测试、清理 | `./scripts/topems.sh start-all`、`build`、`test`、`clean-all` |
 | **`cli/` (Python CLI)** | 高级运维工具（需 pip install） | 数据库管理、系统诊断、Schema 防御 | `topems db migrate`、`doctor`、`db backup` |
 | **`Makefile`** | Rust 专项快捷命令 | SQLx 缓存、cargo check、覆盖率基线 | `make sqlx-prepare`、`make check-offline` |
 | **`package.json` scripts** | 前端专属命令 | 前端开发、构建、lint、格式检查、设计系统审计、组件文档 | `pnpm dev:web`、`build`、`lint`、`format`、`storybook` |
@@ -410,7 +410,14 @@ Rust 增量编译产物（`target/debug/incremental`）长期累积可达数十 
 
 # 全量清理（含 release）——发布由 CI 出包时可用
 ./scripts/topems.sh clean --rust           # 或 make clean-rust
+
+# 一键全量清理（Rust target + 前端产物 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama）
+./scripts/topems.sh clean-all              # 等价 clean --all，可加 --dry-run 预览 / --deep / --system-cache
 ```
+
+> **注意**：`clean` 默认是**增量**清理（只清 debug 增量缓存，保留产物与依赖）；全量清理用 `clean-all`（= `clean --all`）。
+
+**磁盘守卫**：清理/构建前置磁盘检查，磁盘剩余 < `DISK_BLOCK_GB`（默认 5 GiB）时阻断执行，< `DISK_WARN_GB`（默认 10 GiB）时警告提示；可用同名环境变量覆盖阈值。
 
 - 所有 `clean` 命令均支持 `--dry-run` 预演；执行时会自动终止后台 cargo/rustc 进程，并输出 `target/` 前后占用与磁盘可用量。
 - `.cargo/config.toml` 的 `target-dir` 已设为绝对路径，从任何子目录构建都统一落在根 `target/`，不再产生重复编译的嵌套 target。
@@ -657,16 +664,18 @@ python3 -m topems_cli db migrate
 ./scripts/topems.sh sqlx prepare --pkg=topems-mes # 仅刷新某个包
 ./scripts/topems.sh sqlx prepare --check          # 校验缓存完整性
 ./scripts/topems.sh sqlx check-offline            # 全量离线编译校验（DATABASE_URL 未设置）
-./scripts/topems.sh sqlx merge                    # 合并分包缓存
+./scripts/topems.sh sqlx prepare --merge         # 合并分包缓存到根 .sqlx
 
 # 批量操作
 ./scripts/topems.sh start-all [--only-core|--no-frontend|--no-register|--skip=<svc>]
 ./scripts/topems.sh stop-all                      # 停止所有服务（含前端）
+./scripts/topems.sh stop-all --with-db             # 连 PostgreSQL/Redis 一起停（= run-stop）
 ./scripts/topems.sh restart-all [同上选项]        # 重启所有服务
 
 # 一键运行
 ./scripts/topems.sh run                      # 一键启动数据库+所有服务
-./scripts/topems.sh run-stop                 # 一键停止所有服务+数据库
+./scripts/topems.sh run --auto-build         # 先全量编译再启动（避免未构建时逐服务慢编译）
+./scripts/topems.sh run-stop                 # 一键停止所有服务+数据库（= stop-all --with-db）
 
 # 测试
 ./scripts/topems.sh test-all                 # 运行所有测试
@@ -715,7 +724,7 @@ python3 -m topems_cli db migrate
 | `scripts/dev/update-admin-password.sh` | 重置管理员密码 | `./scripts/dev/update-admin-password.sh [用户名] [密码]` |
 | `scripts/dev/health-check.sh` | 健康检查 | `./scripts/dev/health-check.sh` |
 | `scripts/dev/verify-route-matrix.sh` | 路由验证 | `./scripts/dev/verify-route-matrix.sh` |
-| `scripts/deploy/deploy.sh` | 部署脚本 | `./scripts/deploy/deploy.sh deploy` |
+| `scripts/deploy/production-deploy.sh` | 生产部署（systemd 范式） | `./scripts/deploy/production-deploy.sh` |
 | `scripts/deploy/install.sh` | Linux 服务器安装 | `./scripts/deploy/install.sh` |
 | `scripts/deploy/setup-db.sh` | 数据库设置 | `./scripts/deploy/setup-db.sh` |
 

@@ -183,10 +183,11 @@ sudo systemctl start topems-core
 ./scripts/topems.sh --help
 
 # 启动所有服务
-./scripts/topems.sh start
+./scripts/topems.sh start-all
 
-# 启动指定服务
-./scripts/topems.sh start erp hrm
+# 启动指定服务（start 一次只接一个服务名）
+./scripts/topems.sh start erp
+./scripts/topems.sh start hrm
 
 # 查看服务状态
 ./scripts/topems.sh status
@@ -194,11 +195,12 @@ sudo systemctl start topems-core
 # 停止所有服务
 ./scripts/topems.sh stop
 
-# 重启服务
-./scripts/topems.sh restart
+# 重启服务（单个）/ 重启全部
+./scripts/topems.sh restart hrm
+./scripts/topems.sh restart-all
 
-# 查看日志
-./scripts/topems.sh logs
+# 查看日志（需指定服务）
+./scripts/topems.sh logs hrm
 ```
 
 ### Docker 管理
@@ -455,8 +457,8 @@ sudo certbot --nginx -d app.topems.local
 ### 服务无法启动
 
 ```bash
-# 检查日志
-./scripts/topems.sh logs
+# 检查日志（需指定服务）
+./scripts/topems.sh logs hrm
 
 # 检查端口占用
 lsof -i :8000

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: bi
-        image: topems/bi:latest
+        image: topems-bi:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8060

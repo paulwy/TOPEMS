@@ -28,8 +28,11 @@ RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; BLUE='\033[0;34m'; NC
 PASS=0; FAIL=0
 
 # ---- 提取 topems.sh 的函数定义 + case 分发 ----
-EXTRACTED=$(mktemp /tmp/topems-flow-test.XXXXXX)
-trap 'rm -f "$EXTRACTED"' EXIT
+# 提取件落在项目内临时目录：topems.sh:10-18 加载期守卫用 BASH_SOURCE 解析 PROJECT_ROOT
+# 并要求其含 Cargo.toml；放 /tmp 会使 PROJECT_ROOT=/ → exit 1（见 test-topems-sh.sh）。
+EXTRACTED_DIR=$(mktemp -d "$PROJECT_ROOT/.topems-flow-test.XXXXXX")
+EXTRACTED="$EXTRACTED_DIR/extracted.sh"
+trap 'rm -rf "$EXTRACTED_DIR"' EXIT
 
 sed '/^# 主命令处理$/,$d' "$SCRIPT_UNDER_TEST" \
     | sed 's/^set -e$/# set -e (disabled for testing)/' > "$EXTRACTED"
@@ -44,7 +47,13 @@ sed '/^# 主命令处理$/,$d' "$SCRIPT_UNDER_TEST" \
 set +eu
 # shellcheck disable=SC1090
 source "$EXTRACTED" 2>/dev/null
-set -u; set +e
+# 提取件内 topems.sh:2861 注册的 EXIT trap（_release_build_lock）会覆盖上方的清理 trap；
+# source 后重新注册，保证项目内临时目录退出时被删除。
+trap 'rm -rf "$EXTRACTED_DIR"' EXIT
+set +eu
+# 注意：此处不再重新开启 set -u。topems.sh 实际以 set -e 运行（非 set -u），
+# 且其 start_all_services 等使用空数组 "${extra_opts[@]}"，在 macOS bash 3.2
+# 下遇 set -u 会报 unbound variable 直接退出。与 test-topems-sh.sh 的 set +eu 对齐。
 
 # ====================== Mock 状态控制 ======================
 # 用全局变量控制各 mock 的行为
@@ -74,6 +83,14 @@ _reset_mocks() {
 db_start()           { CALL_LOG="${CALL_LOG}db_start "; return "$MOCK_DB_START_RC"; }
 redis_start()        { CALL_LOG="${CALL_LOG}redis_start "; return "$MOCK_REDIS_START_RC"; }
 load_env()           { :; }
+# 新版 topems.sh 在 run_all / start_all_services 入口自动调用 _preflight_check
+# （→ clean_project --preflight 真实磁盘/文件预检）与 _check_sqlx_cache_freshness
+# （→ 真实 SQLx 缓存新鲜度门禁）。测试须将其 mock 为 no-op/返回 0，
+# 否则真实预检/门禁在隔离测试环境会 return 1 提前中止，service 循环不会执行。
+_preflight_check()   { :; }
+clean_project()      { :; }
+_check_sqlx_cache_freshness() { return 0; }
+_wait_for_plugin_registry()   { return 0; }
 wait_for_core_services() { :; }
 get_all_services()   { echo "svc-a svc-b svc-c"; }
 start_service()      { CALL_LOG="${CALL_LOG}start_service "; return "$MOCK_START_SVC_RC"; }

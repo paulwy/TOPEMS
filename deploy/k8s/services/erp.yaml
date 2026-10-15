@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: erp
-        image: topems/erp:latest
+        image: topems-erp:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8010

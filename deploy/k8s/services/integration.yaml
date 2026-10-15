@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: integration
-        image: topems/integration:latest
+        image: topems-integration:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8072

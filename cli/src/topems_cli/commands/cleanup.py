@@ -3,6 +3,15 @@
 与 scripts/topems.sh 的 clean 命令功能重叠。
 日常开发推荐使用 ./scripts/topems.sh clean（零依赖、clean/clean-rust/clean-frontend 分类）。
 本命令提供 Python 原生体验，作为可选替代。
+
+语义映射（对齐 topems.sh 新约定）：
+- topems.sh `clean`（默认增量，只清 debug 增量缓存）≈ 本模块不提供等价物，
+  全量清理请用 `topems.sh clean-all` 或这里的 `cleanup all`。
+- topems.sh `clean-all` / `clean --all` = clean_project --all（help:3699-3700, 实现 4039-4041）
+  ≈ `topems cleanup all`（stop-all + rm target/.cargo + rm logs）。
+- topems.sh `clean --rust` ≈ `cleanup cache` 的 Rust 部分。
+- 磁盘保护阈值（topems.sh:2763-2765）：DISK_BLOCK_GB=5（可用 <5GB 阻止清理性删除）、
+  DISK_WARN_GB=10（<10GB 告警）。本模块不接管磁盘保护，执行前请自行确认磁盘余量。
 """
 
 import subprocess
@@ -118,11 +127,12 @@ def clean_logs(yes: bool):
 @cleanup.command(name="all")
 @click.option("-y", "--yes", is_flag=True, help="跳过确认")
 def clean_all(yes: bool):
-    """清理所有缓存、日志和编译产物"""
+    """清理所有缓存、日志和编译产物（≈ topems.sh clean-all）"""
     console.print("[bold red]全面清理...[/bold red]")
-    
+
     if not yes:
         console.print("[yellow]警告: 这将删除所有编译缓存和日志！[/yellow]")
+        console.print("[dim]提示: topems.sh 磁盘保护阈值 DISK_BLOCK_GB=5 / DISK_WARN_GB=10（可用 <5GB 阻止、<10GB 告警）；本命令无此保护，执行前请确认磁盘余量。[/dim]")
         if not click.confirm("继续?"):
             return
     

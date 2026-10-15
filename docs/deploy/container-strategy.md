@@ -48,13 +48,13 @@ brew services stop docker  # 或 Docker Desktop 设置中关闭开机自启
 
 | 文件/目录 | 状态 | 处置 |
 |---|---|---|
-| `scripts/deploy/deploy.sh` | **DEPRECATED**（docker run 离线范式） | 已标，保留参考 |
-| `scripts/deploy/docker/topems-docker.sh` | **DEPRECATED**（2026-10-08 标记） | 保留参考（见 README） |
-| `deploy/docker/`（8 compose + Dockerfile + 构建脚本） | **DEPRECATED**（README 已说明弃用原因） | 保留参考；未来目标环境明确 docker 时复用 |
+| ~~`scripts/deploy/deploy.sh`~~ | **已删除**（2026-10-15，docker run 离线范式弃用后移除） | 生产部署见 `production-deploy.sh` |
+| `scripts/deploy/docker/topems-docker.sh` | **现用入口**（docker 部署；2026-10-15 复核已修复复活，与 topems.sh help:3734 口径一致） | docker 部署统一入口 |
+| `deploy/docker/`（8 compose + Dockerfile + 构建脚本） | 随 topems-docker.sh 恢复使用 | docker 部署目录资产 |
 | `svc/unified-core/Dockerfile` | 应用容器化资产 | 保留（无运行时依赖） |
 | 11 个脚本中的 docker 引用 | 检测/分支为主，无生产依赖 | 保留（不影响 systemd 部署路径） |
 
-> 结论：docker 部署代码全套已标记弃用但**保留**（历史/参考价值）；生产链路零 docker 依赖。
+> 结论：生产默认走 systemd（`topems.sh deploy`）；docker 部署路径以 `scripts/deploy/docker/topems-docker.sh` 为现用入口，`deploy/docker/` 资产随之一并恢复使用。
 
 ## 6. 版本一致性（2026-10-08 核对）
 
@@ -71,4 +71,4 @@ brew services stop docker  # 或 Docker Desktop 设置中关闭开机自启
 
 - `docs/database/database-primary-instance.md` §7（生产库独立化定案）
 - `docs/database/postgres-native-migration-20261008.md`（迁移与纯净分离记录）
-- `scripts/deploy/docker/topems-docker.sh`（历史 docker 部署脚本，仅参考）
+- `scripts/deploy/docker/topems-docker.sh`（docker 部署现用入口，见 `topems.sh help` deploy 段）

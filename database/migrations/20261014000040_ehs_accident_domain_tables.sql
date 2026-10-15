@@ -90,6 +90,17 @@ CREATE TABLE IF NOT EXISTS ehs.qa_ehs_incident_actions (
     tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001'::uuid
 );
 
+-- 兼容存量表（2026-10-15 空库重建链修复）：20260926120000_app_schema_tables 等早期迁移
+-- 已固化 ehs.qa_ehs_accidents（15 列，无 tenant_id），上方 CREATE TABLE IF NOT EXISTS 会跳过；
+-- 此处幂等补列（对齐本迁移 19 列契约 + 下方 tenant 策略的 tenant_id 引用），
+-- 仅 qa_ehs_accidents 缺列，其余 5 张 ADD IF NOT EXISTS 无害。
+ALTER TABLE ehs.qa_ehs_accidents         ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001';
+ALTER TABLE ehs.qa_ehs_investigations    ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001';
+ALTER TABLE ehs.qa_ehs_treatments        ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001';
+ALTER TABLE ehs.qa_ehs_treatment_actions ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001';
+ALTER TABLE ehs.qa_ehs_reviews           ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001';
+ALTER TABLE ehs.qa_ehs_incident_actions  ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '00000000-0000-0000-0000-000000000001';
+
 -- RLS：6 表统一开启 + FORCE + tenant 策略（nil/空豁免，对齐 risk_controls）
 DO $$
 DECLARE

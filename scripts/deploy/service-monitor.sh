@@ -22,16 +22,17 @@ set -euo pipefail
 # ==================== 配置 ====================
 
 # 服务列表（服务名:端口:健康检查路径）
+# 端口口径以 config/ports.env 为单一事实源（原 8011-8019 连续段为历史臆造值，已对齐）
 SERVICES=(
     "topems-ai:8013:/health"
-    "topems-srm:8011:/health"
-    "topems-pm:8012:/health"
-    "topems-analytics:8014:/health"
-    "topems-master-data:8015:/health"
-    "topems-mobile:8016:/health"
-    "topems-ehs:8017:/health"
-    "topems-pdm:8018:/health"
-    "topems-rd:8019:/health"
+    "topems-srm:8042:/health"
+    "topems-pm:8023:/health"
+    "topems-analytics:8060:/health"
+    "topems-master-data:8090:/health"
+    "topems-mobile:8070:/health"
+    "topems-ehs:8052:/health"
+    "topems-pdm:8031:/health"
+    "topems-rd:8053:/health"
 )
 
 # 日志文件

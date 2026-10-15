@@ -71,19 +71,22 @@ journalctl -u topems-backend --since "2026-08-28" --until "2026-08-29"
 
 ```bash
 # 健康检查
-./scripts/operations/health-check.sh
+./scripts/dev/health-check.sh
 
 # 服务监控（自动恢复异常服务）
-./scripts/operations/service-monitor.sh
+./scripts/topems.sh check
 
 # 一键启动所有服务
-./scripts/operations/start-all.sh
+./scripts/topems.sh start-all
 
 # 一键停止所有服务
-./scripts/operations/stop-all.sh
+./scripts/topems.sh stop-all
+
+# 一键停止所有服务 + PostgreSQL/Redis
+./scripts/topems.sh stop-all --with-db
 
 # 一键重启所有服务
-./scripts/operations/restart-all.sh
+./scripts/topems.sh restart-all
 ```
 
 ### 2.2 配置管理
@@ -104,8 +107,8 @@ journalctl -u topems-backend --since "2026-08-28" --until "2026-08-29"
 # 1. 编辑配置文件
 vim /etc/topems/backend.env
 
-# 2. 验证配置（如支持）
-./scripts/operations/validate-config.sh
+# 2. 验证配置（重启后用统一脚本检查状态）
+./scripts/topems.sh status
 
 # 3. 重启服务使配置生效
 systemctl restart topems-backend
@@ -564,14 +567,14 @@ ulimit -n 65535
 
 ## 8. 常用运维脚本
 
-| 脚本 | 位置 | 说明 |
+| 脚本/命令 | 位置 | 说明 |
 |------|------|------|
-| 健康检查 | scripts/operations/health-check.sh | 检查所有服务健康状态 |
-| 服务监控 | scripts/operations/service-monitor.sh | 监控服务状态并自动恢复 |
-| 数据库备份 | scripts/backup/backup-database.sh | 数据库全量备份 |
-| 配置备份 | scripts/backup/backup-config.sh | 配置文件备份 |
-| 日志清理 | scripts/operations/clean-logs.sh | 清理过期日志 |
-| 性能分析 | scripts/operations/performance-analysis.sh | 系统性能分析 |
+| 健康检查 | scripts/dev/health-check.sh | 检查所有服务健康状态 |
+| 服务监控 | ./scripts/topems.sh check | 监控服务状态并自动恢复异常服务 |
+| 数据库备份 | ./scripts/topems.sh db backup | 数据库全量备份 |
+| 配置备份 | 手工 cp .env /etc/topems/backend.env（无专用脚本） | 配置文件备份 |
+| 日志清理 | ./scripts/topems.sh clean --logs | 清理过期日志（logs/*.log） |
+| 性能分析 | 系统 top / htop（无专用脚本） | 系统性能分析 |
 
 ## 9. 联系方式
 

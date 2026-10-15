@@ -7,7 +7,7 @@
 #     A. IAM 登录 → JWT → 受保护 API 抽样（/api/v1/users）
 #     B. 各域服务健康（/api/<域>/health，经 nginx map 路由）
 #     C. BI 真实 SQL 执行（/api/bi/datasets/test-sql + /datasets/query）
-#     D. 插件注册/运行时（/api/plugin/runtime/list 带 token）
+#     D. 插件注册/运行时（/api/plugins/health 带 token）
 #   层2（专项指引，依赖生产数据与事件编排，打印执行步骤与期望，
 #        由运维按 TODO 2.3 清单在生产机逐项复验）：
 #     E. 财务凭证借贷平衡（R2 ① 后端已验 10000=10000）
@@ -16,14 +16,16 @@
 #     H. WS MES 看板推送（unified-core 投影由 mes_real_module 提供）
 #
 # 用法：
-#   ./scripts/deploy/smoke-prod.sh --base http://localhost:80 [--user admin] [--password admin123] [--insecure]
+#   ./scripts/deploy/smoke-prod.sh --base http://localhost:80 --user <u> --password <p> [--insecure]
+#   SMOKE_ADMIN=<u> SMOKE_PASS=<p> ./scripts/deploy/smoke-prod.sh --base http://localhost:80
+# 注意：不再内置 admin/admin123 默认口令，必须显式 --user/--password 或 SMOKE_ADMIN/SMOKE_PASS 环境变量
 # 依赖：curl / jq（生产机标准工具）
 # ==============================================================================
 set -uo pipefail
 
 BASE=""
-USERNAME="admin"
-PASSWORD="admin123"
+USERNAME="${SMOKE_ADMIN:-}"
+PASSWORD="${SMOKE_PASS:-}"
 CURL_OPTS=(-s --max-time 15)
 FAIL=0
 PASS_COUNT=0
@@ -36,8 +38,8 @@ log_info() { echo "ℹ️  $1"; }
 usage() {
   echo "Usage: $0 --base <portal_url> [--user <u>] [--password <p>] [--insecure]"
   echo "  --base       portal 入口 URL，如 http://localhost:80 或 https://portal.example.com"
-  echo "  --user       登录用户名（默认 admin）"
-  echo "  --password   登录密码（默认 admin123）"
+  echo "  --user       登录用户名（无默认；也可经 SMOKE_ADMIN 环境变量传入）"
+  echo "  --password   登录密码（无默认；也可经 SMOKE_PASS 环境变量传入）"
   echo "  --insecure   HTTPS 自签证书场景跳过证书校验（-k）"
   exit 2
 }
@@ -53,6 +55,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -z "$BASE" ]] && usage
+
+# 凭证必填：禁止内置默认弱口令（--user/--password 或 SMOKE_ADMIN/SMOKE_PASS 二选一）
+if [[ -z "$USERNAME" || -z "$PASSWORD" ]]; then
+  echo "错误: 未提供登录凭证（--user/--password 或 SMOKE_ADMIN/SMOKE_PASS）" >&2
+  usage
+fi
 
 # 输出目标 URL 时去掉尾部斜杠
 BASE="${BASE%/}"
@@ -113,7 +121,7 @@ else
 fi
 
 # ========== 层1D：插件注册/运行时（带 token） ==========
-log_info "层1D 插件运行时（/api/plugin/runtime/list）"
+log_info "层1D 插件运行时（/api/plugins/health）"
 if [[ -n "${TOKEN:-}" ]]; then
   PLUGIN_CODE=$(curl "${CURL_OPTS[@]}" -o /dev/null -w '%{http_code}' \
     -H "Authorization: Bearer $TOKEN" "$BASE/api/plugins/health" 2>/dev/null)

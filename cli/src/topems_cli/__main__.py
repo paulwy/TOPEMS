@@ -34,6 +34,7 @@ from .commands.build import build
 from .commands.db import db
 from .commands.dev import dev
 from .commands.doctor import doctor
+from .commands.ops import reset_password, run, run_stop
 
 main.add_command(start, name="start")
 main.add_command(stop, name="stop")
@@ -45,13 +46,14 @@ main.add_command(build, name="build")
 main.add_command(db, name="db")
 main.add_command(dev, name="dev")
 main.add_command(doctor, name="doctor")
+main.add_command(reset_password, name="reset-password")
+main.add_command(reset_password, name="update-password")  # 别名（对齐 topems.sh:4034）
+main.add_command(run, name="run")
+main.add_command(run_stop, name="run-stop")
 
-# Docker 命令只在 Docker 可用时注册
-from .docker import get_docker_manager
-_docker_mgr = get_docker_manager()
-if _docker_mgr.is_docker_available():
-    from .commands.docker import docker
-    main.add_command(docker, name="docker")
+# Docker 命令组始终注册（命令面稳定，help 恒定可见）；daemon 可用性由各命令内部检查并友好提示
+from .commands.docker import docker
+main.add_command(docker, name="docker")
 
 
 if __name__ == "__main__":

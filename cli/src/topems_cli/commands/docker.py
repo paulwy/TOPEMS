@@ -60,6 +60,14 @@ def status():
     console.print(f"\n[dim]总计: {status['total']} 容器[/dim]")
 
 
+@docker.command("ps")
+def ps_():
+    """查看容器状态（docker ps 别名）"""
+    # 2026-10-15 修复：不能直接调用 status()（click Command 对象会重解析 sys.argv 报 extra args），
+    # 调用其原始 callback 函数
+    status.callback()
+
+
 @docker.command()
 @click.argument("services", nargs=-1)
 @click.option("--profile", "-p", help="指定 profile")

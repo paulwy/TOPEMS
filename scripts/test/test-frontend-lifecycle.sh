@@ -20,8 +20,11 @@ FE_PID_FILE="$STATE_DIR/fe_pid_exists"
 : > "$CALLS_FILE"; echo "-1" > "$OPEN_AFTER_FILE"; echo "1" > "$FE_PID_FILE"
 
 # ========== 注入被测脚本 ==========
-EXTRACTED=$(mktemp /tmp/topems-fe-test.XXXXXX)
-trap 'rm -f "$EXTRACTED"; rm -rf "$STATE_DIR"; pkill -f "command sleep 86400" 2>/dev/null || true' EXIT
+# 提取件落在项目内临时目录：topems.sh:10-18 加载期守卫用 BASH_SOURCE 解析 PROJECT_ROOT
+# 并要求其含 Cargo.toml；放 /tmp 会使 PROJECT_ROOT=/ → exit 1（见 test-topems-sh.sh）。
+EXTRACTED_DIR=$(mktemp -d "$PROJECT_ROOT/.topems-fe-test.XXXXXX")
+EXTRACTED="$EXTRACTED_DIR/extracted.sh"
+trap 'rm -rf "$EXTRACTED_DIR"; rm -rf "$STATE_DIR"; pkill -f "command sleep 86400" 2>/dev/null || true' EXIT
 
 RENAME_SYMS=(
     check_port get_frontend_pid get_pkg_cmd ensure_frontend_deps
@@ -45,10 +48,17 @@ for sym in "${RENAME_SYMS[@]}"; do
 done
 perl -i -pe "$RENAME_LIST" "$EXTRACTED"
 perl -i -pe 's/(?<![A-Za-z0-9_])nohup(?![A-Za-z0-9_])/mock_nohup/g' "$EXTRACTED"
+# start_frontend 体内 `cd "$PROJECT_ROOT/apps/web" && nohup ... &` 的 cd 落在后台子 shell，
+# 前台 OLDPWD 从未设置，紧随的 `cd - > /dev/null` 只丢 stdout、stderr 泄漏
+# "bash: cd: OLDPWD not set" 噪音。在测试侧把 cd - 改为显式 cd 仓库根（不动 topems.sh 本体）。
+perl -i -pe 's/^(\s*)cd - > \/dev\/null[ \t]*$/${1}cd "\$PROJECT_ROOT" >\/dev\/null 2>&1 || true/' "$EXTRACTED"
 
 set +eu
 # shellcheck disable=SC1090
 source "$EXTRACTED" 2>/dev/null
+# 提取件内 topems.sh:2861 注册的 EXIT trap（_release_build_lock）会覆盖上方组合清理
+# trap；source 后重新注册（提取目录 + STATE_DIR + 清理挂起 mock 进程）。
+trap 'rm -rf "$EXTRACTED_DIR"; rm -rf "$STATE_DIR"; pkill -f "command sleep 86400" 2>/dev/null || true' EXIT
 RC=$?
 set -u; set +e
 if [ "$RC" != "0" ]; then

@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
       - name: unified-core
-        image: topems/unified-core:latest
+        image: topems-unified-core:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000

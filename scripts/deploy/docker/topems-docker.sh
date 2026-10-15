@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# [DEPRECATED] 容器策略定案（2026-10-08）：生产数据禁入容器，Docker 仅临时验证。
-# 本脚本为历史 docker-compose 部署形态入口，不再用于生产；保留仅供未来目标环境（明确 docker）参考。
+# Docker 本地/演练环境一键启动入口（生产仍走 systemd 范式，见 scripts/deploy/production-deploy.sh）。
+# compose 文件与 .env 均在仓库根 deploy/docker/（与 scripts/deploy/docker/ 不同目录，勿混用）。
 # 详见 docs/deploy/container-strategy.md
 
 # TOPEMS Docker方案启动脚本
@@ -17,6 +17,11 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")"
 cd "$PROJECT_ROOT"
+
+# compose 文件与 env 文件均在仓库根 deploy/docker/（scripts/deploy/docker/ 下只有本脚本）
+COMPOSE_DIR="$PROJECT_ROOT/deploy/docker"
+COMPOSE_FILE="$COMPOSE_DIR/docker-compose.yml"
+ENV_FILE="$COMPOSE_DIR/.env"
 
 # 颜色定义
 RED='\033[0;31m'
@@ -61,32 +66,61 @@ check_compose() {
       error "Docker Compose 未安装"
       exit 1
     fi
-    COMPOSE_CMD="docker-compose"
+    COMPOSE_BIN=(docker-compose)
   else
-    COMPOSE_CMD="docker compose"
+    COMPOSE_BIN=(docker compose)
   fi
   success "Docker Compose 可用"
+  # 2026-10-15 修复：确保 .env 完整（含 POSTGRES_PASSWORD 等 compose 必填变量），
+  # 旧版 .env（仅端口变量）会导致 compose 解析失败——所有 compose 命令统一前置 ensure。
+  ensure_env_file
 }
 
-# 创建环境变量文件
-create_env_file() {
-  if [ ! -f "$PROJECT_ROOT/docker/.env" ]; then
+# 统一 compose 调用：显式 -f 指向 deploy/docker/docker-compose.yml，--env-file 与其同目录
+compose() {
+  if [ -f "$ENV_FILE" ]; then
+    "${COMPOSE_BIN[@]}" --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"
+  else
+    "${COMPOSE_BIN[@]}" -f "$COMPOSE_FILE" "$@"
+  fi
+}
+
+# 确保环境变量文件完整（与 compose 文件同目录 deploy/docker/.env；compose 以 --env-file 读取）
+# 2026-10-15 修复：旧版 .env（凭据治理前，仅端口变量）缺 POSTGRES_PASSWORD 等 compose 必填变量，
+# 会导致 config/status/up 全部解析失败——文件不存在时创建完整模板；
+# 存在但缺关键变量时备份旧文件并追加缺失变量（保留已有行，不覆盖既有值）。
+ensure_env_file() {
+  if [ ! -f "$ENV_FILE" ]; then
     info "创建Docker环境变量文件..."
-    cat > "$PROJECT_ROOT/docker/.env" << EOF
+    cat > "$ENV_FILE" << EOF
 # TOPEMS Docker Configuration
 POSTGRES_USER=topems
 POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-$(openssl rand -hex 16)}"  # 默认随机；生产可用环境变量覆盖
 POSTGRES_DB=topems
 POSTGRES_PORT=5432
-REDIS_PASSWORD="${REDIS_PASSWORD:-$(openssl rand -hex 16)}"  # 默认随机；生产可用环境变量覆盖
 REDIS_PORT=6379
 JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
 JWT_REFRESH_SECRET="${JWT_REFRESH_SECRET:-$(openssl rand -hex 32)}"
 CORS_ORIGINS=http://localhost:3000,http://localhost:8000
 EOF
-    success "环境变量文件创建完成"
+    success "环境变量文件创建完成: $ENV_FILE"
+  elif ! grep -q "^POSTGRES_PASSWORD=" "$ENV_FILE" || ! grep -q "^RABBITMQ_PASSWORD=" "$ENV_FILE"; then
+    warning "检测到旧版 .env（缺 compose 必填变量），备份并补全必填变量..."
+    cp "$ENV_FILE" "$ENV_FILE.bak-$(date +%Y%m%d)"
+    {
+      grep -q "^POSTGRES_USER=" "$ENV_FILE" || echo "POSTGRES_USER=topems"
+      grep -q "^POSTGRES_PASSWORD=" "$ENV_FILE" || echo "POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-$(openssl rand -hex 16)}"
+      grep -q "^POSTGRES_DB=" "$ENV_FILE" || echo "POSTGRES_DB=topems"
+      grep -q "^RABBITMQ_PASSWORD=" "$ENV_FILE" || echo "RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-$(openssl rand -hex 16)}"
+      grep -q "^JWT_SECRET=" "$ENV_FILE" || echo "JWT_SECRET=${JWT_SECRET:-$(openssl rand -hex 32)}"
+      grep -q "^JWT_REFRESH_SECRET=" "$ENV_FILE" || echo "JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-$(openssl rand -hex 32)}"
+    } >> "$ENV_FILE"
+    success "环境变量文件已补全: $ENV_FILE"
   fi
 }
+
+# 兼容旧调用名（start/start-db 原有调用点）
+create_env_file() { ensure_env_file; }
 
 # 启动数据库服务
 start_database() {
@@ -97,12 +131,12 @@ start_database() {
   check_container_conflict "topems-postgres"
   check_container_conflict "topems-redis"
   
-  $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" up -d postgres redis
+  compose up -d postgres redis
   
   # 等待数据库就绪
   info "等待数据库服务就绪..."
   for i in {1..30}; do
-    if $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" exec -T postgres pg_isready -U topems >/dev/null 2>&1; then
+    if compose exec -T postgres pg_isready -U topems >/dev/null 2>&1; then
       success "PostgreSQL 就绪"
       break
     fi
@@ -114,7 +148,7 @@ start_database() {
   done
   
   for i in {1..30}; do
-    if $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" exec -T redis redis-cli -a topems_redis_secret ping | grep -q PONG; then
+    if compose exec -T redis redis-cli ping | grep -q PONG; then
       success "Redis 就绪"
       break
     fi
@@ -129,7 +163,7 @@ start_database() {
 # 启动后端服务
 start_backend() {
   info "启动后端服务..."
-  $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" --profile backend up -d
+  compose --profile backend up -d
   
   # 等待IAM服务就绪
   info "等待IAM服务就绪..."
@@ -148,7 +182,7 @@ start_backend() {
 # 启动前端服务
 start_frontend() {
   info "启动前端服务..."
-  $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" --profile frontend up -d
+  compose --profile frontend up -d
   
   # 等待前端服务就绪
   info "等待前端服务就绪..."
@@ -175,13 +209,13 @@ show_status() {
   # 数据库状态
   echo ""
   echo "📦 数据库服务:"
-  if $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" ps postgres | grep -q "Up"; then
+  if compose ps postgres | grep -q "Up"; then
     echo "  ✅ PostgreSQL (端口 5432)"
   else
     echo "  ❌ PostgreSQL"
   fi
   
-  if $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" ps redis | grep -q "Up"; then
+  if compose ps redis | grep -q "Up"; then
     echo "  ✅ Redis (端口 6379)"
   else
     echo "  ❌ Redis"
@@ -195,7 +229,7 @@ show_status() {
     name=$(echo "$service" | cut -d':' -f1)
     port=$(echo "$service" | cut -d':' -f2)
     
-    if $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" ps "$name" 2>/dev/null | grep -q "Up"; then
+    if compose ps "$name" 2>/dev/null | grep -q "Up"; then
       if curl -s "http://localhost:$port/health" >/dev/null 2>&1; then
         echo "  ✅ $name (端口 $port)"
       else
@@ -209,7 +243,7 @@ show_status() {
   # 前端服务状态
   echo ""
   echo "🌐 前端服务:"
-  if $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" ps web | grep -q "Up"; then
+  if compose ps web | grep -q "Up"; then
     if curl -s http://localhost:3000 >/dev/null 2>&1; then
       echo "  ✅ Frontend (端口 3000)"
     else
@@ -226,7 +260,7 @@ show_status() {
 # 停止服务
 stop_services() {
   info "停止所有服务..."
-  $COMPOSE_CMD -f "$SCRIPT_DIR/docker-compose.yml" down
+  compose down
   success "所有服务已停止"
 }
 

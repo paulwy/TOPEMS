@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: gis
-        image: topems/gis:latest
+        image: topems-gis:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8071

@@ -49,6 +49,23 @@ REDIS_PORT=6379
 ENVIRONMENT=development
 ```
 
+### 脚本行为调节（scripts/topems.sh）
+
+```env
+# 重试策略（服务注册/健康检查失败时）
+MAX_RETRIES=3          # 最大重试次数（默认 3）
+RETRY_DELAY=3          # 重试初始间隔秒（默认 3）
+BACKOFF_FACTOR=2       # 指数退避倍数（默认 2）
+
+# SQLx 离线缓存门禁
+SQLX_CHECK_SKIP=0      # 1=跳过离线缓存新鲜度门禁（等同命令加 --skip-sqlx-check）
+FORCE_ONLINE_BUILD=0   # 1=build/build-all 默认在线编译
+
+# 清理磁盘守卫阈值（GiB）
+DISK_BLOCK_GB=5        # 磁盘剩余 <5 时 topems clean 阻断执行
+DISK_WARN_GB=10        # 磁盘剩余 <10 时 topems clean 警告提示
+```
+
 ### 服务端口配置（与 config/services.yaml 保持一致）
 
 ```env
@@ -260,8 +277,8 @@ cd docker
 docker-compose up -d postgres redis
 cd ..
 
-# 2. 使用统一脚本启动服务
-./scripts/topems.sh start
+# 2. 使用统一脚本启动全部服务
+./scripts/topems.sh start-all
 
 # 3. 查看服务状态
 ./scripts/topems.sh status
@@ -392,14 +409,15 @@ CSRF_PROTECTION=true
 ### 生产环境部署
 
 ```bash
-# 1. 验证环境变量
-./scripts/topems.sh validate-env
+# 1. 检查服务状态与健康
+./scripts/topems.sh status
+curl http://localhost:8000/health
 
 # 2. 初始化数据库
 cargo run --bin topems-unified-core -- --migrate
 
-# 3. 启动服务
-./scripts/deploy.sh
+# 3. 生产部署（systemd 范式）
+./scripts/topems.sh deploy
 ```
 
 ## 配置验证
@@ -407,9 +425,6 @@ cargo run --bin topems-unified-core -- --migrate
 ### 使用脚本验证
 
 ```bash
-# 验证环境变量配置
-./scripts/topems.sh validate-env
-
 # 检查服务健康状态
 ./scripts/topems.sh status
 
@@ -495,8 +510,8 @@ VITE_DEFAULT_LOCALE=zh-CN
 # 查找占用端口的进程
 lsof -i :8000
 
-# 强制清理端口
-./scripts/topems.sh start --force
+# 杀掉占用进程后强制重启 iam（8000；--force 必须在服务名之后）
+./scripts/topems.sh start iam --force
 ```
 
 ### 环境变量不生效
@@ -522,14 +537,14 @@ psql $DATABASE_URL
 ### 服务健康检查失败
 
 ```bash
-# 查看服务日志
-./scripts/topems.sh logs
+# 查看服务日志（需指定服务；8000 为 iam/unified-core）
+./scripts/topems.sh logs iam
 
 # 检查端口占用
 lsof -i :8000
 
 # 重启服务
-./scripts/topems.sh restart
+./scripts/topems.sh restart iam
 ```
 
 ### 插件架构配置 (V13.0)

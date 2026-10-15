@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: hrm
-        image: topems/hrm:latest
+        image: topems-hrm:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8020

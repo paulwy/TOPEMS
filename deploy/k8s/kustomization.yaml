@@ -60,8 +60,8 @@ commonLabels:
 # Images (override for different environments)
 images:
   # Infrastructure
-  - name: postgres
-    newTag: latest
+  - name: pgvector/pgvector
+    newTag: pg18
   - name: redis
     newTag: latest
   - name: rabbitmq
@@ -70,57 +70,57 @@ images:
     newTag: latest
   
   # Core services
-  - name: topems/unified-core
+  - name: topems-unified-core
     newTag: latest
   
   # Management services
-  - name: topems/erp
+  - name: topems-erp
     newTag: latest
-  - name: topems/finance
+  - name: topems-finance
     newTag: latest
-  - name: topems/ai
+  - name: topems-ai
     newTag: latest
-  - name: topems/hrm
+  - name: topems-hrm
     newTag: latest
-  - name: topems/pm
+  - name: topems-pm
     newTag: latest
-  - name: topems/crm
+  - name: topems-crm
     newTag: latest
 
   # Manufacturing services
-  - name: topems/mes
+  - name: topems-mes
     newTag: latest
-  - name: topems/pdm
+  - name: topems-pdm
     newTag: latest
 
   # Supply chain services
-  - name: topems/scm
+  - name: topems-scm
     newTag: latest
-  - name: topems/wms
+  - name: topems-wms
     newTag: latest
-  - name: topems/srm
+  - name: topems-srm
     newTag: latest
 
   # Quality services
-  - name: topems/qms
+  - name: topems-qms
     newTag: latest
-  - name: topems/lims
+  - name: topems-lims
     newTag: latest
-  - name: topems/ehs
+  - name: topems-ehs
     newTag: latest
-  - name: topems/rd
+  - name: topems-rd
     newTag: latest
 
   # Analytics services
-  - name: topems/bi
+  - name: topems-bi
     newTag: latest
-  - name: topems/portal
+  - name: topems-portal
     newTag: latest
   
   # Infrastructure services
-  - name: topems/mobile
+  - name: topems-mobile
     newTag: latest
-  - name: topems/gis
+  - name: topems-gis
     newTag: latest
-  - name: topems/integration
+  - name: topems-integration
     newTag: latest

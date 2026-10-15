@@ -102,17 +102,17 @@ lldb -- target/debug/my-service
 ### 4. 日志查看
 
 ```bash
-# 查看所有服务日志
-./scripts/topems.sh logs
+# 查看所有服务状态（logs 需指定服务，不支持裸命令）
+./scripts/topems.sh status
 
 # 查看指定服务日志
-./scripts/topems.sh logs --service iam
+./scripts/topems.sh logs iam
 
-# 实时跟踪日志
-./scripts/topems.sh logs --follow
+# 查看指定服务最近 100 行日志（位置参数：<服务> [行数]）
+./scripts/topems.sh logs iam 100
 
-# 查看最近 100 行日志
-./scripts/topems.sh logs --tail 100
+# 实时跟踪日志（logs 无 --follow/-f，直接 tail 日志文件）
+tail -f logs/iam.log
 ```
 
 ---
@@ -358,8 +358,9 @@ ss -tlnp | grep 8000
 #### 检查配置文件
 
 ```bash
-# 验证环境变量
-./scripts/topems.sh validate-env
+# 检查服务状态与健康
+./scripts/topems.sh status
+curl http://localhost:8000/health
 
 # 检查 .env 文件
 cat .env

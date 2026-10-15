@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
       - name: rd
-        image: topems/rd:latest
+        image: topems-rd:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8053

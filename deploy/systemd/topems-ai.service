@@ -3,6 +3,9 @@ Description=TOPEMS AI Service
 Documentation=https://github.com/topems/topems
 After=network.target postgresql.service redis.service ollama.service
 Wants=postgresql.service redis.service
+# 启动频率限制（防止崩溃循环）——2026-10-15 修复：systemd v230+ StartLimit* 属 [Unit] 段，原放 [Service] 段被忽略
+StartLimitBurst=5
+StartLimitIntervalSec=60
 
 [Service]
 Type=simple
@@ -17,10 +20,6 @@ Restart=always
 RestartSec=5
 RestartSteps=10
 RestartMaxDelaySec=60
-
-# 启动频率限制（防止崩溃循环）
-StartLimitBurst=5
-StartLimitIntervalSec=60
 
 # 超时设置
 TimeoutStartSec=30

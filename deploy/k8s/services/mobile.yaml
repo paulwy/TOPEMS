@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: mobile
-        image: topems/mobile:latest
+        image: topems-mobile:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8070

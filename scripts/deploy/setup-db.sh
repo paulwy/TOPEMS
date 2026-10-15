@@ -84,8 +84,8 @@ echo -e "User: ${GREEN}${DB_USER}${NC}"
 echo -e "Database: ${GREEN}${DB_NAME}${NC}"
 echo ""
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# 仓库根（脚本位于 scripts/deploy/，上移两级）；init.sql 与 migrations 均在仓库根 database/ 下
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 # PGPASSWORD for non-interactive auth
 export PGPASSWORD="${DB_PASSWORD}"
@@ -134,21 +134,39 @@ if [[ "$INIT_SCHEMA" == true ]]; then
     echo -e "${YELLOW}Initializing database schema...${NC}"
 
     # Run init.sql if exists
-    if [[ -f "${SCRIPT_DIR}/database/postgres/init.sql" ]]; then
+    if [[ -f "${PROJECT_ROOT}/database/postgres/init.sql" ]]; then
         psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
-            -f "${SCRIPT_DIR}/database/postgres/init.sql"
+            -f "${PROJECT_ROOT}/database/postgres/init.sql"
         echo -e "${GREEN}✓ Base schema initialized${NC}"
     fi
 
     # Run migrations
-    if [[ -d "${SCRIPT_DIR}/migrations" ]]; then
-        for sql_file in "${SCRIPT_DIR}/migrations"/*.sql; do
-            if [[ -f "$sql_file" ]]; then
-                echo -e "${YELLOW}Running: ${sql_file}${NC}"
-                psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
-                    -f "$sql_file" || echo -e "${YELLOW}⚠ Some statements may have failed${NC}"
+    # 2026-10-15 修复（双轨制消除）：原 psql 逐文件重放 database/migrations 不遵守
+    #   _sqlx_migrations 记录——非幂等迁移重复执行会失败/重复数据，且与项目 sqlx 迁移链
+    #   （production-deploy.sh / migrate.sh / cli）双轨漂移。统一改走 sqlx migrate run
+    #   （幂等，_sqlx_migrations 保证只应用未应用项）；sqlx 不可用时保留 psql 重放作 legacy fallback。
+    if [[ -d "${PROJECT_ROOT}/database/migrations" ]]; then
+        if command -v sqlx >/dev/null 2>&1; then
+            # 密码经 URL 编码后拼 DATABASE_URL（部署机无 python3 时回退原样拼接）
+            if command -v python3 >/dev/null 2>&1; then
+                ENC_PW="$(python3 -c 'import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))' "$DB_PASSWORD")"
+            else
+                ENC_PW="$DB_PASSWORD"
+            fi
+            DB_URL="postgres://${DB_USER}:${ENC_PW}@${DB_HOST}:${DB_PORT}/${DB_NAME}"
+            echo -e "${YELLOW}Running sqlx migrations (chain, idempotent)...${NC}"
+            DATABASE_URL="$DB_URL" sqlx migrate run --source "${PROJECT_ROOT}/database/migrations"
+            echo -e "${GREEN}✓ Migrations applied${NC}"
+        else
+            echo -e "${YELLOW}sqlx not found — legacy psql replay (non-idempotent, prefer installing sqlx)${NC}"
+            for sql_file in "${PROJECT_ROOT}/database/migrations"/*.sql; do
+                if [[ -f "$sql_file" ]]; then
+                    echo -e "${YELLOW}Running: ${sql_file}${NC}"
+                    psql -h "${DB_HOST}" -p "${DB_PORT}" -U "${DB_USER}" -d "${DB_NAME}" \
+                        -f "$sql_file" || echo -e "${YELLOW}⚠ Some statements may have failed${NC}"
             fi
         done
+        fi
         echo -e "${GREEN}✓ Migrations applied${NC}"
     fi
 

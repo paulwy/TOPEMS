@@ -7,7 +7,7 @@
 
 ## 内容
 
-- `docker-compose*.yml`：多形态 compose（full/services/monolith/domains/observability/dify）
+- `docker-compose*.yml`：多形态 compose（**参考基准 = docker-compose.yml v5.0**；full/services/domains/observability 为历史套件，头注已标注漂移点）
 - `Dockerfile.server` / `Dockerfile.service`：服务镜像构建
 - `build-local.sh` / `build-service.sh`：本地/服务镜像构建脚本
 - `alertmanager/` `consul/`：附属配置

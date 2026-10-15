@@ -46,13 +46,23 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# 数据库连接参数（支持环境变量覆盖；缺省与本机 postgres 容器映射一致）
+# 数据库连接参数（支持环境变量覆盖）
 PGHOST="${PGHOST:-localhost}"
 PGPORT="${PGPORT:-5432}"
 PGUSER="${PGUSER:-topems}"
-PGPASSWORD="${PGPASSWORD:-topems}"
 PGDATABASE="${PGDATABASE:-topems}"
+# 口令不设默认弱值：环境变量优先；非 dry-run 下未设置即报错退出（dry-run 不连库可豁免）
+PGPASSWORD="${PGPASSWORD:-}"
+if [ -z "$PGPASSWORD" ] && [ "$DRY_RUN" != "true" ]; then
+    echo "错误: 未设置 PGPASSWORD 环境变量（回滚需直连数据库）" >&2
+    echo "用法: PGPASSWORD='<口令>' $0 [--dry-run] [backup_dir]" >&2
+    exit 1
+fi
 export PGPASSWORD
+
+# 回滚后登录冒烟凭证：环境变量优先；未设置则跳过冒烟（不再内置 admin/admin123）
+ROLLBACK_ADMIN_USER="${ROLLBACK_ADMIN_USER:-admin}"
+ROLLBACK_ADMIN_PASS="${ROLLBACK_ADMIN_PASS:-}"
 
 PSQL=(psql -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE")
 PGDUMP=(pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" "$PGDATABASE")
@@ -271,16 +281,20 @@ else
         print_fail "权限数据异常"
     fi
 
-    # 检查管理员登录
-    sleep 2
-    LOGIN_RESULT=$(curl -s -X POST http://localhost:8000/api/auth/login \
-        -H "Content-Type: application/json" \
-        -d '{"username":"admin","password":"admin123"}' 2>/dev/null)
-
-    if echo "$LOGIN_RESULT" | grep -q '"success":true'; then
-        print_ok "管理员登录正常"
+    # 检查管理员登录（凭证经 ROLLBACK_ADMIN_USER/ROLLBACK_ADMIN_PASS 注入，未设置则跳过）
+    if [ -z "$ROLLBACK_ADMIN_PASS" ]; then
+        print_info "未设置 ROLLBACK_ADMIN_PASS，跳过管理员登录冒烟"
     else
-        print_fail "管理员登录异常"
+        sleep 2
+        LOGIN_RESULT=$(curl -s -X POST http://localhost:8000/api/auth/login \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"$ROLLBACK_ADMIN_USER\",\"password\":\"$ROLLBACK_ADMIN_PASS\"}" 2>/dev/null)
+
+        if echo "$LOGIN_RESULT" | grep -q '"success":true'; then
+            print_ok "管理员登录正常"
+        else
+            print_fail "管理员登录异常"
+        fi
     fi
 fi
 

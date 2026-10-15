@@ -22,8 +22,8 @@
 **排查步骤**：
 
 ```bash
-# 1. 查看服务日志
-./scripts/topems.sh logs
+# 1. 查看服务状态
+./scripts/topems.sh status
 
 # 2. 检查具体服务的日志
 ./scripts/topems.sh logs hrm
@@ -97,8 +97,8 @@ for port in 8000 8010 8011 8013 8020 8023 8029 8030 8031 8040 8041 8042 8050 805
   lsof -ti:$port 2>/dev/null | xargs kill -9 2>/dev/null
 done
 
-# 4. 使用 topems.sh 强制重启
-./scripts/topems.sh start --force
+# 4. 使用 topems.sh 重启全部服务
+./scripts/topems.sh start-all
 ```
 
 ---
@@ -155,7 +155,7 @@ ALTER USER topems CREATEDB;
 EOF
 
 # 重启服务
-./scripts/topems.sh restart
+./scripts/topems.sh restart-all
 ```
 
 ---
@@ -564,17 +564,17 @@ docker compose exec unified-core nslookup postgres
 ### 查看实时日志
 
 ```bash
-# 所有服务
-./scripts/topems.sh logs
+# 所有服务状态（logs 需指定服务，不支持裸命令）
+./scripts/topems.sh status
 
 # 特定服务
 ./scripts/topems.sh logs hrm
 
-# 最近的日志
-./scripts/topems.sh logs hrm --tail 100
+# 最近的日志（位置参数：<服务> [行数]）
+./scripts/topems.sh logs hrm 100
 
-# 跟踪日志
-./scripts/topems.sh logs hrm -f
+# 跟踪日志（logs 无 --tail/-f，直接 tail 日志文件）
+tail -f logs/hrm.log
 ```
 
 ### 搜索错误日志

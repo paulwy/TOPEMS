@@ -98,7 +98,7 @@ pnpm build
 
 ```bash
 # 启动全部服务
-./scripts/topems.sh start
+./scripts/topems.sh start-all
 
 # 数据库迁移
 ./scripts/topems.sh db migrate

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: ehs
-        image: topems/ehs:latest
+        image: topems-ehs:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8052

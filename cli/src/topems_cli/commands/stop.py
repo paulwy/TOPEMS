@@ -16,7 +16,8 @@ console = Console()
 @click.option("--module", "-m", help="停止整个模块的服务")
 @click.option("--all", "-a", is_flag=True, help="停止所有服务")
 @click.option("--force", "-f", is_flag=True, help="强制停止 (SIGKILL)")
-def stop(service: str, module: str, all: bool, force: bool):
+@click.option("--with-db", is_flag=True, help="额外停止 PostgreSQL/Redis（对齐 topems.sh stop-all --with-db / run-stop）")
+def stop(service: str, module: str, all: bool, force: bool, with_db: bool):
     """停止 TOPEMS 服务
 
     示例:
@@ -24,7 +25,10 @@ def stop(service: str, module: str, all: bool, force: bool):
         topems stop -m core      停止核心模块
         topems stop --all        停止所有服务
         topems stop --force      强制停止
+        topems stop --all --with-db   连 PostgreSQL/Redis 一起停（= topems.sh run-stop）
     """
+    import subprocess
+
     from ..config import get_config
     from ..manager import get_manager
 
@@ -59,6 +63,19 @@ def stop(service: str, module: str, all: bool, force: bool):
     if all:
         console.print("[cyan]停止前端服务...[/cyan]")
         manager.stop_frontend(force=force)
+
+    # --with-db：额外停止 PostgreSQL / Redis（对齐 topems.sh stop_everything）
+    if with_db:
+        console.print("[cyan]停止 PostgreSQL / Redis...[/cyan]")
+        for svc in ("postgresql@18", "redis"):
+            result = subprocess.run(
+                ["brew", "services", "stop", svc],
+                capture_output=True, text=True,
+            )
+            if result.returncode == 0:
+                console.print(f"[green]✓[/green] {svc} 已停止")
+            else:
+                console.print(f"[yellow]⚠[/yellow] {svc} 停止失败（可能非 brew 安装或已停止）: {result.stderr.strip()[:120]}")
 
     # 显示结果
     console.print()

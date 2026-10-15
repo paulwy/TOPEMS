@@ -940,22 +940,31 @@ pnpm --filter topems-portal dev              # Host Shell:3000
 
 **位置**: [scripts/topems.sh](../../scripts/topems.sh)
 
-主要命令速查：
+主要命令速查（与 `topems.sh help` 一致；未识别命令会先 stderr 提示再透传给 core CLI `cli/bin/topems`）：
 | 命令 | 说明 |
 |------|------|
-| `./scripts/topems.sh help` | 帮助 |
+| `./scripts/topems.sh help` | 帮助（全集见 help 输出） |
 | `status [svc]` | 状态 |
-| `start/stop/restart <svc>` | 启停单个 |
-| `logs <svc> [lines]` | 日志 |
+| `start/stop/restart <svc> [--force]` | 启停单个（--force 必须在服务名后；stop 无参=停全部） |
+| `logs <svc> [行数]` | 日志（仅位置参数，实时跟踪用 `tail -f logs/<svc>.log`） |
+| `check` | 检查并自动重启异常服务 |
+| `mes-guard [--clean/--sync-snapshot/--prepare/--skip-compile]` | MES 编译守卫 |
 | `build <svc> [--online/--offline/--dev]` | 单包编译 |
-| `build-all [--only-core/--skip=ai/--backend-only]` | 全量编译 |
-| `start-all/stop-all/restart-all` | 批量启停 |
-| `sqlx prepare --all | --pkg=topems-mes | --check` | SQLx 缓存管理 |
-| `db start/stop/status/migrate/backup/restore` | 数据库操作 |
+| `build-all` / `build-backend` / `build-frontend [--dev/--skip-lint]` | 全量编译（后端+前端 / 仅后端 / 仅前端） |
+| `start-all` / `stop-all [--with-db]` / `restart-all` | 批量启停；`--with-db` 同时停 PostgreSQL/Redis |
+| `run [--auto-build]` / `run-stop` | 一键全栈启停；`--auto-build` 先全量编译再启动；`run-stop` = `stop-all --with-db` 别名 |
+| `register-all` | 批量注册运行中服务到 unified-core |
+| `dev` / `doctor` / `install-deps` / `sync_base` | 最小开发环境 / 环境自举 / 装依赖 / 新机器同步 |
+| `clean`（默认增量）/ `clean-all`（= `clean --all` 全量） | 清理；`clean` 只清 debug 增量缓存，全量用 `clean-all`（可加 `--dry-run/--deep/--system-cache`） |
+| `test-all` / `test-backend` / `test-frontend [模式]` | 测试 |
+| `sqlx prepare [--pkg=X|--all]` / `sqlx prepare --check` / `sqlx prepare --merge` / `sqlx check-offline` | SQLx 缓存管理 |
+| `db start/stop/status/migrate/backup/restore/reset/defense-check <svc>/defense-check-all/boundary-check` | PostgreSQL 生命周期 |
 | `redis start/stop` | Redis 操作 |
-| `reset-password [user] [pwd]` | 重置密码（默认 admin/admin123） |
-| `check` | 检查并重启异常服务 |
-| `run` / `run-stop` | 一键全栈启停 |
+| `ai start/stop/status/pull <模型>` / `ws check` | Ollama 管理 / WebSocket 检查 |
+| `reset-password [user] [pwd]`（`update-password` 为别名） | 重置密码（默认 admin/admin123） |
+| `deploy` | 生产部署（systemd 范式；docker 部署见 `deploy/docker/topems-docker.sh`） |
+| `push [--skip-check]` | 推送入口（先自检门禁钩子再 git push） |
+| 环境变量 | `MAX_RETRIES=3` / `RETRY_DELAY=3` / `BACKOFF_FACTOR=2` / `FORCE_ONLINE_BUILD` / `SQLX_CHECK_SKIP=1` / `DISK_BLOCK_GB=5` / `DISK_WARN_GB=10` |
 
 ### 9.5 端口配置单一信源
 

@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: finance
-        image: topems/finance:latest
+        image: topems-finance:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8011

@@ -2631,8 +2631,8 @@ run_cli() {
         fi
         source .venv/bin/activate
         export PYTHONPATH="$CLI_DIR/src"
-        # 检查依赖
-        python3 -c "import yaml, click, rich" 2>/dev/null || {
+        # 检查依赖（httpx 为 health.py 真实依赖，自检包清单须与 cli/bin/topems:38 一致）
+        python3 -c "import yaml, click, rich, httpx" 2>/dev/null || {
             info "缺少 Python CLI 依赖，正在安装..."
             python3 -m pip install pyyaml click rich httpx --quiet
         }
@@ -2651,7 +2651,7 @@ run_cli() {
 
 # kill 后台 cargo-(llvm-cov|test|bench|build) 进程
 # 用法: _kill_background_cargo [--dry-run]
-# 返回: 0=无进程或已清理, 1=dry-run 预览
+# 返回: 0=无进程（无动作）, 1=有动作（已终止或 dry-run 预览）
 _kill_background_cargo() {
     local dry_run=false
     [ "$1" = "--dry-run" ] && dry_run=true
@@ -2697,9 +2697,15 @@ _kill_background_cargo() {
             kill -9 "$p" 2>/dev/null || true
         done
     fi
-    pkill -9 -f "cargo-llvm-cov" 2>/dev/null || true
-    pkill -9 -f "cargo test.*llvm-cov" 2>/dev/null || true
-    pkill -9 -f "cargo nextest" 2>/dev/null || true
+    # 兜底强杀：仅针对工作目录在本仓库的残留进程（与上方 cwd 过滤一致，防误杀其他项目）
+    local force_pids
+    force_pids=$(ps aux | grep -v grep | grep -E "cargo-llvm-cov|cargo test.*llvm-cov|cargo nextest" | awk '{print $2}' | tr '\n' ' ')
+    local fp
+    for fp in $force_pids; do
+        if lsof -a -p "$fp" -d cwd -Fn 2>/dev/null | grep -q "$PROJECT_ROOT"; then
+            kill -9 "$fp" 2>/dev/null || true
+        fi
+    done
     success "后台 cargo 进程已终止"
     return 1
 }
@@ -2735,6 +2741,17 @@ _clean_cov_remnants() {
     return $cleaned
 }
 
+# 累计本次清理释放的空间（供 clean_project 结束报告；只在实际删除前调用）
+# 用法: _acc_freed <目录/文件>
+_acc_freed() {
+    [ -e "$1" ] || return 0
+    local k
+    k=$(du -sk "$1" 2>/dev/null | awk '{print $1}')
+    [ -n "$k" ] || k=0
+    _CLEAN_FREED_KB=$((_CLEAN_FREED_KB + k))
+    return 0
+}
+
 # 磁盘空间守卫
 # 用法: _check_disk_space
 # 返回: 0=磁盘充足, 1=磁盘不足（阻断）
@@ -2747,10 +2764,10 @@ _check_disk_space() {
     local block_gb="${DISK_BLOCK_GB:-5}"
     local warn_gb="${DISK_WARN_GB:-10}"
     if [ "$avail_gb" -lt "$block_gb" ]; then
-        error "磁盘仅剩 ${avail_gb}GiB！即将满盘，请先执行: $0 clean"
+        error "磁盘仅剩 ${avail_gb}GiB！即将满盘，请先执行: $0 clean-all（全量释放；日常增量: $0 clean）"
         return 1
     elif [ "$avail_gb" -lt "$warn_gb" ]; then
-        warn "磁盘仅剩 ${avail_gb}GiB，建议执行: $0 clean"
+        warn "磁盘仅剩 ${avail_gb}GiB，建议执行: $0 clean（增量）或 clean-all（全量）"
     fi
     return 0
 }
@@ -2873,8 +2890,10 @@ clean_project() {
     local clean_debug_full=false
     local clean_sccache=false
     local clean_analyze=false
+    local clean_sqlx=false
     local dry_run=false
     local preflight=false
+    local prune_done=false
 
     for arg in "$@"; do
         case "$arg" in
@@ -2883,6 +2902,7 @@ clean_project() {
             --debug-full)   clean_debug_full=true ;;
             --sccache)      clean_sccache=true ;;
             --analyze)      clean_analyze=true ;;
+            --sqlx)         clean_sqlx=true ;;
             --frontend)     clean_frontend=true ;;
             --cache)        clean_cache=true ;;
             --system-cache) clean_system_cache=true ;;
@@ -2894,11 +2914,14 @@ clean_project() {
             --preflight)    preflight=true ;;
             *)
                 error "未知参数: $arg"
-                echo "可用选项: --rust --debug --debug-full --sccache --frontend --cache --system-cache --ollama --logs --all --deep --dry-run --preflight"
+                echo "可用选项: --rust --debug --debug-full --sccache --analyze --sqlx --frontend --cache --system-cache --ollama --logs --all --deep --dry-run --preflight"
                 return 1
                 ;;
         esac
     done
+
+    # 全局累计：本次清理合计释放（供结束报告）
+    _CLEAN_FREED_KB=0
 
     # ── --analyze：磁盘占用分析（只读，不删除任何文件）──────────
     if [ "$clean_analyze" = true ]; then
@@ -2913,16 +2936,24 @@ clean_project() {
             "$PROJECT_ROOT/target/debug/deps"
             "$PROJECT_ROOT/target/debug"
             "$PROJECT_ROOT/target/release"
+            "$PROJECT_ROOT/node_modules"
             "$PROJECT_ROOT/apps/web/node_modules"
             "$PROJECT_ROOT/apps/desktop/node_modules"
             "$PROJECT_ROOT/apps/mobile/node_modules"
             "$PROJECT_ROOT/apps/web/dist"
+            "$PROJECT_ROOT/storybook-static"
+            "$PROJECT_ROOT/test-results"
             "$PROJECT_ROOT/logs"
             "$PROJECT_ROOT/.sqlx"
             "$HOME/.cargo/registry"
             "$HOME/Library/Caches/Mozilla.sccache"
             "$HOME/.ollama/models"
         )
+        # 补充 svc/lib 嵌套 target 残留（glob 展开）
+        local rem
+        for rem in "$PROJECT_ROOT"/svc/*/target "$PROJECT_ROOT"/lib/*/target; do
+            [ -e "$rem" ] && analyze_dirs+=("$rem")
+        done
         {
             local d
             for d in "${analyze_dirs[@]}"; do
@@ -2934,7 +2965,7 @@ clean_project() {
         echo ""
         info "磁盘当前可用: $(df -h "$PROJECT_ROOT" | awk 'NR==2 {print $4}')（$(df -h "$PROJECT_ROOT" | awk 'NR==2 {print $5}') 已用）"
         echo ""
-        detail "清理建议: 日常 topems clean --debug（清增量，保留依赖）| 大扫除 topems clean（全量）"
+        detail "清理建议: 日常 topems clean（增量，保留依赖）| 大扫除 topems clean-all（全量）"
         return 0
     fi
 
@@ -2964,14 +2995,14 @@ clean_project() {
         return 0
     fi
 
-    # 默认全量清理（仅项目级，system-cache/ollama 需显式指定）
+    # 默认增量清理（保留 release 产物与依赖；全量需显式 --all / --rust / --debug-full）
     if [ "$clean_rust" = false ] && [ "$clean_debug" = false ] && \
        [ "$clean_debug_full" = false ] && [ "$clean_sccache" = false ] && \
        [ "$clean_frontend" = false ] && \
        [ "$clean_cache" = false ] && [ "$clean_system_cache" = false ] && \
        [ "$clean_ollama" = false ] && [ "$clean_logs" = false ] && \
-       [ "$clean_all" = false ]; then
-        clean_all=true
+       [ "$clean_sqlx" = false ] && [ "$clean_all" = false ]; then
+        clean_debug=true
     fi
     if [ "$clean_all" = true ]; then
         clean_rust=true
@@ -3009,21 +3040,22 @@ clean_project() {
     info "================================================"
     info "  TOPEMS 清理命令"
     info "================================================"
-    info "提示: 日常小清理用 ./scripts/clean_target.sh（增量，保留产物秒级）；本命令为显式清理（全量/定向），全量清理会触发重新编译"
+    info "提示: 默认 clean = 增量清理（保留产物与依赖）；全量用 clean-all（= clean --all）/ --rust；更轻量可用 ./scripts/clean_target.sh"
     echo ""
-
-    # ── 空间基线（用于结束报告 target/ 前后对比）──────────────
-    local target_before_kb=0
-    [ -d "$PROJECT_ROOT/target" ] && target_before_kb=$(du -sk "$PROJECT_ROOT/target" 2>/dev/null | awk '{print $1}')
 
     # ── 公共前置：杀后台 cargo/rustc 进程 + 清独立 target 残留 ──
     #    （rust/debug/debug-full 均需避免与运行中构建冲突、避免残留目录复发）
     if [ "$clean_rust" = true ] || [ "$clean_debug" = true ] || [ "$clean_debug_full" = true ]; then
         # shellcheck disable=SC2046
-        _kill_background_cargo $( $dry_run && echo --dry-run ) && did_clean=true
+        if ! _kill_background_cargo $( $dry_run && echo --dry-run ); then did_clean=true; fi
         # shellcheck disable=SC2046
-        _clean_cov_remnants $( $dry_run && echo --dry-run ) && did_clean=true
+        if ! _clean_cov_remnants $( $dry_run && echo --dry-run ); then did_clean=true; fi
     fi
+
+    # ── 空间基线（用于结束报告 target/ 前后对比；必须在终止进程之后测量，
+    #     否则与运行中构建的并发写入竞争，baseline 会失真导致报告显示 0.0G）──
+    local target_before_kb=0
+    [ -d "$PROJECT_ROOT/target" ] && target_before_kb=$(du -sk "$PROJECT_ROOT/target" 2>/dev/null | awk '{print $1}')
 
     if [ "$clean_rust" = true ]; then
         # target/ 完整清理
@@ -3034,8 +3066,8 @@ clean_project() {
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将删除 Rust 编译产物: $dir ($size)"
             else
-                info "清理 Rust 编译产物 (cargo clean)..."
-                cargo clean 2>/dev/null
+                info "清理 Rust 编译产物（直接删除 target/，等效 cargo clean 且更快）..."
+                _acc_freed "$dir"
                 rm -rf "$dir"
                 success "已清理 target/ ($size)"
                 did_clean=true
@@ -3044,27 +3076,30 @@ clean_project() {
             detail "target/ 不存在，跳过"
         fi
 
+    fi
+
+    # ── .sqlx 离线编译缓存（默认不删，已入库 git；--sqlx 或 CLEAN_SQLX=true 才清理）──
+    if [ "$clean_sqlx" = true ] || [ "${CLEAN_SQLX:-false}" = "true" ]; then
         local sqlx_dir="$PROJECT_ROOT/.sqlx"
-        # 默认不删除.sqlx缓存（已入库git，删除会导致离线编译失败暴露大量历史类型错误）
-        # 只有显式加 --sqlx 参数才清理
-        if [ "${CLEAN_SQLX:-false}" = "true" ]; then
-            if [ -d "$sqlx_dir" ]; then
-                local sqlx_size
-                sqlx_size=$(du -sh "$sqlx_dir" 2>/dev/null | awk '{print $1}')
-                if [ "$dry_run" = true ]; then
-                    info "[DRY-RUN] 将删除 SQLx 缓存: $sqlx_dir ($sqlx_size)"
-                else
-                    rm -rf "$sqlx_dir"
-                    detail "已清理 .sqlx ($sqlx_size)"
-                    warning "注意：.sqlx 为 SQLx 离线编译缓存（已入库 git）。清理后离线编译/启动会依赖它，"
-                    warning "  如需恢复：git checkout -- .sqlx，或运行 ./scripts/dev/sqlx-prepare.sh 重新生成。"
-                    did_clean=true
-                fi
+        if [ -d "$sqlx_dir" ]; then
+            local sqlx_size
+            sqlx_size=$(du -sh "$sqlx_dir" 2>/dev/null | awk '{print $1}')
+            if [ "$dry_run" = true ]; then
+                info "[DRY-RUN] 将删除 SQLx 缓存: $sqlx_dir ($sqlx_size)"
+            else
+                _acc_freed "$sqlx_dir"
+                rm -rf "$sqlx_dir"
+                detail "已清理 .sqlx ($sqlx_size)"
+                warning "注意：.sqlx 为 SQLx 离线编译缓存（已入库 git）。清理后离线编译/启动会依赖它，"
+                warning "  如需恢复：git checkout -- .sqlx，或运行 ./scripts/dev/sqlx-prepare.sh 重新生成。"
+                did_clean=true
             fi
         else
-            detail "默认跳过 .sqlx 缓存清理（已入库git，删除会导致离线编译失败）"
-            detail "  如需强制清理.sqlx，请执行: CLEAN_SQLX=true ./scripts/topems.sh clean --sqlx"
+            detail ".sqlx 不存在，跳过"
         fi
+    else
+        detail "默认跳过 .sqlx 缓存清理（已入库git，删除会导致离线编译失败）"
+        detail "  如需强制清理.sqlx，请执行: $0 clean --sqlx"
     fi
 
     # ── --debug / --debug-full：只清 Rust 增量/依赖缓存，保留 release 产物 ──
@@ -3081,6 +3116,7 @@ clean_project() {
                 "$PROJECT_ROOT/target/debug/examples"
             )
         fi
+        local debug_cleaned=false
         for dir in "${debug_dirs[@]}"; do
             if [ -d "$dir" ]; then
                 local size
@@ -3088,16 +3124,22 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
+                    _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
                     did_clean=true
+                    debug_cleaned=true
                 fi
             fi
         done
         if [ "$dry_run" = false ]; then
             local debug_mode="Rust 增量缓存（debug+release incremental）"
             [ "$clean_debug_full" = true ] && debug_mode="debug 产物（增量+依赖+构建脚本+examples）"
-            info "已清理 $debug_mode；target/release 产物与 target/debug 二进制保留"
+            if [ "$debug_cleaned" = true ]; then
+                info "已清理 $debug_mode；target/release 产物与 target/debug 二进制保留"
+            else
+                detail "$debug_mode 无残留，跳过"
+            fi
         fi
     fi
 
@@ -3111,6 +3153,7 @@ clean_project() {
                 info "[DRY-RUN] 将清空 sccache 缓存: $sccache_dir ($sccache_size)"
             else
                 sccache --stop-server >/dev/null 2>&1 || true
+                _acc_freed "$sccache_dir"
                 rm -rf "${sccache_dir:?}/"* 2>/dev/null
                 detail "已清空 sccache 编译缓存 ($sccache_size)"
                 did_clean=true
@@ -3137,6 +3180,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
+                    _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
                     did_clean=true
@@ -3147,7 +3191,6 @@ clean_project() {
         # node_modules 内部缓存
         local nm_cache_dirs=(
             "$PROJECT_ROOT/apps/web/node_modules/.vite"
-            "$PROJECT_ROOT/apps/web/node_modules/.cache"
         )
         for dir in "${nm_cache_dirs[@]}"; do
             if [ -d "$dir" ]; then
@@ -3156,6 +3199,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除: $dir ($size)"
                 else
+                    _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
                     did_clean=true
@@ -3185,6 +3229,7 @@ clean_project() {
                     if [ "$dry_run" = true ]; then
                         info "[DRY-RUN] 将删除: $dir ($size)"
                     else
+                        _acc_freed "$dir"
                         rm -rf "$dir"
                         detail "已删除 $dir ($size)"
                         did_clean=true
@@ -3192,7 +3237,8 @@ clean_project() {
                 fi
             done
             # pnpm store prune（清理未引用包，不影响其他项目）
-            if command -v pnpm &>/dev/null; then
+            if [ "$prune_done" = false ] && command -v pnpm &>/dev/null; then
+                prune_done=true
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将执行 pnpm store prune"
                 else
@@ -3222,6 +3268,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除项目缓存: $dir ($size)"
                 else
+                    _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
                     did_clean=true
@@ -3230,7 +3277,8 @@ clean_project() {
         done
 
         # pnpm store prune （仅清理未引用包，不影响其他项目）
-        if command -v pnpm &>/dev/null; then
+        if [ "$prune_done" = false ] && command -v pnpm &>/dev/null; then
+            prune_done=true
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将执行 pnpm store prune"
             else
@@ -3246,7 +3294,7 @@ clean_project() {
     if [ "$clean_system_cache" = true ]; then
         local system_cache_dirs=(
             "$HOME/Library/Caches/pnpm"
-            "$HOME/Library/Caches/google"
+            "$HOME/Library/Caches/Google"
             "$HOME/Library/Caches/Mozilla.sccache"
             "$HOME/Library/Caches/com.trae.app.ShipIt"
             "$HOME/Library/Caches/Trae CN"
@@ -3258,6 +3306,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将删除系统缓存: $dir ($size)"
                 else
+                    _acc_freed "$dir"
                     rm -rf "$dir"
                     detail "已删除 $dir ($size)"
                     did_clean=true
@@ -3271,6 +3320,7 @@ clean_project() {
             if [ "$dry_run" = true ]; then
                 info "[DRY-RUN] 将删除 Cargo registry: $HOME/.cargo/registry ($cargo_size)"
             else
+                _acc_freed "$HOME/.cargo/registry"
                 rm -rf "$HOME/.cargo/registry"
                 detail "已删除 Cargo registry ($cargo_size)"
                 did_clean=true
@@ -3307,10 +3357,12 @@ clean_project() {
                 for model in $installed_models; do
                     local is_required=false
                     for req in "${required_models[@]}"; do
-                        if [ "$model" = "$req" ]; then
-                            is_required=true
-                            break
-                        fi
+                        # 兼容 tag 后缀：ollama list 返回 "name:tag"（如 nomic-embed-text:latest），
+                        # required 为 "name" 或 "name:tag"，须前缀匹配，否则会把保留模型误判为多余
+                        case "$model" in
+                            "$req"|"$req:"*) is_required=true ;;
+                        esac
+                        [ "$is_required" = true ] && break
                     done
                     if [ "$is_required" = true ]; then
                         detail "保留项目模型: $model"
@@ -3327,22 +3379,36 @@ clean_project() {
             fi
         fi
 
-        # 清理 Ollama blobs 残留（manifests 已删但 blobs 仍在的情况）
+        # 清理 Ollama blobs 孤儿残留：只删未被任何 manifest 引用的 blob，保留模型的 blob 绝不触碰
         local ollama_blobs="$HOME/.ollama/models/blobs"
-        if [ -d "$ollama_blobs" ]; then
-            local blob_size
-            blob_size=$(du -sh "$ollama_blobs" 2>/dev/null | awk '{print $1}')
-            local blob_count
-            blob_count=$(ls "$ollama_blobs" 2>/dev/null | wc -l | tr -s ' ' | xargs)
-            if [ "$blob_count" -gt 0 ]; then
-                if [ "$dry_run" = true ]; then
-                    info "[DRY-RUN] 将清理 Ollama blobs 残留: $ollama_blobs ($blob_size, $blob_count files)"
-                else
-                    rm -rf "${ollama_blobs:?}/*" 2>/dev/null
-                    detail "已清理 Ollama blobs 残留 ($blob_size)"
-                    did_clean=true
+        local ollama_manifests="$HOME/.ollama/models/manifests"
+        if [ -d "$ollama_blobs" ] && [ -d "$ollama_manifests" ] && [ -n "$(ls -A "$ollama_manifests" 2>/dev/null)" ]; then
+            local blob_count=0 orphan_count=0
+            local blob
+            for blob in "$ollama_blobs"/sha256-*; do
+                [ -e "$blob" ] || continue
+                blob_count=$((blob_count + 1))
+                local digest
+                digest=$(basename "$blob" | sed 's/^sha256-/sha256:/')
+                if ! grep -rlq "$digest" "$ollama_manifests" 2>/dev/null; then
+                    if [ "$dry_run" = true ]; then
+                        info "[DRY-RUN] 将删除孤儿 blob: $(basename "$blob")"
+                    else
+                        _acc_freed "$blob"
+                        rm -f "$blob" 2>/dev/null || true
+                        detail "已删除孤儿 blob: $(basename "$blob")"
+                        did_clean=true
+                    fi
+                    orphan_count=$((orphan_count + 1))
                 fi
+            done
+            if [ "$blob_count" -eq 0 ]; then
+                detail "无 Ollama blobs，跳过"
+            elif [ "$orphan_count" -eq 0 ]; then
+                detail "无孤儿 blob（$blob_count 个 blob 均被模型引用），跳过"
             fi
+        else
+            warn "Ollama blobs/manifests 目录缺失，跳过 blob 清理（避免误删）"
         fi
     fi
 
@@ -3357,6 +3423,7 @@ clean_project() {
                 if [ "$dry_run" = true ]; then
                     info "[DRY-RUN] 将清空: $dir ($size)"
                 else
+                    _acc_freed "$dir"
                     find "$dir" -name "*.log" -type f -delete 2>/dev/null
                     detail "已清空 $dir 下的日志"
                     did_clean=true
@@ -3389,6 +3456,10 @@ clean_project() {
         local freed_kb=$(( target_before_kb - target_after_kb ))
         [ "$freed_kb" -lt 0 ] && freed_kb=0
         info "target/ 占用: $(awk -v b="$target_before_kb" 'BEGIN{printf "%.1fG", b/1024/1024}') → $(awk -v a="$target_after_kb" 'BEGIN{printf "%.1fG", a/1024/1024}')（本次节省 $(awk -v f="$freed_kb" 'BEGIN{printf "%.1fG", f/1024/1024}')）"
+        local total_freed_kb="${_CLEAN_FREED_KB:-0}"
+        if [ "$total_freed_kb" -gt 0 ]; then
+            info "本次清理合计释放: $(awk -v f="$total_freed_kb" 'BEGIN{printf "%.2fGB", f/1024/1024}')"
+        fi
         local avail_kb
         avail_kb=$(df -k "$PROJECT_ROOT" 2>/dev/null | awk 'NR==2 {print $4}')
         [ -n "$avail_kb" ] && info "磁盘当前可用: $(awk -v a="$avail_kb" 'BEGIN{printf "%.1fGiB", a/1024/1024}')"
@@ -3535,7 +3606,7 @@ show_help() {
     cat << EOF
 TOPEMS 服务管理工具
 
-用法: topems <命令> [选项]
+用法: topems <命令> [选项]   （未识别的命令将透传给 core CLI: cli/bin/topems）
 
 服务管理（场景: 单服务生命周期——启动/停止/重启/日志/状态/单服务编译）:
   status [服务]           查看服务状态
@@ -3577,16 +3648,17 @@ TOPEMS 服务管理工具
                             --skip=<svc>      跳过某个服务
                             --skip-sqlx-check 跳过 SQLx 离线缓存新鲜度门禁
                             --skip-preflight 跳过启动前预检（CI / 已清理过场景）
-  stop-all                停止所有服务（含前端）
+  stop-all [--with-db]    停止所有服务（含前端；--with-db 同时停止 PostgreSQL/Redis，= run-stop）
   restart-all [选项]      重启所有服务（透传 start-all 选项）
 
 一键运行（场景: 完整环境一键——run 启动 DB+全部服务；run-stop 停止+可选停 DB）:
   run [选项]             一键启动数据库+所有服务（透传 start-all 选项）
+                          --auto-build      先全量编译再启动（等价 build-all + run，避免未构建时逐服务慢编译）
                           --only-core       只启动核心服务
                           --no-frontend     不启动前端
                           --skip=<svc>      跳过某个服务
                           --skip-sqlx-check 跳过 SQLx 离线缓存新鲜度门禁
-  run-stop                一键停止所有服务+数据库（= stop-all + 询问确认是否停 DB/Redis）
+  run-stop                一键停止所有服务+数据库（stop-all --with-db 的别名）
 
 前端（场景: 只启/停前端，不碰后端）:
   start web               启动前端服务（仅前端）
@@ -3602,13 +3674,13 @@ TOPEMS 服务管理工具
                             --no-typecheck: 跳过类型检查（纯跑 vitest）
 
 SQLx 离线缓存（场景: 迁移/改 SQL 后维护离线缓存; V64+; V3xx 门禁）:
-  sqlx prepare [--pkg=X] [--all]  生成离线缓存
+  sqlx prepare [-p X]  生成离线缓存
   sqlx prepare --check            校验离线缓存
   sqlx prepare --merge            合并分包缓存到根 .sqlx
-  sqlx check-offline              无 DATABASE_URL 下全量离线编译校验
+  sqlx check-offline              离线模式校验缓存（= prepare --check + SQLX_OFFLINE=true）
 
 SQLx 离线缓存新鲜度门禁 (V3xx):
-  build / build-all / build-backend / start / start-all / run / dev 默认先执行
+  build / build-all / build-backend / start / restart / start-all / run / dev 默认先执行
   scripts/dev/sqlx-prepare.sh --check；缓存缺失或与代码不一致即停止并给出修复指引。
   跳过: 命令加 --skip-sqlx-check，或设置环境变量 SQLX_CHECK_SKIP=1，或使用 --online。
 
@@ -3624,18 +3696,21 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
   redis stop              停止 Redis
 
 清理（场景: 磁盘治理——日常增量 clean_target.sh → 显式定向 clean → 危险 --system-cache）:
-  clean [选项]            清理编译产物、缓存、日志
-                            --rust         全量清理 Rust 编译产物 (target/ 含 release, .sqlx, 嵌套 target 残留) + 终止后台 cargo/rustc 进程
+  clean-all             全量清理，等价 clean --all（Rust target + 前端 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama）
+                         可追加参数：--dry-run 预览 / --deep / --system-cache 等
+  clean [选项]            清理编译产物、缓存、日志（默认增量：只清 debug 增量缓存，保留产物与依赖）
+                            --rust         全量清理 Rust 编译产物 (target/ 含 release, 嵌套 target 残留) + 终止后台 cargo/rustc 进程
+                            --sqlx         清理 SQLx 离线编译缓存 (.sqlx，已入库 git，默认不删；清理后需 sqlx prepare 重新生成)
                             --debug        只清 Rust 增量缓存 + 嵌套 target 残留（保留 debug/release 产物，日常推荐，恢复最快）
                             --debug-full   清 debug 增量+依赖+构建脚本产物（保留 release；依赖需重编，配合 sccache 可接受）
                             --sccache      停止 sccache 守护进程并清空编译缓存（下次构建冷启动）
                             --frontend     清理前端产物 (dist/, coverage/, .vite 缓存)
                             --deep         深度清理所有 node_modules + pnpm store prune（解决 dual versions / lockfile 漂移）
-                            --cache        清理项目级缓存 (.lighthouseci, .venv, .storybook 等)
+                            --cache        清理项目级缓存 (apps/web/.lighthouseci, apps/web/.storybook, cli/.venv, cli/.pytest_cache, node_modules/.cache)
                             --system-cache 清理系统级缓存 (pnpm/cargo/IDE，危险操作需确认)
                             --ollama       清理 Ollama 模型（保留项目使用的模型）
                             --logs         清理日志文件 (logs/*.log)
-                            --all          全量清理（默认）
+                            --all          全量清理（Rust target + 前端 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama）
                             --analyze      磁盘占用分析（只读排行，不删除任何文件）
                             --dry-run      预演模式，仅显示将删除的内容
                           环境变量: DISK_BLOCK_GB（阻断阈值，默认5）/ DISK_WARN_GB（警告阈值，默认10）
@@ -3656,8 +3731,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
 
   ws check                检查 WebSocket 连接状态
 
-  deploy                  生产部署（systemd 范式，需 .env.production；docker 部署见 deploy/docker/topems-docker.sh）
-  update-password         重置管理员密码（reset-password 的别名）
+  deploy                  生产部署（systemd 范式，需 .env.production；docker 部署见 scripts/deploy/docker/topems-docker.sh）
   reset-password [用户] [密码]  重置用户密码（默认 admin/admin123；update-password 为别名）
 
 自动预检（主流程入口自动执行，磁盘 <5GiB 会阻断）:
@@ -3686,7 +3760,7 @@ SQLx 离线缓存新鲜度门禁 (V3xx):
   topems build-all --serial --cooldown=3  串行构建+3秒冷却间隔
   topems build-all --prepare  先刷新 sqlx 缓存再编译（刷新后自动校验缓存可用）
   topems build-all --only-core --dev  仅 debug 编译核心服务
-  topems sqlx prepare --all   生成全量 SQLx 离线缓存
+  topems sqlx prepare   生成全量 SQLx 离线缓存
   topems test-all             运行所有测试
   topems run                  一键运行（数据库+所有服务）
   topems run --auto-build    先全量编译再一键运行（避免未构建时逐服务慢编译）
@@ -3797,7 +3871,7 @@ case "${1:-help}" in
         build_service "$2" "${@:3}"
         ;;
     mes-guard)
-        # mes 编译守卫：遮蔽检查 + 在线编译断言 0 error（--clean/--sync-snapshot/--skip-compile 透传）
+        # mes 编译守卫：遮蔽检查 + 在线编译断言 0 error（--clean/--sync-snapshot/--prepare/--skip-compile 透传）
         # V3xx：DB 连接串从 .env 派生（原硬编码 topems:topems_secret 与 .env 不一致）
         bash "$PROJECT_ROOT/scripts/mes_guard.sh" --db-url "$(_mes_db_url)" "${@:2}"
         ;;
@@ -3827,7 +3901,11 @@ case "${1:-help}" in
         show_all_status
         ;;
     stop-all)
-        stop_all_services
+        if [ "${2:-}" = "--with-db" ]; then
+            stop_everything
+        else
+            stop_all_services
+        fi
         ;;
     restart-all)
         restart_all "${@:2}"
@@ -3859,7 +3937,7 @@ case "${1:-help}" in
         run_all "${@:2}"
         ;;
     run-stop)
-        stop_everything
+        stop_everything   # = stop-all --with-db 的别名
         ;;
     db)
         case "$2" in
@@ -3953,10 +4031,13 @@ case "${1:-help}" in
         ;;
     update-password|reset-password)
         info "调用密码重置脚本..."
-        "$SCRIPT_DIR/dev/update-admin-password.sh" "${2:-admin}" "${3:-admin123}"
+        "$SCRIPT_DIR/dev/update-admin-password.sh" -y "${2:-admin}" "${3:-admin123}"
         ;;
     help|--help|-h)
         show_help
+        ;;
+    clean-all)
+        clean_project --all "${@:2}"
         ;;
     clean)
         clean_project "${@:2}"
@@ -3968,6 +4049,10 @@ case "${1:-help}" in
         push_guard "${@:2}"
         ;;
     *)
+        # 未识别命令：提示后透传给 core CLI（防敲错命令名被静默吞掉）
+        if [ -f "$CLI_DIR/bin/topems" ]; then
+            echo "提示: '$1' 不是 topems 内置命令，已透传给 core CLI (cli/bin/topems)" >&2
+        fi
         run_cli "$@"
         ;;
 esac

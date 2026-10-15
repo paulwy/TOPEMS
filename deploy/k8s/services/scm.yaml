@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: scm
-        image: topems/scm:latest
+        image: topems-scm:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8040

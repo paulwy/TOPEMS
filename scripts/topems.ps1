@@ -2014,12 +2014,22 @@ function Invoke-DbBoundaryCheck {
 # 一键运行/停止
 # =============================================
 function Invoke-RunAll([string[]]$allArgs) {
-    if (-not (Invoke-Preflight @allArgs)) { return 1 }
+    # 对齐 topems.sh: run --auto-build（先全量编译再启动；剥掉该旗标避免透传）
+    $autoBuild = $false
+    $runArgs = @()
+    foreach ($a in $allArgs) {
+        if ($a -eq '--auto-build') { $autoBuild = $true } else { $runArgs += $a }
+    }
+    if ($autoBuild) {
+        Write-Info '========== --auto-build：先全量编译 =========='
+        Invoke-BuildAll @() | Out-Null
+    }
+    if (-not (Invoke-Preflight @runArgs)) { return 1 }
     Write-Info '========== 一键运行 =========='
     if (-not (Start-Database)) { Write-Error2 '数据库启动失败，无法继续。请检查 PostgreSQL 配置。'; return 1 }
     if (-not (Start-Redis)) { Write-Error2 'Redis 启动失败，无法继续。请检查 Redis 配置。'; return 1 }
     Start-Sleep 2
-    Start-AllServices @allArgs
+    Start-AllServices @runArgs
     Write-Host ''
     Write-Success '一键运行完成！'
     Show-AllStatus
@@ -2088,7 +2098,7 @@ function Invoke-RunCli([string[]]$allArgs) {
 #   1. Invoke-SqlxPrepare      <-> scripts/dev/sqlx-prepare.sh
 #   2. Invoke-InstallDeps      <-> scripts/dev/install-deps.sh (Windows 引导版)
 #   3. Invoke-AiModels         <-> scripts/dev/ai-models.sh
-#   4. Invoke-Deploy           <-> scripts/deploy/deploy.sh (Docker)
+#   4. Invoke-Deploy           <-> 原 scripts/deploy/deploy.sh（Docker 范式，deploy.sh 已于 2026-10-15 移除）
 #   5. Invoke-UpdateAdminPassword <-> scripts/dev/update-admin-password.sh
 # =============================================================================
 
@@ -2671,7 +2681,7 @@ function Config-OllamaVectorDb {
 }
 
 # =============================================================================
-# 4) 一键部署（原 scripts/deploy/deploy.sh，Docker）
+# 4) 一键部署（原 scripts/deploy/deploy.sh 功能，Docker；deploy.sh 已于 2026-10-15 移除）
 # =============================================================================
 function Invoke-Deploy([string]$action, [string]$arg2) {
     if (-not (Test-CommandExists 'docker')) {
@@ -3538,11 +3548,12 @@ TOPEMS 服务管理工具 (Windows PowerShell 版)
                             --no-frontend     不启动前端
                             --no-register     不自动注册插件
                             --skip=<svc>      跳过某个服务
-  stop-all                停止所有服务（含前端）
+  stop-all [--with-db]    停止所有服务（含前端）；--with-db 同时非交互停止 PostgreSQL 和 Redis
   restart-all [选项]      重启所有服务（透传 start-all 选项）
 
 一键运行:
   run [选项]             一键启动数据库+所有服务（透传 start-all 选项）
+                            --auto-build    先全量编译再启动
   run-stop                一键停止所有服务+数据库
 
 前端:
@@ -3578,6 +3589,7 @@ SQLx 离线缓存 (V64+):
   redis stop              停止 Redis
 
 清理:
+  clean-all               全量清理（= clean --all：Rust target + 前端 + 项目缓存 + 日志）
   clean [选项]            清理编译产物、缓存、日志
                             --rust         清理 Rust 编译产物 (target/, .sqlx, llvm-cov-target, lib/target) + 终止后台 cargo 进程
                             --frontend     清理前端产物 (dist/, coverage/, .vite 缓存)
@@ -3710,7 +3722,15 @@ try {
             Start-AllServices $rest
             Show-AllStatus
         }
-        'stop-all' { Stop-AllServices }
+        'stop-all' {
+            Stop-AllServices
+            # 对齐 topems.sh: stop-all --with-db（非交互停止 PostgreSQL/Redis）
+            if ($rest -and ($rest -contains '--with-db' -or $rest -contains '-WithDb')) {
+                Write-Info '同时停止 PostgreSQL 和 Redis (--with-db)...'
+                Stop-Database
+                Stop-Redis
+            }
+        }
         'restart-all' { Invoke-RestartAll $rest }
         'check' { Check-AndRestartServices }
         'sqlx' {
@@ -3800,9 +3820,11 @@ try {
             $null = Invoke-UpdateAdminPassword $user $pwd
         }
         { $_ -in @('help','--help','-h') } { Show-Help }
+        'clean-all' { $null = Invoke-CleanProject (@('--all') + $rest) }
         'clean' { $null = Invoke-CleanProject $rest }
         default {
-            # 其它命令透传给 Python CLI
+            # 未知命令：对齐 topems.sh —— 先向 stderr 输出提示，再透传给 Python CLI（core CLI）
+            Write-Error2 "未知命令 '$cmd'，尝试透传给 Python CLI ..."
             Invoke-RunCli $CmdArgs
         }
     }

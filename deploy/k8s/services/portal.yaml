@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: portal
-        image: topems/portal:latest
+        image: topems-portal:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8063

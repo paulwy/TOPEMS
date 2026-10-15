@@ -19,9 +19,11 @@ console = Console()
 @click.option("--module", "-m", help="启动整个模块的服务")
 @click.option("--all", "-a", is_flag=True, help="启动所有服务")
 @click.option("--no-frontend", is_flag=True, help="不启动前端")
+@click.option("--auto-build", is_flag=True, help="先全量 cargo build 再启动（对齐 topems.sh run --auto-build）")
 @click.option("--wait/--no-wait", default=True, help="等待服务健康检查")
 @click.option("--timeout", default=30, help="健康检查超时时间(秒)")
-def start(service: str, module: str, all: bool, no_frontend: bool, wait: bool, timeout: int):
+def start(service: str, module: str, all: bool, no_frontend: bool, wait: bool, timeout: int,
+         auto_build: bool):
     """启动 TOPEMS 服务
 
     示例:
@@ -29,12 +31,25 @@ def start(service: str, module: str, all: bool, no_frontend: bool, wait: bool, t
         topems start -m core      启动核心模块
         topems start --all        启动所有服务（含前端）
         topems start --all --no-frontend  仅启动后端服务
+        topems start --all --auto-build   先全量编译再启动
     """
+    import subprocess
+    from pathlib import Path
+
     from ..config import get_config
     from ..manager import get_manager
 
     config = get_config()
     manager = get_manager()
+
+    # --auto-build：先全量编译（对齐 topems.sh run --auto-build:2544-2556）
+    if auto_build:
+        project_root = Path(__file__).parent.parent.parent.parent.parent
+        console.print("[cyan]--auto-build: 先全量编译 (cargo build)...[/cyan]")
+        result = subprocess.run(["cargo", "build"], cwd=str(project_root))
+        if result.returncode != 0:
+            console.print("[red]错误: 全量编译失败，中止启动[/red]")
+            return
 
     services_to_start = []
 

@@ -25,7 +25,9 @@
 
 param(
     [Parameter(Position=0)]
-    [ValidateSet("start", "start-core", "start-backend", "start-frontend", "start-service", "stop", "status", "restart")]
+    # 注：本脚本为轻量 Windows 启动器，仅实现 start/start-core/start-backend/
+    # start-frontend/start-service/stop/status/restart。完整命令（clean-all、reset-password、
+    # stop-all --with-db、run --auto-build、db/redis/test 等）请使用 scripts/topems.ps1 或 core CLI。
     [string]$Command = "start"
 )
 
@@ -750,5 +752,11 @@ switch ($Command) {
     "restart" {
         Stop-AllServices
         & $MyInvocation.MyCommand.Path start
+    }
+    default {
+        # 轻量启动器定位：未知命令不外抛 ValidateSet 错误，改为 stderr 提示并引导到完整入口
+        Write-Host "[standalone] 未知命令 '$Command'：本启动器仅支持 start/start-core/start-backend/start-frontend/start-service/stop/status/restart。" -ForegroundColor Yellow
+        Write-Host "[standalone] 完整命令（clean-all / reset-password / stop-all --with-db / run --auto-build / db / redis / test 等）请运行: powershell -File `"$PSScriptRoot\..\topems.ps1`" $Command $($args -join ' ')" -ForegroundColor Yellow
+        exit 1
     }
 }

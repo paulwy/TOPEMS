@@ -1,6 +1,8 @@
 # TOPEMS Docker Compose 配置
 # 用于开发和生产环境的数据库基础设施、API网关和监控系统
 # 版本: v5.0 - 与 plugin-architecture-design.md 端口规范同步
+# 📌 本文件为本目录参考基准（full/services/domains/observability 均为历史套件，见各文件头注）。
+#    整目录 2026-10-08 起弃用，仅作 docker 临时验证（见 README.md）。
 
 x-common-env: &common-env
   DATABASE_URL: postgres://topems_app:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必须提供}@postgres:5432/${POSTGRES_DB:-topems}

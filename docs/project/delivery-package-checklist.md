@@ -106,34 +106,34 @@
 
 | 序号 | 脚本名称 | 位置 | 说明 | 状态 |
 |------|---------|------|------|------|
-| 4.1.1 | 生产部署脚本 | `scripts/deploy/deploy-production.sh` | 生产环境一键部署 | ✅ |
+| 4.1.1 | 生产部署脚本 | `scripts/deploy/production-deploy.sh` | 生产环境一键部署（systemd 范式，`topems.sh deploy` 调用） | ✅ |
 | 4.1.2 | 回滚脚本 | `scripts/deploy/rollback.sh` | 版本回滚脚本 | ✅ |
-| 4.1.3 | 环境检查脚本 | `scripts/deploy/check-environment.sh` | 部署前环境检查 | ✅ |
-| 4.1.4 | 初始化脚本 | `scripts/deploy/init.sh` | 系统初始化配置 | ✅ |
+| 4.1.3 | 环境检查脚本 | `./scripts/topems.sh doctor` | 部署前环境自检/自举（钩子注册、工具链核对） | ✅ |
+| 4.1.4 | 初始化脚本 | `scripts/deploy/install.sh` | Linux 服务器安装初始化 | ✅ |
 
 ### 4.2 运维脚本
 
 | 序号 | 脚本名称 | 位置 | 说明 | 状态 |
 |------|---------|------|------|------|
-| 4.2.1 | 健康检查脚本 | `scripts/operations/health-check.sh` | 服务健康状态检查 | ✅ |
-| 4.2.2 | 服务监控脚本 | `scripts/operations/service-monitor.sh` | 服务状态监控和自动恢复 | ✅ |
-| 4.2.3 | 日志清理脚本 | `scripts/operations/clean-logs.sh` | 过期日志清理 | ✅ |
-| 4.2.4 | 性能分析脚本 | `scripts/operations/performance-analysis.sh` | 系统性能分析 | ✅ |
+| 4.2.1 | 健康检查脚本 | `scripts/dev/health-check.sh` | 服务健康状态检查 | ✅ |
+| 4.2.2 | 服务监控 | `./scripts/topems.sh check` | 服务状态监控和自动恢复异常服务 | ✅ |
+| 4.2.3 | 日志清理 | `./scripts/topems.sh clean --logs` | 过期日志清理（logs/*.log） | ✅ |
+| 4.2.4 | 性能分析 | 系统 `top` / `htop`（无专用脚本） | 系统性能分析 | ✅ |
 
 ### 4.3 备份脚本
 
 | 序号 | 脚本名称 | 位置 | 说明 | 状态 |
 |------|---------|------|------|------|
-| 4.3.1 | 数据库备份脚本 | `scripts/backup/backup-database.sh` | 数据库全量备份 | ✅ |
-| 4.3.2 | 配置备份脚本 | `scripts/backup/backup-config.sh` | 配置文件备份 | ✅ |
-| 4.3.3 | 数据库恢复脚本 | `scripts/backup/restore-database.sh` | 数据库恢复 | ✅ |
+| 4.3.1 | 数据库备份脚本 | `./scripts/topems.sh db backup` | 数据库全量备份 | ✅ |
+| 4.3.2 | 配置备份脚本 | 手工 `cp .env /etc/topems/`（无专用脚本） | 配置文件备份 | ✅ |
+| 4.3.3 | 数据库恢复脚本 | `./scripts/topems.sh db restore <备份文件>` | 数据库恢复 | ✅ |
 
 ### 4.4 测试脚本
 
 | 序号 | 脚本名称 | 位置 | 说明 | 状态 |
 |------|---------|------|------|------|
 | 4.4.1 | 性能测试运行脚本 | `scripts/performance/run-performance-tests.sh` | 多场景性能测试 | ✅ |
-| 4.4.2 | 端到端测试脚本 | `scripts/test/run-e2e-tests.sh` | 端到端测试运行 | ✅ |
+| 4.4.2 | 端到端测试脚本 | `./scripts/topems.sh test-frontend smoke` | 前端端到端/冒烟测试（模式 all/unit/component/smoke/coverage） | ✅ |
 | 4.4.3 | 集成测试脚本 | `scripts/test/run-integration-tests.sh` | 集成测试运行 | ✅ |
 
 ## 5. 测试交付物

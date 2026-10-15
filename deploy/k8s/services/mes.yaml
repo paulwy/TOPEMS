@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: mes
-        image: topems/mes:latest
+        image: topems-mes:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8030

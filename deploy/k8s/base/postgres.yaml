@@ -21,7 +21,8 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:latest
+        # 与 docker-compose.yml 主基准一致：pgvector/pgvector:pg18（ai 服务依赖 pgvector 扩展）
+        image: pgvector/pgvector:pg18
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5432

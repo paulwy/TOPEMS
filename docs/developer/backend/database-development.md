@@ -249,7 +249,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
 **Q4：SCHEMA_DEFENSE_VERIFY_STRICT=true/false 分别什么时候用？**
 - **false（默认）**：本地开发 / 演示环境 / 回归压测。缺列仅 WARN 不阻塞，让你先把别的功能跑起来。
-- **true**：CI 门禁（GitHub Actions / Jenkins）/ 生产发布前冒烟。`./scripts/topems.sh db defense-check gis ehs portal finance` 启动后会自动 grep WARN，0 WARN=通过；任何 1 列缺失都会 panic 返回非 0 exit，直接让流水线标红阻断发布。
+- **true**：CI 门禁（GitHub Actions / Jenkins）/ 生产发布前冒烟。`./scripts/topems.sh db defense-check gis`（一次只接一个服务名；核心 4 服务逐个跑 gis / ehs / portal / finance，或直接 `./scripts/topems.sh db defense-check-all` 跑全量 4 批）启动后会自动 grep WARN，0 WARN=通过；任何 1 列缺失都会 panic 返回非 0 exit，直接让流水线标红阻断发布。
 
 **Q5：为什么把三函数 + 两阶段入口抽到 `shared-db::schema`，不直接让每个服务内联写？**
 内联写法的后果：ehs（43表）~80行、portal（115表）~110行、finance（66表）~90行 —— 28服务就是 28×100 = **2800 行重复代码**，后续改一处错误模式需要同步改 28 次非常容易漏。抽到 `shared-db` 后每个服务只需写：① SERVICE_SCHEMA ② TABLE_DEFS ③ 调用 `run_schema_defense(pool, schema, TABLE_DEFS, service_tag)`。三函数只在一个地方存在 = 修 bug / 加模式 = 一次生效全覆盖。

@@ -260,19 +260,28 @@ test_model() {
 # 配置向量库
 config_vector_db() {
   info "配置向量库..."
-  
+
+  # 凭据治理：DATABASE_URL 环境变量优先 → 从 config/standalone.env 提取 → 未设置即报错退出（不硬编码口令）
+  DB_URL="${DATABASE_URL:-}"
+  if [ -z "$DB_URL" ] && [ -f "$PROJECT_ROOT/config/standalone.env" ]; then
+    DB_URL="$(sed -n 's#^DATABASE_URL=\(.*\)#\1#p' "$PROJECT_ROOT/config/standalone.env" | head -1)"
+  fi
+  if [ -z "$DB_URL" ]; then
+    error "未设置 DATABASE_URL 环境变量，且无法从 config/standalone.env 提取数据库连接串"
+  fi
+
   # 检查PostgreSQL是否支持向量
-  if psql -U topems -d topems -c "SELECT 1 FROM pg_extension WHERE extname = 'vector'" >/dev/null 2>&1; then
+  if psql "$DB_URL" -c "SELECT 1 FROM pg_extension WHERE extname = 'vector'" >/dev/null 2>&1; then
     success "向量扩展已安装"
   else
     info "安装向量扩展..."
-    psql -U topems -d topems -c "CREATE EXTENSION IF NOT EXISTS vector"
+    psql "$DB_URL" -c "CREATE EXTENSION IF NOT EXISTS vector"
     success "向量扩展安装完成"
   fi
-  
+
   # 创建向量表（如果需要）
   info "检查向量表..."
-  if psql -U topems -d topems -c "SELECT 1 FROM information_schema.tables WHERE table_name = 'document_chunks'" >/dev/null 2>&1; then
+  if psql "$DB_URL" -c "SELECT 1 FROM information_schema.tables WHERE table_name = 'document_chunks'" >/dev/null 2>&1; then
     success "向量表已存在"
   else
     warning "向量表不存在，AI服务启动时会自动创建"

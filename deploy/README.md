@@ -70,7 +70,7 @@ bash deploy/docker/build-service.sh finance --tag latest
 部署和运维脚本统一放在 `scripts/deploy/` 目录下，包括：
 - `install.sh` / `uninstall.sh` / `update.sh` — Linux 服务器安装/卸载/更新
 - `setup-db.sh` — 数据库初始化
-- `deploy.sh` / `production-deploy.sh` — 一键部署
+- `production-deploy.sh` — 一键部署（现用，systemd 范式）；`deploy.sh` 已 **DEPRECATED**（docker run 离线范式 C，2026-10-03 弃用，勿用于新部署）
 - `production-verify.sh` — 生产环境验证
 - `rollback.sh` — 回滚
 - `start-production.sh` — 生产环境启停

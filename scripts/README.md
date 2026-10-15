@@ -27,7 +27,11 @@
 
 ## 目录结构
 
-
+> **已归档（2026-10-15 根域 P2 治理）**：`scripts/_archive/` 存放无仓内引用的一次性/历史脚本——
+> `generate_align_5432_module_schemas.py`、`generate_align_migration.py`、`generate_restore_legacy_tables.py`、
+> `split_graphql_schema.py`、`gen_web_contract_gap_doc.py`、`topems.sh.bak-20261015`、`topems.sh.bak-20261015b`，
+> 仅作历史留存，勿用于日常开发。deprecated 但仍被文档引用的脚本（`sync-ports.sh`、`upgrade-runtime.sh`）
+> 保留原位，头部已标注"勿用"，替代命令分别为 `python3 scripts/gen-service-config.py`、`scripts/deploy/update.sh`。
 
 ```
 scripts/
@@ -131,12 +135,17 @@ pm          svc/pm                 topems-pm             8023
 | `./scripts/topems.sh logs <服务> [行数]`            | 查看服务日志        |
 | `./scripts/topems.sh build <服务>`                | 编译服务          |
 | `./scripts/topems.sh start-all`                 | 启动所有服务（含前端）   |
-| `./scripts/topems.sh stop-all`                  | 停止所有服务（含前端）   |
+| `./scripts/topems.sh stop-all [--with-db]`      | 停止所有服务（含前端；`--with-db` 同时停 PostgreSQL/Redis，= run-stop）   |
+| `./scripts/topems.sh restart-all`               | 重启所有服务 |
+| `./scripts/topems.sh run [--auto-build]`        | 一键启动数据库+所有服务；`--auto-build` 先全量编译再启动 |
+| `./scripts/topems.sh run-stop`                  | 一键停止所有服务+数据库（= `stop-all --with-db`） |
+| `./scripts/topems.sh clean`                     | 清理（默认增量：只清 debug 增量缓存，保留产物与依赖） |
+| `./scripts/topems.sh clean-all`                  | 全量清理（= `clean --all`：Rust target+前端+项目缓存+日志；可加 --dry-run/--deep/--system-cache） |
 | `./scripts/topems.sh dev`                       | 启动 macOS 开发环境 |
 | `./scripts/topems.sh install-deps`              | 安装所有依赖        |
 | `./scripts/topems.sh ai start/stop/status/pull` | AI 模型管理       |
-| `./scripts/topems.sh reset-password`            | 重置管理员密码       |
-| `./scripts/topems.sh deploy`                    | 部署服务          |
+| `./scripts/topems.sh reset-password`            | 重置管理员密码（update-password 为别名）       |
+| `./scripts/topems.sh deploy`                    | 部署服务（systemd 范式；docker 见 deploy/docker/topems-docker.sh）          |
 
 ### 开发工具
 
@@ -233,7 +242,7 @@ node scripts/patch-react-transition-group.js --check
 
 | 脚本                                         | 说明                            |
 | ------------------------------------------ | ----------------------------- |
-| `./scripts/deploy/deploy.sh`               | 部署脚本（默认本地，--docker 使用 Docker） |
+| `./scripts/deploy/production-deploy.sh`    | 生产部署（systemd 范式）            |
 | `./scripts/deploy/rollback.sh`             | 回滚脚本                          |
 | `./scripts/deploy/docker/topems-docker.sh` | Docker Compose 部署             |
 

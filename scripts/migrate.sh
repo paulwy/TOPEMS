@@ -19,7 +19,7 @@
 #
 # 与现有脚本的关系:
 #   - 替代 scripts/topems.sh db_migrate (psql 模式) 的功能
-#   - 替代 scripts/deploy/deploy.sh run_migrations 的功能
+#   - 替代已删除的 scripts/deploy/deploy.sh run_migrations 的功能（deploy.sh 于 2026-10-15 移除）
 #   - 与 scripts/migration/validate.sh 互补 (本脚本调用 validate.sh 做校验)
 #   - 与 .github/workflows/migration-test.yml 中 sqlx-cli 用法对齐
 #

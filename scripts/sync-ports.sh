@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================================
-# ⚠️  DEPRECATED - 请使用 scripts/gen-service-config.py
+# ⚠️  DEPRECATED（2026-10-15，勿用）- 请使用 scripts/gen-service-config.py
 # ============================================================================
 # 本脚本的功能已被 gen-service-config.py 完全覆盖：
 #   - scripts/services.conf 生成 → gen-service-config.py 从 config/services.yaml 直接生成

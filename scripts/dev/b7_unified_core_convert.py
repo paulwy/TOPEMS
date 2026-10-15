@@ -2,12 +2,16 @@
 """B7 扩展批次：unified-core api_error → TopemsError 批量替换（静态模式）。
 静态: api_error(500|404|400, "msg") → ApiResponse::from(TopemsError::X("msg".to_string()))
 泄露型（format!/变量插值）不在此替换，另行手工。
+
+ROOT 从本脚本位置（scripts/dev/）上溯三级到仓库根，不再硬编码他机绝对路径；
+可用环境变量 B7_TARGET_DIR 覆盖。
 """
+import os
 import re
 import sys
 from pathlib import Path
 
-ROOT = Path("/Users/xingzhai/TOPEMS/svc/unified-core/src")
+ROOT = Path(os.environ.get("B7_TARGET_DIR", Path(__file__).resolve().parents[2] / "svc" / "unified-core" / "src"))
 
 MAP = {
     "500": ("Internal", "InternalError"),

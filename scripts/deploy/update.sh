@@ -81,9 +81,13 @@ run() {
 # Pull latest code if version specified
 if [[ -n "$VERSION" ]]; then
     echo -e "${YELLOW}Updating to version: ${VERSION}${NC}"
-    git fetch origin
-    git checkout "$VERSION"
-    git pull origin "$VERSION"
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${YELLOW}[dry-run]${NC} 跳过 git fetch/checkout/pull $VERSION（干跑不改 git 状态）"
+    else
+        git fetch origin
+        git checkout "$VERSION"
+        git pull origin "$VERSION"
+    fi
 fi
 
 # Build backend
@@ -97,6 +101,8 @@ fi
 
 # Determine which services to update
 # unified-core 包含: IAM + Doc + Flow + File + Communication + Tenant + Billing + AI + Monitor
+# 注意：本数组必须与 install.sh SERVICES 数组保持一致（同口径双写，改一处需同步另一处）。
+# bi 即 analytics 别名（target/release 下无 bi / topems-bi 二进制），勿列入。
 ALL_SERVICES=(
     "unified-core"
     "ai"
@@ -116,10 +122,17 @@ ALL_SERVICES=(
     "wms"
     "srm"
     "rd"
-    "bi"
     "mobile"
     "portal"
     "integration"
+    "communication"
+    "server"
+    "search"
+    "ticket"
+    "tms"
+    "monitor"
+    "plugin-registry"
+    "master-data"
 )
 
 if [[ -n "$SERVICES" ]]; then
@@ -177,9 +190,13 @@ done
 if [[ "$SKIP_FRONTEND" == false ]]; then
     echo -e "${YELLOW}Building frontend...${NC}"
 
-    cd "${SCRIPT_DIR}/apps/web"
-    pnpm install
-    pnpm run build
+    if [[ "$DRY_RUN" == "true" ]]; then
+        echo -e "${YELLOW}[dry-run]${NC} 跳过 pnpm install/build（apps/web）"
+    else
+        cd "${SCRIPT_DIR}/apps/web"
+        pnpm install
+        pnpm run build
+    fi
 
     # Backup old frontend
     if [[ -d "${PREFIX}/web" ]]; then

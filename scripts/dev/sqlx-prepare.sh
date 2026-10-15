@@ -24,6 +24,7 @@
 #   ./scripts/dev/sqlx-prepare.sh --check        # 离线校验缓存与代码一致（CI 用，不连接 DB）
 #   ./scripts/dev/sqlx-prepare.sh --semantic     # 语义级校验：连接 DB + PREPARE 验证 + hash 比较（CI advisory）
 #   ./scripts/dev/sqlx-prepare.sh --offline-test # 刷新后执行离线编译测试
+#   ./scripts/dev/sqlx-prepare.sh --merge        # 纯离线：把子目录已有 .sqlx/ 合并到根 .sqlx/（不连 DB）
 #
 # 环境变量（可选）：
 #   DATABASE_URL  覆盖默认 .env / config/standalone.env
@@ -43,11 +44,12 @@ ok()   { echo -e "${GREEN}[sqlx-prepare][ok]${NC} $*"; }
 err()  { echo -e "${RED}[sqlx-prepare][err]${NC} $*" >&2; }
 
 # ---------- 参数解析 ----------
-MODE="prepare"            # prepare | check | offline-test | semantic
+MODE="prepare"            # prepare | check | offline-test | semantic | merge
 CUSTOM_PKGS=()
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --check)        MODE="check"; shift ;;
+    --merge)        MODE="merge"; shift ;;
     --semantic)     MODE="semantic"; shift ;;
     --offline-test) MODE="offline-test"; shift ;;
     -p|--package)   CUSTOM_PKGS+=("$2"); shift 2 ;;
@@ -68,7 +70,26 @@ if [ -f .env ]; then
   set -a; source .env; set +a; ENV_LOADED=1
 fi
 
-if [ "$MODE" != "offline-test" ] && [ -z "$DATABASE_URL" ]; then
+# merge 模式为纯离线合并，不需要 DATABASE_URL / cargo，提前分流
+if [ "$MODE" == "merge" ]; then
+  log "执行纯合并模式：把子目录已存在的 .sqlx/*.json 合并到根 .sqlx/（不连 DB、不执行 cargo prepare）..."
+  mkdir -p .sqlx
+  MERGED=0
+  while IFS= read -r dir; do
+    [ -z "$dir" ] && continue
+    n=$(find "$dir" -maxdepth 1 -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$n" -gt 0 ]; then
+      cp -f "$dir"/*.json .sqlx/
+      MERGED=$((MERGED + n))
+    fi
+    rm -rf "$dir"
+  done <<< "$(find svc lib -mindepth 2 -maxdepth 2 -type d -name .sqlx 2>/dev/null)"
+  ROOT_QUERIES=$(find .sqlx -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
+  ok "纯合并完成：合并 $MERGED 个子目录查询缓存，根 .sqlx 共 $ROOT_QUERIES queries"
+  exit 0
+fi
+
+if [ "$MODE" != "offline-test" ] && [ "$MODE" != "merge" ] && [ -z "$DATABASE_URL" ]; then
   err "DATABASE_URL 未设置，请在 .env 或 config/standalone.env 中声明，或：
     export DATABASE_URL=postgres://user:pw@localhost:5432/dbname"
   exit 2

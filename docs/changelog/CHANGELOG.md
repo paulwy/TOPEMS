@@ -43,6 +43,38 @@
 - **finance + portal 两大 crate Region 显著提升**：finance 14.53% → 17.58%（+3.05pp，16 文件 +60 tests）、portal 23.83% → 24.52%（+0.69pp，5 文件 +28 tests）
 - **ai_form handlers.rs 可测试性重构**：从直接实例化 client 改为 trait-based 注入，单测 0% → 91.46%（`refactor(ai): 引入 mock 可测试架构`）
 
+### Changed - scripts/topems.sh 命令族收敛与文档一致性修复（2026-10-15）
+- **clean-all 顶层命令**：= `clean --all`（Rust target + 前端产物 + 项目缓存 + 日志；不含 .sqlx / system-cache / ollama），可追加 `--dry-run` 预览 / `--deep` / `--system-cache`；`clean` 默认收敛为**增量**（只清 debug 增量缓存，保留产物与依赖），全量须用 `clean-all` 或 `clean --all` / `--rust`
+- **stop-all --with-db / run-stop**：`stop-all --with-db` 同时停 PostgreSQL/Redis；`run-stop` 为其别名（一键停全部+DB）
+- **reset-password 主名合并**：`reset-password [用户] [密码]` 为主命令（默认 admin/admin123），`update-password` 保留为别名
+- **run --auto-build**：一键启动前先全量编译（= build-all + run），避免未构建时逐服务慢编译
+- **未知命令透传**：未识别命令先 stderr 提示"已透传给 core CLI (cli/bin/topems)"，再 `run_cli`，防敲错命令被静默吞掉
+- **磁盘守卫阈值**：`DISK_BLOCK_GB=5`（可用空间低于时 clean 阻断）/ `DISK_WARN_GB=10`（警告）；环境变量 `MAX_RETRIES=3` / `RETRY_DELAY=3` / `BACKOFF_FACTOR=2` / `FORCE_ONLINE_BUILD` / `SQLX_CHECK_SKIP` 补入 `.env.example` 与 environment-config 文档
+- **sqlx 子命令口径**：`sqlx prepare [-p X|--all]` / `sqlx prepare --check` / `sqlx prepare --merge` / `sqlx check-offline`（= prepare --check + SQLX_OFFLINE=true）
+- **docker 部署入口复活**：`scripts/deploy/docker/topems-docker.sh` 修复，恢复为 docker 部署现用入口（container-strategy.md 口径同步）
+- **CLI 命令面对齐文档**：stop-all --with-db / run --auto-build / reset-password / run / run-stop 已在 README.md、scripts/README.md、code-wiki.md §9.4 速查表逐条对齐
+- **文档过期引用清理（P1/P2 批）**：docs 族 logs 用法统一为位置参数 `<svc> [行数]`（删除 --service/--follow/--tail/-f 过期写法）；裸 `start`/`restart` 补服务名或改 start-all/restart-all；删除不存在命令 `validate-env`；清除 `scripts/operations/*.sh`、根 `scripts/install-deps.sh`、根 `scripts/deploy.sh` 等死路径引用；delivery-package-checklist.md 4.1/4.2/4.3/4.4 脚本表全部改为实测存在路径
+- **部署脚本硬化（scripts/deploy/，同批）**：
+  - `update.sh`：移除 bi 服务名（与 install.sh 对齐）
+  - `update.sh` / `install.sh`：`--dry-run` 守卫扩展——git/pnpm/cargo 等有副作用步骤在干跑模式下只打印不执行
+  - `uninstall.sh`：删除 unit 列表按 deploy/systemd 实际名单重建
+  - `production-deploy.sh`：编译失败不再吞错，失败即退出
+  - `service-monitor.sh`：端口清单对齐 `config/ports.env`
+  - `ai-models.sh`：config-vector 口令改为环境变量注入（不写死）
+  - `rollback.sh`：回滚冒烟口令改为环境变量注入
+  - `services.conf`：头部注释更新（信源 `scripts/gen-service-config.py`）
+- **脚本体系治理收尾与归档发布（同批）**：
+  - `scripts/deploy/deploy.sh`（DEPRECATED 死代码）**已删除**；README.md / AI 部署指南 / container-strategy.md 引用同步为 `production-deploy.sh`；`migrate.sh` 头部注释注明替代关系
+  - `scripts/_archive`（5 个孤立脚本 + 2 个 topems.sh 备份）与 `k8s/_archive` 归档目录**已清理**
+  - 审查发现全部落地：P0×1（build-service.sh）、P1×20、J-1（topems-docker.sh 复活）、P2 9 域、未纳入项 3 组、收尾注释级 4 项；凭据硬编码全仓清除（未写入新口令）
+  - 动态行为验证清单（约 60 项，含 docker compose config / kustomize build / install.sh --dry-run / Windows pwsh 实跑）见《修复清单与验证报告-2026-10-15.md》
+- **数据库迁移链首次完整验证与修复（同批）**：
+  - `database/migrations` 在演练库 `topems_test@5432` 全链验证：**388/388 迁移应用成功、0 失败、重复运行零待迁移**（此前从未在任何库完整应用过）
+  - 6 个断点修复：flow stub 表补丁（`20260919000000_restore_flow_stub_tables`）、plugin_mes audit_logs 基线（`20261012000000_plugin_mes_audit_logs_baseline`）、同版本冲突改名（missing_tables 0000→0001）、ehs 缺 tenant_id 幂等补列、DROP 顺序修正（invoices→subscriptions→billing_plans）、RLS `tenant_id = ''` 空串 bug（改全零 UUID，7 表同病，全仓同类排查清零）
+  - backfill 契约修复：16 张缺列表幂等补列 + 8 张运行时表补最小骨架基线（`20261015000074_k1_missing_table_baselines`）+ backfill 改名让位（74→75）；8 张骨架表完整结构由运行时 schema_defense 逐列补全（20260725000000 同款幂等模式）
+  - `setup-db.sh --init-schema` 双轨制消除：迁移重放改走 `sqlx migrate run`（原 psql 逐文件重放不遵守 `_sqlx_migrations`，非幂等迁移重复执行会失败/重复），sqlx 不可用时保留 psql fallback；演练库实测通过
+  - 详见《修复清单与验证报告-2026-10-15.md》第十二章；验证清单 C 组 6/6 全过、汇总 17/27
+
 ### Fixed
 - `.sqlx/` 目录缓存文件误提交风险：根目录 `.gitignore` 新增 pattern（`chore(gitignore)`）
 - MES 数据库 schema refactor 后 97 个编译错误清零（`fix(mes): resolve 97 compile errors`）

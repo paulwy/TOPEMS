@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: lims
-        image: topems/lims:latest
+        image: topems-lims:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8051

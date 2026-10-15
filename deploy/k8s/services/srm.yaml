@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: srm
-        image: topems/srm:latest
+        image: topems-srm:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8042

@@ -62,7 +62,8 @@ while [[ $# -gt 0 ]]; do
     --sync-snapshot) SYNC_SNAPSHOT=1 ;;
     --skip-compile)  SKIP_COMPILE=1 ;;
     --prepare)       PREPARE=1 ;;
-    --db-url)        DB_URL="$2"; shift ;;
+    --db-url)        [[ -z "${2:-}" ]] && die "--db-url 需要参数 <postgresql://...>"
+                     DB_URL="$2"; shift ;;
     *) die "未知参数: $1（支持 --clean / --sync-snapshot / --skip-compile / --prepare / --db-url）" ;;
   esac
   shift

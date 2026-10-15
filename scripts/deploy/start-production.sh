@@ -18,7 +18,9 @@ BACKEND_PORT=8013
 FRONTEND_PORT=3001
 if [ -f "${PROJECT_DIR}/config/ports.env" ]; then
     source "${PROJECT_DIR}/config/ports.env"
-    BACKEND_PORT="${AI_PORT:-$BACKEND_PORT}"
+    # unified-core 端口事实源 = CORE_PORT=8000（services.yaml: iam env_var=CORE_PORT；
+    # 勿用 AI_PORT=8013，那是 svc/ai 的端口，与本脚本启动的 topems-unified-core 不匹配）
+    BACKEND_PORT="${CORE_PORT:-$BACKEND_PORT}"
     FRONTEND_PORT="${WEB_PORT:-$FRONTEND_PORT}"
 fi
 

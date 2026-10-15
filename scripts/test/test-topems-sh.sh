@@ -31,8 +31,12 @@ PASS=0
 FAIL=0
 
 # ---- 提取 topems.sh 的函数定义 + case 分发 ----
-EXTRACTED=$(mktemp /tmp/topems-test.XXXXXX)
-trap 'rm -f "$EXTRACTED"' EXIT
+# 注意：提取件必须落在项目内临时目录。topems.sh:10-18 有加载期 PROJECT_ROOT 守卫，
+# 它用 BASH_SOURCE[0] 的父父目录解析 PROJECT_ROOT 并要求其中存在 Cargo.toml；
+# 若提取件在 /tmp，则 PROJECT_ROOT 解析为 /，守卫命中 exit 1，source 直接失败。
+EXTRACTED_DIR=$(mktemp -d "$PROJECT_ROOT/.topems-unit-test.XXXXXX")
+EXTRACTED="$EXTRACTED_DIR/extracted.sh"
+trap 'rm -rf "$EXTRACTED_DIR"' EXIT
 
 # 1) 提取 # 主命令处理 之前的所有内容（函数定义 + 全局变量初始化）
 #    同时移除 set -e，防止 source 时因命令返回非零而退出
@@ -53,6 +57,9 @@ set +eu
 # 加载函数定义
 # shellcheck disable=SC1090
 source "$EXTRACTED" 2>/dev/null
+# 提取件内 topems.sh:2861 会注册自己的 EXIT trap（_release_build_lock），覆盖上方的
+# rm 清理 trap；source 后立即重新注册，确保项目内临时目录在退出时被删除。
+trap 'rm -rf "$EXTRACTED_DIR"' EXIT
 
 # ---- Mock 副作用函数 ----
 CAPTURED_ARGS=""

@@ -120,8 +120,8 @@ BEGIN
         EXECUTE format('DROP POLICY IF EXISTS tenant_isolation_policy ON master_data.%I', t);
         EXECUTE format(
             'CREATE POLICY tenant_isolation_policy ON master_data.%I
-                USING (tenant_id IS NULL OR tenant_id = '''' OR tenant_id = ''00000000-0000-0000-0000-000000000001'' OR tenant_id = current_setting(''app.tenant_id'')::uuid)
-                WITH CHECK (tenant_id IS NULL OR tenant_id = '''' OR tenant_id = ''00000000-0000-0000-0000-000000000001'' OR tenant_id = current_setting(''app.tenant_id'')::uuid)',
+                USING (tenant_id IS NULL OR tenant_id = ''00000000-0000-0000-0000-000000000000'' OR tenant_id = ''00000000-0000-0000-0000-000000000001'' OR tenant_id = current_setting(''app.tenant_id'')::uuid)
+                WITH CHECK (tenant_id IS NULL OR tenant_id = ''00000000-0000-0000-0000-000000000000'' OR tenant_id = ''00000000-0000-0000-0000-000000000001'' OR tenant_id = current_setting(''app.tenant_id'')::uuid)',
             t);
     END LOOP;
 END $$;

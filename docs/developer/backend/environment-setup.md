@@ -122,7 +122,7 @@ CREATE DATABASE topems_test;
 cargo run --bin topems-unified-core -- --migrate
 
 # 或使用脚本
-./scripts/topems.sh migrate
+./scripts/topems.sh db migrate
 ```
 
 ---
@@ -181,13 +181,13 @@ RUST_LOG=debug
 
 ```bash
 # 使用统一脚本启动所有服务
-./scripts/topems.sh start
+./scripts/topems.sh start-all
 
 # 查看服务状态
 ./scripts/topems.sh status
 
-# 查看服务日志
-./scripts/topems.sh logs
+# 查看服务日志（需指定服务）
+./scripts/topems.sh logs iam
 
 # 停止所有服务
 ./scripts/topems.sh stop
@@ -319,8 +319,8 @@ lsof -i :8000
 # 终止占用进程
 kill -9 <PID>
 
-# 或使用脚本强制重启
-./scripts/topems.sh start --force
+# 或使用脚本强制重启 iam（8000；--force 必须在服务名之后）
+./scripts/topems.sh start iam --force
 ```
 
 ### 数据库连接失败

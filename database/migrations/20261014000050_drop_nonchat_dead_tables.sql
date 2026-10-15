@@ -13,17 +13,22 @@
 --   core_subscriptions                          → iam / mes（public 另计/K2 联动）
 --   core_finance_voucher_entries / templates    → public
 --
--- 依赖顺序：core_subscriptions.plan_id 有 FK → core_billing_plans，须先 drop subscriptions；
+-- 依赖顺序：core_billing_invoices.subscription_id 有 FK → core_subscriptions，
+--   且 core_subscriptions.plan_id 有 FK → core_billing_plans；
+--   故须先 drop invoices → 再 drop subscriptions → 最后 billing_plans（CASCADE 仅摘除死表 FK）。
 --   public.core_subscriptions（out-of-scope 保留）对 public.core_billing_plans 仍持 FK，
 --   故 billing_plans 用 CASCADE 仅摘除死表上的 FK 约束（不级联任何活表）。
 -- 幂等：全部 IF EXISTS。
-
-DROP TABLE IF EXISTS "iam"."core_subscriptions";
-DROP TABLE IF EXISTS "mes"."core_subscriptions";
+-- 2026-10-15 空库重建链修复：原顺序 subscriptions 先于 invoices，
+--   空库上 rebuild_orphan_tables（20261007000006）重建了完整 FK 链，DROP subscriptions 被
+--   billing_invoices 的 FK 依赖阻断（cannot drop ... other objects depend on it）→ 调整为先删 invoices。
 
 DROP TABLE IF EXISTS "iam"."core_billing_invoices";
 DROP TABLE IF EXISTS "mes"."core_billing_invoices";
 DROP TABLE IF EXISTS "public"."core_billing_invoices";
+
+DROP TABLE IF EXISTS "iam"."core_subscriptions";
+DROP TABLE IF EXISTS "mes"."core_subscriptions";
 
 DROP TABLE IF EXISTS "iam"."core_billing_plans" CASCADE;
 DROP TABLE IF EXISTS "mes"."core_billing_plans" CASCADE;

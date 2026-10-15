@@ -214,14 +214,15 @@ topems docker exec iam bash
 |------|------|
 | **core** | unified-core (iam) |
 | **erp** | erp, finance, ai |
-| **collaboration** | hrm, pm, crm |
+| **collaboration** | hrm, pm, crm, communication, ticket |
 | **manufacturing** | mes, pdm |
 | **supply-chain** | scm, wms, srm |
 | **quality-rd** | qms, lims, ehs, rd |
-| **analytics** | bi, portal |
+| **analytics** | bi, portal, search |
 | **infrastructure** | mobile, gis, integration |
 | **master-data** | master-data |
-| **extension** | search, communication, billing, ticket, feedback |
+
+> 注：billing / feedback / lowcode 已移除（feedback 并入 ticket；lowcode 空壳归档），与 config/services.yaml module_groups 对齐。
 
 ## 端口分配
 
@@ -252,10 +253,7 @@ topems docker exec iam bash
 | integration | 8072 | 系统集成 |
 | search | 8082 | 搜索服务 |
 | communication | 8084 | 通讯服务 |
-| billing | 8085 | 计费服务 |
 | ticket | 8086 | 工单服务 |
-| feedback | 8087 | 反馈服务 |
-| lowcode | 8088 | 低代码平台 |
 | master-data | 8090 | 主数据 |
 | Frontend | 3000 | 前端 |
 

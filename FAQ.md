@@ -365,8 +365,8 @@ A: 查看服务日志：
 # 查看最近 100 行日志
 ./scripts/topems.sh logs erp 100
 
-# 实时跟踪日志
-./scripts/topems.sh logs erp -f
+# 实时跟踪日志（logs 无 -f，直接 tail 日志文件）
+tail -f logs/erp.log
 ```
 
 ### Q32: 如何添加新的业务服务？

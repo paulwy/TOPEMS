@@ -165,8 +165,7 @@ pnpm dev
 ```bash
 # 根目录
 pnpm dev              # 一键启动（等价于 ./scripts/dev/start-local.sh）
-pnpm dev:web          # 仅启动 web 前端（3000）
-pnpm dev:core         # 仅启动 core 微前端（3001）
+pnpm dev:web         # 仅启动 web 前端（3000，即 topems-portal）
 pnpm dev:backend      # 仅启动后端 IAM
 pnpm dev:all          # 启动所有后端 + 前端
 pnpm dev:stop         # 停止所有服务
@@ -181,7 +180,7 @@ pnpm test             # 运行测试
 
 ```bash
 # 启动服务时自动注册
-./topems.sh start erp
+./scripts/topems.sh start erp
 
 # 预期输出
 [INFO] 启动 erp 服务...
@@ -207,7 +206,7 @@ curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
 
 ```bash
 # 检查并重启异常服务
-./topems.sh check
+./scripts/topems.sh check
 ```
 
 ## 端口分配

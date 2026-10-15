@@ -11,6 +11,6 @@ src_dir = cli_dir / "src"
 
 sys.path.insert(0, str(src_dir))
 
-# 测试配置
-TEST_CONFIG_PATH = cli_dir / "config" / "services.yaml"
+# 测试配置（config/services.yaml 在仓库根 config/，不在 cli/config/；与 test_config.py 一致）
+TEST_CONFIG_PATH = test_dir.parent.parent / "config" / "services.yaml"
 TEST_TIMEOUT = 5  # 秒

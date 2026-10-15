@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: pm
-        image: topems/pm:latest
+        image: topems-pm:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8023

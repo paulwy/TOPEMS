@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: wms
-        image: topems/wms:latest
+        image: topems-wms:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8041

@@ -21,7 +21,16 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-DB_URL="${DB_URL:-postgresql://topems:3b07cf82f13669d9c360214db1fc2d40@localhost:5432/topems}"
+# 口令不设硬编码默认：优先 DB_URL 环境变量，其次从 config/standalone.env 提取（与 update-admin-password.sh 同款）
+DB_URL="${DB_URL:-}"
+if [ -z "$DB_URL" ] && [ -f "$ROOT/config/standalone.env" ]; then
+    DB_URL="$(sed -n 's#^DATABASE_URL=\(.*\)#\1#p' "$ROOT/config/standalone.env" | head -1)"
+fi
+if [ -z "$DB_URL" ]; then
+    echo "错误: 未设置 DB_URL 环境变量，且无法从 config/standalone.env 提取 DATABASE_URL" >&2
+    echo "用法: DB_URL=\"postgres://...\" $0" >&2
+    exit 2
+fi
 EXPECT_NAIVE=0
 EXPECT_TZ=4410
 EXPECT_DATE=283

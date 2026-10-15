@@ -84,6 +84,22 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 | `status` | 查看服务状态 |
 | `restart` | 重启所有服务 |
 
+### 与 topems.sh（Linux/macOS 主入口）的差异
+
+`topems-standalone.ps1` 是**轻量启动器**，只覆盖 start/stop/status/restart 类常用命令，
+不实现完整命令集。以下能力请改用完整 PowerShell 入口 `scripts/topems.ps1`（已与 topems.sh 新约定同步）：
+
+| topems.sh 新约定 | standalone.ps1 | 完整入口 scripts/topems.ps1 |
+|---|---|---|
+| `clean-all`（= clean --all） | 不支持，会 stderr 提示并引导 | ✅ 已同步（`clean-all` = `clean --all`） |
+| `stop-all --with-db`（非交互停库） | 仅 `stop`（停应用+前端，不停 PG/Redis） | ✅ 已同步（`stop-all --with-db`） |
+| `run --auto-build`（先全量编译再启动） | 不支持 | ✅ 已同步（`run --auto-build`） |
+| `reset-password` / `update-password` | 不支持 | ✅ 已同步（`reset-password` 主名） |
+| 未知命令透传 core CLI | 不支持（stderr 提示） | ✅ 已同步（先 stderr 提示再透传） |
+
+> 说明：本仓库为 macOS 开发环境（无 `pwsh`），上述 `.ps1` 仅做静态文本审阅与括号配平检查，
+> **未在 Windows 实跑验证**；请在 Windows PowerShell 5.1+ / 7+ 上运行 `.\topems.ps1 help` 复核。
+
 ## 端口配置
 
 编辑 `ports.ps1` 文件修改端口号。默认配置：

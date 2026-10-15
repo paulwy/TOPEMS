@@ -8,7 +8,7 @@
 # 环境要求：Rust 1.70+ / Node.js 18+ / PostgreSQL 14+ / Redis 7+
 
 # 使用统一脚本启动全部服务
-./scripts/topems.sh start
+./scripts/topems.sh start-all
 
 # 访问系统
 #   前端: http://localhost:3000

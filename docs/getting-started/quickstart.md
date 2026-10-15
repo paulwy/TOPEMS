@@ -65,8 +65,8 @@ cd cli && pip3 install -e . && cd ..
 
 # 安装/编译 Rust 依赖（首次会需要 5-10 分钟）
 cargo build --workspace
-# 或者使用项目脚本
-./scripts/install-deps.sh
+# 或者使用项目脚本（安装全部依赖）
+./scripts/topems.sh install-deps
 ```
 
 ### 步骤 3：启动本地数据库（无需 Docker）
@@ -100,7 +100,7 @@ sudo -u postgres psql -c "CREATE USER topems WITH PASSWORD '<TOPEMS_PG_PASSWORD>
 sudo -u postgres psql -c "CREATE DATABASE topems OWNER topems;"
 ```
 
-> **不使用 Docker。** 上面是默认推荐方式。如果你确实需要 Docker，可参考 `docker/` 目录的 `docker-compose.yml`（仅作为可选方案）。
+> **不使用 Docker。** 上面是默认推荐方式。如果你确实需要 Docker，可参考 `deploy/docker/` 目录的 `docker-compose.yml`（仅作为可选方案）。
 
 ### 步骤 4：配置环境变量
 

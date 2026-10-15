@@ -62,8 +62,8 @@ check-finance: ## 仅离线 check topems-finance（端口 8011）
 	DATABASE_URL= SQLX_OFFLINE=true cargo check -p topems-finance
 
 # ---------- 磁盘空间 / 构建清理 ----------
-clean: ## 全量清理（推荐，等效 topems clean）
-	./scripts/topems.sh clean
+clean: ## 全量清理（推荐，等效 topems clean-all）
+	./scripts/topems.sh clean-all
 
 clean-debug: ## 只清 Rust 增量缓存 + 嵌套 target 残留（保留 debug/release 产物，日常推荐）
 	./scripts/topems.sh clean --debug

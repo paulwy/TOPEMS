@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: ai
-        image: topems/ai:latest
+        image: topems-ai:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8013
