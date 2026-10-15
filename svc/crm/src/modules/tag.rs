@@ -202,11 +202,19 @@ async fn create_tag(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(tag) => (
-            Json(ApiResponse::success(tag.clone(), "标签创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(tag) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(tag.clone(), "标签创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建标签失败: {}", e);
             (
@@ -393,11 +401,19 @@ async fn update_tag(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(tag) => (
-            Json(ApiResponse::success(tag.clone(), "标签更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(tag) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(tag.clone(), "标签更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新标签失败: {}", e);
             (

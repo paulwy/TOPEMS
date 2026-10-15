@@ -1553,7 +1553,16 @@ pub async fn update_customer_finance(
             .execute(&mut **txn)
             .await;
             match inserted {
-                Ok(_) => Json(ApiResponse::success(merged, "更新客户财务信息成功")),
+                Ok(_) => {
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
+                    Json(ApiResponse::success(merged, "更新客户财务信息成功"))
+                }
                 Err(e) => {
                     tracing::error!("插入客户财务信息失败: {}", e);
                     Json(ApiResponse::from(TopemsError::Internal(
@@ -1562,7 +1571,16 @@ pub async fn update_customer_finance(
                 }
             }
         }
-        Ok(_) => Json(ApiResponse::success(merged, "更新客户财务信息成功")),
+        Ok(_) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(merged, "更新客户财务信息成功"))
+        }
         Err(e) => {
             tracing::error!("更新客户财务信息失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

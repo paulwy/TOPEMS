@@ -276,7 +276,16 @@ async fn create_interaction(
     .await;
 
     match result {
-        Ok(record) => Json(ApiResponse::success(record, "创建交互记录成功")),
+        Ok(record) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(record, "创建交互记录成功"))
+        }
         Err(e) => {
             tracing::error!("创建交互记录失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(
@@ -350,7 +359,16 @@ async fn update_interaction(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "更新交互记录成功")),
+        Ok(Some(record)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(record, "更新交互记录成功"))
+        }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "交互记录不存在".to_string(),
         ))),
@@ -399,10 +417,18 @@ async fn delete_interaction(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({ "deleted": true }),
-            "删除交互记录成功",
-        )),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({ "deleted": true }),
+                "删除交互记录成功",
+            ))
+        }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "交互记录不存在".to_string(),
         ))),
@@ -480,10 +506,18 @@ pub async fn batch_delete_interactions(
     .await;
 
     match result {
-        Ok(r) => Json(ApiResponse::success(
-            serde_json::json!({ "deleted": r.rows_affected() }),
-            "批量删除成功",
-        )),
+        Ok(r) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({ "deleted": r.rows_affected() }),
+                "批量删除成功",
+            ))
+        }
         Err(e) => {
             tracing::error!("批量删除交互记录失败: {}", e);
             Json(ApiResponse::from(TopemsError::Internal(

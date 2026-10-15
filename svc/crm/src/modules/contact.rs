@@ -229,11 +229,19 @@ pub async fn create_contact(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(contact) => (
-            Json(ApiResponse::success(contact.clone(), "联系人创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(contact) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(contact.clone(), "联系人创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建联系人失败: {}", e);
             (
@@ -428,11 +436,19 @@ async fn update_contact(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(contact) => (
-            Json(ApiResponse::success(contact.clone(), "联系人更新成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(contact) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(contact.clone(), "联系人更新成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("更新联系人失败: {}", e);
             (

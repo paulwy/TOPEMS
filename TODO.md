@@ -1829,5 +1829,6 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **erp 批完成**：34 handler（初筛剔除 4 个 HashSet/HashMap .insert() 误报），commit `f57f680fe`。
 - **rd 批完成**：30 handler 实修（脚本 23 + 手工 8；export_audit_logs 纯读误报不修；清理 3 处 SELECT 检查分支误插 commit 防运行期 panic；清理 1 处 Ok(None) 分支误插 + 1 处 headers() 分支误插），12 文件；cargo check/build 绿；实测 create_bug 落库通过（BUG-E4DE，对照旧进程回滚 0 行）。待提交。
 - **srm 批完成**：24 handler 实修（award_tender 独立事务已 commit 排除；修复模式含 guard-delete 块化 / Ok(row) 块 / 尾部型 / check_permission 前缀型），11 文件 +181 行；cargo check/build 绿；实测 delete_supplier 200 + status=deleted 落库。commit `63ac3fd27`（含 TODO 登记）。
-- **tms 批完成**：23 handler 实修（批量 OkSome-Json 块化 10 + guard-delete 插 commit 4 + 状态机型内层成功块 9；复扫 0 剩余），5 文件；cargo check/build 绿；实测 submit_inspection（active→maintenance）/ submit_verification（active→suspended）/ approve_driver（suspended→active）落库通过 + delete_vehicle 物理删除验证。待提交。
-- 待办批：crm 13 / scm 10。
+- **tms 批完成**：23 handler 实修（批量 OkSome-Json 块化 10 + guard-delete 插 commit 4 + 状态机型内层成功块 9；复扫 0 剩余），5 文件；cargo check/build 绿；实测 submit_inspection（active→maintenance）/ submit_verification（active→suspended）/ approve_driver（suspended→active）落库通过 + delete_vehicle 物理删除验证。commit `33337c1e8`（含 TODO 登记）。
+- **crm 批完成**：13 handler 实修（元组型 Ok(var) => 块化 4 + OkSome-Json 块化 2 + guard-del/Ok(r) 块化 5 + Ok(row) 块 1 + Ok(_) 尾部型 1；修复中踩坑：脚本 A 模式 close 定位错导致 contact.rs 括号错乱，git checkout 恢复后改 close 起点重跑 + 手工精确替换 4 处元组型），5 文件；cargo check/build 绿；实测 create_tag 200 落库 + delete_interaction 200 deleted_at 落库。待提交。
+- 待办批：scm 10。

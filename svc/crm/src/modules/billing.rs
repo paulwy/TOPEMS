@@ -269,6 +269,13 @@ async fn create_billing_record(
 
     match result {
         Ok(row) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             let id: Uuid = row.get("id");
             tracing::info!("[crm] 账单创建成功 - invoice_no={}", invoice_no);
             Json(ApiResponse::success(
@@ -347,7 +354,16 @@ async fn update_billing_record(
     .await;
 
     match result {
-        Ok(Some(record)) => Json(ApiResponse::success(record, "更新账单成功")),
+        Ok(Some(record)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(record, "更新账单成功"))
+        }
         Ok(None) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "账单不存在".to_string(),
         ))),
@@ -396,10 +412,18 @@ async fn delete_billing_record(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({ "deleted": true }),
-            "删除账单成功",
-        )),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({ "deleted": true }),
+                "删除账单成功",
+            ))
+        }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "账单不存在".to_string(),
         ))),
@@ -466,10 +490,18 @@ pub async fn mark_billing_paid(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
-            serde_json::json!({ "id": id, "status": "paid", "paid_at": now }),
-            "标记已收款成功",
-        )),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(
+                serde_json::json!({ "id": id, "status": "paid", "paid_at": now }),
+                "标记已收款成功",
+            ))
+        }
         Ok(_) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "账单不存在".to_string(),
         ))),
