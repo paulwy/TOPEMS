@@ -275,7 +275,7 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
     };
 
     let client = reqwest::Client::new();
-    let url = format!("{}/api/core/plugin/dev/plugins/erp/register", core_url);
+    let url = format!("{}/dev/runtime/erp/register", core_url);
 
     let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
     let mut request = client.post(&url).json(&info);
@@ -325,8 +325,8 @@ pub fn create_routes() -> Router<ApiState> {
         (status = 200, description = "操作成功"),
     ),
 )]
-pub async fn auto_register_to_core(core_url: Option<&str>) {
-    let core_url = core_url.unwrap_or("http://localhost:8000");
+pub async fn auto_register_to_core(_core_url: Option<&str>) {
+    let core_url = std::env::var("PLUGIN_REGISTRY_URL").unwrap_or_else(|_| "http://localhost:8096".to_string());
     let runtime_url =
         env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
 
@@ -347,7 +347,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     };
 
     let client = reqwest::Client::new();
-    let url = format!("{}/api/core/plugin/dev/plugins/erp/register", core_url);
+    let url = format!("{}/dev/runtime/erp/register", core_url);
 
     let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
     let mut request = client.post(&url).json(&info);

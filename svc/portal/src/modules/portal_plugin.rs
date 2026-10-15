@@ -118,7 +118,7 @@ fn get_runtime_url() -> String {
 }
 
 /// 启动时自动注册到统一核心
-pub async fn auto_register_to_core(core_url: Option<&str>) {
+pub async fn auto_register_to_core(_core_url: Option<&str>) {
     let (core_url, source) = match core_url {
         Some(v) if !v.is_empty() => (v.to_string(), "caller_param".to_string()),
         _ => match std::env::var("CORE_URL") {
@@ -157,7 +157,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     };
 
     let client = Client::new();
-    let url = format!("{}/api/core/plugin/dev/plugins/portal/register", core_url);
+    let url = format!("{}/dev/runtime/portal/register", core_url);
 
     let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
     let mut request = client.post(&url).json(&info);

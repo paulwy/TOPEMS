@@ -211,8 +211,8 @@ fn get_runtime_url() -> String {
 }
 
 /// 启动时自动注册到统一核心
-pub async fn auto_register_to_core(core_url: Option<&str>) {
-    let core_url = core_url.unwrap_or("http://localhost:8000");
+pub async fn auto_register_to_core(_core_url: Option<&str>) {
+    let core_url = std::env::var("PLUGIN_REGISTRY_URL").unwrap_or_else(|_| "http://localhost:8096".to_string());
     let runtime_url = get_runtime_url();
 
     let info = PluginInfo {
@@ -235,7 +235,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     };
 
     let client = reqwest::Client::new();
-    let url = format!("{}/api/core/plugin/dev/plugins/qa/register", core_url);
+    let url = format!("{}/dev/runtime/qa/register", core_url);
 
     let token = std::env::var("PLUGIN_REGISTRATION_TOKEN").unwrap_or_default();
     let mut request = client.post(&url).json(&info);
