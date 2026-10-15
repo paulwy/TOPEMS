@@ -221,7 +221,7 @@ async fn update_plan(
             participants = COALESCE($6, participants),
             documents_required = COALESCE($7, documents_required),
             updated_at = $8
-        WHERE id = $9 RETURNING *"
+        WHERE id = $9 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.plan_name)
     .bind(req.acceptance_type)
@@ -620,7 +620,7 @@ async fn update_record(
             findings = COALESCE($5::jsonb, findings),
             recommendations = COALESCE($6::jsonb, recommendations),
             updated_at = $7
-        WHERE id = $8 RETURNING *"
+        WHERE id = $8 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.status)
     .bind(req.conclusion)

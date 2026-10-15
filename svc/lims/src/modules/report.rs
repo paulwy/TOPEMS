@@ -357,6 +357,7 @@ pub async fn approve_report(
         UPDATE public.qa_lab_inspection_reports
         SET status = 'approved', updated_at = NOW()
         WHERE id = $1 AND status = 'draft'
+          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING id, report_no, sample_id, sample_no, sample_name, inspection_date,
                   inspector, inspection_items, conclusion, remark, status, created_at
         "#,

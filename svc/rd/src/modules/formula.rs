@@ -710,7 +710,7 @@ pub async fn create_formula_version(
                 r#"
                 UPDATE rs.formulas SET
                     version = $2, ingredients = $3, process_steps = $4, updated_at = $5
-                WHERE id = $1
+                WHERE id = $1 AND ($6::uuid IS NULL OR tenant_id = $6::uuid)
                 "#,
             )
             .bind(id)
@@ -718,6 +718,7 @@ pub async fn create_formula_version(
             .bind(serde_json::to_value(ingredients).unwrap_or(serde_json::Value::Array(vec![])))
             .bind(&req.process_steps)
             .bind(now)
+            .bind(tenant_opt)
             .execute(&mut **txn)
             .await
             .ok();

@@ -2074,3 +2074,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 甄别跳过（已租户化，非缺口）：scm supplier_admission/purchase_contract/price_comparison/incoming_inspection（WHERE 已含租户）、wms.replenishment_order_items（已含）、hrm.employees（tenant_id=$2 已有）、scm.suppliers event_handlers（内部事件同步，无 Claims，RLS 兜底）
 - 复核：三服务 check 0 error；SQL 事务内实测——sync_records/departments 用真实行、leave_requests/internal_transactions 空表插测试行，4 表本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-Za：散点 9 处（写路径租户约束）
+- 状态：代码已修改（rd/qms/lims/pm check 通过 0 error），待提交
+- rd.rs.formulas 1 处（create_formula_version 内主表 UPDATE）：Claims 已有（复用 tenant_opt）补 $6
+- qms.qa_alert_messages 1 处（acknowledge_alert）+ qms.qa_apqp_approvals 1 处（process_apqp_approval）：无 Claims，内联 current_setting
+- lims public.qa_lab_inspection_reports 1 处（approve_report）：无 Claims，内联
+- pm 5 处（quality_checks/project_risks/notification_settings/acceptance_records/acceptance_plans）：无 Claims（pm 无中间件），内联
+- 复核：4 服务 check 0 error；SQL 事务内实测（9 表空表插测试行，apqp 先插项目、lab 用真实样本 FK、pm 用真实项目 FK）——9 表本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

@@ -201,7 +201,7 @@ async fn update_quality_check(
             corrective_actions = COALESCE($10, corrective_actions),
             follow_up_date = COALESCE($11, follow_up_date),
             updated_at = $12
-        WHERE id = $13 RETURNING *"
+        WHERE id = $13 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(req.check_name)
     .bind(req.check_type)
