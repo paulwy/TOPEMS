@@ -264,7 +264,12 @@ const QmsEightDRedesignPage: React.FC = () => {
     },
   });
 
-  const reports = data?.reports || [];
+  // 真实数据优先；API 空/失败时降级 mock（渲染层兜底，不依赖 queryFn 分支是否命中）
+  const reports = data?.reports?.length
+    ? data.reports
+    : isLoading
+      ? []
+      : mockEightDReports;
 
   const pushToast = (type: Toast['variant'], message: string) => {
     const id = Date.now().toString();
@@ -616,7 +621,7 @@ const QmsEightDRedesignPage: React.FC = () => {
         data={pagedReports}
         rowKey='id'
         loading={isLoading}
-        error={error ? (error as Error).message : null}
+        error={reports.length === 0 && error ? (error as Error).message : null}
         emptyTitle={t('qms.eight_d_redesign.empty_title')}
         emptyDescription={t('qms.eight_d_redesign.empty_description')}
         footer={

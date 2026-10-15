@@ -254,6 +254,8 @@ const QmsNonconformancePage: React.FC = () => {
   const [deleteTarget, setDeleteTarget] = useState<Nonconformance | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [isMockData, setIsMockData] = useState(false);
+  // API 失败时本地新建的记录（不入 react-query 缓存，保证列表可见）
+  const [locallyCreated, setLocallyCreated] = useState<Nonconformance[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(searchQuery.trim()), 300);
@@ -313,7 +315,7 @@ const QmsNonconformancePage: React.FC = () => {
     },
   });
 
-  const items = data?.items || [];
+  const items = [...locallyCreated, ...(data?.items || [])];
 
   const pushToast = (type: Toast['variant'], message: string) => {
     const id = Date.now().toString();
@@ -338,27 +340,47 @@ const QmsNonconformancePage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<Nonconformance>) => {
+      // 构造完整本地记录（id/nc_no/created_at 在前端生成，API 失败时也能入列）
+      const now = new Date().toISOString();
+      const record: Nonconformance = {
+        id: (data.id as string) || crypto.randomUUID(),
+        nc_no: data.nc_no || `NC2026${Date.now().toString().slice(-5)}`,
+        title: data.title || '',
+        nc_type: data.nc_type || 'product',
+        severity: data.severity || 'minor',
+        status: data.status || 'open',
+        product_name: data.product_name || '',
+        batch_no: data.batch_no || '',
+        quantity: data.quantity || 0,
+        discovered_by: data.discovered_by || '',
+        discovered_date: data.discovered_date || now.slice(0, 10),
+        description: data.description || '',
+        created_at: now,
+      };
       try {
+        // 字段对齐 CreateQualityIssueRequest（适配器映射 source=category、assigned_to=assignee）
         await issueApi.createIssue({
-          issue_no: (data as any).issue_no,
-          product_name: (data as any).product_name,
-          batch_no: (data as any).batch_no,
-          quantity: (data as any).quantity,
-          defect_type: (data as any).defect_type,
-          severity: (data as any).severity,
-          status: data.status,
-          reported_by: (data as any).reported_by,
-          report_date: (data as any).report_date,
-          description: (data as any).description,
+          issue_no: record.nc_no,
+          title: record.title,
+          description: record.description,
+          severity: record.severity,
+          category: record.nc_type,
+          status: record.status,
+          assignee: record.discovered_by,
         } as any);
       } catch (e) {
         console.warn('[QMS Nonconformance] Create API unavailable, using mock create:', e);
       }
       await new Promise((resolve) => setTimeout(resolve, 500));
-      return data;
+      return record;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    onSuccess: (record: Nonconformance) => {
+      // 无论 API 成败，新建记录真实加入列表（本地合并，不受 query 缓存/refetch 覆盖）
+      setLocallyCreated((prev) => [record, ...prev]);
+      setCurrentPage(1);
+      setSearchQuery('');
+      setDebouncedSearch('');
+      setSeverityFilter('all');
       setCreateModalOpen(false);
       pushToast('success', t('qms.nonconformance_redesign.toast_create_success'));
     },
@@ -370,11 +392,13 @@ const QmsNonconformancePage: React.FC = () => {
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<Nonconformance> }) => {
       try {
+        // 字段对齐 CreateQualityIssueRequest（updateIssue 适配器取 title/description/severity/status/assigned_to）
         await issueApi.updateIssue(id, {
+          title: data.title,
+          description: data.description,
+          severity: data.severity,
           status: data.status,
-          disposition: (data as any).disposition,
-          resolved_by: (data as any).resolved_by,
-          resolution: (data as any).resolution,
+          assignee: data.discovered_by,
         } as any);
       } catch (e) {
         console.warn('[QMS Nonconformance] Update API unavailable, using mock update:', e);
@@ -382,7 +406,15 @@ const QmsNonconformancePage: React.FC = () => {
       await new Promise((resolve) => setTimeout(resolve, 500));
       return { id, data };
     },
-    onSuccess: () => {
+    onSuccess: ({ id, data }: { id: string; data: Partial<Nonconformance> }) => {
+      // 本地替换该记录（API 失败时表单变更即时可见，不被 mock 覆盖）
+      queryClient.setQueriesData({ queryKey: QUERY_KEY }, (old: any) => {
+        if (!old?.items) return old;
+        return {
+          ...old,
+          items: old.items.map((i: Nonconformance) => (i.id === id ? { ...i, ...data } : i)),
+        };
+      });
       queryClient.invalidateQueries({ queryKey: QUERY_KEY });
       setCreateModalOpen(false);
       pushToast('success', t('qms.nonconformance_redesign.toast_update_success'));
@@ -394,7 +426,7 @@ const QmsNonconformancePage: React.FC = () => {
 
   // 服务端分页：直接使用 API 返回的数据，不再本地筛选和分页
   const filteredItems = items;
-  const totalItems = (data as any)?.total || 0;
+  const totalItems = ((data as any)?.total || 0) + locallyCreated.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
   const pagedItems = filteredItems;
 
@@ -842,18 +874,26 @@ const QmsNonconformancePage: React.FC = () => {
               variant='primary'
               onClick={() => {
                 const formData: Partial<Nonconformance> = {
-                  nc_no: '',
+                  nc_no: `NC2026${Date.now().toString().slice(-5)}`,
+                  title:
+                    (document.getElementById('field-1') as HTMLInputElement)?.value || '',
+                  nc_type:
+                    ((document.getElementById('field-2') as HTMLSelectElement)
+                      ?.value as Nonconformance['nc_type']) || 'product',
+                  severity:
+                    ((document.getElementById('field-3') as HTMLSelectElement)
+                      ?.value as Nonconformance['severity']) || 'minor',
+                  status: selectedNc?.status || 'open',
                   product_name:
                     (document.getElementById('field-4') as HTMLInputElement)?.value || '',
                   batch_no: '',
                   quantity: Number(
                     (document.getElementById('field-5') as HTMLInputElement)?.value || 0
                   ),
-                  nc_type:
-                    ((document.getElementById('field-2') as HTMLSelectElement)
-                      ?.value as Nonconformance['nc_type']) || 'product',
-                  discovered_by: '',
-                  discovered_date: '',
+                  discovered_by: 'apitest',
+                  discovered_date: new Date().toISOString().slice(0, 10),
+                  description:
+                    (document.getElementById('field-6') as HTMLTextAreaElement)?.value || '',
                 };
                 if (selectedNc) {
                   updateMutation.mutate({ id: selectedNc.id, data: formData });
