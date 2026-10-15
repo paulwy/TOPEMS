@@ -236,7 +236,10 @@ async fn update_contract(
             end_date = COALESCE($8, end_date),
             status = COALESCE($9, status),
             updated_at = $10
-        WHERE id = $11 RETURNING *"#
+        WHERE id = $11
+          AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL
+               OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        RETURNING *"#
     ))
     .bind(req.contract_name)
     .bind(req.party_a)
@@ -320,7 +323,7 @@ async fn delete_contract(
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let result = sqlx::query(only_own_schema_query!(
         "pm",
-        "UPDATE pm.contracts SET deleted_at = NOW() WHERE id = $1"
+        "UPDATE pm.contracts SET deleted_at = NOW() WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(id)
     .execute(&pool)
@@ -400,7 +403,7 @@ async fn submit_contract(
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
         "pm",
-        "UPDATE pm.contracts SET status = 'pending', updated_at = $1 WHERE id = $2 RETURNING *"
+        "UPDATE pm.contracts SET status = 'pending', updated_at = $1 WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(Utc::now())
     .bind(id)
@@ -488,7 +491,7 @@ async fn approve_contract(
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
         "pm",
-        "UPDATE pm.contracts SET status = 'approved', updated_at = $1 WHERE id = $2 RETURNING *"
+        "UPDATE pm.contracts SET status = 'approved', updated_at = $1 WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(Utc::now())
     .bind(id)
@@ -576,7 +579,7 @@ async fn reject_contract(
     let user_id = headers.get("x-username").and_then(|v| v.to_str().ok());
     let contract = sqlx::query_as::<_, Contract>(only_own_schema_query!(
         "pm",
-        "UPDATE pm.contracts SET status = 'rejected', updated_at = $1 WHERE id = $2 RETURNING *"
+        "UPDATE pm.contracts SET status = 'rejected', updated_at = $1 WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING *"
     ))
     .bind(Utc::now())
     .bind(id)

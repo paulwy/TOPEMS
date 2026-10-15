@@ -2016,3 +2016,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - consolidation/reports.rs 5 处（generate_report / submit_report / approve_report / publish_report / delete_report）：函数均无 Claims——generate/publish/delete 用 current_setting 内联租户条件（同 INSERT 模式）；submit/approve 有前置 SELECT，用 report.tenant_id 作 $2 绑定
 - 复核：erp check 0 error；SQL 事务内实测（scopes→reports 完整链）——两表本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留；sales_orders 真实 1 行（tenant 全0）未触碰
 
+## 方案C 批2-Q：pm.contracts 5 处 + rs.projects 0 处（skip 登记）
+- 状态：代码已修改（pm check 通过 0 error），待提交
+- pm/contract.rs 5 处（update_contract / delete_contract / submit_contract / approve_contract / reject_contract）：pm 服务路由无 Claims 注入（纯 pool，无 tenant_middleware），用 current_setting 内联租户条件（同 reports.rs 先例、与 RLS 同源）
+- skip 登记：rs.projects（rd）——rd handler 层（update_project/delete_project/batch_delete_projects）在方案C 批1已显式租户化；repository.rs 的 update/delete/batch_delete 3 处无生产调用（ProjectService 未接线，仅测试引用），295/500 处为 cfg(test) 测试代码——全部 skip
+- 复核：pm check 0 error；SQL 事务内实测（真实 project 外键）——pm.contracts 本租户 UPDATE 1 / 他租户越权 0，ROLLBACK 零残留
+
