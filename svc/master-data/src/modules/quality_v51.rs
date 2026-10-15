@@ -1457,7 +1457,7 @@ pub async fn approve_suggestion(
     let row = sqlx::query(&format!(
         "UPDATE master_data.mdm_governance_suggestions
          SET status = 'approved'
-         WHERE id = $1
+         WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING {SUGGESTION_COLS}"
     ))
     .bind(&id)
@@ -1509,7 +1509,7 @@ pub async fn reject_suggestion(
     let row = sqlx::query(&format!(
         "UPDATE master_data.mdm_governance_suggestions
          SET status = 'rejected'
-         WHERE id = $1
+         WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
          RETURNING {SUGGESTION_COLS}"
     ))
     .bind(&id)

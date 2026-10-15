@@ -392,7 +392,7 @@ impl IntelligentMatcher {
         let row = sqlx::query(
             "UPDATE master_data.mdm_match_results
              SET status = $1
-             WHERE id = $2
+             WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
              RETURNING id, source_id, target_id, match_score, match_type, confidence, status, matched_at",
         )
         .bind(match_status_str(&status))
@@ -638,7 +638,7 @@ impl AutoClassifier {
             "UPDATE master_data.mdm_classification_results
              SET category = COALESCE($1, category),
                  confidence = LEAST(CASE WHEN $2 THEN confidence + 0.05 ELSE confidence END, 0.99)
-             WHERE id = $3
+             WHERE id = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
              RETURNING id, entity_id, category, confidence, alternatives, classified_at",
         )
         .bind(&corrected_category)

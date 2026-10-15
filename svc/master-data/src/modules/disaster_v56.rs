@@ -1948,14 +1948,14 @@ pub async fn complete_failover(
     .map_err(|e| TopemsError::BusinessLogic(format!("更新故障转移记录失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1"#,
+        r#"UPDATE master_data.mdm_region_configs SET status = 'offline', primary_flag = false WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&record.from_region)
     .execute(&state.db)
     .await
     .map_err(|e| TopemsError::BusinessLogic(format!("更新源地域失败: {e}"))) { return Json(ApiResponse::error(500, &e.to_string())); }
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1"#,
+        r#"UPDATE master_data.mdm_region_configs SET status = 'online', primary_flag = true WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&record.to_region)
     .execute(&state.db)
@@ -2026,7 +2026,7 @@ pub async fn switch_regions(
     };
 
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET primary_flag = false WHERE region_id <> $1"#,
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = false WHERE region_id <> $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&req.primary_region)
     .execute(&state.db)
@@ -2036,7 +2036,7 @@ pub async fn switch_regions(
         return Json(ApiResponse::error(500, &e.to_string()));
     }
     if let Err(e) = sqlx::query(
-        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1"#,
+        r#"UPDATE master_data.mdm_region_configs SET primary_flag = true, status = 'online' WHERE region_id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))"#,
     )
     .bind(&req.primary_region)
     .execute(&state.db)

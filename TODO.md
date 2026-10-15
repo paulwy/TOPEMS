@@ -2107,3 +2107,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 类型适配：billing_records（text 列）内联用 text 版；subscriptions tier 同 text 版
 - 复核：master-data check 0 error；SQL 事务内实测 9 表（真实行保真 / billing 空表插测试行）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留（subscriptions 同表 text 逻辑批2-Zd 已验证）
 
+## 方案C 批2-Zf：master-data 收尾 9 处（写路径租户约束）
+- 状态：代码已修改（master-data check 通过 0 error），待提交
+- master-data 9 处（region_configs×4 / match_results / classification_results / governance_suggestions×2 / user_role_assignments DELETE）：无 Claims，内联 current_setting
+- 至此 master-data v5x 冻结模块候选全部清完（批2-Zd 11 + 批2-Ze 12 + 本批 9 = 32 处）
+- 复核：master-data check 0 error；SQL 事务内实测 5 表（真实行保真）——本租户 UPDATE/DELETE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+

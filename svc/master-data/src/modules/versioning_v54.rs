@@ -1732,7 +1732,7 @@ pub async fn revoke_role(
     Json(req): Json<RevokeRoleRequest>,
 ) -> Json<ApiResponse<()>> {
     let result = sqlx::query(
-        "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2",
+        "DELETE FROM master_data.mdm_user_role_assignments WHERE user_id = $1 AND role_id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))",
     )
     .bind(&req.user_id)
     .bind(&req.role_id)
