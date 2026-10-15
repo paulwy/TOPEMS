@@ -149,10 +149,11 @@ pub async fn send_notification(
     let title = truncate_notification_title(&req.title, 255);
     let channels = select_channels(&notification_type, &["all"]);
 
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
-        INSERT INTO core_notifications (id, user_id, title, content, notification_type, priority, data, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        INSERT INTO core_notifications (id, user_id, title, content, notification_type, priority, data, tenant_id, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
         RETURNING id, user_id, title, content, notification_type, is_read, priority, data, created_at, read_at
         "#),
     )
@@ -163,6 +164,7 @@ pub async fn send_notification(
     .bind(&notification_type)
     .bind(priority)
     .bind(&req.data)
+    .bind(tenant_bind)
     .fetch_one(&pool)
     .await;
 
@@ -1917,10 +1919,11 @@ pub async fn create_template(
         .unwrap_or_else(|| "info".to_string());
     let priority = req.priority.unwrap_or(0);
 
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
-        INSERT INTO core_notification_templates (id, name, title_template, content_template, notification_type, priority, data, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        INSERT INTO core_notification_templates (id, name, title_template, content_template, notification_type, priority, data, tenant_id, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
         RETURNING id, name, title_template AS title, content_template AS content, notification_type, priority, data, created_at, updated_at
         "#),
     )
@@ -1931,6 +1934,7 @@ pub async fn create_template(
     .bind(&notification_type)
     .bind(priority)
     .bind(&req.data)
+    .bind(tenant_bind)
     .fetch_one(&pool)
     .await;
 

@@ -318,10 +318,11 @@ pub async fn send_email(
     match result {
         Ok(_) => {
             let email_id = Uuid::new_v4();
+            let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
             let _ = sqlx::query(
                 only_own_schema_query!("public", r#"
-                INSERT INTO core_emails (id, from_email, to_email, subject, body, html_body, sent_at)
-                VALUES ($1, $2, $3, $4, $5, $6, NOW())
+                INSERT INTO core_emails (id, from_email, to_email, subject, body, html_body, tenant_id, sent_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
                 "#),
             )
             .bind(email_id)
@@ -330,6 +331,7 @@ pub async fn send_email(
             .bind(&payload.subject)
             .bind(&payload.body)
             .bind(&payload.html_body)
+            .bind(tenant_bind)
             .execute(&pool)
             .await;
 
@@ -790,10 +792,11 @@ pub async fn create_template(
     }
 
     let id = Uuid::new_v4();
+    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
-        INSERT INTO core_email_templates (id, name, subject_template, body_template, description, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+        INSERT INTO core_email_templates (id, name, subject_template, body_template, description, tenant_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
         RETURNING id, name, subject_template, body_template, description, created_at, updated_at
         "#),
     )
@@ -802,6 +805,7 @@ pub async fn create_template(
     .bind(&payload.subject_template)
     .bind(&payload.body_template)
     .bind(&payload.description)
+    .bind(tenant_bind)
     .fetch_one(&pool)
     .await;
 
@@ -1691,9 +1695,10 @@ pub async fn send_with_template_by_code(
     ) {
         Ok(_) => {
             let email_id = Uuid::new_v4();
+            let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
             let _ = sqlx::query(only_own_schema_query!("public",
-                "INSERT INTO core_emails (id, from_email, to_email, subject, body, sent_at) VALUES ($1,$2,$3,$4,$5,NOW())"))
-                .bind(email_id).bind("system@topems.io").bind(&to).bind(&subject).bind(&body).execute(&pool).await;
+                "INSERT INTO core_emails (id, from_email, to_email, subject, body, tenant_id, sent_at) VALUES ($1,$2,$3,$4,$5,$6,NOW())"))
+                .bind(email_id).bind("system@topems.io").bind(&to).bind(&subject).bind(&body).bind(tenant_bind).execute(&pool).await;
             Json(
                 serde_json::json!({"success":true,"message":"模板邮件发送成功","code":200,
                 "data":{"id":email_id.to_string(),"to":to,"subject":subject}}),

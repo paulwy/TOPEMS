@@ -1877,3 +1877,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - `svc/finance/src/services/finance/voucher.rs` update_voucher：同上
   - `svc/finance/src/services/finance/voucher_generation.rs` generate_vouchers：DELETE vouchers 加 `AND tenant_id = $2` + bind
 - 验证：cargo check topems-finance 通过；全仓扫描复扫待提交后执行
+
+## 方案C 批2（写路径租户约束）— 子批 B：communication INSERT 补绑
+- 状态：已提交（待推送）
+- 修改（INSERT 加 tenant_id 列 + VALUES 参数 + bind 操作者租户，claims 样板同批1 mes）：
+  - notification.rs send_notification（core_notifications）
+  - notification.rs create_template（core_notification_templates）
+  - mail.rs send_email（core_emails）
+  - mail.rs create_template（core_email_templates）
+  - mail.rs send_with_template_by_code（core_emails）
+- 跳过并登记：report_subscriptions（analytics，0 行数据 + 读按 user_id 兜底——低优先级）；system_settings（erp，系统级设置 nil 语义合理 + 宿主无租户来源）；cqrs_snapshots（finance，内部事件快照）；search_logs（search，系统日志）
+- 下批：unified-core 平台表 INSERT 补绑（约 30 处，子批 C）
