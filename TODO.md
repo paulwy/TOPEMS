@@ -2036,3 +2036,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 观察项：srm.suppliers 92 行 tenant_id 全 NULL（历史数据未回填，RLS 行为待评估，同 hrm.initialization_status）
 - 复核：srm check 0 error；SQL 事务内实测——quotations / suppliers（空表插测试行）本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
 
+## 方案C 批2-T：wms.batches 4 处 + wms.cycle_count_configs 4 处（写路径租户约束）
+- 状态：代码已修改（wms check 通过 0 error），待提交
+- batch.rs 4 处（update_batch $20 / delete_batch $2 / adjust_quantity $3 / transfer_location $3）：claims 均已有，补 tenant_filter + UPDATE WHERE 租户条件
+- cycle_count.rs 4 处（update_cycle_count_config $9 / delete_cycle_count_config $3 / generate_cycle_count $5 / generate_all_cycle_counts $5）：claims 均已有（generate/generate_all 复用已有 tenant_id 变量），补 UPDATE WHERE 租户条件
+- 复核：wms check 0 error；SQL 事务内实测（空表插测试行，warehouse 用真实 FK）——batches / cycle_count_configs 本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留
+
