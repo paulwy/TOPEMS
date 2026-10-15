@@ -384,6 +384,15 @@ pub async fn create_contract(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -598,6 +607,15 @@ pub async fn update_contract(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -679,6 +697,15 @@ pub async fn delete_contract(
         &headers,
     )
     .await;
+
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
 
     response
 }
@@ -939,7 +966,15 @@ pub async fn update_renewal(
     .await;
 
     match result {
-        Ok(Some(renewal)) => Json(ApiResponse::success(renewal, "续签申请更新成功")),
+        Ok(Some(renewal)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(renewal, "续签申请更新成功"))
+        },
         Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
             404,
             "续签申请不存在或状态不正确",
@@ -973,6 +1008,12 @@ pub async fn delete_renewal(
 
     match result {
         Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success("".to_string(), "续签申请已取消"))
         }
         Ok(_) => Json(ApiResponse::<String>::error(
@@ -1029,7 +1070,15 @@ pub async fn approve_renewal(
     .await;
 
     match result {
-        Ok(Some(renewal)) => Json(ApiResponse::success(renewal, "续签申请已批准")),
+        Ok(Some(renewal)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(renewal, "续签申请已批准"))
+        },
         Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
             404,
             "续签申请不存在或状态不正确",
@@ -1089,7 +1138,15 @@ pub async fn reject_renewal(
     .await;
 
     match result {
-        Ok(Some(renewal)) => Json(ApiResponse::success(renewal, "续签申请已拒绝")),
+        Ok(Some(renewal)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(renewal, "续签申请已拒绝"))
+        },
         Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
             404,
             "续签申请不存在或状态不正确",

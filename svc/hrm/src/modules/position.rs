@@ -259,11 +259,19 @@ pub async fn create_position(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(position) => (
-            Json(ApiResponse::success(position.clone(), "岗位创建成功")),
-            "success",
-            None,
-        ),
+        Ok(position) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(position.clone(), "岗位创建成功")),
+                "success",
+                None,
+            )
+        },
         Err(e) => {
             tracing::error!("创建岗位失败: {}", e);
             (
@@ -418,7 +426,15 @@ pub async fn update_position(
     .await;
 
     match result {
-        Ok(Some(position)) => Json(ApiResponse::success(position, "岗位更新成功")),
+        Ok(Some(position)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(position, "岗位更新成功"))
+        }
         Ok(None) => Json(ApiResponse::<Position>::error(404, "岗位不存在")),
         Err(e) => {
             tracing::error!("更新岗位失败: {}", e);
@@ -460,11 +476,19 @@ pub async fn delete_position(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success(id.to_string(), "岗位删除成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(r) if r.rows_affected() > 0 => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            (
+                Json(ApiResponse::success(id.to_string(), "岗位删除成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Ok(_) => (
             Json(ApiResponse::from(TopemsError::ResourceNotFound(
                 "岗位不存在".to_string(),

@@ -433,6 +433,12 @@ pub async fn update_company(
             .await;
 
             tracing::debug!("更新公司成功: {}", company.name);
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(company, "公司更新成功"))
         }
         Err(e) => {
@@ -526,6 +532,12 @@ pub async fn delete_company(
                     .await;
 
                     tracing::debug!("删除公司成功: {}", company.name);
+                    if let Some(t) = guard.take() {
+                        if let Err(e) = t.commit().await {
+                            tracing::error!("事务提交失败: {}", e);
+                            return Json(ApiResponse::error(500, "事务提交失败"));
+                        }
+                    }
                     Json(ApiResponse::success(company.id.to_string(), "公司删除成功"))
                 }
                 Err(e) => {

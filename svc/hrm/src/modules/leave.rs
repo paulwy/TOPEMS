@@ -339,6 +339,15 @@ pub async fn create_leave(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -435,7 +444,15 @@ pub async fn update_leave(
     .await;
 
     match result {
-        Ok(Some(leave)) => Json(ApiResponse::success(leave, "请假申请更新成功")),
+        Ok(Some(leave)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(leave, "请假申请更新成功"))
+        },
         Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
             404,
             "请假申请不存在或已处理",
@@ -526,6 +543,15 @@ pub async fn delete_leave(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -573,7 +599,15 @@ pub async fn approve_leave(
     .await;
 
     match result {
-        Ok(Some(leave)) => Json(ApiResponse::success(leave, "请假已批准")),
+        Ok(Some(leave)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(leave, "请假已批准"))
+        },
         Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
             404,
             "请假申请不存在或已处理",
@@ -631,7 +665,15 @@ pub async fn reject_leave(
     .await;
 
     match result {
-        Ok(Some(leave)) => Json(ApiResponse::success(leave, "请假已拒绝")),
+        Ok(Some(leave)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(leave, "请假已拒绝"))
+        },
         Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
             404,
             "请假申请不存在或已处理",

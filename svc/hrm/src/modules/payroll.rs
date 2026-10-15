@@ -297,6 +297,15 @@ pub async fn create_payroll_run(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -426,6 +435,15 @@ pub async fn delete_payroll_run(
     )
     .await;
 
+    if result.is_ok() {
+        if let Some(t) = guard.take() {
+            if let Err(e) = t.commit().await {
+                tracing::error!("事务提交失败: {}", e);
+                return Json(ApiResponse::error(500, "事务提交失败"));
+            }
+        }
+    }
+
     response
 }
 
@@ -482,6 +500,12 @@ pub async fn calculate_payroll_run(
     match result {
         Ok(Some(run)) => {
             let _ = create_payroll_items(&state.db, id, emp_count as i32).await;
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
             Json(ApiResponse::success(run, "薪资计算完成"))
         }
         Ok(None) => Json(ApiResponse::<PayrollRun>::error(
@@ -581,7 +605,15 @@ pub async fn pay_payroll_run(
     .await;
 
     match result {
-        Ok(Some(run)) => Json(ApiResponse::success(run, "薪资发放完成")),
+        Ok(Some(run)) => {
+            if let Some(t) = guard.take() {
+                if let Err(e) = t.commit().await {
+                    tracing::error!("事务提交失败: {}", e);
+                    return Json(ApiResponse::error(500, "事务提交失败"));
+                }
+            }
+            Json(ApiResponse::success(run, "薪资发放完成"))
+        },
         Ok(None) => Json(ApiResponse::<PayrollRun>::error(
             404,
             "薪资周期不存在或状态不正确",
