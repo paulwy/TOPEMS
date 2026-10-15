@@ -1778,3 +1778,21 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 **结果**：337 目标中 274 张已开 RLS + policy；63 张 air owner 死表豁免（0 行开发残留，仅 iam.tenant_users 2 行测试数据，记录为已知缺口待人工）。明细见 artifacts/rls_tenant_policy_batch_20261015.txt。
 - **air owner 63 张豁免**（二次确认 2026-10-15）：air 为 superuser 但无凭据/无成员可 SET ROLE，63 张 0 行死表无法开 RLS，维持豁免；iam.tenant_users 仅 2 行测试数据（tenant_id 非 NULL）——待 air 凭据后补开或删除测试行后豁免到底。
 - **air owner 63 张一步到位闭环**（2026-10-15 追加）：发现 unix socket peer 认证可免密以 air（superuser）连库 → ① 63 张 owner 改 topems_app；② 9 schema GRANT USAGE；③ migration 77（63 张开 RLS，DATABASE_URL 可复现）；④ 剩余 53 张 air 表（豁免/旧套/无 tenant_id）owner 统一 topems_app → **全库业务表 air owner = 0**；337 目标 RLS+policy = 337/337（100%）。
+
+## 2026-10-15 RLS 全库最终复核（✅ 核查闭环，无代码改动）
+
+> air owner 一步到位（migration 77）之后的全库收官核查：确认 337 目标之外无任何漏网表。
+
+### 复核方法
+- 全库扫描「有 tenant_id 列 + 未开 RLS」= **83 张**；逐一对照豁免清单分类。
+
+### 分类结论（83 张 = 100% 豁免，无一漏网）
+- **43 张 public.qa_ehs 旧套**：count(*) 实测 0 行（死套），权威套 ehs.qa_ehs（50 张）已 100% 开 RLS + policy。
+- **33 张死表**（iam/mes/public 的 core_*/dashboard_*/master_data_refs/data_permissions/supply_chain_orders 等）：rg -w 全仓 0 引用（svc/ + lib/，排除 tests）。
+- **5 张备份/归档**：customers_tenant_null_backup_20260919（177 行，tenant_id 全 NULL，policy NULL 分支全可见=无隔离语义）、lims.samples_tenant_null_backup、qa_lab_samples_merge_backup、public._archive_core_workflow_versions 等。
+- **2 张系统表**：_sqlx_migrations、spatial_ref_sys。
+- **ehs 双套归属确认**：ehs.qa_ehs 50 张 relrowsecurity=50/50 + tenant_id 列 50/50（权威套已全合规）；public.qa_ehs 43 张 0 行豁免。
+
+### 主线状态
+- 337 目标 RLS = 337/337、policy = 337/337；全库业务表 air owner = 0。
+- 主线「RLS 租户隔离收尾 + 同类缺陷清查」**实质闭环**。
