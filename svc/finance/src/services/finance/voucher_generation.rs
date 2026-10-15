@@ -504,9 +504,10 @@ impl FinanceService {
                 // Clean up voucher without lines
                 let _ = sqlx::query(only_own_schema_query!(
                     "finance",
-                    "DELETE FROM finance.core_finance_vouchers WHERE id = $1"
+                    "DELETE FROM finance.core_finance_vouchers WHERE id = $1 AND tenant_id = $2"
                 ))
                 .bind(voucher_id)
+                .bind(tenant_id)
                 .execute(&self.db_pool)
                 .await;
                 failed_count += 1;

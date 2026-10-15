@@ -1868,3 +1868,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 **rd 跳过**：TestProjectRepository::create（project_repository.rs:318）在 `#[cfg(test)]` 内（测试代码无生产影响）；create_project handler 已显式绑租户。
 
 **待办**：批 2 = 平台表（unified-core/communication/erp settings 等）读写显式过滤；UPDATE/DELETE 路径显式租户约束。
+
+## 方案C 批2（写路径租户约束）— 子批 A：finance DELETE
+- 状态：已提交（待推送）
+- 背景：非 txn crate pool 直连绕过 RLS；全仓 UPDATE/DELETE 语句块级扫描 + 人工确认后，真实缺口收敛：ehs/ai/plugin-registry 候选大多已含 `tenant_id::text = $N` 显式过滤或属系统层（install_count/version/同步记录——跨租户合法）；仅 finance 3 处 DELETE 按 voucher_id 删除无租户约束。
+- 修改：
+  - `svc/finance/src/services/finance/payment.rs` update_payment：DELETE voucher_lines 加 `AND tenant_id = $2` + bind
+  - `svc/finance/src/services/finance/voucher.rs` update_voucher：同上
+  - `svc/finance/src/services/finance/voucher_generation.rs` generate_vouchers：DELETE vouchers 加 `AND tenant_id = $2` + bind
+- 验证：cargo check topems-finance 通过；全仓扫描复扫待提交后执行

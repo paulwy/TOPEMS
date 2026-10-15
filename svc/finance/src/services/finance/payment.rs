@@ -319,9 +319,10 @@ impl FinanceService {
 
         sqlx::query(only_own_schema_query!(
             "finance",
-            "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1"
+            "DELETE FROM finance.core_finance_voucher_lines WHERE voucher_id = $1 AND tenant_id = $2"
         ))
         .bind(payment.voucher_id)
+        .bind(tenant_id)
         .execute(&mut *tx)
         .await?;
 
