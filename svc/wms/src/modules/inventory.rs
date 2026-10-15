@@ -618,7 +618,7 @@ pub async fn update_inventory(
             material_code = $2, material_name = $3, specification = $4, unit = $5, 
             quantity = $6, available_quantity = $7, location_id = $8, warehouse_id = $9, 
             min_quantity = $10, max_quantity = $11, quality_status = $12, updated_at = $13
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL AND ($14::uuid IS NULL OR tenant_id = $14::uuid)
         RETURNING id, material_code as sku, material_name as name, specification, unit, quantity, 
                   location_id, warehouse_id, min_quantity, max_quantity, quality_status as status,
                   created_at, updated_at
@@ -637,6 +637,7 @@ pub async fn update_inventory(
     .bind(max_quantity)
     .bind(&status)
     .bind(now)
+    .bind(tenant_id)
     .fetch_one(&mut **txn)
     .await;
 
@@ -772,11 +773,17 @@ pub async fn delete_inventory(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+        r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 

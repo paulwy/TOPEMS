@@ -1591,6 +1591,11 @@ pub async fn adjust_stock_take(
         Err(e) => return e,
     }
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
@@ -1635,12 +1640,14 @@ pub async fn adjust_stock_take(
                       AND material_code = $3
                       AND ($4::text IS NULL OR batch_number = $4)
                       AND deleted_at IS NULL
+                      AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
                     "#
                 ))
                 .bind(discrepancy_qty)
                 .bind(now)
                 .bind(&material_code)
                 .bind(batch_number)
+                .bind(tenant_filter)
                 .execute(&mut *tx)
                 .await;
             }

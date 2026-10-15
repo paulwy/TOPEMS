@@ -551,6 +551,11 @@ pub async fn adjust_inventory(
     }
 
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     // 获取已审批的差异处理记录
     let record = sqlx::query_as::<_, DiscrepancyRecord>(only_own_schema_query!(
@@ -562,9 +567,11 @@ pub async fn adjust_inventory(
                adjustment_date, reason, notes, created_at, updated_at
         FROM wms.discrepancy_records
         WHERE id = $1 AND adjustment_status = 'approved' AND deleted_at IS NULL
+          AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
         "#
     ))
     .bind(id)
+    .bind(tenant_filter)
     .fetch_optional(&mut **txn)
     .await;
 
@@ -592,7 +599,7 @@ pub async fn adjust_inventory(
             last_movement_type = 'cycle_count_adjustment',
             movement_count = movement_count + 1,
             updated_at = $3
-        WHERE id = $1
+        WHERE id = $1 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
         RETURNING id
         "#,
         record.inventory_id,
@@ -600,7 +607,8 @@ pub async fn adjust_inventory(
             use std::str::FromStr;
             sqlx::types::BigDecimal::from_str(&format!("{:.2}", v)).unwrap_or_default()
         }),
-        now
+        now,
+        record.tenant_id
     )
     .fetch_one(&mut **txn)
     .await;

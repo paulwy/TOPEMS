@@ -1409,6 +1409,11 @@ pub async fn ship_outbound_order(
     }
     let request_data = serde_json::to_value(&items).ok();
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let tx = state.db.begin().await.map_err(|e| {
         tracing::error!("开启事务失败: {}", e);
@@ -1448,11 +1453,13 @@ pub async fn ship_outbound_order(
             WHERE organization_id = '00000000-0000-0000-0000-000000000001'
               AND material_code IN (SELECT material_code FROM wms.outbound_order_items WHERE id = $3)
             AND quantity >= $1
+            AND ($4::uuid IS NULL OR tenant_id = $4::uuid)
             "#),
         )
         .bind(item.shipped_quantity)
         .bind(now)
         .bind(item.item_id)
+        .bind(tenant_filter)
         .execute(&mut *tx)
         .await;
 

@@ -537,13 +537,18 @@ pub async fn update_inbound_order(
     let status = req.status.unwrap_or(existing.status);
     let remarks = req.remarks.or(existing.remarks);
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, InboundOrder>(
         only_own_schema_query!("wms", r#"
         UPDATE wms.inbound_orders SET
             warehouse_id = $2, supplier_id = $3, expected_arrival_date = $4, actual_arrival_date = $5, 
             total_value = $6, status = $7, notes = $8, updated_at = $9
-        WHERE id = $1 AND deleted_at IS NULL
+        WHERE id = $1 AND deleted_at IS NULL AND ($10::uuid IS NULL OR tenant_id = $10::uuid)
         RETURNING id, organization_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
@@ -572,6 +577,7 @@ pub async fn update_inbound_order(
     .bind(&status)
     .bind(&remarks)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -655,11 +661,17 @@ pub async fn delete_inbound_order(
         Ok(_) => {}
         Err(e) => return e,
     }
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
-        r#"UPDATE wms.inbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#
+        r#"UPDATE wms.inbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
+    .bind(tenant_filter)
     .execute(&mut **txn)
     .await;
 
@@ -1132,13 +1144,18 @@ pub async fn confirm_inbound_order(
         Err(e) => return e,
     }
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.inbound_orders SET
             status = 'confirmed', updated_at = $2
-        WHERE id = $1 AND status = 'created' AND deleted_at IS NULL
+        WHERE id = $1 AND status = 'created' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, organization_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
@@ -1160,6 +1177,7 @@ pub async fn confirm_inbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 
@@ -1373,11 +1391,12 @@ pub async fn receive_inbound_order(
         r#"
         UPDATE wms.inbound_orders SET
             status = 'received', actual_arrival_date = $1, updated_at = $1
-        WHERE id = $2 AND deleted_at IS NULL
+        WHERE id = $2 AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         "#
     ))
     .bind(now)
     .bind(id)
+    .bind(tenant_id)
     .execute(&mut *tx)
     .await;
 
@@ -1543,13 +1562,18 @@ pub async fn complete_inbound_order(
         Err(e) => return e,
     }
     let now = Utc::now();
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     let result = sqlx::query_as::<_, InboundOrder>(only_own_schema_query!(
         "wms",
         r#"
         UPDATE wms.inbound_orders SET
             status = 'completed', updated_at = $2
-        WHERE id = $1 AND status = 'received' AND deleted_at IS NULL
+        WHERE id = $1 AND status = 'received' AND deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
         RETURNING id, organization_id AS tenant_id, order_number, order_type,
                   reference_number, reference_type, warehouse_id, warehouse_name,
                   supplier_id, supplier_name, supplier_code,
@@ -1571,6 +1595,7 @@ pub async fn complete_inbound_order(
     ))
     .bind(id)
     .bind(now)
+    .bind(tenant_filter)
     .fetch_one(&mut **txn)
     .await;
 

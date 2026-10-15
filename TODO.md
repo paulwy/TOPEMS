@@ -1970,3 +1970,13 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 登记 skip：master_data_conflict.rs 3 处（detect_conflicts 自动更新时间戳 + apply_resolved_value 辅助函数）——内部同步流程、函数无 Claims 上下文、RLS 兜底，后续评估
 - 候选明细：artifacts/ud_tenant_gap_candidates.txt（805 条 表:行）
 
+## 方案C 批2-K：wms 库存/入库域写路径租户约束（10 处）
+- 状态：代码已修改（wms check 通过 0 error），待提交
+- inbound_order.rs 5 处（update 542 / delete 660 / confirm 1138 / receive 1373 / complete 1549）：UPDATE WHERE 加 `($N::uuid IS NULL OR tenant_id = $N::uuid)` + tenant_filter bind（receive 复用已有 tenant_id 变量）
+- outbound_order.rs 1 处（ship 1444 扣库存 UPDATE wms.inventory）：加租户条件 + bind（函数补 tenant_filter 变量；WHERE 保留既有 organization_id='0000…0001' 硬编码——疑似旧单租户逻辑，登记观察）
+- inventory.rs 2 处（update 617 / delete 777）：update 复用 resolve_tenant_id 的 tenant_id（Uuid 非 Option——函数既有 superuser 报错设计）；delete 加标准 tenant_filter
+- discrepancy.rs 2 处（adjust_inventory）：record 查询加租户条件（$2）+ UPDATE wms.inventory 加租户条件（$4 = record.tenant_id，确保调整差异记录同租户库存）
+- stock_take.rs 1 处（adjust_stock_take 1630 UPDATE wms.inventory）：加租户条件 $5（函数补 tenant_filter；WHERE 保留 organization_id 硬编码 0001，登记观察）
+- RLS 列确认：inbound_orders/inventory 均有 tenant_id 列 + RLS FORCE（policy qual 用 tenant_id）
+- 复核：wms check 0 error；inbound_orders 空表（无数据）无法 SQL 复核、psql INSERT 亦被 RLS with_check 拦截（事务回滚零残留）；模式与批2-J 一致（erp 已复核样板），待端到端实测
+
