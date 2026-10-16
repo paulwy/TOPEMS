@@ -2269,3 +2269,13 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - menu 1：list_menus/get_menu 无 Claims 上下文 skip；create/update 写路径批2 已处理。
 - tenant 1：租户管理接口（list/get/onboard 等）平台级无 Claims skip。
 - 验证：全文件代码走查；unified-core 批3 至此收官（file 9 + flow 4 补，iam/menu/tenant 0 补）。
+
+## 方案C 批3-L：全库剩余服务读路径核查（2026-10-16）
+- 状态：已核查 + 0 真缺口 + 独立 commit（批3 全库收官）
+- mobile：列表类（repository/shared list_* 5 个）无 Claims 上下文 skip；patrol/task 用户级过滤（checked_by/assignee）skip；写路径批2 已处理（task update 已有 tenant）。观察项：push_notification 列表提取 user_id 后丢弃（用户级缺口，非租户）。
+- lims：instrument_data/statistics 全局报表无 Claims skip；sample_barcode/inspection_task/proficiency_testing 辅助查询 id 精确（调用前实体已隔离）skip。
+- integration：get_statistics/get_pending 无 Claims 内部轮询 skip；update/retry 写路径批2 已有 tenant。
+- ai：ai_plugin SELECT 1 健康检查、vector document_chunks 内部元数据 skip；qa/db 已用 set_config RLS 上下文。
+- qms：quality_dashboard 全局统计报表无 Claims skip；list_alert_rules 无 Claims 无法过滤 skip（观察项：租户级数据待 ctx）。
+- portal：aggregation user_id 用户级 skip；help FAQ 平台内容 skip。
+- 批3 全库汇总：finance 15 + mes 31 + communication 1 + pm 4 + unified-core 13 补；iam/menu/tenant/mobile/lims/integration/ai/qms/portal 精筛 0 真缺口。
