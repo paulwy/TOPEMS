@@ -246,7 +246,6 @@ pub async fn list_production_schedules(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM mes.production_schedules ps{}",
         where_clause

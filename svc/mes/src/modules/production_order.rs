@@ -274,7 +274,6 @@ pub async fn list_production_orders(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM production_orders{}",
         where_clause

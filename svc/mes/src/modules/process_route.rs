@@ -232,7 +232,6 @@ pub async fn list_process_routes(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM process_routes pr{}",
         where_clause

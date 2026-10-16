@@ -278,7 +278,6 @@ pub async fn list_work_reports(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM work_reports wr{}",
         where_clause

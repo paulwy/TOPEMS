@@ -466,7 +466,8 @@ async fn run_aps_scheduling(
 
     for order in &sorted_orders {
         // 6.1 检查物料齐套性
-        let material_ready = check_material_availability(pool, order.id, order.quantity, tenant_id).await?;
+        let material_ready =
+            check_material_availability(pool, order.id, order.quantity, tenant_id).await?;
 
         // 6.2 选择合适的工位
         let suitable_stations: Vec<&WorkStationInfo> =
@@ -1106,7 +1107,12 @@ pub async fn check_schedule_constraints(
             "#,
         )
         .bind(order_id)
-        .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+        .bind(
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|s| Uuid::parse_str(s).ok()),
+        )
         .fetch_optional(&state.pool)
         .await;
 
@@ -1156,7 +1162,12 @@ pub async fn check_schedule_constraints(
                 "#,
             )
             .bind(order_id)
-            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+            .bind(
+                claims
+                    .tenant_id
+                    .as_deref()
+                    .and_then(|s| Uuid::parse_str(s).ok()),
+            )
             .fetch_all(&state.pool)
             .await;
 
@@ -1194,7 +1205,12 @@ pub async fn check_schedule_constraints(
                 LIMIT 5
                 "#,
             )
-            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+            .bind(
+                claims
+                    .tenant_id
+                    .as_deref()
+                    .and_then(|s| Uuid::parse_str(s).ok()),
+            )
             .fetch_all(&state.pool)
             .await;
 
@@ -1239,7 +1255,12 @@ pub async fn check_schedule_constraints(
                 LIMIT 5
                 "#,
             )
-            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+            .bind(
+                claims
+                    .tenant_id
+                    .as_deref()
+                    .and_then(|s| Uuid::parse_str(s).ok()),
+            )
             .fetch_all(&state.pool)
             .await;
 

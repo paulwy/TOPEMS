@@ -338,7 +338,6 @@ pub async fn list_oee_records(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM mes.equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
         where_clause

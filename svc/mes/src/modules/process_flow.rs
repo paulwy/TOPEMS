@@ -233,7 +233,10 @@ pub async fn list_process_flows(
 
     // tenant 隔离（读路径 Claims bind，nil=全见）
     let tenant_ph = params.len() + 1;
-    let tenant_filter = format!("(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pf.tenant_id = ${}::uuid)", tenant_ph, tenant_ph);
+    let tenant_filter = format!(
+        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR pf.tenant_id = ${}::uuid)",
+        tenant_ph, tenant_ph
+    );
     if where_clause.is_empty() {
         where_clause.push_str(&format!(" WHERE {}", tenant_filter));
     } else {

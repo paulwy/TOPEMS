@@ -241,7 +241,6 @@ pub async fn list_work_stations(
     }
     let tenant_uuid = get_tenant_id(&claims);
 
-
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM work_stations ws{}",
         where_clause

@@ -8,8 +8,8 @@ use axum::{
     Json, Router,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
 use sqlx::types::Uuid;
+use sqlx::PgPool;
 
 use topems_shared_auth::auth::Claims;
 fn get_tenant_id(claims: &Claims) -> Uuid {
