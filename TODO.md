@@ -2296,14 +2296,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 实施：process_route 2（列表 count/fetch + add_flow_step 查证）、equipment_oee 2（efficiency 列表 + 列表 count）、production_scheduling 2（列表 count/fetch + create 查 order_no）、work_report 1、production_record 1、work_station 1、production_order 1（各列表 count/fetch 加 tenant_filter + bind）。equipment_oee/production_scheduling/production_order 补 get_tenant_id 定义。
 - 踩坑：批量脚本 format! 引号/双大括号/别名位置错——整块重写修复；count_sql 结构保持 format!( 多行。
 - skip 登记：production_cost 2（work_orders 子查询/count——work_orders 无 tenant_id 且 order_id 41 行全 NULL，JOIN production_orders 链路断裂）、material_requirement 1、work_order 1（同）。
-- 数据治理观察项：mes.production_schedules 198 行 tenant_id 全 nil（生产排程业务数据应归租户，待 migration 归 0001 或确认平台公共）。
+- 数据治理观察项：mes.production_schedules 198 行 tenant_id 全 nil（生产排程业务数据应归租户，待 migration 归 0001 或确认平台公共）。【已回填 2026-10-16，migration 95】核实实际为全 0 UUID（非 NULL）：orders 99 行 = 76 行 0001（6 月种子）+ 21 行全 0（10-06 空壳 pending）+ 2 行 NULL（9 月种子）；schedules 198 行全 0 = 关联 0001 订单 55 + 关联全 0 订单 126 + 孤儿 17。统一回填 0001（与 88/90/92 同口径），RLS 复核 0001 可见 99/198、他租户 0/0（回填前全 0 行任意租户可见的隔离漏洞修复）。
 - 验证：cargo check topems-mes 0 error；SQL 实测 20 项（production_records 2/0/3、work_stations 77/0/79 隔离正确；process_routes/equipment_oee/work_reports/production_processes 空表 0/0/0 语义正确；production_schedules 0001=0 因全 nil 数据）。
 
 ## 方案C 批3-F：mes audit 读路径 + mes 收官（2026-10-16）
 - 状态：已完成 + 实测 + 独立 commit
 - 实施：audit.rs 2 处（list_audit_logs 主查询 + count 加 tenant 条件 $9/$7 + bind get_tenant_id），补本地 get_tenant_id 定义。
 - mes 有 ctx 候选全部处理完：APS 9 + equipment 6 + wip/team/process_flow 5 + 7 文件 9 + audit 2 = 31 处补；skip 登记（get_optimization_report 5 统计/wips 3/team UPDATE 3/work_orders 4 等）。
-- 数据治理观察项：production_orders 2 行 NULL + production_schedules 198 行全 nil（待 migration 归 0001 或确认平台公共）。
+- 数据治理观察项：production_orders 2 行 NULL + production_schedules 198 行全 nil（待 migration 归 0001 或确认平台公共）。【已回填 2026-10-16，migration 95，见批3-E 段记录】
 - 验证：cargo check topems-mes 0 error；audit_logs 空表 0/0/0/0 语义正确。
 
 ## 方案C 批3-G：communication 读路径显式租户过滤（2026-10-16）
