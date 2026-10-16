@@ -1450,7 +1450,7 @@ pub async fn ship_outbound_order(
                 quantity = quantity - $1,
                 available_quantity = available_quantity - $1,
                 updated_at = $2
-            WHERE organization_id = '00000000-0000-0000-0000-000000000001'
+            WHERE organization_id = (SELECT organization_id FROM wms.outbound_order_items WHERE id = $3)
               AND material_code IN (SELECT material_code FROM wms.outbound_order_items WHERE id = $3)
             AND quantity >= $1
             AND ($4::uuid IS NULL OR tenant_id = $4::uuid)

@@ -1661,7 +1661,7 @@ pub async fn adjust_stock_take(
                         quantity = quantity + $1,
                         available_quantity = available_quantity + $1,
                         updated_at = $2
-                    WHERE organization_id = '00000000-0000-0000-0000-000000000001'
+                    WHERE organization_id = (SELECT organization_id FROM wms.stock_take_items WHERE stock_take_id = $6 AND deleted_at IS NULL LIMIT 1)
                       AND material_code = $3
                       AND ($4::text IS NULL OR batch_number = $4)
                       AND deleted_at IS NULL
@@ -1673,6 +1673,7 @@ pub async fn adjust_stock_take(
                 .bind(&material_code)
                 .bind(batch_number)
                 .bind(tenant_filter)
+                .bind(id)
                 .execute(&mut *tx)
                 .await;
             }
