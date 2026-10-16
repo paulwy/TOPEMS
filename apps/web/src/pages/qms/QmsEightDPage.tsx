@@ -191,7 +191,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
           onClick={handleAddRoot}
           disabled={disabled}
         >
-          {i18n.t('pages.qms_eight_d_page.k1')}
+          {i18n.t('pages.qms_eight_d_page.k15')}
         </Button>
         <Button
           size='small'
@@ -201,7 +201,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
           color='error'
           startIcon={<Trash2 size={14} />}
         >
-          {i18n.t('pages.qms_eight_d_page.k2')}
+          {i18n.t('pages.qms_eight_d_page.k16')}
         </Button>
       </Box>
       {!disabled && nodes.length === 0 && (
@@ -216,9 +216,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
         >
           <Typography variant='body2'>
             {i18n.t('qms.eight_d_page.no_root_cause_data', {
-              action:
-                i18n.t('pages.qms_eight_d_page.k15') +
-                i18n.t('ai.document_analysis.button.start_analysis'),
+              action: i18n.t('pages.qms_eight_d_page.k15'),
             })}
           </Typography>
         </Paper>

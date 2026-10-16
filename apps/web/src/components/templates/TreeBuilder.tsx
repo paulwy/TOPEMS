@@ -437,7 +437,7 @@ export function TreeBuilder({
             startIcon={<PlusIcon size={16} />}
             onClick={() => openAddDialog(null)}
           >
-            {i18n.t('components.tree_builder.k0')}
+            {i18n.t('templates.tree_builder.k5')}
           </Button>
           <Chip
             label={`${i18n.t('components.tree_builder.k2')}${flattenTree(internalData).length}${i18n.t('components.tree_builder.k3')}`}
