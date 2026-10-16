@@ -304,7 +304,7 @@ export function WizardBuilder({
           )}
         </Box>
 
-        {config.showSummaryOnComplete && isLastStep ? (
+        {config.showSummaryOnComplete && isLastStep && regularStepFields.length === 0 && stepNestedTables.length === 0 ? (
           renderSummary()
         ) : (
           <>
@@ -354,7 +354,7 @@ export function WizardBuilder({
           variant='subtitle1'
           sx={{ mb: 2, fontWeight: 600 }}
         >
-          {i18n.t('components.wizard_builder.k1')}
+          {i18n.t('components.wizard_builder.k5')}
         </Typography>
         <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(2, 1fr)' }}>
           {fields.map((field) => {

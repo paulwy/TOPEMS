@@ -114,7 +114,7 @@ export const adaptInspectionToBackend = (
 // Quality Issue adapters
 export const adaptIssueToFrontend = (backend: QualityIssueBackend): QualityIssue => ({
   id: backend.id,
-  issue_no: backend.issue_no,
+  issue_no: backend.issue_no || '',
   title: backend.title,
   description: backend.description,
   severity: backend.severity,

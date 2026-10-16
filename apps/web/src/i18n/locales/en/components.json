@@ -6333,7 +6333,6 @@
   "demo.stat.unit_piece": "pcs",
   "demo.stat.delivery_rate": "On-time Delivery Rate",
   "demo.stat.quality_rate": "Quality Pass Rate",
-  "demo.stat.unit_piece": "pcs",
   "demo.enter": "Enter →",
   "demo.section.realtime_alerts": "Real-time Alerts",
   "demo.alert_level.error": "Error",
@@ -6664,5 +6663,6 @@
   "components.top_bar.settings": "Settings",
   "components.top_bar.notifications": "Notifications",
   "components.dashboard_template.k8": "No data",
-  "components.dashboard_template.k9": "No dashboard data yet. Refresh or check the data source."
+  "components.dashboard_template.k9": "No dashboard data yet. Refresh or check the data source.",
+  "components.wizard_builder.k5": "Report Summary"
 }

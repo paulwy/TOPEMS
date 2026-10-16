@@ -180,6 +180,7 @@ export interface InspectionResult {
 
 export interface QualityIssueBackend {
   id: string;
+  issue_no?: string;
   title: string;
   description: string;
   severity: string;
@@ -564,6 +565,8 @@ export interface QmsPaginatedResponse<T> {
   inspections?: T[];
   issues?: T[];
   actions?: T[];
+  list?: T[];
+  items?: T[];
   total: number;
   page: number;
   page_size: number;

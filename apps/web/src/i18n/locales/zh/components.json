@@ -2996,7 +2996,6 @@
   "demo.stat.unit_piece": "件",
   "demo.stat.delivery_rate": "订单准时交付率",
   "demo.stat.quality_rate": "质量合格率",
-  "demo.stat.unit_piece": "件",
   "demo.enter": "进入 →",
   "demo.section.realtime_alerts": "实时告警",
   "demo.alert_level.error": "错误",
@@ -3331,5 +3330,6 @@
   "components.pageHeader.4062b25e": "导出中...",
   "components.pageHeader.c7f0d5": "导出",
   "components.viewModeToggle.175e01": "切换为卡片视图",
-  "components.viewModeToggle.6cef16": "切换为表格视图"
+  "components.viewModeToggle.6cef16": "切换为表格视图",
+  "components.wizard_builder.k5": "报告摘要"
 }
