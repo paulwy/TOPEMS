@@ -45,7 +45,12 @@
   - 🐛 **模板级缺陷 1（CrudPage 错误态缺失 + 双层重试延迟）**：`src/components/templates/CrudPage.tsx` 列表 `useQuery` 只解构 `data/isPending`，未传 `error`/`onRefresh` → 500 时**静默空表格无错误提示**；且 axios 层重试（2 次+退避）与 tanstack 默认 retry:3 **叠加** → 错误提示延迟 ~10s+（实测 tbody 长期停留骨架行）。修复：解构 `isError/error/refetch` → 传 `ListPageTemplate`（复用其 ErrorEmptyState + 重试按钮）；`retry: false`（api-client 已内建重试）。**全仓受益**（ListPageTemplate 型 CrudPage 列表页）
   - 执行方式：新增 `apps/web/e2e/ui/b3-list-render.spec.ts`（8 页正常态 + 2 mock 态），`API_URL=http://localhost:8099 pnpm exec playwright test e2e/ui/b3-list-render.spec.ts --project=chromium --workers=1 --retries=0` → **3 passed (30.7s)**
   - 遗留：`TreeBuilder` 无错误态渲染（CrudPage tree 视图 500 仍静默，待办 D4 前补）
-- [ ] B4 导航链路：侧栏/顶栏/面包屑/返回正确（复用 `e2e/ui/navigation.spec.ts` / `mobile-navigation.spec.ts`）
+- ✅ B4 导航链路（2026-10-17 实机完成）：侧栏/顶栏/面包屑/返回全链路验证（新增 `apps/web/e2e/ui/b4-navigation.spec.ts`，10 项全过 8.3s）：
+  - **侧栏**：`nav[aria-label="Main navigation"]` 渲染 + 含核心模块项（客户管理/制造执行/质量管理/财务/人力资源）；展开「客户管理」→ 点「联系人」→ URL /crm/contacts；展开「人力资源」→ 点「员工」→ /hrm/employees
+  - **面包屑**：/crm/contacts 显示「首页 / 客户管理 / 联系人」（MUI Breadcrumbs，i18n 值对齐实际渲染）
+  - **浏览器返回**：跨模块跳转后 goBack 回到前页 /crm/contacts
+  - **顶栏**：header 存在 + 搜索入口
+  - 复用基线：现有 `e2e/ui/navigation.spec.ts` 仍通过（登录表单版）；`mobile-navigation.spec.ts` 待 A5/D 阶段实机
 
 ### C. 数据录入（模拟输入）验证
 - ✅ C1 表单覆盖清点（2026-10-16 静态完成）：录入面三形态——① **整页表单** `FormPageTemplate`（`zodResolver`，`mode onBlur`，`src/components/templates/FormPageTemplate.tsx`）：**16 文件 / 52 处**；② **列表+弹窗 CRUD** `ListPageTemplate`（内嵌 `FormDialog`）：**75 文件 / 203 处**（主形态）；③ 直接用 `FormDialog`：10 文件 / 41 处；④ **手写 `useForm`**：仅 4 文件（`shared/LoginPage.tsx`/`shared/ForgotPasswordPage.tsx`/`shared/ProfilePage.tsx`/`shared/hooks/useProfile.ts`，均为 auth/个人中心）→ **表单机制一致性良好，无大面积双轨**
