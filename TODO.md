@@ -2239,3 +2239,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - mes 有 ctx 候选全部处理完：APS 9 + equipment 6 + wip/team/process_flow 5 + 7 文件 9 + audit 2 = 31 处补；skip 登记（get_optimization_report 5 统计/wips 3/team UPDATE 3/work_orders 4 等）。
 - 数据治理观察项：production_orders 2 行 NULL + production_schedules 198 行全 nil（待 migration 归 0001 或确认平台公共）。
 - 验证：cargo check topems-mes 0 error；audit_logs 空表 0/0/0/0 语义正确。
+
+## 方案C 批3-G：communication 读路径显式租户过滤（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 实施：mail.rs 1 处（resend_emails 1757 取邮件内容加 tenant 条件 + bind get_tenant_id），补本地 get_tenant_id 定义。
+- skip 登记：notification.rs 8 处（mark_as_read/read/archive 等 EXISTS 校验按 user_id=claims.sub 用户级隔离已保证；run_auto_archive 后台任务无用户上下文）+ mail.rs 9 处（list_emails 2 按 core_users 邮箱关联用户级过滤；delete_email 2 EXISTS 用户校验；get_stats 5 全局运营统计跨租户聚合语义同 financial_reports）。
+- 验证：cargo check topems-communication 0 error；core_emails 空表 0/0/0/0 语义正确。

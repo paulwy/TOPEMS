@@ -19,6 +19,13 @@ use lettre::{
 };
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::error::TopemsError;
 use topems_shared_core::locale::Locale;
@@ -1778,8 +1785,8 @@ pub async fn resend_emails(
             }
         };
         match sqlx::query(only_own_schema_query!("public",
-            "SELECT from_email, to_email, subject, body FROM core_emails WHERE id = $1 AND deleted_at IS NULL"))
-            .bind(email_id).fetch_optional(&pool).await
+            "SELECT from_email, to_email, subject, body FROM core_emails WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
+            .bind(email_id).bind(get_tenant_id(&claims)).fetch_optional(&pool).await
         {
             Ok(Some(row)) => {
                 let from_email = row.get::<String,_>("from_email");
