@@ -15,6 +15,7 @@ import {
   adaptSpcChartToFrontend,
   adaptSpcChartToBackend,
   adaptSpcDataPointToFrontend,
+  adaptSpcDataPointToBackend,
   adaptControlLimitsToFrontend,
 } from './adapters';
 
@@ -38,9 +39,22 @@ export const spcApi = {
   ): Promise<ApiResponse<SpcChart | undefined>> => {
     const backendData = adaptSpcChartToBackend(data);
     const response = await apiClient.qms.post<SpcChartBackend>('/spc/charts', backendData);
+    if (!response.data || !response.data.id || !data.dataPoints?.length) {
+      return {
+        ...response,
+        data: response.data ? adaptSpcChartToFrontend(response.data) : ({} as SpcChart),
+      };
+    }
+    // 创建成功后串联写入数据点子表（向导第 2 步录入的原始数据点）
+    const chartId = response.data.id;
+    for (const dp of data.dataPoints) {
+      const pointBackend = adaptSpcDataPointToBackend(chartId, dp);
+      await apiClient.qms.post('/spc/data-points', pointBackend);
+    }
+    const refreshed = await apiClient.qms.get<SpcChartBackend>(`/spc/charts/${chartId}`);
     return {
       ...response,
-      data: response.data ? adaptSpcChartToFrontend(response.data) : ({} as SpcChart),
+      data: refreshed.data ? adaptSpcChartToFrontend(refreshed.data) : ({} as SpcChart),
     };
   },
 
@@ -49,21 +63,21 @@ export const spcApi = {
     data: Partial<CreateSpcChartRequest>
   ): Promise<ApiResponse<SpcChart | undefined>> => {
     const backendData: UpdateSpcChartRequestBackend = {
-      chart_name: data.chartName,
       chart_type: data.chartType,
-      product_id: data.productId,
-      product_name: data.productName,
-      process_id: data.processId,
+      parameter_name: data.characteristic,
+      chart_name: data.chartName,
       process_name: data.processName,
-      characteristic: data.characteristic,
       unit: data.unit,
       usl: data.usl,
       lsl: data.lsl,
       target: data.target,
-      samplesize: data.sampleSize,
+      sample_size: data.sampleSize,
       sampling_frequency: data.samplingFrequency,
-      status: data.status,
       description: data.description,
+      ucl: data.ucl,
+      cl: data.cl,
+      lcl: data.lcl,
+      status: data.status,
     };
     const response = await apiClient.qms.put<SpcChartBackend>(`/spc/charts/${id}`, backendData);
     return {
@@ -98,14 +112,13 @@ export const spcApi = {
       | 'violationRules'
     >
   ): Promise<ApiResponse<SpcDataPoint | undefined>> => {
-    const backendData: CreateSpcDataPointRequestBackend = {
-      chart_id: chartId,
-      sample_no: data.sampleNo,
-      sample_time: data.sampleTime,
+    const backendData = adaptSpcDataPointToBackend(chartId, {
+      sampleNo: data.sampleNo,
+      sampleTime: data.sampleTime,
       values: data.values,
       operator: data.operator,
       remark: data.remark,
-    };
+    });
     const response = await apiClient.qms.post<SpcDataPointBackend>('/spc/data-points', backendData);
     return {
       ...response,

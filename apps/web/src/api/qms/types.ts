@@ -604,90 +604,96 @@ export interface QmsStatistics {
 export interface SpcChartBackend {
   id: string;
   chart_no: string;
-  chart_name: string;
   chart_type: string;
   product_id?: string;
   product_name?: string;
-  process_id?: string;
+  parameter_name: string;
+  chart_name?: string;
   process_name?: string;
-  characteristic: string;
   unit?: string;
   usl?: number;
   lsl?: number;
   target?: number;
-  ucl?: number;
-  lcl?: number;
-  cl?: number;
-  samplesize: number;
+  sample_size?: number;
   sampling_frequency?: string;
-  status: string;
   description?: string;
+  ucl?: number;
+  cl?: number;
+  lcl?: number;
+  cp?: number;
+  cpk?: number;
+  pp?: number;
+  ppk?: number;
+  sample_count?: number;
+  status?: string;
   created_by?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface CreateSpcChartRequestBackend {
-  chart_no: string;
-  chart_name: string;
   chart_type: string;
   product_id?: string;
   product_name?: string;
-  process_id?: string;
+  parameter_name: string;
+  chart_name?: string;
   process_name?: string;
-  characteristic: string;
   unit?: string;
   usl?: number;
   lsl?: number;
   target?: number;
-  samplesize: number;
+  sample_size?: number;
   sampling_frequency?: string;
-  status?: string;
   description?: string;
+  ucl?: number;
+  cl?: number;
+  lcl?: number;
+  status?: string;
+  created_by?: string;
 }
 
 export interface UpdateSpcChartRequestBackend {
-  chart_name?: string;
   chart_type?: string;
-  product_id?: string;
-  product_name?: string;
-  process_id?: string;
+  parameter_name?: string;
+  chart_name?: string;
   process_name?: string;
-  characteristic?: string;
   unit?: string;
   usl?: number;
   lsl?: number;
   target?: number;
-  ucl?: number;
-  lcl?: number;
-  cl?: number;
-  samplesize?: number;
+  sample_size?: number;
   sampling_frequency?: string;
-  status?: string;
   description?: string;
+  ucl?: number;
+  cl?: number;
+  lcl?: number;
+  status?: string;
 }
 
 export interface SpcDataPointBackend {
   id: string;
   chart_id: string;
-  sample_no: string;
-  sample_time: string;
-  values: number[];
+  sample_no: number;
+  value: number;
+  subgroup_size?: number;
+  is_out_of_control?: boolean;
+  trend_flag?: string;
   mean?: number;
   range?: number;
-  std_dev?: number;
-  is_out_of_control: boolean;
-  violation_rules?: string[];
   operator?: string;
   remark?: string;
+  measured_at?: string;
   created_at: string;
 }
 
 export interface CreateSpcDataPointRequestBackend {
   chart_id: string;
-  sample_no: string;
+  sample_no: number;
+  value: number;
+  subgroup_size?: number;
   sample_time?: string;
-  values: number[];
+  mean?: number;
+  range?: number;
   operator?: string;
   remark?: string;
 }
@@ -733,8 +739,17 @@ export interface SpcChart {
   updatedAt: string;
 }
 
+export interface SpcDataPointInput {
+  sampleNo: string;
+  sampleTime?: string;
+  values: number[];
+  mean?: number;
+  range?: number;
+  operator?: string;
+  remark?: string;
+}
+
 export interface CreateSpcChartRequest {
-  chartNo: string;
   chartName: string;
   chartType: string;
   productId?: string;
@@ -748,8 +763,12 @@ export interface CreateSpcChartRequest {
   target?: number;
   sampleSize: number;
   samplingFrequency?: string;
+  ucl?: number;
+  lcl?: number;
+  cl?: number;
   status?: string;
   description?: string;
+  dataPoints?: SpcDataPointInput[];
 }
 
 export interface SpcDataPoint {

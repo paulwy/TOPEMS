@@ -1,0 +1,17 @@
+-- SPC 前后端契约对齐：qa_spc_charts 补前端向导字段列，qa_spc_data_points 补数据点明细列
+ALTER TABLE qms.qa_spc_charts
+    ADD COLUMN IF NOT EXISTS chart_name VARCHAR(256),
+    ADD COLUMN IF NOT EXISTS process_name VARCHAR(256),
+    ADD COLUMN IF NOT EXISTS unit VARCHAR(32),
+    ADD COLUMN IF NOT EXISTS usl DECIMAL(12,4),
+    ADD COLUMN IF NOT EXISTS lsl DECIMAL(12,4),
+    ADD COLUMN IF NOT EXISTS target DECIMAL(12,4),
+    ADD COLUMN IF NOT EXISTS sample_size INT,
+    ADD COLUMN IF NOT EXISTS sampling_frequency VARCHAR(128),
+    ADD COLUMN IF NOT EXISTS description TEXT;
+
+ALTER TABLE qms.qa_spc_data_points
+    ADD COLUMN IF NOT EXISTS mean DECIMAL(12,4),
+    ADD COLUMN IF NOT EXISTS range DECIMAL(12,4),
+    ADD COLUMN IF NOT EXISTS operator VARCHAR(64),
+    ADD COLUMN IF NOT EXISTS remark TEXT;

@@ -21,6 +21,8 @@ import type {
   CreateSpcChartRequestBackend,
   SpcDataPointBackend,
   SpcDataPoint,
+  SpcDataPointInput,
+  CreateSpcDataPointRequestBackend,
   ControlLimitsResultBackend,
   ControlLimitsResult,
   QualityCostBackend,
@@ -165,13 +167,12 @@ export const adaptActionToBackend = (
 export const adaptSpcChartToFrontend = (backend: SpcChartBackend): SpcChart => ({
   id: backend.id,
   chartNo: backend.chart_no,
-  chartName: backend.chart_name,
+  chartName: backend.chart_name || '',
   chartType: backend.chart_type,
   productId: backend.product_id,
   productName: backend.product_name,
-  processId: backend.process_id,
   processName: backend.process_name,
-  characteristic: backend.characteristic,
+  characteristic: backend.parameter_name,
   unit: backend.unit,
   usl: backend.usl,
   lsl: backend.lsl,
@@ -179,51 +180,74 @@ export const adaptSpcChartToFrontend = (backend: SpcChartBackend): SpcChart => (
   ucl: backend.ucl,
   lcl: backend.lcl,
   cl: backend.cl,
-  sampleSize: backend.samplesize,
+  sampleSize: backend.sample_size ?? 1,
   samplingFrequency: backend.sampling_frequency,
-  status: backend.status,
+  status: backend.status || 'active',
   description: backend.description,
   createdBy: backend.created_by,
   createdAt: backend.created_at,
-  updatedAt: backend.updated_at,
+  updatedAt: backend.updated_at || '',
 });
 
 export const adaptSpcChartToBackend = (
   frontend: CreateSpcChartRequest
 ): CreateSpcChartRequestBackend => ({
-  chart_no: frontend.chartNo,
-  chart_name: frontend.chartName,
   chart_type: frontend.chartType,
   product_id: frontend.productId,
   product_name: frontend.productName,
-  process_id: frontend.processId,
+  parameter_name: frontend.characteristic,
+  chart_name: frontend.chartName,
   process_name: frontend.processName,
-  characteristic: frontend.characteristic,
   unit: frontend.unit,
   usl: frontend.usl,
   lsl: frontend.lsl,
   target: frontend.target,
-  samplesize: frontend.sampleSize,
+  sample_size: frontend.sampleSize,
   sampling_frequency: frontend.samplingFrequency,
-  status: frontend.status,
   description: frontend.description,
+  ucl: frontend.ucl,
+  cl: frontend.cl,
+  lcl: frontend.lcl,
+  status: frontend.status,
 });
 
 export const adaptSpcDataPointToFrontend = (backend: SpcDataPointBackend): SpcDataPoint => ({
   id: backend.id,
   chartId: backend.chart_id,
-  sampleNo: backend.sample_no,
-  sampleTime: backend.sample_time,
-  values: backend.values,
+  sampleNo: String(backend.sample_no),
+  sampleTime: backend.measured_at || '',
+  values: [backend.value],
   mean: backend.mean,
   range: backend.range,
-  stdDev: backend.std_dev,
-  isOutOfControl: backend.is_out_of_control,
-  violationRules: backend.violation_rules,
+  isOutOfControl: backend.is_out_of_control || false,
   operator: backend.operator,
   remark: backend.remark,
   createdAt: backend.created_at,
 });
+
+export const adaptSpcDataPointToBackend = (
+  chartId: string,
+  input: SpcDataPointInput
+): CreateSpcDataPointRequestBackend => {
+  // 向导数据点子表 values 可能为 number[]、单值字符串、或以逗号分隔的字符串，统一归一化为数值数组
+  const rawValues = Array.isArray(input.values) ? input.values : [input.values];
+  const vals = (rawValues as unknown[])
+    .flatMap((v) => (typeof v === 'string' ? v.split(/[,，\s]+/) : [v]))
+    .filter((v) => v !== undefined && v !== null && v !== '' && !Number.isNaN(Number(v)))
+    .map(Number);
+  const first = vals.length > 0 ? vals[0] : 0;
+  return {
+    chart_id: chartId,
+    sample_no: Number(input.sampleNo) || 0,
+    value: first,
+    subgroup_size: vals.length > 0 ? vals.length : undefined,
+    sample_time: input.sampleTime,
+    mean: input.mean,
+    range: input.range,
+    operator: input.operator,
+    remark: input.remark,
+  };
+};
 
 export const adaptControlLimitsToFrontend = (
   backend: ControlLimitsResultBackend
