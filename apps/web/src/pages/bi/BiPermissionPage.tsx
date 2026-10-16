@@ -97,7 +97,7 @@ const BiPermissionPage = () => {
     queryFn: async () => {
       const res = await listDataPermissions();
       if (res.success && res.data) {
-        return res.data || [];
+        return res.data.items || [];
       }
       return [];
     },

@@ -181,7 +181,8 @@ export const StatCard: React.FC<StatCardConfig> = ({
     warning: theme.palette.warning.main,
     info: theme.palette.info.main,
   };
-  const accent = paletteMap[color];
+  // 未知 color（如 'primary.main' 等非短键值）兜底 primary，避免 alpha(undefined) 崩溃
+  const accent = paletteMap[color] || paletteMap.primary;
 
   if (loading) {
     return (

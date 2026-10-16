@@ -59,12 +59,12 @@ import { QUERY_KEYS } from '@/lib/reactQuery';
 
 const ct = designTokens.colors;
 const moduleConfig: Record<string, { name: string; icon: string; color: string }> = {
-  rs: { name: i18n.t('bi.bi_module_detail_page.k0'), icon: '🔬', color: 'primary.main' },
-  lims: { name: i18n.t('bi.bi_module_detail_page.k1'), icon: '🧪', color: 'success.main' },
-  qms: { name: i18n.t('bi.bi_module_detail_page.k2'), icon: '✅', color: 'warning.main' },
-  ehs: { name: i18n.t('bi.bi_module_detail_page.k3'), icon: '🛡️', color: 'error.main' },
-  srm: { name: i18n.t('bi.bi_module_detail_page.k4'), icon: '📦', color: 'secondary.main' },
-  pdm: { name: i18n.t('bi.bi_module_detail_page.k5'), icon: '🏭', color: ct.cyan.main },
+  rs: { name: i18n.t('bi.bi_module_detail_page.k0'), icon: '🔬', color: 'primary' },
+  lims: { name: i18n.t('bi.bi_module_detail_page.k1'), icon: '🧪', color: 'success' },
+  qms: { name: i18n.t('bi.bi_module_detail_page.k2'), icon: '✅', color: 'warning' },
+  ehs: { name: i18n.t('bi.bi_module_detail_page.k3'), icon: '🛡️', color: 'error' },
+  srm: { name: i18n.t('bi.bi_module_detail_page.k4'), icon: '📦', color: 'secondary' },
+  pdm: { name: i18n.t('bi.bi_module_detail_page.k5'), icon: '🏭', color: 'info' },
 };
 interface ModuleData {
   summary: Record<string, number | string>;
