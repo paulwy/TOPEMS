@@ -448,8 +448,8 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
                     type='button'
                     onClick={() => navigate(AUTH_PATHS.forgotPassword)}
                     sx={{
-                      color: ct.secondary[400],
-                      '&:hover': { color: ct.secondary[600] },
+                      color: ct.secondary[600],
+                      '&:hover': { color: ct.secondary[700] },
                       fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                       background: 'transparent',
                       fontWeight: 500,
@@ -470,7 +470,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
                   height: 48,
                   borderRadius: 1.5,
                   fontWeight: 600,
-                  background: `linear-gradient(135deg, ${ct.secondary[400]} 0%, ${ct.secondary.dark} 100%)`,
+                  background: `linear-gradient(135deg, ${ct.secondary[500]} 0%, ${ct.secondary.dark} 100%)`,
                   '&:hover': {
                     background: `linear-gradient(135deg, ${ct.secondary[600]} 0%, ${ct.secondary[800]} 100%)`,
                   },
@@ -494,8 +494,8 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
               type='button'
               onClick={() => setIsRegister(!isRegister)}
               sx={{
-                color: ct.secondary[400],
-                '&:hover': { color: ct.secondary[600] },
+                color: ct.secondary[600],
+                '&:hover': { color: ct.secondary[700] },
                 fontSize: designTokens.typography.fontSize.scale['0.875rem'],
                 background: 'transparent',
                 fontWeight: 500,
@@ -509,7 +509,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
             <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid grey.200' }}>
               <Typography
                 variant='caption'
-                sx={{ color: 'text.disabled', textAlign: 'center', display: 'block' }}
+                sx={{ color: 'text.secondary', textAlign: 'center', display: 'block' }}
               >
                 {i18n.t('pages.login_page.k5')}: admin / admin123 (
                 {i18n.t('shared.permissions.k54')}) | user / user123 (

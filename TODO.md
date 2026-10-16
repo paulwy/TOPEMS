@@ -60,7 +60,8 @@
 - [ ] C4 提交链路：接口调用 → 成功提示(toast/message) → 失败错误提示 → 列表刷新 全链路可验证
 
 ### D. 其他可测项
-- [ ] D1 可访问性：`label↔input` 关联、焦点可见、键盘可达（`apps/web/eslint.a11y.config.js` 已有配置）
+- [x] D1 可访问性：`label↔input` 关联、焦点可见、键盘可达（`apps/web/eslint.a11y.config.js` 已有配置）
+  - **D1 已闭环（2026-10-17）**：a11y lint 全绿（0 error 0 warning）+ 新增 `apps/web/e2e/ui/d1-a11y.spec.ts`（@axe-core/playwright）实机扫描 6 页 **serious/critical 清零 6/6 PASS**；修复 12 项：DrillDownPanel Escape 键盘关闭（2.1.1）、ImageUpload 预览键盘可达、Avatar lint 豁免（已实现 role/tabIndex/onKeyDown）、ModeToggle aria-label、Select label↔id 关联+aria fallback、Pagination 每页条数 aria-label+i18n、CrudPage/ListPageTemplate MUI Select labelId 关联、TopBar command palette aria-label 含可见文本（kbd aria-hidden）、crm 等级筛选 select aria-label、viewport 允许缩放（1.4.4）、对比度 6 处（登录按钮 secondary[500]/text 按钮 [600]、dark --text-tertiary 提亮、badge info 8%、ObservabilityPanel info.700、dev 提示 text.secondary）；**遗留（moderate/minor 记录不阻塞）**：页面壳层无 `main` landmark / 无 h1（登录页/表单页，建议 D 节收尾统一加）、crm/hrm create 空 heading（MUI 结构空标题）
 - [ ] D2 i18n：无占位残留（如近期修复的 "Name" 占位残留）、zh/en 切换无缺失 key
 - [ ] D3 性能/体积：Lighthouse 基线（`apps/web/lighthouse-*.json`）复核
 - [ ] D4 可测试性：缺 `data-testid` / `label` 关联的页面登记清单，便于后续 e2e

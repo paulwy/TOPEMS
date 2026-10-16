@@ -46,7 +46,8 @@ export const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
         color: 'var(--error-500)',
       },
       info: {
-        backgroundColor: 'color-mix(in srgb, var(--info-500) 12%, transparent)',
+        // bg 保持更透明（贴近底色）以提升 info 文字对比度（WCAG 1.4.3）
+        backgroundColor: 'color-mix(in srgb, var(--info-500) 8%, transparent)',
         color: 'var(--info-500)',
       },
     };

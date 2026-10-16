@@ -5907,7 +5907,8 @@
       "k0": "Project"
     },
     "pagination": {
-      "k0": "Total"
+      "k0": "Total",
+      "page_size": "Rows per page"
     },
     "hooks": {
       "k0": "Confirm Delete Hit"
@@ -6196,7 +6197,8 @@
     "mode_toggle": {
       "k0": "Light Mode",
       "k1": "Dark Mode",
-      "k2": "System"
+      "k2": "System",
+      "k3": "Toggle theme"
     },
     "addressbook_filters": {
       "span_0": ">Status:</span>"

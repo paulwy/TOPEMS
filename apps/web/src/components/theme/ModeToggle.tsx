@@ -41,6 +41,8 @@ export function ModeToggle() {
         variant='outlined'
         size='small'
         className='theme-toggle-btn'
+        aria-label={i18n.t('components.mode_toggle.k3')}
+        title={i18n.t('components.mode_toggle.k3')}
         onClick={handleMenuOpen}
       >
         {getIcon()}

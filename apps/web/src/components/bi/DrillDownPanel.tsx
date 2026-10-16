@@ -1,5 +1,5 @@
 import { designTokens } from '@topems/tokens';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, ChevronRight, Search, Filter, RefreshCw } from 'lucide-react';
 import {
   CardHeader,
@@ -74,6 +74,16 @@ export function DrillDownPanel({
     }
   };
 
+  // 键盘可达：Escape 关闭面板（a11y，WCAG 2.1.1/2.1.2）
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
@@ -86,6 +96,10 @@ export function DrillDownPanel({
         justifyContent: 'flex-end',
       }}
     >
+      {}
+      {/* Click-to-close on the overlay is a mouse enhancement; keyboard close is provided
+          by the Escape handler in useEffect above (WCAG 2.1.2). No tabIndex on the overlay
+          so it does not disturb the panel's focus order. */}
       {}
       <div
         style={{

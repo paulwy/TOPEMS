@@ -695,8 +695,10 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
             size='small'
             sx={{ minWidth: 160 }}
           >
-            <InputLabel>{filter.label}</InputLabel>
+            <InputLabel id={`${filter.id}-label`}>{filter.label}</InputLabel>
             <Select
+              labelId={`${filter.id}-label`}
+              id={`${filter.id}-select`}
               value={filterValues[filter.id] || 'all'}
               label={filter.label}
               onChange={(e) => handleFilterChange(filter.id, e.target.value)}

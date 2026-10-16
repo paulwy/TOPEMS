@@ -1252,8 +1252,10 @@ export function ListPageTemplate<
               disabled={disabled}
               error={!!error}
             >
-              <InputLabel>{field.label}</InputLabel>
+              <InputLabel id={`${field.key}-label`}>{field.label}</InputLabel>
               <Select
+                labelId={`${field.key}-label`}
+                id={`${field.key}-select`}
                 value={value ?? ''}
                 label={field.label}
                 onChange={(e) => handleFieldChange(field.key, e.target.value)}

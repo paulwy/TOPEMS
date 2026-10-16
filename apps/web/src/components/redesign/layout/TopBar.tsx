@@ -137,11 +137,12 @@ export const TopBar: React.FC<TopBarProps> = ({
           size='sm'
           leftIcon={<Search size={16} />}
           onClick={onCommandOpen}
-          aria-label='Open command palette'
+          aria-label={`${i18n.t('common.search')} ⌘K`}
         >
           <span className='desktop-only'>{i18n.t('common.search')}</span>
           <kbd
             className='desktop-only'
+            aria-hidden='true'
             style={{
               marginLeft: 'var(--space-2)',
               padding: '2px 6px',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import clsx from 'clsx';
 
 export interface SelectOption {
@@ -15,7 +15,11 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, options, placeholder, className, style, ...rest }, ref) => {
+  (
+    { label, error, options, placeholder, className, style, 'aria-label': ariaLabel, ...rest },
+    ref
+  ) => {
+    const selectId = useId();
     return (
       <div
         className={clsx('redesign-select-wrapper', className)}
@@ -29,6 +33,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
       >
         {label && (
           <label
+            htmlFor={selectId}
             style={{
               fontSize: 'var(--text-xs)',
               fontWeight: 'var(--font-semibold)',
@@ -56,6 +61,8 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
         >
           <select
             ref={ref}
+            id={selectId}
+            aria-label={ariaLabel ?? label ?? placeholder ?? undefined}
             style={{
               flex: 1,
               minWidth: 0,

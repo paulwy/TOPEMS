@@ -345,11 +345,20 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             },
           }}
         >
-          {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
+          {/* 预览图点击打开大图：加 role/tabIndex/onKeyDown 提供键盘可达（WCAG 2.1.1） */}
+          {}
           <img
             src={image.preview}
             alt=''
+            role='button'
+            tabIndex={0}
             onClick={() => setPreviewImage(image.preview)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setPreviewImage(image.preview);
+              }
+            }}
           />
           <Box
             className='overlay'

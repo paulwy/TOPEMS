@@ -115,7 +115,7 @@ const ObservabilityPanel: React.FC = () => {
             startIcon={<ActivityIcon size={18} />}
             onClick={() => setIsExpanded(true)}
             sx={{
-              bgcolor: 'info.600',
+              bgcolor: 'info.700',
               borderRadius: 2,
               textTransform: 'none',
               boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.4)}`,
@@ -171,7 +171,7 @@ const ObservabilityPanel: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              bgcolor: 'primary.main',
+              bgcolor: 'primary.700',
               color: 'primary.contrastText',
             }}
           >

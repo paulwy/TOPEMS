@@ -203,6 +203,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         {/* 每页条数选择 */}
         {showSizeChanger && onPageSizeChange && (
           <select
+            aria-label={t('components.pagination.page_size')}
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
             disabled={disabled}

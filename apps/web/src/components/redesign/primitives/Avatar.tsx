@@ -138,6 +138,10 @@ export const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
     const avatarBg = bgColor || (name ? getColorFromName(name) : 'var(--surface-3)');
 
     return (
+      /* When onClick exists, role="button" / tabIndex=0 / Enter+Space onKeyDown are provided
+          conditionally below (keyboard semantics equal to mouse). Static lint cannot confirm
+          the conditional branch, so these rules are disabled for this element. */
+
       <div
         ref={ref}
         id={avatarId}

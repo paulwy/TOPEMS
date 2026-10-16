@@ -569,6 +569,7 @@ const CrmCustomerRedesignPage: React.FC = () => {
               />
               <Select
                 value={levelFilter}
+                aria-label={t('crm.customer_list_page.col_level')}
                 onChange={(e) => setLevelFilter(e.target.value)}
                 options={[
                   { value: 'all', label: t('crm.customer_list_page.level_all') },
