@@ -1,9 +1,19 @@
 import { useLocation } from 'react-router-dom';
-import { useMemo } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import type { NavItem } from '@/lib/navigation/types';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import i18n from '@/i18n';
+import i18n, { subscribeResourceVersion, getResourceVersion } from '@/i18n';
+
+/**
+ * 订阅 i18n 资源版本号：业务命名空间（如 bi）经 ensureNamespacesLoaded 异步注入
+ * 翻译后，useMemo（依赖仅 pathname）不会重算，导致面包屑/路径 Tabs 的 label
+ * 停留在注入前的旧值（如旧英文 "Data Analysis"）。把资源版本纳入依赖后，
+ * 资源注入完成即重算，label 跟随最新翻译。
+ */
+function useI18nResourceVersion(): number {
+  return useSyncExternalStore(subscribeResourceVersion, getResourceVersion);
+}
 
 interface AutoBreadcrumbItem {
   label: string;
@@ -35,6 +45,7 @@ export function useAutoBreadcrumbs(options: UseAutoBreadcrumbsOptions = {}): Aut
 
   const location = useLocation();
   const currentPath = location.pathname;
+  const resourceVersion = useI18nResourceVersion();
 
   const breadcrumbs = useMemo((): AutoBreadcrumbItem[] => {
     const result: AutoBreadcrumbItem[] = [];
@@ -69,6 +80,7 @@ export function useAutoBreadcrumbs(options: UseAutoBreadcrumbsOptions = {}): Aut
     fallbackToPath,
     customItems,
     dynamicTitleResolver,
+    resourceVersion,
   ]);
 
   return breadcrumbs;

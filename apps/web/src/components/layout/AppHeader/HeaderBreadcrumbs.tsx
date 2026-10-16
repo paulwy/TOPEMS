@@ -1,14 +1,20 @@
 import { designTokens } from '@topems/tokens';
-import React, { useMemo } from 'react';
+import React, { useMemo, useSyncExternalStore } from 'react';
 import { Box, Breadcrumbs, Link, Typography } from '@mui/material';
 import { Home, ChevronRight } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { navigationRegistryV2 } from '@/lib/navigation';
 import { SUITE_GROUPS } from '@/lib/navigation/types';
 import type { NavItem, ModuleSuite } from '@/lib/navigation/types';
 import { renderIcon } from '@/lib/iconMapping';
 import { DASHBOARD_PATHS } from '@/routes/dashboard';
-import i18n from '@/i18n';
+import i18n, { subscribeResourceVersion, getResourceVersion } from '@/i18n';
+
+// 订阅 i18n 资源版本：异步注入翻译后 useMemo 缓存重算，避免面包屑 label 停留旧值
+function useI18nResourceVersion(): number {
+  return useSyncExternalStore(subscribeResourceVersion, getResourceVersion);
+}
 
 interface HeaderBreadcrumbsProps {
   /** 权限校验函数（透传 usePermission().checkPermission），用于控制各级面包屑跳转 */
@@ -26,6 +32,8 @@ interface HeaderBreadcrumbsProps {
 export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({ checkPermission }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
+  const resourceVersion = useI18nResourceVersion();
 
   // L1 业务域入口（当前模块所属 suite → 该域首个模块首页）
   const domainItem = useMemo<NavItem | null>(() => {
@@ -45,14 +53,14 @@ export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({ checkPermi
       permission: firstModule?.permission,
       showInBreadcrumb: true,
     };
-  }, [location.pathname, checkPermission]);
+  }, [location.pathname, checkPermission, resourceVersion]);
 
   const moduleItems = useMemo<NavItem[]>(() => {
     if (!navigationRegistryV2) return [];
     const hierarchy = navigationRegistryV2.getNavHierarchy(location.pathname);
     // 仅保留在面包屑中展示的层级（showInBreadcrumb !== false）
     return hierarchy.filter((item) => item.showInBreadcrumb !== false);
-  }, [location.pathname]);
+  }, [location.pathname, resourceVersion]);
 
   const breadcrumbItems = useMemo<NavItem[]>(
     () => (domainItem ? [domainItem, ...moduleItems] : moduleItems),
@@ -69,6 +77,9 @@ export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({ checkPermi
   };
 
   const renderCrumb = (item: NavItem, isLast: boolean) => {
+    // 渲染期响应式翻译：i18n 资源异步注入后 useTranslation 触发重渲染，
+    // 避免依赖 config 模块顶层求值固化的 label（i18n ns 注入竞态下可能为旧值）。
+    const label = item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label;
     const itemIcon =
       item.icon && !isLast ? (
         <Box
@@ -96,7 +107,7 @@ export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({ checkPermi
           }}
         >
           {itemIcon}
-          {item.label}
+          {label}
         </Typography>
       );
     }
@@ -120,7 +131,7 @@ export const HeaderBreadcrumbs: React.FC<HeaderBreadcrumbsProps> = ({ checkPermi
         onClick={() => item.path && navigate(item.path)}
       >
         {itemIcon}
-        {item.label}
+        {label}
       </Link>
     );
   };

@@ -5,7 +5,7 @@ import type { PageHeaderProps, PageAction } from '../templates/PageHeader';
 import { useNavHierarchy, useCurrentNavItem } from '@/lib/navigation/hooks';
 import { findRouteByPathSync } from '@/routes/v2';
 import { useLocation } from 'react-router-dom';
-import i18n from '@/i18n';
+import { useTranslation } from 'react-i18next';
 
 interface PageContainerProps {
   children: React.ReactNode;
@@ -51,27 +51,29 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   backButton,
 }) => {
   const location = useLocation();
+  const { t } = useTranslation();
   const currentNavItem = useCurrentNavItem();
   const navHierarchy = useNavHierarchy();
 
   const computedTitle = useMemo(() => {
     if (!autoTitle) return;
     if (currentNavItem) {
-      // currentNavItem.label 已由 NavigationRegistryV2 运行时翻译，直接使用
-      return currentNavItem.label;
+      // 渲染期响应式翻译：i18n 资源异步注入后 useTranslation 触发重渲染，
+      // 避免 currentNavItem.label 停留在 ns 注入前的旧翻译。
+      return currentNavItem.labelKey ? t(currentNavItem.labelKey) : currentNavItem.label;
     }
     const route = findRouteByPathSync(location.pathname);
     // route.title 可能来自模块 config 顶层求值固化值（i18n ns 注入竞态），
     // 若存在 titleKey 则渲染期运行时翻译，避免显示原始 i18n 键。
     if (route?.titleKey) {
       try {
-        return i18n.t(route.titleKey);
+        return t(route.titleKey);
       } catch {
         /* noop */
       }
     }
     return route?.title;
-  }, [autoTitle, currentNavItem, location.pathname]);
+  }, [autoTitle, currentNavItem, location.pathname, t]);
 
   const title = propTitle || computedTitle || '';
 
@@ -79,12 +81,12 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     if (!autoBreadcrumbs) return;
     if (navHierarchy.length > 0) {
       return navHierarchy.map((item) => ({
-        label: item.label,
+        label: item.labelKey ? t(item.labelKey, { defaultValue: item.label }) : item.label,
         href: item.path,
       }));
     }
     return;
-  }, [autoBreadcrumbs, navHierarchy]);
+  }, [autoBreadcrumbs, navHierarchy, t]);
 
   const backButtonConfig = useMemo(() => {
     if (backButton === false || !backButton) return;

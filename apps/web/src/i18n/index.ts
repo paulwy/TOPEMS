@@ -639,9 +639,37 @@ i18n.on('languageChanged', (lng: string) => {
 // 解决 i18n.t() 直接调用（非 useTranslation hook）不触发重渲染的问题
 let forceUpdate: (() => void) | null = null;
 let pendingResourceUpdate = false;
+let resourceVersion = 0;
+const versionListeners = new Set<() => void>();
+
+function bumpResourceVersion(): void {
+  resourceVersion += 1;
+  for (const cb of versionListeners) {
+    cb();
+  }
+}
+
+/**
+ * 订阅 i18n 资源版本号变化（用于 useSyncExternalStore，使 useMemo 缓存感知
+ * 异步注入的翻译资源更新后重新计算，例如导航面包屑的 label）。
+ */
+export function subscribeResourceVersion(cb: () => void): () => void {
+  versionListeners.add(cb);
+  return () => {
+    versionListeners.delete(cb);
+  };
+}
+
+/**
+ * 读取当前 i18n 资源版本号（resourcesAdded/resourcesRemoved 时递增）。
+ */
+export function getResourceVersion(): number {
+  return resourceVersion;
+}
 
 i18n.on('resourcesAdded', () => {
   pendingResourceUpdate = true;
+  bumpResourceVersion();
   if (forceUpdate) {
     forceUpdate();
   }
@@ -649,6 +677,7 @@ i18n.on('resourcesAdded', () => {
 
 i18n.on('resourcesRemoved', () => {
   pendingResourceUpdate = true;
+  bumpResourceVersion();
   if (forceUpdate) {
     forceUpdate();
   }
