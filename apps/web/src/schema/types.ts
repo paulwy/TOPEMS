@@ -443,6 +443,25 @@ export function toColumnDef(field: SchemaField): ColumnDef | null {
     };
   }
 
+  // select 静态枚举：未自定义 render 时显示 label 而非 value（如 severity 显示"中"而非 medium）
+  if (
+    !render &&
+    field.type === 'select' &&
+    field.options &&
+    'type' in field.options &&
+    field.options.type === 'static'
+  ) {
+    const optionMap = new Map(
+      (field.options.options || []).map((opt) => [String(opt.value), opt.label ?? opt.value])
+    );
+    render = (row: Record<string, unknown>) => {
+      const value = row[field.name];
+      if (value == null || value === '') return '';
+      const label = optionMap.get(String(value));
+      return label ?? String(value);
+    };
+  }
+
   // 行内编辑配置
   const inlineEdit = field.tableEditable
     ? (() => {

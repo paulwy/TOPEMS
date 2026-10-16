@@ -404,6 +404,25 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
   const columnDefs = config.columns;
   const fields = useMemo(() => config.fields || fieldSchema || [], [fieldSchema, config.fields]);
 
+  // select 静态枚举：单元格显示 label 而非 value（如 role 显示"质量代表"而非 quality）
+  const formatCellValue = useCallback(
+    (fieldName: string, value: unknown): string => {
+      if (value == null || value === '') return '';
+      const field = fields.find((f) => f.name === fieldName);
+      if (
+        field?.type === 'select' &&
+        field.options &&
+        'type' in field.options &&
+        field.options.type === 'static'
+      ) {
+        const opt = field.options.options.find((o) => String(o.value) === String(value));
+        if (opt) return String(opt.label ?? opt.value);
+      }
+      return String(value);
+    },
+    [fields]
+  );
+
   const displayRows = useMemo(() => {
     if (config.minRows && value.length < config.minRows) {
       const padded = [...value];
@@ -645,7 +664,7 @@ export function SubTableBuilder<T extends Record<string, unknown> = Record<strin
                         variant='body2'
                         noWrap
                       >
-                        {String(row[col.id] ?? '')}
+                        {formatCellValue(String(col.id), row[col.id])}
                       </Typography>
                     )}
                   </TableCell>
