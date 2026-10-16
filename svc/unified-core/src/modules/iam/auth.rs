@@ -653,7 +653,10 @@ pub async fn refresh_token(
             Ok(tx) => tx,
             Err(e) => {
                 tracing::error!("开启事务失败: {}", e);
-                return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+                return Json(topems_shared_core::response::error_value(
+                    500,
+                    "内部服务器错误",
+                ));
             }
         };
         if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
@@ -663,7 +666,10 @@ pub async fn refresh_token(
         {
             tracing::error!("设置租户上下文失败: {}", e);
             let _ = ctx_tx.rollback().await;
-            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
         let r = sqlx::query(
             "SELECT rt.user_id, u.username, u.is_superuser, u.email,
@@ -694,11 +700,17 @@ pub async fn refresh_token(
         Ok(Some(r)) => r,
         Ok(None) => {
             tracing::warn!("Refresh token 无效或已过期或已吊销");
-            return Json(topems_shared_core::response::error_value(401, "Refresh token 无效或已过期"));
+            return Json(topems_shared_core::response::error_value(
+                401,
+                "Refresh token 无效或已过期",
+            ));
         }
         Err(e) => {
             tracing::error!("查询 refresh token 失败: {}", e);
-            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+            return Json(topems_shared_core::response::error_value(
+                500,
+                "内部服务器错误",
+            ));
         }
     };
 
@@ -816,7 +828,10 @@ pub async fn refresh_token(
     {
         tracing::error!("设置租户上下文失败: {}", e);
         let _ = tx.rollback().await;
-        return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+        return Json(topems_shared_core::response::error_value(
+            500,
+            "内部服务器错误",
+        ));
     }
 
     let revoke_result = sqlx::query(
