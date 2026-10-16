@@ -9,8 +9,16 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
+use sqlx::types::Uuid;
 
 use topems_shared_auth::auth::Claims;
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 use topems_shared_core::response::ApiResponse;
 
 // ===== 数据类型 =====
@@ -43,7 +51,7 @@ pub struct ProjectStatusItem {
 )]
 pub async fn get_project_trend(
     State(pool): State<PgPool>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ProjectTrendItem>>> {
     tracing::info!("获取PM项目创建趋势数据");
 
@@ -91,23 +99,27 @@ pub async fn get_project_trend(
 #[allow(clippy::as_conversions, clippy::cast_precision_loss)]
 pub async fn get_project_status(
     State(pool): State<PgPool>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ProjectStatusItem>>> {
     tracing::info!("获取PM项目状态分布");
 
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM pm.projects WHERE deleted_at IS NULL")
-            .fetch_one(&pool)
-            .await
-            .unwrap_or(0);
+    let tenant_uuid = get_tenant_id(&claims);
+    let total: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM pm.projects WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)",
+    )
+    .bind(tenant_uuid)
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(0);
 
     let rows: Vec<(Option<String>, Option<i64>)> = sqlx::query_as(
         "SELECT status, COUNT(*) as count
          FROM pm.projects
-         WHERE deleted_at IS NULL
+         WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
          GROUP BY status
          ORDER BY count DESC",
     )
+    .bind(tenant_uuid)
     .fetch_all(&pool)
     .await
     .unwrap_or_default();

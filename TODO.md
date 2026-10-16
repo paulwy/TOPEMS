@@ -2245,3 +2245,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 实施：mail.rs 1 处（resend_emails 1757 取邮件内容加 tenant 条件 + bind get_tenant_id），补本地 get_tenant_id 定义。
 - skip 登记：notification.rs 8 处（mark_as_read/read/archive 等 EXISTS 校验按 user_id=claims.sub 用户级隔离已保证；run_auto_archive 后台任务无用户上下文）+ mail.rs 9 处（list_emails 2 按 core_users 邮箱关联用户级过滤；delete_email 2 EXISTS 用户校验；get_stats 5 全局运营统计跨租户聚合语义同 financial_reports）。
 - 验证：cargo check topems-communication 0 error；core_emails 空表 0/0/0/0 语义正确。
+
+## 方案C 批3-H：pm 读路径 + master-data 核查（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 实施：pm 4 处（analytics.rs get_project_status COUNT + 状态分布；report.rs generate_report projects/phases 查证，加 tenant 条件 + bind get_tenant_id），2 文件补 get_tenant_id 定义 + analytics 补 Uuid import。
+- skip 登记：pm get_milestone/get_phase（无 claims 按 project_id 查询，隔离依赖调用方）；master-data 全模块 0 真缺口（disaster/knowledge/ai_governance/commercial 等冻结模块无 Claims，内部流程；schema_registry/persist 无 claims handler）。
+- 验证：cargo check topems-pm 0 error；SQL 实测 6 项全过（proj 9/0/9、get_proj 1/0）。

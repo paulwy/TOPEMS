@@ -7,6 +7,13 @@ use axum::{
 use chrono::{DateTime, Utc};
 use sqlx::{PgPool, Row};
 use topems_shared_auth::auth::Claims;
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::ApiResponse;
@@ -178,8 +185,9 @@ async fn generate_report(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let project_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM pm.projects WHERE id = $1"))
+    let project_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, code, project_type, status, progress, budget, start_date, end_date FROM pm.projects WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"))
         .bind(project_id)
+        .bind(get_tenant_id(&claims))
         .fetch_one(&pool)
         .await;
 
@@ -197,8 +205,9 @@ async fn generate_report(
         Err(_) => serde_json::json!({}),
     };
 
-    let phases_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, sequence_number, progress, status FROM pm.project_phases WHERE project_id = $1 ORDER BY sequence_number"))
+    let phases_data = sqlx::query(only_own_schema_query!("pm", "SELECT name, sequence_number, progress, status FROM pm.project_phases WHERE project_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid) ORDER BY sequence_number"))
         .bind(project_id)
+        .bind(get_tenant_id(&claims))
         .fetch_all(&pool)
         .await;
 
