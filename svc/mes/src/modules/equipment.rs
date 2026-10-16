@@ -248,6 +248,19 @@ pub async fn list_equipment(
         params.push(serde_json::Value::String(pattern));
     }
 
+    // tenant 隔离（读路径 Claims bind，nil=全见）
+    let tenant_ph = params.len() + 1;
+    let tenant_filter = format!(
+        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = ${}::uuid)",
+        tenant_ph, tenant_ph
+    );
+    if where_clause.is_empty() {
+        where_clause.push_str(&format!(" WHERE {}", tenant_filter));
+    } else {
+        where_clause.push_str(&format!(" AND {}", tenant_filter));
+    }
+    let tenant_uuid = get_tenant_id(&claims);
+
     let count_sql = format!("SELECT COUNT(*) as total FROM equipment{}", where_clause);
 
     let mut count_query = sqlx::query_scalar(&count_sql);
@@ -255,6 +268,7 @@ pub async fn list_equipment(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
+    count_query = count_query.bind(tenant_uuid);
 
     let count_result = count_query.fetch_one(&state.pool).await;
     let total: Option<i64> = match count_result {
@@ -287,7 +301,7 @@ pub async fn list_equipment(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
     }
-    fetch_query = fetch_query.bind(page_size).bind(offset);
+    fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
     let equipment = match fetch_query.fetch_all(&state.pool).await {
         Ok(e) => e,
@@ -921,8 +935,9 @@ pub async fn create_maintenance(
     let updated_at = result.updated_at;
 
     let equipment_name = sqlx::query_scalar!(
-        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_name FROM equipment WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
         equipment_id,
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await
@@ -930,8 +945,9 @@ pub async fn create_maintenance(
     .flatten();
 
     let equipment_no = sqlx::query_scalar!(
-        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1",
+        "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
         equipment_id,
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await
@@ -1135,6 +1151,8 @@ pub async fn list_inspections(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let page = query.page.unwrap_or(1) as i64;
     let page_size = query.page_size.unwrap_or(10) as i64;
     let offset = (page - 1) * page_size;
@@ -1148,8 +1166,12 @@ pub async fn list_inspections(
         r#"
         SELECT COUNT(*) FROM equipment_inspections
         WHERE ($1::uuid IS NULL OR equipment_id = $1)
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR EXISTS (
+              SELECT 1 FROM mes.equipment e WHERE e.id = equipment_id AND e.tenant_id = $2::uuid AND e.deleted_at IS NULL
+          ))
         "#,
         equipment_uuid,
+        tenant_id,
     )
     .fetch_one(&state.pool)
     .await;
@@ -1172,10 +1194,14 @@ pub async fn list_inspections(
             ei.created_at
         FROM equipment_inspections ei
         WHERE ($1::uuid IS NULL OR ei.equipment_id = $1)
+          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR EXISTS (
+              SELECT 1 FROM mes.equipment e WHERE e.id = ei.equipment_id AND e.tenant_id = $2::uuid AND e.deleted_at IS NULL
+          ))
         ORDER BY ei.created_at DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $3 OFFSET $4
         "#,
         equipment_uuid,
+        tenant_id,
         page_size,
         offset,
     )
@@ -1253,6 +1279,8 @@ pub async fn create_inspection(
         return e;
     }
 
+    let tenant_id = get_tenant_id(&claims);
+
     let equipment_uuid = match Uuid::parse_str(&body.equipment_id) {
         Ok(u) => u,
         Err(_) => {
@@ -1261,8 +1289,9 @@ pub async fn create_inspection(
     };
 
     let equipment_info = sqlx::query!(
-        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM equipment WHERE deleted_at IS NULL AND id = $1"#,
+        r#"SELECT equipment_code AS equipment_no, equipment_name AS name FROM equipment WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         equipment_uuid,
+        tenant_id,
     )
     .fetch_optional(&state.pool)
     .await;

@@ -2212,3 +2212,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - skip 登记：get_optimization_report 5 处 = 优化报表聚合语义（跨租户管理报表，同 financial_reports 口径，产品决策）。
 - 数据观察：mes.production_orders 2 行 tenant_id NULL（见下 TODO 数据治理项），equipment nil 1 / work_stations nil 2 为平台公共行（nil 语义，非缺口）。
 - 验证：cargo check topems-mes 0 error；SQL 实测 12 项断言全过（po 5/0/27、equip 10/0/11、ws 67/0/69、get_po 1/0——本租户/他租户/nil 全见）。
+
+## 方案C 批3-C：mes equipment 读路径显式租户过滤（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 实施：equipment.rs 6 处（list_equipment 动态 where_clause 加 tenant_filter + count/fetch bind tenant_uuid；create_maintenance 2 处 query_scalar! 设备名/编码查证；list_inspections count + 主查询；create_inspection 设备信息查询）。
+- 新踩坑：equipment_inspections 表无 tenant_id 列（0 行，关联 equipment）→ 改用 EXISTS JOIN mes.equipment 间接租户过滤（e.id=ei.equipment_id AND e.tenant_id=$N AND e.deleted_at IS NULL），语义正确且绕过缺列。宏 bind 序号注意 LIMIT/OFFSET 顺延。
+- 验证：cargo check topems-mes 0 error；SQL 实测 6 项断言全过（eq 10/0/11/11、get_eq 1/0）。
