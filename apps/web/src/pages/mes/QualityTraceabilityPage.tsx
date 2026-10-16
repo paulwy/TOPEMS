@@ -4,25 +4,14 @@ import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { mesApi } from '@/api/mes';
 import i18n from '@/i18n';
 
-type TraceabilityApi = {
-  forward?: (lot: string) => Promise<{ data?: unknown }>;
-  forwardTraceability?: (lot: string) => Promise<{ data?: unknown }>;
-};
-
 const QualityTraceabilityPage: React.FC = () => {
   const { isLoading, refetch } = useQuery({
     queryKey: ['mes-quality-traceability'],
     queryFn: async () => {
       try {
-        const traceability = mesApi.traceability as unknown as TraceabilityApi;
-        if (typeof traceability.forward === 'function') {
-          const res = await traceability.forward('SAMPLE-LOT');
-          return res?.data ?? {};
-        }
-        if (typeof traceability.forwardTraceability === 'function') {
-          const res = await traceability.forwardTraceability('SAMPLE-LOT');
-          return res?.data ?? {};
-        }
+        // 页面无批号输入入口（showSearch=false）：不调用
+        // /traceability/forward/{order_id}（参数为 UUID，无真实工单时
+        // 硬编码示例值会触发 400），改用生产记录列表展示兜底。
         const [records] = await Promise.all([mesApi.records.list({ pageSize: 10 })]);
         return records?.data ?? {};
       } catch (_e) {
