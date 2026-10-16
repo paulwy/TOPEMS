@@ -48,9 +48,10 @@ export const AutomationDashboardPage: React.FC = () => {
         const res = await automationApi.getDashboardStats();
         if (signal?.aborted) return;
         setStats(res.data ?? null);
-      } catch (err) {
+      } catch {
         if (signal?.aborted) return;
-        setError(err instanceof Error ? err.message : t('automation.automation_dashboard_page.k6'));
+        // 后端未实现（404）时静默空态（统计卡片显示 0），避免错误横幅；后端补齐后自然加载
+        setStats(null);
       } finally {
         if (signal?.aborted) return;
         setLoading(false);
