@@ -23,8 +23,21 @@
 - [ ] A5 响应式断点实机核验（断点判定已被 A1 的硬编码绕过：静态结论=移动端分支失效，但 `e2e/ui` 仍有 `Desktop Chrome`+`iPhone 12` 两个 project → **需实机确认 iPhone 12 下实际渲染的是哪套布局**）
 
 ### B. 页面功能巡检
-- [ ] B1 路由可达性：遍历路由表全页面 smoke，断言无 404/白屏/整页崩溃
-- [ ] B2 控制台洁净：断言无 uncaught error / React key warning / 4xx-5xx 失败请求
+- ✅ B1 路由可达性（2026-10-16 实机完成）：遍历路由表全页面 smoke（运行时从源码推导 479 条，去重后 471 条），断言无 404/白屏/整页崩溃 → **硬失败 0**（无 404/白屏/崩溃/踢登录）。执行方式：`full-route-smoke.spec.ts` 分批（ROUTE_FILTER 多前缀过滤 + SMOKE_OUT 独立报告，逐 group 跑 3-27s/组；dev 模式大组合批会被单慢路由拖垮，逐组是稳定执行路径）
+- ✅ B2 控制台洁净（2026-10-16 实机完成）：逐路由收集 console error + HTTP>=400 → **发现 5 控制台错误路由 + 2 HTTP 404，全部修复并复验归零**：
+  - 🐛 **/help/faq、/help/guide 双前缀 404**：`src/api/help.ts` 全仓孤例用 `apiClient`（core client baseURL=/api/core）+ 绝对路径 `API_PATHS.help.*`（已含 /api/core）→ `/api/core/api/core/help/faqs` 404。修复：改相对路径 `/help/faqs`（与全仓 per-service client + 相对路径模式对齐）
+  - 🐛 **/attachments ErrorBoundary 崩溃（comments.map is not a function）**：后端 GET /comments 为 contract stub 返回分页信封 `{items,total}`，`CommentsPage` 当数组用。修复：兼容 `Array.isArray ? 数组 : data.items` 双形态
+  - 🐛 **/mes/analytics/mtbf "Received NaN for attribute"**：`by_equipment_type` 空列表时 `0/0=NaN` + 字段缺失 undefined 入图。修复：除零防护 + `?? 0` 数值兜底
+  - 🐛 **/notification/settings 受控/非受控切换警告**：`SettingsPageTemplate` 各控件 `value={value as X}` 首帧 undefined。修复：`checked={Boolean(value)}` / `value={value ?? ''}` / `?? 0`
+  - 复验：routes 33/mes 39/notification 8 三组重跑，0 hard / 0 console / 0 http 全部归零
+- ✅ B2.5 契约门禁清债（2026-10-16 实机完成）：B1/B2 提交被 pre-commit `web-contract-smoke` 拦截（staged 含 `apps/web/src/api/help.ts` 触发契约实跑，**19 个存量 FAIL 全在后端**）→ 逐域修根因后 **4076/4076 PASS 0 FAIL**：
+  - **qms 6**（spc charts CRUD/data-points/calculate 500）：① 应用既有未跑迁移 91（`qa_spc_contract_cols`：charts 补 9 列 + data_points 补 4 列，已登记 mes._sqlx_migrations）；② `{id}` 端点 `id::TEXT = $1`（bind Uuid）→ `id = $1`（text=uuid 无操作符 500）
+  - **aps 8**（forecasts 404×6 + schedules 500）：前端 `runtime.ts` aps baseURL 默认 `/api/mes`→`/api/aps`（对齐 svc/mes aps_compat 的 `/api/aps` nest + `/api/aps/forecasts→/api/mes/demand-forecasts` 重定向，注释本就写明设计）；schedules 500 = mes handler 占位符冲突（见下）
+  - **mes schedules 1 + mobile production/orders 1**：`production_scheduling.rs`/`production_order.rs` 同款动态 SQL bug——tenant 过滤占位符 `$n+1` 与 `LIMIT ${n+1}` **同号冲突** → bind 不匹配 500 → LIMIT/OFFSET 顺延 `n+2/n+3`
+  - **file 2**（preview/thumbnail 500）：嵌入模式 `SEARCH_PATH=flow,public` → 无前缀 `FROM core_files` 解析到 **flow 影子表（缺 tenant_id 列）** → file 模块全部 SQL 显式 `public.core_files`（download/manage/upload/mod）
+  - **wms 1**（serial PUT 500）：① UPDATE SQL 残留 `'...)0 AND` 非法 `0` + 重复租户条件 → 删；② 依赖不存在的 `TxnArc` 注入 `.expect("rls txn missing")` panic → 改 pool 直连；③ `WHERE id = $2` 与 SET `material_name=$2` **同号** + 第 20 个 bind 超限 → 改 `$20`
+  - **help 1**（`/help/guides/{id}/lessons` 404）：contract_stubs 补 `.route(...post(stub_action))`
+  - 验证：cargo 重编译 → 重启 monolith → `python3 scripts/web_contract_smoke.py` **总计 4076/4076 PASS 0 FAIL**（前一轮 19 FAIL → 4 FAIL → 0）
 - [ ] B3 列表页数据渲染：抽样 crm/mes/wms/erp/finance/hrm/pm/qms 列表非空 + 三态（加载/空/错误）
 - [ ] B4 导航链路：侧栏/顶栏/面包屑/返回正确（复用 `e2e/ui/navigation.spec.ts` / `mobile-navigation.spec.ts`）
 

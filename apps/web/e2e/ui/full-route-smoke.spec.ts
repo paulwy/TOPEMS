@@ -78,10 +78,20 @@ function isNoise(text: string): boolean {
 
 test.describe('B1/B2 全路由巡检 smoke', () => {
   test('遍历路由清单：可达性 + 控制台洁净', async ({ browser }, testInfo) => {
-    test.setTimeout(30 * 60 * 1000);
+    // 479 条路由在 dev 模式单线程遍历超过 1h；支持 ROUTE_FILTER（group 前缀）分批并行
+    test.setTimeout(45 * 60 * 1000);
 
     const webSrc = path.resolve(path.dirname(testInfo.file), '../../src');
-    const inventory = buildInventory(webSrc);
+    let inventory = buildInventory(webSrc);
+    const filter = process.env.ROUTE_FILTER;
+    if (filter) {
+      const prefixes = filter.split(',').map((s) => s.trim()).filter(Boolean);
+      inventory = inventory.filter((e) => prefixes.some((p) => e.group.startsWith(p)));
+    }
+    if (!inventory.length) {
+      console.log(`[B1/B2] ROUTE_FILTER=${filter} 无匹配路由`);
+      return;
+    }
 
     const context = await createAuthenticatedContext(browser);
     const page = await context.newPage();
@@ -107,12 +117,12 @@ test.describe('B1/B2 全路由巡检 smoke', () => {
 
     for (const { group, route } of inventory) {
       reset();
-      await page.goto(route, { waitUntil: 'domcontentloaded' }).catch(() => undefined);
-      await page.waitForTimeout(900);
+      await page.goto(route, { waitUntil: 'domcontentloaded', timeout: 20_000 }).catch(() => undefined);
+      await page.waitForTimeout(400);
 
       let body = (await page.locator('body').innerText().catch(() => '')) || '';
       if (body.trim().length < 30) {
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(800);
         body = (await page.locator('body').innerText().catch(() => '')) || '';
       }
 
@@ -155,7 +165,7 @@ test.describe('B1/B2 全路由巡检 smoke', () => {
       consoleErrorRoutes: consoleHits,
       httpErrorRoutes: httpHits,
     };
-    const outFile = '/tmp/topems-full-route-smoke.json';
+    const outFile = process.env.SMOKE_OUT || '/tmp/topems-full-route-smoke.json';
     fs.writeFileSync(outFile, JSON.stringify(report, null, 2));
 
     const summarize = (arr: Array<Record<string, unknown>>) =>

@@ -54,7 +54,10 @@ const CommentsPage: React.FC = () => {
     queryFn: async () => {
       const response = await commentApi.list(entityType, entityId);
       if (response.success && response.data) {
-        return response.data;
+        // FE-B2: 后端（含 contract stub 与真实上游）返回分页信封 { items, total }，
+        // 兼容数组直返两种形态，避免 comments.map 崩溃
+        const data = response.data as Comment[] | { items?: Comment[] };
+        return Array.isArray(data) ? data : (data.items ?? []);
       }
       return [];
     },

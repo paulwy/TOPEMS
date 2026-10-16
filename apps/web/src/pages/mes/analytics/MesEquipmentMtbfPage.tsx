@@ -28,11 +28,15 @@ export default function MesEquipmentMtbfPage() {
     () => ({
       by_equipment_type: (analyticsData?.by_equipment_type ?? []).map((item) => ({
         type: item.equipment_type,
-        mtbf_hours: item.mtbf_hours,
-        mttr_hours: item.mttr_hours,
+        // FE-B2: 后端字段可能缺失 → 数值兜底 0，避免图表 NaN
+        mtbf_hours: item.mtbf_hours ?? 0,
+        mttr_hours: item.mttr_hours ?? 0,
       })),
       fault_reasons: analyticsData?.fault_reasons ?? [],
-      scatter: analyticsData?.scatter ?? [],
+      scatter: (analyticsData?.scatter ?? []).map((item) => ({
+        label: item.label,
+        oee: item.oee ?? 0,
+      })),
     }),
     [analyticsData]
   );
@@ -41,12 +45,15 @@ export default function MesEquipmentMtbfPage() {
     const avgMtbf = Math.round(
       TREND_12W.reduce((sum, item) => sum + item.mtbf, 0) / TREND_12W.length
     );
-    const avgMttr = Number(
-      (
-        data.by_equipment_type.reduce((sum, item) => sum + item.mttr_hours, 0) /
-        data.by_equipment_type.length
-      ).toFixed(1)
-    );
+    // FE-B2: 空列表除零防护（0/0=NaN 会触发 MUI "Received NaN" 警告）
+    const avgMttr = data.by_equipment_type.length
+      ? Number(
+          (
+            data.by_equipment_type.reduce((sum, item) => sum + item.mttr_hours, 0) /
+            data.by_equipment_type.length
+          ).toFixed(1)
+        )
+      : 0;
     const totalFaults = data.fault_reasons.reduce((sum, item) => sum + item.frequency, 0);
     return [
       {

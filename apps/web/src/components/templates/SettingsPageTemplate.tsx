@@ -305,7 +305,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
         {field.type === 'switch' && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Switch
-              checked={value as boolean}
+              checked={Boolean(value)}
               onChange={(e) => handleFieldChange(field.id, e.target.checked)}
               disabled={isDisabled}
             />
@@ -349,7 +349,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           >
             <InputLabel>{field.label}</InputLabel>
             <Select
-              value={value as string}
+              value={(value ?? '') as string}
               onChange={(e) => handleFieldChange(field.id, e.target.value)}
               disabled={isDisabled}
               label={field.label}
@@ -385,7 +385,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             multiline
             rows={4}
             size='small'
-            value={value as string}
+            value={(value ?? '') as string}
             onChange={(e) => handleFieldChange(field.id, e.target.value)}
             disabled={isDisabled}
             placeholder={field.placeholder}
@@ -399,7 +399,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             fullWidth
             type='password'
             size='small'
-            value={value as string}
+            value={(value ?? '') as string}
             onChange={(e) => handleFieldChange(field.id, e.target.value)}
             disabled={isDisabled}
             placeholder={field.placeholder}
@@ -413,7 +413,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             fullWidth
             type='number'
             size='small'
-            value={value as number}
+            value={(value ?? 0) as number}
             onChange={(e) =>
               handleFieldChange(field.id, e.target.value === '' ? '' : Number(e.target.value))
             }
@@ -428,7 +428,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           <TextField
             fullWidth
             size='small'
-            value={value as string}
+            value={(value ?? '') as string}
             onChange={(e) => handleFieldChange(field.id, e.target.value)}
             disabled={isDisabled}
             placeholder={field.placeholder}
