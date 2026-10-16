@@ -737,7 +737,9 @@ pub async fn list_workflow_versions(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let versions = sqlx::query_as::<_, WorkflowVersion>(
-        "SELECT id, workflow_id, version, definition, change_description, created_by, isactive, created_at
+        // flow.core_workflow_versions.version 为 integer、created_by 为 uuid，
+        // 而 WorkflowVersion 模型二者均为 String，显式 ::text 对齐解码（API 仍输出字符串）
+        "SELECT id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at
          FROM core_workflow_versions
          WHERE workflow_id = $1 AND deleted_at IS NULL
          AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($2::uuid IS NULL OR cw.tenant_id=$2)) 
@@ -845,7 +847,7 @@ pub async fn create_workflow_version(
         "INSERT INTO core_workflow_versions
          (workflow_id, version, definition, change_description, created_by, tenant_id)
          VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING id, workflow_id, version, definition, change_description, created_by, isactive, created_at",
+         RETURNING id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at",
     )
     .bind(workflow_id)
     .bind(&payload.version)
@@ -896,7 +898,8 @@ pub async fn get_workflow_version(
             .and_then(|t| Uuid::parse_str(t).ok())
     };
     let version = sqlx::query_as::<_, WorkflowVersion>(
-        "SELECT id, workflow_id, version, definition, change_description, created_by, isactive, created_at
+        // version integer / created_by uuid → 模型 String，显式 ::text 对齐解码
+        "SELECT id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at
          FROM core_workflow_versions
          WHERE workflow_id = $1 AND id = $2 AND deleted_at IS NULL
          AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) ",
@@ -1004,7 +1007,7 @@ pub async fn activate_workflow_version(
         "UPDATE core_workflow_versions SET isactive = TRUE
          WHERE id = $1 AND workflow_id = $2 AND deleted_at IS NULL
          AND EXISTS (SELECT 1 FROM core_workflows cw WHERE cw.id = core_workflow_versions.workflow_id AND cw.deleted_at IS NULL AND ($3::uuid IS NULL OR cw.tenant_id=$3)) 
-         RETURNING id, workflow_id, version, definition, change_description, created_by, isactive, created_at",
+         RETURNING id, workflow_id, version::text, definition, change_description, created_by::text, isactive, created_at",
     )
     .bind(version_id)
     .bind(workflow_id)

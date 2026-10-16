@@ -83,7 +83,7 @@ impl FinanceService {
         status: Option<String>,
     ) -> Result<Vec<VoucherGenerationRule>, TopemsError> {
         let mut query =
-            "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)".to_string();
+            "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid)".to_string();
 
         if source_type.is_some() {
             query.push_str(" AND source_type = $2");
@@ -112,7 +112,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let rule: VoucherGenerationRule = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000' OR tenant_id = $1::uuid) AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -138,14 +138,17 @@ impl FinanceService {
                 (id, tenant_id, name, source_type, source_filter, mapping_config, 
                  output_voucher_type, status, priority, description, created_at, updated_at, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, 'active', $8, $9, $10, $10, $11)
-            RETURNING *
+            RETURNING id, tenant_id, name, source_type, source_filter::jsonb AS source_filter,
+                      mapping_config, output_voucher_type, status, priority, description,
+                      created_at, updated_at, created_by
             "#),
         )
         .bind(id)
         .bind(tenant_id)
         .bind(&req.name)
         .bind(&req.source_type)
-        .bind(&req.source_filter)
+        // source_filter 列为 TEXT，绑定前序列化为 JSON 文本，避免 jsonb→text 类型不匹配
+        .bind(req.source_filter.as_ref().map(serde_json::Value::to_string))
         .bind(&req.mapping_config)
         .bind(&req.output_voucher_type)
         .bind(priority)
@@ -165,7 +168,7 @@ impl FinanceService {
         req: UpdateGenerationRuleRequest,
     ) -> Result<VoucherGenerationRule, TopemsError> {
         let existing: VoucherGenerationRule = sqlx::query_as(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)
@@ -190,13 +193,16 @@ impl FinanceService {
                 name = $2, source_type = $3, source_filter = $4, mapping_config = $5,
                 output_voucher_type = $6, status = $7, priority = $8, description = $9, updated_at = $10
             WHERE tenant_id = $1 AND id = $11
-            RETURNING *
+            RETURNING id, tenant_id, name, source_type, source_filter::jsonb AS source_filter,
+                      mapping_config, output_voucher_type, status, priority, description,
+                      created_at, updated_at, created_by
             "#),
         )
         .bind(tenant_id)
         .bind(&name)
         .bind(&source_type)
-        .bind(&source_filter)
+        // source_filter 列为 TEXT，绑定前序列化为 JSON 文本
+        .bind(source_filter.as_ref().map(serde_json::Value::to_string))
         .bind(&mapping_config)
         .bind(&output_voucher_type)
         .bind(&status)
@@ -216,7 +222,7 @@ impl FinanceService {
         rule_id: Uuid,
     ) -> Result<(), TopemsError> {
         let existing = sqlx::query_as::<_, VoucherGenerationRule>(
-            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
+            only_own_schema_query!("finance", "SELECT id, tenant_id, name, source_type, source_filter::jsonb AS source_filter, mapping_config, output_voucher_type, status, priority, description, created_at, updated_at, created_by FROM finance_voucher_generation_rules WHERE deleted_at IS NULL AND tenant_id = $1 AND id = $2"),
         )
         .bind(tenant_id)
         .bind(rule_id)

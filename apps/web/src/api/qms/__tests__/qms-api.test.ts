@@ -94,7 +94,15 @@ describe('QMS Module API Tests', () => {
       const { apiClient } = await import('../../client');
       (apiClient.qms.get as vi.Mock).mockResolvedValue({ data: { inspections: [] } });
       await inspectionApi.listChecks();
-      expect(apiClient.qms.get).toHaveBeenCalledWith('/checks');
+      expect(apiClient.qms.get).toHaveBeenCalledWith('/checks', {
+        params: {
+          page: undefined,
+          page_size: undefined,
+          search: undefined,
+          inspection_type: undefined,
+          status: undefined,
+        },
+      });
     });
 
     it('getCheck should call GET /checks/:id', async () => {

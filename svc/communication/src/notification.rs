@@ -2193,15 +2193,14 @@ pub async fn list_channels(
     Query(query): Query<ChannelQuery>,
     headers: HeaderMap,
 ) -> Json<serde_json::Value> {
-    let tenant_id: Option<String> = if claims.is_superuser {
+    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .clone()
-                .unwrap_or_else(|| "default".to_string()),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let page = query.page.unwrap_or(1).max(1);
     let page_size = query.page_size.unwrap_or(20).clamp(1, 100);
@@ -2218,12 +2217,12 @@ pub async fn list_channels(
          rate_limit_per_minute, retry_count, description, \
          created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
          FROM notification_channels \
-         WHERE ($1::text IS NULL OR tenant_id = $1) \
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) \
            AND ($2::text IS NULL OR type = $2) \
            AND ($3::text IS NULL OR status = $3) \
          ORDER BY created_at DESC LIMIT $5 OFFSET $6",
     )
-    .bind(&tenant_id)
+    .bind(tenant_id)
     .bind(type_filter)
     .bind(status_filter)
     .bind(locale)
@@ -2243,9 +2242,9 @@ pub async fn list_channels(
 
     let total = sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM notification_channels \
-         WHERE ($1::text IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR type = $2) AND ($3::text IS NULL OR status = $3)",
+         WHERE ($1::uuid IS NULL OR tenant_id = $1) AND ($2::text IS NULL OR type = $2) AND ($3::text IS NULL OR status = $3)",
     )
-    .bind(&tenant_id)
+    .bind(tenant_id)
     .bind(query.r#type)
     .bind(query.status)
     .fetch_one(&pool)
@@ -2285,15 +2284,14 @@ pub async fn get_channel(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<serde_json::Value> {
-    let tenant_id: Option<String> = if claims.is_superuser {
+    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .clone()
-                .unwrap_or_else(|| "default".to_string()),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     let locale = Locale::from_headers(&headers).as_sql();
     match sqlx::query_as::<_, NotificationChannel>(
@@ -2302,10 +2300,10 @@ pub async fn get_channel(
                 type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, \
          created_at::timestamptz AS created_at, updated_at::timestamptz AS updated_at \
-         FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)",
+         FROM notification_channels WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(&tenant_id)
+    .bind(tenant_id)
     .bind(locale)
     .fetch_optional(&pool)
     .await
@@ -2338,10 +2336,12 @@ pub async fn create_channel(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateChannelRequest>,
 ) -> Json<serde_json::Value> {
+    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil（与本文件其他写入一致）
     let tenant_id = claims
         .tenant_id
-        .clone()
-        .unwrap_or_else(|| "default".to_string());
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or(Uuid::nil());
     let id = Uuid::new_v4();
     let config = req.config.unwrap_or_else(|| serde_json::json!({}));
     let is_default = req.is_default.unwrap_or(false);
@@ -2352,7 +2352,7 @@ pub async fn create_channel(
             "UPDATE notification_channels SET is_default = false, updated_at = NOW() \
              WHERE tenant_id = $1 AND is_default = true",
         )
-        .bind(&tenant_id)
+        .bind(tenant_id)
         .execute(&pool)
         .await;
     }
@@ -2366,7 +2366,7 @@ pub async fn create_channel(
          rate_limit_per_minute, retry_count, description, created_at, updated_at",
     )
     .bind(id)
-    .bind(&tenant_id)
+    .bind(tenant_id)
     .bind(&req.name)
     .bind(&req.r#type)
     .bind(req.provider_id)
@@ -2407,10 +2407,12 @@ pub async fn update_channel(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateChannelRequest>,
 ) -> Json<serde_json::Value> {
+    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil（与 create_channel 一致）
     let tenant_id = claims
         .tenant_id
-        .clone()
-        .unwrap_or_else(|| "default".to_string());
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or(Uuid::nil());
 
     // 如果设为默认，先取消其他默认
     if req.is_default.unwrap_or(false) {
@@ -2418,7 +2420,7 @@ pub async fn update_channel(
             "UPDATE notification_channels SET is_default = false, updated_at = NOW() \
              WHERE tenant_id = $1 AND is_default = true AND id != $2",
         )
-        .bind(&tenant_id)
+        .bind(tenant_id)
         .bind(id)
         .execute(&pool)
         .await;
@@ -2446,7 +2448,7 @@ pub async fn update_channel(
     .bind(req.description)
     .bind(req.status)
     .bind(id)
-    .bind(&tenant_id)
+    .bind(tenant_id)
     .fetch_optional(&pool)
     .await
     {
@@ -2481,13 +2483,15 @@ pub async fn delete_channel(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
+    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败回退 nil
     let tenant_id = claims
         .tenant_id
-        .clone()
-        .unwrap_or_else(|| "default".to_string());
+        .as_deref()
+        .and_then(|t| Uuid::parse_str(t).ok())
+        .unwrap_or(Uuid::nil());
     match sqlx::query("DELETE FROM notification_channels WHERE id = $1 AND tenant_id = $2")
         .bind(id)
-        .bind(&tenant_id)
+        .bind(tenant_id)
         .execute(&pool)
         .await
     {
@@ -2527,23 +2531,22 @@ pub async fn test_channel(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
-    let tenant_id: Option<String> = if claims.is_superuser {
+    // tenant_id 列为 uuid；claims.tenant_id 为字符串，解析失败按 None（超管分支仍为 None）
+    let tenant_id: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        Some(
-            claims
-                .tenant_id
-                .clone()
-                .unwrap_or_else(|| "default".to_string()),
-        )
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
     match sqlx::query_as::<_, NotificationChannel>(
         "SELECT id, tenant_id, name, type, status, provider_id, is_default, config, \
          rate_limit_per_minute, retry_count, description, created_at, updated_at \
-         FROM notification_channels WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)",
+         FROM notification_channels WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)",
     )
     .bind(id)
-    .bind(&tenant_id)
+    .bind(tenant_id)
     .fetch_optional(&pool)
     .await
     {

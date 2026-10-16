@@ -96,6 +96,8 @@ vi.mock('@/i18n', () => ({
   ensureLanguageLoaded: vi.fn().mockResolvedValue(undefined),
   ensureNamespacesLoaded: vi.fn().mockResolvedValue(undefined),
   loadTranslationsForLang: vi.fn().mockResolvedValue(undefined),
+  subscribeResourceVersion: vi.fn(() => () => {}),
+  getResourceVersion: () => 0,
 }));
 
 vi.mock('react-i18next', () => {

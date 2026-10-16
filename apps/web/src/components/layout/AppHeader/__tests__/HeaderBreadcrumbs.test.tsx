@@ -49,6 +49,8 @@ const { i18nMap, translate, mockNavigate, navRegistryMock } = vi.hoisted(() => {
 
 vi.mock('@/i18n', () => ({
   default: { t: translate, language: 'zh-CN', on: vi.fn(), off: vi.fn() },
+  subscribeResourceVersion: vi.fn(() => () => {}),
+  getResourceVersion: () => 0,
 }));
 
 vi.mock('react-i18next', () => ({

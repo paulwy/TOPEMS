@@ -58,7 +58,7 @@ pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Val
     let reports = sqlx::query(
         r#"
         SELECT id, name, description, report_type, status, template_id, created_by, created_at
-        FROM reports
+        FROM bi.reports
         ORDER BY created_at DESC
         "#,
     )
@@ -108,7 +108,7 @@ pub async fn create_report(
 
     let result = sqlx::query(
         r#"
-        INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at, tenant_id)
+        INSERT INTO bi.reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at, tenant_id)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         "#,
     )
@@ -193,7 +193,7 @@ pub async fn create_report_from_template(
 
             let result = sqlx::query(
                 r#"
-                INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at, tenant_id)
+                INSERT INTO bi.reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at, tenant_id)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
                 "#,
             )
@@ -256,7 +256,7 @@ pub async fn get_report(
     let report = sqlx::query(
         r#"
         SELECT id, name, description, report_type, config, template_id, created_by, status, last_run_at, created_at, updated_at
-        FROM reports
+        FROM bi.reports
         WHERE id = $1
         "#,
     )
@@ -314,10 +314,10 @@ pub async fn update_report(
 
     let result = sqlx::query(
         r#"
-        UPDATE reports
+        UPDATE bi.reports
         SET name = COALESCE($1, name),
             description = COALESCE($2, description),
-            status = COALESCE($3::report_status, status),
+            status = COALESCE($3, status),
             config = COALESCE($4, config),
             updated_at = $5
         WHERE id = $6
@@ -360,7 +360,7 @@ pub async fn delete_report(
 
     let result = sqlx::query!(
         r#"
-        UPDATE reports SET deleted_at = NOW()
+        UPDATE bi.reports SET deleted_at = NOW()
         WHERE id = $1
         "#,
         id,
@@ -398,7 +398,7 @@ pub async fn export_report(
     let report = sqlx::query(
         r#"
         SELECT name, report_type, config, output_format
-        FROM reports
+        FROM bi.reports
         WHERE id = $1
         "#,
     )
@@ -502,7 +502,7 @@ pub async fn run_report(
 
     let result = sqlx::query(
         r#"
-        UPDATE reports
+        UPDATE bi.reports
         SET last_run_at = $1
         WHERE id = $2
         "#,

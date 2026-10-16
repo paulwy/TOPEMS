@@ -900,6 +900,8 @@ vi.mock('@/i18n', () => ({
   ensureLanguageLoaded: vi.fn().mockResolvedValue(undefined),
   ensureNamespacesLoaded: vi.fn().mockResolvedValue(undefined),
   loadTranslationsForLang: vi.fn().mockResolvedValue(undefined),
+  subscribeResourceVersion: vi.fn(() => () => {}),
+  getResourceVersion: () => 0,
 }));
 
 // ─── Mock raw i18next (used by @topems/shared-components) ──────────────────

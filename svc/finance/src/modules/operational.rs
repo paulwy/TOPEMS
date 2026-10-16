@@ -421,10 +421,16 @@ pub async fn create_budget(
                 .or_else(|| v.as_str().and_then(|s| s.parse::<i32>().ok()))
         })
         .unwrap_or(0);
+    // 优先读 total_budget；前端旧字段 total_amount 作为回退，避免金额丢失
     let total_budget: rust_decimal::Decimal = req
         .get("total_budget")
         .and_then(|v| v.as_str())
         .and_then(|s| rust_decimal::Decimal::from_str(s).ok())
+        .or_else(|| {
+            req.get("total_amount")
+                .and_then(|v| v.as_f64())
+                .and_then(|f| rust_decimal::Decimal::from_str(&f.to_string()).ok())
+        })
         .unwrap_or_default();
     let used_amount = rust_decimal::Decimal::ZERO;
     let remaining_amount = total_budget - used_amount;
@@ -455,7 +461,12 @@ pub async fn create_budget(
             .and_then(|v| v.as_str())
             .and_then(|s| Uuid::parse_str(s).ok()),
     )
-    .bind(req.get("budget_type").and_then(|v| v.as_str()))
+    // budget_type 列 NOT NULL 无默认值；请求缺省时给合理默认 'department'，避免 23502
+    .bind(
+        req.get("budget_type")
+            .and_then(|v| v.as_str())
+            .unwrap_or("department"),
+    )
     .bind(fiscal_year)
     .bind(total_budget)
     .bind(used_amount)

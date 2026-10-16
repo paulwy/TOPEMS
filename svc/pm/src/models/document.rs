@@ -16,7 +16,9 @@ pub struct ProjectDocument {
     pub version: i32,
     pub status: String,
     pub description: Option<String>,
-    pub tags: Option<Vec<String>>,
+    // 库内 tags 为 jsonb；必须用 serde_json::Value 绑定/解码，裸 Vec<String> 会被
+    // sqlx 按 PG 数组(text[])编码，与 jsonb 列 COALESCE 类型不匹配导致 500。
+    pub tags: Option<serde_json::Value>,
     pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -31,7 +33,7 @@ pub struct CreateDocumentRequest {
     pub file_size: i64,
     pub file_hash: Option<String>,
     pub description: Option<String>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<serde_json::Value>,
     pub created_by: Option<String>,
 }
 
@@ -41,7 +43,7 @@ pub struct UpdateDocumentRequest {
     pub document_type: Option<String>,
     pub status: Option<String>,
     pub description: Option<String>,
-    pub tags: Option<Vec<String>>,
+    pub tags: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -111,7 +113,7 @@ mod tests {
             version: 1,
             status: "active".to_string(),
             description: Some("d".to_string()),
-            tags: Some(vec!["需求".to_string(), "v1".to_string()]),
+            tags: Some(serde_json::json!(["需求", "v1"])),
             created_by: Some("admin".to_string()),
             created_at: now(),
             updated_at: now(),
@@ -159,10 +161,10 @@ mod tests {
     #[test]
     fn test_project_document_empty_tags_roundtrip() {
         let mut d = sample_doc();
-        d.tags = Some(vec![]);
+        d.tags = Some(serde_json::json!([]));
         let s = serde_json::to_string(&d).unwrap();
         let back: ProjectDocument = serde_json::from_str(&s).unwrap();
-        assert_eq!(back.tags.as_ref().unwrap().len(), 0);
+        assert_eq!(back.tags.as_ref().unwrap().as_array().unwrap().len(), 0);
     }
 
     #[test]
@@ -186,7 +188,7 @@ mod tests {
             file_size: 2048,
             file_hash: Some("h".to_string()),
             description: Some("d".to_string()),
-            tags: Some(vec!["t1".to_string()]),
+            tags: Some(serde_json::json!(["t1"])),
             created_by: Some("u".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -239,7 +241,7 @@ mod tests {
             document_type: Some("report".to_string()),
             status: Some("archived".to_string()),
             description: Some("d".to_string()),
-            tags: Some(vec!["t".to_string()]),
+            tags: Some(serde_json::json!(["t"])),
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: UpdateDocumentRequest = serde_json::from_str(&s).unwrap();

@@ -3,6 +3,7 @@ import { pluginApi, pluginApiAggregated } from '../../api/plugin';
 import { pluginAxios } from '../../api/plugin/marketplace';
 import { apiLogger } from '../../utils/logger';
 import { navigationRegistryV2 } from '../navigation/NavigationRegistryV2';
+import { coreModuleNavConfigs } from '../navigation/modules';
 import type { ModuleNavConfig, NavItemConfig, ModuleSuite } from '../navigation/types';
 import i18n from '@/i18n';
 
@@ -485,6 +486,13 @@ export class PluginManager {
   private async syncNavigationRegistry(): Promise<void> {
     await this.fetchNavigationConfig(true);
 
+    // MONO 内建模式：全部内建模块（含 source='plugin' 的专业模块，如 bi/crm/finance）
+    // 已由 lib/navigation/index.ts 统一注册进 navigationRegistryV2。插件市场模式下
+    // pluginApi.listInstalled 返回的才是“真正安装的插件”，listInstalled 为空（插件市场
+    // 暂未上线）时，不能把内建模块误判为“未安装”而注销——否则 /bi/data-analysis 等
+    // 页面级路径无法命中注册表，面包屑落入 URL 段 fallback 输出英文 PascalCase。
+    const builtInCodes = new Set(coreModuleNavConfigs.map((config) => config.code));
+
     const activePlugins = this.getActivePlugins();
     const registeredModules = navigationRegistryV2.getAllModuleCodes();
 
@@ -495,6 +503,7 @@ export class PluginManager {
     }
 
     registeredModules.forEach((moduleCode) => {
+      if (builtInCodes.has(moduleCode)) return;
       if (!this.isPluginActive(moduleCode)) {
         navigationRegistryV2.unregisterModule(moduleCode);
       }
