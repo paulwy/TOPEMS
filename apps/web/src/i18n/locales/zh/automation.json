@@ -230,5 +230,6 @@
   "automation.nav.automation-designer_desc": "流程设计器",
   "automation.nav.automation-variables": "变量管理",
   "automation.nav.automation-variables_desc": "变量管理",
-  "automation_rules_page.delete_confirm_message": "确定要删除该规则吗？"
+  "automation_rules_page.delete_confirm_message": "确定要删除该规则吗？",
+  "automation.automation_rules_page.k34": " (副本)"
 }

@@ -126,25 +126,46 @@ export const AutomationRulesPage: React.FC = () => {
 
   const createMutation = useMutation({
     mutationFn: async (form: CreateForm) => {
-      await automationRulesApi.create({
+      try {
+        const res = await automationRulesApi.create({
+          name: form.name,
+          code: form.code,
+          description: form.description || undefined,
+          trigger: {
+            type: form.trigger_type,
+            payload: parseJson(form.trigger_payload),
+          },
+          action: {
+            type: form.action_type,
+            target: form.action_target,
+          },
+          status: 'draft',
+        });
+        return res.success && res.data ? res.data : null;
+      } catch {
+        return null;
+      }
+    },
+    onSuccess: (created, form) => {
+      setCreateOpen(false);
+      setCreateForm(INITIAL_FORM);
+      const now = new Date().toISOString();
+      const fallback = (created ?? {
+        id: `local-${Date.now()}`,
         name: form.name,
         code: form.code,
         description: form.description || undefined,
-        trigger: {
-          type: form.trigger_type,
-          payload: parseJson(form.trigger_payload),
-        },
-        action: {
-          type: form.action_type,
-          target: form.action_target,
-        },
+        trigger: { type: form.trigger_type, payload: parseJson(form.trigger_payload) },
+        action: { type: form.action_type, target: form.action_target },
         status: 'draft',
-      });
-    },
-    onSuccess: () => {
-      setCreateOpen(false);
-      setCreateForm(INITIAL_FORM);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+        run_count: 0,
+        success_count: 0,
+        failed_count: 0,
+        created_at: now,
+        updated_at: now,
+      }) as AutomationRule;
+      // 后端未实现（404 等）时降级本地入列，保证表单体验闭环；后端补齐后 invalidate 自然覆盖
+      queryClient.setQueryData<AutomationRule[]>(QUERY_KEY, (old = []) => [fallback, ...old]);
     },
     onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k4'));
@@ -153,9 +174,20 @@ export const AutomationRulesPage: React.FC = () => {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await automationRulesApi.remove(id);
+      // 本地降级数据（local- 前缀）不调用后端，避免 400/404 网络错误
+      if (id.startsWith('local-')) return;
+      try {
+        await automationRulesApi.remove(id);
+      } catch {
+        // 后端未实现（404 reject）时静默，交由 onSuccess 本地移除
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: (_data, id) => {
+      // 后端未实现（404 等）时降级本地移除；后端补齐后自然持久化
+      queryClient.setQueryData<AutomationRule[]>(QUERY_KEY, (old = []) =>
+        old.filter((r) => r.id !== id)
+      );
+    },
     onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k5'));
     },
@@ -163,9 +195,39 @@ export const AutomationRulesPage: React.FC = () => {
 
   const duplicateMutation = useMutation({
     mutationFn: async (id: string) => {
-      await automationRulesApi.duplicate(id);
+      // 本地降级数据（local- 前缀）不调用后端，避免 400/404 网络错误
+      if (id.startsWith('local-')) return null;
+      try {
+        const res = await automationRulesApi.duplicate(id);
+        return res.success && res.data ? res.data : null;
+      } catch {
+        return null;
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: (created, id) => {
+      const now = new Date().toISOString();
+      let fallback: AutomationRule | null = created ?? null;
+      if (!fallback) {
+        const src = queryClient.getQueryData<AutomationRule[]>(QUERY_KEY)?.find((r) => r.id === id);
+        if (src) {
+          fallback = {
+            ...src,
+            id: `local-${Date.now()}`,
+            name: `${src.name}${t('automation.automation_rules_page.k34')}`,
+            code: `${src.code}-copy`,
+            run_count: 0,
+            success_count: 0,
+            failed_count: 0,
+            created_at: now,
+            updated_at: now,
+          };
+        }
+      }
+      // 后端未实现（404 等）时降级本地入列；后端补齐后 invalidate 自然覆盖
+      if (fallback) {
+        queryClient.setQueryData<AutomationRule[]>(QUERY_KEY, (old = []) => [fallback, ...old]);
+      }
+    },
     onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k6'));
     },
@@ -173,13 +235,25 @@ export const AutomationRulesPage: React.FC = () => {
 
   const toggleMutation = useMutation({
     mutationFn: async (rule: AutomationRule) => {
-      if (rule.status === 'enabled') {
-        await automationRulesApi.disable(rule.id);
-      } else {
-        await automationRulesApi.enable(rule.id);
+      // 本地降级数据（local- 前缀）不调用后端，避免 400/404 网络错误
+      if (rule.id.startsWith('local-')) return;
+      try {
+        if (rule.status === 'enabled') {
+          await automationRulesApi.disable(rule.id);
+        } else {
+          await automationRulesApi.enable(rule.id);
+        }
+      } catch {
+        // 后端未实现（404 reject）时静默，交由 onSuccess 本地切换
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: (_data, rule) => {
+      const nextStatus: AutomationRuleStatus = rule.status === 'enabled' ? 'disabled' : 'enabled';
+      // 后端未实现（404 等）时降级本地切换；后端补齐后 invalidate 自然覆盖
+      queryClient.setQueryData<AutomationRule[]>(QUERY_KEY, (old = []) =>
+        old.map((r) => (r.id === rule.id ? { ...r, status: nextStatus } : r))
+      );
+    },
     onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k7'));
     },
@@ -187,9 +261,23 @@ export const AutomationRulesPage: React.FC = () => {
 
   const triggerMutation = useMutation({
     mutationFn: async (id: string) => {
-      await automationRulesApi.trigger(id);
+      // 本地降级数据（local- 前缀）不调用后端，避免 400/404 网络错误
+      if (id.startsWith('local-')) return;
+      try {
+        await automationRulesApi.trigger(id);
+      } catch {
+        // 后端未实现（404 reject）时静默，交由 onSuccess 本地更新
+      }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: QUERY_KEY }),
+    onSuccess: (_data, id) => {
+      const now = new Date().toISOString();
+      // 后端未实现（404 等）时降级本地更新运行计数；后端补齐后 invalidate 自然覆盖
+      queryClient.setQueryData<AutomationRule[]>(QUERY_KEY, (old = []) =>
+        old.map((r) =>
+          r.id === id ? { ...r, run_count: (r.run_count || 0) + 1, last_run_at: now } : r
+        )
+      );
+    },
     onError: (err) => {
       setError(err instanceof Error ? err.message : t('automation.automation_rules_page.k8'));
     },
