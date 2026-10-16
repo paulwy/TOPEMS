@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
@@ -38,7 +38,10 @@ const CORE_PORT = BACKEND_PORTS.core; // 8000，从 ports.ts 单一信源读取
 
 // 模块化单体模式：所有后端服务由 topems-server(:8099) 统一承载（VITE_MONOLITH=1）。
 // 独立部署模式（默认）：各服务按 ports.ts 独立端口代理。
-const MONO_TARGET = process.env.VITE_MONOLITH === '1' ? 'http://localhost:8099' : null;
+// VITE_MONOLITH 从 .env.local 经 loadEnv 注入（见 defineConfig 函数签名），
+// 重启 vite 无需再带 shell 前缀。MONO_TARGET 为模块级变量：defineConfig 内
+// 赋值后，顶层 buildServiceProxies()（在 return 时求值）可见。
+let MONO_TARGET: string | null = null;
 
 const SERVICES: ServiceConfig[] = [
   // 核心服务
@@ -660,7 +663,12 @@ function topemsRechartsSplitPlugin(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  MONO_TARGET =
+    loadEnv(mode, process.cwd(), '').VITE_MONOLITH === '1'
+      ? 'http://localhost:8099'
+      : null;
+  return {
   plugins: [
     // V83/V84: dev-tools 为 DEV-only 工具面板（App.tsx import.meta.env.DEV 门控）。
     // V84 起 treeshake:true 下该分支被自然摇掉，生产不再产出；
@@ -1383,4 +1391,5 @@ export default defineConfig({
     },
     proxy: buildServiceProxies(),
   },
+};
 });
