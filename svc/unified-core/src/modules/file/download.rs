@@ -14,6 +14,13 @@ use std::path::Path;
 use crate::AppState;
 use axum::Extension;
 use topems_shared_auth::auth::Claims;
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 use uuid::Uuid;
 
 /// 下载文件
@@ -47,9 +54,10 @@ pub async fn download_file(
 
     // 查询文件信息
     let row = match sqlx::query(
-        "SELECT name, path, mime_type, size, uploader_id AS created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT name, path, mime_type, size, uploader_id AS created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(file_id)
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await
     {
@@ -186,9 +194,10 @@ pub async fn preview_file(
 
     // 查询文件信息
     let row = match sqlx::query(
-        "SELECT name, path, mime_type, size, uploader_id AS created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT name, path, mime_type, size, uploader_id AS created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(file_id)
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await
     {
@@ -325,9 +334,10 @@ pub async fn get_thumbnail(
 
     // 查询文件信息
     let row = match sqlx::query(
-        "SELECT name, path, mime_type, uploader_id AS created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT name, path, mime_type, uploader_id AS created_by FROM core_files WHERE id = $1 AND deleted_at IS NULL AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
     )
     .bind(file_id)
+    .bind(get_tenant_id(&claims))
     .fetch_optional(&state.pool)
     .await
     {

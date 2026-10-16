@@ -2251,3 +2251,8 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 实施：pm 4 处（analytics.rs get_project_status COUNT + 状态分布；report.rs generate_report projects/phases 查证，加 tenant 条件 + bind get_tenant_id），2 文件补 get_tenant_id 定义 + analytics 补 Uuid import。
 - skip 登记：pm get_milestone/get_phase（无 claims 按 project_id 查询，隔离依赖调用方）；master-data 全模块 0 真缺口（disaster/knowledge/ai_governance/commercial 等冻结模块无 Claims，内部流程；schema_registry/persist 无 claims handler）。
 - 验证：cargo check topems-pm 0 error；SQL 实测 6 项全过（proj 9/0/9、get_proj 1/0）。
+
+## 方案C 批3-I：unified-core file 域读路径显式租户过滤（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 实施：download.rs 3 处（download_file/preview_file/get_thumbnail 取文件信息）+ manage.rs 6 处（list_files count 分支 admin/else、update_file/delete_file/move_file/copy_file 权限校验与信息查询），加 tenant 条件 + bind get_tenant_id，2 文件补 get_tenant_id 定义。manage.rs 86 行 _count_query 死代码 skip。
+- 验证：cargo check topems-unified-core 0 error；core_files 空表 0/0/0/0 语义正确。

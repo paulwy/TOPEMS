@@ -12,6 +12,13 @@ use uuid::Uuid;
 use crate::AppState;
 use axum::Extension;
 use topems_shared_auth::auth::Claims;
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 
 #[derive(Debug, Clone, Serialize)]
 struct FileInfo {
@@ -132,14 +139,16 @@ pub async fn list_files(
                 .collect();
 
             // 获取总数
+            let tenant_uuid = get_tenant_id(&claims);
             let count_query = if claims.is_superuser || claims.has_permission("file:admin") {
-                "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL"
+                "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)"
             } else {
-                "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL AND uploader_id = $1"
+                "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL AND uploader_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
             };
 
             let total = match sqlx::query_scalar::<_, i64>(count_query)
                 .bind(user_id)
+                .bind(tenant_uuid)
                 .fetch_one(&state.pool)
                 .await
             {
