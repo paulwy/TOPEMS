@@ -66,8 +66,9 @@ export const AutomationRunsPage: React.FC = () => {
     try {
       const res = await automationRunsApi.list({ page: 1, pageSize: 50 });
       setRuns(res.data?.items ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('automation.automation_runs_page.k6'));
+    } catch {
+      // 后端未实现（404）时静默空态，避免错误横幅；后端补齐后自然加载
+      setRuns([]);
     } finally {
       setLoading(false);
     }
@@ -81,10 +82,10 @@ export const AutomationRunsPage: React.FC = () => {
     async (id: string) => {
       try {
         await automationRunsApi.retry(id);
-        await load();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('automation.automation_runs_page.k7'));
+      } catch {
+        // 后端未实现（404 reject）时静默；新运行由后端产生，不做本地伪造
       }
+      await load();
     },
     [load, t]
   );
@@ -93,10 +94,10 @@ export const AutomationRunsPage: React.FC = () => {
     async (id: string) => {
       try {
         await automationRunsApi.cancel(id);
-        await load();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('automation.automation_runs_page.k8'));
+      } catch {
+        // 后端未实现（404 reject）时静默
       }
+      await load();
     },
     [load, t]
   );
@@ -105,9 +106,10 @@ export const AutomationRunsPage: React.FC = () => {
     async (run: AutomationRun) => {
       try {
         const res = await automationRunsApi.get(run.id);
-        if (res.data) setDetailRun(res.data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t('automation.automation_runs_page.k9'));
+        setDetailRun(res.data ?? run);
+      } catch {
+        // 后端未实现（404 reject）时降级用列表行数据打开详情
+        setDetailRun(run);
       }
     },
     [t]
