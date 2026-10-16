@@ -421,7 +421,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
 
   const queryKey = [schema.entity, 'list', page, pageSize, search, filterParams, extraQueryParams];
 
-  const { data, isPending } = useQuery({
+  const { data, isPending, isError, error, refetch } = useQuery({
     queryKey,
     queryFn: async () => {
       return apiAdapter.list({
@@ -434,6 +434,9 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
     },
 
     staleTime: CACHE_DURATIONS.MEDIUM,
+    // 错误态快速呈现：api-client 层已内建重试（500 等 ≥2 次+退避），
+    // tanstack 不再叠加 retry，避免双层重试导致错误提示延迟 ~10s+（B3 实测）
+    retry: false,
   });
 
   // ── Mutations ──
@@ -857,6 +860,14 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 columns={columns}
                 data={rows}
                 loading={isPending}
+                error={
+                  isError
+                    ? error instanceof Error
+                      ? error.message
+                      : String(error ?? '')
+                    : undefined
+                }
+                onRefresh={refetch}
                 searchable
                 searchPlaceholder={t('common.search', i18n.t('components.crud_page.k23'))}
                 searchValue={search}

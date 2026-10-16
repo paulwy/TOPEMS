@@ -38,7 +38,13 @@
   - **wms 1**（serial PUT 500）：① UPDATE SQL 残留 `'...)0 AND` 非法 `0` + 重复租户条件 → 删；② 依赖不存在的 `TxnArc` 注入 `.expect("rls txn missing")` panic → 改 pool 直连；③ `WHERE id = $2` 与 SET `material_name=$2` **同号** + 第 20 个 bind 超限 → 改 `$20`
   - **help 1**（`/help/guides/{id}/lessons` 404）：contract_stubs 补 `.route(...post(stub_action))`
   - 验证：cargo 重编译 → 重启 monolith → `python3 scripts/web_contract_smoke.py` **总计 4076/4076 PASS 0 FAIL**（前一轮 19 FAIL → 4 FAIL → 0）
-- [ ] B3 列表页数据渲染：抽样 crm/mes/wms/erp/finance/hrm/pm/qms 列表非空 + 三态（加载/空/错误）
+- ✅ B3 列表页数据渲染（2026-10-17 实机完成）：抽样 crm/mes/wms/erp/finance/hrm/pm/qms 8 模块列表页 + 三态：
+  - **正常态**：8 页（/crm/contacts、/mes/production-orders、/wms/inbound-orders、/erp/asset-management、/finance/vouchers、/hrm/employees、/pm/contracts、/qms/quality-control）实机打开 → **数据非空渲染**（表格行/列表容器），0 console error / 0 HTTP≥400
+  - **空态**（mock 空分页 /crm/contacts）：呈现「暂无数据」空态提示，不白屏 ✓
+  - **错误态**（mock 500 /crm/contacts）：呈现「❌ 加载失败 + 重新加载」错误提示，不白屏 ✓（修复前**静默空表格**）
+  - 🐛 **模板级缺陷 1（CrudPage 错误态缺失 + 双层重试延迟）**：`src/components/templates/CrudPage.tsx` 列表 `useQuery` 只解构 `data/isPending`，未传 `error`/`onRefresh` → 500 时**静默空表格无错误提示**；且 axios 层重试（2 次+退避）与 tanstack 默认 retry:3 **叠加** → 错误提示延迟 ~10s+（实测 tbody 长期停留骨架行）。修复：解构 `isError/error/refetch` → 传 `ListPageTemplate`（复用其 ErrorEmptyState + 重试按钮）；`retry: false`（api-client 已内建重试）。**全仓受益**（ListPageTemplate 型 CrudPage 列表页）
+  - 执行方式：新增 `apps/web/e2e/ui/b3-list-render.spec.ts`（8 页正常态 + 2 mock 态），`API_URL=http://localhost:8099 pnpm exec playwright test e2e/ui/b3-list-render.spec.ts --project=chromium --workers=1 --retries=0` → **3 passed (30.7s)**
+  - 遗留：`TreeBuilder` 无错误态渲染（CrudPage tree 视图 500 仍静默，待办 D4 前补）
 - [ ] B4 导航链路：侧栏/顶栏/面包屑/返回正确（复用 `e2e/ui/navigation.spec.ts` / `mobile-navigation.spec.ts`）
 
 ### C. 数据录入（模拟输入）验证
