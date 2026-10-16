@@ -2262,3 +2262,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 实施：instance.rs 4 处（list_instances count 无筛选/有筛选 + 列表无筛选/有筛选，WHERE 尾加 tenant 条件，LIMIT/OFFSET 序号顺延），补 get_tenant_id 定义。
 - skip 登记：delegate.rs 2（core_flow_delegates 无 tenant_id 列 + 用户级 uid 过滤）、monitor.rs 5（get_monitor_statistics 跨租户聚合监控统计，无用户上下文）。
 - 验证：cargo check topems-unified-core 0 error；core_workflow_instances 空表 0/0/0/0 语义正确。
+
+## 方案C 批3-K：unified-core iam/menu/tenant 域读路径核查（2026-10-16）
+- 状态：已核查 + 0 真缺口 + 独立 commit
+- iam 23 处精筛：0 补。列表类（position/role/crud）已有 superuser 全见 + 普通分支租户过滤双分支（含 core_tenant_users EXISTS 模式）；单用户查询用户级 id 过滤（profile_ext/profile/roles/status/permission_verify/batch 等 claims.sub 或 id=$1）；权限目录（core_permissions）平台语义 skip；唯一性检查（username/email）全局约束 skip；认证流程（auth.rs 登录前无 Claims）与平台引导（assign superadmin）skip。
+- menu 1：list_menus/get_menu 无 Claims 上下文 skip；create/update 写路径批2 已处理。
+- tenant 1：租户管理接口（list/get/onboard 等）平台级无 Claims skip。
+- 验证：全文件代码走查；unified-core 批3 至此收官（file 9 + flow 4 补，iam/menu/tenant 0 补）。
