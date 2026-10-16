@@ -1,0 +1,1 @@
+{"db_name": "PostgreSQL", "query": "DELETE FROM wms.inbound_orders WHERE id = $1", "describe": {"columns": [], "parameters": {"Left": ["Uuid"]}, "nullable": []}}
