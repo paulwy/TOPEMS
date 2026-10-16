@@ -1,5 +1,6 @@
 import { navigationRegistryV2 } from './NavigationRegistryV2';
 import {
+  coreModuleNavConfigs,
   adminNavConfig,
   iamNavConfig,
   workflowNavConfig,
@@ -72,6 +73,17 @@ const essentialModules: ModuleNavConfig[] = [
 ];
 
 essentialModules.forEach((config) => {
+  navigationRegistryV2.registerModule(config);
+});
+
+// MONO 内建模式：将全部内建模块（含 bi/crm/finance/asset/im/aps/pdm/rd/srm/lims/gis/tms/ehs 等
+// 专业模块，source='plugin'）统一注册进导航注册表。
+// 背景：插件市场（pluginApi.listInstalled）当前返回空数组，这些模块不会经 PluginManager
+// 动态注册；而面包屑/页签/顶部导航走 navigationRegistryV2.findNavItemByPath/getNavHierarchy，
+// 若模块未注册则 /bi/data-analysis 等页面级路径无法命中，落入 useAutoBreadcrumbs 的 URL 段
+// fallback，输出英文 PascalCase（如 "Data Analysis"）。
+// registerModule 基于 Map.set 幂等，插件市场模式下由 PluginManager 动态注册不受影响。
+coreModuleNavConfigs.forEach((config) => {
   navigationRegistryV2.registerModule(config);
 });
 
