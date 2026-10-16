@@ -2178,3 +2178,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 回填：migration `20261016000088_backfill_null_tenant_id_seed.sql` 统一回填主租户 0001（UPDATE 92/5/13/32/1/13 全成功），_sqlx_migrations 登记成功。
 - 验证：回填后 NULL 全 0；RLS 实测——0001 租户可见 suppliers 92 / push_templates 13，他租户（c51c3a73）各 0——从"全租户公共可见"收敛为"仅 0001 可见"。
 - 备注：RLS policy 的 `tenant_id IS NULL` 分支保留（防御纵深，未来新增无主行仍会公共可见）；push_notifications target_type=all/broadcast 广播语义与 0001 归属兼容；_sqlx_migrations 中 80-87 历史 migration 文件存在但未登记（历史批次直接执行未登记），本次仅登记 88，未扩大范围。
+
+## 方案C 隔离完整性：含 tenant_id 无 RLS 表补齐（2026-10-16）
+- 状态：已补齐，复核查证，独立 commit（migration 20261016000089 已应用并登记）
+- 背景：全库核查发现 83 张表有 tenant_id 列但未启用 RLS（public 58 / mes 12 / iam 11 / lims 1 / crm 1）——均为空表（rows=0），属预留/契约对齐建表（EHS 旧套 qa_ehs_* 40+、dashboard 快照 11、core 平台表跨 schema 镜像、master_data_refs、supply_chain_orders 等）。
+- 补齐：migration 89 DO 块动态对 76 张启用 RLS + FORCE + rls_tenant_isolation 策略（模板与既有表一致：context NULL/空/0000 放行 + tenant_id IS NULL 放行 + tenant_id 匹配），幂等（已启用跳过）。
+- skip（7）：spatial_ref_sys（PostGIS 系统表）、_archive_core_workflow_*（归档只读）、_sqlx_migrations（登记表）、*_backup_20260919 ×3（备份表）。
+- 验证：复核查剩余缺口 7（=skip 7）；抽查 dashboard_stats/qa_ehs_hazards/core_email_queue/data_permissions/supply_chain_orders 均 rls=true force=true 且 policy 存在。
+- 备注：这些表此前无 RLS 时靠代码显式条件；补 RLS 后为纵深兜底（txn SET 上下文 + policy）。空表启用无数据影响；未来 INSERT 走 WITH CHECK（NULL 放行分支兼容未绑租户写入）。dashboard_stats 等代码引用 26 处为既有访问模式，RLS 兼容未改代码。
