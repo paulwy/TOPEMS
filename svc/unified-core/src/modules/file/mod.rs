@@ -10,7 +10,7 @@ use sqlx::PgPool;
 pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_files (
+        CREATE TABLE IF NOT EXISTS public.core_files (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name VARCHAR(256) NOT NULL,
             original_name VARCHAR(256),
@@ -31,7 +31,7 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // 兼容旧表：确保 deleted_at 列存在（V68.2-3 起 is_deleted 列已移除）
-    sqlx::query("ALTER TABLE core_files ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP")
+    sqlx::query("ALTER TABLE public.core_files ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP")
         .execute(pool)
         .await?;
 
@@ -65,13 +65,15 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_folder ON core_files(folder_id)")
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_folder ON public.core_files(folder_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_uploader ON core_files(uploader_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_deleted_at ON core_files(deleted_at) WHERE deleted_at IS NULL")
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_files_uploader ON public.core_files(uploader_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_files_deleted_at ON public.core_files(deleted_at) WHERE deleted_at IS NULL")
         .execute(pool)
         .await?;
     sqlx::query(

@@ -236,4 +236,5 @@ pub fn contract_stub_routes() -> Router<AppState> {
         .route("/help/guides", get(stub_list).post(stub_action))
         .route("/help/guides/categories", get(stub_string_array))
         .route("/help/guides/{id}", get(stub_detail_404))
+        .route("/help/guides/{id}/lessons", post(stub_action))
 }

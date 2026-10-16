@@ -478,13 +478,8 @@ pub async fn update_serial_number(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
-    Extension(txn_arc): Extension<
-        std::sync::Arc<tokio::sync::Mutex<Option<sqlx::Transaction<'static, sqlx::Postgres>>>>,
-    >,
     Json(req): Json<UpdateSerialNumberRequest>,
 ) -> Json<ApiResponse<SerialNumber>> {
-    let mut guard = txn_arc.lock().await;
-    let txn = guard.as_mut().expect("rls txn missing");
     match check_permission(&state.db, &claims, &ModulePermission::WarehouseWrite).await {
         Ok(_) => {}
         Err(e) => return e,
@@ -524,7 +519,7 @@ pub async fn update_serial_number(
             unit_price = COALESCE($17, unit_price),
             remark = COALESCE($18, remark),
             updated_at = $19
-        WHERE id = $2 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))0 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+        WHERE id = $20 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -548,19 +543,11 @@ pub async fn update_serial_number(
     .bind(&req.remark)
     .bind(now)
     .bind(serial_id)
-    .fetch_one(&mut **txn)
+    .fetch_one(&state.db)
     .await;
 
     match result {
-        Ok(serial) => {
-            if let Some(t) = guard.take() {
-                if let Err(e) = t.commit().await {
-                    tracing::error!("事务提交失败: {}", e);
-                    return Json(ApiResponse::error(500, "事务提交失败"));
-                }
-            }
-            Json(ApiResponse::success(serial, "更新序列号成功"))
-        }
+        Ok(serial) => Json(ApiResponse::success(serial, "更新序列号成功")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::from(TopemsError::ResourceNotFound(
             "序列号不存在".to_string(),
         ))),

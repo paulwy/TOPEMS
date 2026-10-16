@@ -87,10 +87,10 @@ pub async fn list_files(
     // 构建查询条件 - 简化版本，避免动态参数问题
     let base_query =
         "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at
-         FROM core_files
+         FROM public.core_files
          WHERE deleted_at IS NULL";
 
-    let _count_query = "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL";
+    let _count_query = "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL";
 
     let result = sqlx::query_as::<
         _,
@@ -141,9 +141,9 @@ pub async fn list_files(
             // 获取总数
             let tenant_uuid = get_tenant_id(&claims);
             let count_query = if claims.is_superuser || claims.has_permission("file:admin") {
-                "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)"
+                "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)"
             } else {
-                "SELECT COUNT(*) FROM core_files WHERE deleted_at IS NULL AND uploader_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
+                "SELECT COUNT(*) FROM public.core_files WHERE deleted_at IS NULL AND uploader_id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"
             };
 
             let total = match sqlx::query_scalar::<_, i64>(count_query)
@@ -224,7 +224,7 @@ pub async fn get_file(
 
     let row = match sqlx::query(
         "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at
-         FROM core_files WHERE id = $1",
+         FROM public.core_files WHERE id = $1",
     )
     .bind(file_id)
     .fetch_optional(&state.pool)
@@ -328,7 +328,7 @@ pub async fn update_file(
 
     // 检查文件是否存在且有权限
     let row = match sqlx::query(
-        "SELECT uploader_id FROM core_files WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(file_id)
     .fetch_optional(&state.pool)
@@ -394,7 +394,10 @@ pub async fn update_file(
     }
 
     updates.push("updated_at = NOW()");
-    let query = format!("UPDATE core_files SET {} WHERE id = $1", updates.join(", "));
+    let query = format!(
+        "UPDATE public.core_files SET {} WHERE id = $1",
+        updates.join(", ")
+    );
 
     // 执行更新查询
     let mut query_builder = sqlx::query(&query).bind(file_id);
@@ -477,31 +480,32 @@ pub async fn delete_file(
     };
 
     // 获取文件信息
-    let row =
-        match sqlx::query("SELECT uploader_id, path, deleted_at FROM core_files WHERE id = $1")
-            .bind(file_id)
-            .fetch_optional(&state.pool)
-            .await
-        {
-            Ok(Some(r)) => r,
-            Ok(None) => {
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": "文件不存在",
-                    "data": null,
-                    "code": 404
-                }));
-            }
-            Err(e) => {
-                tracing::error!("Failed to fetch file: {}", e);
-                return Json(serde_json::json!({
-                    "success": false,
-                    "message": "内部服务器错误",
-                    "data": null,
-                    "code": 500
-                }));
-            }
-        };
+    let row = match sqlx::query(
+        "SELECT uploader_id, path, deleted_at FROM public.core_files WHERE id = $1",
+    )
+    .bind(file_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => {
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "文件不存在",
+                "data": null,
+                "code": 404
+            }));
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch file: {}", e);
+            return Json(serde_json::json!({
+                "success": false,
+                "message": "内部服务器错误",
+                "data": null,
+                "code": 500
+            }));
+        }
+    };
 
     let file_uploader_id: Uuid = row.get("uploader_id");
     let file_path: String = row.get("path");
@@ -527,7 +531,7 @@ pub async fn delete_file(
 
     // 软删除文件
     match sqlx::query(
-        "UPDATE core_files SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
+        "UPDATE public.core_files SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(file_id)
     .execute(&state.pool)
@@ -627,7 +631,7 @@ pub async fn move_file(
 
     // 检查文件权限
     let row = match sqlx::query(
-        "SELECT uploader_id FROM core_files WHERE id = $1 AND deleted_at IS NULL",
+        "SELECT uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(file_id)
     .fetch_optional(&state.pool)
@@ -664,11 +668,13 @@ pub async fn move_file(
     }
 
     // 更新文件的文件夹ID
-    match sqlx::query("UPDATE core_files SET folder_id = $2, updated_at = NOW() WHERE id = $1")
-        .bind(file_id)
-        .bind(target_folder_uuid)
-        .execute(&state.pool)
-        .await
+    match sqlx::query(
+        "UPDATE public.core_files SET folder_id = $2, updated_at = NOW() WHERE id = $1",
+    )
+    .bind(file_id)
+    .bind(target_folder_uuid)
+    .execute(&state.pool)
+    .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
             "success": true,
@@ -743,7 +749,7 @@ pub async fn copy_file(
     };
 
     // 获取源文件信息
-    let row = match sqlx::query("SELECT name, size, mime_type, path, uploader_id FROM core_files WHERE id = $1 AND deleted_at IS NULL")
+    let row = match sqlx::query("SELECT name, size, mime_type, path, uploader_id FROM public.core_files WHERE id = $1 AND deleted_at IS NULL")
         .bind(file_id)
         .fetch_optional(&state.pool)
         .await
@@ -828,7 +834,7 @@ pub async fn copy_file(
     // 保存新文件记录到数据库
     match sqlx::query(
         r#"
-        INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
+        INSERT INTO public.core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
         "#,
     )
@@ -936,7 +942,7 @@ pub async fn set_file_permission(
 
     // 检查文件是否存在
     let exists = match sqlx::query_scalar::<_, bool>(
-        "SELECT EXISTS(SELECT 1 FROM core_files WHERE id = $1 AND deleted_at IS NULL)",
+        "SELECT EXISTS(SELECT 1 FROM public.core_files WHERE id = $1 AND deleted_at IS NULL)",
     )
     .bind(file_id)
     .fetch_one(&state.pool)

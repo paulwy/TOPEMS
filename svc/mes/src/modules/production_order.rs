@@ -310,8 +310,10 @@ pub async fn list_production_orders(
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 1,
-        params.len() + 2
+        // 占位符编号：where/status/search 用 1..n、tenant 用 n+1；LIMIT/OFFSET 顺延 n+2/n+3
+        // （旧代码 n+1 与 tenant 同号冲突 → bind 不匹配 500）
+        params.len() + 2,
+        params.len() + 3
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);

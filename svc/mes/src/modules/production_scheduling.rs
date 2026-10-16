@@ -284,13 +284,15 @@ pub async fn list_production_schedules(
         LEFT JOIN mes.work_stations ws ON ps.work_station_id = ws.id
         LEFT JOIN mes.equipment e ON ps.equipment_id = e.id
         LEFT JOIN mes.production_processes pp ON ps.process_id = pp.id
-        {}
+        {} 
         ORDER BY ps.planned_start_time DESC, ps.priority DESC
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 1,
-        params.len() + 2
+        // 占位符编号：where_clause 内 status/search 用 1..n、tenant 用 n+1；
+        // LIMIT/OFFSET 顺延 n+2/n+3（旧代码 n+1 与 tenant 同号冲突 → bind 不匹配 500）
+        params.len() + 2,
+        params.len() + 3
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);

@@ -255,7 +255,7 @@ pub async fn get_spc_chart(
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id::TEXT = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"SELECT id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at FROM qms.qa_spc_charts WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"#)).bind(id).bind(tenant_opt)
     .fetch_one(&state.pool)
     .await;
 
@@ -296,7 +296,7 @@ pub async fn update_spc_chart(
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), chart_name = COALESCE($4, chart_name), process_name = COALESCE($5, process_name), unit = COALESCE($6, unit), usl = COALESCE($7, usl), lsl = COALESCE($8, lsl), target = COALESCE($9, target), sample_size = COALESCE($10, sample_size), sampling_frequency = COALESCE($11, sampling_frequency), description = COALESCE($12, description), ucl = COALESCE($13, ucl), cl = COALESCE($14, cl), lcl = COALESCE($15, lcl), status = COALESCE($16, status), updated_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $17 RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at"#)).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.chart_name).bind(req.process_name).bind(req.unit).bind(req.usl).bind(req.lsl).bind(req.target).bind(req.sample_size).bind(req.sampling_frequency).bind(req.description).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
+    let chart = sqlx::query_as::<_, SpcChart>(only_own_schema_query!("qms", r#"UPDATE qms.qa_spc_charts SET chart_type = COALESCE($2, chart_type), parameter_name = COALESCE($3, parameter_name), chart_name = COALESCE($4, chart_name), process_name = COALESCE($5, process_name), unit = COALESCE($6, unit), usl = COALESCE($7, usl), lsl = COALESCE($8, lsl), target = COALESCE($9, target), sample_size = COALESCE($10, sample_size), sampling_frequency = COALESCE($11, sampling_frequency), description = COALESCE($12, description), ucl = COALESCE($13, ucl), cl = COALESCE($14, cl), lcl = COALESCE($15, lcl), status = COALESCE($16, status), updated_at = NOW() WHERE id = $1 AND tenant_id = $17 RETURNING id::TEXT, tenant_id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, chart_name, process_name, unit, usl, lsl, target, sample_size, sampling_frequency, description, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at, updated_at"#)).bind(id).bind(req.chart_type).bind(req.parameter_name).bind(req.chart_name).bind(req.process_name).bind(req.unit).bind(req.usl).bind(req.lsl).bind(req.target).bind(req.sample_size).bind(req.sampling_frequency).bind(req.description).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.status).bind(tenant_id)
     .fetch_one(&state.pool)
     .await;
 
@@ -337,7 +337,7 @@ pub async fn delete_spc_chart(
 
     let result = sqlx::query(only_own_schema_query!(
         "qms",
-        r#"UPDATE qms.qa_spc_charts SET deleted_at = NOW() WHERE id::TEXT = $1 AND tenant_id = $2"#
+        r#"UPDATE qms.qa_spc_charts SET deleted_at = NOW() WHERE id = $1 AND tenant_id = $2"#
     ))
     .bind(id)
     .bind(tenant_id)

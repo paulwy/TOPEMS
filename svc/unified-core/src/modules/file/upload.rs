@@ -147,7 +147,7 @@ pub async fn upload_file(
 
         match sqlx::query(
             r#"
-            INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
+            INSERT INTO public.core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
@@ -312,7 +312,7 @@ pub async fn upload_multiple(
 
         match sqlx::query(
             r#"
-            INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
+            INSERT INTO public.core_files (id, name, size, mime_type, path, folder_id, uploader_id, tenant_id, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())
             "#,
         )
