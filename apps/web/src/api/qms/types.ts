@@ -960,6 +960,9 @@ export interface EightDReportBackend {
   created_by?: string;
   created_at: string;
   updated_at: string;
+  /** 表单/列表展示兼容（后端无独立列，可空） */
+  problem_date?: string;
+  impact_scope?: string;
 }
 
 export interface CreateEightDReportRequestBackend {
@@ -1031,6 +1034,23 @@ export interface EightDReport {
   currentStage: number;
   teamLeader?: string;
   teamMembers?: string[];
+  /** 列表页 schema snake_case 列兼容（CrudPage 按字段名取值） */
+  team_leader?: string;
+  due_date?: string;
+  created_at?: string;
+  problem_date?: string;
+  impact_scope?: string;
+  d3_effectiveness_check?: string;
+  d5_validation_standard?: string;
+  d6_verification_result?: string;
+  d6_data_comparison?: string;
+  d6_is_effective?: string | boolean;
+  d7_preventive_action?: string;
+  d7_updated_documents?: string;
+  d7_target_date?: string;
+  d8_approver?: string;
+  d8_sign_off_date?: string;
+  d8_closure_summary?: string;
   d1TeamEstablished: boolean;
   d2ProblemDescribed: boolean;
   d3ContainmentImplemented: boolean;
