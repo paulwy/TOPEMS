@@ -2186,3 +2186,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - skip（7）：spatial_ref_sys（PostGIS 系统表）、_archive_core_workflow_*（归档只读）、_sqlx_migrations（登记表）、*_backup_20260919 ×3（备份表）。
 - 验证：复核查剩余缺口 7（=skip 7）；抽查 dashboard_stats/qa_ehs_hazards/core_email_queue/data_permissions/supply_chain_orders 均 rls=true force=true 且 policy 存在。
 - 备注：这些表此前无 RLS 时靠代码显式条件；补 RLS 后为纵深兜底（txn SET 上下文 + policy）。空表启用无数据影响；未来 INSERT 走 WITH CHECK（NULL 放行分支兼容未绑租户写入）。dashboard_stats 等代码引用 26 处为既有访问模式，RLS 兼容未改代码。
+
+## 审计完整性：migration 80-87 补登记 _sqlx_migrations（2026-10-16）
+- 状态：已补登记，无代码改动，独立 commit
+- 背景：database/migrations/ 下 20261015000080~20261016000087 共 8 个 migration 文件存在但未登记 _sqlx_migrations（历史批次 psql 直接执行未登记），审计链断裂。
+- 核查：80/81（policy nil 分支——finance 180 policy 含 nil 分支）、82（key 统一——无 current_tenant_id 残留）、83（125 表 backfill——抽查 hrm.initialization_logs/portal_todos/core_dict_items/wms.replenishment_suggestions/srm.quotations/finance.payables/mes.production_records NULL 全 0）、84（cqrs_projection_progress.tenant_id 列存在）、85/86/87（qms/ehs timestamptz 列类型确认）——**全部已在 DB 生效**。
+- 补登记：INSERT _sqlx_migrations 8 条（checksum 占位 manual-via-migrate-sh，与 77-79 惯例一致），ON CONFLICT 幂等。登记后 80-89 连续无缺。
