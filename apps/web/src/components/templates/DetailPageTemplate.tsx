@@ -128,6 +128,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   onEdit,
   onDelete,
   onShare,
+  onDownload,
   tabs,
   defaultTab,
   sections,
