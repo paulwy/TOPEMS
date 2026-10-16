@@ -418,7 +418,7 @@ async fn run_aps_scheduling(
     let _weights = request.optimization_weights.clone().unwrap_or_default();
 
     // 1. 获取待排程订单
-    let orders = fetch_pending_orders(pool, request.order_ids.as_ref()).await?;
+    let orders = fetch_pending_orders(pool, request.order_ids.as_ref(), tenant_id).await?;
     if orders.is_empty() {
         return Ok(ApsScheduleResult {
             schedule_id: Uuid::new_v4(),
@@ -436,13 +436,13 @@ async fn run_aps_scheduling(
     }
 
     // 2. 获取可用工位
-    let stations = fetch_available_work_stations(pool).await?;
+    let stations = fetch_available_work_stations(pool, tenant_id).await?;
     if stations.is_empty() {
         return Err(TopemsError::BusinessLogic("没有可用的工位".to_string()));
     }
 
     // 3. 获取设备信息
-    let equipment_map = fetch_equipment_map(pool).await?;
+    let equipment_map = fetch_equipment_map(pool, tenant_id).await?;
 
     // 4. 按优先级排序订单
     let mut sorted_orders = orders.clone();
@@ -466,7 +466,7 @@ async fn run_aps_scheduling(
 
     for order in &sorted_orders {
         // 6.1 检查物料齐套性
-        let material_ready = check_material_availability(pool, order.id, order.quantity).await?;
+        let material_ready = check_material_availability(pool, order.id, order.quantity, tenant_id).await?;
 
         // 6.2 选择合适的工位
         let suitable_stations: Vec<&WorkStationInfo> =
@@ -692,6 +692,7 @@ fn calculate_feasibility_score(
 async fn fetch_pending_orders(
     pool: &sqlx::PgPool,
     order_ids: Option<&Vec<Uuid>>,
+    tenant_id: Uuid,
 ) -> Result<Vec<WorkOrderInfo>, TopemsError> {
     let query = if let Some(ids) = order_ids {
         if ids.is_empty() {
@@ -703,10 +704,12 @@ async fn fetch_pending_orders(
             SELECT id, order_number AS order_no, product_name, product_code, quantity,
                    planned_start_date, planned_end_date, status, priority
             FROM mes.production_orders
-            WHERE id IN ({}) AND status IN ('pending', 'released')
+            WHERE id IN ({0}) AND status IN ('pending', 'released')
+                   AND (${1}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = ${1}::uuid)
             ORDER BY priority DESC, planned_start_date ASC
             "#,
-            placeholders.join(", ")
+            placeholders.join(", "),
+            ids.len() + 1
         )
     } else {
         r#"
@@ -714,6 +717,7 @@ async fn fetch_pending_orders(
                planned_start_date, planned_end_date, status, priority
         FROM mes.production_orders
         WHERE status IN ('pending', 'released')
+               AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         ORDER BY priority DESC, planned_start_date ASC
         "#
         .to_string()
@@ -725,6 +729,7 @@ async fn fetch_pending_orders(
             query_builder = query_builder.bind(*id);
         }
     }
+    query_builder = query_builder.bind(tenant_id);
 
     let rows = query_builder
         .fetch_all(pool)
@@ -770,15 +775,17 @@ async fn fetch_pending_orders(
 
 async fn fetch_available_work_stations(
     pool: &sqlx::PgPool,
+    tenant_id: Uuid,
 ) -> Result<Vec<WorkStationInfo>, TopemsError> {
     let rows = sqlx::query(
         r#"
         SELECT id, station_name AS name, capacity, status, equipment_id, process_id
         FROM mes.work_stations
-        WHERE status = 'active'
+        WHERE status = 'active' AND ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         ORDER BY capacity DESC
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("获取工位信息失败: {}", e)))?;
@@ -806,13 +813,16 @@ async fn fetch_available_work_stations(
 
 async fn fetch_equipment_map(
     pool: &sqlx::PgPool,
+    tenant_id: Uuid,
 ) -> Result<HashMap<Uuid, EquipmentInfo>, TopemsError> {
     let rows = sqlx::query(
         r#"
         SELECT id, equipment_name AS name, status, next_maintenance_date
         FROM mes.equipment
+        WHERE ($1::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $1::uuid)
         "#,
     )
+    .bind(tenant_id)
     .fetch_all(pool)
     .await
     .map_err(|e| TopemsError::DatabaseQuery(format!("获取设备信息失败: {}", e)))?;
@@ -845,11 +855,13 @@ async fn check_material_availability(
     pool: &sqlx::PgPool,
     order_id: Uuid,
     _order_quantity: f64,
+    tenant_id: Uuid,
 ) -> Result<bool, TopemsError> {
     // 获取订单关联的 BOM（简化逻辑：通过产品编码匹配）
     // 实际场景需要更复杂的物料需求计算
-    let product = sqlx::query(r#"SELECT product_code FROM mes.production_orders WHERE id = $1"#)
+    let product = sqlx::query(r#"SELECT product_code FROM mes.production_orders WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#)
         .bind(order_id)
+        .bind(tenant_id)
         .fetch_optional(pool)
         .await
         .map_err(|e| TopemsError::DatabaseQuery(format!("查询产品信息失败: {}", e)))?;
@@ -1090,10 +1102,11 @@ pub async fn check_schedule_constraints(
             SELECT id, order_number AS order_no, product_name, product_code, quantity,
                    planned_start_date, planned_end_date
             FROM mes.production_orders
-            WHERE id = $1
+            WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)
             "#,
         )
         .bind(order_id)
+        .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
         .fetch_optional(&state.pool)
         .await;
 
@@ -1139,10 +1152,11 @@ pub async fn check_schedule_constraints(
                 FROM mes.bom_items bi
                 JOIN mes.material_boms b ON bi.bom_id = b.id
                 JOIN mes.production_orders po ON po.product_code = b.product_code
-                WHERE po.id = $1
+                WHERE po.id = $1 AND ($2::uuid IS NULL OR po.tenant_id = $2::uuid)
                 "#,
             )
             .bind(order_id)
+            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_all(&state.pool)
             .await;
 
@@ -1176,10 +1190,11 @@ pub async fn check_schedule_constraints(
                 r#"
                 SELECT id, equipment_name, status, next_maintenance_date
                 FROM mes.equipment
-                WHERE status = 'normal'
+                WHERE status = 'normal' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
                 LIMIT 5
                 "#,
             )
+            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_all(&state.pool)
             .await;
 
@@ -1220,10 +1235,11 @@ pub async fn check_schedule_constraints(
                 r#"
                 SELECT id, team_name, member_count
                 FROM mes.teams
-                WHERE status = 'active'
+                WHERE status = 'active' AND ($1::uuid IS NULL OR tenant_id = $1::uuid)
                 LIMIT 5
                 "#,
             )
+            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_all(&state.pool)
             .await;
 

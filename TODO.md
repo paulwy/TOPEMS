@@ -2201,3 +2201,14 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - skip 登记：financial_reports 16 处 + pg_materialized_views 10 处 = 管理报表/物化视图跨租户聚合语义（产品决策，非机械补）；pg_event_store 9 + database.rs 2 = cqrs 事件流/信息 schema 平台内部；forecast_v53 3 + risk_v54 1 = 冻结模块内部流程。
 - 数据修复：migration 90 回填 finance.budgets 61 行 NULL tenant_id 归主租户 0001（2026-10-05~15 空壳测试预算，与 88 批同口径），应用 + 登记。
 - 验证：cargo check topems-finance 0 error；SQL 双租户实测 13 项断言全过（0001 可见 1/61、他租户越权 0、superuser None 全见，ROLLBACK 零残留）。
+
+## 方案C 批3-B：mes APS 读路径显式租户过滤（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 背景：mes 无 txn crate，批1 声明覆盖但实际 SELECT 读路径无显式租户条件（粗扫 47 有 ctx 候选，本批做 APS 模块 9 处）。
+- 实施：
+  - handler 层 check_schedule_constraints 4 处（订单 WHERE id / BOM JOIN po.tenant_id / 设备 status+tenant / 团队 status+tenant）——Claims bind 模式 `($N::uuid IS NULL OR tenant_id=$N::uuid)`（superuser None 全见）。
+  - 内部链 4 函数（fetch_pending_orders 双分支 / fetch_available_work_stations / fetch_equipment_map / check_material_availability）——tenant_id: Uuid 传参 + `($N::uuid = nil OR tenant_id=$N::uuid)`（nil=全见，与 handler 的 Uuid::nil() 语义一致）+ 4 调用处传参。
+  - fetch_pending_orders IN 分支占位符用 Rust format! `{0}`/`{1}`（ids.len()+1 为 tenant 序号）。
+- skip 登记：get_optimization_report 5 处 = 优化报表聚合语义（跨租户管理报表，同 financial_reports 口径，产品决策）。
+- 数据观察：mes.production_orders 2 行 tenant_id NULL（见下 TODO 数据治理项），equipment nil 1 / work_stations nil 2 为平台公共行（nil 语义，非缺口）。
+- 验证：cargo check topems-mes 0 error；SQL 实测 12 项断言全过（po 5/0/27、equip 10/0/11、ws 67/0/69、get_po 1/0——本租户/他租户/nil 全见）。
