@@ -2008,7 +2008,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 批2-A finance DELETE 端到端实测（闭环）：构造临时 voucher（0001 + c51c3a73 租户各 1，draft，含 lines），tenant 0001 走 PUT /api/finance/vouchers/{id}：
   - 更新本租户 voucher → 200，DELETE 本租户旧 lines（物理删）+ 重插 50/50（existing 查询 WHERE tenant_id=$1 AND id=$2 + DELETE WHERE voucher_id=$1 AND tenant_id=$2 均生效）
   - 更新他租户 voucher → 404 记录不存在（existing 查询租户约束拦截），他租户 lines 原样（100/100）——不越权，DELETE 约束为纵深防御
-  - 测试数据已清理（0 残留）；update_payment/generate_vouchers 同模式（代码审查确认租户约束完整），payment 流程依赖发票数据未单独实测，登记待补
+  - 测试数据已清理（0 残留）；update_payment/generate_vouchers 同模式（代码审查确认租户约束完整）。**payment 流程补测（2026-10-16 本会话，实测闭环，原「登记待补」项关闭）**：铸双租户 JWT（0001 + c51c3a73-6cd4-49eb-b21e-efd7231e445b，permissions=finance:admin）对 monolith :8099 实测——① 列表隔离：各租户仅见己方 core_finance_payments；② 跨租户 GET/PUT/DELETE 均 code 404「记录不存在」（读门 SELECT tenant_id=$1 拦截，写/删为纵深防御）；③ 本租户 PUT 200：补 ZT 测试科目 1002/2202 后全链路（voucher lines 重写 + payments 更新 + payment items 落库 tenant_id=0001）成功；④ 软删闭环。测试数据/科目已清理 0 残留
 
 ## 方案C 批2-I：erp.customers 写路径租户约束首批（7 处，实测闭环）
 - 状态：已实测闭环，待提交
