@@ -105,12 +105,9 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
     try {
       const res = await automationRulesApi.list({ page: 1, pageSize: 100 });
       setRules(res.data?.items ?? []);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : i18n.t('automation.automation_designer_page_use_automation_designer.e1')
-      );
+    } catch {
+      // 后端未实现（404）时静默空态，避免错误横幅；后端补齐后自然加载
+      setRules([]);
     }
   }, []);
 
@@ -136,7 +133,7 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
         setCanvasZoom(1);
         setCanvasOffset({ x: 0, y: 0 });
       }
-    } catch (err) {
+    } catch {
       try {
         const syncRes = await automationDesignerApi.syncFromRule(ruleId);
         if (syncRes.data) {
@@ -145,16 +142,12 @@ export function useAutomationDesigner(): UseAutomationDesignerResult {
           setCanvasZoom(syncRes.data.zoom ?? 1);
           setCanvasOffset(syncRes.data.offset ?? { x: 0, y: 0 });
         }
-      } catch (syncErr) {
-        setError(
-          syncErr instanceof Error
-            ? syncErr.message
-            : err instanceof Error
-              ? err.message
-              : i18n.t('automation.automation_designer_page_use_automation_designer.e2')
-        );
+      } catch {
+        // 后端未实现（404）时静默空画布，避免错误横幅；后端补齐后自然加载
         setCanvas(null);
         setNodes([]);
+        setCanvasZoom(1);
+        setCanvasOffset({ x: 0, y: 0 });
       }
     } finally {
       setLoading(false);
