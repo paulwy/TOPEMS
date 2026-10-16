@@ -148,6 +148,15 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
   headerContent,
   footerContent,
   defaultColumnWidth = 300,
+  // 声明但本模板不消费的回调/配置：显式提取，避免随 ...props 透传到
+  // DOM 触发 React "Unknown event handler property" / "does not recognize" 警告
+  //（页面仍可传这些 props，看板内部逻辑交由子组件/宿主处理）。
+  onCardDelete,
+  onCardEdit,
+  onCardArchive,
+  filterConfig,
+  filters,
+  onFilterChange,
   ...props
 }) => {
   const theme = useTheme();
