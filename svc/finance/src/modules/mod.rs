@@ -1859,9 +1859,10 @@ pub async fn get_template_usage_stats_handler(
     .unwrap_or(0);
     let generated_voucher_count: i64 = sqlx::query_scalar(only_own_schema_query!(
         "finance",
-        "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE template_id = $1"
+        "SELECT COUNT(*) FROM finance.core_finance_vouchers WHERE template_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
     ))
     .bind(template_id)
+    .bind(tenant_id)
     .fetch_one(&state.pool)
     .await
     .unwrap_or(0);
@@ -1989,9 +1990,10 @@ async fn update_template_entry_handler(
     let existing: crate::services::finance::voucher_template::VoucherTemplateLine =
         match sqlx::query_as(only_own_schema_query!(
             "finance",
-            "SELECT * FROM finance_voucher_template_lines WHERE id = $1"
+            "SELECT * FROM finance_voucher_template_lines WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"
         ))
         .bind(entry_id)
+        .bind(tenant_id)
         .fetch_one(&state.pool)
         .await
         {
@@ -2117,9 +2119,10 @@ pub async fn reorder_template_entries_handler(
         Vec<crate::services::finance::voucher_template::VoucherTemplateLine>,
         sqlx::Error,
     > = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
+        only_own_schema_query!("finance", "SELECT * FROM finance_voucher_template_lines WHERE template_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order, created_at"),
     )
     .bind(template_id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
     match lines {

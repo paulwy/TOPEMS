@@ -2192,3 +2192,12 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 背景：database/migrations/ 下 20261015000080~20261016000087 共 8 个 migration 文件存在但未登记 _sqlx_migrations（历史批次 psql 直接执行未登记），审计链断裂。
 - 核查：80/81（policy nil 分支——finance 180 policy 含 nil 分支）、82（key 统一——无 current_tenant_id 残留）、83（125 表 backfill——抽查 hrm.initialization_logs/portal_todos/core_dict_items/wms.replenishment_suggestions/srm.quotations/finance.payables/mes.production_records NULL 全 0）、84（cqrs_projection_progress.tenant_id 列存在）、85/86/87（qms/ehs timestamptz 列类型确认）——**全部已在 DB 生效**。
 - 补登记：INSERT _sqlx_migrations 8 条（checksum 占位 manual-via-migrate-sh，与 77-79 惯例一致），ON CONFLICT 幂等。登记后 80-89 连续无缺。
+
+## 方案C 批3：finance 读路径显式租户过滤（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit（代码批 + migration 90）
+- 背景：finance 为无 txn crate（pool 直连无 RLS SET 上下文），批2 已补写路径（INSERT current_setting / UPDATE/DELETE 显式），但 SELECT 读路径未隔离——写隔离读不隔离不对称。粗扫 365 SELECT → 精扫 67 候选 → 甄别真缺口 15 处。
+- 实施：Claims bind 模式 `($N::uuid IS NULL OR tenant_id = $N::uuid)`（superuser None 全见），非内联 current_setting（pool 直连无 SET 时内联 nil 分支会全量放行，无隔离价值）。bind 用 `claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())`（Option<String>→Option<Uuid>）。
+- 修改：operational.rs 11 处（list/get × expenses/budgets/receivables/payables 7 函数 + COUNT 4 处）、mod.rs 3 处（get_template_usage_stats 1862 / update_template_entry 1992 / reorder 2120）、voucher_template_entries.rs 1 处（reorder_entries 280）——共 15 处。
+- skip 登记：financial_reports 16 处 + pg_materialized_views 10 处 = 管理报表/物化视图跨租户聚合语义（产品决策，非机械补）；pg_event_store 9 + database.rs 2 = cqrs 事件流/信息 schema 平台内部；forecast_v53 3 + risk_v54 1 = 冻结模块内部流程。
+- 数据修复：migration 90 回填 finance.budgets 61 行 NULL tenant_id 归主租户 0001（2026-10-05~15 空壳测试预算，与 88 批同口径），应用 + 登记。
+- 验证：cargo check topems-finance 0 error；SQL 双租户实测 13 项断言全过（0001 可见 1/61、他租户越权 0、superuser None 全见，ROLLBACK 零残留）。

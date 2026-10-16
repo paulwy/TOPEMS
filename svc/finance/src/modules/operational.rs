@@ -40,7 +40,7 @@ use topems_shared_core::response::{PaginatedResponse, PaginationParams};
 )]
 pub async fn list_expenses(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Value>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -57,12 +57,14 @@ pub async fn list_expenses(
            FROM expenses
            WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
+             AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
     .fetch_all(&state.pool)
     .await;
 
@@ -72,10 +74,12 @@ pub async fn list_expenses(
             let total: i64 = sqlx::query_scalar(
                 only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM expenses
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)"#),
+                     AND ($2::text IS NULL OR status = $2)
+                     AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -174,7 +178,7 @@ pub async fn create_expense(
 )]
 pub async fn get_expense(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Value>> {
     let result = sqlx::query(only_own_schema_query!(
@@ -182,9 +186,10 @@ pub async fn get_expense(
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
                   description, expense_date, receipt_count, status, approver_id, approved_at,
                   reimbursed_at, created_at, updated_at
-           FROM expenses WHERE id = $1"#
+           FROM expenses WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
     .fetch_optional(&state.pool)
     .await;
 
@@ -341,7 +346,7 @@ pub async fn delete_expense(
 )]
 pub async fn list_budgets(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Value>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -353,11 +358,12 @@ pub async fn list_budgets(
         r#"SELECT id, tenant_id, department_id, budget_type, fiscal_year,
                   total_budget, used_amount, remaining_amount, usage_rate, status,
                   created_at, updated_at, deleted_at
-           FROM budgets WHERE deleted_at IS NULL
+           FROM budgets WHERE deleted_at IS NULL AND ($3::uuid IS NULL OR tenant_id = $3::uuid)
            ORDER BY created_at DESC LIMIT $1 OFFSET $2"#
     ))
     .bind(page_size)
     .bind(offset)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
     .fetch_all(&state.pool)
     .await;
 
@@ -366,8 +372,9 @@ pub async fn list_budgets(
             let items: Vec<Value> = rows.iter().map(row_to_budget_json).collect();
             let total: i64 = sqlx::query_scalar(only_own_schema_query!(
                 "finance",
-                "SELECT COUNT(*) FROM budgets WHERE deleted_at IS NULL"
+                "SELECT COUNT(*) FROM budgets WHERE deleted_at IS NULL AND ($1::uuid IS NULL OR tenant_id = $1::uuid)"
             ))
+            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -623,7 +630,7 @@ pub async fn delete_budget(
 )]
 pub async fn list_receivables(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Value>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -640,12 +647,14 @@ pub async fn list_receivables(
            FROM receivables
            WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
+             AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
     .fetch_all(&state.pool)
     .await;
 
@@ -655,10 +664,12 @@ pub async fn list_receivables(
             let total: i64 = sqlx::query_scalar(
                 only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM receivables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR customer_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)"#),
+                     AND ($2::text IS NULL OR status = $2)
+                     AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -759,7 +770,7 @@ pub async fn create_receivable(
 )]
 pub async fn get_receivable(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Value>> {
     let result = sqlx::query(only_own_schema_query!(
@@ -767,9 +778,10 @@ pub async fn get_receivable(
         r#"SELECT id, invoice_number, customer_name, project_id, contract_id, project_name,
                   amount, invoice_date, due_date, status, received_amount, payment_schedule,
                   created_at, updated_at
-           FROM receivables WHERE id = $1"#
+           FROM receivables WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
     .fetch_optional(&state.pool)
     .await;
 
@@ -902,7 +914,7 @@ pub async fn delete_receivable(
 )]
 pub async fn list_payables(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<PaginatedResponse<Value>>> {
     let page = params.page.unwrap_or(1).max(1);
@@ -919,12 +931,14 @@ pub async fn list_payables(
            FROM payables
            WHERE ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
+             AND ($5::uuid IS NULL OR tenant_id = $5::uuid)
            ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
     ))
     .bind(&search_pattern)
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
     .fetch_all(&state.pool)
     .await;
 
@@ -934,10 +948,12 @@ pub async fn list_payables(
             let total: i64 = sqlx::query_scalar(
                 only_own_schema_query!("finance", r#"SELECT COUNT(*) FROM payables
                    WHERE deleted_at IS NULL AND ($1::text IS NULL OR invoice_number ILIKE $1 OR supplier_name ILIKE $1)
-                     AND ($2::text IS NULL OR status = $2)"#),
+                     AND ($2::text IS NULL OR status = $2)
+                     AND ($3::uuid IS NULL OR tenant_id = $3::uuid)"#),
             )
             .bind(&search_pattern)
             .bind(&status_filter)
+            .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
             .fetch_one(&state.pool)
             .await
             .unwrap_or(0);
@@ -1038,7 +1054,7 @@ pub async fn create_payable(
 )]
 pub async fn get_payable(
     State(state): State<AppState>,
-    Extension(_claims): Extension<Claims>,
+    Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Value>> {
     let result = sqlx::query(only_own_schema_query!(
@@ -1046,9 +1062,10 @@ pub async fn get_payable(
         r#"SELECT id, invoice_number, supplier_name, project_id, contract_id, category,
                   amount, invoice_date, due_date, status, paid_amount, payment_schedule,
                   created_at, updated_at
-           FROM payables WHERE id = $1"#
+           FROM payables WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
+    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
     .fetch_optional(&state.pool)
     .await;
 

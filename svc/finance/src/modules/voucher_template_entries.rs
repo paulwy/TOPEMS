@@ -277,9 +277,10 @@ pub async fn reorder_entries(
         }
     }
     let lines: Result<Vec<VoucherTemplateLine>, sqlx::Error> = sqlx::query_as(
-        only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 ORDER BY sort_order, created_at"),
+        only_own_schema_query!("finance", "SELECT id, template_id, description, account_code, direction, amount_formula, sort_order, created_at FROM finance_voucher_template_lines WHERE template_id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid) ORDER BY sort_order, created_at"),
     )
     .bind(template_id)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
     match lines {
