@@ -18,6 +18,14 @@ use crate::models::audit_log::AuditLog;
 use crate::shared::permission::{check_permission, MesPermission};
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
+
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 use topems_shared_db::SchemaAwareAuditLogService;
 
 /// 审计日志参数包装（消除 clippy::too_many_arguments 告警）
@@ -89,6 +97,7 @@ async fn list_audit_logs(
           AND ($4::text IS NULL OR status = $4)
           AND ($5::text IS NULL OR created_at >= $5::timestamptz)
           AND ($6::text IS NULL OR created_at <= $6::timestamptz)
+          AND ($9::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $9::uuid)
         ORDER BY created_at DESC
         LIMIT $7 OFFSET $8
         "#,
@@ -99,6 +108,7 @@ async fn list_audit_logs(
     .bind(&params.status)
     .bind(params.start_date.clone())
     .bind(params.end_date.clone())
+    .bind(get_tenant_id(&claims))
     .bind(page_size)
     .bind(offset)
     .fetch_all(&state.pool)
@@ -115,6 +125,7 @@ async fn list_audit_logs(
                   AND ($4::text IS NULL OR status = $4)
                   AND ($5::text IS NULL OR created_at >= $5::timestamptz)
                   AND ($6::text IS NULL OR created_at <= $6::timestamptz)
+                  AND ($7::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $7::uuid)
                 "#,
             )
             .bind(&params.action)
@@ -123,6 +134,7 @@ async fn list_audit_logs(
             .bind(&params.status)
             .bind(params.start_date)
             .bind(params.end_date)
+            .bind(get_tenant_id(&claims))
             .fetch_one(&state.pool)
             .await;
 

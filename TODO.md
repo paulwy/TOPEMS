@@ -2232,3 +2232,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - skip 登记：production_cost 2（work_orders 子查询/count——work_orders 无 tenant_id 且 order_id 41 行全 NULL，JOIN production_orders 链路断裂）、material_requirement 1、work_order 1（同）。
 - 数据治理观察项：mes.production_schedules 198 行 tenant_id 全 nil（生产排程业务数据应归租户，待 migration 归 0001 或确认平台公共）。
 - 验证：cargo check topems-mes 0 error；SQL 实测 20 项（production_records 2/0/3、work_stations 77/0/79 隔离正确；process_routes/equipment_oee/work_reports/production_processes 空表 0/0/0 语义正确；production_schedules 0001=0 因全 nil 数据）。
+
+## 方案C 批3-F：mes audit 读路径 + mes 收官（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 实施：audit.rs 2 处（list_audit_logs 主查询 + count 加 tenant 条件 $9/$7 + bind get_tenant_id），补本地 get_tenant_id 定义。
+- mes 有 ctx 候选全部处理完：APS 9 + equipment 6 + wip/team/process_flow 5 + 7 文件 9 + audit 2 = 31 处补；skip 登记（get_optimization_report 5 统计/wips 3/team UPDATE 3/work_orders 4 等）。
+- 数据治理观察项：production_orders 2 行 NULL + production_schedules 198 行全 nil（待 migration 归 0001 或确认平台公共）。
+- 验证：cargo check topems-mes 0 error；audit_logs 空表 0/0/0/0 语义正确。
