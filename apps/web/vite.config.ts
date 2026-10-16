@@ -1169,10 +1169,13 @@ export default defineConfig(({ mode }) => {
       //         - use-sync-external-store/shim
       //         - use-sync-external-store/shim/index
       //         - use-sync-external-store/shim/index.js
+      //         - use-sync-external-store/with-selector
+      //         - use-sync-external-store/with-selector.js
+      //         - use-sync-external-store/shim/with-selector(.js)（recharts 等）
       //         - /@fs/xxx/node_modules/.pnpm/xxx/use-sync-external-store/*/shim/index.js?v=xx
       //         - 以及 Windows 反斜杠路径变体
       {
-        find: /use-sync-external-store[\\/]+shim(?:[\\/]+index(?:\.js)?)?$/,
+        find: /use-sync-external-store[\\/]+(?:(?:shim[\\/]+)?with-selector(?:\.js)?|shim(?:[\\/]+index(?:\.js)?)?)$/,
         replacement: path.resolve(__dirname, './src/shims/use-sync-external-store-shim.ts'),
       },
       // C3 §5 P1: lucide 子路径优化 -55%

@@ -64,6 +64,9 @@ export const ProductionDashboardPage: React.FC = () => {
   const [schedules, setSchedules] = useState<ProductionSchedule[]>([]);
   const [alarms, setAlarms] = useState<RealtimeAlarm[]>([]);
   const [wsSupported] = useState(typeof window !== 'undefined' && 'WebSocket' in window);
+  // MONO(:8099) 未挂 /ws/mes/dashboard 路由时握手必然失败；首次失败即停用
+  // WebSocket（避免无限低频重连风暴刷 console），数据由 REST 轮询（autoRefresh）兜底。
+  const [wsAvailable, setWsAvailable] = useState(true);
   const refreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const {
     isConnected: wsConnected,
@@ -77,7 +80,16 @@ export const ProductionDashboardPage: React.FC = () => {
     maxReconnectDelay: 30000,
     minReconnectDelay: 1000,
     connectionTimeout: 15000,
-    enabled: autoRefresh && wsSupported && !!token,
+    // MONO(:8099) 未挂 /ws/mes/dashboard 路由：MONO 模式下完全禁用 ws
+    // （避免每次导航的首连 404），数据由 REST 轮询（autoRefresh）兜底。
+    enabled:
+      autoRefresh && wsSupported && !!token && wsAvailable && import.meta.env.VITE_MONOLITH !== '1',
+    onError: () => {
+      setWsAvailable(false);
+    },
+    onClose: () => {
+      setWsAvailable(false);
+    },
     onMessage: (message) => {
       try {
         const payload = typeof message === 'string' ? JSON.parse(message) : message;
