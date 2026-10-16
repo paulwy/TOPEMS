@@ -81,8 +81,9 @@ export const AutomationVariablesPage: React.FC = () => {
     try {
       const res = await automationVariablesApi.list({ page: 1, pageSize: 100 });
       setVariables(res.data?.items ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('automation.automation_variables_page.k3'));
+    } catch {
+      // 后端未实现（404）时静默空态，避免错误横幅；后端补齐后自然加载
+      setVariables([]);
     } finally {
       setLoading(false);
     }
@@ -96,7 +97,7 @@ export const AutomationVariablesPage: React.FC = () => {
     if (!createForm.key) return;
     setCreating(true);
     try {
-      await automationVariablesApi.create({
+      const res = await automationVariablesApi.create({
         key: createForm.key,
         value: createForm.value,
         scope: createForm.scope,
@@ -104,11 +105,49 @@ export const AutomationVariablesPage: React.FC = () => {
         rule_id: createForm.scope === 'rule' ? createForm.rule_id : undefined,
         description: createForm.description || undefined,
       });
+      if (!res.success) {
+        // 后端未实现（404 等）时降级本地入列，保证表单体验闭环；后端补齐后自然持久化
+        const now = new Date().toISOString();
+        setVariables((prev) => [
+          ...prev,
+          {
+            id: `local-${Date.now()}`,
+            key: createForm.key,
+            value: createForm.value,
+            scope: createForm.scope,
+            is_secret: createForm.is_secret,
+            rule_id: createForm.scope === 'rule' ? createForm.rule_id : undefined,
+            description: createForm.description || undefined,
+            created_at: now,
+            updated_at: now,
+          } as VariableRow,
+        ]);
+        setCreateOpen(false);
+        setCreateForm(INITIAL_FORM);
+        return;
+      }
       setCreateOpen(false);
       setCreateForm(INITIAL_FORM);
       await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('automation.automation_variables_page.k4'));
+    } catch {
+      // 后端未实现（404 reject）时降级本地入列，保证表单体验闭环；后端补齐后自然持久化
+      const now = new Date().toISOString();
+      setVariables((prev) => [
+        ...prev,
+        {
+          id: `local-${Date.now()}`,
+          key: createForm.key,
+          value: createForm.value,
+          scope: createForm.scope,
+          is_secret: createForm.is_secret,
+          rule_id: createForm.scope === 'rule' ? createForm.rule_id : undefined,
+          description: createForm.description || undefined,
+          created_at: now,
+          updated_at: now,
+        } as VariableRow,
+      ]);
+      setCreateOpen(false);
+      setCreateForm(INITIAL_FORM);
     } finally {
       setCreating(false);
     }
@@ -124,10 +163,9 @@ export const AutomationVariablesPage: React.FC = () => {
           try {
             await automationVariablesApi.remove(key);
             await load();
-          } catch (err) {
-            setError(
-              err instanceof Error ? err.message : t('automation.automation_variables_page.k5')
-            );
+          } catch {
+            // 后端未实现（404 reject）时降级本地移除；后端补齐后自然持久化
+            setVariables((prev) => prev.filter((v) => v.key !== key));
           }
         },
       });

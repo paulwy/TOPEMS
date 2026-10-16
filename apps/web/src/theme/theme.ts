@@ -114,7 +114,7 @@ declare module '@mui/material/styles' {
   }
 }
 
-const lightShadows = [...Array(24)].map((_, i) => {
+const lightShadows = [...Array(25)].map((_, i) => {
   // MUI shadows 是 0..24 的数组（长度 25），以下为对齐设计 tokens 的合理映射
   const shadows = [
     designTokens.shadows.none, // 0
