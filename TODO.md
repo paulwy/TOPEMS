@@ -2171,3 +2171,10 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - portal 2（portal_todos）
 - skip（甄别）：52 处中平台表 23（work_orders/erp_production_orders/core_plugin_instances×6/iam.users/core_plugins×2/report_execution_records/geofences/material_tests/patents/research_costs）；已带 tenant_id bind 非缺口 41（crm/tms/ticket 全 19 表已带 `tenant_id=$N`）；内部流程 5（mes_erp_sync×3/async_tasks/event_handlers pm）；rd 77/367 SELECT 读路径（批1 范围）
 - 复核：7 服务 check 0 error；SQL 事务内实测 14 表（rs.projects/map_markers/replenishment_suggestions 真实行 + 11 表插行）——本租户 UPDATE 各 1 / 他租户越权各 0，ROLLBACK 零残留。踩坑：interviews 用 scheduled_at 无 interview_date；finance match_status/source_type 为枚举（cross 测试用合法值）；gis.locations position 为 json；wms safety_stock SELECT 133 行顺带内联（纵深防御）；finance sessions UPDATE 629 原已带 tenant_id=$3 叠加内联（等效更严）
+
+## 方案C 观察项：历史 NULL tenant_id 种子数据回填（2026-10-16）
+- 状态：已回填，RLS 行为验证通过，独立 commit（migration 20261016000088 已应用并登记）
+- 背景：srm.suppliers 92 / hrm.initialization_status 5 / mobile 4 表（push_templates 13 + push_notifications 32 + sync_policies 1 + barcode_scans 13）tenant_id 为 NULL——RLS `tenant_id IS NULL` 分支放行，全部租户可见（隔离漏洞/公共语义）。核实：全部为 2026-06 种子/冒烟测试数据（"测试供应商"×92、"冒烟模板"×13、测试用户 e91e2228 的移动数据 14 行、初始化向导步骤 5 行，created_by 均 NULL 无归属）。
+- 回填：migration `20261016000088_backfill_null_tenant_id_seed.sql` 统一回填主租户 0001（UPDATE 92/5/13/32/1/13 全成功），_sqlx_migrations 登记成功。
+- 验证：回填后 NULL 全 0；RLS 实测——0001 租户可见 suppliers 92 / push_templates 13，他租户（c51c3a73）各 0——从"全租户公共可见"收敛为"仅 0001 可见"。
+- 备注：RLS policy 的 `tenant_id IS NULL` 分支保留（防御纵深，未来新增无主行仍会公共可见）；push_notifications target_type=all/broadcast 广播语义与 0001 归属兼容；_sqlx_migrations 中 80-87 历史 migration 文件存在但未登记（历史批次直接执行未登记），本次仅登记 88，未扩大范围。
