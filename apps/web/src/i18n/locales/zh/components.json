@@ -2841,7 +2841,7 @@
   "components.map_layers.k3": "当前: {location.current_usage}",
   "components.project_report.pipi_0": "CPI/SPI 趋势分析",
   "components.project_report.index1_1": "第{index + 1}期",
-  "components.project_template_card.k1": "{template.phases_count}个阶段",
+  "components.project_template_card.k1": "{{template.phases_count}}个阶段",
   "components.form_page_template.index1_0": "草稿 #{index + 1}",
   "components.list_page_template.v_0": "CSV 格式",
   "components.list_page_template.on_1": "JSON 格式",

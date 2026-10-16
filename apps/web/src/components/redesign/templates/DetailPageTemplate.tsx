@@ -10,7 +10,7 @@ export interface DetailSection {
 
 export interface DetailPageTemplateProps extends Omit<
   React.HTMLAttributes<HTMLDivElement>,
-  'title'
+  'title' | 'onRefresh'
 > {
   header: PageHeaderProps;
   sections?: DetailSection[];
@@ -23,6 +23,8 @@ export interface DetailPageTemplateProps extends Omit<
   loading?: boolean;
   /** 操作区（不传递给 DOM 元素） */
   action?: React.ReactNode;
+  /** 刷新回调（仅供页内使用，不传递给 DOM 元素） */
+  onRefresh?: () => void;
 }
 
 export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
@@ -38,6 +40,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   className,
   style,
   action: _action, // 显式排除 action，避免传递给非 form 元素
+  onRefresh: _onRefresh, // 显式排除 onRefresh，避免传递给 DOM 元素
   ...rest
 }) => {
   return (

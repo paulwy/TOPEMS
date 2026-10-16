@@ -97,7 +97,11 @@ const ProjectTemplateCard: React.FC<ProjectTemplateCardProps> = ({ template, onS
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
             <Tag size={16} />
-            <span>{i18n.t('components.project_template_card.k1')}</span>
+            <span>
+              {i18n.t('components.project_template_card.k1', {
+                template: { phases_count: template.phases_count ?? 0 },
+              })}
+            </span>
           </div>
         </div>
 
