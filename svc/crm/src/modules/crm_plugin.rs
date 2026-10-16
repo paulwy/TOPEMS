@@ -141,7 +141,8 @@ pub async fn plugin_health_check(
 
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(_core_url: Option<&str>) {
-    let core_url = std::env::var("PLUGIN_REGISTRY_URL").unwrap_or_else(|_| "http://localhost:8096".to_string());
+    let core_url = std::env::var("PLUGIN_REGISTRY_URL")
+        .unwrap_or_else(|_| "http://localhost:8096".to_string());
     let runtime_url =
         std::env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8029".to_string());
 

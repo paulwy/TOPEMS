@@ -532,7 +532,14 @@ async fn update_device_location(
     {
         return e;
     }
-    let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| uuid::Uuid::parse_str(s).ok()) };
+    let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| uuid::Uuid::parse_str(s).ok())
+    };
     match sqlx::query_as::<_, DeviceLocation>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.device_locations
@@ -575,7 +582,14 @@ async fn delete_device_location(
     {
         return e;
     }
-    let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| uuid::Uuid::parse_str(s).ok()) };
+    let tenant_filter: Option<uuid::Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| uuid::Uuid::parse_str(s).ok())
+    };
     match sqlx::query(only_own_schema_query!(
         "gis",
         "DELETE FROM gis.device_locations WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2)"

@@ -188,7 +188,14 @@ pub async fn update_device(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::DeviceLocationWrite).await {
         return e;
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()) };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     match sqlx::query_as::<_, Device>(only_own_schema_query!(
         "gis",

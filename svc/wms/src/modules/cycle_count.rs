@@ -324,7 +324,10 @@ pub async fn update_cycle_count_config(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     // 计算新的下次盘点日期
@@ -429,7 +432,10 @@ pub async fn delete_cycle_count_config(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query!(

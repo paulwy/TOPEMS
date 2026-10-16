@@ -280,7 +280,10 @@ pub async fn update_quotation(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let valid_until = req.valid_until.and_then(|s| {
@@ -352,7 +355,10 @@ pub async fn delete_quotation(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let result = sqlx::query(only_own_schema_query!(
         "srm",
@@ -410,7 +416,10 @@ pub async fn award_quotation(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query_as::<_, Quotation>(
@@ -475,7 +484,10 @@ pub async fn reject_quotation(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query_as::<_, Quotation>(

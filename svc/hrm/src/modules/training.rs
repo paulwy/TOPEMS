@@ -305,7 +305,7 @@ pub async fn update_plan(
                 }
             }
             Json(ApiResponse::success(plan, "培训计划更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<TrainingPlan>::error(404, "培训计划不存在")),
         Err(e) => {
             tracing::error!("更新培训计划失败: {}", e);
@@ -611,7 +611,7 @@ pub async fn update_course(
                 }
             }
             Json(ApiResponse::success(course, "课程更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<TrainingCourse>::error(404, "课程不存在")),
         Err(e) => {
             tracing::error!("更新课程失败: {}", e);
@@ -981,7 +981,7 @@ pub async fn update_record(
                 }
             }
             Json(ApiResponse::success(record, "培训记录更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<TrainingRecord>::error(404, "培训记录不存在")),
         Err(e) => {
             tracing::error!("更新培训记录失败: {}", e);
@@ -1291,7 +1291,7 @@ pub async fn complete_record(
                 }
             }
             Json(ApiResponse::success(record, "培训记录已完成"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<TrainingRecord>::error(404, "培训记录不存在")),
         Err(e) => {
             tracing::error!("更新培训记录状态失败: {}", e);

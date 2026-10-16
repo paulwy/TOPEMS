@@ -447,7 +447,10 @@ pub async fn update_outbound_order(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
         "wms",
@@ -561,7 +564,10 @@ pub async fn delete_outbound_order(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let result = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1074,7 +1080,10 @@ pub async fn confirm_outbound_order(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -1185,7 +1194,10 @@ pub async fn pick_outbound_order(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let result = sqlx::query_as::<_, OutboundOrder>(
         only_own_schema_query!("wms", r#"
@@ -1293,7 +1305,10 @@ pub async fn pack_outbound_order(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(
@@ -1412,7 +1427,10 @@ pub async fn ship_outbound_order(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let tx = state.db.begin().await.map_err(|e| {
@@ -1512,7 +1530,10 @@ pub async fn ship_outbound_order(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let _ = sqlx::query(only_own_schema_query!(
         "wms",
@@ -1684,7 +1705,10 @@ pub async fn complete_outbound_order(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query_as::<_, OutboundOrder>(only_own_schema_query!(

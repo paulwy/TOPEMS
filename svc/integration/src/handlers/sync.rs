@@ -11,8 +11,8 @@ use topems_shared_core::TopemsError;
 use uuid::Uuid;
 
 use crate::models::AppState;
-use topems_shared_core::response::ApiResponse;
 use topems_shared_auth::auth::Claims;
+use topems_shared_core::response::ApiResponse;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateStatusRequest {
@@ -234,7 +234,10 @@ pub async fn update_status(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     match Uuid::parse_str(&task_id) {
         Ok(id) => {
@@ -383,7 +386,10 @@ pub async fn retry_failed(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let result = if req.sync_type.is_some() && req.source_module.is_some() {
         sqlx::query(only_own_schema_query!(

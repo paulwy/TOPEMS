@@ -271,7 +271,7 @@ pub async fn create_position(
                 "success",
                 None,
             )
-        },
+        }
         Err(e) => {
             tracing::error!("创建岗位失败: {}", e);
             (

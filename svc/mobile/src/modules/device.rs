@@ -270,7 +270,10 @@ pub async fn update_push_token(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query(only_own_schema_query!("mobile", "UPDATE mobile.devices SET push_token = $1, updated_at = NOW() WHERE user_id = $2 AND device_id = $3 AND ($4::uuid IS NULL OR tenant_id = $4::uuid)"))
@@ -424,7 +427,10 @@ pub async fn update_device(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let app_version = payload.get("appVersion").and_then(|v| v.as_str());
@@ -484,7 +490,10 @@ pub async fn unregister_device(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -534,7 +543,10 @@ pub async fn activate_device(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query(only_own_schema_query!(
@@ -584,7 +596,10 @@ pub async fn disable_device(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query(only_own_schema_query!(

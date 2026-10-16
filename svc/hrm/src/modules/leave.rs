@@ -452,7 +452,7 @@ pub async fn update_leave(
                 }
             }
             Json(ApiResponse::success(leave, "请假申请更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
             404,
             "请假申请不存在或已处理",
@@ -607,7 +607,7 @@ pub async fn approve_leave(
                 }
             }
             Json(ApiResponse::success(leave, "请假已批准"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
             404,
             "请假申请不存在或已处理",
@@ -673,7 +673,7 @@ pub async fn reject_leave(
                 }
             }
             Json(ApiResponse::success(leave, "请假已拒绝"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<LeaveRequest>::error(
             404,
             "请假申请不存在或已处理",

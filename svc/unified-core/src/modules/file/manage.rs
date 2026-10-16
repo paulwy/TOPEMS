@@ -692,7 +692,15 @@ pub async fn copy_file(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     tracing::info!(
         "File manage copy_file called with id: {} for user: {}",
         id,
@@ -855,7 +863,15 @@ pub async fn set_file_permission(
     Path(id): Path<String>,
     Json(payload): Json<FilePermissionRequest>,
 ) -> Json<serde_json::Value> {
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     tracing::info!(
         "File manage set_file_permission called with id: {} for user: {}",
         id,

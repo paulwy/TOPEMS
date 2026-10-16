@@ -323,7 +323,15 @@ pub async fn create_rule(
         .clone()
         .unwrap_or_else(|| "draft".to_string());
 
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     let rule: Result<AutomationRule, _> = sqlx::query_as(
         r#"INSERT INTO automation_rules (name, code, description, trigger, action, on_success, on_error, canvas, status, created_by, tenant_id)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
@@ -928,7 +936,15 @@ pub async fn create_variable(
     Json(payload): Json<CreateVariableRequest>,
 ) -> Json<ApiResponse<AutomationVariable>> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     let scope = payload
         .scope
         .clone()
@@ -1075,7 +1091,15 @@ pub async fn bulk_import_variables(
     Json(payload): Json<BulkImportRequest>,
 ) -> Json<ApiResponse<Value>> {
     let user_id = Uuid::parse_str(&claims.sub).ok();
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     let mut imported = 0;
     let mut skipped = 0;
 

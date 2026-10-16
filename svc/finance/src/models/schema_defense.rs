@@ -18,8 +18,14 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("currency", "VARCHAR(10) NOT NULL DEFAULT 'CNY'"),
             ("is_enabled", "BOOLEAN NOT NULL DEFAULT true"),
             ("description", "TEXT"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            (
+                "created_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
+            (
+                "updated_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
         ],
     ),
     (
@@ -37,8 +43,14 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("created_by", "VARCHAR(100) NOT NULL"),
             ("approved_by", "VARCHAR(100)"),
             ("posted_by", "VARCHAR(100)"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            (
+                "created_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
+            (
+                "updated_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
             ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
@@ -55,7 +67,10 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("credit", "NUMERIC(18,4) NOT NULL DEFAULT 0"),
             ("project_id", "UUID"),
             ("department_id", "UUID"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            (
+                "created_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
         ],
     ),
     (
@@ -73,7 +88,10 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("debit", "NUMERIC(18,4) NOT NULL DEFAULT 0"),
             ("credit", "NUMERIC(18,4) NOT NULL DEFAULT 0"),
             ("balance", "NUMERIC(18,4) NOT NULL DEFAULT 0"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            (
+                "created_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
             ("deleted_at", "TIMESTAMPTZ"),
         ],
     ),
@@ -89,8 +107,14 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("end_date", "TIMESTAMPTZ NOT NULL"),
             ("closed_at", "TIMESTAMPTZ"),
             ("closed_by", "VARCHAR(100)"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            (
+                "created_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
+            (
+                "updated_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
         ],
     ),
     (
@@ -112,8 +136,14 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("rejected_at", "TIMESTAMPTZ"),
             ("rejection_reason", "TEXT"),
             ("comment", "TEXT"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            (
+                "created_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
+            (
+                "updated_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
         ],
     ),
     (
@@ -132,8 +162,14 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("unmatched_items", "INT NOT NULL DEFAULT 0"),
             ("diff_items", "INT NOT NULL DEFAULT 0"),
             ("created_by", "VARCHAR(100) NOT NULL"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            (
+                "created_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
+            (
+                "updated_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
             ("completed_at", "TIMESTAMPTZ"),
         ],
     ),
@@ -155,8 +191,14 @@ pub const TABLE_DEFS: &[(&str, &[(&str, &str)])] = &[
             ("diff_reason", "diff_reason"),
             ("diff_amount", "NUMERIC(18,4)"),
             ("notes", "TEXT"),
-            ("created_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
-            ("updated_at", "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP"),
+            (
+                "created_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
+            (
+                "updated_at",
+                "TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP",
+            ),
         ],
     ),
     (

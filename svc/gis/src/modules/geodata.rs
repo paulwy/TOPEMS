@@ -257,7 +257,14 @@ pub async fn update_geodata(
     if let Err(e) = check_permission(&pool, &claims, &GisPermission::All).await {
         return e;
     }
-    let tenant_filter: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()) };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
 
     match sqlx::query_as::<_, GeoData>(
         only_own_schema_query!("gis", r#"

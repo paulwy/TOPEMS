@@ -942,7 +942,10 @@ pub async fn update_renewal(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
@@ -981,7 +984,7 @@ pub async fn update_renewal(
                 }
             }
             Json(ApiResponse::success(renewal, "续签申请更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
             404,
             "续签申请不存在或状态不正确",
@@ -1009,7 +1012,10 @@ pub async fn delete_renewal(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let result = sqlx::query(only_own_schema_query!(
         "hrm",
@@ -1068,7 +1074,10 @@ pub async fn approve_renewal(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
@@ -1099,7 +1108,7 @@ pub async fn approve_renewal(
                 }
             }
             Json(ApiResponse::success(renewal, "续签申请已批准"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
             404,
             "续签申请不存在或状态不正确",
@@ -1142,7 +1151,10 @@ pub async fn reject_renewal(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
 
     let result = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
@@ -1174,7 +1186,7 @@ pub async fn reject_renewal(
                 }
             }
             Json(ApiResponse::success(renewal, "续签申请已拒绝"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<ContractRenewal>::error(
             404,
             "续签申请不存在或状态不正确",
@@ -1220,7 +1232,10 @@ pub async fn execute_renewal(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let renewal = sqlx::query_as::<_, ContractRenewal>(only_own_schema_query!(
         "hrm",

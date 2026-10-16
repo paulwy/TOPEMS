@@ -148,7 +148,8 @@ pub async fn plugin_health_check(
 /// 启动时自动注册到 plugin-registry（V68.1 拆分：注册目标为独立 registry 8096，
 /// 不再使用 unified-core 旧路径 /dev/runtime/{code}/register）
 pub async fn auto_register_to_core(_core_url: Option<&str>) {
-    let core_url = std::env::var("PLUGIN_REGISTRY_URL").unwrap_or_else(|_| "http://localhost:8096".to_string());
+    let core_url = std::env::var("PLUGIN_REGISTRY_URL")
+        .unwrap_or_else(|_| "http://localhost:8096".to_string());
     let runtime_url = get_runtime_url();
 
     let info = PluginInfo {

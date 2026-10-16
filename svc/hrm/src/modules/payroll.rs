@@ -613,7 +613,7 @@ pub async fn pay_payroll_run(
                 }
             }
             Json(ApiResponse::success(run, "薪资发放完成"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<PayrollRun>::error(
             404,
             "薪资周期不存在或状态不正确",

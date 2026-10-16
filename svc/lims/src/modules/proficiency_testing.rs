@@ -3,9 +3,9 @@ use axum::{
     routing::{get, post, put},
     Json, Router,
 };
-use topems_shared_auth::middleware::tenant::TenantContext;
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
+use topems_shared_auth::middleware::tenant::TenantContext;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 
 use crate::shared::AppState;
@@ -260,7 +260,11 @@ pub async fn list_plans(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Query(query): axum::extract::Query<PtPlanQuery>,
 ) -> Json<ApiResponse<Vec<ProficiencyTestingPlan>>> {
-    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let page = query.page.unwrap_or(1);
     let page_size = query.page_size.unwrap_or(10);
     let offset = (page - 1) * page_size;
@@ -320,7 +324,12 @@ pub async fn list_plans(
                 .bind(offset);
         }
         (Some(st), Some(yr), None, None) => {
-            query_builder = query_builder.bind(tenant_filter).bind(st).bind(yr).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(tenant_filter)
+                .bind(st)
+                .bind(yr)
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, Some(pn), Some(pr)) => {
             query_builder = query_builder
@@ -348,7 +357,11 @@ pub async fn list_plans(
                 .bind(offset);
         }
         (Some(st), None, None, None) => {
-            query_builder = query_builder.bind(tenant_filter).bind(st).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(tenant_filter)
+                .bind(st)
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(yr), Some(pn), Some(pr)) => {
             query_builder = query_builder
@@ -376,7 +389,11 @@ pub async fn list_plans(
                 .bind(offset);
         }
         (None, Some(yr), None, None) => {
-            query_builder = query_builder.bind(tenant_filter).bind(yr).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(tenant_filter)
+                .bind(yr)
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, Some(pn), Some(pr)) => {
             query_builder = query_builder
@@ -401,7 +418,10 @@ pub async fn list_plans(
                 .bind(offset);
         }
         (None, None, None, None) => {
-            query_builder = query_builder.bind(tenant_filter).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(tenant_filter)
+                .bind(page_size)
+                .bind(offset);
         }
     }
 
@@ -799,7 +819,11 @@ pub async fn list_plan_samples(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtSample>>> {
-    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
@@ -1010,7 +1034,11 @@ pub async fn list_plan_results(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtResult>>> {
-    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
@@ -1225,7 +1253,11 @@ pub async fn list_plan_evaluations(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtEvaluation>>> {
-    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
@@ -1485,7 +1517,11 @@ pub async fn list_plan_corrective_actions(
     Extension(ctx): Extension<TenantContext>,
     axum::extract::Path(plan_id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PtCorrectiveAction>>> {
-    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() { None } else { Some(ctx.tenant_id) };
+    let tenant_filter: Option<Uuid> = if ctx.tenant_id == Uuid::nil() {
+        None
+    } else {
+        Some(ctx.tenant_id)
+    };
     let id = match Uuid::parse_str(&plan_id) {
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),

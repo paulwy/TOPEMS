@@ -7,12 +7,12 @@
 use axum::extract::{Extension, Path, Query, State};
 use axum::Json;
 use serde::Deserialize;
-use topems_shared_boundary::only_own_schema_query;
 use topems_shared_auth::auth::Claims;
-use uuid::Uuid;
+use topems_shared_boundary::only_own_schema_query;
 use topems_shared_core::response::PaginatedResponse;
 use topems_shared_core::{response::ApiResponse, TopemsError};
 use utoipa::IntoParams;
+use uuid::Uuid;
 
 use super::master_data_refs::{MasterDataRef, MasterDataRow};
 use super::ApiState;
@@ -121,7 +121,10 @@ pub async fn archive_master_data_ref(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let now = chrono::Utc::now();
 
@@ -244,7 +247,10 @@ pub async fn restore_master_data_ref(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let now = chrono::Utc::now();
 
@@ -361,7 +367,10 @@ pub async fn schedule_destruction(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let now = chrono::Utc::now();
     let scheduled_at = req
@@ -483,7 +492,10 @@ pub async fn cancel_destruction(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let now = chrono::Utc::now();
 
@@ -603,7 +615,10 @@ pub async fn destroy_master_data_ref(
     let tenant_filter: Option<Uuid> = if claims.is_superuser {
         None
     } else {
-        claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok())
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
     };
     let now = chrono::Utc::now();
 

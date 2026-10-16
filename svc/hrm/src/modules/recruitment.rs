@@ -471,7 +471,7 @@ pub async fn update_job_opening(
                 }
             }
             Json(ApiResponse::success(opening, "职位更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<JobOpening>::error(404, "职位不存在")),
         Err(e) => {
             tracing::error!("更新职位失败: {}", e);
@@ -602,7 +602,7 @@ pub async fn publish_job_opening(
                 }
             }
             Json(ApiResponse::success(opening, "职位已发布"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<JobOpening>::error(
             404,
             "职位不存在或状态不正确",
@@ -660,7 +660,7 @@ pub async fn close_job_opening(
                 }
             }
             Json(ApiResponse::success(opening, "职位已关闭"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<JobOpening>::error(
             404,
             "职位不存在或状态不正确",
@@ -941,7 +941,7 @@ pub async fn update_candidate(
                 }
             }
             Json(ApiResponse::success(candidate, "候选人信息更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<Candidate>::error(404, "候选人不存在")),
         Err(e) => {
             tracing::error!("更新候选人失败: {}", e);
@@ -1250,7 +1250,7 @@ pub async fn update_interview(
                 }
             }
             Json(ApiResponse::success(interview, "面试信息更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<Interview>::error(404, "面试不存在")),
         Err(e) => {
             tracing::error!("更新面试失败: {}", e);
@@ -1350,7 +1350,7 @@ pub async fn complete_interview(
                 }
             }
             Json(ApiResponse::success(interview, "面试已完成"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<Interview>::error(
             404,
             "面试不存在或状态不正确",

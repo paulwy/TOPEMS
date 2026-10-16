@@ -59,9 +59,24 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             base_path: "/api/monitor".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "alerts".to_string(), name: "告警管理".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
-            PermissionDef { code: "metrics".to_string(), name: "指标采集".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
-            PermissionDef { code: "health".to_string(), name: "健康检查".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
+            PermissionDef {
+                code: "alerts".to_string(),
+                name: "告警管理".to_string(),
+                resource_type: "monitor".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "metrics".to_string(),
+                name: "指标采集".to_string(),
+                resource_type: "monitor".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "health".to_string(),
+                name: "健康检查".to_string(),
+                resource_type: "monitor".to_string(),
+                action: "read".to_string(),
+            },
         ],
         runtime_url,
         dependencies: vec![],
@@ -105,7 +120,8 @@ fn get_runtime_url() -> String {
 
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(_core_url: Option<&str>) {
-    let core_url = std::env::var("PLUGIN_REGISTRY_URL").unwrap_or_else(|_| "http://localhost:8096".to_string());
+    let core_url = std::env::var("PLUGIN_REGISTRY_URL")
+        .unwrap_or_else(|_| "http://localhost:8096".to_string());
     let runtime_url = get_runtime_url();
 
     let info = PluginInfo {
@@ -118,9 +134,24 @@ pub async fn auto_register_to_core(_core_url: Option<&str>) {
             base_path: "/api/monitor".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "alerts".to_string(), name: "告警管理".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
-            PermissionDef { code: "metrics".to_string(), name: "指标采集".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
-            PermissionDef { code: "health".to_string(), name: "健康检查".to_string(), resource_type: "monitor".to_string(), action: "read".to_string() },
+            PermissionDef {
+                code: "alerts".to_string(),
+                name: "告警管理".to_string(),
+                resource_type: "monitor".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "metrics".to_string(),
+                name: "指标采集".to_string(),
+                resource_type: "monitor".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "health".to_string(),
+                name: "健康检查".to_string(),
+                resource_type: "monitor".to_string(),
+                action: "read".to_string(),
+            },
         ],
         runtime_url,
         dependencies: vec![],

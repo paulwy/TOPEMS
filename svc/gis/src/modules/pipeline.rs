@@ -190,7 +190,14 @@ pub async fn update_pipeline(
         return e;
     }
     let status = payload.status.unwrap_or_else(|| "active".to_string());
-    let tenant_filter: Option<Uuid> = if claims.is_superuser { None } else { claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()) };
+    let tenant_filter: Option<Uuid> = if claims.is_superuser {
+        None
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok())
+    };
     match sqlx::query_as::<_, Pipeline>(
         only_own_schema_query!("gis", r#"
         UPDATE gis.pipelines 

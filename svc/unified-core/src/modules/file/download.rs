@@ -464,5 +464,10 @@ pub async fn thumbnail_compat(
     Extension(claims): Extension<Claims>,
     AxumPath((id, _size)): AxumPath<(String, String)>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
-    get_thumbnail(axum::extract::State(state), axum::Extension(claims), AxumPath(id)).await
+    get_thumbnail(
+        axum::extract::State(state),
+        axum::Extension(claims),
+        AxumPath(id),
+    )
+    .await
 }

@@ -407,7 +407,7 @@ pub async fn update_review(
                 }
             }
             Json(ApiResponse::success(review, "绩效评核更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
             404,
             "绩效评核不存在",
@@ -545,7 +545,7 @@ pub async fn submit_review(
                 }
             }
             Json(ApiResponse::success(review, "绩效评核已提交"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
             404,
             "绩效评核不存在或状态不正确",
@@ -606,7 +606,7 @@ pub async fn approve_review(
                 }
             }
             Json(ApiResponse::success(review, "绩效评核已批准"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<PerformanceReview>::error(
             404,
             "绩效评核不存在或状态不正确",
@@ -896,7 +896,7 @@ pub async fn update_goal(
                 }
             }
             Json(ApiResponse::success(goal, "绩效目标更新成功"))
-        },
+        }
         Ok(None) => Json(ApiResponse::<PerformanceGoal>::error(404, "绩效目标不存在")),
         Err(e) => {
             tracing::error!("更新绩效目标失败: {}", e);

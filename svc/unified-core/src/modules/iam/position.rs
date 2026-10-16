@@ -277,11 +277,13 @@ pub async fn update_position(
     }
 
     if let Some(permissions) = &req.permissions {
-        let _ = sqlx::query(r#"DELETE FROM iam.position_permissions WHERE position_id = $1 AND tenant_id = $2"#)
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+        let _ = sqlx::query(
+            r#"DELETE FROM iam.position_permissions WHERE position_id = $1 AND tenant_id = $2"#,
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .execute(&state.pool)
+        .await;
 
         for perm in permissions {
             let _ = sqlx::query(
@@ -296,11 +298,13 @@ pub async fn update_position(
     }
 
     if let Some(role_ids) = &req.role_ids {
-        let _ = sqlx::query(r#"DELETE FROM iam.position_roles WHERE position_id = $1 AND tenant_id = $2"#)
-            .bind(id)
-            .bind(tenant_id)
-            .execute(&state.pool)
-            .await;
+        let _ = sqlx::query(
+            r#"DELETE FROM iam.position_roles WHERE position_id = $1 AND tenant_id = $2"#,
+        )
+        .bind(id)
+        .bind(tenant_id)
+        .execute(&state.pool)
+        .await;
 
         for role_id in role_ids {
             let _ = sqlx::query(

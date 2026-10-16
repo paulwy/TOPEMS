@@ -31,7 +31,15 @@ pub async fn upload_file(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     tracing::info!(
         "File upload upload_file called for user: {}",
         claims.username
@@ -215,7 +223,15 @@ pub async fn upload_multiple(
     Extension(claims): Extension<Claims>,
     mut multipart: Multipart,
 ) -> Json<serde_json::Value> {
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     tracing::info!(
         "File upload upload_multiple called for user: {}",
         claims.username

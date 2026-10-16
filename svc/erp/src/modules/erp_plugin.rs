@@ -326,7 +326,8 @@ pub fn create_routes() -> Router<ApiState> {
     ),
 )]
 pub async fn auto_register_to_core(_core_url: Option<&str>) {
-    let core_url = std::env::var("PLUGIN_REGISTRY_URL").unwrap_or_else(|_| "http://localhost:8096".to_string());
+    let core_url = std::env::var("PLUGIN_REGISTRY_URL")
+        .unwrap_or_else(|_| "http://localhost:8096".to_string());
     let runtime_url =
         env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
 

@@ -64,7 +64,12 @@ pub async fn list_expenses(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .fetch_all(&state.pool)
     .await;
 
@@ -189,7 +194,12 @@ pub async fn get_expense(
            FROM expenses WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .fetch_optional(&state.pool)
     .await;
 
@@ -363,7 +373,12 @@ pub async fn list_budgets(
     ))
     .bind(page_size)
     .bind(offset)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .fetch_all(&state.pool)
     .await;
 
@@ -654,7 +669,12 @@ pub async fn list_receivables(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .fetch_all(&state.pool)
     .await;
 
@@ -781,7 +801,12 @@ pub async fn get_receivable(
            FROM receivables WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .fetch_optional(&state.pool)
     .await;
 
@@ -938,7 +963,12 @@ pub async fn list_payables(
     .bind(&status_filter)
     .bind(page_size)
     .bind(offset)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .fetch_all(&state.pool)
     .await;
 
@@ -1065,7 +1095,12 @@ pub async fn get_payable(
            FROM payables WHERE id = $1 AND ($2::uuid IS NULL OR tenant_id = $2::uuid)"#
     ))
     .bind(id)
-    .bind(claims.tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok()))
+    .bind(
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|s| Uuid::parse_str(s).ok()),
+    )
     .fetch_optional(&state.pool)
     .await;
 

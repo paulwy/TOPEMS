@@ -7,7 +7,8 @@ use topems_shared_core::response::ApiResponse;
 
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(_core_url: Option<&str>) {
-    let core_url = std::env::var("PLUGIN_REGISTRY_URL").unwrap_or_else(|_| "http://localhost:8096".to_string());
+    let core_url = std::env::var("PLUGIN_REGISTRY_URL")
+        .unwrap_or_else(|_| "http://localhost:8096".to_string());
 
     let info = get_plugin_info();
 
@@ -78,10 +79,30 @@ pub fn get_plugin_info() -> PluginInfo {
         port: 8071,
         base_path: "/api/gis".to_string(),
         permissions: vec![
-            PermissionDef { code: "location".to_string(), name: "位置服务".to_string(), resource_type: "gis".to_string(), action: "read".to_string() },
-            PermissionDef { code: "geofence".to_string(), name: "地理围栏".to_string(), resource_type: "gis".to_string(), action: "read".to_string() },
-            PermissionDef { code: "device".to_string(), name: "设备管理".to_string(), resource_type: "gis".to_string(), action: "read".to_string() },
-            PermissionDef { code: "track".to_string(), name: "轨迹追踪".to_string(), resource_type: "gis".to_string(), action: "read".to_string() },
+            PermissionDef {
+                code: "location".to_string(),
+                name: "位置服务".to_string(),
+                resource_type: "gis".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "geofence".to_string(),
+                name: "地理围栏".to_string(),
+                resource_type: "gis".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "device".to_string(),
+                name: "设备管理".to_string(),
+                resource_type: "gis".to_string(),
+                action: "read".to_string(),
+            },
+            PermissionDef {
+                code: "track".to_string(),
+                name: "轨迹追踪".to_string(),
+                resource_type: "gis".to_string(),
+                action: "read".to_string(),
+            },
         ],
         runtime_url,
         dependencies: vec!["mes".to_string()],

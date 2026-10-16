@@ -149,7 +149,15 @@ pub async fn send_notification(
     let title = truncate_notification_title(&req.title, 255);
     let channels = select_channels(&notification_type, &["all"]);
 
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
         INSERT INTO core_notifications (id, user_id, title, content, notification_type, priority, data, tenant_id, created_at)
@@ -249,8 +257,16 @@ pub async fn broadcast_notification(
     let mut sent_count = 0;
 
     for user_id in &req.user_ids {
-        let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
-    let id = Uuid::new_v4();
+        let tenant_bind = if claims.is_superuser {
+            Uuid::nil()
+        } else {
+            claims
+                .tenant_id
+                .as_deref()
+                .and_then(|t| Uuid::parse_str(t).ok())
+                .unwrap_or(Uuid::nil())
+        };
+        let id = Uuid::new_v4();
         let result = sqlx::query(
             only_own_schema_query!("public", r#"
             INSERT INTO core_notifications (id, user_id, title, content, notification_type, priority, data, tenant_id, created_at)
@@ -1921,7 +1937,15 @@ pub async fn create_template(
         .unwrap_or_else(|| "info".to_string());
     let priority = req.priority.unwrap_or(0);
 
-    let tenant_bind = if claims.is_superuser { Uuid::nil() } else { claims.tenant_id.as_deref().and_then(|t| Uuid::parse_str(t).ok()).unwrap_or(Uuid::nil()) };
+    let tenant_bind = if claims.is_superuser {
+        Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| Uuid::parse_str(t).ok())
+            .unwrap_or(Uuid::nil())
+    };
     let result = sqlx::query(
         only_own_schema_query!("public", r#"
         INSERT INTO core_notification_templates (id, name, title_template, content_template, notification_type, priority, data, tenant_id, created_at)
