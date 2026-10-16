@@ -14,13 +14,13 @@
 #
 # 用法：
 #   ./scripts/run_monolith.sh            # 前台运行（Ctrl+C 停止）
-#   ./scripts/run_monolith.sh --daemon   # 后台运行（日志 /tmp/topems_server_5433.log）
+#   ./scripts/run_monolith.sh --daemon   # 后台运行（日志 /tmp/topems_server.log）
 # ============================================================================
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
 BIN="${BIN:-./target/debug/topems-server}"
-LOG="${LOG:-/tmp/topems_server_5433.log}"
+LOG="${LOG:-/tmp/topems_server.log}"
 MODE="${1:-}"
 
 # 服务间调用统一指向模块化单体入口（服务名 → <SVC>_SERVICE_URL）

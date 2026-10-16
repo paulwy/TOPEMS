@@ -139,6 +139,12 @@ pre-commit:
       run: |
         STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^scripts/db/|^database/migrations/" || true)
         [ -z "$STAGED" ] && exit 0
+        # 本机 DB 使用 .env 中的自定义凭据；脚本内默认值（topems:topems_secret）与本机不一致，
+        # 故从 .env 的 MIGRATE_URL 派生 DATABASE_URL（已显式提供时不覆盖）
+        if [ -f .env ] && [ -z "${DATABASE_URL:-}" ]; then
+          DATABASE_URL=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1)
+          [ -n "$DATABASE_URL" ] && export DATABASE_URL
+        fi
         if [ -f "scripts/ci/check-rls-permissions.cjs" ]; then
           node scripts/ci/check-rls-permissions.cjs
         fi
@@ -371,4 +377,12 @@ pre-push:
         export SQLX_OFFLINE=true
         export RUST_TEST_THREADS=1
         command -v sccache >/dev/null && export RUSTC_WRAPPER=sccache || true
+        # 本机 DB/Redis 使用 .env 中的自定义凭据；测试内默认值（topems:topems_secret）与本机不一致，
+        # 故从 .env 派生 TEST_DATABASE_URL / REDIS_URL（已显式提供时不覆盖；.env 缺失则回退测试内默认值）
+        if [ -f .env ]; then
+          if [ -z "${TEST_DATABASE_URL:-}" ]; then TEST_DATABASE_URL=$(sed -nE 's/^MIGRATE_URL=(.*)/\1/p' .env | head -1); fi
+          if [ -z "${REDIS_URL:-}" ]; then REDIS_URL=$(sed -nE 's/^REDIS_URL=(.*)/\1/p' .env | head -1); fi
+          if [ -n "$TEST_DATABASE_URL" ]; then export TEST_DATABASE_URL; fi
+          if [ -n "$REDIS_URL" ]; then export REDIS_URL; fi
+        fi
         cargo test --workspace --lib

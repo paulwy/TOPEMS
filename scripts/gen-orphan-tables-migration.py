@@ -74,7 +74,7 @@ def main():
             i += 1
             continue
         # 两行 PK/FK：ALTER TABLE ONLY <s>.<t>（无分号）+ 下一行缩进 ADD CONSTRAINT ...;
-        #  PK/UNIQUE：仅源表 ∈ 独有表；FK：目标表 ∈ 独有表（解掉 37 个源表在 5433 已存在的缺失 FK）
+        #  PK/UNIQUE：仅源表 ∈ 独有表；FK：目标表 ∈ 独有表（解掉 37 个源表在目标空库已存在的缺失 FK）
         m = re.match(r"ALTER TABLE ONLY (\"?)([\w]+)\1\.\1([\w]+)\1$", ln)
         if m:
             s, t = m.group(2), m.group(3)
@@ -105,7 +105,7 @@ def main():
         f"-- FK（目标表∈独有表） {len(fk_alters)} | POLICY {len(policies)} | RLS {len(rls_alters)}",
         "-- =============================================================================",
         "",
-        "-- 0) schema 兜底（5433 可能缺独有表所在 schema）",
+        "-- 0) schema 兜底（目标空库可能缺独有表所在 schema）",
         "",
     ]
     schemas = []

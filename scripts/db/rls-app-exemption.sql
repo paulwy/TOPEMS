@@ -1,6 +1,6 @@
 -- RLS 策略 service 豁免补全（幂等重建 274 策略）
 -- 统一追加豁免分支 + current_setting missing_ok=true（GUC 未设置时不报错）
--- 用途：5433 容器库重建后执行（新策略自动带豁免，本脚本仅修历史策略）
+-- 用途：容器库/独立库重建后执行（新策略自动带豁免，本脚本仅修历史策略）
 -- 验证：nil 全量 / 租户隔离 / GUC 未设 16 不报错
 
 DROP POLICY IF EXISTS tenant_isolation_ai_training_samples ON ai.ai_training_samples; CREATE POLICY tenant_isolation_ai_training_samples ON ai.ai_training_samples AS PERMISSIVE FOR ALL TO PUBLIC USING ((tenant_id)::text = NULLIF(current_setting('app.tenant_id'::text, true), ''::text) OR tenant_id IS NULL OR COALESCE(current_setting('app.tenant_id'::text, true), ''::text) = '00000000-0000-0000-0000-000000000000');

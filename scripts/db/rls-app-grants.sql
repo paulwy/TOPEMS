@@ -1,5 +1,5 @@
 -- RLS 受限用户 topems_app 权限补全（幂等）
--- 用途：5433 容器库重建后执行本脚本，确保 topems_app 具备全库读写权限
+-- 用途：容器库/独立库重建后执行本脚本，确保 topems_app 具备全库读写权限
 -- 但受 RLS 策略约束（service 豁免 nil / 用户租户隔离）
 GRANT SELECT, INSERT, UPDATE, DELETE ON
     plugin_erp.assets,

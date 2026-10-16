@@ -11,7 +11,7 @@ work_stations.name vs station_name、contracts.title_en 缺列等）。
   python3 scripts/check_sql_columns.py --out f  # 输出报告到文件
   python3 scripts/check_sql_columns.py --limit N  # 只显示前 N 条
 
-依赖：运行库 5433 可连接（PGPASSWORD=topems_app_secret），含 RLS options。
+依赖：运行库 5432 可连接（PGPASSWORD=topems_app_secret），含 RLS options。
 """
 import re
 import subprocess
@@ -19,7 +19,7 @@ import collections
 import sys
 import os
 
-RUN_DB = "postgresql://topems_app@localhost:5433/topems?options=-capp.tenant_id%3D00000000-0000-0000-0000-000000000000"
+RUN_DB = "postgresql://topems_app@localhost:5432/topems?options=-capp.tenant_id%3D00000000-0000-0000-0000-000000000000"
 PSQL_PREFIX = "PGPASSWORD=topems_app_secret psql " + RUN_DB
 
 def load_schema():

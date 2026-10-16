@@ -4,6 +4,8 @@
 > 背景：2026-09-01 起宿主机 5432 被 Homebrew postgres 占用，postgres 容器改映射 5433；两套实例长期并存，
 > 需明确"哪个是主、如何保持一致、何时用哪个"。
 
+> **更新（2026-10-16）**：§6 / §7 描述的 **5433 Homebrew 验证实例已不存在**（数据目录 `/opt/homebrew/var/postgres5433` 缺失、5433 端口无监听），相关小节已就地标注；本机 `backups/` 目录及 §7.4 三份 dump 资产亦缺失。另：§7.1 所述**开发库 `topems_dev` 亦不存在**——本机仅存 `topems` / `topems_prepare` / `postgres`。
+
 ## 1. 实例口径（唯一权威）
 
 | 实例 | 端口 | 运行方式 | 角色 | 连接凭据来源 | 用途 |
@@ -33,8 +35,8 @@
 | 操作 | 命令 |
 |---|---|
 | 本地 psql（生产主库） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5432 -U topems -d topems` |
-| 验证库 psql（5433） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6） |
-| 迁移执行（生产/开发） | `DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems sqlx migrate run`（topems_dev 用同名 5432 库覆盖 DATABASE_URL） |
+| 验证库 psql（5433） | `PGPASSWORD=<TOPEMS_PG_PASSWORD> psql -h localhost -p 5433 -U topems -d topems`（迁移链重放/账本核对，见 §6）⚠️ **2026-10-16 起该实例已不存在**，执行前须先按 §6.3 重建 |
+| 迁移执行（生产/开发） | `DATABASE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems sqlx migrate run`（原 `topems_dev` 用同名 5432 库覆盖 `DATABASE_URL` 的做法**已失效**：该库 2026-10-16 核实不存在） |
 | 一致性检查 | `bash scripts/db/check-consistency.sh` |
 
 ## 5. 相关文件
@@ -49,6 +51,8 @@
 
 > 用户定案（A2）：**弃 docker 口径**。5433 端口上的官方双库验证实例改用 **Homebrew PostgreSQL**（非 docker 容器），作为与 5432 开发主库配对的"第二库"，专用于迁移链空库重放 / 双库账本核对 / RLS 隔离回归。本节为该实例的运维权威口径，**与上文 §1 表格中"5433=docker 部署库"的历史映射不冲突**：§1 描述的是 docker-compose 部署形态下的宿主映射；本节固化的是本地开发/验证口径下 5433 的实际承载者。
 
+> **现状更新（2026-10-16）**：该实例**已不存在**——数据目录 `/opt/homebrew/var/postgres5433` 全盘无迹、5433 无任何监听；原「保留运行（常驻）」策略随之失效。复用须按 §6.1 / §6.3 **重建**（`initdb` 新数据目录 → 建 `topems` 角色与库 → 迁移链空库重放）。
+
 ### 6.1 实例方案（唯一权威）
 
 | 项 | 值 |
@@ -62,7 +66,7 @@
 | 数据库 | `topems` |
 | 连接串 | `MIGRATE_URL=postgres://topems:<TOPEMS_PG_PASSWORD>@127.0.0.1:5433/topems` |
 | 用途 | 双库验证（与 5432 配对）：空库守卫重放、`_sqlx_migrations` 双账本核对、RLS/租户隔离回归 |
-| 运行策略 | **保留运行**（常驻，供随批验证复用；不随验证结束销毁） |
+| 运行策略 | ~~保留运行（常驻，供随批验证复用；不随验证结束销毁）~~ → **已失效（2026-10-16）**：实例已销毁，数据目录不存在、端口无监听；复用需按 §6.3 重建 |
 
 > 实测基线（2026-10-08）：`_sqlx_migrations` = **329** 条，与磁盘迁移文件数、5432 开发主库 public 账本三者一致（checksum 0 漂移）。
 
@@ -76,6 +80,7 @@
 
 ```bash
 # --- 启停（pg_ctl；数据目录固定 /opt/homebrew/var/postgres5433）---
+# ⚠️ 2026-10-16：该数据目录已不存在，以下命令当前不可用；须先 initdb 重建目录并重建库
 pg_ctl -D /opt/homebrew/var/postgres5433 -l /opt/homebrew/var/postgres5433/server.log start   # 启动
 pg_ctl -D /opt/homebrew/var/postgres5433 stop -m fast                                       # 停止（快速）
 pg_ctl -D /opt/homebrew/var/postgres5433 status                                             # 状态
@@ -123,8 +128,8 @@ bash scripts/db/check-consistency.sh
 | 库 | 端口 | 运行方式 | 角色 | 数据基线 |
 |---|---|---|---|---|
 | **生产库 `topems`** | `5432` | Homebrew PostgreSQL **18.4**（`/opt/homebrew/opt/postgresql@18`，`/opt/homebrew/var/postgresql@18`） | **生产权威库** | **纯净**：231 表 / 850 权限 / 1 用户（= 5433 原数据全量一致） |
-| **开发库 `topems_dev`** | `5432` | 同实例 | 开发/验证基线 | 235 表 / 955 权限（含 4 个开发独有 public 表 + 19 个模块表 + 开发数据） |
-| **验证库 `topems`（5433）** | `5433` | Homebrew PostgreSQL 18.4（`/opt/homebrew/var/postgres5433`） | 迁移链重放 / 双库账本核对（§6） | 与生产一致（数据已复制） |
+| ~~**开发库 `topems_dev`**~~ | `5432` | 同实例 | 开发/验证基线 | **2026-10-16 核实：该库已不存在**；原基线 235 表 / 955 权限（含 4 个开发独有 public 表 + 19 个模块表 + 开发数据）需从 `backups/topems_pre_clean_20261008.sql` 重建（该 dump 亦缺失，见 §7.4） |
+| **验证库 `topems`（5433）** | `5433` | Homebrew PostgreSQL 18.4（`/opt/homebrew/var/postgres5433`）——**2026-10-16 起实例已不存在**（数据目录缺失、端口无监听） | 迁移链重放 / 双库账本核对（§6） | 与生产一致（数据已复制）；复用需重建 |
 
 ### 7.2 迁移过程与纯净分离
 
@@ -138,14 +143,16 @@ bash scripts/db/check-consistency.sh
 ### 7.3 连接口径（应用/脚本）
 
 - **生产/部署**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems`（脚本默认 PGPORT=5432 已对齐）
-- **开发**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权）
-- **5433 验证库**：仅迁移链重放/账本核对（§6 命令），不承载应用
+- **开发**：`postgres://topems:<TOPEMS_PG_PASSWORD>@localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权）⚠️ **2026-10-16 核实 `topems_dev` 不存在**，该口径当前不可用；且本机 `.env.local` 的 `DATABASE_URL` 仍指向已消失的 **5433**，使用前须改为 5432 的 `topems` 或重建 `topems_dev`
+- **5433 验证库**：仅迁移链重放/账本核对（§6 命令），不承载应用；**2026-10-16 起该实例已不存在，执行前须先重建（§6.3）**
 
 ### 7.4 备份资产（2026-10-08，统一存放 `backups/`）
 
 - `backups/topems_migration_backup_20261008_080512.sql`（5433 原全量，迁移时）
 - `backups/topems_container_clean_20261008.sql`（5433 纯净，分离时）
 - `backups/topems_pre_clean_20261008.sql`（合并库全量 = 开发基线来源）
+
+> ⚠️ **现状（2026-10-16）**：本机 `backups/` 目录不存在，上述三份 dump 资产已缺失 → 5433 重建**不能**依赖 dump 恢复，只能走迁移链空库重放（§6.3）。
 
 ### 7.5 Docker 容器处置
 

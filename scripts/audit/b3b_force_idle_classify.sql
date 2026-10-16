@@ -6,7 +6,7 @@
 --
 -- 目的：
 --   A5 审计（audit-force-rls-no-policy.sql）登记了 FORCE 空转表
---   5432=173 / 5433=192（U5-C 型）。本脚本对该集合做处置前分类：
+--   5432=173 / 5433=192（U5-C 型；5433 验证实例 2026-10-16 起已不存在）。本脚本对该集合做处置前分类：
 --     [1] 明细清单：每张表的 schema / 表名 / 是否含 tenant_id / tenant_id 类型 /
 --         行数 / 既有 policy 数 / 建议处置桶
 --     [2] 分类汇总：含 tenant_id（→ U5-C rls_tenant_isolation）vs

@@ -2,7 +2,7 @@
 """gen-missing-columns-migration.py — 从基线库导出缺失列定义，生成幂等补链迁移。
 
 用途（2026-10-07 自愈验证后"系统性补链"落地）:
-  对拍 BASE_URL（演进库，如 5432）与 TARGET_URL（空库重建，如 5433），
+  对拍 BASE_URL（演进库，如 5432）与 TARGET_URL（空库重建，独立库），
   找出"同表在 BASE 有、TARGET 无"的列，从 BASE 的 pg_attribute/pg_attrdef
   提取精确类型/NOT NULL/DEFAULT，生成单个幂等迁移 SQL
   （ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...）。

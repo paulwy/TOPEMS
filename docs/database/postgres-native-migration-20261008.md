@@ -1,5 +1,7 @@
 # PostgreSQL 生产库原生迁移记录（2026-10-08）
 
+> **更新（2026-10-16）**：本文档「最终双库 / 应用连接切换 / 5433 后续 / 备份资产」四处描述已过时——5433 Homebrew 验证实例（数据目录 `/opt/homebrew/var/postgres5433`）**已不存在**（全盘无该目录、端口无监听）；`backups/` 目录及三份 dump **亦缺失**；`topems_dev`（开发基线）**亦不存在**。口径以 `docs/database/database-primary-instance.md` 顶部更新块为准。
+
 ## 背景
 
 - 生产数据原运行于 Docker 容器 `topems-postgres`（pgvector/pgvector:pg18，宿主映射 5433）
@@ -47,17 +49,17 @@
 | 库 | 数据 | 角色 |
 |---|---|---|
 | `topems`（5432） | 231 表 / 850 权限 / 1 用户（纯净 = 5433） | **生产权威库** |
-| `topems_dev`（5432） | 235 表 / 955 权限（+4 个开发独有 public 表、19 个模块表、开发数据） | 开发基线 |
+| ~~`topems_dev`（5432）~~ | 原 235 表 / 955 权限（+4 个开发独有 public 表、19 个模块表、开发数据） | 开发基线 —— **2026-10-16 核实该库已不存在** |
 
 ## 应用连接切换
 
 - 生产/部署：`localhost:5432/topems`（脚本 PGPORT 默认已 5432；rollback.sh/upgrade-runtime.sh 已调整）
-- 开发：`localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权 ALL）
+- 开发：`localhost:5432/topems_dev`（`DATABASE_URL` 覆盖；topems_app 已授权 ALL）⚠️ **2026-10-16 核实 `topems_dev` 不存在**，该口径不可用；且本机 `.env.local` 的 `DATABASE_URL` 仍指向已消失的 **5433**，使用前须改指 5432 的 `topems` 或重建 `topems_dev`
 
 ## 5433 后续
 
-- 5433 为 Homebrew 验证实例（数据目录 `/opt/homebrew/var/postgres5433`），保留作迁移链重放/双库账本核对（见
-  `docs/database/database-primary-instance.md` §6）
+- ~~5433 为 Homebrew 验证实例（数据目录 `/opt/homebrew/var/postgres5433`），保留作迁移链重放/双库账本核对（见
+  `docs/database/database-primary-instance.md` §6）~~ → **2026-10-16 核实：该实例已不存在**（数据目录缺失、5433 无监听）；如需复用须按 `database-primary-instance.md` §6.3 重建（`initdb` + 迁移链重放）
 - 容器 `topems-postgres` 已弃（无容器进程在服务 5433）；Docker daemon 恢复后清理模拟容器
 
 ## 备份资产
@@ -66,6 +68,8 @@
 - `backups/topems_container_clean_20261008.sql`（5433 纯净 dump）
 - `backups/topems_pre_clean_20261008.sql`（合并库全量 = topems_dev 开发基线来源）
 
+> ⚠️ **现状（2026-10-16）**：本机 `backups/` 目录不存在，上述三份 dump 已缺失 → 5433 / `topems_dev` 重建**不能**依赖 dump 恢复。
+>
 > 备份统一存放于仓库 `backups/`（已 gitignore，不入库）；清理策略见 §标准恢复流程。
 
 ### 备份有效性验证（2026-10-08）

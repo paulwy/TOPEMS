@@ -7,7 +7,7 @@
   R2 自定义 enum 列（代码模型通常为 String）—— bi.reports report_type/status 已实证
   R3 DATE/NUMERIC 全量分布（业务正确基线，供未来新增查询参考）
 用法：
-  python3 scripts/scan_column_type_risks.py            # 默认容器库 5433
+  python3 scripts/scan_column_type_risks.py            # 默认本机 5432（Homebrew 权威库）
   DATABASE_URL=postgres://... python3 scripts/scan_column_type_risks.py
 输出：stdout 报告 + docs/database/column-type-risk-report.md
 """
@@ -17,7 +17,7 @@ import subprocess
 import sys
 
 HOST = os.environ.get("PGHOST", "localhost")
-PORT = os.environ.get("PGPORT", "5433")
+PORT = os.environ.get("PGPORT", "5432")
 DB = os.environ.get("PGDATABASE", "topems")
 USER = os.environ.get("PGUSER", "topems")
 PASSWORD = os.environ.get("PGPASSWORD", "topems_secret")

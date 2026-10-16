@@ -1203,7 +1203,7 @@
 - [ ] 生产机 smoke-prod.sh 全项 PASS（层1 自动断言 + 层2 专项：财务借贷/工单事件化/质量链/插件/BI/WS 看板）
 - [ ] 生产服务 /health 全绿（health-check.sh 就绪）
 - [ ] nginx 生产验证（verify-nginx-prod.sh 本机 MAP_OK；nginx -t + 6 域冒烟需生产 Linux）
-- [ ] 验证库（5433）pgvector 对齐 0.8.7（`ALTER EXTENSION vector UPDATE`；当前无数据风险）
+- [x] pgvector 对齐 0.8.7 — 原定「验证库（5433）」已不存在（数据目录 `/opt/homebrew/var/postgres5433` 缺失、5433 无监听），口径落 **5432 `topems`**：brew pgvector `0.8.2→0.8.7` + `ALTER EXTENSION vector UPDATE` 已执行（2026-10-16）。风险 0（4 张向量表全 0 行、无活动业务连接），完成后 vector 类型可用、`core.idx_kc_embedding` ivfflat 索引仍 valid。5432 的 `postgres` / `topems_prepare` 两库已一并对齐 0.8.7（均无向量表、无业务连接，风险 0）→ 本机 5432 上 3 个装了 vector 的库现全为 0.8.7；`docs/database/database-primary-instance.md` §6 关于 5433 实例「常驻运行」的描述已过时
 - [ ] Windows 部署实跑（按 `docs/deploy/windows-deployment.md`；WSL2 环境待建）
 - [ ] TRAE 并行线未提交改动待其自行收口（svc/erp、svc/search、navigation-menu-demo.design/）
 
