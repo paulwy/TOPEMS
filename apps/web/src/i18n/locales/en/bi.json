@@ -6662,5 +6662,7 @@
   "bi.nav.bi-index_desc": "Indicators",
   "bi.nav.bi-gis_desc": "GIS Analytics",
   "bi.nav.bi-data-analysis_desc": "Sales Analysis",
-  "bi.nav.bi-module-detail_desc": "Detail"
+  "bi.nav.bi-module-detail_desc": "Detail",
+  "bi.dataset_page.loading": "Loading data sources...",
+  "bi.dataset_page.no_data_sources": "No data sources yet (create one in Data Source Management first)"
 }

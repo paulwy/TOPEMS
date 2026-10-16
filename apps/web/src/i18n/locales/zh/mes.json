@@ -1827,5 +1827,7 @@
   "mes.demo.line_a": "A 线",
   "mes.demo.line_b": "B 线",
   "mes.demo.line_c": "C 线",
-  "mes.work_order.unit_piece": "件"
+  "mes.work_order.unit_piece": "件",
+  "mes.quality_traceability.title": "质量追溯",
+  "mes.quality_traceability.description": "全流程质量追溯、批次关联与异常跟踪"
 }

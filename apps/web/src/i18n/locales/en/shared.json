@@ -9778,5 +9778,6 @@
   "shared.sidebar.scm_purchase": "Purchasing",
   "shared.sidebar.scm_logistics": "Logistics",
   "shared.sidebar.crm_contracts": "Contracts",
-  "shared.sidebar.qms_eight_d": "8D Reports"
+  "shared.sidebar.qms_eight_d": "8D Reports",
+  "shared.data_load_failed": "Failed to load data"
 }

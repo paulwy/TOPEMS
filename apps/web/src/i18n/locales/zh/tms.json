@@ -491,5 +491,7 @@
   "tms.nav.tms-route-detail_desc": "路线管理详情",
   "tms.nav.tms-transport-plan-detail": "详情",
   "tms.nav.tms-transport-plan-detail_desc": "详情",
-  "tms.freight_cost_page.k20": "运费按距离和重量自动测算"
+  "tms.freight_cost_page.k20": "运费按距离和重量自动测算",
+  "tms.transport_plan_detail_page.8_0": "运输计划",
+  "tms.transport_plan_detail_page.loading": "加载中…"
 }

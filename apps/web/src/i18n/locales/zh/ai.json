@@ -3856,5 +3856,9 @@
   "ai.v60-ethics-panel.disabled": "暂不可用",
   "ai.v60-ethics-panel.title": "AI 伦理",
   "ai.v60-quality-panel.disabled": "暂不可用",
-  "ai.v60-quality-panel.title": "AI 质量"
+  "ai.v60-quality-panel.title": "AI 质量",
+  "ai.ai_prompt_library_page.columns.name": "名称",
+  "ai.ai_prompt_library_page.columns.category": "类别",
+  "ai.ai_prompt_library_page.columns.usage_count": "使用次数",
+  "ai.ai_prompt_library_page.columns.created_by": "创建人"
 }

@@ -6666,5 +6666,13 @@
   "components.top_bar.notifications": "Notifications",
   "components.dashboard_template.k8": "No data",
   "components.dashboard_template.k9": "No dashboard data yet. Refresh or check the data source.",
-  "components.wizard_builder.k5": "Report Summary"
+  "components.wizard_builder.k5": "Report Summary",
+  "components.exportMenu.currentPage": "Current page",
+  "components.mobileCardView.0a60ac": "Yes",
+  "components.mobileCardView.c9744f": "No",
+  "components.pageHeader.105c8a": "Export completed",
+  "components.pageHeader.4062b25e": "Exporting...",
+  "components.pageHeader.c7f0d5": "Export",
+  "components.viewModeToggle.175e01": "Switch to card view",
+  "components.viewModeToggle.6cef16": "Switch to table view"
 }

@@ -1939,5 +1939,14 @@
   "finance.fixed_asset.k50": "编辑固定资产",
   "finance.fixed_asset.k51": "固定资产详情",
   "finance.fixed_asset.k52": "计提折旧",
-  "finance.fixed_asset.k53": "对所选资产计算折旧"
+  "finance.fixed_asset.k53": "对所选资产计算折旧",
+  "finance.voucher_create_page.aux_type": "辅助核算",
+  "finance.voucher_create_page.aux_type_placeholder": "类型",
+  "finance.voucher_create_page.aux_object": "辅助核算对象",
+  "finance.voucher_create_page.aux_object_placeholder": "选择对象",
+  "finance.voucher_create_page.aux_customer": "客户",
+  "finance.voucher_create_page.aux_supplier": "供应商",
+  "finance.voucher_create_page.aux_project": "项目",
+  "finance.voucher_create_page.aux_department": "部门",
+  "finance.voucher_create_page.aux_employee": "员工"
 }

@@ -1207,5 +1207,7 @@
   "common.priority_medium": "Medium",
   "common.priority_normal": "Normal",
   "common.priority_low": "Low",
-  "common.priority_unknown": "Unknown"
+  "common.priority_unknown": "Unknown",
+  "common.basic_info": "Basic Information",
+  "common.home": "Home"
 }

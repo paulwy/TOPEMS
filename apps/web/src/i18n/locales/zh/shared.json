@@ -5568,5 +5568,14 @@
   "shared.dashboard.type_document": "文档任务",
   "shared.dashboard.type_system": "系统任务",
   "shared.dashboard.type_workflow": "工作流任务",
-  "shared.data_load_failed": "数据加载失败"
+  "shared.data_load_failed": "数据加载失败",
+  "shared.attachments_page.columns.file": "文件",
+  "shared.attachments_page.columns.type": "类型",
+  "shared.attachments_page.columns.upload_time": "上传时间",
+  "shared.favorites_page.columns.created_at": "创建时间",
+  "shared.favorites_page.columns.search_query": "搜索关键词",
+  "shared.favorites_page.columns.searched_at": "搜索时间",
+  "shared.favorites_page.columns.title": "标题",
+  "shared.favorites_page.columns.type": "类型",
+  "shared.favorites_page.columns.source": "来源"
 }

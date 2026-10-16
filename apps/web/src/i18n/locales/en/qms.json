@@ -3541,5 +3541,8 @@
   "qms.demo.audit_auditee_2": "Huadong Electronics Co., Ltd.",
   "qms.demo.audit_auditee_3": "Company-wide",
   "qms.demo.audit_auditee_4": "Production Dept 2",
-  "qms.demo.audit_auditee_5": "Quality Dept"
+  "qms.demo.audit_auditee_5": "Quality Dept",
+  "qms.nonconformance_redesign.field_detail_label": "Issue details",
+  "qms.nonconformance_redesign.field_detail_placeholder": "Please enter issue details",
+  "qms.nonconformance_redesign.field_quantity_placeholder": "Please enter quantity"
 }

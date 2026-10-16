@@ -62,7 +62,8 @@
 ### D. 其他可测项
 - [x] D1 可访问性：`label↔input` 关联、焦点可见、键盘可达（`apps/web/eslint.a11y.config.js` 已有配置）
   - **D1 已闭环（2026-10-17）**：a11y lint 全绿（0 error 0 warning）+ 新增 `apps/web/e2e/ui/d1-a11y.spec.ts`（@axe-core/playwright）实机扫描 6 页 **serious/critical 清零 6/6 PASS**；修复 12 项：DrillDownPanel Escape 键盘关闭（2.1.1）、ImageUpload 预览键盘可达、Avatar lint 豁免（已实现 role/tabIndex/onKeyDown）、ModeToggle aria-label、Select label↔id 关联+aria fallback、Pagination 每页条数 aria-label+i18n、CrudPage/ListPageTemplate MUI Select labelId 关联、TopBar command palette aria-label 含可见文本（kbd aria-hidden）、crm 等级筛选 select aria-label、viewport 允许缩放（1.4.4）、对比度 6 处（登录按钮 secondary[500]/text 按钮 [600]、dark --text-tertiary 提亮、badge info 8%、ObservabilityPanel info.700、dev 提示 text.secondary）；**遗留（moderate/minor 记录不阻塞）**：页面壳层无 `main` landmark / 无 h1（登录页/表单页，建议 D 节收尾统一加）、crm/hrm create 空 heading（MUI 结构空标题）
-- [ ] D2 i18n：无占位残留（如近期修复的 "Name" 占位残留）、zh/en 切换无缺失 key
+- [x] D2 i18n：无占位残留（如近期修复的 "Name" 占位残留）、zh/en 切换无缺失 key
+  - **D2 已闭环（2026-10-17）**：双方向 key 对齐扫描（zh/en 全量展平对比 + UI 引用交集）→ **补 zh→en 被引用缺口 216**（hrm 125 / pm 57 / ai 26 / dev_platform 20 / crm 12 / dashboard 10 / components 9 / crud_page_adapter 5 / intelligent_ops 4 / qms 3 / common 2 / bi 2 / shared 1 / system 2 / automation 1）**+ 补 en→zh 被引用缺口 105**（dashboard 70 / finance 9 / shared 9 / plugin 6 / ai 4 / mes 2 / tms 2 / common 2 / help 1）→ **被引用缺失 key 归零**；清理 `en/utils.json` 裸 k0-k9 假占位（"Text 000xxx"）；**验证**：typecheck + eslint 全绿、新增 `apps/web/e2e/ui/d2-i18n.spec.ts` 双语渲染实机 4/4 PASS（en HRM 仪表盘/员工列表、zh 工作台、en CRM 合同——均无 raw key 残留）；**遗留登记（未引用死 key，无运行时影响，不补）**：zh→en 缺 63 / en→zh 缺 52（pm_contract_detail k51-k74 与 bi 6 的 en 假占位 "Text xxx" 死 key、pm 36），清理与否待团队口径
 - [ ] D3 性能/体积：Lighthouse 基线（`apps/web/lighthouse-*.json`）复核
 - [ ] D4 可测试性：缺 `data-testid` / `label` 关联的页面登记清单，便于后续 e2e
 

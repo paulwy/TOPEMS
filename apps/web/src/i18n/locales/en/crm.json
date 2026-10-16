@@ -1605,5 +1605,17 @@
   "crm.demo.contract_2_title": "PLC Controller Framework Agreement",
   "crm.demo.contract_3_title": "Industrial Camera Service Contract",
   "crm.demo.contract_4_title": "Inverter Sales Contract (Completed)",
-  "crm.demo.contract_5_title": "Touchscreen Pilot Contract (Expired)"
+  "crm.demo.contract_5_title": "Touchscreen Pilot Contract (Expired)",
+  "crm.contract_redesign.toast_create_fail": "Contract creation failed",
+  "crm.contract_redesign.toast_create_success": "Contract created successfully",
+  "crm.contract_redesign.toast_delete_fail": "Contract deletion failed",
+  "crm.contract_redesign.toast_delete_success": "Contract deleted successfully",
+  "crm.contract_redesign.toast_update_fail": "Contract update failed",
+  "crm.contract_redesign.toast_update_success": "Contract updated successfully",
+  "crm.opportunity_redesign.toast_create_fail": "Opportunity creation failed",
+  "crm.opportunity_redesign.toast_create_success": "Opportunity created successfully",
+  "crm.opportunity_redesign.toast_delete_fail": "Opportunity deletion failed",
+  "crm.opportunity_redesign.toast_delete_success": "Opportunity deleted successfully",
+  "crm.opportunity_redesign.toast_update_fail": "Opportunity update failed",
+  "crm.opportunity_redesign.toast_update_success": "Opportunity updated successfully"
 }

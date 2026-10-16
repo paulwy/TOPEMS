@@ -6620,5 +6620,16 @@
       "k37": "Status",
       "k38": "Freight"
     }
-  }
+  },
+  "dashboard.dash_ehs_desc": "Environment, Health & Safety Management System",
+  "dashboard.dash_ehs_name": "EHS Safety Management",
+  "dashboard.dash_lims_desc": "Laboratory Information Management System",
+  "dashboard.dash_lims_name": "LIMS Laboratory Management",
+  "dashboard.dash_pdm_desc": "Product Data Management System",
+  "dashboard.dash_pdm_name": "PDM Product Data Management",
+  "dashboard.dash_rd_desc": "R&D Projects & Document Management",
+  "dashboard.dash_rd_name": "R&D Management",
+  "dashboard.dash_srm_desc": "Supplier Relationship Management System",
+  "dashboard.dash_srm_name": "SRM Supplier Management",
+  "automation_rules_page.delete_confirm_message": "Are you sure you want to delete this rule?"
 }

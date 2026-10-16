@@ -96,5 +96,25 @@
       "k45": "Activity Log",
       "k46": "No activity records"
     }
-  }
+  },
+  "dev_platform.v53-platform-console.empty_projects": "No project data",
+  "dev_platform.v53-platform-console.start_first": "Start by creating your first project",
+  "dev_platform.v53-platform-console.env_development": "Development environment",
+  "dev_platform.v53-platform-console.env_staging": "Staging environment",
+  "dev_platform.v53-platform-console.env_production": "Production environment",
+  "dev_platform.v53-platform-console.k0": "items",
+  "dev_platform.v53-platform-console.k47": "Theme mode",
+  "dev_platform.v53-platform-console.k48": "Version",
+  "dev_platform.v53-platform-console.k49": "Verified",
+  "dev_platform.v53-platform-console.k50": "Installed plugins",
+  "dev_platform.v53-platform-console.k51": "Not enabled",
+  "dev_platform.v53-platform-console.k52": "Enabled",
+  "dev_platform.v53-platform-console.k53": "Pipeline run history",
+  "dev_platform.v53-platform-console.k54": "Pipeline",
+  "dev_platform.v53-platform-console.k55": "Status",
+  "dev_platform.v53-platform-console.k56": "Stage",
+  "dev_platform.v53-platform-console.k57": "Duration",
+  "dev_platform.v53-platform-console.k58": "Details",
+  "dev_platform.v53-platform-console.k59": "Quick run",
+  "dev_platform.v53-platform-console.k60": "Activity log"
 }

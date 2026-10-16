@@ -568,5 +568,7 @@
   "system.log_config_panel.level_info": "Info",
   "system.log_config_panel.level_warn": "Warn",
   "system.log_config_panel.level_error": "Error",
-  "system.log_config_panel.level_fatal": "Fatal"
+  "system.log_config_panel.level_fatal": "Fatal",
+  "system.auditPage.end_date": "End Date",
+  "system.auditPage.start_date": "Start Date"
 }

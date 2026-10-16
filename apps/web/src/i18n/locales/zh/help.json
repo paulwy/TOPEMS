@@ -153,5 +153,6 @@
   "help.contact_support_desc": "contact支持desc",
   "help.shortcut": "快捷键",
   "help.all_docs": "全部文档",
-  "help_center.guide": "使用指南"
+  "help_center.guide": "使用指南",
+  "help.guide_page.sequence_tip": "推荐学习顺序：入门 → 进阶 → 高级"
 }

@@ -108,5 +108,9 @@
       "k51": "Event Timeline",
       "k52": "Events"
     }
-  }
+  },
+  "intelligent_ops.v56-ops-panel.k6": "Involved components",
+  "intelligent_ops.v56-ops-panel.k8": "Create emergency plan",
+  "intelligent_ops.v56-ops-panel.sev_critical": "Critical",
+  "intelligent_ops.v56-ops-panel.sev_info": "Info"
 }
