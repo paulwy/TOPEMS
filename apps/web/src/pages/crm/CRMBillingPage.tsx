@@ -16,6 +16,7 @@ import { PageContainer } from '@/components/common';
 import CrudPage from '@/components/templates/CrudPage';
 import type { CrudApiAdapter } from '@/components/templates/CrudPage';
 import { crmApi, useCrmMock } from '@/api/crm';
+import type { CrmMockShape } from '@/api/crm/mockData';
 import type { BillingRecord, BillingAnalyticsData, Period } from '@/api/crm';
 import { billingSchema } from '@/schemas/crm';
 
@@ -30,7 +31,10 @@ const CRMBillingPage: React.FC = () => {
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
   const [period] = useState<Period>('MTD');
-  const { data: mockBilling, mockEnabled } = useCrmMock<BillingAnalyticsData>({ period });
+  const { data: mockData, mockEnabled } = useCrmMock<CrmMockShape>({ period });
+  // useCrmMock 返回整棵 CrmMockShape（含 dashboard/funnel/scoring/forecast/segmentation/billing），
+  // 本页消费 billing 分支
+  const mockBilling = mockData.billing;
 
   const { data: stats, isLoading: statsLoading } = useQuery<BillingAnalyticsData['summary']>({
     queryKey: ['crm', 'billing', 'stats'],

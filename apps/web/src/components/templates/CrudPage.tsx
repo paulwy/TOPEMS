@@ -754,7 +754,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
       {/* Tab 导航 */}
       {hasTabs && (
         <Tabs
-          value={activeTab}
+          value={tabsProp.some((t) => t.id === activeTab) ? activeTab : (tabsProp[0]?.id ?? '')}
           onChange={(_, v: string) => setActiveTab(v)}
           sx={{
             mb: 2,

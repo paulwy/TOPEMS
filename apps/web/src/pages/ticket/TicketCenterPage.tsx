@@ -122,8 +122,12 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
   const { data: commentsData } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.TICKET_COMMENTS_BASE, ticket.id],
     queryFn: async () => {
-      const res = await ticketApi.getComments(ticket.id);
-      return res.data.data;
+      try {
+        const res = await ticketApi.getComments(ticket.id);
+        return res.data.data ?? [];
+      } catch {
+        return [];
+      }
     },
     staleTime: 30 * 1000,
   });
@@ -131,8 +135,12 @@ const TicketDetailContent: React.FC<{ ticket: Ticket }> = ({ ticket }) => {
   const { data: slaInfo } = useQuery({
     queryKey: [...QUERY_KEYS.AD_HOC.TICKET_SLA_BASE, ticket.id],
     queryFn: async () => {
-      const res = await ticketApi.getTicketSla(ticket.id);
-      return res.data.data;
+      try {
+        const res = await ticketApi.getTicketSla(ticket.id);
+        return res.data.data ?? null;
+      } catch {
+        return null;
+      }
     },
     staleTime: 60 * 1000,
   });
@@ -397,8 +405,12 @@ const TicketCenterPage: React.FC = () => {
   const { data: statsData } = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.TICKET_STATS_BASE,
     queryFn: async () => {
-      const res = await ticketApi.getStats();
-      return res.data.data;
+      try {
+        const res = await ticketApi.getStats();
+        return res.data.data ?? null;
+      } catch {
+        return null;
+      }
     },
     staleTime: 5 * 60 * 1000,
   });

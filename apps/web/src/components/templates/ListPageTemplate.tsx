@@ -159,6 +159,7 @@ export function ListPageTemplate<
   onFilterChange,
   actions,
   rowActions,
+  renderRowActions,
   onRefresh,
   showBatchActionBar = true,
   emptyMessage = i18n.t('templates.list_page_template.k0'),
@@ -2498,7 +2499,7 @@ export function ListPageTemplate<
             </TableCell>
           );
         })}
-        {resolvedRowActions && resolvedRowActions.length > 0 && (
+        {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
           <TableCell
             align='right'
             sx={{ width: 80 }}
@@ -2571,7 +2572,7 @@ export function ListPageTemplate<
               />
             </TableCell>
           ))}
-          {resolvedRowActions && resolvedRowActions.length > 0 && (
+          {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
             <TableCell>
               <Skeleton
                 variant='text'
@@ -2637,7 +2638,9 @@ export function ListPageTemplate<
     }
     return treeTableData.map((row, index) => {
       const rowId =
-        getRowId?.(row) ?? ((row as unknown as Record<string, unknown>).id as string | number);
+        getRowId?.(row) ??
+        ((row as unknown as Record<string, unknown>).id as string | number) ??
+        index;
       const isSelected = effectiveSelectedIds.includes(rowId);
       const isExpanded = expandedIds.includes(rowId);
       const rowLevel = resolvedTreeView ? getRowLevel(rowId) : 0;
@@ -2847,9 +2850,11 @@ export function ListPageTemplate<
                 </TableCell>
               );
             })}
-            {resolvedRowActions && resolvedRowActions.length > 0 && (
+            {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
               <TableCell align='right'>
-                {isMobile ? (
+                {renderRowActions ? (
+                  renderRowActions(row, index)
+                ) : isMobile ? (
                   <IconButton
                     size='small'
                     onClick={(e) => handleRowActionClick(e, row)}
@@ -2865,7 +2870,7 @@ export function ListPageTemplate<
                       gap: 0.5,
                     }}
                   >
-                    {resolvedRowActions.slice(0, 3).map((action, actionIndex) => {
+                    {(resolvedRowActions ?? []).slice(0, 3).map((action, actionIndex) => {
                       if (action.show && !action.show(row)) return null;
                       return (
                         <Tooltip
@@ -2886,7 +2891,7 @@ export function ListPageTemplate<
                         </Tooltip>
                       );
                     })}
-                    {resolvedRowActions.length > 3 && (
+                    {(resolvedRowActions ?? []).length > 3 && (
                       <IconButton
                         size='small'
                         onClick={(e) => handleRowActionClick(e, row)}
@@ -3033,7 +3038,7 @@ export function ListPageTemplate<
             </TableCell>
           );
         })}
-        {resolvedRowActions && resolvedRowActions.length > 0 && (
+        {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
           <TableCell
             align='right'
             sx={{ width: 80 }}
@@ -3200,7 +3205,7 @@ export function ListPageTemplate<
                       sx={{ p: 0.5 }}
                     />
                   )}
-                  {resolvedRowActions && resolvedRowActions.length > 0 && (
+                  {(renderRowActions || (resolvedRowActions && resolvedRowActions.length > 0)) && (
                     <IconButton
                       size='small'
                       onClick={(e) => handleRowActionClick(e, row)}

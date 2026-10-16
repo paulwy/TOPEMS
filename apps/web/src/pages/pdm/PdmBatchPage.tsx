@@ -19,7 +19,10 @@ export default function PdmBatchPage() {
         if (!response.success || !response.data) {
           return { data: [], total: 0 };
         }
-        let items = (response.data as unknown as ProductionBatch[]) || [];
+        let items =
+          ((response.data as unknown as { batches?: ProductionBatch[] }).batches ??
+            (Array.isArray(response.data) ? response.data : [])) ||
+          [];
         const search = params?.search;
         if (search) {
           const lower = search.toLowerCase();

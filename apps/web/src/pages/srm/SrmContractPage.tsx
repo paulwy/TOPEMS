@@ -86,7 +86,8 @@ const ContractStats: React.FC = () => {
     queryFn: async () => {
       const response = await srmApi.listContracts();
       if (response.success && response.data) {
-        return response.data as SupplierContract[];
+        const raw = response.data as unknown as { contracts?: SupplierContract[] };
+        return raw.contracts ?? [];
       }
       return [];
     },

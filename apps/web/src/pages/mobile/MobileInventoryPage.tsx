@@ -482,7 +482,7 @@ const MobileInventoryPage: React.FC = () => {
             {activeTab === 0 && (
               <List disablePadding>
                 {filteredItems.map((item, index) => (
-                  <React.Fragment key={item.id}>
+                  <React.Fragment key={item.id ?? index}>
                     <MobileCard
                       leftIcon={
                         <Avatar

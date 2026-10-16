@@ -251,7 +251,7 @@ const MiniPieChart: React.FC<{
       color: item.color,
       label: item.label,
       value: item.value,
-      percentage: ((item.value / total) * 100).toFixed(1),
+      percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
     };
   });
   return (
@@ -415,14 +415,16 @@ export const MonitorDashboardPage: React.FC = () => {
     const memUsage = Math.round(systemMetrics?.memory_usage ?? 0);
     const diskUsage = Math.round(systemMetrics?.disk_usage ?? 0);
     const networkThroughput = systemMetrics
-      ? Math.round(systemMetrics.network_in + systemMetrics.network_out)
+      ? Math.round((systemMetrics.network_in ?? 0) + (systemMetrics.network_out ?? 0))
       : 0;
     const dbConnections = dbMetrics?.connections ?? 0;
     const onlineServices = apiServices.filter((s) => s.status === 'healthy').length;
     const alertCount = apiAlerts.length;
     const apiResponseTime =
       apiPerf.length > 0
-        ? Math.round(apiPerf.reduce((sum, p) => sum + p.avg_response_time, 0) / apiPerf.length)
+        ? Math.round(
+            apiPerf.reduce((sum, p) => sum + (p.avg_response_time ?? 0), 0) / apiPerf.length
+          )
         : 0;
     return [
       {
@@ -546,15 +548,21 @@ export const MonitorDashboardPage: React.FC = () => {
   const apiResponseTimeData = useMemo(() => {
     const avg =
       apiPerf.length > 0
-        ? Math.round(apiPerf.reduce((sum, p) => sum + p.avg_response_time, 0) / apiPerf.length)
+        ? Math.round(
+            apiPerf.reduce((sum, p) => sum + (p.avg_response_time ?? 0), 0) / apiPerf.length
+          )
         : 0;
     const p95 =
       apiPerf.length > 0
-        ? Math.round(apiPerf.reduce((sum, p) => sum + p.p95_response_time, 0) / apiPerf.length)
+        ? Math.round(
+            apiPerf.reduce((sum, p) => sum + (p.p95_response_time ?? 0), 0) / apiPerf.length
+          )
         : 0;
     const p99 =
       apiPerf.length > 0
-        ? Math.round(apiPerf.reduce((sum, p) => sum + p.p99_response_time, 0) / apiPerf.length)
+        ? Math.round(
+            apiPerf.reduce((sum, p) => sum + (p.p99_response_time ?? 0), 0) / apiPerf.length
+          )
         : 0;
     return {
       avg: createFlatTrend(timeLabels.length, avg),

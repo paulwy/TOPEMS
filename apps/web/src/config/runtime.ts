@@ -92,7 +92,7 @@ const config: RuntimeConfig = {
     scm: getEnv('VITE_SCM_SERVICE_URL', '/api/scm'),
     wms: getEnv('VITE_WMS_SERVICE_URL', '/api/wms'),
     tms: getEnv('VITE_TMS_SERVICE_URL', '/api/tms'),
-    aps: getEnv('VITE_APS_SERVICE_URL', '/api/aps'),
+    aps: getEnv('VITE_APS_SERVICE_URL', '/api/mes'),
     /** aps 无独立服务：由 svc/mes 的 aps_compat 兼容层提供（nest /api/aps → 内部重写为 /api/mes） */
     srm: getEnv('VITE_SRM_SERVICE_URL', '/api/srm'),
     qms: getEnv('VITE_QMS_SERVICE_URL', '/api/qms'),

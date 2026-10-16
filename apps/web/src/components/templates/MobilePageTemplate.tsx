@@ -59,7 +59,9 @@ export const MobilePageTemplate: React.FC<MobilePageTemplateProps> = ({
   const rightActions =
     actions && actions.length > 0 ? (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.xs }}>
-        {actions}
+        {actions.map((action, index) => (
+          <React.Fragment key={index}>{action}</React.Fragment>
+        ))}
       </Box>
     ) : undefined;
 

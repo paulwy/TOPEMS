@@ -21,7 +21,10 @@ export default function PdmFormulaPage() {
         if (!response.success || !response.data) {
           return { data: [], total: 0 };
         }
-        let items = (response.data as unknown as ProductionFormula[]) || [];
+        let items =
+          ((response.data as unknown as { formulas?: ProductionFormula[] }).formulas ??
+            (Array.isArray(response.data) ? response.data : [])) ||
+          [];
         const search = params?.search;
         if (search) {
           const lower = search.toLowerCase();

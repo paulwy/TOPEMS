@@ -146,7 +146,10 @@ const EvaluationStats: React.FC = () => {
     queryKey: QUERY_KEYS.AD_HOC.SRM_EVALUATIONS_STATS_BASE,
     queryFn: async () => {
       const response = await srmApi.listEvaluations();
-      if (response.success && response.data) return response.data;
+      if (response.success && response.data) {
+        const raw = response.data as unknown as { evaluations?: SupplierEvaluation[] };
+        return raw.evaluations ?? [];
+      }
       return [];
     },
     staleTime: 5 * 60 * 1000,
