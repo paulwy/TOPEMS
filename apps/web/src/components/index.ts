@@ -1,6 +1,5 @@
 // Layout components
-export { GlobalLayout } from './layout/GlobalLayout';
-// [已清理] ModuleTabs / TabItem - 0 引用（审计 P2-9）
+// [已清理] GlobalLayout - 旧桌面壳，已由 GlobalLayoutV3 取代（UI V3 定案 2026-10-16）
 export { default as PageHeader } from './templates/PageHeader';
 export type {
   PageHeaderProps,

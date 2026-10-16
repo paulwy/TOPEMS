@@ -1,6 +1,3 @@
-export { MobileLayout } from './MobileLayout';
-export type { MobileLayoutProps } from './MobileLayout';
-
 export { BottomTabBar } from './BottomTabBar';
 export type { TabItem } from './BottomTabBar';
 

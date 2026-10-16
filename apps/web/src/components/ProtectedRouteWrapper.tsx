@@ -1,8 +1,7 @@
 import React from 'react';
 import { ModuleGate } from './PermissionGate';
 import { ProtectedRoute } from './auth/ProtectedRoute';
-import { SmartLayout } from '../layouts/SmartLayout';
-import { AdaptiveLayout } from '../layouts/AdaptiveLayout';
+import { GlobalLayoutV3 } from '../layouts/GlobalLayoutV3';
 import type { RouteConfig } from '../routes';
 
 interface ProtectedRouteWrapperProps {
@@ -13,28 +12,24 @@ interface ProtectedRouteWrapperProps {
 const ProtectedRouteWrapper: React.FC<ProtectedRouteWrapperProps> = ({ route, children }) => {
   const permissions = route.requiredPermissions || [];
   const hasModuleGate = route.module && route.action;
-  // 临时修复：强制使用 V3 布局
-  const v3Enabled = true;
 
   const renderContent = (withLayout: boolean) => {
-    // V3 布局：使用 AdaptiveLayout（GlobalLayoutV3 / MobileLayoutV3）
-    const LayoutWrapper = v3Enabled ? AdaptiveLayout : SmartLayout;
-
     const content = hasModuleGate ? (
       <ModuleGate
         module={route.module!}
         action={route.action!}
       >
-        {withLayout ? <LayoutWrapper>{children}</LayoutWrapper> : children}
+        {withLayout ? <GlobalLayoutV3>{children}</GlobalLayoutV3> : children}
       </ModuleGate>
     ) : withLayout ? (
-      <LayoutWrapper>{children}</LayoutWrapper>
+      <GlobalLayoutV3>{children}</GlobalLayoutV3>
     ) : (
       children
     );
     return <ProtectedRoute requiredPermissions={permissions}>{content}</ProtectedRoute>;
   };
 
+  // 移动端模块自带壳（MobilePageTemplate），不套全局布局
   if (route.module === 'mobile') {
     return renderContent(false);
   }

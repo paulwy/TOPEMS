@@ -1,8 +1,7 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute, GuestRoute } from '../components/auth/ProtectedRoute';
-import { GlobalLayout } from '../components/layout';
-import { AdaptiveLayout, isUIV3Enabled } from '../layouts';
+import { GlobalLayoutV3 } from '../layouts';
 import DynamicRoutes from '../components/DynamicRoutes';
 import ProtectedRouteWrapper from '../components/ProtectedRouteWrapper';
 import PageLoader from '../components/PageLoader';
@@ -60,7 +59,7 @@ const renderRoutes = (routes: RouteConfig[]) => {
  * 包含：
  * - 性能测试页（直连，不走布局）
  * - 认证路由（GuestRoute）
- * - 仪表盘 / 公共路由（ProtectedRoute + SmartLayout）
+ * - 仪表盘 / 公共路由（ProtectedRoute + GlobalLayoutV3）
  * - 动态模块路由（DynamicRoutes）
  * - 核心模块路由（Module Federation 或静态降级）
  * - 旧路径重定向
@@ -124,15 +123,9 @@ const AppRoutes: React.FC = () => {
           path='/core/*'
           element={
             <ProtectedRoute>
-              {isUIV3Enabled() ? (
-                <AdaptiveLayout>
-                  <DynamicRouter />
-                </AdaptiveLayout>
-              ) : (
-                <GlobalLayout>
-                  <DynamicRouter />
-                </GlobalLayout>
-              )}
+              <GlobalLayoutV3>
+                <DynamicRouter />
+              </GlobalLayoutV3>
             </ProtectedRoute>
           }
         />

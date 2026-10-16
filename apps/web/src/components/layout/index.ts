@@ -1,4 +1,3 @@
-export { GlobalLayout } from './GlobalLayout';
 export { AppHeader } from './AppHeader';
 export { MobileNav } from './MobileNav';
 export type { TabItem } from './ModuleTabs';

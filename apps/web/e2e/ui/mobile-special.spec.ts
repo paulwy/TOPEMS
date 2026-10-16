@@ -35,12 +35,15 @@ test.describe('移动端专项测试', () => {
     test('底部导航栏应适配底部安全区域', async () => {
       const page = await authenticatedContext.newPage();
       await page.setViewportSize({ width: 375, height: 812 });
-      await page.goto('/dashboard');
-      await page.waitForLoadState('domcontentloaded');
+      // /dashboard 现为桌面 V3 壳（无底部导航），改指向真实渲染 BottomTabBar 的
+      // /mobile/* 页面（MobileWorkbenchPage）
+      await page.goto('/mobile/workbench');
+      await page.waitForLoadState('networkidle');
 
-      const bottomNav = page.locator('[role="navigation"], .MuiBottomNavigation-root');
-      const isVisible = await bottomNav.first().isVisible().catch(() => false);
-      expect(isVisible).toBe(true);
+      // BottomTabBar.tsx：Paper.className='bottom-tab-bar' 内为 MUI BottomNavigation，
+      // 并通过 paddingBottom: env(safe-area-inset-bottom, 0px) 适配底部安全区域
+      const bottomNav = page.locator('.bottom-tab-bar .MuiBottomNavigation-root');
+      await expect(bottomNav).toBeVisible();
 
       await page.close();
     });

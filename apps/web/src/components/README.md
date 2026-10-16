@@ -373,7 +373,7 @@ export type { StatusBadgeProps } from './StatusBadge';
 
 | 推荐组件 | 路径 | 使用场景 | 状态 |
 | -------- | ---- | -------- | ---- |
-| **MobileLayout** | `mobile/MobileLayout.tsx` | 移动端布局 | ✅ 推荐 |
+| **MobileLayoutV3** | `../../layouts/MobileLayoutV3.tsx` | 移动端宿主布局（`route.module==='mobile'` 自带壳，Industrial OS 视觉） | ✅ 推荐 |
 | **MobileHeader** | `mobile/MobileHeader.tsx` | 移动端头部 | ✅ 推荐 |
 | **MobileDataTable** | `mobile/MobileDataTable.tsx` | 移动端数据表格 | ✅ 推荐 |
 | **MobileForm** | `mobile/MobileForm.tsx` | 移动端表单 | ✅ 推荐 |

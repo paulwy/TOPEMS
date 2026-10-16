@@ -34,7 +34,7 @@ import {
  * GlobalLayoutV3 — Industrial OS 全局布局
  *
  * 使用 AppShell（TopBar + SideRail）替换旧的 GlobalLayout / SmartLayout。
- * 通过 VITE_UI_V3_ENABLED 开关控制，开启时走新布局，关闭时回退旧布局。
+ * 定案（2026-10-16）：主路由恒用本布局，原 VITE_UI_V3_ENABLED 灰度开关已移除。
  *
  * 特性：
  * - 统一的 Industrial OS 视觉语言

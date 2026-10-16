@@ -1,161 +1,81 @@
-import React, { useMemo } from 'react';
-import i18n from '@/i18n';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, Factory, MessageSquare, User } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
-import { designTokens } from '@topems/tokens';
+import React from 'react';
+import { Box } from '@mui/material';
+import { BottomTabBar, MobileHeader, PageTransition } from '@/components/mobile';
+import type { MobileHeaderProps, TabItem } from '@/components/mobile';
 
 /**
- * MobileLayoutV3 — Industrial OS 移动端布局
+ * MobileLayoutV3 — Industrial OS 移动端布局（mobile module 宿主壳）
  *
- * 使用底部导航栏（BottomRail）+ 全屏抽屉替换旧的 MobileLayout。
- * 通过 VITE_UI_V3_ENABLED 开关控制，开启时走新布局，关闭时回退旧布局。
+ * 定案（2026-10-16）：
+ * - 主路由恒用 GlobalLayoutV3（桌面壳），不再有设备分流 / SmartLayout。
+ * - `route.module === 'mobile'`（/mobile/*）的路由不套全局壳，
+ *   由本布局承载（ProtectedRouteWrapper 分流），即移动端模块自带壳。
  *
- * 特性：
- * - 底部 5 个核心 Tab 导航
- * - 全屏抽屉菜单（更多功能）
- * - 统一的 Industrial OS 视觉语言
- * - 页面过渡动画（后续接入）
+ * 与旧 `components/mobile/MobileLayout` 的差异：仅替换外层为 Industrial OS
+ * 视觉（CSS 变量 `--bg-primary`，随 `data-theme` 明暗自适应），内部复用同一套
+ * 移动端原语（MobileHeader / BottomTabBar / PageTransition），
+ * API 与旧布局完全对齐，迁移为纯 import 替换、行为不丢。
  */
-export interface MobileLayoutV3Props {
+export interface MobileLayoutV3Props extends MobileHeaderProps {
   children: React.ReactNode;
+  showTabBar?: boolean;
+  activeTab?: string;
+  tabs?: TabItem[];
+  onTabChange?: (tabId: string) => void;
+  bottomPadding?: boolean;
+  enableTransition?: boolean;
+  safeAreaBottom?: boolean;
 }
 
-interface MobileTabItem {
-  id: string;
-  label: string;
-  icon: LucideIcon;
-  path: string;
-  badge?: number;
-}
-
-const mobileTabs: MobileTabItem[] = [
-  { id: 'home', label: i18n.t('layouts.mobile_nav.home'), icon: Home, path: '/dashboard' },
-  { id: 'mes', label: i18n.t('layouts.mobile_nav.mes'), icon: Factory, path: '/mes' },
-  { id: 'im', label: i18n.t('layouts.mobile_nav.im'), icon: MessageSquare, path: '/im', badge: 3 },
-  { id: 'profile', label: i18n.t('layouts.mobile_nav.profile'), icon: User, path: '/profile' },
-];
-
-export const MobileLayoutV3: React.FC<MobileLayoutV3Props> = ({ children }) => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const activeTabId = useMemo(() => {
-    for (const tab of mobileTabs) {
-      if (location.pathname === tab.path || location.pathname.startsWith(`${tab.path}/`)) {
-        return tab.id;
-      }
-    }
-    return 'home';
-  }, [location.pathname]);
-
-  const handleTabClick = (tab: MobileTabItem) => {
-    if (tab.id !== activeTabId) {
-      navigate(tab.path);
-    }
-  };
+export const MobileLayoutV3: React.FC<MobileLayoutV3Props> = ({
+  children,
+  showTabBar = true,
+  activeTab,
+  tabs,
+  onTabChange,
+  bottomPadding = true,
+  enableTransition = true,
+  safeAreaBottom = true,
+  ...headerProps
+}) => {
+  const content = enableTransition ? <PageTransition>{children}</PageTransition> : children;
 
   return (
-    <div
-      style={{
-        minHeight: '100dvh',
-        backgroundColor: 'var(--bg-primary)',
+    <Box
+      sx={{
         display: 'flex',
         flexDirection: 'column',
+        minHeight: '100dvh',
+        backgroundColor: 'var(--bg-primary)',
+        maxWidth: '100%',
+        overflow: 'hidden',
       }}
     >
-      {/* 主内容区 */}
-      <main
-        style={{
-          flex: 1,
-          paddingBottom: 'calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px))',
-          overflowY: 'auto',
-        }}
-      >
-        {children}
-      </main>
+      <MobileHeader {...headerProps} />
 
-      {/* 底部导航栏 */}
-      <nav
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 'var(--bottom-nav-height, 64px)',
-          backgroundColor: 'var(--bg-surface)',
-          borderTop: '1px solid var(--border-default)',
-          display: 'flex',
-          justifyContent: 'space-around',
-          alignItems: 'center',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-          zIndex: designTokens.zIndex.mobileStepper,
+      <Box
+        component='main'
+        sx={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          pb: showTabBar && bottomPadding ? 7 : 0,
+          WebkitOverflowScrolling: 'touch',
         }}
       >
-        {mobileTabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = tab.id === activeTabId;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab)}
-              style={{
-                flex: 1,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1,
-                backgroundColor: 'transparent',
-                border: 'none',
-                cursor: 'pointer',
-                color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                position: 'relative',
-              }}
-            >
-              <div style={{ position: 'relative' }}>
-                <Icon
-                  size={22}
-                  strokeWidth={isActive ? 2.5 : 2}
-                />
-                {tab.badge && tab.badge > 0 && (
-                  <span
-                    style={{
-                      position: 'absolute',
-                      top: '-6px',
-                      right: '-8px',
-                      minWidth: '16px',
-                      height: '16px',
-                      borderRadius: '8px',
-                      backgroundColor: 'var(--status-error)',
-                      color: 'white',
-                      fontSize: '10px',
-                      fontWeight: 600,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      padding: '0 4px',
-                    }}
-                  >
-                    {tab.badge > 99 ? '99+' : tab.badge}
-                  </span>
-                )}
-              </div>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: isActive ? 600 : 400,
-                  lineHeight: 1,
-                }}
-              >
-                {tab.label}
-              </span>
-            </button>
-          );
-        })}
-      </nav>
-    </div>
+        {content}
+      </Box>
+
+      {showTabBar && tabs && tabs.length > 0 && (
+        <Box sx={{ pb: safeAreaBottom ? 'env(safe-area-inset-bottom, 20px)' : 0 }}>
+          <BottomTabBar
+            tabs={tabs}
+            activeTab={activeTab || ''}
+            onChange={onTabChange}
+          />
+        </Box>
+      )}
+    </Box>
   );
 };
 

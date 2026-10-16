@@ -1,8 +1,9 @@
 /**
  * MobilePageTemplate - 移动端页面模板
  *
- * 面向 `apps/web/src/pages/mobile/*` 的小屏页面，封装 MobileLayout + PageContainer
- * + 可选 PullToRefresh 的标准外壳，消除各页面重复的布局胶水代码。
+ * 面向 `apps/web/src/pages/mobile/*` 的小屏页面，封装 MobileLayoutV3（mobile module
+ * 宿主壳，Industrial OS 视觉）+ PageContainer + 可选 PullToRefresh 的标准外壳，
+ * 消除各页面重复的布局胶水代码。
  *
  * 与桌面端模板（ListPageTemplate 等）的差异：
  * - 全屏宽度（maxWidth=false）、触摸友好的头部按钮（44x44 命中区）
@@ -14,8 +15,9 @@
 import React from 'react';
 import { Box } from '@mui/material';
 import { designTokens } from '@topems/tokens';
-import { MobileLayout, PullToRefresh } from '@/components/mobile';
+import { PullToRefresh } from '@/components/mobile';
 import type { MobileHeaderProps } from '@/components/mobile';
+import { MobileLayoutV3 } from '@/layouts';
 import { PageContainer } from '@/components/common';
 
 export interface MobilePageTemplateProps {
@@ -72,7 +74,7 @@ export const MobilePageTemplate: React.FC<MobilePageTemplateProps> = ({
   );
 
   return (
-    <MobileLayout
+    <MobileLayoutV3
       title={title}
       rightActions={rightActions}
       showTabBar={false}
@@ -89,7 +91,7 @@ export const MobilePageTemplate: React.FC<MobilePageTemplateProps> = ({
         {hasBottomNav && <Box sx={{ height: BOTTOM_NAV_RESERVED_HEIGHT, flexShrink: 0 }} />}
       </PageContainer>
       {hasBottomNav && bottomNav}
-    </MobileLayout>
+    </MobileLayoutV3>
   );
 };
 

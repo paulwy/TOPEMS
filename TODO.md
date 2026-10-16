@@ -1,6 +1,67 @@
 
 ---
 
+## 🔍 前端 UI 全面审核规划（2026-10-16，待执行）
+
+> 目标：对 `apps/web`（topems-portal，React 19 + react-router 7 + Vite，**885 个页面组件 / ~40 模块**）做全面 UI/页面审核 + 模拟录入，找出【布局嵌套 / 页面功能 / 数据录入】等问题，产出分级问题清单。
+> 方法：静态审计（Grep/脚本）+ 扩展既有 Playwright e2e/ui + 浏览器自动化（browser_use / webapp-testing）实机模拟输入。
+> 既有基线：`docs/quality/前端UI审计报告-2026-10-07.md`（六维结论）、TODO.md「🔧 前端 UI 审计批次（2026-10-07）」、e2e/ui 既有 46 个 spec。
+
+### 环境前置（执行前确认）
+- [ ] 前端 dev：`pnpm --filter topems-portal dev --port 3001`（e2e 基线 `baseURL=http://localhost:3001`，`playwright.config.ts` webServer 同此）
+- [ ] 后端依赖：前端经 `vite.config.ts` proxy 调后端 80xx（core 8000 等），**无 MSW/mock**（仅 `e2e/mock-iam-server.cjs`）→ 需启动后端；最简 `bash scripts/run_monolith.sh`（:8099）或 `./scripts/topems.sh start-all`
+- [ ] DB/Redis：本机 5432 权威库 + `.env` 带密码 `REDIS_URL`
+
+### A. 布局与嵌套审计
+- ✅ A1 布局装配链核对（2026-10-16 静态完成）：`App.tsx`→`AppLayout`（仅 Provider）→`AppRoutes`；`/core/*` 走 `isUIV3Enabled() ? AdaptiveLayout : GlobalLayout`（`src/routes/appRoutes.tsx:123-138`）；其余受保护路由走 `ProtectedRouteWrapper`（`src/components/ProtectedRouteWrapper.tsx:13-43`）。**发现 3 处"临时修复"硬编码**：
+  - ⚠️ **P1 移动端布局被禁用**：`src/layouts/AdaptiveLayout.tsx:73-76` 硬编码强制返回 `GlobalLayoutV3`，注释原文「临时修复：强制使用桌面端布局（GlobalLayoutV3）／问题：当前视口宽度 753px 被识别为移动端，使用了 MobileLayoutV3／后续根据实际需要调整响应式断点」→ **MobileLayoutV3 实际不可达，响应式切换失效**
+  - ⚠️ **P2 旧布局分支死代码**：`ProtectedRouteWrapper.tsx:16-17` `const v3Enabled = true;`（注释「临时修复：强制使用 V3 布局」）→ `SmartLayout` 分支永不可达；`SmartLayout`→`Mobile/Tablet/Global` 三套布局成为死路径
+  - ⚠️ **P2 口径冲突**：`isUIV3Enabled()`（`AdaptiveLayout.tsx:34-36`，读 `VITE_UI_V3_ENABLED`）与 `ProtectedRouteWrapper` 硬编码 `true` 两套开关口径不一致；且 `AdaptiveLayout.tsx:68-71` 未启用 V3 时直接返回 children（不包裹布局）→ 若调用方未自包旧布局将渲染裸内容，需核对全部调用点
+- ✅ A2 页面重复渲染壳层扫描（2026-10-16 静态完成）：`src/pages` 中**仅 1 个页面**直接 import+渲染壳层组件（`AppHeader`/`AppSidebar`/`GlobalLayout`/`AdaptiveLayout`/`SmartLayout`/`MobileNav`/`MobileHeader`）= `src/pages/admin/SystemManagementPage.tsx`（同时渲染 `DashboardTemplate` + `MobileHeader` + `MobileNav` + 吸顶信息条，`L77-116`）→ **重复壳层为点状风险，非系统性**；待实机确认是否与 V3 布局叠加
+- [ ] A3 内容区嵌套 padding/max-width 叠加检测（静态难判定 → 归入实机阶段 B/C 的视觉核查）
+- ✅ A4 双布局并存一致性（2026-10-16 静态完成）：结论见 A1——**V3 被两处硬编码强制，旧 `GlobalLayout`/`SmartLayout` 路径实际不可达**，无法通过开关做 V3/旧一致性对比；需决定是「正式删除死布局」还是「恢复灰度开关」
+- [ ] A5 响应式断点实机核验（断点判定已被 A1 的硬编码绕过：静态结论=移动端分支失效，但 `e2e/ui` 仍有 `Desktop Chrome`+`iPhone 12` 两个 project → **需实机确认 iPhone 12 下实际渲染的是哪套布局**）
+
+### B. 页面功能巡检
+- [ ] B1 路由可达性：遍历路由表全页面 smoke，断言无 404/白屏/整页崩溃
+- [ ] B2 控制台洁净：断言无 uncaught error / React key warning / 4xx-5xx 失败请求
+- [ ] B3 列表页数据渲染：抽样 crm/mes/wms/erp/finance/hrm/pm/qms 列表非空 + 三态（加载/空/错误）
+- [ ] B4 导航链路：侧栏/顶栏/面包屑/返回正确（复用 `e2e/ui/navigation.spec.ts` / `mobile-navigation.spec.ts`）
+
+### C. 数据录入（模拟输入）验证
+- ✅ C1 表单覆盖清点（2026-10-16 静态完成）：录入面三形态——① **整页表单** `FormPageTemplate`（`zodResolver`，`mode onBlur`，`src/components/templates/FormPageTemplate.tsx`）：**16 文件 / 52 处**；② **列表+弹窗 CRUD** `ListPageTemplate`（内嵌 `FormDialog`）：**75 文件 / 203 处**（主形态）；③ 直接用 `FormDialog`：10 文件 / 41 处；④ **手写 `useForm`**：仅 4 文件（`shared/LoginPage.tsx`/`shared/ForgotPasswordPage.tsx`/`shared/ProfilePage.tsx`/`shared/hooks/useProfile.ts`，均为 auth/个人中心）→ **表单机制一致性良好，无大面积双轨**
+  - 代表性整页表单（C2 候选）：`crm/CustomerCreatePage.tsx`、`crm/CustomerEditPage.tsx`、`hrm/HrmEmployeeCreatePage.tsx`、`pm/PmProjectCreatePage.tsx`、`rd/RsExperimentCreatePage.tsx`、`asset/TransferPage.tsx`、`admin/SystemSettingsPage.tsx`；**手写校验对照**：`finance/VoucherCreatePage.tsx`（凭证号/日期/期间/借贷平衡自校验，`L173-220`）
+- [ ] C2 代表性录入页模拟提交 10-15 个（CRM 客户 `crm/CustomerCreatePage.tsx`、finance 凭证 `finance/VoucherCreatePage.tsx`，mes/wms/erp/hrm/pm/qms 各选 1-2）：填必填 → 校验提示 → 提交 → 成功/失败反馈闭环
+- [ ] C3 校验正确性：必填缺失/格式非法/枚举越界的提示正确；zod 与手写校验口径一致
+- [ ] C4 提交链路：接口调用 → 成功提示(toast/message) → 失败错误提示 → 列表刷新 全链路可验证
+
+### D. 其他可测项
+- [ ] D1 可访问性：`label↔input` 关联、焦点可见、键盘可达（`apps/web/eslint.a11y.config.js` 已有配置）
+- [ ] D2 i18n：无占位残留（如近期修复的 "Name" 占位残留）、zh/en 切换无缺失 key
+- [ ] D3 性能/体积：Lighthouse 基线（`apps/web/lighthouse-*.json`）复核
+- [ ] D4 可测试性：缺 `data-testid` / `label` 关联的页面登记清单，便于后续 e2e
+
+### 静态审计小结（2026-10-16，A1/A2/A4 + C1 已跑完）
+- **真实缺陷 3 项**：① [P1] `AdaptiveLayout.tsx:73-76` 硬编码强制桌面布局 → 移动端布局失效；② [P2] `ProtectedRouteWrapper.tsx:16-17` 硬编码强制 V3 → 旧布局成死代码；③ [P2] `pages/admin/SystemManagementPage.tsx` 页面自带壳层（点状，待实机确认叠加）
+- **正向结论**：重复壳层**非系统性**（885+ 页中仅 1 页）；表单机制**一致性良好**（手写 `useForm` 仅 auth/个人中心 4 文件）
+- **已决策（2026-10-16，方案 A）**：V3 硬编码 = **正式定案**（非「临时修复待回收」）→ 据此回收 `SmartLayout`/`MobileLayout`/`TabletLayout` 等死布局代码（已完成步骤1/2），移动端布局**不恢复**设备分流（`AdaptiveLayout` 不再回归）；移动端模块自带壳统一由 `layouts/MobileLayoutV3` 承载
+- **下一步（需后端）**：B1 全路由 smoke / B2 控制台洁净 / B3 列表三态 / B4 导航 / C2-C4 模拟录入闭环
+
+### UI V3 定案收口（2026-10-16，选定方案 A：主路由恒桌面 V3 + 移动端独立 module）
+- ✅ 步骤1 回收开关：删 `isUIV3Enabled`/`shouldUseUIV3`/`forceV3` 与 `layouts/AdaptiveLayout.tsx`；`appRoutes` 的 `/core/*` 与 `ProtectedRouteWrapper` 直用 `GlobalLayoutV3`；`.env.example` 移除 `VITE_UI_V3_ENABLED`（消除「生产 `/core/*` 走旧 GlobalLayout」的双 UI 缺陷）
+- ✅ 步骤2 删死布局家族：`layouts/SmartLayout.tsx`、`layouts/MobileLayout.tsx`、`layouts/TabletLayout.tsx`、旧 `components/layout/GlobalLayout.tsx` 及其单测 `components/layout/__tests__/responsive-breakpoints.test.tsx`（引用已逐一核实）
+- ✅ 步骤3 移动端壳（**定案：方案 b**）：`layouts/MobileLayoutV3` 重写为 Industrial OS 宿主壳并补齐 API parity（继承 `MobileHeaderProps` + `showTabBar`/`activeTab`/`tabs`/`onTabChange`/`bottomPadding`/`enableTransition`/`safeAreaBottom`；内部组合复用 `components/mobile` 的 `MobileHeader`/`BottomTabBar`/`PageTransition`，仅外层改用 V3 CSS 变量 `--bg-primary`，随 `data-theme` 明暗自适应）→ `MobilePageTemplate` 单点 import 由 `components/mobile/MobileLayout` 切到 `@/layouts/MobileLayoutV3`（13 页经此迁移），旧 `components/mobile/MobileLayout` 成死代码已删除（含 story 与 barrel 导出）→ 移动端壳收敛为唯一实现，行为不丢
+- ✅ 步骤4 移除 `pages/admin/SystemManagementPage.tsx` 自带的 `MobileHeader`/`MobileNav` 壳层与 `mobileNavOpen` 状态（保留桌面 `desktop-only` 头部）
+- ✅ 步骤5 重写 mobile e2e specs：`mobile-navigation.spec.ts` 改断言新架构（`/mobile/*` 无桌面壳、`BottomTabBar` 切换、`/dashboard` 定视口仍渲染 GlobalLayoutV3）；`mobile-special.spec.ts` 底部安全区域用例改指向 `/mobile/workbench`；`mobile-real-device.spec.ts` 仅涉 `/login`，无需改动
+- ✅ 步骤6 验证：`pnpm --filter topems-portal typecheck` 通过（exit 0）
+
+### 产出物
+- 分级问题清单（P0-P3，附 `文件:行号` / 路由 / 复现步骤 / 截图）
+- 扩展既有 e2e/ui（46 spec）新增「全页面巡检」用例
+- 报告落 `docs/quality/`（沿用 2026-10-07 审计报告格式）
+
+---
+
 ## 2026-10-15 RLS 租户隔离收尾 + 同类缺陷清查（✅ 全部推送）
 
 > 承接 RLS INSERT 缺口批，沿「租户列/响应列」主线把同类 `get("tenant_id")` 运行时 panic 风险全仓清零。推送链：`89505b776 → a6d2e1af8 → ffa44a5b1 → a28e9c6cd → 20db16a70`（origin/main 已同步）。

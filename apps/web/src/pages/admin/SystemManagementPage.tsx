@@ -1,8 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Settings, ChevronLeft, Book, Database, Users, Shield, Key, FileText } from 'lucide-react';
-import { MobileHeader } from '@/components/mobile';
-import { MobileNav } from '@/components/layout/MobileNav';
 import { Box, Typography } from '@mui/material';
 import { DashboardTemplate } from '@/components/templates';
 import { designTokens } from '@/theme/tokens';
@@ -15,7 +13,6 @@ interface SystemManagementPageProps {
 }
 const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const navigate = useNavigate();
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const systemFeatures = [
     {
       id: 'users',
@@ -85,17 +82,6 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
           background: `linear-gradient(to bottom right, grey.100, ${ct.background.default})`,
         }}
       >
-        <MobileHeader
-          title={i18n.t('admin.system_management_page.k14')}
-          onMenuClick={() => setMobileNavOpen(true)}
-        />
-        <Box sx={{ '& > .MuiIconButton-root': { display: 'none' } }}>
-          <MobileNav
-            open={mobileNavOpen}
-            onClose={() => setMobileNavOpen(false)}
-            onOpen={() => setMobileNavOpen(true)}
-          />
-        </Box>
         <Box
           sx={{
             bgcolor: 'background.paper',
