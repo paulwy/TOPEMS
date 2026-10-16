@@ -21,8 +21,13 @@ import {
 
 export const spcApi = {
   listSpcCharts: async (): Promise<ApiResponse<SpcChart[]>> => {
-    const response = await apiClient.qms.get<{ charts?: SpcChartBackend[] }>('/spc/charts');
-    const adaptedData = (response.data?.charts || []).map(adaptSpcChartToFrontend);
+    // 后端 /spc/charts 直接返回数组；兼容旧版 { charts: [...] } 包裹结构
+    const response = await apiClient.qms.get<{ charts?: SpcChartBackend[] } | SpcChartBackend[]>(
+      '/spc/charts'
+    );
+    const raw = response.data;
+    const list = Array.isArray(raw) ? raw : raw?.charts || [];
+    const adaptedData = list.map(adaptSpcChartToFrontend);
     return { ...response, data: adaptedData };
   },
 

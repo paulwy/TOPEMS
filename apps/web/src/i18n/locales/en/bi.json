@@ -3419,11 +3419,11 @@
       ],
       [
         "name_fad522",
-        "Name Fad522"
+        "Completed"
       ],
       [
         "name_fb852f",
-        "Name Fb852f"
+        "In Progress"
       ],
       [
         "name_2111cc",
@@ -6327,8 +6327,8 @@
   "bi.bi_module_detail_page.name_8a8992": "Name 8a8992",
   "bi.bi_module_detail_page.name_b56976": "Name B56976",
   "bi.bi_module_detail_page.name_5cb424": "Name 5cb424",
-  "bi.bi_module_detail_page.name_fad522": "Name Fad522",
-  "bi.bi_module_detail_page.name_fb852f": "Name Fb852f",
+  "bi.bi_module_detail_page.name_fad522": "Completed",
+  "bi.bi_module_detail_page.name_fb852f": "In Progress",
   "bi.bi_module_detail_page.name_2111cc": "Name 2111cc",
   "bi.bi_module_detail_page.total_projects_3ea3ec": "Total Projects 3ea3ec",
   "bi.bi_module_detail_page.active_projects_fb852f": "Active Projects Fb852f",
