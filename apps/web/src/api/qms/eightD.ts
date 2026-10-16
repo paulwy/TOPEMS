@@ -148,12 +148,23 @@ export const eightDApi = {
     const backendData: UpdateEightDReportRequestBackend = {
       title: data.title,
       problem_description: data.problemDescription,
+      d2_problem_description: data.problemDescription,
       severity: data.severity,
       source: data.source,
       product_id: data.productId,
       product_name: data.productName,
       customer: data.customer,
+      assignee: data.assignee,
       due_date: data.dueDate,
+      d1_team: data.d1Team,
+      d1_leader: data.d1Leader,
+      d3_containment_action: data.d3ContainmentAction,
+      d4_root_cause: data.d4RootCause,
+      d4_cause_analysis: data.d4CauseAnalysis,
+      d5_permanent_action: data.d5PermanentAction,
+      d6_verification_result: data.d6VerificationResult,
+      d7_preventive_action: data.d7PreventiveAction,
+      d8_congratulations: data.d8Congratulations,
     };
     const response = await apiClient.qms.put<EightDReportBackend>(`/eightd/${id}`, backendData);
     return {

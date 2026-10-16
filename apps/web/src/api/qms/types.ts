@@ -912,7 +912,9 @@ export interface EightDReportBackend {
   id: string;
   report_no: string;
   title: string;
-  problem_description: string;
+  /** 后端 create/update 契约字段名（DB 列 d2_problem_description）；旧版前端用 problem_description，保留兼容 */
+  problem_description?: string;
+  d2_problem_description?: string;
   severity: string;
   source?: string;
   related_issue_id?: string;
@@ -923,6 +925,20 @@ export interface EightDReportBackend {
   current_stage: number;
   team_leader?: string;
   team_members?: string[];
+  /** 后端实际返回/更新的 8D 步骤字段（DB 列同名） */
+  d1_team?: string;
+  d1_leader?: string;
+  d3_containment_action?: string;
+  d3_implemented_at?: string;
+  d4_root_cause?: string;
+  d4_cause_analysis?: string;
+  d5_permanent_action?: string;
+  d6_verification_result?: string;
+  d6_verified_at?: string;
+  d7_preventive_action?: string;
+  d8_congratulations?: string;
+  d8_closed_at?: string;
+  assignee?: string;
   d1_team_established?: boolean;
   d2_problem_described?: boolean;
   d3_containment_implemented?: boolean;
@@ -949,7 +965,9 @@ export interface EightDReportBackend {
 export interface CreateEightDReportRequestBackend {
   report_no: string;
   title: string;
-  problem_description: string;
+  /** 后端 create 契约字段（d2_problem_description）；problem_description 仅为前端兼容 */
+  problem_description?: string;
+  d2_problem_description?: string;
   severity: string;
   source?: string;
   related_issue_id?: string;
@@ -958,19 +976,32 @@ export interface CreateEightDReportRequestBackend {
   customer?: string;
   team_leader?: string;
   team_members?: string[];
+  assignee?: string;
   due_date?: string;
 }
 
 export interface UpdateEightDReportRequestBackend {
   title?: string;
   problem_description?: string;
+  d2_problem_description?: string;
   severity?: string;
   source?: string;
   product_id?: string;
   product_name?: string;
   customer?: string;
   status?: string;
+  assignee?: string;
   due_date?: string;
+  /** 8D 步骤字段（后端 UpdateEightDRequest 契约，DB 列同名） */
+  d1_team?: string;
+  d1_leader?: string;
+  d3_containment_action?: string;
+  d4_root_cause?: string;
+  d4_cause_analysis?: string;
+  d5_permanent_action?: string;
+  d6_verification_result?: string;
+  d7_preventive_action?: string;
+  d8_congratulations?: string;
 }
 
 export interface EightDAuditLogBackend {
@@ -1016,6 +1047,16 @@ export interface EightDReport {
   d6Content?: string;
   d7Content?: string;
   d8Content?: string;
+  /** 向导/后端步骤字段（列表展示与详情用） */
+  d1Team?: string;
+  d1Leader?: string;
+  d3ContainmentAction?: string;
+  d4RootCause?: string;
+  d4CauseAnalysis?: string;
+  d5PermanentAction?: string;
+  d6VerificationResult?: string;
+  d7PreventiveAction?: string;
+  d8Congratulations?: string;
   dueDate?: string;
   closedAt?: string;
   createdBy?: string;
@@ -1035,7 +1076,18 @@ export interface CreateEightDReportRequest {
   customer?: string;
   teamLeader?: string;
   teamMembers?: string[];
+  assignee?: string;
   dueDate?: string;
+  /** 向导分步提交字段（后端 UpdateEightDRequest 契约） */
+  d1Team?: string;
+  d1Leader?: string;
+  d3ContainmentAction?: string;
+  d4RootCause?: string;
+  d4CauseAnalysis?: string;
+  d5PermanentAction?: string;
+  d6VerificationResult?: string;
+  d7PreventiveAction?: string;
+  d8Congratulations?: string;
 }
 
 export interface EightDAuditLog {

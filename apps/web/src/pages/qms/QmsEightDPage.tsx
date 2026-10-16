@@ -26,6 +26,7 @@ import type {
   WizardStepRenderProps,
   TreeConfig,
 } from '@/schema/schemaExtensions';
+import type { CreateEightDReportRequest } from '@/api/qms/types';
 import i18n from '@/i18n';
 import type { SchemaField } from '@/schema/types';
 
@@ -179,6 +180,7 @@ const RootCauseStepContent: React.FC<WizardStepRenderProps> = ({
         fields={rootCausesFields}
         mode={mode === 'view' ? 'view' : 'edit'}
         loading={false}
+        onChange={(tree) => onChange('root_cause_tree', tree)}
         onNodeAdd={async () => {}}
         onNodeUpdate={async () => {}}
         onNodeDelete={async () => {}}
@@ -267,11 +269,73 @@ const eightDAdapter: CrudApiAdapter = {
   },
 
   create: async (data) => {
-    const payload = data as unknown as Parameters<typeof eightDApi.createEightDReport>[0];
-    const response = await eightDApi.createEightDReport(payload);
-    if (!response.success)
-      throw new Error(response.message || i18n.t('pages.qms_eight_d_page.8d_17'));
-    return (response.data ?? {}) as Record<string, unknown>;
+    const v = data as Record<string, unknown>;
+    const json = (val: unknown) =>
+      Array.isArray(val) ? JSON.stringify(val) : val != null ? String(val) : '';
+
+    // 1) 创建基础记录（后端 CreateEightDRequest 契约：title/severity/d2_problem_description）
+    const created = await eightDApi.createEightDReport({
+      title: String(v.title ?? ''),
+      severity: String(v.severity ?? 'medium'),
+      problemDescription: String(v.problem_description ?? ''),
+    } as CreateEightDReportRequest);
+    if (!created.success)
+      throw new Error(created.message || i18n.t('pages.qms_eight_d_page.8d_17'));
+    const rec = created.data;
+    if (!rec?.id) throw new Error(i18n.t('pages.qms_eight_d_page.8d_17'));
+
+    // 2) 分步字段一次补齐（后端 UpdateEightDRequest 契约：DB 标量列）
+    const updateRes = await eightDApi.updateEightDReport(rec.id, {
+      problemDescription: String(v.problem_description ?? ''),
+      severity: String(v.severity ?? 'medium'),
+      d1Leader: String(v.team_leader ?? ''),
+      d1Team: json(v.team_members),
+      d3ContainmentAction: [
+        String(v.d3_effectiveness_check ?? ''),
+        json(v.containment_actions),
+      ]
+        .filter(Boolean)
+        .join('；'),
+      d4RootCause: json(v.root_causes),
+      d4CauseAnalysis: json(v.root_cause_tree),
+      d5PermanentAction: [
+        String(v.d5_validation_standard ?? ''),
+        json(v.permanent_actions),
+      ]
+        .filter(Boolean)
+        .join('；'),
+      d6VerificationResult: [
+        String(v.d6_verification_result ?? ''),
+        String(v.d6_data_comparison ?? ''),
+        `是否有效:${String(v.d6_is_effective ?? '')}`,
+      ]
+        .filter(Boolean)
+        .join('；'),
+      d7PreventiveAction: [
+        String(v.d7_preventive_action ?? ''),
+        String(v.d7_updated_documents ?? ''),
+      ]
+        .filter(Boolean)
+        .join('；'),
+      d8Congratulations: String(v.d8_closure_summary ?? ''),
+    });
+    if (!updateRes.success)
+      throw new Error(updateRes.message || i18n.t('pages.qms_eight_d_page.8d_18'));
+
+    // 3) 关闭收尾（d8_closed_at + status='closed'）
+    const closeRes = await eightDApi.closeEightDReport(rec.id, {
+      content: [
+        `审批人：${String(v.d8_approver ?? '')}`,
+        `签字日期：${String(v.d8_sign_off_date ?? '')}`,
+        `总结：${String(v.d8_closure_summary ?? '')}`,
+      ]
+        .filter(Boolean)
+        .join('；'),
+    });
+    if (!closeRes.success)
+      throw new Error(closeRes.message || i18n.t('pages.qms_eight_d_page.8d_19'));
+
+    return (rec as unknown) as Record<string, unknown>;
   },
 
   update: async (id, data) => {

@@ -320,53 +320,71 @@ export function TreeBuilder({
     setEditForm({});
   }, []);
 
-  const handleSave = useCallback(async () => {
-    if (!editForm[labelField]?.trim()) return;
+  const dialogFields = useMemo(() => {
+    if (fields.length > 0) return fields;
+    return [
+      {
+        name: labelField,
+        label: i18n.t('templates.tree_builder.k4'),
+        type: 'text' as const,
+        required: true,
+      },
+    ];
+  }, [fields, labelField]);
 
+  const handleSave = useCallback(async () => {
+    const primaryField = dialogFields[0]?.name ?? labelField;
+    const invalid = dialogFields.some(
+      (f) => f.required && !String(editForm[f.name] ?? '').trim()
+    );
+    if (invalid) return;
+    if (!String(editForm[primaryField] ?? '').trim()) return;
+
+    const fallbackLabel = String(editForm[labelField] ?? '').trim() || String(editForm[primaryField] ?? '').trim();
+
+    let nextData: TreeNode[];
     if (editDialog.mode === 'edit' && editDialog.node) {
       if (onNodeUpdate) {
         await onNodeUpdate(editDialog.node.id, editForm);
       }
-      setInternalData((prev) =>
-        updateNodeInTree(
-          prev,
-          editDialog.node!.id,
-          (n) => ({
-            ...n,
-            label: editForm[labelField],
-            data: { ...n.data, ...editForm },
-          }),
-          keyField
-        )
+      nextData = updateNodeInTree(
+        internalData,
+        editDialog.node.id,
+        (n) => ({
+          ...n,
+          label: fallbackLabel || n.label,
+          data: { ...n.data, ...editForm },
+        }),
+        keyField
       );
     } else {
       const newId = `new_${Date.now()}`;
       const newNode: TreeNode = {
         id: newId,
-        label: editForm[labelField],
+        label: fallbackLabel,
         data: editForm,
       };
       if (onNodeAdd) {
         await onNodeAdd(editDialog.parentId, editForm);
       }
-      setInternalData((prev) => {
-        if (editDialog.parentId === null) {
-          return [...prev, newNode];
-        }
-        return updateNodeInTree(
-          prev,
-          editDialog.parentId!,
-          (n) => ({
-            ...n,
-            children: [...(n.children || []), newNode],
-          }),
-          keyField
-        );
-      });
+      nextData =
+        editDialog.parentId === null
+          ? [...internalData, newNode]
+          : updateNodeInTree(
+              internalData,
+              editDialog.parentId!,
+              (n) => ({
+                ...n,
+                children: [...(n.children || []), newNode],
+              }),
+              keyField
+            );
     }
 
+    setInternalData(nextData);
+    onChange?.(nextData);
     closeDialog();
-  }, [editDialog, editForm, labelField, onNodeAdd, onNodeUpdate, closeDialog, keyField]);
+  }, [editDialog, editForm, labelField, onNodeAdd, onNodeUpdate, closeDialog, keyField, internalData, dialogFields, onChange]);
 
   const handleDelete = useCallback(
     async (node: TreeNode) => {
@@ -415,18 +433,6 @@ export function TreeBuilder({
     },
     [expandedKeys, mode, openEditDialog, handleDelete, openAddDialog, config]
   );
-
-  const dialogFields = useMemo(() => {
-    if (fields.length > 0) return fields;
-    return [
-      {
-        name: labelField,
-        label: i18n.t('templates.tree_builder.k4'),
-        type: 'text' as const,
-        required: true,
-      },
-    ];
-  }, [fields, labelField]);
 
   return (
     <Box sx={{ width: '100%', height: '100%' }}>
@@ -523,7 +529,9 @@ export function TreeBuilder({
           <Button
             onClick={handleSave}
             variant='contained'
-            disabled={!editForm[labelField]?.trim()}
+            disabled={dialogFields.some(
+              (f) => f.required && !String(editForm[f.name] ?? '').trim()
+            )}
           >
             {editDialog.mode === 'edit'
               ? i18n.t('templates.tree_builder.k9')
