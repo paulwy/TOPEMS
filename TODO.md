@@ -2218,3 +2218,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 实施：equipment.rs 6 处（list_equipment 动态 where_clause 加 tenant_filter + count/fetch bind tenant_uuid；create_maintenance 2 处 query_scalar! 设备名/编码查证；list_inspections count + 主查询；create_inspection 设备信息查询）。
 - 新踩坑：equipment_inspections 表无 tenant_id 列（0 行，关联 equipment）→ 改用 EXISTS JOIN mes.equipment 间接租户过滤（e.id=ei.equipment_id AND e.tenant_id=$N AND e.deleted_at IS NULL），语义正确且绕过缺列。宏 bind 序号注意 LIMIT/OFFSET 顺延。
 - 验证：cargo check topems-mes 0 error；SQL 实测 6 项断言全过（eq 10/0/11/11、get_eq 1/0）。
+
+## 方案C 批3-D：mes wip/team/process_flow 读路径显式租户过滤（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 实施：wip.rs 1 处（create_wip 查 production_orders 加 tenant 条件）+ team.rs 1 处（list_teams count/fetch 加 tenant_filter）+ process_flow.rs 3 处（list_process_flows count/fetch、add_flow_step 查证、analyze_capacity 单行）。3 文件各补本地 get_tenant_id 定义。
+- skip 登记：wip.rs 3 处（stub_wip_transfer_detail/wip 列表/transfer_wip——wips/wip_transfers 无 tenant_id 列且 wips.order_id 2 行全 NULL，production_orders JOIN 链路断裂，隔离依赖上游写入规范，待数据治理决策）；team.rs 3 处（create_team/add_team_member/remove_team_member 的 UPDATE member_count 内部统计子查询，team_id 已限定，随写路径隔离）。
+- 验证：cargo check topems-mes 0 error；SQL 实测 8 项断言全过（po 76/0/99、get_po 1/0、flows 0/0/1/1 平台公共 nil）。

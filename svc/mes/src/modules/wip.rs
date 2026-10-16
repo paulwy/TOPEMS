@@ -16,6 +16,14 @@ use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
 
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
+
 use crate::shared::permission::{check_permission, ModulePermission};
 use topems_shared_db::decimal::{big_decimal_to_f64, big_decimal_to_f64_non_opt};
 
@@ -419,8 +427,9 @@ pub async fn create_wip(
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
-            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1"#,
-            order_id
+            r#"SELECT order_number AS order_no FROM production_orders WHERE id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
+            order_id,
+            get_tenant_id(&claims)
         )
         .fetch_optional(&state.pool)
         .await
