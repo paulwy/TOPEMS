@@ -2224,3 +2224,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 实施：wip.rs 1 处（create_wip 查 production_orders 加 tenant 条件）+ team.rs 1 处（list_teams count/fetch 加 tenant_filter）+ process_flow.rs 3 处（list_process_flows count/fetch、add_flow_step 查证、analyze_capacity 单行）。3 文件各补本地 get_tenant_id 定义。
 - skip 登记：wip.rs 3 处（stub_wip_transfer_detail/wip 列表/transfer_wip——wips/wip_transfers 无 tenant_id 列且 wips.order_id 2 行全 NULL，production_orders JOIN 链路断裂，隔离依赖上游写入规范，待数据治理决策）；team.rs 3 处（create_team/add_team_member/remove_team_member 的 UPDATE member_count 内部统计子查询，team_id 已限定，随写路径隔离）。
 - 验证：cargo check topems-mes 0 error；SQL 实测 8 项断言全过（po 76/0/99、get_po 1/0、flows 0/0/1/1 平台公共 nil）。
+
+## 方案C 批3-E：mes 7 文件 9 处读路径显式租户过滤（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 实施：process_route 2（列表 count/fetch + add_flow_step 查证）、equipment_oee 2（efficiency 列表 + 列表 count）、production_scheduling 2（列表 count/fetch + create 查 order_no）、work_report 1、production_record 1、work_station 1、production_order 1（各列表 count/fetch 加 tenant_filter + bind）。equipment_oee/production_scheduling/production_order 补 get_tenant_id 定义。
+- 踩坑：批量脚本 format! 引号/双大括号/别名位置错——整块重写修复；count_sql 结构保持 format!( 多行。
+- skip 登记：production_cost 2（work_orders 子查询/count——work_orders 无 tenant_id 且 order_id 41 行全 NULL，JOIN production_orders 链路断裂）、material_requirement 1、work_order 1（同）。
+- 数据治理观察项：mes.production_schedules 198 行 tenant_id 全 nil（生产排程业务数据应归租户，待 migration 归 0001 或确认平台公共）。
+- 验证：cargo check topems-mes 0 error；SQL 实测 20 项（production_records 2/0/3、work_stations 77/0/79 隔离正确；process_routes/equipment_oee/work_reports/production_processes 空表 0/0/0 语义正确；production_schedules 0001=0 因全 nil 数据）。

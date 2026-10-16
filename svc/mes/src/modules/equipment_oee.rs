@@ -10,6 +10,13 @@ use sqlx::{types::Uuid, Row};
 use std::str::FromStr;
 
 use topems_shared_auth::auth::Claims;
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
@@ -61,14 +68,18 @@ async fn stub_efficiency_detail(
         Err(_) => return Json(ApiResponse::error(400, "无效的设备ID")),
     };
 
+    let tenant_id = get_tenant_id(&claims);
+
     let rows = sqlx::query(
         r#"SELECT id, equipment_id, record_date, availability, performance, quality_rate, oee
            FROM mes.equipment_oee
            WHERE equipment_id = $1
+             AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
            ORDER BY record_date DESC
            LIMIT 10"#,
     )
     .bind(equipment_uuid)
+    .bind(tenant_id)
     .fetch_all(&state.pool)
     .await;
 
@@ -314,6 +325,20 @@ pub async fn list_oee_records(
         params.push(serde_json::Value::String(pattern));
     }
 
+    // tenant 隔离（读路径 Claims bind，nil=全见）
+    let tenant_ph = params.len() + 1;
+    let tenant_filter = format!(
+        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR oee.tenant_id = ${}::uuid)",
+        tenant_ph, tenant_ph
+    );
+    if where_clause.is_empty() {
+        where_clause.push_str(&format!(" WHERE {}", tenant_filter));
+    } else {
+        where_clause.push_str(&format!(" AND {}", tenant_filter));
+    }
+    let tenant_uuid = get_tenant_id(&claims);
+
+
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM mes.equipment_oee oee LEFT JOIN equipment e ON oee.equipment_id = e.id{}",
         where_clause
@@ -324,6 +349,7 @@ pub async fn list_oee_records(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
+    count_query = count_query.bind(tenant_uuid);
 
     let count_result = count_query.fetch_one(&state.pool).await;
     let total: Option<i64> = match count_result {
@@ -359,7 +385,7 @@ pub async fn list_oee_records(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
     }
-    fetch_query = fetch_query.bind(page_size).bind(offset);
+    fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
     let records = match fetch_query.fetch_all(&state.pool).await {
         Ok(r) => r,

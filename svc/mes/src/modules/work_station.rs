@@ -228,6 +228,20 @@ pub async fn list_work_stations(
         params.push(serde_json::Value::String(pattern));
     }
 
+    // tenant 隔离（读路径 Claims bind，nil=全见）
+    let tenant_ph = params.len() + 1;
+    let tenant_filter = format!(
+        "(${}::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR ws.tenant_id = ${}::uuid)",
+        tenant_ph, tenant_ph
+    );
+    if where_clause.is_empty() {
+        where_clause.push_str(&format!(" WHERE {}", tenant_filter));
+    } else {
+        where_clause.push_str(&format!(" AND {}", tenant_filter));
+    }
+    let tenant_uuid = get_tenant_id(&claims);
+
+
     let count_sql = format!(
         "SELECT COUNT(*) as total FROM work_stations ws{}",
         where_clause
@@ -238,6 +252,7 @@ pub async fn list_work_stations(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         count_query = count_query.bind(p.as_str().unwrap_or(""));
     }
+    count_query = count_query.bind(tenant_uuid);
 
     let count_result = count_query.fetch_one(&state.pool).await;
     let total: Option<i64> = match count_result {
@@ -274,7 +289,7 @@ pub async fn list_work_stations(
         // params 仅由本函数 push 的 String 变体组成，as_str 恒有值；兜底空串仅为消除 unwrap（杜绝 panic），正常路径行为不变
         fetch_query = fetch_query.bind(p.as_str().unwrap_or(""));
     }
-    fetch_query = fetch_query.bind(page_size).bind(offset);
+    fetch_query = fetch_query.bind(tenant_uuid).bind(page_size).bind(offset);
 
     let workstations = match fetch_query.fetch_all(&state.pool).await {
         Ok(w) => w,
