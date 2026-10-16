@@ -857,7 +857,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
         <Controller
           name={field.name}
           control={control}
-          defaultValue={field.defaultValue || ''}
+          defaultValue={(defaultValues?.[field.name] as unknown) ?? field.defaultValue ?? ''}
           rules={{
             required: isRequired
               ? `${field.label}${i18n.t('components.form_page_template.k1')}`
