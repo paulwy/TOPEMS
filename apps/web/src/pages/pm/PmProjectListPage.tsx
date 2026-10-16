@@ -26,7 +26,7 @@ const projectApiAdapter: CrudApiAdapter<Project> = {
     }
     return {
       data: (response.data.projects || []) as unknown as Project[],
-      total: response.data.total_count || 0,
+      total: (response.data.total ?? response.data.total_count) || 0,
     };
   },
   create: async (data) => {
