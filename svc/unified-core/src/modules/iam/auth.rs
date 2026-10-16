@@ -288,6 +288,10 @@ pub async fn login(
         }
     };
 
+    // 会话/刷新令牌写入需绑定租户（RLS FORCE），提前解析为 Uuid 供 INSERT 使用
+    let tenant_uuid = tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_ctx = tenant_id.clone();
+
     // 创建完整的 Claims，包含用户的真实 is_superuser 状态
     let now = chrono::Utc::now();
     let exp = usize::try_from((now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp())
@@ -334,38 +338,63 @@ pub async fn login(
     let refresh_expires_at =
         chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours * 7);
 
-    let insert_session_result = sqlx::query(
-        "INSERT INTO public.core_sessions (user_id, token_hash, ip_address, user_agent, expires_at)
-         VALUES ($1, $2, $3::inet, $4, $5)",
-    )
-    .bind(user.id)
-    .bind(&access_token_hash)
-    .bind(ip_addr_opt)
-    .bind(user_agent.as_deref())
-    .bind(access_expires_at)
-    .execute(&state.pool)
-    .await;
+    // RLS FORCE：凭证 INSERT 必须带租户上下文（login 无 JWT，中间件不设置连接上下文）。
+    // 两处 INSERT 纳入同一事务，事务内 set_config(app.tenant_id) 建立租户上下文；
+    // 落库失败保持既有语义（仅 warn，不阻断登录）。
+    match state.pool.begin().await {
+        Ok(mut tx) => {
+            if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+                .bind(&tenant_ctx)
+                .execute(&mut *tx)
+                .await
+            {
+                tracing::warn!("设置会话租户上下文失败: {}", e);
+                let _ = tx.rollback().await;
+            } else {
+                let session_r = sqlx::query(
+                    "INSERT INTO public.core_sessions (user_id, tenant_id, token_hash, ip_address, user_agent, expires_at)
+                     VALUES ($1, $2, $3, $4::inet, $5, $6)",
+                )
+                .bind(user.id)
+                .bind(tenant_uuid)
+                .bind(&access_token_hash)
+                .bind(ip_addr_opt)
+                .bind(user_agent.as_deref())
+                .bind(access_expires_at)
+                .execute(&mut *tx)
+                .await;
 
-    match insert_session_result {
-        Ok(_) => tracing::debug!("会话保存成功"),
-        Err(e) => tracing::warn!("会话保存失败: {}", e),
-    }
+                let refresh_r = sqlx::query(
+                    "INSERT INTO public.core_refresh_tokens (user_id, tenant_id, token_hash, ip_address, user_agent, expires_at)
+                     VALUES ($1, $2, $3, $4::inet, $5, $6)",
+                )
+                .bind(user.id)
+                .bind(tenant_uuid)
+                .bind(&refresh_token_hash)
+                .bind(ip_addr_opt)
+                .bind(user_agent.as_deref())
+                .bind(refresh_expires_at)
+                .execute(&mut *tx)
+                .await;
 
-    let insert_refresh_result = sqlx::query(
-        "INSERT INTO public.core_refresh_tokens (user_id, token_hash, ip_address, user_agent, expires_at)
-         VALUES ($1, $2, $3::inet, $4, $5)",
-    )
-    .bind(user.id)
-    .bind(&refresh_token_hash)
-    .bind(ip_addr_opt)
-    .bind(user_agent.as_deref())
-    .bind(refresh_expires_at)
-    .execute(&state.pool)
-    .await;
-
-    match insert_refresh_result {
-        Ok(_) => tracing::debug!("Refresh token 保存成功"),
-        Err(e) => tracing::warn!("Refresh token 保存失败: {}", e),
+                match (session_r, refresh_r) {
+                    (Ok(_), Ok(_)) => match tx.commit().await {
+                        Ok(_) => tracing::debug!("会话凭证写入成功"),
+                        Err(e) => tracing::warn!("会话凭证提交失败: {}", e),
+                    },
+                    (s, r) => {
+                        let _ = tx.rollback().await;
+                        if let Err(e) = s {
+                            tracing::warn!("会话保存失败: {}", e);
+                        }
+                        if let Err(e) = r {
+                            tracing::warn!("Refresh token 保存失败: {}", e);
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => tracing::warn!("会话事务开启失败: {}", e),
     }
 
     let username_clone = user.username.clone();
@@ -617,23 +646,51 @@ pub async fn refresh_token(
 
     let refresh_token_hash = hash_token(refresh_token);
 
-    let row = match sqlx::query(
-        "SELECT rt.user_id, u.username, u.is_superuser, u.email,
-           (u.status = 'active') AS is_active,
-           COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
-                     JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
-           COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
-                     JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
-                     JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
-           rt.id as refresh_token_id
-         FROM public.core_refresh_tokens rt
-         JOIN iam.users u ON rt.user_id = u.id
-         WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
-    )
-    .bind(&refresh_token_hash)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    // RLS FORCE：refresh 请求无 JWT，中间件不设置连接上下文；此处以系统级上下文
+    // （全 0 = RLS 策略管理分支）校验 token 归属，后续写路径再落真实租户上下文。
+    let row = {
+        let mut ctx_tx = match state.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                tracing::error!("开启事务失败: {}", e);
+                return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+            }
+        };
+        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind("00000000-0000-0000-0000-000000000000")
+            .execute(&mut *ctx_tx)
+            .await
+        {
+            tracing::error!("设置租户上下文失败: {}", e);
+            let _ = ctx_tx.rollback().await;
+            return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+        }
+        let r = sqlx::query(
+            "SELECT rt.user_id, u.username, u.is_superuser, u.email,
+               (u.status = 'active') AS is_active,
+               COALESCE((SELECT ARRAY_AGG(DISTINCT r.name) FROM public.core_user_roles ur
+                         JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = u.id), '{}') AS roles,
+               COALESCE((SELECT ARRAY_AGG(DISTINCT p.code) FROM public.core_user_roles ur
+                         JOIN public.core_role_permissions rp ON rp.role_id = ur.role_id
+                         JOIN public.core_permissions p ON p.id = rp.permission_id WHERE ur.user_id = u.id), '{}') AS permissions,
+               rt.id as refresh_token_id
+             FROM public.core_refresh_tokens rt
+             JOIN iam.users u ON rt.user_id = u.id
+             WHERE rt.token_hash = $1 AND rt.expires_at > NOW() AND rt.revoked_at IS NULL",
+        )
+        .bind(&refresh_token_hash)
+        .fetch_optional(&mut *ctx_tx)
+        .await;
+        match ctx_tx.commit().await {
+            Ok(()) => r,
+            Err(e) => {
+                tracing::error!("提交租户上下文事务失败: {}", e);
+                Err(e)
+            }
+        }
+    };
+
+    let row = match row {
         Ok(Some(r)) => r,
         Ok(None) => {
             tracing::warn!("Refresh token 无效或已过期或已吊销");
@@ -692,6 +749,10 @@ pub async fn refresh_token(
         }
     };
 
+    // 会话/刷新令牌写入需绑定租户（RLS FORCE），提前解析为 Uuid 供 INSERT 使用
+    let tenant_uuid = tenant_id.as_deref().and_then(|s| Uuid::parse_str(s).ok());
+    let tenant_ctx = tenant_id.clone();
+
     let claims = Claims {
         sub: user_id.to_string(),
         username: username.clone(),
@@ -747,6 +808,17 @@ pub async fn refresh_token(
         }
     };
 
+    // RLS FORCE：revoke/INSERT 需真实租户上下文（refresh 已从 core_tenant_users 解析出 tenant_id）
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(&tenant_ctx)
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("设置租户上下文失败: {}", e);
+        let _ = tx.rollback().await;
+        return Json(topems_shared_core::response::error_value(500, "内部服务器错误"));
+    }
+
     let revoke_result = sqlx::query(
         "UPDATE public.core_refresh_tokens
          SET revoked_at = NOW(), revoked_reason = 'rotated'
@@ -766,10 +838,11 @@ pub async fn refresh_token(
     }
 
     let insert_result = sqlx::query(
-        "INSERT INTO public.core_refresh_tokens (user_id, token_hash, expires_at)
-         VALUES ($1, $2, $3)",
+        "INSERT INTO public.core_refresh_tokens (user_id, tenant_id, token_hash, expires_at)
+         VALUES ($1, $2, $3, $4)",
     )
     .bind(user_id)
+    .bind(tenant_uuid)
     .bind(&new_refresh_token_hash)
     .bind(refresh_expires_at)
     .execute(&mut *tx)
@@ -785,10 +858,11 @@ pub async fn refresh_token(
     }
 
     let session_result = sqlx::query(
-        "INSERT INTO public.core_sessions (user_id, token_hash, expires_at)
-         VALUES ($1, $2, $3)",
+        "INSERT INTO public.core_sessions (user_id, tenant_id, token_hash, expires_at)
+         VALUES ($1, $2, $3, $4)",
     )
     .bind(user_id)
+    .bind(tenant_uuid)
     .bind(&access_token_hash)
     .bind(access_expires_at)
     .execute(&mut *tx)
@@ -859,13 +933,41 @@ pub async fn logout(
     hasher.update(refresh_token.as_bytes());
     let token_hash = format!("{:x}", hasher.finalize());
 
-    let user_id: Option<Uuid> = match sqlx::query_scalar(
-        "SELECT user_id FROM public.core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
-    )
-    .bind(&token_hash)
-    .fetch_optional(&state.pool)
-    .await
-    {
+    // RLS FORCE：logout 请求无 JWT，中间件不设置连接上下文；以系统级上下文
+    // （全 0 = RLS 策略管理分支）校验 token 归属，后续删除/吊销落真实租户上下文。
+    let user_id: Result<Option<Uuid>, sqlx::Error> = {
+        let mut ctx_tx = match state.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                tracing::error!("开启事务失败: {}", e);
+                return Json(topems_shared_core::response::error_value(500, "登出失败"));
+            }
+        };
+        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind("00000000-0000-0000-0000-000000000000")
+            .execute(&mut *ctx_tx)
+            .await
+        {
+            tracing::error!("设置租户上下文失败: {}", e);
+            let _ = ctx_tx.rollback().await;
+            return Json(topems_shared_core::response::error_value(500, "登出失败"));
+        }
+        let r = sqlx::query_scalar(
+            "SELECT user_id FROM public.core_refresh_tokens WHERE token_hash = $1 AND revoked_at IS NULL",
+        )
+        .bind(&token_hash)
+        .fetch_optional(&mut *ctx_tx)
+        .await;
+        match ctx_tx.commit().await {
+            Ok(()) => r,
+            Err(e) => {
+                tracing::error!("提交租户上下文事务失败: {}", e);
+                Err(e)
+            }
+        }
+    };
+
+    let user_id = match user_id {
         Ok(uid) => uid,
         Err(e) => {
             tracing::error!("查询 refresh_token 失败: {}", e);
@@ -888,6 +990,23 @@ pub async fn logout(
 
     tracing::info!("IAM auth logout called for user_id: {}", user_id);
 
+    // RLS FORCE：删除/吊销需真实租户上下文（logout 无 JWT，按 core_tenant_users 解析租户，
+    // 未关联时 fallback 到默认租户，与 login/refresh 同口径）
+    let tenant_id = match sqlx::query_scalar::<_, uuid::Uuid>(
+        "SELECT tenant_id FROM core_tenant_users WHERE user_id = $1 AND status = 'active' LIMIT 1",
+    )
+    .bind(user_id)
+    .fetch_optional(&state.pool)
+    .await
+    {
+        Ok(Some(tid)) => Some(tid.to_string()),
+        Ok(None) => Some("00000000-0000-0000-0000-000000000001".to_string()),
+        Err(e) => {
+            tracing::warn!("查询用户租户信息失败: {}", e);
+            Some("00000000-0000-0000-0000-000000000001".to_string())
+        }
+    };
+
     // 删除用户会话和刷新令牌
     let mut tx = match state.pool.begin().await {
         Ok(tx) => tx,
@@ -896,6 +1015,16 @@ pub async fn logout(
             return Json(topems_shared_core::response::error_value(500, "登出失败"));
         }
     };
+
+    if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+        .bind(&tenant_id)
+        .execute(&mut *tx)
+        .await
+    {
+        tracing::error!("设置租户上下文失败: {}", e);
+        let _ = tx.rollback().await;
+        return Json(topems_shared_core::response::error_value(500, "登出失败"));
+    }
 
     let delete_sessions = sqlx::query("DELETE FROM public.core_sessions WHERE user_id = $1")
         .bind(user_id)
@@ -1279,15 +1408,50 @@ pub async fn list_sessions(
             "code": 400, "success": false, "data": null, "message": "无效的用户ID"
         }));
     };
-    let rows = sqlx::query_as::<_, (Uuid, Option<String>, Option<String>, Option<serde_json::Value>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
-        "SELECT id, ip_address::text, user_agent, device_info, created_at, last_active_at, expires_at \
-         FROM public.core_sessions \
-         WHERE user_id = $1 AND deleted_at IS NULL AND expires_at > now() \
-         ORDER BY created_at DESC",
-    )
-    .bind(user_id)
-    .fetch_all(&state.pool)
-    .await;
+    // RLS FORCE：会话行已绑定租户（追补后），读取须带租户上下文；从 JWT claims 取租户，
+    // 缺失时 fallback 默认租户（与 login 同口径）
+    let tenant_ctx = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "00000000-0000-0000-0000-000000000001".to_string());
+    let rows = {
+        let mut ctx_tx = match state.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                tracing::error!("开启事务失败: {}", e);
+                return Json(serde_json::json!({
+                    "code": 500, "success": false, "data": null, "message": "获取会话列表失败"
+                }));
+            }
+        };
+        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind(&tenant_ctx)
+            .execute(&mut *ctx_tx)
+            .await
+        {
+            tracing::error!("设置租户上下文失败: {}", e);
+            let _ = ctx_tx.rollback().await;
+            return Json(serde_json::json!({
+                "code": 500, "success": false, "data": null, "message": "获取会话列表失败"
+            }));
+        }
+        let r = sqlx::query_as::<_, (Uuid, Option<String>, Option<String>, Option<serde_json::Value>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>, chrono::DateTime<chrono::Utc>)>(
+            "SELECT id, ip_address::text, user_agent, device_info, created_at, last_active_at, expires_at \
+             FROM public.core_sessions \
+             WHERE user_id = $1 AND deleted_at IS NULL AND expires_at > now() \
+             ORDER BY created_at DESC",
+        )
+        .bind(user_id)
+        .fetch_all(&mut *ctx_tx)
+        .await;
+        match ctx_tx.commit().await {
+            Ok(()) => r,
+            Err(e) => {
+                tracing::error!("提交租户上下文事务失败: {}", e);
+                Err(e)
+            }
+        }
+    };
 
     match rows {
         Ok(rows) => {
@@ -1328,14 +1492,48 @@ pub async fn delete_session(
             "code": 400, "success": false, "data": null, "message": "无效的用户ID"
         }));
     };
-    let result = sqlx::query(
-        "UPDATE public.core_sessions SET deleted_at = now() \
-         WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
-    )
-    .bind(id)
-    .bind(user_id)
-    .execute(&state.pool)
-    .await;
+    // RLS FORCE：会话行已绑定租户（追补后），写路径须带租户上下文；从 JWT claims 取租户
+    let tenant_ctx = claims
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "00000000-0000-0000-0000-000000000001".to_string());
+    let result = {
+        let mut ctx_tx = match state.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                tracing::error!("开启事务失败: {}", e);
+                return Json(serde_json::json!({
+                    "code": 500, "success": false, "data": null, "message": "注销会话失败"
+                }));
+            }
+        };
+        if let Err(e) = sqlx::query("SELECT set_config('app.tenant_id', $1, true)")
+            .bind(&tenant_ctx)
+            .execute(&mut *ctx_tx)
+            .await
+        {
+            tracing::error!("设置租户上下文失败: {}", e);
+            let _ = ctx_tx.rollback().await;
+            return Json(serde_json::json!({
+                "code": 500, "success": false, "data": null, "message": "注销会话失败"
+            }));
+        }
+        let r = sqlx::query(
+            "UPDATE public.core_sessions SET deleted_at = now() \
+             WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
+        )
+        .bind(id)
+        .bind(user_id)
+        .execute(&mut *ctx_tx)
+        .await;
+        match ctx_tx.commit().await {
+            Ok(()) => r,
+            Err(e) => {
+                tracing::error!("提交租户上下文事务失败: {}", e);
+                Err(e)
+            }
+        }
+    };
 
     match result {
         Ok(res) if res.rows_affected() > 0 => Json(serde_json::json!({
