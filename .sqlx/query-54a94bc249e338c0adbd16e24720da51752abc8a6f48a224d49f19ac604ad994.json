@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE mes.production_processes SET\n            status = 'inactive',\n            updated_at = $2\n        WHERE id = $1 AND status = 'active'\n        RETURNING \n            id, process_code AS process_no, process_name AS name, description, version,\n            status, sequence, NULL::text AS equipment_required, NULL::numeric AS estimated_duration,\n            created_at, updated_at\n        ",
+  "query": "\n        UPDATE mes.production_processes SET\n            status = 'inactive',\n            updated_at = $2\n        WHERE id = $1 AND status = 'active' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))\n        RETURNING \n            id, process_code AS process_no, process_name AS name, description, version,\n            status, sequence, NULL::text AS equipment_required, NULL::numeric AS estimated_duration,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -79,5 +79,5 @@
       false
     ]
   },
-  "hash": "54bc3df35e34bd4a7a5d533e8dd8b1cd2e991be59621ee7c64811eafbd427a61"
+  "hash": "54a94bc249e338c0adbd16e24720da51752abc8a6f48a224d49f19ac604ad994"
 }

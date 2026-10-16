@@ -1,1 +1,16 @@
-{"db_name": "PostgreSQL", "query": "\n        UPDATE wms.cycle_count_configs\n        SET deleted_at = $2, is_active = false, updated_at = $2\n        WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)\n        ", "describe": {"columns": [], "parameters": {"Left": ["Uuid", "Timestamptz", "Uuid"]}, "nullable": []}, "hash": "93fad627c839e3be21287a8037c9a0f4f874a6f65566ed551c074ab9f7249e5a"}
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE wms.cycle_count_configs\n        SET deleted_at = $2, is_active = false, updated_at = $2\n        WHERE id = $1 AND ($3::uuid IS NULL OR tenant_id = $3::uuid)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "4021936ab90d30909c2c397c4502178e8ce567ef2be06a8d089cf25ca43d867b"
+}

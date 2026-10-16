@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT \n            ei.id, ei.equipment_id, ei.equipment_code, ei.equipment_name,\n            ei.inspector, ei.inspection_date, ei.location,\n            ei.temperature, ei.vibration, ei.noiselevel,\n            ei.status, ei.items, ei.abnormalities, ei.remarks,\n            ei.created_at\n        FROM equipment_inspections ei\n        WHERE ($1::uuid IS NULL OR ei.equipment_id = $1)\n        ORDER BY ei.created_at DESC\n        LIMIT $2 OFFSET $3\n        ",
+  "query": "\n        SELECT \n            ei.id, ei.equipment_id, ei.equipment_code, ei.equipment_name,\n            ei.inspector, ei.inspection_date, ei.location,\n            ei.temperature, ei.vibration, ei.noiselevel,\n            ei.status, ei.items, ei.abnormalities, ei.remarks,\n            ei.created_at\n        FROM equipment_inspections ei\n        WHERE ($1::uuid IS NULL OR ei.equipment_id = $1)\n          AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR EXISTS (\n              SELECT 1 FROM mes.equipment e WHERE e.id = ei.equipment_id AND e.tenant_id = $2::uuid AND e.deleted_at IS NULL\n          ))\n        ORDER BY ei.created_at DESC\n        LIMIT $3 OFFSET $4\n        ",
   "describe": {
     "columns": [
       {
@@ -82,6 +82,7 @@
     "parameters": {
       "Left": [
         "Uuid",
+        "Uuid",
         "Int8",
         "Int8"
       ]
@@ -104,5 +105,5 @@
       true
     ]
   },
-  "hash": "c5d0f4145683dcdd78d77a9a57abd941abf4facf828bc8c888db767792e0ae0f"
+  "hash": "12d7daea72cf38932de814fbe6c1641bb7432aa0fbde1707694d01412b0fedf2"
 }

@@ -1,1 +1,28 @@
-{"db_name": "PostgreSQL", "query": "\n        UPDATE wms.slotting_suggestions\n        SET status = 'rejected'\n        WHERE id = $1 AND status = 'pending' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))\n        RETURNING id, status\n        ", "describe": {"columns": [{"ordinal": 0, "name": "id", "type_info": "Uuid"}, {"ordinal": 1, "name": "status", "type_info": "Varchar"}], "parameters": {"Left": ["Uuid"]}, "nullable": [false, false]}, "hash": "9feb217d44c20954f3e2df0d120aa07be362891304cb87d5c9798a16c5d1c7b7"}
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        UPDATE wms.slotting_suggestions\n        SET status = 'rejected'\n        WHERE id = $1 AND status = 'pending' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))\n        RETURNING id, status\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "status",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "d68df4cdcc76892e570d456759861d80fc5505819c13559b484a261f1c061aae"
+}

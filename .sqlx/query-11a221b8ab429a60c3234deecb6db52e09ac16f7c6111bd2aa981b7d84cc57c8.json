@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        SELECT id, name, capacity FROM process_flows WHERE deleted_at IS NULL AND id = $1\n        ",
+  "query": "\n        SELECT id, name, capacity FROM process_flows WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)\n        ",
   "describe": {
     "columns": [
       {
@@ -21,6 +21,7 @@
     ],
     "parameters": {
       "Left": [
+        "Uuid",
         "Uuid"
       ]
     },
@@ -30,5 +31,5 @@
       true
     ]
   },
-  "hash": "4335df20e2a6cf8de4dc7cc18fa690adbc24de6e27fba157d0e8717a8f32fb30"
+  "hash": "11a221b8ab429a60c3234deecb6db52e09ac16f7c6111bd2aa981b7d84cc57c8"
 }

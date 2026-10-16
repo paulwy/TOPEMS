@@ -1,0 +1,23 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT equipment_code FROM equipment WHERE deleted_at IS NULL AND id = $1 AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "equipment_code",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "121798760fe457be1ae5be04da4f991ecd12ed6da8226988bd02ef116de9fb5d"
+}
