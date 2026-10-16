@@ -1968,7 +1968,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - auth.rs 登录/刷新流程已解析 tenant_id（core_tenant_users）但 4 处 INSERT（sessions×2/refresh_tokens×2）未绑定 → 补 tenant_id 列 + bind 解析租户；RLS FORCE 下 pool 直连无上下文 → 5 个函数（login/refresh_token/logout/list_sessions/delete_session）的凭证表读写全部纳入事务级 set_config('app.tenant_id', …, true) 上下文
   - migration 92 回填存量 46+1638 行：按 core_tenant_users 关联取租户，关联不上归主租户 0001（与 88/90 同口径）
   - 实测：登录→凭证落库（tenant=0001、0 NULL）→refresh 旋转→logout 吊销全链路通过；RLS 复核 0001 上下文可见全量、B 租户上下文 0 行；测试数据零残留
-  - 【暴露的独立缺陷（未在本追补内处理）】凭证表 user_id FK 指向历史表 public.core_users（46 行测试账号，与 iam.users 零重叠）；新注册用户（iam.users）登录时凭证 INSERT 被 FK 拦截（静默 warn，凭证不落库）——追补前即存在；建议改 FK 指向 iam.users 并处理存量凭证归属
+  - 【暴露的独立缺陷（已修复 2026-10-16，migration 93）】凭证表 user_id FK 指向历史表 public.core_users（46 行测试账号，与 iam.users 零重叠、admin 同名不同 id）；新注册用户（iam.users）登录时凭证 INSERT 被 FK 拦截（静默 warn，凭证不落库）——追补前即存在。修复：删存量测试凭证（46 sessions+1638 refresh，user_id 全部不在 iam.users）+ 两表 FK 改指 iam.users(id) ON DELETE CASCADE；实测新用户登录→凭证落库（tenant=0001、0 NULL）→refresh 旋转→logout 吊销全链路通过，测试数据零残留
 
 ## 方案C 批2 — 子批 D：RLS policy nil 分支 migration（pool 直连兼容）
 - 状态：已提交（待推送）
