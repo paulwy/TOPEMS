@@ -18,14 +18,14 @@ import i18n from '@/i18n';
 const employeeSchema = z.object({
   name: z.string().min(1, i18n.t('hrm.hrm_employee_create_page.k0')),
   employee_no: z.string().min(1, i18n.t('hrm.hrm_employee_create_page.k1')),
-  email: z.string().email(i18n.t('hrm.hrm_employee_create_page.k2')).optional(),
+  email: z.string().email(i18n.t('hrm.hrm_employee_create_page.k2')).or(z.literal('')).optional(),
   phone: z.string().optional(),
-  gender: z.enum(['male', 'female']).default('male'),
+  gender: z.enum(['male', 'female']).or(z.literal('')).default('male'),
   birth_date: z.string().optional(),
   department_id: z.string().optional(),
   position_id: z.string().optional(),
   hire_date: z.string().optional(),
-  status: z.enum(['active', 'probation', 'resigned']).default('active'),
+  status: z.enum(['active', 'probation', 'resigned']).or(z.literal('')).default('active'),
   address: z.string().optional(),
   emergency_contact_name: z.string().optional(),
   emergency_contact_phone: z.string().optional(),
@@ -74,7 +74,15 @@ const HrmEmployeeCreatePage: React.FC = () => {
       if (!data.name || !data.employee_no) {
         throw new Error(t('hrm.hrm_employee_create_page.please_fill'));
       }
-      const res = await employeeApi.create(data);
+      // 后端 birth_date/hire_date 为 Option<NaiveDate>、department_id/position_id 为 Option<Uuid>，
+      // 空串 '' 会反序列化失败（422）；未填时转 undefined 让 JSON 序列化跳过该字段（C2 实测契约对齐）
+      const res = await employeeApi.create({
+        ...data,
+        birth_date: data.birth_date || undefined,
+        hire_date: data.hire_date || undefined,
+        department_id: data.department_id || undefined,
+        position_id: data.position_id || undefined,
+      });
       if (res.code !== 200 && res.code !== 201) {
         throw new Error(res.message || t('hrm.hrm_employee_create_page.create'));
       }

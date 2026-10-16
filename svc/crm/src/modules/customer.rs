@@ -262,6 +262,8 @@ pub async fn create_customer(
     };
     let tenant_id = tenant_opt
         .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    // 归属人缺省取当前登录用户（claims.sub → user_id），前端可不传 owner_id
+    let owner_id = req.owner_id.or_else(|| claims.user_id().ok());
 
     let result = sqlx::query_as::<_, Customer>(
 
@@ -279,7 +281,7 @@ pub async fn create_customer(
     // rating 未传时绑定默认 'C'（列定义 DEFAULT 'C'，模型为非空 String）
     .bind(req.rating.as_deref().unwrap_or("C"))
     .bind(req.region.as_deref())
-    .bind(req.owner_id)
+    .bind(owner_id)
     // tags 未传时绑定空数组（列定义 TEXT[] NOT NULL DEFAULT '{}'，避免 NULL 违反约束）
     .bind(req.tags.as_deref().unwrap_or(&[]))
     .bind("none")

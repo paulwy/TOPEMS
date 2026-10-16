@@ -93,7 +93,7 @@ async fn create_customer_for(pool: &PgPool, tenant_id: Uuid, name: &str) -> Cust
         rating: Some("C".into()),
         region: None,
         name_en: None,
-        owner_id: Uuid::new_v4(),
+        owner_id: Some(Uuid::new_v4()),
         tags: Some(vec![]),
     };
     sqlx::query_as::<_, Customer>(r#"

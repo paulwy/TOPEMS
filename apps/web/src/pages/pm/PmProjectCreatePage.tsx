@@ -61,6 +61,9 @@ const PmProjectCreatePage: React.FC = () => {
   const queryClient = useQueryClient();
   const createMutation = useMutation({
     mutationFn: async (data: ProjectFormData) => {
+      // 后端 CreateProjectRequest.start_date/end_date 为 DateTime<Utc>（完整 ISO8601），
+      // 表单值为 'YYYY-MM-DD'，提交前补全为当日零点 UTC 时间戳（C2 实测契约对齐）
+      const toIso = (d?: string) => (d ? `${d}T00:00:00Z` : undefined);
       return pmApi.projects.create({
         name: data.name.trim(),
         code: data.code.trim(),
@@ -68,8 +71,8 @@ const PmProjectCreatePage: React.FC = () => {
         description: data.description?.trim() || undefined,
         budget: data.budget ? parseFloat(data.budget) : undefined,
         leader: data.leader?.trim() || undefined,
-        start_date: data.start_date,
-        end_date: data.end_date,
+        start_date: toIso(data.start_date),
+        end_date: toIso(data.end_date),
         tags: data.tags?.trim() ? data.tags.split(',').map((t) => t.trim()) : undefined,
       });
     },

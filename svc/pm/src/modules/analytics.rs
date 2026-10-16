@@ -51,7 +51,7 @@ pub struct ProjectStatusItem {
 )]
 pub async fn get_project_trend(
     State(pool): State<PgPool>,
-    Extension(claims): Extension<Claims>,
+    Extension(_claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<ProjectTrendItem>>> {
     tracing::info!("获取PM项目创建趋势数据");
 

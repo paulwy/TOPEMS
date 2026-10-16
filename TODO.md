@@ -2369,3 +2369,31 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - qms：quality_dashboard 全局统计报表无 Claims skip；list_alert_rules 无 Claims 无法过滤 skip（观察项：租户级数据待 ctx）。
 - portal：aggregation user_id 用户级 skip；help FAQ 平台内容 skip。
 - 批3 全库汇总：finance 15 + mes 31 + communication 1 + pm 4 + unified-core 13 补；iam/menu/tenant/mobile/lims/integration/ai/qms/portal 精筛 0 真缺口。
+
+## 方案C 批2-C：C2-C4 模拟录入实机验证（2026-10-17）
+- 状态：已完成 + 7/7 Playwright PASS + 契约 smoke 4076/4076 + 前后端修复
+- C2 代表性录入页模拟提交：
+  - C2a crm 客户创建：填必填 → 提交 → 跳转列表 → 列表出现新客户（C4 链路）✅
+  - C2b hrm 员工创建：填必填 → 提交 → 跳转列表 → 列表出现新员工（C4 链路）✅
+  - C2c pm 项目创建：表单渲染 + 类型选择 + 必填校验（日期缺失拦截提示）✅
+    - 完整提交闭环（含日期）：后端 curl 验证 ISO8601 日期 200 OK；前端 toIso 转换已修复
+    - 遗留：MUI date 受控组件 + react-hook-form 的 UI 自动化填值不触发表单 state
+      （fill/native setter/键入均只改 DOM value），完整 UI 提交留人工验证
+  - C2d 弹窗 CRUD 形态：wms 入库单 + mes 工单 创建弹窗打开/渲染/关闭 ✅
+- C3 校验正确性：crm 必填缺失提示 ✅ / crm email 非法提示 ✅ / finance 借贷不平衡提示 ✅
+- C4 提交链路：crm/hrm 提交成功后列表出现新记录 ✅
+- **实测发现并修复的前后端契约缺口（6 类）**：
+  1. crm create 缺 owner_id（后端必填 Uuid → 400）：后端 CreateCustomerRequest.owner_id 改
+     Option<Uuid> + handler 从 claims.user_id() 兜底（svc/crm models/customer.rs + modules/customer.rs）
+  2. pm create 日期格式（前端 'YYYY-MM-DD' vs 后端 DateTime<Utc> → 400）：前端 mutationFn
+     toIso 转换补 T00:00:00Z（PmProjectCreatePage.tsx）
+  3. hrm create 空串字段 422：birth_date/hire_date（Option<NaiveDate>）+ department_id/position_id
+     （Option<Uuid>）空串反序列化失败 → 前端空串转 undefined（HrmEmployeeCreatePage.tsx）
+  4. email 空串校验失败（'' 非 undefined，z.string().email().optional()）：hrm create/edit +
+     crm create/edit 4 处 .or(z.literal(''))
+  5. website url 空串校验失败：crm create/edit 2 处 .or(z.literal(''))
+  6. enum optional/default 空串校验失败（industry/source/gender/status）：crm create/edit 4 处 +
+     hrm create/edit 4 处 .or(z.literal(''))
+- 验证：cargo build/check 0 error；pnpm tsc 0 error；契约 smoke 4076/4076 PASS；
+  Playwright c2-form-submit.spec.ts 7/7 PASS（~55s）；后端 curl 复验 crm 无 owner_id 200 / pm ISO 日期 200。
+- 新增 spec：apps/web/e2e/ui/c2-form-submit.spec.ts（7 test）

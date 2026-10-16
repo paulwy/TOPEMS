@@ -115,7 +115,8 @@ pub struct CreateCustomerRequest {
     pub industry: Option<String>,
     pub rating: Option<String>,
     pub region: Option<String>,
-    pub owner_id: Uuid,
+    /// 归属人；缺省时由 handler 从登录 token（claims.user_id）补齐
+    pub owner_id: Option<Uuid>,
     pub tags: Option<Vec<String>>,
 }
 
@@ -140,7 +141,7 @@ impl Default for CreateCustomerRequest {
             industry: None,
             rating: Some("C".into()),
             region: None,
-            owner_id: Uuid::nil(),
+            owner_id: None,
             tags: Some(vec![]),
         }
     }
@@ -273,7 +274,7 @@ mod tests {
             industry: Some("科技".to_string()),
             rating: Some("B".to_string()),
             region: Some("华南".to_string()),
-            owner_id: Uuid::new_v4(),
+            owner_id: Some(Uuid::new_v4()),
             tags: Some(vec!["new".to_string(), "tech".to_string()]),
         };
         roundtrip(&r);
@@ -288,7 +289,7 @@ mod tests {
             industry: None,
             rating: None,
             region: None,
-            owner_id: Uuid::nil(),
+            owner_id: Some(Uuid::nil()),
             tags: None,
         };
         roundtrip(&r);

@@ -24,11 +24,25 @@ const CustomerCreatePage: React.FC = () => {
         name: z.string().min(1, t('crm.customerCreate.validation_name_required')),
         code: z.string().optional(),
         type: z.enum(['enterprise', 'personal', 'government']),
-        industry: z.enum(['it', 'finance', 'manufacture', 'retail', 'other']).optional(),
-        source: z.enum(['website', 'referral', 'exhibition', 'cold_call', 'other']).optional(),
-        website: z.string().url(t('crm.customerCreate.validation_website_invalid')).optional(),
+        industry: z
+          .enum(['it', 'finance', 'manufacture', 'retail', 'other'])
+          .or(z.literal(''))
+          .optional(),
+        source: z
+          .enum(['website', 'referral', 'exhibition', 'cold_call', 'other'])
+          .or(z.literal(''))
+          .optional(),
+        website: z
+          .string()
+          .url(t('crm.customerCreate.validation_website_invalid'))
+          .or(z.literal(''))
+          .optional(),
         phone: z.string().optional(),
-        email: z.string().email(t('crm.customerCreate.validation_email_invalid')).optional(),
+        email: z
+          .string()
+          .email(t('crm.customerCreate.validation_email_invalid'))
+          .or(z.literal(''))
+          .optional(),
         address: z.string().optional(),
         description: z.string().optional(),
       }),
