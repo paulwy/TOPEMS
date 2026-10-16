@@ -10,6 +10,14 @@ use uuid::Uuid;
 
 use topems_shared_auth::auth::Claims;
 use topems_shared_auth::service::is_service_claims;
+
+fn get_tenant_id(claims: &Claims) -> Uuid {
+    claims
+        .tenant_id
+        .as_deref()
+        .and_then(|s| Uuid::parse_str(s).ok())
+        .unwrap_or(Uuid::nil())
+}
 use topems_shared_core::response::ApiResponse;
 use topems_shared_core::response::PaginatedResponse;
 
@@ -82,9 +90,11 @@ pub async fn list_instances(
                    JOIN approvals a ON a.id = ar.approval_id
                    WHERE a.workflow_instance_id = core_workflow_instances.id
                      AND ar.actor_id = $1 AND ar.deleted_at IS NULL
-               ))"#,
+               ))
+               AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)"#,
         )
         .bind(user_uuid)
+        .bind(get_tenant_id(&claims))
         .fetch_one(&state.pool)
         .await
         .unwrap_or(0)
@@ -106,12 +116,14 @@ pub async fn list_instances(
                      JOIN approvals a ON a.id = ar.approval_id
                      WHERE a.workflow_instance_id = core_workflow_instances.id
                        AND ar.actor_id = $4 AND ar.deleted_at IS NULL
-                 ))"#,
+                 ))
+                 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)"#,
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
         .bind(workflow_uuid)
         .bind(user_uuid)
+        .bind(get_tenant_id(&claims))
         .fetch_one(&state.pool)
         .await
         {
@@ -139,9 +151,11 @@ pub async fn list_instances(
                    WHERE a.workflow_instance_id = core_workflow_instances.id
                      AND ar.actor_id = $1 AND ar.deleted_at IS NULL
                ))
-               ORDER BY created_at DESC LIMIT $2 OFFSET $3"#
+               AND ($2::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $2::uuid)
+               ORDER BY created_at DESC LIMIT $3 OFFSET $4"#
         )
         .bind(user_uuid)
+        .bind(get_tenant_id(&claims))
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.pool)
@@ -178,12 +192,14 @@ pub async fn list_instances(
                      WHERE a.workflow_instance_id = core_workflow_instances.id
                        AND ar.actor_id = $4 AND ar.deleted_at IS NULL
                  ))
-               ORDER BY created_at DESC LIMIT $5 OFFSET $6"#
+                 AND ($5::uuid = '00000000-0000-0000-0000-000000000000'::uuid OR tenant_id = $5::uuid)
+               ORDER BY created_at DESC LIMIT $6 OFFSET $7"#
         )
         .bind(format!("%{}%", search.clone()))
         .bind(status.clone().unwrap_or_default())
         .bind(workflow_uuid)
         .bind(user_uuid)
+        .bind(get_tenant_id(&claims))
         .bind(page_size)
         .bind(offset)
         .fetch_all(&state.pool)

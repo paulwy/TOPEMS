@@ -2256,3 +2256,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 状态：已完成 + 实测 + 独立 commit
 - 实施：download.rs 3 处（download_file/preview_file/get_thumbnail 取文件信息）+ manage.rs 6 处（list_files count 分支 admin/else、update_file/delete_file/move_file/copy_file 权限校验与信息查询），加 tenant 条件 + bind get_tenant_id，2 文件补 get_tenant_id 定义。manage.rs 86 行 _count_query 死代码 skip。
 - 验证：cargo check topems-unified-core 0 error；core_files 空表 0/0/0/0 语义正确。
+
+## 方案C 批3-J：unified-core flow 域读路径显式租户过滤（2026-10-16）
+- 状态：已完成 + 实测 + 独立 commit
+- 实施：instance.rs 4 处（list_instances count 无筛选/有筛选 + 列表无筛选/有筛选，WHERE 尾加 tenant 条件，LIMIT/OFFSET 序号顺延），补 get_tenant_id 定义。
+- skip 登记：delegate.rs 2（core_flow_delegates 无 tenant_id 列 + 用户级 uid 过滤）、monitor.rs 5（get_monitor_statistics 跨租户聚合监控统计，无用户上下文）。
+- 验证：cargo check topems-unified-core 0 error；core_workflow_instances 空表 0/0/0/0 语义正确。
