@@ -101,8 +101,9 @@ async fn apply_event(
 }
 
 /// 启动实体事件订阅者（失败不阻塞 search 启动；对齐 erp start_event_subscribers）。
-pub async fn start_projection_subscriber(pool: PgPool) -> Result<(), String> {
-    let subscriber = EventSubscriber::new("search").map_err(|e| e.to_string())?;
+pub async fn start_projection_subscriber(pool: PgPool) -> Result<(), TopemsError> {
+    let subscriber = EventSubscriber::new("search")
+        .map_err(|e| TopemsError::internal("构建事件订阅者失败", e))?;
 
     let sub =
         subscriber.subscribe_handler(vec![EventType::SearchableEntityChanged], move |event| {

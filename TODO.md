@@ -647,7 +647,7 @@
 - 累计迁移 487 处（静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 签名 20+）
 - 剩余形态：Result<_, String> 465 处（下一候选批，待用户定）
 
-### ✅ B7 第 16 批：业务层 Result<_, String> 清零（本地提交未 push）
+### ✅ B7 第 16 批：业务层 Result<_, String> 清零（提交已并入 origin/main——第 17 批协作时由并行线 rebase 合并推送）
 
 > 用户「推进后端 B7 收尾」拍板执行。TODO 原口径「Result<_, String> 465 处」为 10-05 宽口径快照（含注释/误命中/并行线已改），
 > 实测复查：精确形态（第二类型参数=String）全仓 153 处 = svc 业务层 7 + svc tests 48 + apps/desktop(Tauri) 98。
@@ -668,6 +668,13 @@
 - **业务层 Result<_, String> 全仓归零**（B7 剩余形态再清一项；累计：静态 Err 113 + Err(format!) 55 + map_err(format!) 399 + 业务层 Result<_, String> 7）
 - 剩余（非业务层，建议另议）：~~svc tests 48 处~~（已清零，见第 17 批）
   + ~~apps/desktop 98 处~~（已清零，见第 18 批）
+
+### ✅ B7 收尾补点：search 订阅者启动 1 处（2026-10-17）
+- 复查全仓精确计数时发现 `svc/search/src/projection.rs:104 start_projection_subscriber -> Result<(), String>`
+  为第 16 批同模式遗漏（lims/crm/ehs/hrm/mobile 已处理，search 未覆盖）
+- 改法与 16 批一致：`Result<(), TopemsError>` + `EventSubscriber::new("search").map_err(|e| TopemsError::internal("构建事件订阅者失败", e))`
+- 调用方 main.rs `tracing::warn!("{}", e)` Display 兼容零改动
+- 验证：cargo check topems-search 0 error；**全仓 `Result<_, String>` 精确计数 153→0（B7 最终形态归零）**
 
 ### ✅ B7 第 17 批：svc tests 48 处清零（与并行线协作完成，已推送 origin/main）
 
