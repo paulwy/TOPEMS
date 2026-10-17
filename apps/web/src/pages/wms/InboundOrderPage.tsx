@@ -18,7 +18,12 @@ import { getColumns } from '@/schema';
 import { inboundOrderSchema } from '@/schemas/wms/inboundOrder';
 import type { EntitySchema } from '@/schema';
 
-const inboundOrderApiAdapter = createCrudPageAdapter(wmsApi.inboundOrders);
+// 后端列表响应体为 { data: { orders: [...] , total } }（见 svc/wms GET /inbound-orders），
+// normalizeListResponse 默认只认 items/materials/data 字段，需显式 itemsField='orders'，
+// 否则列表 items 恒为空（total 正常 → 表格空 + 分页有数）。
+const inboundOrderApiAdapter = createCrudPageAdapter(wmsApi.inboundOrders, {
+  itemsField: 'orders',
+});
 const inboundOrderCrudApi = createListPageCrudApi<Record<string, unknown>>(
   inboundOrderApiAdapter as unknown as CrudApiAdapter<Record<string, unknown>>
 );
@@ -41,7 +46,6 @@ const InboundOrderPage: React.FC = () => {
         { label: i18n.t('pages.inbound_order_page.k2') },
       ]}
       columns={columns}
-      data={[]}
       crud={{
         api: inboundOrderCrudApi,
         queryKey: 'wms-inbound-orders',

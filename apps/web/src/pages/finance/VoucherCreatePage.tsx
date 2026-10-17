@@ -652,12 +652,12 @@ const VoucherCreatePage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             <Typography variant='body2'>
-              {t('finance.voucher_create_page.e1', {
+              {t('finance.voucher_create_page.balance_alert', {
                 v1: t('finance.voucher_create_page.m1'),
                 v2: formatCurrency(totalDebit),
+                v3: formatCurrency(totalCredit),
+                v4: formatCurrency(Math.abs(totalDebit - totalCredit)),
               })}
-              {t('finance.voucher_create_page.e1', { v1: formatCurrency(totalCredit) })}
-              {formatCurrency(Math.abs(totalDebit - totalCredit))}
             </Typography>
           </Alert>
         )}
@@ -669,7 +669,9 @@ const VoucherCreatePage: React.FC = () => {
             sx={{ mt: 2 }}
           >
             <Typography variant='body2'>
-              {t('finance.voucher_create_page.e2', { v1: t('finance.voucher_create_page.k5') })}
+              {t('finance.voucher_create_page.balance_ok', {
+                v1: t('finance.voucher_create_page.k5'),
+              })}
               {formatCurrency(totalDebit)}
             </Typography>
           </Alert>

@@ -160,22 +160,14 @@ export const FormDrawer = React.memo(function FormDrawer({
       footerContent={footerContent}
       contentSx={contentSx}
     >
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
-      <form
+      {/* NOTE: never wrap children in <form> (same as FormDialog;
+          children render their own <form>, nesting triggers native GET). */}
+      <div
         onKeyDown={handleKeyDown}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!loading && !disableSubmit) onSubmit();
-        }}
         style={{ display: 'flex', flexDirection: 'column', height: '100%' }}
       >
         {children}
-        <input
-          type='submit'
-          style={{ display: 'none' }}
-          disabled={loading || disableSubmit}
-        />
-      </form>
+      </div>
     </Drawer>
   );
 });

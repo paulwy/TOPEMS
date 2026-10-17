@@ -1,4 +1,6 @@
 use chrono::{DateTime, Utc};
+use rust_decimal::Decimal;
+
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sqlx::FromRow;
@@ -6,6 +8,32 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 use super::uuid_helpers::option_uuid;
+
+/// Decimal 序列化为 JSON 数字而非字符串（rust_decimal 默认 serde 输出字符串，
+/// 前端数字运算/统计会因类型变化崩溃；DB numeric 精度不受影响）。
+/// 同时兼容数字/字符串反序列化输入。
+mod decimal_number {
+    use rust_decimal::prelude::{FromPrimitive, ToPrimitive};
+    use rust_decimal::Decimal;
+    use serde::{Deserialize, Deserializer, Serializer};
+
+    pub fn serialize<S: Serializer>(v: &Option<Decimal>, s: S) -> Result<S::Ok, S::Error> {
+        match v {
+            Some(d) => s.serialize_f64(d.to_f64().unwrap_or(0.0)),
+            None => s.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Option<Decimal>, D::Error> {
+        let v = serde_json::Value::deserialize(d)?;
+        Ok(match v {
+            serde_json::Value::Null => None,
+            serde_json::Value::Number(n) => n.as_f64().and_then(Decimal::from_f64),
+            serde_json::Value::String(s) => s.parse::<Decimal>().ok(),
+            _ => None,
+        })
+    }
+}
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 pub struct Asset {
@@ -16,7 +44,12 @@ pub struct Asset {
     pub brand: Option<String>,
     pub model: Option<String>,
     pub purchase_date: Option<DateTime<Utc>>,
-    pub purchase_amount: Option<f64>,
+    #[serde(
+        default,
+        with = "decimal_number",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub purchase_amount: Option<Decimal>,
     pub location: Option<String>,
     pub responsible_id: Option<Uuid>,
     pub status: String,
@@ -25,9 +58,24 @@ pub struct Asset {
     // 设备专用字段
     pub serial_number: Option<String>,
     pub manufacturer: Option<String>,
-    pub rated_power: Option<f64>,
-    pub rated_voltage: Option<f64>,
-    pub rated_current: Option<f64>,
+    #[serde(
+        default,
+        with = "decimal_number",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub rated_power: Option<Decimal>,
+    #[serde(
+        default,
+        with = "decimal_number",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub rated_voltage: Option<Decimal>,
+    #[serde(
+        default,
+        with = "decimal_number",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub rated_current: Option<Decimal>,
     pub specifications: Option<Value>,
     pub image_url: Option<String>,
     pub department: Option<String>,
@@ -41,16 +89,16 @@ pub struct CreateAssetRequest {
     pub brand: Option<String>,
     pub model: Option<String>,
     pub purchase_date: Option<DateTime<Utc>>,
-    pub purchase_amount: Option<f64>,
+    pub purchase_amount: Option<Decimal>,
     pub location: Option<String>,
     #[serde(default, with = "option_uuid")]
     pub responsible_id: Option<Uuid>,
     // 设备专用字段
     pub serial_number: Option<String>,
     pub manufacturer: Option<String>,
-    pub rated_power: Option<f64>,
-    pub rated_voltage: Option<f64>,
-    pub rated_current: Option<f64>,
+    pub rated_power: Option<Decimal>,
+    pub rated_voltage: Option<Decimal>,
+    pub rated_current: Option<Decimal>,
     pub specifications: Option<Value>,
     pub image_url: Option<String>,
     pub department: Option<String>,
@@ -63,7 +111,7 @@ pub struct UpdateAssetRequest {
     pub brand: Option<String>,
     pub model: Option<String>,
     pub purchase_date: Option<DateTime<Utc>>,
-    pub purchase_amount: Option<f64>,
+    pub purchase_amount: Option<Decimal>,
     pub location: Option<String>,
     #[serde(default, with = "option_uuid")]
     pub responsible_id: Option<Uuid>,
@@ -71,9 +119,9 @@ pub struct UpdateAssetRequest {
     // 设备专用字段
     pub serial_number: Option<String>,
     pub manufacturer: Option<String>,
-    pub rated_power: Option<f64>,
-    pub rated_voltage: Option<f64>,
-    pub rated_current: Option<f64>,
+    pub rated_power: Option<Decimal>,
+    pub rated_voltage: Option<Decimal>,
+    pub rated_current: Option<Decimal>,
     pub specifications: Option<Value>,
     pub image_url: Option<String>,
     pub department: Option<String>,
@@ -84,7 +132,12 @@ pub struct UpdateAssetRequest {
 mod tests {
     use super::*;
     use chrono::Utc;
+    use rust_decimal::prelude::FromPrimitive;
     use serde_json::json;
+
+    fn dec(f: f64) -> Decimal {
+        Decimal::from_f64(f).unwrap()
+    }
 
     fn sample_uuid() -> Uuid {
         Uuid::parse_str("550e8400-e29b-41d4-a716-446655440000").unwrap()
@@ -100,7 +153,7 @@ mod tests {
             brand: Some("联想".into()),
             model: Some("ThinkPad X1".into()),
             purchase_date: Some(Utc::now()),
-            purchase_amount: Some(12999.99),
+            purchase_amount: Some(dec(12999.99)),
             location: Some("北京总部3楼".into()),
             responsible_id: Some(sample_uuid()),
             status: "in_use".into(),
@@ -108,9 +161,9 @@ mod tests {
             updated_at: Utc::now(),
             serial_number: Some("SN123456".into()),
             manufacturer: Some("联想集团".into()),
-            rated_power: Some(65.0),
-            rated_voltage: Some(220.0),
-            rated_current: Some(0.5),
+            rated_power: Some(dec(65.0)),
+            rated_voltage: Some(dec(220.0)),
+            rated_current: Some(dec(0.5)),
             specifications: Some(json!({"cpu": "i7", "ram": "16GB"})),
             image_url: Some("https://img.example.com/a.jpg".into()),
             department: Some("技术部".into()),
@@ -183,7 +236,7 @@ mod tests {
             brand: None,
             model: None,
             purchase_date: None,
-            purchase_amount: Some(0.0),
+            purchase_amount: Some(dec(0.0)),
             location: None,
             responsible_id: None,
             status: "active".into(),
@@ -213,7 +266,7 @@ mod tests {
             brand: None,
             model: None,
             purchase_date: None,
-            purchase_amount: Some(-500.0),
+            purchase_amount: Some(dec(-500.0)),
             location: None,
             responsible_id: None,
             status: "retired".into(),
@@ -230,7 +283,7 @@ mod tests {
         };
         let s = serde_json::to_string(&a).unwrap();
         let a2: Asset = serde_json::from_str(&s).unwrap();
-        assert_eq!(a2.purchase_amount, Some(-500.0));
+        assert_eq!(a2.purchase_amount, Some(dec(-500.0)));
     }
 
     #[test]
@@ -243,7 +296,7 @@ mod tests {
             brand: None,
             model: None,
             purchase_date: None,
-            purchase_amount: Some(999999.99),
+            purchase_amount: Some(dec(999999.99)),
             location: None,
             responsible_id: None,
             status: "in_use".into(),
@@ -251,9 +304,9 @@ mod tests {
             updated_at: Utc::now(),
             serial_number: None,
             manufacturer: None,
-            rated_power: Some(10000.0),
-            rated_voltage: Some(380.0),
-            rated_current: Some(50.0),
+            rated_power: Some(dec(10000.0)),
+            rated_voltage: Some(dec(380.0)),
+            rated_current: Some(dec(50.0)),
             specifications: Some(json!({
                 "parts": ["电机", "传送带", "控制器"],
                 "warranty_years": 5,
@@ -281,14 +334,14 @@ mod tests {
             brand: Some("Dell".into()),
             model: Some("XPS".into()),
             purchase_date: Some(Utc::now()),
-            purchase_amount: Some(5000.0),
+            purchase_amount: Some(dec(5000.0)),
             location: Some("上海".into()),
             responsible_id: Some(sample_uuid()),
             serial_number: Some("SN777".into()),
             manufacturer: Some("戴尔".into()),
-            rated_power: Some(100.0),
-            rated_voltage: Some(220.0),
-            rated_current: Some(0.8),
+            rated_power: Some(dec(100.0)),
+            rated_voltage: Some(dec(220.0)),
+            rated_current: Some(dec(0.8)),
             specifications: Some(json!({"hdd": "1TB"})),
             image_url: Some("http://x.com/a.png".into()),
             department: Some("财务部".into()),
@@ -362,7 +415,7 @@ mod tests {
             brand: Some("新品牌".into()),
             model: None,
             purchase_date: None,
-            purchase_amount: Some(100.0),
+            purchase_amount: Some(dec(100.0)),
             location: None,
             responsible_id: Some(sample_uuid()),
             status: Some("in_repair".into()),
@@ -379,7 +432,7 @@ mod tests {
         let req2: UpdateAssetRequest = serde_json::from_value(v).unwrap();
         assert_eq!(req2.name, Some("新名称".into()));
         assert_eq!(req2.brand, Some("新品牌".into()));
-        assert_eq!(req2.purchase_amount, Some(100.0));
+        assert_eq!(req2.purchase_amount, Some(dec(100.0)));
         assert_eq!(req2.responsible_id, Some(sample_uuid()));
         assert_eq!(req2.status, Some("in_repair".into()));
     }

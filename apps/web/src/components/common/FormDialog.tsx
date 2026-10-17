@@ -105,22 +105,16 @@ export const FormDialog = React.memo(function FormDialog({
         loading,
       }}
     >
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
-      <form
+      {/* NOTE: never wrap children in <form> here. Children (FormBuilder/
+          SchemaForm or the auto form) render their own <form>; a nested
+          <form> makes the inner submit event bypass React handling and
+          triggers a native GET navigation (page reload, request lost). */}
+      <div
         onKeyDown={handleKeyDown}
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!loading && !disableSubmit) onSubmit();
-        }}
+        style={{ display: 'flex', flexDirection: 'column' }}
       >
         {children}
-        {/* 隐藏的提交按钮以支持原生 form 提交 */}
-        <input
-          type='submit'
-          style={{ display: 'none' }}
-          disabled={loading || disableSubmit}
-        />
-      </form>
+      </div>
     </Dialog>
   );
 });

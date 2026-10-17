@@ -1427,6 +1427,8 @@
   "mes.work_order.k53": "Add Work Order",
   "mes.work_order.k54": "Edit Work Order",
   "mes.work_order.k55": "Work Order Details",
+  "mes.work_order.k56": "Product Code",
+  "mes.work_order.k57": "Product Name",
   "mes.work_report.k0": "Work Report",
   "mes.work_report.k1": "Manage work reports, including work report No., production order, process, workstation, operator, and quantity",
   "mes.work_report.k2": "Work Report No.",

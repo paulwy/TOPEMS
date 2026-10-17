@@ -3355,7 +3355,9 @@ export function ListPageTemplate<
             </Box>
 
             {/* 操作按钮 */}
-            {(primaryActionButton || (actions && actions.length > 0)) && (
+            {(primaryActionButton ||
+              (actions && actions.length > 0) ||
+              (effectiveActions && effectiveActions.length > 0)) && (
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 {primaryActionButton && (
                   <Button

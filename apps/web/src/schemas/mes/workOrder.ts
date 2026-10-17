@@ -25,6 +25,22 @@ export const workOrderSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 64 }],
     },
     {
+      name: 'product_code',
+      label: i18n.t('mes.work_order.k56'),
+      type: 'text',
+      required: true,
+      listWidth: 120,
+      validation: [{ type: 'maxLength', value: 64 }],
+    },
+    {
+      name: 'product_name',
+      label: i18n.t('mes.work_order.k57'),
+      type: 'text',
+      required: true,
+      listWidth: 160,
+      validation: [{ type: 'maxLength', value: 255 }],
+    },
+    {
       name: 'order_number',
       label: i18n.t('mes.work_order.k3'),
       type: 'text',
@@ -49,7 +65,7 @@ export const workOrderSchema: EntitySchema = {
       listWidth: 100,
     },
     {
-      name: 'quantity',
+      name: 'planned_quantity',
       label: i18n.t('mes.work_order.k7'),
       type: 'number',
       required: true,

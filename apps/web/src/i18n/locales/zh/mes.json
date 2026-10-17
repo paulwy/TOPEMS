@@ -1427,6 +1427,8 @@
   "mes.work_order.k53": "新增工单",
   "mes.work_order.k54": "编辑工单",
   "mes.work_order.k55": "工单详情",
+  "mes.work_order.k56": "产品编码",
+  "mes.work_order.k57": "产品名称",
   "mes.work_report.k0": "工作报告",
   "mes.work_report.k1": "管理工作报告，包括报工单号、生产订单、工序、工位、操作员、数量等",
   "mes.work_report.k2": "报工单号",

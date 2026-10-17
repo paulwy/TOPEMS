@@ -284,7 +284,7 @@ pub async fn create_inbound_order(
     .bind(&req.order_number)
     .bind(req.warehouse_id)
     .bind(req.supplier_id)
-    .bind(req.order_date)
+    .bind(req.order_date.unwrap_or_else(Utc::now))
     .bind(req.expected_arrival)
     .bind(req.total_amount)
     .bind(&req.remarks)

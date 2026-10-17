@@ -2403,3 +2403,22 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 验证：cargo build/check 0 error；pnpm tsc 0 error；契约 smoke 4076/4076 PASS；
   Playwright c2-form-submit.spec.ts 7/7 PASS（~55s）；后端 curl 复验 crm 无 owner_id 200 / pm ISO 日期 200。
 - 新增 spec：apps/web/e2e/ui/c2-form-submit.spec.ts（7 test）
+
+## 方案C 批2-C-扩展：C2e-C2i 弹窗真实提交闭环（2026-10-17）
+- 状态：已完成 + 扩展 spec **5/5 PASS** + 主 spec 7/7 回归 PASS
+- 新增 spec：apps/web/e2e/ui/c2-form-submit-ext.spec.ts（C2e-C2i 五用例：finance 平衡 / wms / mes / erp / qms 弹窗 填必填→提交→列表出现新记录）
+- **本轮修复的根因（前后端 12 处）**：
+  1. **FormDialog/FormDrawer 非法嵌套 `<form>`**（C2f 卡死根因）：组件外层 `<form>` 包住 FormBuilder 内层 `<form>` → 子表单 submit 事件不被 React 处理 → 浏览器原生 GET 导航（页面刷新、0 POST）。修复：外层改 `<div>`（保留 Enter 提交），子内容自带 form 归一。*探针证据：`<form> cannot contain a nested <form>` console error + 提交后 GET 本页 query 导航*
+  2. **wms 列表 `itemsField='orders'`**：后端 GET /inbound-orders 返回 `data.orders`，normalizeListResponse 默认只认 items/materials/data → 列表空。修复：`createCrudPageAdapter(wmsApi.inboundOrders, { itemsField: 'orders' })`
+  3. **wms InboundOrderPage `data={[]}` 覆盖 crud 数据**：propData 优先于 crudResult.data → 表格恒空（分页 total 正常）。修复：移除 `data={[]}` prop
+  4. **erp Decimal 序列化类型回归**：数值字段 f64→Decimal 后 rust_decimal 默认 serde 输出字符串 → 前端 `totalValue.toFixed is not a function` 整页崩溃（AssetStats）。修复：asset.rs 自研 `decimal_number` serde helper（JSON 数字 + 兼容字符串反序列化，`#[serde(with)]` 4 字段）
+  5. **erp 数值 0 创建 500**（第二批前置）：float8 无法隐式转 numeric 列 → 4 数值字段 f64→rust_decimal::Decimal，验证 purchase_amount=0 + rated_*=0 创建 200
+  6. **finance 平衡提示双重缺陷**：① e1 同时被「基本信息」标题与不平衡 Alert 复用且缺 {v1} 占位；② i18n 模板用 `{v1}` 单括号而 i18next 默认只插值 `{{v1}}` → 原文渲染。修复：e1 恢复标题、新增 `balance_alert`/`balance_ok` 专用键（`{{v1}}` 双括号）、VoucherCreatePage 改单模板调用
+  7. **迁移漂移 `20261017000002`**：accounting_subjects 实表仅 5 列（V321 漂移）→ 新增迁移补 9 列+4 索引；本地存量库禁跑 migrate.sh run（积压 `character varying = uuid`），手动 psql + 记 _sqlx_migrations（sha256）
+  8. **finance.core_finance_accounts 科目表为空**（create_voucher 行级查询表）→ 补插 1001 库存现金（asset/debit）/ 6001 主营业务收入（income/credit）+ accounting_subjects 14 列同步；平衡凭证 curl POST 200（记2026100004）
+  9. **wms order_date 必填→Option**：schema 默认值 DateTime 必填 + 前端不填 → 422；后端 Option + `unwrap_or_else(Utc::now)`（inbound_order.rs models/modules）
+  10. **mes workOrder 必填产品/数量**：schema 补 product_code/product_name 必填、quantity→planned_quantity（后端字段名对齐）
+  11. **erp asset_number required**：schema 校验必填（后端本就必填，前端补校验）
+  12. **qms 路径 `/api/qms/checks`**：routes/common.ts 真实 schema 页（QmsInspectionRedesignPage）手写弹窗（id=field-1..5 无 name）+ 页脚「创建检验单」→ C2i 按此操作；API 异常时静默 fallback mock create（不写库）已知
+- 验证：扩展 spec 5/5 PASS（43s）；主 spec 7/7 回归 PASS（1.0m）；`curl POST /api/finance/vouchers` 平衡凭证 200；`GET /api/wms/inbound-orders` total 含 E2E 新单；erp `/api/erp/assets` 数值字段 JSON number
+- 遗留（非本次引入，已用 stash 复现验证为 HEAD 既有失败）：components.spec 首页「今日概览」缺失（前端调 `/api/erp/assets/stats` 400——后端无此路由，仅 /dashboard/stats）；b3-list-render 401（spec 鉴权上下文）

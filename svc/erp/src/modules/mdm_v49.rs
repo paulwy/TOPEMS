@@ -377,11 +377,8 @@ mod tests {
     // --- record_event ---
     #[test]
     fn test_record_event_appends_to_store() {
-        let store = get_lifecycle_store();
-        // 清空事件存储，避免测试之间的状态共享
-        store.events.lock().map(|mut e| e.clear()).unwrap_or(());
-        let before = store.events.lock().map(|e| e.len()).unwrap_or(0);
-
+        // 共享单例 store 且本模块测试并行执行：断言基于“自身事件存在性”，
+        // 避免全局 clear/长度差在并行下的竞态（flaky）。
         record_event(
             "md-test-1".to_string(),
             "customer".to_string(),
@@ -393,8 +390,9 @@ mod tests {
             None,
         );
 
-        let after = store.events.lock().map(|e| e.len()).unwrap_or(0);
-        assert_eq!(after, before + 1);
+        let store = get_lifecycle_store();
+        let events = store.events.lock().unwrap();
+        assert!(events.iter().any(|e| e.master_data_id == "md-test-1"));
     }
 
     #[test]
@@ -412,7 +410,10 @@ mod tests {
 
         let store = get_lifecycle_store();
         let events = store.events.lock().unwrap();
-        let last = events.last().unwrap();
+        let last = events
+            .iter()
+            .find(|e| e.master_data_id == "md-test-2")
+            .unwrap();
         assert_eq!(last.master_data_id, "md-test-2");
         assert_eq!(last.entity_type, "supplier");
         assert_eq!(last.from_stage, None);

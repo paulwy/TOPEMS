@@ -222,7 +222,8 @@ export interface ListPageTemplateProps<T = Record<string, unknown>> extends BoxP
 
   // 数据
   columns: ColumnDef<T>[];
-  data: T[];
+  /** 受控数据源（外部提供时优先于 crud 内部列表数据） */
+  data?: T[];
   loading?: boolean;
   error?: string;
 

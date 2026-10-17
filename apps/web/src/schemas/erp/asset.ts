@@ -29,6 +29,7 @@ export const assetSchema: EntitySchema = {
       name: 'asset_number',
       label: i18n.t('schema:erp.asset.asset_number.label'),
       type: 'text',
+      required: true,
       listWidth: 120,
       validation: [{ type: 'maxLength', value: 100 }],
     },

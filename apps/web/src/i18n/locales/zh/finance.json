@@ -705,7 +705,7 @@
   "finance.finance_budget_detail_page.l3": "• 关注使用率较高的科目，必要时调整预算分配",
   "finance.finance_budget_detail_page.l4": "• 定期进行预算执行分析，及时发现问题",
   "finance.finance_voucher_page_components_subject_list_panel.e1": "上级科目:",
-  "finance.voucher_create_page.e2": "- 借方合计  = 贷方合计 = ",
+  "finance.voucher_create_page.e2": "{v1}：借方合计 = 贷方合计 = ",
   "finance.finance_reports_page.e1": "2024年01月",
   "finance.finance_reports_page.e2": "2024年02月",
   "finance.finance_reports_page.e3": "2024年03月",
@@ -1948,5 +1948,7 @@
   "finance.voucher_create_page.aux_supplier": "供应商",
   "finance.voucher_create_page.aux_project": "项目",
   "finance.voucher_create_page.aux_department": "部门",
-  "finance.voucher_create_page.aux_employee": "员工"
+  "finance.voucher_create_page.aux_employee": "员工",
+  "finance.voucher_create_page.balance_alert": "{{v1}}：借方合计 = {{v2}}，贷方合计 = {{v3}}，差额 = {{v4}}",
+  "finance.voucher_create_page.balance_ok": "{{v1}}：借方合计 = 贷方合计 = "
 }
