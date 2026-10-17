@@ -226,11 +226,11 @@ async fn update_resource(
             allocation_percent = COALESCE($4, allocation_percent),
             quantity = COALESCE($5, quantity),
             cost = COALESCE($6, cost),
-            resource_id = COALESCE($7, resource_id),
-            role = COALESCE($8, role),
-            actual_hours = COALESCE($9, actual_hours),
-            actual_cost = COALESCE($10, actual_cost),
-            status = COALESCE($11, status),
+            status = COALESCE($7, status),
+            resource_id = COALESCE($8, resource_id),
+            role = COALESCE($9, role),
+            actual_hours = COALESCE($10, actual_hours),
+            actual_cost = COALESCE($11, actual_cost),
             updated_at = $12
         WHERE project_id = $13 AND id = $14 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *

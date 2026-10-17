@@ -1014,7 +1014,7 @@ pub async fn get_disease_case(
                reported_at::text AS reported_at, created_at::text AS created_at,
                updated_at::text AS updated_at, tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_disease_cases
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -1133,7 +1133,7 @@ pub async fn update_disease_case(
         r#"
         UPDATE ehs.qa_ehs_disease_cases
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, case_no, employee_id, employee_name, gender, age,
@@ -1186,7 +1186,7 @@ pub async fn delete_disease_case(
     let sql = r#"
         UPDATE ehs.qa_ehs_disease_cases
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;

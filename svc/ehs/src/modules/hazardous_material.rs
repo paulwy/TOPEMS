@@ -271,8 +271,8 @@ pub async fn list_materials(
     let sql = format!(
         r#"
         SELECT id::text AS id, material_no, name, category,
-               CASE WHEN jsonb_typeof(hazard_class) = 'array'
-                    THEN (SELECT string_agg(elem, ', ') FROM jsonb_array_elements_text(hazard_class) elem)
+               CASE WHEN jsonb_typeof(hazard_class::jsonb) = 'array'
+                    THEN (SELECT string_agg(elem, ', ') FROM jsonb_array_elements_text(hazard_class::jsonb) elem)
                     ELSE NULL END AS hazard_class,
                un_number, cas_no, specification, unit, description, hazards::text AS hazards,
                storage_requirements, handling_requirements, emergency_measures,
@@ -390,8 +390,8 @@ pub async fn get_material(
     let sql = format!(
         r#"
         SELECT id::text AS id, material_no, name, category,
-               CASE WHEN jsonb_typeof(hazard_class) = 'array'
-                    THEN (SELECT string_agg(elem, ', ') FROM jsonb_array_elements_text(hazard_class) elem)
+               CASE WHEN jsonb_typeof(hazard_class::jsonb) = 'array'
+                    THEN (SELECT string_agg(elem, ', ') FROM jsonb_array_elements_text(hazard_class::jsonb) elem)
                     ELSE NULL END AS hazard_class,
                un_number, cas_no, specification, unit, description, hazards::text AS hazards,
                storage_requirements, handling_requirements, emergency_measures,
@@ -399,7 +399,7 @@ pub async fn get_material(
                created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_hazardous_materials
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
         "#
@@ -516,7 +516,7 @@ pub async fn update_material(
         r#"
         UPDATE ehs.qa_ehs_hazardous_materials
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, material_no, name, category,
@@ -569,7 +569,7 @@ pub async fn delete_material(
     let sql = r#"
         UPDATE ehs.qa_ehs_hazardous_materials
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -690,7 +690,7 @@ pub async fn get_material_msds(
                disposal_considerations, transport_info, regulatory_info, other_info,
                updated_at::text AS updated_at, tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_msds
-        WHERE material_id = $1
+        WHERE material_id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
         ORDER BY updated_at DESC

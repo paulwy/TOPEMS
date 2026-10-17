@@ -352,7 +352,7 @@ pub async fn get_training_plan(
                training_type, start_date::text AS planned_date, instructor AS trainer,
                status, created_at::text AS created_at, tenant_id::text AS tenant_id
         FROM ehs.training_programs
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -409,7 +409,7 @@ pub async fn update_training_plan(
         params.push(v.to_string());
     }
     if let Some(v) = req.get("planned_date").and_then(|v| v.as_str()) {
-        sets.push(format!("start_date = ${}", params.len() + 1));
+        sets.push(format!("start_date = ${}::timestamptz", params.len() + 1));
         params.push(v.to_string());
     }
     if let Some(v) = req.get("status").and_then(|v| v.as_str()) {
@@ -424,7 +424,7 @@ pub async fn update_training_plan(
         r#"
         UPDATE ehs.training_programs
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, program_no AS plan_no, title, content AS description,
@@ -471,7 +471,7 @@ pub async fn delete_training_plan(
     let sql = r#"
         UPDATE ehs.training_programs
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -516,7 +516,7 @@ pub async fn get_training_record(
                created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.training_records
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -578,7 +578,10 @@ pub async fn update_training_record(
         params.push(v.to_string());
     }
     if let Some(v) = req.get("training_date").and_then(|v| v.as_str()) {
-        sets.push(format!("training_date = ${}", params.len() + 1));
+        sets.push(format!(
+            "training_date = ${}::timestamptz",
+            params.len() + 1
+        ));
         params.push(v.to_string());
     }
     if let Some(v) = req.get("location").and_then(|v| v.as_str()) {
@@ -621,7 +624,7 @@ pub async fn update_training_record(
         r#"
         UPDATE ehs.training_records
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
@@ -670,7 +673,7 @@ pub async fn delete_training_record(
     let sql = r#"
         UPDATE ehs.training_records
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -715,7 +718,7 @@ pub async fn get_certificate(
                created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_training_certificates
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -768,11 +771,11 @@ pub async fn update_certificate(
         params.push(v.to_string());
     }
     if let Some(v) = req.get("issue_date").and_then(|v| v.as_str()) {
-        sets.push(format!("issue_date = ${}", params.len() + 1));
+        sets.push(format!("issue_date = ${}::timestamptz", params.len() + 1));
         params.push(v.to_string());
     }
     if let Some(v) = req.get("expiry_date").and_then(|v| v.as_str()) {
-        sets.push(format!("expiry_date = ${}", params.len() + 1));
+        sets.push(format!("expiry_date = ${}::timestamptz", params.len() + 1));
         params.push(v.to_string());
     }
     if let Some(v) = req.get("issuing_authority").and_then(|v| v.as_str()) {
@@ -795,7 +798,7 @@ pub async fn update_certificate(
         r#"
         UPDATE ehs.qa_ehs_training_certificates
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, certificate_no, employee_id, employee_name, training_type,
@@ -844,7 +847,7 @@ pub async fn delete_certificate(
     let sql = r#"
         UPDATE ehs.qa_ehs_training_certificates
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -1002,7 +1005,7 @@ pub async fn create_training_plan(
     let sql = r#"
         INSERT INTO ehs.training_programs
             (program_no, title, content, training_type, instructor, start_date, status, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7, $8::uuid)
         RETURNING id::text AS id, program_no AS plan_no, title, content AS description,
                   training_type, start_date::text AS planned_date, instructor AS trainer,
                   status, created_at::text AS created_at, tenant_id::text AS tenant_id
@@ -1193,7 +1196,7 @@ pub async fn create_training_record(
             (record_no, program_id, title, training_type, category, trainer, training_date,
              location, duration_hours, participants, content, materials, result, pass_rate,
              status, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        VALUES ($1, $2::uuid, $3, $4, $5, $6, $7::timestamptz, $8, $9::numeric, $10, $11, $12, $13, $14::numeric, $15, $16::uuid)
         RETURNING id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
                   category, trainer, training_date::text AS training_date, location, duration_hours,
                   participants, content, materials, result, pass_rate, status, created_by,
@@ -1382,7 +1385,7 @@ pub async fn create_certificate(
         INSERT INTO ehs.qa_ehs_training_certificates
             (certificate_no, employee_id, employee_name, training_type, certificate_type,
              issue_date, expiry_date, issuing_authority, status, record_id, attachments, tenant_id)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz, $8, $9, $10::uuid, $11, $12::uuid)
         RETURNING id::text AS id, certificate_no, employee_id, employee_name, training_type,
                   certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
                   issuing_authority, status, record_id::text AS record_id, attachments,

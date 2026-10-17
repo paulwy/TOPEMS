@@ -517,7 +517,7 @@ pub async fn get_drill_record(
                created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_drill_records
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -609,7 +609,7 @@ pub async fn update_drill_record(
         r#"
         UPDATE ehs.qa_ehs_drill_records
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, record_no AS drill_no, plan_id::text AS plan_id, title AS drill_name,
@@ -662,7 +662,7 @@ pub async fn delete_drill_record(
     let sql = r#"
         UPDATE ehs.qa_ehs_drill_records
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;

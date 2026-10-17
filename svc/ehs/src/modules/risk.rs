@@ -1027,7 +1027,7 @@ pub async fn create_control_measure(
     let owned = sqlx::query_as::<_, (String,)>(
         r#"
         SELECT id::text FROM ehs.qa_ehs_risks
-        WHERE id = $1::uuid AND deleted_at IS NULL
+        WHERE id::text = $1::uuid AND deleted_at IS NULL
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
         "#,
     )

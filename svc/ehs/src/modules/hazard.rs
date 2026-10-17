@@ -1158,7 +1158,7 @@ pub async fn get_safety_hazard(
                created_by, created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.safety_hazards
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -1250,7 +1250,7 @@ pub async fn update_safety_hazard(
         r#"
         UPDATE ehs.safety_hazards
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, hazard_no, name, category, level, description, location,
@@ -1298,7 +1298,7 @@ pub async fn delete_safety_hazard(
     let sql = r#"
         UPDATE ehs.safety_hazards
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -1432,7 +1432,7 @@ pub async fn list_risk_assessments_db(
                assessment_date::text AS assessment_date, assessor, severity, likelihood,
                risklevel, recommendations, created_at::text AS created_at
         FROM ehs.hazard_risk_assessments
-        WHERE hazard_id = $1
+        WHERE hazard_id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
@@ -1473,7 +1473,7 @@ pub async fn list_control_measures_db(
                responsible, deadline::text AS deadline, status, effectiveness,
                created_at::text AS created_at
         FROM ehs.hazard_control_measures
-        WHERE hazard_id = $1
+        WHERE hazard_id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
         ORDER BY created_at DESC
@@ -1562,7 +1562,7 @@ pub async fn delete_control_measure_db(
     let sql = r#"
         UPDATE ehs.hazard_control_measures
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;

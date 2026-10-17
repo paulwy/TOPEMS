@@ -837,7 +837,7 @@ pub async fn get_plan_db(
                created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_inspection_plans
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -907,7 +907,7 @@ pub async fn update_plan_db(
         r#"
         UPDATE ehs.qa_ehs_inspection_plans
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, plan_no, title, description, inspection_type, frequency,
@@ -955,7 +955,7 @@ pub async fn delete_plan_db(
     let sql = r#"
         UPDATE ehs.qa_ehs_inspection_plans
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -1162,7 +1162,7 @@ pub async fn update_record_db(
         r#"
         UPDATE ehs.qa_ehs_inspection_records
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
@@ -1211,7 +1211,7 @@ pub async fn delete_record_db(
     let sql = r#"
         UPDATE ehs.qa_ehs_inspection_records
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;

@@ -598,7 +598,7 @@ pub async fn get_regulation(
                created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_environmental_regulations
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -698,7 +698,7 @@ pub async fn update_regulation(
         r#"
         UPDATE ehs.qa_ehs_environmental_regulations
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
@@ -748,7 +748,7 @@ pub async fn delete_regulation(
     let sql = r#"
         UPDATE ehs.qa_ehs_environmental_regulations
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -848,7 +848,7 @@ pub async fn get_permit(
                attachments, created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_discharge_permits
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -952,7 +952,7 @@ pub async fn update_permit(
         r#"
         UPDATE ehs.qa_ehs_discharge_permits
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
@@ -1002,7 +1002,7 @@ pub async fn delete_permit(
     let sql = r#"
         UPDATE ehs.qa_ehs_discharge_permits
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -1205,7 +1205,7 @@ pub async fn get_evaluation(
                created_at::text AS created_at, updated_at::text AS updated_at,
                tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_compliance_evaluations
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;
@@ -1312,7 +1312,7 @@ pub async fn update_evaluation(
         r#"
         UPDATE ehs.qa_ehs_compliance_evaluations
         SET {set_clause}
-        WHERE id = ${id_idx}
+        WHERE id::text = ${id_idx}
           AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
           AND deleted_at IS NULL
         RETURNING id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
@@ -1366,7 +1366,7 @@ pub async fn delete_evaluation(
     let sql = r#"
         UPDATE ehs.qa_ehs_compliance_evaluations
         SET deleted_at = now()
-        WHERE id = $1
+        WHERE id::text = $1
           AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
           AND deleted_at IS NULL
     "#;

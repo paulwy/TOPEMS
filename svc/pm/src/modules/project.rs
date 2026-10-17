@@ -183,7 +183,8 @@ async fn list_projects(
                CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, description, project_type, status, leader, start_date, end_date,
                budget, progress, project_config, benefit_target, risk_level, priority, tags,
-               parent_id, workspace_id, created_by, created_at, updated_at
+               parent_id, workspace_id, cost_center_id, cost_center_name,
+               created_by, created_at, updated_at
         FROM pm.projects ORDER BY created_at DESC
         "#
     ))
@@ -265,7 +266,8 @@ async fn create_project(
                   CASE WHEN $24 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, description, project_type, status, leader, start_date, end_date,
                   budget, progress, project_config, benefit_target, risk_level, priority, tags,
-                  parent_id, workspace_id, created_by, created_at, updated_at
+                  parent_id, workspace_id, cost_center_id, cost_center_name,
+                  created_by, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -405,7 +407,8 @@ async fn get_project(
                CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                code, description, project_type, status, leader, start_date, end_date,
                budget, progress, project_config, benefit_target, risk_level, priority, tags,
-               parent_id, workspace_id, created_by, created_at, updated_at
+               parent_id, workspace_id, cost_center_id, cost_center_name,
+               created_by, created_at, updated_at
         FROM pm.projects WHERE deleted_at IS NULL AND id = $1
         "#
     ))
@@ -476,7 +479,8 @@ async fn update_project(
                   CASE WHEN $18 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
                   code, description, project_type, status, leader, start_date, end_date,
                   budget, progress, project_config, benefit_target, risk_level, priority, tags,
-                  parent_id, workspace_id, created_by, created_at, updated_at
+                  parent_id, workspace_id, cost_center_id, cost_center_name,
+                  created_by, created_at, updated_at
         "#
     ))
     .bind(&req.name)
