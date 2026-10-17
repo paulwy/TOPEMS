@@ -1230,9 +1230,12 @@ fn row_to_expense_json(row: &sqlx::postgres::PgRow) -> Value {
     json!({
         "id": row.try_get::<Uuid, _>("id").ok(),
         "expense_number": row.try_get::<String, _>("expense_number").ok(),
+        "expense_no": row.try_get::<String, _>("expense_number").ok(), // 双兼容：前端 expense_no ← 后端 expense_number
         "applicant_name": row.try_get::<Option<String>, _>("applicant_name").ok().flatten(),
+        "title": row.try_get::<Option<String>, _>("applicant_name").ok().flatten(), // 双兼容：前端 title ← 后端 applicant_name
         "department_id": row.try_get::<Option<Uuid>, _>("department_id").ok().flatten(),
         "expense_type": row.try_get::<Option<String>, _>("expense_type").ok().flatten(),
+        "category": row.try_get::<Option<String>, _>("expense_type").ok().flatten(), // 双兼容：前端 category ← 后端 expense_type
         "amount": row.try_get::<f64, _>("amount").ok(),
         "description": row.try_get::<Option<String>, _>("description").ok().flatten(),
         "expense_date": row.try_get::<Option<chrono::DateTime<Utc>>, _>("expense_date").ok().flatten(),
@@ -1243,6 +1246,13 @@ fn row_to_expense_json(row: &sqlx::postgres::PgRow) -> Value {
         "reimbursed_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("reimbursed_at").ok().flatten(),
         "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
         "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
+        // 以下字段 DB 无对应列，返回 null 保持前端契约兼容
+        "currency": null,
+        "sub_category": null,
+        "project_id": null,
+        "employee_id": null,
+        "payment_method": null,
+        "voucher_id": null,
     })
 }
 
