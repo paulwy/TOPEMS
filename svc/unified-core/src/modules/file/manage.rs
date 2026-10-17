@@ -94,7 +94,7 @@ pub async fn list_files(
 
     // 构建查询条件 - 简化版本，避免动态参数问题
     let base_query =
-        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at
+        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, original_name
          FROM public.core_files
          WHERE deleted_at IS NULL";
 
@@ -112,6 +112,7 @@ pub async fn list_files(
             Uuid,
             chrono::NaiveDateTime,
             chrono::NaiveDateTime,
+            Option<String>,
         ),
     >(base_query)
     .fetch_all(&state.pool)
@@ -132,9 +133,10 @@ pub async fn list_files(
                         uploader_id,
                         created_at,
                         updated_at,
+                        original_name,
                     )| FileInfo {
                         filename: name.clone(),
-                        original_filename: name.clone(),
+                        original_filename: original_name.unwrap_or_else(|| name.clone()),
                         id: id.to_string(),
                         name,
                         size: size as u64,
@@ -233,7 +235,7 @@ pub async fn get_file(
     };
 
     let row = match sqlx::query(
-        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at
+        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, original_name
          FROM public.core_files WHERE id = $1",
     )
     .bind(file_id)
@@ -282,7 +284,9 @@ pub async fn get_file(
             .map(|id| id.to_string()),
         uploader_id: row.get::<Uuid, _>("uploader_id").to_string(),
         filename: row.get::<String, _>("name"),
-        original_filename: row.get::<String, _>("name"),
+        original_filename: row
+            .get::<Option<String>, _>("original_name")
+            .unwrap_or_else(|| row.get::<String, _>("name")),
         created_at: row
             .get::<chrono::NaiveDateTime, _>("created_at")
             .to_string(),
