@@ -11,6 +11,8 @@ pub struct Customer {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub name: String,
+    #[serde(default)]
+    pub name_en: Option<String>,
     pub customer_type: String,
     #[serde(default)]
     pub industry: Option<String>,
@@ -47,6 +49,13 @@ pub struct Customer {
     pub source: Option<String>,
     #[serde(default)]
     pub status: Option<String>,
+    // 字段级对拍 crm 批（2026-10-17）：DB 有列而响应 struct 缺，补齐
+    #[serde(default)]
+    pub fax: Option<String>,
+    #[serde(default)]
+    pub postal_code: Option<String>,
+    #[serde(default)]
+    pub notes: Option<String>,
     #[serde(default = "default_approval_none")]
     pub approval_status: String,
     pub created_at: DateTime<Utc>,
@@ -61,6 +70,7 @@ impl Default for Customer {
             id: Uuid::nil(),
             tenant_id: Uuid::nil(),
             name: String::new(),
+            name_en: None,
             customer_type: "enterprise".into(),
             industry: None,
             rating: "C".into(),
@@ -80,6 +90,9 @@ impl Default for Customer {
             revenue: None,
             source: None,
             status: None,
+            fax: None,
+            postal_code: None,
+            notes: None,
             approval_status: "none".into(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
@@ -118,6 +131,41 @@ pub struct CreateCustomerRequest {
     /// 归属人；缺省时由 handler 从登录 token（claims.user_id）补齐
     pub owner_id: Option<Uuid>,
     pub tags: Option<Vec<String>>,
+    // 字段级对拍 crm 批（2026-10-17）：前端契约 15 字段后端缺收导致创建数据静默丢失，补齐
+    #[serde(default)]
+    pub code: Option<String>,
+    #[serde(default)]
+    pub email: Option<String>,
+    #[serde(default)]
+    pub phone: Option<String>,
+    #[serde(default)]
+    pub website: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+    #[serde(default)]
+    pub city: Option<String>,
+    #[serde(default)]
+    pub province: Option<String>,
+    #[serde(default)]
+    pub country: Option<String>,
+    /// DB 列 company_size；alias 兼容前端历史笔误 companysize
+    #[serde(default)]
+    #[serde(alias = "companysize")]
+    pub company_size: Option<String>,
+    #[serde(default)]
+    pub employee_count: Option<i32>,
+    #[serde(default)]
+    pub revenue: Option<f64>,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub fax: Option<String>,
+    #[serde(default)]
+    pub postal_code: Option<String>,
+    #[serde(default)]
+    pub notes: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, ToSchema, Default)]
@@ -130,6 +178,40 @@ pub struct UpdateCustomerRequest {
     pub region: Option<String>,
     pub owner_id: Option<Uuid>,
     pub tags: Option<Vec<String>>,
+    // 字段级对拍 crm 批（2026-10-17）：编辑提交字段对齐 DB 列
+    #[serde(default)]
+    pub code: Option<String>,
+    #[serde(default)]
+    pub email: Option<String>,
+    #[serde(default)]
+    pub phone: Option<String>,
+    #[serde(default)]
+    pub website: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+    #[serde(default)]
+    pub city: Option<String>,
+    #[serde(default)]
+    pub province: Option<String>,
+    #[serde(default)]
+    pub country: Option<String>,
+    #[serde(default)]
+    #[serde(alias = "companysize")]
+    pub company_size: Option<String>,
+    #[serde(default)]
+    pub employee_count: Option<i32>,
+    #[serde(default)]
+    pub revenue: Option<f64>,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub status: Option<String>,
+    #[serde(default)]
+    pub fax: Option<String>,
+    #[serde(default)]
+    pub postal_code: Option<String>,
+    #[serde(default)]
+    pub notes: Option<String>,
 }
 
 impl Default for CreateCustomerRequest {
@@ -143,6 +225,22 @@ impl Default for CreateCustomerRequest {
             region: None,
             owner_id: None,
             tags: Some(vec![]),
+            code: None,
+            email: None,
+            phone: None,
+            website: None,
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            company_size: None,
+            employee_count: None,
+            revenue: None,
+            source: None,
+            status: None,
+            fax: None,
+            postal_code: None,
+            notes: None,
         }
     }
 }
@@ -196,6 +294,7 @@ mod tests {
             id: Uuid::new_v4(),
             tenant_id: Uuid::new_v4(),
             name: "ACME Corp".to_string(),
+            name_en: Some("ACME Corp".to_string()),
             customer_type: "enterprise".to_string(),
             industry: Some("制造业".to_string()),
             rating: "A".to_string(),
@@ -215,6 +314,9 @@ mod tests {
             revenue: Some(5200000.0),
             source: Some("manual".to_string()),
             status: Some("active".to_string()),
+            fax: Some("021-66668888".to_string()),
+            postal_code: Some("201203".to_string()),
+            notes: Some("重点客户".to_string()),
             approval_status: "approved".to_string(),
             created_at: now,
             updated_at: later,
@@ -230,6 +332,7 @@ mod tests {
             id: Uuid::nil(),
             tenant_id: Uuid::nil(),
             name: String::new(),
+            name_en: None,
             customer_type: "potential".into(),
             industry: None,
             rating: "C".into(),
@@ -249,6 +352,9 @@ mod tests {
             revenue: None,
             source: None,
             status: None,
+            fax: None,
+            postal_code: None,
+            notes: None,
             approval_status: "none".into(),
             created_at: now,
             updated_at: now,
@@ -276,6 +382,22 @@ mod tests {
             region: Some("华南".to_string()),
             owner_id: Some(Uuid::new_v4()),
             tags: Some(vec!["new".to_string(), "tech".to_string()]),
+            code: None,
+            email: None,
+            phone: None,
+            website: None,
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            company_size: None,
+            employee_count: None,
+            revenue: None,
+            source: None,
+            status: None,
+            fax: None,
+            postal_code: None,
+            notes: None,
         };
         roundtrip(&r);
     }
@@ -291,6 +413,22 @@ mod tests {
             region: None,
             owner_id: Some(Uuid::nil()),
             tags: None,
+            code: None,
+            email: None,
+            phone: None,
+            website: None,
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            company_size: None,
+            employee_count: None,
+            revenue: None,
+            source: None,
+            status: None,
+            fax: None,
+            postal_code: None,
+            notes: None,
         };
         roundtrip(&r);
     }
@@ -306,6 +444,22 @@ mod tests {
             region: Some("华北".to_string()),
             owner_id: Some(Uuid::new_v4()),
             tags: Some(vec!["updated".to_string()]),
+            code: None,
+            email: None,
+            phone: None,
+            website: None,
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            company_size: None,
+            employee_count: None,
+            revenue: None,
+            source: None,
+            status: None,
+            fax: None,
+            postal_code: None,
+            notes: None,
         };
         roundtrip(&r);
     }
@@ -321,6 +475,22 @@ mod tests {
             region: None,
             owner_id: None,
             tags: None,
+            code: None,
+            email: None,
+            phone: None,
+            website: None,
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            company_size: None,
+            employee_count: None,
+            revenue: None,
+            source: None,
+            status: None,
+            fax: None,
+            postal_code: None,
+            notes: None,
         };
         roundtrip(&r);
     }

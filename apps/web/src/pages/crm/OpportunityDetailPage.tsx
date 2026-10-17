@@ -158,7 +158,7 @@ const OpportunityDetailPage: React.FC = () => {
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>
             {t('crm.opportunityDetail.field_probability')}
           </InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{opportunity.probability || 0}%</Typography>
+          <Typography sx={{ mt: 0.5 }}>{opportunity.win_rate || 0}%</Typography>
         </Box>
         {opportunity.notes && (
           <Box sx={{ gridColumn: 'span 3', mt: 2 }}>
@@ -179,17 +179,17 @@ const OpportunityDetailPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
           <LinearProgress
             variant='determinate'
-            value={opportunity.probability || 0}
+            value={opportunity.win_rate || 0}
             sx={{ flex: 1, height: 10, borderRadius: 5 }}
           />
           <Typography
             variant='h6'
             sx={{ fontWeight: 600 }}
           >
-            {opportunity.probability || 0}%
+            {opportunity.win_rate || 0}%
           </Typography>
         </Box>
-        {opportunity.probability !== undefined && (
+        {opportunity.win_rate !== undefined && (
           <Box>
             <Typography
               variant='body2'
@@ -197,7 +197,7 @@ const OpportunityDetailPage: React.FC = () => {
             >
               {t('crm.opportunityDetail.weighted_expected_amount')}{' '}
               {formatMoney(
-                opportunity.value ? opportunity.value * (opportunity.probability / 100) : undefined
+                opportunity.value ? opportunity.value * (opportunity.win_rate / 100) : undefined
               )}
             </Typography>
           </Box>
@@ -295,13 +295,13 @@ const OpportunityDetailPage: React.FC = () => {
         { label: t('crm.opportunityDetail.stat_amount'), value: formatMoney(opportunity?.value) },
         {
           label: t('crm.opportunityDetail.stat_probability'),
-          value: `${opportunity?.probability || 0}%`,
+          value: `${opportunity?.win_rate || 0}%`,
         },
         {
           label: t('crm.opportunityDetail.stat_expected'),
           value: formatMoney(
-            opportunity?.value && opportunity?.probability
-              ? opportunity.value * (opportunity.probability / 100)
+            opportunity?.value && opportunity?.win_rate
+              ? opportunity.value * (opportunity.win_rate / 100)
               : undefined
           ),
         },

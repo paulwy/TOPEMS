@@ -112,6 +112,9 @@ pub struct CreateReturnRequest {
     pub ticket_id: Option<Uuid>,
     #[serde(default)]
     pub warehouse_id: Option<Uuid>,
+    // 字段级对拍 crm 批（2026-10-17）：创建/编辑可提交退款金额（DB 列 refund_amount）
+    #[serde(default)]
+    pub refund_amount: Option<Decimal>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, ToSchema, Default)]
@@ -132,6 +135,9 @@ pub struct UpdateReturnRequest {
     pub ticket_id: Option<Uuid>,
     #[serde(default)]
     pub warehouse_id: Option<Uuid>,
+    // 字段级对拍 crm 批（2026-10-17）：创建/编辑可提交退款金额（DB 列 refund_amount）
+    #[serde(default)]
+    pub refund_amount: Option<Decimal>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -181,6 +187,7 @@ impl Default for CreateReturnRequest {
             exchange_product_id: None,
             ticket_id: None,
             warehouse_id: None,
+            refund_amount: None,
         }
     }
 }
@@ -282,6 +289,7 @@ mod tests {
             exchange_product_id: Some(uid()),
             ticket_id: Some(uid()),
             warehouse_id: Some(uid()),
+            refund_amount: Some(Decimal::from(188)),
         };
         roundtrip(&r);
     }
@@ -303,6 +311,7 @@ mod tests {
             exchange_product_id: None,
             ticket_id: Some(uid()),
             warehouse_id: Some(uid()),
+            refund_amount: Some(Decimal::from(99)),
         };
         roundtrip(&r);
     }

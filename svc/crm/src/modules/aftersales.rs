@@ -362,7 +362,7 @@ async fn create_return(
             id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
             status, refund_amount, exchange_product_id, received, created_by, updated_by, created_at, updated_at,
             ticket_id, warehouse_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', 0, $9, FALSE, $10, $10, $11, $11, $12, $13)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', COALESCE($14, 0), $9, FALSE, $10, $10, $11, $11, $12, $13)
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -382,6 +382,7 @@ async fn create_return(
     .bind(now)
     .bind(req.ticket_id)
     .bind(req.warehouse_id)
+    .bind(req.refund_amount)
     .fetch_one(&mut **txn)
     .await;
 
@@ -581,6 +582,7 @@ async fn update_return(
     let exchange_product_id = req.exchange_product_id.or(existing.exchange_product_id);
     let ticket_id = req.ticket_id.or(existing.ticket_id);
     let warehouse_id = req.warehouse_id.or(existing.warehouse_id);
+    let refund_amount = req.refund_amount.or_else(|| Some(existing.refund_amount));
 
     let result = sqlx::query_as::<_, Return>(
         r#"
@@ -588,8 +590,9 @@ async fn update_return(
             customer_id = $2, order_id = $3, return_type = $4, reason = $5,
             reason_detail = $6, exchange_product_id = $7,
             ticket_id = $8, warehouse_id = $9,
-            updated_by = $10, updated_at = $11
-        WHERE id = $1 AND tenant_id = $12
+            refund_amount = COALESCE($10, refund_amount),
+            updated_by = $11, updated_at = $12
+        WHERE id = $1 AND tenant_id = $13
         RETURNING id, return_no, tenant_id, customer_id, order_id, return_type, reason, reason_detail,
                   status, refund_amount, exchange_product_id, received, received_at, approved_by,
                   approved_at, completed_at, resolved_at, created_by, updated_by, created_at, updated_at,
@@ -605,6 +608,7 @@ async fn update_return(
     .bind(exchange_product_id)
     .bind(ticket_id)
     .bind(warehouse_id)
+    .bind(refund_amount)
     .bind(operator_id)
     .bind(now)
     .bind(tenant_id)

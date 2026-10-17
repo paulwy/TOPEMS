@@ -198,11 +198,11 @@ const CRMCustomerScoringPage: React.FC = () => {
       ),
     },
     {
-      id: 'scorelevel',
+      id: 'score_level',
       label: t('crm.customerScoring.col_level'),
       width: 100,
       align: 'center',
-      render: (row) => getGradeBadge(row.scorelevel),
+      render: (row) => getGradeBadge(row.score_level),
     },
     {
       id: 'trend',
@@ -280,10 +280,10 @@ const CRMCustomerScoringPage: React.FC = () => {
   const headerContent = (rows: unknown[], _total: number) => {
     const scores = rows as CustomerScore[];
     const fromList = {
-      A: scores.filter((s) => s.scorelevel === 'A').length,
-      B: scores.filter((s) => s.scorelevel === 'B').length,
-      C: scores.filter((s) => s.scorelevel === 'C').length,
-      D: scores.filter((s) => s.scorelevel === 'D').length,
+      A: scores.filter((s) => s.score_level === 'A').length,
+      B: scores.filter((s) => s.score_level === 'B').length,
+      C: scores.filter((s) => s.score_level === 'C').length,
+      D: scores.filter((s) => s.score_level === 'D').length,
     };
     const gradeDistribution = mockEnabled ? mockScoring.distribution : fromList;
 
@@ -491,7 +491,7 @@ const CRMCustomerScoringPage: React.FC = () => {
             )}
           </Box>
           <Box sx={{ textAlign: 'center' }}>
-            {getGradeBadge(score.scorelevel)}
+            {getGradeBadge(score.score_level)}
             <Typography
               variant='body2'
               sx={{ color: 'text.secondary', mt: 0.5 }}

@@ -6,7 +6,7 @@ export interface Customer {
   name_en?: string | null;
   code?: string;
   industry?: string;
-  companysize?: string;
+  company_size?: string;
   website?: string;
   email?: string;
   phone?: string;
@@ -31,7 +31,7 @@ export interface CreateCustomerRequest {
   name: string;
   code?: string;
   industry?: string;
-  companysize?: string;
+  company_size?: string;
   website?: string;
   email?: string;
   phone?: string;
@@ -53,7 +53,7 @@ export interface UpdateCustomerRequest {
   name?: string;
   code?: string;
   industry?: string;
-  companysize?: string;
+  company_size?: string;
   website?: string;
   email?: string;
   phone?: string;
@@ -145,7 +145,7 @@ export interface Opportunity {
   customer_id?: string;
   value?: number;
   stage: string;
-  probability?: number;
+  win_rate?: number;
   close_date?: string;
   notes?: string;
   created_at: string;
@@ -156,7 +156,7 @@ export interface CreateOpportunityRequest {
   name: string;
   customer_id?: string;
   value?: number;
-  probability?: number;
+  win_rate?: number;
   close_date?: string;
   notes?: string;
 }
@@ -166,7 +166,7 @@ export interface UpdateOpportunityRequest {
   customer_id?: string;
   value?: number;
   stage?: string;
-  probability?: number;
+  win_rate?: number;
   close_date?: string;
   notes?: string;
 }
@@ -182,6 +182,7 @@ export interface FunnelStage {
   count: number;
   total_value?: number;
   avg_probability?: number;
+  probability?: number;
 }
 
 export interface OpportunityStats {
@@ -225,7 +226,7 @@ export interface CustomerScore {
   customer_id: string;
   customer_name: string;
   score: number;
-  scorelevel: string;
+  score_level: string;
   scoring_date: string;
   factors: ScoreFactor[];
   trend: 'up' | 'down' | 'stable';
@@ -244,12 +245,12 @@ export interface ScoreFactor {
 export interface CreateCustomerScoreRequest {
   customer_id: string;
   score?: number;
-  scorelevel?: string;
+  score_level?: string;
 }
 
 export interface CustomerScoringQueryParams extends PaginationParams {
   customer_id?: string;
-  scorelevel?: string;
+  score_level?: string;
 }
 
 export interface SalesForecast {
@@ -260,7 +261,7 @@ export interface SalesForecast {
   actual_amount?: number;
   accuracy?: number;
   trend: 'up' | 'down' | 'stable';
-  confidencelevel: number;
+  confidence_level: number;
   factors: ForecastFactor[];
   status: string;
   created_at: string;
@@ -322,9 +323,9 @@ export interface CustomerSegment {
 }
 
 export interface SegmentCriteria {
-  scorelevels?: string[];
+  score_levels?: string[];
   industries?: string[];
-  companysizes?: string[];
+  company_sizes?: string[];
   statuses?: string[];
   customer_types?: string[];
   revenue_min?: number;
@@ -343,7 +344,7 @@ export interface SegmentedCustomer {
   industry?: string;
   status: string;
   score?: number;
-  scorelevel?: string;
+  score_level?: string;
   revenue?: number;
   segment_tags: string[];
 }

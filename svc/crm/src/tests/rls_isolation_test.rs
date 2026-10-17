@@ -95,11 +95,27 @@ async fn create_customer_for(pool: &PgPool, tenant_id: Uuid, name: &str) -> Cust
         name_en: None,
         owner_id: Some(Uuid::new_v4()),
         tags: Some(vec![]),
+        code: None,
+        email: None,
+        phone: None,
+        website: None,
+        address: None,
+        city: None,
+        province: None,
+        country: None,
+        company_size: None,
+        employee_count: None,
+        revenue: None,
+        source: None,
+        status: None,
+        fax: None,
+        postal_code: None,
+        notes: None,
     };
     sqlx::query_as::<_, Customer>(r#"
         INSERT INTO crm.customers (tenant_id, name, customer_type, industry, rating, region, owner_id, tags)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING id, tenant_id, name, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, created_at, updated_at, deleted_at
+        RETURNING id, tenant_id, name, name_en, customer_type, industry, rating, region, owner_id, tags, approval_status, code, email, phone, website, address, city, province, country, company_size, employee_count, revenue, source, status, fax, postal_code, notes, created_at, updated_at, deleted_at
     "#)
     .bind(tenant_id)
     .bind(&req.name)

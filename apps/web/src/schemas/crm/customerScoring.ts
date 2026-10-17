@@ -35,7 +35,7 @@ export const customerScoringSchema: EntitySchema = {
       sortable: true,
     },
     {
-      name: 'scorelevel',
+      name: 'score_level',
       label: i18n.t('shared.customer_scoring.k4'),
       type: 'text',
       listWidth: 100,
@@ -65,7 +65,7 @@ export const customerScoringSchema: EntitySchema = {
   ],
 
   list: {
-    columns: ['customer_name', 'score', 'scorelevel', 'trend', 'scoring_date', 'last_score'],
+    columns: ['customer_name', 'score', 'score_level', 'trend', 'scoring_date', 'last_score'],
     searchFields: ['customer_name'],
     pageSize: 10,
   },

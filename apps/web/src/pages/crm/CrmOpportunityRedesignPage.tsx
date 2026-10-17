@@ -62,7 +62,7 @@ const mapApiOpportunities = (apiOpportunities: ApiOpportunity[]): Opportunity[] 
     stage: ((o as any).stage as Opportunity['stage']) || 'lead',
     amount: (o as any).amount || 0,
     expected_date: (o as any).expected_date || (o as any).expectedDate || '-',
-    probability: (o as any).probability || 0,
+    probability: (o as any).win_rate || 0,
     owner: (o as any).owner || '-',
     source: ((o as any).source as Opportunity['source']) || 'other',
     created_at: o.created_at,
@@ -300,7 +300,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           amount: data.amount,
           stage: data.stage,
           expected_date: data.expected_date,
-          probability: data.probability,
+          win_rate: data.probability,
           owner: data.owner,
           source: data.source,
         } as any);
@@ -329,7 +329,7 @@ const CrmOpportunityRedesignPage: React.FC = () => {
           amount: data.amount,
           stage: data.stage,
           expected_date: data.expected_date,
-          probability: data.probability,
+          win_rate: data.probability,
           owner: data.owner,
           source: data.source,
         } as any);
