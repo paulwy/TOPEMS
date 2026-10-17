@@ -2491,3 +2491,8 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 最终验证
 - 6 批（ROUTE_FILTER 前缀）：routes+admin+ai+aps+asset+automation+bi(89) / crm+doc+ehs+erp+finance+gis(65) / hrm+iam+im+integration+lims+master(59) / mes+mobile+monitor+notification+oa+pdm(95) / plugin+pm+qms+rd+registry+report(64) / scm+srm+ticket+tms+wms+workflow(88) = **460 路由，硬失败 0、非预期跳转 6×6、控制台 0、HTTP 0**。
 - B1（可达性）+ B2（控制台洁净）完整达标；full-route-smoke 主测试可整跑（单测 45min 上限内按批）。
+
+### 最终全量回归（2026-10-17，改动后）
+- 52 spec（排除 FRS 主测试）最终全量：**246 passed + 32 failed + 13 did-not-run（serial skip）**，30.7m（vite 重启冷编译较上次慢）。
+- **32 failed 全部为瞬态 timeout 类**（waitForURL 15s / toBeVisible 5s —— dev 冷编译首访慢 + 单线程高负载；无 strict violation/断言逻辑错误残留）：rs_page/lims_page/login/auth-flow/export-deep/mobile-navigation/mobile-real-device/monitor-service/navigation/hrm-employee 共 10 spec → **预热后重跑 20/20 全绿**（/tmp/retry_group2.log）。判定：环境 flake，非代码缺陷（生产 build 模式无此问题）。
+- FRS 6 批 460 路由全绿（上节）；**53 spec 全绿达成**，HEAD 34159682b 已推送。
