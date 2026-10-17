@@ -53,7 +53,8 @@ pub async fn list_expenses(
         "finance",
         r#"SELECT id, expense_number, applicant_name, department_id, expense_type, amount,
                   description, expense_date, receipt_count, status, approver_id, approved_at,
-                  reimbursed_at, created_at, updated_at
+                  reimbursed_at, currency, sub_category, project_id, employee_id, payment_method, voucher_id,
+                  created_at, updated_at
            FROM expenses
            WHERE ($1::text IS NULL OR expense_number ILIKE $1 OR applicant_name ILIKE $1)
              AND ($2::text IS NULL OR status = $2)
@@ -1246,13 +1247,13 @@ fn row_to_expense_json(row: &sqlx::postgres::PgRow) -> Value {
         "reimbursed_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("reimbursed_at").ok().flatten(),
         "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
         "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
-        // 以下字段 DB 无对应列，返回 null 保持前端契约兼容
-        "currency": null,
-        "sub_category": null,
-        "project_id": null,
-        "employee_id": null,
-        "payment_method": null,
-        "voucher_id": null,
+        // 以下字段已建列（migration 20261018000004），真值读取
+        "currency": row.try_get::<Option<String>, _>("currency").ok().flatten(),
+        "sub_category": row.try_get::<Option<String>, _>("sub_category").ok().flatten(),
+        "project_id": row.try_get::<Option<Uuid>, _>("project_id").ok().flatten(),
+        "employee_id": row.try_get::<Option<Uuid>, _>("employee_id").ok().flatten(),
+        "payment_method": row.try_get::<Option<String>, _>("payment_method").ok().flatten(),
+        "voucher_id": row.try_get::<Option<Uuid>, _>("voucher_id").ok().flatten(),
     })
 }
 
