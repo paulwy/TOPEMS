@@ -274,10 +274,7 @@ impl EtcdServiceDiscovery {
             )));
         }
 
-        let lease_response: EtcdLeaseGrantResponse = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let lease_response: EtcdLeaseGrantResponse = response.json().await?;
 
         Ok(lease_response.id)
     }
@@ -395,10 +392,7 @@ impl EtcdServiceDiscovery {
             return Ok(None);
         }
 
-        let range_response: EtcdRangeResponse = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let range_response: EtcdRangeResponse = response.json().await?;
 
         let Some(kvs) = range_response.kvs else {
             return Ok(None);
@@ -433,10 +427,7 @@ impl EtcdServiceDiscovery {
             return Ok(Vec::new());
         }
 
-        let range_response: EtcdRangeResponse = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let range_response: EtcdRangeResponse = response.json().await?;
 
         let Some(kvs) = range_response.kvs else {
             return Ok(Vec::new());
@@ -468,13 +459,12 @@ impl EtcdServiceDiscovery {
             last_heartbeat: registration.last_heartbeat.clone(),
         };
 
-        serde_json::to_string(&data).map_err(|e| ServiceClientError::ParseFailed(e.to_string()))
+        serde_json::to_string(&data).map_err(ServiceClientError::from)
     }
 
     /// Convert etcd service data JSON to ServiceRegistration.
     fn data_to_registration(data: &str) -> Result<ServiceRegistration, ServiceClientError> {
-        let service_data: EtcdServiceData = serde_json::from_str(data)
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let service_data: EtcdServiceData = serde_json::from_str(data)?;
 
         Ok(ServiceRegistration {
             name: service_data.name,

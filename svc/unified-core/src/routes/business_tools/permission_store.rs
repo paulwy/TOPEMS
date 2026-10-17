@@ -692,3 +692,10 @@ impl From<PermissionStoreError> for topems_shared_core::error::TopemsError {
         }
     }
 }
+
+/// B7 波3：sqlx::Error → PermissionStoreError::StoreError 桥接，消除手写 to_string 散落。
+impl From<sqlx::Error> for PermissionStoreError {
+    fn from(e: sqlx::Error) -> Self {
+        PermissionStoreError::StoreError(e.to_string())
+    }
+}

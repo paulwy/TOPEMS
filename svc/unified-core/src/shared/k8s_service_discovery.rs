@@ -513,10 +513,7 @@ impl ServiceDiscovery for K8sServiceDiscovery {
             )));
         }
 
-        let endpoints: K8sEndpoints = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let endpoints: K8sEndpoints = response.json().await?;
 
         Ok(Self::endpoints_to_registration(&endpoints))
     }
@@ -546,10 +543,7 @@ impl ServiceDiscovery for K8sServiceDiscovery {
             )));
         }
 
-        let endpoints_list: K8sEndpointsList = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let endpoints_list: K8sEndpointsList = response.json().await?;
 
         let services: Vec<ServiceRegistration> = endpoints_list
             .items
@@ -597,10 +591,7 @@ impl K8sServiceDiscovery {
             )));
         }
 
-        let service: K8sService = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let service: K8sService = response.json().await?;
 
         Ok(Self::service_to_registration(&service))
     }

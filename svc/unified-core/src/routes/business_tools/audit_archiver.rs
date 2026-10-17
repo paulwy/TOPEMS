@@ -181,7 +181,7 @@ impl AuditLogArchiver {
 
         // Serialize entries to JSON
         let json = serde_json::to_string_pretty(entries)
-            .map_err(|e| ArchiveError::Serialization(e.to_string()))?;
+            ?;
 
         if self.config.compress {
             self.write_compressed_file(&filepath, json.as_bytes())?;
@@ -198,12 +198,12 @@ impl AuditLogArchiver {
             .create(true)
             .append(true)
             .open(path)
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
+            ?;
 
         file.write_all(data)
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
+            ?;
         file.write_all(b"\n")
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
+            ?;
 
         Ok(())
     }
@@ -218,10 +218,10 @@ impl AuditLogArchiver {
             .create(true)
             .append(true)
             .open(path)
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
+            ?;
 
         file.write_all(&compressed)
-            .map_err(|e| ArchiveError::Io(e.to_string()))?;
+            ?;
 
         Ok(())
     }
@@ -230,7 +230,7 @@ impl AuditLogArchiver {
     fn ensure_archive_dir(&self) -> Result<(), ArchiveError> {
         if !self.config.archive_dir.exists() {
             fs::create_dir_all(&self.config.archive_dir)
-                .map_err(|e| ArchiveError::Io(e.to_string()))?;
+                ?;
             info!(
                 dir = ?self.config.archive_dir,
                 "Created archive directory"
@@ -248,15 +248,15 @@ impl AuditLogArchiver {
         let mut archives = Vec::new();
 
         for entry in
-            fs::read_dir(&self.config.archive_dir).map_err(|e| ArchiveError::Io(e.to_string()))?
+            fs::read_dir(&self.config.archive_dir)?
         {
-            let entry = entry.map_err(|e| ArchiveError::Io(e.to_string()))?;
+            let entry = entry?;
             let path = entry.path();
 
             if path.is_file() {
                 let metadata = entry
                     .metadata()
-                    .map_err(|e| ArchiveError::Io(e.to_string()))?;
+                    ?;
                 let created = metadata
                     .created()
                     .ok()
@@ -335,6 +335,20 @@ pub enum ArchiveError {
     /// Compression error.
     #[error("Compression error: {0}")]
     Compression(String),
+}
+
+/// B7 波3：std::io::Error → ArchiveError::Io 桥接，消除手写 to_string 散落。
+impl From<std::io::Error> for ArchiveError {
+    fn from(e: std::io::Error) -> Self {
+        ArchiveError::Io(e.to_string())
+    }
+}
+
+/// B7 波3：serde_json::Error → ArchiveError::Serialization 桥接。
+impl From<serde_json::Error> for ArchiveError {
+    fn from(e: serde_json::Error) -> Self {
+        ArchiveError::Serialization(e.to_string())
+    }
 }
 
 // ===== Helper Functions =====

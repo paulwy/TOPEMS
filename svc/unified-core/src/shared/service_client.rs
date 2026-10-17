@@ -69,6 +69,27 @@ impl From<topems_shared_core::error::TopemsError> for ServiceClientError {
     }
 }
 
+/// serde_json::Error → ServiceClientError 桥接（B7 波3：反序列化错误归 ParseFailed，消除手写 to_string）。
+impl From<serde_json::Error> for ServiceClientError {
+    fn from(e: serde_json::Error) -> Self {
+        ServiceClientError::ParseFailed(e.to_string())
+    }
+}
+
+/// InvalidHeaderName → ServiceClientError 桥接（B7 波3）。
+impl From<reqwest::header::InvalidHeaderName> for ServiceClientError {
+    fn from(e: reqwest::header::InvalidHeaderName) -> Self {
+        ServiceClientError::InvalidHeader(e.to_string())
+    }
+}
+
+/// InvalidHeaderValue → ServiceClientError 桥接（B7 波3）。
+impl From<reqwest::header::InvalidHeaderValue> for ServiceClientError {
+    fn from(e: reqwest::header::InvalidHeaderValue) -> Self {
+        ServiceClientError::InvalidHeader(e.to_string())
+    }
+}
+
 // ===== Service Configuration =====
 
 /// Configuration for a single service.
@@ -209,27 +230,17 @@ impl ServiceConfig {
         let mut headers = HeaderMap::new();
 
         if let Some(api_key) = &self.api_key {
-            headers.insert(
-                HeaderName::from_static("x-api-key"),
-                HeaderValue::from_str(api_key)
-                    .map_err(|e| ServiceClientError::InvalidHeader(e.to_string()))?,
-            );
+            headers.insert(HeaderName::from_static("x-api-key"), HeaderValue::from_str(api_key)?);
         }
 
         if let Some(token) = &self.bearer_token {
             let auth_value = format!("Bearer {}", token);
-            headers.insert(
-                reqwest::header::AUTHORIZATION,
-                HeaderValue::from_str(&auth_value)
-                    .map_err(|e| ServiceClientError::InvalidHeader(e.to_string()))?,
-            );
+            headers.insert(reqwest::header::AUTHORIZATION, HeaderValue::from_str(&auth_value)?);
         }
 
         for (key, value) in &self.default_headers {
-            let header_name = HeaderName::from_bytes(key.as_bytes())
-                .map_err(|e| ServiceClientError::InvalidHeader(e.to_string()))?;
-            let header_value = HeaderValue::from_str(value)
-                .map_err(|e| ServiceClientError::InvalidHeader(e.to_string()))?;
+            let header_name = HeaderName::from_bytes(key.as_bytes())?;
+            let header_value = HeaderValue::from_str(value)?;
             headers.insert(header_name, header_value);
         }
 
@@ -1406,10 +1417,7 @@ impl ServiceClient {
         }
 
         // Parse response
-        let data: T = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let data: T = response.json().await?;
 
         Ok(ServiceResponse::success(
             data,

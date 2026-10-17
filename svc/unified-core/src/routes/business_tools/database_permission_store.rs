@@ -258,7 +258,7 @@ impl DatabasePermissionStore {
             )
             .execute(self.pool.as_ref())
             .await
-            .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+            ?;
         }
 
         Ok(())
@@ -281,7 +281,7 @@ impl DatabasePermissionStore {
         )
         .fetch_optional(self.pool.as_ref())
         .await
-        .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+        ?;
 
         let Some(record) = record else {
             return Ok(None);
@@ -298,7 +298,7 @@ impl DatabasePermissionStore {
         )
         .fetch_all(self.pool.as_ref())
         .await
-        .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+        ?;
 
         let tool_permissions = tool_records
             .into_iter()
@@ -337,7 +337,7 @@ impl DatabasePermissionStore {
         )
         .execute(self.pool.as_ref())
         .await
-        .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+        ?;
 
         if result.rows_affected() == 0 {
             return Err(PermissionStoreError::NotFound(
@@ -365,7 +365,7 @@ impl DatabasePermissionStore {
         )
         .fetch_all(self.pool.as_ref())
         .await
-        .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+        ?;
 
         let mut permissions = Vec::new();
         for record in records {
@@ -396,7 +396,7 @@ impl DatabasePermissionStore {
         )
         .fetch_all(self.pool.as_ref())
         .await
-        .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+        ?;
 
         let mut permissions = Vec::new();
         for record in records {
@@ -427,7 +427,7 @@ impl DatabasePermissionStore {
         )
         .fetch_one(self.pool.as_ref())
         .await
-        .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+        ?;
 
         Ok(record.count.unwrap_or(0) as usize)
     }
@@ -472,7 +472,7 @@ impl PermissionStore for DatabasePermissionStore {
             .pool
             .begin()
             .await
-            .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+            ?;
 
         // Insert tenant permission
         let tenant_perm_id = sqlx::query!(
@@ -519,13 +519,13 @@ impl PermissionStore for DatabasePermissionStore {
             )
             .execute(&mut *tx)
             .await
-            .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+            ?;
         }
 
         // Commit transaction
         tx.commit()
             .await
-            .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+            ?;
 
         // Update cache
         self.insert_into_cache(permission).await;
@@ -573,7 +573,7 @@ impl PermissionStore for DatabasePermissionStore {
             .pool
             .begin()
             .await
-            .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+            ?;
 
         // Update tenant permission
         let result = sqlx::query!(
@@ -590,7 +590,7 @@ impl PermissionStore for DatabasePermissionStore {
         )
         .fetch_optional(&mut *tx)
         .await
-        .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+        ?;
 
         let Some(record) = result else {
             return Err(PermissionStoreError::NotFound(
@@ -609,7 +609,7 @@ impl PermissionStore for DatabasePermissionStore {
         )
         .execute(&mut *tx)
         .await
-        .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+        ?;
 
         // Insert new tool permissions
         for tool_perm in &permission.tool_permissions {
@@ -627,13 +627,13 @@ impl PermissionStore for DatabasePermissionStore {
             )
             .execute(&mut *tx)
             .await
-            .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+            ?;
         }
 
         // Commit transaction
         tx.commit()
             .await
-            .map_err(|e| PermissionStoreError::StoreError(e.to_string()))?;
+            ?;
 
         // Invalidate cache
         self.invalidate_cache(&permission.tenant_id, &permission.user_id)

@@ -242,10 +242,7 @@ impl ConsulServiceDiscovery {
             return Ok(false);
         }
 
-        let checks: Vec<ConsulHealthCheck> = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let checks: Vec<ConsulHealthCheck> = response.json().await?;
 
         // Service is healthy if all checks are passing
         Ok(checks.iter().all(|c| c.status == "passing"))
@@ -364,10 +361,7 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
             return Ok(None);
         }
 
-        let entries: Vec<ConsulServiceEntry> = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let entries: Vec<ConsulServiceEntry> = response.json().await?;
 
         if entries.is_empty() {
             return Ok(None);
@@ -398,10 +392,7 @@ impl ServiceDiscovery for ConsulServiceDiscovery {
             return Ok(Vec::new());
         }
 
-        let services: HashMap<String, Vec<String>> = response
-            .json()
-            .await
-            .map_err(|e| ServiceClientError::ParseFailed(e.to_string()))?;
+        let services: HashMap<String, Vec<String>> = response.json().await?;
 
         let mut registrations = Vec::new();
         for service_name in services.keys() {

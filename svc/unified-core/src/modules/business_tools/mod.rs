@@ -260,14 +260,8 @@ impl BaseBusinessTool {
         path: &str,
         query: Option<&HashMap<String, String>>,
     ) -> Result<ServiceResponse<T>, BusinessToolError> {
-        let client = self
-            .service_registry
-            .get_client(&self.service_name)
-            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
-        let response = client
-            .get::<T>(path, query)
-            .await
-            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
+        let client = self.service_registry.get_client(&self.service_name)?;
+        let response = client.get::<T>(path, query).await?;
         Ok(response)
     }
 
@@ -277,14 +271,8 @@ impl BaseBusinessTool {
         path: &str,
         body: &B,
     ) -> Result<ServiceResponse<T>, BusinessToolError> {
-        let client = self
-            .service_registry
-            .get_client(&self.service_name)
-            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
-        let response = client
-            .post::<T, B>(path, body)
-            .await
-            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
+        let client = self.service_registry.get_client(&self.service_name)?;
+        let response = client.post::<T, B>(path, body).await?;
         Ok(response)
     }
 
@@ -294,14 +282,8 @@ impl BaseBusinessTool {
         path: &str,
         body: &B,
     ) -> Result<ServiceResponse<T>, BusinessToolError> {
-        let client = self
-            .service_registry
-            .get_client(&self.service_name)
-            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
-        let response = client
-            .put::<T, B>(path, body)
-            .await
-            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
+        let client = self.service_registry.get_client(&self.service_name)?;
+        let response = client.put::<T, B>(path, body).await?;
         Ok(response)
     }
 
@@ -310,14 +292,8 @@ impl BaseBusinessTool {
         &self,
         path: &str,
     ) -> Result<ServiceResponse<T>, BusinessToolError> {
-        let client = self
-            .service_registry
-            .get_client(&self.service_name)
-            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
-        let response = client
-            .delete::<T>(path)
-            .await
-            .map_err(|e| BusinessToolError::OperationFailed(e.to_string()))?;
+        let client = self.service_registry.get_client(&self.service_name)?;
+        let response = client.delete::<T>(path).await?;
         Ok(response)
     }
 }
