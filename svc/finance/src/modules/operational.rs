@@ -1264,6 +1264,7 @@ fn row_to_budget_json(row: &sqlx::postgres::PgRow) -> Value {
         "budget_type": row.try_get::<Option<String>, _>("budget_type").ok().flatten(),
         "fiscal_year": row.try_get::<String, _>("fiscal_year").ok(),
         "total_budget": row.try_get::<rust_decimal::Decimal, _>("total_budget").ok(),
+        "total_amount": row.try_get::<rust_decimal::Decimal, _>("total_budget").ok(), // 双兼容：前端 total_amount ← 后端 total_budget
         "used_amount": row.try_get::<rust_decimal::Decimal, _>("used_amount").ok(),
         "remaining_amount": row.try_get::<rust_decimal::Decimal, _>("remaining_amount").ok(),
         "usage_rate": row.try_get::<rust_decimal::Decimal, _>("usage_rate").ok(),
@@ -1271,6 +1272,14 @@ fn row_to_budget_json(row: &sqlx::postgres::PgRow) -> Value {
         "created_at": row.try_get::<chrono::DateTime<Utc>, _>("created_at").ok(),
         "updated_at": row.try_get::<chrono::DateTime<Utc>, _>("updated_at").ok(),
         "deleted_at": row.try_get::<Option<chrono::DateTime<Utc>>, _>("deleted_at").ok().flatten(),
+        // 以下字段 DB 无对应列，返回 null 保持前端契约兼容
+        "code": null,
+        "name": null,
+        "period": null,
+        "start_date": null,
+        "end_date": null,
+        "project_id": null,
+        "items": null,
     })
 }
 
