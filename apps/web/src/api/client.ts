@@ -696,8 +696,8 @@ class ApiClient {
     // 回滚方式：把对应服务名从该集合移除即可（无需改其他端）。
     // 已逐服务取证后端 axum Query 分页结构：以下服务列表接口确实吃 page_size（snake_case 字段，
     // 或同时接受 page_size/pageSize 别名），开启后 pageSize→page_size 才能命中分页参数。
-    // 保持关闭（见下方注释）：mobile/ticket/core 后端部分端点 #[serde(rename="pageSize")] 只吃 camelCase；
-    // iam/file/doc/migration/gis/plugin-registry/aps 未确认或无分页，保守不开。
+    // Kept off: gis (TrackingQuery uses limit, no page_size); plugin-registry (filter
+    // structs unverified for camelCase keys); migration/aps/jaeger are not frontend services.
     const SNAKE_CASE_SERVICES = new Set([
       // 第一梯队（FE-18 已上线验证）
       'wms',
@@ -731,6 +731,13 @@ class ApiClient {
       'flow',
       'workflow', // flow 别名
       'automation', // unified-core automation：page_size 原生 + pageSize_alt 双吃
+      // Tier 3 (2026-10-17 full rollout): backend adapted or no pagination struct
+      'mobile', // svc/mobile attendance/oa Query 已改 pub page_size（原生 snake_case）
+      'ticket', // feedback_compat 已加 alias="page_size" 双吃
+      'core', // unified-core tenant 分页 Query 已加 alias="page_size" 双吃
+      'iam', // 无分页 Query struct，转换无操作
+      'file',
+      'doc',
     ]);
 
     Object.entries(config.services).forEach(([name, baseURL]) => {

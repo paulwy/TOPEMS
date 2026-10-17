@@ -104,7 +104,7 @@ pub struct ResponseFeedbackRequest {
 #[derive(Debug, Deserialize)]
 pub struct ListFeedbackParams {
     pub page: Option<i64>,
-    #[serde(rename = "pageSize")]
+    #[serde(rename = "pageSize", alias = "page_size")]
     pub page_size: Option<i64>,
     #[serde(rename = "type")]
     pub type_: Option<String>,

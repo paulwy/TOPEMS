@@ -359,7 +359,7 @@ pub struct UpdateMemberRoleRequest {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListTenantsQuery {
     pub page: Option<i64>,
-    #[serde(rename = "pageSize")]
+    #[serde(rename = "pageSize", alias = "page_size")]
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub status: Option<String>,
@@ -370,7 +370,7 @@ pub struct ListTenantsQuery {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ListTenantUsersQuery {
     pub page: Option<i64>,
-    #[serde(rename = "pageSize")]
+    #[serde(rename = "pageSize", alias = "page_size")]
     pub page_size: Option<i64>,
     pub search: Option<String>,
     pub role: Option<String>,
@@ -390,7 +390,7 @@ pub struct ListTenantsResponse {
     pub items: Vec<Tenant>,
     pub total: i64,
     pub page: i64,
-    #[serde(rename = "pageSize")]
+    #[serde(rename = "pageSize", alias = "page_size")]
     pub page_size: i64,
 }
 
@@ -400,7 +400,7 @@ pub struct ListTenantUsersResponse {
     pub items: Vec<TenantUser>,
     pub total: i64,
     pub page: i64,
-    #[serde(rename = "pageSize")]
+    #[serde(rename = "pageSize", alias = "page_size")]
     pub page_size: i64,
 }
 
