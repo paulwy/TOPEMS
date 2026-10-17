@@ -947,7 +947,7 @@ pub async fn start_event_subscribers(
         purchase_cache.clone(),
         dict_cache.clone(),
     );
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers.build_subscriber().map_err(|e| TopemsError::Internal(format!("事件订阅者初始化失败: {e}")))?;
 
     // 创建缓存失效监听器，注册三个缓存处理器
     let mut cache_invalidation_listener = CacheInvalidationListener::new("scm");
@@ -974,7 +974,7 @@ pub async fn start_event_subscribers(
     // 订阅缓存失效事件
     let cache_listener = cache_invalidation_listener;
     let cache_subscriber = EventSubscriber::new("scm-cache-invalidation")
-        .map_err(|e| e.to_string())?
+        .map_err(|e| TopemsError::Internal(format!("事件订阅者初始化失败: {e}")))?
         .subscribe(vec![EventType::CacheInvalidated], move |event| {
             let listener = cache_listener.clone();
             Box::pin(async move {
