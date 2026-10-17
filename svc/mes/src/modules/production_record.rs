@@ -208,8 +208,10 @@ pub async fn list_records(
         LIMIT ${} OFFSET ${}
         "#,
         where_clause,
-        params.len() + 1,
-        params.len() + 2
+        // tenant 隔离占 1 位（where_clause 内 $N），LIMIT/OFFSET 必须顺延到 N+1/N+2，
+        // 否则无筛选时 LIMIT $1 复用 tenant_uuid → uuid 类型错误 → 500
+        params.len() + 2,
+        params.len() + 3
     );
 
     let mut fetch_query = sqlx::query(&fetch_sql);

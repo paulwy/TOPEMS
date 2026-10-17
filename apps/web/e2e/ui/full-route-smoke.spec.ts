@@ -73,7 +73,7 @@ function buildInventory(webSrc: string): RouteEntry[] {
 
 /** vite / HMR / 静态资源噪声过滤（非应用缺陷） */
 function isNoise(text: string): boolean {
-  return /vite|sockjs|hot-update|favicon|\.map(\?|$)|Download the React DevTools/i.test(text);
+  return /vite|sockjs|hot-update|favicon|\.map(\?|$)|fonts\.googleapis|Download the React DevTools/i.test(text);
 }
 
 test.describe('B1/B2 全路由巡检 smoke', () => {
@@ -93,7 +93,7 @@ test.describe('B1/B2 全路由巡检 smoke', () => {
       return;
     }
 
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 

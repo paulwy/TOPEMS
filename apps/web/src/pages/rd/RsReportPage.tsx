@@ -67,7 +67,7 @@ const RsReportPage: React.FC = () => {
   const reportQuery = useQuery<RsReportData>({
     queryKey: QUERY_KEYS.AD_HOC.RD_REPORT_SUMMARY_BASE,
     queryFn: async () => {
-      const response = await apiClient.rd.get<RsReportData>('/reports/summary');
+      const response = await apiClient.rd.get<RsReportData>('/reports/projects/summary');
       if (response.success && response.data) return response.data;
       return defaultReportData;
     },

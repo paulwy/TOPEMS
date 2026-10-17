@@ -123,6 +123,9 @@ const SERVICES: ServiceConfig[] = [
     wsPath: '/ws/mes',
   },
   { name: 'pdm', port: BACKEND_PORTS.pdm, apiPrefix: '/api/pdm', legacyPrefix: '/pdm/api' },
+  // aps 无独立服务：由 svc/mes 的 aps_compat 兼容层提供（nest /api/aps → 内部重写为 /api/mes）；
+  // monolith 模式（VITE_MONOLITH=1）下 buildServiceProxies 自动指向 :8099，非单体指向 MES 端口
+  { name: 'aps', port: BACKEND_PORTS.mes, apiPrefix: '/api/aps' },
 
   // 供应链
   { name: 'scm', port: BACKEND_PORTS.scm, apiPrefix: '/api/scm', legacyPrefix: '/scm/api' },

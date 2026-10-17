@@ -134,7 +134,7 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
   const configQuery = useQuery({
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_RATE_LIMIT_CONFIG_BASE,
     queryFn: async () => {
-      const res = await apiClient.core.get<RateLimitConfig>('/api/core/iam/v1/rate-limit/config');
+      const res = await apiClient.core.get<RateLimitConfig>('/iam/v1/rate-limit/config');
       if (res.success && res.data) {
         return res.data;
       }
@@ -147,7 +147,7 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
     queryKey: QUERY_KEYS.AD_HOC.ADMIN_ANTI_REPLAY_CONFIG_BASE,
     queryFn: async () => {
       const res = await apiClient.core.get<AntiReplayConfig>(
-        '/api/core/iam/v1/rate-limit/config/anti-replay'
+        '/iam/v1/rate-limit/config/anti-replay'
       );
       if (res.success && res.data) {
         return res.data;
@@ -171,10 +171,7 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
 
   const saveMutation = useMutation({
     mutationFn: async (next: RateLimitConfig) => {
-      const res = await apiClient.core.put<RateLimitConfig>(
-        '/api/core/iam/v1/rate-limit/config',
-        next
-      );
+      const res = await apiClient.core.put<RateLimitConfig>('/iam/v1/rate-limit/config', next);
       return res;
     },
     onSuccess: (res) => {
@@ -214,7 +211,7 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
   const saveAntiReplayMutation = useMutation({
     mutationFn: async (next: AntiReplayConfig) => {
       const res = await apiClient.core.put<AntiReplayConfig>(
-        '/api/core/iam/v1/rate-limit/config/anti-replay',
+        '/iam/v1/rate-limit/config/anti-replay',
         next
       );
       return res;
@@ -255,10 +252,7 @@ export function useRateLimitConfig(): UseRateLimitConfigReturn {
 
   const resetMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiClient.core.post<RateLimitConfig>(
-        '/api/core/iam/v1/rate-limit/config',
-        {}
-      );
+      const res = await apiClient.core.post<RateLimitConfig>('/iam/v1/rate-limit/config', {});
       return res;
     },
     onSuccess: (res) => {
