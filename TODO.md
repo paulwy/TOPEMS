@@ -2570,3 +2570,16 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - 结论：3a 已由 K1 续批次落地（迁移 20261015000069 commercial / 20261015000070 metadata / 0068 quality）。commercial_v55（products/subscriptions/usage/billing/rate_cards/sla_*）与 metadata_v60（objects/attributes/tags/lineage_*/lifecycle_*）全部 handler 均已 sqlx 直查真表，LazyLock/Mutex/persist/ensure_initialized 残留为 0（grep 复核）。
 - 3b：quality_v51 store 基础设施已在 0068 批次删除，规则/检查/auto_fix/suggestions/insights 均为关系表读写；本次仅清理其文件内 4 行悬空注释标题（:274-284，描述已删 store），非半接真、非死代码 handler。
 - 验证：cargo check -p topems-master-data --lib 0/0；cargo test --lib 451 passed / 0 failed。
+
+## B7 波5｜lib/shared-* .map_err String→TopemsError 语义化核验（2026-10-18）
+
+- 结论：lib 侧 B7 反模式已在前序波次清零。精确 pattern `.map_err(|e| e.to_string())`（裸 String）全 lib 仅 1 处且在 `lib/shared-event/tests/event_bus_smoke.rs`（测试豁免，保留）。
+- 裸 `Result<_, String>` 签名（非测试）= 0。
+- 现存 `.map_err(...to_string())` 全部已喂语义化领域错误变体（即目标终态），不构成反模式：
+  - shared-db/backup.rs:245/266/270/341 → `BackupError::IoError(...)`
+  - shared-auth/security/encryption.rs:84/159/180/185/189/191 → `EncryptionError::{InvalidBase64,EncryptionFailed,DecryptionFailed,InvalidUtf8}(...)`
+  - shared-event/consul/mod.rs → `ConsulError::{Request,Parse}(...)`；etcd/mod.rs → `EtcdError::{Connect,Serialize,Lease,Kv}(...)`；event/{rabbitmq,delayed_message}.rs → `EventError::{Connection,Publish,Subscribe}Error(...)`
+  - shared-event/event/master_data.rs:267-309 → `TopemsError::NetworkRequest(...)`；shared-db/rls.rs:172 uuid 解析 → `TenantContextRejection::InvalidTenantId`
+  - shared-core/error/enhanced.rs:200 宏已规范输出 `TopemsError::Internal(e.to_string())`。
+- 映射缺口复核：sqlx 裸桥接 0、uuid→ValidationFailed 已走 InvalidTenantId、reqwest→NetworkRequest（语义变体，优于笼统 Internal）。未改任何错误变体定义（遵循"不动变体本身"边界）。
+- 验证：cargo check -p shared-core/shared-db/shared-event/shared-auth 0 error。
