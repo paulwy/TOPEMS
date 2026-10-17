@@ -57,9 +57,13 @@ vi.mock('@/api/iam', () => ({
   },
 }));
 
-vi.mock('@/modules/iam/config', () => ({
-  IAM_PATHS: { root: '/admin/iam', users: '/admin/iam/users' },
-}));
+vi.mock('@/modules/iam/config', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/modules/iam/config')>();
+  return {
+    ...actual,
+    IAM_PATHS: { root: '/admin/iam', users: '/admin/iam/users' },
+  };
+});
 
 describe('UserManagementPage', () => {
   it('renders page title', () => {

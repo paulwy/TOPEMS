@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TopBar, type TopBarProps } from './TopBar';
 import i18n from '@/i18n';
 import { SideRail, type SideRailProps } from './SideRail';
+import { useAutoBreadcrumbs } from '@/hooks/useAutoBreadcrumbs';
+import { DASHBOARD_PATHS } from '@/routes/dashboard';
 
 export interface AppShellProps extends TopBarProps, Omit<SideRailProps, 'title'> {
   children: React.ReactNode;
@@ -30,16 +32,6 @@ export const AppShell: React.FC<AppShellProps> = ({
     }
     return defaultSidebarExpanded;
   });
-  const location = useLocation();
-  const FALLBACK_SEGMENT_LABELS: Record<string, string> = {
-    modules: i18n.t('shared.app_shell_breadcrumb.modules'),
-    profile: i18n.t('shared.app_shell_breadcrumb.profile'),
-    favorites: i18n.t('shared.app_shell_breadcrumb.favorites'),
-    comments: i18n.t('shared.app_shell_breadcrumb.comments'),
-    attachments: i18n.t('shared.app_shell_breadcrumb.attachments'),
-    help: i18n.t('shared.app_shell_breadcrumb.help'),
-  };
-
   const navigate = useNavigate();
 
   const handleToggleSidebar = () => {
@@ -56,57 +48,19 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const sidebarWidth = sidebarExpanded ? '280px' : '72px';
 
-  // 自动生成面包屑
-  const breadcrumbs = useMemo(() => {
-    const path = location.pathname;
-    const crumbs: Array<{ label: string; onClick?: () => void }> = [
-      { label: i18n.t('shared.app_shell_breadcrumb.home'), onClick: () => navigate('/dashboard') },
-    ];
-
-    // 查找当前路径对应的菜单
-    const findPathInItems = (
-      menuItems: typeof items,
-      currentPath: string
-    ): { parentLabel: string; childLabel?: string } | null => {
-      for (const item of menuItems || []) {
-        if (item.path === currentPath) {
-          return { parentLabel: item.label };
-        }
-        if (item.children) {
-          for (const child of item.children) {
-            if (child.path === currentPath) {
-              return { parentLabel: item.label, childLabel: child.label };
-            }
-          }
-        }
-      }
-      return null;
+  // 自动面包屑：统一走 useAutoBreadcrumbs（导航注册表链路，含 i18n 资源版本订阅），
+  // 覆盖 sidebar 菜单之外的模块路由（如 /bi/data-analysis → 首页 / 数据决策 / 销售分析）
+  const autoBreadcrumbs = useAutoBreadcrumbs({
+    homePath: DASHBOARD_PATHS.dashboard,
+    homeLabel: i18n.t('shared.app_shell_breadcrumb.home'),
+  });
+  const breadcrumbs = autoBreadcrumbs.map((crumb) => {
+    const href = crumb.href;
+    return {
+      label: crumb.label,
+      onClick: href ? () => navigate(href) : undefined,
     };
-
-    const result = findPathInItems(items || [], path);
-    if (result) {
-      // label 可能是 i18n key（如 shared.sidebar.mes），统一翻译；非 key 的原始文本原样返回
-      crumbs.push({ label: i18n.t(result.parentLabel) });
-      if (result.childLabel) {
-        crumbs.push({ label: i18n.t(result.childLabel) });
-      }
-    } else {
-      // 如果找不到，使用路径片段（已知平台页映射为中文标题）
-      const segments = path.split('/').filter(Boolean);
-      if (segments.length > 0) {
-        const last = segments[segments.length - 1];
-        crumbs.push({
-          label:
-            FALLBACK_SEGMENT_LABELS[last] ||
-            i18n.t(`shared.app_shell_breadcrumb.${last}`, {
-              defaultValue: last,
-            }),
-        });
-      }
-    }
-
-    return crumbs;
-  }, [location.pathname, items, navigate, i18n.language]);
+  });
 
   return (
     <div
