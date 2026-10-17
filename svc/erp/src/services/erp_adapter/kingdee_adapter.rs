@@ -51,12 +51,12 @@ impl KingdeeApiClient {
             .post(&auth_url)
             .form(&params)
             .send()
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| TopemsError::Internal(format!("金蝶认证请求失败: {e}")))?;
 
         if response.status().is_success() {
             let token_data = response
                 .json::<serde_json::Value>()
-                .map_err(|e| e.to_string())?;
+                .map_err(|e| TopemsError::Internal(format!("金蝶响应解析失败: {e}")))?;
             if let Some(access_token) = token_data.get("access_token").and_then(|v| v.as_str()) {
                 self.access_token = Some(access_token.to_string());
                 if let Some(refresh) = token_data.get("refresh_token").and_then(|v| v.as_str()) {

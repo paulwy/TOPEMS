@@ -1043,7 +1043,7 @@ async fn export_graph(format: &str) -> Result<String, TopemsError> {
     let graph = build_lineage_graph().await;
 
     match format {
-        "json" => Ok(serde_json::to_string_pretty(&graph).map_err(|e| e.to_string())?),
+        "json" => Ok(serde_json::to_string_pretty(&graph).map_err(|e| TopemsError::Internal(format!("谱系图序列化失败: {e}")))?),
         "graphml" => {
             let mut xml = String::new();
             xml.push_str("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");

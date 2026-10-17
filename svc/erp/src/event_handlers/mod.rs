@@ -2301,7 +2301,7 @@ pub async fn start_event_subscribers(
     dict_cache: Arc<AsyncL2Cache<serde_json::Value>>,
 ) -> Result<(), TopemsError> {
     let handlers = ErpEventHandlers::new(db, dict_cache.clone());
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers.build_subscriber().map_err(|e| TopemsError::Internal(format!("事件订阅者初始化失败: {e}")))?;
 
     // 创建缓存失效监听器，注册字典缓存处理器
     let mut cache_invalidation_listener = CacheInvalidationListener::new("erp");
@@ -2324,7 +2324,7 @@ pub async fn start_event_subscribers(
     // CacheInvalidated 为 best-effort 内存缓存淘汰（parse 失败即跳过、dispatch 无失败语义），
     // 保持 .subscribe() 不入 DLQ——避免良性缓存失效失败制造死信噪音。
     let cache_subscriber = EventSubscriber::new("erp-cache-invalidation")
-        .map_err(|e| e.to_string())?
+        .map_err(|e| TopemsError::Internal(format!("事件订阅者初始化失败: {e}")))?
         .subscribe(vec![EventType::CacheInvalidated], move |event| {
             let listener = cache_listener.clone();
             Box::pin(async move {
