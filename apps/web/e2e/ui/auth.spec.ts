@@ -14,13 +14,13 @@ test.describe('Authentication Tests', () => {
   });
 
   test('shows validation errors for empty fields', async ({ page }) => {
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
   });
 
   test('shows validation error for short username', async ({ page }) => {
     await page.getByPlaceholder('请输入用户名').fill('ab');
     await page.getByPlaceholder('请输入密码').fill('Test@1234');
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
   });
 
   test('password visibility toggle', async ({ page }) => {
@@ -44,7 +44,7 @@ test.describe('Authentication Tests', () => {
   test('successful login with valid credentials', async ({ page }) => {
     await page.getByPlaceholder('请输入用户名').fill('test_admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
     
     await page.waitForURL('**/dashboard', { timeout: 10000 });
   });
@@ -52,7 +52,7 @@ test.describe('Authentication Tests', () => {
   test('unsuccessful login with invalid credentials', async ({ page }) => {
     await page.getByPlaceholder('请输入用户名').fill('admin');
     await page.getByPlaceholder('请输入密码').fill('wrongpassword');
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
     
     await expect(page).toHaveURL(/login/);
   });

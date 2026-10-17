@@ -36,7 +36,7 @@ const loginFormSchema = z.object({
     .string()
     .min(2, { message: i18n.t('pages.login_page.2_0') })
     .max(20, { message: i18n.t('pages.login_page.20_1') })
-    .regex(/^[a-zA-Z0-9]+$/, { message: i18n.t('pages.login_page.k2') }),
+    .regex(/^[a-zA-Z0-9_]+$/, { message: i18n.t('pages.login_page.k2') }),
   password: z.string().min(6, { message: i18n.t('pages.login_page.6_3') }),
   email: z.string().optional(),
 });

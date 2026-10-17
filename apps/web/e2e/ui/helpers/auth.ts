@@ -5,7 +5,7 @@ import { Page, expect } from '@playwright/test';
  * 使用 test_admin / admin123 账号登录系统（本地种子账号；admin 账号不存在会登录失败）
  */
 export async function loginAsAdmin(page: Page): Promise<void> {
-  await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  await page.goto('/login', { waitUntil: 'load', timeout: 30000 });
   // 等待用户名输入框出现，而不是 networkidle（避免持续轮询导致超时）
   await page.waitForSelector('input[placeholder*="用户名"], input[name="username"]', { timeout: 15000 }).catch(() => {});
 
@@ -17,8 +17,8 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   const passwordInput = page.getByPlaceholder('请输入密码');
   await passwordInput.fill('admin123');
 
-  // 点击登录按钮（使用 exact: true 避免匹配到"登录成功"按钮）
-  await page.getByRole('button', { name: '登录', exact: true }).click();
+  // 点击登录按钮（用 data-testid 稳定定位，避免页面幽灵「登录成功」演示按钮干扰）
+  await page.getByTestId('login-submit').click();
 
   // 等待跳转到 dashboard
   await page.waitForURL('**/dashboard', { timeout: 15000 });
