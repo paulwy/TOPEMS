@@ -620,7 +620,7 @@
 - 终态冒烟：**web 4139/4139 PASS 0 FAIL exit=0**；mobile 117/117；pre-commit 23 项全绿（MCS/WCS 实跑）
 
 ### ⬜ 遗留待办
-- **并行会话 WIP 归属待确认（未触碰）**：svc/finance 3 个 M（settlement_center/service.rs、finance/collection.rs、finance/payment_record.rs）+ svc/unified-core 6 个 M（master/handlers.rs、tenant/handlers.rs、business_tools/{audit_export_api,permission_audit_log,permission_export_import_api,permission_store_factory}.rs）；flow 迁移重排 `20261006000002→0000`（内容逐字节相同，建议归属方 git mv 提交）；.sqlx 删除若干 + `.sqlx/query-57ec2a25...json` 新增；长期未跟踪 lib/Cargo.lock、shared/、svc/migration-sdk/
+- **~~并行会话 WIP 归属待确认（未触碰）~~ 已核实过期（2026-10-17）**：工作区全干净（`git status` 无未提交/未跟踪），svc/finance 路径（settlement_center/service.rs 等）已不存在于工作区且 git 历史已有对应提交（`8bbe5886d3` V518 finance utoipa paths、`19c45b1c3a` 孤立注解清理、`935367412d` openapi-gen 加固）；`lib/Cargo.lock`、`shared/`、`svc/migration-sdk/` 均无未跟踪——并行线已自行提交，本项无对象
 - 潜伏：读路径默认租户回退（pm/rd/gis/flow 等，有意保留已标注非缺口）
 - 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
 - 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）
