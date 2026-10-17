@@ -800,8 +800,26 @@ export const createCustomTheme = (): Theme => {
               '&.Mui-focused': {
                 color: designTokens.colors.primary.main,
               },
-              '&.Mui-shrink': {
-                fontSize: designTokens.typography.fontSize.sm,
+              '&.MuiInputLabel-shrink': {
+                // 2026-10-17 readability fix: MUI v7 uses MuiInputLabel-shrink
+                // (v5 &.Mui-shrink no longer matches). Shrink label is scaled by
+                // transform scale(0.75), so 14px x 0.75 = 10.5px visual < 12px
+                // (Lighthouse legible-text audit failure). Bump to 16px -> 12px
+                // visual, clears the audit with a negligible visual change.
+                fontSize: 16,
+              },
+            },
+          },
+        },
+        MuiOutlinedInput: {
+          styleOverrides: {
+            notchedOutline: {
+              // 2026-10-17 readability fix: MUI notched legend defaults to
+              // 0.75em (14px x 0.75 = 10.5px < 12px, Lighthouse legible-text
+              // audit failure). Override to 12px, aligned with the shrink label
+              // visual (16px x 0.75 = 12px).
+              '& legend': {
+                fontSize: 12,
               },
             },
           },
