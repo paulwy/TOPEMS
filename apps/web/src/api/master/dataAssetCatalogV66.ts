@@ -283,16 +283,98 @@ interface CreateDataMapRequest {
   depth?: LineageDepth;
 }
 
+// ============ V60 → DataAsset response adapter ============
+// 【BE-09】核心方法已改指 V60 /mdm-v60/metadata，但 V60 返回 MetadataObject 与前端
+// DataAsset 契约字段名/枚举不一致。在此统一映射，页面零改动零回归。
+// 字段无源时给安全默认值并注释说明，不编造语义。
+
+interface V60MetadataObject {
+  id: string;
+  name: string;
+  object_type?: string;
+  description: string;
+  owner: string;
+  tags: string[];
+  attributes?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+interface V60MetadataStats {
+  total_objects: number;
+  total_attributes: number;
+  total_tags: number;
+  by_type?: Record<string, number>;
+  recent_created?: V60MetadataObject[];
+}
+
+function mapObjectType(t?: string): AssetType {
+  // V60 object_type ∈ {Table, Field, Entity, Model}；与前端 AssetType
+  // (table/view/function/api/file/report/dashboard) 仅 table 精确对应，
+  // Field/Entity/Model 无直接语义，统一回落 dashboard（通用元数据目录项）。
+  switch (t) {
+    case 'Table':
+      return 'table';
+    default:
+      return 'dashboard';
+  }
+}
+
+function toDataAsset(v: V60MetadataObject): DataAsset {
+  return {
+    id: v.id,
+    name: v.name,
+    display_name: v.name, // V60 无 display_name，回退为 name
+    type: mapObjectType(v.object_type),
+    description: v.description,
+    owner: v.owner,
+    owner_team: v.owner, // V60 无 owner_team，回退为 owner
+    status: 'active', // V60 无 status 字段，安全默认 active
+    sensitivity: 'internal', // V60 无 sensitivity 字段，安全默认 internal
+    tags: v.tags,
+    created_at: v.created_at,
+    updated_at: v.updated_at,
+  };
+}
+
+function toDashboard(s: V60MetadataStats): AssetCatalogDashboard {
+  const total = s.total_objects ?? 0;
+  return {
+    total_assets: total,
+    active_assets: total, // V60 无 status，全部视为 active
+    deprecated_assets: 0, // V60 无 deprecated 维度
+    by_type: [],
+    by_sensitivity: [],
+    by_owner_team: [],
+    recent_updated: (s.recent_created ?? []).map((o) => ({
+      asset_id: o.id,
+      name: o.name,
+      updated_at: o.updated_at,
+    })),
+    unassigned_assets: 0, // V60 owner 恒有值，无法计算未分配
+    orphan_assets: 0, // V60 无孤儿维度
+    lineage_coverage: 0, // V60 stats 无 lineage 覆盖
+    tags_coverage: 0, // V60 stats 无 tag 覆盖率
+  };
+}
+
+function mapResp<T, R>(res: ApiResponse<T>, fn: (d: T) => R): ApiResponse<R> {
+  if (res.data === undefined) return res as unknown as ApiResponse<R>;
+  return { ...res, data: fn(res.data) };
+}
+
 // ============ API ============
 
 export const dataAssetCatalogApiV66 = {
   // ===== 数据资产编目 CRUD =====
   async createAsset(data: CreateDataAssetRequest): Promise<ApiResponse<DataAsset>> {
-    return apiClient.master.post<DataAsset>('/mdm-v60/metadata', data);
+    const res = await apiClient.master.post<V60MetadataObject>('/mdm-v60/metadata', data);
+    return mapResp(res, toDataAsset);
   },
 
   async getAsset(id: string): Promise<ApiResponse<DataAsset>> {
-    return apiClient.master.get<DataAsset>(`/mdm-v60/metadata/${id}`);
+    const res = await apiClient.master.get<V60MetadataObject>(`/mdm-v60/metadata/${id}`);
+    return mapResp(res, toDataAsset);
   },
 
   async listAssets(
@@ -313,13 +395,15 @@ export const dataAssetCatalogApiV66 = {
     if (params?.page !== undefined) qs.set('page', String(params.page));
     if (params?.pageSize !== undefined) qs.set('page_size', String(params.pageSize));
     const s = qs.toString();
-    return apiClient.master.get<{ items: DataAsset[]; total: number }>(
+    const res = await apiClient.master.get<{ items: V60MetadataObject[]; total: number }>(
       `/mdm-v60/metadata${s ? `?${s}` : ''}`
     );
+    return mapResp(res, (d) => ({ items: (d.items ?? []).map(toDataAsset), total: d.total }));
   },
 
   async updateAsset(id: string, data: UpdateDataAssetRequest): Promise<ApiResponse<DataAsset>> {
-    return apiClient.master.put<DataAsset>(`/mdm-v60/metadata/${id}`, data);
+    const res = await apiClient.master.put<V60MetadataObject>(`/mdm-v60/metadata/${id}`, data);
+    return mapResp(res, toDataAsset);
   },
 
   async deleteAsset(id: string): Promise<ApiResponse<{ deleted: boolean }>> {
@@ -591,7 +675,8 @@ export const dataAssetCatalogApiV66 = {
 
   // ===== 仪表盘 =====
   async getDashboard(): Promise<ApiResponse<AssetCatalogDashboard>> {
-    return apiClient.master.get<AssetCatalogDashboard>('/mdm-v60/metadata/stats');
+    const res = await apiClient.master.get<V60MetadataStats>('/mdm-v60/metadata/stats');
+    return mapResp(res, toDashboard);
   },
 
   async getRecentAssets(limit?: number): Promise<ApiResponse<DataAsset[]>> {
