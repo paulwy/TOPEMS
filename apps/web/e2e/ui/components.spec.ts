@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { TEST_ACCOUNTS, createAuthenticatedContext } from '../utils/testUtils';
+import { createAuthenticatedContext } from '../utils/testUtils';
 
 let authenticatedContext: any;
 
@@ -7,8 +7,8 @@ test.describe('首页组件测试', () => {
   test.beforeAll(async ({ browser }) => {
     authenticatedContext = await createAuthenticatedContext(
       browser,
-      TEST_ACCOUNTS.superadmin.username,
-      TEST_ACCOUNTS.superadmin.password
+      'test_admin',
+      'admin123'
     );
   });
 
@@ -23,10 +23,11 @@ test.describe('首页组件测试', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
 
-    await expect(page.locator('text=今日概览')).toBeVisible({ timeout: 10000 });
-    await expect(page.locator('text=快捷入口')).toBeVisible();
-    await expect(page.locator('text=待办事项')).toBeVisible();
-    await expect(page.locator('text=模块导航')).toBeVisible();
+    await expect(page.locator('text=工作台').first()).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=概览')).toBeVisible();
+    await expect(page.locator('text=模块状态').first()).toBeVisible();
+    await expect(page.locator('text=实时告警').first()).toBeVisible();
+    await expect(page.locator('text=待办任务').first()).toBeVisible();
 
     await page.close();
   });
@@ -36,7 +37,8 @@ test.describe('首页组件测试', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
 
-    await expect(page.locator('text=服务状态监测')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=系统健康')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=服务状态监控')).toBeVisible();
 
     const refreshButton = page.locator('[data-testid="service-refresh-button"]');
     if (await refreshButton.isVisible().catch(() => false)) {
@@ -51,9 +53,9 @@ test.describe('首页组件测试', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
 
-    await expect(page.locator('text=快捷入口')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=模块状态').first()).toBeVisible({ timeout: 10000 });
 
-    const section = page.locator('text=快捷入口').locator('..');
+    const section = page.locator('text=模块状态').first().locator('..');
     const collapseButton = section.locator('button').first();
     if (await collapseButton.isVisible().catch(() => false)) {
       await collapseButton.click();
@@ -67,8 +69,8 @@ test.describe('导航组件测试', () => {
   test.beforeAll(async ({ browser }) => {
     authenticatedContext = await createAuthenticatedContext(
       browser,
-      TEST_ACCOUNTS.superadmin.username,
-      TEST_ACCOUNTS.superadmin.password
+      'test_admin',
+      'admin123'
     );
   });
 
@@ -84,9 +86,9 @@ test.describe('导航组件测试', () => {
     await page.waitForLoadState('domcontentloaded');
 
     await expect(page.locator('text=首页')).toBeVisible();
-    await expect(page.locator('text=人力')).toBeVisible();
-    await expect(page.locator('text=客户')).toBeVisible();
-    await expect(page.locator('text=项目')).toBeVisible();
+    await expect(page.locator('text=制造执行')).toBeVisible();
+    await expect(page.locator('text=人力资源')).toBeVisible();
+    await expect(page.locator('text=客户管理')).toBeVisible();
 
     await page.close();
   });
@@ -96,9 +98,9 @@ test.describe('导航组件测试', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
 
-    await page.click('text=人力');
-    await expect(page.locator('text=员工')).toBeVisible();
-    await expect(page.locator('text=部门')).toBeVisible();
+    await page.click('text=人力资源');
+    await expect(page.locator('text=员工管理')).toBeVisible();
+    await expect(page.locator('text=组织架构')).toBeVisible();
 
     await page.close();
   });
@@ -108,8 +110,9 @@ test.describe('导航组件测试', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('domcontentloaded');
 
-    await page.click('text=人力');
-    await page.click('text=员工');
+    await page.click('text=制造执行');
+    await page.click('text=生产订单');
+    await expect(page).toHaveURL(/\/mes\/production-orders/);
 
     await page.close();
   });
@@ -119,8 +122,8 @@ test.describe('响应式布局测试', () => {
   test.beforeAll(async ({ browser }) => {
     authenticatedContext = await createAuthenticatedContext(
       browser,
-      TEST_ACCOUNTS.superadmin.username,
-      TEST_ACCOUNTS.superadmin.password
+      'test_admin',
+      'admin123'
     );
   });
 
@@ -162,8 +165,8 @@ test.describe('主题切换测试', () => {
   test.beforeAll(async ({ browser }) => {
     authenticatedContext = await createAuthenticatedContext(
       browser,
-      TEST_ACCOUNTS.superadmin.username,
-      TEST_ACCOUNTS.superadmin.password
+      'test_admin',
+      'admin123'
     );
   });
 

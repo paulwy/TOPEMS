@@ -2421,4 +2421,7 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   11. **erp asset_number required**：schema 校验必填（后端本就必填，前端补校验）
   12. **qms 路径 `/api/qms/checks`**：routes/common.ts 真实 schema 页（QmsInspectionRedesignPage）手写弹窗（id=field-1..5 无 name）+ 页脚「创建检验单」→ C2i 按此操作；API 异常时静默 fallback mock create（不写库）已知
 - 验证：扩展 spec 5/5 PASS（43s）；主 spec 7/7 回归 PASS（1.0m）；`curl POST /api/finance/vouchers` 平衡凭证 200；`GET /api/wms/inbound-orders` total 含 E2E 新单；erp `/api/erp/assets` 数值字段 JSON number
-- 遗留（非本次引入，已用 stash 复现验证为 HEAD 既有失败）：components.spec 首页「今日概览」缺失（前端调 `/api/erp/assets/stats` 400——后端无此路由，仅 /dashboard/stats）；b3-list-render 401（spec 鉴权上下文）
+- 遗留闭环（2026-10-17 已修复）：components.spec 9/9 + b3-list-render 3/3 全绿
+  - **components.spec 失败根因（旧断言 + 账号）**：① `TEST_ACCOUNTS.superadmin(admin)` 本地 DB 不存在 → apiLogin 401 → fallback mock token → 真实 API 请求验签 401 → 页面区块缺失（与 c2 同源，c2 已用 test_admin 显式登录）；② dashboard 已改版为「工作台/概览/模块状态/实时告警/待办任务/系统健康」布局，旧断言「今日概览/快捷入口/服务状态监测」过时；③ 顶部导航改 click 展开子菜单（人力资源→员工管理/组织架构；制造执行→生产订单→/mes/production-orders），旧 hover 下拉断言过时。修复：改用 `test_admin/admin123`（真 token），断言对齐新版 UI 文案（text= 多命中处用 .first()）
+  - **b3-list-render 失败根因**：① 同上账号问题（默认 admin → mock token → API 401 → 列表空）；② 每页 CONSOLE:1 为 Google Fonts 样式表加载警告（无外网环境噪声，非应用缺陷）→ isNoise 补 `fonts\.googleapis`。修复后 8 模块正常态全部 content=true、控制台洁净
+- 全量：c2 7/7 + c2-ext 5/5 + components 9/9 + b3 3/3 = **24/24 PASS**（2.4m）

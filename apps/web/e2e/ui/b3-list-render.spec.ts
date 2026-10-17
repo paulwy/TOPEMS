@@ -30,9 +30,9 @@ const LIST_PAGES: ListPageEntry[] = [
   { name: 'qms-quality-control', route: '/qms/quality-control' },
 ];
 
-/** vite / HMR / 静态资源噪声过滤（非应用缺陷） */
+/** vite / HMR / 静态资源噪声过滤（非应用缺陷；fonts.googleapis 为无外网环境样式表加载警告） */
 function isNoise(text: string): boolean {
-  return /vite|sockjs|hot-update|favicon|\.map(\?|$)|Download the React DevTools/i.test(text);
+  return /vite|sockjs|hot-update|favicon|\.map(\?|$)|fonts\.googleapis|Download the React DevTools/i.test(text);
 }
 
 /** 页面数据非空判定：表格行 > 0，或常见列表项容器 > 2，或文本含条数量词 */
@@ -66,7 +66,7 @@ async function hasErrorHint(page: import('@playwright/test').Page): Promise<bool
 test.describe('B3 列表页数据渲染', () => {
   test('8 模块列表页：正常态非空渲染 + 控制台洁净', async ({ browser }, testInfo) => {
     test.setTimeout(30 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     const results: string[] = [];
 
@@ -128,7 +128,7 @@ test.describe('B3 列表页数据渲染', () => {
 
   test('空态兜底：列表 API 空分页 → 暂无数据提示（mock /crm/contacts）', async ({ browser }) => {
     test.setTimeout(3 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     let pageError = '';
     page.on('pageerror', (e) => (pageError = String(e.message || e)));
@@ -155,7 +155,7 @@ test.describe('B3 列表页数据渲染', () => {
 
   test('错误态兜底：列表 API 500 → 错误提示且不白屏（mock /crm/contacts）', async ({ browser }) => {
     test.setTimeout(3 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     let pageError = '';
     let routeHits = 0;
