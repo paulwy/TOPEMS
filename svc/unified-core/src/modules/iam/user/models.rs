@@ -67,6 +67,9 @@ pub(crate) struct UserResponse {
     pub role: String,
     pub roles: Vec<String>,
     pub permissions: Vec<String>,
+    /// BE-09 P1-1：前端契约为 `isactive`（Django 风格，schemas/iam/user.ts:184 读 row.isactive）；
+    /// alias 保留 `is_active` 旧键兼容 Deserialize。
+    #[serde(rename = "isactive", alias = "is_active")]
     pub is_active: bool,
     pub is_superuser: bool,
     pub created_at: Option<String>,

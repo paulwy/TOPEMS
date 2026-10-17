@@ -88,13 +88,31 @@ pub async fn list_users(
 
     match result {
         Ok(users) => {
+            // BE-09 P1-4：批量查真实角色名（core_user_roles JOIN core_roles），
+            // 替代原先硬编码 ["user"]/["admin"] 的语义撒谎。
+            let user_ids: Vec<uuid::Uuid> = users.iter().map(|u| u.id).collect();
+            let real_roles: std::collections::HashMap<uuid::Uuid, Vec<String>> = sqlx::query_as::<_, (uuid::Uuid, String)>(
+                "SELECT ur.user_id, r.name FROM public.core_user_roles ur JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = ANY($1) AND r.deleted_at IS NULL ORDER BY ur.user_id, r.name",
+            )
+            .bind(&user_ids)
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default()
+            .into_iter()
+            .fold(std::collections::HashMap::new(), |mut m, (uid, name)| {
+                m.entry(uid).or_default().push(name);
+                m
+            });
+
             let user_responses: Vec<UserResponse> = users
                 .into_iter()
                 .map(|u| {
                     let roles = if u.is_superuser {
-                        vec!["admin".to_string(), "user".to_string()]
+                        let mut r = real_roles.get(&u.id).cloned().unwrap_or_default();
+                        r.push("admin".to_string());
+                        r
                     } else {
-                        vec!["user".to_string()]
+                        real_roles.get(&u.id).cloned().unwrap_or_default()
                     };
 
                     let permissions = if u.is_superuser {
@@ -441,10 +459,21 @@ pub async fn get_user(
 
     match user {
         Some(u) => {
+            // BE-09 P1-4：单用户详情同样查真实角色名。
+            let real_roles: Vec<String> = sqlx::query_scalar::<_, String>(
+                "SELECT r.name FROM public.core_user_roles ur JOIN public.core_roles r ON r.id = ur.role_id WHERE ur.user_id = $1 AND r.deleted_at IS NULL ORDER BY r.name",
+            )
+            .bind(u.id)
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
+
             let roles = if u.is_superuser {
-                vec!["admin".to_string(), "user".to_string()]
+                let mut r = real_roles;
+                r.push("admin".to_string());
+                r
             } else {
-                vec!["user".to_string()]
+                real_roles
             };
 
             let permissions = if u.is_superuser {
