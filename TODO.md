@@ -1,7 +1,9 @@
 
 ---
 
-## 🔍 前端 UI 全面审核规划（2026-10-16，待执行）
+## 🔍 前端 UI 全面审核规划（2026-10-16 → 2026-10-17 ✅ 全部闭环）
+
+> **终态（2026-10-17）**：A 布局嵌套 / B 页面功能巡检（B1 路由可达 479→460 去重 全绿、B2 控制台洁净归零、B2.5 契约门禁 4076/4076、B3 列表三态、B4 导航链路）/ C 数据录入（C1 结构、C2 常规录入、C3 校验拦截、C4 提交链路）/ D 其他（D1 a11y、D1.5 landmark、D2 i18n、D3 Lighthouse、D4 testid）**全部实机闭环**；最终全量 52 spec **291 passed + 0 failed**，53 spec 全绿推送 origin/main（HEAD cdd880225）。
 
 > 目标：对 `apps/web`（topems-portal，React 19 + react-router 7 + Vite，**885 个页面组件 / ~40 模块**）做全面 UI/页面审核 + 模拟录入，找出【布局嵌套 / 页面功能 / 数据录入】等问题，产出分级问题清单。
 > 方法：静态审计（Grep/脚本）+ 扩展既有 Playwright e2e/ui + 浏览器自动化（browser_use / webapp-testing）实机模拟输入。
