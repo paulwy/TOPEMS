@@ -2470,3 +2470,20 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 - **全量 52 spec（排除 full-route-smoke 主测试）**：245 passed + 33 failed（已修重跑 20/20 绿）+ 13 serial did-not-run（重跑绿）→ **52 spec 全绿（278 用例）**
 - full-route-smoke「遍历路由清单」：479 路由单线程 >1h，设计为 ROUTE_FILTER 分批（B1/B2 已按组分批验证过，全量内不单跑）
 - pre-commit 全门禁 PASS ×3 提交；pre-push cargo-fmt 门禁曾失败（`cargo fmt` 需全 workspace，`-p topems-server` 不覆盖 svc/ai）→ 修复后推送成功
+
+## 方案C 批2-C-第四阶段补：full-route-smoke 分批巡检闭环（2026-10-17）
+
+> B1/B2 全路由巡检（479 路由）设计为 ROUTE_FILTER 分批（单线程 >1h 超 Playwright 45min 上限）。本轮 6 批跑完（routes + 35 模块，去重 460 路由），**每批 1 failed → 根因全部修复后 6 批 460 路由全绿（硬失败 0 / 控制台 0 / HTTP 0）**。
+
+### 修复清单（commit 5028fcffe + 66e93d3e4 已推送）
+1. **FRS 全路由踢 /login（头号根因）**：`createAuthenticatedContext(browser)` 默认账号 = TEST_ACCOUNTS.superadmin(admin)（本地 DB 不存在）→ apiLogin fallback mock token → 服务端验签 401 → 全路由踢回登录页（硬失败 60/83/56 条）。修复：FRS 显式传 `'test_admin','admin123'`（真 token）。
+2. **Google Fonts 噪声**：无外网环境 fonts.googleapis 加载失败（isNoise 缺该规则）→ 补 `fonts\.googleapis`，批1/5 console 89/64 → 0。
+3. **/api/aps/* 404（vite dev）**：aps 无独立服务（由 svc/mes aps_compat 兼容层提供 /api/aps → 内部重写 /api/mes），vite SERVICES 缺 aps 条目 → dev proxy 404。修复：加 `{ name:'aps', port: BACKEND_PORTS.mes, apiPrefix:'/api/aps' }`（monolith 模式自动指向 :8099；**改 vite.config 必须重启 dev**）。
+4. **/admin/rate-limit 双前缀 404**：UseRateLimitConfig 用 apiClient.core（baseURL=/api/core）调绝对路径 `/api/core/iam/v1/rate-limit/config` → `/api/core/api/core/...`；改相对 `/iam/v1/*`（5 处，与 help.ts 同源模式）。
+5. **/rd/settings reports/summary 404**：RsReportPage 调 `/reports/summary`，后端实际路由 `/reports/projects/summary`（少 /projects 段）→ 对齐。
+6. **mes 3 list 接口 500（process-routes/records/work-reports）**：LIMIT/OFFSET 占位符与 tenant 同号冲突——where_clause 内 tenant 占 `$N`（params.len()+1），LIMIT/OFFSET 复用 `params.len()+1/+2` → 无筛选时 `LIMIT $1` 吃到 tenant_uuid → uuid 类型错误 → 500（curl 复现）。修复：顺延 `params.len()+2/+3`，**全仓扫描同模式 10 文件一并修**（mes: process_route/work_report/production_record/team/process_flow/equipment_oee/equipment/work_station；production_scheduling/production_order 已正确）。
+7. **/notification/templates + /srm/performance 偶发 query failed**：前端已用外迁路径 /api/communication/notification（主路径 200）与 srm /performance/reports（200）——复跑后归零，无代码改动。
+
+### 最终验证
+- 6 批（ROUTE_FILTER 前缀）：routes+admin+ai+aps+asset+automation+bi(89) / crm+doc+ehs+erp+finance+gis(65) / hrm+iam+im+integration+lims+master(59) / mes+mobile+monitor+notification+oa+pdm(95) / plugin+pm+qms+rd+registry+report(64) / scm+srm+ticket+tms+wms+workflow(88) = **460 路由，硬失败 0、非预期跳转 6×6、控制台 0、HTTP 0**。
+- B1（可达性）+ B2（控制台洁净）完整达标；full-route-smoke 主测试可整跑（单测 45min 上限内按批）。
