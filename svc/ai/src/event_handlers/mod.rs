@@ -248,7 +248,9 @@ pub async fn start_event_subscribers(
     event_publisher: Option<Arc<EventPublisher>>,
 ) -> Result<(), TopemsError> {
     let handlers = AiEventHandlers::new(db, event_publisher);
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers
+        .build_subscriber()
+        .map_err(|e| TopemsError::Internal(format!("事件订阅者构建失败: {e}")))?;
 
     tracing::info!("[ai] 启动事件订阅者，注册 3 类业务事件 handler");
     tokio::spawn(async move {
