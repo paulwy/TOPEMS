@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        UPDATE mes.production_records SET\n            process_id = COALESCE($2, process_id),\n            work_station_id = COALESCE($3, work_station_id),\n            operator_id = COALESCE($4, operator_id),\n            end_time = COALESCE($5, end_time),\n            completed_quantity = COALESCE($6, completed_quantity),\n            status = $7,\n            notes = COALESCE($8, notes),\n            updated_at = $9\n        WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))\n        RETURNING \n            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,\n            operator_id, start_time, end_time,\n            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,\n            created_at, updated_at\n        ",
+  "query": "\n        INSERT INTO mes.production_records (\n            order_id, process_id, work_station_id,\n            operator_id, operator, start_time, end_time,\n            completed_quantity, status, notes,\n            created_at, updated_at, tenant_id\n        ) VALUES ($1, $2, $3, $4, NULL, $5, NULL, $6, 'in_progress', $7, $8, $8, $9)\n        RETURNING\n            id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,\n            operator_id, operator, start_time, end_time,\n            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,\n            created_at, updated_at\n        ",
   "describe": {
     "columns": [
       {
@@ -35,41 +35,46 @@
       },
       {
         "ordinal": 6,
+        "name": "operator",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 7,
         "name": "start_time",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 7,
+        "ordinal": 8,
         "name": "end_time",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 8,
+        "ordinal": 9,
         "name": "quantity_produced",
         "type_info": "Numeric"
       },
       {
-        "ordinal": 9,
+        "ordinal": 10,
         "name": "quantity_defective",
         "type_info": "Int4"
       },
       {
-        "ordinal": 10,
+        "ordinal": 11,
         "name": "status",
         "type_info": "Varchar"
       },
       {
-        "ordinal": 11,
+        "ordinal": 12,
         "name": "notes",
         "type_info": "Text"
       },
       {
-        "ordinal": 12,
+        "ordinal": 13,
         "name": "created_at",
         "type_info": "Timestamptz"
       },
       {
-        "ordinal": 13,
+        "ordinal": 14,
         "name": "updated_at",
         "type_info": "Timestamptz"
       }
@@ -82,9 +87,9 @@
         "Uuid",
         "Timestamptz",
         "Numeric",
-        "Varchar",
         "Text",
-        "Timestamptz"
+        "Timestamptz",
+        "Uuid"
       ]
     },
     "nullable": [
@@ -95,14 +100,15 @@
       null,
       true,
       false,
+      false,
       true,
       false,
-      null,
+      true,
       false,
       true,
       false,
       false
     ]
   },
-  "hash": "02aa86125148000588a3149741a2005f0b705a9a81c5f51e27144b92d12dd51b"
+  "hash": "e4a5f76da8f5ae10e59774573620fd59254c0f68e71319bef38f8e5a19fb916c"
 }

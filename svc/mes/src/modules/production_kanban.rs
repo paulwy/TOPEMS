@@ -56,6 +56,7 @@ pub struct OrderProgressResponse {
     pub order_id: String,
     pub order_number: String,
     pub product_name: String,
+    #[serde(alias = "planned_quantity", rename = "plannedQuantity")]
     pub planned_quantity: f64,
     pub completed_quantity: f64,
     pub progress: f64,

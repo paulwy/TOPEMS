@@ -31,8 +31,8 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             status VARCHAR(32) NOT NULL DEFAULT 'active',
             location VARCHAR(256),
             purchase_date DATE,
-            warranty_end_date DATE,
-            maintenance_cycle INT DEFAULT 30,
+            warranty_expiry_date DATE,
+            maintenance_frequency_days INT DEFAULT 30,
             last_maintenance_date DATE,
             next_maintenance_date DATE,
             description TEXT NOT NULL DEFAULT '',
@@ -41,7 +41,8 @@ async fn setup_schema(pool: &sqlx::PgPool) {
             deleted_at TIMESTAMPTZ,
             equipment_name VARCHAR(256) NOT NULL,
             equipment_code VARCHAR(64) NOT NULL,
-            equipment_type VARCHAR(50)
+            equipment_type VARCHAR(50),
+            tenant_id UUID DEFAULT '00000000-0000-0000-0000-000000000000'
         )"#,
     )
     .execute(pool)

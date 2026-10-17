@@ -83,9 +83,12 @@ pub struct ProductionRecordResponse {
     pub work_station_id: Option<Uuid>,
     pub equipment_id: Option<Uuid>,
     pub operator_id: Option<Uuid>,
+    pub operator: Option<String>,
     pub start_time: DateTime<Utc>,
     pub end_time: Option<DateTime<Utc>>,
+    #[serde(alias = "quantity_produced", rename = "quantity_completed")]
     pub quantity_produced: f64,
+    #[serde(alias = "quantity_defective", rename = "quantity_rejected")]
     pub quantity_defective: f64,
     pub status: String,
     pub notes: Option<String>,
@@ -199,8 +202,8 @@ pub async fn list_records(
         r#"
         SELECT 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
-            operator_id, start_time, end_time,
-            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
+            operator_id, operator, start_time, end_time,
+            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         FROM mes.production_records
         {}
@@ -241,6 +244,7 @@ pub async fn list_records(
                 .flatten(),
             equipment_id: r.try_get::<Option<Uuid>, _>("equipment_id").ok().flatten(),
             operator_id: r.try_get::<Option<Uuid>, _>("operator_id").ok().flatten(),
+            operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
             start_time: naive_to_utc(
                 r.try_get::<Option<DateTime<Utc>>, _>("start_time")
                     .ok()
@@ -308,14 +312,14 @@ pub async fn create_record(
         r#"
         INSERT INTO mes.production_records (
             order_id, process_id, work_station_id,
-            operator_id, start_time, end_time,
+            operator_id, operator, start_time, end_time,
             completed_quantity, status, notes,
             created_at, updated_at, tenant_id
-        ) VALUES ($1, $2, $3, $4, $5, NULL, $6, 'in_progress', $7, $8, $8, $9)
+        ) VALUES ($1, $2, $3, $4, NULL, $5, NULL, $6, 'in_progress', $7, $8, $8, $9)
         RETURNING
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
-            operator_id, start_time, end_time,
-            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
+            operator_id, operator, start_time, end_time,
+            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
         req.order_id,
@@ -346,6 +350,7 @@ pub async fn create_record(
         work_station_id: result.work_station_id,
         equipment_id: result.equipment_id,
         operator_id: result.operator_id,
+        operator: Some(result.operator),
         start_time: result.start_time,
         end_time: result.end_time,
         quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(result.quantity_produced))),
@@ -389,8 +394,8 @@ pub async fn get_record(
         r#"
         SELECT 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
-            operator_id, start_time, end_time,
-            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
+            operator_id, operator, start_time, end_time,
+            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         FROM mes.production_records
         WHERE id = $1
@@ -417,6 +422,7 @@ pub async fn get_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
+                operator: Some(r.operator),
                 start_time: r.start_time,
                 end_time: r.end_time,
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),
@@ -464,8 +470,8 @@ pub async fn update_record(
         WHERE id = $1 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
-            operator_id, start_time, end_time,
-            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
+            operator_id, operator, start_time, end_time,
+            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
         id,
@@ -498,6 +504,7 @@ pub async fn update_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
+                operator: Some(r.operator),
                 start_time: r.start_time,
                 end_time: r.end_time,
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),
@@ -581,8 +588,8 @@ pub async fn complete_record(
         WHERE id = $1 AND status = 'in_progress' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING 
             id, order_id, process_id, work_station_id, NULL::uuid AS equipment_id,
-            operator_id, start_time, end_time,
-            completed_quantity AS quantity_produced, NULL::int AS quantity_defective, status, notes,
+            operator_id, operator, start_time, end_time,
+            completed_quantity AS quantity_produced, rejected_quantity AS quantity_defective, status, notes,
             created_at, updated_at
         "#,
         id,
@@ -608,6 +615,7 @@ pub async fn complete_record(
                 work_station_id: r.work_station_id,
                 equipment_id: r.equipment_id,
                 operator_id: r.operator_id,
+                operator: Some(r.operator),
                 start_time: r.start_time,
                 end_time: r.end_time,
                 quantity_produced: big_decimal_to_f64(Some(BigDecimal::from(r.quantity_produced))),

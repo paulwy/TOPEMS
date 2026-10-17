@@ -92,19 +92,28 @@ pub struct WorkOrderResponse {
     pub id: String,
     pub work_order_no: String,
     pub order_id: Option<String>,
+    #[serde(alias = "order_no", rename = "order_number")]
     pub order_no: Option<String>,
     pub product_code: String,
     pub product_name: String,
     pub work_station_id: Option<String>,
     pub process_id: Option<String>,
+    #[serde(alias = "planned_quantity", rename = "quantity")]
     pub planned_quantity: f64,
     pub completed_quantity: f64,
+    #[serde(alias = "plan_start_date", rename = "planned_start_time")]
     pub plan_start_date: Option<String>,
+    #[serde(alias = "plan_end_date", rename = "planned_end_time")]
     pub plan_end_date: Option<String>,
+    #[serde(alias = "actual_start_date", rename = "actual_start_time")]
     pub actual_start_date: Option<String>,
+    #[serde(alias = "actual_end_date", rename = "actual_end_time")]
     pub actual_end_date: Option<String>,
     pub team_id: Option<String>,
     pub operator: Option<String>,
+    pub process_name: Option<String>,
+    pub work_station_name: Option<String>,
+    pub team_name: Option<String>,
     pub status: String,
     pub priority: Option<String>,
     pub remark: Option<String>,
@@ -244,8 +253,11 @@ pub async fn list_work_orders(
             wo.actual_start_date, wo.actual_end_date,
             wo.team_id, wo.operator,
             wo.status, wo.priority, wo.remark,
-            wo.created_at, wo.updated_at
+            wo.created_at, wo.updated_at,
+            pp.process_name, pp.work_station_name, tm.team_name
         FROM mes.work_orders wo
+        LEFT JOIN mes.production_processes pp ON pp.id = wo.process_id
+        LEFT JOIN mes.teams tm ON tm.id = wo.team_id
         {}
         ORDER BY wo.created_at DESC
         LIMIT ${} OFFSET ${}
@@ -329,6 +341,15 @@ pub async fn list_work_orders(
                 .flatten()
                 .map(|u| u.to_string()),
             operator: r.try_get::<Option<String>, _>("operator").ok().flatten(),
+            process_name: r
+                .try_get::<Option<String>, _>("process_name")
+                .ok()
+                .flatten(),
+            work_station_name: r
+                .try_get::<Option<String>, _>("work_station_name")
+                .ok()
+                .flatten(),
+            team_name: r.try_get::<Option<String>, _>("team_name").ok().flatten(),
             status: r
                 .try_get::<Option<String>, _>("status")
                 .ok()
@@ -429,6 +450,9 @@ pub async fn get_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
+                process_name: None,
+                work_station_name: None,
+                team_name: None,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
@@ -540,6 +564,9 @@ pub async fn create_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
+                process_name: None,
+                work_station_name: None,
+                team_name: None,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
@@ -673,6 +700,9 @@ pub async fn update_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
+                process_name: None,
+                work_station_name: None,
+                team_name: None,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
@@ -821,6 +851,9 @@ pub async fn start_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
+                process_name: None,
+                work_station_name: None,
+                team_name: None,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
@@ -911,6 +944,9 @@ pub async fn complete_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
+                process_name: None,
+                work_station_name: None,
+                team_name: None,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
@@ -1001,6 +1037,9 @@ pub async fn cancel_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
+                process_name: None,
+                work_station_name: None,
+                team_name: None,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
@@ -1091,6 +1130,9 @@ pub async fn pause_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
+                process_name: None,
+                work_station_name: None,
+                team_name: None,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,
@@ -1181,6 +1223,9 @@ pub async fn resume_work_order(
                 actual_end_date: opt_datetime_to_string(r.actual_end_date),
                 team_id: r.team_id.map(|u| u.to_string()),
                 operator: r.operator,
+                process_name: None,
+                work_station_name: None,
+                team_name: None,
                 status: r.status.unwrap_or_default(),
                 priority: r.priority.map(|v| v.to_string()),
                 remark: r.remark,

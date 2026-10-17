@@ -1,1 +1,0 @@
-{"db_name": "PostgreSQL", "query": "DELETE FROM qa_quality_issues WHERE id IN ($1, $2)", "describe": {"columns": [], "parameters": {"Left": ["Uuid", "Uuid"]}, "nullable": []}}
