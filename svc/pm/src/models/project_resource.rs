@@ -14,6 +14,10 @@ pub struct ProjectResource {
     pub project_id: Uuid,
     pub resource_type: String,
     pub resource_name: String,
+    pub resource_id: Option<String>,
+    pub role: Option<String>,
+    pub actual_hours: Option<f64>,
+    pub actual_cost: Option<f64>,
     pub resource_service: Option<String>,
     pub quantity: Option<f64>,
     pub cost: Option<f64>,
@@ -30,6 +34,10 @@ pub struct ProjectResource {
 pub struct CreateResourceRequest {
     pub resource_type: String,
     pub resource_name: String,
+    pub resource_id: Option<String>,
+    pub role: Option<String>,
+    pub actual_hours: Option<f64>,
+    pub actual_cost: Option<f64>,
     pub resource_service: Option<String>,
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
@@ -45,6 +53,10 @@ pub struct UpdateResourceRequest {
     pub allocation_percent: Option<i32>,
     pub quantity: Option<f64>,
     pub cost: Option<f64>,
+    pub resource_id: Option<String>,
+    pub role: Option<String>,
+    pub actual_hours: Option<f64>,
+    pub actual_cost: Option<f64>,
     pub status: Option<String>,
 }
 
@@ -75,6 +87,10 @@ mod tests {
             end_date: Some(now()),
             allocation_percent: Some(80),
             status: Some("active".to_string()),
+            resource_id: None,
+            role: None,
+            actual_hours: None,
+            actual_cost: None,
             created_by: Some("admin".to_string()),
             created_at: now(),
             updated_at: now(),
@@ -114,6 +130,10 @@ mod tests {
             end_date: None,
             allocation_percent: None,
             status: None,
+            resource_id: None,
+            role: None,
+            actual_hours: None,
+            actual_cost: None,
             created_by: None,
             created_at: now(),
             updated_at: now(),
@@ -154,6 +174,10 @@ mod tests {
             end_date: Some(now()),
             allocation_percent: Some(50),
             created_by: Some("u".to_string()),
+            resource_id: None,
+            role: None,
+            actual_hours: None,
+            actual_cost: None,
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateResourceRequest = serde_json::from_str(&s).unwrap();
@@ -171,6 +195,10 @@ mod tests {
             end_date: None,
             allocation_percent: None,
             created_by: None,
+            resource_id: None,
+            role: None,
+            actual_hours: None,
+            actual_cost: None,
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateResourceRequest = serde_json::from_str(&s).unwrap();
@@ -188,6 +216,10 @@ mod tests {
             allocation_percent: None,
             quantity: None,
             cost: None,
+            resource_id: None,
+            role: None,
+            actual_hours: None,
+            actual_cost: None,
             status: None,
         };
         let s = serde_json::to_string(&r).unwrap();
@@ -205,6 +237,10 @@ mod tests {
             allocation_percent: Some(100),
             quantity: Some(200.0),
             cost: Some(25_000.0),
+            resource_id: None,
+            role: None,
+            actual_hours: None,
+            actual_cost: None,
             status: Some("completed".to_string()),
         };
         let s = serde_json::to_string(&r).unwrap();

@@ -7,6 +7,7 @@ use uuid::Uuid;
 pub struct Contract {
     pub id: Uuid,
     pub project_id: Uuid,
+    #[serde(alias = "contract_no", rename = "contractNo")]
     pub contract_no: String,
     pub contract_name: String,
     pub contract_type: String,
@@ -28,6 +29,7 @@ pub struct Contract {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateContractRequest {
     pub project_id: Uuid,
+    #[serde(alias = "contract_no", rename = "contractNo")]
     pub contract_no: String,
     pub contract_name: String,
     pub contract_type: String,

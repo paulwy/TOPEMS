@@ -66,7 +66,7 @@ async fn list_resources(
     Path(project_id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ProjectResource>>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
+        only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, resource_id, role, actual_hours, actual_cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 ORDER BY resource_type ASC"),
     )
     .bind(project_id)
     .fetch_all(&pool)
@@ -115,9 +115,10 @@ async fn add_resource(
         INSERT INTO pm.project_resources (
             id, project_id, resource_type, resource_name, resource_service,
             quantity, cost, status, created_by, start_date, end_date,
-            allocation_percent, created_at, updated_at, tenant_id
+            allocation_percent, resource_id, role, actual_hours, actual_cost,
+            created_at, updated_at, tenant_id
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
         RETURNING *
         "#
     ))
@@ -133,6 +134,10 @@ async fn add_resource(
     .bind(req.start_date)
     .bind(req.end_date)
     .bind(req.allocation_percent.unwrap_or(100))
+    .bind(&req.resource_id)
+    .bind(&req.role)
+    .bind(req.actual_hours)
+    .bind(req.actual_cost)
     .bind(now)
     .bind(now)
     .bind(tenant_id)
@@ -169,7 +174,7 @@ async fn get_resource(
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<ProjectResource>> {
     let result = sqlx::query_as::<_, ProjectResource>(
-        only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
+        only_own_schema_query!("pm", "SELECT id, project_id, resource_type, resource_name, resource_service, quantity, cost, resource_id, role, actual_hours, actual_cost, start_date, end_date, allocation_percent, status, created_by, created_at, updated_at FROM pm.project_resources WHERE deleted_at IS NULL AND project_id = $1 AND id = $2"),
     )
     .bind(project_id)
     .bind(id)
@@ -221,9 +226,13 @@ async fn update_resource(
             allocation_percent = COALESCE($4, allocation_percent),
             quantity = COALESCE($5, quantity),
             cost = COALESCE($6, cost),
-            status = COALESCE($7, status),
-            updated_at = $8
-        WHERE project_id = $9 AND id = $10 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
+            resource_id = COALESCE($7, resource_id),
+            role = COALESCE($8, role),
+            actual_hours = COALESCE($9, actual_hours),
+            actual_cost = COALESCE($10, actual_cost),
+            status = COALESCE($11, status),
+            updated_at = $12
+        WHERE project_id = $13 AND id = $14 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING *
         "#
     ))
@@ -234,6 +243,10 @@ async fn update_resource(
     .bind(req.quantity)
     .bind(req.cost)
     .bind(&req.status)
+    .bind(&req.resource_id)
+    .bind(&req.role)
+    .bind(req.actual_hours)
+    .bind(req.actual_cost)
     .bind(now)
     .bind(project_id)
     .bind(id)

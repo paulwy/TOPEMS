@@ -40,12 +40,17 @@ pub struct Project {
     pub budget: Option<Decimal>,
     pub progress: i32,
     pub project_config: Option<serde_json::Value>,
+    #[serde(alias = "benefit_target", rename = "benefittarget")]
     pub benefit_target: Option<serde_json::Value>,
+    #[serde(alias = "risk_level", rename = "risklevel")]
     pub risk_level: Option<String>,
     pub priority: Option<i32>,
     pub tags: Option<Vec<String>>,
+    #[serde(alias = "parent_id", rename = "parentId")]
     pub parent_id: Option<Uuid>,
     pub workspace_id: Option<Uuid>,
+    pub cost_center_id: Option<String>,
+    pub cost_center_name: Option<String>,
     pub created_by: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -88,12 +93,17 @@ pub struct CreateProjectRequest {
     pub end_date: Option<DateTime<Utc>>,
     pub budget: Option<Decimal>,
     pub project_config: Option<serde_json::Value>,
+    #[serde(alias = "benefit_target", rename = "benefittarget")]
     pub benefit_target: Option<serde_json::Value>,
+    #[serde(alias = "risk_level", rename = "risklevel")]
     pub risk_level: Option<String>,
     pub priority: Option<i32>,
     pub tags: Option<Vec<String>>,
+    #[serde(alias = "parent_id", rename = "parentId")]
     pub parent_id: Option<Uuid>,
     pub workspace_id: Option<Uuid>,
+    pub cost_center_id: Option<String>,
+    pub cost_center_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -107,12 +117,17 @@ pub struct UpdateProjectRequest {
     pub budget: Option<Decimal>,
     pub progress: Option<i32>,
     pub project_config: Option<serde_json::Value>,
+    #[serde(alias = "benefit_target", rename = "benefittarget")]
     pub benefit_target: Option<serde_json::Value>,
+    #[serde(alias = "risk_level", rename = "risklevel")]
     pub risk_level: Option<String>,
     pub priority: Option<i32>,
     pub tags: Option<Vec<String>>,
+    #[serde(alias = "parent_id", rename = "parentId")]
     pub parent_id: Option<Uuid>,
     pub workspace_id: Option<Uuid>,
+    pub cost_center_id: Option<String>,
+    pub cost_center_name: Option<String>,
 }
 
 #[cfg(test)]
@@ -245,6 +260,8 @@ mod tests {
             tags: Some(vec!["tag1".to_string(), "tag2".to_string()]),
             parent_id: Some(sample_uuid()),
             workspace_id: Some(sample_uuid()),
+            cost_center_id: None,
+            cost_center_name: None,
             created_by: Some("creator".to_string()),
             created_at: now(),
             updated_at: now(),
@@ -295,6 +312,8 @@ mod tests {
             tags: None,
             parent_id: None,
             workspace_id: None,
+            cost_center_id: None,
+            cost_center_name: None,
             created_by: None,
             created_at: now(),
             updated_at: now(),
@@ -421,6 +440,8 @@ mod tests {
             tags: Some(vec!["a".to_string()]),
             parent_id: Some(sample_uuid()),
             workspace_id: Some(sample_uuid()),
+            cost_center_id: None,
+            cost_center_name: None,
         }
     }
 
@@ -462,6 +483,8 @@ mod tests {
             tags: None,
             parent_id: None,
             workspace_id: None,
+            cost_center_id: None,
+            cost_center_name: None,
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: CreateProjectRequest = serde_json::from_str(&s).unwrap();
@@ -489,6 +512,8 @@ mod tests {
             tags: None,
             parent_id: None,
             workspace_id: None,
+            cost_center_id: None,
+            cost_center_name: None,
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: UpdateProjectRequest = serde_json::from_str(&s).unwrap();
@@ -514,6 +539,8 @@ mod tests {
             tags: Some(vec!["t".to_string()]),
             parent_id: Some(sample_uuid()),
             workspace_id: Some(sample_uuid()),
+            cost_center_id: None,
+            cost_center_name: None,
         };
         let s = serde_json::to_string(&r).unwrap();
         let back: UpdateProjectRequest = serde_json::from_str(&s).unwrap();
@@ -540,6 +567,8 @@ mod tests {
             tags: None,
             parent_id: None,
             workspace_id: None,
+            cost_center_id: None,
+            cost_center_name: None,
         };
         let c = r.clone();
         assert_eq!(c.name, r.name);
