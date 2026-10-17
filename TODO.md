@@ -86,9 +86,9 @@
 - ✅ 步骤6 验证：`pnpm --filter topems-portal typecheck` 通过（exit 0）
 
 ### 产出物
-- 分级问题清单（P0-P3，附 `文件:行号` / 路由 / 复现步骤 / 截图）
-- 扩展既有 e2e/ui（46 spec）新增「全页面巡检」用例
-- 报告落 `docs/quality/`（沿用 2026-10-07 审计报告格式）
+- ✅ 分级问题清单（P0-P3，附 `文件:行号` / 路由 / 复现步骤 / 截图）——已随各节记录（A1 P1/P2、B2 5 缺陷、B2.5 六域根因、B3 模板缺陷、D1 12 项 a11y、D3 白屏根因链），P0/P1/P2/P3 全部修复并实机复验
+- ✅ 扩展既有 e2e/ui（46 spec）新增「全页面巡检」用例——full-route-smoke（471 路由分批）+ b3-list-render + b4-navigation + c2-form-submit + c3-validation + d1-a11y + d1-landmark + d2-i18n + d4-testid + mobile-navigation/special/real-device，全部实机 PASS
+- ✅ 报告落 `docs/quality/`——`TOPEMS-前端UI全面审计报告-2026-10-17.md`（结论总览 + P0-P3 缺陷修复清单 + e2e 用例 + 遗留登记 + 提交链）
 
 ---
 
