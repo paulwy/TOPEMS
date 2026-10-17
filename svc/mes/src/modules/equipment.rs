@@ -97,6 +97,7 @@ pub struct UpdateEquipmentRequest {
 pub struct EquipmentResponse {
     pub id: String,
     pub equipment_no: String,
+    pub code: String,
     pub name: String,
     pub model: Option<String>,
     pub manufacturer: Option<String>,
@@ -140,6 +141,7 @@ fn row_to_equipment_response(r: &sqlx::postgres::PgRow) -> EquipmentResponse {
     EquipmentResponse {
         id: r.try_get::<Uuid, _>("id").unwrap_or_default().to_string(),
         equipment_no: r.try_get::<String, _>("equipment_no").unwrap_or_default(),
+        code: r.try_get::<String, _>("equipment_no").unwrap_or_default(),
         name: r.try_get::<String, _>("name").unwrap_or_default(),
         model: r.try_get::<Option<String>, _>("model").ok().flatten(),
         manufacturer: r
