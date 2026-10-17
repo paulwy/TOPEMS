@@ -1031,7 +1031,7 @@ pub async fn get_dashboard_summary(
 
     // 库存总量和SKU数
     let inventory_row: (Option<f64>, Option<i64>) = sqlx::query_as(
-        "SELECT COALESCE(SUM(quantity), 0) as total, COUNT(DISTINCT material_code) as sku_count FROM wms.inventory"
+        "SELECT COALESCE(SUM(quantity), 0)::float8 as total, COUNT(DISTINCT material_code) as sku_count FROM wms.inventory"
     )
     .fetch_one(&state.db)
     .await
