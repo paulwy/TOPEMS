@@ -1,6 +1,15 @@
 
 ---
 
+## S1 ehs 残余桩接真（2026-10-18）✅ environment + training certificates 闭环
+
+> 事故域后 ehs 纯桩清零收尾。
+- **environment.rs**（项1）：前端 `EnvironmentPage.tsx` 真实消费 `ehsApi.listEnvironmentMonitors/create/update/delete`（此前 grep `environmentApi=0` 是因页面用 `ehsApi.listXxx` 平铺方法名，误判零消费）。建 `ehs.qa_ehs_environment_monitors`（迁移 `20261018000002`，字段对齐 `types/environment.ts:4-20` EnvironmentMonitor，tenant_id+RLS FORCE+nil 豁免+软删）→ 5 handler（list/create/get/update/delete）改真 sqlx（runtime query + 应用层 tenant 过滤 + Row::try_get），未命中 404、失败 500。commit `bfad745380`。
+- **training certificates**（项2）：核查结论——迁移 `20261017000003_ehs_training_certificates.sql` 与 handler（training.rs list:1253/get:706/create:1330/update:751/delete:840）在 training 批已就位，前端 `TrainingPage.tsx:97-294` 真实消费；本次仅补齐 live DB 建表（to_regclass 此前为空，已应用），代码层无改动。
+- 验证：`SQLX_OFFLINE=true cargo check -p topems-ehs --lib` 0 error；`cargo test -p topems-ehs --lib` 231/231 绿。
+
+---
+
 ## 🔍 前端 UI 全面审核规划（2026-10-16 → 2026-10-17 ✅ 全部闭环）
 
 > **终态（2026-10-17）**：A 布局嵌套 / B 页面功能巡检（B1 路由可达 479→460 去重 全绿、B2 控制台洁净归零、B2.5 契约门禁 4076/4076、B3 列表三态、B4 导航链路）/ C 数据录入（C1 结构、C2 常规录入、C3 校验拦截、C4 提交链路）/ D 其他（D1 a11y、D1.5 landmark、D2 i18n、D3 Lighthouse、D4 testid）**全部实机闭环**；最终全量 52 spec **291 passed + 0 failed**，53 spec 全绿推送 origin/main（HEAD cdd880225）。
