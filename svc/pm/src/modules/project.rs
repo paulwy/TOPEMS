@@ -964,6 +964,8 @@ mod tests {
             tags: Some(vec!["urgent".to_string()]),
             parent_id: None,
             workspace_id: None,
+            cost_center_id: None,
+            cost_center_name: None,
             created_by: Some("admin".to_string()),
             created_at: now(),
             updated_at: now(),
