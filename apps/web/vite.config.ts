@@ -669,6 +669,12 @@ export default defineConfig(({ mode }) => {
       ? 'http://localhost:8099'
       : null;
   return {
+  // 2026-10-17 试验：vite 8 新版 CJS interop（default import 规则变更）疑似与
+  // rolldown build 组合导致 CJS named/default 绑定错位（Jt/iy is not a function），
+  // 先按官方迁移文档恢复旧 interop 行为验证。
+  legacy: {
+    inconsistentCjsInterop: true,
+  },
   plugins: [
     // V83/V84: dev-tools 为 DEV-only 工具面板（App.tsx import.meta.env.DEV 门控）。
     // V84 起 treeshake:true 下该分支被自然摇掉，生产不再产出；
@@ -939,6 +945,11 @@ export default defineConfig(({ mode }) => {
       return {
         name: 'fix-cjs-named-exports-general',
         enforce: 'pre' as const,
+        // 2026-10-17 修复：build 时禁用（仅 dev 需要——@fs 直读 CJS）。
+        // rolldown build 自己打包 node_modules CJS，此插件在 build 再包装会
+        // 导致双重处理：named exports 绑定到包装对象而非 exports
+        // （`__FIX_CJS_NS__$5.createContext` undefined → 登录页白屏）。
+        apply: 'serve' as const,
         async transform(code: string, id: string) {
           const norm = id.replace(/\\/g, '/').split('?')[0];
           if (!norm.endsWith('.js')) return null;
@@ -1064,6 +1075,47 @@ export default defineConfig(({ mode }) => {
       };
     })(),
     react(),
+  // 2026-10-17 修复：rolldown build 对 CJS 模块的 named import interop 错位。
+  // rolldown 把 CJS 依赖（react/react-dom/react-is 等）转换为
+  // `X={exports:{}},(function(n,r){...})(X,X.exports)` CJS 包装，但外部 named
+  // import（`import { createContext } from 'react'` 等）被绑定到包装对象 X
+  // 而非 X.exports，导致运行时 `X.<export>` 为 undefined
+  // （prod 登录页白屏 `TypeError: <min> is not a function`；dev 正常因走
+  // C3 §5.2 预打包修复）。build 后处理：把每个 CJS 包装变量的属性访问
+  // `X.<prop>`（非 X.exports 自身）改为 `X.exports.<prop>`。
+  {
+    name: 'fix-cjs-interop-build',
+    apply: 'build',
+    async closeBundle() {
+      const dir = path.resolve(__dirname, 'dist/assets');
+      const files = (await fsp.readdir(dir)).filter((f) => f.endsWith('.js'));
+      const marker = /\b([A-Za-z_\$][\w\$]*)=\{exports:\{\}\}[,;]\(function\(/g;
+      for (const file of files) {
+        const p2 = path.join(dir, file);
+        const src = await fsp.readFile(p2, 'utf8');
+        const varNames = new Set();
+        let m;
+        marker.lastIndex = 0;
+        while ((m = marker.exec(src)) !== null) varNames.add(m[1]);
+        if (!varNames.size) continue;
+        let out = src;
+        let total = 0;
+        for (const v of varNames) {
+          // 替换 X.<prop>（排除 exports）→ X.exports.<prop>
+          const re = new RegExp('\\b' + v + '\\.(?!exports\\b)([A-Za-z_\\$][\\w\\$]*)\\b', 'g');
+          let cnt = 0;
+          out = out.replace(re, (mm, prop) => { cnt++; return v + '.exports.' + prop; });
+          total += cnt;
+        }
+        if (total > 0) {
+          await fsp.writeFile(p2, out);
+          console.log('[fix-cjs-interop-build] ' + file + ': ' + total + ' refs fixed');
+        }
+      }
+    },
+  },
+,
+
     // V65.1.2: 启用 gzip + brotli 压缩
     // - gzip 兼容性最好（所有现代浏览器），用 vite-plugin-compression
     // - brotli 压缩率更高（比 gzip 再降 15-25%），主流浏览器均支持；
@@ -1156,6 +1208,22 @@ export default defineConfig(({ mode }) => {
   },
   resolve: {
     alias: [
+      // 2026-10-17 修复：rolldown build 转换 react 条件 CJS 入口
+      // （if NODE_ENV==='production' module.exports=require('./cjs/react.production.js')）
+      // 时丢失 React.createContext 实现（prod 登录页白屏
+      // `TypeError: <min> is not a function`；dev 正常因走 C3 §5.2 预打包修复）。
+      // build-only：直接 alias 到无条件的 production CJS bundle，绕过条件入口转换 bug。
+      ...(mode === 'production'
+        ? [
+            { find: /^react$/, replacement: path.resolve(__dirname, 'node_modules/react/cjs/react.production.js') },
+            { find: /^react-dom$/, replacement: path.resolve(__dirname, 'node_modules/react-dom/cjs/react-dom.production.js') },
+            { find: /^react-dom\/client$/, replacement: path.resolve(__dirname, 'node_modules/react-dom/cjs/react-dom-client.production.js') },
+            { find: /^react\/jsx-runtime$/, replacement: path.resolve(__dirname, 'node_modules/react/cjs/react-jsx-runtime.production.js') },
+            { find: /^react\/jsx-dev-runtime$/, replacement: path.resolve(__dirname, 'node_modules/react/cjs/react-jsx-dev-runtime.production.js') },
+            { find: /^react-is$/, replacement: path.resolve(__dirname, 'node_modules/react-is/cjs/react-is.production.js') },
+          ]
+        : []),
+
       // C3 §5.1: React 19 兼容修复 —— use-sync-external-store CJS shim interop 失败
       // 错误 1: ".../use-sync-external-store/shim/index.js does not provide an export named 'useSyncExternalStore'"
       // 原因 1: shim/index.js 为 CJS（module.exports = require('../cjs/...')），
@@ -1252,7 +1320,11 @@ export default defineConfig(({ mode }) => {
     // - terser: 纯 JS 单线程，passes=2 导致两遍扫描，minify 占总构建 30%+
     // - esbuild: Go 实现 + 多线程并行，压缩比仅略降 5-8%（Brotli 后差距更小）
     // - 压缩选项：通过 esbuildOptions 对齐原 terser 的 drop_console / drop_debugger
-    minify: 'esbuild',
+        // 2026-10-17 调试：rolldown build CJS interop 错位（X.属性 vs X.exports.属性）
+    // 需 closeBundle 插件修复；esbuild minify 下插件曾误伤（\w 转义 bug 已修；
+    // 分号包装已覆盖）。若再次出现同名误伤（如 o.exports.componentDidMount），
+    // 回退 minify:false 保留唯一变量名。
+minify: 'esbuild',
     // V72 P1-3: 显式 workerCount = 8（10 核 CPU，留 2 核给 IO/GC/Brotli）
     // Vite 8 默认：os.cpus().length - 1 = 9，但 Rolldown/Vite 在部分阶段会额外
     // 产生 helper 线程，留 2 核余量避免上下文切换过载，实测吞吐更稳
@@ -1271,7 +1343,11 @@ export default defineConfig(({ mode }) => {
       //     一致（4 过 1 挂，挂项为既有环境问题：dashboard 侧边栏依赖后端
       //     权限数据、骨架屏超时，与 tree-shaking 无关）
       // 若未来升级 Rolldown 后出现 Jt 类错误，回退为 treeshake:false 并排查模块
-      treeshake: true,
+            // 2026-10-17 实测：treeshake:true 下 prod build 产物 react-vendor chunk
+      // 丢失 React.createContext 实现（Jt=void 0），登录页白屏
+      // `TypeError: Jt is not a function`（dev 正常，因 dev 走 C3 §5.2 预打包修复）；
+      // 按注释预案回退 treeshake:false 恢复正确性（brotli closeBundle 清理兜底保留）。
+treeshake: false,
       // https://rolldown.rs/reference/InputOptions.checks
       checks: {
         // Disable noisy plugin timing summary; only useful when tuning builds.
