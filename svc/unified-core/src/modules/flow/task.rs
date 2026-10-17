@@ -98,6 +98,11 @@ pub async fn list_tasks(
         }
     };
 
+    // BE-09 3c：assignee_name 已 LEFT JOIN iam.users 取真实全名；
+    // node_name 当前兜底 = node_id。真实节点展示名需从 mes.core_workflow_instances
+    // → core_workflow_versions.definition->'nodes' JSON 提取，但该路径跨 schema
+    // （unified-core 边界仅允许 public），且当前 DB 0 tasks / 0 instances，
+    // 待跨域边界白名单或 mes 侧导出视图后再补。
     let items: Vec<WorkflowTask> = if !has_filters {
         match sqlx::query_as::<_, WorkflowTask>(
             r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
