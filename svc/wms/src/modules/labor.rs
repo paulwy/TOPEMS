@@ -58,9 +58,9 @@ pub struct LaborEfficiencyRow {
 
 #[derive(Deserialize)]
 pub struct LaborQuery {
-    date_from: Option<chrono::NaiveDate>,
-    date_to: Option<chrono::NaiveDate>,
-    warehouse_id: Option<Uuid>,
+    pub date_from: Option<chrono::NaiveDate>,
+    pub date_to: Option<chrono::NaiveDate>,
+    pub warehouse_id: Option<Uuid>,
 }
 
 async fn efficiency_query<'e, E>(
@@ -88,7 +88,7 @@ where
                     THEN ROUND(COALESCE(SUM(picked_items),0)::float8 / NULLIF(SUM(total_items),0)::float8 * 100 * 100) / 100
                     ELSE 0 END AS completion_rate,
                CASE WHEN COUNT(*) > 0
-                    THEN ROUND(COALESCE(AVG(EXTRACT(EPOCH FROM (end_time - start_time))) / 60, 0) * 100) / 100
+                    THEN ROUND(COALESCE(AVG(EXTRACT(EPOCH FROM (end_time - start_time))) / 60, 0) * 100)::float8 / 100
                     ELSE 0 END AS avg_duration_minutes,
                CASE WHEN SUM(total_items) > 0
                     THEN ROUND(COALESCE(SUM(picked_items),0)::float8 / NULLIF(SUM(total_items),0)::float8 * 100 * 100) / 100
@@ -614,8 +614,8 @@ pub async fn create_labor_shift(
         r#"
         INSERT INTO wms.labor_shifts
             (organization_id, tenant_id, user_id, user_name, shift_date, start_time, end_time,
-             warehouse_id, zone, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             warehouse_id, zone, status, org_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING id, organization_id, tenant_id, user_id, user_name, shift_date,
                   start_time, end_time, warehouse_id, zone, status,
                   tasks_assigned, tasks_completed, created_at
@@ -631,6 +631,7 @@ pub async fn create_labor_shift(
     .bind(req.warehouse_id)
     .bind(&req.zone)
     .bind(req.status.unwrap_or_else(|| "scheduled".into()))
+    .bind(organization_id)
     .fetch_one(&mut **txn)
     .await;
 
