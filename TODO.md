@@ -44,7 +44,7 @@
   - **错误态**（mock 500 /crm/contacts）：呈现「❌ 加载失败 + 重新加载」错误提示，不白屏 ✓（修复前**静默空表格**）
   - 🐛 **模板级缺陷 1（CrudPage 错误态缺失 + 双层重试延迟）**：`src/components/templates/CrudPage.tsx` 列表 `useQuery` 只解构 `data/isPending`，未传 `error`/`onRefresh` → 500 时**静默空表格无错误提示**；且 axios 层重试（2 次+退避）与 tanstack 默认 retry:3 **叠加** → 错误提示延迟 ~10s+（实测 tbody 长期停留骨架行）。修复：解构 `isError/error/refetch` → 传 `ListPageTemplate`（复用其 ErrorEmptyState + 重试按钮）；`retry: false`（api-client 已内建重试）。**全仓受益**（ListPageTemplate 型 CrudPage 列表页）
   - 执行方式：新增 `apps/web/e2e/ui/b3-list-render.spec.ts`（8 页正常态 + 2 mock 态），`API_URL=http://localhost:8099 pnpm exec playwright test e2e/ui/b3-list-render.spec.ts --project=chromium --workers=1 --retries=0` → **3 passed (30.7s)**
-  - 遗留：`TreeBuilder` 无错误态渲染（CrudPage tree 视图 500 仍静默，待办 D4 前补）
+  - 遗留：`TreeBuilder` 无错误态渲染（CrudPage tree 视图 500 仍静默，待办 D4 前补）→ **已补（2026-10-17）**：`TreeBuilder` 新增 `error`/`onRefresh` props，渲染 `ErrorEmptyState`（复用 B3 已验证组件，含重试按钮）；`CrudPage` tree query 解构 `isError/error/refetch` 并透传——**tree 视图 500 不再静默**；验证：typecheck + eslint 全绿；**注**：当前仓库无启用 tree 视图的生产页面（`hasTree`/`treeDataAdapter` 未在 pages 使用），实机待未来 tree 页面启用后覆盖
 - ✅ B4 导航链路（2026-10-17 实机完成）：侧栏/顶栏/面包屑/返回全链路验证（新增 `apps/web/e2e/ui/b4-navigation.spec.ts`，10 项全过 8.3s）：
   - **侧栏**：`nav[aria-label="Main navigation"]` 渲染 + 含核心模块项（客户管理/制造执行/质量管理/财务/人力资源）；展开「客户管理」→ 点「联系人」→ URL /crm/contacts；展开「人力资源」→ 点「员工」→ /hrm/employees
   - **面包屑**：/crm/contacts 显示「首页 / 客户管理 / 联系人」（MUI Breadcrumbs，i18n 值对齐实际渲染）

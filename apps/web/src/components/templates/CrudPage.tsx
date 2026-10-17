@@ -518,7 +518,13 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
   // ── 树形数据查询 ──
   const treeQueryKey = useMemo(() => [schema.entity, 'tree'], [schema.entity]);
 
-  const { data: treeRawData, isPending: treeLoading } = useQuery({
+  const {
+    data: treeRawData,
+    isPending: treeLoading,
+    isError: treeIsError,
+    error: treeError,
+    refetch: refetchTree,
+  } = useQuery({
     queryKey: treeQueryKey,
     queryFn: async () => {
       if (!effectiveTreeAdapter) return [];
@@ -851,6 +857,14 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   fields={schema.fields as SchemaField[]}
                   mode={actions.includes('edit') ? 'edit' : 'view'}
                   loading={treeLoading}
+                  error={
+                    treeIsError
+                      ? treeError instanceof Error
+                        ? treeError.message
+                        : String(treeError ?? '')
+                      : undefined
+                  }
+                  onRefresh={refetchTree}
                   onNodeAdd={handleTreeNodeAdd}
                   onNodeUpdate={handleTreeNodeUpdate}
                   onNodeDelete={handleTreeNodeDelete}

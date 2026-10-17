@@ -28,6 +28,7 @@ import {
   Chip,
 } from '@mui/material';
 import i18n from '@/i18n';
+import { ErrorEmptyState } from '@topems/shared-components';
 import { TreeView, TreeItem } from '@mui/lab';
 import {
   ChevronRight as ChevronRightIcon,
@@ -64,6 +65,10 @@ interface TreeBuilderProps {
   onNodeUpdate?: (id: string | number, data: Record<string, unknown>) => Promise<void>;
   onNodeDelete?: (id: string | number) => Promise<void>;
   loading?: boolean;
+  /** 加载失败时的错误文本；非空时渲染错误态（含重试按钮） */
+  error?: string;
+  /** 错误态重试回调 */
+  onRefresh?: () => void;
 }
 
 // ============ 辅助函数 ============
@@ -258,6 +263,8 @@ export function TreeBuilder({
   onNodeUpdate,
   onNodeDelete,
   loading = false,
+  error,
+  onRefresh,
 }: TreeBuilderProps) {
   const keyField = config.keyField || 'id';
   const labelField = config.labelField || 'label';
@@ -334,13 +341,12 @@ export function TreeBuilder({
 
   const handleSave = useCallback(async () => {
     const primaryField = dialogFields[0]?.name ?? labelField;
-    const invalid = dialogFields.some(
-      (f) => f.required && !String(editForm[f.name] ?? '').trim()
-    );
+    const invalid = dialogFields.some((f) => f.required && !String(editForm[f.name] ?? '').trim());
     if (invalid) return;
     if (!String(editForm[primaryField] ?? '').trim()) return;
 
-    const fallbackLabel = String(editForm[labelField] ?? '').trim() || String(editForm[primaryField] ?? '').trim();
+    const fallbackLabel =
+      String(editForm[labelField] ?? '').trim() || String(editForm[primaryField] ?? '').trim();
 
     let nextData: TreeNode[];
     if (editDialog.mode === 'edit' && editDialog.node) {
@@ -384,7 +390,18 @@ export function TreeBuilder({
     setInternalData(nextData);
     onChange?.(nextData);
     closeDialog();
-  }, [editDialog, editForm, labelField, onNodeAdd, onNodeUpdate, closeDialog, keyField, internalData, dialogFields, onChange]);
+  }, [
+    editDialog,
+    editForm,
+    labelField,
+    onNodeAdd,
+    onNodeUpdate,
+    closeDialog,
+    keyField,
+    internalData,
+    dialogFields,
+    onChange,
+  ]);
 
   const handleDelete = useCallback(
     async (node: TreeNode) => {
@@ -467,7 +484,12 @@ export function TreeBuilder({
           },
         }}
       >
-        {loading ? (
+        {error ? (
+          <ErrorEmptyState
+            error={error}
+            onRetry={onRefresh}
+          />
+        ) : loading ? (
           <Typography
             variant='body2'
             color='text.secondary'
