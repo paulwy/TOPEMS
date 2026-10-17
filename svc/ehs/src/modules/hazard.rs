@@ -60,6 +60,18 @@ pub fn create_routes() -> Router<AppState> {
             post(submit_rectification),
         )
         .route("/issues/{id}/verification", post(verify_hazard))
+        .route(
+            "/hazards/{hazard_id}/assessments",
+            get(list_risk_assessments_db),
+        )
+        .route(
+            "/hazards/{hazard_id}/controls",
+            get(list_control_measures_db).post(create_control_measure_db),
+        )
+        .route(
+            "/hazards/{hazard_id}/controls/{measure_id}",
+            delete(delete_control_measure_db),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -1353,5 +1365,262 @@ fn safety_hazard_from_row(r: &sqlx::postgres::PgRow) -> SafetyHazard {
         created_at: r.try_get::<String, _>("created_at").ok(),
         updated_at: r.try_get::<String, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+// ---- hazard 详情子资源接真（/hazards/{hazardId}/assessments|controls）----
+
+#[derive(Debug, Serialize)]
+pub struct RiskAssessment {
+    pub id: String,
+    pub hazard_id: String,
+    pub assessment_date: Option<String>,
+    pub assessor: Option<String>,
+    pub severity: String,
+    pub likelihood: String,
+    pub risklevel: Option<String>,
+    pub recommendations: Option<String>,
+    pub created_at: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct ControlMeasure {
+    pub id: String,
+    pub hazard_id: String,
+    pub measure_type: String,
+    pub description: Option<String>,
+    pub responsible: Option<String>,
+    pub deadline: Option<String>,
+    pub status: String,
+    pub effectiveness: Option<String>,
+    pub created_at: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateRiskAssessmentRequest {
+    pub hazard_id: String,
+    pub assessment_date: Option<String>,
+    pub assessor: Option<String>,
+    pub severity: Option<String>,
+    pub likelihood: Option<String>,
+    pub recommendations: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateControlMeasureRequest {
+    pub measure_type: String,
+    pub description: Option<String>,
+    pub responsible: Option<String>,
+    pub deadline: Option<String>,
+    pub status: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/hazards/{hazard_id}/assessments",
+    tag = "ehs",
+    params(("hazard_id" = String, Path, description = "危险源 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn list_risk_assessments_db(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(hazard_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Vec<RiskAssessment>>> {
+    let tenant_bind = resolve_hazard_tenant(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, hazard_id::text AS hazard_id,
+               assessment_date::text AS assessment_date, assessor, severity, likelihood,
+               risklevel, recommendations, created_at::text AS created_at
+        FROM ehs.hazard_risk_assessments
+        WHERE hazard_id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC
+    "#;
+    let rows = match sqlx::query(sql)
+        .bind(&hazard_id)
+        .bind(&tenant_bind)
+        .fetch_all(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list hazard risk assessments: {}", e);
+            return Json(ApiResponse::error(500, "获取风险评估列表失败"));
+        }
+    };
+    let list: Vec<RiskAssessment> = rows.iter().map(hazard_risk_assessment_from_row).collect();
+    Json(ApiResponse::success(list, "获取风险评估列表成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/hazards/{hazard_id}/controls",
+    tag = "ehs",
+    params(("hazard_id" = String, Path, description = "危险源 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn list_control_measures_db(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(hazard_id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Vec<ControlMeasure>>> {
+    let tenant_bind = resolve_hazard_tenant(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, hazard_id::text AS hazard_id, measure_type, description,
+               responsible, deadline::text AS deadline, status, effectiveness,
+               created_at::text AS created_at
+        FROM ehs.hazard_control_measures
+        WHERE hazard_id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        ORDER BY created_at DESC
+    "#;
+    let rows = match sqlx::query(sql)
+        .bind(&hazard_id)
+        .bind(&tenant_bind)
+        .fetch_all(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list hazard control measures: {}", e);
+            return Json(ApiResponse::error(500, "获取管控措施列表失败"));
+        }
+    };
+    let list: Vec<ControlMeasure> = rows.iter().map(hazard_control_measure_from_row).collect();
+    Json(ApiResponse::success(list, "获取管控措施列表成功"))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/hazards/{hazard_id}/controls",
+    request_body = CreateControlMeasureRequest,
+    tag = "ehs",
+    params(("hazard_id" = String, Path, description = "危险源 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn create_control_measure_db(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(hazard_id): axum::extract::Path<String>,
+    Json(req): Json<CreateControlMeasureRequest>,
+) -> Json<ApiResponse<ControlMeasure>> {
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let status = req.status.clone().unwrap_or_else(|| "pending".to_string());
+    let sql = r#"
+        INSERT INTO ehs.hazard_control_measures
+            (hazard_id, measure_type, description, responsible, deadline, status, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id::text AS id, hazard_id::text AS hazard_id, measure_type, description,
+                  responsible, deadline::text AS deadline, status, effectiveness,
+                  created_at::text AS created_at
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&hazard_id)
+        .bind(&req.measure_type)
+        .bind(&req.description)
+        .bind(&req.responsible)
+        .bind(&req.deadline)
+        .bind(&status)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create hazard control measure: {}", e);
+            return Json(ApiResponse::error(500, "管控措施创建失败"));
+        }
+    };
+    let record = hazard_control_measure_from_row(&row);
+    Json(ApiResponse::success(record, "管控措施创建成功"))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:delete"])),
+    path = "/api/ehs/hazards/{hazard_id}/controls/{measure_id}",
+    tag = "ehs",
+    params(
+        ("hazard_id" = String, Path, description = "危险源 ID"),
+        ("measure_id" = String, Path, description = "管控措施 ID")
+    ),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_control_measure_db(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path((_hazard_id, measure_id)): axum::extract::Path<(String, String)>,
+) -> Json<ApiResponse<()>> {
+    let tenant_bind = resolve_hazard_tenant(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.hazard_control_measures
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&measure_id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete hazard control measure: {}", e);
+            return Json(ApiResponse::error(500, "管控措施删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "管控措施不存在"));
+    }
+    Json(ApiResponse::success((), "管控措施删除成功"))
+}
+
+/// hazard_risk_assessments 行 → RiskAssessment
+fn hazard_risk_assessment_from_row(r: &sqlx::postgres::PgRow) -> RiskAssessment {
+    RiskAssessment {
+        id: r.try_get("id").unwrap_or_default(),
+        hazard_id: r.try_get("hazard_id").unwrap_or_default(),
+        assessment_date: r.try_get("assessment_date").ok().flatten(),
+        assessor: r.try_get("assessor").ok().flatten(),
+        severity: r
+            .try_get("severity")
+            .unwrap_or_else(|_| "medium".to_string()),
+        likelihood: r
+            .try_get("likelihood")
+            .unwrap_or_else(|_| "medium".to_string()),
+        risklevel: r.try_get("risklevel").ok().flatten(),
+        recommendations: r.try_get("recommendations").ok().flatten(),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+    }
+}
+
+/// hazard_control_measures 行 → ControlMeasure
+fn hazard_control_measure_from_row(r: &sqlx::postgres::PgRow) -> ControlMeasure {
+    ControlMeasure {
+        id: r.try_get("id").unwrap_or_default(),
+        hazard_id: r.try_get("hazard_id").unwrap_or_default(),
+        measure_type: r
+            .try_get("measure_type")
+            .unwrap_or_else(|_| "engineering".to_string()),
+        description: r.try_get("description").ok().flatten(),
+        responsible: r.try_get("responsible").ok().flatten(),
+        deadline: r.try_get("deadline").ok().flatten(),
+        status: r
+            .try_get("status")
+            .unwrap_or_else(|_| "pending".to_string()),
+        effectiveness: r.try_get("effectiveness").ok().flatten(),
+        created_at: r.try_get::<String, _>("created_at").ok(),
     }
 }
