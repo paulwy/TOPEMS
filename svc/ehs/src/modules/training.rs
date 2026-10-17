@@ -112,12 +112,18 @@ pub struct TrainingRecord {
 pub struct TrainingCertificate {
     pub id: String,
     pub certificate_no: String,
+    pub employee_id: String,
     pub employee_name: String,
-    pub training_title: String,
+    pub training_type: String,
+    pub certificate_type: String,
     pub issue_date: Option<String>,
     pub expiry_date: Option<String>,
-    pub certificate_type: Option<String>,
+    pub issuing_authority: Option<String>,
     pub status: String,
+    pub record_id: Option<String>,
+    pub attachments: Option<Vec<String>>,
+    pub created_at: String,
+    pub updated_at: String,
 
     pub tenant_id: Uuid,
 }
@@ -618,36 +624,39 @@ pub async fn delete_training_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_certificate(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<TrainingCertificate>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Getting certificate: {}", id);
-    Json(ApiResponse::success(
-        TrainingCertificate {
-            id,
-            certificate_no: "CERT-2024001".to_string(),
-            employee_name: "测试员工".to_string(),
-            training_title: "安全培训".to_string(),
-            issue_date: Some(chrono::Utc::now().to_rfc3339()),
-            expiry_date: Some("2026-12-31".to_string()),
-            certificate_type: Some("safety".to_string()),
-            status: "valid".to_string(),
-            tenant_id,
-        },
-        "获取培训证书成功",
-    ))
+    let sql = r#"
+        SELECT id::text AS id, certificate_no, employee_id, employee_name, training_type,
+               certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
+               issuing_authority, status, record_id::text AS record_id, attachments,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_training_certificates
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "培训证书不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get training certificate: {}", e);
+            return Json(ApiResponse::error(500, "获取培训证书失败"));
+        }
+    };
+    let certificate = training_certificate_from_row(&row);
+    Json(ApiResponse::success(certificate, "获取培训证书成功"))
 }
 
 #[utoipa::path(
@@ -660,58 +669,84 @@ pub async fn get_certificate(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_certificate(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingCertificate>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = req.get("employee_name").and_then(|v| v.as_str()) {
+        sets.push(format!("employee_name = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("training_type").and_then(|v| v.as_str()) {
+        sets.push(format!("training_type = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("certificate_type").and_then(|v| v.as_str()) {
+        sets.push(format!("certificate_type = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("issue_date").and_then(|v| v.as_str()) {
+        sets.push(format!("issue_date = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("expiry_date").and_then(|v| v.as_str()) {
+        sets.push(format!("expiry_date = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("issuing_authority").and_then(|v| v.as_str()) {
+        sets.push(format!("issuing_authority = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("status").and_then(|v| v.as_str()) {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("attachments") {
+        sets.push(format!("attachments = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_training_certificates
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, certificate_no, employee_id, employee_name, training_type,
+                  certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
+                  issuing_authority, status, record_id::text AS record_id, attachments,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "培训证书不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update training certificate: {}", e);
+            return Json(ApiResponse::error(500, "培训证书更新失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating certificate {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        TrainingCertificate {
-            id,
-            certificate_no: "CERT-2024001".to_string(),
-            employee_name: req
-                .get("employee_name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("测试员工")
-                .to_string(),
-            training_title: req
-                .get("training_title")
-                .and_then(|v| v.as_str())
-                .unwrap_or("安全培训")
-                .to_string(),
-            issue_date: req
-                .get("issue_date")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            expiry_date: req
-                .get("expiry_date")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            certificate_type: req
-                .get("certificate_type")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            status: req
-                .get("status")
-                .and_then(|v| v.as_str())
-                .unwrap_or("valid")
-                .to_string(),
-            tenant_id,
-        },
-        "培训证书更新成功",
-    ))
+    let certificate = training_certificate_from_row(&row);
+    Json(ApiResponse::success(certificate, "培训证书更新成功"))
 }
 
 #[utoipa::path(
@@ -723,12 +758,34 @@ pub async fn update_certificate(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_certificate(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting certificate: {}", id);
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.qa_ehs_training_certificates
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete training certificate: {}", e);
+            return Json(ApiResponse::error(500, "培训证书删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "培训证书不存在"));
+    }
     Json(ApiResponse::success((), "培训证书删除成功"))
 }
 
@@ -977,6 +1034,16 @@ pub async fn create_training_record(
     ))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct TrainingCertificateQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+    pub training_type: Option<String>,
+    pub employee_id: Option<String>,
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:cert:read"])),
@@ -985,15 +1052,71 @@ pub async fn create_training_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_certificates(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Query(q): Query<TrainingCertificateQuery>,
 ) -> Json<ApiResponse<Vec<TrainingCertificate>>> {
-    tracing::debug!("Listing training certificates");
-    Json(ApiResponse::success(
-        Vec::<TrainingCertificate>::new(),
-        "获取证书列表成功",
-    ))
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(status) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(status.clone());
+    }
+    if let Some(training_type) = &q.training_type {
+        where_clause.push_str(&format!(" AND training_type = ${}", params.len() + 1));
+        params.push(training_type.clone());
+    }
+    if let Some(employee_id) = &q.employee_id {
+        where_clause.push_str(&format!(" AND employee_id = ${}", params.len() + 1));
+        params.push(employee_id.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (employee_name ILIKE ${} OR certificate_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, certificate_no, employee_id, employee_name, training_type,
+               certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
+               issuing_authority, status, record_id::text AS record_id, attachments,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_training_certificates
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list training certificates: {}", e);
+            return Json(ApiResponse::error(500, "获取证书列表失败"));
+        }
+    };
+
+    let list: Vec<TrainingCertificate> = rows.iter().map(training_certificate_from_row).collect();
+    Json(ApiResponse::success(list, "获取证书列表成功"))
 }
 
 // gate: admin-only
@@ -1006,51 +1129,94 @@ pub async fn list_certificates(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_certificate(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingCertificate>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating certificate: {:?}", req);
-    Json(ApiResponse::success(
-        TrainingCertificate {
-            id: uuid::Uuid::new_v4().to_string(),
-            certificate_no: format!(
-                "CERT-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            employee_name: req
-                .get("employee_name")
-                .and_then(|v| v.as_str())
-                .unwrap_or("员工")
-                .to_string(),
-            training_title: req
-                .get("training_title")
-                .and_then(|v| v.as_str())
-                .unwrap_or("安全培训")
-                .to_string(),
-            issue_date: None,
-            expiry_date: None,
-            certificate_type: req
-                .get("certificate_type")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            status: "active".to_string(),
+    let tenant_id = resolve_tenant_id(&claims);
+    let certificate_no = format!("CERT-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let employee_id = req
+        .get("employee_id")
+        .and_then(|v| v.as_str())
+        .unwrap_or_default()
+        .to_string();
+    let employee_name = req
+        .get("employee_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("员工")
+        .to_string();
+    let training_type = req
+        .get("training_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("safety")
+        .to_string();
+    let certificate_type = req
+        .get("certificate_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("certificate")
+        .to_string();
+    let issue_date = req
+        .get("issue_date")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let expiry_date = req
+        .get("expiry_date")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let issuing_authority = req
+        .get("issuing_authority")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let record_id = req
+        .get("record_id")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let status = req
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("valid")
+        .to_string();
+    let attachments: serde_json::Value = req
+        .get("attachments")
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!([]));
 
-            tenant_id,
-        },
-        "证书创建成功",
-    ))
+    let sql = r#"
+        INSERT INTO ehs.qa_ehs_training_certificates
+            (certificate_no, employee_id, employee_name, training_type, certificate_type,
+             issue_date, expiry_date, issuing_authority, status, record_id, attachments, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        RETURNING id::text AS id, certificate_no, employee_id, employee_name, training_type,
+                  certificate_type, issue_date::text AS issue_date, expiry_date::text AS expiry_date,
+                  issuing_authority, status, record_id::text AS record_id, attachments,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&certificate_no)
+        .bind(&employee_id)
+        .bind(&employee_name)
+        .bind(&training_type)
+        .bind(&certificate_type)
+        .bind(issue_date)
+        .bind(expiry_date)
+        .bind(issuing_authority)
+        .bind(&status)
+        .bind(record_id)
+        .bind(attachments)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create training certificate: {}", e);
+            return Json(ApiResponse::error(500, "证书创建失败"));
+        }
+    };
+    let certificate = training_certificate_from_row(&row);
+    Json(ApiResponse::success(certificate, "证书创建成功"))
 }
 
 /// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
@@ -1079,6 +1245,36 @@ fn training_plan_from_row(r: &sqlx::postgres::PgRow) -> TrainingPlan {
         trainer: r.try_get("trainer").ok().flatten(),
         status: r.try_get("status").unwrap_or_else(|_| "draft".to_string()),
         created_at: r.try_get::<String, _>("created_at").unwrap_or_default(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+/// qa_ehs_training_certificates 行 → TrainingCertificate（SELECT 列别名对齐本函数字段）
+fn training_certificate_from_row(r: &sqlx::postgres::PgRow) -> TrainingCertificate {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let attachments: Option<serde_json::Value> = r.try_get("attachments").ok().flatten();
+    let attachments = attachments.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    TrainingCertificate {
+        id: r.try_get("id").unwrap_or_default(),
+        certificate_no: r.try_get("certificate_no").unwrap_or_default(),
+        employee_id: r.try_get("employee_id").unwrap_or_default(),
+        employee_name: r.try_get("employee_name").unwrap_or_default(),
+        training_type: r.try_get("training_type").unwrap_or_default(),
+        certificate_type: r.try_get("certificate_type").unwrap_or_default(),
+        issue_date: r.try_get("issue_date").ok().flatten(),
+        expiry_date: r.try_get("expiry_date").ok().flatten(),
+        issuing_authority: r.try_get("issuing_authority").ok().flatten(),
+        status: r.try_get("status").unwrap_or_else(|_| "valid".to_string()),
+        record_id: r.try_get("record_id").ok().flatten(),
+        attachments,
+        created_at: r.try_get::<String, _>("created_at").unwrap_or_default(),
+        updated_at: r.try_get::<String, _>("updated_at").unwrap_or_default(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
