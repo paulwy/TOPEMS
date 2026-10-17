@@ -34,7 +34,7 @@ pub struct Employee {
     pub department_id: Option<Uuid>,
     #[schema(example = "550e8400-e29b-41d4-a716-446655440003")]
     pub position_id: Option<Uuid>,
-    #[serde(alias = "employee_no")]
+    #[serde(alias = "employee_number", rename = "employee_no")]
     #[schema(example = "EMP001")]
     pub employee_number: String,
     #[schema(example = "张三")]
@@ -47,7 +47,7 @@ pub struct Employee {
     pub email: Option<String>,
     #[schema(example = "13800138000")]
     pub phone: Option<String>,
-    #[serde(alias = "id_number")]
+    #[serde(alias = "id_card_number", rename = "id_number")]
     #[schema(example = "110101199001011234")]
     pub id_card_number: Option<String>,
     #[schema(example = "北京市朝阳区建国路88号")]

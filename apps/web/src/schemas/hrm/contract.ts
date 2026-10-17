@@ -107,13 +107,13 @@ export const contractSchema: EntitySchema = {
       listWidth: 120,
     },
     {
-      name: 'salary',
+      name: 'base_salary',
       label: i18n.t('hrm.contract.k16'),
       type: 'number',
       listWidth: 100,
     },
     {
-      name: 'probation_period_days',
+      name: 'probation_period',
       label: i18n.t('hrm.contract.k17'),
       type: 'number',
       listWidth: 100,
@@ -142,13 +142,13 @@ export const contractSchema: EntitySchema = {
       validation: [{ type: 'maxLength', value: 20 }],
     },
     {
-      name: 'contract_file_path',
+      name: 'contract_file',
       label: i18n.t('hrm.contract.k24'),
       type: 'text',
       showInList: false,
     },
     {
-      name: 'notes',
+      name: 'remark',
       label: i18n.t('hrm.contract.k25'),
       type: 'textarea',
       showInList: false,
@@ -179,7 +179,7 @@ export const contractSchema: EntitySchema = {
       'contractNo',
       'employee_id',
       'contract_type',
-      'salary',
+      'base_salary',
       'start_date',
       'end_date',
       'status',
@@ -242,11 +242,11 @@ export const contractSchema: EntitySchema = {
     },
     {
       title: i18n.t('hrm.contract.k41'),
-      fields: ['start_date', 'end_date', 'salary', 'probation_period_days', 'reminder_days'],
+      fields: ['start_date', 'end_date', 'base_salary', 'probation_period', 'reminder_days'],
     },
     {
       title: i18n.t('hrm.contract.k42'),
-      fields: ['contract_file_path', 'notes'],
+      fields: ['contract_file', 'remark'],
     },
   ],
 

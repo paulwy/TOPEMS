@@ -9,20 +9,33 @@ pub struct Contract {
     pub id: Uuid,
     pub tenant_id: Uuid,
     pub employee_id: Uuid,
+    #[serde(alias = "contract_no", rename = "contractNo")]
     pub contract_no: Option<String>,
     pub contract_type: String,
+    #[serde(alias = "contract_name")]
+    pub contract_name: Option<String>,
     pub party_a_name: Option<String>,
     pub party_a_contact: Option<String>,
     pub party_b_name: Option<String>,
     pub party_b_contact: Option<String>,
     pub start_date: DateTime<Utc>,
     pub end_date: Option<DateTime<Utc>>,
+    #[serde(alias = "salary", rename = "base_salary")]
     pub salary: Option<f64>,
+    #[serde(alias = "probation_period_days", rename = "probation_period")]
     pub probation_period_days: Option<i32>,
+    pub probation_end_date: Option<DateTime<Utc>>,
+    #[serde(alias = "contract_file_path", rename = "contract_file")]
     pub contract_file_path: Option<String>,
     pub reminder_days: Option<i32>,
     pub status: String,
+    #[serde(alias = "notes", rename = "remark")]
     pub notes: Option<String>,
+    pub currency: Option<String>,
+    pub salary_type: Option<String>,
+    pub work_location: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -30,37 +43,63 @@ pub struct Contract {
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct CreateContractRequest {
     pub employee_id: Uuid,
+    #[serde(alias = "contract_no", rename = "contractNo")]
     pub contract_no: Option<String>,
     pub contract_type: String,
+    #[serde(alias = "contract_name")]
+    pub contract_name: Option<String>,
     pub party_a_name: Option<String>,
     pub party_a_contact: Option<String>,
     pub party_b_name: Option<String>,
     pub party_b_contact: Option<String>,
     pub start_date: DateTime<Utc>,
     pub end_date: Option<DateTime<Utc>>,
+    #[serde(alias = "salary", rename = "base_salary")]
     pub salary: Option<f64>,
+    #[serde(alias = "probation_period_days", rename = "probation_period")]
     pub probation_period_days: Option<i32>,
+    pub probation_end_date: Option<DateTime<Utc>>,
+    #[serde(alias = "contract_file_path", rename = "contract_file")]
     pub contract_file_path: Option<String>,
     pub reminder_days: Option<i32>,
+    #[serde(alias = "notes", rename = "remark")]
     pub notes: Option<String>,
+    pub currency: Option<String>,
+    pub salary_type: Option<String>,
+    pub work_location: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
 pub struct UpdateContractRequest {
+    #[serde(alias = "contract_no", rename = "contractNo")]
     pub contract_no: Option<String>,
     pub contract_type: Option<String>,
+    #[serde(alias = "contract_name")]
+    pub contract_name: Option<String>,
     pub party_a_name: Option<String>,
     pub party_a_contact: Option<String>,
     pub party_b_name: Option<String>,
     pub party_b_contact: Option<String>,
     pub start_date: Option<DateTime<Utc>>,
     pub end_date: Option<DateTime<Utc>>,
+    #[serde(alias = "salary", rename = "base_salary")]
     pub salary: Option<f64>,
+    #[serde(alias = "probation_period_days", rename = "probation_period")]
     pub probation_period_days: Option<i32>,
+    pub probation_end_date: Option<DateTime<Utc>>,
+    #[serde(alias = "contract_file_path", rename = "contract_file")]
     pub contract_file_path: Option<String>,
     pub reminder_days: Option<i32>,
     pub status: Option<String>,
+    #[serde(alias = "notes", rename = "remark")]
     pub notes: Option<String>,
+    pub currency: Option<String>,
+    pub salary_type: Option<String>,
+    pub work_location: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
 }
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
@@ -134,6 +173,13 @@ mod tests {
             reminder_days: Some(30),
             status: "active".to_string(),
             notes: None,
+            contract_name: None,
+            currency: None,
+            salary_type: None,
+            work_location: None,
+            department: None,
+            position: None,
+            probation_end_date: None,
             created_at,
             updated_at,
         };
@@ -164,6 +210,13 @@ mod tests {
             contract_file_path: None,
             reminder_days: None,
             notes: None,
+            contract_name: None,
+            probation_end_date: None,
+            currency: None,
+            salary_type: None,
+            work_location: None,
+            department: None,
+            position: None,
         };
 
         assert_eq!(request.employee_id, employee_id);
@@ -187,6 +240,13 @@ mod tests {
             reminder_days: None,
             status: Some("inactive".to_string()),
             notes: None,
+            contract_name: None,
+            probation_end_date: None,
+            currency: None,
+            salary_type: None,
+            work_location: None,
+            department: None,
+            position: None,
         };
 
         assert_eq!(request.contract_no, Some("CONTRACT-003".to_string()));

@@ -103,10 +103,11 @@ pub async fn list_contracts(
 
     let result = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-               party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+        SELECT id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name,
+               party_a_contact, party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
-               contract_file_path, reminder_days, status, notes, created_at, updated_at
+               probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
+               status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         FROM hrm.contracts
         WHERE deleted_at IS NULL
           AND ($1::uuid IS NULL OR employee_id = $1)
@@ -192,10 +193,11 @@ pub async fn list_expiring_contracts(
 
     let result = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-               party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+        SELECT id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name,
+               party_a_contact, party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
-               contract_file_path, reminder_days, status, notes, created_at, updated_at
+               probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
+               status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         FROM hrm.contracts
         WHERE deleted_at IS NULL
           AND end_date IS NOT NULL
@@ -316,12 +318,15 @@ pub async fn create_contract(
         INSERT INTO hrm.contracts (
             id, tenant_id, organization_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
             party_b_name, party_b_contact, start_date, end_date, salary, probation_period_days,
-            contract_file_path, reminder_days, status, notes, created_at, updated_at
-        ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'active', $16, $17, $18)
-        RETURNING id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+            contract_file_path, reminder_days, status, notes, created_at, updated_at,
+            contract_name, probation_end_date, currency, salary_type, work_location, department, position
+        ) VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, 'active', $16, $17, $18,
+                  $19, $20, $21, $22, $23, $24, $25)
+        RETURNING id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                   end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
-                  contract_file_path, reminder_days, status, notes, created_at, updated_at
+                  probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
+                  status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -342,6 +347,13 @@ pub async fn create_contract(
     .bind(&req.notes)
     .bind(now)
     .bind(now)
+    .bind(&req.contract_name)
+    .bind(req.probation_end_date)
+    .bind(&req.currency)
+    .bind(&req.salary_type)
+    .bind(&req.work_location)
+    .bind(&req.department)
+    .bind(&req.position)
     .fetch_one(&mut **txn)
     .await;
 
@@ -421,10 +433,11 @@ pub async fn get_contract(
     let txn = guard.as_mut().expect("rls txn missing");
     let result = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-               party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+        SELECT id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name,
+               party_a_contact, party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
-               contract_file_path, reminder_days, status, notes, created_at, updated_at
+               probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
+               status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
         "#),
     )
@@ -495,10 +508,11 @@ pub async fn update_contract(
     let txn = guard.as_mut().expect("rls txn missing");
     let contract_result = sqlx::query_as::<_, Contract>(
         only_own_schema_query!("hrm", r#"
-        SELECT id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
-               party_b_name, party_b_contact, start_date::timestamptz AS start_date,
+        SELECT id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name,
+               party_a_contact, party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
-               contract_file_path, reminder_days, status, notes, created_at, updated_at
+               probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
+               status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         FROM hrm.contracts WHERE deleted_at IS NULL AND id = $1
         "#),
     )
@@ -540,12 +554,20 @@ pub async fn update_contract(
             reminder_days = COALESCE($13, reminder_days),
             status = COALESCE($14, status),
             notes = COALESCE($15, notes),
+            contract_name = COALESCE($17, contract_name),
+            probation_end_date = COALESCE($18, probation_end_date),
+            currency = COALESCE($19, currency),
+            salary_type = COALESCE($20, salary_type),
+            work_location = COALESCE($21, work_location),
+            department = COALESCE($22, department),
+            position = COALESCE($23, position),
             updated_at = $16
         WHERE id = $1 AND deleted_at IS NULL
-        RETURNING id, tenant_id, employee_id, contract_no, contract_type, party_a_name, party_a_contact,
+        RETURNING id, tenant_id, employee_id, contract_no, contract_type, contract_name, party_a_name, party_a_contact,
                   party_b_name, party_b_contact, start_date::timestamptz AS start_date,
                   end_date::timestamptz AS end_date, salary::float8 AS salary, probation_period_days,
-                  contract_file_path, reminder_days, status, notes, created_at, updated_at
+                  probation_end_date::timestamptz AS probation_end_date, contract_file_path, reminder_days,
+                  status, notes, currency, salary_type, work_location, department, position, created_at, updated_at
         "#),
     )
     .bind(id)
@@ -564,6 +586,13 @@ pub async fn update_contract(
     .bind(&req.status)
     .bind(&req.notes)
     .bind(now)
+    .bind(&req.contract_name)
+    .bind(req.probation_end_date)
+    .bind(&req.currency)
+    .bind(&req.salary_type)
+    .bind(&req.work_location)
+    .bind(&req.department)
+    .bind(&req.position)
     .fetch_one(&mut **txn)
     .await;
 
