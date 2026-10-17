@@ -85,16 +85,6 @@ pub fn create_routes() -> Router<AppState> {
             get(get_compliance_statistics),
         )
         .route(
-            "/environmental-compliance/assessments",
-            get(list_evaluations).post(create_evaluation),
-        )
-        .route(
-            "/environmental-compliance/assessments/{id}",
-            get(get_evaluation)
-                .put(update_evaluation)
-                .delete(delete_evaluation),
-        )
-        .route(
             "/environmental-compliance/events",
             get(list_incidents).post(create_incident),
         )

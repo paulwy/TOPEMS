@@ -60,16 +60,13 @@ pub fn create_routes() -> Router<AppState> {
             post(submit_rectification),
         )
         .route("/issues/{id}/verification", post(verify_hazard))
+        .route("/hazards/{id}/assessments", get(list_risk_assessments_db))
         .route(
-            "/hazards/{hazard_id}/assessments",
-            get(list_risk_assessments_db),
-        )
-        .route(
-            "/hazards/{hazard_id}/controls",
+            "/hazards/{id}/controls",
             get(list_control_measures_db).post(create_control_measure_db),
         )
         .route(
-            "/hazards/{hazard_id}/controls/{measure_id}",
+            "/hazards/{id}/controls/{measure_id}",
             delete(delete_control_measure_db),
         )
 }
@@ -1418,7 +1415,7 @@ pub struct CreateControlMeasureRequest {
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/hazards/{hazard_id}/assessments",
+    path = "/api/ehs/hazards/{id}/assessments",
     tag = "ehs",
     params(("hazard_id" = String, Path, description = "危险源 ID")),
     responses((status = 200, description = "OK")),
@@ -1459,7 +1456,7 @@ pub async fn list_risk_assessments_db(
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
-    path = "/api/ehs/hazards/{hazard_id}/controls",
+    path = "/api/ehs/hazards/{id}/controls",
     tag = "ehs",
     params(("hazard_id" = String, Path, description = "危险源 ID")),
     responses((status = 200, description = "OK")),
@@ -1500,7 +1497,7 @@ pub async fn list_control_measures_db(
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:write"])),
-    path = "/api/ehs/hazards/{hazard_id}/controls",
+    path = "/api/ehs/hazards/{id}/controls",
     request_body = CreateControlMeasureRequest,
     tag = "ehs",
     params(("hazard_id" = String, Path, description = "危险源 ID")),
@@ -1547,7 +1544,7 @@ pub async fn create_control_measure_db(
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:delete"])),
-    path = "/api/ehs/hazards/{hazard_id}/controls/{measure_id}",
+    path = "/api/ehs/hazards/{id}/controls/{measure_id}",
     tag = "ehs",
     params(
         ("hazard_id" = String, Path, description = "危险源 ID"),

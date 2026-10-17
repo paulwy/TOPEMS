@@ -26,14 +26,9 @@ pub fn create_routes() -> Router<AppState> {
             "/hazards/{id}/assessments/{assessment_id}",
             put(update_assessment),
         )
-        .route(
-            "/hazards/{id}/controls",
-            get(list_control_measures).post(create_control_measure),
-        )
-        .route(
-            "/hazards/{id}/controls/{measure_id}",
-            put(update_control_measure).delete(delete_control_measure),
-        )
+    // 2026-10-17 hazard 详情子资源批：/hazards/{id}/controls 语义已由 hazard.rs 接管
+    // （hazard_control_measures 表，对齐前端 EhsHazardDetailPage 契约）；此处旧 Risk 域
+    // controls 路由删除，避免 axum 同路径同方法 merge panic。
 }
 
 #[derive(Debug, Deserialize)]
