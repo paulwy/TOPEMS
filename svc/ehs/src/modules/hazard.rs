@@ -39,10 +39,15 @@ fn hazards_list_cache_key(
 pub fn create_routes() -> Router<AppState> {
     // 路由相对路径，由 server nest /api/ehs 包裹（原误写 /api/ehs/issues 导致双前缀 /api/ehs/api/ehs/issues/*）
     Router::new()
-        .route("/issues", get(list_hazards).post(create_hazard))
+        .route(
+            "/issues",
+            get(list_safety_hazards).post(create_safety_hazard),
+        )
         .route(
             "/issues/{id}",
-            get(get_hazard).put(update_hazard).delete(delete_hazard),
+            get(get_safety_hazard)
+                .put(update_safety_hazard)
+                .delete(delete_safety_hazard),
         )
         .route("/issues/{id}/approval/start", post(start_hazard_approval))
         .route("/issues/{id}/close", post(close_hazard))
@@ -61,6 +66,7 @@ pub fn create_routes() -> Router<AppState> {
 pub struct HazardQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
+    pub search: Option<String>,
     pub status: Option<String>,
     pub level: Option<String>,
     pub source: Option<String>,
@@ -932,4 +938,420 @@ pub async fn verify_hazard(
         }),
         "隐患验证完成",
     ))
+}
+
+// ---- /issues 主 CRUD（接 ehs.safety_hazards，对齐前端 SafetyHazard 契约）----
+
+#[derive(Debug, Serialize)]
+pub struct SafetyHazard {
+    pub id: String,
+    pub hazard_no: String,
+    pub name: String,
+    pub category: String,
+    pub level: String,
+    pub description: Option<String>,
+    pub location: Option<String>,
+    pub risk_assessment: Option<String>,
+    pub control_measures: Option<Vec<String>>,
+    pub status: String,
+    pub severity: Option<String>,
+    pub exposure: Option<String>,
+    pub likelihood: Option<String>,
+    pub created_by: Option<String>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSafetyHazardRequest {
+    pub hazard_no: Option<String>,
+    pub name: String,
+    pub category: String,
+    pub level: String,
+    pub description: Option<String>,
+    pub location: Option<String>,
+    pub risk_assessment: Option<String>,
+    pub control_measures: Option<Vec<String>>,
+    pub status: Option<String>,
+    pub severity: Option<String>,
+    pub exposure: Option<String>,
+    pub likelihood: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateSafetyHazardRequest {
+    pub name: Option<String>,
+    pub category: Option<String>,
+    pub level: Option<String>,
+    pub description: Option<String>,
+    pub location: Option<String>,
+    pub risk_assessment: Option<String>,
+    pub control_measures: Option<Vec<String>>,
+    pub status: Option<String>,
+    pub severity: Option<String>,
+    pub exposure: Option<String>,
+    pub likelihood: Option<String>,
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:hazard:read"])),
+    path = "/api/ehs/issues",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn list_safety_hazards(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Query(q): Query<HazardQuery>,
+) -> Json<ApiResponse<Vec<SafetyHazard>>> {
+    let tenant_bind = resolve_hazard_tenant(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(s) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(s.clone());
+    }
+    if let Some(level) = &q.level {
+        where_clause.push_str(&format!(" AND level = ${}", params.len() + 1));
+        params.push(level.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (name ILIKE ${} OR location ILIKE ${} OR hazard_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2,
+            params.len() + 3
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, hazard_no, name, category, level, description, location,
+               risk_assessment, control_measures, status, severity, exposure, likelihood,
+               created_by, created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.safety_hazards
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list safety hazards: {}", e);
+            return Json(ApiResponse::error(500, "获取危险源列表失败"));
+        }
+    };
+    let list: Vec<SafetyHazard> = rows.iter().map(safety_hazard_from_row).collect();
+    Json(ApiResponse::success(list, "获取危险源列表成功"))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:hazard:write"])),
+    path = "/api/ehs/issues",
+    request_body = CreateSafetyHazardRequest,
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn create_safety_hazard(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Json(req): Json<CreateSafetyHazardRequest>,
+) -> Json<ApiResponse<SafetyHazard>> {
+    let tenant_id = resolve_hazard_tenant(&claims);
+    let hazard_no = req
+        .hazard_no
+        .clone()
+        .unwrap_or_else(|| format!("HZ-{}", Uuid::new_v4().to_string()[..8].to_uppercase()));
+    let control_measures: serde_json::Value = req
+        .control_measures
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+    let status = req.status.clone().unwrap_or_else(|| "active".to_string());
+
+    let sql = r#"
+        INSERT INTO ehs.safety_hazards
+            (hazard_no, name, category, level, description, location, risk_assessment,
+             control_measures, status, severity, exposure, likelihood, created_by, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        RETURNING id::text AS id, hazard_no, name, category, level, description, location,
+                  risk_assessment, control_measures, status, severity, exposure, likelihood,
+                  created_by, created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&hazard_no)
+        .bind(&req.name)
+        .bind(&req.category)
+        .bind(&req.level)
+        .bind(&req.description)
+        .bind(&req.location)
+        .bind(&req.risk_assessment)
+        .bind(control_measures)
+        .bind(&status)
+        .bind(&req.severity)
+        .bind(&req.exposure)
+        .bind(&req.likelihood)
+        .bind(Some(claims.sub.as_str()))
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create safety hazard: {}", e);
+            return Json(ApiResponse::error(500, "危险源创建失败"));
+        }
+    };
+    let record = safety_hazard_from_row(&row);
+    Json(ApiResponse::success(record, "危险源创建成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:hazard:read"])),
+    path = "/api/ehs/issues/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_safety_hazard(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<SafetyHazard>> {
+    let tenant_bind = resolve_hazard_tenant(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, hazard_no, name, category, level, description, location,
+               risk_assessment, control_measures, status, severity, exposure, likelihood,
+               created_by, created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.safety_hazards
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "危险源不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get safety hazard: {}", e);
+            return Json(ApiResponse::error(500, "获取危险源失败"));
+        }
+    };
+    let record = safety_hazard_from_row(&row);
+    Json(ApiResponse::success(record, "获取危险源成功"))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:hazard:update"])),
+    path = "/api/ehs/issues/{id}",
+    request_body = UpdateSafetyHazardRequest,
+    tag = "ehs",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_safety_hazard(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateSafetyHazardRequest>,
+) -> Json<ApiResponse<SafetyHazard>> {
+    let tenant_bind = resolve_hazard_tenant(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = req.name {
+        sets.push(format!("name = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.category {
+        sets.push(format!("category = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.level {
+        sets.push(format!("level = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.description {
+        sets.push(format!("description = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.location {
+        sets.push(format!("location = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.risk_assessment {
+        sets.push(format!("risk_assessment = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.control_measures {
+        sets.push(format!("control_measures = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = req.status {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.severity {
+        sets.push(format!("severity = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.exposure {
+        sets.push(format!("exposure = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.likelihood {
+        sets.push(format!("likelihood = ${}", params.len() + 1));
+        params.push(v);
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.safety_hazards
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, hazard_no, name, category, level, description, location,
+                  risk_assessment, control_measures, status, severity, exposure, likelihood,
+                  created_by, created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "危险源不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update safety hazard: {}", e);
+            return Json(ApiResponse::error(500, "危险源更新失败"));
+        }
+    };
+    let record = safety_hazard_from_row(&row);
+    Json(ApiResponse::success(record, "危险源更新成功"))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:hazard:delete"])),
+    path = "/api/ehs/issues/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_safety_hazard(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    let tenant_bind = resolve_hazard_tenant(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.safety_hazards
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete safety hazard: {}", e);
+            return Json(ApiResponse::error(500, "危险源删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "危险源不存在"));
+    }
+    Json(ApiResponse::success((), "危险源删除成功"))
+}
+
+/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
+fn resolve_hazard_tenant(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+/// ehs.safety_hazards 行 → SafetyHazard
+fn safety_hazard_from_row(r: &sqlx::postgres::PgRow) -> SafetyHazard {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let control_measures: Option<serde_json::Value> = r.try_get("control_measures").ok().flatten();
+    let control_measures = control_measures.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    SafetyHazard {
+        id: r.try_get("id").unwrap_or_default(),
+        hazard_no: r.try_get("hazard_no").unwrap_or_default(),
+        name: r.try_get("name").unwrap_or_default(),
+        category: r.try_get("category").unwrap_or_default(),
+        level: r.try_get("level").unwrap_or_default(),
+        description: r.try_get("description").ok().flatten(),
+        location: r.try_get("location").ok().flatten(),
+        risk_assessment: r.try_get("risk_assessment").ok().flatten(),
+        control_measures,
+        status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
+        severity: r.try_get("severity").ok().flatten(),
+        exposure: r.try_get("exposure").ok().flatten(),
+        likelihood: r.try_get("likelihood").ok().flatten(),
+        created_by: r.try_get("created_by").ok().flatten(),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
 }
