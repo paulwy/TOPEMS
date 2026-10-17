@@ -700,11 +700,15 @@ pub async fn get_equipment_statistics(
 
     Json(ApiResponse::success(
         serde_json::json!({
-            "total_count": stats.total_count.unwrap_or(0),
-            "normal_count": stats.normal_count.unwrap_or(0),
-            "maintenance_count": stats.maintenance_count.unwrap_or(0),
-            "fault_count": stats.fault_count.unwrap_or(0),
-            "pending_maintenance_count": stats.pending_maintenance_count.unwrap_or(0),
+            "total": stats.total_count.unwrap_or(0),
+            "in_use": stats.normal_count.unwrap_or(0),
+            "idle": stats.fault_count.unwrap_or(0),
+            "maintenance": stats.maintenance_count.unwrap_or(0),
+            "scrapped": 0,
+            "total_value": 0,
+            "monthly_inspections": 0,
+            "monthly_maintenances": 0,
+            "pending_repairs": stats.pending_maintenance_count.unwrap_or(0),
         }),
         "获取设备统计成功",
     ))

@@ -46,7 +46,10 @@ pub struct CreateProcessRequest {
     pub version: Option<String>,
     pub sequence: Option<i32>,
     pub equipment_required: Option<bool>,
-    pub estimated_duration: Option<i32>,
+    pub code: Option<String>,
+    #[serde(alias = "estimated_duration")]
+    pub standard_time: Option<i32>,
+    pub work_station_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -56,7 +59,10 @@ pub struct UpdateProcessRequest {
     pub version: Option<String>,
     pub sequence: Option<i32>,
     pub equipment_required: Option<bool>,
-    pub estimated_duration: Option<i32>,
+    pub code: Option<String>,
+    #[serde(alias = "estimated_duration")]
+    pub standard_time: Option<i32>,
+    pub work_station_id: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
@@ -289,23 +295,25 @@ pub async fn create_process(
     let _ = set_session_tenant_id(&state.pool, tenant_id).await;
 
     let now = Utc::now();
-    let process_no = format!(
-        "PROC{}{:04}",
-        now.format("%Y%m%d"),
-        rand::random::<u16>() % 10000
-    );
+    let process_no = req.code.clone().unwrap_or_else(|| {
+        format!(
+            "PROC{}{:04}",
+            now.format("%Y%m%d"),
+            rand::random::<u16>() % 10000
+        )
+    });
 
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         INSERT INTO mes.production_processes (
             process_code, process_name, description, version, status,
-            sequence, equipment_required, standard_time_minutes,
+            sequence, equipment_required, standard_time_minutes, work_station_id,
             organization_id, tenant_id, created_at, updated_at
-        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, CAST($7 AS NUMERIC), $8, $8, $9, $9)
+        ) VALUES ($1, $2, $3, $4, 'active', $5, $6, CAST($7 AS NUMERIC), $8, $9, $9, $10, $10)
         RETURNING
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
-            created_at, updated_at
+            work_station_id, created_at, updated_at
         "#,
     )
     .bind(process_no)
@@ -314,7 +322,8 @@ pub async fn create_process(
     .bind(req.version.unwrap_or_else(|| "1.0".to_string()))
     .bind(req.sequence.unwrap_or(0))
     .bind(req.equipment_required.unwrap_or(false))
-    .bind(req.estimated_duration.unwrap_or(0))
+    .bind(req.standard_time.unwrap_or(0))
+    .bind(req.work_station_id.as_deref())
     .bind(tenant_id)
     .bind(Utc::now())
     .fetch_one(&state.pool)
@@ -408,27 +417,31 @@ pub async fn update_process(
     let result = sqlx::query_as::<_, ProductionProcessRow>(
         r#"
         UPDATE mes.production_processes SET
-            process_name = COALESCE($2, process_name),
-            description = COALESCE($3, description),
-            version = COALESCE($4, version),
-            sequence = COALESCE($5, sequence),
-            equipment_required = COALESCE($6, equipment_required),
-            standard_time_minutes = COALESCE(CAST($7 AS NUMERIC), standard_time_minutes),
-            updated_at = $8
+            process_code = COALESCE($2, process_code),
+            process_name = COALESCE($3, process_name),
+            description = COALESCE($4, description),
+            version = COALESCE($5, version),
+            sequence = COALESCE($6, sequence),
+            equipment_required = COALESCE($7, equipment_required),
+            standard_time_minutes = COALESCE(CAST($8 AS NUMERIC), standard_time_minutes),
+            work_station_id = COALESCE($9, work_station_id),
+            updated_at = $10
         WHERE id = $1 AND status = 'active' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING
             id, process_code AS process_no, process_name AS name, description, version,
             status, sequence, equipment_required, CAST(standard_time_minutes AS INTEGER) AS estimated_duration,
-            created_at, updated_at
+            work_station_id, created_at, updated_at
         "#,
     )
     .bind(id)
+    .bind(req.code)
     .bind(req.name)
     .bind(req.description)
     .bind(req.version)
     .bind(req.sequence)
     .bind(req.equipment_required)
-    .bind(req.estimated_duration)
+    .bind(req.standard_time)
+    .bind(req.work_station_id.as_deref())
     .bind(Utc::now())
     .fetch_optional(&state.pool)
     .await;

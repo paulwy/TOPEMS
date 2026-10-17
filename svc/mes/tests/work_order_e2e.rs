@@ -17,6 +17,26 @@ async fn setup_schema(pool: &sqlx::PgPool) {
         .await
         .unwrap();
     sqlx::query(
+        r#"CREATE TABLE IF NOT EXISTS mes.production_processes (
+            id UUID PRIMARY KEY,
+            process_name VARCHAR(128),
+            work_station_name VARCHAR(128),
+            work_station_id UUID
+        )"#,
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+    sqlx::query(
+        r#"CREATE TABLE IF NOT EXISTS mes.teams (
+            id UUID PRIMARY KEY,
+            team_name VARCHAR(128)
+        )"#,
+    )
+    .execute(pool)
+    .await
+    .unwrap();
+    sqlx::query(
         r#"CREATE TABLE IF NOT EXISTS mes.work_orders (
             id UUID PRIMARY KEY,
             work_order_no VARCHAR(64) NOT NULL,

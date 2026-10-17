@@ -142,7 +142,10 @@ pub struct AdjustScheduleRequest {
 pub struct GanttTask {
     pub id: String,
     pub name: String,
+    pub order_no: Option<String>,
+    #[serde(alias = "start", rename = "start_time")]
     pub start: DateTime<Utc>,
+    #[serde(alias = "end", rename = "end_time")]
     pub end: DateTime<Utc>,
     pub progress: f64,
     pub status: String,
@@ -151,9 +154,17 @@ pub struct GanttTask {
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
+pub struct GanttDateRange {
+    pub start: String,
+    pub end: String,
+}
+
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct GanttDataResponse {
     pub tasks: Vec<GanttTask>,
+    #[serde(rename = "work_stations")]
     pub resources: Vec<GanttResource>,
+    pub date_range: GanttDateRange,
 }
 
 #[derive(Debug, Clone, Serialize, ToSchema)]
@@ -870,7 +881,7 @@ pub async fn get_gantt_data(
     let schedules = sqlx::query!(
         r#"
         SELECT 
-            ps.id, ps.schedule_no, ps.product_name,
+            ps.id, ps.schedule_no, ps.order_no, ps.product_name,
             ps.planned_start_time, ps.planned_end_time,
             ps.actual_start_time, ps.actual_end_time,
             ps.status, ps.quantity, ps.completed_quantity,
@@ -923,6 +934,7 @@ pub async fn get_gantt_data(
         tasks.push(GanttTask {
             id: s.id.to_string(),
             name: format!("{} - {}", s.schedule_no.clone(), s.product_name.clone()),
+            order_no: s.order_no.clone(),
             start,
             end,
             progress,
@@ -932,8 +944,24 @@ pub async fn get_gantt_data(
         });
     }
 
+    let date_range = {
+        let mut min_start: Option<DateTime<Utc>> = None;
+        let mut max_end: Option<DateTime<Utc>> = None;
+        for t in &tasks {
+            min_start = Some(min_start.map_or(t.start, |m| m.min(t.start)));
+            max_end = Some(max_end.map_or(t.end, |m| m.max(t.end)));
+        }
+        GanttDateRange {
+            start: min_start.map(|d| d.to_rfc3339()).unwrap_or_default(),
+            end: max_end.map(|d| d.to_rfc3339()).unwrap_or_default(),
+        }
+    };
     Json(ApiResponse::success(
-        GanttDataResponse { tasks, resources },
+        GanttDataResponse {
+            tasks,
+            resources,
+            date_range,
+        },
         "获取甘特图数据成功",
     ))
 }
