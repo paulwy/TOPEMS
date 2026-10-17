@@ -68,7 +68,7 @@ pub struct UpdateRuleRequest {
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct AutomationRun {
     pub id: Uuid,
-    pub tenant_id: Uuid,
+    pub tenant_id: Option<Uuid>,
     pub rule_id: Uuid,
     pub rule_name: Option<String>,
     pub status: String,

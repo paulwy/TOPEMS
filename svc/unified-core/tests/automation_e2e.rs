@@ -10,8 +10,9 @@ use app_state::{super_claims, test_app_state};
 use axum::extract::{Json, Path, Query, State};
 use axum::Extension;
 use topems_unified_core::modules::automation::{
-    create_rule, delete_rule, disable_rule, enable_rule, get_rule, list_rules, AutomationRule,
-    CreateRuleRequest, RuleQueryParams,
+    create_rule, delete_rule, disable_rule, duplicate_rule, enable_rule, get_rule,
+    get_rule_by_code, list_rules, update_rule, AutomationRule, CreateRuleRequest, RuleQueryParams,
+    UpdateRuleRequest,
 };
 
 async fn setup_schema(pool: &sqlx::PgPool) {
@@ -180,4 +181,52 @@ async fn delete_removes_rule(pool: sqlx::PgPool) {
     let state = test_app_state(pool.clone());
     let resp = get_rule(State(state), Path(rule.id)).await;
     assert!(resp.0.data.is_none());
+}
+
+#[sqlx::test(migrations = false)]
+async fn get_by_code_returns_rule(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
+
+    let state = test_app_state(pool);
+    let resp = get_rule_by_code(State(state), Path("RULE_A".to_string())).await;
+    let got: AutomationRule = resp.0.data.unwrap();
+    assert_eq!(got.id, rule.id);
+    assert_eq!(got.name, "规则A");
+}
+
+#[sqlx::test(migrations = false)]
+async fn update_rule_fields(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
+
+    let payload = UpdateRuleRequest {
+        name: Some("规则A-改".to_string()),
+        description: None,
+        trigger: None,
+        action: None,
+        on_success: None,
+        on_error: None,
+        canvas: None,
+        status: Some("enabled".to_string()),
+    };
+    let state = test_app_state(pool);
+    let resp = update_rule(State(state), Path(rule.id), Json(payload)).await;
+    let got: AutomationRule = resp.0.data.unwrap();
+    assert_eq!(got.name, "规则A-改");
+    assert_eq!(got.status, "enabled");
+}
+
+#[sqlx::test(migrations = false)]
+async fn duplicate_creates_copy(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let rule = create_via_handler(pool.clone(), "规则A", "RULE_A").await;
+
+    let state = test_app_state(pool);
+    let resp = duplicate_rule(State(state), Path(rule.id)).await;
+    let copy: AutomationRule = resp.0.data.unwrap();
+    assert_ne!(copy.id, rule.id);
+    assert!(copy.name.contains("副本"));
+    assert!(copy.code.contains("_copy_"));
+    assert_eq!(copy.status, "draft");
 }
