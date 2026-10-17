@@ -83,8 +83,8 @@ pub async fn list_audit_logs(
              AND ($3::text IS NULL OR action = $3)
              AND ($4::text IS NULL OR entity_type = $4)
              AND ($5::text IS NULL OR status = $5)
-             AND ($6::timestamptz IS NULL OR created_at >= $6)
-             AND ($7::timestamptz IS NULL OR created_at <= $7)
+             AND ($6::timestamptz IS NULL OR created_at >= $6::timestamptz)
+             AND ($7::timestamptz IS NULL OR created_at <= $7::timestamptz)
              AND ($8 = '' OR action ILIKE '%' || $8 || '%' OR entity_type ILIKE '%' || $8 || '%' OR COALESCE(user_name, '') ILIKE '%' || $8 || '%')"#,
     )
     .bind(user_uuid)
@@ -106,8 +106,8 @@ pub async fn list_audit_logs(
              AND ($3::text IS NULL OR action = $3)
              AND ($4::text IS NULL OR entity_type = $4)
              AND ($5::text IS NULL OR status = $5)
-             AND ($6::timestamptz IS NULL OR created_at >= $6)
-             AND ($7::timestamptz IS NULL OR created_at <= $7)
+             AND ($6::timestamptz IS NULL OR created_at >= $6::timestamptz)
+             AND ($7::timestamptz IS NULL OR created_at <= $7::timestamptz)
              AND ($8 = '' OR action ILIKE '%' || $8 || '%' OR entity_type ILIKE '%' || $8 || '%' OR COALESCE(user_name, '') ILIKE '%' || $8 || '%')
            ORDER BY created_at DESC LIMIT $9 OFFSET $10"#,
     )
@@ -174,8 +174,8 @@ pub async fn export_audit_logs(
              AND ($3::text IS NULL OR action = $3)
              AND ($4::text IS NULL OR entity_type = $4)
              AND ($5::text IS NULL OR status = $5)
-             AND ($6::timestamptz IS NULL OR created_at >= $6)
-             AND ($7::timestamptz IS NULL OR created_at <= $7)
+             AND ($6::timestamptz IS NULL OR created_at >= $6::timestamptz)
+             AND ($7::timestamptz IS NULL OR created_at <= $7::timestamptz)
              AND ($8 = '' OR action ILIKE '%' || $8 || '%' OR entity_type ILIKE '%' || $8 || '%' OR COALESCE(user_name, '') ILIKE '%' || $8 || '%')
            ORDER BY created_at DESC LIMIT 10000"#,
     )
@@ -214,8 +214,8 @@ pub async fn get_audit_stats(
 
     let total: i64 = sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM audit_logs
-           WHERE ($1::timestamptz IS NULL OR created_at >= $1)
-             AND ($2::timestamptz IS NULL OR created_at <= $2)"#,
+           WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
+             AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)"#,
     )
     .bind(&params.start_date)
     .bind(&params.end_date)
@@ -225,8 +225,8 @@ pub async fn get_audit_stats(
 
     let success_count: i64 = sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM audit_logs WHERE status = 'success'
-           AND ($1::timestamptz IS NULL OR created_at >= $1)
-           AND ($2::timestamptz IS NULL OR created_at <= $2)"#,
+           AND ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
+           AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)"#,
     )
     .bind(&params.start_date)
     .bind(&params.end_date)
@@ -236,8 +236,8 @@ pub async fn get_audit_stats(
 
     let failed_count: i64 = sqlx::query_scalar(
         r#"SELECT COUNT(*) FROM audit_logs WHERE status != 'success'
-           AND ($1::timestamptz IS NULL OR created_at >= $1)
-           AND ($2::timestamptz IS NULL OR created_at <= $2)"#,
+           AND ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
+           AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)"#,
     )
     .bind(&params.start_date)
     .bind(&params.end_date)
@@ -248,8 +248,8 @@ pub async fn get_audit_stats(
     let by_group: Vec<(String, i64)> = match group_by.as_str() {
         "action" => sqlx::query_as(
             r#"SELECT action as key, COUNT(*) as count FROM audit_logs
-               WHERE ($1::timestamptz IS NULL OR created_at >= $1)
-                 AND ($2::timestamptz IS NULL OR created_at <= $2)
+               WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
+                 AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
                GROUP BY action ORDER BY count DESC LIMIT 50"#,
         )
         .bind(&params.start_date)
@@ -259,8 +259,8 @@ pub async fn get_audit_stats(
         .unwrap_or_default(),
         "resource" => sqlx::query_as(
             r#"SELECT entity_type as key, COUNT(*) as count FROM audit_logs
-               WHERE ($1::timestamptz IS NULL OR created_at >= $1)
-                 AND ($2::timestamptz IS NULL OR created_at <= $2)
+               WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
+                 AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
                GROUP BY entity_type ORDER BY count DESC LIMIT 50"#,
         )
         .bind(&params.start_date)
@@ -271,8 +271,8 @@ pub async fn get_audit_stats(
         "user" => sqlx::query_as(
             r#"SELECT COALESCE(user_name, user_id::text, 'unknown') as key, COUNT(*) as count
                FROM audit_logs
-               WHERE ($1::timestamptz IS NULL OR created_at >= $1)
-                 AND ($2::timestamptz IS NULL OR created_at <= $2)
+               WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
+                 AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
                GROUP BY key ORDER BY count DESC LIMIT 50"#,
         )
         .bind(&params.start_date)
@@ -282,8 +282,8 @@ pub async fn get_audit_stats(
         .unwrap_or_default(),
         "date" => sqlx::query_as(
             r#"SELECT created_at::date::text as key, COUNT(*) as count FROM audit_logs
-               WHERE ($1::timestamptz IS NULL OR created_at >= $1)
-                 AND ($2::timestamptz IS NULL OR created_at <= $2)
+               WHERE ($1::timestamptz IS NULL OR created_at >= $1::timestamptz)
+                 AND ($2::timestamptz IS NULL OR created_at <= $2::timestamptz)
                GROUP BY key ORDER BY key DESC LIMIT 50"#,
         )
         .bind(&params.start_date)
