@@ -1,7 +1,13 @@
 //! Occupational health records - Physical exams, health plans, contraindications, and follow-up
 
-use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
+use axum::{
+    extract::{Query, State},
+    http::HeaderMap,
+    routing::*,
+    Extension, Json, Router,
+};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -46,13 +52,13 @@ pub fn create_routes() -> Router<AppState> {
         )
         .route(
             "/occupational-health/records",
-            get(list_exam_records).post(create_exam_record),
+            get(list_health_records).post(create_health_record),
         )
         .route(
             "/occupational-health/records/{id}",
-            get(get_exam_record)
-                .put(update_exam_record)
-                .delete(delete_exam_record),
+            get(get_health_record)
+                .put(update_health_record)
+                .delete(delete_health_record),
         )
 }
 
@@ -60,10 +66,70 @@ pub fn create_routes() -> Router<AppState> {
 pub struct HealthQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
     pub status: Option<String>,
     pub employee_id: Option<String>,
     pub exam_type: Option<String>,
     pub year: Option<i32>,
+}
+
+/// 健康档案（对齐前端 apps/web/src/api/ehs/types/health.ts HealthRecord）
+#[derive(Debug, Serialize)]
+pub struct HealthRecord {
+    pub id: String,
+    pub record_no: String,
+    pub employee_id: String,
+    pub employee_name: String,
+    pub gender: Option<String>,
+    pub birthday: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
+    pub workplace: Option<String>,
+    pub hazard_factors: Option<Vec<String>>,
+    pub blood_type: Option<String>,
+    pub allergy_history: Option<String>,
+    pub medical_history: Option<String>,
+    pub contact_info: Option<String>,
+    pub status: String,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+
+    pub tenant_id: Uuid,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateHealthRecordRequest {
+    pub employee_id: String,
+    pub employee_name: String,
+    pub gender: Option<String>,
+    pub birthday: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
+    pub workplace: Option<String>,
+    pub hazard_factors: Option<Vec<String>>,
+    pub blood_type: Option<String>,
+    pub allergy_history: Option<String>,
+    pub medical_history: Option<String>,
+    pub contact_info: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateHealthRecordRequest {
+    pub employee_name: Option<String>,
+    pub gender: Option<String>,
+    pub birthday: Option<String>,
+    pub department: Option<String>,
+    pub position: Option<String>,
+    pub workplace: Option<String>,
+    pub hazard_factors: Option<Vec<String>>,
+    pub blood_type: Option<String>,
+    pub allergy_history: Option<String>,
+    pub medical_history: Option<String>,
+    pub contact_info: Option<String>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -976,4 +1042,381 @@ pub async fn get_health_statistics(
         },
         "获取健康统计成功",
     ))
+}
+
+// ---- health records（/occupational-health/records，接 ehs.health_records）----
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/occupational-health/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn list_health_records(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Query(q): Query<HealthQuery>,
+) -> Json<ApiResponse<Vec<HealthRecord>>> {
+    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(s) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(s.clone());
+    }
+    if let Some(d) = &q.department {
+        where_clause.push_str(&format!(" AND department = ${}", params.len() + 1));
+        params.push(d.clone());
+    }
+    if let Some(p) = &q.position {
+        where_clause.push_str(&format!(" AND position = ${}", params.len() + 1));
+        params.push(p.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (employee_name ILIKE ${} OR employee_id ILIKE ${} OR record_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2,
+            params.len() + 3
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, record_no, employee_id, employee_name, gender,
+               birth_date::text AS birthday, department, position, workplace,
+               hazard_factors, blood_type,
+               COALESCE(allergy_history, allergies::text) AS allergy_history,
+               medical_history, contact_info, status,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.health_records
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list health records: {}", e);
+            return Json(ApiResponse::error(500, "获取健康档案列表失败"));
+        }
+    };
+    let list: Vec<HealthRecord> = rows.iter().map(health_record_from_row).collect();
+    Json(ApiResponse::success(list, "获取健康档案列表成功"))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/occupational-health/records",
+    request_body = CreateHealthRecordRequest,
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn create_health_record(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Json(req): Json<CreateHealthRecordRequest>,
+) -> Json<ApiResponse<HealthRecord>> {
+    let tenant_id = resolve_health_tenant(&claims);
+    let record_no = format!("HR-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let hazard_factors: serde_json::Value = req
+        .hazard_factors
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+    let status = req.status.clone().unwrap_or_else(|| "active".to_string());
+
+    let sql = r#"
+        INSERT INTO ehs.health_records
+            (record_no, employee_id, employee_name, gender, birth_date, department,
+             position, workplace, hazard_factors, blood_type, allergy_history,
+             medical_history, contact_info, status, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        RETURNING id::text AS id, record_no, employee_id, employee_name, gender,
+                  birth_date::text AS birthday, department, position, workplace,
+                  hazard_factors, blood_type, allergy_history, medical_history,
+                  contact_info, status, created_at::text AS created_at,
+                  updated_at::text AS updated_at, tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&record_no)
+        .bind(&req.employee_id)
+        .bind(&req.employee_name)
+        .bind(&req.gender)
+        .bind(&req.birthday)
+        .bind(&req.department)
+        .bind(&req.position)
+        .bind(&req.workplace)
+        .bind(hazard_factors)
+        .bind(&req.blood_type)
+        .bind(&req.allergy_history)
+        .bind(&req.medical_history)
+        .bind(&req.contact_info)
+        .bind(&status)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create health record: {}", e);
+            return Json(ApiResponse::error(500, "健康档案创建失败"));
+        }
+    };
+    let record = health_record_from_row(&row);
+    Json(ApiResponse::success(record, "健康档案创建成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/occupational-health/records/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_health_record(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<HealthRecord>> {
+    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, record_no, employee_id, employee_name, gender,
+               birth_date::text AS birthday, department, position, workplace,
+               hazard_factors, blood_type, allergy_history, medical_history,
+               contact_info, status, created_at::text AS created_at,
+               updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        FROM ehs.health_records
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "健康档案不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get health record: {}", e);
+            return Json(ApiResponse::error(500, "获取健康档案失败"));
+        }
+    };
+    let record = health_record_from_row(&row);
+    Json(ApiResponse::success(record, "获取健康档案成功"))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:update"])),
+    path = "/api/ehs/occupational-health/records/{id}",
+    request_body = UpdateHealthRecordRequest,
+    tag = "ehs",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_health_record(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateHealthRecordRequest>,
+) -> Json<ApiResponse<HealthRecord>> {
+    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = req.employee_name {
+        sets.push(format!("employee_name = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.gender {
+        sets.push(format!("gender = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.birthday {
+        sets.push(format!("birth_date = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.department {
+        sets.push(format!("department = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.position {
+        sets.push(format!("position = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.workplace {
+        sets.push(format!("workplace = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.hazard_factors {
+        sets.push(format!("hazard_factors = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = req.blood_type {
+        sets.push(format!("blood_type = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.allergy_history {
+        sets.push(format!("allergy_history = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.medical_history {
+        sets.push(format!("medical_history = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.contact_info {
+        sets.push(format!("contact_info = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.status {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v);
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.health_records
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, record_no, employee_id, employee_name, gender,
+                  birth_date::text AS birthday, department, position, workplace,
+                  hazard_factors, blood_type, allergy_history, medical_history,
+                  contact_info, status, created_at::text AS created_at,
+                  updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "健康档案不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update health record: {}", e);
+            return Json(ApiResponse::error(500, "健康档案更新失败"));
+        }
+    };
+    let record = health_record_from_row(&row);
+    Json(ApiResponse::success(record, "健康档案更新成功"))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:delete"])),
+    path = "/api/ehs/occupational-health/records/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "id")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_health_record(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    let tenant_bind = resolve_health_tenant(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.health_records
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete health record: {}", e);
+            return Json(ApiResponse::error(500, "健康档案删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "健康档案不存在"));
+    }
+    Json(ApiResponse::success((), "健康档案删除成功"))
+}
+
+/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
+fn resolve_health_tenant(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+/// ehs.health_records 行 → HealthRecord
+fn health_record_from_row(r: &sqlx::postgres::PgRow) -> HealthRecord {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let hazard_factors: Option<serde_json::Value> = r.try_get("hazard_factors").ok().flatten();
+    let hazard_factors = hazard_factors.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    HealthRecord {
+        id: r.try_get("id").unwrap_or_default(),
+        record_no: r.try_get("record_no").unwrap_or_default(),
+        employee_id: r.try_get("employee_id").unwrap_or_default(),
+        employee_name: r.try_get("employee_name").unwrap_or_default(),
+        gender: r.try_get("gender").ok().flatten(),
+        birthday: r.try_get("birthday").ok().flatten(),
+        department: r.try_get("department").ok().flatten(),
+        position: r.try_get("position").ok().flatten(),
+        workplace: r.try_get("workplace").ok().flatten(),
+        hazard_factors,
+        blood_type: r.try_get("blood_type").ok().flatten(),
+        allergy_history: r.try_get("allergy_history").ok().flatten(),
+        medical_history: r.try_get("medical_history").ok().flatten(),
+        contact_info: r.try_get("contact_info").ok().flatten(),
+        status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
 }
