@@ -261,7 +261,7 @@ impl GisEventHandlers {
 
 pub async fn start_event_subscribers(db: PgPool) -> Result<(), TopemsError> {
     let handlers = GisEventHandlers::new(db);
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers.build_subscriber().map_err(|e| TopemsError::Internal(format!("事件订阅者初始化失败: {e}")))?;
 
     tracing::info!("[gis] 启动事件订阅者，注册 3 类业务事件 handler");
     tokio::spawn(async move {
