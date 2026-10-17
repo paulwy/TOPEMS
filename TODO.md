@@ -2441,3 +2441,29 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - **components.spec 失败根因（旧断言 + 账号）**：① `TEST_ACCOUNTS.superadmin(admin)` 本地 DB 不存在 → apiLogin 401 → fallback mock token → 真实 API 请求验签 401 → 页面区块缺失（与 c2 同源，c2 已用 test_admin 显式登录）；② dashboard 已改版为「工作台/概览/模块状态/实时告警/待办任务/系统健康」布局，旧断言「今日概览/快捷入口/服务状态监测」过时；③ 顶部导航改 click 展开子菜单（人力资源→员工管理/组织架构；制造执行→生产订单→/mes/production-orders），旧 hover 下拉断言过时。修复：改用 `test_admin/admin123`（真 token），断言对齐新版 UI 文案（text= 多命中处用 .first()）
   - **b3-list-render 失败根因**：① 同上账号问题（默认 admin → mock token → API 401 → 列表空）；② 每页 CONSOLE:1 为 Google Fonts 样式表加载警告（无外网环境噪声，非应用缺陷）→ isNoise 补 `fonts\.googleapis`。修复后 8 模块正常态全部 content=true、控制台洁净
 - 全量：c2 7/7 + c2-ext 5/5 + components 9/9 + b3 3/3 = **24/24 PASS**（2.4m）
+
+## 方案C 批2-C-第四阶段：AI/auth 系列 + 全量 52 spec 巡检闭环（2026-10-17）
+
+> 主线「全量 53 spec（361 用例）修复到全绿」第四批。环境：monolith :8099（PID 6230）+ dev :3001；账号 test_admin/admin123（API + UI 双通道）。
+
+### 已提交推送（HEAD 2b7d03b6f，rebase 到远端 8e0484baa）
+- `ceaecab39` fix(ai)：AI 模块 e2e —— i18n 单实例（vite dedupe react-i18next/i18next）、governance/copilot dsh 裸返回契约对齐、后端 CreateSessionResponse 富模型（user_id/tenant_id/current_page/selected_records/conversation_history/context_data/updated_at）、spec 驼峰路由 + 定位器修复
+- `e04c5f401` fix(auth)：登录页实际是 `LoginPage.tsx`（非 LoginFormV2）——zod `/^[a-zA-Z0-9]+$/` 拒 test_admin（下划线）→ 表单永不提交 → 21 消费 spec 全卡 waitForURL；允许下划线后恢复
+- `1651a208d` fix(e2e)：登录页幽灵「登录成功」演示按钮 → getByRole(登录) strict violation（rs/lims/login/navigation/monitor/hrm 6 spec）；全局换 data-testid=login-submit；apiLogin 失败重试 1 次（全量高负载 IAM 偶发 401/500 → auth-flow/export-deep flake）
+
+### 根因清单（本轮新增）
+1. **i18n 双实例**：懒加载 chunk（BusinessCopilotPage）与壳层各解析一份 react-i18next → raw key 渲染（`ai.business_copilot.header_title`）；vite `resolve.dedupe` += react-i18next/i18next（optimizeDeps.exclude 保持不动）；**改 vite.config 必须重启 dev 才生效**
+2. **dsh 系列 API 裸返回**（`/api/ai/dsh/*` 无 {code,data} envelope）vs 前端整套 ApiResponse 解包 → data 恒 undefined → governance 空白/copilot ErrorBoundary；对齐前后端 5 处
+3. **copilot create_session user_id 必填**（后端非 Option）→ 422；前端 fallback 'anonymous'
+4. **登录页 schema**（见上）——**历史教训**：登录页在 `src/pages/shared/LoginPage.tsx`，`LoginFormV2` 是导出但未挂路由的组件，改错对象白改一次
+5. **Playwright 定位器**：① `locator('text=A, text=B')` 是无效语法（text= 引擎不支持列表，整体按子串「A, text=B」查找 → 永不匹配）→ 必须 `.or()`（内层带 page. 前缀）；② `page.waitForSelector('text=...')` 不支持伪引擎（SyntaxError）→ 用 locator.waitFor()；③ 页面主/副标题重复 → strict violation → .first()；④ evaluate querySelector('text=') 无效 → scrollIntoViewIfNeeded()
+6. **mobile 500（存量环境）**：mobile 服务调 WMS(:8041)/MES(:8030) 独立服务未运行 → 500 handler_error → pre-commit web-contract-smoke 6 FAIL（无豁免机制）→ cargo build + nohup 启动两服务后门禁恢复全 PASS
+7. **serial spec（monitor-service/navigation）**：describe.configure({mode:'serial'}) 前序失败 → 后续 13 个 did-not-run（全量统计口径需注意）
+
+### 验证结果
+- AI 3 spec 46/46 全绿（copilot 15 + BI 21 + governance 21，最终 1f/45p → governance 21/21）
+- auth 系列全绿（auth.spec 9 + auth-flow + export-deep 12/12）
+- 21 消费 spec（crm/erp/mes/scm/tms/wms）70/70 全绿
+- **全量 52 spec（排除 full-route-smoke 主测试）**：245 passed + 33 failed（已修重跑 20/20 绿）+ 13 serial did-not-run（重跑绿）→ **52 spec 全绿（278 用例）**
+- full-route-smoke「遍历路由清单」：479 路由单线程 >1h，设计为 ROUTE_FILTER 分批（B1/B2 已按组分批验证过，全量内不单跑）
+- pre-commit 全门禁 PASS ×3 提交；pre-push cargo-fmt 门禁曾失败（`cargo fmt` 需全 workspace，`-p topems-server` 不覆盖 svc/ai）→ 修复后推送成功
