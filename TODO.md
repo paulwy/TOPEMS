@@ -2555,3 +2555,9 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 ### 最终验证（2026-10-17）
 - **全量 52 spec（排除 FRS 主测试）：291 passed + 0 failed（23.6m）**，53 spec 全绿达成（FRS 6 批 460 路由已全绿于上节）。
 - crm 联系人页「加载失败 500」调查结论（2026-10-17）：全量回归高负载下偶发，**主接口 /api/crm/contacts 全参数组合 curl 200**（page/pageSize/page_size/limit/offset 均 200，items:[]）；页面探针（开 /crm/contacts 监听 response）**无任何 4xx/5xx**，无复现。判定：**环境高负载瞬态**（与 auth-flow apiLogin 偶发失败同源），非持久缺陷，无需代码改动。
+
+## K1 续｜项3 commercial/metadata 剩余实体 + quality_v51 store 核验（2026-10-18）
+
+- 结论：3a 已由 K1 续批次落地（迁移 20261015000069 commercial / 20261015000070 metadata / 0068 quality）。commercial_v55（products/subscriptions/usage/billing/rate_cards/sla_*）与 metadata_v60（objects/attributes/tags/lineage_*/lifecycle_*）全部 handler 均已 sqlx 直查真表，LazyLock/Mutex/persist/ensure_initialized 残留为 0（grep 复核）。
+- 3b：quality_v51 store 基础设施已在 0068 批次删除，规则/检查/auto_fix/suggestions/insights 均为关系表读写；本次仅清理其文件内 4 行悬空注释标题（:274-284，描述已删 store），非半接真、非死代码 handler。
+- 验证：cargo check -p topems-master-data --lib 0/0；cargo test --lib 451 passed / 0 failed。
