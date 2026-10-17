@@ -625,12 +625,12 @@
 - 决策项跳过（用户拍板暂不处理）：B1/B14/B15/A2/A5
 - 环境阻塞：A1（生产 nginx conf 需 Linux）；SIGKILL 完整 e2e 需独占实例环境（并行线 11824）
 
-### ✅ 路由级懒加载（登录页首屏瘦身）闭环（2026-10-17，commit 83c83ca5f5）
-- **根因**：MarkdownEditorTemplate 静态 import react-markdown/remark-gfm/react-syntax-highlighter，经 components 桶与模板注册链进入登录页首屏 modulepreload（markdown-vendor 1.7M/gzip 555KB）
-- **改法**：拆出独立 `MarkdownPreview.tsx` 重模块（渲染逻辑逐行等价迁移）+ React.lazy + Suspense 轻壳；MarkdownEditorTemplate 删除 4 处静态 import
-- **效果（Lighthouse 同配置节流可比）**：FCP 11.7→8.4s（-28%）、LCP 12.3→8.6s（-30%）、脚本传输 1914.7→1355.7KB（-559KB）；markdown-vendor/exceljs 均退出传输；预载 75→74
+### ✅ 路由级懒加载（登录页首屏瘦身）闭环（2026-10-17，commit 83c83ca5f5 + 05f0abd391）
+- **根因**：① MarkdownEditorTemplate 静态 import react-markdown/remark-gfm/react-syntax-highlighter（markdown-vendor 1.7M/gzip 555KB）；② GisMapTemplate 经 components 桶 + templates/extensions 桶静态 re-export（leaflet-vendor 159KB）——均经模板注册链进入登录页首屏 modulepreload
+- **改法**：① 拆出独立 `MarkdownPreview.tsx` 重模块（渲染逻辑逐行等价迁移）+ React.lazy + Suspense 轻壳；② 两处桶导出 GisMapTemplate 改 React.lazy 包装（命名导出 .then 映射 default，类型导出保留）
+- **效果（Lighthouse 同配置节流可比）**：FCP 11.7→8.2s（-30%）、LCP 12.3→8.7s（-29%）、脚本传输 1914.7→1307.1KB（-607.6KB，-32%）；markdown-vendor/exceljs/leaflet 全部退出传输；预载 75→73
 - **验证**：typecheck 0 error；build mapDeps 确认动态依赖边界；pre-commit 26 + pre-push 全绿
-- **注**：MarkdownEditorTemplate 当前无启用业务页（实机渲染待页面采用后覆盖）；leaflet-vendor（159KB）仍在首屏，量级小（gzip ~45KB）留作后续可选优化
+- **注**：MarkdownEditorTemplate 当前无启用业务页（实机渲染待页面采用后覆盖）；GisMapTemplate 业务页（GisPage/gis）为路由级 lazy + Suspense 兜底
 
 ### ✅ B7 第 15 批：收尾批 14 服务 map_err(format!) TopemsError 化（commit f0a9c2e86，22 文件）
 - gis/crm/pm/mobile/srm/rd/hrm/communication/ehs/portal/pdm/server/lims/analytics 77 处
