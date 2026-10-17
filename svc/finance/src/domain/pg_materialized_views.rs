@@ -48,7 +48,7 @@ impl PgVoucherSummaryView {
             .bind(s)
             .fetch_one(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
@@ -56,9 +56,9 @@ impl PgVoucherSummaryView {
             ))
             .fetch_one(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         };
-        let total: i64 = count_row.try_get("count").map_err(|e| e.to_string())?;
+        let total: i64 = count_row.try_get("count")?;
 
         let rows = if let Some(s) = &status {
             sqlx::query(
@@ -69,7 +69,7 @@ impl PgVoucherSummaryView {
             .bind(offset)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         } else {
             sqlx::query(
                 only_own_schema_query!("finance", "SELECT id, voucher_no, voucher_date, voucher_type, status, summary, total_amount, posted_at, version, created_by, created_at FROM mv_voucher_summary ORDER BY created_at DESC LIMIT $1 OFFSET $2"),
@@ -78,7 +78,7 @@ impl PgVoucherSummaryView {
             .bind(offset)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         };
 
         let mut items = Vec::new();
@@ -93,7 +93,7 @@ impl PgVoucherSummaryView {
             .bind(id)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| e.to_string())?;
+            ?;
 
         match result {
             Some(row) => Ok(Some(Self::row_to_voucher(&row)?)),
@@ -106,7 +106,7 @@ impl PgVoucherSummaryView {
             .bind(no)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| e.to_string())?;
+            ?;
 
         match result {
             Some(row) => Ok(Some(Self::row_to_voucher(&row)?)),
@@ -116,17 +116,17 @@ impl PgVoucherSummaryView {
 
     fn row_to_voucher(row: &sqlx::postgres::PgRow) -> Result<PgVoucherSummary, TopemsError> {
         Ok(PgVoucherSummary {
-            id: row.try_get("id").map_err(|e| e.to_string())?,
-            voucher_no: row.try_get("voucher_no").map_err(|e| e.to_string())?,
-            voucher_date: row.try_get("voucher_date").map_err(|e| e.to_string())?,
-            voucher_type: row.try_get("voucher_type").map_err(|e| e.to_string())?,
-            status: row.try_get("status").map_err(|e| e.to_string())?,
+            id: row.try_get("id")?,
+            voucher_no: row.try_get("voucher_no")?,
+            voucher_date: row.try_get("voucher_date")?,
+            voucher_type: row.try_get("voucher_type")?,
+            status: row.try_get("status")?,
             summary: row.try_get("summary").unwrap_or_default(),
-            total_amount: row.try_get("total_amount").map_err(|e| e.to_string())?,
+            total_amount: row.try_get("total_amount")?,
             created_by: row.try_get("created_by").unwrap_or_default(),
-            created_at: row.try_get("created_at").map_err(|e| e.to_string())?,
-            posted_at: row.try_get("posted_at").map_err(|e| e.to_string())?,
-            version: row.try_get("version").map_err(|e| e.to_string())?,
+            created_at: row.try_get("created_at")?,
+            posted_at: row.try_get("posted_at")?,
+            version: row.try_get("version")?,
         })
     }
 }
@@ -167,7 +167,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 .bind(e.occurred_at)
                 .execute(&self.pool)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             }
             FinanceDomainEvent::VoucherPosted(e) => {
                 sqlx::query(only_own_schema_query!(
@@ -181,7 +181,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 .bind(&e.voucher_id)
                 .execute(&self.pool)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             }
             FinanceDomainEvent::VoucherReversed(e) => {
                 sqlx::query(only_own_schema_query!(
@@ -194,7 +194,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 .bind(&e.voucher_id)
                 .execute(&self.pool)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             }
             _ => {}
         }
@@ -208,7 +208,7 @@ impl MaterializedView for PgVoucherSummaryView {
         ))
         .execute(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
+        ?;
         Ok(())
     }
 }
@@ -255,7 +255,7 @@ impl PgReceivableAgingView {
             .bind(s)
             .fetch_one(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
@@ -263,9 +263,9 @@ impl PgReceivableAgingView {
             ))
             .fetch_one(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         };
-        let total: i64 = count_row.try_get("count").map_err(|e| e.to_string())?;
+        let total: i64 = count_row.try_get("count")?;
 
         let rows = if let Some(s) = &status {
             sqlx::query(
@@ -276,7 +276,7 @@ impl PgReceivableAgingView {
             .bind(offset)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         } else {
             sqlx::query(
                 only_own_schema_query!("finance", "SELECT id, customer_id, customer_name, total_amount, current_amount, bucket_30_amount, bucket_60_amount, bucket_90_amount, bucket_180_amount, over_180_amount, status, version, updated_at FROM mv_receivable_aging ORDER BY updated_at DESC LIMIT $1 OFFSET $2"),
@@ -285,7 +285,7 @@ impl PgReceivableAgingView {
             .bind(offset)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         };
 
         let mut items = Vec::new();
@@ -300,7 +300,7 @@ impl PgReceivableAgingView {
             .bind(id)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| e.to_string())?;
+            ?;
 
         match result {
             Some(row) => Ok(Some(Self::row_to_aging(&row)?)),
@@ -310,21 +310,21 @@ impl PgReceivableAgingView {
 
     fn row_to_aging(row: &sqlx::postgres::PgRow) -> Result<PgReceivableAging, TopemsError> {
         Ok(PgReceivableAging {
-            id: row.try_get("id").map_err(|e| e.to_string())?,
-            customer_id: row.try_get("customer_id").map_err(|e| e.to_string())?,
+            id: row.try_get("id")?,
+            customer_id: row.try_get("customer_id")?,
             customer_name: row.try_get("customer_name").unwrap_or_default(),
-            total_amount: row.try_get("total_amount").map_err(|e| e.to_string())?,
-            current_amount: row.try_get("current_amount").map_err(|e| e.to_string())?,
-            bucket_30_amount: row.try_get("bucket_30_amount").map_err(|e| e.to_string())?,
-            bucket_60_amount: row.try_get("bucket_60_amount").map_err(|e| e.to_string())?,
-            bucket_90_amount: row.try_get("bucket_90_amount").map_err(|e| e.to_string())?,
+            total_amount: row.try_get("total_amount")?,
+            current_amount: row.try_get("current_amount")?,
+            bucket_30_amount: row.try_get("bucket_30_amount")?,
+            bucket_60_amount: row.try_get("bucket_60_amount")?,
+            bucket_90_amount: row.try_get("bucket_90_amount")?,
             bucket_180_amount: row
                 .try_get("bucket_180_amount")
-                .map_err(|e| e.to_string())?,
-            over_180_amount: row.try_get("over_180_amount").map_err(|e| e.to_string())?,
-            status: row.try_get("status").map_err(|e| e.to_string())?,
-            version: row.try_get("version").map_err(|e| e.to_string())?,
-            updated_at: row.try_get("updated_at").map_err(|e| e.to_string())?,
+                ?,
+            over_180_amount: row.try_get("over_180_amount")?,
+            status: row.try_get("status")?,
+            version: row.try_get("version")?,
+            updated_at: row.try_get("updated_at")?,
         })
     }
 
@@ -343,16 +343,16 @@ impl PgReceivableAgingView {
         ))
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
+        ?;
 
         let current: Option<rust_decimal::Decimal> =
-            row.try_get("current").map_err(|e| e.to_string())?;
-        let b30: Option<rust_decimal::Decimal> = row.try_get("b30").map_err(|e| e.to_string())?;
-        let b60: Option<rust_decimal::Decimal> = row.try_get("b60").map_err(|e| e.to_string())?;
-        let b90: Option<rust_decimal::Decimal> = row.try_get("b90").map_err(|e| e.to_string())?;
-        let b180: Option<rust_decimal::Decimal> = row.try_get("b180").map_err(|e| e.to_string())?;
+            row.try_get("current")?;
+        let b30: Option<rust_decimal::Decimal> = row.try_get("b30")?;
+        let b60: Option<rust_decimal::Decimal> = row.try_get("b60")?;
+        let b90: Option<rust_decimal::Decimal> = row.try_get("b90")?;
+        let b180: Option<rust_decimal::Decimal> = row.try_get("b180")?;
         let over180: Option<rust_decimal::Decimal> =
-            row.try_get("over180").map_err(|e| e.to_string())?;
+            row.try_get("over180")?;
 
         let to_f64 = |d: Option<rust_decimal::Decimal>| -> f64 {
             d.unwrap_or(rust_decimal::Decimal::ZERO)
@@ -435,7 +435,7 @@ impl MaterializedView for PgReceivableAgingView {
                 .bind("Unsettled")
                 .execute(&self.pool)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             }
             FinanceDomainEvent::ReceivableSettled(e) => {
                 let remaining = rust_decimal::Decimal::from_f64(e.remaining_amount)
@@ -456,7 +456,7 @@ impl MaterializedView for PgReceivableAgingView {
                 .bind(&e.receivable_id)
                 .execute(&self.pool)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
             }
             FinanceDomainEvent::AgingCalculated(e) if e.entity_type == "receivable" => {
                 for bucket in &e.buckets {
@@ -479,7 +479,7 @@ impl MaterializedView for PgReceivableAgingView {
                         .bind(amount)
                         .execute(&self.pool)
                         .await
-                        .map_err(|e| e.to_string())?;
+                        ?;
                 }
             }
             _ => {}
@@ -494,7 +494,7 @@ impl MaterializedView for PgReceivableAgingView {
         ))
         .execute(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
+        ?;
         Ok(())
     }
 }
