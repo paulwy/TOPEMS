@@ -23,8 +23,8 @@ function generateMockToken(username: string, role: string = 'admin'): string {
 }
 
 export async function apiLogin(username: string, password: string): Promise<string> {
-  // 高负载下 IAM 偶发 401/500，重试一次降低 flake（auth-flow 全量上下文曾连续失败）
-  for (let attempt = 0; attempt < 2; attempt++) {
+  // 高负载下 IAM 偶发 401/500/连接失败，重试三次降低 flake（全量回归曾连续 mock token）
+  for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const response = await fetch(`${API_URL}/api/core/iam/auth/login`, {
         method: 'POST',
@@ -45,8 +45,8 @@ export async function apiLogin(username: string, password: string): Promise<stri
         const role = username.includes('admin') ? 'superadmin' : 'employee';
         return generateMockToken(username, role);
       }
-      // 首次失败：短暂等待后重试（高负载下 IAM 偶发 401/500）
-      await new Promise((r) => setTimeout(r, 600));
+      // 首次/二次失败：退避后重试（高负载下 IAM 偶发 401/500/连接重置）
+      await new Promise((r) => setTimeout(r, 600 + attempt * 500));
     }
   }
   // unreachable

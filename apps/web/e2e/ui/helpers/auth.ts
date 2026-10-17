@@ -21,7 +21,7 @@ export async function loginAsAdmin(page: Page): Promise<void> {
   await page.getByTestId('login-submit').click();
 
   // 等待跳转到 dashboard
-  await page.waitForURL('**/dashboard', { timeout: 15000 });
+  await page.waitForURL('**/dashboard', { timeout: 30000 });
   // 等待页面主体加载，而不是 networkidle
   await page.waitForSelector('main, #main-content, [role="main"]', { timeout: 10000 }).catch(() => {});
 }

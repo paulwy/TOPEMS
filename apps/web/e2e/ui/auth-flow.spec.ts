@@ -1,23 +1,8 @@
 import { test, expect, Browser, Page } from '@playwright/test';
-import { TEST_ACCOUNTS, apiLogin, BASE_URL } from '../utils/testUtils';
-
-async function createAuthenticatedContext(browser: Browser, username: string, password: string) {
-  const token = await apiLogin(username, password).catch(() => '');
-  
-  return browser.newContext({
-    storageState: {
-      cookies: [],
-      origins: [
-        {
-          origin: BASE_URL,
-          localStorage: [
-            { name: 'token', value: token },
-          ],
-        },
-      ],
-    },
-  });
-}
+// 复用 testUtils 的 createAuthenticatedContext：完整注入 token/user/roles/permissions/
+// token_expiry/topems_user/last_activity/topems-auth-storage（AuthProvider 需完整 auth 状态，
+// 仅注入 token 会被判定未登录并踢回 /login）
+import { createAuthenticatedContext } from '../utils/testUtils';
 
 test.describe('认证流程测试', () => {
   test('登录后应能访问 dashboard', async ({ browser }) => {
@@ -56,9 +41,9 @@ test.describe('认证流程测试', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    const sidebar = page.locator('[data-testid="sidebar"], aside, .MuiDrawer-root');
-    const isSidebarVisible = await sidebar.first().isVisible().catch(() => false);
-    expect(isSidebarVisible).toBe(true);
+    // UI V3 壳（GlobalLayoutV3 → SideRail <nav aria-label='Main navigation'>），旧壳选择器已过时
+    const sidebar = page.getByRole('navigation', { name: 'Main navigation' });
+    await expect(sidebar).toBeVisible();
     
     await context.close();
   });

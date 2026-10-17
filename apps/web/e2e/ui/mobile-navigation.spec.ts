@@ -29,7 +29,7 @@ test.describe('移动端导航 e2e', () => {
   let context: any;
 
   test.beforeAll(async ({ browser }) => {
-    context = await createAuthenticatedContext(browser);
+    context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
   });
 
   test.afterAll(async () => {

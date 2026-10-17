@@ -90,6 +90,8 @@ test.describe('移动端真机测试', () => {
   });
 
   test('安全区域 CSS 变量应正确定义', async ({ page }) => {
+    // 变量在 @media (max-width: 640px) 下定义，需窄视口才能拿到
+    await page.setViewportSize({ width: 375, height: 812 });
     await page.goto('/login');
     await expect(page.getByPlaceholder('请输入用户名')).toBeVisible({ timeout: 20000 });
 

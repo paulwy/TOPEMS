@@ -7,10 +7,10 @@ test.describe('Monitor Service Health', () => {
     await page.goto('/login');
     await page.waitForLoadState('networkidle');
 
-    await page.getByPlaceholder('请输入用户名').fill('admin');
+    await page.getByPlaceholder('请输入用户名').fill('test_admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
     await page.getByTestId('login-submit').click();
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    await page.waitForURL('**/dashboard', { timeout: 30000 });
     await page.waitForLoadState('networkidle');
   });
 
@@ -24,7 +24,7 @@ test.describe('Monitor Service Health', () => {
     await page.goto('/monitor');
     await page.waitForLoadState('networkidle');
 
-    const healthSection = page.locator('text=服务健康');
+    const healthSection = page.locator('text=服务健康').first();
     if (await healthSection.isVisible()) {
       await expect(healthSection).toBeVisible();
     }
@@ -45,7 +45,7 @@ test.describe('Monitor Service Health', () => {
     await page.goto('/monitor');
     await page.waitForLoadState('networkidle');
 
-    const responseTime = page.locator('text=响应时间');
+    const responseTime = page.locator('text=响应时间').first();
     if (await responseTime.isVisible()) {
       await expect(responseTime).toBeVisible();
     }

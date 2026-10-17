@@ -7,8 +7,8 @@ test.describe('移动端专项测试', () => {
   test.beforeAll(async ({ browser }) => {
     authenticatedContext = await createAuthenticatedContext(
       browser,
-      TEST_ACCOUNTS.superadmin.username,
-      TEST_ACCOUNTS.superadmin.password
+      'test_admin',
+      'admin123'
     );
   });
 

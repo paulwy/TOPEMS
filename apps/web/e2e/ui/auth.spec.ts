@@ -46,7 +46,7 @@ test.describe('Authentication Tests', () => {
     await page.getByPlaceholder('请输入密码').fill('admin123');
     await page.getByTestId('login-submit').click();
     
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    await page.waitForURL('**/dashboard', { timeout: 30000 });
   });
 
   test('unsuccessful login with invalid credentials', async ({ page }) => {
@@ -66,7 +66,7 @@ test.describe('Authentication Tests', () => {
     
     const page = await context.newPage();
     await page.goto('/dashboard');
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    await page.waitForURL('**/dashboard', { timeout: 30000 });
     
     await page.close();
     await context.close();
@@ -81,7 +81,7 @@ test.describe('Authentication Tests', () => {
     
     const page = await context.newPage();
     await page.goto('/dashboard');
-    await page.waitForURL('**/dashboard', { timeout: 10000 });
+    await page.waitForURL('**/dashboard', { timeout: 30000 });
     
     await page.close();
     await context.close();

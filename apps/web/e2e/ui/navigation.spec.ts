@@ -9,7 +9,7 @@ test.describe('Navigation Tests', () => {
     await page.waitForLoadState('networkidle');
 
     // Fill login form
-    await page.getByPlaceholder('请输入用户名').fill('admin');
+    await page.getByPlaceholder('请输入用户名').fill('test_admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
 
     // Click login and wait for response

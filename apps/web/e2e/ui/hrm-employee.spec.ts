@@ -11,10 +11,10 @@ test.describe('HRM Employee Management Flow', () => {
 
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.getByPlaceholder('请输入用户名').fill('admin');
+    await page.getByPlaceholder('请输入用户名').fill('test_admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
     await page.getByTestId('login-submit').click();
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    await page.waitForURL('**/dashboard', { timeout: 30000 });
   });
 
   test('should navigate to employee management page', async ({ page }) => {

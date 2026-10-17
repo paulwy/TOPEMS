@@ -3,22 +3,25 @@ import { test, expect } from '@playwright/test';
 test.describe('LIMS Page Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.getByPlaceholder('请输入用户名').fill('admin');
+    await page.getByPlaceholder('请输入用户名').fill('test_admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
     await page.getByTestId('login-submit').click();
-    await page.waitForURL('**/dashboard', { timeout: 15000 });
+    await page.waitForURL('**/dashboard', { timeout: 30000 });
     
     // Use direct URL navigation instead of sidebar click
-    await page.goto('/lims');
+    // /lims 是 dashboard 概览；样品列表在 /lims/sample（列表页）
+    await page.goto('/lims/sample');
     await page.waitForLoadState('networkidle');
   });
 
   test('displays LIMS page correctly', async ({ page }) => {
-    await expect(page.locator('h1', { hasText: '检验管理' })).toBeVisible();
+    // /lims/sample 页面标题为「LIMS 样品管理」（i18n），h1 非固定标签
+    // LIMS 为徽标、样品管理为标题（不同元素），text= 不跨元素，用 body 文本断言
+    await expect(page.locator('body')).toContainText('样品管理', { timeout: 30000 });
   });
 
   test('displays samples section', async ({ page }) => {
-    await expect(page.locator('text=样品列表').first()).toBeVisible();
+    await expect(page.locator('text=样品管理').first()).toBeVisible({ timeout: 30000 });
   });
 
   test('displays tests section', async ({ page }) => {
