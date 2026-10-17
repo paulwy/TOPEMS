@@ -12,6 +12,19 @@ use uuid::Uuid;
 
 use super::models::{is_valid_email, record_audit_log, ListUsersParams, UserResponse, UserRow};
 
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["unified-core:iam:user:read"])),
+    path = "/users",
+    tag = "IAM-User",
+    responses(
+        (status = 200, description = "用户列表查询成功"),
+        (status = 400, description = "参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 500, description = "查询失败"),
+    ),
+)]
+#[axum::debug_handler]
 pub async fn list_users(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
@@ -145,6 +158,21 @@ struct CreateUserRequest {
     full_name: Option<String>,
 }
 
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["unified-core:iam:user:write"])),
+    path = "/users",
+    tag = "IAM-User",
+    request_body = serde_json::Value,
+    responses(
+        (status = 200, description = "创建用户成功"),
+        (status = 400, description = "参数错误"),
+        (status = 401, description = "未授权"),
+        (status = 409, description = "用户名或邮箱已存在"),
+        (status = 500, description = "创建失败"),
+    ),
+)]
+#[axum::debug_handler]
 pub async fn create_user(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,

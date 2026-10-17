@@ -160,9 +160,9 @@ pub async fn list_alerts(
             i.material_code as material_code,
             i.material_name as material_name,
             i.warehouse_id as warehouse_id,
-            w.warehouse_name as warehouse_name,
+            COALESCE(w.warehouse_name, '') as warehouse_name,
             i.location_id as location_id,
-            l.location_code as location_code,
+            COALESCE(l.location_code, '') as location_code,
             CASE
                 WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity THEN 'below_min'
                 WHEN i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity THEN 'above_max'
@@ -245,9 +245,9 @@ pub async fn list_alerts(
                     material_code: r.material_code,
                     material_name: r.material_name,
                     warehouse_id: Some(r.warehouse_id),
-                    warehouse_name: Some(r.warehouse_name),
+                    warehouse_name: r.warehouse_name.filter(|s| !s.is_empty()),
                     location_id: r.location_id,
-                    location_code: Some(r.location_code),
+                    location_code: r.location_code.filter(|s| !s.is_empty()),
                     alert_type: r.alert_type.unwrap_or_default(),
                     current_quantity: big_decimal_to_f64_non_opt(r.current_quantity),
                     threshold_value: r.threshold_value.map(big_decimal_to_f64_non_opt),
@@ -316,9 +316,9 @@ pub async fn get_alert(
             i.material_code as material_code,
             i.material_name as material_name,
             i.warehouse_id as warehouse_id,
-            w.warehouse_name as warehouse_name,
+            COALESCE(w.warehouse_name, '') as warehouse_name,
             i.location_id as location_id,
-            l.location_code as location_code,
+            COALESCE(l.location_code, '') as location_code,
             CASE
                 WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity THEN 'below_min'
                 WHEN i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity THEN 'above_max'
@@ -365,9 +365,9 @@ pub async fn get_alert(
                 material_code: r.material_code,
                 material_name: r.material_name,
                 warehouse_id: Some(r.warehouse_id),
-                warehouse_name: Some(r.warehouse_name),
+                warehouse_name: r.warehouse_name.filter(|s| !s.is_empty()),
                 location_id: r.location_id,
-                location_code: Some(r.location_code),
+                location_code: r.location_code.filter(|s| !s.is_empty()),
                 alert_type: r.alert_type.unwrap_or_default(),
                 current_quantity: big_decimal_to_f64_non_opt(r.current_quantity),
                 threshold_value: r.threshold_value.map(big_decimal_to_f64_non_opt),
@@ -540,7 +540,7 @@ pub async fn get_alert_statistics(
         r#"
         SELECT 
             i.warehouse_id,
-            w.warehouse_name as warehouse_name,
+            COALESCE(w.warehouse_name, '') as warehouse_name,
             COUNT(*) as alert_count
         FROM wms.inventory i
         LEFT JOIN wms.warehouses w ON i.warehouse_id = w.id
@@ -562,7 +562,7 @@ pub async fn get_alert_statistics(
             .into_iter()
             .map(|r| WarehouseAlertCount {
                 warehouse_id: Some(r.warehouse_id),
-                warehouse_name: Some(r.warehouse_name),
+                warehouse_name: r.warehouse_name.filter(|s| !s.is_empty()),
                 alert_count: r.alert_count.unwrap_or(0),
             })
             .collect(),
@@ -740,9 +740,9 @@ pub async fn get_alerts_by_warehouse(
             i.material_code as material_code,
             i.material_name as material_name,
             i.warehouse_id as warehouse_id,
-            w.warehouse_name as warehouse_name,
+            COALESCE(w.warehouse_name, '') as warehouse_name,
             i.location_id as location_id,
-            l.location_code as location_code,
+            COALESCE(l.location_code, '') as location_code,
             CASE
                 WHEN i.min_quantity IS NOT NULL AND i.quantity < i.min_quantity THEN 'below_min'
                 WHEN i.max_quantity IS NOT NULL AND i.quantity > i.max_quantity THEN 'above_max'
@@ -806,9 +806,9 @@ pub async fn get_alerts_by_warehouse(
                     material_code: r.material_code,
                     material_name: r.material_name,
                     warehouse_id: Some(r.warehouse_id),
-                    warehouse_name: Some(r.warehouse_name),
+                    warehouse_name: r.warehouse_name.filter(|s| !s.is_empty()),
                     location_id: r.location_id,
-                    location_code: Some(r.location_code),
+                    location_code: r.location_code.filter(|s| !s.is_empty()),
                     alert_type: r.alert_type.unwrap_or_default(),
                     current_quantity: big_decimal_to_f64_non_opt(r.current_quantity),
                     threshold_value: r.threshold_value.map(big_decimal_to_f64_non_opt),

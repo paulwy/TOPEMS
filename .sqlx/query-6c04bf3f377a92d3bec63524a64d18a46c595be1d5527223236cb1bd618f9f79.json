@@ -15,12 +15,12 @@
         "Uuid",
         "Uuid",
         "Uuid",
-        "Varchar",
-        "Varchar",
-        "Numeric",
-        "Numeric",
-        "Numeric",
-        "Varchar",
+        "Text",
+        "Text",
+        "Float8",
+        "Float8",
+        "Float8",
+        "Text",
         "Timestamptz",
         "Uuid"
       ]

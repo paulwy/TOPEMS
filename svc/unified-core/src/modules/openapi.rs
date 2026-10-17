@@ -95,6 +95,8 @@ pub struct Permission {
         crate::modules::iam::position::list_positions,
         crate::modules::iam::permission_verify::verify_permission,
         crate::modules::iam::permission_verify::verify_multiple_permissions,
+        crate::modules::iam::user::crud::list_users,
+        crate::modules::iam::user::crud::create_user,
         crate::modules::iam::user::profile_ext::get_my_permissions,
         crate::modules::iam::user::roles::get_user_permissions,
         // ===== Flow module - task =====
