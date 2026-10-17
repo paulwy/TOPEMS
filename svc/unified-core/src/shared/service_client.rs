@@ -230,12 +230,18 @@ impl ServiceConfig {
         let mut headers = HeaderMap::new();
 
         if let Some(api_key) = &self.api_key {
-            headers.insert(HeaderName::from_static("x-api-key"), HeaderValue::from_str(api_key)?);
+            headers.insert(
+                HeaderName::from_static("x-api-key"),
+                HeaderValue::from_str(api_key)?,
+            );
         }
 
         if let Some(token) = &self.bearer_token {
             let auth_value = format!("Bearer {}", token);
-            headers.insert(reqwest::header::AUTHORIZATION, HeaderValue::from_str(&auth_value)?);
+            headers.insert(
+                reqwest::header::AUTHORIZATION,
+                HeaderValue::from_str(&auth_value)?,
+            );
         }
 
         for (key, value) in &self.default_headers {

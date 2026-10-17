@@ -180,8 +180,7 @@ impl AuditLogArchiver {
         let filepath = self.config.archive_dir.join(&filename);
 
         // Serialize entries to JSON
-        let json = serde_json::to_string_pretty(entries)
-            ?;
+        let json = serde_json::to_string_pretty(entries)?;
 
         if self.config.compress {
             self.write_compressed_file(&filepath, json.as_bytes())?;
@@ -194,16 +193,10 @@ impl AuditLogArchiver {
 
     /// Write a plain (uncompressed) file.
     fn write_plain_file(&self, path: &Path, data: &[u8]) -> Result<(), ArchiveError> {
-        let mut file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)
-            ?;
+        let mut file = OpenOptions::new().create(true).append(true).open(path)?;
 
-        file.write_all(data)
-            ?;
-        file.write_all(b"\n")
-            ?;
+        file.write_all(data)?;
+        file.write_all(b"\n")?;
 
         Ok(())
     }
@@ -214,14 +207,9 @@ impl AuditLogArchiver {
         let compressed = compress_gzip(data)?;
 
         // Write compressed file (append mode)
-        let mut file = OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(path)
-            ?;
+        let mut file = OpenOptions::new().create(true).append(true).open(path)?;
 
-        file.write_all(&compressed)
-            ?;
+        file.write_all(&compressed)?;
 
         Ok(())
     }
@@ -229,8 +217,7 @@ impl AuditLogArchiver {
     /// Ensure the archive directory exists.
     fn ensure_archive_dir(&self) -> Result<(), ArchiveError> {
         if !self.config.archive_dir.exists() {
-            fs::create_dir_all(&self.config.archive_dir)
-                ?;
+            fs::create_dir_all(&self.config.archive_dir)?;
             info!(
                 dir = ?self.config.archive_dir,
                 "Created archive directory"
@@ -247,16 +234,12 @@ impl AuditLogArchiver {
 
         let mut archives = Vec::new();
 
-        for entry in
-            fs::read_dir(&self.config.archive_dir)?
-        {
+        for entry in fs::read_dir(&self.config.archive_dir)? {
             let entry = entry?;
             let path = entry.path();
 
             if path.is_file() {
-                let metadata = entry
-                    .metadata()
-                    ?;
+                let metadata = entry.metadata()?;
                 let created = metadata
                     .created()
                     .ok()

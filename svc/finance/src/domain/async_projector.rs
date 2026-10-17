@@ -78,17 +78,13 @@ impl AsyncProjector {
 
         match result {
             Some(row) => {
-                let last_event_id: Option<Uuid> =
-                    row.try_get("last_event_id")?;
+                let last_event_id: Option<Uuid> = row.try_get("last_event_id")?;
                 let last_event_time: Option<chrono::DateTime<chrono::Utc>> =
                     row.try_get("last_event_time")?;
-                let processed_count: i64 =
-                    row.try_get("processed_count")?;
+                let processed_count: i64 = row.try_get("processed_count")?;
                 let error_count: i64 = row.try_get("error_count")?;
-                let last_error: Option<String> =
-                    row.try_get("last_error")?;
-                let updated_at: chrono::DateTime<chrono::Utc> =
-                    row.try_get("updated_at")?;
+                let last_error: Option<String> = row.try_get("last_error")?;
+                let updated_at: chrono::DateTime<chrono::Utc> = row.try_get("updated_at")?;
 
                 Ok(ProjectionProgress {
                     view_name: view_name.to_string(),
@@ -132,7 +128,10 @@ impl AsyncProjector {
         error: Option<&str>,
     ) -> Result<(), TopemsError> {
         let last_event_uuid = match last_event_id {
-            Some(id) => Some(Uuid::parse_str(id).map_err(|e| TopemsError::ValidationFailed(format!("无效UUID: {e}")))?),
+            Some(id) => Some(
+                Uuid::parse_str(id)
+                    .map_err(|e| TopemsError::ValidationFailed(format!("无效UUID: {e}")))?,
+            ),
             None => None,
         };
 
@@ -149,8 +148,7 @@ impl AsyncProjector {
             .bind(err)
             .bind(view_name)
             .execute(&self.pool)
-            .await
-            ?;
+            .await?;
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
@@ -164,8 +162,7 @@ impl AsyncProjector {
             .bind(processed_increment as i64)
             .bind(view_name)
             .execute(&self.pool)
-            .await
-            ?;
+            .await?;
         }
 
         Ok(())
@@ -318,8 +315,7 @@ impl AsyncProjector {
         ))
         .bind(view_name)
         .execute(&self.pool)
-        .await
-        ?;
+        .await?;
 
         Ok(())
     }

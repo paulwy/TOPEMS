@@ -280,8 +280,7 @@ impl DatabasePermissionStore {
             user_id,
         )
         .fetch_optional(self.pool.as_ref())
-        .await
-        ?;
+        .await?;
 
         let Some(record) = record else {
             return Ok(None);
@@ -297,8 +296,7 @@ impl DatabasePermissionStore {
             record.id,
         )
         .fetch_all(self.pool.as_ref())
-        .await
-        ?;
+        .await?;
 
         let tool_permissions = tool_records
             .into_iter()
@@ -336,8 +334,7 @@ impl DatabasePermissionStore {
             user_id,
         )
         .execute(self.pool.as_ref())
-        .await
-        ?;
+        .await?;
 
         if result.rows_affected() == 0 {
             return Err(PermissionStoreError::NotFound(
@@ -364,8 +361,7 @@ impl DatabasePermissionStore {
             tenant_id,
         )
         .fetch_all(self.pool.as_ref())
-        .await
-        ?;
+        .await?;
 
         let mut permissions = Vec::new();
         for record in records {
@@ -395,8 +391,7 @@ impl DatabasePermissionStore {
             user_id,
         )
         .fetch_all(self.pool.as_ref())
-        .await
-        ?;
+        .await?;
 
         let mut permissions = Vec::new();
         for record in records {
@@ -426,8 +421,7 @@ impl DatabasePermissionStore {
             "#,
         )
         .fetch_one(self.pool.as_ref())
-        .await
-        ?;
+        .await?;
 
         Ok(record.count.unwrap_or(0) as usize)
     }
@@ -468,11 +462,7 @@ impl PermissionStore for DatabasePermissionStore {
         permission: TenantPermission,
     ) -> Result<(), PermissionStoreError> {
         // Start a transaction
-        let mut tx = self
-            .pool
-            .begin()
-            .await
-            ?;
+        let mut tx = self.pool.begin().await?;
 
         // Insert tenant permission
         let tenant_perm_id = sqlx::query!(
@@ -523,9 +513,7 @@ impl PermissionStore for DatabasePermissionStore {
         }
 
         // Commit transaction
-        tx.commit()
-            .await
-            ?;
+        tx.commit().await?;
 
         // Update cache
         self.insert_into_cache(permission).await;
@@ -569,11 +557,7 @@ impl PermissionStore for DatabasePermissionStore {
         permission: TenantPermission,
     ) -> Result<(), PermissionStoreError> {
         // Start a transaction
-        let mut tx = self
-            .pool
-            .begin()
-            .await
-            ?;
+        let mut tx = self.pool.begin().await?;
 
         // Update tenant permission
         let result = sqlx::query!(
@@ -589,8 +573,7 @@ impl PermissionStore for DatabasePermissionStore {
             permission.user_id,
         )
         .fetch_optional(&mut *tx)
-        .await
-        ?;
+        .await?;
 
         let Some(record) = result else {
             return Err(PermissionStoreError::NotFound(
@@ -608,8 +591,7 @@ impl PermissionStore for DatabasePermissionStore {
             record.id,
         )
         .execute(&mut *tx)
-        .await
-        ?;
+        .await?;
 
         // Insert new tool permissions
         for tool_perm in &permission.tool_permissions {
@@ -631,9 +613,7 @@ impl PermissionStore for DatabasePermissionStore {
         }
 
         // Commit transaction
-        tx.commit()
-            .await
-            ?;
+        tx.commit().await?;
 
         // Invalidate cache
         self.invalidate_cache(&permission.tenant_id, &permission.user_id)

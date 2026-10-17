@@ -47,16 +47,14 @@ impl PgVoucherSummaryView {
             ))
             .bind(s)
             .fetch_one(&self.pool)
-            .await
-            ?
+            .await?
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
                 "SELECT COUNT(*) as count FROM mv_voucher_summary"
             ))
             .fetch_one(&self.pool)
-            .await
-            ?
+            .await?
         };
         let total: i64 = count_row.try_get("count")?;
 
@@ -180,8 +178,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 .bind(e.occurred_at)
                 .bind(&e.voucher_id)
                 .execute(&self.pool)
-                .await
-                ?;
+                .await?;
             }
             FinanceDomainEvent::VoucherReversed(e) => {
                 sqlx::query(only_own_schema_query!(
@@ -193,8 +190,7 @@ impl MaterializedView for PgVoucherSummaryView {
                 .bind("Reversed")
                 .bind(&e.voucher_id)
                 .execute(&self.pool)
-                .await
-                ?;
+                .await?;
             }
             _ => {}
         }
@@ -207,8 +203,7 @@ impl MaterializedView for PgVoucherSummaryView {
             "DELETE FROM mv_voucher_summary"
         ))
         .execute(&self.pool)
-        .await
-        ?;
+        .await?;
         Ok(())
     }
 }
@@ -254,16 +249,14 @@ impl PgReceivableAgingView {
             ))
             .bind(s)
             .fetch_one(&self.pool)
-            .await
-            ?
+            .await?
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
                 "SELECT COUNT(*) as count FROM mv_receivable_aging"
             ))
             .fetch_one(&self.pool)
-            .await
-            ?
+            .await?
         };
         let total: i64 = count_row.try_get("count")?;
 
@@ -318,9 +311,7 @@ impl PgReceivableAgingView {
             bucket_30_amount: row.try_get("bucket_30_amount")?,
             bucket_60_amount: row.try_get("bucket_60_amount")?,
             bucket_90_amount: row.try_get("bucket_90_amount")?,
-            bucket_180_amount: row
-                .try_get("bucket_180_amount")
-                ?,
+            bucket_180_amount: row.try_get("bucket_180_amount")?,
             over_180_amount: row.try_get("over_180_amount")?,
             status: row.try_get("status")?,
             version: row.try_get("version")?,
@@ -342,17 +333,14 @@ impl PgReceivableAgingView {
              FROM mv_receivable_aging"
         ))
         .fetch_one(&self.pool)
-        .await
-        ?;
+        .await?;
 
-        let current: Option<rust_decimal::Decimal> =
-            row.try_get("current")?;
+        let current: Option<rust_decimal::Decimal> = row.try_get("current")?;
         let b30: Option<rust_decimal::Decimal> = row.try_get("b30")?;
         let b60: Option<rust_decimal::Decimal> = row.try_get("b60")?;
         let b90: Option<rust_decimal::Decimal> = row.try_get("b90")?;
         let b180: Option<rust_decimal::Decimal> = row.try_get("b180")?;
-        let over180: Option<rust_decimal::Decimal> =
-            row.try_get("over180")?;
+        let over180: Option<rust_decimal::Decimal> = row.try_get("over180")?;
 
         let to_f64 = |d: Option<rust_decimal::Decimal>| -> f64 {
             d.unwrap_or(rust_decimal::Decimal::ZERO)
@@ -455,8 +443,7 @@ impl MaterializedView for PgReceivableAgingView {
                 .bind(status)
                 .bind(&e.receivable_id)
                 .execute(&self.pool)
-                .await
-                ?;
+                .await?;
             }
             FinanceDomainEvent::AgingCalculated(e) if e.entity_type == "receivable" => {
                 for bucket in &e.buckets {
@@ -475,11 +462,7 @@ impl MaterializedView for PgReceivableAgingView {
                             "UPDATE mv_receivable_aging SET {} = $1, version = version + 1, updated_at = NOW() WHERE status != 'Settled'",
                             bucket_col
                         );
-                    sqlx::query(&query)
-                        .bind(amount)
-                        .execute(&self.pool)
-                        .await
-                        ?;
+                    sqlx::query(&query).bind(amount).execute(&self.pool).await?;
                 }
             }
             _ => {}
@@ -493,8 +476,7 @@ impl MaterializedView for PgReceivableAgingView {
             "DELETE FROM mv_receivable_aging"
         ))
         .execute(&self.pool)
-        .await
-        ?;
+        .await?;
         Ok(())
     }
 }
