@@ -1,5 +1,6 @@
 // Layout components
-// [已清理] GlobalLayout - 旧桌面壳，已由 GlobalLayoutV3 取代（UI V3 定案 2026-10-16）
+import { lazy } from 'react';
+// [cleaned] GlobalLayout - old desktop shell, replaced by GlobalLayoutV3 (UI V3 final 2026-10-16)
 export { default as PageHeader } from './templates/PageHeader';
 export type {
   PageHeaderProps,
@@ -299,7 +300,10 @@ export type {
   ReportDesignerState,
 } from './templates/ReportDesignerTemplate';
 
-export { GisMapTemplate } from './templates/GisMapTemplate';
+// Lazy GIS map template: leaflet stays out of first paint.
+export const GisMapTemplate = lazy(() =>
+  import('./templates/GisMapTemplate').then((m) => ({ default: m.GisMapTemplate }))
+);
 export type {
   MapMarker,
   MapLayer,

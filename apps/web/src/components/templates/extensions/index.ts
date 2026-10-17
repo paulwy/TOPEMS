@@ -1,9 +1,10 @@
 /**
- * 扩展模板插件（12个，按需引入）
+ * Extension templates (12, imported on demand).
  *
- * 这些模板通过核心模板 + 配置组合可实现，或使用场景较低频。
- * 推荐使用动态导入（lazy import）以减少 bundle 体积。
+ * These can be composed from core templates + config, or are lower-frequency.
+ * Dynamic import (lazy) is recommended to reduce bundle size.
  */
+import { lazy } from 'react';
 
 export { TreePageTemplate } from '../TreePageTemplate';
 export type { TreeNode, TreeConfig, TreeAction, TreePageTemplateProps } from '../TreePageTemplate';
@@ -81,7 +82,10 @@ export type {
   ReportDesignerState,
 } from '../ReportDesignerTemplate';
 
-export { GisMapTemplate } from '../GisMapTemplate';
+// Lazy GIS map template: leaflet stays out of first paint.
+export const GisMapTemplate = lazy(() =>
+  import('../GisMapTemplate').then((m) => ({ default: m.GisMapTemplate }))
+);
 export type {
   MapMarker,
   MapLayer,
