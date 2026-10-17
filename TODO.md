@@ -1085,7 +1085,7 @@
 ### ⚠️ 事件与遗留
 - **并发改动抹除事件（已恢复）**：首次 DB-06 提交时 `git commit --only` 的 hidden-stash 恢复失败（migration-validate 在钩子内重写已暂存 checksums.txt → patch failed:190），吞掉全部未暂存改动（AR×3、FE-20/21 代码、plugin-registry 注释）；恢复：两工作包子代理（在场 IDLE_RESUMABLE）按原记忆精确重放（AR +93/-8、FE-20 注释、FE-21 三文件），重放后均已提交；教训——迁移类提交勿在暂存 checksums.txt 时被钩子重写，先对齐暂存/工作区
 - **FE-21 首提交为空壳已修正**：d301fd852 因代码改动被抹只含文档 → 代码修复单独 commit `a557c431c`（文档与代码分提交，内容完整）
-- **全链 5433 空库守卫阻塞**：用户并发迁移 `20261007140000_align_stub_tables_handler_contract.sql`（未跟踪）引用不存在的 finance.reconciliation_orders → 全链重放失败；DB-05/06 已用「基础链+本批 2 迁移」单独重放绕过验证；待用户修复后补跑全链
+- **~~全链 5433 空库守卫阻塞~~ 已解决（2026-10-17 核实）**：用户并发迁移 `20261007140000_align_stub_tables_handler_contract.sql` 已入库（`4058848d20` web-contract stub 对齐收口 4125/4125 全绿 + `29060e9148` audit 写入链路对齐），内容为幂等 `ADD COLUMN IF NOT EXISTS` 对齐，不再引用不存在的 finance.reconciliation_orders；后续所有提交 pre-commit migration-validate 全绿（checksums 一致）——迁移链门禁层面已对齐，全链 DB 重放待有数据库环境时补跑
 - **AR-08 实施前置**：Cargo.toml/Cargo.lock 用户并发（jsonwebtoken rust_crypto）提交变干净后，按 ar08 方案批次执行（先 A 批 → C 批 → B 批）
 
 ## 2026-10-07 第四批·BE-08 triage + 前端收敛 + 文档小项（已完成，摘要 `artifacts/tier2-fixes/TOPEMS第四批修复摘要.md`）
