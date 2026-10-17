@@ -35,7 +35,17 @@ pub fn create_routes() -> Router<AppState> {
             get(list_evaluations).post(create_evaluation),
         )
         .route(
+            "/environmental-compliance/assessments",
+            get(list_evaluations).post(create_evaluation),
+        )
+        .route(
             "/environmental-compliance/evaluations/{id}",
+            get(get_evaluation)
+                .put(update_evaluation)
+                .delete(delete_evaluation),
+        )
+        .route(
+            "/environmental-compliance/assessments/{id}",
             get(get_evaluation)
                 .put(update_evaluation)
                 .delete(delete_evaluation),
@@ -130,26 +140,35 @@ pub struct EnvironmentalRegulation {
 }
 
 #[derive(Debug, Serialize)]
-pub struct ComplianceEvaluation {
+pub struct ComplianceAssessment {
     pub id: String,
-    pub eval_no: String,
+    pub assessment_no: String,
     pub title: String,
-    pub eval_type: String,
-    pub eval_period: Option<String>,
-    pub start_date: Option<String>,
-    pub end_date: Option<String>,
-    pub evaluator: Option<String>,
-    pub status: String,
-    pub overall_result: Option<String>,
-    pub compliance_rate: Option<f64>,
+    pub assessment_type: String,
+    pub scope: Option<String>,
+    pub period_start: Option<String>,
+    pub period_end: Option<String>,
+    pub assessor: Option<String>,
+    pub assessment_date: Option<String>,
+    pub result: Option<String>,
+    pub score: Option<f64>,
     pub findings: Option<String>,
-    pub improvements: Option<String>,
-    pub evaluated_at: Option<String>,
+    pub non_complianceitems: Option<Vec<String>>,
+    pub corrective_actions: Option<String>,
+    pub status: String,
     pub attachments: Option<Vec<String>>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 
     pub tenant_id: Uuid,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct DischargeLimit {
+    pub pollutant_name: String,
+    pub limit_value: f64,
+    pub unit: String,
+    pub standard: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -200,20 +219,20 @@ pub struct EnvironmentMonitor {
 pub struct DischargePermit {
     pub id: String,
     pub permit_no: String,
+    pub title: Option<String>,
     pub permit_type: String,
-    pub permit_name: Option<String>,
-    pub issuing_authority: Option<String>,
-    pub issued_date: Option<String>,
-    pub valid_from: Option<String>,
-    pub valid_to: Option<String>,
-    pub status: String,
-    pub pollutant_list: Option<Vec<String>>,
-    pub discharge_standard: Option<String>,
-    pub total_amount_limit: Option<String>,
-    pub discharge_location: Option<String>,
+    pub permit_category: Option<String>,
     pub holder: Option<String>,
+    pub issue_date: Option<String>,
+    pub effective_date: Option<String>,
+    pub expiry_date: Option<String>,
+    pub issuing_authority: Option<String>,
+    pub discharge_location: Option<String>,
+    pub discharge_standard: Option<String>,
+    pub discharge_limits: Option<Vec<DischargeLimit>>,
+    pub monitoring_requirements: Option<String>,
+    pub status: String,
     pub attachments: Option<Vec<String>>,
-    pub remarks: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 
@@ -302,19 +321,36 @@ pub struct UpdateRegulationRequest {
 #[derive(Debug, Deserialize)]
 pub struct CreateEvaluationRequest {
     pub title: String,
-    pub eval_type: String,
-    pub eval_period: Option<String>,
-    pub start_date: Option<String>,
-    pub end_date: Option<String>,
-    pub evaluator: Option<String>,
+    pub assessment_type: String,
+    pub scope: Option<String>,
+    pub period_start: Option<String>,
+    pub period_end: Option<String>,
+    pub assessor: Option<String>,
+    pub assessment_date: Option<String>,
+    pub result: Option<String>,
+    pub score: Option<f64>,
+    pub findings: Option<String>,
+    pub non_complianceitems: Option<Vec<String>>,
+    pub corrective_actions: Option<String>,
+    pub attachments: Option<Vec<String>>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateEvaluationRequest {
-    pub overall_result: Option<String>,
-    pub compliance_rate: Option<f64>,
+    pub title: Option<String>,
+    pub assessment_type: Option<String>,
+    pub scope: Option<String>,
+    pub period_start: Option<String>,
+    pub period_end: Option<String>,
+    pub assessor: Option<String>,
+    pub assessment_date: Option<String>,
+    pub result: Option<String>,
+    pub score: Option<f64>,
     pub findings: Option<String>,
-    pub improvements: Option<String>,
+    pub non_complianceitems: Option<Vec<String>>,
+    pub corrective_actions: Option<String>,
+    pub attachments: Option<Vec<String>>,
     pub status: Option<String>,
 }
 
@@ -338,28 +374,38 @@ pub struct CreateMonitorRecordRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct CreatePermitRequest {
+    pub title: String,
     pub permit_type: String,
-    pub permit_name: Option<String>,
-    pub issuing_authority: Option<String>,
-    pub issued_date: Option<String>,
-    pub valid_from: Option<String>,
-    pub valid_to: Option<String>,
-    pub pollutant_list: Option<Vec<String>>,
-    pub discharge_standard: Option<String>,
-    pub total_amount_limit: Option<String>,
-    pub discharge_location: Option<String>,
+    pub permit_category: Option<String>,
     pub holder: Option<String>,
-    pub remarks: Option<String>,
+    pub issue_date: Option<String>,
+    pub effective_date: Option<String>,
+    pub expiry_date: Option<String>,
+    pub issuing_authority: Option<String>,
+    pub discharge_location: Option<String>,
+    pub discharge_standard: Option<String>,
+    pub discharge_limits: Option<Vec<DischargeLimit>>,
+    pub monitoring_requirements: Option<String>,
+    pub attachments: Option<Vec<String>>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdatePermitRequest {
-    pub permit_name: Option<String>,
+    pub title: Option<String>,
+    pub permit_type: Option<String>,
+    pub permit_category: Option<String>,
+    pub holder: Option<String>,
+    pub issue_date: Option<String>,
+    pub effective_date: Option<String>,
+    pub expiry_date: Option<String>,
+    pub issuing_authority: Option<String>,
+    pub discharge_location: Option<String>,
+    pub discharge_standard: Option<String>,
+    pub discharge_limits: Option<Vec<DischargeLimit>>,
+    pub monitoring_requirements: Option<String>,
+    pub attachments: Option<Vec<String>>,
     pub status: Option<String>,
-    pub valid_from: Option<String>,
-    pub valid_to: Option<String>,
-    pub pollutant_list: Option<Vec<String>>,
-    pub remarks: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -798,46 +844,39 @@ pub async fn update_monitor_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_permit(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DischargePermit>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
+               holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
+               valid_to::text AS expiry_date, issuing_authority, discharge_location,
+               discharge_standard, discharge_limits, monitoring_requirements, status,
+               attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_discharge_permits
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "排污许可不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get discharge permit: {}", e);
+            return Json(ApiResponse::error(500, "获取排污许可失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting permit: {}", id);
-    Json(ApiResponse::success(
-        DischargePermit {
-            id,
-            permit_no: "PERM-2024001".to_string(),
-            permit_type: "wastewater".to_string(),
-            permit_name: Some("排污许可证".to_string()),
-            issuing_authority: Some("生态环境局".to_string()),
-            issued_date: Some("2024-01-01".to_string()),
-            valid_from: Some("2024-01-01".to_string()),
-            valid_to: Some("2027-12-31".to_string()),
-            status: "valid".to_string(),
-            pollutant_list: Some(vec!["COD".to_string(), "NH3-N".to_string()]),
-            discharge_standard: Some("GB8978".to_string()),
-            total_amount_limit: Some("500t/a".to_string()),
-            discharge_location: Some("厂区排污口".to_string()),
-            holder: Some("公司名称".to_string()),
-            attachments: None,
-            remarks: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "获取排污许可成功",
-    ))
+    let permit = discharge_permit_from_row(&row);
+    Json(ApiResponse::success(permit, "获取排污许可成功"))
 }
 
 #[utoipa::path(
@@ -850,47 +889,109 @@ pub async fn get_permit(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_permit(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdatePermitRequest>,
 ) -> Json<ApiResponse<DischargePermit>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = req.title {
+        sets.push(format!("permit_name = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.permit_type {
+        sets.push(format!("permit_type = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.permit_category {
+        sets.push(format!("permit_category = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.holder {
+        sets.push(format!("holder = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.issue_date {
+        sets.push(format!("issued_date = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.effective_date {
+        sets.push(format!("valid_from = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.expiry_date {
+        sets.push(format!("valid_to = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.issuing_authority {
+        sets.push(format!("issuing_authority = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.discharge_location {
+        sets.push(format!("discharge_location = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.discharge_standard {
+        sets.push(format!("discharge_standard = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.discharge_limits {
+        sets.push(format!("discharge_limits = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = req.monitoring_requirements {
+        sets.push(format!("monitoring_requirements = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.attachments {
+        sets.push(format!("attachments = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = req.status {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v);
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_discharge_permits
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
+                  holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
+                  valid_to::text AS expiry_date, issuing_authority, discharge_location,
+                  discharge_standard, discharge_limits, monitoring_requirements, status,
+                  attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "排污许可不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update discharge permit: {}", e);
+            return Json(ApiResponse::error(500, "排污许可更新失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating permit {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        DischargePermit {
-            id,
-            permit_no: "PERM-2024001".to_string(),
-            permit_type: "wastewater".to_string(),
-            permit_name: req.permit_name,
-            issuing_authority: None,
-            issued_date: None,
-            valid_from: req.valid_from,
-            valid_to: req.valid_to,
-            status: req.status.unwrap_or_else(|| "valid".to_string()),
-            pollutant_list: req.pollutant_list,
-            discharge_standard: None,
-            total_amount_limit: None,
-            discharge_location: None,
-            holder: None,
-            attachments: None,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "排污许可更新成功",
-    ))
+    let permit = discharge_permit_from_row(&row);
+    Json(ApiResponse::success(permit, "排污许可更新成功"))
 }
 
 #[utoipa::path(
@@ -902,13 +1003,45 @@ pub async fn update_permit(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_permit(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting permit: {}", id);
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.qa_ehs_discharge_permits
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete discharge permit: {}", e);
+            return Json(ApiResponse::error(500, "排污许可删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "排污许可不存在"));
+    }
     Json(ApiResponse::success((), "排污许可删除成功"))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AssessmentQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub assessment_type: Option<String>,
+    pub result: Option<String>,
+    pub status: Option<String>,
 }
 
 #[utoipa::path(
@@ -919,15 +1052,71 @@ pub async fn delete_permit(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_evaluations(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<ComplianceEvaluation>>> {
-    tracing::debug!("Listing compliance evaluations");
-    Json(ApiResponse::success(
-        Vec::<ComplianceEvaluation>::new(),
-        "获取合规性评价列表成功",
-    ))
+    Query(q): Query<AssessmentQuery>,
+) -> Json<ApiResponse<Vec<ComplianceAssessment>>> {
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(t) = &q.assessment_type {
+        where_clause.push_str(&format!(" AND eval_type = ${}", params.len() + 1));
+        params.push(t.clone());
+    }
+    if let Some(r) = &q.result {
+        where_clause.push_str(&format!(" AND overall_result = ${}", params.len() + 1));
+        params.push(r.clone());
+    }
+    if let Some(s) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(s.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (title ILIKE ${} OR eval_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
+               eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
+               evaluator AS assessor, evaluated_at::text AS assessment_date, overall_result AS result,
+               compliance_rate::float8 AS score, findings, non_complianceitems,
+               corrective_actions, status, attachments,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_compliance_evaluations
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list compliance assessments: {}", e);
+            return Json(ApiResponse::error(500, "获取合规性评价列表失败"));
+        }
+    };
+    let list: Vec<ComplianceAssessment> = rows.iter().map(compliance_assessment_from_row).collect();
+    Json(ApiResponse::success(list, "获取合规性评价列表成功"))
 }
 
 #[utoipa::path(
@@ -939,49 +1128,64 @@ pub async fn list_evaluations(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_evaluation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateEvaluationRequest>,
-) -> Json<ApiResponse<ComplianceEvaluation>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating compliance evaluation: {:?}", req);
-    Json(ApiResponse::success(
-        ComplianceEvaluation {
-            id: uuid::Uuid::new_v4().to_string(),
-            eval_no: format!(
-                "CE-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            title: req.title,
-            eval_type: req.eval_type,
-            eval_period: req.eval_period,
-            start_date: req.start_date,
-            end_date: req.end_date,
-            evaluator: req.evaluator,
-            status: "in_progress".to_string(),
-            overall_result: None,
-            compliance_rate: None,
-            findings: None,
-            improvements: None,
-            evaluated_at: None,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+) -> Json<ApiResponse<ComplianceAssessment>> {
+    let tenant_id = resolve_tenant_id(&claims);
+    let eval_no = format!("CE-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let non_complianceitems: serde_json::Value = req
+        .non_complianceitems
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+    let attachments: serde_json::Value = req
+        .attachments
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
 
-            tenant_id,
-        },
-        "合规性评价创建成功",
-    ))
+    let sql = r#"
+        INSERT INTO ehs.qa_ehs_compliance_evaluations
+            (eval_no, title, eval_type, eval_period, start_date, end_date, evaluator,
+             evaluated_at, overall_result, compliance_rate, findings, non_complianceitems,
+             corrective_actions, status, attachments, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
+                  eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
+                  evaluator AS assessor, evaluated_at::text AS assessment_date, overall_result AS result,
+                  compliance_rate::float8 AS score, findings, non_complianceitems,
+                  corrective_actions, status, attachments,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&eval_no)
+        .bind(&req.title)
+        .bind(&req.assessment_type)
+        .bind(req.scope)
+        .bind(req.period_start)
+        .bind(req.period_end)
+        .bind(req.assessor)
+        .bind(req.assessment_date)
+        .bind(req.result)
+        .bind(req.score)
+        .bind(req.findings)
+        .bind(non_complianceitems)
+        .bind(req.corrective_actions)
+        .bind(req.status.unwrap_or_else(|| "in_progress".to_string()))
+        .bind(attachments)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create compliance assessment: {}", e);
+            return Json(ApiResponse::error(500, "合规性评价创建失败"));
+        }
+    };
+    let assessment = compliance_assessment_from_row(&row);
+    Json(ApiResponse::success(assessment, "合规性评价创建成功"))
 }
 
 #[utoipa::path(
@@ -996,46 +1200,40 @@ pub async fn create_evaluation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_evaluation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-) -> Json<ApiResponse<ComplianceEvaluation>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+) -> Json<ApiResponse<ComplianceAssessment>> {
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
+               eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
+               evaluator AS assessor, evaluated_at::text AS assessment_date, overall_result AS result,
+               compliance_rate::float8 AS score, findings, non_complianceitems,
+               corrective_actions, status, attachments,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_compliance_evaluations
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "合规性评价不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get compliance assessment: {}", e);
+            return Json(ApiResponse::error(500, "获取评价详情失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting compliance evaluation: {}", id);
-    Json(ApiResponse::success(
-        ComplianceEvaluation {
-            id,
-            eval_no: "CE-2024001".to_string(),
-            title: "2024年度环保合规性评价".to_string(),
-            eval_type: "annual".to_string(),
-            eval_period: Some("2024年度".to_string()),
-            start_date: Some("2024-01-01".to_string()),
-            end_date: Some("2024-12-31".to_string()),
-            evaluator: Some("环保部".to_string()),
-            status: "completed".to_string(),
-            overall_result: Some("compliant".to_string()),
-            compliance_rate: Some(95.5),
-            findings: Some("总体合规，部分记录需要完善".to_string()),
-            improvements: Some("加强废水监测频次".to_string()),
-            evaluated_at: Some(chrono::Utc::now().to_rfc3339()),
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "获取评价详情成功",
-    ))
+    let assessment = compliance_assessment_from_row(&row);
+    Json(ApiResponse::success(assessment, "获取评价详情成功"))
 }
 
 #[utoipa::path(
@@ -1051,57 +1249,110 @@ pub async fn get_evaluation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_evaluation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateEvaluationRequest>,
-) -> Json<ApiResponse<ComplianceEvaluation>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+) -> Json<ApiResponse<ComplianceAssessment>> {
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = req.title {
+        sets.push(format!("title = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.assessment_type {
+        sets.push(format!("eval_type = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.scope {
+        sets.push(format!("eval_period = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.period_start {
+        sets.push(format!("start_date = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.period_end {
+        sets.push(format!("end_date = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.assessor {
+        sets.push(format!("evaluator = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.assessment_date {
+        sets.push(format!("evaluated_at = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.result {
+        sets.push(format!("overall_result = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.score {
+        sets.push(format!("compliance_rate = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.findings {
+        sets.push(format!("findings = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.non_complianceitems {
+        sets.push(format!("non_complianceitems = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = req.corrective_actions {
+        sets.push(format!("corrective_actions = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.attachments {
+        sets.push(format!("attachments = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = req.status {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v);
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_compliance_evaluations
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, eval_no AS assessment_no, title, eval_type AS assessment_type,
+                  eval_period AS scope, start_date::text AS period_start, end_date::text AS period_end,
+                  evaluator AS assessor, evaluated_at::text AS assessment_date, overall_result AS result,
+                  compliance_rate::float8 AS score, findings, non_complianceitems,
+                  corrective_actions, status, attachments,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "合规性评价不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update compliance assessment: {}", e);
+            return Json(ApiResponse::error(500, "评价更新失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating compliance evaluation {}: {:?}", id, req);
-    let status = req
-        .status
-        .clone()
-        .unwrap_or_else(|| "completed".to_string());
-    let evaluated_at = if status == "completed" {
-        Some(chrono::Utc::now().to_rfc3339())
-    } else {
-        None
-    };
-
-    Json(ApiResponse::success(
-        ComplianceEvaluation {
-            id,
-            eval_no: "CE-2024001".to_string(),
-            title: "2024年度环保合规性评价".to_string(),
-            eval_type: "annual".to_string(),
-            eval_period: Some("2024年度".to_string()),
-            start_date: Some("2024-01-01".to_string()),
-            end_date: Some("2024-12-31".to_string()),
-            evaluator: Some("环保部".to_string()),
-            status,
-            overall_result: req.overall_result,
-            compliance_rate: req.compliance_rate,
-            findings: req.findings,
-            improvements: req.improvements,
-            evaluated_at,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "评价更新成功",
-    ))
+    let assessment = compliance_assessment_from_row(&row);
+    Json(ApiResponse::success(assessment, "评价更新成功"))
 }
 
 #[utoipa::path(
@@ -1116,12 +1367,34 @@ pub async fn update_evaluation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_evaluation(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting compliance evaluation: {}", id);
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.qa_ehs_compliance_evaluations
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete compliance assessment: {}", e);
+            return Json(ApiResponse::error(500, "评价删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "合规性评价不存在"));
+    }
     Json(ApiResponse::success((), "评价删除成功"))
 }
 
@@ -1201,6 +1474,16 @@ pub async fn create_monitor_record(
     ))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct PermitQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub permit_type: Option<String>,
+    pub permit_category: Option<String>,
+    pub status: Option<String>,
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:permit:read"])),
@@ -1209,15 +1492,70 @@ pub async fn create_monitor_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_permits(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Query(q): Query<PermitQuery>,
 ) -> Json<ApiResponse<Vec<DischargePermit>>> {
-    tracing::debug!("Listing discharge permits");
-    Json(ApiResponse::success(
-        Vec::<DischargePermit>::new(),
-        "获取排污许可列表成功",
-    ))
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(t) = &q.permit_type {
+        where_clause.push_str(&format!(" AND permit_type = ${}", params.len() + 1));
+        params.push(t.clone());
+    }
+    if let Some(c) = &q.permit_category {
+        where_clause.push_str(&format!(" AND permit_category = ${}", params.len() + 1));
+        params.push(c.clone());
+    }
+    if let Some(s) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(s.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (permit_name ILIKE ${} OR permit_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
+               holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
+               valid_to::text AS expiry_date, issuing_authority, discharge_location,
+               discharge_standard, discharge_limits, monitoring_requirements, status,
+               attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_discharge_permits
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list discharge permits: {}", e);
+            return Json(ApiResponse::error(500, "获取排污许可列表失败"));
+        }
+    };
+    let list: Vec<DischargePermit> = rows.iter().map(discharge_permit_from_row).collect();
+    Json(ApiResponse::success(list, "获取排污许可列表成功"))
 }
 
 // gate: admin-only
@@ -1230,50 +1568,63 @@ pub async fn list_permits(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_permit(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreatePermitRequest>,
 ) -> Json<ApiResponse<DischargePermit>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating discharge permit: {:?}", req);
-    Json(ApiResponse::success(
-        DischargePermit {
-            id: uuid::Uuid::new_v4().to_string(),
-            permit_no: format!(
-                "DP-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            permit_type: req.permit_type,
-            permit_name: req.permit_name,
-            issuing_authority: req.issuing_authority,
-            issued_date: req.issued_date,
-            valid_from: req.valid_from,
-            valid_to: req.valid_to,
-            status: "valid".to_string(),
-            pollutant_list: req.pollutant_list,
-            discharge_standard: req.discharge_standard,
-            total_amount_limit: req.total_amount_limit,
-            discharge_location: req.discharge_location,
-            holder: req.holder,
-            attachments: None,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+    let tenant_id = resolve_tenant_id(&claims);
+    let permit_no = format!("DP-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let discharge_limits: serde_json::Value = req
+        .discharge_limits
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+    let attachments: serde_json::Value = req
+        .attachments
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
 
-            tenant_id,
-        },
-        "排污许可创建成功",
-    ))
+    let sql = r#"
+        INSERT INTO ehs.qa_ehs_discharge_permits
+            (permit_no, permit_type, permit_name, permit_category, holder, issued_date,
+             valid_from, valid_to, issuing_authority, discharge_location, discharge_standard,
+             discharge_limits, monitoring_requirements, status, attachments, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING id::text AS id, permit_no, permit_name AS title, permit_type, permit_category,
+                  holder, issued_date::text AS issue_date, valid_from::text AS effective_date,
+                  valid_to::text AS expiry_date, issuing_authority, discharge_location,
+                  discharge_standard, discharge_limits, monitoring_requirements, status,
+                  attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&permit_no)
+        .bind(&req.permit_type)
+        .bind(&req.title)
+        .bind(req.permit_category)
+        .bind(req.holder)
+        .bind(req.issue_date)
+        .bind(req.effective_date)
+        .bind(req.expiry_date)
+        .bind(req.issuing_authority)
+        .bind(req.discharge_location)
+        .bind(req.discharge_standard)
+        .bind(discharge_limits)
+        .bind(req.monitoring_requirements)
+        .bind(req.status.unwrap_or_else(|| "valid".to_string()))
+        .bind(attachments)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create discharge permit: {}", e);
+            return Json(ApiResponse::error(500, "排污许可创建失败"));
+        }
+    };
+    let permit = discharge_permit_from_row(&row);
+    Json(ApiResponse::success(permit, "排污许可创建成功"))
 }
 
 #[utoipa::path(
@@ -1664,6 +2015,93 @@ fn environmental_regulation_from_row(r: &sqlx::postgres::PgRow) -> Environmental
         attachments,
         version: r.try_get("version").ok().flatten(),
         created_by: r.try_get("created_by").ok().flatten(),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+/// qa_ehs_compliance_evaluations 行 → ComplianceAssessment（SELECT 列别名对齐本函数字段）
+fn compliance_assessment_from_row(r: &sqlx::postgres::PgRow) -> ComplianceAssessment {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let non_complianceitems: Option<serde_json::Value> =
+        r.try_get("non_complianceitems").ok().flatten();
+    let non_complianceitems = non_complianceitems.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    let attachments: Option<serde_json::Value> = r.try_get("attachments").ok().flatten();
+    let attachments = attachments.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    ComplianceAssessment {
+        id: r.try_get("id").unwrap_or_default(),
+        assessment_no: r.try_get("assessment_no").unwrap_or_default(),
+        title: r.try_get("title").unwrap_or_default(),
+        assessment_type: r.try_get("assessment_type").unwrap_or_default(),
+        scope: r.try_get("scope").ok().flatten(),
+        period_start: r.try_get("period_start").ok().flatten(),
+        period_end: r.try_get("period_end").ok().flatten(),
+        assessor: r.try_get("assessor").ok().flatten(),
+        assessment_date: r.try_get("assessment_date").ok().flatten(),
+        result: r.try_get("result").ok().flatten(),
+        score: r.try_get("score").ok().flatten(),
+        findings: r.try_get("findings").ok().flatten(),
+        non_complianceitems,
+        corrective_actions: r.try_get("corrective_actions").ok().flatten(),
+        status: r
+            .try_get("status")
+            .unwrap_or_else(|_| "in_progress".to_string()),
+        attachments,
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+/// qa_ehs_discharge_permits 行 → DischargePermit（SELECT 列别名对齐本函数字段）
+fn discharge_permit_from_row(r: &sqlx::postgres::PgRow) -> DischargePermit {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let discharge_limits: Option<serde_json::Value> = r.try_get("discharge_limits").ok().flatten();
+    let discharge_limits = discharge_limits.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| serde_json::from_value::<DischargeLimit>(e.clone()).ok())
+                .collect::<Vec<DischargeLimit>>()
+        })
+    });
+    let attachments: Option<serde_json::Value> = r.try_get("attachments").ok().flatten();
+    let attachments = attachments.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    DischargePermit {
+        id: r.try_get("id").unwrap_or_default(),
+        permit_no: r.try_get("permit_no").unwrap_or_default(),
+        title: r.try_get("title").ok().flatten(),
+        permit_type: r.try_get("permit_type").unwrap_or_default(),
+        permit_category: r.try_get("permit_category").ok().flatten(),
+        holder: r.try_get("holder").ok().flatten(),
+        issue_date: r.try_get("issue_date").ok().flatten(),
+        effective_date: r.try_get("effective_date").ok().flatten(),
+        expiry_date: r.try_get("expiry_date").ok().flatten(),
+        issuing_authority: r.try_get("issuing_authority").ok().flatten(),
+        discharge_location: r.try_get("discharge_location").ok().flatten(),
+        discharge_standard: r.try_get("discharge_standard").ok().flatten(),
+        discharge_limits,
+        monitoring_requirements: r.try_get("monitoring_requirements").ok().flatten(),
+        status: r.try_get("status").unwrap_or_else(|_| "valid".to_string()),
+        attachments,
         created_at: r.try_get::<String, _>("created_at").ok(),
         updated_at: r.try_get::<String, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
