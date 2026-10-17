@@ -1,6 +1,17 @@
 
 ---
 
+## S1 ehs 消费中域终态核实（2026-10-18）✅ 无新接真需求，剩余桩面全冻结
+
+> 续接批：逐条核实剩余消费中域前端实调面，确认是否还有"前端在调、后端桩/404"的契约撒谎面。
+- **emergency_drill**：EhsDrillPage/EmergencyPage 仅调 `listDrills/createDrill/updateDrill/deleteDrill`（→ drill_records CRUD，`emergency_drill.rs:658-915` 全 sqlx）；plans/evaluations/statistics/types 亦已 sqlx（commit d31d177154/ab66830b17）。**消费面已接真，无动作**。
+- **environmental_compliance**：CompliancePage 调 regulations/assessments(evaluations)/dischargePermits CRUD（`environmental_compliance.rs` list_regulations:490/list_permits:1563/list_evaluations:1074 全 sqlx）；monitoring/incidents/statistics 已接真（commit 971554057a）。**无动作**。
+- **health / occupational_health**：HealthManagementPage 仅调 `listHealthRecords/create/update/deleteHealthRecord`（→ `occupational_health.rs:1111/1160/1215/1317/1360` 全 sqlx）。
+- **冻结面（决策 4.3"前端触发再补"，零页面消费，不接真）**：occupational_health.rs 的 exam_plans(381-561)/exam_records(578-801)/contraindications(818-988)/get_health_statistics(1005) 共 16 handler 仍桩（文件仅 5 处 sqlx = health_records CRUD）；前端 `occupationalHealthApi` 虽定义 check-plans/check-records/contraindications 方法，但 HealthManagementPage 未实调。待页面接入后按 S1 范式补真。
+- 验证：`cargo check -p topems-ehs --lib` 0 错；`cargo test -p topems-ehs --lib` 231 绿基线。本批无代码改动、无迁移、无 commit（纯核实 + 冻结标注）。
+
+---
+
 ## S1 ehs 残余桩接真（2026-10-18）✅ environment + training certificates 闭环
 
 > 事故域后 ehs 纯桩清零收尾。
