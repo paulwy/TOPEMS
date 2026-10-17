@@ -253,6 +253,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
           <form onSubmit={form.handleSubmit(handleSubmit)}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField
+                data-testid='login-username'
                 label={i18n.t('pages.login_page.k18')}
                 placeholder={i18n.t('pages.login_page.k19')}
                 value={form.watch('username')}
@@ -311,6 +312,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
               )}
 
               <TextField
+                data-testid='login-password'
                 label={i18n.t('pages.login_page.k22')}
                 type={showPassword ? 'text' : 'password'}
                 placeholder={i18n.t('pages.login_page.k23')}
@@ -463,6 +465,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
               )}
 
               <Button
+                data-testid='login-submit'
                 type='submit'
                 variant='contained'
                 sx={{

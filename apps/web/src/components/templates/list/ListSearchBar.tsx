@@ -196,6 +196,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
     >
       {(searchable || globalSearch) && (
         <TextField
+          data-testid='list-search-input'
           size='small'
           placeholder={globalSearch?.placeholder || searchPlaceholder}
           value={searchInput}

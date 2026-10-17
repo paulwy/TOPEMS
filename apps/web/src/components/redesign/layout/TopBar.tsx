@@ -98,6 +98,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
         {handleToggle && (
           <Button
+            data-testid='topbar-sidebar-toggle'
             variant='ghost'
             size='sm'
             onClick={handleToggle}
@@ -133,6 +134,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
         <Button
+          data-testid='topbar-command-palette'
           variant='ghost'
           size='sm'
           leftIcon={<Search size={16} />}
@@ -161,6 +163,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <ThemeSelector showMenu={false} />
 
         <Button
+          data-testid='topbar-notifications'
           variant='ghost'
           size='sm'
           onClick={onNotificationsOpen}
@@ -170,6 +173,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </Button>
 
         <Button
+          data-testid='topbar-settings'
           variant='ghost'
           size='sm'
           onClick={onSettingsOpen}
@@ -184,6 +188,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           ref={userMenuRef}
         >
           <Button
+            data-testid='topbar-profile'
             variant='ghost'
             size='sm'
             onClick={() => setUserMenuOpen(!userMenuOpen)}

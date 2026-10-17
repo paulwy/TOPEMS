@@ -821,6 +821,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                 }}
               >
                 <Button
+                  data-testid='crud-view-list'
                   size='small'
                   startIcon={<List size={14} />}
                   variant={viewMode === 'list' ? 'contained' : 'text'}
@@ -830,6 +831,7 @@ function CrudPage<T extends Record<string, unknown> = Record<string, unknown>>({
                   {i18n.t('components.crud_page.k0')}
                 </Button>
                 <Button
+                  data-testid='crud-view-tree'
                   size='small'
                   startIcon={<GitBranch size={14} />}
                   variant={viewMode === 'tree' ? 'contained' : 'text'}

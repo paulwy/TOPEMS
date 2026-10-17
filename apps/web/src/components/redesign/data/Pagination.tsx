@@ -125,6 +125,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
         {/* 首页 */}
         <button
+          data-testid='pagination-first'
           type='button'
           style={buttonBaseStyle}
           disabled={disabled || current === 1}
@@ -136,6 +137,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
         {/* 上一页 */}
         <button
+          data-testid='pagination-prev'
           type='button'
           style={buttonBaseStyle}
           disabled={disabled || current === 1}
@@ -161,6 +163,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           ) : (
             <button
               key={page}
+              data-testid={`pagination-page-${page}`}
               type='button'
               style={{
                 ...buttonBaseStyle,
@@ -180,6 +183,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
         {/* 下一页 */}
         <button
+          data-testid='pagination-next'
           type='button'
           style={buttonBaseStyle}
           disabled={disabled || current === total}
@@ -191,6 +195,7 @@ export const Pagination: React.FC<PaginationProps> = ({
 
         {/* 末页 */}
         <button
+          data-testid='pagination-last'
           type='button'
           style={buttonBaseStyle}
           disabled={disabled || current === total}
@@ -203,6 +208,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         {/* 每页条数选择 */}
         {showSizeChanger && onPageSizeChange && (
           <select
+            data-testid='pagination-page-size'
             aria-label={t('components.pagination.page_size')}
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
