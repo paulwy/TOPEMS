@@ -165,7 +165,10 @@ pub async fn create_session(
     let module = req.module.unwrap_or_else(|| "erp".to_string());
     let business_module = parse_business_module(&module);
     let user_id = req.user_id.clone();
-    let tenant_id = req.tenant_id.clone().unwrap_or_else(|| "default".to_string());
+    let tenant_id = req
+        .tenant_id
+        .clone()
+        .unwrap_or_else(|| "default".to_string());
 
     let session_id = {
         let manager = state.session_manager.read().await;
