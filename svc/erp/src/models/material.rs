@@ -78,6 +78,10 @@ pub struct Customer {
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    // BE-09：前端契约字段（双兼容——保留上方 code/name/email 旧键，新增对齐键）
+    pub customer_code: String,
+    pub customer_name: String,
+    pub contact_email: Option<String>,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
@@ -514,6 +518,9 @@ mod tests {
             status: "active".into(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            customer_code: "C".into(),
+            customer_name: "N".into(),
+            contact_email: None,
         };
         let v = serde_json::to_value(&c).unwrap();
         let c2: Customer = serde_json::from_value(v).unwrap();
@@ -544,6 +551,9 @@ mod tests {
             status: "inactive".into(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            customer_code: "C".into(),
+            customer_name: "N".into(),
+            contact_email: None,
         };
         let s = serde_json::to_string(&c).unwrap();
         let c2: Customer = serde_json::from_str(&s).unwrap();
@@ -572,6 +582,9 @@ mod tests {
             status: "active".into(),
             created_at: Utc::now(),
             updated_at: Utc::now(),
+            customer_code: "C".into(),
+            customer_name: "N".into(),
+            contact_email: None,
         };
         let v = serde_json::to_value(&c).unwrap();
         let c2: Customer = serde_json::from_value(v).unwrap();

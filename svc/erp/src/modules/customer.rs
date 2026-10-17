@@ -141,7 +141,7 @@ pub async fn list_customers(
         let customer_type = customer_type_filter.clone();
 
         sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("erp", r#"SELECT id, code, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at
+            only_own_schema_query!("erp", r#"SELECT id, code, CASE WHEN $6 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at
                FROM erp.customers
                WHERE (code ILIKE $1 OR name ILIKE $1 OR contact_person ILIKE $1)
                  AND ($2 = '' OR status = $2)
@@ -158,7 +158,7 @@ pub async fn list_customers(
         .await
     } else {
         sqlx::query_as::<_, Customer>(
-            only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at FROM erp.customers ORDER BY created_at DESC LIMIT $1 OFFSET $2")
         )
         .bind(page_size)
         .bind(offset)
@@ -231,7 +231,7 @@ pub async fn get_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL AND id = $1"),
+        only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL AND id = $1"),
     )
     .bind(id)
     .bind(Locale::from_headers(&headers).as_sql())
@@ -281,7 +281,7 @@ pub async fn create_customer(
     }
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at"),
     )
     .bind(body.code)
     .bind(body.name)
@@ -376,7 +376,7 @@ pub async fn update_customer(
     };
 
     let result = sqlx::query_as::<_, Customer>(
-        only_own_schema_query!("erp", "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 AND ($18::uuid IS NULL OR tenant_id = $18::uuid) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"),
+        only_own_schema_query!("erp", "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 AND ($18::uuid IS NULL OR tenant_id = $18::uuid) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at"),
     )
     .bind(body.name)
     .bind(body.short_name)
@@ -582,7 +582,7 @@ pub struct CustomerRecentResponse {
 
 fn customer_select_cols(locale_placeholder: &str) -> String {
     format!(
-        "id, code, CASE WHEN {locale_placeholder} = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+        "id, code, CASE WHEN {locale_placeholder} = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at"
     )
 }
 #[utoipa::path(
@@ -675,7 +675,7 @@ pub async fn batch_create_customers(
     for req in &body.customers {
         let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
             "erp",
-            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+            "INSERT INTO erp.customers (code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit, status, name_en, tenant_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000')) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at"
         ))
         .bind(&req.code).bind(&req.name).bind(&req.short_name).bind(&req.contact_person)
         .bind(&req.contact_phone).bind(&req.email).bind(&req.address).bind(&req.province)
@@ -738,7 +738,7 @@ async fn batch_update_customers(
     for item in &body.updates {
         let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
             "erp",
-            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 AND deleted_at IS NULL AND ($18::uuid IS NULL OR tenant_id = $18::uuid) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+            "UPDATE erp.customers SET name = COALESCE($1, name), short_name = COALESCE($2, short_name), contact_person = COALESCE($3, contact_person), contact_phone = COALESCE($4, contact_phone), email = COALESCE($5, email), address = COALESCE($6, address), province = COALESCE($7, province), city = COALESCE($8, city), district = COALESCE($9, district), customer_type = COALESCE($10, customer_type), industry = COALESCE($11, industry), scale = COALESCE($12, scale), credit_limit = COALESCE($13, credit_limit), status = COALESCE($14, status), updated_at = NOW(), name_en = COALESCE($16, name_en) WHERE id = $15 AND deleted_at IS NULL AND ($18::uuid IS NULL OR tenant_id = $18::uuid) RETURNING id, code, CASE WHEN $17 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at"
         ))
         .bind(&item.payload.name).bind(&item.payload.short_name).bind(&item.payload.contact_person)
         .bind(&item.payload.contact_phone).bind(&item.payload.email).bind(&item.payload.address)
@@ -882,7 +882,7 @@ pub async fn change_customer_status(
     };
     let result = sqlx::query_as::<_, Customer>(only_own_schema_query!(
         "erp",
-        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL AND ($4::uuid IS NULL OR tenant_id = $4::uuid) RETURNING id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at"
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = $2 AND deleted_at IS NULL AND ($4::uuid IS NULL OR tenant_id = $4::uuid) RETURNING id, code, CASE WHEN $3 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at"
     ))
     .bind(&body.status).bind(id).bind(Locale::from_headers(&headers).as_sql()).bind(tenant_filter).fetch_optional(&mut **txn).await;
     match result {
@@ -953,7 +953,7 @@ pub async fn batch_change_status(
         .collect();
     let filter_idx = body.ids.len() + 2;
     let sql = format!(
-        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at",
+        "UPDATE erp.customers SET status = $1, updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at",
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
@@ -1029,7 +1029,7 @@ pub async fn batch_change_category(
         .collect();
     let filter_idx = body.ids.len() + 3;
     let sql = format!(
-        "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at",
+        "UPDATE erp.customers SET customer_type = COALESCE($1, customer_type), industry = COALESCE($2, industry), updated_at = NOW() WHERE id = ANY(array[{}]::uuid[]) AND deleted_at IS NULL AND (${filter_idx}::uuid IS NULL OR tenant_id = ${filter_idx}::uuid) RETURNING id, code, name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at",
         placeholders.join(",")
     );
     let mut query = sqlx::query_as::<_, Customer>(&sql);
@@ -1146,7 +1146,7 @@ pub async fn list_recent_customers(
         return e;
     }
     let limit = params.limit.unwrap_or(20).clamp(1, 100);
-    let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).bind(Locale::from_headers(&headers).as_sql()).fetch_all(&mut **txn).await.unwrap_or_default();
+    let customers: Vec<Customer> = sqlx::query_as(only_own_schema_query!("erp", "SELECT id, code, CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name, short_name, contact_person, contact_phone, email, address, province, city, district, customer_type, industry, scale, credit_limit::float8 AS credit_limit, status, code AS customer_code, name AS customer_name, email AS contact_email, created_at, updated_at FROM erp.customers WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT $1")).bind(limit).bind(Locale::from_headers(&headers).as_sql()).fetch_all(&mut **txn).await.unwrap_or_default();
     let total: i64 = sqlx::query_scalar(only_own_schema_query!(
         "erp",
         "SELECT COUNT(*) FROM erp.customers WHERE deleted_at IS NULL"
