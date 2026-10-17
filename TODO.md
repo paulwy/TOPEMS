@@ -2595,3 +2595,11 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
   - shared-core/error/enhanced.rs:200 宏已规范输出 `TopemsError::Internal(e.to_string())`。
 - 映射缺口复核：sqlx 裸桥接 0、uuid→ValidationFailed 已走 InvalidTenantId、reqwest→NetworkRequest（语义变体，优于笼统 Internal）。未改任何错误变体定义（遵循"不动变体本身"边界）。
 - 验证：cargo check -p shared-core/shared-db/shared-event/shared-auth 0 error。
+
+## BE-09 unified-core 撒谎面修复（2026-10-18）
+
+- 已修（3 commit，未 push）：
+  - `801cf8872d` iam：UserResponse.is_active → serde rename `isactive`（alias 保留 is_active）；list_users/get_user 批量 JOIN core_user_roles→core_roles 取真实角色名（替代硬编码 ["user"]）。
+  - `a7147b0c0a` doc/file：FileInfo.mime_type → rename `content_type`；uploader_id → rename `created_by`；补发 filename/original_filename 字段。
+  - `ae8333c164` flow：list_tasks/get_task SQL LEFT JOIN iam.users 出 assignee_name，node_name 兜底=node_id。
+- **menu 域冻结标注（P3 待批）**：svc/unified-core/src/modules/menu/handlers.rs 10 个 handler 完整（真实 SQL 列），但 routes/menu.rs 不存在 = HTTP 路由未挂载；前端 apps/web/src 零 /menu API 消费。判定：后端实现完整但未接线域。选项：(a) 补 routes/menu.rs 挂载 + 前端开页面；(b) P3 批 DROP handlers+models。待用户拍板，当前不接不挂不删。
