@@ -100,7 +100,12 @@ pub async fn list_tasks(
 
     let items: Vec<WorkflowTask> = if !has_filters {
         match sqlx::query_as::<_, WorkflowTask>(
-            "SELECT id, tenant_id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at, tenant_id FROM public.core_workflow_tasks ORDER BY created_at DESC LIMIT $1 OFFSET $2"
+            r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
+                      COALESCE(u.full_name, u.username) AS assignee_name,
+                      t.node_id AS node_name
+               FROM public.core_workflow_tasks t
+               LEFT JOIN iam.users u ON u.id = t.assignee_id
+               ORDER BY t.created_at DESC LIMIT $1 OFFSET $2"#
         )
         .bind(page_size)
         .bind(offset)
@@ -118,13 +123,16 @@ pub async fn list_tasks(
         let instance_uuid = instance_id.and_then(|s| Uuid::parse_str(&s).ok());
 
         match sqlx::query_as::<_, WorkflowTask>(
-            r#"SELECT id, tenant_id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at 
-               FROM public.core_workflow_tasks 
-               WHERE (node_id ILIKE $1 OR comment ILIKE $1 OR $1 = '')
-                 AND (status = $2 OR $2 = '')
-                 AND (assignee_id = $3 OR $3 IS NULL)
-                 AND (instance_id = $4 OR $4 IS NULL)
-               ORDER BY created_at DESC LIMIT $5 OFFSET $6"#
+            r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
+                      COALESCE(u.full_name, u.username) AS assignee_name,
+                      t.node_id AS node_name
+               FROM public.core_workflow_tasks t
+               LEFT JOIN iam.users u ON u.id = t.assignee_id
+               WHERE (t.node_id ILIKE $1 OR t.comment ILIKE $1 OR $1 = '')
+                 AND (t.status = $2 OR $2 = '')
+                 AND (t.assignee_id = $3 OR $3 IS NULL)
+                 AND (t.instance_id = $4 OR $4 IS NULL)
+               ORDER BY t.created_at DESC LIMIT $5 OFFSET $6"#
         )
         .bind(format!("%{}%", search))
         .bind(status.clone().unwrap_or_default())
@@ -168,7 +176,12 @@ pub async fn get_task(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<WorkflowTask>> {
     let task = match sqlx::query_as::<_, WorkflowTask>(
-        "SELECT id, tenant_id, instance_id, node_id, assignee_id, status, comment, priority, due_time, created_at, completed_at, claimed_at FROM public.core_workflow_tasks WHERE id = $1",
+        r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
+                  COALESCE(u.full_name, u.username) AS assignee_name,
+                  t.node_id AS node_name
+           FROM public.core_workflow_tasks t
+           LEFT JOIN iam.users u ON u.id = t.assignee_id
+           WHERE t.id = $1"#,
     )
     .bind(id)
     .fetch_one(&state.pool)

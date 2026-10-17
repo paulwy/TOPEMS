@@ -87,6 +87,14 @@ pub struct WorkflowTask {
     pub created_at: DateTime<Utc>,
     pub completed_at: Option<DateTime<Utc>>,
     pub claimed_at: Option<DateTime<Utc>>,
+    /// BE-09 P1-3：审批人展示名（LEFT JOIN iam.users.full_name），前端契约读 `assignee_name`。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(default)]
+    pub assignee_name: Option<String>,
+    /// BE-09 P1-3：节点展示名（兜底=node_id），前端契约读 `node_name`。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[sqlx(default)]
+    pub node_name: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -530,6 +538,8 @@ mod tests {
             created_at: sample_time(),
             completed_at: None,
             claimed_at: None,
+            assignee_name: None,
+            node_name: None,
         };
         let json =
             serde_json::to_string(&task).unwrap_or_else(|e| panic!("serde serialize failed: {e}"));
