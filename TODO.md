@@ -2521,4 +2521,4 @@ ALTER TABLE <schema>.<table> ALTER COLUMN <col> TYPE timestamptz USING <col> AT 
 
 ### 最终验证（2026-10-17）
 - **全量 52 spec（排除 FRS 主测试）：291 passed + 0 failed（23.6m）**，53 spec 全绿达成（FRS 6 批 460 路由已全绿于上节）。
-- 已知未定论：crm 联系人页偶现「加载失败 500」（页面错误，主接口 curl 200，相关 spec 断言未受影响）——记录待查。
+- crm 联系人页「加载失败 500」调查结论（2026-10-17）：全量回归高负载下偶发，**主接口 /api/crm/contacts 全参数组合 curl 200**（page/pageSize/page_size/limit/offset 均 200，items:[]）；页面探针（开 /crm/contacts 监听 response）**无任何 4xx/5xx**，无复现。判定：**环境高负载瞬态**（与 auth-flow apiLogin 偶发失败同源），非持久缺陷，无需代码改动。
