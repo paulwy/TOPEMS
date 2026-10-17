@@ -1,7 +1,13 @@
 //! Environmental compliance management - Regulations, compliance evaluation, monitoring, permits, and incidents
 
-use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
+use axum::{
+    extract::{Query, State},
+    http::HeaderMap,
+    routing::*,
+    Extension, Json, Router,
+};
 use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use topems_shared_auth::auth::Claims;
 use topems_shared_core::response::ApiResponse;
 
@@ -102,20 +108,21 @@ pub struct ComplianceQuery {
 #[derive(Debug, Serialize)]
 pub struct EnvironmentalRegulation {
     pub id: String,
-    pub reg_no: String,
+    pub regulation_no: String,
     pub title: String,
     pub category: String,
     pub regulation_type: Option<String>,
     pub issuing_authority: Option<String>,
-    pub issued_date: Option<String>,
+    pub issue_date: Option<String>,
     pub effective_date: Option<String>,
     pub expiry_date: Option<String>,
     pub status: String,
     pub content: Option<String>,
-    pub applicability: Option<String>,
-    pub related_files: Option<Vec<String>>,
+    pub keywords: Option<Vec<String>>,
+    pub applicable_scopes: Option<Vec<String>>,
+    pub attachments: Option<Vec<String>>,
     pub version: Option<String>,
-    pub remarks: Option<String>,
+    pub created_by: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 
@@ -265,13 +272,14 @@ pub struct CreateRegulationRequest {
     pub category: String,
     pub regulation_type: Option<String>,
     pub issuing_authority: Option<String>,
-    pub issued_date: Option<String>,
+    pub issue_date: Option<String>,
     pub effective_date: Option<String>,
     pub expiry_date: Option<String>,
     pub content: Option<String>,
-    pub applicability: Option<String>,
+    pub keywords: Option<Vec<String>>,
+    pub applicable_scopes: Option<Vec<String>>,
+    pub attachments: Option<Vec<String>>,
     pub version: Option<String>,
-    pub remarks: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -280,14 +288,15 @@ pub struct UpdateRegulationRequest {
     pub category: Option<String>,
     pub regulation_type: Option<String>,
     pub issuing_authority: Option<String>,
-    pub issued_date: Option<String>,
+    pub issue_date: Option<String>,
     pub effective_date: Option<String>,
     pub expiry_date: Option<String>,
     pub status: Option<String>,
     pub content: Option<String>,
-    pub applicability: Option<String>,
+    pub keywords: Option<Vec<String>>,
+    pub applicable_scopes: Option<Vec<String>>,
+    pub attachments: Option<Vec<String>>,
     pub version: Option<String>,
-    pub remarks: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -377,6 +386,15 @@ pub struct UpdateIncidentRequest {
     pub preventive_measures: Option<String>,
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RegulationQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub category: Option<String>,
+    pub status: Option<String>,
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -385,15 +403,69 @@ pub struct UpdateIncidentRequest {
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_regulations(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Query(q): Query<RegulationQuery>,
 ) -> Json<ApiResponse<Vec<EnvironmentalRegulation>>> {
-    tracing::debug!("Listing environmental regulations");
-    Json(ApiResponse::success(
-        Vec::<EnvironmentalRegulation>::new(),
-        "获取环保法规列表成功",
-    ))
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(category) = &q.category {
+        where_clause.push_str(&format!(" AND category = ${}", params.len() + 1));
+        params.push(category.clone());
+    }
+    if let Some(status) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(status.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (title ILIKE ${} OR reg_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
+               issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
+               expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
+               related_files AS attachments, version, created_by,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_environmental_regulations
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list environmental regulations: {}", e);
+            return Json(ApiResponse::error(500, "获取环保法规列表失败"));
+        }
+    };
+
+    let list: Vec<EnvironmentalRegulation> =
+        rows.iter().map(environmental_regulation_from_row).collect();
+    Json(ApiResponse::success(list, "获取环保法规列表成功"))
 }
 
 #[utoipa::path(
@@ -405,49 +477,66 @@ pub async fn list_regulations(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_regulation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateRegulationRequest>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating environmental regulation: {:?}", req);
-    Json(ApiResponse::success(
-        EnvironmentalRegulation {
-            id: uuid::Uuid::new_v4().to_string(),
-            reg_no: format!(
-                "ER-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            title: req.title,
-            category: req.category,
-            regulation_type: req.regulation_type,
-            issuing_authority: req.issuing_authority,
-            issued_date: req.issued_date,
-            effective_date: req.effective_date,
-            expiry_date: req.expiry_date,
-            status: "active".to_string(),
-            content: req.content,
-            applicability: req.applicability,
-            related_files: None,
-            version: req.version,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+    let tenant_id = resolve_tenant_id(&claims);
+    let reg_no = format!("ER-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let keywords: serde_json::Value = req
+        .keywords
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+    let applicable_scopes: serde_json::Value = req
+        .applicable_scopes
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+    let attachments: serde_json::Value = req
+        .attachments
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
 
-            tenant_id,
-        },
-        "环保法规创建成功",
-    ))
+    let sql = r#"
+        INSERT INTO ehs.qa_ehs_environmental_regulations
+            (reg_no, title, category, regulation_type, issuing_authority, issued_date,
+             effective_date, expiry_date, status, content, keywords, applicable_scopes,
+             related_files, version, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+        RETURNING id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
+                  issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
+                  expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
+                  related_files AS attachments, version, created_by,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&reg_no)
+        .bind(&req.title)
+        .bind(&req.category)
+        .bind(req.regulation_type)
+        .bind(req.issuing_authority)
+        .bind(req.issue_date)
+        .bind(req.effective_date)
+        .bind(req.expiry_date)
+        .bind("draft")
+        .bind(req.content)
+        .bind(keywords)
+        .bind(applicable_scopes)
+        .bind(attachments)
+        .bind(req.version)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create environmental regulation: {}", e);
+            return Json(ApiResponse::error(500, "环保法规创建失败"));
+        }
+    };
+    let regulation = environmental_regulation_from_row(&row);
+    Json(ApiResponse::success(regulation, "环保法规创建成功"))
 }
 
 #[utoipa::path(
@@ -459,45 +548,39 @@ pub async fn create_regulation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_regulation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
+               issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
+               expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
+               related_files AS attachments, version, created_by,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_environmental_regulations
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "环保法规不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get environmental regulation: {}", e);
+            return Json(ApiResponse::error(500, "获取环保法规失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting regulation: {}", id);
-    Json(ApiResponse::success(
-        EnvironmentalRegulation {
-            id,
-            reg_no: "ER-2024001".to_string(),
-            title: "环保法规".to_string(),
-            category: "emission".to_string(),
-            regulation_type: Some("national".to_string()),
-            issuing_authority: Some("生态环境部".to_string()),
-            issued_date: Some("2024-01-01".to_string()),
-            effective_date: Some("2024-02-01".to_string()),
-            expiry_date: None,
-            status: "active".to_string(),
-            content: Some("法规内容（内存桩数据）".to_string()),
-            applicability: Some("全厂".to_string()),
-            related_files: None,
-            version: Some("v1.0".to_string()),
-            remarks: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "获取环保法规成功",
-    ))
+    let regulation = environmental_regulation_from_row(&row);
+    Json(ApiResponse::success(regulation, "获取环保法规成功"))
 }
 
 #[utoipa::path(
@@ -510,46 +593,105 @@ pub async fn get_regulation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_regulation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateRegulationRequest>,
 ) -> Json<ApiResponse<EnvironmentalRegulation>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = req.title {
+        sets.push(format!("title = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.category {
+        sets.push(format!("category = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.regulation_type {
+        sets.push(format!("regulation_type = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.issuing_authority {
+        sets.push(format!("issuing_authority = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.issue_date {
+        sets.push(format!("issued_date = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.effective_date {
+        sets.push(format!("effective_date = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.expiry_date {
+        sets.push(format!("expiry_date = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.status {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.content {
+        sets.push(format!("content = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.version {
+        sets.push(format!("version = ${}", params.len() + 1));
+        params.push(v);
+    }
+    if let Some(v) = req.keywords {
+        sets.push(format!("keywords = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = req.applicable_scopes {
+        sets.push(format!("applicable_scopes = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = req.attachments {
+        sets.push(format!("related_files = ${}", params.len() + 1));
+        params.push(serde_json::to_string(&v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_environmental_regulations
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, reg_no AS regulation_no, title, category, regulation_type,
+                  issuing_authority, issued_date::text AS issue_date, effective_date::text AS effective_date,
+                  expiry_date::text AS expiry_date, status, content, keywords, applicable_scopes,
+                  related_files AS attachments, version, created_by,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "环保法规不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update environmental regulation: {}", e);
+            return Json(ApiResponse::error(500, "环保法规更新失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating regulation {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        EnvironmentalRegulation {
-            id,
-            reg_no: "ER-2024001".to_string(),
-            title: req.title.unwrap_or_else(|| "环保法规".to_string()),
-            category: req.category.unwrap_or_else(|| "emission".to_string()),
-            regulation_type: req.regulation_type,
-            issuing_authority: req.issuing_authority,
-            issued_date: req.issued_date,
-            effective_date: req.effective_date,
-            expiry_date: req.expiry_date,
-            status: req.status.unwrap_or_else(|| "active".to_string()),
-            content: req.content,
-            applicability: req.applicability,
-            related_files: None,
-            version: req.version,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "环保法规更新成功",
-    ))
+    let regulation = environmental_regulation_from_row(&row);
+    Json(ApiResponse::success(regulation, "环保法规更新成功"))
 }
 
 #[utoipa::path(
@@ -561,12 +703,34 @@ pub async fn update_regulation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_regulation(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting regulation: {}", id);
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.qa_ehs_environmental_regulations
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete environmental regulation: {}", e);
+            return Json(ApiResponse::error(500, "环保法规删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "环保法规不存在"));
+    }
     Json(ApiResponse::success((), "环保法规删除成功"))
 }
 
@@ -1440,4 +1604,68 @@ pub async fn list_monitor_types(
         serde_json::json!({ "code": "groundwater", "name": "地下水监测" }),
     ];
     Json(ApiResponse::success(types, "获取监测类型成功"))
+}
+
+/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
+fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+/// qa_ehs_environmental_regulations 行 → EnvironmentalRegulation（SELECT 列别名对齐本函数字段）
+fn environmental_regulation_from_row(r: &sqlx::postgres::PgRow) -> EnvironmentalRegulation {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let keywords: Option<serde_json::Value> = r.try_get("keywords").ok().flatten();
+    let keywords = keywords.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    let applicable_scopes: Option<serde_json::Value> =
+        r.try_get("applicable_scopes").ok().flatten();
+    let applicable_scopes = applicable_scopes.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    let attachments: Option<serde_json::Value> = r.try_get("attachments").ok().flatten();
+    let attachments = attachments.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    EnvironmentalRegulation {
+        id: r.try_get("id").unwrap_or_default(),
+        regulation_no: r.try_get("regulation_no").unwrap_or_default(),
+        title: r.try_get("title").unwrap_or_default(),
+        category: r.try_get("category").unwrap_or_default(),
+        regulation_type: r.try_get("regulation_type").ok().flatten(),
+        issuing_authority: r.try_get("issuing_authority").ok().flatten(),
+        issue_date: r.try_get("issue_date").ok().flatten(),
+        effective_date: r.try_get("effective_date").ok().flatten(),
+        expiry_date: r.try_get("expiry_date").ok().flatten(),
+        status: r.try_get("status").unwrap_or_else(|_| "draft".to_string()),
+        content: r.try_get("content").ok().flatten(),
+        keywords,
+        applicable_scopes,
+        attachments,
+        version: r.try_get("version").ok().flatten(),
+        created_by: r.try_get("created_by").ok().flatten(),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
 }
