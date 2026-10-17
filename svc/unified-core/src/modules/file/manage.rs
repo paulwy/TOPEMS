@@ -25,10 +25,18 @@ struct FileInfo {
     id: String,
     name: String,
     size: u64,
+    /// BE-09 P1-2：前端契约读 `content_type`（doc/index.ts:45）；alias 保留 `mime_type`。
+    #[serde(rename = "content_type", alias = "mime_type")]
     mime_type: String,
     path: String,
     folder_id: Option<String>,
+    /// BE-09 P1-5：前端 doc 契约读 `created_by`（doc/index.ts:48）；alias 保留 `uploader_id`。
+    #[serde(rename = "created_by", alias = "uploader_id")]
     uploader_id: String,
+    /// BE-09 P1-5：前端 file 契约读 `filename`/`original_filename`（file/index.ts:42-43）。
+    #[serde(rename = "filename")]
+    filename: String,
+    original_filename: String,
     created_at: String,
     updated_at: String,
 }
@@ -125,6 +133,8 @@ pub async fn list_files(
                         created_at,
                         updated_at,
                     )| FileInfo {
+                        filename: name.clone(),
+                        original_filename: name.clone(),
                         id: id.to_string(),
                         name,
                         size: size as u64,
@@ -271,6 +281,8 @@ pub async fn get_file(
             .get::<Option<Uuid>, _>("folder_id")
             .map(|id| id.to_string()),
         uploader_id: row.get::<Uuid, _>("uploader_id").to_string(),
+        filename: row.get::<String, _>("name"),
+        original_filename: row.get::<String, _>("name"),
         created_at: row
             .get::<chrono::NaiveDateTime, _>("created_at")
             .to_string(),
