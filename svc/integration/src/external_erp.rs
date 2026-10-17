@@ -19,7 +19,7 @@ const TENANT_ID: &str = "default";
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ExternalErpSyncLog {
     id: Uuid,
-    tenant_id: String,
+    tenant_id: Uuid,
     connection_id: Option<Uuid>,
     entity: String,
     direction: String,
@@ -57,7 +57,7 @@ pub async fn list_connections(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -135,7 +135,7 @@ pub async fn create_connection(
         "INSERT INTO erp_connections \
          (id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
           sync_direction, sync_mode, sync_interval, status, isactive, created_at, updated_at) \
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
+         VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,$11,'inactive',TRUE,NOW(),NOW()) \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
          created_at AS created_at, updated_at AS updated_at"
@@ -233,7 +233,7 @@ async fn get_connection(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
+         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1 AND ($2::text IS NULL OR tenant_id::text = $2)"
     ))
     .bind(uuid)
     .bind(tid)
@@ -288,7 +288,7 @@ pub async fn update_connection(
          isactive = COALESCE($3, isactive), \
          status = COALESCE($4, status), \
          updated_at = NOW() \
-         WHERE id = $5 AND tenant_id = $6 \
+         WHERE id = $5 AND tenant_id::text = $6 \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
          created_at AS created_at, updated_at AS updated_at"
@@ -329,7 +329,7 @@ pub async fn delete_connection(
     let uuid = Uuid::parse_str(&id).unwrap_or(Uuid::nil());
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_connections WHERE id = $1 AND tenant_id = $2"
+        "DELETE FROM erp_connections WHERE id = $1 AND tenant_id::text = $2"
     ))
     .bind(uuid)
     .bind(&claims.tenant_id)
@@ -360,7 +360,7 @@ pub async fn list_entity_mappings(
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at FROM erp_mappings \
-         WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id = $3) ORDER BY created_at DESC"
+         WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id::text = $3) ORDER BY created_at DESC"
     ))
     .bind(uuid)
     .bind(&entity)
@@ -408,7 +408,7 @@ async fn create_entity_mapping(
          (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
           external_code, external_name, direction, isactive, priority, condition, \
           created_at, updated_at) \
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NULL,NOW(),NOW()) \
+         VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NULL,NOW(),NOW()) \
          RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at"
@@ -473,7 +473,7 @@ pub async fn batch_entity_mappings(
             "INSERT INTO erp_mappings \
              (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
               external_code, external_name, direction, isactive, priority, created_at, updated_at) \
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NOW(),NOW())"
+             VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,'bidirectional',TRUE,0,NOW(),NOW())"
         ))
         .bind(mapping_id)
         .bind(&claims.tenant_id)
@@ -519,7 +519,7 @@ pub async fn preview_entity(
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at FROM erp_mappings \
-         WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id = $3) \
+         WHERE connection_id = $1 AND mapping_type = $2 AND ($3::text IS NULL OR tenant_id::text = $3) \
          ORDER BY created_at DESC LIMIT 20"
     ))
     .bind(uuid)
@@ -545,7 +545,7 @@ async fn get_connection_by_id(
         "integration",
         "SELECT id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1 AND tenant_id = $2"
+         created_at AS created_at, updated_at AS updated_at FROM erp_connections WHERE id = $1 AND tenant_id::text = $2"
     ))
     .bind(connection_id)
     .bind(tenant)
@@ -740,7 +740,7 @@ pub async fn sync_entity(
         "integration",
         "INSERT INTO external_erp_sync_logs \
          (id, tenant_id, connection_id, entity, direction, status, started_at, created_at) \
-         VALUES ($1,$2,$3,$4,$5,'running',NOW(),NOW())"
+         VALUES ($1,$2::uuid,$3,$4,$5,'running',NOW(),NOW())"
     ))
     .bind(task_id)
     .bind(&claims.tenant_id)
@@ -952,7 +952,7 @@ pub async fn sync_logs(
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at AS started_at, completed_at AS completed_at, created_at AS created_at \
-         FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC LIMIT 100"
+         FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC LIMIT 100"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -977,7 +977,7 @@ pub async fn sync_statistics(
     // 总量统计
     let total: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1)"
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1)"
     ))
     .bind(tid)
     .fetch_optional(&state.pool)
@@ -986,7 +986,7 @@ pub async fn sync_statistics(
 
     let successful: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) AND status = 'success'"
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) AND status = 'success'"
     ))
     .bind(tid)
     .fetch_optional(&state.pool)
@@ -995,7 +995,7 @@ pub async fn sync_statistics(
 
     let failed: Option<(i64,)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) AND status = 'failed'"
+        "SELECT COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) AND status = 'failed'"
     ))
     .bind(tid)
     .fetch_optional(&state.pool)
@@ -1005,7 +1005,7 @@ pub async fn sync_statistics(
     let last_sync: Option<(Option<chrono::DateTime<chrono::Utc>>,)> =
         sqlx::query_as(only_own_schema_query!(
             "integration",
-            "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1)"
+            "SELECT MAX(completed_at) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1)"
         ))
         .bind(tid)
         .fetch_optional(&state.pool)
@@ -1015,7 +1015,7 @@ pub async fn sync_statistics(
     // 按 entity 分组统计
     let by_entity_rows: Vec<(String, i64)> = sqlx::query_as(only_own_schema_query!(
         "integration",
-        "SELECT entity, COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) GROUP BY entity ORDER BY COUNT(*) DESC"
+        "SELECT entity, COUNT(*) FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) GROUP BY entity ORDER BY COUNT(*) DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -1054,7 +1054,7 @@ pub async fn export_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -1086,7 +1086,7 @@ pub async fn export_sync_logs(
         "SELECT id, tenant_id, connection_id, entity, direction, status, \
          total_records, success_count, failed_count, error_message, \
          started_at AS started_at, completed_at AS completed_at, created_at AS created_at \
-         FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         FROM external_erp_sync_logs WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -1120,7 +1120,7 @@ pub async fn toggle_connection(
     match sqlx::query_as::<_, ErpConnection>(only_own_schema_query!(
         "integration",
         "UPDATE erp_connections SET isactive = $2, updated_at = NOW() \
-         WHERE id = $1 AND tenant_id = $3 \
+         WHERE id = $1 AND tenant_id::text = $3 \
          RETURNING id, tenant_id, name, type, api_url, api_version, app_key, app_secret, \
          sync_direction, sync_mode, sync_interval, status, isactive, last_sync_at AS last_sync_at, \
          created_at AS created_at, updated_at AS updated_at"
@@ -1173,7 +1173,7 @@ pub async fn list_company_mappings(
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at \
-         FROM erp_mappings WHERE connection_id = $1 AND mapping_type = 'company' AND ($2::text IS NULL OR tenant_id = $2) ORDER BY created_at DESC"
+         FROM erp_mappings WHERE connection_id = $1 AND mapping_type = 'company' AND ($2::text IS NULL OR tenant_id::text = $2) ORDER BY created_at DESC"
     ))
     .bind(uuid)
     .bind(tid)
@@ -1219,7 +1219,7 @@ pub async fn create_company_mapping(
          (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
           external_code, external_name, direction, isactive, priority, condition, \
           created_at, updated_at) \
-         VALUES ($1,$2,$3,'company',$4,$5,$6,$7,$8,'bidirectional',TRUE,0,NULL,NOW(),NOW()) \
+         VALUES ($1,$2::uuid,$3,'company',$4,$5,$6,$7,$8,'bidirectional',TRUE,0,NULL,NOW(),NOW()) \
          RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at"
@@ -1287,7 +1287,7 @@ pub async fn delete_company_mapping(
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = 'company' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id::text = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(mid)
     .bind(conn_uuid)
@@ -1350,7 +1350,7 @@ pub async fn delete_entity_mapping(
     let mid = Uuid::parse_str(&mapping_id).unwrap_or(Uuid::nil());
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
+        "DELETE FROM erp_mappings WHERE id = $1 AND connection_id = $2 AND mapping_type = $3 AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id::text = COALESCE(NULLIF(current_setting('app.tenant_id', true), ''), '00000000-0000-0000-0000-000000000000'))"
     ))
     .bind(mid)
     .bind(conn_uuid)

@@ -33,7 +33,7 @@ pub async fn list_mappings(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id = $1) ORDER BY created_at DESC"
+         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE ($1::text IS NULL OR tenant_id::text = $1) ORDER BY created_at DESC"
     ))
     .bind(tid)
     .fetch_all(&state.pool)
@@ -74,7 +74,7 @@ pub async fn get_mapping(
         "integration",
         "SELECT id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
-         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE id = $1 AND ($2::text IS NULL OR tenant_id = $2)"
+         created_at AS created_at, updated_at AS updated_at FROM erp_mappings WHERE id = $1 AND ($2::text IS NULL OR tenant_id::text = $2)"
     ))
     .bind(id)
     .bind(tid)
@@ -109,7 +109,7 @@ pub async fn create_mapping(
          (id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
           external_code, external_name, direction, isactive, priority, condition, \
           created_at, updated_at) \
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,TRUE,$11,$12,NOW(),NOW()) \
+         VALUES ($1,$2::uuid,$3,$4,$5,$6,$7,$8,$9,$10,TRUE,$11,$12,NOW(),NOW()) \
          RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at"
@@ -167,7 +167,7 @@ pub async fn update_mapping(
          priority = COALESCE($9, priority), \
          condition = COALESCE($10, condition), \
          updated_at = NOW() \
-         WHERE id = $11 AND tenant_id = $12 \
+         WHERE id = $11 AND tenant_id::text = $12 \
          RETURNING id, tenant_id, connection_id, mapping_type, local_id, local_code, local_name, \
          external_code, external_name, direction, isactive, priority, condition, \
          created_at AS created_at, updated_at AS updated_at"
@@ -213,7 +213,7 @@ pub async fn delete_mapping(
     let tid = "default".to_string();
     match sqlx::query(only_own_schema_query!(
         "integration",
-        "DELETE FROM erp_mappings WHERE id = $1 AND tenant_id = $2"
+        "DELETE FROM erp_mappings WHERE id = $1 AND tenant_id::text = $2"
     ))
     .bind(id)
     .bind(&tid)

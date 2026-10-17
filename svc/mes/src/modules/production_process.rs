@@ -424,7 +424,7 @@ pub async fn update_process(
             sequence = COALESCE($6, sequence),
             equipment_required = COALESCE($7, equipment_required),
             standard_time_minutes = COALESCE(CAST($8 AS NUMERIC), standard_time_minutes),
-            work_station_id = COALESCE($9, work_station_id),
+            work_station_id = COALESCE(NULLIF($9, '')::uuid, work_station_id),
             updated_at = $10
         WHERE id = $1 AND status = 'active' AND (COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000') IS NULL OR tenant_id = COALESCE(NULLIF(current_setting('app.tenant_id', true), '')::UUID, '00000000-0000-0000-0000-000000000000'))
         RETURNING

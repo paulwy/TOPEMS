@@ -151,7 +151,7 @@ impl FromRef<AppState> for PgPool {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ErpConnection {
     pub id: Uuid,
-    pub tenant_id: String,
+    pub tenant_id: Uuid,
     pub name: String,
     pub r#type: String,
     pub api_url: String,
@@ -215,7 +215,7 @@ pub struct TestConnectionResponse {
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ErpMapping {
     pub id: Uuid,
-    pub tenant_id: String,
+    pub tenant_id: Uuid,
     pub connection_id: Option<Uuid>,
     pub mapping_type: String,
     pub local_id: Option<String>,

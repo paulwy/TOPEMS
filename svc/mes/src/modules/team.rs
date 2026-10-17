@@ -15,6 +15,22 @@ use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
 
+#[derive(Debug, sqlx::FromRow)]
+struct TeamRow {
+    id: Uuid,
+    team_code: String,
+    team_name: String,
+    team_type: Option<String>,
+    work_station_id: Option<Uuid>,
+    leader_id: Option<String>,
+    leader_name: Option<String>,
+    member_count: Option<i32>,
+    status: Option<String>,
+    description: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+    updated_at: Option<DateTime<Utc>>,
+}
+
 fn get_tenant_id(claims: &Claims) -> Uuid {
     claims
         .tenant_id
@@ -494,9 +510,8 @@ pub async fn update_team(
         .work_station_id
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
-    let leader_id: Option<Uuid> = req.leader_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
 
-    let result = sqlx::query!(
+    let result = sqlx::query_as::<_, TeamRow>(
         r#"
         UPDATE teams SET
             team_name = COALESCE($2, team_name),
@@ -513,16 +528,16 @@ pub async fn update_team(
             leader_id, leader_name, member_count, status, description,
             created_at, updated_at
         "#,
-        id,
-        req.team_name,
-        req.team_type,
-        work_station_id,
-        leader_id,
-        req.leader_name,
-        req.status,
-        req.description,
-        Utc::now(),
     )
+    .bind(id)
+    .bind(req.team_name)
+    .bind(req.team_type)
+    .bind(work_station_id)
+    .bind(req.leader_id)
+    .bind(req.leader_name)
+    .bind(req.status)
+    .bind(req.description)
+    .bind(Utc::now())
     .fetch_optional(&state.pool)
     .await;
 

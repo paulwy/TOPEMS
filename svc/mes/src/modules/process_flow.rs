@@ -17,6 +17,22 @@ use topems_shared_auth::auth::Claims;
 use crate::shared::permission::{check_permission, ModulePermission};
 use crate::AppState;
 use topems_shared_core::response::ApiResponse;
+
+#[derive(Debug, sqlx::FromRow)]
+struct FlowStepRow {
+    id: Uuid,
+    flow_id: Uuid,
+    process_id: Option<Uuid>,
+    sequence: i32,
+    work_station_id: Option<Uuid>,
+    equipment_ids: Option<Vec<Uuid>>,
+    standard_time: Option<i32>,
+    wait_time: Option<i32>,
+    transfer_time: Option<i32>,
+    quality_check_required: Option<bool>,
+    description: Option<String>,
+    created_at: Option<DateTime<Utc>>,
+}
 use topems_shared_db::decimal::big_decimal_to_f64_opt;
 
 fn get_tenant_id(claims: &Claims) -> Uuid {
@@ -903,16 +919,16 @@ pub async fn update_flow_step(
             .collect()
     });
 
-    let result = sqlx::query_unchecked!(
+    let result = sqlx::query_as::<_, FlowStepRow>(
         r#"
         UPDATE process_flow_steps
         SET
             sequence = COALESCE($1, sequence),
             work_station_id = COALESCE($2, work_station_id),
             equipment_ids = COALESCE($3, equipment_ids),
-            standard_time = COALESCE($4, standard_time),
-            wait_time = COALESCE($5, wait_time),
-            transfer_time = COALESCE($6, transfer_time),
+            standard_time = COALESCE(CAST($4 AS INTEGER), standard_time),
+            wait_time = COALESCE(CAST($5 AS INTEGER), wait_time),
+            transfer_time = COALESCE(NULLIF($6, '')::integer, transfer_time),
             quality_check_required = COALESCE($7, quality_check_required),
             description = COALESCE($8, description)
         WHERE id = $9
@@ -921,16 +937,16 @@ pub async fn update_flow_step(
             standard_time, wait_time, transfer_time,
             quality_check_required, description, created_at
         "#,
-        body.sequence,
-        work_station_uuid,
-        equipment_ids.as_deref(),
-        standard_time,
-        wait_time,
-        body.transfer_time.as_deref(),
-        body.quality_check_required,
-        body.description,
-        step_uuid,
     )
+    .bind(body.sequence)
+    .bind(work_station_uuid)
+    .bind(equipment_ids.as_deref())
+    .bind(standard_time)
+    .bind(wait_time)
+    .bind(body.transfer_time.as_deref())
+    .bind(body.quality_check_required)
+    .bind(body.description)
+    .bind(step_uuid)
     .fetch_one(&state.pool)
     .await;
 
@@ -954,7 +970,7 @@ pub async fn update_flow_step(
                 ProcessFlowStepResponse {
                     id: s.id.to_string(),
                     flow_id: s.flow_id.to_string(),
-                    process_id: s.process_id.to_string(),
+                    process_id: s.process_id.map(|u| u.to_string()).unwrap_or_default(),
                     process_name: process_name.unwrap_or_default(),
                     process_code: process_code.unwrap_or_default(),
                     sequence: s.sequence,
