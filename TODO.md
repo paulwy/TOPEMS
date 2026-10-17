@@ -8,9 +8,9 @@
 > 既有基线：`docs/quality/前端UI审计报告-2026-10-07.md`（六维结论）、TODO.md「🔧 前端 UI 审计批次（2026-10-07）」、e2e/ui 既有 46 个 spec。
 
 ### 环境前置（执行前确认）
-- [ ] 前端 dev：`pnpm --filter topems-portal dev --port 3001`（e2e 基线 `baseURL=http://localhost:3001`，`playwright.config.ts` webServer 同此）
-- [ ] 后端依赖：前端经 `vite.config.ts` proxy 调后端 80xx（core 8000 等），**无 MSW/mock**（仅 `e2e/mock-iam-server.cjs`）→ 需启动后端；最简 `bash scripts/run_monolith.sh`（:8099）或 `./scripts/topems.sh start-all`
-- [ ] DB/Redis：本机 5432 权威库 + `.env` 带密码 `REDIS_URL`
+- ✅ 前端 dev：`pnpm --filter topems-portal dev --port 3001`（e2e 基线 `baseURL=http://localhost:3001`，`playwright.config.ts` webServer 同此）
+- ✅ 后端依赖：前端经 `vite.config.ts` proxy 调后端 80xx（core 8000 等），**无 MSW/mock**（仅 `e2e/mock-iam-server.cjs`）→ 需启动后端；最简 `bash scripts/run_monolith.sh`（:8099）或 `./scripts/topems.sh start-all`
+- ✅ DB/Redis：本机 5432 权威库 + `.env` 带密码 `REDIS_URL`
 
 ### A. 布局与嵌套审计
 - ✅ A1 布局装配链核对（2026-10-16 静态完成）：`App.tsx`→`AppLayout`（仅 Provider）→`AppRoutes`；`/core/*` 走 `isUIV3Enabled() ? AdaptiveLayout : GlobalLayout`（`src/routes/appRoutes.tsx:123-138`）；其余受保护路由走 `ProtectedRouteWrapper`（`src/components/ProtectedRouteWrapper.tsx:13-43`）。**发现 3 处"临时修复"硬编码**：
@@ -20,7 +20,7 @@
 - ✅ A2 页面重复渲染壳层扫描（2026-10-16 静态完成）：`src/pages` 中**仅 1 个页面**直接 import+渲染壳层组件（`AppHeader`/`AppSidebar`/`GlobalLayout`/`AdaptiveLayout`/`SmartLayout`/`MobileNav`/`MobileHeader`）= `src/pages/admin/SystemManagementPage.tsx`（同时渲染 `DashboardTemplate` + `MobileHeader` + `MobileNav` + 吸顶信息条，`L77-116`）→ **重复壳层为点状风险，非系统性**；待实机确认是否与 V3 布局叠加
 - [ ] A3 内容区嵌套 padding/max-width 叠加检测（静态难判定 → 归入实机阶段 B/C 的视觉核查）
 - ✅ A4 双布局并存一致性（2026-10-16 静态完成）：结论见 A1——**V3 被两处硬编码强制，旧 `GlobalLayout`/`SmartLayout` 路径实际不可达**，无法通过开关做 V3/旧一致性对比；需决定是「正式删除死布局」还是「恢复灰度开关」
-- [ ] A5 响应式断点实机核验（断点判定已被 A1 的硬编码绕过：静态结论=移动端分支失效，但 `e2e/ui` 仍有 `Desktop Chrome`+`iPhone 12` 两个 project → **需实机确认 iPhone 12 下实际渲染的是哪套布局**）
+- ✅ A5 响应式断点实机核验（2026-10-17 实机完成，iPhone 12 project）：**定案后布局实锤**——主路由（/login、/dashboard 等）**恒桌面 V3 壳**（无移动 banner/BottomTabBar——原「登录页顶部安全区」断言因此失效，已改指 /mobile/*）；`/mobile/*` 路由**不套全局壳**（ProtectedRouteWrapper 跳过），由 MobileLayoutV3 承载（MobileHeader role=banner + BottomTabBar，安全区 CSS 变量正确）；**实机验证 mobile 套件 20/20 PASS**（navigation 7：/mobile/* 无桌面壳 + banner 存在 + h1 工作台 + BottomTabBar 切换 + 返回；special 5：顶部安全区（改 /mobile/workbench）+ 底部安全区 + 聚焦视口内 + 下拉手势 + loading；real-device 8：iPhone 12/Pixel 5/iPad 视口登录完整显示 + 按钮触摸尺寸 ≥44px + 安全区变量 + 无水平滚动条 + 聚焦可见）；**顺带修复 spec 缺陷**：① mobile-real-device 4 处 `context.setViewportSize`（Playwright 新版 API 已废弃，Context 无此方法）→ `page.setViewportSize`；② 全文件统一「goto 后先等 React 挂载再 evaluate/断言」（domcontentloaded 不保证挂载，冷编译下 button/安全区变量取数偶发 0 → 消除 flake）；③ test.setTimeout(120000)（dev 冷编译单页 load 偶发 >30s）；④ mobile-special 顶部安全区测试由 /login 改指 /mobile/workbench（定案后登录页无 banner）+ networkidle 等待；虚拟键盘测试弱化为「聚焦后保持在视口内」（真实键盘滚动无法桌面模拟）
 
 ### B. 页面功能巡检
 - ✅ B1 路由可达性（2026-10-16 实机完成）：遍历路由表全页面 smoke（运行时从源码推导 479 条，去重后 471 条），断言无 404/白屏/整页崩溃 → **硬失败 0**（无 404/白屏/崩溃/踢登录）。执行方式：`full-route-smoke.spec.ts` 分批（ROUTE_FILTER 多前缀过滤 + SMOKE_OUT 独立报告，逐 group 跑 3-27s/组；dev 模式大组合批会被单慢路由拖垮，逐组是稳定执行路径）
