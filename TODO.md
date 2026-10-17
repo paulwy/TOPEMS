@@ -14,7 +14,7 @@
 
 ### A. 布局与嵌套审计
 - ✅ A1 布局装配链核对（2026-10-16 静态完成）：`App.tsx`→`AppLayout`（仅 Provider）→`AppRoutes`；`/core/*` 走 `isUIV3Enabled() ? AdaptiveLayout : GlobalLayout`（`src/routes/appRoutes.tsx:123-138`）；其余受保护路由走 `ProtectedRouteWrapper`（`src/components/ProtectedRouteWrapper.tsx:13-43`）。**发现 3 处"临时修复"硬编码**：
-  - ⚠️ **P1 移动端布局被禁用**：`src/layouts/AdaptiveLayout.tsx:73-76` 硬编码强制返回 `GlobalLayoutV3`，注释原文「临时修复：强制使用桌面端布局（GlobalLayoutV3）／问题：当前视口宽度 753px 被识别为移动端，使用了 MobileLayoutV3／后续根据实际需要调整响应式断点」→ **MobileLayoutV3 实际不可达，响应式切换失效**
+  - ~~⚠️ **P1 移动端布局被禁用**：`src/layouts/AdaptiveLayout.tsx:73-76` 硬编码强制返回 `GlobalLayoutV3`，注释原文「临时修复：强制使用桌面端布局（GlobalLayoutV3）／问题：当前视口宽度 753px 被识别为移动端，使用了 MobileLayoutV3／后续根据实际需要调整响应式断点」→ **MobileLayoutV3 实际不可达，响应式切换失效**~~ **已过期（2026-10-17 核实）**：`AdaptiveLayout.tsx` 已从仓库移除（现布局 = `AppLayout`/`GlobalLayoutV3`/`MobileLayoutV3`），A5 定案后主路由恒桌面 V3 壳、`/mobile/*` 由 MobileLayoutV3 独立承载（实机 20/20 PASS）——原「响应式切换失效」问题已被新架构取代，登记作废
   - ⚠️ **P2 旧布局分支死代码**：`ProtectedRouteWrapper.tsx:16-17` `const v3Enabled = true;`（注释「临时修复：强制使用 V3 布局」）→ `SmartLayout` 分支永不可达；`SmartLayout`→`Mobile/Tablet/Global` 三套布局成为死路径
   - ⚠️ **P2 口径冲突**：`isUIV3Enabled()`（`AdaptiveLayout.tsx:34-36`，读 `VITE_UI_V3_ENABLED`）与 `ProtectedRouteWrapper` 硬编码 `true` 两套开关口径不一致；且 `AdaptiveLayout.tsx:68-71` 未启用 V3 时直接返回 children（不包裹布局）→ 若调用方未自包旧布局将渲染裸内容，需核对全部调用点
 - ✅ A2 页面重复渲染壳层扫描（2026-10-16 静态完成）：`src/pages` 中**仅 1 个页面**直接 import+渲染壳层组件（`AppHeader`/`AppSidebar`/`GlobalLayout`/`AdaptiveLayout`/`SmartLayout`/`MobileNav`/`MobileHeader`）= `src/pages/admin/SystemManagementPage.tsx`（同时渲染 `DashboardTemplate` + `MobileHeader` + `MobileNav` + 吸顶信息条，`L77-116`）→ **重复壳层为点状风险，非系统性**；待实机确认是否与 V3 布局叠加
