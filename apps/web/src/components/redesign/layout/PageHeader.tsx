@@ -100,19 +100,21 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               ← {backButton.label || t('components.page_header.back')}
             </Button>
           )}
-          <h1
-            style={{
-              margin: 0,
-              fontFamily: 'var(--font-brand)',
-              fontSize: 'var(--text-3xl)',
-              fontWeight: 'var(--font-bold)',
-              letterSpacing: 'var(--tracking-tight)',
-              color: 'var(--text-primary)',
-              lineHeight: 'var(--leading-tight)',
-            }}
-          >
-            {title}
-          </h1>
+          {title && (
+            <h1
+              style={{
+                margin: 0,
+                fontFamily: 'var(--font-brand)',
+                fontSize: 'var(--text-3xl)',
+                fontWeight: 'var(--font-bold)',
+                letterSpacing: 'var(--tracking-tight)',
+                color: 'var(--text-primary)',
+                lineHeight: 'var(--leading-tight)',
+              }}
+            >
+              {title}
+            </h1>
+          )}
           {subtitle && <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{subtitle}</p>}
         </div>
 

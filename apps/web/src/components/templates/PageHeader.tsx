@@ -455,12 +455,15 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'common.white' }}
-              >
-                {title}
-              </Typography>
+              {title && (
+                <Typography
+                  variant='h5'
+                  component='h1'
+                  sx={{ fontWeight: 700, color: 'common.white' }}
+                >
+                  {title}
+                </Typography>
+              )}
               {banner.chip && (
                 <Chip
                   label={banner.chip}
@@ -572,12 +575,15 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 ) : (
                   <>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Typography
-                        variant={isMobile ? 'h5' : 'h4'}
-                        sx={{ fontWeight: 600 }}
-                      >
-                        {title}
-                      </Typography>
+                      {title && (
+                        <Typography
+                          variant={isMobile ? 'h5' : 'h4'}
+                          component='h1'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          {title}
+                        </Typography>
+                      )}
                       {renderBadge()}
                     </Box>
                     {subtitle && (

@@ -245,9 +245,10 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
               <>
                 <Typography
                   variant='h5'
+                  component='h2'
                   sx={{ fontWeight: 600, mb: 0.5 }}
                 >
-                  {infoCard.title || title}
+                  {infoCard.title || title || detailItemName || null}
                   {moduleChip && (
                     <Chip
                       label={moduleChip}
@@ -299,7 +300,7 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                     variant='h4'
                     sx={{ fontWeight: 700 }}
                   >
-                    {loading ? <Skeleton width={40} /> : stat.value}
+                    {loading ? <Skeleton width={40} /> : stat.value || '–'}
                   </Typography>
                   <Typography
                     variant='caption'

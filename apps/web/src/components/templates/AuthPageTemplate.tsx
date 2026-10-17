@@ -47,6 +47,7 @@ export const AuthPageTemplate: React.FC<AuthPageTemplateProps> = ({
 }) => {
   return (
     <Box
+      component='main'
       className='auth-page-template'
       sx={{
         minHeight: '100vh',

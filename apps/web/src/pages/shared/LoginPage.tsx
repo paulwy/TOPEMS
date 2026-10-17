@@ -237,6 +237,7 @@ const LoginPage: React.FC<LoginPageProps> = ({}) => {
           </Box>
           <Typography
             variant='h4'
+            component='h1'
             sx={{ fontWeight: 700, color: 'common.white' }}
           >
             {isRegister ? i18n.t('pages.login_page.k15') : i18n.t('pages.login_page.k14')}

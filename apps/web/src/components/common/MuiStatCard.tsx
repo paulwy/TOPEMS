@@ -172,7 +172,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                       lineHeight: 1.2,
                     }}
                   >
-                    {typeof value === 'number' ? value.toLocaleString() : value}
+                    {typeof value === 'number' ? value.toLocaleString() : value || '–'}
                   </Typography>
                   {unit && (
                     <Typography
