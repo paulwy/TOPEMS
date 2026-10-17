@@ -780,51 +780,81 @@ pub async fn delete_regulation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_monitor_record(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<CreateMonitorRecordRequest>,
 ) -> Json<ApiResponse<EnvironmentMonitor>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    let mut add = |field: &str, val: Option<String>| {
+        if let Some(v) = val {
+            let cast = if field == "monitor_date" {
+                "::date"
+            } else {
+                ""
+            };
+            sets.push(format!("{field} = ${}{cast}", params.len() + 1));
+            params.push(v);
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating monitor record {}: {:?}", id, req);
+    add("monitor_type", Some(req.monitor_type));
+    add("monitor_point", Some(req.monitor_point));
+    add("monitor_date", req.monitor_date);
+    add("monitor_agency", req.monitor_agency);
+    add("monitor_method", req.monitor_method);
+    add("pollutant", req.pollutant);
+    add("concentration", req.concentration);
+    add("unit", req.unit);
+    add("standard_value", req.standard_value);
+    add("standard_type", req.standard_type);
+    add("result", Some(req.result));
+    add("flow_rate", req.flow_rate);
+    add("emission_rate", req.emission_rate);
+    add("remarks", req.remarks);
+
+    if sets.is_empty() {
+        return Json(ApiResponse::error(400, "无更新字段"));
+    }
+    sets.push(format!("updated_at = ${}", params.len() + 1));
+    params.push(chrono::Utc::now().to_rfc3339());
+    let set_clause = sets.join(", ");
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_env_monitor_records
+        SET {set_clause}
+        WHERE id::text = ${}
+          AND (${} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${})
+          AND deleted_at IS NULL
+        RETURNING
+            id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
+            monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
+            result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
+            created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        "#,
+        params.len() + 1,
+        params.len() + 2,
+        params.len() + 2
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    query = query.bind(&id).bind(&tenant_bind);
+    let row = match query.fetch_one(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to update monitor record: {}", e);
+            return Json(ApiResponse::error(404, "监测记录不存在或更新失败"));
+        }
+    };
     Json(ApiResponse::success(
-        EnvironmentMonitor {
-            id,
-            record_no: "EM-2024001".to_string(),
-            monitor_type: req.monitor_type,
-            monitor_point: req.monitor_point,
-            monitor_date: req.monitor_date,
-            monitor_agency: req.monitor_agency,
-            monitor_method: req.monitor_method,
-            pollutant: req.pollutant,
-            concentration: req.concentration,
-            unit: req.unit,
-            standard_value: req.standard_value,
-            standard_type: req.standard_type,
-            result: req.result,
-            flow_rate: req.flow_rate,
-            emission_rate: req.emission_rate,
-            status: "completed".to_string(),
-            remarks: req.remarks,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-            tenant_id,
-        },
-        "监测记录更新成功",
+        monitor_record_from_row(&row),
+        "更新监测记录成功",
     ))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -1396,17 +1426,56 @@ pub async fn delete_evaluation(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_monitor_records(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    axum::extract::Query(q): axum::extract::Query<ComplianceQuery>,
 ) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
-    tracing::debug!("Listing environment monitor records");
-    Json(ApiResponse::success(
-        Vec::<EnvironmentMonitor>::new(),
-        "获取环境监测记录列表成功",
-    ))
-}
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(st) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(st.clone());
+    }
+    if let Some(cat) = &q.category {
+        where_clause.push_str(&format!(" AND monitor_type = ${}", params.len() + 1));
+        params.push(cat.clone());
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
+               monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
+               result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
+               created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_env_monitor_records
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list monitor records: {}", e);
+            return Json(ApiResponse::error(500, "获取环境监测记录列表失败"));
+        }
+    };
+    let records: Vec<EnvironmentMonitor> =
+        rows.iter().map(|r| monitor_record_from_row(r)).collect();
+    Json(ApiResponse::success(records, "获取环境监测记录列表成功"))
+}
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:write"])),
@@ -1416,54 +1485,64 @@ pub async fn list_monitor_records(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_monitor_record(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateMonitorRecordRequest>,
 ) -> Json<ApiResponse<EnvironmentMonitor>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating environment monitor record: {:?}", req);
-    Json(ApiResponse::success(
-        EnvironmentMonitor {
-            id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!(
-                "EM-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            monitor_type: req.monitor_type,
-            monitor_point: req.monitor_point,
-            monitor_date: req.monitor_date,
-            monitor_agency: req.monitor_agency,
-            monitor_method: req.monitor_method,
-            pollutant: req.pollutant,
-            concentration: req.concentration,
-            unit: req.unit,
-            standard_value: req.standard_value,
-            standard_type: req.standard_type,
-            result: req.result,
-            flow_rate: req.flow_rate,
-            emission_rate: req.emission_rate,
-            status: "completed".to_string(),
-            remarks: req.remarks,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+    let tenant_id = resolve_tenant_id(&claims);
+    let now = chrono::Utc::now();
+    let record_no = format!(
+        "EM-{}-{}",
+        now.format("%Y%m%d"),
+        &Uuid::new_v4().simple().to_string()[..6]
+    );
 
-            tenant_id,
-        },
+    let result = sqlx::query(
+        r#"
+        INSERT INTO ehs.qa_ehs_env_monitor_records (
+            record_no, monitor_type, monitor_point, monitor_date, monitor_agency, monitor_method,
+            pollutant, concentration, unit, standard_value, standard_type, result, flow_rate,
+            emission_rate, status, remarks, tenant_id, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4::date, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 'completed', $15, $16, NOW(), NOW())
+        RETURNING
+            id::text AS id, record_no, monitor_type, monitor_point, monitor_date::text AS monitor_date,
+            monitor_agency, monitor_method, pollutant, concentration, unit, standard_value, standard_type,
+            result, flow_rate, emission_rate, status, remarks, attachments::text AS attachments,
+            created_at::text AS created_at, updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        "#
+    )
+    .bind(&record_no)
+    .bind(&req.monitor_type)
+    .bind(&req.monitor_point)
+    .bind(req.monitor_date.as_deref())
+    .bind(req.monitor_agency.as_deref())
+    .bind(req.monitor_method.as_deref())
+    .bind(req.pollutant.as_deref())
+    .bind(req.concentration.as_deref())
+    .bind(req.unit.as_deref())
+    .bind(req.standard_value.as_deref())
+    .bind(req.standard_type.as_deref())
+    .bind(&req.result)
+    .bind(req.flow_rate.as_deref())
+    .bind(req.emission_rate.as_deref())
+    .bind(req.remarks.as_deref())
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create monitor record: {}", e);
+            return Json(ApiResponse::error(500, "创建环境监测记录失败"));
+        }
+    };
+    Json(ApiResponse::success(
+        monitor_record_from_row(&row),
         "监测记录创建成功",
     ))
 }
-
 #[derive(Debug, Deserialize)]
 pub struct PermitQuery {
     pub page: Option<i64>,
@@ -1625,17 +1704,64 @@ pub async fn create_permit(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_incidents(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    axum::extract::Query(q): axum::extract::Query<ComplianceQuery>,
 ) -> Json<ApiResponse<Vec<EnvironmentIncident>>> {
-    tracing::debug!("Listing environment incidents");
-    Json(ApiResponse::success(
-        Vec::<EnvironmentIncident>::new(),
-        "获取环境事件列表成功",
-    ))
-}
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(st) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(st.clone());
+    }
+    if let Some(cat) = &q.category {
+        where_clause.push_str(&format!(" AND incident_type = ${}", params.len() + 1));
+        params.push(cat.clone());
+    }
+    if let Some(y) = &q.year {
+        where_clause.push_str(&format!(
+            " AND EXTRACT(YEAR FROM occurred_at)::int = ${}",
+            params.len() + 1
+        ));
+        params.push(y.to_string());
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, incident_no, title, incident_type, level, location,
+               occurred_at::text AS occurred_at, reported_by, reported_at::text AS reported_at,
+               description, cause, impact, immediate_measures, status, responsible_person,
+               investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
+               attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_environment_incidents
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list incidents: {}", e);
+            return Json(ApiResponse::error(500, "获取环境事件列表失败"));
+        }
+    };
+    let records: Vec<EnvironmentIncident> = rows.iter().map(|r| incident_from_row(r)).collect();
+    Json(ApiResponse::success(records, "获取环境事件列表成功"))
+}
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:incident:write"])),
@@ -1645,56 +1771,63 @@ pub async fn list_incidents(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_incident(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating environment incident: {:?}", req);
-    Json(ApiResponse::success(
-        EnvironmentIncident {
-            id: uuid::Uuid::new_v4().to_string(),
-            incident_no: format!(
-                "EI-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            title: req.title,
-            incident_type: req.incident_type,
-            level: req.level,
-            location: req.location,
-            occurred_at: req.occurred_at,
-            reported_by: req.reported_by,
-            reported_at: Some(chrono::Utc::now().to_rfc3339()),
-            description: req.description,
-            cause: None,
-            impact: None,
-            immediate_measures: req.immediate_measures,
-            status: "reported".to_string(),
-            responsible_person: req.responsible_person,
-            investigation_result: None,
-            corrective_actions: None,
-            preventive_measures: None,
-            closed_at: None,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+    let tenant_id = resolve_tenant_id(&claims);
+    let now = chrono::Utc::now();
+    let incident_no = format!(
+        "EI-{}-{}",
+        now.format("%Y%m%d"),
+        &Uuid::new_v4().simple().to_string()[..6]
+    );
+    let reported_at = now.to_rfc3339();
 
-            tenant_id,
-        },
+    let result = sqlx::query(
+        r#"
+        INSERT INTO ehs.qa_ehs_environment_incidents (
+            incident_no, title, incident_type, level, location, occurred_at, reported_by,
+            reported_at, description, immediate_measures, status, responsible_person,
+            tenant_id, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6::timestamptz, $7, $8::timestamptz, $9, $10, 'reported', $11, $12, NOW(), NOW())
+        RETURNING
+            id::text AS id, incident_no, title, incident_type, level, location,
+            occurred_at::text AS occurred_at, reported_by, reported_at::text AS reported_at,
+            description, cause, impact, immediate_measures, status, responsible_person,
+            investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
+            attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+            tenant_id::text AS tenant_id
+        "#
+    )
+    .bind(&incident_no)
+    .bind(&req.title)
+    .bind(&req.incident_type)
+    .bind(req.level.as_deref())
+    .bind(req.location.as_deref())
+    .bind(req.occurred_at.as_deref())
+    .bind(req.reported_by.as_deref())
+    .bind(&reported_at)
+    .bind(req.description.as_deref())
+    .bind(req.immediate_measures.as_deref())
+    .bind(req.responsible_person.as_deref())
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create incident: {}", e);
+            return Json(ApiResponse::error(500, "创建环境事件失败"));
+        }
+    };
+    Json(ApiResponse::success(
+        incident_from_row(&row),
         "环境事件创建成功",
     ))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:incident:read"])),
@@ -1707,53 +1840,43 @@ pub async fn create_incident(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_incident(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting environment incident: {}", id);
-    Json(ApiResponse::success(
-        EnvironmentIncident {
-            id,
-            incident_no: "EI-2024001".to_string(),
-            title: "废水管网泄漏事件".to_string(),
-            incident_type: "wastewater_leak".to_string(),
-            level: Some("general".to_string()),
-            location: Some("厂区东南角".to_string()),
-            occurred_at: Some("2024-05-15T08:30:00Z".to_string()),
-            reported_by: Some("巡检员".to_string()),
-            reported_at: Some("2024-05-15T08:45:00Z".to_string()),
-            description: Some("废水管网接口处发生少量泄漏".to_string()),
-            cause: Some("管道老化导致接口松动".to_string()),
-            impact: Some("少量废水渗入土壤，已及时清理".to_string()),
-            immediate_measures: Some("立即关闭阀门，组织人员清理现场".to_string()),
-            status: "closed".to_string(),
-            responsible_person: Some("设施主管".to_string()),
-            investigation_result: Some("管道老化，需定期检查更换".to_string()),
-            corrective_actions: Some("更换老化管道，增加巡检频次".to_string()),
-            preventive_measures: Some("建立管道定期检测制度".to_string()),
-            closed_at: Some(chrono::Utc::now().to_rfc3339()),
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let result = sqlx::query(
+        r#"
+        SELECT id::text AS id, incident_no, title, incident_type, level, location,
+               occurred_at::text AS occurred_at, reported_by, reported_at::text AS reported_at,
+               description, cause, impact, immediate_measures, status, responsible_person,
+               investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
+               attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_environment_incidents
+        WHERE id::text = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        "#
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await;
 
-            tenant_id,
-        },
-        "获取环境事件详情成功",
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to get incident: {}", e);
+            return Json(ApiResponse::error(404, "环境事件不存在"));
+        }
+    };
+    Json(ApiResponse::success(
+        incident_from_row(&row),
+        "获取环境事件成功",
     ))
 }
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["ehs:incident:write"])),
@@ -1767,64 +1890,71 @@ pub async fn get_incident(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_incident(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    let mut add = |field: &str, val: Option<String>| {
+        if let Some(v) = val {
+            sets.push(format!("{field} = ${}", params.len() + 1));
+            params.push(v);
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating environment incident {}: {:?}", id, req);
-    let status = req
-        .status
-        .clone()
-        .unwrap_or_else(|| "investigating".to_string());
-    let closed_at = if status == "closed" {
-        Some(chrono::Utc::now().to_rfc3339())
-    } else {
-        None
-    };
+    add("level", req.level);
+    add("status", req.status);
+    add("cause", req.cause);
+    add("impact", req.impact);
+    add("investigation_result", req.investigation_result);
+    add("corrective_actions", req.corrective_actions);
+    add("preventive_measures", req.preventive_measures);
 
+    if sets.is_empty() {
+        return Json(ApiResponse::error(400, "无更新字段"));
+    }
+    sets.push(format!("updated_at = ${}", params.len() + 1));
+    params.push(chrono::Utc::now().to_rfc3339());
+    let set_clause = sets.join(", ");
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_environment_incidents
+        SET {set_clause}
+        WHERE id::text = ${}
+          AND (${} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${})
+          AND deleted_at IS NULL
+        RETURNING
+            id::text AS id, incident_no, title, incident_type, level, location,
+            occurred_at::text AS occurred_at, reported_by, reported_at::text AS reported_at,
+            description, cause, impact, immediate_measures, status, responsible_person,
+            investigation_result, corrective_actions, preventive_measures, closed_at::text AS closed_at,
+            attachments::text AS attachments, created_at::text AS created_at, updated_at::text AS updated_at,
+            tenant_id::text AS tenant_id
+        "#,
+        params.len() + 1,
+        params.len() + 2,
+        params.len() + 2
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    query = query.bind(&id).bind(&tenant_bind);
+    let row = match query.fetch_one(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to update incident: {}", e);
+            return Json(ApiResponse::error(404, "环境事件不存在或更新失败"));
+        }
+    };
     Json(ApiResponse::success(
-        EnvironmentIncident {
-            id,
-            incident_no: "EI-2024001".to_string(),
-            title: "废水管网泄漏事件".to_string(),
-            incident_type: "wastewater_leak".to_string(),
-            level: req.level,
-            location: Some("厂区东南角".to_string()),
-            occurred_at: Some("2024-05-15T08:30:00Z".to_string()),
-            reported_by: Some("巡检员".to_string()),
-            reported_at: Some("2024-05-15T08:45:00Z".to_string()),
-            description: Some("废水管网接口处发生少量泄漏".to_string()),
-            cause: req.cause,
-            impact: req.impact,
-            immediate_measures: Some("立即关闭阀门，组织人员清理现场".to_string()),
-            status,
-            responsible_person: Some("设施主管".to_string()),
-            investigation_result: req.investigation_result,
-            corrective_actions: req.corrective_actions,
-            preventive_measures: req.preventive_measures,
-            closed_at,
-            attachments: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "环境事件更新成功",
+        incident_from_row(&row),
+        "更新环境事件成功",
     ))
 }
-
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:incident:write"])),
@@ -1837,15 +1967,35 @@ pub async fn update_incident(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_incident(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting environment incident: {}", id);
-    Json(ApiResponse::success((), "环境事件删除成功"))
-}
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let result = sqlx::query(
+        r#"
+        UPDATE ehs.qa_ehs_environment_incidents
+        SET deleted_at = NOW()
+        WHERE id::text = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        "#,
+    )
+    .bind(&id)
+    .bind(&tenant_bind)
+    .execute(&state.pool)
+    .await;
 
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "环境事件删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "环境事件不存在")),
+        Err(e) => {
+            tracing::error!("Failed to delete incident: {}", e);
+            Json(ApiResponse::error(500, "删除环境事件失败"))
+        }
+    }
+}
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -1854,51 +2004,119 @@ pub async fn delete_incident(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_compliance_statistics(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<ComplianceStatistics>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting compliance statistics");
+    let tenant_id = resolve_tenant_id(&claims);
+    let tenant_bind = tenant_id.to_string();
+    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+
+    let total_regulations: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_environmental_regulations WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let active_regulations: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_environmental_regulations WHERE {} AND status = 'active'",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let total_evaluations: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_compliance_evaluations WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let average_compliance_rate: Option<f64> = sqlx::query_scalar(&format!(
+        "SELECT AVG(compliance_rate)::float8 FROM ehs.qa_ehs_compliance_evaluations WHERE {} AND compliance_rate IS NOT NULL", tc
+    )).bind(&tenant_bind).fetch_one(&state.pool).await.ok().flatten();
+    let total_monitor_records: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let qualified_monitor_records: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_env_monitor_records WHERE {} AND result IN ('合格','达标')", tc
+    )).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+    let total_permits: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let expiring_permits: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_discharge_permits WHERE {} AND valid_to BETWEEN NOW() AND NOW() + INTERVAL '30 days'", tc
+    )).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+    let total_incidents: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let open_incidents: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_environment_incidents WHERE {} AND status NOT IN ('closed','resolved')", tc
+    )).bind(&tenant_bind).fetch_one(&state.pool).await.unwrap_or(0);
+
+    let mut by_monitor_type: Vec<serde_json::Value> = Vec::new();
+    if let Ok(rows) = sqlx::query(&format!(
+        "SELECT COALESCE(monitor_type, '未分类') AS mt, COUNT(*)::int8 AS cnt, COUNT(*) FILTER (WHERE result IN ('合格','达标'))::int8 AS qc FROM ehs.qa_ehs_env_monitor_records WHERE {} GROUP BY 1 ORDER BY cnt DESC", tc
+    )).bind(&tenant_bind).fetch_all(&state.pool).await {
+        for r in rows {
+            by_monitor_type.push(serde_json::json!({
+                "type": r.try_get::<String, _>("mt").unwrap_or_default(),
+                "count": r.try_get::<i64, _>("cnt").unwrap_or(0),
+                "qualified": r.try_get::<i64, _>("qc").unwrap_or(0),
+            }));
+        }
+    }
+    let mut by_incident_type: Vec<serde_json::Value> = Vec::new();
+    if let Ok(rows) = sqlx::query(&format!(
+        "SELECT COALESCE(incident_type, '未分类') AS it, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_environment_incidents WHERE {} GROUP BY 1 ORDER BY cnt DESC", tc
+    )).bind(&tenant_bind).fetch_all(&state.pool).await {
+        for r in rows {
+            by_incident_type.push(serde_json::json!({
+                "type": r.try_get::<String, _>("it").unwrap_or_default(),
+                "count": r.try_get::<i64, _>("cnt").unwrap_or(0),
+            }));
+        }
+    }
+
     Json(ApiResponse::success(
         ComplianceStatistics {
-            total_regulations: 25,
-            active_regulations: 23,
-            total_evaluations: 4,
-            average_compliance_rate: Some(94.2),
-            total_monitor_records: 120,
-            qualified_monitor_records: 115,
-            total_permits: 5,
-            expiring_permits: 1,
-            total_incidents: 3,
-            open_incidents: 0,
-            by_monitor_type: vec![
-                serde_json::json!({ "type": "wastewater", "name": "废水", "count": 48, "qualified": 46 }),
-                serde_json::json!({ "type": "wastegas", "name": "废气", "count": 36, "qualified": 35 }),
-                serde_json::json!({ "type": "noise", "name": "噪声", "count": 24, "qualified": 24 }),
-                serde_json::json!({ "type": "solid_waste", "name": "固废", "count": 12, "qualified": 10 }),
-            ],
-            by_incident_type: vec![
-                serde_json::json!({ "type": "wastewater_leak", "name": "废水泄漏", "count": 1 }),
-                serde_json::json!({ "type": "wastegas_emission", "name": "废气超标", "count": 1 }),
-                serde_json::json!({ "type": "solid_waste", "name": "固废处置", "count": 1 }),
-            ],
+            total_regulations: i32::try_from(total_regulations).unwrap_or(i32::MAX),
+            active_regulations: i32::try_from(active_regulations).unwrap_or(i32::MAX),
+            total_evaluations: i32::try_from(total_evaluations).unwrap_or(i32::MAX),
+            average_compliance_rate,
+            total_monitor_records: i32::try_from(total_monitor_records).unwrap_or(i32::MAX),
+            qualified_monitor_records: i32::try_from(qualified_monitor_records).unwrap_or(i32::MAX),
+            total_permits: i32::try_from(total_permits).unwrap_or(i32::MAX),
+            expiring_permits: i32::try_from(expiring_permits).unwrap_or(i32::MAX),
+            total_incidents: i32::try_from(total_incidents).unwrap_or(i32::MAX),
+            open_incidents: i32::try_from(open_incidents).unwrap_or(i32::MAX),
+            by_monitor_type,
+            by_incident_type,
 
             tenant_id,
         },
         "获取环保合规统计成功",
     ))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -2095,5 +2313,75 @@ fn discharge_permit_from_row(r: &sqlx::postgres::PgRow) -> DischargePermit {
         created_at: r.try_get::<String, _>("created_at").ok(),
         updated_at: r.try_get::<String, _>("updated_at").ok(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+fn monitor_record_from_row(r: &sqlx::postgres::PgRow) -> EnvironmentMonitor {
+    EnvironmentMonitor {
+        id: r.try_get("id").unwrap_or_default(),
+        record_no: r.try_get("record_no").unwrap_or_default(),
+        monitor_type: r.try_get("monitor_type").unwrap_or_default(),
+        monitor_point: r.try_get("monitor_point").unwrap_or_default(),
+        monitor_date: r.try_get("monitor_date").ok().flatten(),
+        monitor_agency: r.try_get("monitor_agency").ok().flatten(),
+        monitor_method: r.try_get("monitor_method").ok().flatten(),
+        pollutant: r.try_get("pollutant").ok().flatten(),
+        concentration: r.try_get("concentration").ok().flatten(),
+        unit: r.try_get("unit").ok().flatten(),
+        standard_value: r.try_get("standard_value").ok().flatten(),
+        standard_type: r.try_get("standard_type").ok().flatten(),
+        result: r.try_get("result").unwrap_or_default(),
+        flow_rate: r.try_get("flow_rate").ok().flatten(),
+        emission_rate: r.try_get("emission_rate").ok().flatten(),
+        status: r.try_get("status").unwrap_or_default(),
+        remarks: r.try_get("remarks").ok().flatten(),
+        attachments: r
+            .try_get::<Option<String>, _>("attachments")
+            .ok()
+            .flatten()
+            .and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok()),
+        created_at: r.try_get("created_at").ok().flatten(),
+        updated_at: r.try_get("updated_at").ok().flatten(),
+        tenant_id: r
+            .try_get::<Option<Uuid>, _>("tenant_id")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+    }
+}
+
+fn incident_from_row(r: &sqlx::postgres::PgRow) -> EnvironmentIncident {
+    EnvironmentIncident {
+        id: r.try_get("id").unwrap_or_default(),
+        incident_no: r.try_get("incident_no").unwrap_or_default(),
+        title: r.try_get("title").unwrap_or_default(),
+        incident_type: r.try_get("incident_type").unwrap_or_default(),
+        level: r.try_get("level").ok().flatten(),
+        location: r.try_get("location").ok().flatten(),
+        occurred_at: r.try_get("occurred_at").ok().flatten(),
+        reported_by: r.try_get("reported_by").ok().flatten(),
+        reported_at: r.try_get("reported_at").ok().flatten(),
+        description: r.try_get("description").ok().flatten(),
+        cause: r.try_get("cause").ok().flatten(),
+        impact: r.try_get("impact").ok().flatten(),
+        immediate_measures: r.try_get("immediate_measures").ok().flatten(),
+        status: r.try_get("status").unwrap_or_default(),
+        responsible_person: r.try_get("responsible_person").ok().flatten(),
+        investigation_result: r.try_get("investigation_result").ok().flatten(),
+        corrective_actions: r.try_get("corrective_actions").ok().flatten(),
+        preventive_measures: r.try_get("preventive_measures").ok().flatten(),
+        closed_at: r.try_get("closed_at").ok().flatten(),
+        attachments: r
+            .try_get::<Option<String>, _>("attachments")
+            .ok()
+            .flatten()
+            .and_then(|s| serde_json::from_str::<Vec<String>>(&s).ok()),
+        created_at: r.try_get("created_at").ok().flatten(),
+        updated_at: r.try_get("updated_at").ok().flatten(),
+        tenant_id: r
+            .try_get::<Option<Uuid>, _>("tenant_id")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
     }
 }
