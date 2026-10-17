@@ -47,6 +47,34 @@ pub fn create_routes() -> Router<AppState> {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct DrillPlanQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub status: Option<String>,
+    pub drill_type: Option<String>,
+    pub year: Option<i32>,
+    pub q: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDrillEvaluationRequest {
+    pub evaluator: Option<String>,
+    pub overall_score: Option<i32>,
+    pub overall_comment: Option<String>,
+    pub objectives_met: Option<bool>,
+    pub response_time_score: Option<i32>,
+    pub coordination_score: Option<i32>,
+    pub procedure_score: Option<i32>,
+    pub equipment_score: Option<i32>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DrillType {
+    pub code: String,
+    pub name: String,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct DrillQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
@@ -259,17 +287,107 @@ pub struct UpdateDrillProblemRequest {
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_drill_plans(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Query(q): Query<DrillPlanQuery>,
 ) -> Json<ApiResponse<Vec<DrillPlan>>> {
-    tracing::debug!("Listing drill plans");
-    Json(ApiResponse::success(
-        Vec::<DrillPlan>::new(),
-        "获取演练计划列表成功",
-    ))
-}
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(s) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(s.clone());
+    }
+    if let Some(t) = &q.drill_type {
+        where_clause.push_str(&format!(" AND drill_type = ${}", params.len() + 1));
+        params.push(t.clone());
+    }
+    if let Some(y) = q.year {
+        where_clause.push_str(&format!(
+            " AND EXTRACT(YEAR FROM plan_date) = ${}",
+            params.len() + 1
+        ));
+        params.push(y.to_string());
+    }
+    if let Some(k) = &q.q {
+        where_clause.push_str(&format!(
+            " AND (title ILIKE ${} OR plan_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2
+        ));
+        let like = format!("%{k}%");
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, plan_no, title, description, drill_type,
+               plan_date::text AS plan_date, location, participants, estimated_duration,
+               content, organizer, status, related_plan_id::text AS related_plan_id,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_drill_plans
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list drill plans: {}", e);
+            return Json(ApiResponse::error(500, "获取演练计划列表失败"));
+        }
+    };
+
+    let plans: Vec<DrillPlan> = rows
+        .iter()
+        .map(|r| DrillPlan {
+            id: r.try_get::<String, _>("id").unwrap_or_default(),
+            plan_no: r.try_get::<String, _>("plan_no").unwrap_or_default(),
+            title: r.try_get::<String, _>("title").unwrap_or_default(),
+            description: r.try_get::<Option<String>, _>("description").ok().flatten(),
+            drill_type: r.try_get::<String, _>("drill_type").unwrap_or_default(),
+            plan_date: r.try_get::<Option<String>, _>("plan_date").ok().flatten(),
+            location: r.try_get::<Option<String>, _>("location").ok().flatten(),
+            participants: r.try_get::<Option<i32>, _>("participants").ok().flatten(),
+            estimated_duration: r
+                .try_get::<Option<i32>, _>("estimated_duration")
+                .ok()
+                .flatten(),
+            content: r.try_get::<Option<String>, _>("content").ok().flatten(),
+            organizer: r.try_get::<Option<String>, _>("organizer").ok().flatten(),
+            status: r
+                .try_get::<String, _>("status")
+                .unwrap_or_else(|_| "planned".to_string()),
+            related_plan_id: r
+                .try_get::<Option<String>, _>("related_plan_id")
+                .ok()
+                .flatten(),
+            created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
+            updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
+            tenant_id: r
+                .try_get::<Option<Uuid>, _>("tenant_id")
+                .ok()
+                .flatten()
+                .unwrap_or_default(),
+        })
+        .collect();
+
+    Json(ApiResponse::success(plans, "获取演练计划列表成功"))
+}
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:plan:write"])),
@@ -279,81 +397,209 @@ pub async fn list_drill_plans(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_drill_plan(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateDrillPlanRequest>,
 ) -> Json<ApiResponse<DrillPlan>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         claims
             .tenant_id
             .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating drill plan: {:?}", req);
-    Json(ApiResponse::success(
-        DrillPlan {
-            id: uuid::Uuid::new_v4().to_string(),
-            plan_no: format!(
-                "DP-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            title: req.title,
-            description: req.description,
-            drill_type: req.drill_type,
-            plan_date: req.plan_date,
-            location: req.location,
-            participants: req.participants,
-            estimated_duration: req.estimated_duration,
-            content: req.content,
-            organizer: req.organizer,
-            status: "planned".to_string(),
-            related_plan_id: req.related_plan_id,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+    let tenant_id = tenant_opt.unwrap_or_else(Uuid::nil);
 
-            tenant_id,
-        },
-        "演练计划创建成功",
-    ))
+    let now = chrono::Utc::now();
+    let plan_no = format!(
+        "DP-{}-{}",
+        now.format("%Y%m%d"),
+        &Uuid::new_v4().simple().to_string()[..6]
+    );
+
+    let result = sqlx::query(
+        r#"
+        INSERT INTO ehs.qa_ehs_drill_plans (
+            plan_no, title, description, drill_type, plan_date, location,
+            participants, estimated_duration, content, organizer, status,
+            related_plan_id, tenant_id, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, COALESCE($11, 'planned'), $12, $13, NOW(), NOW())
+        RETURNING
+            id::text AS id, plan_no, title, description, drill_type,
+            plan_date::text AS plan_date, location, participants, estimated_duration,
+            content, organizer, status, related_plan_id::text AS related_plan_id,
+            created_at::text AS created_at, updated_at::text AS updated_at,
+            tenant_id::text AS tenant_id
+        "#
+    )
+    .bind(&plan_no)
+    .bind(&req.title)
+    .bind(req.description.as_deref())
+    .bind(&req.drill_type)
+    .bind(req.plan_date.as_deref())
+    .bind(req.location.as_deref())
+    .bind(req.participants)
+    .bind(req.estimated_duration)
+    .bind(req.content.as_deref())
+    .bind(req.organizer.as_deref())
+    .bind(req.related_plan_id.as_deref())
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create drill plan: {}", e);
+            return Json(ApiResponse::error(500, "创建演练计划失败"));
+        }
+    };
+
+    let plan = DrillPlan {
+        id: row.try_get::<String, _>("id").unwrap_or_default(),
+        plan_no: row.try_get::<String, _>("plan_no").unwrap_or_default(),
+        title: row.try_get::<String, _>("title").unwrap_or_default(),
+        description: row
+            .try_get::<Option<String>, _>("description")
+            .ok()
+            .flatten(),
+        drill_type: row.try_get::<String, _>("drill_type").unwrap_or_default(),
+        plan_date: row.try_get::<Option<String>, _>("plan_date").ok().flatten(),
+        location: row.try_get::<Option<String>, _>("location").ok().flatten(),
+        participants: row.try_get::<Option<i32>, _>("participants").ok().flatten(),
+        estimated_duration: row
+            .try_get::<Option<i32>, _>("estimated_duration")
+            .ok()
+            .flatten(),
+        content: row.try_get::<Option<String>, _>("content").ok().flatten(),
+        organizer: row.try_get::<Option<String>, _>("organizer").ok().flatten(),
+        status: row
+            .try_get::<String, _>("status")
+            .unwrap_or_else(|_| "planned".to_string()),
+        related_plan_id: row
+            .try_get::<Option<String>, _>("related_plan_id")
+            .ok()
+            .flatten(),
+        created_at: row
+            .try_get::<Option<String>, _>("created_at")
+            .ok()
+            .flatten(),
+        updated_at: row
+            .try_get::<Option<String>, _>("updated_at")
+            .ok()
+            .flatten(),
+        tenant_id: row
+            .try_get::<Option<Uuid>, _>("tenant_id")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+    };
+
+    Json(ApiResponse::success(plan, "创建演练计划成功"))
 }
-
 pub async fn submit_drill_evaluation(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
-    Json(req): Json<serde_json::Value>,
-) -> Json<ApiResponse<serde_json::Value>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
+    Json(req): Json<CreateDrillEvaluationRequest>,
+) -> Json<ApiResponse<DrillEvaluation>> {
+    let tenant_opt: Option<Uuid> = if claims.is_superuser {
         None
     } else {
         claims
             .tenant_id
             .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .and_then(|t| Uuid::parse_str(t).ok())
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Submitting drill evaluation for record {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        serde_json::json!({
-            "id": uuid::Uuid::new_v4().to_string(),
-            "drill_record_id": id,
-            "score": req.get("score").and_then(|v| v.as_f64()).unwrap_or(0.0),
-            "evaluation": req.get("evaluation").and_then(|v| v.as_str()).unwrap_or(""),
-            "evaluator": "test_admin",
-            "evaluated_at": chrono::Utc::now().to_rfc3339(),
-            "tenant_id": tenant_id.to_string(),
-        }),
-        "演练评估提交成功",
-    ))
-}
+    let tenant_id = tenant_opt.unwrap_or_else(Uuid::nil);
 
+    let result = sqlx::query(
+        r#"
+        INSERT INTO ehs.qa_ehs_drill_evaluations (
+            drill_id, evaluator, overall_score, overall_comment, objectives_met,
+            response_time_score, coordination_score, procedure_score, equipment_score,
+            evaluated_at, tenant_id, created_at
+        ) VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10, NOW())
+        RETURNING
+            id::text AS id, drill_id::text AS drill_id, evaluator, overall_score,
+            overall_comment, objectives_met, response_time_score, coordination_score,
+            procedure_score, equipment_score, evaluated_at::text AS evaluated_at,
+            created_at::text AS created_at, tenant_id::text AS tenant_id
+        "#,
+    )
+    .bind(&id)
+    .bind(req.evaluator.as_deref())
+    .bind(req.overall_score)
+    .bind(req.overall_comment.as_deref())
+    .bind(req.objectives_met)
+    .bind(req.response_time_score)
+    .bind(req.coordination_score)
+    .bind(req.procedure_score)
+    .bind(req.equipment_score)
+    .bind(tenant_id)
+    .fetch_one(&state.pool)
+    .await;
+
+    let row = match result {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to submit drill evaluation: {}", e);
+            return Json(ApiResponse::error(500, "提交演练评估失败"));
+        }
+    };
+
+    let eval = DrillEvaluation {
+        id: row.try_get::<String, _>("id").unwrap_or_default(),
+        drill_id: row.try_get::<String, _>("drill_id").unwrap_or_default(),
+        evaluator: row.try_get::<Option<String>, _>("evaluator").ok().flatten(),
+        overall_score: row
+            .try_get::<Option<i32>, _>("overall_score")
+            .ok()
+            .flatten(),
+        overall_comment: row
+            .try_get::<Option<String>, _>("overall_comment")
+            .ok()
+            .flatten(),
+        objectives_met: row
+            .try_get::<Option<bool>, _>("objectives_met")
+            .ok()
+            .flatten(),
+        response_time_score: row
+            .try_get::<Option<i32>, _>("response_time_score")
+            .ok()
+            .flatten(),
+        coordination_score: row
+            .try_get::<Option<i32>, _>("coordination_score")
+            .ok()
+            .flatten(),
+        procedure_score: row
+            .try_get::<Option<i32>, _>("procedure_score")
+            .ok()
+            .flatten(),
+        equipment_score: row
+            .try_get::<Option<i32>, _>("equipment_score")
+            .ok()
+            .flatten(),
+        evaluated_at: row
+            .try_get::<Option<String>, _>("evaluated_at")
+            .ok()
+            .flatten(),
+        created_at: row
+            .try_get::<Option<String>, _>("created_at")
+            .ok()
+            .flatten(),
+        tenant_id: row
+            .try_get::<Option<Uuid>, _>("tenant_id")
+            .ok()
+            .flatten()
+            .unwrap_or_default(),
+    };
+
+    Json(ApiResponse::success(eval, "提交演练评估成功"))
+}
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -692,51 +938,113 @@ pub async fn delete_drill_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_drill_statistics(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
 ) -> Json<ApiResponse<DrillStatistics>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting drill statistics");
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+
+    let total_drills: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let planned_count: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_plans WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let completed_count: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_records WHERE {} AND status = 'completed'",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let average_score: Option<f64> = sqlx::query_scalar(&format!(
+        "SELECT AVG(overall_score)::float8 FROM ehs.qa_ehs_drill_evaluations WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(None);
+    let problem_count: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_problems WHERE {}",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+    let rectified_count: i64 = sqlx::query_scalar(&format!(
+        "SELECT COUNT(*) FROM ehs.qa_ehs_drill_problems WHERE {} AND status = 'rectified'",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_one(&state.pool)
+    .await
+    .unwrap_or(0);
+
+    let mut by_type: Vec<serde_json::Value> = Vec::new();
+    if let Ok(rows) = sqlx::query(&format!(
+        "SELECT drill_type, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_drill_records WHERE {} GROUP BY drill_type ORDER BY cnt DESC",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_all(&state.pool)
+    .await
+    {
+        for r in rows {
+            by_type.push(serde_json::json!({
+                "type": r.try_get::<String, _>("drill_type").unwrap_or_default(),
+                "name": r.try_get::<String, _>("drill_type").unwrap_or_default(),
+                "count": r.try_get::<i64, _>("cnt").unwrap_or(0),
+            }));
+        }
+    }
+
+    let mut by_month: Vec<serde_json::Value> = Vec::new();
+    if let Ok(rows) = sqlx::query(&format!(
+        "SELECT to_char(started_at, 'YYYY-MM') AS month, COUNT(*)::int8 AS cnt FROM ehs.qa_ehs_drill_records WHERE {} GROUP BY 1 ORDER BY 1",
+        tc
+    ))
+    .bind(&tenant_bind)
+    .fetch_all(&state.pool)
+    .await
+    {
+        for r in rows {
+            by_month.push(serde_json::json!({
+                "month": r.try_get::<String, _>("month").unwrap_or_default(),
+                "count": r.try_get::<i64, _>("cnt").unwrap_or(0),
+            }));
+        }
+    }
+
     Json(ApiResponse::success(
         DrillStatistics {
-            total_drills: 12,
-            planned_count: 2,
-            completed_count: 10,
-            average_score: Some(82.5),
-            by_type: vec![
-                serde_json::json!({ "type": "fire", "name": "火灾", "count": 4 }),
-                serde_json::json!({ "type": "leak", "name": "泄漏", "count": 3 }),
-                serde_json::json!({ "type": "evacuation", "name": "疏散", "count": 3 }),
-                serde_json::json!({ "type": "rescue", "name": "救援", "count": 2 }),
-            ],
-            by_month: vec![
-                serde_json::json!({ "month": "1月", "count": 1 }),
-                serde_json::json!({ "month": "2月", "count": 1 }),
-                serde_json::json!({ "month": "3月", "count": 2 }),
-                serde_json::json!({ "month": "4月", "count": 1 }),
-                serde_json::json!({ "month": "5月", "count": 1 }),
-                serde_json::json!({ "month": "6月", "count": 2 }),
-            ],
-            problem_count: 28,
-            rectified_count: 24,
-            participant_count: 1560,
-
-            tenant_id,
+            total_drills: i32::try_from(total_drills).unwrap_or(i32::MAX),
+            planned_count: i32::try_from(planned_count).unwrap_or(i32::MAX),
+            completed_count: i32::try_from(completed_count).unwrap_or(i32::MAX),
+            average_score,
+            by_type,
+            by_month,
+            problem_count: i32::try_from(problem_count).unwrap_or(i32::MAX),
+            rectified_count: i32::try_from(rectified_count).unwrap_or(i32::MAX),
+            participant_count: 0,
+            tenant_id: tenant_bind.parse().unwrap_or_default(),
         },
-        "获取统计数据成功",
+        "获取演练统计成功",
     ))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -745,22 +1053,87 @@ pub async fn get_drill_statistics(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_drill_types(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
-) -> Json<ApiResponse<Vec<serde_json::Value>>> {
-    tracing::debug!("Listing drill types");
-    let types = vec![
-        serde_json::json!({ "code": "fire", "name": "火灾演练" }),
-        serde_json::json!({ "code": "leak", "name": "泄漏演练" }),
-        serde_json::json!({ "code": "poisoning", "name": "中毒演练" }),
-        serde_json::json!({ "code": "evacuation", "name": "疏散演练" }),
-        serde_json::json!({ "code": "rescue", "name": "救援演练" }),
-        serde_json::json!({ "code": "comprehensive", "name": "综合演练" }),
-    ];
+) -> Json<ApiResponse<Vec<DrillType>>> {
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let tc = "($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL";
+
+    let mut types: Vec<DrillType> = Vec::new();
+    let sql = format!(
+        "SELECT drill_type FROM ehs.qa_ehs_drill_plans WHERE {tc} AND drill_type IS NOT NULL AND drill_type <> ''          UNION          SELECT drill_type FROM ehs.qa_ehs_drill_records WHERE {tc} AND drill_type IS NOT NULL AND drill_type <> ''          ORDER BY 1"
+    );
+    if let Ok(rows) = sqlx::query(&sql)
+        .bind(&tenant_bind)
+        .fetch_all(&state.pool)
+        .await
+    {
+        for r in rows {
+            let code = r.try_get::<String, _>("drill_type").unwrap_or_default();
+            types.push(DrillType {
+                code: code.clone(),
+                name: code,
+            });
+        }
+    }
+
     Json(ApiResponse::success(types, "获取演练类型成功"))
 }
 
+fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+/// qa_ehs_drill_records 行 → DrillRecord（SELECT 列别名对齐本函数字段）
+fn drill_record_from_row(r: &sqlx::postgres::PgRow) -> DrillRecord {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let participants: Option<serde_json::Value> = r.try_get("participants").ok().flatten();
+    let participants = participants.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    let attachments: Option<serde_json::Value> = r.try_get("attachments").ok().flatten();
+    let attachments = attachments.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    DrillRecord {
+        id: r.try_get("id").unwrap_or_default(),
+        drill_no: r.try_get("drill_no").unwrap_or_default(),
+        plan_id: r.try_get("plan_id").ok().flatten(),
+        drill_name: r.try_get("drill_name").unwrap_or_default(),
+        drill_date: r.try_get("drill_date").ok().flatten(),
+        participants,
+        duration_hours: r.try_get("duration_hours").ok().flatten(),
+        location: r.try_get("location").ok().flatten(),
+        summary: r.try_get("summary").ok().flatten(),
+        issues_found: r.try_get("issues_found").ok().flatten(),
+        improvements: r.try_get("improvements").ok().flatten(),
+        attachments,
+        status: r
+            .try_get("status")
+            .unwrap_or_else(|_| "in_progress".to_string()),
+        created_by: r.try_get("created_by").ok().flatten(),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
 pub fn drill_score(
     participation_rate: f64,
     scenario_completion: f64,
@@ -919,60 +1292,5 @@ mod tests {
     #[test]
     fn test_coverage_overflow() {
         assert!((plan_coverage(15, 10) - 100.0).abs() < 1e-9);
-    }
-}
-
-/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
-fn resolve_tenant_id(claims: &Claims) -> uuid::Uuid {
-    if claims.is_superuser {
-        uuid::Uuid::nil()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-    }
-}
-
-/// qa_ehs_drill_records 行 → DrillRecord（SELECT 列别名对齐本函数字段）
-fn drill_record_from_row(r: &sqlx::postgres::PgRow) -> DrillRecord {
-    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
-    let participants: Option<serde_json::Value> = r.try_get("participants").ok().flatten();
-    let participants = participants.and_then(|v| {
-        v.as_array().map(|arr| {
-            arr.iter()
-                .filter_map(|e| e.as_str().map(|s| s.to_string()))
-                .collect::<Vec<String>>()
-        })
-    });
-    let attachments: Option<serde_json::Value> = r.try_get("attachments").ok().flatten();
-    let attachments = attachments.and_then(|v| {
-        v.as_array().map(|arr| {
-            arr.iter()
-                .filter_map(|e| e.as_str().map(|s| s.to_string()))
-                .collect::<Vec<String>>()
-        })
-    });
-    DrillRecord {
-        id: r.try_get("id").unwrap_or_default(),
-        drill_no: r.try_get("drill_no").unwrap_or_default(),
-        plan_id: r.try_get("plan_id").ok().flatten(),
-        drill_name: r.try_get("drill_name").unwrap_or_default(),
-        drill_date: r.try_get("drill_date").ok().flatten(),
-        participants,
-        duration_hours: r.try_get("duration_hours").ok().flatten(),
-        location: r.try_get("location").ok().flatten(),
-        summary: r.try_get("summary").ok().flatten(),
-        issues_found: r.try_get("issues_found").ok().flatten(),
-        improvements: r.try_get("improvements").ok().flatten(),
-        attachments,
-        status: r
-            .try_get("status")
-            .unwrap_or_else(|_| "in_progress".to_string()),
-        created_by: r.try_get("created_by").ok().flatten(),
-        created_at: r.try_get::<String, _>("created_at").ok(),
-        updated_at: r.try_get::<String, _>("updated_at").ok(),
-        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
