@@ -21,7 +21,7 @@ async function createAuthenticatedContext(browser: Browser, username: string, pa
 
 test.describe('认证流程测试', () => {
   test('登录后应能访问 dashboard', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -34,7 +34,7 @@ test.describe('认证流程测试', () => {
   });
 
   test('登录后页面应包含页面内容', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -49,7 +49,7 @@ test.describe('认证流程测试', () => {
   });
 
   test('登录后侧边栏应可见', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -64,7 +64,7 @@ test.describe('认证流程测试', () => {
   });
 
   test('移动端登录后页面应正常渲染', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 375, height: 667 });
@@ -77,7 +77,7 @@ test.describe('认证流程测试', () => {
   });
 
   test('认证状态应在页面刷新后保持', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });

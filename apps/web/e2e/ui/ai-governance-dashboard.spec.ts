@@ -13,28 +13,35 @@
  * - 数据导出功能
  */
 
-import { test, expect } from '@playwright/test';
+import { test as base, expect } from '@playwright/test';
 import { createAuthenticatedContext } from '../utils/testUtils';
 
-test.describe('AI 治理仪表盘页面测试', () => {
-  test.beforeEach(async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+// 自定义 fixture：创建已认证的 page（与 ai-business-copilot.spec 一致）
+const test = base.extend<{ authedPage: any }>({
+  authedPage: async ({ browser }, use) => {
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
-
-    await page.goto('/ai/governance-dashboard');
+    await page.goto('/ai/governanceDashboard');
     await page.waitForLoadState('networkidle');
-  });
+    // 数据面板异步渲染，等待关键面板出现（首次加载可能 >5s）
+    await page.locator('text=治理评分').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+    await use(page);
+    await context.close();
+  },
+});
 
-  test('页面应正确加载并显示标题', async ({ page }) => {
+test.describe('AI 治理仪表盘页面测试', () => {
+
+  test('页面应正确加载并显示标题', async ({ authedPage: page }) => {
     // 验证页面标题
-    await expect(page.locator('text=AI 治理仪表盘')).toBeVisible();
+    await expect(page.locator('text=AI 治理仪表盘').first()).toBeVisible();
 
     // 验证页面描述
-    await expect(page.locator('text=全面监控 AI 系统的安全、合规、成本和性能')).toBeVisible();
+    await expect(page.locator('text=全面监控 AI 系统的安全、合规、成本和性能').first()).toBeVisible();
   });
 
-  test('应显示时间范围选择器', async ({ page }) => {
+  test('应显示时间范围选择器', async ({ authedPage: page }) => {
     // 验证时间范围选择器存在
     await expect(page.locator('label:has-text("时间范围"), select').first()).toBeVisible();
 
@@ -46,7 +53,7 @@ test.describe('AI 治理仪表盘页面测试', () => {
     }
   });
 
-  test('应能切换时间范围', async ({ page }) => {
+  test('应能切换时间范围', async ({ authedPage: page }) => {
     // 选择最近 7 天
     const select = page.locator('select').first();
     if (await select.isVisible().catch(() => false)) {
@@ -57,16 +64,16 @@ test.describe('AI 治理仪表盘页面测试', () => {
     }
   });
 
-  test('应显示治理评分', async ({ page }) => {
+  test('应显示治理评分', async ({ authedPage: page }) => {
     // 验证治理评分区域存在
-    await expect(page.locator('text=总体治理评分, text=治理评分').first()).toBeVisible();
+    await expect(page.locator('text=总体治理评分').or(page.locator('text=治理评分')).first()).toBeVisible();
 
     // 验证评分数字存在（0-100 之间的数字）
     const scoreElement = page.locator('text=/^\\d{1,3}$/').first();
     // 评分可能以不同的格式显示，这里只验证页面有数字内容
   });
 
-  test('应显示治理等级', async ({ page }) => {
+  test('应显示治理等级', async ({ authedPage: page }) => {
     // 验证治理等级存在
     const levels = ['优秀', '良好', '一般', '需改进', '较差', 'excellent', 'good', 'fair', 'needs_improvement', 'poor'];
     let levelFound = false;
@@ -80,7 +87,7 @@ test.describe('AI 治理仪表盘页面测试', () => {
     // 治理等级应该显示其中一个值
   });
 
-  test('应显示关键指标卡片', async ({ page }) => {
+  test('应显示关键指标卡片', async ({ authedPage: page }) => {
     // 验证关键指标区域存在
     const metrics = ['总请求', '成功率', '响应时间', 'Token', '用户', '缓存'];
     for (const metric of metrics) {
@@ -89,48 +96,48 @@ test.describe('AI 治理仪表盘页面测试', () => {
     }
   });
 
-  test('应显示风险评估面板', async ({ page }) => {
+  test('应显示风险评估面板', async ({ authedPage: page }) => {
     // 验证风险评估区域存在
-    await expect(page.locator('text=风险评估, text=总体风险等级').first()).toBeVisible();
+    await expect(page.locator('text=风险评估').or(page.locator('text=总体风险等级')).first()).toBeVisible();
 
     // 验证风险等级存在
     const riskLevels = ['低', '中', '高', '严重', 'low', 'medium', 'high', 'critical'];
     // 风险等级应该显示其中一个值
   });
 
-  test('应显示合规状态面板', async ({ page }) => {
+  test('应显示合规状态面板', async ({ authedPage: page }) => {
     // 验证合规状态区域存在
-    await expect(page.locator('text=合规状态, text=总体合规率').first()).toBeVisible();
+    await expect(page.locator('text=合规状态').or(page.locator('text=总体合规率')).first()).toBeVisible();
 
     // 验证合规统计存在
     const complianceStats = ['通过', '失败', '待处理', 'passed', 'failed', 'pending'];
     // 合规统计应该显示这些值
   });
 
-  test('应显示成本分析面板', async ({ page }) => {
+  test('应显示成本分析面板', async ({ authedPage: page }) => {
     // 验证成本分析区域存在
-    await expect(page.locator('text=成本分析, text=总成本').first()).toBeVisible();
+    await expect(page.locator('text=成本分析').or(page.locator('text=总成本')).first()).toBeVisible();
 
     // 验证成本分类存在
     const costCategories = ['LLM', '工具', '存储', '网络', '其他', 'llm', 'tool', 'storage', 'network'];
     // 成本分类应该显示这些值
   });
 
-  test('应显示性能指标面板', async ({ page }) => {
+  test('应显示性能指标面板', async ({ authedPage: page }) => {
     // 验证性能指标区域存在
-    await expect(page.locator('text=性能指标, text=平均响应时间').first()).toBeVisible();
+    await expect(page.locator('text=性能指标').or(page.locator('text=平均响应时间')).first()).toBeVisible();
 
     // 验证性能指标存在
     const performanceMetrics = ['P50', 'P90', 'P95', 'P99', '吞吐量', '错误率', 'throughput', 'error_rate'];
     // 性能指标应该显示这些值
   });
 
-  test('应显示刷新按钮', async ({ page }) => {
+  test('应显示刷新按钮', async ({ authedPage: page }) => {
     // 验证刷新按钮存在
     await expect(page.locator('button:has-text("刷新"), button[aria-label="刷新"]').first()).toBeVisible();
   });
 
-  test('点击刷新按钮应刷新数据', async ({ page }) => {
+  test('点击刷新按钮应刷新数据', async ({ authedPage: page }) => {
     // 点击刷新按钮
     const refreshButton = page.locator('button:has-text("刷新"), button[aria-label="刷新"]').first();
     if (await refreshButton.isVisible().catch(() => false)) {
@@ -141,13 +148,13 @@ test.describe('AI 治理仪表盘页面测试', () => {
     }
   });
 
-  test('应显示自动刷新开关', async ({ page }) => {
+  test('应显示自动刷新开关', async ({ authedPage: page }) => {
     // 验证自动刷新开关存在
     const autoRefreshToggle = page.locator('text=自动刷新, [role="switch"]').first();
     // 自动刷新开关应该存在
   });
 
-  test('应能切换自动刷新', async ({ page }) => {
+  test('应能切换自动刷新', async ({ authedPage: page }) => {
     // 点击自动刷新开关
     const autoRefreshToggle = page.locator('[role="switch"]').first();
     if (await autoRefreshToggle.isVisible().catch(() => false)) {
@@ -158,13 +165,13 @@ test.describe('AI 治理仪表盘页面测试', () => {
     }
   });
 
-  test('应显示最后更新时间', async ({ page }) => {
+  test('应显示最后更新时间', async ({ authedPage: page }) => {
     // 验证最后更新时间存在
-    const lastUpdated = page.locator('text=最后更新, text=最后刷新').first();
+    const lastUpdated = page.locator('text=最后更新').or(page.locator('text=最后刷新')).first();
     // 最后更新时间应该存在
   });
 
-  test('页面应响应式布局', async ({ page }) => {
+  test('页面应响应式布局', async ({ authedPage: page }) => {
     // 测试桌面分辨率
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.waitForTimeout(300);
@@ -178,10 +185,10 @@ test.describe('AI 治理仪表盘页面测试', () => {
     await page.waitForTimeout(300);
 
     // 验证页面在移动设备上仍能显示
-    await expect(page.locator('text=AI 治理仪表盘')).toBeVisible();
+    await expect(page.locator('text=AI 治理仪表盘').first()).toBeVisible();
   });
 
-  test('应能导出治理报告', async ({ page }) => {
+  test('应能导出治理报告', async ({ authedPage: page }) => {
     // 验证导出按钮存在
     const exportButton = page.locator('button:has-text("导出"), button[aria-label="导出"]').first();
     if (await exportButton.isVisible().catch(() => false)) {
@@ -190,25 +197,25 @@ test.describe('AI 治理仪表盘页面测试', () => {
       await page.waitForTimeout(1000);
 
       // 验证导出选项出现
-      const exportOptions = page.locator('text=PDF, text=Excel, text=JSON').first();
+      const exportOptions = page.locator('text=PDF').or(page.locator('text=Excel, text=JSON')).first();
       // 导出选项应该出现
     }
   });
 
-  test('应显示建议和改进项', async ({ page }) => {
+  test('应显示建议和改进项', async ({ authedPage: page }) => {
     // 滚动到页面底部
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(500);
 
     // 验证建议和改进项区域存在
-    const recommendations = page.locator('text=建议, text=改进项, text=优化建议').first();
+    const recommendations = page.locator('text=建议').or(page.locator('text=改进项, text=优化建议')).first();
     // 建议和改进项应该存在
   });
 });
 
 test.describe('AI 治理仪表盘数据加载测试', () => {
   test('页面加载时应显示加载状态', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -220,7 +227,7 @@ test.describe('AI 治理仪表盘数据加载测试', () => {
       }
     });
 
-    await page.goto('/ai/governance-dashboard');
+    await page.goto('/ai/governanceDashboard');
     await page.waitForLoadState('networkidle');
 
     // 验证至少有一个治理 API 请求被发出
@@ -230,7 +237,7 @@ test.describe('AI 治理仪表盘数据加载测试', () => {
   });
 
   test('应能处理 API 错误', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -243,7 +250,7 @@ test.describe('AI 治理仪表盘数据加载测试', () => {
       });
     });
 
-    await page.goto('/ai/governance-dashboard');
+    await page.goto('/ai/governanceDashboard');
     await page.waitForLoadState('networkidle');
 
     // 验证错误状态显示（可能显示错误消息或空状态）
@@ -253,7 +260,7 @@ test.describe('AI 治理仪表盘数据加载测试', () => {
   });
 
   test('应能处理空数据', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
@@ -347,11 +354,11 @@ test.describe('AI 治理仪表盘数据加载测试', () => {
       });
     });
 
-    await page.goto('/ai/governance-dashboard');
+    await page.goto('/ai/governanceDashboard');
     await page.waitForLoadState('networkidle');
 
     // 验证页面能正常显示空数据状态
-    await expect(page.locator('text=AI 治理仪表盘')).toBeVisible();
+    await expect(page.locator('text=AI 治理仪表盘').first()).toBeVisible();
 
     await context.close();
   });

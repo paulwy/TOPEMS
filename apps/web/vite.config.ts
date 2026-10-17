@@ -1298,6 +1298,11 @@ export default defineConfig(({ mode }) => {
       'scheduler',
       'react-router-dom',
       '@tanstack/react-query',
+      // 懒加载 chunk（业务页面）与 App 壳必须共享同一 i18n 实例：
+      // AI Copilot/治理 页面此前 raw key（useTranslation 找不到已 init 的 i18next），
+      // 因 react-i18next/i18next 不在 dedupe，懒加载 chunk 解析到独立副本。
+      'react-i18next',
+      'i18next',
       // CJS 传递依赖：防止 MF version negotiation 拦截
       'prop-types',
       '@babel/runtime',

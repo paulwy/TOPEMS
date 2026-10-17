@@ -16,10 +16,10 @@ import { createAuthenticatedContext } from '../utils/testUtils';
 // 自定义 fixture：创建已认证的 page
 const test = base.extend<{ authedPage: any }>({
   authedPage: async ({ browser }, use) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000); // 等待页面渲染
     await use(page);

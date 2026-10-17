@@ -4,7 +4,7 @@ import { createAuthenticatedContext } from '../utils/testUtils';
 // D2 i18n alignment: verify no raw-key leakage after backfilling zh<->en keys
 test.describe('D2 i18n render sanity', () => {
   async function openPage(browser: any, url: string, lang: string) {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = context.pages()[0] ?? (await context.newPage());
     await page.goto('http://localhost:3001/');
     await page.evaluate((l) => localStorage.setItem('language', l), lang);

@@ -21,7 +21,7 @@ async function createAuthenticatedContext(browser: Browser, username: string, pa
 
 test.describe('导出功能深度测试', () => {
   test('导出按钮应在页面上可见', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -37,7 +37,7 @@ test.describe('导出功能深度测试', () => {
   });
 
   test('导出功能应支持多种格式', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -53,7 +53,7 @@ test.describe('导出功能深度测试', () => {
   });
 
   test('CSV 导出应触发文件下载', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -88,7 +88,7 @@ test.describe('导出功能深度测试', () => {
   });
 
   test('导出请求应包含认证信息', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -117,7 +117,7 @@ test.describe('导出功能深度测试', () => {
   });
 
   test('导出文件应包含正确的 Content-Type', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -145,7 +145,7 @@ test.describe('导出功能深度测试', () => {
   });
 
   test('移动端导出按钮应可点击', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 375, height: 667 });
@@ -161,7 +161,7 @@ test.describe('导出功能深度测试', () => {
   });
 
   test('导出功能在无数据时应正常处理', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });
@@ -179,7 +179,7 @@ test.describe('导出功能深度测试', () => {
   });
 
   test('导出进度提示应显示', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser, TEST_ACCOUNTS.superadmin.username, TEST_ACCOUNTS.superadmin.password);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     
     await page.setViewportSize({ width: 1280, height: 720 });

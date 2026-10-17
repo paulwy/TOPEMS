@@ -197,10 +197,11 @@ export async function createSession(
   module: BusinessModuleType,
   user_id?: string,
   tenant_id?: string
-): Promise<ApiResponse<CopilotSession>> {
+): Promise<CopilotSession> {
+  // dsh copilot 接口返回裸业务对象；user_id 后端必填，缺省用 anonymous
   return apiClient.ai.post(`/dsh/copilot/sessions`, {
     module,
-    user_id,
+    user_id: user_id || 'anonymous',
     tenant_id,
   });
 }
@@ -224,9 +225,7 @@ export async function deleteSession(session_id: string): Promise<ApiResponse<voi
 /**
  * 发送消息并获取响应
  */
-export async function sendMessage(
-  request: SendMessageRequest
-): Promise<ApiResponse<CopilotResponse>> {
+export async function sendMessage(request: SendMessageRequest): Promise<CopilotResponse> {
   return apiClient.ai.post(`/dsh/copilot/sessions/${request.session_id}/messages`, {
     message: request.user_input,
     module: request.module,
@@ -240,23 +239,21 @@ export async function sendMessage(
 export async function recognizeIntent(
   text: string,
   module?: BusinessModuleType
-): Promise<ApiResponse<IntentRecognitionResult>> {
+): Promise<IntentRecognitionResult> {
   return apiClient.ai.post(`/dsh/copilot/intent/recognize`, { text, module });
 }
 
 /**
  * 获取业务模块配置
  */
-export async function getModuleConfig(
-  module: BusinessModuleType
-): Promise<ApiResponse<BusinessModuleConfig>> {
+export async function getModuleConfig(module: BusinessModuleType): Promise<BusinessModuleConfig> {
   return apiClient.ai.get(`/dsh/copilot/modules/${module}`);
 }
 
 /**
  * 获取所有业务模块配置
  */
-export async function getAllModuleConfigs(): Promise<ApiResponse<BusinessModuleConfig[]>> {
+export async function getAllModuleConfigs(): Promise<BusinessModuleConfig[]> {
   return apiClient.ai.get(`/dsh/copilot/modules`);
 }
 

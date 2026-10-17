@@ -13,12 +13,12 @@ import { createAuthenticatedContext } from '../utils/testUtils';
 
 test.describe('场景 1: 业务 Copilot 完整对话流程', () => {
   test('从模块选择到对话完成的完整流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
     // 步骤 1: 导航到业务 Copilot 页面
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
 
     // 验证页面加载
@@ -51,8 +51,8 @@ test.describe('场景 1: 业务 Copilot 完整对话流程', () => {
         // 步骤 6: 等待响应
         await page.waitForTimeout(3000);
 
-        // 步骤 7: 验证用户消息显示
-        await expect(page.locator('text=查询本月采购订单统计')).toBeVisible();
+        // 步骤 7: 验证用户消息显示（用户消息 + 助手回复均含该文本 → .first()）
+        await expect(page.locator('text=查询本月采购订单统计').first()).toBeVisible();
       }
     }
 
@@ -68,11 +68,11 @@ test.describe('场景 1: 业务 Copilot 完整对话流程', () => {
   });
 
   test('多轮对话流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
 
     // 第一轮对话
@@ -106,23 +106,26 @@ test.describe('场景 1: 业务 Copilot 完整对话流程', () => {
 
 test.describe('场景 2: 智能表单自动填充流程', () => {
   test('从表单选择到提交的完整流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
     // 步骤 1: 导航到业务 Copilot 页面
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
+    // 首屏渲染可能 >5s，等待 tab 出现再操作
+    await page.locator('role=tab[name="智能表单"]').first().waitFor({ state: 'visible', timeout: 15000 });
 
     // 步骤 2: 切换到智能表单标签页
     const formTab = page.locator('role=tab[name="智能表单"]');
     if (await formTab.isVisible().catch(() => false)) {
       await formTab.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1500);
     }
 
-    // 步骤 3: 验证表单标题显示
-    await expect(page.locator('text=智能表单 - 采购申请单, text=采购申请单').first()).toBeVisible();
+    // 步骤 3: 验证表单标题显示（等待表单区渲染完成）
+    await page.locator('text=采购申请单').first().waitFor({ state: 'visible', timeout: 15000 });
+    await expect(page.locator('text=智能表单 - 采购申请单').or(page.locator('text=采购申请单')).first()).toBeVisible();
 
     // 步骤 4: 填写表单字段
     const titleInput = page.locator('input[name="title"], label:has-text("申请标题") + div input').first();
@@ -162,7 +165,7 @@ test.describe('场景 2: 智能表单自动填充流程', () => {
       await page.waitForTimeout(2000);
 
       // 步骤 7: 验证提交成功（可能显示成功消息或重定向）
-      const successMessage = page.locator('text=提交成功, text=已提交, text=创建成功').first();
+      const successMessage = page.locator('text=提交成功').or(page.locator('text=已提交, text=创建成功')).first();
       // 提交成功消息应该显示
     }
 
@@ -170,11 +173,11 @@ test.describe('场景 2: 智能表单自动填充流程', () => {
   });
 
   test('表单验证流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
 
     // 切换到智能表单标签
@@ -191,7 +194,7 @@ test.describe('场景 2: 智能表单自动填充流程', () => {
       await page.waitForTimeout(1000);
 
       // 验证验证错误显示
-      const errorMessages = page.locator('text=必填, text=请输入, text=不能为空, .error-message, [role="alert"]');
+      const errorMessages = page.locator('text=必填').or(page.locator('text=请输入, text=不能为空, .error-message, [role="alert"]'));
       // 应该显示验证错误
     }
 
@@ -199,11 +202,11 @@ test.describe('场景 2: 智能表单自动填充流程', () => {
   });
 
   test('保存草稿流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
 
     // 切换到智能表单标签
@@ -226,7 +229,7 @@ test.describe('场景 2: 智能表单自动填充流程', () => {
       await page.waitForTimeout(1000);
 
       // 验证草稿保存成功
-      const successMessage = page.locator('text=草稿已保存, text=保存成功').first();
+      const successMessage = page.locator('text=草稿已保存').or(page.locator('text=保存成功')).first();
       // 草稿保存成功消息应该显示
     }
 
@@ -236,26 +239,29 @@ test.describe('场景 2: 智能表单自动填充流程', () => {
 
 test.describe('场景 3: 文档智能处理流程', () => {
   test('从文档上传到分析完成的完整流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
     // 步骤 1: 导航到业务 Copilot 页面
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
+    // 首屏渲染可能 >5s，等待 tab 出现再操作
+    await page.locator('role=tab[name="文档智能"]').first().waitFor({ state: 'visible', timeout: 15000 });
 
     // 步骤 2: 切换到文档智能标签页
     const docTab = page.locator('role=tab[name="文档智能"]');
     if (await docTab.isVisible().catch(() => false)) {
       await docTab.click();
-      await page.waitForTimeout(500);
+      await page.waitForTimeout(1500);
     }
 
-    // 步骤 3: 验证文档智能标题显示
-    await expect(page.locator('text=文档智能处理, text=文档智能').first()).toBeVisible();
+    // 步骤 3: 验证文档智能标题显示（等待文档区渲染完成）
+    await page.locator('text=文档智能').first().waitFor({ state: 'visible', timeout: 15000 });
+    await expect(page.locator('text=文档智能处理').or(page.locator('text=文档智能')).first()).toBeVisible();
 
     // 步骤 4: 验证上传区域存在
-    const uploadArea = page.locator('text=上传文档, text=点击上传, text=拖拽文件到此处, [data-testid="upload"]').first();
+    const uploadArea = page.locator('text=上传文档').or(page.locator('text=点击上传, text=拖拽文件到此处, [data-testid="upload"]')).first();
     // 上传区域应该存在
 
     // 步骤 5: 验证标签页存在
@@ -294,11 +300,11 @@ test.describe('场景 3: 文档智能处理流程', () => {
   });
 
   test('文档关键词搜索流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
 
     // 切换到文档智能标签
@@ -334,19 +340,21 @@ test.describe('场景 3: 文档智能处理流程', () => {
 
 test.describe('场景 4: 治理仪表盘监控流程', () => {
   test('从页面加载到数据导出的完整流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
     // 步骤 1: 导航到治理仪表盘页面
-    await page.goto('/ai/governance-dashboard');
+    await page.goto('/ai/governanceDashboard');
     await page.waitForLoadState('networkidle');
+    // 数据面板异步渲染（首次可能 >5s）
+    await page.locator('text=治理评分').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
 
-    // 步骤 2: 验证页面标题
-    await expect(page.locator('text=AI 治理仪表盘')).toBeVisible();
+    // 步骤 2: 验证页面标题（主标题 + 卡片标题均含该文本 → .first()）
+    await expect(page.locator('text=AI 治理仪表盘').first()).toBeVisible();
 
     // 步骤 3: 验证治理评分显示
-    const scoreElement = page.locator('text=总体治理评分, text=治理评分').first();
+    const scoreElement = page.locator('text=总体治理评分').or(page.locator('text=治理评分')).first();
     // 治理评分应该显示
 
     // 步骤 4: 切换时间范围
@@ -364,47 +372,35 @@ test.describe('场景 4: 治理仪表盘监控流程', () => {
     }
 
     // 步骤 6: 滚动到风险评估区域
-    await page.evaluate(() => {
-      const element = document.querySelector('text=风险评估');
-      if (element) element.scrollIntoView();
-    });
+    await page.locator('text=风险评估').first().scrollIntoViewIfNeeded().catch(() => {});
     await page.waitForTimeout(500);
 
     // 步骤 7: 验证风险评估显示
-    const riskElement = page.locator('text=风险评估, text=总体风险等级').first();
+    const riskElement = page.locator('text=风险评估').or(page.locator('text=总体风险等级')).first();
     // 风险评估应该显示
 
     // 步骤 8: 滚动到合规状态区域
-    await page.evaluate(() => {
-      const element = document.querySelector('text=合规状态');
-      if (element) element.scrollIntoView();
-    });
+    await page.locator('text=合规状态').first().scrollIntoViewIfNeeded().catch(() => {});
     await page.waitForTimeout(500);
 
     // 步骤 9: 验证合规状态显示
-    const complianceElement = page.locator('text=合规状态, text=总体合规率').first();
+    const complianceElement = page.locator('text=合规状态').or(page.locator('text=总体合规率')).first();
     // 合规状态应该显示
 
     // 步骤 10: 滚动到成本分析区域
-    await page.evaluate(() => {
-      const element = document.querySelector('text=成本分析');
-      if (element) element.scrollIntoView();
-    });
+    await page.locator('text=成本分析').first().scrollIntoViewIfNeeded().catch(() => {});
     await page.waitForTimeout(500);
 
     // 步骤 11: 验证成本分析显示
-    const costElement = page.locator('text=成本分析, text=总成本').first();
+    const costElement = page.locator('text=成本分析').or(page.locator('text=总成本')).first();
     // 成本分析应该显示
 
     // 步骤 12: 滚动到性能指标区域
-    await page.evaluate(() => {
-      const element = document.querySelector('text=性能指标');
-      if (element) element.scrollIntoView();
-    });
+    await page.locator('text=性能指标').first().scrollIntoViewIfNeeded().catch(() => {});
     await page.waitForTimeout(500);
 
     // 步骤 13: 验证性能指标显示
-    const performanceElement = page.locator('text=性能指标, text=平均响应时间').first();
+    const performanceElement = page.locator('text=性能指标').or(page.locator('text=平均响应时间')).first();
     // 性能指标应该显示
 
     // 步骤 14: 滚动到建议区域
@@ -412,18 +408,18 @@ test.describe('场景 4: 治理仪表盘监控流程', () => {
     await page.waitForTimeout(500);
 
     // 步骤 15: 验证建议显示
-    const recommendationElement = page.locator('text=建议, text=改进项, text=优化建议').first();
+    const recommendationElement = page.locator('text=建议').or(page.locator('text=改进项, text=优化建议')).first();
     // 建议应该显示
 
     await context.close();
   });
 
   test('治理仪表盘自动刷新流程', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
-    await page.goto('/ai/governance-dashboard');
+    await page.goto('/ai/governanceDashboard');
     await page.waitForLoadState('networkidle');
 
     // 启用自动刷新
@@ -436,7 +432,7 @@ test.describe('场景 4: 治理仪表盘监控流程', () => {
       await page.waitForTimeout(5000);
 
       // 验证最后更新时间已更新
-      const lastUpdated = page.locator('text=最后更新, text=最后刷新').first();
+      const lastUpdated = page.locator('text=最后更新').or(page.locator('text=最后刷新')).first();
       // 最后更新时间应该显示
     }
 
@@ -446,38 +442,41 @@ test.describe('场景 4: 治理仪表盘监控流程', () => {
 
 test.describe('跨页面导航测试', () => {
   test('应能从业务 Copilot 导航到治理仪表盘', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
     // 导航到业务 Copilot
-    await page.goto('/ai/business-copilot');
+    await page.goto('/ai/businessCopilot');
     await page.waitForLoadState('networkidle');
 
     // 切换到治理仪表盘标签
+    await page.locator('role=tab[name="治理仪表盘"]').first().waitFor({ state: 'visible', timeout: 15000 });
     const governanceTab = page.locator('role=tab[name="治理仪表盘"]');
     if (await governanceTab.isVisible().catch(() => false)) {
       await governanceTab.click();
-      await page.waitForTimeout(500);
+      // 治理面板数据异步加载
+      await page.locator('text=治理评分').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
 
       // 验证治理仪表盘内容显示
-      await expect(page.locator('text=AI 治理仪表盘, text=治理仪表盘').first()).toBeVisible();
+      await expect(page.locator('text=AI 治理仪表盘').or(page.locator('text=治理仪表盘')).first()).toBeVisible();
     }
 
     await context.close();
   });
 
   test('应能直接访问治理仪表盘独立页面', async ({ browser }) => {
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.setViewportSize({ width: 1440, height: 900 });
 
     // 直接导航到治理仪表盘独立页面
-    await page.goto('/ai/governance-dashboard');
+    await page.goto('/ai/governanceDashboard');
     await page.waitForLoadState('networkidle');
 
-    // 验证页面加载
-    await expect(page.locator('text=AI 治理仪表盘')).toBeVisible();
+    // 验证页面加载（主标题 + 卡片标题均含该文本 → .first()）
+    await page.locator('text=治理评分').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+    await expect(page.locator('text=AI 治理仪表盘').first()).toBeVisible();
 
     await context.close();
   });

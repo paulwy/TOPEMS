@@ -471,7 +471,7 @@ const BusinessCopilotPage: React.FC = () => {
               {moduleConfig.description}
             </Typography>
             <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {moduleConfig.supported_intents.map((intent) => (
+              {moduleConfig.supported_intents?.map((intent) => (
                 <Chip
                   key={intent}
                   label={intent}
@@ -601,7 +601,7 @@ const BusinessCopilotPage: React.FC = () => {
                           color='text.secondary'
                         >
                           {t('ai.business_copilot.session_messages', {
-                            count: session.conversation_history.length,
+                            count: session.conversation_history?.length ?? 0,
                           })}
                         </Typography>
                         <Typography
@@ -632,7 +632,7 @@ const BusinessCopilotPage: React.FC = () => {
                 </Card>
 
                 {/* 快捷操作 */}
-                {moduleConfig && moduleConfig.quick_actions.length > 0 && (
+                {moduleConfig && (moduleConfig.quick_actions?.length ?? 0) > 0 && (
                   <Card>
                     <CardContent>
                       <Typography
@@ -642,7 +642,7 @@ const BusinessCopilotPage: React.FC = () => {
                         {t('ai.business_copilot.quick_actions')}
                       </Typography>
                       <Stack spacing={1}>
-                        {moduleConfig.quick_actions.slice(0, 5).map((action) => (
+                        {moduleConfig.quick_actions?.slice(0, 5).map((action) => (
                           <Button
                             key={action.action_id}
                             variant='outlined'

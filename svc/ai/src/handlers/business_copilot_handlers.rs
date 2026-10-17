@@ -55,8 +55,15 @@ pub struct CreateSessionRequest {
 #[derive(Debug, Serialize)]
 pub struct CreateSessionResponse {
     pub session_id: String,
+    pub user_id: String,
+    pub tenant_id: String,
     pub module: String,
+    pub current_page: Option<String>,
+    pub selected_records: Vec<SelectedRecord>,
+    pub conversation_history: Vec<ConversationMessage>,
+    pub context_data: serde_json::Value,
     pub created_at: String,
+    pub updated_at: String,
 }
 
 /// 发送消息请求
@@ -157,20 +164,29 @@ pub async fn create_session(
 ) -> impl IntoResponse {
     let module = req.module.unwrap_or_else(|| "erp".to_string());
     let business_module = parse_business_module(&module);
+    let user_id = req.user_id.clone();
+    let tenant_id = req.tenant_id.clone().unwrap_or_else(|| "default".to_string());
 
     let session_id = {
         let manager = state.session_manager.read().await;
-        let tenant_id = req.tenant_id.unwrap_or_else(|| "default".to_string());
-        let context = manager.create_session(&req.user_id, &tenant_id, business_module);
+        let context = manager.create_session(&user_id, &tenant_id, business_module);
         context.session_id
     };
+    let now = chrono::Utc::now().to_rfc3339();
 
     (
         StatusCode::CREATED,
         Json(CreateSessionResponse {
             session_id,
+            user_id,
+            tenant_id,
             module,
-            created_at: chrono::Utc::now().to_rfc3339(),
+            current_page: None,
+            selected_records: vec![],
+            conversation_history: vec![],
+            context_data: serde_json::json!({}),
+            created_at: now.clone(),
+            updated_at: now,
         }),
     )
         .into_response()

@@ -2,7 +2,7 @@ import { Page, expect } from '@playwright/test';
 
 /**
  * 登录辅助函数
- * 使用 admin / admin123 账号登录系统
+ * 使用 test_admin / admin123 账号登录系统（本地种子账号；admin 账号不存在会登录失败）
  */
 export async function loginAsAdmin(page: Page): Promise<void> {
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
@@ -11,7 +11,7 @@ export async function loginAsAdmin(page: Page): Promise<void> {
 
   // 填写用户名
   const usernameInput = page.getByPlaceholder('请输入用户名');
-  await usernameInput.fill('admin');
+  await usernameInput.fill('test_admin');
 
   // 填写密码
   const passwordInput = page.getByPlaceholder('请输入密码');

@@ -28,8 +28,8 @@ const test = base.extend<{ authedPage: any }>({
       console.log(`[PAGE ERROR STACK] ${error.stack}`);
     });
     
-    console.log('Navigating to /ai/business-copilot...');
-    await page.goto('/ai/business-copilot', { waitUntil: 'domcontentloaded' });
+    console.log('Navigating to /ai/businessCopilot...');
+    await page.goto('/ai/businessCopilot', { waitUntil: 'domcontentloaded' });
     
     // 等待页面渲染
     await page.waitForTimeout(10000);

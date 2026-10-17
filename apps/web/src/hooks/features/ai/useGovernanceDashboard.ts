@@ -85,15 +85,16 @@ export function useGovernanceDashboard(
       const range = timeRange || state.timeRange;
       setState((s) => ({ ...s, isLoading: true, error: null }));
       try {
-        const response = await getGovernanceDashboard(range);
-        if (response.data) {
+        // dsh governance 接口返回裸业务对象（非 {code,data} envelope）
+        const dashboard = await getGovernanceDashboard(range);
+        if (dashboard) {
           setState((s) => ({
             ...s,
-            dashboard: response.data!,
+            dashboard,
             isLoading: false,
             lastRefreshed: new Date(),
           }));
-          return response.data;
+          return dashboard;
         }
         throw new Error('Failed to load dashboard');
       } catch (err) {

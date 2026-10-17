@@ -236,7 +236,7 @@ export interface GovernanceDashboardData {
  */
 export async function getGovernanceDashboard(
   time_range: TimeRange = '24h'
-): Promise<ApiResponse<GovernanceDashboardData>> {
+): Promise<GovernanceDashboardData> {
   return apiClient.ai.get(`/dsh/governance/dashboard`, {
     params: { time_range },
   });

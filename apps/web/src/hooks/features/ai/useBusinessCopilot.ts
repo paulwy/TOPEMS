@@ -117,16 +117,17 @@ export function useBusinessCopilot(
   const createNewSession = useCallback(async (module: BusinessModuleType) => {
     setState((s) => ({ ...s, isLoading: true, error: null }));
     try {
-      const response = await createSession(module);
-      if (response.data) {
+      // dsh copilot 接口返回裸业务对象（非 envelope），直接用返回值
+      const session = await createSession(module);
+      if (session) {
         setState((s) => ({
           ...s,
-          session: response.data!,
+          session,
           messages: [],
           currentModule: module,
           isLoading: false,
         }));
-        return response.data;
+        return session;
       }
       throw new Error('Failed to create session');
     } catch (err) {
@@ -154,7 +155,7 @@ export function useBusinessCopilot(
         };
 
         const response = await sendMessage(request);
-        if (response.data) {
+        if (response) {
           // 添加用户消息
           const userMessage: ConversationMessage = {
             message_id: `msg_${Date.now()}_user`,
@@ -167,18 +168,18 @@ export function useBusinessCopilot(
           const assistantMessage: ConversationMessage = {
             message_id: `msg_${Date.now()}_assistant`,
             role: 'assistant',
-            content: response.data.reply,
+            content: response.reply,
             timestamp: new Date().toISOString(),
-            tool_calls: response.data.tool_calls,
+            tool_calls: response.tool_calls,
           };
 
           setState((s) => ({
             ...s,
             messages: [...s.messages, userMessage, assistantMessage],
-            lastResponse: response.data!,
+            lastResponse: response,
             isSending: false,
           }));
-          return response.data;
+          return response;
         }
         throw new Error('Failed to send message');
       } catch (err) {
@@ -195,9 +196,9 @@ export function useBusinessCopilot(
     async (text: string) => {
       try {
         const response = await recognizeIntent(text, state.currentModule);
-        if (response.data) {
-          setState((s) => ({ ...s, intentResult: response.data! }));
-          return response.data;
+        if (response) {
+          setState((s) => ({ ...s, intentResult: response }));
+          return response;
         }
         return null;
       } catch (err) {
@@ -222,9 +223,9 @@ export function useBusinessCopilot(
   const loadModuleConfig = useCallback(async (module: BusinessModuleType) => {
     try {
       const response = await getModuleConfig(module);
-      if (response.data) {
-        setState((s) => ({ ...s, moduleConfig: response.data! }));
-        return response.data;
+      if (response) {
+        setState((s) => ({ ...s, moduleConfig: response }));
+        return response;
       }
       return null;
     } catch (err) {
@@ -238,9 +239,9 @@ export function useBusinessCopilot(
   const loadAllModuleConfigs = useCallback(async () => {
     try {
       const response = await getAllModuleConfigs();
-      if (response.data) {
-        setState((s) => ({ ...s, allModuleConfigs: response.data! }));
-        return response.data;
+      if (response) {
+        setState((s) => ({ ...s, allModuleConfigs: response }));
+        return response;
       }
       return [];
     } catch (err) {

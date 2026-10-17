@@ -20,7 +20,7 @@ const NAV_SELECTOR = 'nav[aria-label="Main navigation"]';
 test.describe('B4 导航链路', () => {
   test('侧栏/顶栏/面包屑/返回 全链路', async ({ browser }) => {
     test.setTimeout(5 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     const fails: string[] = [];
     const notes: string[] = [];

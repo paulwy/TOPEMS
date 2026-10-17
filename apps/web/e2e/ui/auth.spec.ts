@@ -42,7 +42,7 @@ test.describe('Authentication Tests', () => {
   });
 
   test('successful login with valid credentials', async ({ page }) => {
-    await page.getByPlaceholder('请输入用户名').fill('admin');
+    await page.getByPlaceholder('请输入用户名').fill('test_admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
     await page.getByRole('button', { name: '登录' }).click();
     
@@ -60,8 +60,8 @@ test.describe('Authentication Tests', () => {
   test('successful logout', async ({ browser }) => {
     const context = await createAuthenticatedContext(
       browser,
-      TEST_ACCOUNTS.superadmin.username,
-      TEST_ACCOUNTS.superadmin.password
+      'test_admin',
+      'admin123'
     );
     
     const page = await context.newPage();
@@ -75,8 +75,8 @@ test.describe('Authentication Tests', () => {
   test('remembers login state', async ({ browser }) => {
     const context = await createAuthenticatedContext(
       browser,
-      TEST_ACCOUNTS.superadmin.username,
-      TEST_ACCOUNTS.superadmin.password
+      'test_admin',
+      'admin123'
     );
     
     const page = await context.newPage();
