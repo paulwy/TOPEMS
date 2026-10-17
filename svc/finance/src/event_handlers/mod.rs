@@ -880,7 +880,7 @@ pub async fn start_event_subscribers(
     event_publisher: Option<Arc<EventPublisher>>,
 ) -> Result<(), TopemsError> {
     let handlers = FinanceEventHandlers::new(db, event_publisher);
-    let subscriber = handlers.build_subscriber().map_err(|e| e.to_string())?;
+    let subscriber = handlers.build_subscriber()?;
 
     tracing::info!(
         "[finance] 启动事件订阅者，注册 12 类业务事件 handler（销售/采购/收付款+对账/结算快照）"
