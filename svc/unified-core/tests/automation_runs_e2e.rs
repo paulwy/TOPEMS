@@ -10,8 +10,8 @@ mod app_state;
 use app_state::test_app_state;
 use axum::extract::{Json, Path, Query, State};
 use topems_unified_core::modules::automation::{
-    cancel_run, get_run, list_runs, purge_runs, retry_run, AutomationRun, PurgeRequest,
-    RunQueryParams,
+    cancel_run, get_run, get_run_log_by_id, get_run_logs, get_run_steps, list_runs, purge_runs,
+    retry_run, AutomationRun, PurgeRequest, RunLogQueryParams, RunQueryParams,
 };
 
 async fn setup_schema(pool: &sqlx::PgPool) {
@@ -68,6 +68,29 @@ async fn insert_run_via_sql(
     .bind(rule_id)
     .bind(rule_name)
     .bind(status)
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    row.0
+}
+
+async fn insert_run_with_content(
+    pool: &sqlx::PgPool,
+    rule_id: uuid::Uuid,
+    status: &str,
+    rule_name: &str,
+    steps: serde_json::Value,
+    logs: &str,
+) -> uuid::Uuid {
+    let row: (uuid::Uuid,) = sqlx::query_as(
+        r#"INSERT INTO automation_runs (rule_id, rule_name, status, trigger_type, steps, logs)
+           VALUES ($1, $2, $3, 'manual', $4, $5) RETURNING id"#,
+    )
+    .bind(rule_id)
+    .bind(rule_name)
+    .bind(status)
+    .bind(steps)
+    .bind(logs)
     .fetch_one(pool)
     .await
     .unwrap();
@@ -215,4 +238,95 @@ async fn purge_runs_deletes_matching(pool: sqlx::PgPool) {
         .await
         .unwrap();
     assert_eq!(count, 1);
+}
+
+#[sqlx::test(migrations = false)]
+async fn get_run_steps_returns_steps(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let rid = uuid::Uuid::new_v4();
+    let run_id = insert_run_with_content(
+        &pool,
+        rid,
+        "completed",
+        "规则A",
+        serde_json::json!([{"step": 1, "name": "init"}]),
+        "",
+    )
+    .await;
+
+    let state = test_app_state(pool);
+    let resp = get_run_steps(State(state), Path(run_id)).await;
+    let steps: serde_json::Value = resp.0.data.unwrap();
+    assert_eq!(steps[0]["name"], serde_json::json!("init"));
+}
+
+#[sqlx::test(migrations = false)]
+async fn get_run_steps_none_returns_empty_array(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let rid = uuid::Uuid::new_v4();
+    let run_id = insert_run_via_sql(&pool, rid, "running", "规则A").await;
+
+    let state = test_app_state(pool);
+    let resp = get_run_steps(State(state), Path(run_id)).await;
+    let steps: serde_json::Value = resp.0.data.unwrap();
+    assert_eq!(steps, serde_json::json!([]));
+}
+
+#[sqlx::test(migrations = false)]
+async fn get_run_logs_splits_lines(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let rid = uuid::Uuid::new_v4();
+    let run_id = insert_run_with_content(
+        &pool,
+        rid,
+        "completed",
+        "规则A",
+        serde_json::json!([]),
+        "line1\nline2\nline3",
+    )
+    .await;
+
+    let state = test_app_state(pool);
+    let resp = get_run_logs(
+        State(state),
+        Path(run_id),
+        Query(RunLogQueryParams {
+            page: None,
+            page_size: None,
+            page_size_alt: None,
+        }),
+    )
+    .await;
+    let body: serde_json::Value = resp.0.data.unwrap();
+    assert_eq!(body["total"], serde_json::json!(3));
+    assert_eq!(body["lines"].as_array().unwrap().len(), 3);
+}
+
+#[sqlx::test(migrations = false)]
+async fn get_run_log_by_id_delegates(pool: sqlx::PgPool) {
+    setup_schema(&pool).await;
+    let rid = uuid::Uuid::new_v4();
+    let run_id = insert_run_with_content(
+        &pool,
+        rid,
+        "completed",
+        "规则A",
+        serde_json::json!([]),
+        "a\nb",
+    )
+    .await;
+
+    let state = test_app_state(pool);
+    let resp = get_run_log_by_id(
+        State(state),
+        Path((run_id, uuid::Uuid::new_v4())),
+        Query(RunLogQueryParams {
+            page: None,
+            page_size: None,
+            page_size_alt: None,
+        }),
+    )
+    .await;
+    let body: serde_json::Value = resp.0.data.unwrap();
+    assert_eq!(body["total"], serde_json::json!(2));
 }
