@@ -5,7 +5,7 @@ test.describe('LIMS Page Tests', () => {
     await page.goto('/login');
     await page.getByPlaceholder('请输入用户名').fill('admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
     await page.waitForURL('**/dashboard', { timeout: 15000 });
     
     // Use direct URL navigation instead of sidebar click

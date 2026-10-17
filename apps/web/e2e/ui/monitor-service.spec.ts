@@ -9,7 +9,7 @@ test.describe('Monitor Service Health', () => {
 
     await page.getByPlaceholder('请输入用户名').fill('admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
     await page.waitForURL('**/dashboard', { timeout: 15000 });
     await page.waitForLoadState('networkidle');
   });

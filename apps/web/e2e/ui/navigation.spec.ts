@@ -13,7 +13,7 @@ test.describe('Navigation Tests', () => {
     await page.getByPlaceholder('请输入密码').fill('admin123');
 
     // Click login and wait for response
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
 
     // Wait for navigation to complete
     await page.waitForURL('**/dashboard', { timeout: 30000 });

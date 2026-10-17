@@ -9,14 +9,14 @@ test.describe('Login Page Tests', () => {
     await expect(page.getByText('TOPEMS')).toBeVisible();
     await expect(page.getByPlaceholder('请输入用户名')).toBeVisible();
     await expect(page.getByPlaceholder('请输入密码')).toBeVisible();
-    await expect(page.getByRole('button', { name: '登录' })).toBeVisible();
+    await expect(page.getByTestId('login-submit')).toBeVisible();
 
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
     await expect(page.getByPlaceholder('请输入用户名')).toHaveAttribute('aria-invalid', 'true');
 
     await page.getByPlaceholder('请输入用户名').fill('admin');
     await page.getByPlaceholder('请输入密码').fill('123');
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
     await expect(page.getByPlaceholder('请输入密码')).toHaveAttribute('aria-invalid', 'true');
 
     const passwordInput = page.getByPlaceholder('请输入密码');
@@ -37,7 +37,7 @@ test.describe('Login Page Tests', () => {
 
     await page.getByPlaceholder('请输入用户名').fill('admin');
     await page.getByPlaceholder('请输入密码').fill('wrongpassword');
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
     await expect(page).toHaveURL(/login/);
   });
 });
@@ -49,7 +49,7 @@ test.describe('Login Flow Tests', () => {
     
     await page.getByPlaceholder('请输入用户名').fill('admin');
     await page.getByPlaceholder('请输入密码').fill('admin123');
-    await page.getByRole('button', { name: '登录' }).click();
+    await page.getByTestId('login-submit').click();
     
     await page.waitForURL('**/dashboard', { timeout: 10000 });
     await expect(page).toHaveURL(/dashboard/);

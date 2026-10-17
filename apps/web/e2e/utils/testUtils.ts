@@ -23,25 +23,34 @@ function generateMockToken(username: string, role: string = 'admin'): string {
 }
 
 export async function apiLogin(username: string, password: string): Promise<string> {
-  try {
-    const response = await fetch(`${API_URL}/api/core/iam/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password }),
-    });
+  // 高负载下 IAM 偶发 401/500，重试一次降低 flake（auth-flow 全量上下文曾连续失败）
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetch(`${API_URL}/api/core/iam/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
 
-    const data = await response.json();
-    if (data.code !== 0) {
-      throw new Error(`登录失败: ${data.message}`);
+      const data = await response.json();
+      if (data.code !== 0) {
+        throw new Error(`登录失败: ${data.message}`);
+      }
+
+      return data.data.access_token || data.data.token || data.token || '';
+    } catch (error) {
+      if (attempt === 1) {
+        // Fallback: 如果 IAM 服务不可用，返回 mock token
+        console.warn(`[apiLogin] IAM 服务不可用，使用 mock token: ${(error as Error).message}`);
+        const role = username.includes('admin') ? 'superadmin' : 'employee';
+        return generateMockToken(username, role);
+      }
+      // 首次失败：短暂等待后重试（高负载下 IAM 偶发 401/500）
+      await new Promise((r) => setTimeout(r, 600));
     }
-
-    return data.data.access_token || data.data.token || data.token || '';
-  } catch (error) {
-    // Fallback: 如果 IAM 服务不可用，返回 mock token
-    console.warn(`[apiLogin] IAM 服务不可用，使用 mock token: ${(error as Error).message}`);
-    const role = username.includes('admin') ? 'superadmin' : 'employee';
-    return generateMockToken(username, role);
   }
+  // unreachable
+  return '';
 }
 
 export async function authRequest(
