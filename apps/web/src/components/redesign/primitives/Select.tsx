@@ -12,14 +12,33 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
   error?: string;
   options: SelectOption[];
   placeholder?: string;
+  /** 显式指定 testid；缺省时按 label 生成（select-{label}） */
+  'data-testid'?: string;
 }
 
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
   (
-    { label, error, options, placeholder, className, style, 'aria-label': ariaLabel, ...rest },
+    {
+      label,
+      error,
+      options,
+      placeholder,
+      className,
+      style,
+      'aria-label': ariaLabel,
+      'data-testid': dataTestId,
+      ...rest
+    },
     ref
   ) => {
     const selectId = useId();
+    // 2026-10-17 D4 遗留：通用 Select 补 testid——父级显式传入优先，否则按 label
+    // 生成唯一 id（多实例可用 label 区分；中文 label 保留，空格/符号归一为 '-'）
+    const resolvedTestId =
+      dataTestId ??
+      (label
+        ? `select-${label.toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')}`
+        : undefined);
     return (
       <div
         className={clsx('redesign-select-wrapper', className)}
@@ -63,6 +82,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={selectId}
             aria-label={ariaLabel ?? label ?? placeholder ?? undefined}
+            data-testid={resolvedTestId}
             style={{
               flex: 1,
               minWidth: 0,

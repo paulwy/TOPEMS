@@ -452,7 +452,12 @@ export function TreeBuilder({
   );
 
   return (
-    <Box sx={{ width: '100%', height: '100%' }}>
+    <Box
+      sx={{ width: '100%', height: '100%' }}
+      // 2026-10-17 D4 遗留：TreeBuilder 补根 testid（e2e 定位树形组件；多实例由调用方
+      // 覆盖或配合上下文区分）
+      data-testid='tree-builder'
+    >
       {mode === 'edit' && (
         <Box sx={{ mb: 2, display: 'flex', gap: 1 }}>
           <Button
