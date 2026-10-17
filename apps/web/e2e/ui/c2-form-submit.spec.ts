@@ -26,7 +26,7 @@ const ts = () => Date.now().toString().slice(-8);
 test.describe('C2-C4 模拟录入', () => {
   test('C2a crm 客户创建：填必填→提交→跳转列表→列表出现新客户（C4）', async ({ browser }) => {
     test.setTimeout(3 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     const custName = `巡检测试客户-${ts()}`;
     const fails: string[] = [];
@@ -56,7 +56,7 @@ test.describe('C2-C4 模拟录入', () => {
 
   test('C2b hrm 员工创建：填必填→提交→跳转列表→列表出现新员工（C4）', async ({ browser }) => {
     test.setTimeout(3 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     const empName = `巡检测试员工-${ts()}`;
     const empNo = `T${ts()}`;
@@ -86,7 +86,7 @@ test.describe('C2-C4 模拟录入', () => {
 
   test('C2c pm 项目创建：表单渲染 + 类型选择 + 必填校验（日期缺失 → 拦截提示）', async ({ browser }) => {
     test.setTimeout(3 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     const projName = `巡检测试项目-${ts()}`;
     const projCode = `PRJ${ts()}`;
@@ -135,7 +135,7 @@ test.describe('C2-C4 模拟录入', () => {
 
   test('C2d 弹窗 CRUD 形态：wms 入库单 + mes 工单 创建弹窗打开/渲染/关闭', async ({ browser }) => {
     test.setTimeout(4 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     const fails: string[] = [];
 
@@ -180,7 +180,7 @@ test.describe('C2-C4 模拟录入', () => {
 
   test('C3a crm 必填缺失校验：name 空提交 → 提示', async ({ browser }) => {
     test.setTimeout(3 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.goto(`${BASE_URL}/crm/customers/create`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     await page.locator('form button[type="submit"]').waitFor({ state: 'attached', timeout: 60_000 }).catch(() => {});
@@ -197,7 +197,7 @@ test.describe('C2-C4 模拟录入', () => {
 
   test('C3b crm email 非法校验：填非法 email → 提示', async ({ browser }) => {
     test.setTimeout(3 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.goto(`${BASE_URL}/crm/customers/create`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     await page.locator('form button[type="submit"]').waitFor({ state: 'attached', timeout: 60_000 }).catch(() => {});
@@ -215,7 +215,7 @@ test.describe('C2-C4 模拟录入', () => {
 
   test('C3c finance 借贷不平衡校验：单边分录提交 → 平衡提示（手写校验对照）', async ({ browser }) => {
     test.setTimeout(3 * 60 * 1000);
-    const context = await createAuthenticatedContext(browser);
+    const context = await createAuthenticatedContext(browser, 'test_admin', 'admin123');
     const page = await context.newPage();
     await page.goto(`${BASE_URL}/finance/vouchers/create`, { waitUntil: 'domcontentloaded', timeout: 60_000 });
     await page.waitForTimeout(1800);

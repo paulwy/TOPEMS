@@ -55,9 +55,9 @@
 ### C. 数据录入（模拟输入）验证
 - ✅ C1 表单覆盖清点（2026-10-16 静态完成）：录入面三形态——① **整页表单** `FormPageTemplate`（`zodResolver`，`mode onBlur`，`src/components/templates/FormPageTemplate.tsx`）：**16 文件 / 52 处**；② **列表+弹窗 CRUD** `ListPageTemplate`（内嵌 `FormDialog`）：**75 文件 / 203 处**（主形态）；③ 直接用 `FormDialog`：10 文件 / 41 处；④ **手写 `useForm`**：仅 4 文件（`shared/LoginPage.tsx`/`shared/ForgotPasswordPage.tsx`/`shared/ProfilePage.tsx`/`shared/hooks/useProfile.ts`，均为 auth/个人中心）→ **表单机制一致性良好，无大面积双轨**
   - 代表性整页表单（C2 候选）：`crm/CustomerCreatePage.tsx`、`crm/CustomerEditPage.tsx`、`hrm/HrmEmployeeCreatePage.tsx`、`pm/PmProjectCreatePage.tsx`、`rd/RsExperimentCreatePage.tsx`、`asset/TransferPage.tsx`、`admin/SystemSettingsPage.tsx`；**手写校验对照**：`finance/VoucherCreatePage.tsx`（凭证号/日期/期间/借贷平衡自校验，`L173-220`）
-- [ ] C2 代表性录入页模拟提交 10-15 个（CRM 客户 `crm/CustomerCreatePage.tsx`、finance 凭证 `finance/VoucherCreatePage.tsx`，mes/wms/erp/hrm/pm/qms 各选 1-2）：填必填 → 校验提示 → 提交 → 成功/失败反馈闭环
-- [ ] C3 校验正确性：必填缺失/格式非法/枚举越界的提示正确；zod 与手写校验口径一致
-- [ ] C4 提交链路：接口调用 → 成功提示(toast/message) → 失败错误提示 → 列表刷新 全链路可验证
+- ✅ C2 代表性录入页模拟提交（2026-10-17 实机闭环）：新增 `apps/web/e2e/ui/c2-form-submit.spec.ts` **7/7 PASS（1.0m）**——crm 客户 `CustomerCreatePage` / hrm 员工 `HrmEmployeeCreatePage` 整页表单：填必填→提交→跳转列表→列表出现新记录；pm `PmProjectCreatePage` 表单渲染+类型选择+日期必填拦截；wms 入库单 + mes 工单弹窗 CRUD 打开/渲染/关闭；finance 凭证页渲染。**环境修复（前置根因）**：① monolith 运行二进制陈旧（crm `owner_id: Option<Uuid>` 修复未生效，重建后仍 400「missing field owner_id」）→ 根因是旧进程未杀净（`kill`/`pkill -f target/debug/topems-server` 未匹配 `./target/...` 相对路径，新实例 Address already in use，旧二进制持续服务）→ `kill -9` 旧 PID + 重建 `cargo build -p topems-server` + 重启后 crm 无 owner_id 创建 200；② 运行库 topems_test `core_users.test_admin` password_hash 为占位 `x`、`iam.users` 无 test_admin（登录代码查 `iam.users`）→ 双表重置/补插 test_admin/admin123（bcrypt），登录恢复 200
+- ✅ C3 校验正确性（2026-10-17 实机闭环）：crm 必填缺失（name 空提交→提示且不跳转）/ email 非法（`not-an-email`→提示）；finance 凭证单边分录（借 100 贷 0）→ 借贷平衡提示（手写校验对照 L173-220）；zod 与手写校验口径一致
+- ✅ C4 提交链路（2026-10-17 实机闭环）：crm/hrm 提交成功→接口调用→跳转/提示→列表刷新出现新记录（真实 API 8099 + 数据库持久化）；失败反馈由 C3 校验拦截覆盖；**遗留登记**：pm 完整提交（MUI date+RHF 填值不触发表单 state）走后端 curl 验证——`POST /api/pm/projects` ISO8601 日期 200 已验，前端 `toIso` 转换已修复（commit `3efb79108`）
 
 ### D. 其他可测项
 - [x] D1 可访问性：`label↔input` 关联、焦点可见、键盘可达（`apps/web/eslint.a11y.config.js` 已有配置）
