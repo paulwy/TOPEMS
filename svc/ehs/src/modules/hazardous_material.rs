@@ -4,7 +4,6 @@ use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router}
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
-use topems_shared_core::locale::Locale;
 use topems_shared_core::response::ApiResponse;
 
 use uuid::Uuid;
@@ -70,25 +69,19 @@ pub struct HazardousMaterial {
     pub id: String,
     pub material_no: String,
     pub name: String,
-    pub alias: Option<String>,
-    pub english_name: Option<String>,
-    pub cas_no: Option<String>,
     pub category: String,
-    pub hazard_level: Option<String>,
-    pub hazard_class: Option<Vec<String>>,
+    pub hazard_class: Option<String>,
+    pub un_number: Option<String>,
+    pub cas_no: Option<String>,
     pub specification: Option<String>,
     pub unit: Option<String>,
-    pub packaging: Option<String>,
-    pub storage_condition: Option<String>,
-    pub storage_location: Option<String>,
-    pub max_stock: Option<f64>,
-    pub min_stock: Option<f64>,
-    pub current_stock: Option<f64>,
-    pub safety_data_sheet: Option<String>,
+    pub description: Option<String>,
+    pub hazards: Option<Vec<String>>,
+    pub storage_requirements: Option<String>,
+    pub handling_requirements: Option<String>,
     pub emergency_measures: Option<String>,
-    pub supplier: Option<String>,
+    pub msds_url: Option<String>,
     pub status: String,
-    pub remarks: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 
@@ -143,21 +136,26 @@ pub struct MsdsData {
     pub material_id: String,
     pub material_name: String,
     pub version: Option<String>,
-    pub ingredients: Option<String>,
+    pub product_name: Option<String>,
+    pub manufacturer: Option<String>,
+    pub emergency_phone: Option<String>,
     pub hazard_identification: Option<String>,
+    pub composition_info: Option<String>,
     pub first_aid_measures: Option<String>,
     pub fire_fighting_measures: Option<String>,
     pub accidental_release_measures: Option<String>,
     pub handling_and_storage: Option<String>,
-    pub exposure_control: Option<String>,
+    pub exposure_controls: Option<String>,
     pub physical_chemical_properties: Option<String>,
-    pub stability_reactivity: Option<String>,
+    pub reactivity_info: Option<String>,
     pub toxicological_info: Option<String>,
     pub ecological_info: Option<String>,
     pub disposal_considerations: Option<String>,
     pub transport_info: Option<String>,
     pub regulatory_info: Option<String>,
     pub other_info: Option<String>,
+    pub file_url: Option<String>,
+    pub created_at: Option<String>,
     pub updated_at: Option<String>,
 
     pub tenant_id: Uuid,
@@ -190,46 +188,37 @@ pub struct MaterialStatistics {
 #[derive(Debug, Deserialize)]
 pub struct CreateMaterialRequest {
     pub name: String,
-    pub alias: Option<String>,
-    pub english_name: Option<String>,
-    pub cas_no: Option<String>,
     pub category: String,
-    pub hazard_level: Option<String>,
-    pub hazard_class: Option<Vec<String>>,
+    pub hazard_class: Option<String>,
+    pub un_number: Option<String>,
+    pub cas_no: Option<String>,
     pub specification: Option<String>,
     pub unit: Option<String>,
-    pub packaging: Option<String>,
-    pub storage_condition: Option<String>,
-    pub storage_location: Option<String>,
-    pub max_stock: Option<f64>,
-    pub min_stock: Option<f64>,
-    pub safety_data_sheet: Option<String>,
+    pub description: Option<String>,
+    pub hazards: Option<Vec<String>>,
+    pub storage_requirements: Option<String>,
+    pub handling_requirements: Option<String>,
     pub emergency_measures: Option<String>,
-    pub supplier: Option<String>,
-    pub remarks: Option<String>,
+    pub msds_url: Option<String>,
+    pub status: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateMaterialRequest {
     pub name: Option<String>,
-    pub alias: Option<String>,
-    pub english_name: Option<String>,
-    pub cas_no: Option<String>,
     pub category: Option<String>,
-    pub hazard_level: Option<String>,
-    pub hazard_class: Option<Vec<String>>,
+    pub hazard_class: Option<String>,
+    pub un_number: Option<String>,
+    pub cas_no: Option<String>,
     pub specification: Option<String>,
     pub unit: Option<String>,
-    pub packaging: Option<String>,
-    pub storage_condition: Option<String>,
-    pub storage_location: Option<String>,
-    pub max_stock: Option<f64>,
-    pub min_stock: Option<f64>,
-    pub safety_data_sheet: Option<String>,
+    pub description: Option<String>,
+    pub hazards: Option<Vec<String>>,
+    pub storage_requirements: Option<String>,
+    pub handling_requirements: Option<String>,
     pub emergency_measures: Option<String>,
-    pub supplier: Option<String>,
+    pub msds_url: Option<String>,
     pub status: Option<String>,
-    pub remarks: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -276,119 +265,40 @@ pub struct UpdateMsdsRequest {
 pub async fn list_materials(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let locale = Locale::from_headers(&headers).as_sql();
-    let result = sqlx::query(
+    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let sql = format!(
         r#"
-        SELECT
-            id::text AS id, material_no,
-            CASE WHEN $1 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
-            alias, english_name, cas_no, category, hazard_level,
-            hazard_class::text AS hazard_class,
-            specification, unit, packaging, storage_condition, storage_location,
-            max_stock::float8 AS max_stock, min_stock::float8 AS min_stock, current_stock::float8 AS current_stock,
-            safety_data_sheet, emergency_measures, supplier, status, remarks,
-            created_at::text AS created_at, updated_at::text AS updated_at
+        SELECT id::text AS id, material_no, name, category,
+               CASE WHEN jsonb_typeof(hazard_class) = 'array'
+                    THEN (SELECT string_agg(elem, ', ') FROM jsonb_array_elements_text(hazard_class) elem)
+                    ELSE NULL END AS hazard_class,
+               un_number, cas_no, specification, unit, description, hazards::text AS hazards,
+               storage_requirements, handling_requirements, emergency_measures,
+               safety_data_sheet AS msds_url, status,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_hazardous_materials
-        WHERE ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2) AND deleted_at IS NULL
+        WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL
         ORDER BY created_at DESC
         LIMIT 200
-        "#,
-    )
-    .bind(locale)
-    .bind(&tenant_bind)
-    .fetch_all(&state.pool)
-    .await;
-
-    let rows = match result {
+        "#
+    );
+    let rows = match sqlx::query(&sql)
+        .bind(&tenant_bind)
+        .fetch_all(&state.pool)
+        .await
+    {
         Ok(r) => r,
         Err(e) => {
             tracing::error!("Failed to list materials: {}", e);
             return Json(ApiResponse::error(500, "获取危险品列表失败"));
         }
     };
-
-    let materials: Vec<HazardousMaterial> = rows
-        .iter()
-        .map(|r| {
-            let hc = r
-                .try_get::<Option<String>, _>("hazard_class")
-                .ok()
-                .flatten()
-                .and_then(|t| serde_json::from_str(&t).ok());
-            HazardousMaterial {
-                id: r.try_get::<String, _>("id").unwrap_or_default(),
-                material_no: r.try_get::<String, _>("material_no").unwrap_or_default(),
-                name: r.try_get::<String, _>("name").unwrap_or_default(),
-                alias: r.try_get::<Option<String>, _>("alias").ok().flatten(),
-                english_name: r
-                    .try_get::<Option<String>, _>("english_name")
-                    .ok()
-                    .flatten(),
-                cas_no: r.try_get::<Option<String>, _>("cas_no").ok().flatten(),
-                category: r
-                    .try_get::<Option<String>, _>("category")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_default(),
-                hazard_level: r
-                    .try_get::<Option<String>, _>("hazard_level")
-                    .ok()
-                    .flatten(),
-                hazard_class: hc,
-                specification: r
-                    .try_get::<Option<String>, _>("specification")
-                    .ok()
-                    .flatten(),
-                unit: r.try_get::<Option<String>, _>("unit").ok().flatten(),
-                packaging: r.try_get::<Option<String>, _>("packaging").ok().flatten(),
-                storage_condition: r
-                    .try_get::<Option<String>, _>("storage_condition")
-                    .ok()
-                    .flatten(),
-                storage_location: r
-                    .try_get::<Option<String>, _>("storage_location")
-                    .ok()
-                    .flatten(),
-                max_stock: r.try_get::<Option<f64>, _>("max_stock").ok().flatten(),
-                min_stock: r.try_get::<Option<f64>, _>("min_stock").ok().flatten(),
-                current_stock: r.try_get::<Option<f64>, _>("current_stock").ok().flatten(),
-                safety_data_sheet: r
-                    .try_get::<Option<String>, _>("safety_data_sheet")
-                    .ok()
-                    .flatten(),
-                emergency_measures: r
-                    .try_get::<Option<String>, _>("emergency_measures")
-                    .ok()
-                    .flatten(),
-                supplier: r.try_get::<Option<String>, _>("supplier").ok().flatten(),
-                status: r
-                    .try_get::<Option<String>, _>("status")
-                    .ok()
-                    .flatten()
-                    .unwrap_or_else(|| "active".to_string()),
-                remarks: r.try_get::<Option<String>, _>("remarks").ok().flatten(),
-                created_at: r.try_get::<Option<String>, _>("created_at").ok().flatten(),
-                updated_at: r.try_get::<Option<String>, _>("updated_at").ok().flatten(),
-                tenant_id: uuid::Uuid::nil(),
-            }
-        })
-        .collect();
-
-    Json(ApiResponse::success(materials, "获取危险品列表成功"))
+    let list: Vec<HazardousMaterial> = rows.iter().map(material_from_row).collect();
+    Json(ApiResponse::success(list, "获取危险品列表成功"))
 }
-
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:write"])),
@@ -398,58 +308,67 @@ pub async fn list_materials(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_material(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateMaterialRequest>,
 ) -> Json<ApiResponse<HazardousMaterial>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = resolve_material_tenant(&claims);
+    let material_no = format!("HM-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let status = req.status.clone().unwrap_or_else(|| "active".to_string());
+    let hazards: serde_json::Value = req
+        .hazards
+        .clone()
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+    let sql = r#"
+        INSERT INTO ehs.qa_ehs_hazardous_materials
+            (material_no, name, category, hazard_class, un_number, cas_no, specification,
+             unit, description, hazards, storage_requirements, handling_requirements,
+             emergency_measures, safety_data_sheet, status, tenant_id)
+        VALUES ($1, $2, $3, $4::jsonb, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING id::text AS id, material_no, name, category,
+                  hazard_class::text AS hazard_class,
+                  un_number, cas_no, specification, unit, description, hazards::text AS hazards,
+                  storage_requirements, handling_requirements, emergency_measures,
+                  safety_data_sheet AS msds_url, status,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&material_no)
+        .bind(&req.name)
+        .bind(&req.category)
+        .bind(
+            req.hazard_class
+                .clone()
+                .map(|h| serde_json::json!([h]))
+                .unwrap_or_else(|| serde_json::json!([])),
+        )
+        .bind(&req.un_number)
+        .bind(&req.cas_no)
+        .bind(&req.specification)
+        .bind(&req.unit)
+        .bind(&req.description)
+        .bind(hazards)
+        .bind(&req.storage_requirements)
+        .bind(&req.handling_requirements)
+        .bind(&req.emergency_measures)
+        .bind(&req.msds_url)
+        .bind(&status)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create material: {}", e);
+            return Json(ApiResponse::error(500, "危险品创建失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating hazardous material: {:?}", req);
-    Json(ApiResponse::success(
-        HazardousMaterial {
-            id: uuid::Uuid::new_v4().to_string(),
-            material_no: format!(
-                "HM-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            name: req.name,
-            alias: req.alias,
-            english_name: req.english_name,
-            cas_no: req.cas_no,
-            category: req.category,
-            hazard_level: req.hazard_level,
-            hazard_class: req.hazard_class,
-            specification: req.specification,
-            unit: req.unit,
-            packaging: req.packaging,
-            storage_condition: req.storage_condition,
-            storage_location: req.storage_location,
-            max_stock: req.max_stock,
-            min_stock: req.min_stock,
-            current_stock: Some(0.0),
-            safety_data_sheet: req.safety_data_sheet,
-            emergency_measures: req.emergency_measures,
-            supplier: req.supplier,
-            status: "active".to_string(),
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "危险品创建成功",
-    ))
+    let record = material_from_row(&row);
+    Json(ApiResponse::success(record, "危险品创建成功"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -464,124 +383,41 @@ pub async fn create_material(
 pub async fn get_material(
     State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
-    headers: HeaderMap,
+    _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MaterialDetail>> {
-    let tenant_bind: String = if claims.is_superuser {
-        uuid::Uuid::nil().to_string()
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-            .unwrap_or_else(uuid::Uuid::nil)
-            .to_string()
-    };
-    let locale = Locale::from_headers(&headers).as_sql();
-    let result = sqlx::query(
+    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let sql = format!(
         r#"
-        SELECT
-            id::text AS id, material_no,
-            CASE WHEN $2 = 'en' THEN COALESCE(name_en, name) ELSE name END AS name,
-            alias, english_name, cas_no, category, hazard_level,
-            hazard_class::text AS hazard_class,
-            specification, unit, packaging, storage_condition, storage_location,
-            max_stock::float8 AS max_stock, min_stock::float8 AS min_stock, current_stock::float8 AS current_stock,
-            safety_data_sheet, emergency_measures, supplier, status, remarks,
-            created_at::text AS created_at, updated_at::text AS updated_at
+        SELECT id::text AS id, material_no, name, category,
+               CASE WHEN jsonb_typeof(hazard_class) = 'array'
+                    THEN (SELECT string_agg(elem, ', ') FROM jsonb_array_elements_text(hazard_class) elem)
+                    ELSE NULL END AS hazard_class,
+               un_number, cas_no, specification, unit, description, hazards::text AS hazards,
+               storage_requirements, handling_requirements, emergency_measures,
+               safety_data_sheet AS msds_url, status,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
         FROM ehs.qa_ehs_hazardous_materials
-        WHERE ($3 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $3) AND id = $1::uuid AND deleted_at IS NULL
-        "#,
-    )
-    .bind(&id)
-    .bind(locale)
-    .bind(&tenant_bind)
-    .fetch_optional(&state.pool)
-    .await;
-
-    let row = match result {
-        Ok(r) => r,
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        "#
+    );
+    let row = match sqlx::query(&sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "危险品不存在")),
         Err(e) => {
             tracing::error!("Failed to get material: {}", e);
             return Json(ApiResponse::error(500, "获取危险品详情失败"));
         }
     };
-    let row = match row {
-        Some(r) => r,
-        None => return Json(ApiResponse::error(404, "危险品不存在")),
-    };
-
-    let hc = row
-        .try_get::<Option<String>, _>("hazard_class")
-        .ok()
-        .flatten()
-        .and_then(|t| serde_json::from_str(&t).ok());
-    let material = HazardousMaterial {
-        id: row.try_get::<String, _>("id").unwrap_or_default(),
-        material_no: row.try_get::<String, _>("material_no").unwrap_or_default(),
-        name: row.try_get::<String, _>("name").unwrap_or_default(),
-        alias: row.try_get::<Option<String>, _>("alias").ok().flatten(),
-        english_name: row
-            .try_get::<Option<String>, _>("english_name")
-            .ok()
-            .flatten(),
-        cas_no: row.try_get::<Option<String>, _>("cas_no").ok().flatten(),
-        category: row
-            .try_get::<Option<String>, _>("category")
-            .ok()
-            .flatten()
-            .unwrap_or_default(),
-        hazard_level: row
-            .try_get::<Option<String>, _>("hazard_level")
-            .ok()
-            .flatten(),
-        hazard_class: hc,
-        specification: row
-            .try_get::<Option<String>, _>("specification")
-            .ok()
-            .flatten(),
-        unit: row.try_get::<Option<String>, _>("unit").ok().flatten(),
-        packaging: row.try_get::<Option<String>, _>("packaging").ok().flatten(),
-        storage_condition: row
-            .try_get::<Option<String>, _>("storage_condition")
-            .ok()
-            .flatten(),
-        storage_location: row
-            .try_get::<Option<String>, _>("storage_location")
-            .ok()
-            .flatten(),
-        max_stock: row.try_get::<Option<f64>, _>("max_stock").ok().flatten(),
-        min_stock: row.try_get::<Option<f64>, _>("min_stock").ok().flatten(),
-        current_stock: row
-            .try_get::<Option<f64>, _>("current_stock")
-            .ok()
-            .flatten(),
-        safety_data_sheet: row
-            .try_get::<Option<String>, _>("safety_data_sheet")
-            .ok()
-            .flatten(),
-        emergency_measures: row
-            .try_get::<Option<String>, _>("emergency_measures")
-            .ok()
-            .flatten(),
-        supplier: row.try_get::<Option<String>, _>("supplier").ok().flatten(),
-        status: row
-            .try_get::<Option<String>, _>("status")
-            .ok()
-            .flatten()
-            .unwrap_or_else(|| "active".to_string()),
-        remarks: row.try_get::<Option<String>, _>("remarks").ok().flatten(),
-        created_at: row
-            .try_get::<Option<String>, _>("created_at")
-            .ok()
-            .flatten(),
-        updated_at: row
-            .try_get::<Option<String>, _>("updated_at")
-            .ok()
-            .flatten(),
-        tenant_id: uuid::Uuid::nil(),
-    };
-
+    let material = material_from_row(&row);
     Json(ApiResponse::success(
         MaterialDetail {
             material,
@@ -593,7 +429,6 @@ pub async fn get_material(
         "获取危险品详情成功",
     ))
 }
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["ehs:update"])),
@@ -607,56 +442,112 @@ pub async fn get_material(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_material(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateMaterialRequest>,
 ) -> Json<ApiResponse<HazardousMaterial>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = &req.name {
+        sets.push(format!("name = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.category {
+        sets.push(format!("category = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.hazard_class {
+        let arr = serde_json::json!([v.clone()]).to_string();
+        sets.push(format!("hazard_class = ${}::jsonb", params.len() + 1));
+        params.push(arr);
+    }
+    if let Some(v) = &req.un_number {
+        sets.push(format!("un_number = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.cas_no {
+        sets.push(format!("cas_no = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.specification {
+        sets.push(format!("specification = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.unit {
+        sets.push(format!("unit = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.description {
+        sets.push(format!("description = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.hazards {
+        sets.push(format!("hazards = ${}::jsonb", params.len() + 1));
+        params.push(serde_json::to_string(v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    if let Some(v) = &req.storage_requirements {
+        sets.push(format!("storage_requirements = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.handling_requirements {
+        sets.push(format!("handling_requirements = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.emergency_measures {
+        sets.push(format!("emergency_measures = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.msds_url {
+        sets.push(format!("safety_data_sheet = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.status {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_hazardous_materials
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, material_no, name, category,
+                  hazard_class::text AS hazard_class,
+                  un_number, cas_no, specification, unit, description, hazards::text AS hazards,
+                  storage_requirements, handling_requirements, emergency_measures,
+                  safety_data_sheet AS msds_url, status,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "危险品不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update material: {}", e);
+            return Json(ApiResponse::error(500, "危险品更新失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating hazardous material {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        HazardousMaterial {
-            id,
-            material_no: "HM-2024001".to_string(),
-            name: req.name.unwrap_or_else(|| "浓硫酸".to_string()),
-            alias: req.alias,
-            english_name: req.english_name,
-            cas_no: req.cas_no,
-            category: req.category.unwrap_or_else(|| "corrosive".to_string()),
-            hazard_level: req.hazard_level,
-            hazard_class: req.hazard_class,
-            specification: req.specification,
-            unit: req.unit,
-            packaging: req.packaging,
-            storage_condition: req.storage_condition,
-            storage_location: req.storage_location,
-            max_stock: req.max_stock,
-            min_stock: req.min_stock,
-            current_stock: Some(200.0),
-            safety_data_sheet: req.safety_data_sheet,
-            emergency_measures: req.emergency_measures,
-            supplier: req.supplier,
-            status: req.status.unwrap_or_else(|| "active".to_string()),
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "危险品更新成功",
-    ))
+    let record = material_from_row(&row);
+    Json(ApiResponse::success(record, "危险品更新成功"))
 }
-
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:delete"])),
@@ -669,15 +560,36 @@ pub async fn update_material(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_material(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting hazardous material: {}", id);
+    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.qa_ehs_hazardous_materials
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete material: {}", e);
+            return Json(ApiResponse::error(500, "危险品删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "危险品不存在"));
+    }
     Json(ApiResponse::success((), "危险品删除成功"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -762,53 +674,44 @@ pub async fn get_stock_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_material_msds(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<MsdsData>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_material_tenant(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, material_id::text AS material_id, material_name, version,
+               product_name, manufacturer, emergency_phone, hazard_identification,
+               ingredients AS composition_info, first_aid_measures, fire_fighting_measures,
+               accidental_release_measures, handling_and_storage,
+               exposure_control AS exposure_controls, physical_chemical_properties,
+               stability_reactivity AS reactivity_info, toxicological_info, ecological_info,
+               disposal_considerations, transport_info, regulatory_info, other_info,
+               updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_msds
+        WHERE material_id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+        ORDER BY updated_at DESC
+        LIMIT 1
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "该危险品暂无 MSDS")),
+        Err(e) => {
+            tracing::error!("Failed to get material MSDS: {}", e);
+            return Json(ApiResponse::error(500, "获取 MSDS 失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting MSDS for material: {}", id);
-    Json(ApiResponse::success(
-        MsdsData {
-            id: "msds-001".to_string(),
-            material_id: id,
-            material_name: "浓硫酸".to_string(),
-            version: Some("V1.0".to_string()),
-            ingredients: Some("硫酸 98%".to_string()),
-            hazard_identification: Some("腐蚀性，强氧化性".to_string()),
-            first_aid_measures: Some(
-                "皮肤接触：立即脱去污染的衣着，用大量流动清水冲洗至少15分钟...".to_string(),
-            ),
-            fire_fighting_measures: Some("消防人员必须穿全身耐酸碱消防服...".to_string()),
-            accidental_release_measures: Some("迅速撤离泄漏污染区人员至安全区...".to_string()),
-            handling_and_storage: Some("密闭操作，注意通风...".to_string()),
-            exposure_control: Some("密闭操作，提供安全淋浴和洗眼设备...".to_string()),
-            physical_chemical_properties: Some("无色透明油状液体，无臭...".to_string()),
-            stability_reactivity: Some("稳定，遇水大量放热...".to_string()),
-            toxicological_info: Some("具有强腐蚀性...".to_string()),
-            ecological_info: Some("对环境有危害，对水体和土壤可造成污染...".to_string()),
-            disposal_considerations: Some("缓慢加入碱液-石灰水中，并不断搅拌...".to_string()),
-            transport_info: Some("铁路运输时应严格按照铁道部...".to_string()),
-            regulatory_info: Some("化学危险物品安全管理条例...".to_string()),
-            other_info: None,
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "获取MSDS成功",
-    ))
+    let record = msds_from_row(&row);
+    Json(ApiResponse::success(record, "获取 MSDS 成功"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -1240,5 +1143,85 @@ mod tests {
     fn test_storage_incompatible_oxidizer_flammable() {
         assert!(!storage_compatibility(&["氧化", "易燃"]));
         assert!(!storage_compatibility(&["oxidizer", "flammable"]));
+    }
+}
+
+/// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。
+fn resolve_material_tenant(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+/// qa_ehs_hazardous_materials 行 → HazardousMaterial（jsonb 字段宽容解析）
+fn material_from_row(r: &sqlx::postgres::PgRow) -> HazardousMaterial {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let hazards: Option<serde_json::Value> = r.try_get("hazards").ok().flatten();
+    let hazards = hazards.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|x| x.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    HazardousMaterial {
+        id: r.try_get("id").unwrap_or_default(),
+        material_no: r.try_get("material_no").unwrap_or_default(),
+        name: r.try_get("name").unwrap_or_default(),
+        category: r.try_get("category").unwrap_or_default(),
+        hazard_class: r.try_get("hazard_class").ok().flatten(),
+        un_number: r.try_get("un_number").ok().flatten(),
+        cas_no: r.try_get("cas_no").ok().flatten(),
+        specification: r.try_get("specification").ok().flatten(),
+        unit: r.try_get("unit").ok().flatten(),
+        description: r.try_get("description").ok().flatten(),
+        hazards,
+        storage_requirements: r.try_get("storage_requirements").ok().flatten(),
+        handling_requirements: r.try_get("handling_requirements").ok().flatten(),
+        emergency_measures: r.try_get("emergency_measures").ok().flatten(),
+        msds_url: r.try_get("msds_url").ok().flatten(),
+        status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+/// qa_ehs_msds 行 → MsdsData（file_url 表无来源恒 None，created_at 用 updated_at 兼容）
+fn msds_from_row(r: &sqlx::postgres::PgRow) -> MsdsData {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    MsdsData {
+        id: r.try_get("id").unwrap_or_default(),
+        material_id: r.try_get("material_id").unwrap_or_default(),
+        material_name: r.try_get("material_name").unwrap_or_default(),
+        version: r.try_get("version").ok().flatten(),
+        product_name: r.try_get("product_name").ok().flatten(),
+        manufacturer: r.try_get("manufacturer").ok().flatten(),
+        emergency_phone: r.try_get("emergency_phone").ok().flatten(),
+        hazard_identification: r.try_get("hazard_identification").ok().flatten(),
+        composition_info: r.try_get("composition_info").ok().flatten(),
+        first_aid_measures: r.try_get("first_aid_measures").ok().flatten(),
+        fire_fighting_measures: r.try_get("fire_fighting_measures").ok().flatten(),
+        accidental_release_measures: r.try_get("accidental_release_measures").ok().flatten(),
+        handling_and_storage: r.try_get("handling_and_storage").ok().flatten(),
+        exposure_controls: r.try_get("exposure_controls").ok().flatten(),
+        physical_chemical_properties: r.try_get("physical_chemical_properties").ok().flatten(),
+        reactivity_info: r.try_get("reactivity_info").ok().flatten(),
+        toxicological_info: r.try_get("toxicological_info").ok().flatten(),
+        ecological_info: r.try_get("ecological_info").ok().flatten(),
+        disposal_considerations: r.try_get("disposal_considerations").ok().flatten(),
+        transport_info: r.try_get("transport_info").ok().flatten(),
+        regulatory_info: r.try_get("regulatory_info").ok().flatten(),
+        other_info: r.try_get("other_info").ok().flatten(),
+        file_url: None,
+        created_at: r.try_get::<String, _>("updated_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
     }
 }
