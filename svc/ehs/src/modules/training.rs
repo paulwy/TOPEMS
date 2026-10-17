@@ -97,13 +97,23 @@ pub struct TrainingPlan {
 pub struct TrainingRecord {
     pub id: String,
     pub record_no: String,
-    pub training_title: String,
+    pub plan_id: Option<String>,
+    pub title: String,
+    pub training_type: String,
+    pub category: String,
     pub trainer: Option<String>,
     pub training_date: Option<String>,
-    pub duration_hours: Option<i32>,
-    pub participants: Option<i32>,
-    pub pass_count: Option<i32>,
+    pub location: Option<String>,
+    pub duration_hours: Option<f64>,
+    pub participants: Option<Vec<String>>,
+    pub content: Option<String>,
+    pub materials: Option<Vec<String>>,
+    pub result: Option<String>,
+    pub pass_rate: Option<f64>,
     pub status: String,
+    pub created_by: Option<String>,
+    pub created_at: String,
+    pub updated_at: String,
 
     pub tenant_id: Uuid,
 }
@@ -492,37 +502,39 @@ pub async fn delete_training_plan(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_training_record(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<TrainingRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
     tracing::debug!("Getting training record: {}", id);
-    Json(ApiResponse::success(
-        TrainingRecord {
-            id,
-            record_no: "TRR-2024001".to_string(),
-            training_title: "安全培训".to_string(),
-            trainer: Some("安全讲师".to_string()),
-            training_date: Some(chrono::Utc::now().to_rfc3339()),
-            duration_hours: Some(4),
-            participants: Some(30),
-            pass_count: Some(28),
-            status: "completed".to_string(),
-            tenant_id,
-        },
-        "获取培训记录成功",
-    ))
+    let sql = r#"
+        SELECT id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
+               category, trainer, training_date::text AS training_date, location, duration_hours,
+               participants, content, materials, result, pass_rate, status, created_by,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.training_records
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "培训记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get training record: {}", e);
+            return Json(ApiResponse::error(500, "获取培训记录失败"));
+        }
+    };
+    let record = training_record_from_row(&row);
+    Json(ApiResponse::success(record, "获取培训记录成功"))
 }
 
 #[utoipa::path(
@@ -540,61 +552,104 @@ pub async fn get_training_record(
     clippy::cast_possible_wrap
 )]
 pub async fn update_training_record(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = req.get("title").and_then(|v| v.as_str()) {
+        sets.push(format!("title = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("training_type").and_then(|v| v.as_str()) {
+        sets.push(format!("training_type = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("category").and_then(|v| v.as_str()) {
+        sets.push(format!("category = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("trainer").and_then(|v| v.as_str()) {
+        sets.push(format!("trainer = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("training_date").and_then(|v| v.as_str()) {
+        sets.push(format!("training_date = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("location").and_then(|v| v.as_str()) {
+        sets.push(format!("location = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("duration_hours") {
+        sets.push(format!("duration_hours = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("participants") {
+        sets.push(format!("participants = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("content").and_then(|v| v.as_str()) {
+        sets.push(format!("content = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("materials") {
+        sets.push(format!("materials = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("result").and_then(|v| v.as_str()) {
+        sets.push(format!("result = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("pass_rate") {
+        sets.push(format!("pass_rate = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = req.get("status").and_then(|v| v.as_str()) {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.training_records
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
+                  category, trainer, training_date::text AS training_date, location, duration_hours,
+                  participants, content, materials, result, pass_rate, status, created_by,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "培训记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update training record: {}", e);
+            return Json(ApiResponse::error(500, "培训记录更新失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating training record {}: {:?}", id, req);
-    Json(ApiResponse::success(
-        TrainingRecord {
-            id,
-            record_no: "TRR-2024001".to_string(),
-            training_title: req
-                .get("training_title")
-                .and_then(|v| v.as_str())
-                .unwrap_or("安全培训")
-                .to_string(),
-            trainer: req
-                .get("trainer")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            training_date: req
-                .get("training_date")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            duration_hours: req
-                .get("duration_hours")
-                .and_then(|v| v.as_i64())
-                .map(|v| v as i32),
-            participants: req
-                .get("participants")
-                .and_then(|v| v.as_i64())
-                .map(|v| v as i32),
-            pass_count: req
-                .get("pass_count")
-                .and_then(|v| v.as_i64())
-                .map(|v| v as i32),
-            status: req
-                .get("status")
-                .and_then(|v| v.as_str())
-                .unwrap_or("completed")
-                .to_string(),
-            tenant_id,
-        },
-        "培训记录更新成功",
-    ))
+    let record = training_record_from_row(&row);
+    Json(ApiResponse::success(record, "培训记录更新成功"))
 }
 
 #[utoipa::path(
@@ -606,12 +661,34 @@ pub async fn update_training_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_training_record(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting training record: {}", id);
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.training_records
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete training record: {}", e);
+            return Json(ApiResponse::error(500, "培训记录删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "培训记录不存在"));
+    }
     Json(ApiResponse::success((), "培训记录删除成功"))
 }
 
@@ -952,6 +1029,16 @@ pub async fn create_training_plan(
     Json(ApiResponse::success(plan, "培训计划创建成功"))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct TrainingRecordQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+    pub training_type: Option<String>,
+    pub category: Option<String>,
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:training:read"])),
@@ -960,15 +1047,73 @@ pub async fn create_training_plan(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_training_records(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Query(q): Query<TrainingRecordQuery>,
 ) -> Json<ApiResponse<Vec<TrainingRecord>>> {
-    tracing::debug!("Listing training records");
-    Json(ApiResponse::success(
-        Vec::<TrainingRecord>::new(),
-        "获取培训记录列表成功",
-    ))
+    let tenant_bind = resolve_tenant_id(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(status) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(status.clone());
+    }
+    if let Some(training_type) = &q.training_type {
+        where_clause.push_str(&format!(" AND training_type = ${}", params.len() + 1));
+        params.push(training_type.clone());
+    }
+    if let Some(category) = &q.category {
+        where_clause.push_str(&format!(" AND category = ${}", params.len() + 1));
+        params.push(category.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (title ILIKE ${} OR record_no ILIKE ${} OR trainer ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2,
+            params.len() + 3
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
+               category, trainer, training_date::text AS training_date, location, duration_hours,
+               participants, content, materials, result, pass_rate, status, created_by,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.training_records
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list training records: {}", e);
+            return Json(ApiResponse::error(500, "获取培训记录列表失败"));
+        }
+    };
+
+    let list: Vec<TrainingRecord> = rows.iter().map(training_record_from_row).collect();
+    Json(ApiResponse::success(list, "获取培训记录列表成功"))
 }
 
 #[utoipa::path(
@@ -981,57 +1126,108 @@ pub async fn list_training_records(
 )]
 #[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
 pub async fn create_training_record(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<TrainingRecord>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
-    };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating training record: {:?}", req);
-    Json(ApiResponse::success(
-        TrainingRecord {
-            id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!(
-                "TRC-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            training_title: req
-                .get("training_title")
-                .and_then(|v| v.as_str())
-                .unwrap_or("安全培训")
-                .to_string(),
-            trainer: req
-                .get("trainer")
-                .and_then(|v| v.as_str())
-                .map(|s| s.to_string()),
-            training_date: None,
-            duration_hours: req
-                .get("duration_hours")
-                .and_then(|v| v.as_i64())
-                .map(|v| v as i32),
-            participants: req
-                .get("participants")
-                .and_then(|v| v.as_i64())
-                .map(|v| v as i32),
-            pass_count: req
-                .get("pass_count")
-                .and_then(|v| v.as_i64())
-                .map(|v| v as i32),
-            status: "completed".to_string(),
+    let tenant_id = resolve_tenant_id(&claims);
+    let record_no = format!("TRC-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let plan_id = req
+        .get("plan_id")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let title = req
+        .get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or("培训记录")
+        .to_string();
+    let training_type = req
+        .get("training_type")
+        .and_then(|v| v.as_str())
+        .unwrap_or("safety")
+        .to_string();
+    let category = req
+        .get("category")
+        .and_then(|v| v.as_str())
+        .unwrap_or("general")
+        .to_string();
+    let trainer = req
+        .get("trainer")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let training_date = req
+        .get("training_date")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let location = req
+        .get("location")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let duration_hours = req.get("duration_hours").map(|v| v.to_string());
+    let participants: serde_json::Value = req
+        .get("participants")
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!([]));
+    let content = req
+        .get("content")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let materials: serde_json::Value = req
+        .get("materials")
+        .cloned()
+        .unwrap_or_else(|| serde_json::json!([]));
+    let result = req
+        .get("result")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let pass_rate = req.get("pass_rate").map(|v| v.to_string());
+    let status = req
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("ongoing")
+        .to_string();
 
-            tenant_id,
-        },
-        "培训记录创建成功",
-    ))
+    let sql = r#"
+        INSERT INTO ehs.training_records
+            (record_no, program_id, title, training_type, category, trainer, training_date,
+             location, duration_hours, participants, content, materials, result, pass_rate,
+             status, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+        RETURNING id::text AS id, record_no, program_id::text AS plan_id, title, training_type,
+                  category, trainer, training_date::text AS training_date, location, duration_hours,
+                  participants, content, materials, result, pass_rate, status, created_by,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&record_no)
+        .bind(plan_id)
+        .bind(&title)
+        .bind(&training_type)
+        .bind(&category)
+        .bind(trainer)
+        .bind(training_date)
+        .bind(location)
+        .bind(duration_hours)
+        .bind(participants)
+        .bind(content)
+        .bind(materials)
+        .bind(result)
+        .bind(pass_rate)
+        .bind(&status)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create training record: {}", e);
+            return Json(ApiResponse::error(500, "培训记录创建失败"));
+        }
+    };
+    let record = training_record_from_row(&row);
+    Json(ApiResponse::success(record, "培训记录创建成功"))
 }
 
 #[derive(Debug, Deserialize)]
@@ -1273,6 +1469,51 @@ fn training_certificate_from_row(r: &sqlx::postgres::PgRow) -> TrainingCertifica
         status: r.try_get("status").unwrap_or_else(|_| "valid".to_string()),
         record_id: r.try_get("record_id").ok().flatten(),
         attachments,
+        created_at: r.try_get::<String, _>("created_at").unwrap_or_default(),
+        updated_at: r.try_get::<String, _>("updated_at").unwrap_or_default(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+/// ehs.training_records 行 → TrainingRecord（SELECT 列别名对齐本函数字段）
+fn training_record_from_row(r: &sqlx::postgres::PgRow) -> TrainingRecord {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let participants: Option<serde_json::Value> = r.try_get("participants").ok().flatten();
+    let participants = participants.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    let materials: Option<serde_json::Value> = r.try_get("materials").ok().flatten();
+    let materials = materials.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    TrainingRecord {
+        id: r.try_get("id").unwrap_or_default(),
+        record_no: r.try_get("record_no").unwrap_or_default(),
+        plan_id: r.try_get("plan_id").ok().flatten(),
+        title: r.try_get("title").unwrap_or_default(),
+        training_type: r.try_get("training_type").unwrap_or_default(),
+        category: r.try_get("category").unwrap_or_default(),
+        trainer: r.try_get("trainer").ok().flatten(),
+        training_date: r.try_get("training_date").ok().flatten(),
+        location: r.try_get("location").ok().flatten(),
+        duration_hours: r.try_get("duration_hours").ok().flatten(),
+        participants,
+        content: r.try_get("content").ok().flatten(),
+        materials,
+        result: r.try_get("result").ok().flatten(),
+        pass_rate: r.try_get("pass_rate").ok().flatten(),
+        status: r
+            .try_get("status")
+            .unwrap_or_else(|_| "ongoing".to_string()),
+        created_by: r.try_get("created_by").ok().flatten(),
         created_at: r.try_get::<String, _>("created_at").unwrap_or_default(),
         updated_at: r.try_get::<String, _>("updated_at").unwrap_or_default(),
         tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
