@@ -1,7 +1,7 @@
 //! Safety handlers - Inspection plans, items, and records
 
 use axum::{
-    extract::State,
+    extract::{Query, State},
     http::HeaderMap,
     routing::{delete, get, post},
     Extension, Json, Router,
@@ -15,20 +15,25 @@ use uuid::Uuid;
 use crate::shared::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/checks/plans", get(list_plans).post(create_plan))
+        .route("/checks/plans", get(list_plans_db).post(create_plan_db))
         .route(
             "/checks/plans/{id}",
-            get(get_plan).put(update_plan).delete(delete_plan),
+            get(get_plan_db).put(update_plan_db).delete(delete_plan_db),
         )
         .route("/checks/plans/{plan_id}/items", post(create_plan_item))
         .route(
             "/checks/plans/{plan_id}/items/{item_id}",
             delete(delete_plan_item),
         )
-        .route("/checks/records", get(list_records).post(create_record))
+        .route(
+            "/checks/records",
+            get(list_records_db).post(create_record_db),
+        )
         .route(
             "/checks/records/{id}",
-            get(get_record).put(update_record).delete(delete_record),
+            get(get_record)
+                .put(update_record_db)
+                .delete(delete_record_db),
         )
         .route("/checks", get(list_plans).post(create_safety_check))
         .route(
@@ -41,6 +46,7 @@ pub fn create_routes() -> Router<AppState> {
 pub struct InspectionQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
+    pub search: Option<String>,
     pub status: Option<String>,
     pub inspection_type: Option<String>,
 }
@@ -49,6 +55,7 @@ pub struct InspectionQuery {
 pub struct InspectionPlanQuery {
     pub page: Option<i64>,
     pub page_size: Option<i64>,
+    pub search: Option<String>,
     pub status: Option<String>,
 }
 
@@ -130,6 +137,7 @@ pub struct CreateInspectionPlanRequest {
     pub start_date: Option<String>,
     pub end_date: Option<String>,
     pub inspector: Option<String>,
+    #[serde(default)]
     pub items: Vec<CreateInspectionItemRequest>,
 }
 
@@ -690,4 +698,610 @@ pub async fn delete_record(
 ) -> Json<ApiResponse<()>> {
     tracing::debug!("Deleting inspection record: {}", id);
     Json(ApiResponse::success((), "检查记录删除成功"))
+}
+
+// ---- 接真实现（读 qa_ehs_inspection_plans / qa_ehs_inspection_records）----
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:plan:read"])),
+    path = "/api/ehs/checks/plans",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn list_plans_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Query(q): Query<InspectionPlanQuery>,
+) -> Json<ApiResponse<Vec<InspectionPlan>>> {
+    let tenant_bind = resolve_inspection_tenant(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(s) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(s.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (title ILIKE ${} OR plan_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, plan_no, title, description, inspection_type, frequency,
+               start_date::text AS start_date, end_date::text AS end_date, inspector, status,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_inspection_plans
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list inspection plans: {}", e);
+            return Json(ApiResponse::error(500, "获取检查计划列表失败"));
+        }
+    };
+    let list: Vec<InspectionPlan> = rows.iter().map(inspection_plan_from_row).collect();
+    Json(ApiResponse::success(list, "获取检查计划列表成功"))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:plan:write"])),
+    path = "/api/ehs/checks/plans",
+    request_body = CreateInspectionPlanRequest,
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn create_plan_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Json(req): Json<CreateInspectionPlanRequest>,
+) -> Json<ApiResponse<InspectionPlan>> {
+    let tenant_id = resolve_inspection_tenant(&claims);
+    let plan_no = format!("IP-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let sql = r#"
+        INSERT INTO ehs.qa_ehs_inspection_plans
+            (plan_no, title, description, inspection_type, frequency, start_date, end_date,
+             inspector, status, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id::text AS id, plan_no, title, description, inspection_type, frequency,
+                  start_date::text AS start_date, end_date::text AS end_date, inspector, status,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&plan_no)
+        .bind(&req.title)
+        .bind(&req.description)
+        .bind(&req.inspection_type)
+        .bind(&req.frequency)
+        .bind(&req.start_date)
+        .bind(&req.end_date)
+        .bind(&req.inspector)
+        .bind("active")
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create inspection plan: {}", e);
+            return Json(ApiResponse::error(500, "检查计划创建失败"));
+        }
+    };
+    let record = inspection_plan_from_row(&row);
+    Json(ApiResponse::success(record, "检查计划创建成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/checks/plans/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "检查计划 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn get_plan_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<InspectionPlan>> {
+    let tenant_bind = resolve_inspection_tenant(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, plan_no, title, description, inspection_type, frequency,
+               start_date::text AS start_date, end_date::text AS end_date, inspector, status,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_inspection_plans
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "检查计划不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get inspection plan: {}", e);
+            return Json(ApiResponse::error(500, "获取检查计划失败"));
+        }
+    };
+    let record = inspection_plan_from_row(&row);
+    Json(ApiResponse::success(record, "获取检查计划成功"))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:plan:update"])),
+    path = "/api/ehs/checks/plans/{id}",
+    request_body = CreateInspectionPlanRequest,
+    tag = "ehs",
+    params(("id" = String, Path, description = "检查计划 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_plan_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateInspectionPlanRequest>,
+) -> Json<ApiResponse<InspectionPlan>> {
+    let tenant_bind = resolve_inspection_tenant(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    sets.push(format!("title = ${}", params.len() + 1));
+    params.push(req.title.clone());
+    if let Some(v) = &req.description {
+        sets.push(format!("description = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    sets.push(format!("inspection_type = ${}", params.len() + 1));
+    params.push(req.inspection_type.clone());
+    sets.push(format!("frequency = ${}", params.len() + 1));
+    params.push(req.frequency.clone());
+    if let Some(v) = &req.start_date {
+        sets.push(format!("start_date = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.end_date {
+        sets.push(format!("end_date = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.inspector {
+        sets.push(format!("inspector = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_inspection_plans
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, plan_no, title, description, inspection_type, frequency,
+                  start_date::text AS start_date, end_date::text AS end_date, inspector, status,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "检查计划不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update inspection plan: {}", e);
+            return Json(ApiResponse::error(500, "检查计划更新失败"));
+        }
+    };
+    let record = inspection_plan_from_row(&row);
+    Json(ApiResponse::success(record, "检查计划更新成功"))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:plan:delete"])),
+    path = "/api/ehs/checks/plans/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "检查计划 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_plan_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    let tenant_bind = resolve_inspection_tenant(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.qa_ehs_inspection_plans
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete inspection plan: {}", e);
+            return Json(ApiResponse::error(500, "检查计划删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "检查计划不存在"));
+    }
+    Json(ApiResponse::success((), "检查计划删除成功"))
+}
+
+#[utoipa::path(
+    get,
+    security(("BearerAuth" = ["ehs:read"])),
+    path = "/api/ehs/checks/records",
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn list_records_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Query(q): Query<InspectionQuery>,
+) -> Json<ApiResponse<Vec<InspectionRecord>>> {
+    let tenant_bind = resolve_inspection_tenant(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(s) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(s.clone());
+    }
+    if let Some(t) = &q.inspection_type {
+        where_clause.push_str(&format!(" AND inspection_type = ${}", params.len() + 1));
+        params.push(t.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (title ILIKE ${} OR record_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
+               location, inspector, inspected_at::text AS inspected_at, result,
+               issues, attachments, status,
+               created_at::text AS created_at, updated_at::text AS updated_at,
+               tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_inspection_records
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list inspection records: {}", e);
+            return Json(ApiResponse::error(500, "获取检查记录列表失败"));
+        }
+    };
+    let list: Vec<InspectionRecord> = rows.iter().map(inspection_record_from_row).collect();
+    Json(ApiResponse::success(list, "获取检查记录列表成功"))
+}
+
+#[utoipa::path(
+    post,
+    security(("BearerAuth" = ["ehs:write"])),
+    path = "/api/ehs/checks/records",
+    request_body = CreateInspectionRecordRequest,
+    tag = "ehs",
+    responses((status = 200, description = "OK")),
+)]
+pub async fn create_record_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    Json(req): Json<CreateInspectionRecordRequest>,
+) -> Json<ApiResponse<InspectionRecord>> {
+    let tenant_id = resolve_inspection_tenant(&claims);
+    let record_no = format!("CR-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let issues: serde_json::Value = req
+        .issues
+        .clone()
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+
+    let sql = r#"
+        INSERT INTO ehs.qa_ehs_inspection_records
+            (record_no, plan_id, title, inspection_type, location, inspector, inspected_at,
+             issues, status, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        RETURNING id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
+                  location, inspector, inspected_at::text AS inspected_at, result,
+                  issues, attachments, status,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&record_no)
+        .bind(&req.plan_id)
+        .bind(&req.title)
+        .bind(&req.inspection_type)
+        .bind(&req.location)
+        .bind(&req.inspector)
+        .bind(&req.inspected_at)
+        .bind(issues)
+        .bind("in_progress")
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create inspection record: {}", e);
+            return Json(ApiResponse::error(500, "检查记录创建失败"));
+        }
+    };
+    let record_id: String = row.try_get("id").unwrap_or_default();
+    // 宽容写 items（前端 create 必带 items；表结构匹配则落库，失败仅记日志不阻断主流程）
+    for it in &req.items {
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO ehs.qa_ehs_inspection_record_items
+                (record_id, item_id, item_title, item_category, result, remarks, tenant_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            "#,
+        )
+        .bind(&record_id)
+        .bind(&it.item_id)
+        .bind(&it.item_title)
+        .bind(&it.item_category)
+        .bind(&it.result)
+        .bind(&it.remarks)
+        .bind(tenant_id)
+        .execute(&state.pool)
+        .await;
+    }
+    let record = inspection_record_from_row(&row);
+    Json(ApiResponse::success(record, "检查记录创建成功"))
+}
+
+#[utoipa::path(
+    put,
+    security(("BearerAuth" = ["ehs:update"])),
+    path = "/api/ehs/checks/records/{id}",
+    request_body = UpdateInspectionRecordRequest,
+    tag = "ehs",
+    params(("id" = String, Path, description = "检查记录 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn update_record_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateInspectionRecordRequest>,
+) -> Json<ApiResponse<InspectionRecord>> {
+    let tenant_bind = resolve_inspection_tenant(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = &req.result {
+        sets.push(format!("result = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.status {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.issues {
+        sets.push(format!("issues = ${}", params.len() + 1));
+        params.push(serde_json::to_string(v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_inspection_records
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, record_no, plan_id::text AS plan_id, title, inspection_type,
+                  location, inspector, inspected_at::text AS inspected_at, result,
+                  issues, attachments, status,
+                  created_at::text AS created_at, updated_at::text AS updated_at,
+                  tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "检查记录不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update inspection record: {}", e);
+            return Json(ApiResponse::error(500, "检查记录更新失败"));
+        }
+    };
+    let record = inspection_record_from_row(&row);
+    Json(ApiResponse::success(record, "检查记录更新成功"))
+}
+
+#[utoipa::path(
+    delete,
+    security(("BearerAuth" = ["ehs:delete"])),
+    path = "/api/ehs/checks/records/{id}",
+    tag = "ehs",
+    params(("id" = String, Path, description = "检查记录 ID")),
+    responses((status = 200, description = "OK")),
+)]
+pub async fn delete_record_db(
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
+    _headers: HeaderMap,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    let tenant_bind = resolve_inspection_tenant(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.qa_ehs_inspection_records
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete inspection record: {}", e);
+            return Json(ApiResponse::error(500, "检查记录删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "检查记录不存在"));
+    }
+    Json(ApiResponse::success((), "检查记录删除成功"))
+}
+
+/// 解析请求租户：超管 → nil UUID（全租户可见）；否则取 claims.tenant_id。
+fn resolve_inspection_tenant(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+/// qa_ehs_inspection_plans 行 → InspectionPlan
+fn inspection_plan_from_row(r: &sqlx::postgres::PgRow) -> InspectionPlan {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    InspectionPlan {
+        id: r.try_get("id").unwrap_or_default(),
+        plan_no: r.try_get("plan_no").unwrap_or_default(),
+        title: r.try_get("title").unwrap_or_default(),
+        description: r.try_get("description").ok().flatten(),
+        inspection_type: r.try_get("inspection_type").unwrap_or_default(),
+        frequency: r.try_get("frequency").unwrap_or_default(),
+        start_date: r.try_get("start_date").ok().flatten(),
+        end_date: r.try_get("end_date").ok().flatten(),
+        inspector: r.try_get("inspector").ok().flatten(),
+        status: r.try_get("status").unwrap_or_else(|_| "active".to_string()),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
+}
+
+/// qa_ehs_inspection_records 行 → InspectionRecord
+fn inspection_record_from_row(r: &sqlx::postgres::PgRow) -> InspectionRecord {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let issues: Option<serde_json::Value> = r.try_get("issues").ok().flatten();
+    let issues = issues.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    let attachments: Option<serde_json::Value> = r.try_get("attachments").ok().flatten();
+    let attachments = attachments.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|s| s.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    InspectionRecord {
+        id: r.try_get("id").unwrap_or_default(),
+        record_no: r.try_get("record_no").unwrap_or_default(),
+        plan_id: r.try_get("plan_id").ok().flatten(),
+        title: r.try_get("title").unwrap_or_default(),
+        inspection_type: r.try_get("inspection_type").unwrap_or_default(),
+        location: r.try_get("location").ok().flatten(),
+        inspector: r.try_get("inspector").ok().flatten(),
+        inspected_at: r.try_get("inspected_at").ok().flatten(),
+        result: r.try_get("result").ok().flatten(),
+        issues,
+        attachments,
+        status: r
+            .try_get("status")
+            .unwrap_or_else(|_| "in_progress".to_string()),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
 }
