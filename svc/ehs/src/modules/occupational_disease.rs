@@ -1,6 +1,11 @@
 //! Occupational disease prevention - Hazard factors, detection records, cases, protection, and training
 
-use axum::{extract::State, http::HeaderMap, routing::*, Extension, Json, Router};
+use axum::{
+    extract::{Query, State},
+    http::HeaderMap,
+    routing::*,
+    Extension, Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use topems_shared_auth::auth::Claims;
@@ -122,21 +127,23 @@ pub struct DiseaseCase {
     pub case_no: String,
     pub employee_id: String,
     pub employee_name: String,
+    pub gender: Option<String>,
+    pub age: Option<i64>,
     pub department: Option<String>,
     pub position: Option<String>,
     pub disease_type: String,
     pub disease_name: String,
-    pub severity: Option<String>,
-    pub diagnosed_at: Option<String>,
-    pub diagnosing_hospital: Option<String>,
+    pub hazard_factor: Option<String>,
+    pub diagnosis_date: Option<String>,
+    pub diagnosis_hospital: Option<String>,
     pub diagnosis_basis: Option<String>,
+    pub work_related: bool,
+    pub severity: Option<String>,
     pub status: String,
-    pub treatment_plan: Option<String>,
-    pub work_arrangement: Option<String>,
-    pub compensation_status: Option<String>,
-    pub outcome: Option<String>,
-    pub closed_at: Option<String>,
-    pub remarks: Option<String>,
+    pub treatment: Option<String>,
+    pub compensation: Option<String>,
+    pub attachments: Option<Vec<String>>,
+    pub reported_at: Option<String>,
     pub created_at: Option<String>,
     pub updated_at: Option<String>,
 
@@ -253,28 +260,44 @@ pub struct CreateDetectionRecordRequest {
 pub struct CreateDiseaseCaseRequest {
     pub employee_id: String,
     pub employee_name: String,
+    pub gender: Option<String>,
+    pub age: Option<i64>,
     pub department: Option<String>,
     pub position: Option<String>,
     pub disease_type: String,
     pub disease_name: String,
-    pub severity: Option<String>,
-    pub diagnosed_at: Option<String>,
-    pub diagnosing_hospital: Option<String>,
+    pub hazard_factor: Option<String>,
+    pub diagnosis_date: Option<String>,
+    pub diagnosis_hospital: Option<String>,
     pub diagnosis_basis: Option<String>,
-    pub treatment_plan: Option<String>,
-    pub work_arrangement: Option<String>,
-    pub remarks: Option<String>,
+    pub work_related: Option<bool>,
+    pub severity: Option<String>,
+    pub status: Option<String>,
+    pub treatment: Option<String>,
+    pub compensation: Option<String>,
+    pub attachments: Option<Vec<String>>,
+    pub reported_at: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateDiseaseCaseRequest {
+    pub employee_name: Option<String>,
+    pub gender: Option<String>,
+    pub age: Option<i64>,
+    pub department: Option<String>,
+    pub position: Option<String>,
+    pub disease_type: Option<String>,
+    pub disease_name: Option<String>,
+    pub hazard_factor: Option<String>,
+    pub diagnosis_date: Option<String>,
+    pub diagnosis_hospital: Option<String>,
+    pub diagnosis_basis: Option<String>,
+    pub work_related: Option<bool>,
     pub severity: Option<String>,
     pub status: Option<String>,
-    pub treatment_plan: Option<String>,
-    pub work_arrangement: Option<String>,
-    pub compensation_status: Option<String>,
-    pub outcome: Option<String>,
-    pub remarks: Option<String>,
+    pub treatment: Option<String>,
+    pub compensation: Option<String>,
+    pub attachments: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -799,6 +822,16 @@ pub async fn delete_detection_record(
     Json(ApiResponse::success((), "检测记录删除成功"))
 }
 
+#[derive(Debug, Deserialize)]
+pub struct DiseaseCaseQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub search: Option<String>,
+    pub status: Option<String>,
+    pub disease_type: Option<String>,
+    pub severity: Option<String>,
+}
+
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:disease:read"])),
@@ -807,17 +840,74 @@ pub async fn delete_detection_record(
     responses((status = 200, description = "OK")),
 )]
 pub async fn list_disease_cases(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
+    Query(q): Query<DiseaseCaseQuery>,
 ) -> Json<ApiResponse<Vec<DiseaseCase>>> {
-    tracing::debug!("Listing disease cases");
-    Json(ApiResponse::success(
-        Vec::<DiseaseCase>::new(),
-        "获取职业病案例列表成功",
-    ))
-}
+    let tenant_bind = resolve_disease_tenant(&claims).to_string();
+    let page = q.page.unwrap_or(1).max(1);
+    let page_size = q.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
 
+    let mut params: Vec<String> = vec![tenant_bind];
+    let mut where_clause = String::from(
+        " WHERE ($1 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $1) AND deleted_at IS NULL",
+    );
+    if let Some(s) = &q.status {
+        where_clause.push_str(&format!(" AND status = ${}", params.len() + 1));
+        params.push(s.clone());
+    }
+    if let Some(d) = &q.disease_type {
+        where_clause.push_str(&format!(" AND disease_type = ${}", params.len() + 1));
+        params.push(d.clone());
+    }
+    if let Some(v) = &q.severity {
+        where_clause.push_str(&format!(" AND severity = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(search) = &q.search {
+        where_clause.push_str(&format!(
+            " AND (employee_name ILIKE ${} OR employee_id ILIKE ${} OR case_no ILIKE ${})",
+            params.len() + 1,
+            params.len() + 2,
+            params.len() + 3
+        ));
+        let like = format!("%{search}%");
+        params.push(like.clone());
+        params.push(like.clone());
+        params.push(like);
+    }
+
+    let sql = format!(
+        r#"
+        SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
+               department, position, disease_type, disease_name, hazard_factor,
+               diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+               diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+               compensation_status AS compensation, attachments,
+               reported_at::text AS reported_at, created_at::text AS created_at,
+               updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_disease_cases
+        {where_clause}
+        ORDER BY created_at DESC
+        LIMIT {page_size} OFFSET {offset}
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let rows = match query.fetch_all(&state.pool).await {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to list disease cases: {}", e);
+            return Json(ApiResponse::error(500, "获取职业病案例列表失败"));
+        }
+    };
+    let list: Vec<DiseaseCase> = rows.iter().map(disease_case_from_row).collect();
+    Json(ApiResponse::success(list, "获取职业病案例列表成功"))
+}
 #[utoipa::path(
     post,
     security(("BearerAuth" = ["ehs:disease:write"])),
@@ -827,55 +917,76 @@ pub async fn list_disease_cases(
     responses((status = 200, description = "OK")),
 )]
 pub async fn create_disease_case(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     Json(req): Json<CreateDiseaseCaseRequest>,
 ) -> Json<ApiResponse<DiseaseCase>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_id = resolve_disease_tenant(&claims);
+    let case_no = format!("DC-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+    let status = req
+        .status
+        .clone()
+        .unwrap_or_else(|| "suspected".to_string());
+    let attachments: serde_json::Value = req
+        .attachments
+        .clone()
+        .map(|v| serde_json::to_value(v).unwrap_or_else(|_| serde_json::json!([])))
+        .unwrap_or_else(|| serde_json::json!([]));
+    let diagnosis_date = req
+        .diagnosis_date
+        .clone()
+        .map(|d| d.split('T').next().unwrap_or(&d).to_string());
+    let sql = r#"
+        INSERT INTO ehs.qa_ehs_disease_cases
+            (case_no, employee_id, employee_name, gender, age, department, position,
+             disease_type, disease_name, hazard_factor, diagnosed_at, diagnosing_hospital,
+             diagnosis_basis, work_related, severity, status, treatment_plan,
+             compensation_status, attachments, reported_at, tenant_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16,
+                $17, $18, $19, $20, $21)
+        RETURNING id::text AS id, case_no, employee_id, employee_name, gender, age,
+                  department, position, disease_type, disease_name, hazard_factor,
+                  diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+                  diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+                  compensation_status AS compensation, attachments,
+                  reported_at::text AS reported_at, created_at::text AS created_at,
+                  updated_at::text AS updated_at, tenant_id::text AS tenant_id
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&case_no)
+        .bind(&req.employee_id)
+        .bind(&req.employee_name)
+        .bind(&req.gender)
+        .bind(req.age)
+        .bind(&req.department)
+        .bind(&req.position)
+        .bind(&req.disease_type)
+        .bind(&req.disease_name)
+        .bind(&req.hazard_factor)
+        .bind(&diagnosis_date)
+        .bind(&req.diagnosis_hospital)
+        .bind(&req.diagnosis_basis)
+        .bind(req.work_related.unwrap_or(false))
+        .bind(&req.severity)
+        .bind(&status)
+        .bind(&req.treatment)
+        .bind(&req.compensation)
+        .bind(attachments)
+        .bind(&req.reported_at)
+        .bind(tenant_id)
+        .fetch_one(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to create disease case: {}", e);
+            return Json(ApiResponse::error(500, "职业病案例创建失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Creating disease case: {:?}", req);
-    Json(ApiResponse::success(
-        DiseaseCase {
-            id: uuid::Uuid::new_v4().to_string(),
-            case_no: format!(
-                "DC-{}",
-                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
-            ),
-            employee_id: req.employee_id,
-            employee_name: req.employee_name,
-            department: req.department,
-            position: req.position,
-            disease_type: req.disease_type,
-            disease_name: req.disease_name,
-            severity: req.severity,
-            diagnosed_at: req.diagnosed_at,
-            diagnosing_hospital: req.diagnosing_hospital,
-            diagnosis_basis: req.diagnosis_basis,
-            status: "active".to_string(),
-            treatment_plan: req.treatment_plan,
-            work_arrangement: req.work_arrangement,
-            compensation_status: None,
-            outcome: None,
-            closed_at: None,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "职业病案例创建成功",
-    ))
+    let record = disease_case_from_row(&row);
+    Json(ApiResponse::success(record, "职业病案例创建成功"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:disease:read"])),
@@ -888,52 +999,41 @@ pub async fn create_disease_case(
     responses((status = 200, description = "OK")),
 )]
 pub async fn get_disease_case(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<DiseaseCase>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_disease_tenant(&claims).to_string();
+    let sql = r#"
+        SELECT id::text AS id, case_no, employee_id, employee_name, gender, age,
+               department, position, disease_type, disease_name, hazard_factor,
+               diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+               diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+               compensation_status AS compensation, attachments,
+               reported_at::text AS reported_at, created_at::text AS created_at,
+               updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        FROM ehs.qa_ehs_disease_cases
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let row = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "职业病案例不存在")),
+        Err(e) => {
+            tracing::error!("Failed to get disease case: {}", e);
+            return Json(ApiResponse::error(500, "获取职业病案例详情失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Getting disease case: {}", id);
-    Json(ApiResponse::success(
-        DiseaseCase {
-            id,
-            case_no: "DC-2024001".to_string(),
-            employee_id: "EMP001".to_string(),
-            employee_name: "张三".to_string(),
-            department: Some("生产部".to_string()),
-            position: Some("冲压工".to_string()),
-            disease_type: "noise_induced".to_string(),
-            disease_name: "噪声聋".to_string(),
-            severity: Some("mild".to_string()),
-            diagnosed_at: Some("2024-03-15".to_string()),
-            diagnosing_hospital: Some("市职业病防治院".to_string()),
-            diagnosis_basis: Some("纯音听力测试，职业史".to_string()),
-            status: "active".to_string(),
-            treatment_plan: Some("药物治疗，定期复查".to_string()),
-            work_arrangement: Some("调离噪声作业岗位".to_string()),
-            compensation_status: Some("applied".to_string()),
-            outcome: None,
-            closed_at: None,
-            remarks: None,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "获取职业病案例详情成功",
-    ))
+    let record = disease_case_from_row(&row);
+    Json(ApiResponse::success(record, "获取职业病案例详情成功"))
 }
-
 #[utoipa::path(
     put,
     security(("BearerAuth" = ["ehs:disease:write"])),
@@ -947,60 +1047,124 @@ pub async fn get_disease_case(
     responses((status = 200, description = "OK")),
 )]
 pub async fn update_disease_case(
-    State(_state): State<crate::shared::AppState>,
+    State(state): State<crate::shared::AppState>,
     Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
     Json(req): Json<UpdateDiseaseCaseRequest>,
 ) -> Json<ApiResponse<DiseaseCase>> {
-    let tenant_opt: Option<uuid::Uuid> = if claims.is_superuser {
-        None
-    } else {
-        claims
-            .tenant_id
-            .as_deref()
-            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+    let tenant_bind = resolve_disease_tenant(&claims).to_string();
+    let mut sets: Vec<String> = Vec::new();
+    let mut params: Vec<String> = Vec::new();
+    if let Some(v) = &req.employee_name {
+        sets.push(format!("employee_name = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.gender {
+        sets.push(format!("gender = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = req.age {
+        sets.push(format!("age = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = &req.department {
+        sets.push(format!("department = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.position {
+        sets.push(format!("position = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.disease_type {
+        sets.push(format!("disease_type = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.disease_name {
+        sets.push(format!("disease_name = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.hazard_factor {
+        sets.push(format!("hazard_factor = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.diagnosis_date {
+        let d = v.split('T').next().unwrap_or(v).to_string();
+        sets.push(format!("diagnosed_at = ${}", params.len() + 1));
+        params.push(d);
+    }
+    if let Some(v) = &req.diagnosis_hospital {
+        sets.push(format!("diagnosing_hospital = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.diagnosis_basis {
+        sets.push(format!("diagnosis_basis = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = req.work_related {
+        sets.push(format!("work_related = ${}", params.len() + 1));
+        params.push(v.to_string());
+    }
+    if let Some(v) = &req.severity {
+        sets.push(format!("severity = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.status {
+        sets.push(format!("status = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.treatment {
+        sets.push(format!("treatment_plan = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.compensation {
+        sets.push(format!("compensation_status = ${}", params.len() + 1));
+        params.push(v.clone());
+    }
+    if let Some(v) = &req.attachments {
+        sets.push(format!("attachments = ${}", params.len() + 1));
+        params.push(serde_json::to_string(v).unwrap_or_else(|_| "[]".to_string()));
+    }
+    sets.push("updated_at = now()".to_string());
+    let set_clause = sets.join(", ");
+    let id_idx = params.len() + 1;
+    let tenant_idx = params.len() + 2;
+    let sql = format!(
+        r#"
+        UPDATE ehs.qa_ehs_disease_cases
+        SET {set_clause}
+        WHERE id = ${id_idx}
+          AND (${tenant_idx} = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = ${tenant_idx})
+          AND deleted_at IS NULL
+        RETURNING id::text AS id, case_no, employee_id, employee_name, gender, age,
+                  department, position, disease_type, disease_name, hazard_factor,
+                  diagnosed_at::text AS diagnosis_date, diagnosing_hospital AS diagnosis_hospital,
+                  diagnosis_basis, work_related, severity, status, treatment_plan AS treatment,
+                  compensation_status AS compensation, attachments,
+                  reported_at::text AS reported_at, created_at::text AS created_at,
+                  updated_at::text AS updated_at, tenant_id::text AS tenant_id
+        "#
+    );
+    let mut query = sqlx::query(&sql);
+    for p in &params {
+        query = query.bind(p);
+    }
+    let row = match query
+        .bind(&id)
+        .bind(&tenant_bind)
+        .fetch_optional(&state.pool)
+        .await
+    {
+        Ok(Some(r)) => r,
+        Ok(None) => return Json(ApiResponse::error(404, "职业病案例不存在")),
+        Err(e) => {
+            tracing::error!("Failed to update disease case: {}", e);
+            return Json(ApiResponse::error(500, "职业病案例更新失败"));
+        }
     };
-    let tenant_id = tenant_opt
-        .unwrap_or_else(|| uuid::Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap());
-    tracing::debug!("Updating disease case {}: {:?}", id, req);
-    let status = req.status.clone().unwrap_or_else(|| "active".to_string());
-    let closed_at = if status == "closed" {
-        Some(chrono::Utc::now().to_rfc3339())
-    } else {
-        None
-    };
-
-    Json(ApiResponse::success(
-        DiseaseCase {
-            id,
-            case_no: "DC-2024001".to_string(),
-            employee_id: "EMP001".to_string(),
-            employee_name: "张三".to_string(),
-            department: Some("生产部".to_string()),
-            position: Some("冲压工".to_string()),
-            disease_type: "noise_induced".to_string(),
-            disease_name: "噪声聋".to_string(),
-            severity: req.severity,
-            diagnosed_at: Some("2024-03-15".to_string()),
-            diagnosing_hospital: Some("市职业病防治院".to_string()),
-            diagnosis_basis: Some("纯音听力测试，职业史".to_string()),
-            status,
-            treatment_plan: req.treatment_plan,
-            work_arrangement: req.work_arrangement,
-            compensation_status: req.compensation_status,
-            outcome: req.outcome,
-            closed_at,
-            remarks: req.remarks,
-            created_at: Some(chrono::Utc::now().to_rfc3339()),
-            updated_at: Some(chrono::Utc::now().to_rfc3339()),
-
-            tenant_id,
-        },
-        "职业病案例更新成功",
-    ))
+    let record = disease_case_from_row(&row);
+    Json(ApiResponse::success(record, "职业病案例更新成功"))
 }
-
 #[utoipa::path(
     delete,
     security(("BearerAuth" = ["ehs:disease:write"])),
@@ -1013,15 +1177,36 @@ pub async fn update_disease_case(
     responses((status = 200, description = "OK")),
 )]
 pub async fn delete_disease_case(
-    State(_state): State<crate::shared::AppState>,
-    Extension(_claims): Extension<Claims>,
+    State(state): State<crate::shared::AppState>,
+    Extension(claims): Extension<Claims>,
     _headers: HeaderMap,
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<()>> {
-    tracing::debug!("Deleting disease case: {}", id);
+    let tenant_bind = resolve_disease_tenant(&claims).to_string();
+    let sql = r#"
+        UPDATE ehs.qa_ehs_disease_cases
+        SET deleted_at = now()
+        WHERE id = $1
+          AND ($2 = '00000000-0000-0000-0000-000000000000' OR tenant_id::text = $2)
+          AND deleted_at IS NULL
+    "#;
+    let result = match sqlx::query(sql)
+        .bind(&id)
+        .bind(&tenant_bind)
+        .execute(&state.pool)
+        .await
+    {
+        Ok(r) => r,
+        Err(e) => {
+            tracing::error!("Failed to delete disease case: {}", e);
+            return Json(ApiResponse::error(500, "职业病案例删除失败"));
+        }
+    };
+    if result.rows_affected() == 0 {
+        return Json(ApiResponse::error(404, "职业病案例不存在"));
+    }
     Json(ApiResponse::success((), "职业病案例删除成功"))
 }
-
 #[utoipa::path(
     get,
     security(("BearerAuth" = ["ehs:read"])),
@@ -1289,4 +1474,58 @@ pub async fn update_detection_record(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     Json(ApiResponse::error(404, "检测记录不存在"))
+}
+
+/// 解析请求租户：超管 → nil UUID；否则取 claims.tenant_id。
+fn resolve_disease_tenant(claims: &Claims) -> uuid::Uuid {
+    if claims.is_superuser {
+        uuid::Uuid::nil()
+    } else {
+        claims
+            .tenant_id
+            .as_deref()
+            .and_then(|t| uuid::Uuid::parse_str(t).ok())
+            .unwrap_or_else(uuid::Uuid::nil)
+    }
+}
+
+/// qa_ehs_disease_cases 行 → DiseaseCase（表列名 → 前端字段名）
+fn disease_case_from_row(r: &sqlx::postgres::PgRow) -> DiseaseCase {
+    let tenant_id: String = r.try_get("tenant_id").unwrap_or_default();
+    let attachments: Option<serde_json::Value> = r.try_get("attachments").ok().flatten();
+    let attachments = attachments.and_then(|v| {
+        v.as_array().map(|arr| {
+            arr.iter()
+                .filter_map(|e| e.as_str().map(|x| x.to_string()))
+                .collect::<Vec<String>>()
+        })
+    });
+    DiseaseCase {
+        id: r.try_get("id").unwrap_or_default(),
+        case_no: r.try_get("case_no").unwrap_or_default(),
+        employee_id: r.try_get("employee_id").unwrap_or_default(),
+        employee_name: r.try_get("employee_name").unwrap_or_default(),
+        gender: r.try_get("gender").ok().flatten(),
+        age: r.try_get("age").ok().flatten(),
+        department: r.try_get("department").ok().flatten(),
+        position: r.try_get("position").ok().flatten(),
+        disease_type: r.try_get("disease_type").unwrap_or_default(),
+        disease_name: r.try_get("disease_name").unwrap_or_default(),
+        hazard_factor: r.try_get("hazard_factor").ok().flatten(),
+        diagnosis_date: r.try_get("diagnosis_date").ok().flatten(),
+        diagnosis_hospital: r.try_get("diagnosis_hospital").ok().flatten(),
+        diagnosis_basis: r.try_get("diagnosis_basis").ok().flatten(),
+        work_related: r.try_get("work_related").unwrap_or(false),
+        severity: r.try_get("severity").ok().flatten(),
+        status: r
+            .try_get("status")
+            .unwrap_or_else(|_| "suspected".to_string()),
+        treatment: r.try_get("treatment").ok().flatten(),
+        compensation: r.try_get("compensation").ok().flatten(),
+        attachments,
+        reported_at: r.try_get("reported_at").ok().flatten(),
+        created_at: r.try_get::<String, _>("created_at").ok(),
+        updated_at: r.try_get::<String, _>("updated_at").ok(),
+        tenant_id: Uuid::parse_str(&tenant_id).unwrap_or_default(),
+    }
 }
