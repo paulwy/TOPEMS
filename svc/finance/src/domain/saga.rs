@@ -166,7 +166,7 @@ impl SagaCoordinator {
         payload: serde_json::Value,
     ) -> Result<String, TopemsError> {
         let steps = {
-            let defs = self.definitions.lock().map_err(|e| e.to_string())?;
+            let defs = self.definitions.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
             let def = defs
                 .iter()
                 .find(|d| d.saga_type() == saga_type)
@@ -197,7 +197,7 @@ impl SagaCoordinator {
     /// 执行 Saga：依次执行每个步骤的正向 action（内存模拟，标记为完成）
     pub async fn execute_saga(&self, saga_id: &str) -> Result<SagaStatus, TopemsError> {
         let snapshot = {
-            let instances = self.instances.lock().map_err(|e| e.to_string())?;
+            let instances = self.instances.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
             instances
                 .iter()
                 .find(|s| s.id == saga_id)
@@ -257,7 +257,7 @@ impl SagaCoordinator {
     /// 补偿 Saga：从最后一个已完成步骤倒序执行 compensation
     pub async fn compensate_saga(&self, saga_id: &str) -> Result<SagaStatus, TopemsError> {
         let snapshot = {
-            let instances = self.instances.lock().map_err(|e| e.to_string())?;
+            let instances = self.instances.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
             instances
                 .iter()
                 .find(|s| s.id == saga_id)

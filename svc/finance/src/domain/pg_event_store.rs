@@ -34,19 +34,19 @@ impl PgEventStore {
 
     #[allow(clippy::as_conversions, clippy::cast_sign_loss)]
     fn row_to_event_record(row: &sqlx::postgres::PgRow) -> Result<EventRecord, TopemsError> {
-        let id: Uuid = row.try_get("id").map_err(|e| e.to_string())?;
-        let aggregate_id: String = row.try_get("aggregate_id").map_err(|e| e.to_string())?;
-        let aggregate_type: String = row.try_get("aggregate_type").map_err(|e| e.to_string())?;
-        let event_type: String = row.try_get("event_type").map_err(|e| e.to_string())?;
-        let version: i64 = row.try_get("version").map_err(|e| e.to_string())?;
-        let payload_json: serde_json::Value = row.try_get("payload").map_err(|e| e.to_string())?;
+        let id: Uuid = row.try_get("id")?;
+        let aggregate_id: String = row.try_get("aggregate_id")?;
+        let aggregate_type: String = row.try_get("aggregate_type")?;
+        let event_type: String = row.try_get("event_type")?;
+        let version: i64 = row.try_get("version")?;
+        let payload_json: serde_json::Value = row.try_get("payload")?;
         let metadata_json: serde_json::Value =
-            row.try_get("metadata").map_err(|e| e.to_string())?;
+            row.try_get("metadata")?;
         let occurred_at: chrono::DateTime<chrono::Utc> =
-            row.try_get("occurred_at").map_err(|e| e.to_string())?;
+            row.try_get("occurred_at")?;
 
         let payload: FinanceDomainEvent =
-            serde_json::from_value(payload_json).map_err(|e| e.to_string())?;
+            serde_json::from_value(payload_json).map_err(|e| TopemsError::Internal(format!("JSON反序列化失败: {e}")))?;
         let metadata: EventMetadata = serde_json::from_value(metadata_json).unwrap_or_default();
 
         Ok(EventRecord {
@@ -70,7 +70,7 @@ impl PgEventStore {
         let batch_i64 = batch_size as i64;
 
         let rows = if let Some(last_id) = last_event_id {
-            let last_uuid = Uuid::parse_str(last_id).map_err(|e| e.to_string())?;
+            let last_uuid = Uuid::parse_str(last_id).map_err(|e| TopemsError::ValidationFailed(format!("无效UUID: {e}")))?;
             sqlx::query(
                 only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE id > $1 ORDER BY occurred_at ASC, id ASC LIMIT $2"),
             )
@@ -78,13 +78,13 @@ impl PgEventStore {
             .bind(batch_i64)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         } else {
             sqlx::query(only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events ORDER BY occurred_at ASC, id ASC LIMIT $1"))
                 .bind(batch_i64)
                 .fetch_all(&self.pool)
                 .await
-                .map_err(|e| e.to_string())?
+                ?
         };
 
         let mut records = Vec::new();
@@ -102,8 +102,8 @@ impl PgEventStore {
         ))
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
-        let count: i64 = row.try_get("count").map_err(|e| e.to_string())?;
+        ?;
+        let count: i64 = row.try_get("count")?;
         Ok(count as u64)
     }
 
@@ -124,8 +124,8 @@ impl PgEventStore {
         .bind(aggregate_type)
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
-        let total: i64 = count_row.try_get("count").map_err(|e| e.to_string())?;
+        ?;
+        let total: i64 = count_row.try_get("count")?;
 
         let rows = sqlx::query(
             only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_type = $1 ORDER BY occurred_at DESC LIMIT $2 OFFSET $3"),
@@ -135,7 +135,7 @@ impl PgEventStore {
         .bind(offset)
         .fetch_all(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
+        ?;
 
         let mut records = Vec::new();
         for row in rows {
@@ -152,8 +152,8 @@ impl PgEventStore {
         ))
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
-        let count: i64 = row.try_get("count").map_err(|e| e.to_string())?;
+        ?;
+        let count: i64 = row.try_get("count")?;
         Ok(count as u64)
     }
 }
@@ -173,7 +173,7 @@ impl EventStore for PgEventStore {
         expected_version: u64,
         metadata: Option<EventMetadata>,
     ) -> Result<Vec<EventRecord>, TopemsError> {
-        let mut tx = self.pool.begin().await.map_err(|e| e.to_string())?;
+        let mut tx = self.pool.begin().await?;
 
         let current_version_row = sqlx::query(only_own_schema_query!(
             "finance",
@@ -182,10 +182,10 @@ impl EventStore for PgEventStore {
         .bind(aggregate_id)
         .fetch_one(&mut *tx)
         .await
-        .map_err(|e| e.to_string())?;
+        ?;
         let current_version: i64 = current_version_row
             .try_get("version")
-            .map_err(|e| e.to_string())?;
+            ?;
         let current_version_u64 = current_version as u64;
 
         if current_version_u64 != expected_version {
@@ -196,14 +196,14 @@ impl EventStore for PgEventStore {
         }
 
         let metadata = metadata.unwrap_or_default();
-        let metadata_json = serde_json::to_value(&metadata).map_err(|e| e.to_string())?;
+        let metadata_json = serde_json::to_value(&metadata).map_err(|e| TopemsError::Internal(format!("JSON序列化失败: {e}")))?;
         let mut records = Vec::new();
         let mut version = current_version_u64;
 
         for event in events {
             version += 1;
             let event_type = Self::event_type(event);
-            let payload_json = serde_json::to_value(event).map_err(|e| e.to_string())?;
+            let payload_json = serde_json::to_value(event).map_err(|e| TopemsError::Internal(format!("JSON序列化失败: {e}")))?;
             let id = Uuid::new_v4();
 
             let row = sqlx::query(
@@ -220,12 +220,12 @@ impl EventStore for PgEventStore {
             .bind(&metadata_json)
             .fetch_one(&mut *tx)
             .await
-            .map_err(|e| e.to_string())?;
+            ?;
 
             records.push(Self::row_to_event_record(&row)?);
         }
 
-        tx.commit().await.map_err(|e| e.to_string())?;
+        tx.commit().await?;
         Ok(records)
     }
 
@@ -245,7 +245,7 @@ impl EventStore for PgEventStore {
             .bind(to_ver as i64)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         } else {
             sqlx::query(
                 only_own_schema_query!("finance", "SELECT id, aggregate_id, aggregate_type, event_type, payload, metadata, version, occurred_at FROM cqrs_events WHERE aggregate_id = $1 AND version >= $2 ORDER BY version ASC"),
@@ -254,7 +254,7 @@ impl EventStore for PgEventStore {
             .bind(from_version as i64)
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| e.to_string())?
+            ?
         };
 
         let mut records = Vec::new();
@@ -266,7 +266,7 @@ impl EventStore for PgEventStore {
 
     #[allow(clippy::as_conversions, clippy::cast_possible_wrap)]
     async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), TopemsError> {
-        let state_json = serde_json::to_value(&snapshot.state).map_err(|e| e.to_string())?;
+        let state_json = serde_json::to_value(&snapshot.state).map_err(|e| TopemsError::Internal(format!("JSON序列化失败: {e}")))?;
 
         sqlx::query(only_own_schema_query!(
             "finance",
@@ -284,7 +284,7 @@ impl EventStore for PgEventStore {
         .bind(&state_json)
         .execute(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
+        ?;
 
         Ok(())
     }
@@ -298,18 +298,18 @@ impl EventStore for PgEventStore {
             .bind(aggregate_id)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| e.to_string())?;
+            ?;
 
         match result {
             Some(row) => {
                 let aggregate_id: String =
-                    row.try_get("aggregate_id").map_err(|e| e.to_string())?;
+                    row.try_get("aggregate_id")?;
                 let aggregate_type: String =
-                    row.try_get("aggregate_type").map_err(|e| e.to_string())?;
-                let version: i64 = row.try_get("version").map_err(|e| e.to_string())?;
-                let state: serde_json::Value = row.try_get("state").map_err(|e| e.to_string())?;
+                    row.try_get("aggregate_type")?;
+                let version: i64 = row.try_get("version")?;
+                let state: serde_json::Value = row.try_get("state")?;
                 let created_at: chrono::DateTime<chrono::Utc> =
-                    row.try_get("created_at").map_err(|e| e.to_string())?;
+                    row.try_get("created_at")?;
 
                 Ok(Some(SnapshotRecord {
                     aggregate_id,
@@ -332,8 +332,8 @@ impl EventStore for PgEventStore {
         .bind(aggregate_id)
         .fetch_one(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
-        let version: i64 = row.try_get("version").map_err(|e| e.to_string())?;
+        ?;
+        let version: i64 = row.try_get("version")?;
         Ok(version as u64)
     }
 }

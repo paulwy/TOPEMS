@@ -138,7 +138,7 @@ impl EventStore for InMemoryEventStore {
         expected_version: u64,
         metadata: Option<EventMetadata>,
     ) -> Result<Vec<EventRecord>, TopemsError> {
-        let mut all_events = self.events.lock().map_err(|e| e.to_string())?;
+        let mut all_events = self.events.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         let current_version = all_events
             .iter()
@@ -183,7 +183,7 @@ impl EventStore for InMemoryEventStore {
         from_version: u64,
         to_version: Option<u64>,
     ) -> Result<Vec<EventRecord>, TopemsError> {
-        let all_events = self.events.lock().map_err(|e| e.to_string())?;
+        let all_events = self.events.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         let mut events: Vec<EventRecord> = all_events
             .iter()
@@ -200,7 +200,7 @@ impl EventStore for InMemoryEventStore {
     }
 
     async fn save_snapshot(&self, snapshot: SnapshotRecord) -> Result<(), TopemsError> {
-        let mut snapshots = self.snapshots.lock().map_err(|e| e.to_string())?;
+        let mut snapshots = self.snapshots.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         snapshots.retain(|s| s.aggregate_id != snapshot.aggregate_id);
         snapshots.push(snapshot);
@@ -211,7 +211,7 @@ impl EventStore for InMemoryEventStore {
         &self,
         aggregate_id: &str,
     ) -> Result<Option<SnapshotRecord>, TopemsError> {
-        let snapshots = self.snapshots.lock().map_err(|e| e.to_string())?;
+        let snapshots = self.snapshots.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         Ok(snapshots
             .iter()
@@ -221,7 +221,7 @@ impl EventStore for InMemoryEventStore {
     }
 
     async fn get_aggregate_version(&self, aggregate_id: &str) -> Result<u64, TopemsError> {
-        let all_events = self.events.lock().map_err(|e| e.to_string())?;
+        let all_events = self.events.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         Ok(all_events
             .iter()

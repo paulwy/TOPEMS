@@ -74,21 +74,21 @@ impl AsyncProjector {
             .bind(view_name)
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| e.to_string())?;
+            ?;
 
         match result {
             Some(row) => {
                 let last_event_id: Option<Uuid> =
-                    row.try_get("last_event_id").map_err(|e| e.to_string())?;
+                    row.try_get("last_event_id")?;
                 let last_event_time: Option<chrono::DateTime<chrono::Utc>> =
-                    row.try_get("last_event_time").map_err(|e| e.to_string())?;
+                    row.try_get("last_event_time")?;
                 let processed_count: i64 =
-                    row.try_get("processed_count").map_err(|e| e.to_string())?;
-                let error_count: i64 = row.try_get("error_count").map_err(|e| e.to_string())?;
+                    row.try_get("processed_count")?;
+                let error_count: i64 = row.try_get("error_count")?;
                 let last_error: Option<String> =
-                    row.try_get("last_error").map_err(|e| e.to_string())?;
+                    row.try_get("last_error")?;
                 let updated_at: chrono::DateTime<chrono::Utc> =
-                    row.try_get("updated_at").map_err(|e| e.to_string())?;
+                    row.try_get("updated_at")?;
 
                 Ok(ProjectionProgress {
                     view_name: view_name.to_string(),
@@ -107,7 +107,7 @@ impl AsyncProjector {
                 .bind(view_name)
                 .execute(&self.pool)
                 .await
-                .map_err(|e| e.to_string())?;
+                ?;
 
                 Ok(ProjectionProgress {
                     view_name: view_name.to_string(),
@@ -132,7 +132,7 @@ impl AsyncProjector {
         error: Option<&str>,
     ) -> Result<(), TopemsError> {
         let last_event_uuid = match last_event_id {
-            Some(id) => Some(Uuid::parse_str(id).map_err(|e| e.to_string())?),
+            Some(id) => Some(Uuid::parse_str(id).map_err(|e| TopemsError::ValidationFailed(format!("无效UUID: {e}")))?),
             None => None,
         };
 
@@ -150,7 +150,7 @@ impl AsyncProjector {
             .bind(view_name)
             .execute(&self.pool)
             .await
-            .map_err(|e| e.to_string())?;
+            ?;
         } else {
             sqlx::query(only_own_schema_query!(
                 "finance",
@@ -165,7 +165,7 @@ impl AsyncProjector {
             .bind(view_name)
             .execute(&self.pool)
             .await
-            .map_err(|e| e.to_string())?;
+            ?;
         }
 
         Ok(())
@@ -319,7 +319,7 @@ impl AsyncProjector {
         .bind(view_name)
         .execute(&self.pool)
         .await
-        .map_err(|e| e.to_string())?;
+        ?;
 
         Ok(())
     }

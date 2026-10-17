@@ -50,7 +50,7 @@ impl VoucherSummaryMaterializedView {
         page_size: i64,
         status: Option<String>,
     ) -> Result<(Vec<VoucherSummaryView>, i64), TopemsError> {
-        let data = self.data.lock().map_err(|e| e.to_string())?;
+        let data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         let mut items: Vec<VoucherSummaryView> = data
             .values()
@@ -69,12 +69,12 @@ impl VoucherSummaryMaterializedView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<VoucherSummaryView>, TopemsError> {
-        let data = self.data.lock().map_err(|e| e.to_string())?;
+        let data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
         Ok(data.get(id).cloned())
     }
 
     pub async fn get_by_no(&self, no: &str) -> Result<Option<VoucherSummaryView>, TopemsError> {
-        let data = self.data.lock().map_err(|e| e.to_string())?;
+        let data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
         Ok(data.values().find(|v| v.voucher_no == no).cloned())
     }
 }
@@ -92,7 +92,7 @@ impl MaterializedView for VoucherSummaryMaterializedView {
     }
 
     async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
-        let mut data = self.data.lock().map_err(|e| e.to_string())?;
+        let mut data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         match event {
             FinanceDomainEvent::VoucherCreated(e) => {
@@ -128,7 +128,7 @@ impl MaterializedView for VoucherSummaryMaterializedView {
     }
 
     async fn rebuild(&self) -> Result<(), TopemsError> {
-        let mut data = self.data.lock().map_err(|e| e.to_string())?;
+        let mut data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
         data.clear();
         Ok(())
     }
@@ -174,7 +174,7 @@ impl ReceivableAgingMaterializedView {
         page_size: i64,
         status: Option<String>,
     ) -> Result<(Vec<ReceivableAgingView>, i64), TopemsError> {
-        let data = self.data.lock().map_err(|e| e.to_string())?;
+        let data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         let mut items: Vec<ReceivableAgingView> = data
             .values()
@@ -193,12 +193,12 @@ impl ReceivableAgingMaterializedView {
     }
 
     pub async fn get_by_id(&self, id: &str) -> Result<Option<ReceivableAgingView>, TopemsError> {
-        let data = self.data.lock().map_err(|e| e.to_string())?;
+        let data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
         Ok(data.get(id).cloned())
     }
 
     pub async fn total_by_bucket(&self) -> Result<Vec<AgingBucket>, TopemsError> {
-        let data = self.data.lock().map_err(|e| e.to_string())?;
+        let data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
         let mut bucket_map: HashMap<String, f64> = HashMap::new();
 
         for view in data.values() {
@@ -248,7 +248,7 @@ impl MaterializedView for ReceivableAgingMaterializedView {
     }
 
     async fn handle_event(&self, event: &FinanceDomainEvent) -> Result<(), TopemsError> {
-        let mut data = self.data.lock().map_err(|e| e.to_string())?;
+        let mut data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
 
         match event {
             FinanceDomainEvent::ReceivableCreated(e) => {
@@ -299,7 +299,7 @@ impl MaterializedView for ReceivableAgingMaterializedView {
     }
 
     async fn rebuild(&self) -> Result<(), TopemsError> {
-        let mut data = self.data.lock().map_err(|e| e.to_string())?;
+        let mut data = self.data.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
         data.clear();
         Ok(())
     }

@@ -145,7 +145,7 @@ impl DomainEventPublisherExt for InMemoryEventPublisher {
         &self,
         events: &[(FinanceDomainEvent, String)],
     ) -> Result<(), TopemsError> {
-        let mut store = self.published_events.lock().map_err(|e| e.to_string())?;
+        let mut store = self.published_events.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
         let now = chrono::Utc::now();
         for (event, aggregate_id) in events {
             store.push(PublishedEvent {
@@ -164,7 +164,7 @@ impl DomainEventPublisherExt for InMemoryEventPublisher {
         aggregate_id: &str,
         metadata: EventPublishMetadata,
     ) -> Result<(), TopemsError> {
-        let mut store = self.published_events.lock().map_err(|e| e.to_string())?;
+        let mut store = self.published_events.lock().map_err(|e| TopemsError::Internal(format!("锁中毒: {e}")))?;
         store.push(PublishedEvent {
             event: event.clone(),
             aggregate_id: aggregate_id.to_string(),
