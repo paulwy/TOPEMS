@@ -98,18 +98,29 @@ pub async fn list_tasks(
         }
     };
 
-    // BE-09 3c：assignee_name 已 LEFT JOIN iam.users 取真实全名；
-    // node_name 当前兜底 = node_id。真实节点展示名需从 mes.core_workflow_instances
-    // → core_workflow_versions.definition->'nodes' JSON 提取，但该路径跨 schema
-    // （unified-core 边界仅允许 public），且当前 DB 0 tasks / 0 instances，
-    // 待跨域边界白名单或 mes 侧导出视图后再补。
+    // BE-09 3c：assignee_name LEFT JOIN iam.users；node_name 经 public.core_workflow_instances
+    // → public.core_workflow_versions.definition->'nodes' JSON 提取 e->>'name'，
+    // COALESCE 兜底 node_id（全部 public schema，无跨域）。
     let items: Vec<WorkflowTask> = if !has_filters {
         match sqlx::query_as::<_, WorkflowTask>(
             r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
                       COALESCE(u.full_name, u.username) AS assignee_name,
-                      t.node_id AS node_name
+                      COALESCE(nd.node_display, t.node_id) AS node_name
                FROM public.core_workflow_tasks t
                LEFT JOIN iam.users u ON u.id = t.assignee_id
+               LEFT JOIN LATERAL (
+                   SELECT v.definition AS def
+                   FROM public.core_workflow_instances i
+                   JOIN public.core_workflow_versions v ON v.workflow_id = i.workflow_id AND v.isactive = true
+                   WHERE i.id = t.instance_id
+                   LIMIT 1
+               ) inst ON TRUE
+               LEFT JOIN LATERAL (
+                   SELECT e->>'name' AS node_display
+                   FROM jsonb_array_elements(inst.def->'nodes') e
+                   WHERE e->>'id' = t.node_id
+                   LIMIT 1
+               ) nd ON TRUE
                ORDER BY t.created_at DESC LIMIT $1 OFFSET $2"#
         )
         .bind(page_size)
@@ -130,9 +141,22 @@ pub async fn list_tasks(
         match sqlx::query_as::<_, WorkflowTask>(
             r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
                       COALESCE(u.full_name, u.username) AS assignee_name,
-                      t.node_id AS node_name
+                      COALESCE(nd.node_display, t.node_id) AS node_name
                FROM public.core_workflow_tasks t
                LEFT JOIN iam.users u ON u.id = t.assignee_id
+               LEFT JOIN LATERAL (
+                   SELECT v.definition AS def
+                   FROM public.core_workflow_instances i
+                   JOIN public.core_workflow_versions v ON v.workflow_id = i.workflow_id AND v.isactive = true
+                   WHERE i.id = t.instance_id
+                   LIMIT 1
+               ) inst ON TRUE
+               LEFT JOIN LATERAL (
+                   SELECT e->>'name' AS node_display
+                   FROM jsonb_array_elements(inst.def->'nodes') e
+                   WHERE e->>'id' = t.node_id
+                   LIMIT 1
+               ) nd ON TRUE
                WHERE (t.node_id ILIKE $1 OR t.comment ILIKE $1 OR $1 = '')
                  AND (t.status = $2 OR $2 = '')
                  AND (t.assignee_id = $3 OR $3 IS NULL)
@@ -183,9 +207,22 @@ pub async fn get_task(
     let task = match sqlx::query_as::<_, WorkflowTask>(
         r#"SELECT t.id, t.tenant_id, t.instance_id, t.node_id, t.assignee_id, t.status, t.comment, t.priority, t.due_time, t.created_at, t.completed_at, t.claimed_at,
                   COALESCE(u.full_name, u.username) AS assignee_name,
-                  t.node_id AS node_name
+                  COALESCE(nd.node_display, t.node_id) AS node_name
            FROM public.core_workflow_tasks t
            LEFT JOIN iam.users u ON u.id = t.assignee_id
+           LEFT JOIN LATERAL (
+               SELECT v.definition AS def
+               FROM public.core_workflow_instances i
+               JOIN public.core_workflow_versions v ON v.workflow_id = i.workflow_id AND v.isactive = true
+               WHERE i.id = t.instance_id
+               LIMIT 1
+           ) inst ON TRUE
+           LEFT JOIN LATERAL (
+               SELECT e->>'name' AS node_display
+               FROM jsonb_array_elements(inst.def->'nodes') e
+               WHERE e->>'id' = t.node_id
+               LIMIT 1
+           ) nd ON TRUE
            WHERE t.id = $1"#,
     )
     .bind(id)
