@@ -33,6 +33,16 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['erp', 'inventory'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+
 interface InventoryItem {
   id: string;
   sku: string;
@@ -567,9 +577,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedItem.sku}
-                  </div>
+                  <div style={detailLabel}>{selectedItem.sku}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -649,31 +657,21 @@ const ErpInventoryRedesignPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('erp.erp_inventory_redesign.drawer.warehouse')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedItem.warehouse}
-                  </div>
+                  <div style={detailLabel}>{t('erp.erp_inventory_redesign.drawer.warehouse')}</div>
+                  <div style={detailValue}>{selectedItem.warehouse}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('erp.erp_inventory_redesign.drawer.unit')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedItem.unit}
-                  </div>
+                  <div style={detailLabel}>{t('erp.erp_inventory_redesign.drawer.unit')}</div>
+                  <div style={detailValue}>{selectedItem.unit}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('erp.erp_inventory_redesign.drawer.unit_price')}
-                  </div>
+                  <div style={detailLabel}>{t('erp.erp_inventory_redesign.drawer.unit_price')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     ¥{selectedItem.unit_price.toLocaleString('zh-CN')}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('erp.erp_inventory_redesign.drawer.total_value')}
                   </div>
                   <div
@@ -687,7 +685,7 @@ const ErpInventoryRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('erp.erp_inventory_redesign.drawer.last_restock')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedItem.last_restock}</div>

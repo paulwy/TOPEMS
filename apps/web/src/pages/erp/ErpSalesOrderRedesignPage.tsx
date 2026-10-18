@@ -38,6 +38,27 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['erp', 'sales-orders'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface SalesOrder {
   id: string;
   order_no: string;
@@ -659,7 +680,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedOrder && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -669,9 +690,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedOrder.order_no}
-                  </div>
+                  <div style={detailLabel}>{selectedOrder.order_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -710,23 +729,19 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.product_name')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedOrder.product_name}
-                  </div>
+                  <div style={detailValue}>{selectedOrder.product_name}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('erp.erp_sales_order_redesign.field.quantity')}
-                  </div>
+                  <div style={detailLabel}>{t('erp.erp_sales_order_redesign.field.quantity')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedOrder.quantity} {t('erp.erp_sales_order_redesign.field.piece_unit')}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.unit_price')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
@@ -734,21 +749,19 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.salesperson')}
                   </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedOrder.salesperson}
-                  </div>
+                  <div style={detailValue}>{selectedOrder.salesperson}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.order_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.order_date}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
+                  <div style={detailLabel}>
                     {t('erp.erp_sales_order_redesign.field.delivery_date')}
                   </div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedOrder.delivery_date}</div>
@@ -811,12 +824,12 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
               <label
                 htmlFor='field-1'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('erp.erp_sales_order_redesign.form.customer_name')} *
               </label>
@@ -835,7 +848,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('erp.erp_sales_order_redesign.form.product_name')} *
               </label>
@@ -848,7 +861,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('erp.erp_sales_order_redesign.form.quantity')}
               </label>
@@ -862,7 +875,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('erp.erp_sales_order_redesign.form.unit_price')}
               </label>
@@ -876,7 +889,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('erp.erp_sales_order_redesign.form.order_date')}
               </label>
@@ -889,7 +902,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-6'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('erp.erp_sales_order_redesign.form.delivery_date')}
               </label>
@@ -902,7 +915,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-7'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('erp.erp_sales_order_redesign.form.salesperson')}
               </label>
@@ -915,7 +928,7 @@ const ErpSalesOrderRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-8'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('erp.erp_sales_order_redesign.form.status')}
               </label>
