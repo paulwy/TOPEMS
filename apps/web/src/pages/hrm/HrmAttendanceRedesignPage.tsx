@@ -38,6 +38,32 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['hrm', 'attendance'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const gridTwoCol: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 'var(--space-4)',
+};
+const headingReset: React.CSSProperties = {
+  margin: 0,
+  color: 'var(--text-secondary)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface AttendanceRecord {
   id: string;
   emp_no: string;
@@ -626,7 +652,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedRecord && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -636,9 +662,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedRecord.date}
-                  </div>
+                  <div style={detailLabel}>{selectedRecord.date}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -660,13 +684,9 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('hrm.attendance_redesign_page.k37')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.attendance_redesign_page.k25')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.attendance_redesign_page.k25')}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-xl)',
@@ -678,9 +698,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.attendance_redesign_page.k26')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.attendance_redesign_page.k26')}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-xl)',
@@ -695,21 +713,15 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('hrm.attendance_redesign_page.k38')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.attendance_redesign_page.k39')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.attendance_redesign_page.k39')}</div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                     {selectedRecord.work_hours} {t('hrm.attendance_redesign_page.k40')}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.attendance_redesign_page.k41')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.attendance_redesign_page.k41')}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -730,7 +742,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
 
             {selectedRecord.remark && (
               <Card title={t('hrm.attendance_redesign_page.k43')}>
-                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>{selectedRecord.remark}</p>
+                <p style={headingReset}>{selectedRecord.remark}</p>
               </Card>
             )}
           </div>
@@ -779,12 +791,12 @@ const HrmAttendanceRedesignPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
               <label
                 htmlFor='field-1'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.attendance_redesign_page.k49')}
               </label>
@@ -818,7 +830,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.attendance_redesign_page.k50')}
               </label>
@@ -831,7 +843,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.attendance_redesign_page.k25')}
               </label>
@@ -844,7 +856,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.attendance_redesign_page.k26')}
               </label>
@@ -857,7 +869,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.attendance_redesign_page.k53')}
               </label>
@@ -877,7 +889,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-6'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.attendance_redesign_page.k54')}
               </label>
@@ -892,7 +904,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
           <div>
             <label
               htmlFor='field-7'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('hrm.attendance_redesign_page.k43')}
             </label>
@@ -929,7 +941,7 @@ const HrmAttendanceRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p style={headingReset}>
           {t('hrm.attendance_redesign_page.k59', {
             name: deleteTarget?.employee_name,
             date: deleteTarget?.date,

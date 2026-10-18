@@ -39,6 +39,29 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['hrm', 'employees'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const rowGap2: React.CSSProperties = { display: 'flex', gap: 'var(--space-2)' };
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const gridTwoCol: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 'var(--space-4)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface Employee {
   id: string;
   emp_no: string;
@@ -571,7 +594,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 style={{ width: 140 }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={rowGap2}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -670,7 +693,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedEmployee && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -680,9 +703,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedEmployee.emp_no}
-                  </div>
+                  <div style={detailLabel}>{selectedEmployee.emp_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -696,7 +717,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
                     {selectedEmployee.department} · {selectedEmployee.position}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div style={rowGap2}>
                   <Badge variant={levelConfig[selectedEmployee.level]?.variant || 'default'}>
                     {levelConfig[selectedEmployee.level]?.label ||
                       t('hrm.employee_redesign_page.k31')}
@@ -710,56 +731,40 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             </Card>
 
             <Card title={t('hrm.employee_redesign_page.k34')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.employee_redesign_page.k23')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.employee_redesign_page.k23')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedEmployee.phone}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.employee_redesign_page.k35')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.employee_redesign_page.k35')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedEmployee.email}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.employee_redesign_page.k36')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.employee_redesign_page.k36')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
                     {selectedEmployee.manager}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.employee_redesign_page.k25')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.employee_redesign_page.k25')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>{selectedEmployee.join_date}</div>
                 </div>
               </div>
             </Card>
 
             <Card title={t('hrm.employee_redesign_page.k37')}>
-              <div
-                style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
-              >
+              <div style={gridTwoCol}>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.employee_redesign_page.k24')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.employee_redesign_page.k24')}</div>
                   <div style={{ fontSize: 'var(--text-lg)', fontWeight: 'var(--font-bold)' }}>
                     {formatSalary(selectedEmployee.salary)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.employee_redesign_page.k38')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.employee_redesign_page.k38')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedEmployee.created_at)}
                   </div>
@@ -820,12 +825,12 @@ const HrmEmployeeRedesignPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
               <label
                 htmlFor='field-1'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.employee_redesign_page.k44')}
               </label>
@@ -838,7 +843,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.employee_redesign_page.k46')}
               </label>
@@ -851,7 +856,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.employee_redesign_page.k48')}
               </label>
@@ -869,7 +874,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.employee_redesign_page.k49')}
               </label>
@@ -882,7 +887,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.employee_redesign_page.k22')}
               </label>
@@ -902,7 +907,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-6'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.employee_redesign_page.k52')}
               </label>
@@ -916,7 +921,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-7'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.employee_redesign_page.k54')}
               </label>
@@ -929,7 +934,7 @@ const HrmEmployeeRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-8'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.employee_redesign_page.k56')}
               </label>

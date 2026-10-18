@@ -39,6 +39,32 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['hrm', 'performance'];
 
+// 详情/卡片重复样式（等价抽取，值不变）
+const detailLabel: React.CSSProperties = {
+  fontSize: 'var(--text-xs)',
+  color: 'var(--text-secondary)',
+};
+const detailValue: React.CSSProperties = {
+  fontSize: 'var(--text-sm)',
+  fontWeight: 'var(--font-medium)',
+};
+const rowGap2: React.CSSProperties = { display: 'flex', gap: 'var(--space-2)' };
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const headingReset: React.CSSProperties = {
+  margin: 0,
+  color: 'var(--text-secondary)',
+};
+const sectionTitle: React.CSSProperties = {
+  display: 'block',
+  marginBottom: 4,
+  fontSize: 13,
+  fontWeight: 500,
+};
+
 interface PerformanceReview {
   id: string;
   review_no: string;
@@ -571,7 +597,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 style={{ width: 140 }}
               />
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+            <div style={rowGap2}>
               <Button
                 variant='ghost'
                 leftIcon={<RefreshCw size={16} />}
@@ -670,7 +696,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
         size='lg'
       >
         {selectedReview && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div style={colGap4}>
             <Card>
               <div
                 style={{
@@ -680,9 +706,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {selectedReview.review_no}
-                  </div>
+                  <div style={detailLabel}>{selectedReview.review_no}</div>
                   <div
                     style={{
                       fontSize: 'var(--text-lg)',
@@ -696,7 +720,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                     {selectedReview.department} · {selectedReview.period}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+                <div style={rowGap2}>
                   <Badge variant={ratingConfig[selectedReview.rating]?.variant || 'default'}>
                     {ratingConfig[selectedReview.rating]?.label || '-'}
                   </Badge>
@@ -740,33 +764,21 @@ const HrmPerformanceRedesignPage: React.FC = () => {
                 style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}
               >
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.performance_redesign_page.k20')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedReview.period}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.performance_redesign_page.k20')}</div>
+                  <div style={detailValue}>{selectedReview.period}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.performance_redesign_page.k21')}
-                  </div>
-                  <div style={{ fontSize: 'var(--text-sm)', fontWeight: 'var(--font-medium)' }}>
-                    {selectedReview.reviewer}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.performance_redesign_page.k21')}</div>
+                  <div style={detailValue}>{selectedReview.reviewer}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.performance_redesign_page.k24')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.performance_redesign_page.k24')}</div>
                   <div style={{ fontSize: 'var(--text-sm)', fontFamily: 'var(--font-mono)' }}>
                     {selectedReview.kpi_completion > 0 ? `${selectedReview.kpi_completion}%` : '-'}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-secondary)' }}>
-                    {t('hrm.performance_redesign_page.k36')}
-                  </div>
+                  <div style={detailLabel}>{t('hrm.performance_redesign_page.k36')}</div>
                   <div style={{ fontSize: 'var(--text-sm)' }}>
                     {formatDateTime(selectedReview.created_at)}
                   </div>
@@ -776,9 +788,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
 
             {selectedReview.improvement && (
               <Card title={t('hrm.performance_redesign_page.k37')}>
-                <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
-                  {selectedReview.improvement}
-                </p>
+                <p style={headingReset}>{selectedReview.improvement}</p>
               </Card>
             )}
           </div>
@@ -832,12 +842,12 @@ const HrmPerformanceRedesignPage: React.FC = () => {
           </>
         }
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div style={colGap4}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
             <div>
               <label
                 htmlFor='field-1'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.performance_redesign_page.k42')}
               </label>
@@ -871,7 +881,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-2'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.performance_redesign_page.k43')}
               </label>
@@ -891,7 +901,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-3'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.performance_redesign_page.k21')}
               </label>
@@ -904,7 +914,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-4'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.performance_redesign_page.k22')}
               </label>
@@ -923,7 +933,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-5'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.performance_redesign_page.k23')}
               </label>
@@ -937,7 +947,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
             <div>
               <label
                 htmlFor='field-6'
-                style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+                style={sectionTitle}
               >
                 {t('hrm.performance_redesign_page.k48')}
               </label>
@@ -952,7 +962,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
           <div>
             <label
               htmlFor='field-7'
-              style={{ display: 'block', marginBottom: 4, fontSize: 13, fontWeight: 500 }}
+              style={sectionTitle}
             >
               {t('hrm.performance_redesign_page.k37')}
             </label>
@@ -989,7 +999,7 @@ const HrmPerformanceRedesignPage: React.FC = () => {
           </>
         }
       >
-        <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+        <p style={headingReset}>
           {t('hrm.performance_redesign_page.k58', {
             name: deleteTarget?.employee_name,
             period: deleteTarget?.period,
