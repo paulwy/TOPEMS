@@ -40,7 +40,7 @@ export const FloatingDock: React.FC<FloatingDockProps> = ({ showHelp = true, sho
         position: 'fixed',
         bottom: 24,
         right: 24,
-        zIndex: (theme) => theme.zIndex.snackbar + 1,
+        zIndex: (theme) => theme.zIndex.floatingDock,
         display: { xs: 'none', md: 'flex' },
         alignItems: 'center',
         pointerEvents: 'none',

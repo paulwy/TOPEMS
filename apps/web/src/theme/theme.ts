@@ -72,6 +72,7 @@ declare module '@mui/material/styles' {
     topmost: number;
     devToolsPanel: number;
     devToolsModal: number;
+    floatingDock: number;
   }
 }
 
@@ -283,7 +284,7 @@ export const createCustomTheme = (): Theme => {
         } as const,
       },
       spacing: (factor: number) => `${factor * 8}px`,
-      zIndex: designTokens.zIndex,
+      zIndex: { ...designTokens.zIndex, floatingDock: 1101 } as ThemeOptions['zIndex'],
       shadows: lightShadows as ThemeOptions['shadows'],
       customShadows: customShadowsLight,
       transitions: {
