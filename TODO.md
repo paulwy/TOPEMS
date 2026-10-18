@@ -10,7 +10,7 @@
 - [x] **P1 · 财务报表聚合 f64→Decimal** ✅ 完成（2026-10-18，见下方批次块「批 A1」）：`financial_reports.rs` 报表查询聚合层金额全程 Decimal，仅比率/growth_rate 最后一步转 f64；finance lib 1087 passed / 0 failed
 - [x] **P1 · 前端空态兜底** ✅ 核销（2026-10-18 批 A2）：原「约 1100 页无空态」为宽口径高估（混入表单/详情/图表/静态桩）。实测两套模板层早已闭环——CrudPage/ListPageTemplate/TableSection 与 redesign DataTable 均内置 loading 骨架 + ErrorEmptyState + EmptyState 三态（历史已接线 48 页，见下方三态批次块）；走模板的查询主列表无白屏。本批补唯一实测白屏自绘列表 `gis/GisFencePage`（围栏列表区分「暂无数据/搜索无匹配」，zh/en 补 k63/k64），typecheck/eslint 绿。**长尾降 P2**：自绘子表纯文本空文案统一到共享 EmptyState、静态桩接真后补空态，按需处理，不机械铺改。
 - [x] **P1 · 批 C 路由冒烟 + CRUD 数据流补测** ✅ 完成（2026-10-18，见下方批次块「批 C」）：真起后端栈（8099 健康、admin 真登录）；C1 静态路由基线绿（v2-routes.smoke 6/6、489 页面 import 0 断链、注册路由 526）；C2 盘点核销不硬补后端单测；C3 树立 2 个真数据流断言范本（crm 客户列表/详情、finance 凭证详情，真栈 3/3 绿）；C4 全量 471 路由分 14 批实跑 **硬失败 0**（296 条 403 为 test_admin 权限噪声、无 5xx；2 条 rate-limit/feature-flag 404 为后端未挂载），顺带修 2 处前端数组兜底崩溃。**遗留**：e2e 入 CI 待 E3 外部恢复、其余弱 spec 照范本后续补。
-- [x] **P2 · 批 B 清债小批** 🟡 部分完成（2026-10-18，见下方「批 B」块）：B6(H1/H2/H3) 闭环（`8ec80da554`）、B1(F9) 误报核销保留；B2 MF 死配置 / B3 DSH RAG 空壳 / B5 休眠服务发现 待方向抉择，B4 contract_stubs 台账待文档补。
+- [x] **P2 · 批 B 清债小批** ✅ 完成（2026-10-18，见下方「批 B」块）：B6(H1/H2/H3) `8ec80da554`、B1(F9) 误报核销保留、B3(F5) 已接真核销+补测 `d12ea83d97`、B2(F8) 放弃 MF 删零引用 Loader `fcaaf48392`、B5(F7) 后端接 k8s 模式选择 `79cbfa26b8`；仅 B4 contract_stubs 映射台账待文档补。
 - [ ] **P1 · 内联样式治理**（2026-10-18 实测 3236 处；热区 components/templates 已收敛到 token/样式常量，长尾分批，新代码禁新增）
 - [x] **P1 · 测试前置一键脚本** ✅ 完成（`26461d2f51`）：`scripts/dev/run-e2e-stack.sh` + testUtils 真 token 化，使 full-route-smoke 脱离 mock token 假失败（待实跑全量路由验证）
 - [x] **P2 · menu 域冻结标注** ✅ 完成（`4780760e13`/`3247c12ecf`）：routes/master.rs:197-224 有路由注册 4 handler + init_database 初始化，非"未挂载"；前端 0 消费，判定"后端已实现、前端页面未开发"，冻结保留待前端接线
@@ -95,7 +95,7 @@
 
 ---
 
-## 批 B · P2 清债小批（2026-10-18）🟡 B6 闭环，B1 核销，B2/B3/B5 待方向抉择
+## 批 B · P2 清债小批（2026-10-18）🟢 B1 核销 / B2 删 MF Loader / B3 核销补测 / B5 接 k8s / B6 闭环；仅 B4 台账待文档
 
 > 来源：审计报告批 B。逐项实测复核，不采信旧报告字面；每项独立小 commit、本地门禁绿。
 
@@ -107,10 +107,16 @@
 - **H2**：5 份 2026-08 管理文档（final-review/quality/risk/time/communication）git mv 入 `docs/archive/project-management-2026-08/`，重构 `docs/project/README.md`，`docs/project/TODO.md`（V516）加"已归档·现行以根 TODO 为准"横幅。
 - **H3**：新建 `src/components/charts/chartPalette.ts` 抽 G2 演示色板（G2_PALETTE + DEMO_COLORS + getG2Color），7 个 stories 硬编码 hex 全替换为常量。tsc/eslint/prettier 绿。
 
-### 待方向抉择（本轮不擅动，登记专项）
-- **B2（F8 MF 死配置）**：构建期 federation 插件已移除，运行时 Loader 零 JSX 使用；但 config.ts/core-modules remoteEntry/env 模式分支/vite `/remote` 代理构成"备用 MF 部署模式"，删除属架构回退，需先定"放弃 MF 部署 or 冻结保留"。
-- **B3（F5 DSH RAG 空壳）**：接 `ai_knowledge/rag.rs` 真实 RAG 或删 1096 行空壳，中风险，先定方向。
-- **B5（F7 休眠服务发现）**：etcd/consul/dns 生产零引用、k8s 仅测试引用；但 mod.rs 注释明确为有意保留的预留扩展点，删除违背设计意图，需专项定"冻结标注 or 删至一套"。
+### B3（F5）✅ 核销误报 + 补测试，提交 `d12ea83d97`
+- 旧报告"1096 行仅 1 处 query_as 空壳"失实：`routes.rs:84` 已注入 pool+ai_client，`vector_search` 复用 `ai_knowledge` embedding 查 `core.knowledge_chunks` pgvector，enhanced_handler:478 真消费 `retrieve()`（重写→向量→阈值→rerank→TopK→拼上下文）。补 2 纯逻辑测试（无依赖回退空、build_context 空），`cargo test -p topems-ai dsh::rag` 20 passed。
+
+### B2（F8）✅ 放弃 MF，删零引用 Loader，提交 `fcaaf48392`（-426 行）
+- 删 `MicroFrontendLoader.tsx`（271 行 MF 运行时）+ 测试，移除 `plugin-loader/index` 导出；tsconfig 排除 `_archive-microfrontend/`。实测 `config.ts`/version-manager/canary-release 被 `useAppInit` 活调用（模块自更新/灰度链路），属活代码保留冻结；`core-modules.getCoreModules` 在 static 模式直接返回 `[]` 不生效，不强行删。tsc/eslint/prettier 绿。
+
+### B5（F7）✅ 后端接 k8s 模式选择，提交 `79cbfa26b8`（+88 行）
+- `service_client` 新增 `DiscoveryMode`(parse/from_env) + `build_discovery(_with)`，按 `TOPEMS_DISCOVERY_MODE=static|env|k8s` 选择实现，k8s 集群外构造失败回退 static。补 4 单测，lib 10 passed/0 failed，cargo check 绿。按决策**不做前端面板**；etcd/consul/dns 保留预留扩展点；工厂已可被主链路装配，真正注入 ServiceRegistry 登记后续。
+
+### 待办（本轮不擅动）
 - **B4（F4）**：125 条 contract_stubs 前端在用不可删，后续建 stub→上游实现映射台账（文档型）。
 
 ---
