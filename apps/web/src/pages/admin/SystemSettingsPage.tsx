@@ -21,6 +21,18 @@ import '@/theme/redesign-global.css';
 
 const QUERY_KEY = ['admin', 'system-settings'];
 
+// 重复布局样式（等价抽取，值不变）
+const colGap4: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 'var(--space-4)',
+};
+const gridTwoCol3: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: 'var(--space-3)',
+};
+
 // 默认设置（文案经 i18n 取数；模块求值早于资源就绪，故构造逻辑下沉为工厂函数，组件内用 t() 调用）
 const buildDefaultSettings = (t: TFunction) => ({
   basic: {
@@ -145,7 +157,7 @@ const SystemSettingsPage: React.FC = () => {
   };
 
   const renderBasicTab = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+    <div style={colGap4}>
       <FieldGroup title={t('admin.system_settings_page.group_system_info')}>
         <FormField
           label={t('system_settings.system_name')}
@@ -167,7 +179,7 @@ const SystemSettingsPage: React.FC = () => {
       </FieldGroup>
 
       <FieldGroup title={t('admin.system_settings_page.group_contact')}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+        <div style={gridTwoCol3}>
           <FormField label={t('system_settings.contact_email')}>
             <Input
               type='email'
@@ -196,7 +208,7 @@ const SystemSettingsPage: React.FC = () => {
   );
 
   const renderMailTab = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+    <div style={colGap4}>
       <FieldGroup title={t('admin.system_settings_page.group_mail_service')}>
         <FormField label={t('system_settings.enable_email_service')}>
           <Toggle
@@ -236,7 +248,7 @@ const SystemSettingsPage: React.FC = () => {
             />
           </FormField>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+        <div style={gridTwoCol3}>
           <FormField label={t('system_settings.username')}>
             <Input
               value={settings.mail.smtpUsername}
@@ -270,7 +282,7 @@ const SystemSettingsPage: React.FC = () => {
       </FieldGroup>
 
       <FieldGroup title={t('admin.system_settings_page.group_sender')}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+        <div style={gridTwoCol3}>
           <FormField label={t('admin.system_settings_page.sender_email')}>
             <Input
               value={settings.mail.fromEmail}
@@ -293,7 +305,7 @@ const SystemSettingsPage: React.FC = () => {
   );
 
   const renderSmsTab = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+    <div style={colGap4}>
       <FieldGroup title={t('admin.system_settings_page.group_sms_service')}>
         <FormField label={t('system_settings.enable_sms_service')}>
           <Toggle
@@ -321,7 +333,7 @@ const SystemSettingsPage: React.FC = () => {
             disabled={!settings.sms.enabled}
           />
         </FormField>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
+        <div style={gridTwoCol3}>
           <FormField label='Access Key ID'>
             <Input
               value={settings.sms.accessKeyId}
@@ -353,7 +365,7 @@ const SystemSettingsPage: React.FC = () => {
   );
 
   const renderLogTab = () => (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+    <div style={colGap4}>
       <FieldGroup title={t('system_settings.log_level')}>
         <FormField label={t('system_settings.log_level')}>
           <Select
