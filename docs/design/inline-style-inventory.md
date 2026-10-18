@@ -70,8 +70,10 @@
 ## 5. 分批路线建议
 
 1. **第 0 批 · 防新增门禁 ✅ 已落地（2026-10-19）**：扩展 `scripts/eslint-plugin-topems-design.cjs` 新增 `no-hardcoded-hex`（仅拦 `#rgb/#rrggbb/#rrggbbaa`，不连坐 rgb()/hsl()/命名色），`eslint.config.js` 开为 warn；豁免色板常量 `charts/chartPalette.ts` 与 `__tests__`/`*.test`（mock 示例色）。实测产品代码 hex 命中 0，探针可正确报警、放过 `var(--token)` 与合法间距。**不**一刀切禁 px（固定语义尺寸合法）。
-2. **第 1 批 · C 类清零**：按 §4 清单逐处人工复核，修掉笔误颜色值、把脱离 token 的裸 px 换成 space/text token；每文件单独核对视觉。
-3. **第 2 批起 · B 类按域抽常量**：从聚集最高的 wms/qms 开始，逐页把重复布局抽局部 styles 对象/就近 CSS 类，每页一次提交、视觉回归核对；不跨域并行铺改。
+2. **第 1 批 · C 类颜色笔误 ✅ 已落地（2026-10-19）**：`PivotTable.tsx` 失效主题路径（border.default/grey.x/text.muted/primary/common.white/非法 lg）全映射 theme.palette；全仓复查其余命中均在 sx 合法路径或 schemas 契约键，无需改。tsc 0 error、eslint 零新增。
+3. **第 2 批 · B 类按域抽常量（进行中，单页样板已起）**：
+   - 已起：`pages/wms/WmsInventoryPage.tsx` 详情面板重复文本样式（detailLabel×5/cellSub×2/detailValue×2）等价抽为局部 `React.CSSProperties` 常量，值逐字不变。
+   - 排队（每页一次提交、视觉回归核对，不并行铺）：`WmsLocationPage`(47)、`WmsStocktakePage`(46)、`WmsOutboundOrderPage`(41)、`WmsInboundOrderPage`(40)；其后 qms 域。跨页同构单元（详情项 label/value、统计卡）待视觉回归条件具备时再沉淀为共享组件，不在无回归环境下盲重组。
 4. **A 类不动；D 类随演示载体迭代。**
 
 ## 6. 局限
