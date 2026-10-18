@@ -8,7 +8,6 @@ mod app_state;
 use app_state::{super_claims, test_app_state};
 use axum::extract::{Extension, State};
 use axum::Json;
-use serde_json::Value;
 use topems_unified_core::modules::settings::api_keys::{
     create_api_key, delete_api_key, list_api_keys, ApiKeyEntry, CreateApiKeyRequest,
 };
