@@ -33,7 +33,8 @@
     "src/components/ai/rag/**",
     "src/design-system/**",
     "src/hooks/bff/**",
-    "src/modules/_archive/**"
+    "src/modules/_archive/**",
+    "src/_archive-microfrontend/**"
   ],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

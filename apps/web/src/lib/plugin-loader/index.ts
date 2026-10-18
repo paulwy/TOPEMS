@@ -16,4 +16,3 @@ export {
 export { eventBus, ModuleEvents } from './eventBus';
 export { useModuleLoadingStore } from '@/store/moduleLoadingStore';
 export type { ModuleStatus } from '@/store/moduleLoadingStore';
-export { MicroFrontendLoader, preloadRemoteModule } from './MicroFrontendLoader';
