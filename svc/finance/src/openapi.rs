@@ -213,8 +213,6 @@ use crate::modules::*;
         crate::modules::get_payable_aging_handler,
         crate::modules::get_receivable_aging_handler,
         crate::modules::import_vouchers_handler,
-        crate::modules::multi_dimensional::get_cost_center_report_handler,
-        crate::modules::multi_dimensional::get_profit_center_ranking_handler,
         crate::modules::open_period,
         crate::modules::reconciliation::batch_update_diff_handler,
         crate::modules::reconciliation::create_session_handler,

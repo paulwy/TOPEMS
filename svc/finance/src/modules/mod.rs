@@ -9,7 +9,6 @@ pub mod event_routes;
 pub mod financial_reports;
 pub mod forecast_v53;
 pub mod forecasting;
-pub mod multi_dimensional;
 pub mod operational;
 pub mod reconcile_orders;
 pub mod reconciliation;
@@ -4541,7 +4540,6 @@ pub fn create_routes() -> Router<AppState> {
         .merge(operational::create_routes())
         .merge(report_center::create_routes())
         .merge(forecasting::create_routes())
-        .merge(multi_dimensional::create_routes())
         .merge(financial_reports::create_routes())
         .merge(accounting_subjects::create_routes())
         .nest("/cqrs", cqrs_routes::cqrs_routes())
