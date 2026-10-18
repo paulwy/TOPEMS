@@ -4,6 +4,27 @@
 > 挂载：`svc/unified-core/src/routes/mod.rs:187` `.merge(contract_stub_routes())`，位于 core 受保护路由轨，实际前缀 `/api/core/*`（双轨 `/api/v1/core/*`）。
 > 口径：本文档为**纯文档台账，不改任何代码**；用于后续逐条对接/挂载/存废决策。端点最终存废与 BE-08（349 条 API 存废待业务勾选）同源，需业务确认后再动。
 
+## 0. B4 第一批核销记录（2026-10-19，已落地代码）
+
+**删除判据（三者同时满足才删，否则保留以免裸 404）**：① core 内无同前缀真实路由覆盖；② 活前端代码无 `apiClient.core` / 裸 client 打该路径（`api/ai/generated/client.ts` 为零消费废弃生成代码、`__tests__` 不计）；③ 能力已由独立 svc 承接。
+
+**本批删除 26 条（125 → 99）**，`cargo check -p topems-unified-core` 与 openapi/smoke 测试绿：
+
+| 域 | 删除 | 保留（仍被 core 兜底依赖） |
+|---|---|---|
+| governance（12→2） | dashboard / score / risk / compliance / cost / performance / security-events(GET+POST) / audit / recommendations | trends(GET)、refresh(POST)（`governanceDashboard.ts:351,384` 走 core） |
+| forms（7→1） | GET `/forms` 列表、validate / auto-fill / generate / submit / draft | GET `/forms/{id}`（`businessIntelligence.ts:253` 走 core） |
+| copilot（8→3） | POST `/copilot/sessions`、chat、intent、GET `/copilot/modules`、GET `/copilot/modules/{id}` | sessions(GET/DELETE)、modules/{id}/faq（`businessCopilot.ts:214,222,268` 走 core） |
+| documents（9→4） | GET 列表、POST 创建、GET `{id}`、DELETE `{id}`、generate | parse、summary(GET+POST)、search（`businessIntelligence.ts:330,340,350,370` 走 core） |
+
+**本批实测纠正（推翻原台账 🟢 判断，不可删）**：
+
+- **system/api-keys（2）→ 改 🔴**：`settings.rs` 真实仅 GET 列表 / POST 创建 / DELETE `{id}`；stub 的 GET 详情、PUT 更新是**未实现**，非冗余。
+- **wms-approval（12）→ 不可对接**：svc/wms 真实仅 4 条（inbound reject、stock-take reject、transfer approve/reject），且命名 `/transfers` ≠ stub `/transfer-orders`，无 start、无 outbound；前端 `wms/index.ts:168-196` 走裸 `apiClient`（core 兜底），改指也会 404，保留待真实服务补齐。
+- **help（7）→ 保留**：`help.ts` 注释明示走 core client，非已迁出。
+- **search（4）→ 全保留**：`shared/index.ts:176,180,184,188` 活调 core `/search`、`/search/suggestions`、`/search/recent`(GET/DELETE)。
+- **dict（1）→ 保留**：`system/index.ts:146` 走 core `/dict/dict-types/{id}/items`。
+
 ## 1. 兜底类型（4 种 handler）
 
 | Handler | 返回 | 用途 |
@@ -22,14 +43,14 @@
 | 🔴 | **待上游新建**（全仓 0 命中） | 排期新建，或产品判定不做 |
 | ⚪ | **前端未确认调用** | 随 BE-08 业务勾选存废，可能直接删 |
 
-## 3. 总览（125 条 / 21 域）
+## 3. 总览（第一批核销后 99 条 / 21 域；原 125，已删 26）
 
 | 域 | 条数 | 主要状态 | 上游候选 / 现状 | 前端调用文件 |
 |---|---:|---|---|---|
-| copilot | 8 | 🟢 | svc/ai `business_copilot_handlers`（前端实际走 `/dsh/copilot/*`） | `api/ai/businessCopilot.ts` |
-| forms | 7 | 🟢 | svc/ai `ai_form` / `smart_forms_handlers` | `api/ai/businessIntelligence.ts` |
-| documents | 9 | 🔴 | 通用文档库 parse/summary/search/generate 0 命中；list/CRUD 可评估复用 ai knowledge | `api/ai/documents.ts`、`api/doc/*` |
-| governance | 12 | 🟡 部分 | svc/ai `governance_dashboard_handlers` 覆盖 dashboard/score，余 10 项 🔴 | `api/ai/governanceDashboard.ts` |
+| copilot | 3（原8，已删5） | 🟢 已核销 | 5 条死兜底已删；sessions(GET/DELETE)、faq 仍走 core | `api/ai/businessCopilot.ts` |
+| forms | 1（原7，已删6） | 🟢 已核销 | 6 条死兜底已删；仅 GET `/forms/{id}` 走 core | `api/ai/businessIntelligence.ts` |
+| documents | 4（原9，已删5） | 🔴 部分 | CRUD/generate 死兜底已删；parse/summary/search 仍走 core | `api/ai/businessIntelligence.ts` |
+| governance | 2（原12，已删10） | 🟢 已核销 | 10 条死兜底已删；trends/refresh 仍走 core | `api/ai/governanceDashboard.ts` |
 | comments | 4 | 🔴 | 通用评论未建（doc/ticket 各自域评论独立，非此端点） | `api/shared/index.ts`（通用） |
 | favorites | 4 | 🔴 | 收藏/「是否已收藏」0 命中 | `api/shared/index.ts` |
 | search | 4 | 🟢 部分 | svc/search 已有 `/`、`/suggestions`；`/search/recent` 🔴 | `api/search/index.ts` |
@@ -44,9 +65,9 @@
 | tenant/integrations | 4 | 🔴 | 0 命中（第三方集成登记） | `api/tenant/config.ts` |
 | tenant/webhooks | 5 | 🟢 部分 | integration `plugin.rs` / communication 有 webhook 能力可复用 | `api/tenant/config.ts`、`api/notification/webhook.ts` |
 | tenant/security | 18 | 🟡 部分 | iam/auth 已有 password-policy；2fa/api-keys/audit-logs/sessions/ip-whitelist 🔴 | `api/tenant/security.ts` |
-| system/api-keys | 2 | 🟢 | core `settings.rs` 已挂 `/system/api-keys/{id}`，兜底冗余 | `api/unified-core/system.ts` |
-| wms-approval | 12 | 🟢 | svc/wms 入/出/盘点/调拨四类订单审批已实现（走 `/api/wms/*`） | `api/wms/index.ts` |
-| help | 7 | 🟢 | svc/portal `help/faq.rs` 已实现（注释载明已迁出） | `api/help.ts` |
+| system/api-keys | 2 | 🔴（原误标🟢） | 真实仅列表/创建/删除；stub 的 GET 详情、PUT 更新为未实现，非冗余 | `api/unified-core/system.ts` |
+| wms-approval | 12 | 🔴 不可对接 | svc/wms 真实仅 4 条且命名 `/transfers`≠`/transfer-orders`、无 start/outbound；前端走 core 兜底，保留待补齐 | `api/wms/index.ts` |
+| help | 7 | ⚠ 保留 | `help.ts` 仍走 core client（非已迁出），删除会裸 404 | `api/help.ts` |
 
 ## 4. 分组明细
 

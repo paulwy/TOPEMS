@@ -66,41 +66,24 @@ async fn stub_detail_404(
 #[allow(clippy::too_many_lines)]
 pub fn contract_stub_routes() -> Router<AppState> {
     Router::new()
-        .route("/copilot/sessions", post(stub_action))
+        // B4 第一批：创建会话/chat/intent/模块列表/模块详情前端已走 svc/ai `/dsh/copilot/*`，
+        // core 兜底删除；仅 sessions(GET/DELETE) 与 modules/{id}/faq 仍由 core 兜底。
         .route("/copilot/sessions/{id}", get(stub_list))
         .route("/copilot/sessions/{id}", delete(stub_action))
-        .route("/copilot/chat", post(stub_action))
-        .route("/copilot/intent", post(stub_action))
-        .route("/copilot/modules", get(stub_list))
-        .route("/copilot/modules/{id}", get(stub_list))
         .route("/copilot/modules/{id}/faq", get(stub_list))
-        .route("/forms", get(stub_list))
+        // B4 第一批：表单列表/validate/auto-fill/generate/submit/draft 前端已走
+        // svc/ai `/dsh/smart-forms/*`，core 兜底删除；仅 GET /forms/{id} 模板详情仍由 core 承载。
         .route("/forms/{id}", get(stub_list))
-        .route("/forms/{id}/validate", post(stub_action))
-        .route("/forms/{id}/auto-fill", post(stub_action))
-        .route("/forms/{id}/generate", post(stub_action))
-        .route("/forms/{id}/submit", post(stub_action))
-        .route("/forms/{id}/draft", post(stub_action))
-        .route("/documents", get(stub_list))
-        .route("/documents", post(stub_action))
-        .route("/documents/{id}", get(stub_list))
-        .route("/documents/{id}", delete(stub_action))
+        // B4 第一批：文档列表/创建/详情/删除/generate 前端已走 svc/ai 或 /doc 真实模块，
+        // core 兜底删除；仅 parse、summary(GET/POST)、search 仍由 core 兜底。
         .route("/documents/{id}/parse", post(stub_action))
         .route("/documents/{id}/summary", get(stub_list))
         .route("/documents/{id}/summary", post(stub_action))
         .route("/documents/{id}/search", get(stub_list))
-        .route("/documents/generate", post(stub_action))
-        .route("/governance/dashboard", get(stub_list))
-        .route("/governance/score", get(stub_list))
-        .route("/governance/risk", get(stub_list))
-        .route("/governance/compliance", get(stub_list))
-        .route("/governance/cost", get(stub_list))
-        .route("/governance/performance", get(stub_list))
-        .route("/governance/security-events", get(stub_list))
-        .route("/governance/security-events", post(stub_action))
-        .route("/governance/audit", get(stub_list))
+        // B4 第一批：dashboard/score/risk/compliance/cost/performance/security-events/audit/
+        // recommendations 前端已改走 svc/ai `/dsh/governance/*`，core 兜底删除；
+        // 仅 trends(GET)、refresh(POST) 仍由 core 承载，保留。
         .route("/governance/trends", get(stub_list))
-        .route("/governance/recommendations", get(stub_list))
         .route("/governance/refresh", post(stub_action))
         .route("/comments", get(stub_list))
         .route("/comments", post(stub_action))
